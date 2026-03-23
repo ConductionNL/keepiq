@@ -1,36 +1,45 @@
 schema: conduction
 
 context: |
-  Project: App Template
-  Repo: ConductionNL/nextcloud-app-template
+  Project: Doriath
+  Repo: ConductionNL/doriath
   Type: Nextcloud App (PHP backend + Vue 2 frontend)
-  Description: Starter template for Conduction Nextcloud apps — replace this description with your app's purpose.
-  Key components: Dashboard, Settings, Example objects
-  Database: PostgreSQL (via OpenRegister's ObjectService)
-  Mount path: /var/www/html/custom_apps/app-template
+  Description: Encrypted secrets manager for Nextcloud — stores and shares secrets (passwords, API keys)
+    for users and applications using end-to-end RSA/AES encryption with a private Certificate Authority.
+  Key components: Secrets, EncryptionSuites, CACertificates, Applications, Sharing (user/link/request)
+  Database: PostgreSQL (own tables — does NOT use OpenRegister)
+  Mount path: /var/www/html/custom_apps/doriath
 
   Architecture:
-    Pattern: Thin client — App Template owns no database tables
-    Data layer: OpenRegister (JSON object storage with schema validation)
-    Frontend: Vue 2.7 + Pinia stores querying OpenRegister API directly
-    Backend: Minimal — SettingsController + SettingsService for register setup
+    Pattern: Thick backend — Doriath owns all database tables and handles all encryption server-side
+    Data layer: Own Doctrine entities and migrations (no OpenRegister dependency)
+    Encryption: RSA-4096 for secrets, AES-256 for private keys; OpenSSL; private CA (root + intermediate)
+    Frontend: Vue 2.7 + Pinia stores querying Doriath REST API
+    Backend: Controllers, Services, and Entities for secrets, encryption suites, applications, sharing
+    Master password: Stored in Nextcloud user session or X-Vault-Password HTTP header (never in DB)
 
   Shared specs: See ../openspec/specs/ for cross-project conventions
   Project guidelines: See ../project.md for workspace-wide standards
 
 rules:
   proposal:
-    - Reference shared nextcloud-app spec for app structure requirements
-    - Consider impact on other Conduction apps
+    - Doriath owns its own database — do NOT reference OpenRegister for data storage
+    - Security implications must be explicitly addressed for any feature touching encryption
+    - Consider impact on other Conduction apps only where Doriath acts as a secret provider
   specs:
-    - Use Schema.org type annotations for all entities
-    - Specify which Nextcloud OCP interfaces are used for integration features
+    - Specify which fields are stored encrypted vs plain text
+    - Specify which Nextcloud OCP interfaces are used for session, user, and auth integration
+    - Encryption chunking constraints (RSA cap ~500 bytes/chunk) must be noted for large data fields
   design:
-    - Uses OpenRegister API directly from frontend (no own backend CRUD)
-    - Register config in lib/Settings/app_template_register.json (OpenAPI 3.0.0 format)
-    - Imported via ConfigurationService::importFromApp() in repair step
+    - All encryption/decryption happens in PHP backend using OpenSSL — never in frontend
+    - Private keys are never stored unencrypted — always AES-256 encrypted with master password
+    - Master password is never stored in the database
+    - Migrations must use Nextcloud's ISchemaWrapper pattern
   tasks:
-    - Test with OpenRegister to verify schema validation works
+    - Test encryption round-trips (encrypt → store → retrieve → decrypt) in integration tests
+    - Test that encrypted fields cannot be read without the correct master password
   review:
     - Cross-reference shared specs (nextcloud-app, api-patterns, nl-design, docker)
-    - Flag spec deviations with WARNING and justification
+    - Flag any pattern that stores a private key or master password unencrypted as a BLOCKER
+    - Flag spec deviations from org-wide ADRs with WARNING and justification
+    - ADR-001 (OpenRegister data layer) is explicitly superseded by Doriath ADR-001 for this app
