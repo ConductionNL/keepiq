@@ -1,0 +1,39 @@
+schema: conduction
+
+context: |
+  Project: App Template
+  Repo: ConductionNL/app-template
+  Type: Nextcloud App (PHP backend + Vue 2 frontend)
+  Description: A template for creating new Nextcloud apps following ConductionNL conventions
+  Key components: Dashboard, Settings, OpenRegister integration
+  Database: PostgreSQL (via OpenRegister's ObjectService)
+  Mount path: /var/www/html/custom_apps/app-template
+
+  Architecture:
+    Pattern: Thin client — this app owns no database tables
+    Data layer: OpenRegister (JSON object storage with schema validation)
+    Frontend: Vue 2.7 + Pinia stores querying OpenRegister API directly
+    Backend: Minimal — SettingsController + ConfigurationService for register setup
+
+  Shared specs: See ../openspec/specs/ for cross-project conventions
+  Project guidelines: See ../project.md for workspace-wide standards
+
+rules:
+  proposal:
+    - Reference shared nextcloud-app spec for app structure requirements
+    - "ADR-011: Before implementing ANY utility (validation, formatting, parsing), search OpenRegister lib/Formats/, lib/Service/, and lib/Handler/ for existing implementations. Common duplications: BSN validation (BsnFormat.php), date formatting, slug generation, UUID handling. If found, reuse via DI or document why duplication is necessary."
+  specs:
+    - Use Schema.org type annotations for all entities
+    - "ADR-009: Include test scenarios for all MUST/SHALL requirements"
+  design:
+    - Uses OpenRegister API directly from frontend (no own backend CRUD)
+    - Register config in lib/Settings/app_template_register.json (OpenAPI 3.0.0 format)
+    - Imported via ConfigurationService::importFromApp() in repair step
+    - "ADR-001: All data MUST be stored via OpenRegister — no custom database tables"
+    - "ADR-012: MUST use @conduction/nextcloud-vue components (CnIndexPage, CnDashboardPage, CnFormDialog, CnDataTable) — do NOT create custom equivalents"
+    - "ADR-008: Follow Controller -> Service -> Mapper layering pattern"
+    - "ADR-003: MUST use NL Design System tokens via Nextcloud CSS variables — no hardcoded colors"
+  tasks:
+    - "ADR-010: MUST include documentation task with browser screenshots using Playwright MCP"
+    - "ADR-009: MUST include unit test tasks — minimum 75% coverage for new code"
+    - "ADR-005: MUST include i18n tasks — Dutch and English translations required"
