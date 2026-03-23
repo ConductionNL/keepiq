@@ -1,0 +1,22 @@
+{
+    "translations": {
+        "App Template settings": "App Template settings",
+        "Configure the app settings": "Configure the app settings",
+        "Configuration": "Configuration",
+        "Dashboard": "Dashboard",
+        "Documentation": "Documentation",
+        "General": "General",
+        "Install OpenRegister": "Install OpenRegister",
+        "No settings available yet": "No settings available yet",
+        "OpenRegister is required": "OpenRegister is required",
+        "OpenRegister register ID": "OpenRegister register ID",
+        "Register": "Register",
+        "Save": "Save",
+        "Settings": "Settings",
+        "Settings saved successfully": "Settings saved successfully",
+        "Saving...": "Saving...",
+        "This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.": "This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.",
+        "User settings will appear here in a future update.": "User settings will appear here in a future update."
+    },
+    "plurals": ""
+}
