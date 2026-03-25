@@ -71,6 +71,47 @@ When a CSR is uploaded during registration, the system MUST use the public key f
 - THEN the system MUST generate a 4096-bit RSA key pair, sign the certificate, and create an EncryptionSuite
 - AND the private key MUST be returned to the registrant once (never stored in plaintext)
 
+### Requirement: Delete Application
+A vault administrator MUST be able to delete an active application. Deletion is permanent — there is no deactivation or soft-delete state.
+
+On deletion:
+- The application record is removed
+- The application's EncryptionSuite is removed
+- All secrets attributed to the application are hard-deleted
+
+#### Scenario: Delete active application
+- GIVEN an application is active
+- WHEN a vault administrator deletes it
+- THEN the application, its EncryptionSuite, and all its secrets MUST be permanently deleted
+- AND this action MUST NOT be reversible
+
+### Requirement: Admin Notification on Pending Registration
+When a non-admin submits an application registration, all vault administrators MUST be notified via the Nextcloud built-in notification system (bell icon).
+
+Notification content:
+- Title: "New application pending approval"
+- Body: "Application *{name}* is awaiting approval."
+- Action link: opens the approval queue in Doriath
+
+#### Scenario: Non-admin registers application
+- GIVEN a non-admin submits a registration
+- WHEN the application is created with status `pending`
+- THEN a Nextcloud notification MUST be dispatched to all vault administrators
+
+### Requirement: Pending Applications Counter on Dashboard
+The Doriath dashboard MUST display a visible counter of pending application registrations to vault administrators. Non-administrators MUST NOT see this counter.
+
+#### Scenario: Pending applications exist
+- GIVEN one or more applications are in `pending` status
+- WHEN a vault administrator views the Doriath dashboard
+- THEN the dashboard MUST show the count of pending registrations
+- AND the counter MUST link to the approval queue
+
+#### Scenario: No pending applications
+- GIVEN no applications are pending
+- WHEN a vault administrator views the Doriath dashboard
+- THEN the counter MUST NOT be shown (or shown as zero, implementation choice)
+
 ### Requirement: Attribute Secrets to Application
 Once an application is active, users with appropriate permission MUST be able to write secrets into the application's vault (encrypted with the application's public certificate).
 
@@ -98,6 +139,25 @@ Once an application is active, users with appropriate permission MUST be able to
 - [ ] If no CSR is uploaded, a key pair is generated and the private key returned once
 - [ ] Secrets cannot be attributed to pending applications
 - [ ] Writing a secret for an application encrypts it with the app's public certificate
+- [ ] All vault administrators receive a Nextcloud notification when a new application registration is pending
+- [ ] The Doriath dashboard shows a pending application counter to vault administrators (hidden from non-admins)
+- [ ] Vault administrators can delete an active application
+- [ ] Deletion permanently removes the application, its EncryptionSuite, and all its secrets (hard delete, no soft-delete or deactivation state)
+
+## Open Decisions
+
+### 🔴 Application API Authentication — needs team discussion
+
+**Question:** How does an approved application authenticate to retrieve its secrets?
+
+**Options explored:**
+- **Option A** — Static API token issued at registration (`X-Vault-Token` header). Simple, but the token is a credential that needs protecting.
+- **Option B+** — Custom private-key challenge-response. App signs a nonce; Doriath verifies against stored public cert. Pure but non-standard. If private key is lost, re-registration is the recovery path (losing access to existing secrets).
+- **RFC 7523 (JWT Bearer / Private Key JWT)** — OAuth2 client credentials flow where the client authenticates by presenting a JWT signed with its own RSA private key (no separate credential). Standard pattern (used by Google service accounts). Doriath would own the `/oauth2/token` endpoint since Nextcloud's oauth2 app does not support this grant type.
+
+**Lean:** RFC 7523 — standard, uses existing key infrastructure, short-lived tokens, no new credential to manage. Recovery path for lost private key is still re-registration.
+
+**Needs:** Team discussion before decision is finalised.
 
 ## Notes
 
