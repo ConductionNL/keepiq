@@ -54,6 +54,48 @@ _Noted in Vault-app.docx but explicitly out of scope for now._
 
 ---
 
+## Spec Deepening Progress
+
+Tracking remaining gaps to address per spec during `/opsx:app-explore` sessions.
+
+### Encryption Suites — done
+
+### Secrets — done
+
+### Key Generator — pending
+- [ ] Character set edge case: what if excluded characters exhaust the entire set?
+- [ ] Precise definition of "special characters" (symbols vary by target system)
+- [ ] Does the API endpoint require authentication, or is it open?
+
+### Application Management — pending
+- [ ] Application API authentication (how does an approved app authenticate to retrieve its secrets?)
+- [ ] Application deactivation / deletion flow
+- [ ] What happens to application secrets on deletion?
+- [ ] Admin notification when pending registrations arrive
+
+### User Sharing — pending
+- [ ] Can a recipient re-share a secret further?
+- [ ] What if the recipient's EncryptionSuite is revoked — does the share become permanently inaccessible?
+- [ ] Do recipients get notified when a secret is shared with them?
+- [ ] Does the recipient see who else the secret is shared with?
+- [ ] Accept/reject mechanism — do shares just appear, or can the recipient refuse?
+
+### Link Sharing — pending
+- [ ] KDF specification (PBKDF2 vs Argon2 — noted in spec but undecided)
+- [ ] Token entropy requirement
+- [ ] Brute-force protection on password attempts
+- [ ] Snapshot staleness: if the original secret changes after the link is created, the link shows stale data — is that intentional?
+- [ ] Can there be multiple active link shares for the same secret simultaneously?
+
+### Secret Requests — pending
+- [ ] Token expiry — can a request stay pending indefinitely?
+- [ ] Notification to requester when request is fulfilled
+- [ ] Submitted field validation (what if the submitter sends empty values?)
+- [ ] Can the same secret have multiple pending requests simultaneously?
+- [ ] Rate limiting on the fill-in endpoint
+
+---
+
 ## How This Works
 
 1. Run `/opsx:app-explore` to define or refine features in `openspec/specs/`
