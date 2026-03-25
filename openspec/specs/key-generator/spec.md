@@ -16,7 +16,7 @@ The key generator MUST accept the following configuration:
 | Field | Type | Default | Notes |
 |-------|------|---------|-------|
 | `length` | int | 16 | Minimum 8 |
-| `include_special_characters` | bool | true | Symbols such as `!@#$%^&*` |
+| `include_special_characters` | bool | true | OWASP recommended symbols (see below) |
 | `excluded_characters` | string | `""` | Characters to exclude from the character set |
 | `regex` | string | `""` | When valid (see below), overrides all other fields |
 
@@ -57,8 +57,28 @@ When no regex is provided, the system MUST generate a key from the resolved char
 - WHEN the generator processes the request
 - THEN the system MUST return a 16-character random string using alphanumeric and special characters
 
+### Requirement: Special Characters Definition
+The special characters set is defined as the OWASP recommended symbol set:
+
+```
+!@#$%^&*()-_=+[]{}|;:,.<>?/
+```
+
+This is the authoritative set used when `include_special_characters = true`. Users requiring finer control may use `excluded_characters` or `regex`.
+
 ### Requirement: Character Exclusion
 Characters listed in `excluded_characters` MUST be removed from the character set before generation.
+
+### Requirement: Minimum Viable Character Set
+After applying `excluded_characters`, the resolved character set MUST contain at least 2 distinct characters. If the resolved set contains fewer than 2 characters, the system MUST return a validation error before attempting generation.
+
+#### Scenario: Character set exhausted
+- GIVEN a request where `excluded_characters` removes all but 1 (or all) characters from the resolved set
+- WHEN the generator processes the request
+- THEN the system MUST return a validation error indicating the character set is too small
+
+### Requirement: Authentication
+The key generator API endpoint MUST require a valid Nextcloud session. Unauthenticated requests MUST be rejected with HTTP 401.
 
 ### Requirement: Frontend Integration
 The key generator MUST be callable from the secret creation UI with a configuration modal, and the generated value MUST be inserted directly into the key field.
@@ -78,6 +98,9 @@ The key generator MUST be callable from the secret creation UI with a configurat
 - [ ] A valid regex overrides all other configuration fields
 - [ ] An invalid regex (no length quantifier) returns a validation error
 - [ ] Generated values match the configured character set and length
+- [ ] Special characters use the defined OWASP set (`!@#$%^&*()-_=+[]{}|;:,.<>?/`)
+- [ ] A resolved character set with fewer than 2 distinct characters is rejected with a validation error
+- [ ] The generator endpoint requires a valid Nextcloud session; unauthenticated requests return HTTP 401
 - [ ] The generator is available as a REST API endpoint
 - [ ] The generator integrates with the secret creation UI
 
