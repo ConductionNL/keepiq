@@ -18,7 +18,7 @@ This allows secrets to be securely handed off to parties without Nextcloud accou
 |-------|------|-----------|-------|
 | `id` | UUID | No | Primary key |
 | `secret_id` | FK | No | The secret being shared |
-| `token` | string | No | URL-safe random token (part of the share link) |
+| `token` | string | No | URL-safe random token with at least 128 bits of entropy (generated via `random_bytes()`), part of the share link |
 | `encrypted_secret_snapshot` | text | Yes | Encrypted copy of the secret at share creation time |
 | `encryption_suite_id` | FK | No | Suite used to encrypt the snapshot |
 | `usage_limit` | int | No | Max number of accesses; null = unlimited |
@@ -26,7 +26,7 @@ This allows secrets to be securely handed off to parties without Nextcloud accou
 | `created_at` | datetime | No | |
 | `expires_at` | datetime | No | Optional expiry (null = no expiry) |
 
-Note: The link password is not stored. The snapshot is re-encrypted with a key derived from the link password. The server cannot decrypt it without the password being supplied.
+Note: The link password is not stored. The snapshot is re-encrypted with a key derived from the link password using Argon2id. The server cannot decrypt it without the password being supplied.
 
 ## Requirements
 
@@ -62,6 +62,24 @@ The system MUST allow anyone with the link and password to decrypt and retrieve 
 ### Requirement: Auto-deletion
 When the usage count reaches the usage limit, the link share and its encrypted snapshot MUST be automatically deleted.
 
+### Requirement: KDF for Snapshot Encryption
+The snapshot MUST be encrypted using AES-256 with a key derived from the link password via **Argon2id**. Argon2id is chosen over PBKDF2 for its memory-hardness, which significantly increases the cost of brute-force attacks against a captured snapshot.
+
+### Requirement: Brute-Force Protection
+The system MUST rate-limit password attempts by token. After **5 consecutive failed password attempts** on a given token, the link share MUST be permanently deleted (same as reaching the usage limit). This is treated as a hostile access attempt.
+
+#### Scenario: Brute-force attempt
+- GIVEN a valid link share token
+- WHEN 5 consecutive incorrect passwords are submitted
+- THEN the link share MUST be permanently deleted
+- AND subsequent requests with the same token MUST return a "not found" error
+
+### Requirement: Snapshot Staleness (by design)
+A link share captures a snapshot of the secret at the moment of creation. If the original secret is updated after the link is created, the link continues to serve the snapshot value. This is intentional — the owner must revoke and re-create the link to share an updated value.
+
+### Requirement: Multiple Concurrent Link Shares
+A secret MAY have multiple active link shares simultaneously. Each link has its own token, password, usage limit, and lifecycle. The owner can revoke any of them independently.
+
 ### Requirement: Manual revocation
 The secret owner MUST be able to revoke a link share before the usage limit is reached.
 
@@ -81,9 +99,14 @@ The secret owner MUST be able to revoke a link share before the usage limit is r
 - [ ] When the usage limit is reached, the share is automatically deleted
 - [ ] The owner can revoke a link share at any time
 - [ ] An invalid or expired token returns an error with no secret data
+- [ ] Snapshot is encrypted using AES-256 with a key derived from the link password via Argon2id
+- [ ] Link token has at least 128 bits of entropy, generated via `random_bytes()`
+- [ ] After 5 consecutive failed password attempts, the link share is permanently deleted
+- [ ] The link snapshot is a point-in-time copy; updates to the original secret do not affect active link shares
+- [ ] A secret may have multiple active link shares simultaneously
 
 ## Notes
 
-- The password used to encrypt the snapshot must not be stored. Consider using the password as input to a KDF (e.g., PBKDF2 or Argon2) to derive the AES key for the snapshot. This is distinct from RSA encryption used for regular secret storage.
+- The password used to encrypt the snapshot must not be stored. The snapshot AES key is derived from the link password using Argon2id — never stored. This is distinct from RSA encryption used for regular secret storage.
 - The document specifies this as a password the user "enters" — in practice, the UX should show the generated password prominently once, with a copy button.
 - Related ADRs: ADR-003 (encryption architecture)

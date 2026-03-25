@@ -62,37 +62,41 @@ Tracking remaining gaps to address per spec during `/opsx:app-explore` sessions.
 
 ### Secrets — done
 
-### Key Generator — pending
-- [ ] Character set edge case: what if excluded characters exhaust the entire set?
-- [ ] Precise definition of "special characters" (symbols vary by target system)
-- [ ] Does the API endpoint require authentication, or is it open?
+### Key Generator — done
+- [x] Character set exhaustion: fail fast — reject if resolved set has fewer than 2 distinct characters
+- [x] Special characters: OWASP recommended set (`!@#$%^&*()-_=+[]{}|;:,.<>?/`)
+- [x] Authentication: endpoint requires valid Nextcloud session (HTTP 401 otherwise)
 
 ### Application Management — pending
-- [ ] Application API authentication (how does an approved app authenticate to retrieve its secrets?)
-- [ ] Application deactivation / deletion flow
-- [ ] What happens to application secrets on deletion?
-- [ ] Admin notification when pending registrations arrive
+- [ ] 🔴 Application API authentication — RFC 7523 (JWT Bearer / Private Key JWT) is the lean, needs team discussion before finalising
+- [x] Deletion: hard delete only, no deactivation state; removes application, EncryptionSuite, and all secrets
+- [x] Admin notification: Nextcloud built-in notifications dispatched to all vault_admins on pending registration
+- [x] Dashboard counter: pending application count shown to vault_admins, links to approval queue
 
 ### User Sharing — pending
-- [ ] Can a recipient re-share a secret further?
-- [ ] What if the recipient's EncryptionSuite is revoked — does the share become permanently inaccessible?
-- [ ] Do recipients get notified when a secret is shared with them?
-- [ ] Does the recipient see who else the secret is shared with?
-- [ ] Accept/reject mechanism — do shares just appear, or can the recipient refuse?
+- [ ] 🔴 Re-sharing — needs team discussion. Lean: recipients submit a share request to the original owner; owner approves → system creates a direct share from owner to the requested user; requester notified of outcome only (no share list visibility)
+- [x] Group sharing: static expansion at share time; new member joins → owner notified to approve; member leaves → group-derived shares auto-revoked; direct shares unaffected
+- [x] Ownership delegation: admin power grab (any secret shared with them) or user self-delegation (to any existing recipient); multiple simultaneous delegates allowed; owner can reclaim all delegations; permanent on original owner's suite revocation/deletion
+- [ ] 🔵 Future: mandatory admin share on secret creation (policy enforcement) — flagged for later exploration
+- [x] Revoked suite: cascade-delete all shares and copies for that recipient
+- [x] Compromised suite: migration covers shared copies; original owner notified to replace value; sync-on-update unsets `possibly_compromised_at` on all copies
+- [x] Recipients notified via Nextcloud notification when a secret is shared with them
+- [x] Share visibility: only original owner sees full recipient list; recipients see nothing beyond their own copy
+- [x] Accept/reject: no accept/reject on direct shares — share request mechanism replaces re-sharing
 
-### Link Sharing — pending
-- [ ] KDF specification (PBKDF2 vs Argon2 — noted in spec but undecided)
-- [ ] Token entropy requirement
-- [ ] Brute-force protection on password attempts
-- [ ] Snapshot staleness: if the original secret changes after the link is created, the link shows stale data — is that intentional?
-- [ ] Can there be multiple active link shares for the same secret simultaneously?
+### Link Sharing — done
+- [x] KDF: Argon2id (memory-hard, PHP 8.3+ native)
+- [x] Token entropy: minimum 128 bits via `random_bytes()`
+- [x] Brute-force protection: 5 consecutive failed attempts permanently deletes the link share
+- [x] Snapshot staleness: intentional — links serve point-in-time snapshots; owner must revoke and re-create to share updated values
+- [x] Multiple concurrent link shares per secret: allowed, each with independent lifecycle
 
-### Secret Requests — pending
-- [ ] Token expiry — can a request stay pending indefinitely?
-- [ ] Notification to requester when request is fulfilled
-- [ ] Submitted field validation (what if the submitter sends empty values?)
-- [ ] Can the same secret have multiple pending requests simultaneously?
-- [ ] Rate limiting on the fill-in endpoint
+### Secret Requests — done
+- [x] Token expiry: optional — requester can set `expires_at` at creation; no forced expiry
+- [x] Notification: requester receives Nextcloud notification on fulfillment
+- [x] Field validation: all requested fields must be non-empty; partial submissions rejected
+- [x] Multiple requests per secret: N/A — each SecretRequest creates its own unfilled Secret
+- [x] Rate limiting: standard Nextcloud rate limiting sufficient; no per-token limiting needed
 
 ---
 
