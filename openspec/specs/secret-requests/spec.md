@@ -18,9 +18,10 @@ Critically, the requester cannot read the submitted values after they have been 
 |-------|------|-----------|-------|
 | `id` | UUID | No | Primary key |
 | `secret_id` | FK | No | The unfilled Secret this request writes to |
+| `encryption_suite_id` | FK | No | The EncryptionSuite whose public certificate is used to encrypt submitted values. Updated to the new suite during compromise recovery migration. |
 | `token` | string | No | URL-safe token for the fill-in link |
 | `requested_fields` | JSON | No | Array of field names the requester is asking for |
-| `status` | enum | No | `pending`, `fulfilled` |
+| `status` | enum | No | `pending`, `locked`, `fulfilled` — `locked` is set during the requester's compromise recovery migration; fill-in link returns "temporarily unavailable" while locked |
 | `created_at` | datetime | No | |
 | `fulfilled_at` | datetime | No | |
 
