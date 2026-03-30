@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Dashboard Controller
+ * Doriath Dashboard Controller
  *
- * Controller for the main AppTemplate dashboard page.
+ * Controller for the main Doriath dashboard page.
  *
  * @category Controller
- * @package  OCA\AppTemplate\Controller
+ * @package  OCA\Doriath\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Controller;
+namespace OCA\Doriath\Controller;
 
-use OCA\AppTemplate\AppInfo\Application;
+use OCA\Doriath\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IRequest;
 
 /**
- * Controller for the main AppTemplate dashboard page.
+ * Controller for the main Doriath dashboard page.
  */
 class DashboardController extends Controller
 {
@@ -55,4 +55,17 @@ class DashboardController extends Controller
     {
         return new TemplateResponse(Application::APP_ID, 'index');
     }//end page()
+
+    /**
+     * Serve the SPA for deep links (Vue history mode). Delegates to {@see page()}.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @return TemplateResponse
+     */
+    public function catchAll(): TemplateResponse
+    {
+        return $this->page();
+    }//end catchAll()
 }//end class

@@ -1,16 +1,16 @@
 <template>
-	<div class="app-template-admin">
+	<div class="doriath-admin">
 		<CnVersionInfoCard
-			:app-name="'App Template'"
+			:app-name="'Doriath'"
 			:app-version="appVersion"
 			:is-up-to-date="true"
 			:show-update-button="true"
-			:title="t('app-template', 'Version Information')"
-			:description="t('app-template', 'Information about the current App Template installation')">
+			:title="t('doriath', 'Version Information')"
+			:description="t('doriath', 'Information about the current Doriath installation')">
 			<template #footer>
 				<div class="cn-support-info">
-					<h4>{{ t('app-template', 'Support') }}</h4>
-					<p>{{ t('app-template', 'For support, contact us at') }} <a href="mailto:support@conduction.nl">support@conduction.nl</a></p>
+					<h4>{{ t('doriath', 'Support') }}</h4>
+					<p>{{ t('doriath', 'For support, contact us at') }} <a href="mailto:support@conduction.nl">support@conduction.nl</a></p>
 				</div>
 			</template>
 		</CnVersionInfoCard>
@@ -33,7 +33,7 @@ export default {
 	data() {
 		return {
 			storesReady: false,
-			appVersion: document.getElementById('app-template-settings')?.dataset?.version || 'Unknown',
+			appVersion: document.getElementById('doriath-settings')?.dataset?.version || 'Unknown',
 		}
 	},
 	async created() {
@@ -44,7 +44,7 @@ export default {
 </script>
 
 <style scoped>
-.app-template-admin {
+.doriath-admin {
 	max-width: 900px;
 }
 </style>

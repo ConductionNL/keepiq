@@ -26,5 +26,5 @@
     "authentication": "Nextcloud session (users) or X-Vault-Password header (external apps)"
   },
   "createdAt": "2026-03-23",
-  "updatedAt": "2026-03-23"
+  "updatedAt": "2026-03-30"
 }

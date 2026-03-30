@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate DeepLinkRegistrationListener
+ * Doriath DeepLinkRegistrationListener
  *
- * Registers AppTemplate's deep link URL patterns with OpenRegister's search provider.
+ * Registers Doriath's deep link URL patterns with OpenRegister's search provider.
  *
  * @category Listener
- * @package  OCA\AppTemplate\Listener
+ * @package  OCA\Doriath\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,16 +19,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Listener;
+namespace OCA\Doriath\Listener;
 
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
 /**
- * Registers AppTemplate's deep link URL patterns with OpenRegister's search provider.
+ * Registers Doriath's deep link URL patterns with OpenRegister's search provider.
  *
- * When a user searches in Nextcloud's unified search, results for AppTemplate schemas
+ * When a user searches in Nextcloud's unified search, results for Doriath schemas
  * will link directly to the relevant detail views in the app.
  *
  * @implements IEventListener<Event>
@@ -49,13 +49,13 @@ class DeepLinkRegistrationListener implements IEventListener
         }
 
         // Register example object deep links.
-        // Replace 'app-template' with your app ID and update the register slug,
+        // Replace 'doriath' with your app ID and update the register slug,
         // schema slug, and URL template to match your app's actual schemas.
         $event->register(
-            appId: 'app-template',
-            registerSlug: 'app-template',
+            appId: 'doriath',
+            registerSlug: 'doriath',
             schemaSlug: 'example',
-            urlTemplate: '/apps/app-template/#/examples/{uuid}'
+            urlTemplate: '/apps/doriath/#/examples/{uuid}'
         );
 
     }//end handle()

@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Admin Settings
+ * Doriath Admin Settings
  *
- * Provides the admin settings form for the AppTemplate application.
+ * Provides the admin settings form for the Doriath application.
  *
  * @category Settings
- * @package  OCA\AppTemplate\Settings
+ * @package  OCA\Doriath\Settings
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Settings;
+namespace OCA\Doriath\Settings;
 
-use OCA\AppTemplate\AppInfo\Application;
+use OCA\Doriath\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 
 /**
- * Provides the admin settings form for the AppTemplate application.
+ * Provides the admin settings form for the Doriath application.
  */
 class AdminSettings implements ISettings
 {
@@ -64,7 +64,7 @@ class AdminSettings implements ISettings
      */
     public function getSection(): string
     {
-        return 'app-template';
+        return 'doriath';
     }//end getSection()
 
     /**
