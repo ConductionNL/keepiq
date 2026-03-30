@@ -60,7 +60,9 @@ Tracking remaining gaps to address per spec during `/opsx:app-explore` sessions.
 
 ### Encryption Suites — done
 
-### Secrets — done
+### Secrets — pending
+- [ ] 🔴 Pagination approach: 50 items per page (standard pagination) or 30 items with dynamic infinite scroll? To be decided during UI design
+- [ ] 🔴 Subfolder cascade: does `?cascade=delete` and `?cascade=move` apply recursively to subfolders, or only to direct contents? Unclear whether recursive folder deletion should be allowed
 
 ### Key Generator — done
 - [x] Character set exhaustion: fail fast — reject if resolved set has fewer than 2 distinct characters
@@ -74,7 +76,7 @@ Tracking remaining gaps to address per spec during `/opsx:app-explore` sessions.
 - [x] Dashboard counter: pending application count shown to vault_admins, links to approval queue
 
 ### User Sharing — pending
-- [ ] 🔴 Re-sharing — needs team discussion. Lean: recipients submit a share request to the original owner; owner approves → system creates a direct share from owner to the requested user; requester notified of outcome only (no share list visibility)
+- [x] Re-sharing: recipients submit a share request to the original owner; owner approves → system creates a direct share from owner to the requested user; requester notified of outcome only (no share list visibility)
 - [x] Group sharing: static expansion at share time; new member joins → owner notified to approve; member leaves → group-derived shares auto-revoked; direct shares unaffected
 - [x] Ownership delegation: admin power grab (any secret shared with them) or user self-delegation (to any existing recipient); multiple simultaneous delegates allowed; owner can reclaim all delegations; permanent on original owner's suite revocation/deletion
 - [ ] 🔵 Future: mandatory admin share on secret creation (policy enforcement) — flagged for later exploration
