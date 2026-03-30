@@ -60,17 +60,17 @@ Tracking remaining gaps to address per spec during `/opsx:app-explore` sessions.
 
 ### Encryption Suites — done
 
-### Secrets — pending
-- [ ] 🔴 Pagination approach: 50 items per page (standard pagination) or 30 items with dynamic infinite scroll? To be decided during UI design
-- [ ] 🔴 Subfolder cascade: does `?cascade=delete` and `?cascade=move` apply recursively to subfolders, or only to direct contents? Unclear whether recursive folder deletion should be allowed
+### Secrets — done
+- [x] Pagination approach: classic pagination, 50 items per page (team preference)
+- [x] Subfolder cascade: user-directed resolution — frontend dialog lets user choose per subfolder (delete/move/keep); simple cascade params for folders without subfolders
 
 ### Key Generator — done
 - [x] Character set exhaustion: fail fast — reject if resolved set has fewer than 2 distinct characters
 - [x] Special characters: OWASP recommended set (`!@#$%^&*()-_=+[]{}|;:,.<>?/`)
 - [x] Authentication: endpoint requires valid Nextcloud session (HTTP 401 otherwise)
 
-### Application Management — pending
-- [ ] 🔴 Application API authentication — RFC 7523 (JWT Bearer / Private Key JWT) is the lean, needs team discussion before finalising
+### Application Management — done
+- [x] Application API authentication — RFC 7523 (JWT Bearer / Private Key JWT) chosen; may revisit if implementation reveals blockers
 - [x] Deletion: hard delete only, no deactivation state; removes application, EncryptionSuite, and all secrets
 - [x] Admin notification: Nextcloud built-in notifications dispatched to all vault_admins on pending registration
 - [x] Dashboard counter: pending application count shown to vault_admins, links to approval queue
