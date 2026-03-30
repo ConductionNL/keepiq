@@ -15,7 +15,8 @@ return [
         // Health check endpoint.
         ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 
-        // SPA catch-all — serves the Vue app for any frontend route (history mode)
-        ['name' => 'dashboard#page', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
+        // SPA catch-all — same controller as the index route; must use a distinct route name
+        // (duplicate names replace the earlier route in Symfony, which breaks GET /).
+        ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
     ],
 ];
