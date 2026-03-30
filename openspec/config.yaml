@@ -18,14 +18,21 @@ context: |
     Backend: Controllers, Services, and Entities for secrets, encryption suites, applications, sharing
     Master password: Stored in Nextcloud user session or X-Vault-Password HTTP header (never in DB)
 
+  Shared library: @conduction/nextcloud-vue (UI components only — CnDataTable, CnSettingsSection, etc.)
+    Note: useObjectStore and OpenRegister-specific features do NOT apply (Doriath has own DB)
+
+  Sister app: OpenConnector — uses Doriath as a secret store for connector API credentials
   Shared specs: See ../openspec/specs/ for cross-project conventions
   Project guidelines: See ../project.md for workspace-wide standards
+  Architecture: See docs/ARCHITECTURE.md for standards research and data model decisions
+  Features: See docs/FEATURES.md for competitive analysis and feature roadmap
 
 rules:
   proposal:
     - Doriath owns its own database — do NOT reference OpenRegister for data storage
     - Security implications must be explicitly addressed for any feature touching encryption
-    - Consider impact on other Conduction apps only where Doriath acts as a secret provider
+    - Consider impact on OpenConnector where Doriath acts as a secret provider
+    - Reference docs/FEATURES.md for feature tier (MVP/V1/Enterprise)
   specs:
     - Specify which fields are stored encrypted vs plain text
     - Specify which Nextcloud OCP interfaces are used for session, user, and auth integration
@@ -35,6 +42,18 @@ rules:
     - Private keys are never stored unencrypted — always AES-256 encrypted with master password
     - Master password is never stored in the database
     - Migrations must use Nextcloud's ISchemaWrapper pattern
+    - MUST use @conduction/nextcloud-vue UI components (CnDataTable, CnSettingsSection, CnVersionInfoCard, CnDetailPage, CnObjectSidebar, etc.)
+    - MUST NOT use useObjectStore or OpenRegister-specific features — Doriath has its own Pinia stores
+    - MUST use CnDetailPage + CnObjectSidebar for secret detail views (card-based layout with sidebar)
+    - MUST use CnSettingsSection + CnVersionInfoCard for admin settings page
+    - MUST add @conduction/nextcloud-vue npm dependency (^0.1.0-beta.1) + conditional webpack alias + dedup aliases
+    - MUST use NL Design System double-fallback CSS pattern (cn- prefix)
+    - MUST use Vue Router (hash mode) for all navigation — never use custom hash-based routing
+    - Router file at src/router/index.js, registered in main.js, <router-view /> in App.vue
+    - Navigation via $router.push({ name, params, query }) in views; MainMenu uses :to prop on NcAppNavigationItem
+    - Lock screen is a route guard — redirects to /lock when no AES key in session
+    - Detail views use route props functions: props: route => ({ secretId: route.params.id })
+    - Reference Nextcloud OCP interfaces for session (ISession), notifications (IManager), search (IProvider)
   tasks:
     - Test encryption round-trips (encrypt → store → retrieve → decrypt) in integration tests
     - Test that encrypted fields cannot be read without the correct master password
