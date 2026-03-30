@@ -69,24 +69,26 @@ The system MUST automatically create an EncryptionSuite for a Nextcloud user the
 - THEN the system MUST generate a 4096-bit RSA key pair, sign the public key with the active CA intermediate, and store the private key encrypted with the AES-derived key
 
 ### Requirement: Session Mechanism
-After a user successfully enters their master password, the system MUST store the AES-derived key (derived from the master password) in the server-side session. The master password itself MUST NOT be stored in the session or database.
+After a user successfully enters their master password, the AES-derived key and the decrypted private key MUST remain in the browser only. The master password and AES-derived key MUST NOT be sent to the server or stored in `ISession`. See ADR-003 (revised) for the always-E2E architecture.
 
-The session is scoped per device. Unlocking Doriath on one device MUST NOT propagate the session to other devices. Tabs on the same device sharing the same Nextcloud session MAY share the Doriath session.
+The browser derives the AES key from the master password, uses it to decrypt the private key blob (fetched from the API), and imports the result as a WebCrypto `CryptoKey` with `extractable: false`. This `CryptoKey` is held in a JavaScript variable — never in `localStorage` or `sessionStorage`.
 
-When the session timeout elapses or all tabs of the Nextcloud instance are closed, the AES-derived key MUST be cleared from the session immediately and the user MUST be redirected to the Doriath lock screen. The lock screen is a full page — not an overlay — and the API MUST reject all decryption requests when no AES key is present in session, making frontend bypass ineffective.
+The session is scoped per device. Unlocking Doriath on one device MUST NOT propagate the session to other devices. Tabs on the same device sharing the same browser context MAY share the in-memory key via a shared Pinia store (same-origin tabs).
 
-The session timeout MUST be configurable per user (Nextcloud session duration, 10 minutes, or 30 minutes).
+When the session timeout elapses or all tabs of the Nextcloud instance are closed, the in-memory key MUST be cleared immediately and the user MUST be redirected to the Doriath lock screen. The lock screen is a full page — not an overlay. The API always returns encrypted blobs regardless — there is no server-side session state that could be bypassed.
+
+The session timeout MUST be configurable per user (Nextcloud session duration, 10 minutes, or 30 minutes). The timeout is enforced client-side (the browser clears the key); the server has no session state to expire.
 
 #### Scenario: Session expiry
 - GIVEN a user's Doriath session timeout has elapsed
 - WHEN any Doriath route is accessed
-- THEN the system MUST redirect the user to the Doriath lock screen
-- AND the API MUST reject any request that requires the AES key
+- THEN the browser MUST clear the in-memory CryptoKey
+- AND redirect the user to the Doriath lock screen
 
 #### Scenario: All tabs closed
 - GIVEN a user has Doriath open in one or more tabs
 - WHEN all tabs of that Nextcloud instance are closed
-- THEN the AES-derived key MUST be cleared from the session immediately
+- THEN the in-memory CryptoKey MUST be lost (JavaScript memory is released)
 
 #### Scenario: Cross-device isolation
 - GIVEN a user has unlocked Doriath on device A
@@ -141,13 +143,14 @@ When a user indicates their master password has been compromised, the system MUS
 - AND begin migrating all secrets from the old suite to the new suite
 
 ### Requirement: Suite Migration
-During compromise recovery, the system MUST migrate all secrets from the old EncryptionSuite to the new one. Migration is performed synchronously in the user's session (the decrypted private key is held in memory only for the duration of the migration) but migration STATE is persisted server-side so that a closed tab does not lose progress.
+During compromise recovery, the system MUST migrate all secrets from the old EncryptionSuite to the new one. Migration is performed in the user's browser (the decrypted private keys — old for decrypt, new for encrypt — are held as WebCrypto `CryptoKey` objects in JS memory). Migration STATE is persisted server-side so that a closed tab does not lose progress.
 
-Per-secret migration steps:
-1. Decrypt the secret using the old private key (held in session memory)
-2. Re-encrypt using the new public key
-3. Update the secret's `encryption_suite_id` to the new suite
-4. Set `possibly_compromised_at` on the secret
+Per-secret migration steps (all in browser):
+1. Fetch the encrypted secret blob from the API
+2. Decrypt using the old private key (WebCrypto)
+3. Re-encrypt using the new public key (WebCrypto)
+4. POST the re-encrypted blob to the API
+5. Server updates the secret's `encryption_suite_id` to the new suite and sets `possibly_compromised_at`
 
 If re-encryption of a specific secret fails, the error MUST be recorded on the secret (`migration_error`) and migration MUST continue with the remaining secrets. The user MUST be informed of failures.
 
@@ -291,10 +294,12 @@ The admin panel MUST display the current CA status at all times.
 - [ ] An EncryptionSuite is created automatically for a user on first login to Doriath
 - [ ] RSA key size is at least 4096 bits
 - [ ] Private key is stored AES-256 encrypted with the AES-derived key — never in plaintext
-- [ ] Master password is never stored in the session or database — only the AES-derived key
-- [ ] Session timeout is configurable per user (Nextcloud session / 10 min / 30 min)
-- [ ] Session expiry redirects to the Doriath lock screen (full page, not overlay)
-- [ ] Closing all tabs of the Nextcloud instance clears the AES key from session immediately
+- [ ] Master password and AES-derived key never leave the browser — not sent to server or stored in ISession
+- [ ] Decrypted private key is imported as WebCrypto CryptoKey with extractable: false
+- [ ] CryptoKey is held in a JS variable, never in localStorage or sessionStorage
+- [ ] Session timeout is configurable per user (Nextcloud session / 10 min / 30 min), enforced client-side
+- [ ] Session expiry clears the in-memory CryptoKey and redirects to the lock screen (full page, not overlay)
+- [ ] Closing all tabs releases JavaScript memory (CryptoKey lost)
 - [ ] Unlocking Doriath on one device does not affect other devices
 - [ ] Master password strength is enforced using entropy-based scoring (zxcvbn ≥ 3, length ≥ 12 by default)
 - [ ] Admin can raise the strength floor up to zxcvbn score 4 and length 20
@@ -328,7 +333,7 @@ The admin panel MUST display the current CA status at all times.
 
 ## Notes
 
-- The AES key stored in session is derived from the master password — the master password is never stored. This means session interception exposes the derived key, not the master password itself.
+- The AES-derived key and decrypted private key exist only in browser JS memory (WebCrypto CryptoKey). There is no server-side session state for Doriath's encryption. See ADR-003 for the always-E2E architecture and the DecryptService/EncryptService for internal Nextcloud app access.
 - Multiple encryption suites per owner (key rotation beyond compromise recovery) are scoped to a future change.
 - CA upload (custom CA chain) is scoped as advanced functionality.
 - Cross-spec: Secret entity requires `possibly_compromised_at` (datetime) and `migration_error` (text) fields — see secrets spec.

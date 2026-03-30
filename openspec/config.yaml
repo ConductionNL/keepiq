@@ -13,10 +13,10 @@ context: |
   Architecture:
     Pattern: Thick backend — Doriath owns all database tables and handles all encryption server-side
     Data layer: Own Doctrine entities and migrations (no OpenRegister dependency)
-    Encryption: RSA-4096 for secrets, AES-256 for private keys; OpenSSL; private CA (root + intermediate)
-    Frontend: Vue 2.7 + Pinia stores querying Doriath REST API
-    Backend: Controllers, Services, and Entities for secrets, encryption suites, applications, sharing
-    Master password: Stored in Nextcloud user session or X-Vault-Password HTTP header (never in DB)
+    Encryption: RSA-4096 for secrets, AES-256 for private keys; always E2E (see ADR-003 revised)
+    Frontend: Vue 2.7 + Pinia stores; browser users decrypt client-side via WebCrypto API
+    Backend: Controllers, Services, and Entities; DecryptService + EncryptService (stateless crypto for internal NC apps)
+    Master password: Never leaves the browser; AES-derived key and CryptoKey held in JS memory only
 
   Shared library: @conduction/nextcloud-vue (UI components only — CnDataTable, CnSettingsSection, etc.)
     Note: useObjectStore and OpenRegister-specific features do NOT apply (Doriath has own DB)
@@ -38,12 +38,13 @@ rules:
     - Specify which Nextcloud OCP interfaces are used for session, user, and auth integration
     - Encryption chunking constraints (RSA cap ~500 bytes/chunk) must be noted for large data fields
   design:
-    - All encryption/decryption happens in PHP backend using OpenSSL — never in frontend
-    - Private keys are never stored unencrypted — always AES-256 encrypted with master password
-    - Master password is never stored in the database
+    - Always E2E — browser users decrypt client-side (WebCrypto); server never sees plaintext secrets or master password (see ADR-003 revised)
+    - Internal NC apps use DecryptService/EncryptService (stateless crypto utilities, no entity context)
+    - Private keys are never stored unencrypted — always AES-256 encrypted
+    - Master password never leaves the browser; AES-derived key and CryptoKey held in JS memory only
     - Migrations must use Nextcloud's ISchemaWrapper pattern
     - MUST use @conduction/nextcloud-vue UI components (CnDataTable, CnSettingsSection, CnVersionInfoCard, CnDetailPage, CnObjectSidebar, etc.)
-    - MUST NOT use useObjectStore or OpenRegister-specific features — Doriath has its own Pinia stores
+    - MUST NOT use useObjectStore or OpenRegister-specific features — Doriath has its own Pinia stores with client-side decrypt logic
     - MUST use CnDetailPage + CnObjectSidebar for secret detail views (card-based layout with sidebar)
     - MUST use CnSettingsSection + CnVersionInfoCard for admin settings page
     - MUST add @conduction/nextcloud-vue npm dependency (^0.1.0-beta.1) + conditional webpack alias + dedup aliases
@@ -51,12 +52,13 @@ rules:
     - MUST use Vue Router (hash mode) for all navigation — never use custom hash-based routing
     - Router file at src/router/index.js, registered in main.js, <router-view /> in App.vue
     - Navigation via $router.push({ name, params, query }) in views; MainMenu uses :to prop on NcAppNavigationItem
-    - Lock screen is a route guard — redirects to /lock when no AES key in session
-    - Detail views use route props functions: props: route => ({ secretId: route.params.id })
-    - Reference Nextcloud OCP interfaces for session (ISession), notifications (IManager), search (IProvider)
+    - Lock screen is a route guard — redirects to /lock when no CryptoKey in JS memory
+    - "Detail views use route props functions: props: route => ({ secretId: route.params.id })"
+    - Reference Nextcloud OCP interfaces for notifications (IManager), search (IProvider)
   tasks:
-    - Test encryption round-trips (encrypt → store → retrieve → decrypt) in integration tests
-    - Test that encrypted fields cannot be read without the correct master password
+    - Test cross-implementation encryption round-trips (encrypt in JS/WebCrypto → decrypt in PHP/OpenSSL, and vice versa)
+    - Test that the API never returns decrypted secret values (always encrypted blobs)
+    - Test DecryptService and EncryptService in isolation (stateless, no DB calls)
   review:
     - Cross-reference shared specs (nextcloud-app, api-patterns, nl-design, docker)
     - Flag any pattern that stores a private key or master password unencrypted as a BLOCKER
