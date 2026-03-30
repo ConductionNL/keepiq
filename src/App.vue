@@ -1,28 +1,6 @@
 <template>
-	<NcContent app-name="app-template">
-		<template v-if="storesReady && !hasOpenRegisters">
-			<NcAppContent class="open-register-missing">
-				<NcEmptyContent
-					:name="t('app-template', 'OpenRegister is required')"
-					:description="t('app-template', 'This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.')">
-					<template #icon>
-						<img :src="appIcon"
-							alt=""
-							width="64"
-							height="64">
-					</template>
-					<template #action>
-						<NcButton
-							v-if="isAdmin"
-							type="primary"
-							:href="appStoreUrl">
-							{{ t('app-template', 'Install OpenRegister') }}
-						</NcButton>
-					</template>
-				</NcEmptyContent>
-			</NcAppContent>
-		</template>
-		<template v-else-if="storesReady && hasOpenRegisters">
+	<NcContent app-name="doriath">
+		<template v-if="storesReady">
 			<MainMenu />
 			<NcAppContent>
 				<router-view />
@@ -37,19 +15,15 @@
 </template>
 
 <script>
-import { NcButton, NcContent, NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl, imagePath } from '@nextcloud/router'
+import { NcContent, NcAppContent, NcLoadingIcon } from '@nextcloud/vue'
 import { initializeStores } from './store/store.js'
-import { useSettingsStore } from './store/modules/settings.js'
 import MainMenu from './navigation/MainMenu.vue'
 
 export default {
 	name: 'App',
 	components: {
-		NcButton,
 		NcContent,
 		NcAppContent,
-		NcEmptyContent,
 		NcLoadingIcon,
 		MainMenu,
 	},
@@ -58,23 +32,6 @@ export default {
 		return {
 			storesReady: false,
 		}
-	},
-
-	computed: {
-		hasOpenRegisters() {
-			const settingsStore = useSettingsStore()
-			return settingsStore.hasOpenRegisters
-		},
-		isAdmin() {
-			const settingsStore = useSettingsStore()
-			return settingsStore.getIsAdmin
-		},
-		appIcon() {
-			return imagePath('app-template', 'app-dark.svg')
-		},
-		appStoreUrl() {
-			return generateUrl('/settings/apps/integration/openregister')
-		},
 	},
 
 	async created() {
