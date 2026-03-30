@@ -195,16 +195,74 @@ Each user's folder tree is independent. A received share is placed in the recipi
 - WHEN the user deletes it without a cascade parameter
 - THEN the system MUST return a 409 Conflict error: "Folder is not empty"
 
-#### Scenario: Delete with cascade=delete
-- GIVEN a folder contains secrets
+#### Scenario: Delete folder without subfolders — cascade=delete
+- GIVEN a folder contains secrets but NO subfolders
 - WHEN the user deletes it with `?cascade=delete`
 - THEN the folder and all its direct secrets MUST be deleted
 
-#### Scenario: Delete with cascade=move
-- GIVEN a folder contains secrets
+#### Scenario: Delete folder without subfolders — cascade=move
+- GIVEN a folder contains secrets but NO subfolders
 - WHEN the user deletes it with `?cascade=move`
 - THEN all direct secrets MUST be moved to the folder's parent, or to root if the folder has no parent
 - AND the folder MUST be deleted
+
+#### Scenario: Delete folder with subfolders — user-directed resolution
+- GIVEN a folder contains subfolders (with or without direct secrets)
+- WHEN the user requests deletion
+- THEN the frontend MUST first call `GET /folders/{id}/children` to retrieve the direct subfolders with their secret and subfolder counts
+- AND the frontend MUST present a resolution dialog where the user chooses:
+  - For direct secrets: `delete` or `move` (to the deleted folder's parent)
+  - For each direct subfolder, one of three actions: `delete`, `move`, or `keep`
+- AND the frontend MUST send the resolution plan in the DELETE request body
+
+The three subfolder actions have recursive semantics:
+- **`delete`** — recursively delete the subfolder, all its secrets, and all nested subfolders (depth-first)
+- **`move`** — recursively collect all secrets from the subfolder's entire subtree, move them to the deleted folder's parent (or root), then delete the subfolder and all nested subfolders
+- **`keep`** — re-parent the subfolder to the deleted folder's parent (or root); all contents remain inside it unchanged
+
+#### Scenario: Delete folder with subfolders — API contract
+- GIVEN a folder has subfolders
+- WHEN the user sends `DELETE /folders/{id}` with a JSON body
+- THEN the body MUST have this shape:
+  ```json
+  {
+    "directSecrets": "delete" | "move",
+    "subfolders": {
+      "<subfolder-id>": "delete" | "move" | "keep",
+      "<subfolder-id>": "delete" | "move" | "keep"
+    }
+  }
+  ```
+- AND the `subfolders` map MUST include an entry for every direct subfolder
+- AND if any direct subfolder is missing from the map, the system MUST return 400 Bad Request
+- AND each subfolder action applies recursively to that subfolder's entire subtree
+
+#### Scenario: Delete folder with subfolders — no body provided
+- GIVEN a folder has subfolders
+- WHEN the user sends `DELETE /folders/{id}` with only `?cascade=delete` or `?cascade=move` (no body)
+- THEN the system MUST return a 409 Conflict error: "Folder contains subfolders — resolution required"
+- NOTE: the query-parameter shorthand only works for folders without subfolders
+
+### Requirement: List Folder Children
+The system MUST provide an endpoint to list a folder's direct children (subfolders and secret counts) so the frontend can build the subfolder resolution dialog.
+
+`GET /folders/{id}/children` MUST return:
+- `directSecretCount` — number of secrets directly in this folder
+- `subfolders` — array of direct child folders, each with:
+  - `id` — folder UUID
+  - `name` — folder name
+  - `secretCount` — total number of secrets in this subfolder (recursive count, all descendants)
+  - `subfolderCount` — number of direct child subfolders within this subfolder
+
+#### Scenario: List children of a folder
+- GIVEN a user owns a folder with 2 secrets and 1 subfolder (containing 3 secrets and 1 nested subfolder)
+- WHEN they call `GET /folders/{id}/children`
+- THEN the system MUST return `directSecretCount: 2` and a subfolders array with one entry showing `secretCount: 3, subfolderCount: 1`
+
+#### Scenario: List children of a leaf folder
+- GIVEN a folder has no subfolders and 5 secrets
+- WHEN the user calls `GET /folders/{id}/children`
+- THEN the system MUST return `directSecretCount: 5` and an empty subfolders array
 
 ### Requirement: List and Pagination
 The system MUST return secrets in a paginated list. The list MUST include secrets owned by the user and secrets shared with the user (received shares), treated identically. The list MAY be filtered by folder.
@@ -288,6 +346,8 @@ The lock screen MUST support a return URL parameter so the post-unlock redirect 
 - As a user, I want to find my secrets from the Nextcloud search bar so that I do not have to open Doriath first
 - As a user, I want to sort my secrets by name, URL, or date so that I can browse them in a useful order
 - As a user, I want to delete a secret I no longer need
+- As a user, I want to delete a folder and choose what happens to each subfolder (delete, move contents up, or keep) so that I don't accidentally lose secrets
+- As a user, I want to see how many secrets each subfolder contains before deciding what to do with it
 
 ## Acceptance Criteria
 
@@ -306,8 +366,15 @@ The lock screen MUST support a return URL parameter so the post-unlock redirect 
 - [ ] Folder paths are displayed using slash notation derived from the folder tree
 - [ ] Each user's folder structure is independent — received shares are placed in the recipient's own folders
 - [ ] Deleting a non-empty folder without a cascade parameter returns 409 Conflict
-- [ ] `?cascade=delete` deletes the folder and its direct secrets
-- [ ] `?cascade=move` moves direct secrets to the parent folder (or root) before deleting
+- [ ] `?cascade=delete` deletes the folder and its direct secrets (when folder has no subfolders)
+- [ ] `?cascade=move` moves direct secrets to the parent folder or root (when folder has no subfolders)
+- [ ] Deleting a folder with subfolders using only `?cascade=` (no body) returns 409 with "resolution required"
+- [ ] `GET /folders/{id}/children` returns direct secret count and subfolder list with recursive secret counts
+- [ ] DELETE with a resolution body is accepted: each subfolder mapped to `delete`, `move`, or `keep`
+- [ ] Missing subfolder entries in the resolution body return 400 Bad Request
+- [ ] Subfolder action `delete` recursively removes the subfolder and all descendants
+- [ ] Subfolder action `move` recursively collects all secrets from the subtree and moves them to the parent
+- [ ] Subfolder action `keep` re-parents the subfolder to the deleted folder's parent
 - [ ] Received shares appear in the secrets list alongside owned secrets
 - [ ] The list is paginated and includes a total count
 - [ ] The list can be filtered by folder
@@ -328,8 +395,8 @@ The lock screen MUST support a return URL parameter so the post-unlock redirect 
 
 ## Open Questions
 
-- **Pagination approach**: 50 items per page (standard pagination) or 30 items with dynamic infinite scroll? To be decided during UI design.
-- **Subfolder cascade**: does `?cascade=delete` and `?cascade=move` apply recursively to subfolders, or only to direct contents? To be decided — unclear whether recursive folder deletion should be allowed.
+- **Pagination approach**: **Resolved.** Classic pagination with 50 items per page. Team preference — straightforward, consistent with other Conduction apps.
+- **Subfolder cascade**: **Resolved.** User-directed resolution — when a folder has subfolders, the frontend presents a dialog where the user chooses per subfolder: `delete` (recursive), `move` (flatten subtree to parent), or `keep` (re-parent). Folders without subfolders use the simple `?cascade=delete` / `?cascade=move` query parameters. See "Delete folder with subfolders" scenarios above.
 
 ## Notes
 
