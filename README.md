@@ -1,24 +1,24 @@
 <p align="center">
-  <img src="img/app-store.svg" alt="Nextcloud App Template logo" width="80" height="80">
+  <img src="img/app-store.svg" alt="Doriath logo" width="80" height="80">
 </p>
 
-<h1 align="center">Nextcloud App Template</h1>
+<h1 align="center">Doriath</h1>
 
 <p align="center">
-  <strong>A template for creating new Nextcloud apps</strong>
+  <strong>Encrypted secrets manager for Nextcloud — password manager and key store for users and applications</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/ConductionNL/nextcloud-app-template/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/nextcloud-app-template" alt="Latest release"></a>
-  <a href="https://github.com/ConductionNL/nextcloud-app-template/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
-  <a href="https://github.com/ConductionNL/nextcloud-app-template/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/nextcloud-app-template/code-quality.yml?label=quality" alt="Code quality"></a>
+  <a href="https://github.com/ConductionNL/doriath/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/doriath" alt="Latest release"></a>
+  <a href="https://github.com/ConductionNL/doriath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
+  <a href="https://github.com/ConductionNL/doriath/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/doriath/code-quality.yml?label=quality" alt="Code quality"></a>
 </p>
 
 ---
 
-A starting point for building Nextcloud apps following ConductionNL conventions.
+Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
-> **Requires:** [OpenRegister](https://github.com/ConductionNL/openregister) — all data is stored as OpenRegister objects.
+> **Thick backend architecture** — Doriath owns its own encrypted database tables. No OpenRegister dependency. All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
 
 ## Screenshots
 
@@ -26,65 +26,85 @@ _Add screenshots here once the app has a UI._
 
 ## Features
 
-Features are defined in [`appspec/features/`](appspec/features/). See the [roadmap](openspec/ROADMAP.md) for planned work.
+Features are defined in [`openspec/specs/`](openspec/specs/). See the [roadmap](openspec/ROADMAP.md) for planned work. See [`docs/FEATURES.md`](docs/FEATURES.md) for the full competitive analysis and feature matrix.
 
 ### Core
-- **Dashboard** — Personal overview page with key information at a glance
-- **Admin Settings** — Configurable settings panel for administrators
+- **Encrypted vault** — RSA-4096 + AES-256 encryption with a private Certificate Authority
+- **Secret management** — Store passwords, API keys, SSH keys, certificates, and notes
+- **Sharing** — Share with Nextcloud users/groups, password-protected links, secret requests
+- **Application management** — CSR-based registration, write-without-read for application secrets
+- **Key generator** — Configurable password generation with strength feedback
 
 ### Supporting
-- **OpenRegister Integration** — Pre-wired data layer using OpenRegister objects
-- **Quality Pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
+- **Lock screen** — Full-page master password entry with session timeout
+- **Admin settings** — CA health, password policies, application approval queue
+- **NL Design System** — Government theming support, WCAG AA compliance
+- **Quality pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
 
 ## Architecture
 
 ```mermaid
 graph TD
-    A[Vue 2 Frontend] -->|REST API| B[OpenRegister API]
-    B --> C[(PostgreSQL JSON store)]
-    A --> D[Nextcloud Activity]
-    A --> E[Nextcloud Search]
+    A[Vue 2 Frontend] -->|REST API| B[PHP Backend]
+    B --> C[(PostgreSQL - encrypted tables)]
+    B --> D[OpenSSL - RSA/AES encryption]
+    B --> E[Private CA - root + intermediate]
+    A --> F[Nextcloud Notifications]
+    A --> G[Nextcloud Search]
 ```
 
-_Update this diagram during `/app-explore` sessions as the architecture evolves._
+_See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full architecture document._
 
 ### Data Model
 
-| Object | Description |
+| Entity | Description |
 |--------|-------------|
-| _(define your data objects here)_ | — |
-
-_Data model is defined using OpenRegister schemas. See [`appspec/features/`](appspec/features/) for feature-level design decisions and [`appspec/adr/`](appspec/adr/) for architectural decisions._
+| EncryptionSuite | RSA key pair + CA certificate per user/application |
+| CACertificate | Root (20yr) and intermediate (3yr) CA certificates |
+| Secret | Encrypted credential with type-specific fields |
+| SecretType | Classification system (login, api_key, ssh_key, certificate, note, database) |
+| Folder | Hierarchical organization (tree per user) |
+| Application | External system with its own EncryptionSuite |
+| SecretShare | User-to-user encrypted secret copy |
+| LinkShare | Password-protected point-in-time snapshot |
+| SecretRequest | Write-without-read fill-in link |
 
 ### Directory Structure
 
 ```
-app-template/
+doriath/
 ├── appinfo/                    # Nextcloud app manifest, routes, navigation
-├── lib/                        # PHP backend — controllers, settings
+├── lib/                        # PHP backend
 │   ├── AppInfo/Application.php
-│   ├── Controller/DashboardController.php
-│   ├── Settings/AdminSettings.php
-│   └── Sections/SettingsSection.php
+│   ├── Controller/             # DashboardController, SettingsController
+│   ├── Service/SettingsService.php
+│   ├── Listener/DeepLinkRegistrationListener.php
+│   ├── Repair/InitializeSettings.php
+│   └── Settings/               # AdminSettings, doriath_register.json
 ├── templates/                  # PHP templates (SPA shells)
 ├── src/                        # Vue 2 frontend
 │   ├── main.js                 # App entry point
-│   ├── settings.js             # Admin settings entry
 │   ├── App.vue                 # Root component
+│   ├── navigation/MainMenu.vue # App navigation sidebar
 │   ├── router/                 # Vue Router
 │   ├── store/                  # Pinia stores
-│   └── views/                  # Route-level views
-├── appspec/                    # App configuration and specification
+│   └── views/                  # Route-level views + UserSettings.vue
+├── openspec/                   # Specifications, decisions, and roadmap
 │   ├── app-config.json         # Canonical app config (id, goal, dependencies, CI)
-│   ├── features/               # High-level feature definitions
-│   └── adr/                    # Architectural Decision Records
-├── openspec/                   # Implementation specifications and roadmap
+│   ├── config.yaml             # OpenSpec CLI configuration
+│   ├── specs/                  # Feature specs (input for OpenSpec changes)
+│   ├── architecture/           # App-specific Architectural Decision Records
 │   ├── ROADMAP.md              # Product roadmap
-│   └── changes/                # OpenSpec change directories
+│   └── changes/                # OpenSpec change directories (created on first change)
+├── docs/                       # Design documentation
+│   ├── ARCHITECTURE.md         # Standards, data model, integrations
+│   ├── FEATURES.md             # Competitive analysis, feature matrix
+│   └── DESIGN-REFERENCES.md    # Design patterns, ASCII wireframes
+├── docusaurus/                 # Documentation site
+├── tests/                      # Unit and integration tests
+├── l10n/                       # Translations (en, nl)
 ├── .github/workflows/          # CI/CD pipelines
-├── phpcs-custom-sniffs/        # Named parameters enforcement
-├── img/                        # App icons and screenshots
-└── l10n/                       # Translations (en, nl)
+└── img/                        # App icons and screenshots
 ```
 
 ## Requirements
@@ -94,26 +114,23 @@ app-template/
 | Nextcloud | 28 – 33 |
 | PHP | 8.1+ |
 | Node.js | 20+ |
-| [OpenRegister](https://github.com/ConductionNL/openregister) | latest |
 
 ## Installation
 
 ### From the Nextcloud App Store
 
 1. Go to **Apps** in your Nextcloud instance
-2. Search for **Nextcloud App Template**
+2. Search for **Doriath**
 3. Click **Download and enable**
-
-> OpenRegister must be installed first. [Install OpenRegister →](https://apps.nextcloud.com/apps/openregister)
 
 ### From Source
 
 ```bash
 cd /var/www/html/custom_apps
-git clone https://github.com/ConductionNL/nextcloud-app-template.git app-template
-cd app-template
+git clone https://github.com/ConductionNL/doriath.git doriath
+cd doriath
 npm install && npm run build
-php occ app:enable app-template
+php occ app:enable doriath
 ```
 
 ## Development
@@ -121,7 +138,7 @@ php occ app:enable app-template
 ### Start the environment
 
 ```bash
-docker compose -f openregister/docker-compose.yml up -d
+docker compose -f ../.github/docker-compose.yml up -d
 ```
 
 ### Frontend development
@@ -149,7 +166,8 @@ npm run stylelint       # CSS linting
 ### Enable locally
 
 ```bash
-docker exec nextcloud php occ app:enable app-template
+npm install && npm run build
+docker exec nextcloud php occ app:enable doriath
 ```
 
 ## Tech Stack
@@ -158,8 +176,8 @@ docker exec nextcloud php occ app:enable app-template
 |-------|-----------|
 | Frontend | Vue 2.7, Pinia, @nextcloud/vue |
 | Build | Webpack 5, @nextcloud/webpack-vue-config |
-| Backend | PHP 8.1+, Nextcloud App Framework |
-| Data | OpenRegister (PostgreSQL JSON objects) |
+| Backend | PHP 8.1+, Nextcloud App Framework, OpenSSL |
+| Data | PostgreSQL (own encrypted tables) |
 | UX | @conduction/nextcloud-vue |
 | Quality | PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint |
 
@@ -175,24 +193,37 @@ docker exec nextcloud php occ app:enable app-template
 
 | Resource | Description |
 |----------|-------------|
-| [`appspec/`](appspec/) | App configuration, features, and architectural decisions |
-| [`appspec/features/`](appspec/features/) | Feature definitions and lifecycle status |
-| [`appspec/adr/`](appspec/adr/) | Architectural Decision Records |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Standards research, data model, Nextcloud integration |
+| [`docs/FEATURES.md`](docs/FEATURES.md) | Competitive analysis, feature matrix (90 features) |
+| [`docs/DESIGN-REFERENCES.md`](docs/DESIGN-REFERENCES.md) | Design patterns, 12 ASCII wireframes |
+| [`openspec/app-config.json`](openspec/app-config.json) | App identity, goals, dependencies, and CI configuration |
+| [`openspec/specs/`](openspec/specs/) | Feature specs — what the app should do |
+| [`openspec/architecture/`](openspec/architecture/) | App-specific Architectural Decision Records (3 ADRs) |
 | [`openspec/ROADMAP.md`](openspec/ROADMAP.md) | Product roadmap |
-| [`openspec/`](openspec/) | Implementation specifications |
 
 ## Standards & Compliance
 
+- **Encryption:** RSA-4096 + AES-256, X.509 PKI, NIST SP 800-57
+- **Password Policy:** zxcvbn scoring, NIST SP 800-63B
 - **Accessibility:** WCAG AA (Dutch government requirement)
-- **Authorization:** RBAC via OpenRegister
-- **Audit trail:** Full change history on all objects
 - **Localization:** English and Dutch
+- **Audit trail:** Full change history on all operations
 
 ## Related Apps
 
-- **[OpenRegister](https://github.com/ConductionNL/openregister)** — Object storage layer (required dependency)
+- **[OpenConnector](https://github.com/ConductionNL/openconnector)** — Uses Doriath as a secret store for connector API credentials
 
 _Add related apps here as integrations are built._
+
+## Troubleshooting
+
+### App UI is blank after enabling
+
+The `js/` build output is not committed to the repo. Run the frontend build before enabling the app:
+
+```bash
+npm install && npm run build
+```
 
 ## Support
 

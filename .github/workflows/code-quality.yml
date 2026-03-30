@@ -4,14 +4,14 @@ on:
   push:
     branches: [main, development, feature/**, bugfix/**, hotfix/**]
   pull_request:
-    branches: [main, master, development]
+    branches: [main, master, development, beta]
   workflow_dispatch:
 
 jobs:
   quality:
     uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
-      app-name: app-template
+      app-name: doriath
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
       nextcloud-test-refs: '["stable31", "stable32"]'

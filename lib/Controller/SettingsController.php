@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Settings Controller
+ * Doriath Settings Controller
  *
- * Controller for managing AppTemplate application settings.
+ * Controller for managing Doriath application settings.
  *
  * @category Controller
- * @package  OCA\AppTemplate\Controller
+ * @package  OCA\Doriath\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,16 +19,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Controller;
+namespace OCA\Doriath\Controller;
 
-use OCA\AppTemplate\AppInfo\Application;
-use OCA\AppTemplate\Service\SettingsService;
+use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 
 /**
- * Controller for managing AppTemplate application settings.
+ * Controller for managing Doriath application settings.
  */
 class SettingsController extends Controller
 {
@@ -80,7 +80,7 @@ class SettingsController extends Controller
     }//end create()
 
     /**
-     * Re-import the configuration from app_template_register.json.
+     * Re-import the configuration from doriath_register.json.
      *
      * Forces a fresh import regardless of version, auto-configuring
      * all schema and register IDs from the import result.

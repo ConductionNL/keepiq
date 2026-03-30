@@ -1,6 +1,6 @@
 {
-	"name": "conductionnl/app-template",
-	"description": "A template for creating new Nextcloud apps",
+	"name": "conductionnl/doriath",
+	"description": "Encrypted secrets manager for Nextcloud",
 	"license": "EUPL-1.2",
 	"authors": [
 		{
@@ -11,7 +11,7 @@
 	],
 	"autoload": {
 		"psr-4": {
-			"OCA\\AppTemplate\\": "lib/"
+			"OCA\\Doriath\\": "lib/"
 		}
 	},
 	"require": {

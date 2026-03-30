@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Settings Service
+ * Doriath Settings Service
  *
- * Service for managing AppTemplate application configuration and settings.
+ * Service for managing Doriath application configuration and settings.
  *
  * @category Service
- * @package  OCA\AppTemplate\Service
+ * @package  OCA\Doriath\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Service;
+namespace OCA\Doriath\Service;
 
-use OCA\AppTemplate\AppInfo\Application;
+use OCA\Doriath\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -30,7 +30,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Service for managing AppTemplate application configuration and settings.
+ * Service for managing Doriath application configuration and settings.
  */
 class SettingsService
 {
@@ -122,7 +122,7 @@ class SettingsService
     }//end updateSettings()
 
     /**
-     * Load configuration from app_template_register.json via OpenRegister.
+     * Load configuration from doriath_register.json via OpenRegister.
      *
      * @param bool $force Force re-import even if already configured.
      *
@@ -131,7 +131,7 @@ class SettingsService
     public function loadConfiguration(bool $force=false): array
     {
         if ($this->isOpenRegisterAvailable() === false) {
-            $this->logger->warning('AppTemplate: OpenRegister not available, skipping register initialization');
+            $this->logger->warning('Doriath: OpenRegister not available, skipping register initialization');
             return [
                 'success' => false,
                 'message' => 'OpenRegister is not installed or enabled.',
@@ -143,7 +143,7 @@ class SettingsService
             $result = $configurationService->importFromApp(appId: Application::APP_ID, force: $force);
 
             if (empty($result) === false) {
-                $this->logger->info('AppTemplate: register configuration imported successfully');
+                $this->logger->info('Doriath: register configuration imported successfully');
                 return [
                     'success' => true,
                     'message' => 'Configuration imported successfully.',
@@ -157,7 +157,7 @@ class SettingsService
             ];
         } catch (\Throwable $e) {
             $this->logger->error(
-                'AppTemplate: configuration import failed',
+                'Doriath: configuration import failed',
                 ['exception' => $e->getMessage()]
             );
             return [
