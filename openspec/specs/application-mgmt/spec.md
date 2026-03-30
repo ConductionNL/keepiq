@@ -144,20 +144,21 @@ Once an application is active, users with appropriate permission MUST be able to
 - [ ] Vault administrators can delete an active application
 - [ ] Deletion permanently removes the application, its EncryptionSuite, and all its secrets (hard delete, no soft-delete or deactivation state)
 
-## Open Decisions
+## Design Decisions
 
-### 🔴 Application API Authentication — needs team discussion
+### Application API Authentication — RFC 7523 (JWT Bearer / Private Key JWT)
 
-**Question:** How does an approved application authenticate to retrieve its secrets?
+**Decision:** RFC 7523 — OAuth2 client credentials flow where the application authenticates by presenting a JWT signed with its own RSA private key.
 
-**Options explored:**
-- **Option A** — Static API token issued at registration (`X-Vault-Token` header). Simple, but the token is a credential that needs protecting.
-- **Option B+** — Custom private-key challenge-response. App signs a nonce; Doriath verifies against stored public cert. Pure but non-standard. If private key is lost, re-registration is the recovery path (losing access to existing secrets).
-- **RFC 7523 (JWT Bearer / Private Key JWT)** — OAuth2 client credentials flow where the client authenticates by presenting a JWT signed with its own RSA private key (no separate credential). Standard pattern (used by Google service accounts). Doriath would own the `/oauth2/token` endpoint since Nextcloud's oauth2 app does not support this grant type.
+**Why:** Standard pattern (used by Google service accounts), uses the existing key infrastructure (the application already has an RSA key pair from registration), produces short-lived access tokens, and introduces no new credential to manage. Doriath owns the `/oauth2/token` endpoint since Nextcloud's oauth2 app does not support this grant type.
 
-**Lean:** RFC 7523 — standard, uses existing key infrastructure, short-lived tokens, no new credential to manage. Recovery path for lost private key is still re-registration.
+**Recovery:** If the private key is lost, re-registration is the recovery path (new key pair, new EncryptionSuite; existing secrets encrypted with the old public key become inaccessible).
 
-**Needs:** Team discussion before decision is finalised.
+**Alternatives considered:**
+- Static API token (`X-Vault-Token`) — simple but the token is a credential that needs protecting separately
+- Custom private-key challenge-response — pure but non-standard
+
+**Status:** Chosen route. May be revisited if implementation reveals blockers with Nextcloud's request lifecycle or JWT library availability in PHP 8.3+.
 
 ## Notes
 
