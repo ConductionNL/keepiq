@@ -1,8 +1,9 @@
 # Encryption Suites Specification
 
-**Status**: planned
+**Status**: in-progress
 
-**OpenSpec changes:** _(none yet)_
+**OpenSpec changes:**
+- `implement-encryption-suites` (2026-03-31) — Full implementation: CA bootstrap, suite lifecycle, master password session, lock screen, crypto services
 
 ## Purpose
 
@@ -336,6 +337,7 @@ The admin panel MUST display the current CA status at all times.
 - The AES-derived key and decrypted private key exist only in browser JS memory (WebCrypto CryptoKey). There is no server-side session state for Doriath's encryption. See ADR-003 for the always-E2E architecture and the DecryptService/EncryptService for internal Nextcloud app access.
 - Multiple encryption suites per owner (key rotation beyond compromise recovery) are scoped to a future change.
 - CA upload (custom CA chain) is scoped as advanced functionality.
+- **Offline root key export** (future): A future version may allow administrators to export the root CA private key to a hardware token or air-gapped device, then purge it from the database. Root operations (intermediate signing) would require the admin to temporarily provide the key. This reduces long-term root key exposure in the database.
 - Cross-spec: Secret entity requires `possibly_compromised_at` (datetime) and `migration_error` (text) fields — see secrets spec.
 - Cross-spec: SecretRequest entity requires an explicit `encryption_suite_id` FK to know which public certificate to use when encrypting submitted values — see secret-requests spec.
 - Related ADRs: ADR-002 (polymorphic ownership), ADR-003 (encryption architecture)
