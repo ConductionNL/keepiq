@@ -1,8 +1,9 @@
 # User Sharing Specification
 
-**Status**: planned
+**Status**: in-progress
 
-**OpenSpec changes:** _(none yet)_
+**OpenSpec changes:**
+- `implement-user-sharing` (2026-03-31) — Full implementation: user/group sharing, sync-on-update, notifications, share requests, delegation
 
 ## Purpose
 
