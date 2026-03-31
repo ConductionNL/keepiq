@@ -1,8 +1,9 @@
 # Key Generator Specification
 
-**Status**: planned
+**Status**: in-progress
 
-**OpenSpec changes:** _(none yet)_
+**OpenSpec changes:**
+- `implement-key-generator` (2026-03-31) — Full implementation: server-side generation, configurable rules, regex override, secret creation UI integration
 
 ## Purpose
 
