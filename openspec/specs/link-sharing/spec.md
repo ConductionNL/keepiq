@@ -1,8 +1,9 @@
 # Link Sharing Specification
 
-**Status**: planned
+**Status**: in-progress
 
-**OpenSpec changes:** _(none yet)_
+**OpenSpec changes:**
+- `implement-link-sharing` (2026-03-31) — Full implementation: link creation, Argon2id snapshot encryption, brute-force protection, access page, usage limits
 
 ## Purpose
 
@@ -21,7 +22,7 @@ This allows secrets to be securely handed off to parties without Nextcloud accou
 | `token` | string | No | URL-safe random token with at least 128 bits of entropy (generated via `random_bytes()`), part of the share link |
 | `encrypted_secret_snapshot` | text | Yes | Encrypted copy of the secret at share creation time |
 | `encryption_suite_id` | FK | No | Suite used to encrypt the snapshot |
-| `usage_limit` | int | No | Max number of accesses; null = unlimited |
+| `usage_limit` | int | No | Max number of accesses; minimum 1, maximum 10, default 1; unlimited is not allowed |
 | `usage_count` | int | No | Times the link has been accessed and decrypted |
 | `created_at` | datetime | No | |
 | `expires_at` | datetime | No | Optional expiry (null = no expiry) |
@@ -35,7 +36,7 @@ The system MUST allow a user to create a link share for a secret they own. The s
 
 #### Scenario: Create link share
 - GIVEN a user owns a secret and has their master password in session
-- WHEN they create a link share with a usage limit of N
+- WHEN they create a link share with a usage limit of N (1-10, default 1)
 - THEN the system MUST generate a unique token, encrypt a snapshot of the secret using a key derived from a generated password, and return both the link and the password to the user
 - AND the password MUST NOT be stored or recoverable server-side
 
@@ -94,7 +95,7 @@ The secret owner MUST be able to revoke a link share before the usage limit is r
 - [ ] A link share generates a unique URL token and a password
 - [ ] The password is shown to the user exactly once and not stored server-side
 - [ ] The secret snapshot is encrypted such that only the password can decrypt it
-- [ ] The usage limit is configurable (minimum 1, or unlimited)
+- [ ] The usage limit is configurable (minimum 1, maximum 10, default 1); unlimited is not allowed
 - [ ] Each access increments the usage count
 - [ ] When the usage limit is reached, the share is automatically deleted
 - [ ] The owner can revoke a link share at any time
