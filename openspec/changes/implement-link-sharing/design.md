@@ -35,7 +35,7 @@ Link sharing introduces a fundamentally different encryption model from the rest
 
 ### D1: Database Migration -- Continue Sequence from Secrets
 
-Create ISchemaWrapper migration `Version000007Date20260331000006` for the `doriath_link_shares` table. This continues the version numbering from implement-secrets (which ends at Version000006).
+Create ISchemaWrapper migration `Version000010Date20260331000009` for the `doriath_link_shares` table. This continues the version numbering from implement-user-sharing (which ends at Version000009).
 
 Columns:
 - `id` (UUID, PK)

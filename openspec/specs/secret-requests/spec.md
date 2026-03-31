@@ -1,8 +1,9 @@
 # Secret Requests Specification
 
-**Status**: planned
+**Status**: in-progress
 
-**OpenSpec changes:** _(none yet)_
+**OpenSpec changes:**
+- `implement-secret-requests` (2026-03-31) — Full implementation: fill-in links, write-without-read, re-requests, expiry, revocation, notifications
 
 ## Purpose
 
