@@ -1,8 +1,9 @@
 # Secrets Specification
 
-**Status**: planned
+**Status**: in-progress
 
-**OpenSpec changes:** _(none yet)_
+**OpenSpec changes:**
+- `implement-secrets` (2026-03-31) — Full implementation: Secret/Folder/SecretType CRUD, search, unified search, list/pagination, favicon, clipboard
 
 ## Purpose
 
@@ -400,6 +401,7 @@ The lock screen MUST support a return URL parameter so the post-unlock redirect 
 
 ## Notes
 
+- **Secret visibility beyond own vault** (to be addressed in sharing and application-mgmt changes): By default, users can only see and search their own secrets (and received shares). However, two future cases require broader visibility of secret *metadata* (names/URLs only, never decrypted values): (1) When sharing a secret, users may need to see that a target user or application has a vault, but they do NOT browse the target's secrets — sharing is initiated from the sender's own secret. (2) Users who manage an application should be able to browse that application's vault metadata to write new secrets or manage existing ones. The visibility model for these cases should be defined in the `implement-sharing` and `implement-application-mgmt` changes respectively.
 - `url` is stored unencrypted by design — it enables search and Nextcloud unified search integration without requiring the master password. Users should be aware that URLs are visible in the database.
 - Folder names are stored unencrypted — they are organisational metadata, not sensitive values.
 - Folder paths are never stored as strings; they are derived at query time by traversing `parent_id` links.
