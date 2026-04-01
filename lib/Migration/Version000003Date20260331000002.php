@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OCA\Doriath\Migration;
+
+use Closure;
+use OCP\DB\ISchemaWrapper;
+use OCP\DB\Types;
+use OCP\Migration\IOutput;
+use OCP\Migration\SimpleMigrationStep;
+
+/**
+ * Create the doriath_suite_migrations table.
+ */
+class Version000003Date20260331000002 extends SimpleMigrationStep
+{
+    /**
+     * @param IOutput        $output
+     * @param Closure        $schemaClosure
+     * @param array<string,mixed> $options
+     *
+     * @return null|ISchemaWrapper
+     */
+    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
+    {
+        /** @var ISchemaWrapper $schema */
+        $schema = $schemaClosure();
+
+        if ($schema->hasTable('doriath_suite_migrations') === true) {
+            return null;
+        }
+
+        $table = $schema->createTable('doriath_suite_migrations');
+
+        $table->addColumn('id', Types::STRING, [
+            'notnull' => true,
+            'length'  => 36,
+        ]);
+        $table->addColumn('old_suite_id', Types::STRING, [
+            'notnull' => true,
+            'length'  => 36,
+        ]);
+        $table->addColumn('new_suite_id', Types::STRING, [
+            'notnull' => true,
+            'length'  => 36,
+        ]);
+        $table->addColumn('status', Types::STRING, [
+            'notnull' => true,
+            'length'  => 30,
+            'default' => 'in_progress',
+        ]);
+        $table->addColumn('started_at', Types::DATETIME, [
+            'notnull' => true,
+        ]);
+        $table->addColumn('completed_at', Types::DATETIME, [
+            'notnull' => false,
+        ]);
+
+        $table->setPrimaryKey(['id']);
+        $table->addIndex(['old_suite_id'], 'doriath_sm_old_suite_idx');
+        $table->addIndex(['new_suite_id'], 'doriath_sm_new_suite_idx');
+
+        return $schema;
+    }//end changeSchema()
+}//end class
