@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { decryptPrivateKey, importPrivateKey, deriveAesKey } from '../../crypto/index.js'
+import { decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
 
 const DEFAULT_TIMEOUT = 600000 // 10 minutes
 

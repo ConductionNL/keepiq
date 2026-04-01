@@ -18,7 +18,7 @@ const HEADER_LENGTH = 4 + SALT_LENGTH + IV_LENGTH // version + salt + IV
  * @param {Uint8Array} salt
  * @param {Uint8Array} iv
  * @param {Uint8Array} ciphertext (includes GCM tag appended by WebCrypto)
- * @returns {string} Base64-encoded envelope
+ * @return {string} Base64-encoded envelope
  */
 export function encodeEnvelope(version, salt, iv, ciphertext) {
 	const buffer = new ArrayBuffer(4 + salt.byteLength + iv.byteLength + ciphertext.byteLength)
@@ -38,7 +38,7 @@ export function encodeEnvelope(version, salt, iv, ciphertext) {
  * Decode a base64-encoded envelope into its components.
  *
  * @param {string} base64 Base64-encoded envelope
- * @returns {{ version: number, salt: Uint8Array, iv: Uint8Array, ciphertext: Uint8Array, tag: Uint8Array }}
+ * @return {{ version: number, salt: Uint8Array, iv: Uint8Array, ciphertext: Uint8Array, tag: Uint8Array }}
  */
 export function decodeEnvelope(base64) {
 	const raw = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
