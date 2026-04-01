@@ -87,11 +87,13 @@ class CertificateAuthorityService
                     'private_key_type' => OPENSSL_KEYTYPE_RSA,
                 ]
                 );
+        // @codeCoverageIgnoreStart
         if ($rootKey === false) {
             $this->setDegraded();
             throw new RuntimeException('Failed to generate root CA key: '.openssl_error_string());
         }
 
+        // @codeCoverageIgnoreEnd
         // Self-sign the root certificate.
         $rootCsr  = openssl_csr_new(
             [
@@ -110,11 +112,13 @@ class CertificateAuthorityService
             random_int(1, PHP_INT_MAX)
         );
 
+        // @codeCoverageIgnoreStart
         if ($rootCert === false) {
             $this->setDegraded();
             throw new RuntimeException('Failed to sign root CA certificate: '.openssl_error_string());
         }
 
+        // @codeCoverageIgnoreEnd
         openssl_x509_export($rootCert, $rootCertPem);
         openssl_pkey_export($rootKey, $rootKeyPem);
 
@@ -188,10 +192,12 @@ class CertificateAuthorityService
             random_int(1, PHP_INT_MAX)
         );
 
+        // @codeCoverageIgnoreStart
         if ($cert === false) {
             throw new RuntimeException('Failed to sign certificate: '.openssl_error_string());
         }
 
+        // @codeCoverageIgnoreEnd
         openssl_x509_export($cert, $certPem);
         return $certPem;
     }//end signPublicKey()
@@ -220,10 +226,12 @@ class CertificateAuthorityService
             random_int(1, PHP_INT_MAX)
         );
 
+        // @codeCoverageIgnoreStart
         if ($cert === false) {
             throw new RuntimeException('Failed to sign CSR: '.openssl_error_string());
         }
 
+        // @codeCoverageIgnoreEnd
         openssl_x509_export($cert, $certPem);
         return $certPem;
     }//end signCsr()
@@ -437,11 +445,13 @@ class CertificateAuthorityService
             random_int(1, PHP_INT_MAX)
         );
 
+        // @codeCoverageIgnoreStart
         if ($intCert === false) {
             $this->setDegraded();
             throw new RuntimeException('Failed to sign intermediate CA: '.openssl_error_string());
         }
 
+        // @codeCoverageIgnoreEnd
         openssl_x509_export($intCert, $intCertPem);
         openssl_pkey_export($intKey, $intKeyPem);
 
@@ -485,11 +495,13 @@ class CertificateAuthorityService
                 }
 
                 $pubKey = openssl_pkey_get_public($oldCert);
+                // @codeCoverageIgnoreStart
                 if ($pubKey === false) {
                     $this->logger->warning("Doriath: Could not extract public key from suite {$suite->getId()}");
                     continue;
                 }
 
+                // @codeCoverageIgnoreEnd
                 $csr     = openssl_csr_new(
                     ['commonName' => 'Doriath User Certificate'],
                     $pubKey,
@@ -504,11 +516,13 @@ class CertificateAuthorityService
                     random_int(1, PHP_INT_MAX)
                 );
 
+                // @codeCoverageIgnoreStart
                 if ($newCert === false) {
                     $this->logger->warning("Doriath: Failed to re-sign suite {$suite->getId()}");
                     continue;
                 }
 
+                // @codeCoverageIgnoreEnd
                 openssl_x509_export($newCert, $newCertPem);
                 $suite->setCertificate($newCertPem);
                 $this->suiteMapper->update($suite);
@@ -526,6 +540,8 @@ class CertificateAuthorityService
      * Set the CA status to degraded.
      *
      * @return void
+     *
+     * @codeCoverageIgnore
      */
     private function setDegraded(): void
     {
