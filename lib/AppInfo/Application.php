@@ -22,7 +22,9 @@ declare(strict_types=1);
 namespace OCA\Doriath\AppInfo;
 
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Repair\BootstrapCertificateAuthority;
 use OCA\Doriath\Repair\InitializeSettings;
+use OCA\Doriath\Repair\SeedDevelopmentData;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -66,6 +68,12 @@ class Application extends App implements IBootstrap
 
         // Initialize register and schemas on install/upgrade.
         $context->registerRepairStep(InitializeSettings::class);
+
+        // CA bootstrap runs after migrations — also registered in info.xml.
+        $context->registerRepairStep(BootstrapCertificateAuthority::class);
+
+        // Development seed data — only runs when debug mode is enabled.
+        $context->registerRepairStep(SeedDevelopmentData::class);
 
     }//end register()
 
