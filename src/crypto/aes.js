@@ -13,7 +13,7 @@ const PBKDF2_ITERATIONS = 600000
  *
  * @param {string} password The master password
  * @param {Uint8Array} salt 16-byte salt
- * @returns {Promise<CryptoKey>} AES-GCM key
+ * @return {Promise<CryptoKey>} AES-GCM key
  */
 export async function deriveAesKey(password, salt) {
 	const encoder = new TextEncoder()
@@ -44,7 +44,7 @@ export async function deriveAesKey(password, salt) {
  *
  * @param {string} pem PEM-encoded private key
  * @param {string} password The master password
- * @returns {Promise<string>} Base64-encoded envelope
+ * @return {Promise<string>} Base64-encoded envelope
  */
 export async function encryptPrivateKey(pem, password) {
 	const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH))
@@ -68,7 +68,7 @@ export async function encryptPrivateKey(pem, password) {
  *
  * @param {string} envelope Base64-encoded envelope
  * @param {string} password The master password
- * @returns {Promise<string>} PEM-encoded private key
+ * @return {Promise<string>} PEM-encoded private key
  */
 export async function decryptPrivateKey(envelope, password) {
 	const { salt, iv, ciphertextWithTag } = decodeEnvelope(envelope)
