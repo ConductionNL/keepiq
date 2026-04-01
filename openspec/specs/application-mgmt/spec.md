@@ -1,8 +1,9 @@
 # Application Management Specification
 
-**Status**: planned
+**Status**: in-progress
 
-**OpenSpec changes:** _(none yet)_
+**OpenSpec changes:**
+- `implement-application-mgmt` (2026-04-01) — Full implementation: registration, CSR/generated key pair, approval queue, JWT auth, write-without-read, cascade deletion
 
 ## Purpose
 
