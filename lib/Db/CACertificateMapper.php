@@ -43,7 +43,7 @@ class CACertificateMapper extends QBMapper
      */
     public function __construct(IDBConnection $db)
     {
-        parent::__construct(db: $db, tableName: 'doriath_ca_certificates', entityClass: CACertificate::class);
+        parent::__construct(db: $db, tableName: 'doriath_ca_certs', entityClass: CACertificate::class);
     }//end __construct()
 
     /**

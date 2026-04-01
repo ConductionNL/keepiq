@@ -43,7 +43,7 @@ class EncryptionSuiteMapper extends QBMapper
      */
     public function __construct(IDBConnection $db)
     {
-        parent::__construct(db: $db, tableName: 'doriath_encryption_suites', entityClass: EncryptionSuite::class);
+        parent::__construct(db: $db, tableName: 'doriath_enc_suites', entityClass: EncryptionSuite::class);
     }//end __construct()
 
     /**
