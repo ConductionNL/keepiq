@@ -46,6 +46,26 @@ class SuiteMigrationMapper extends QBMapper
     }//end __construct()
 
     /**
+     * Find a suite migration by its ID.
+     *
+     * @param string $id The migration ID
+     *
+     * @return SuiteMigration
+     *
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     */
+    public function findById(string $id): SuiteMigration
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
+
+        return $this->findEntity(query: $qb);
+    }//end findById()
+
+    /**
      * Find an in-progress migration for a given owner by checking suites.
      *
      * @param string $oldSuiteId The old suite ID to find migration for

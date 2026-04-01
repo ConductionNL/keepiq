@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
@@ -33,14 +34,14 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCertificate(string $certificate)
  * @method string|null getPrivateKey()
  * @method void setPrivateKey(?string $privateKey)
- * @method \DateTime getCreatedAt()
- * @method void setCreatedAt(\DateTime $createdAt)
- * @method \DateTime getExpiresAt()
- * @method void setExpiresAt(\DateTime $expiresAt)
+ * @method DateTime|null getCreatedAt()
+ * @method void setCreatedAt(?DateTime $createdAt)
+ * @method DateTime|null getExpiresAt()
+ * @method void setExpiresAt(?DateTime $expiresAt)
  * @method bool getIsActive()
  * @method void setIsActive(bool $isActive)
- * @method \DateTime|null getRevokedAt()
- * @method void setRevokedAt(?\DateTime $revokedAt)
+ * @method DateTime|null getRevokedAt()
+ * @method void setRevokedAt(?DateTime $revokedAt)
  * @method string|null getSuccessorId()
  * @method void setSuccessorId(?string $successorId)
  */
@@ -71,16 +72,16 @@ class CACertificate extends Entity implements JsonSerializable
     /**
      * When the certificate was created.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $createdAt = null;
+    protected ?DateTime $createdAt = null;
 
     /**
      * When the certificate expires.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $expiresAt = null;
+    protected ?DateTime $expiresAt = null;
 
     /**
      * Whether the certificate is active.
@@ -92,9 +93,9 @@ class CACertificate extends Entity implements JsonSerializable
     /**
      * When the certificate was revoked.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $revokedAt = null;
+    protected ?DateTime $revokedAt = null;
 
     /**
      * The ID of the successor certificate.
@@ -110,6 +111,7 @@ class CACertificate extends Entity implements JsonSerializable
      */
     public function __construct()
     {
+        $this->addType(fieldName: 'id', type: 'string');
         $this->addType(fieldName: 'type', type: 'string');
         $this->addType(fieldName: 'certificate', type: 'string');
         $this->addType(fieldName: 'privateKey', type: 'string');

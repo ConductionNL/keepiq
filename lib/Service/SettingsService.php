@@ -28,6 +28,7 @@ use OCP\IGroupManager;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Service for managing Doriath application configuration and settings.
@@ -127,6 +128,8 @@ class SettingsService
      * @param bool $force Force re-import even if already configured.
      *
      * @return array<string,mixed> Result with success flag, message, and version.
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function loadConfiguration(bool $force=false): array
     {
@@ -155,7 +158,7 @@ class SettingsService
                 'success' => false,
                 'message' => 'Import returned an empty result.',
             ];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logger->error(
                 'Doriath: configuration import failed',
                 ['exception' => $e->getMessage()]

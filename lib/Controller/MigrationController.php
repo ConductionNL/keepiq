@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
 
+use Exception;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -80,13 +81,15 @@ class MigrationController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function complete(string $id, bool $hasErrors=false): JSONResponse
     {
         try {
             $migration = $this->migrationService->completeMigration($id, $hasErrors);
             return new JSONResponse($migration->jsonSerialize());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_BAD_REQUEST

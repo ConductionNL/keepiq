@@ -29,3 +29,12 @@ parameters:
         - '#Parameter \$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
         # registerRepairStep exists on server; not yet in nextcloud/ocp stub used for analysis
         - '#Call to an undefined method OCP\\AppFramework\\Bootstrap\\IRegistrationContext::registerRepairStep#'
+        # Entities use string UUIDs as primary keys instead of auto-increment ints;
+        # getId() returns int per OCP\Entity but the actual value is a UUID string at runtime
+        - '#Parameter \#1 \$id of method OCP\\AppFramework\\Db\\Entity::setId\(\) expects int, string given#'
+        - '#expects string(\|null)?, int given#'
+        # str_split with positive chunk size always returns non-empty array
+        - '#Variable \$chunks in empty\(\) always exists and is not falsy#'
+        - '#Strict comparison using === between false and true will always evaluate to false#'
+        # PHPDoc type refinement: nullable DateTime checked at runtime
+        - '#Strict comparison using === between DateTime and null will always evaluate to false#'

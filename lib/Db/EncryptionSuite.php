@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
@@ -37,18 +38,18 @@ use OCP\AppFramework\Db\Entity;
  * @method void setPrivateKey(?string $privateKey)
  * @method string getStatus()
  * @method void setStatus(string $status)
- * @method \DateTime|null getRevokedAt()
- * @method void setRevokedAt(?\DateTime $revokedAt)
+ * @method DateTime|null getRevokedAt()
+ * @method void setRevokedAt(?DateTime $revokedAt)
  * @method string|null getRevokedReason()
  * @method void setRevokedReason(?string $revokedReason)
  * @method string|null getRevokedBy()
  * @method void setRevokedBy(?string $revokedBy)
- * @method \DateTime|null getReinstatedAt()
- * @method void setReinstatedAt(?\DateTime $reinstatedAt)
+ * @method DateTime|null getReinstatedAt()
+ * @method void setReinstatedAt(?DateTime $reinstatedAt)
  * @method string|null getReinstatedBy()
  * @method void setReinstatedBy(?string $reinstatedBy)
- * @method \DateTime getCreatedAt()
- * @method void setCreatedAt(\DateTime $createdAt)
+ * @method DateTime getCreatedAt()
+ * @method void setCreatedAt(DateTime $createdAt)
  */
 class EncryptionSuite extends Entity implements JsonSerializable
 {
@@ -91,9 +92,9 @@ class EncryptionSuite extends Entity implements JsonSerializable
     /**
      * When the suite was revoked.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $revokedAt = null;
+    protected ?DateTime $revokedAt = null;
 
     /**
      * The reason for revocation.
@@ -112,9 +113,9 @@ class EncryptionSuite extends Entity implements JsonSerializable
     /**
      * When the suite was reinstated.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $reinstatedAt = null;
+    protected ?DateTime $reinstatedAt = null;
 
     /**
      * Who reinstated the suite.
@@ -126,9 +127,9 @@ class EncryptionSuite extends Entity implements JsonSerializable
     /**
      * When the suite was created.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $createdAt = null;
+    protected ?DateTime $createdAt = null;
 
     /**
      * Constructor for EncryptionSuite.
@@ -137,6 +138,7 @@ class EncryptionSuite extends Entity implements JsonSerializable
      */
     public function __construct()
     {
+        $this->addType(fieldName: 'id', type: 'string');
         $this->addType(fieldName: 'ownerType', type: 'string');
         $this->addType(fieldName: 'ownerId', type: 'string');
         $this->addType(fieldName: 'certificate', type: 'string');

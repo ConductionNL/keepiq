@@ -120,7 +120,7 @@ class DecryptService
         }
 
         $offset  = 4 + self::AES_SALT_LENGTH;
-        $iv      = substr($raw, $offset, self::AES_IV_LENGTH);
+        $ivector = substr($raw, $offset, self::AES_IV_LENGTH);
         $offset += self::AES_IV_LENGTH;
 
         $ciphertext = substr($raw, $offset, -self::AES_TAG_LENGTH);
@@ -131,7 +131,7 @@ class DecryptService
             'aes-256-gcm',
             $key,
             OPENSSL_RAW_DATA,
-            $iv,
+            $ivector,
             $tag
         );
 
@@ -173,7 +173,7 @@ class DecryptService
         $key  = $this->deriveKey(password: $password, salt: $salt);
 
         $offset  = 4 + self::AES_SALT_LENGTH;
-        $iv      = substr($raw, $offset, self::AES_IV_LENGTH);
+        $ivector = substr($raw, $offset, self::AES_IV_LENGTH);
         $offset += self::AES_IV_LENGTH;
 
         $ciphertext = substr($raw, $offset, -self::AES_TAG_LENGTH);
@@ -184,7 +184,7 @@ class DecryptService
             'aes-256-gcm',
             $key,
             OPENSSL_RAW_DATA,
-            $iv,
+            $ivector,
             $tag
         );
 
