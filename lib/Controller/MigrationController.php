@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Migration Controller
+ *
+ * Controller for suite migration tracking.
+ *
+ * @category Controller
+ * @package  OCA\Doriath\Controller
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
@@ -18,18 +35,29 @@ use OCP\IUserSession;
  */
 class MigrationController extends OCSController
 {
+    /**
+     * Constructor for MigrationController.
+     *
+     * @param IRequest         $request          The request object
+     * @param MigrationService $migrationService The migration service
+     * @param IUserSession     $userSession      The user session
+     *
+     * @return void
+     */
     public function __construct(
         IRequest $request,
         private MigrationService $migrationService,
         private IUserSession $userSession,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
     /**
      * Get in-progress migration status for the current user.
      *
      * @NoAdminRequired
+     *
+     * @return JSONResponse
      */
     public function getStatus(): JSONResponse
     {
@@ -46,9 +74,14 @@ class MigrationController extends OCSController
     /**
      * Complete a migration.
      *
+     * @param string $id        The migration ID
+     * @param bool   $hasErrors Whether the migration had errors
+     *
      * @NoAdminRequired
+     *
+     * @return JSONResponse
      */
-    public function complete(string $id, bool $hasErrors = false): JSONResponse
+    public function complete(string $id, bool $hasErrors=false): JSONResponse
     {
         try {
             $migration = $this->migrationService->completeMigration($id, $hasErrors);
