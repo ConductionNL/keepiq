@@ -1,7 +1,7 @@
 <template>
 	<NcContent app-name="doriath">
 		<template v-if="storesReady">
-			<MainMenu />
+			<MainMenu v-if="!isLocked" />
 			<NcAppContent>
 				<router-view />
 			</NcAppContent>
@@ -17,6 +17,7 @@
 <script>
 import { NcContent, NcAppContent, NcLoadingIcon } from '@nextcloud/vue'
 import { initializeStores } from './store/store.js'
+import { useSessionStore } from './store/modules/session.js'
 import MainMenu from './navigation/MainMenu.vue'
 
 export default {
@@ -31,12 +32,54 @@ export default {
 	data() {
 		return {
 			storesReady: false,
+			timeoutInterval: null,
 		}
+	},
+
+	computed: {
+		isLocked() {
+			const session = useSessionStore()
+			return session.isLocked
+		},
 	},
 
 	async created() {
 		await initializeStores()
 		this.storesReady = true
+
+		// Session timeout check every 10 seconds.
+		this.timeoutInterval = setInterval(() => {
+			const session = useSessionStore()
+			session.checkTimeout()
+		}, 10000)
+
+		// Check timeout when tab becomes visible.
+		document.addEventListener('visibilitychange', this.handleVisibilityChange)
+
+		// Best-effort key clear on tab close.
+		window.addEventListener('beforeunload', this.handleBeforeUnload)
+	},
+
+	beforeDestroy() {
+		if (this.timeoutInterval) {
+			clearInterval(this.timeoutInterval)
+		}
+		document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+		window.removeEventListener('beforeunload', this.handleBeforeUnload)
+	},
+
+	methods: {
+		handleVisibilityChange() {
+			if (document.visibilityState === 'visible') {
+				const session = useSessionStore()
+				session.checkTimeout()
+			}
+		},
+
+		handleBeforeUnload() {
+			const session = useSessionStore()
+			session.lock()
+		},
 	},
 }
 </script>
