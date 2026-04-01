@@ -18,8 +18,12 @@
 			<div class="password-policy__field">
 				<label for="min-score">{{ t('doriath', 'Minimum strength score') }}</label>
 				<select id="min-score" v-model.number="minScore" @change="save">
-					<option :value="3">{{ t('doriath', 'Strong (score 3)') }}</option>
-					<option :value="4">{{ t('doriath', 'Very strong (score 4)') }}</option>
+					<option :value="3">
+						{{ t('doriath', 'Strong (score 3)') }}
+					</option>
+					<option :value="4">
+						{{ t('doriath', 'Very strong (score 4)') }}
+					</option>
 				</select>
 			</div>
 		</div>
