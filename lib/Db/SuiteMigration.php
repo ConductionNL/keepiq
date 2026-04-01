@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
@@ -33,10 +34,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setNewSuiteId(string $newSuiteId)
  * @method string getStatus()
  * @method void setStatus(string $status)
- * @method \DateTime getStartedAt()
- * @method void setStartedAt(\DateTime $startedAt)
- * @method \DateTime|null getCompletedAt()
- * @method void setCompletedAt(?\DateTime $completedAt)
+ * @method DateTime getStartedAt()
+ * @method void setStartedAt(DateTime $startedAt)
+ * @method DateTime|null getCompletedAt()
+ * @method void setCompletedAt(?DateTime $completedAt)
  */
 class SuiteMigration extends Entity implements JsonSerializable
 {
@@ -65,16 +66,16 @@ class SuiteMigration extends Entity implements JsonSerializable
     /**
      * When the migration started.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $startedAt = null;
+    protected ?DateTime $startedAt = null;
 
     /**
      * When the migration completed.
      *
-     * @var \DateTime|null
+     * @var DateTime|null
      */
-    protected ?\DateTime $completedAt = null;
+    protected ?DateTime $completedAt = null;
 
     /**
      * Constructor for SuiteMigration.
@@ -83,6 +84,7 @@ class SuiteMigration extends Entity implements JsonSerializable
      */
     public function __construct()
     {
+        $this->addType(fieldName: 'id', type: 'string');
         $this->addType(fieldName: 'oldSuiteId', type: 'string');
         $this->addType(fieldName: 'newSuiteId', type: 'string');
         $this->addType(fieldName: 'status', type: 'string');

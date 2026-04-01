@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\BackgroundJob;
 
+use DateTime;
+use Exception;
 use OCA\Doriath\Db\CACertificateMapper;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -49,7 +51,7 @@ class CheckRootCertificateExpiry extends TimedJob
         private LoggerInterface $logger,
     ) {
         parent::__construct(time: $time);
-        $this->setInterval(interval: 86400);
+        $this->setInterval(seconds: 86400);
     }//end __construct()
 
     /**
@@ -58,12 +60,14 @@ class CheckRootCertificateExpiry extends TimedJob
      * @param mixed $argument The job argument
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     protected function run($argument): void
     {
         try {
             $root = $this->caCertMapper->findRoot();
-        } catch (\Exception) {
+        } catch (Exception) {
             return;
         }
 
@@ -72,7 +76,7 @@ class CheckRootCertificateExpiry extends TimedJob
             return;
         }
 
-        $daysUntilExpiry = (int) $expiresAt->diff(new \DateTime())->format('%r%a');
+        $daysUntilExpiry = (int) $expiresAt->diff(new DateTime())->format('%r%a');
 
         foreach (self::NOTIFICATION_THRESHOLDS as $threshold) {
             $lowerBound = 0;
