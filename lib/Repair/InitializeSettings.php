@@ -21,7 +21,9 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Repair;
 
+use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\SettingsService;
+use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -39,8 +41,15 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      */
+    private const DEFAULT_CONFIG = [
+        'master_password_min_length' => '12',
+        'master_password_min_score'  => '3',
+        'session_timeout_default'    => '600000',
+    ];
+
     public function __construct(
         private SettingsService $settingsService,
+        private IAppConfig $appConfig,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -65,6 +74,15 @@ class InitializeSettings implements IRepairStep
     public function run(IOutput $output): void
     {
         $output->info('Initializing Doriath configuration...');
+
+        // Seed default app config values for encryption settings.
+        foreach (self::DEFAULT_CONFIG as $key => $value) {
+            $existing = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+            if ($existing === '') {
+                $this->appConfig->setValueString(Application::APP_ID, $key, $value);
+                $output->info("Set default config: {$key} = {$value}");
+            }
+        }
 
         if ($this->settingsService->isOpenRegisterAvailable() === false) {
             $output->warning(
