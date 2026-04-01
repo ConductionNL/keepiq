@@ -3,7 +3,7 @@
 /**
  * Doriath Migration Version 2
  *
- * Create the doriath_ca_certificates table.
+ * Create the doriath_ca_certs table.
  *
  * @category Migration
  * @package  OCA\Doriath\Migration
@@ -28,7 +28,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
- * Create the doriath_ca_certificates table.
+ * Create the doriath_ca_certs table.
  */
 class Version000002Date20260331000001 extends SimpleMigrationStep
 {
@@ -48,11 +48,11 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
         // @var ISchemaWrapper $schema
         $schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_ca_certificates') === true) {
+        if ($schema->hasTable('doriath_ca_certs') === true) {
             return null;
         }
 
-        $table = $schema->createTable('doriath_ca_certificates');
+        $table = $schema->createTable('doriath_ca_certs');
 
         $table->addColumn(
                 'id',

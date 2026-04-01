@@ -3,7 +3,7 @@
 /**
  * Doriath Migration Version 1
  *
- * Create the doriath_encryption_suites table.
+ * Create the doriath_enc_suites table.
  *
  * @category Migration
  * @package  OCA\Doriath\Migration
@@ -28,7 +28,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
- * Create the doriath_encryption_suites table.
+ * Create the doriath_enc_suites table.
  */
 class Version000001Date20260331000000 extends SimpleMigrationStep
 {
@@ -49,11 +49,11 @@ class Version000001Date20260331000000 extends SimpleMigrationStep
         // @var ISchemaWrapper $schema
         $schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_encryption_suites') === true) {
+        if ($schema->hasTable('doriath_enc_suites') === true) {
             return null;
         }
 
-        $table = $schema->createTable('doriath_encryption_suites');
+        $table = $schema->createTable('doriath_enc_suites');
 
         $table->addColumn(
                 'id',
