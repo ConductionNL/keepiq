@@ -118,7 +118,9 @@ export default {
 }
 
 .password-strength-meter__fill--danger { background: var(--color-error); }
+
 .password-strength-meter__fill--warning { background: var(--color-warning); }
+
 .password-strength-meter__fill--success { background: var(--color-success); }
 
 .password-strength-meter__feedback {
@@ -127,6 +129,8 @@ export default {
 }
 
 .password-strength-meter__feedback--danger { color: var(--color-error); }
+
 .password-strength-meter__feedback--warning { color: var(--color-warning); }
+
 .password-strength-meter__feedback--success { color: var(--color-success); }
 </style>

@@ -12,7 +12,7 @@ const RSA_CHUNK_SIZE = 446
 /**
  * Generate an RSA-4096 key pair.
  *
- * @returns {Promise<{ publicKey: CryptoKey, privateKey: CryptoKey, publicKeyPem: string }>}
+ * @return {Promise<{ publicKey: CryptoKey, privateKey: CryptoKey, publicKeyPem: string }>}
  */
 export async function generateKeyPair() {
 	const keyPair = await crypto.subtle.generateKey(
@@ -43,7 +43,7 @@ export async function generateKeyPair() {
  * Import a PEM private key as a non-extractable CryptoKey.
  *
  * @param {string} pem PEM-encoded PKCS#8 private key
- * @returns {Promise<CryptoKey>} Non-extractable RSA-OAEP private key
+ * @return {Promise<CryptoKey>} Non-extractable RSA-OAEP private key
  */
 export async function importPrivateKey(pem) {
 	const pemBody = pem
@@ -68,7 +68,7 @@ export async function importPrivateKey(pem) {
  * Import a PEM public key or certificate for encryption.
  *
  * @param {string} pem PEM-encoded public key (SPKI format)
- * @returns {Promise<CryptoKey>}
+ * @return {Promise<CryptoKey>}
  */
 export async function importPublicKey(pem) {
 	const pemBody = pem
@@ -94,7 +94,7 @@ export async function importPublicKey(pem) {
  *
  * @param {string} plaintext
  * @param {CryptoKey} publicKey
- * @returns {Promise<string>} Base64-encoded chunked ciphertext
+ * @return {Promise<string>} Base64-encoded chunked ciphertext
  */
 export async function rsaEncrypt(plaintext, publicKey) {
 	const encoder = new TextEncoder()
@@ -131,7 +131,7 @@ export async function rsaEncrypt(plaintext, publicKey) {
  *
  * @param {string} ciphertext Base64-encoded chunked ciphertext
  * @param {CryptoKey} privateKey
- * @returns {Promise<string>} Decrypted plaintext
+ * @return {Promise<string>} Decrypted plaintext
  */
 export async function rsaDecrypt(ciphertext, privateKey) {
 	const raw = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0))
