@@ -42,7 +42,7 @@ class SuiteMigrationMapper extends QBMapper
      */
     public function __construct(IDBConnection $db)
     {
-        parent::__construct(db: $db, tableName: 'doriath_suite_migrations', entityClass: SuiteMigration::class);
+        parent::__construct(db: $db, tableName: 'doriath_suite_migr', entityClass: SuiteMigration::class);
     }//end __construct()
 
     /**

@@ -3,7 +3,7 @@
 /**
  * Doriath Migration Version 3
  *
- * Create the doriath_suite_migrations table.
+ * Create the doriath_suite_migr table.
  *
  * @category Migration
  * @package  OCA\Doriath\Migration
@@ -28,7 +28,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
- * Create the doriath_suite_migrations table.
+ * Create the doriath_suite_migr table.
  */
 class Version000003Date20260331000002 extends SimpleMigrationStep
 {
@@ -48,11 +48,11 @@ class Version000003Date20260331000002 extends SimpleMigrationStep
         // @var ISchemaWrapper $schema
         $schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_suite_migrations') === true) {
+        if ($schema->hasTable('doriath_suite_migr') === true) {
             return null;
         }
 
-        $table = $schema->createTable('doriath_suite_migrations');
+        $table = $schema->createTable('doriath_suite_migr');
 
         $table->addColumn(
                 'id',
