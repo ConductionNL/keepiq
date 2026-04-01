@@ -39,9 +39,33 @@ use RuntimeException;
  */
 class EncryptionSuiteControllerTest extends TestCase
 {
+
+    /**
+     * The controller under test.
+     *
+     * @var EncryptionSuiteController
+     */
     private EncryptionSuiteController $controller;
+
+    /**
+     * The mocked suite service.
+     *
+     * @var EncryptionSuiteService&MockObject
+     */
     private EncryptionSuiteService&MockObject $suiteService;
+
+    /**
+     * The mocked migration service.
+     *
+     * @var MigrationService&MockObject
+     */
     private MigrationService&MockObject $migrationService;
+
+    /**
+     * The mocked user session.
+     *
+     * @var IUserSession&MockObject
+     */
     private IUserSession&MockObject $userSession;
 
     /**
@@ -53,22 +77,22 @@ class EncryptionSuiteControllerTest extends TestCase
     {
         parent::setUp();
 
-        $request = $this->createMock(IRequest::class);
-        $this->suiteService = $this->createMock(EncryptionSuiteService::class);
-        $this->migrationService = $this->createMock(MigrationService::class);
-        $this->userSession = $this->createMock(IUserSession::class);
+        $request            = $this->createMock(originalClassName: IRequest::class);
+        $this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
+        $this->migrationService = $this->createMock(originalClassName: MigrationService::class);
+        $this->userSession      = $this->createMock(originalClassName: IUserSession::class);
 
-        $user = $this->createMock(IUser::class);
+        $user = $this->createMock(originalClassName: IUser::class);
         $user->method('getUID')->willReturn('testuser');
         $this->userSession->method('getUser')->willReturn($user);
 
         $this->controller = new EncryptionSuiteController(
-            $request,
-            $this->suiteService,
-            $this->migrationService,
-            $this->userSession,
+            request: $request,
+            suiteService: $this->suiteService,
+            migrationService: $this->migrationService,
+            userSession: $this->userSession,
         );
-    }
+    }//end setUp()
 
     /**
      * Test index returns the current user's suites.
@@ -95,12 +119,12 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->index();
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
+        $this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
         $data = $response->getData();
-        $this->assertCount(2, $data);
-        $this->assertSame('suite-1', $data[0]['id']);
-        $this->assertSame('suite-2', $data[1]['id']);
-    }
+        $this->assertCount(expectedCount: 2, haystack: $data);
+        $this->assertSame(expected: 'suite-1', actual: $data[0]['id']);
+        $this->assertSame(expected: 'suite-2', actual: $data[1]['id']);
+    }//end testIndexReturnsSuites()
 
     /**
      * Test show returns a suite.
@@ -120,9 +144,9 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->show('suite-1');
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('suite-1', $response->getData()['id']);
-    }
+        $this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+        $this->assertSame(expected: 'suite-1', actual: $response->getData()['id']);
+    }//end testShowReturnsSuite()
 
     /**
      * Test show returns 404 when suite not found.
@@ -136,8 +160,32 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->show('nonexistent');
 
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }
+        $this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
+    }//end testShowReturns404WhenNotFound()
+
+    /**
+     * Test show returns 404 when suite belongs to another user.
+     *
+     * @return void
+     */
+    public function testShowReturns403ForOtherUsersSuite(): void
+    {
+        $suite = new EncryptionSuite();
+        $suite->setId('suite-1');
+        $suite->setOwnerType('user');
+        $suite->setOwnerId('otheruser');
+
+        $this->suiteService->method('getSuite')
+            ->with('suite-1')
+            ->willReturn($suite);
+
+        $response = $this->controller->show('suite-1');
+
+        // ValidateOwnership throws RuntimeException caught as a generic Exception -> NOT_FOUND.
+        $this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
+        $this->assertArrayHasKey(key: 'message', array: $response->getData());
+        $this->assertStringContainsString(needle: 'Access denied', haystack: $response->getData()['message']);
+    }//end testShowReturns403ForOtherUsersSuite()
 
     /**
      * Test create returns 201 on success.
@@ -158,9 +206,9 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->create('pub-key-pem', 'encrypted-pk');
 
-        $this->assertSame(Http::STATUS_CREATED, $response->getStatus());
-        $this->assertSame('new-suite', $response->getData()['id']);
-    }
+        $this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
+        $this->assertSame(expected: 'new-suite', actual: $response->getData()['id']);
+    }//end testCreateReturns201OnSuccess()
 
     /**
      * Test create returns 503 when CA is degraded.
@@ -174,9 +222,9 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->create('pub-key', 'encrypted-pk');
 
-        $this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
-        $this->assertArrayHasKey('message', $response->getData());
-    }
+        $this->assertSame(expected: Http::STATUS_SERVICE_UNAVAILABLE, actual: $response->getStatus());
+        $this->assertArrayHasKey(key: 'message', array: $response->getData());
+    }//end testCreateReturns503WhenCaDegraded()
 
     /**
      * Test updatePrivateKey returns updated suite.
@@ -197,9 +245,9 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->updatePrivateKey('suite-1', 'new-encrypted-pk');
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('new-encrypted-pk', $response->getData()['privateKey']);
-    }
+        $this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+        $this->assertSame(expected: 'new-encrypted-pk', actual: $response->getData()['privateKey']);
+    }//end testUpdatePrivateKeyReturnsSuite()
 
     /**
      * Test revoke returns revoked suite.
@@ -218,9 +266,9 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->revoke('suite-1', 'security concern');
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('revoked', $response->getData()['status']);
-    }
+        $this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+        $this->assertSame(expected: 'revoked', actual: $response->getData()['status']);
+    }//end testRevokeReturnsSuite()
 
     /**
      * Test revoke returns 400 for already compromised suite.
@@ -234,8 +282,8 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->revoke('suite-1', 'test');
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+        $this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+    }//end testRevokeReturns400ForCompromisedSuite()
 
     /**
      * Test reinstate returns reinstated suite.
@@ -254,9 +302,9 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->reinstate('suite-1');
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('active', $response->getData()['status']);
-    }
+        $this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+        $this->assertSame(expected: 'active', actual: $response->getData()['status']);
+    }//end testReinstateReturnsSuite()
 
     /**
      * Test reinstate returns 400 when suite is not revoked.
@@ -270,8 +318,8 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->reinstate('suite-1');
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+        $this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+    }//end testReinstateReturns400WhenNotRevoked()
 
     /**
      * Test compromiseRecovery creates new suite and migration.
@@ -305,12 +353,12 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
 
-        $this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+        $this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
         $data = $response->getData();
-        $this->assertSame('new-suite', $data['newSuite']['id']);
-        $this->assertSame('migr-1', $data['migration']['id']);
-        $this->assertSame('old-encrypted-pk', $data['oldEncryptedPrivateKey']);
-    }
+        $this->assertSame(expected: 'new-suite', actual: $data['newSuite']['id']);
+        $this->assertSame(expected: 'migr-1', actual: $data['migration']['id']);
+        $this->assertSame(expected: 'old-encrypted-pk', actual: $data['oldEncryptedPrivateKey']);
+    }//end testCompromiseRecoverySuccess()
 
     /**
      * Test compromiseRecovery returns 500 on failure.
@@ -324,6 +372,6 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
 
-        $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-    }
-}
+        $this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
+    }//end testCompromiseRecoveryReturns500OnFailure()
+}//end class
