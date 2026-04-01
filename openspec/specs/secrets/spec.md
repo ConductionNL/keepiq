@@ -407,4 +407,5 @@ The lock screen MUST support a return URL parameter so the post-unlock redirect 
 - Folder paths are never stored as strings; they are derived at query time by traversing `parent_id` links.
 - Additional fields are encrypted as a JSON blob. Chunking must be implemented before large additional values are supported (see ADR-003 on RSA chunk limits).
 - The key generator feature integrates with secret creation to auto-generate the key value.
+- **Access log** (V1, for dashboard "recently accessed" widget): A `doriath_access_log` table tracks secret access events (secret_id, user_id, accessed_at). Populated by SecretService on each read. Used by the dashboard to show the 5 most recently accessed secrets. The migration for this table should be added when implementing the V1 dashboard features.
 - Related ADRs: ADR-001 (own DB tables), ADR-003 (encryption architecture)

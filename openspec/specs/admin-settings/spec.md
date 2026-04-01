@@ -1,11 +1,11 @@
 # Admin Settings Specification
 
-**Status**: idea
+**Status**: in-progress
 
 **Standards**: OCP\Settings\ISettings, OCP\IAppConfig
 **Feature tier**: MVP | V1
 
-**OpenSpec changes:** _(links to openspec/changes/ directories when in-progress or done)_
+**OpenSpec changes:** [implement-dashboard-settings](../../changes/implement-dashboard-settings/)
 
 ## Purpose
 
