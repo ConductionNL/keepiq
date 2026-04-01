@@ -2,7 +2,7 @@
 	<div class="lock-screen">
 		<div class="lock-screen__card">
 			<div class="lock-screen__icon">
-				<NcIconSvgWrapper :svg="lockIcon" :size="48" />
+				<LockIcon :size="48" />
 			</div>
 			<h1 class="lock-screen__title">
 				{{ isFirstSetup ? t('doriath', 'Set up your master password') : t('doriath', 'Unlock Doriath') }}
@@ -62,10 +62,10 @@
 </template>
 
 <script>
-import { NcButton, NcNoteCard, NcPasswordField, NcIconSvgWrapper } from '@nextcloud/vue'
+import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
+import LockIcon from 'vue-material-design-icons/Lock.vue'
 import { useSessionStore } from '../store/modules/session.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
-import lockIcon from '../../img/app.svg'
 
 export default {
 	name: 'LockScreen',
@@ -73,7 +73,7 @@ export default {
 		NcButton,
 		NcNoteCard,
 		NcPasswordField,
-		NcIconSvgWrapper,
+		LockIcon,
 	},
 
 	data() {
@@ -83,7 +83,6 @@ export default {
 			loading: false,
 			error: null,
 			strengthValid: false,
-			lockIcon,
 		}
 	},
 

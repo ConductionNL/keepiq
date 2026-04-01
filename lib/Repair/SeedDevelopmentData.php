@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Seed Development Data Repair Step
+ *
+ * Creates a test user EncryptionSuite with a known master password for development.
+ *
+ * @category Repair
+ * @package  OCA\Doriath\Repair
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Repair;
@@ -21,9 +38,20 @@ use Ramsey\Uuid\Uuid;
  */
 class SeedDevelopmentData implements IRepairStep
 {
-    private const DEV_USER_ID = 'admin';
+    private const DEV_USER_ID         = 'admin';
     private const DEV_MASTER_PASSWORD = 'Doriath-Dev-2024!';
 
+    /**
+     * Constructor for SeedDevelopmentData.
+     *
+     * @param EncryptionSuiteMapper       $suiteMapper    The encryption suite mapper
+     * @param CertificateAuthorityService $caService      The CA service
+     * @param EncryptService              $encryptService The encrypt service
+     * @param IConfig                     $config         The config interface
+     * @param LoggerInterface             $logger         The logger interface
+     *
+     * @return void
+     */
     public function __construct(
         private EncryptionSuiteMapper $suiteMapper,
         private CertificateAuthorityService $caService,
@@ -33,11 +61,23 @@ class SeedDevelopmentData implements IRepairStep
     ) {
     }//end __construct()
 
+    /**
+     * Get the name of this repair step.
+     *
+     * @return string
+     */
     public function getName(): string
     {
         return 'Seed Doriath development data (debug only)';
     }//end getName()
 
+    /**
+     * Run the repair step to seed development data.
+     *
+     * @param IOutput $output The output interface for progress reporting
+     *
+     * @return void
+     */
     public function run(IOutput $output): void
     {
         if ($this->config->getSystemValueBool('debug', false) === false) {
@@ -56,10 +96,12 @@ class SeedDevelopmentData implements IRepairStep
         }
 
         // Generate RSA key pair.
-        $keyPair = openssl_pkey_new([
-            'private_key_bits' => 4096,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
+        $keyPair = openssl_pkey_new(
+                [
+                    'private_key_bits' => 4096,
+                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                ]
+                );
 
         if ($keyPair === false) {
             $output->warning('Failed to generate RSA key pair for dev seed');
@@ -67,14 +109,14 @@ class SeedDevelopmentData implements IRepairStep
         }
 
         openssl_pkey_export($keyPair, $privateKeyPem);
-        $keyDetails = openssl_pkey_get_details($keyPair);
+        $keyDetails   = openssl_pkey_get_details($keyPair);
         $publicKeyPem = $keyDetails['key'];
 
         // Sign the public key with the CA.
         try {
             $certificate = $this->caService->signPublicKey($publicKeyPem);
         } catch (\Exception $e) {
-            $output->warning('CA not available for dev seed: ' . $e->getMessage());
+            $output->warning('CA not available for dev seed: '.$e->getMessage());
             return;
         }
 
@@ -96,7 +138,7 @@ class SeedDevelopmentData implements IRepairStep
 
         $this->suiteMapper->insert($suite);
 
-        $output->info('Dev EncryptionSuite created for user: ' . self::DEV_USER_ID);
-        $this->logger->info('Doriath dev seed: EncryptionSuite created with master password: ' . self::DEV_MASTER_PASSWORD);
+        $output->info('Dev EncryptionSuite created for user: '.self::DEV_USER_ID);
+        $this->logger->info('Doriath dev seed: EncryptionSuite created with master password: '.self::DEV_MASTER_PASSWORD);
     }//end run()
 }//end class

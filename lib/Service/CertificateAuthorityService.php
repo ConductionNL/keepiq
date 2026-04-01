@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Certificate Authority Service
+ *
+ * Manages the private Certificate Authority (root + intermediate) and certificate signing.
+ *
+ * @category Service
+ * @package  OCA\Doriath\Service
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
@@ -19,10 +36,21 @@ use Ramsey\Uuid\Uuid;
  */
 class CertificateAuthorityService
 {
-    private const ROOT_LIFETIME_DAYS = 7300;
+    private const ROOT_LIFETIME_DAYS         = 7300;
     private const INTERMEDIATE_LIFETIME_DAYS = 1095;
-    private const RESIGN_BATCH_SIZE = 100;
+    private const RESIGN_BATCH_SIZE          = 100;
 
+    /**
+     * Constructor for CertificateAuthorityService.
+     *
+     * @param CACertificateMapper   $caCertificateMapper   The CA certificate mapper
+     * @param EncryptionSuiteMapper $encryptionSuiteMapper The encryption suite mapper
+     * @param IAppConfig            $appConfig             The app config interface
+     * @param ICrypto               $crypto                The crypto service
+     * @param LoggerInterface       $logger                The logger interface
+     *
+     * @return void
+     */
     public function __construct(
         private CACertificateMapper $caCertificateMapper,
         private EncryptionSuiteMapper $encryptionSuiteMapper,
@@ -35,6 +63,8 @@ class CertificateAuthorityService
     /**
      * Bootstrap the CA: generate root + intermediate certificates.
      * Idempotent — skips if CA already exists.
+     *
+     * @return void
      */
     public function bootstrap(): void
     {
@@ -49,17 +79,19 @@ class CertificateAuthorityService
         $this->logger->info('Doriath: Bootstrapping Certificate Authority');
 
         // Generate root CA key pair.
-        $rootKey = openssl_pkey_new([
-            'private_key_bits' => 4096,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
+        $rootKey = openssl_pkey_new(
+                [
+                    'private_key_bits' => 4096,
+                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                ]
+                );
         if ($rootKey === false) {
             $this->setDegraded();
-            throw new \RuntimeException('Failed to generate root CA key: ' . openssl_error_string());
+            throw new \RuntimeException('Failed to generate root CA key: '.openssl_error_string());
         }
 
         // Self-sign the root certificate.
-        $rootCsr = openssl_csr_new(
+        $rootCsr  = openssl_csr_new(
             [
                 'commonName'       => 'Doriath Root CA',
                 'organizationName' => 'Doriath Vault',
@@ -78,7 +110,7 @@ class CertificateAuthorityService
 
         if ($rootCert === false) {
             $this->setDegraded();
-            throw new \RuntimeException('Failed to sign root CA certificate: ' . openssl_error_string());
+            throw new \RuntimeException('Failed to sign root CA certificate: '.openssl_error_string());
         }
 
         openssl_x509_export($rootCert, $rootCertPem);
@@ -91,12 +123,12 @@ class CertificateAuthorityService
         $rootEntity->setCertificate($rootCertPem);
         $rootEntity->setPrivateKey($this->crypto->encrypt($rootKeyPem));
         $rootEntity->setCreatedAt(new \DateTime());
-        $rootEntity->setExpiresAt(new \DateTime('+' . self::ROOT_LIFETIME_DAYS . ' days'));
+        $rootEntity->setExpiresAt(new \DateTime('+'.self::ROOT_LIFETIME_DAYS.' days'));
         $rootEntity->setIsActive(false);
         $this->caCertificateMapper->insert($rootEntity);
 
         // Generate and sign the intermediate certificate.
-        $this->generateIntermediate($rootKey, $rootCert);
+        $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
         $this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
         $this->logger->info('Doriath: CA bootstrap complete');
@@ -104,6 +136,8 @@ class CertificateAuthorityService
 
     /**
      * Retry bootstrap (called from admin panel when CA is degraded).
+     *
+     * @return void
      */
     public function retryBootstrap(): void
     {
@@ -112,11 +146,15 @@ class CertificateAuthorityService
 
     /**
      * Sign a public key PEM with the active intermediate, returning an X.509 certificate PEM.
+     *
+     * @param string $publicKeyPem The PEM-encoded public key
+     *
+     * @return string
      */
     public function signPublicKey(string $publicKeyPem): string
     {
-        $intermediate = $this->caCertificateMapper->findActiveIntermediate();
-        $intermediateKey = openssl_pkey_get_private(
+        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
+        $intermediateKey  = openssl_pkey_get_private(
             $this->crypto->decrypt($intermediate->getPrivateKey())
         );
         $intermediateCert = $intermediate->getCertificate();
@@ -139,7 +177,6 @@ class CertificateAuthorityService
         // (CSR-based registration), the caller must provide a proper PKCS#10 CSR.
         // For generated key pairs, we create the CSR with the generated private key.
         // This method is called with a proper CSR or after key generation.
-
         $cert = openssl_csr_sign(
             $csr,
             $intermediateCert,
@@ -150,7 +187,7 @@ class CertificateAuthorityService
         );
 
         if ($cert === false) {
-            throw new \RuntimeException('Failed to sign certificate: ' . openssl_error_string());
+            throw new \RuntimeException('Failed to sign certificate: '.openssl_error_string());
         }
 
         openssl_x509_export($cert, $certPem);
@@ -159,11 +196,15 @@ class CertificateAuthorityService
 
     /**
      * Sign a PKCS#10 CSR with the active intermediate certificate.
+     *
+     * @param string $csrPem The PEM-encoded CSR
+     *
+     * @return string
      */
     public function signCsr(string $csrPem): string
     {
-        $intermediate = $this->caCertificateMapper->findActiveIntermediate();
-        $intermediateKey = openssl_pkey_get_private(
+        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
+        $intermediateKey  = openssl_pkey_get_private(
             $this->crypto->decrypt($intermediate->getPrivateKey())
         );
         $intermediateCert = $intermediate->getCertificate();
@@ -178,7 +219,7 @@ class CertificateAuthorityService
         );
 
         if ($cert === false) {
-            throw new \RuntimeException('Failed to sign CSR: ' . openssl_error_string());
+            throw new \RuntimeException('Failed to sign CSR: '.openssl_error_string());
         }
 
         openssl_x509_export($cert, $certPem);
@@ -192,10 +233,10 @@ class CertificateAuthorityService
      *
      * @return int Number of suites re-signed.
      */
-    public function renewIntermediate(bool $forced = false): int
+    public function renewIntermediate(bool $forced=false): int
     {
-        $root = $this->caCertificateMapper->findRoot();
-        $rootKey = openssl_pkey_get_private(
+        $root     = $this->caCertificateMapper->findRoot();
+        $rootKey  = openssl_pkey_get_private(
             $this->crypto->decrypt($root->getPrivateKey())
         );
         $rootCert = $root->getCertificate();
@@ -203,7 +244,7 @@ class CertificateAuthorityService
         $oldIntermediate = $this->caCertificateMapper->findActiveIntermediate();
 
         // Generate new intermediate.
-        $newIntermediate = $this->generateIntermediate($rootKey, $rootCert);
+        $newIntermediate = $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
         // Deactivate old intermediate.
         $oldIntermediate->setIsActive(false);
@@ -218,9 +259,12 @@ class CertificateAuthorityService
         // Re-sign all active suites in batches.
         $resignedCount = $this->resignAllActiveSuites();
 
-        $this->logger->info("Doriath: Intermediate renewed, {$resignedCount} suites re-signed", [
-            'forced' => $forced,
-        ]);
+        $this->logger->info(
+                "Doriath: Intermediate renewed, {$resignedCount} suites re-signed",
+                [
+                    'forced' => $forced,
+                ]
+                );
 
         return $resignedCount;
     }//end renewIntermediate()
@@ -235,12 +279,14 @@ class CertificateAuthorityService
         $oldRoot = $this->caCertificateMapper->findRoot();
 
         // Generate new root key pair.
-        $rootKey = openssl_pkey_new([
-            'private_key_bits' => 4096,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
+        $rootKey = openssl_pkey_new(
+                [
+                    'private_key_bits' => 4096,
+                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                ]
+                );
 
-        $rootCsr = openssl_csr_new(
+        $rootCsr  = openssl_csr_new(
             [
                 'commonName'       => 'Doriath Root CA',
                 'organizationName' => 'Doriath Vault',
@@ -267,7 +313,7 @@ class CertificateAuthorityService
         $newRoot->setCertificate($rootCertPem);
         $newRoot->setPrivateKey($this->crypto->encrypt($rootKeyPem));
         $newRoot->setCreatedAt(new \DateTime());
-        $newRoot->setExpiresAt(new \DateTime('+' . self::ROOT_LIFETIME_DAYS . ' days'));
+        $newRoot->setExpiresAt(new \DateTime('+'.self::ROOT_LIFETIME_DAYS.' days'));
         $newRoot->setIsActive(false);
         $this->caCertificateMapper->insert($newRoot);
 
@@ -285,7 +331,7 @@ class CertificateAuthorityService
             // No active intermediate — bootstrap was incomplete.
         }
 
-        $newIntermediate = $this->generateIntermediate($rootKey, $rootCert);
+        $newIntermediate = $this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
         // Link old intermediate to new one.
         if (isset($oldIntermediate) === true) {
@@ -318,7 +364,7 @@ class CertificateAuthorityService
         }
 
         try {
-            $root = $this->caCertificateMapper->findRoot();
+            $root         = $this->caCertificateMapper->findRoot();
             $intermediate = $this->caCertificateMapper->findActiveIntermediate();
         } catch (DoesNotExistException) {
             return [
@@ -330,15 +376,17 @@ class CertificateAuthorityService
 
         $now = new \DateTime();
         $intermediateExpiry = $intermediate->getExpiresAt();
-        $rootExpiry = $root->getExpiresAt();
+        $rootExpiry         = $root->getExpiresAt();
 
         $status = 'healthy';
         if ($intermediateExpiry !== null && $intermediateExpiry->diff($now)->days < 30) {
             $status = 'expiring_soon';
         }
+
         if ($rootExpiry !== null && $rootExpiry->diff($now)->days < 90) {
             $status = 'action_required';
         }
+
         if ($intermediate->getRevokedAt() !== null) {
             $status = 'action_required';
         }
@@ -353,15 +401,19 @@ class CertificateAuthorityService
     /**
      * Generate a new intermediate certificate signed by the given root.
      *
-     * @param \OpenSSLAsymmetricKey          $rootKey  Root private key
+     * @param \OpenSSLAsymmetricKey      $rootKey  Root private key
      * @param \OpenSSLCertificate|string $rootCert Root certificate
+     *
+     * @return CACertificate
      */
     private function generateIntermediate($rootKey, $rootCert): CACertificate
     {
-        $intKey = openssl_pkey_new([
-            'private_key_bits' => 4096,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
+        $intKey = openssl_pkey_new(
+                [
+                    'private_key_bits' => 4096,
+                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                ]
+                );
 
         $intCsr = openssl_csr_new(
             [
@@ -383,7 +435,7 @@ class CertificateAuthorityService
 
         if ($intCert === false) {
             $this->setDegraded();
-            throw new \RuntimeException('Failed to sign intermediate CA: ' . openssl_error_string());
+            throw new \RuntimeException('Failed to sign intermediate CA: '.openssl_error_string());
         }
 
         openssl_x509_export($intCert, $intCertPem);
@@ -395,7 +447,7 @@ class CertificateAuthorityService
         $entity->setCertificate($intCertPem);
         $entity->setPrivateKey($this->crypto->encrypt($intKeyPem));
         $entity->setCreatedAt(new \DateTime());
-        $entity->setExpiresAt(new \DateTime('+' . self::INTERMEDIATE_LIFETIME_DAYS . ' days'));
+        $entity->setExpiresAt(new \DateTime('+'.self::INTERMEDIATE_LIFETIME_DAYS.' days'));
         $entity->setIsActive(true);
 
         $this->caCertificateMapper->insert($entity);
@@ -410,14 +462,14 @@ class CertificateAuthorityService
      */
     private function resignAllActiveSuites(): int
     {
-        $intermediate = $this->caCertificateMapper->findActiveIntermediate();
-        $intermediateKey = openssl_pkey_get_private(
+        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
+        $intermediateKey  = openssl_pkey_get_private(
             $this->crypto->decrypt($intermediate->getPrivateKey())
         );
         $intermediateCert = $intermediate->getCertificate();
 
         $offset = 0;
-        $total = 0;
+        $total  = 0;
 
         do {
             $suites = $this->encryptionSuiteMapper->findAllActiveWithLimit(self::RESIGN_BATCH_SIZE, $offset);
@@ -434,7 +486,7 @@ class CertificateAuthorityService
                     continue;
                 }
 
-                $csr = openssl_csr_new(
+                $csr     = openssl_csr_new(
                     ['commonName' => 'Doriath User Certificate'],
                     $pubKey,
                     ['digest_alg' => 'sha256']
@@ -457,7 +509,7 @@ class CertificateAuthorityService
                 $suite->setCertificate($newCertPem);
                 $this->encryptionSuiteMapper->update($suite);
                 $total++;
-            }
+            }//end foreach
 
             $offset += self::RESIGN_BATCH_SIZE;
         } while (count($suites) === self::RESIGN_BATCH_SIZE);
@@ -465,6 +517,11 @@ class CertificateAuthorityService
         return $total;
     }//end resignAllActiveSuites()
 
+    /**
+     * Set the CA status to degraded.
+     *
+     * @return void
+     */
     private function setDegraded(): void
     {
         $this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'degraded');

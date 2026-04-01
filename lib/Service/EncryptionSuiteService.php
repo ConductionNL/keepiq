@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Encryption Suite Service
+ *
+ * Business logic for EncryptionSuite lifecycle: create, revoke, reinstate.
+ *
+ * @category Service
+ * @package  OCA\Doriath\Service
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
@@ -17,6 +34,16 @@ use Ramsey\Uuid\Uuid;
  */
 class EncryptionSuiteService
 {
+    /**
+     * Constructor for EncryptionSuiteService.
+     *
+     * @param EncryptionSuiteMapper       $mapper    The encryption suite mapper
+     * @param CertificateAuthorityService $caService The CA service
+     * @param IAppConfig                  $appConfig The app config interface
+     * @param LoggerInterface             $logger    The logger interface
+     *
+     * @return void
+     */
     public function __construct(
         private EncryptionSuiteMapper $mapper,
         private CertificateAuthorityService $caService,
@@ -28,9 +55,9 @@ class EncryptionSuiteService
     /**
      * Create an EncryptionSuite for a user or application.
      *
-     * @param string $ownerType          'user' or 'application'
-     * @param string $ownerId            Nextcloud user ID or Application ID
-     * @param string $publicKeyPem       PEM-encoded public key
+     * @param string $ownerType           'user' or 'application'
+     * @param string $ownerId             Nextcloud user ID or Application ID
+     * @param string $publicKeyPem        PEM-encoded public key
      * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
      *
      * @return EncryptionSuite
@@ -43,7 +70,7 @@ class EncryptionSuiteService
     ): EncryptionSuite {
         $caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
         if ($caStatus !== 'healthy') {
-            throw new \RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: ' . $caStatus . ')');
+            throw new \RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')');
         }
 
         $certificate = $this->caService->signPublicKey($publicKeyPem);
@@ -66,6 +93,12 @@ class EncryptionSuiteService
 
     /**
      * Revoke an EncryptionSuite.
+     *
+     * @param string $id        The suite ID
+     * @param string $reason    The reason for revocation
+     * @param string $revokedBy The user who revoked the suite
+     *
+     * @return EncryptionSuite
      *
      * @throws DoesNotExistException
      */
@@ -92,6 +125,11 @@ class EncryptionSuiteService
     /**
      * Reinstate a revoked EncryptionSuite. Re-signs the public key with the active intermediate.
      *
+     * @param string $id           The suite ID
+     * @param string $reinstatedBy The user who reinstated the suite
+     *
+     * @return EncryptionSuite
+     *
      * @throws DoesNotExistException
      */
     public function reinstateSuite(string $id, string $reinstatedBy): EncryptionSuite
@@ -100,7 +138,7 @@ class EncryptionSuiteService
 
         if ($suite->getStatus() !== 'revoked') {
             throw new \InvalidArgumentException(
-                'Only revoked suites can be reinstated (current status: ' . $suite->getStatus() . ')'
+                'Only revoked suites can be reinstated (current status: '.$suite->getStatus().')'
             );
         }
 
@@ -128,6 +166,11 @@ class EncryptionSuiteService
     /**
      * Get the active EncryptionSuite for an owner.
      *
+     * @param string $ownerType The owner type
+     * @param string $ownerId   The owner ID
+     *
+     * @return EncryptionSuite
+     *
      * @throws DoesNotExistException
      */
     public function getActiveSuite(string $ownerType, string $ownerId): EncryptionSuite
@@ -138,6 +181,10 @@ class EncryptionSuiteService
     /**
      * Get an EncryptionSuite by ID.
      *
+     * @param string $id The suite ID
+     *
+     * @return EncryptionSuite
+     *
      * @throws DoesNotExistException
      */
     public function getSuite(string $id): EncryptionSuite
@@ -147,6 +194,9 @@ class EncryptionSuiteService
 
     /**
      * Get all EncryptionSuites for an owner.
+     *
+     * @param string $ownerType The owner type
+     * @param string $ownerId   The owner ID
      *
      * @return EncryptionSuite[]
      */

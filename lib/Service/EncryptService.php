@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Encrypt Service
+ *
+ * Stateless encryption service for RSA-OAEP and AES-256-GCM operations.
+ *
+ * @category Service
+ * @package  OCA\Doriath\Service
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
@@ -15,19 +32,19 @@ namespace OCA\Doriath\Service;
  */
 class EncryptService
 {
-    private const ENVELOPE_VERSION = 1;
-    private const RSA_CHUNK_SIZE = 446;
-    private const RSA_BLOCK_SIZE = 512;
-    private const AES_SALT_LENGTH = 16;
-    private const AES_IV_LENGTH = 12;
-    private const AES_TAG_LENGTH = 16;
+    private const ENVELOPE_VERSION  = 1;
+    private const RSA_CHUNK_SIZE    = 446;
+    private const RSA_BLOCK_SIZE    = 512;
+    private const AES_SALT_LENGTH   = 16;
+    private const AES_IV_LENGTH     = 12;
+    private const AES_TAG_LENGTH    = 16;
     private const PBKDF2_ITERATIONS = 600000;
 
     /**
      * Encrypt plaintext with an RSA public key using OAEP-SHA256 with chunking.
      *
-     * @param string $plaintext     The data to encrypt
-     * @param string $publicKeyPem  PEM-encoded public key or certificate
+     * @param string $plaintext    The data to encrypt
+     * @param string $publicKeyPem PEM-encoded public key or certificate
      *
      * @return string Base64-encoded ciphertext: [4-byte chunk count][512-byte blocks...]
      */
@@ -44,11 +61,11 @@ class EncryptService
         }
 
         $chunkCount = count($chunks);
-        $result = pack('N', $chunkCount);
+        $result     = pack('N', $chunkCount);
 
         foreach ($chunks as $chunk) {
             $encrypted = '';
-            $success = openssl_public_encrypt(
+            $success   = openssl_public_encrypt(
                 $chunk,
                 $encrypted,
                 $publicKey,
@@ -56,17 +73,17 @@ class EncryptService
             );
 
             if ($success === false) {
-                throw new \RuntimeException('RSA encryption failed: ' . openssl_error_string());
+                throw new \RuntimeException('RSA encryption failed: '.openssl_error_string());
             }
 
             if (strlen($encrypted) !== self::RSA_BLOCK_SIZE) {
                 throw new \RuntimeException(
-                    'Unexpected RSA block size: ' . strlen($encrypted) . ' (expected ' . self::RSA_BLOCK_SIZE . ')'
+                    'Unexpected RSA block size: '.strlen($encrypted).' (expected '.self::RSA_BLOCK_SIZE.')'
                 );
             }
 
             $result .= $encrypted;
-        }
+        }//end foreach
 
         return base64_encode($result);
     }//end rsaEncrypt()
@@ -81,7 +98,7 @@ class EncryptService
      */
     public function aesEncrypt(string $plaintext, string $key): string
     {
-        $iv = random_bytes(self::AES_IV_LENGTH);
+        $iv  = random_bytes(self::AES_IV_LENGTH);
         $tag = '';
 
         $ciphertext = openssl_encrypt(
@@ -96,16 +113,16 @@ class EncryptService
         );
 
         if ($ciphertext === false) {
-            throw new \RuntimeException('AES-256-GCM encryption failed: ' . openssl_error_string());
+            throw new \RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
         }
 
         // Envelope: version(4) + salt(16) + IV(12) + ciphertext + tag(16)
         // Salt is empty here — use encryptPrivateKey() for PBKDF2-derived keys.
         $envelope = pack('N', self::ENVELOPE_VERSION)
-            . str_repeat("\0", self::AES_SALT_LENGTH)
-            . $iv
-            . $ciphertext
-            . $tag;
+            .str_repeat("\0", self::AES_SALT_LENGTH)
+            .$iv
+            .$ciphertext
+            .$tag;
 
         return base64_encode($envelope);
     }//end aesEncrypt()
@@ -121,9 +138,9 @@ class EncryptService
     public function encryptPrivateKey(string $pem, string $password): string
     {
         $salt = random_bytes(self::AES_SALT_LENGTH);
-        $key = $this->deriveKey($password, $salt);
+        $key  = $this->deriveKey(password: $password, salt: $salt);
 
-        $iv = random_bytes(self::AES_IV_LENGTH);
+        $iv  = random_bytes(self::AES_IV_LENGTH);
         $tag = '';
 
         $ciphertext = openssl_encrypt(
@@ -138,14 +155,14 @@ class EncryptService
         );
 
         if ($ciphertext === false) {
-            throw new \RuntimeException('AES-256-GCM encryption failed: ' . openssl_error_string());
+            throw new \RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
         }
 
         $envelope = pack('N', self::ENVELOPE_VERSION)
-            . $salt
-            . $iv
-            . $ciphertext
-            . $tag;
+            .$salt
+            .$iv
+            .$ciphertext
+            .$tag;
 
         return base64_encode($envelope);
     }//end encryptPrivateKey()
