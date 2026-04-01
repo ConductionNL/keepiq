@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Decrypt Service
+ *
+ * Stateless decryption service for RSA-OAEP and AES-256-GCM operations.
+ *
+ * @category Service
+ * @package  OCA\Doriath\Service
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
@@ -17,11 +34,11 @@ use OCA\Doriath\Exception\DecryptionException;
  */
 class DecryptService
 {
-    private const ENVELOPE_VERSION = 1;
-    private const RSA_BLOCK_SIZE = 512;
-    private const AES_SALT_LENGTH = 16;
-    private const AES_IV_LENGTH = 12;
-    private const AES_TAG_LENGTH = 16;
+    private const ENVELOPE_VERSION  = 1;
+    private const RSA_BLOCK_SIZE    = 512;
+    private const AES_SALT_LENGTH   = 16;
+    private const AES_IV_LENGTH     = 12;
+    private const AES_TAG_LENGTH    = 16;
     private const PBKDF2_ITERATIONS = 600000;
 
     /**
@@ -38,27 +55,27 @@ class DecryptService
     {
         $raw = base64_decode($ciphertext, true);
         if ($raw === false || strlen($raw) < 4) {
-            throw new DecryptionException('Invalid RSA ciphertext format');
+            throw new DecryptionException(message:'Invalid RSA ciphertext format');
         }
 
         $privateKey = openssl_pkey_get_private($privateKeyPem);
         if ($privateKey === false) {
-            throw new DecryptionException('Invalid private key PEM');
+            throw new DecryptionException(message:'Invalid private key PEM');
         }
 
-        $chunkCount = unpack('N', substr($raw, 0, 4))[1];
+        $chunkCount     = unpack('N', substr($raw, 0, 4))[1];
         $expectedLength = 4 + ($chunkCount * self::RSA_BLOCK_SIZE);
         if (strlen($raw) !== $expectedLength) {
             throw new DecryptionException(
-                "RSA ciphertext length mismatch: expected {$expectedLength}, got " . strlen($raw)
+                message: "RSA ciphertext length mismatch: expected {$expectedLength}, got ".strlen($raw)
             );
         }
 
         $plaintext = '';
         for ($i = 0; $i < $chunkCount; $i++) {
-            $block = substr($raw, 4 + ($i * self::RSA_BLOCK_SIZE), self::RSA_BLOCK_SIZE);
+            $block     = substr($raw, 4 + ($i * self::RSA_BLOCK_SIZE), self::RSA_BLOCK_SIZE);
             $decrypted = '';
-            $success = openssl_private_decrypt(
+            $success   = openssl_private_decrypt(
                 $block,
                 $decrypted,
                 $privateKey,
@@ -66,7 +83,7 @@ class DecryptService
             );
 
             if ($success === false) {
-                throw new DecryptionException('RSA decryption failed for chunk ' . $i . ': ' . openssl_error_string());
+                throw new DecryptionException(message:'RSA decryption failed for chunk '.$i.': '.openssl_error_string());
             }
 
             $plaintext .= $decrypted;
@@ -89,25 +106,25 @@ class DecryptService
     {
         $raw = base64_decode($envelope, true);
         if ($raw === false) {
-            throw new DecryptionException('Invalid base64 envelope');
+            throw new DecryptionException(message:'Invalid base64 envelope');
         }
 
         $minLength = 4 + self::AES_SALT_LENGTH + self::AES_IV_LENGTH + self::AES_TAG_LENGTH;
         if (strlen($raw) < $minLength) {
-            throw new DecryptionException('Envelope too short');
+            throw new DecryptionException(message:'Envelope too short');
         }
 
         $version = unpack('N', substr($raw, 0, 4))[1];
         if ($version !== self::ENVELOPE_VERSION) {
-            throw new DecryptionException("Unsupported envelope version: {$version}");
+            throw new DecryptionException(message:"Unsupported envelope version: {$version}");
         }
 
-        $offset = 4 + self::AES_SALT_LENGTH;
-        $iv = substr($raw, $offset, self::AES_IV_LENGTH);
+        $offset  = 4 + self::AES_SALT_LENGTH;
+        $iv      = substr($raw, $offset, self::AES_IV_LENGTH);
         $offset += self::AES_IV_LENGTH;
 
         $ciphertext = substr($raw, $offset, -self::AES_TAG_LENGTH);
-        $tag = substr($raw, -self::AES_TAG_LENGTH);
+        $tag        = substr($raw, -self::AES_TAG_LENGTH);
 
         $plaintext = openssl_decrypt(
             $ciphertext,
@@ -119,7 +136,7 @@ class DecryptService
         );
 
         if ($plaintext === false) {
-            throw new DecryptionException('AES-256-GCM decryption failed (authentication tag mismatch)');
+            throw new DecryptionException(message:'AES-256-GCM decryption failed (authentication tag mismatch)');
         }
 
         return $plaintext;
@@ -139,28 +156,28 @@ class DecryptService
     {
         $raw = base64_decode($blob, true);
         if ($raw === false) {
-            throw new DecryptionException('Invalid base64 envelope');
+            throw new DecryptionException(message:'Invalid base64 envelope');
         }
 
         $minLength = 4 + self::AES_SALT_LENGTH + self::AES_IV_LENGTH + self::AES_TAG_LENGTH;
         if (strlen($raw) < $minLength) {
-            throw new DecryptionException('Envelope too short');
+            throw new DecryptionException(message:'Envelope too short');
         }
 
         $version = unpack('N', substr($raw, 0, 4))[1];
         if ($version !== self::ENVELOPE_VERSION) {
-            throw new DecryptionException("Unsupported envelope version: {$version}");
+            throw new DecryptionException(message:"Unsupported envelope version: {$version}");
         }
 
         $salt = substr($raw, 4, self::AES_SALT_LENGTH);
-        $key = $this->deriveKey($password, $salt);
+        $key  = $this->deriveKey(password: $password, salt: $salt);
 
-        $offset = 4 + self::AES_SALT_LENGTH;
-        $iv = substr($raw, $offset, self::AES_IV_LENGTH);
+        $offset  = 4 + self::AES_SALT_LENGTH;
+        $iv      = substr($raw, $offset, self::AES_IV_LENGTH);
         $offset += self::AES_IV_LENGTH;
 
         $ciphertext = substr($raw, $offset, -self::AES_TAG_LENGTH);
-        $tag = substr($raw, -self::AES_TAG_LENGTH);
+        $tag        = substr($raw, -self::AES_TAG_LENGTH);
 
         $plaintext = openssl_decrypt(
             $ciphertext,
@@ -172,7 +189,7 @@ class DecryptService
         );
 
         if ($plaintext === false) {
-            throw new DecryptionException('Private key decryption failed (wrong password or corrupted blob)');
+            throw new DecryptionException(message:'Private key decryption failed (wrong password or corrupted blob)');
         }
 
         return $plaintext;

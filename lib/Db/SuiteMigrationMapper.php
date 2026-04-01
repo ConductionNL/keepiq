@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Suite Migration Mapper
+ *
+ * Database mapper for suite migration entities.
+ *
+ * @category Db
+ * @package  OCA\Doriath\Db
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
@@ -10,17 +27,30 @@ use OCP\AppFramework\Db\QBMapper;
 use OCP\IDBConnection;
 
 /**
+ * Mapper for SuiteMigration entities.
+ *
  * @extends QBMapper<SuiteMigration>
  */
 class SuiteMigrationMapper extends QBMapper
 {
+    /**
+     * Constructor for SuiteMigrationMapper.
+     *
+     * @param IDBConnection $db The database connection
+     *
+     * @return void
+     */
     public function __construct(IDBConnection $db)
     {
-        parent::__construct($db, 'doriath_suite_migrations', SuiteMigration::class);
+        parent::__construct(db: $db, tableName: 'doriath_suite_migrations', entityClass: SuiteMigration::class);
     }//end __construct()
 
     /**
      * Find an in-progress migration for a given owner by checking suites.
+     *
+     * @param string $oldSuiteId The old suite ID to find migration for
+     *
+     * @return SuiteMigration
      *
      * @throws DoesNotExistException
      * @throws MultipleObjectsReturnedException
@@ -33,10 +63,14 @@ class SuiteMigrationMapper extends QBMapper
             ->where($qb->expr()->eq('old_suite_id', $qb->createNamedParameter($oldSuiteId)))
             ->andWhere($qb->expr()->eq('status', $qb->createNamedParameter('in_progress')));
 
-        return $this->findEntity($qb);
+        return $this->findEntity(query: $qb);
     }//end findInProgressByOldSuiteId()
 
     /**
+     * Find all migrations related to a suite ID.
+     *
+     * @param string $suiteId The suite ID to search for
+     *
      * @return SuiteMigration[]
      */
     public function findBySuiteId(string $suiteId): array
@@ -51,16 +85,20 @@ class SuiteMigrationMapper extends QBMapper
                 )
             );
 
-        return $this->findEntities($qb);
+        return $this->findEntities(query: $qb);
     }//end findBySuiteId()
 
     /**
      * Check if any in-progress migration exists for the given suite IDs.
+     *
+     * @param string $oldSuiteId The old suite ID to check
+     *
+     * @return bool
      */
     public function hasInProgress(string $oldSuiteId): bool
     {
         try {
-            $this->findInProgressByOldSuiteId($oldSuiteId);
+            $this->findInProgressByOldSuiteId(oldSuiteId: $oldSuiteId);
             return true;
         } catch (DoesNotExistException) {
             return false;
