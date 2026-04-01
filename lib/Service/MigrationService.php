@@ -21,12 +21,12 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use DateTime;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Db\SuiteMigrationMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 
 /**
  * Tracks compromise recovery migrations (suite to suite).
@@ -60,11 +60,11 @@ class MigrationService
     public function initiateCompromiseRecovery(string $oldSuiteId, string $newSuiteId): SuiteMigration
     {
         $migration = new SuiteMigration();
-        $migration->setId(Uuid::uuid4()->toString());
+        $migration->setId($this->generateUuid());
         $migration->setOldSuiteId($oldSuiteId);
         $migration->setNewSuiteId($newSuiteId);
         $migration->setStatus('in_progress');
-        $migration->setStartedAt(new \DateTime());
+        $migration->setStartedAt(new DateTime());
 
         $this->mapper->insert($migration);
 
@@ -80,18 +80,21 @@ class MigrationService
      * @param bool   $hasErrors   Whether the migration had errors
      *
      * @return SuiteMigration
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function completeMigration(string $migrationId, bool $hasErrors=false): SuiteMigration
     {
         $migration = $this->mapper->findById($migrationId);
 
+        $status = 'completed';
         if ($hasErrors === true) {
-            $migration->setStatus('completed_with_errors');
-        } else {
-            $migration->setStatus('completed');
+            $status = 'completed_with_errors';
         }
 
-        $migration->setCompletedAt(new \DateTime());
+        $migration->setStatus($status);
+
+        $migration->setCompletedAt(new DateTime());
 
         $this->mapper->update($migration);
 
@@ -150,4 +153,18 @@ class MigrationService
             return false;
         }
     }//end isWriteLocked()
+
+    /**
+     * Generate a version-4 UUID string.
+     *
+     * @return string
+     */
+    private function generateUuid(): string
+    {
+        $data    = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }//end generateUuid()
 }//end class

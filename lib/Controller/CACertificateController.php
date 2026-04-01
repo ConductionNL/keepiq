@@ -21,12 +21,14 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
 
+use Exception;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\CertificateAuthorityService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
+use RuntimeException;
 
 /**
  * Admin-only controller for CA management.
@@ -68,7 +70,7 @@ class CACertificateController extends OCSController
         try {
             $this->caService->retryBootstrap();
             return new JSONResponse($this->caService->getStatus());
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -92,7 +94,7 @@ class CACertificateController extends OCSController
                         'status'        => $this->caService->getStatus(),
                     ]
                     );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -116,7 +118,7 @@ class CACertificateController extends OCSController
                         'status'        => $this->caService->getStatus(),
                     ]
                     );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR

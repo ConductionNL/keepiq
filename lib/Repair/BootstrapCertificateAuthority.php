@@ -25,6 +25,7 @@ use OCA\Doriath\Service\CertificateAuthorityService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Bootstraps the private CA (root + intermediate) on first install.
@@ -70,7 +71,7 @@ class BootstrapCertificateAuthority implements IRepairStep
         try {
             $this->caService->bootstrap();
             $output->info('Certificate Authority bootstrapped successfully');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $output->warning('CA bootstrap failed: '.$e->getMessage());
             $this->logger->error(
                     'Doriath CA bootstrap failed',

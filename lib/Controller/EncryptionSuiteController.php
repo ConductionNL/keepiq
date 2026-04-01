@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
 
+use Exception;
+use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\MigrationService;
@@ -29,6 +31,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 use OCP\IUserSession;
+use RuntimeException;
 
 /**
  * API controller for EncryptionSuite CRUD operations.
@@ -68,7 +71,7 @@ class EncryptionSuiteController extends OCSController
 
         return new JSONResponse(
                 array_map(
-            static fn ($s) => $s->jsonSerialize(),
+            static fn ($suite) => $suite->jsonSerialize(),
             $suites
         )
                 );
@@ -89,7 +92,7 @@ class EncryptionSuiteController extends OCSController
             $suite = $this->suiteService->getSuite($id);
             $this->validateOwnership(suite: $suite);
             return new JSONResponse($suite->jsonSerialize());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_NOT_FOUND
@@ -121,7 +124,7 @@ class EncryptionSuiteController extends OCSController
                 $encryptedPrivateKey
             );
             return new JSONResponse($suite->jsonSerialize(), Http::STATUS_CREATED);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_SERVICE_UNAVAILABLE
@@ -147,7 +150,7 @@ class EncryptionSuiteController extends OCSController
 
             $suite->setPrivateKey($encryptedPrivateKey);
             return new JSONResponse($suite->jsonSerialize());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_FORBIDDEN
@@ -172,7 +175,7 @@ class EncryptionSuiteController extends OCSController
         try {
             $suite = $this->suiteService->revokeSuite($id, $reason, $userId);
             return new JSONResponse($suite->jsonSerialize());
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_BAD_REQUEST
@@ -194,7 +197,7 @@ class EncryptionSuiteController extends OCSController
         try {
             $suite = $this->suiteService->reinstateSuite($id, $userId);
             return new JSONResponse($suite->jsonSerialize());
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_BAD_REQUEST
@@ -234,7 +237,7 @@ class EncryptionSuiteController extends OCSController
                     ],
                     Http::STATUS_CREATED
                     );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JSONResponse(
                 ['message' => $e->getMessage()],
                 Http::STATUS_INTERNAL_SERVER_ERROR
@@ -253,7 +256,7 @@ class EncryptionSuiteController extends OCSController
     {
         $userId = $this->userSession->getUser()->getUID();
         if ($suite->getOwnerType() === 'user' && $suite->getOwnerId() !== $userId) {
-            throw new \RuntimeException('Access denied: suite belongs to another user');
+            throw new RuntimeException('Access denied: suite belongs to another user');
         }
     }//end validateOwnership()
 }//end class

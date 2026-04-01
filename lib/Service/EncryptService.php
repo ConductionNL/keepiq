@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use InvalidArgumentException;
+use RuntimeException;
+
 /**
  * Stateless encryption service. No database access, no entity awareness.
  *
@@ -52,11 +55,11 @@ class EncryptService
     {
         $publicKey = openssl_pkey_get_public($publicKeyPem);
         if ($publicKey === false) {
-            throw new \InvalidArgumentException('Invalid public key PEM');
+            throw new InvalidArgumentException('Invalid public key PEM');
         }
 
         $chunks = str_split($plaintext, self::RSA_CHUNK_SIZE);
-        if ($chunks === false || count($chunks) === 0) {
+        if (empty($chunks) === true) {
             $chunks = [''];
         }
 
@@ -73,11 +76,11 @@ class EncryptService
             );
 
             if ($success === false) {
-                throw new \RuntimeException('RSA encryption failed: '.openssl_error_string());
+                throw new RuntimeException('RSA encryption failed: '.openssl_error_string());
             }
 
             if (strlen($encrypted) !== self::RSA_BLOCK_SIZE) {
-                throw new \RuntimeException(
+                throw new RuntimeException(
                     'Unexpected RSA block size: '.strlen($encrypted).' (expected '.self::RSA_BLOCK_SIZE.')'
                 );
             }
@@ -98,29 +101,29 @@ class EncryptService
      */
     public function aesEncrypt(string $plaintext, string $key): string
     {
-        $iv  = random_bytes(self::AES_IV_LENGTH);
-        $tag = '';
+        $ivector = random_bytes(self::AES_IV_LENGTH);
+        $tag     = '';
 
         $ciphertext = openssl_encrypt(
             $plaintext,
             'aes-256-gcm',
             $key,
             OPENSSL_RAW_DATA,
-            $iv,
+            $ivector,
             $tag,
             '',
             self::AES_TAG_LENGTH
         );
 
         if ($ciphertext === false) {
-            throw new \RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
+            throw new RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
         }
 
         // Envelope: version(4) + salt(16) + IV(12) + ciphertext + tag(16)
         // Salt is empty here — use encryptPrivateKey() for PBKDF2-derived keys.
         $envelope = pack('N', self::ENVELOPE_VERSION)
             .str_repeat("\0", self::AES_SALT_LENGTH)
-            .$iv
+            .$ivector
             .$ciphertext
             .$tag;
 
@@ -140,27 +143,27 @@ class EncryptService
         $salt = random_bytes(self::AES_SALT_LENGTH);
         $key  = $this->deriveKey(password: $password, salt: $salt);
 
-        $iv  = random_bytes(self::AES_IV_LENGTH);
-        $tag = '';
+        $ivector = random_bytes(self::AES_IV_LENGTH);
+        $tag     = '';
 
         $ciphertext = openssl_encrypt(
             $pem,
             'aes-256-gcm',
             $key,
             OPENSSL_RAW_DATA,
-            $iv,
+            $ivector,
             $tag,
             '',
             self::AES_TAG_LENGTH
         );
 
         if ($ciphertext === false) {
-            throw new \RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
+            throw new RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
         }
 
         $envelope = pack('N', self::ENVELOPE_VERSION)
             .$salt
-            .$iv
+            .$ivector
             .$ciphertext
             .$tag;
 

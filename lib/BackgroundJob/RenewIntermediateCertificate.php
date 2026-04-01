@@ -21,11 +21,12 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\BackgroundJob;
 
+use DateTime;
+use Exception;
 use OCA\Doriath\Db\CACertificateMapper;
 use OCA\Doriath\Service\CertificateAuthorityService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
-use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,11 +37,10 @@ class RenewIntermediateCertificate extends TimedJob
     /**
      * Constructor for RenewIntermediateCertificate.
      *
-     * @param ITimeFactory                $time                The time factory
-     * @param CACertificateMapper         $caCertMapper        The CA certificate mapper
-     * @param CertificateAuthorityService $caService           The CA service
-     * @param INotificationManager        $notificationManager The notification manager
-     * @param LoggerInterface             $logger              The logger interface
+     * @param ITimeFactory                $time         The time factory
+     * @param CACertificateMapper         $caCertMapper The CA certificate mapper
+     * @param CertificateAuthorityService $caService    The CA service
+     * @param LoggerInterface             $logger       The logger interface
      *
      * @return void
      */
@@ -48,11 +48,10 @@ class RenewIntermediateCertificate extends TimedJob
         ITimeFactory $time,
         private CACertificateMapper $caCertMapper,
         private CertificateAuthorityService $caService,
-        private INotificationManager $notificationManager,
         private LoggerInterface $logger,
     ) {
         parent::__construct(time: $time);
-        $this->setInterval(interval: 86400);
+        $this->setInterval(seconds: 86400);
     }//end __construct()
 
     /**
@@ -61,12 +60,14 @@ class RenewIntermediateCertificate extends TimedJob
      * @param mixed $argument The job argument
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     protected function run($argument): void
     {
         try {
             $intermediate = $this->caCertMapper->findActiveIntermediate();
-        } catch (\Exception) {
+        } catch (Exception) {
             $this->logger->warning('Doriath: No active intermediate found, skipping renewal check');
             return;
         }
@@ -76,7 +77,7 @@ class RenewIntermediateCertificate extends TimedJob
             return;
         }
 
-        $daysUntilExpiry = (int) $expiresAt->diff(new \DateTime())->format('%r%a');
+        $daysUntilExpiry = (int) $expiresAt->diff(new DateTime())->format('%r%a');
         if ($daysUntilExpiry > 30) {
             return;
         }
@@ -86,7 +87,7 @@ class RenewIntermediateCertificate extends TimedJob
         try {
             $count = $this->caService->renewIntermediate(forced: false);
             $this->logger->info("Doriath: Intermediate auto-renewed, {$count} suites re-signed");
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error(
                     'Doriath: Intermediate auto-renewal failed',
                     [
