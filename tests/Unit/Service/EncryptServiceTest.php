@@ -12,8 +12,8 @@ class EncryptServiceTest extends TestCase
 {
     private EncryptService $encrypt;
     private DecryptService $decrypt;
-    private string $publicKeyPem;
-    private string $privateKeyPem;
+    private string $publicKeyPem = '';
+    private string $privateKeyPem = '';
 
     protected function setUp(): void
     {
@@ -120,5 +120,124 @@ class EncryptServiceTest extends TestCase
 
         $this->assertEquals($key1, $key2);
         $this->assertEquals(32, strlen($key1));
+    }
+
+    public function testDeriveKeyDifferentPasswordsProduceDifferentKeys(): void
+    {
+        $salt = random_bytes(16);
+        $key1 = $this->encrypt->deriveKey('password1', $salt);
+        $key2 = $this->encrypt->deriveKey('password2', $salt);
+
+        $this->assertNotEquals($key1, $key2);
+    }
+
+    public function testRsaEncryptEmptyString(): void
+    {
+        $ciphertext = $this->encrypt->rsaEncrypt('', $this->publicKeyPem);
+        $decrypted = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
+
+        $this->assertSame('', $decrypted);
+    }
+
+    public function testRsaEncryptExactlyOneChunkBoundary(): void
+    {
+        // Exactly 446 bytes = exactly 1 chunk.
+        $plaintext = str_repeat('B', 446);
+        $ciphertext = $this->encrypt->rsaEncrypt($plaintext, $this->publicKeyPem);
+        $decrypted = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
+
+        $this->assertSame($plaintext, $decrypted);
+    }
+
+    public function testRsaDecryptInvalidBase64(): void
+    {
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Invalid RSA ciphertext format');
+        $this->decrypt->rsaDecrypt('!!!not-base64!!!', $this->privateKeyPem);
+    }
+
+    public function testRsaDecryptTooShortPayload(): void
+    {
+        // Valid base64 but too short (less than 4 bytes).
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Invalid RSA ciphertext format');
+        $this->decrypt->rsaDecrypt(base64_encode('ab'), $this->privateKeyPem);
+    }
+
+    public function testRsaDecryptLengthMismatch(): void
+    {
+        // Header says 2 chunks but only provide data for 1.
+        $header = pack('N', 2);
+        $fakeBlock = str_repeat("\0", 512);
+        $raw = $header . $fakeBlock;
+
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('length mismatch');
+        $this->decrypt->rsaDecrypt(base64_encode($raw), $this->privateKeyPem);
+    }
+
+    public function testRsaDecryptInvalidPrivateKey(): void
+    {
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Invalid private key PEM');
+        $this->decrypt->rsaDecrypt(base64_encode(pack('N', 0)), 'not-a-key');
+    }
+
+    public function testAesDecryptInvalidBase64(): void
+    {
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Invalid base64 envelope');
+        $this->decrypt->aesDecrypt('!!!invalid-base64!!!', random_bytes(32));
+    }
+
+    public function testAesDecryptEnvelopeTooShort(): void
+    {
+        // Minimum length is 4 + 16 + 12 + 16 = 48. Send less.
+        $short = base64_encode(str_repeat("\0", 10));
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Envelope too short');
+        $this->decrypt->aesDecrypt($short, random_bytes(32));
+    }
+
+    public function testAesDecryptWrongVersionByte(): void
+    {
+        // Build an envelope with version 99 instead of 1.
+        $envelope = pack('N', 99)
+            . str_repeat("\0", 16)  // salt
+            . random_bytes(12)      // IV
+            . random_bytes(32)      // ciphertext
+            . random_bytes(16);     // tag
+
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Unsupported envelope version: 99');
+        $this->decrypt->aesDecrypt(base64_encode($envelope), random_bytes(32));
+    }
+
+    public function testDecryptPrivateKeyInvalidEnvelope(): void
+    {
+        $short = base64_encode(str_repeat("\0", 10));
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Envelope too short');
+        $this->decrypt->decryptPrivateKey($short, 'password');
+    }
+
+    public function testDecryptPrivateKeyWrongVersion(): void
+    {
+        $envelope = pack('N', 42)
+            . random_bytes(16)  // salt
+            . random_bytes(12)  // IV
+            . random_bytes(32)  // ciphertext
+            . random_bytes(16); // tag
+
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Unsupported envelope version: 42');
+        $this->decrypt->decryptPrivateKey(base64_encode($envelope), 'password');
+    }
+
+    public function testDecryptPrivateKeyInvalidBase64(): void
+    {
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->expectExceptionMessage('Invalid base64 envelope');
+        $this->decrypt->decryptPrivateKey('!!!bad-base64!!!', 'password');
     }
 }
