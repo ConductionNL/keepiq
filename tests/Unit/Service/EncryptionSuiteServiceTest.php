@@ -127,4 +127,64 @@ class EncryptionSuiteServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->service->reinstateSuite('suite-1', 'admin');
     }
+
+    public function testReinstateActiveSuiteFails(): void
+    {
+        $suite = new EncryptionSuite();
+        $suite->setId('suite-1');
+        $suite->setStatus('active');
+
+        $this->mapper->method('findById')->willReturn($suite);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Only revoked/');
+        $this->service->reinstateSuite('suite-1', 'admin');
+    }
+
+    public function testGetSuiteDelegatesToMapper(): void
+    {
+        $suite = new EncryptionSuite();
+        $suite->setId('suite-1');
+
+        $this->mapper->method('findById')
+            ->with('suite-1')
+            ->willReturn($suite);
+
+        $result = $this->service->getSuite('suite-1');
+
+        $this->assertSame($suite, $result);
+    }
+
+    public function testGetActiveSuiteDelegatesToMapper(): void
+    {
+        $suite = new EncryptionSuite();
+        $suite->setId('suite-1');
+        $suite->setStatus('active');
+
+        $this->mapper->method('findActiveByOwner')
+            ->with('user', 'testuser')
+            ->willReturn($suite);
+
+        $result = $this->service->getActiveSuite('user', 'testuser');
+
+        $this->assertSame($suite, $result);
+    }
+
+    public function testGetSuitesByOwnerDelegatesToMapper(): void
+    {
+        $suite1 = new EncryptionSuite();
+        $suite1->setId('suite-1');
+        $suite2 = new EncryptionSuite();
+        $suite2->setId('suite-2');
+
+        $this->mapper->method('findByOwner')
+            ->with('user', 'testuser')
+            ->willReturn([$suite1, $suite2]);
+
+        $result = $this->service->getSuitesByOwner('user', 'testuser');
+
+        $this->assertCount(2, $result);
+        $this->assertSame('suite-1', $result[0]->getId());
+        $this->assertSame('suite-2', $result[1]->getId());
+    }
 }
