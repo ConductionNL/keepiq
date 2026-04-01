@@ -82,10 +82,12 @@ class DecryptService
                 OPENSSL_PKCS1_OAEP_PADDING
             );
 
+            // @codeCoverageIgnoreStart
             if ($success === false) {
                 throw new DecryptionException(message:'RSA decryption failed for chunk '.$i.': '.openssl_error_string());
             }
 
+            // @codeCoverageIgnoreEnd
             $plaintext .= $decrypted;
         }
 

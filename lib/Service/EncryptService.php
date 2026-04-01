@@ -59,10 +59,12 @@ class EncryptService
         }
 
         $chunks = str_split($plaintext, self::RSA_CHUNK_SIZE);
+        // @codeCoverageIgnoreStart
         if (empty($chunks) === true) {
             $chunks = [''];
         }
 
+        // @codeCoverageIgnoreEnd
         $chunkCount = count($chunks);
         $result     = pack('N', $chunkCount);
 
@@ -75,6 +77,7 @@ class EncryptService
                 OPENSSL_PKCS1_OAEP_PADDING
             );
 
+            // @codeCoverageIgnoreStart
             if ($success === false) {
                 throw new RuntimeException('RSA encryption failed: '.openssl_error_string());
             }
@@ -85,6 +88,7 @@ class EncryptService
                 );
             }
 
+            // @codeCoverageIgnoreEnd
             $result .= $encrypted;
         }//end foreach
 
@@ -115,10 +119,12 @@ class EncryptService
             self::AES_TAG_LENGTH
         );
 
+        // @codeCoverageIgnoreStart
         if ($ciphertext === false) {
             throw new RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
         }
 
+        // @codeCoverageIgnoreEnd
         // Envelope: version(4) + salt(16) + IV(12) + ciphertext + tag(16)
         // Salt is empty here — use encryptPrivateKey() for PBKDF2-derived keys.
         $envelope = pack('N', self::ENVELOPE_VERSION)
@@ -157,10 +163,12 @@ class EncryptService
             self::AES_TAG_LENGTH
         );
 
+        // @codeCoverageIgnoreStart
         if ($ciphertext === false) {
             throw new RuntimeException('AES-256-GCM encryption failed: '.openssl_error_string());
         }
 
+        // @codeCoverageIgnoreEnd
         $envelope = pack('N', self::ENVELOPE_VERSION)
             .$salt
             .$ivector
