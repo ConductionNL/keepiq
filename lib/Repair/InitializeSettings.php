@@ -27,6 +27,7 @@ use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Repair step that initializes Doriath configuration via SettingsService.
@@ -110,7 +111,7 @@ class InitializeSettings implements IRepairStep
             $output->warning(
                 'Doriath configuration import issue: '.$message
             );
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $output->warning('Could not auto-configure Doriath: '.$e->getMessage());
             $this->logger->error(
                 'Doriath initialization failed',

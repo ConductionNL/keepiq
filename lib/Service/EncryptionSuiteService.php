@@ -21,14 +21,15 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use DateTime;
+use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
-
+use RuntimeException;
 /**
  * Business logic for EncryptionSuite lifecycle: create, revoke, reinstate.
  */
@@ -70,19 +71,19 @@ class EncryptionSuiteService
     ): EncryptionSuite {
         $caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
         if ($caStatus !== 'healthy') {
-            throw new \RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')');
+            throw new RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')');
         }
 
         $certificate = $this->caService->signPublicKey($publicKeyPem);
 
         $suite = new EncryptionSuite();
-        $suite->setId(Uuid::uuid4()->toString());
+        $suite->setId($this->generateUuid());
         $suite->setOwnerType($ownerType);
         $suite->setOwnerId($ownerId);
         $suite->setCertificate($certificate);
         $suite->setPrivateKey($encryptedPrivateKey);
         $suite->setStatus('active');
-        $suite->setCreatedAt(new \DateTime());
+        $suite->setCreatedAt(new DateTime());
 
         $this->mapper->insert($suite);
 
@@ -107,11 +108,11 @@ class EncryptionSuiteService
         $suite = $this->mapper->findById($id);
 
         if ($suite->getStatus() === 'compromised') {
-            throw new \InvalidArgumentException('Cannot revoke a compromised suite — it has already been replaced');
+            throw new InvalidArgumentException('Cannot revoke a compromised suite — it has already been replaced');
         }
 
         $suite->setStatus('revoked');
-        $suite->setRevokedAt(new \DateTime());
+        $suite->setRevokedAt(new DateTime());
         $suite->setRevokedReason($reason);
         $suite->setRevokedBy($revokedBy);
 
@@ -137,7 +138,7 @@ class EncryptionSuiteService
         $suite = $this->mapper->findById($id);
 
         if ($suite->getStatus() !== 'revoked') {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Only revoked suites can be reinstated (current status: '.$suite->getStatus().')'
             );
         }
@@ -145,15 +146,16 @@ class EncryptionSuiteService
         // Re-sign the existing public key with the active intermediate.
         $publicKey = openssl_pkey_get_public($suite->getCertificate());
         if ($publicKey === false) {
-            throw new \RuntimeException('Could not extract public key from suite certificate');
+            throw new RuntimeException('Could not extract public key from suite certificate');
         }
 
-        openssl_pkey_export_public($publicKey, $publicKeyPem);
+        $details        = openssl_pkey_get_details($publicKey);
+        $publicKeyPem   = $details['key'];
         $newCertificate = $this->caService->signPublicKey($publicKeyPem);
 
         $suite->setCertificate($newCertificate);
         $suite->setStatus('active');
-        $suite->setReinstatedAt(new \DateTime());
+        $suite->setReinstatedAt(new DateTime());
         $suite->setReinstatedBy($reinstatedBy);
 
         $this->mapper->update($suite);
@@ -204,4 +206,18 @@ class EncryptionSuiteService
     {
         return $this->mapper->findByOwner($ownerType, $ownerId);
     }//end getSuitesByOwner()
+
+    /**
+     * Generate a version-4 UUID string.
+     *
+     * @return string
+     */
+    private function generateUuid(): string
+    {
+        $data    = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }//end generateUuid()
 }//end class

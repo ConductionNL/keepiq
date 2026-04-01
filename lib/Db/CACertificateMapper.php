@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -94,7 +95,7 @@ class CACertificateMapper extends QBMapper
     public function findExpiringSoon(int $days): array
     {
         $qb        = $this->db->getQueryBuilder();
-        $threshold = new \DateTime("+{$days} days");
+        $threshold = new DateTime("+{$days} days");
 
         $qb->select('*')
             ->from($this->getTableName())

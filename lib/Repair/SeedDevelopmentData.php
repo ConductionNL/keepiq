@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Repair;
 
+use DateTime;
+use Exception;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Service\CertificateAuthorityService;
@@ -30,7 +32,6 @@ use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 
 /**
  * Development seed data: creates a test user EncryptionSuite with a known master password.
@@ -115,7 +116,7 @@ class SeedDevelopmentData implements IRepairStep
         // Sign the public key with the CA.
         try {
             $certificate = $this->caService->signPublicKey($publicKeyPem);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $output->warning('CA not available for dev seed: '.$e->getMessage());
             return;
         }
@@ -128,17 +129,31 @@ class SeedDevelopmentData implements IRepairStep
 
         // Create the EncryptionSuite.
         $suite = new EncryptionSuite();
-        $suite->setId(Uuid::uuid4()->toString());
+        $suite->setId($this->generateUuid());
         $suite->setOwnerType('user');
         $suite->setOwnerId(self::DEV_USER_ID);
         $suite->setCertificate($certificate);
         $suite->setPrivateKey($encryptedPrivateKey);
         $suite->setStatus('active');
-        $suite->setCreatedAt(new \DateTime());
+        $suite->setCreatedAt(new DateTime());
 
         $this->suiteMapper->insert($suite);
 
         $output->info('Dev EncryptionSuite created for user: '.self::DEV_USER_ID);
         $this->logger->info('Doriath dev seed: EncryptionSuite created with master password: '.self::DEV_MASTER_PASSWORD);
     }//end run()
+
+    /**
+     * Generate a version-4 UUID string.
+     *
+     * @return string
+     */
+    private function generateUuid(): string
+    {
+        $data    = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }//end generateUuid()
 }//end class

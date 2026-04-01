@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use DateTime;
+use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\CACertificate;
 use OCA\Doriath\Db\CACertificateMapper;
@@ -29,7 +31,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
+use RuntimeException;
 
 /**
  * Manages the private Certificate Authority (root + intermediate) and certificate signing.
@@ -43,17 +45,17 @@ class CertificateAuthorityService
     /**
      * Constructor for CertificateAuthorityService.
      *
-     * @param CACertificateMapper   $caCertificateMapper   The CA certificate mapper
-     * @param EncryptionSuiteMapper $encryptionSuiteMapper The encryption suite mapper
-     * @param IAppConfig            $appConfig             The app config interface
-     * @param ICrypto               $crypto                The crypto service
-     * @param LoggerInterface       $logger                The logger interface
+     * @param CACertificateMapper   $caCertificateMapper The CA certificate mapper
+     * @param EncryptionSuiteMapper $suiteMapper         The encryption suite mapper
+     * @param IAppConfig            $appConfig           The app config interface
+     * @param ICrypto               $crypto              The crypto service
+     * @param LoggerInterface       $logger              The logger interface
      *
      * @return void
      */
     public function __construct(
         private CACertificateMapper $caCertificateMapper,
-        private EncryptionSuiteMapper $encryptionSuiteMapper,
+        private EncryptionSuiteMapper $suiteMapper,
         private IAppConfig $appConfig,
         private ICrypto $crypto,
         private LoggerInterface $logger,
@@ -87,7 +89,7 @@ class CertificateAuthorityService
                 );
         if ($rootKey === false) {
             $this->setDegraded();
-            throw new \RuntimeException('Failed to generate root CA key: '.openssl_error_string());
+            throw new RuntimeException('Failed to generate root CA key: '.openssl_error_string());
         }
 
         // Self-sign the root certificate.
@@ -110,7 +112,7 @@ class CertificateAuthorityService
 
         if ($rootCert === false) {
             $this->setDegraded();
-            throw new \RuntimeException('Failed to sign root CA certificate: '.openssl_error_string());
+            throw new RuntimeException('Failed to sign root CA certificate: '.openssl_error_string());
         }
 
         openssl_x509_export($rootCert, $rootCertPem);
@@ -118,12 +120,12 @@ class CertificateAuthorityService
 
         // Store root certificate with encrypted private key.
         $rootEntity = new CACertificate();
-        $rootEntity->setId(Uuid::uuid4()->toString());
+        $rootEntity->setId($this->generateUuid());
         $rootEntity->setType('root');
         $rootEntity->setCertificate($rootCertPem);
         $rootEntity->setPrivateKey($this->crypto->encrypt($rootKeyPem));
-        $rootEntity->setCreatedAt(new \DateTime());
-        $rootEntity->setExpiresAt(new \DateTime('+'.self::ROOT_LIFETIME_DAYS.' days'));
+        $rootEntity->setCreatedAt(new DateTime());
+        $rootEntity->setExpiresAt(new DateTime('+'.self::ROOT_LIFETIME_DAYS.' days'));
         $rootEntity->setIsActive(false);
         $this->caCertificateMapper->insert($rootEntity);
 
@@ -162,7 +164,7 @@ class CertificateAuthorityService
         // Create a CSR from the public key to sign it.
         $tempKey = openssl_pkey_get_public($publicKeyPem);
         if ($tempKey === false) {
-            throw new \InvalidArgumentException('Invalid public key PEM');
+            throw new InvalidArgumentException('Invalid public key PEM');
         }
 
         // We need a private key to create a CSR, but we only have a public key.
@@ -187,7 +189,7 @@ class CertificateAuthorityService
         );
 
         if ($cert === false) {
-            throw new \RuntimeException('Failed to sign certificate: '.openssl_error_string());
+            throw new RuntimeException('Failed to sign certificate: '.openssl_error_string());
         }
 
         openssl_x509_export($cert, $certPem);
@@ -219,7 +221,7 @@ class CertificateAuthorityService
         );
 
         if ($cert === false) {
-            throw new \RuntimeException('Failed to sign CSR: '.openssl_error_string());
+            throw new RuntimeException('Failed to sign CSR: '.openssl_error_string());
         }
 
         openssl_x509_export($cert, $certPem);
@@ -232,6 +234,8 @@ class CertificateAuthorityService
      * @param bool $forced If true, immediately revoke the old intermediate.
      *
      * @return int Number of suites re-signed.
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function renewIntermediate(bool $forced=false): int
     {
@@ -251,7 +255,7 @@ class CertificateAuthorityService
         $oldIntermediate->setSuccessorId($newIntermediate->getId());
 
         if ($forced === true) {
-            $oldIntermediate->setRevokedAt(new \DateTime());
+            $oldIntermediate->setRevokedAt(new DateTime());
         }
 
         $this->caCertificateMapper->update($oldIntermediate);
@@ -308,12 +312,12 @@ class CertificateAuthorityService
 
         // Store new root.
         $newRoot = new CACertificate();
-        $newRoot->setId(Uuid::uuid4()->toString());
+        $newRoot->setId($this->generateUuid());
         $newRoot->setType('root');
         $newRoot->setCertificate($rootCertPem);
         $newRoot->setPrivateKey($this->crypto->encrypt($rootKeyPem));
-        $newRoot->setCreatedAt(new \DateTime());
-        $newRoot->setExpiresAt(new \DateTime('+'.self::ROOT_LIFETIME_DAYS.' days'));
+        $newRoot->setCreatedAt(new DateTime());
+        $newRoot->setExpiresAt(new DateTime('+'.self::ROOT_LIFETIME_DAYS.' days'));
         $newRoot->setIsActive(false);
         $this->caCertificateMapper->insert($newRoot);
 
@@ -374,7 +378,7 @@ class CertificateAuthorityService
             ];
         }
 
-        $now = new \DateTime();
+        $now = new DateTime();
         $intermediateExpiry = $intermediate->getExpiresAt();
         $rootExpiry         = $root->getExpiresAt();
 
@@ -435,19 +439,19 @@ class CertificateAuthorityService
 
         if ($intCert === false) {
             $this->setDegraded();
-            throw new \RuntimeException('Failed to sign intermediate CA: '.openssl_error_string());
+            throw new RuntimeException('Failed to sign intermediate CA: '.openssl_error_string());
         }
 
         openssl_x509_export($intCert, $intCertPem);
         openssl_pkey_export($intKey, $intKeyPem);
 
         $entity = new CACertificate();
-        $entity->setId(Uuid::uuid4()->toString());
+        $entity->setId($this->generateUuid());
         $entity->setType('intermediate');
         $entity->setCertificate($intCertPem);
         $entity->setPrivateKey($this->crypto->encrypt($intKeyPem));
-        $entity->setCreatedAt(new \DateTime());
-        $entity->setExpiresAt(new \DateTime('+'.self::INTERMEDIATE_LIFETIME_DAYS.' days'));
+        $entity->setCreatedAt(new DateTime());
+        $entity->setExpiresAt(new DateTime('+'.self::INTERMEDIATE_LIFETIME_DAYS.' days'));
         $entity->setIsActive(true);
 
         $this->caCertificateMapper->insert($entity);
@@ -472,7 +476,7 @@ class CertificateAuthorityService
         $total  = 0;
 
         do {
-            $suites = $this->encryptionSuiteMapper->findAllActiveWithLimit(self::RESIGN_BATCH_SIZE, $offset);
+            $suites = $this->suiteMapper->findAllActiveWithLimit(self::RESIGN_BATCH_SIZE, $offset);
 
             foreach ($suites as $suite) {
                 $oldCert = $suite->getCertificate();
@@ -507,12 +511,13 @@ class CertificateAuthorityService
 
                 openssl_x509_export($newCert, $newCertPem);
                 $suite->setCertificate($newCertPem);
-                $this->encryptionSuiteMapper->update($suite);
+                $this->suiteMapper->update($suite);
                 $total++;
             }//end foreach
 
-            $offset += self::RESIGN_BATCH_SIZE;
-        } while (count($suites) === self::RESIGN_BATCH_SIZE);
+            $suiteCount = count($suites);
+            $offset    += self::RESIGN_BATCH_SIZE;
+        } while ($suiteCount === self::RESIGN_BATCH_SIZE);
 
         return $total;
     }//end resignAllActiveSuites()
@@ -527,4 +532,18 @@ class CertificateAuthorityService
         $this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'degraded');
         $this->logger->error('Doriath: CA bootstrap failed, entering degraded state');
     }//end setDegraded()
+
+    /**
+     * Generate a version-4 UUID string.
+     *
+     * @return string
+     */
+    private function generateUuid(): string
+    {
+        $data    = random_bytes(16);
+        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }//end generateUuid()
 }//end class
