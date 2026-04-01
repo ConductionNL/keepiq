@@ -33,20 +33,21 @@ use Psr\Log\LoggerInterface;
  */
 class InitializeSettings implements IRepairStep
 {
-    /**
-     * Constructor for InitializeSettings.
-     *
-     * @param SettingsService $settingsService The settings service
-     * @param LoggerInterface $logger          The logger interface
-     *
-     * @return void
-     */
     private const DEFAULT_CONFIG = [
         'master_password_min_length' => '12',
         'master_password_min_score'  => '3',
         'session_timeout_default'    => '600000',
     ];
 
+    /**
+     * Constructor for InitializeSettings.
+     *
+     * @param SettingsService $settingsService The settings service
+     * @param IAppConfig      $appConfig       The app config interface
+     * @param LoggerInterface $logger          The logger interface
+     *
+     * @return void
+     */
     public function __construct(
         private SettingsService $settingsService,
         private IAppConfig $appConfig,

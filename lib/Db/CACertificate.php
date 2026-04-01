@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath CA Certificate Entity
+ *
+ * Database entity representing a CA certificate (root or intermediate).
+ *
+ * @category Db
+ * @package  OCA\Doriath\Db
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
@@ -8,6 +25,8 @@ use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
 /**
+ * Entity representing a CA certificate with key storage and lifecycle tracking.
+ *
  * @method string getType()
  * @method void setType(string $type)
  * @method string getCertificate()
@@ -27,27 +46,85 @@ use OCP\AppFramework\Db\Entity;
  */
 class CACertificate extends Entity implements JsonSerializable
 {
+
+    /**
+     * The certificate type (root or intermediate).
+     *
+     * @var string
+     */
     protected string $type = '';
+
+    /**
+     * The PEM-encoded certificate.
+     *
+     * @var string
+     */
     protected string $certificate = '';
+
+    /**
+     * The encrypted private key.
+     *
+     * @var string|null
+     */
     protected ?string $privateKey = null;
+
+    /**
+     * When the certificate was created.
+     *
+     * @var \DateTime|null
+     */
     protected ?\DateTime $createdAt = null;
+
+    /**
+     * When the certificate expires.
+     *
+     * @var \DateTime|null
+     */
     protected ?\DateTime $expiresAt = null;
+
+    /**
+     * Whether the certificate is active.
+     *
+     * @var boolean
+     */
     protected bool $isActive = false;
+
+    /**
+     * When the certificate was revoked.
+     *
+     * @var \DateTime|null
+     */
     protected ?\DateTime $revokedAt = null;
+
+    /**
+     * The ID of the successor certificate.
+     *
+     * @var string|null
+     */
     protected ?string $successorId = null;
 
+    /**
+     * Constructor for CACertificate.
+     *
+     * @return void
+     */
     public function __construct()
     {
-        $this->addType('type', 'string');
-        $this->addType('certificate', 'string');
-        $this->addType('privateKey', 'string');
-        $this->addType('createdAt', 'datetime');
-        $this->addType('expiresAt', 'datetime');
-        $this->addType('isActive', 'boolean');
-        $this->addType('revokedAt', 'datetime');
-        $this->addType('successorId', 'string');
+        $this->addType(fieldName: 'type', type: 'string');
+        $this->addType(fieldName: 'certificate', type: 'string');
+        $this->addType(fieldName: 'privateKey', type: 'string');
+        $this->addType(fieldName: 'createdAt', type: 'datetime');
+        $this->addType(fieldName: 'expiresAt', type: 'datetime');
+        $this->addType(fieldName: 'isActive', type: 'boolean');
+        $this->addType(fieldName: 'revokedAt', type: 'datetime');
+        $this->addType(fieldName: 'successorId', type: 'string');
     }//end __construct()
 
+    /**
+     * Serialize the entity to an array for JSON output.
+     *
+     * @return array<string,mixed>
+     */
     public function jsonSerialize(): array
     {
         return [

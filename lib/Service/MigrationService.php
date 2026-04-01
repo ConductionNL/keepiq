@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Doriath Migration Service
+ *
+ * Tracks compromise recovery migrations (suite to suite).
+ *
+ * @category Service
+ * @package  OCA\Doriath\Service
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
 declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
@@ -12,10 +29,19 @@ use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
- * Tracks compromise recovery migrations (suite → suite).
+ * Tracks compromise recovery migrations (suite to suite).
  */
 class MigrationService
 {
+    /**
+     * Constructor for MigrationService.
+     *
+     * @param SuiteMigrationMapper  $mapper      The suite migration mapper
+     * @param EncryptionSuiteMapper $suiteMapper The encryption suite mapper
+     * @param LoggerInterface       $logger      The logger interface
+     *
+     * @return void
+     */
     public function __construct(
         private SuiteMigrationMapper $mapper,
         private EncryptionSuiteMapper $suiteMapper,
@@ -25,6 +51,11 @@ class MigrationService
 
     /**
      * Initiate a compromise recovery migration.
+     *
+     * @param string $oldSuiteId The old suite ID
+     * @param string $newSuiteId The new suite ID
+     *
+     * @return SuiteMigration
      */
     public function initiateCompromiseRecovery(string $oldSuiteId, string $newSuiteId): SuiteMigration
     {
@@ -44,12 +75,22 @@ class MigrationService
 
     /**
      * Complete a migration (with or without errors).
+     *
+     * @param string $migrationId The migration ID
+     * @param bool   $hasErrors   Whether the migration had errors
+     *
+     * @return SuiteMigration
      */
-    public function completeMigration(string $migrationId, bool $hasErrors = false): SuiteMigration
+    public function completeMigration(string $migrationId, bool $hasErrors=false): SuiteMigration
     {
         $migration = $this->mapper->findById($migrationId);
 
-        $migration->setStatus($hasErrors ? 'completed_with_errors' : 'completed');
+        if ($hasErrors === true) {
+            $migration->setStatus('completed_with_errors');
+        } else {
+            $migration->setStatus('completed');
+        }
+
         $migration->setCompletedAt(new \DateTime());
 
         $this->mapper->update($migration);
@@ -59,15 +100,23 @@ class MigrationService
         $oldSuite->setStatus('compromised');
         $this->suiteMapper->update($oldSuite);
 
-        $this->logger->info("Doriath: Compromise recovery completed for migration {$migrationId}", [
-            'hasErrors' => $hasErrors,
-        ]);
+        $this->logger->info(
+                "Doriath: Compromise recovery completed for migration {$migrationId}",
+                [
+                    'hasErrors' => $hasErrors,
+                ]
+                );
 
         return $migration;
     }//end completeMigration()
 
     /**
      * Get in-progress migration for a given owner (via their old suite).
+     *
+     * @param string $ownerType The owner type
+     * @param string $ownerId   The owner ID
+     *
+     * @return SuiteMigration
      *
      * @throws DoesNotExistException if no in-progress migration exists
      */
@@ -86,11 +135,16 @@ class MigrationService
 
     /**
      * Check if an owner is write-locked due to an active migration.
+     *
+     * @param string $ownerType The owner type
+     * @param string $ownerId   The owner ID
+     *
+     * @return bool
      */
     public function isWriteLocked(string $ownerType, string $ownerId): bool
     {
         try {
-            $this->getInProgressMigration($ownerType, $ownerId);
+            $this->getInProgressMigration(ownerType: $ownerType, ownerId: $ownerId);
             return true;
         } catch (DoesNotExistException) {
             return false;
