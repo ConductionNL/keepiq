@@ -166,6 +166,45 @@ class EncryptionSuiteService
     }//end reinstateSuite()
 
     /**
+     * Mark an EncryptionSuite as compromised. Called immediately when
+     * compromise recovery is initiated — before migration begins.
+     *
+     * @param string $id            The suite ID
+     * @param string $compromisedBy The user who reported the compromise
+     *
+     * @return EncryptionSuite
+     *
+     * @throws DoesNotExistException
+     */
+    public function markCompromised(string $id, string $compromisedBy): EncryptionSuite
+    {
+        $suite = $this->mapper->findById($id);
+
+        $suite->setStatus('compromised');
+        $suite->setRevokedAt(new DateTime());
+        $suite->setRevokedReason('Master password compromised');
+        $suite->setRevokedBy($compromisedBy);
+
+        $this->mapper->update($suite);
+
+        $this->logger->info("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
+
+        return $suite;
+    }//end markCompromised()
+
+    /**
+     * Persist changes to an EncryptionSuite.
+     *
+     * @param EncryptionSuite $suite The suite to update
+     *
+     * @return EncryptionSuite
+     */
+    public function updateSuite(EncryptionSuite $suite): EncryptionSuite
+    {
+        return $this->mapper->update($suite);
+    }//end updateSuite()
+
+    /**
      * Get the active EncryptionSuite for an owner.
      *
      * @param string $ownerType The owner type

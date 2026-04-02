@@ -16,7 +16,7 @@
 			<!-- First-time setup mode -->
 			<template v-if="isFirstSetup">
 				<NcPasswordField
-					:value.sync="masterPassword"
+					v-model="masterPassword"
 					:label="t('doriath', 'Master password')"
 					:disabled="loading"
 					@keyup.enter="handleSetup" />
@@ -25,7 +25,7 @@
 					:password="masterPassword"
 					@strength-change="onStrengthChange" />
 				<NcPasswordField
-					:value.sync="confirmPassword"
+					v-model="confirmPassword"
 					:label="t('doriath', 'Confirm master password')"
 					:disabled="loading"
 					@keyup.enter="handleSetup" />
@@ -41,7 +41,7 @@
 			<!-- Normal unlock mode -->
 			<template v-else>
 				<NcPasswordField
-					:value.sync="masterPassword"
+					v-model="masterPassword"
 					:label="t('doriath', 'Master password')"
 					:disabled="loading"
 					@keyup.enter="handleUnlock" />
@@ -64,6 +64,7 @@
 <script>
 import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
 import { useSessionStore } from '../store/modules/session.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 
@@ -74,6 +75,7 @@ export default {
 		NcNoteCard,
 		NcPasswordField,
 		LockIcon,
+		PasswordStrengthMeter,
 	},
 
 	data() {
