@@ -31,7 +31,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
+use RamseyOkay\Uuid\Uuid;
 use RuntimeException;
 
 /**
