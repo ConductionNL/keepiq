@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Doriath Migration Version 2
+ * Doriath Migration Version 4
  *
- * Create the doriath_ca_certs table.
+ * Create the doriath_secret_types table.
  *
  * @category Migration
  * @package  OCA\Doriath\Migration
@@ -28,12 +28,12 @@ use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
- * Create the doriath_ca_certs table.
+ * Create the doriath_secret_types table.
  */
-class Version000002Date20260331000001 extends SimpleMigrationStep
+class Version000004Date20260331000003 extends SimpleMigrationStep
 {
     /**
-     * Change the database schema to add the CA certificates table.
+     * Create the schema for secret types.
      *
      * @param IOutput             $output        The output interface
      * @param Closure             $schemaClosure The schema closure
@@ -45,14 +45,17 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {
-        // @var ISchemaWrapper $schema
+        /*
+         * @var ISchemaWrapper $schema
+         */
+
         $schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_ca_certs') === true) {
+        if ($schema->hasTable('doriath_secret_types') === true) {
             return null;
         }
 
-        $table = $schema->createTable('doriath_ca_certs');
+        $table = $schema->createTable('doriath_secret_types');
 
         $table->addColumn(
                 'id',
@@ -63,25 +66,36 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                 ]
                 );
         $table->addColumn(
-                'type',
+                'name',
                 Types::STRING,
                 [
                     'notnull' => true,
-                    'length'  => 20,
+                    'length'  => 64,
                 ]
                 );
         $table->addColumn(
-                'certificate',
-                Types::TEXT,
+                'label',
+                Types::STRING,
                 [
                     'notnull' => true,
+                    'length'  => 128,
                 ]
                 );
         $table->addColumn(
-                'private_key',
-                Types::TEXT,
+                'scope',
+                Types::STRING,
+                [
+                    'notnull' => true,
+                    'length'  => 10,
+                    'default' => 'system',
+                ]
+                );
+        $table->addColumn(
+                'owner_id',
+                Types::STRING,
                 [
                     'notnull' => false,
+                    'length'  => 64,
                 ]
                 );
         $table->addColumn(
@@ -91,38 +105,9 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                     'notnull' => true,
                 ]
                 );
-        $table->addColumn(
-                'expires_at',
-                Types::DATETIME,
-                [
-                    'notnull' => true,
-                ]
-                );
-        $table->addColumn(
-                'is_active',
-                Types::BOOLEAN,
-                [
-                    'notnull' => false,
-                    'default' => false,
-                ]
-                );
-        $table->addColumn(
-                'revoked_at',
-                Types::DATETIME,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'successor_id',
-                Types::STRING,
-                [
-                    'notnull' => false,
-                    'length'  => 36,
-                ]
-                );
 
         $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['name'], 'doriath_st_name_idx');
 
         return $schema;
     }//end changeSchema()
