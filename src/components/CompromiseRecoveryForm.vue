@@ -7,12 +7,12 @@
 		</NcNoteCard>
 
 		<NcPasswordField
-			:value.sync="oldPassword"
+			v-model="oldPassword"
 			:label="t('doriath', 'Old (compromised) password')"
 			:disabled="loading" />
 
 		<NcPasswordField
-			:value.sync="newPassword"
+			v-model="newPassword"
 			:label="t('doriath', 'New password')"
 			:disabled="loading" />
 
@@ -22,7 +22,7 @@
 			@strength-change="onStrengthChange" />
 
 		<NcPasswordField
-			:value.sync="confirmPassword"
+			v-model="confirmPassword"
 			:label="t('doriath', 'Confirm new password')"
 			:disabled="loading" />
 
@@ -30,7 +30,12 @@
 			{{ error }}
 		</NcNoteCard>
 
+		<NcNoteCard v-if="success" type="success">
+			{{ t('doriath', 'Key rotation complete. Your vault is now secured with a new encryption key.') }}
+		</NcNoteCard>
+
 		<NcButton
+			v-if="!success"
 			type="error"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
@@ -56,6 +61,7 @@ export default {
 			strengthValid: false,
 			loading: false,
 			error: null,
+			success: false,
 		}
 	},
 
@@ -81,7 +87,10 @@ export default {
 			try {
 				const store = useEncryptionSuiteStore()
 				await store.initiateCompromiseRecovery(this.oldPassword, this.newPassword)
-				this.$emit('recovery-started')
+				this.success = true
+				this.oldPassword = ''
+				this.newPassword = ''
+				this.confirmPassword = ''
 			} catch (e) {
 				this.error = e.message || t('doriath', 'Failed to start recovery')
 			} finally {

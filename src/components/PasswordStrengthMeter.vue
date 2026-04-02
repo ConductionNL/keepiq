@@ -13,7 +13,7 @@
 </template>
 
 <script>
-let zxcvbn = null
+import zxcvbn from 'zxcvbn'
 
 export default {
 	name: 'PasswordStrengthMeter',
@@ -75,30 +75,24 @@ export default {
 			clearTimeout(this.debounceTimer)
 			this.debounceTimer = setTimeout(() => this.evaluate(), 300)
 		},
-
-		isValid(val) {
-			this.$emit('strength-change', { isValid: val, score: this.score })
-		},
 	},
 
-	async created() {
-		if (!zxcvbn) {
-			const mod = await import('zxcvbn')
-			zxcvbn = mod.default || mod
-		}
+	created() {
 		this.evaluate()
 	},
 
 	methods: {
 		evaluate() {
-			if (!zxcvbn || !this.password) {
+			if (!this.password) {
 				this.score = 0
 				this.feedback = null
+				this.$emit('strength-change', { isValid: false, score: 0 })
 				return
 			}
 			const result = zxcvbn(this.password)
 			this.score = result.score
 			this.feedback = result.feedback
+			this.$emit('strength-change', { isValid: this.isValid, score: this.score })
 		},
 	},
 }

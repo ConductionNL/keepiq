@@ -98,11 +98,9 @@ class MigrationService
 
         $this->mapper->update($migration);
 
-        // Mark the old suite as compromised.
-        $oldSuite = $this->suiteMapper->findById($migration->getOldSuiteId());
-        $oldSuite->setStatus('compromised');
-        $this->suiteMapper->update($oldSuite);
-
+        // Note: the old suite is already marked compromised when recovery
+        // is initiated (EncryptionSuiteService::markCompromised). We do not
+        // set it again here to avoid overwriting audit fields.
         $this->logger->info(
                 "Doriath: Compromise recovery completed for migration {$migrationId}",
                 [

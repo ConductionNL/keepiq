@@ -3,12 +3,12 @@
 		<h2>{{ t('doriath', 'Change master password') }}</h2>
 
 		<NcPasswordField
-			:value.sync="currentPassword"
+			v-model="currentPassword"
 			:label="t('doriath', 'Current password')"
 			:disabled="loading" />
 
 		<NcPasswordField
-			:value.sync="newPassword"
+			v-model="newPassword"
 			:label="t('doriath', 'New password')"
 			:disabled="loading" />
 
@@ -18,7 +18,7 @@
 			@strength-change="onStrengthChange" />
 
 		<NcPasswordField
-			:value.sync="confirmPassword"
+			v-model="confirmPassword"
 			:label="t('doriath', 'Confirm new password')"
 			:disabled="loading" />
 
