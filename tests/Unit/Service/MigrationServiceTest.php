@@ -43,7 +43,7 @@ class MigrationServiceTest extends TestCase
         $this->assertEquals('new-suite', $migration->getNewSuiteId());
     }
 
-    public function testCompleteMigrationMarksOldSuiteCompromised(): void
+    public function testCompleteMigrationSetsMigrationCompleted(): void
     {
         $migration = new SuiteMigration();
         $migration->setId('migration-1');
@@ -51,14 +51,12 @@ class MigrationServiceTest extends TestCase
         $migration->setNewSuiteId('new-suite');
         $migration->setStatus('in_progress');
 
-        $oldSuite = new EncryptionSuite();
-        $oldSuite->setId('old-suite');
-        $oldSuite->setStatus('active');
-
         $this->migrationMapper->method('findById')->willReturn($migration);
-        $this->suiteMapper->method('findById')->willReturn($oldSuite);
         $this->migrationMapper->expects($this->once())->method('update');
-        $this->suiteMapper->expects($this->once())->method('update');
+
+        // Old suite is already marked compromised at initiation time,
+        // so completeMigration should NOT touch the suite mapper.
+        $this->suiteMapper->expects($this->never())->method('update');
 
         $result = $this->service->completeMigration('migration-1');
 
@@ -72,11 +70,7 @@ class MigrationServiceTest extends TestCase
         $migration->setId('migration-1');
         $migration->setOldSuiteId('old-suite');
 
-        $oldSuite = new EncryptionSuite();
-        $oldSuite->setId('old-suite');
-
         $this->migrationMapper->method('findById')->willReturn($migration);
-        $this->suiteMapper->method('findById')->willReturn($oldSuite);
 
         $result = $this->service->completeMigration('migration-1', true);
 
