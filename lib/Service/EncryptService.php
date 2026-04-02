@@ -53,7 +53,7 @@ class EncryptService
      */
     public function rsaEncrypt(string $plaintext, string $publicKeyPem): string
     {
-        $publicKey = openssl_pkey_get_public($publicKeyPem);
+        $publicKey = openssl_pkey_get_public(public_key: $publicKeyPem);
         if ($publicKey === false) {
             throw new InvalidArgumentException('Invalid public key PEM');
         }
@@ -71,10 +71,10 @@ class EncryptService
         foreach ($chunks as $chunk) {
             $encrypted = '';
             $success   = openssl_public_encrypt(
-                $chunk,
-                $encrypted,
-                $publicKey,
-                OPENSSL_PKCS1_OAEP_PADDING
+                data: $chunk,
+                encrypted_data: $encrypted,
+                public_key: $publicKey,
+                padding: OPENSSL_PKCS1_OAEP_PADDING
             );
 
             // @codeCoverageIgnoreStart
@@ -109,14 +109,14 @@ class EncryptService
         $tag     = '';
 
         $ciphertext = openssl_encrypt(
-            $plaintext,
-            'aes-256-gcm',
-            $key,
-            OPENSSL_RAW_DATA,
-            $ivector,
-            $tag,
-            '',
-            self::AES_TAG_LENGTH
+            data: $plaintext,
+            cipher_algo: 'aes-256-gcm',
+            passphrase: $key,
+            options: OPENSSL_RAW_DATA,
+            iv: $ivector,
+            tag: $tag,
+            aad: '',
+            tag_length: self::AES_TAG_LENGTH
         );
 
         // @codeCoverageIgnoreStart
@@ -153,14 +153,14 @@ class EncryptService
         $tag     = '';
 
         $ciphertext = openssl_encrypt(
-            $pem,
-            'aes-256-gcm',
-            $key,
-            OPENSSL_RAW_DATA,
-            $ivector,
-            $tag,
-            '',
-            self::AES_TAG_LENGTH
+            data: $pem,
+            cipher_algo: 'aes-256-gcm',
+            passphrase: $key,
+            options: OPENSSL_RAW_DATA,
+            iv: $ivector,
+            tag: $tag,
+            aad: '',
+            tag_length: self::AES_TAG_LENGTH
         );
 
         // @codeCoverageIgnoreStart

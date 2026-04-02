@@ -53,7 +53,7 @@ class DashboardController extends Controller
      */
     public function page(): TemplateResponse
     {
-        return new TemplateResponse(Application::APP_ID, 'index');
+        return new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
     }//end page()
 
     /**

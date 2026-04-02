@@ -31,6 +31,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 use RuntimeException;
 
 /**
@@ -41,6 +42,14 @@ class CertificateAuthorityService
     private const ROOT_LIFETIME_DAYS         = 7300;
     private const INTERMEDIATE_LIFETIME_DAYS = 1095;
     private const RESIGN_BATCH_SIZE          = 100;
+
+    private const DEFAULT_DN = [
+        'countryName'            => 'NL',
+        'stateOrProvinceName'    => 'Noord-Holland',
+        'localityName'           => 'Amsterdam',
+        'organizationName'       => 'Conduction',
+        'organizationalUnitName' => 'Doriath',
+    ];
 
     /**
      * Constructor for CertificateAuthorityService.
@@ -82,11 +91,11 @@ class CertificateAuthorityService
 
         // Generate root CA key pair.
         $rootKey = openssl_pkey_new(
-                [
-                    'private_key_bits' => 4096,
-                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
-                ]
-                );
+            options: [
+                'private_key_bits' => 4096,
+                'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            ]
+        );
         // @codeCoverageIgnoreStart
         if ($rootKey === false) {
             $this->setDegraded();
@@ -96,20 +105,17 @@ class CertificateAuthorityService
         // @codeCoverageIgnoreEnd
         // Self-sign the root certificate.
         $rootCsr  = openssl_csr_new(
-            [
-                'commonName'       => 'Doriath Root CA',
-                'organizationName' => 'Doriath Vault',
-            ],
-            $rootKey,
-            ['digest_alg' => 'sha256']
+            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => 'Doriath Root CA']),
+            private_key: $rootKey,
+            options: ['digest_alg' => 'sha256']
         );
         $rootCert = openssl_csr_sign(
-            $rootCsr,
-            null,
-            $rootKey,
-            self::ROOT_LIFETIME_DAYS,
-            ['digest_alg' => 'sha256'],
-            random_int(1, PHP_INT_MAX)
+            csr: $rootCsr,
+            ca_certificate: null,
+            private_key: $rootKey,
+            days: self::ROOT_LIFETIME_DAYS,
+            options: ['digest_alg' => 'sha256'],
+            serial: random_int(1, PHP_INT_MAX)
         );
 
         // @codeCoverageIgnoreStart
@@ -119,12 +125,12 @@ class CertificateAuthorityService
         }
 
         // @codeCoverageIgnoreEnd
-        openssl_x509_export($rootCert, $rootCertPem);
-        openssl_pkey_export($rootKey, $rootKeyPem);
+        openssl_x509_export(certificate: $rootCert, output: $rootCertPem);
+        openssl_pkey_export(key: $rootKey, output: $rootKeyPem);
 
         // Store root certificate with encrypted private key.
         $rootEntity = new CACertificate();
-        $rootEntity->setId($this->generateUuid());
+        $rootEntity->setId(Uuid::uuid4()->toString());
         $rootEntity->setType('root');
         $rootEntity->setCertificate($rootCertPem);
         $rootEntity->setPrivateKey($this->crypto->encrypt($rootKeyPem));
@@ -154,29 +160,28 @@ class CertificateAuthorityService
      * Sign a public key PEM with the active intermediate, returning an X.509 certificate PEM.
      *
      * @param string $publicKeyPem The PEM-encoded public key
+     * @param string $commonName   The common name for the certificate (e.g. user ID or app name)
      *
      * @return string
      */
-    public function signPublicKey(string $publicKeyPem): string
+    public function signPublicKey(string $publicKeyPem, string $commonName='Doriath User'): string
     {
         $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
         $intermediateKey  = openssl_pkey_get_private(
-            $this->crypto->decrypt($intermediate->getPrivateKey())
+            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
         );
         $intermediateCert = $intermediate->getCertificate();
 
         // Create a CSR from the public key to sign it.
-        $tempKey = openssl_pkey_get_public($publicKeyPem);
+        $tempKey = openssl_pkey_get_public(public_key: $publicKeyPem);
         if ($tempKey === false) {
             throw new InvalidArgumentException('Invalid public key PEM');
         }
 
-        // We need a private key to create a CSR, but we only have a public key.
-        // Instead, create a certificate directly using the intermediate to sign the public key.
         $csr = openssl_csr_new(
-            ['commonName' => 'Doriath User Certificate'],
-            $tempKey,
-            ['digest_alg' => 'sha256']
+            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $commonName]),
+            private_key: $tempKey,
+            options: ['digest_alg' => 'sha256']
         );
 
         // Note: openssl_csr_new requires a private key. For signing an external public key
@@ -184,12 +189,12 @@ class CertificateAuthorityService
         // For generated key pairs, we create the CSR with the generated private key.
         // This method is called with a proper CSR or after key generation.
         $cert = openssl_csr_sign(
-            $csr,
-            $intermediateCert,
-            $intermediateKey,
-            365,
-            ['digest_alg' => 'sha256'],
-            random_int(1, PHP_INT_MAX)
+            csr: $csr,
+            ca_certificate: $intermediateCert,
+            private_key: $intermediateKey,
+            days: 365,
+            options: ['digest_alg' => 'sha256'],
+            serial: random_int(1, PHP_INT_MAX)
         );
 
         // @codeCoverageIgnoreStart
@@ -198,7 +203,7 @@ class CertificateAuthorityService
         }
 
         // @codeCoverageIgnoreEnd
-        openssl_x509_export($cert, $certPem);
+        openssl_x509_export(certificate: $cert, output: $certPem);
         return $certPem;
     }//end signPublicKey()
 
@@ -213,17 +218,17 @@ class CertificateAuthorityService
     {
         $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
         $intermediateKey  = openssl_pkey_get_private(
-            $this->crypto->decrypt($intermediate->getPrivateKey())
+            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
         );
         $intermediateCert = $intermediate->getCertificate();
 
         $cert = openssl_csr_sign(
-            $csrPem,
-            $intermediateCert,
-            $intermediateKey,
-            365,
-            ['digest_alg' => 'sha256'],
-            random_int(1, PHP_INT_MAX)
+            csr: $csrPem,
+            ca_certificate: $intermediateCert,
+            private_key: $intermediateKey,
+            days: 365,
+            options: ['digest_alg' => 'sha256'],
+            serial: random_int(1, PHP_INT_MAX)
         );
 
         // @codeCoverageIgnoreStart
@@ -232,7 +237,7 @@ class CertificateAuthorityService
         }
 
         // @codeCoverageIgnoreEnd
-        openssl_x509_export($cert, $certPem);
+        openssl_x509_export(certificate: $cert, output: $certPem);
         return $certPem;
     }//end signCsr()
 
@@ -249,7 +254,7 @@ class CertificateAuthorityService
     {
         $root     = $this->caCertificateMapper->findRoot();
         $rootKey  = openssl_pkey_get_private(
-            $this->crypto->decrypt($root->getPrivateKey())
+            private_key: $this->crypto->decrypt($root->getPrivateKey())
         );
         $rootCert = $root->getCertificate();
 
@@ -272,11 +277,11 @@ class CertificateAuthorityService
         $resignedCount = $this->resignAllActiveSuites();
 
         $this->logger->info(
-                "Doriath: Intermediate renewed, {$resignedCount} suites re-signed",
-                [
-                    'forced' => $forced,
-                ]
-                );
+            "Doriath: Intermediate renewed, {$resignedCount} suites re-signed",
+            [
+                'forced' => $forced,
+            ]
+        );
 
         return $resignedCount;
     }//end renewIntermediate()
@@ -292,35 +297,32 @@ class CertificateAuthorityService
 
         // Generate new root key pair.
         $rootKey = openssl_pkey_new(
-                [
-                    'private_key_bits' => 4096,
-                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
-                ]
-                );
+            options: [
+                'private_key_bits' => 4096,
+                'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            ]
+        );
 
         $rootCsr  = openssl_csr_new(
-            [
-                'commonName'       => 'Doriath Root CA',
-                'organizationName' => 'Doriath Vault',
-            ],
-            $rootKey,
-            ['digest_alg' => 'sha256']
+            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => 'Doriath Root CA']),
+            private_key: $rootKey,
+            options: ['digest_alg' => 'sha256']
         );
         $rootCert = openssl_csr_sign(
-            $rootCsr,
-            null,
-            $rootKey,
-            self::ROOT_LIFETIME_DAYS,
-            ['digest_alg' => 'sha256'],
-            random_int(1, PHP_INT_MAX)
+            csr: $rootCsr,
+            ca_certificate: null,
+            private_key: $rootKey,
+            days: self::ROOT_LIFETIME_DAYS,
+            options: ['digest_alg' => 'sha256'],
+            serial: random_int(1, PHP_INT_MAX)
         );
 
-        openssl_x509_export($rootCert, $rootCertPem);
-        openssl_pkey_export($rootKey, $rootKeyPem);
+        openssl_x509_export(certificate: $rootCert, output: $rootCertPem);
+        openssl_pkey_export(key: $rootKey, output: $rootKeyPem);
 
         // Store new root.
         $newRoot = new CACertificate();
-        $newRoot->setId($this->generateUuid());
+        $newRoot->setId(Uuid::uuid4()->toString());
         $newRoot->setType('root');
         $newRoot->setCertificate($rootCertPem);
         $newRoot->setPrivateKey($this->crypto->encrypt($rootKeyPem));
@@ -421,28 +423,25 @@ class CertificateAuthorityService
     private function generateIntermediate($rootKey, $rootCert): CACertificate
     {
         $intKey = openssl_pkey_new(
-                [
-                    'private_key_bits' => 4096,
-                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
-                ]
-                );
+            options: [
+                'private_key_bits' => 4096,
+                'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            ]
+        );
 
         $intCsr = openssl_csr_new(
-            [
-                'commonName'       => 'Doriath Intermediate CA',
-                'organizationName' => 'Doriath Vault',
-            ],
-            $intKey,
-            ['digest_alg' => 'sha256']
+            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => 'Doriath Intermediate CA']),
+            private_key: $intKey,
+            options: ['digest_alg' => 'sha256']
         );
 
         $intCert = openssl_csr_sign(
-            $intCsr,
-            $rootCert,
-            $rootKey,
-            self::INTERMEDIATE_LIFETIME_DAYS,
-            ['digest_alg' => 'sha256'],
-            random_int(1, PHP_INT_MAX)
+            csr: $intCsr,
+            ca_certificate: $rootCert,
+            private_key: $rootKey,
+            days: self::INTERMEDIATE_LIFETIME_DAYS,
+            options: ['digest_alg' => 'sha256'],
+            serial: random_int(1, PHP_INT_MAX)
         );
 
         // @codeCoverageIgnoreStart
@@ -452,11 +451,11 @@ class CertificateAuthorityService
         }
 
         // @codeCoverageIgnoreEnd
-        openssl_x509_export($intCert, $intCertPem);
-        openssl_pkey_export($intKey, $intKeyPem);
+        openssl_x509_export(certificate: $intCert, output: $intCertPem);
+        openssl_pkey_export(key: $intKey, output: $intKeyPem);
 
         $entity = new CACertificate();
-        $entity->setId($this->generateUuid());
+        $entity->setId(Uuid::uuid4()->toString());
         $entity->setType('intermediate');
         $entity->setCertificate($intCertPem);
         $entity->setPrivateKey($this->crypto->encrypt($intKeyPem));
@@ -478,7 +477,7 @@ class CertificateAuthorityService
     {
         $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
         $intermediateKey  = openssl_pkey_get_private(
-            $this->crypto->decrypt($intermediate->getPrivateKey())
+            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
         );
         $intermediateCert = $intermediate->getCertificate();
 
@@ -494,7 +493,7 @@ class CertificateAuthorityService
                     continue;
                 }
 
-                $pubKey = openssl_pkey_get_public($oldCert);
+                $pubKey = openssl_pkey_get_public(public_key: $oldCert);
                 // @codeCoverageIgnoreStart
                 if ($pubKey === false) {
                     $this->logger->warning("Doriath: Could not extract public key from suite {$suite->getId()}");
@@ -502,18 +501,22 @@ class CertificateAuthorityService
                 }
 
                 // @codeCoverageIgnoreEnd
+                // Preserve the original CN from the existing certificate.
+                $certData   = openssl_x509_parse(certificate: $oldCert);
+                $originalCn = $certData['subject']['CN'] ?? $suite->getOwnerId();
+
                 $csr     = openssl_csr_new(
-                    ['commonName' => 'Doriath User Certificate'],
-                    $pubKey,
-                    ['digest_alg' => 'sha256']
+                    distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $originalCn]),
+                    private_key: $pubKey,
+                    options: ['digest_alg' => 'sha256']
                 );
                 $newCert = openssl_csr_sign(
-                    $csr,
-                    $intermediateCert,
-                    $intermediateKey,
-                    365,
-                    ['digest_alg' => 'sha256'],
-                    random_int(1, PHP_INT_MAX)
+                    csr: $csr,
+                    ca_certificate: $intermediateCert,
+                    private_key: $intermediateKey,
+                    days: 365,
+                    options: ['digest_alg' => 'sha256'],
+                    serial: random_int(1, PHP_INT_MAX)
                 );
 
                 // @codeCoverageIgnoreStart
@@ -523,7 +526,7 @@ class CertificateAuthorityService
                 }
 
                 // @codeCoverageIgnoreEnd
-                openssl_x509_export($newCert, $newCertPem);
+                openssl_x509_export(certificate: $newCert, output: $newCertPem);
                 $suite->setCertificate($newCertPem);
                 $this->suiteMapper->update($suite);
                 $total++;
@@ -548,18 +551,4 @@ class CertificateAuthorityService
         $this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'degraded');
         $this->logger->error('Doriath: CA bootstrap failed, entering degraded state');
     }//end setDegraded()
-
-    /**
-     * Generate a version-4 UUID string.
-     *
-     * @return string
-     */
-    private function generateUuid(): string
-    {
-        $data    = random_bytes(16);
-        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
-        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }//end generateUuid()
 }//end class

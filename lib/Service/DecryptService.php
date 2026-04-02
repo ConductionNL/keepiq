@@ -58,7 +58,7 @@ class DecryptService
             throw new DecryptionException(message:'Invalid RSA ciphertext format');
         }
 
-        $privateKey = openssl_pkey_get_private($privateKeyPem);
+        $privateKey = openssl_pkey_get_private(private_key: $privateKeyPem);
         if ($privateKey === false) {
             throw new DecryptionException(message:'Invalid private key PEM');
         }
@@ -76,10 +76,10 @@ class DecryptService
             $block     = substr($raw, 4 + ($i * self::RSA_BLOCK_SIZE), self::RSA_BLOCK_SIZE);
             $decrypted = '';
             $success   = openssl_private_decrypt(
-                $block,
-                $decrypted,
-                $privateKey,
-                OPENSSL_PKCS1_OAEP_PADDING
+                data: $block,
+                decrypted_data: $decrypted,
+                private_key: $privateKey,
+                padding: OPENSSL_PKCS1_OAEP_PADDING
             );
 
             // @codeCoverageIgnoreStart
@@ -129,12 +129,12 @@ class DecryptService
         $tag        = substr($raw, -self::AES_TAG_LENGTH);
 
         $plaintext = openssl_decrypt(
-            $ciphertext,
-            'aes-256-gcm',
-            $key,
-            OPENSSL_RAW_DATA,
-            $ivector,
-            $tag
+            data: $ciphertext,
+            cipher_algo: 'aes-256-gcm',
+            passphrase: $key,
+            options: OPENSSL_RAW_DATA,
+            iv: $ivector,
+            tag: $tag
         );
 
         if ($plaintext === false) {
@@ -182,12 +182,12 @@ class DecryptService
         $tag        = substr($raw, -self::AES_TAG_LENGTH);
 
         $plaintext = openssl_decrypt(
-            $ciphertext,
-            'aes-256-gcm',
-            $key,
-            OPENSSL_RAW_DATA,
-            $ivector,
-            $tag
+            data: $ciphertext,
+            cipher_algo: 'aes-256-gcm',
+            passphrase: $key,
+            options: OPENSSL_RAW_DATA,
+            iv: $ivector,
+            tag: $tag
         );
 
         if ($plaintext === false) {
