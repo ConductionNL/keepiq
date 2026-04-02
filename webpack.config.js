@@ -36,27 +36,17 @@ webpackConfig.resolve = {
 		...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
 		// Deduplicate shared packages so the aliased library source uses
 		// the same instances as the app (prevents dual-Pinia / dual-Vue bugs).
-		'vue$': path.resolve(__dirname, 'node_modules/vue'),
-		'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
+		vue$: path.resolve(__dirname, 'node_modules/vue'),
+		pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	},
 }
 
-webpackConfig.module = {
-	rules: [
-		{
-			test: /\.vue$/,
-			loader: 'vue-loader',
-		},
-		{
-			test: /\.css$/,
-			use: ['style-loader', 'css-loader'],
-		},
-	],
-}
-
+// Replace VueLoaderPlugin (don't push — duplicates break templates when using local package)
+const otherPlugins = (webpackConfig.plugins || []).filter((p) => p.constructor.name !== 'VueLoaderPlugin')
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
+	...otherPlugins,
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
 	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
 ]
