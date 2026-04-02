@@ -505,7 +505,11 @@ class CertificateAuthorityService
                 $certData   = openssl_x509_parse(certificate: $oldCert);
                 $originalCn = $certData['subject']['CN'] ?? $suite->getOwnerId();
 
-                $csr     = openssl_csr_new(
+                // Suppress the "Supplied key param is a public key" warning —
+                // this is intentional: during re-signing we only have the public key
+                // (the private key is AES-encrypted and only the user's browser can decrypt it).
+                // The CSR is created with the public key embedded, which is correct for re-signing.
+                $csr     = @openssl_csr_new(
                     distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $originalCn]),
                     private_key: $pubKey,
                     options: ['digest_alg' => 'sha256']
