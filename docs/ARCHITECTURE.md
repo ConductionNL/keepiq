@@ -115,6 +115,7 @@ The cryptographic identity of a user or application. Holds a public certificate 
 | **Ownership** | Polymorphic: `owner_type` (user \| application) + `owner_id` | Single table, single query path — see [ADR-002](../openspec/architecture/adr-002-polymorphic-encryption-suite-ownership.md) |
 | **Key size** | RSA-4096 minimum (only allowed to increase) | NIST SP 800-57 recommendation for long-term protection |
 | **Private key protection** | AES-256 encrypted with master password derived key | Master password never stored — see [ADR-003](../openspec/architecture/adr-003-rsa-aes-encryption-architecture.md) |
+| **Certificate DN** | Default DN fields + owner-specific CN | See certificate DN section below |
 
 **Core properties:**
 
@@ -132,6 +133,31 @@ The cryptographic identity of a user or application. Holds a public certificate 
 | `reinstated_at` | datetime | No | — | Audit: when reinstated |
 | `reinstated_by` | string | No | — | Audit: who reinstated |
 | `created_at` | datetime | No | — | — |
+
+#### Certificate Distinguished Name (DN)
+
+All certificates issued by the Doriath CA share a common set of DN fields, with the `commonName` varying by certificate type:
+
+**Default DN fields** (defined as `DEFAULT_DN` in `CertificateAuthorityService`):
+
+| Field | Value |
+|-------|-------|
+| `countryName` | NL |
+| `stateOrProvinceName` | Noord-Holland |
+| `localityName` | Amsterdam |
+| `organizationName` | Conduction |
+| `organizationalUnitName` | Doriath |
+
+**Common Name by certificate type:**
+
+| Certificate | Common Name | Example |
+|-------------|-------------|---------|
+| Root CA | `Doriath Root CA` | `Doriath Root CA` |
+| Intermediate CA | `Doriath Intermediate CA` | `Doriath Intermediate CA` |
+| User certificate | Federated cloud ID (user@instance), falls back to user ID | `admin@nextcloud.local` |
+| Application certificate | Application ID | `a1b2c3d4-...` |
+
+The cloud ID is resolved via `IUserManager::get($ownerId)->getCloudId()` in `EncryptionSuiteService::resolveCommonName()`. This ensures user certificates contain the full federated identity. When a certificate is re-signed during CA renewal, the original CN is preserved by extracting it from the existing certificate via `openssl_x509_parse()`.
 
 #### CACertificate
 

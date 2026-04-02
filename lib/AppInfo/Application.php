@@ -22,9 +22,6 @@ declare(strict_types=1);
 namespace OCA\Doriath\AppInfo;
 
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
-use OCA\Doriath\Repair\BootstrapCertificateAuthority;
-use OCA\Doriath\Repair\InitializeSettings;
-use OCA\Doriath\Repair\SeedDevelopmentData;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -59,6 +56,8 @@ class Application extends App implements IBootstrap
      */
     public function register(IRegistrationContext $context): void
     {
+        include_once __DIR__.'/../../vendor/autoload.php';
+
         // Register deep link patterns with OpenRegister's unified search provider.
         // Only fires when OpenRegister is installed and dispatches the event.
         $context->registerEventListener(
@@ -66,15 +65,8 @@ class Application extends App implements IBootstrap
             listener: DeepLinkRegistrationListener::class
         );
 
-        // Initialize register and schemas on install/upgrade.
-        $context->registerRepairStep(InitializeSettings::class);
-
-        // CA bootstrap runs after migrations — also registered in info.xml.
-        $context->registerRepairStep(BootstrapCertificateAuthority::class);
-
-        // Development seed data — only runs when debug mode is enabled.
-        $context->registerRepairStep(SeedDevelopmentData::class);
-
+        // Repair steps (BootstrapCertificateAuthority, InitializeSettings,
+        // SeedDevelopmentData) are registered via info.xml <repair-steps>.
     }//end register()
 
     /**
