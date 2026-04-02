@@ -47,6 +47,17 @@ export default {
 		await initializeStores()
 		this.storesReady = true
 
+		// Now that Pinia is ready, check if we need the lock screen.
+		// The router guard may have let us through on the initial navigation
+		// because Pinia wasn't active yet.
+		const session = useSessionStore()
+		if (session.isLocked && this.$route.name !== 'Lock') {
+			this.$router.replace({
+				name: 'Lock',
+				query: { returnUrl: this.$route.fullPath },
+			})
+		}
+
 		// Session timeout check every 10 seconds.
 		this.timeoutInterval = setInterval(() => {
 			const session = useSessionStore()

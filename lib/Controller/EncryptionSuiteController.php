@@ -149,6 +149,7 @@ class EncryptionSuiteController extends OCSController
             $this->validateOwnership(suite: $suite);
 
             $suite->setPrivateKey($encryptedPrivateKey);
+            $this->suiteService->updateSuite($suite);
             return new JSONResponse($suite->jsonSerialize());
         } catch (Exception $e) {
             return new JSONResponse(
@@ -222,7 +223,12 @@ class EncryptionSuiteController extends OCSController
         $userId = $this->userSession->getUser()->getUID();
 
         try {
-            $oldSuite  = $this->suiteService->getActiveSuite('user', $userId);
+            $oldSuite = $this->suiteService->getActiveSuite('user', $userId);
+
+            // Mark the old suite as compromised immediately — it must not be
+            // used for new encryption operations from this point on.
+            $this->suiteService->markCompromised($oldSuite->getId(), $userId);
+
             $newSuite  = $this->suiteService->createSuite('user', $userId, $publicKey, $encryptedPrivateKey);
             $migration = $this->migrationService->initiateCompromiseRecovery(
                 $oldSuite->getId(),
