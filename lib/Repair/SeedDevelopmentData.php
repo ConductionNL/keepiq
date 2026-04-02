@@ -29,6 +29,7 @@ use OCA\Doriath\Service\CertificateAuthorityService;
 use OCA\Doriath\Service\EncryptService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
+use Ramsey\Uuid\Uuid;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -40,7 +41,7 @@ use Psr\Log\LoggerInterface;
 class SeedDevelopmentData implements IRepairStep
 {
     private const DEV_USER_ID         = 'admin';
-    private const DEV_MASTER_PASSWORD = 'Doriath-Dev-2024!';
+    private const DEV_MASTER_PASSWORD = 'Oj';
 
     /**
      * Constructor for SeedDevelopmentData.
@@ -89,7 +90,7 @@ class SeedDevelopmentData implements IRepairStep
 
         // Check if dev user already has a suite.
         try {
-            $this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
+            $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: self::DEV_USER_ID);
             $output->info('Dev user already has an EncryptionSuite, skipping');
             return;
         } catch (DoesNotExistException) {
@@ -98,24 +99,27 @@ class SeedDevelopmentData implements IRepairStep
 
         // Generate RSA key pair.
         $keyPair = openssl_pkey_new(
-                [
-                    'private_key_bits' => 4096,
-                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
-                ]
-                );
+            options: [
+                'private_key_bits' => 4096,
+                'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            ]
+        );
 
         if ($keyPair === false) {
             $output->warning('Failed to generate RSA key pair for dev seed');
             return;
         }
 
-        openssl_pkey_export($keyPair, $privateKeyPem);
-        $keyDetails   = openssl_pkey_get_details($keyPair);
+        openssl_pkey_export(key: $keyPair, output: $privateKeyPem);
+        $keyDetails   = openssl_pkey_get_details(key: $keyPair);
         $publicKeyPem = $keyDetails['key'];
 
         // Sign the public key with the CA.
         try {
-            $certificate = $this->caService->signPublicKey($publicKeyPem);
+            $certificate = $this->caService->signPublicKey(
+                publicKeyPem: $publicKeyPem,
+                commonName: self::DEV_USER_ID
+            );
         } catch (Exception $e) {
             $output->warning('CA not available for dev seed: '.$e->getMessage());
             return;
@@ -123,13 +127,13 @@ class SeedDevelopmentData implements IRepairStep
 
         // Encrypt the private key with the dev master password.
         $encryptedPrivateKey = $this->encryptService->encryptPrivateKey(
-            $privateKeyPem,
-            self::DEV_MASTER_PASSWORD
+            pem: $privateKeyPem,
+            password: self::DEV_MASTER_PASSWORD
         );
 
         // Create the EncryptionSuite.
         $suite = new EncryptionSuite();
-        $suite->setId($this->generateUuid());
+        $suite->setId(Uuid::uuid4()->toString());
         $suite->setOwnerType('user');
         $suite->setOwnerId(self::DEV_USER_ID);
         $suite->setCertificate($certificate);
@@ -142,18 +146,4 @@ class SeedDevelopmentData implements IRepairStep
         $output->info('Dev EncryptionSuite created for user: '.self::DEV_USER_ID);
         $this->logger->info('Doriath dev seed: EncryptionSuite created with master password: '.self::DEV_MASTER_PASSWORD);
     }//end run()
-
-    /**
-     * Generate a version-4 UUID string.
-     *
-     * @return string
-     */
-    private function generateUuid(): string
-    {
-        $data    = random_bytes(16);
-        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
-        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }//end generateUuid()
 }//end class

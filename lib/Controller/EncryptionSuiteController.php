@@ -67,14 +67,14 @@ class EncryptionSuiteController extends OCSController
     public function index(): JSONResponse
     {
         $userId = $this->userSession->getUser()->getUID();
-        $suites = $this->suiteService->getSuitesByOwner('user', $userId);
+        $suites = $this->suiteService->getSuitesByOwner(ownerType: 'user', ownerId: $userId);
 
         return new JSONResponse(
-                array_map(
-            static fn ($suite) => $suite->jsonSerialize(),
-            $suites
-        )
-                );
+            data: array_map(
+                static fn ($suite) => $suite->jsonSerialize(),
+                $suites
+            )
+        );
     }//end index()
 
     /**
@@ -91,11 +91,11 @@ class EncryptionSuiteController extends OCSController
         try {
             $suite = $this->suiteService->getSuite($id);
             $this->validateOwnership(suite: $suite);
-            return new JSONResponse($suite->jsonSerialize());
+            return new JSONResponse(data: $suite->jsonSerialize());
         } catch (Exception $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_NOT_FOUND
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_NOT_FOUND
             );
         }
     }//end show()
@@ -118,16 +118,16 @@ class EncryptionSuiteController extends OCSController
 
         try {
             $suite = $this->suiteService->createSuite(
-                'user',
-                $userId,
-                $publicKey,
-                $encryptedPrivateKey
+                ownerType: 'user',
+                ownerId: $userId,
+                publicKeyPem: $publicKey,
+                encryptedPrivateKey: $encryptedPrivateKey
             );
-            return new JSONResponse($suite->jsonSerialize(), Http::STATUS_CREATED);
+            return new JSONResponse(data: $suite->jsonSerialize(), statusCode: Http::STATUS_CREATED);
         } catch (RuntimeException $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_SERVICE_UNAVAILABLE
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_SERVICE_UNAVAILABLE
             );
         }
     }//end create()
@@ -150,11 +150,11 @@ class EncryptionSuiteController extends OCSController
 
             $suite->setPrivateKey($encryptedPrivateKey);
             $this->suiteService->updateSuite($suite);
-            return new JSONResponse($suite->jsonSerialize());
+            return new JSONResponse(data: $suite->jsonSerialize());
         } catch (Exception $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_FORBIDDEN
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_FORBIDDEN
             );
         }
     }//end updatePrivateKey()
@@ -174,12 +174,12 @@ class EncryptionSuiteController extends OCSController
         $userId = $this->userSession->getUser()->getUID();
 
         try {
-            $suite = $this->suiteService->revokeSuite($id, $reason, $userId);
-            return new JSONResponse($suite->jsonSerialize());
+            $suite = $this->suiteService->revokeSuite(id: $id, reason: $reason, revokedBy: $userId);
+            return new JSONResponse(data: $suite->jsonSerialize());
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_BAD_REQUEST
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
             );
         }
     }//end revoke()
@@ -196,12 +196,12 @@ class EncryptionSuiteController extends OCSController
         $userId = $this->userSession->getUser()->getUID();
 
         try {
-            $suite = $this->suiteService->reinstateSuite($id, $userId);
-            return new JSONResponse($suite->jsonSerialize());
+            $suite = $this->suiteService->reinstateSuite(id: $id, reinstatedBy: $userId);
+            return new JSONResponse(data: $suite->jsonSerialize());
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_BAD_REQUEST
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
             );
         }
     }//end reinstate()
@@ -223,30 +223,35 @@ class EncryptionSuiteController extends OCSController
         $userId = $this->userSession->getUser()->getUID();
 
         try {
-            $oldSuite = $this->suiteService->getActiveSuite('user', $userId);
+            $oldSuite = $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId);
 
             // Mark the old suite as compromised immediately — it must not be
             // used for new encryption operations from this point on.
-            $this->suiteService->markCompromised($oldSuite->getId(), $userId);
+            $this->suiteService->markCompromised(id: $oldSuite->getId(), compromisedBy: $userId);
 
-            $newSuite  = $this->suiteService->createSuite('user', $userId, $publicKey, $encryptedPrivateKey);
+            $newSuite  = $this->suiteService->createSuite(
+                ownerType: 'user',
+                ownerId: $userId,
+                publicKeyPem: $publicKey,
+                encryptedPrivateKey: $encryptedPrivateKey
+            );
             $migration = $this->migrationService->initiateCompromiseRecovery(
-                $oldSuite->getId(),
-                $newSuite->getId()
+                oldSuiteId: $oldSuite->getId(),
+                newSuiteId: $newSuite->getId()
             );
 
             return new JSONResponse(
-                    [
-                        'newSuite'               => $newSuite->jsonSerialize(),
-                        'migration'              => $migration->jsonSerialize(),
-                        'oldEncryptedPrivateKey' => $oldSuite->getPrivateKey(),
-                    ],
-                    Http::STATUS_CREATED
-                    );
+                data: [
+                    'newSuite'               => $newSuite->jsonSerialize(),
+                    'migration'              => $migration->jsonSerialize(),
+                    'oldEncryptedPrivateKey' => $oldSuite->getPrivateKey(),
+                ],
+                statusCode: Http::STATUS_CREATED
+            );
         } catch (Exception $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_INTERNAL_SERVER_ERROR
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }//end try
     }//end compromiseRecovery()

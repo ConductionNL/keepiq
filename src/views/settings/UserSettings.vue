@@ -47,6 +47,43 @@
 			<div v-if="suiteStore.currentSuite" class="user-settings__suite-info">
 				<p><strong>{{ t('doriath', 'Status') }}:</strong> {{ suiteStore.currentSuite.status }}</p>
 				<p><strong>{{ t('doriath', 'Created') }}:</strong> {{ suiteStore.currentSuite.createdAt }}</p>
+				<p><strong>{{ t('doriath', 'Suite ID') }}:</strong> {{ suiteStore.currentSuite.id }}</p>
+
+				<template v-if="suiteStore.currentSuite.status === 'active'">
+					<NcNoteCard v-if="revokeConfirm" type="warning">
+						{{ t('doriath', 'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.') }}
+						<div style="margin-top: 0.5rem;">
+							<NcTextField
+								v-model="revokeReason"
+								:label="t('doriath', 'Reason for revocation')"
+								:placeholder="t('doriath', 'e.g. Device lost, key compromised')" />
+						</div>
+						<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+							<NcButton
+								type="error"
+								:disabled="!revokeReason || revoking"
+								@click="handleRevoke">
+								{{ revoking ? t('doriath', 'Revoking...') : t('doriath', 'Confirm revocation') }}
+							</NcButton>
+							<NcButton type="secondary" @click="revokeConfirm = false">
+								{{ t('doriath', 'Cancel') }}
+							</NcButton>
+						</div>
+					</NcNoteCard>
+					<NcButton
+						v-else
+						type="warning"
+						@click="revokeConfirm = true">
+						{{ t('doriath', 'Revoke encryption suite') }}
+					</NcButton>
+				</template>
+
+				<NcNoteCard v-if="revokeSuccess" type="success">
+					{{ t('doriath', 'Encryption suite revoked. Contact an administrator to reinstate it.') }}
+				</NcNoteCard>
+				<NcNoteCard v-if="revokeError" type="error">
+					{{ revokeError }}
+				</NcNoteCard>
 			</div>
 			<NcEmptyContent
 				v-else
@@ -61,7 +98,7 @@
 </template>
 
 <script>
-import { NcAppSettingsDialog, NcAppSettingsSection, NcButton, NcEmptyContent, NcSelect } from '@nextcloud/vue'
+import { NcAppSettingsDialog, NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
@@ -77,7 +114,9 @@ export default {
 		NcAppSettingsSection,
 		NcButton,
 		NcEmptyContent,
+		NcNoteCard,
 		NcSelect,
+		NcTextField,
 		TimerIcon,
 		ShieldIcon,
 		KeyIcon,
@@ -96,6 +135,11 @@ export default {
 		return {
 			sessionTimeout: 'session',
 			showRecovery: false,
+			revokeConfirm: false,
+			revokeReason: '',
+			revoking: false,
+			revokeSuccess: false,
+			revokeError: null,
 			timeoutOptions: [
 				{ value: 'session', label: t('doriath', 'Nextcloud session') },
 				{ value: '10min', label: t('doriath', '10 minutes') },
@@ -115,6 +159,22 @@ export default {
 			const session = useSessionStore()
 			const timeouts = { session: 0, '10min': 600000, '30min': 1800000 }
 			session.timeout = timeouts[this.sessionTimeout] || 600000
+		},
+		async handleRevoke() {
+			this.revoking = true
+			this.revokeError = null
+			this.revokeSuccess = false
+
+			try {
+				await this.suiteStore.revokeSuite(this.revokeReason)
+				this.revokeSuccess = true
+				this.revokeConfirm = false
+				this.revokeReason = ''
+			} catch (e) {
+				this.revokeError = e.response?.data?.message || e.message || t('doriath', 'Failed to revoke suite')
+			} finally {
+				this.revoking = false
+			}
 		},
 	},
 }

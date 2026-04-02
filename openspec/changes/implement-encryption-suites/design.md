@@ -88,6 +88,19 @@ Each entity extends a base class and implements `\JsonSerializable`. Mappers ext
 
 **Why:** Standard Nextcloud entity/mapper pattern (ADR-008). JsonSerializable allows controllers to return entities directly. QBMapper provides type-safe query building.
 
+All entities use string UUIDs as primary keys (not auto-increment integers). Each entity overrides `getId(): string` and `setId($id): void` from the parent `Entity` class to return/accept strings. The `$id` property is declared as `public $id = ''` to match the parent's visibility.
+
+### D6b: Certificate Distinguished Name
+
+All X.509 certificates share a default DN (C=NL, ST=Noord-Holland, L=Amsterdam, O=Conduction, OU=Doriath) defined as `CertificateAuthorityService::DEFAULT_DN`. The `commonName` varies by certificate type:
+
+- **Root/Intermediate CA**: static names (`Doriath Root CA`, `Doriath Intermediate CA`)
+- **User certificates**: the user's federated cloud ID via `IUser::getCloudId()` (e.g. `admin@nextcloud.local`), falling back to the user ID if unavailable
+- **Application certificates**: the application ID
+- **Re-signed certificates** (during CA renewal): the original CN is preserved by parsing it from the existing certificate via `openssl_x509_parse()`
+
+The cloud ID resolution lives in `EncryptionSuiteService::resolveCommonName()` so all code paths (create, reinstate) produce consistent CNs.
+
 ### D7: Service Layer Architecture
 
 ```

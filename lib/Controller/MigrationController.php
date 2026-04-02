@@ -65,10 +65,10 @@ class MigrationController extends OCSController
         $userId = $this->userSession->getUser()->getUID();
 
         try {
-            $migration = $this->migrationService->getInProgressMigration('user', $userId);
-            return new JSONResponse($migration->jsonSerialize());
+            $migration = $this->migrationService->getInProgressMigration(ownerType: 'user', ownerId: $userId);
+            return new JSONResponse(data: $migration->jsonSerialize());
         } catch (DoesNotExistException) {
-            return new JSONResponse(['status' => 'none']);
+            return new JSONResponse(data: ['status' => 'none']);
         }
     }//end getStatus()
 
@@ -87,12 +87,12 @@ class MigrationController extends OCSController
     public function complete(string $id, bool $hasErrors=false): JSONResponse
     {
         try {
-            $migration = $this->migrationService->completeMigration($id, $hasErrors);
-            return new JSONResponse($migration->jsonSerialize());
+            $migration = $this->migrationService->completeMigration(migrationId: $id, hasErrors: $hasErrors);
+            return new JSONResponse(data: $migration->jsonSerialize());
         } catch (Exception $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_BAD_REQUEST
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
             );
         }
     }//end complete()

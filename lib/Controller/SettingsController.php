@@ -57,7 +57,7 @@ class SettingsController extends Controller
     public function index(): JSONResponse
     {
         return new JSONResponse(
-            $this->settingsService->getSettings()
+            data: $this->settingsService->getSettings()
         );
     }//end index()
 
@@ -72,7 +72,7 @@ class SettingsController extends Controller
         $config = $this->settingsService->updateSettings($data);
 
         return new JSONResponse(
-            [
+            data: [
                 'success' => true,
                 'config'  => $config,
             ]
@@ -91,6 +91,6 @@ class SettingsController extends Controller
     {
         $result = $this->settingsService->loadConfiguration(force: true);
 
-        return new JSONResponse($result);
+        return new JSONResponse(data: $result);
     }//end load()
 }//end class

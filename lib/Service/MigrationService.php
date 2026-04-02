@@ -23,6 +23,7 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use Ramsey\Uuid\Uuid;
 use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Db\SuiteMigrationMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -60,7 +61,7 @@ class MigrationService
     public function initiateCompromiseRecovery(string $oldSuiteId, string $newSuiteId): SuiteMigration
     {
         $migration = new SuiteMigration();
-        $migration->setId($this->generateUuid());
+        $migration->setId(Uuid::uuid4()->toString());
         $migration->setOldSuiteId($oldSuiteId);
         $migration->setNewSuiteId($newSuiteId);
         $migration->setStatus('in_progress');
@@ -151,18 +152,4 @@ class MigrationService
             return false;
         }
     }//end isWriteLocked()
-
-    /**
-     * Generate a version-4 UUID string.
-     *
-     * @return string
-     */
-    private function generateUuid(): string
-    {
-        $data    = random_bytes(16);
-        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
-        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }//end generateUuid()
 }//end class
