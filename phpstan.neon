@@ -33,6 +33,8 @@ parameters:
         # getId() returns int per OCP\Entity but the actual value is a UUID string at runtime
         - '#Parameter \#1 \$id of method OCP\\AppFramework\\Db\\Entity::setId\(\) expects int, string given#'
         - '#expects string(\|null)?, int given#'
+        # PHPDoc $id declared as string (UUID) is not covariant with int in OCP\Entity base class
+        - '#PHPDoc type string of property OCA\\Doriath\\Db\\[a-zA-Z]+::\$id is not covariant#'
         # str_split with positive chunk size always returns non-empty array
         - '#Variable \$chunks in empty\(\) always exists and is not falsy#'
         - '#Strict comparison using === between false and true will always evaluate to false#'

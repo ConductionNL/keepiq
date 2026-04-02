@@ -29,6 +29,27 @@ return [
         ['name' => 'migration#getStatus',                'url' => '/api/v1/migrations/status',               'verb' => 'GET'],
         ['name' => 'migration#complete',                 'url' => '/api/v1/migrations/{id}/complete',        'verb' => 'POST'],
 
+        // Secret CRUD.
+        ['name' => 'secret#index',   'url' => '/api/v1/secrets',          'verb' => 'GET'],
+        ['name' => 'secret#search',  'url' => '/api/v1/secrets/search',   'verb' => 'GET'],
+        ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}',     'verb' => 'GET'],
+        ['name' => 'secret#create',  'url' => '/api/v1/secrets',          'verb' => 'POST'],
+        ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}',     'verb' => 'PUT'],
+        ['name' => 'secret#destroy', 'url' => '/api/v1/secrets/{id}',     'verb' => 'DELETE'],
+
+        // SecretType CRUD.
+        ['name' => 'secret_type#index',   'url' => '/api/v1/secret-types',      'verb' => 'GET'],
+        ['name' => 'secret_type#create',  'url' => '/api/v1/secret-types',      'verb' => 'POST'],
+        ['name' => 'secret_type#update',  'url' => '/api/v1/secret-types/{id}', 'verb' => 'PUT'],
+        ['name' => 'secret_type#destroy', 'url' => '/api/v1/secret-types/{id}', 'verb' => 'DELETE'],
+
+        // Folder CRUD.
+        ['name' => 'folder#index',    'url' => '/api/v1/folders',               'verb' => 'GET'],
+        ['name' => 'folder#create',   'url' => '/api/v1/folders',               'verb' => 'POST'],
+        ['name' => 'folder#update',   'url' => '/api/v1/folders/{id}',          'verb' => 'PUT'],
+        ['name' => 'folder#destroy',  'url' => '/api/v1/folders/{id}',          'verb' => 'DELETE'],
+        ['name' => 'folder#children', 'url' => '/api/v1/folders/{id}/children', 'verb' => 'GET'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.

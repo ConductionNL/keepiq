@@ -10,6 +10,14 @@
 				</template>
 			</NcAppNavigationItem>
 			<NcAppNavigationItem
+				:name="t('doriath', 'Secrets')"
+				:to="{ name: 'SecretList' }">
+				<template #icon>
+					<KeyVariantIcon :size="20" />
+				</template>
+			</NcAppNavigationItem>
+			<FolderTree :current-folder-id="currentFolderId" />
+			<NcAppNavigationItem
 				:name="t('doriath', 'Documentation')"
 				@click="openLink('https://conduction.nl', '_blank')">
 				<template #icon>
@@ -42,9 +50,12 @@ import { NcAppNavigation, NcAppNavigationItem } from '@nextcloud/vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
 import HomeIcon from 'vue-material-design-icons/Home.vue'
+import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
+import FolderTree from '../components/FolderTree.vue'
 import UserSettings from '../views/settings/UserSettings.vue'
 import { useSessionStore } from '../store/modules/session.js'
+import { useFolderStore } from '../store/modules/folder.js'
 
 export default {
 	name: 'MainMenu',
@@ -53,7 +64,9 @@ export default {
 		NcAppNavigationItem,
 		BookOpenVariantOutline,
 		CogIcon,
+		FolderTree,
 		HomeIcon,
+		KeyVariantIcon,
 		LockIcon,
 		UserSettings,
 	},
@@ -61,6 +74,15 @@ export default {
 		return {
 			showUserSettings: false,
 		}
+	},
+	computed: {
+		currentFolderId() {
+			return this.$route.params.id ?? null
+		},
+	},
+	async created() {
+		const folderStore = useFolderStore()
+		await folderStore.fetchFolders()
 	},
 	methods: {
 		lockVault() {

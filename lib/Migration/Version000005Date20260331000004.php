@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Doriath Migration Version 2
+ * Doriath Migration Version 5
  *
- * Create the doriath_ca_certs table.
+ * Create the doriath_folders table.
  *
  * @category Migration
  * @package  OCA\Doriath\Migration
@@ -28,12 +28,12 @@ use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
 /**
- * Create the doriath_ca_certs table.
+ * Create the doriath_folders table.
  */
-class Version000002Date20260331000001 extends SimpleMigrationStep
+class Version000005Date20260331000004 extends SimpleMigrationStep
 {
     /**
-     * Change the database schema to add the CA certificates table.
+     * Create the schema for folders.
      *
      * @param IOutput             $output        The output interface
      * @param Closure             $schemaClosure The schema closure
@@ -45,14 +45,17 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {
-        // @var ISchemaWrapper $schema
+        /*
+         * @var ISchemaWrapper $schema
+         */
+
         $schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_ca_certs') === true) {
+        if ($schema->hasTable('doriath_folders') === true) {
             return null;
         }
 
-        $table = $schema->createTable('doriath_ca_certs');
+        $table = $schema->createTable('doriath_folders');
 
         $table->addColumn(
                 'id',
@@ -63,7 +66,23 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                 ]
                 );
         $table->addColumn(
-                'type',
+                'name',
+                Types::STRING,
+                [
+                    'notnull' => true,
+                    'length'  => 255,
+                ]
+                );
+        $table->addColumn(
+                'parent_id',
+                Types::STRING,
+                [
+                    'notnull' => false,
+                    'length'  => 36,
+                ]
+                );
+        $table->addColumn(
+                'owner_type',
                 Types::STRING,
                 [
                     'notnull' => true,
@@ -71,17 +90,11 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                 ]
                 );
         $table->addColumn(
-                'certificate',
-                Types::TEXT,
+                'owner_id',
+                Types::STRING,
                 [
                     'notnull' => true,
-                ]
-                );
-        $table->addColumn(
-                'private_key',
-                Types::TEXT,
-                [
-                    'notnull' => false,
+                    'length'  => 64,
                 ]
                 );
         $table->addColumn(
@@ -92,37 +105,18 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                 ]
                 );
         $table->addColumn(
-                'expires_at',
+                'updated_at',
                 Types::DATETIME,
                 [
                     'notnull' => true,
                 ]
                 );
-        $table->addColumn(
-                'is_active',
-                Types::BOOLEAN,
-                [
-                    'notnull' => false,
-                    'default' => false,
-                ]
-                );
-        $table->addColumn(
-                'revoked_at',
-                Types::DATETIME,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'successor_id',
-                Types::STRING,
-                [
-                    'notnull' => false,
-                    'length'  => 36,
-                ]
-                );
 
         $table->setPrimaryKey(['id']);
+        $table->addIndex(
+            ['owner_type', 'owner_id', 'parent_id'],
+            'doriath_fld_owner_idx'
+        );
 
         return $schema;
     }//end changeSchema()
