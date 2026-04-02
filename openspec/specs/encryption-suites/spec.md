@@ -219,6 +219,15 @@ The system MUST allow an administrator to reinstate a revoked EncryptionSuite. B
 ### Requirement: Minimum Key Size
 The system MUST generate RSA keys of at least 4096 bits. The minimum MUST only be allowed to increase, never decrease.
 
+### Requirement: Certificate Distinguished Name
+All certificates issued by Doriath MUST include a complete X.509 Distinguished Name with default organizational fields (C=NL, ST=Noord-Holland, L=Amsterdam, O=Conduction, OU=Doriath). The `commonName` MUST identify the certificate owner:
+
+- For user certificates: the federated cloud ID (e.g. `admin@nextcloud.local`) if available, otherwise the Nextcloud user ID
+- For application certificates: the application ID
+- For CA certificates: `Doriath Root CA` or `Doriath Intermediate CA`
+
+When a certificate is re-signed during CA renewal, the original `commonName` MUST be preserved.
+
 ### Requirement: CA Bootstrap
 The system MUST generate a private CA (root + intermediate) on first setup if no CA has been configured. If bootstrap fails, the app MUST boot in a degraded state rather than failing installation.
 

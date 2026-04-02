@@ -146,6 +146,24 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		},
 
 		/**
+		 * Revoke the current user's active encryption suite.
+		 *
+		 * @param {string} reason The reason for revocation
+		 */
+		async revokeSuite(reason) {
+			if (!this.currentSuite) {
+				throw new Error('No active suite to revoke')
+			}
+
+			const response = await axios.post(
+				generateUrl(`/apps/doriath/api/v1/suites/${this.currentSuite.id}/revoke`),
+				{ reason },
+			)
+
+			this.currentSuite = response.data
+		},
+
+		/**
 		 * Check migration status.
 		 */
 		async fetchMigrationStatus() {

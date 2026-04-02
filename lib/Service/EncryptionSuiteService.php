@@ -28,7 +28,9 @@ use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
+use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 use RuntimeException;
 /**
  * Business logic for EncryptionSuite lifecycle: create, revoke, reinstate.
@@ -38,10 +40,11 @@ class EncryptionSuiteService
     /**
      * Constructor for EncryptionSuiteService.
      *
-     * @param EncryptionSuiteMapper       $mapper    The encryption suite mapper
-     * @param CertificateAuthorityService $caService The CA service
-     * @param IAppConfig                  $appConfig The app config interface
-     * @param LoggerInterface             $logger    The logger interface
+     * @param EncryptionSuiteMapper       $mapper      The encryption suite mapper
+     * @param CertificateAuthorityService $caService   The CA service
+     * @param IAppConfig                  $appConfig   The app config interface
+     * @param IUserManager                $userManager The user manager
+     * @param LoggerInterface             $logger      The logger interface
      *
      * @return void
      */
@@ -49,6 +52,7 @@ class EncryptionSuiteService
         private EncryptionSuiteMapper $mapper,
         private CertificateAuthorityService $caService,
         private IAppConfig $appConfig,
+        private IUserManager $userManager,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -74,10 +78,11 @@ class EncryptionSuiteService
             throw new RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')');
         }
 
-        $certificate = $this->caService->signPublicKey($publicKeyPem);
+        $commonName  = $this->resolveCommonName(ownerType: $ownerType, ownerId: $ownerId);
+        $certificate = $this->caService->signPublicKey(publicKeyPem: $publicKeyPem, commonName: $commonName);
 
         $suite = new EncryptionSuite();
-        $suite->setId($this->generateUuid());
+        $suite->setId(Uuid::uuid4()->toString());
         $suite->setOwnerType($ownerType);
         $suite->setOwnerId($ownerId);
         $suite->setCertificate($certificate);
@@ -144,14 +149,21 @@ class EncryptionSuiteService
         }
 
         // Re-sign the existing public key with the active intermediate.
-        $publicKey = openssl_pkey_get_public($suite->getCertificate());
+        $publicKey = openssl_pkey_get_public(public_key: $suite->getCertificate());
         if ($publicKey === false) {
             throw new RuntimeException('Could not extract public key from suite certificate');
         }
 
-        $details        = openssl_pkey_get_details($publicKey);
+        $details        = openssl_pkey_get_details(key: $publicKey);
         $publicKeyPem   = $details['key'];
-        $newCertificate = $this->caService->signPublicKey($publicKeyPem);
+        $commonName     = $this->resolveCommonName(
+            ownerType: $suite->getOwnerType(),
+            ownerId: $suite->getOwnerId()
+        );
+        $newCertificate = $this->caService->signPublicKey(
+            publicKeyPem: $publicKeyPem,
+            commonName: $commonName
+        );
 
         $suite->setCertificate($newCertificate);
         $suite->setStatus('active');
@@ -187,8 +199,7 @@ class EncryptionSuiteService
 
         $this->mapper->update($suite);
 
-        $this->logger->info("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
-
+        $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
         return $suite;
     }//end markCompromised()
 
@@ -247,16 +258,25 @@ class EncryptionSuiteService
     }//end getSuitesByOwner()
 
     /**
-     * Generate a version-4 UUID string.
+     * Resolve the certificate common name for an owner.
+     *
+     * For users, returns the federated cloud ID (user@instance) if available,
+     * otherwise falls back to the user ID. For applications, returns the owner ID.
+     *
+     * @param string $ownerType The owner type (user or application)
+     * @param string $ownerId   The owner ID
      *
      * @return string
      */
-    private function generateUuid(): string
+    private function resolveCommonName(string $ownerType, string $ownerId): string
     {
-        $data    = random_bytes(16);
-        $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
-        $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+        if ($ownerType === 'user') {
+            $user = $this->userManager->get($ownerId);
+            if ($user !== null) {
+                return $user->getCloudId();
+            }
+        }
 
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-    }//end generateUuid()
+        return $ownerId;
+    }//end resolveCommonName()
 }//end class

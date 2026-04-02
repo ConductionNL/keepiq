@@ -52,8 +52,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <screenshot>https://raw.githubusercontent.com/ConductionNL/doriath/main/img/app-store.svg</screenshot>
 
     <dependencies>
-        <nextcloud min-version="28" max-version="33"/>
-        <php min-version="8.1"/>
+        <nextcloud min-version="31" max-version="34"/>
+        <php min-version="8.3"/>
     </dependencies>
 
     <navigations>
@@ -71,9 +71,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </background-jobs>
 
     <repair-steps>
+        <install>
+            <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
+            <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+        </install>
         <post-migration>
             <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
         </post-migration>
     </repair-steps>
 

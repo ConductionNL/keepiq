@@ -57,7 +57,7 @@ class CACertificateController extends OCSController
      */
     public function getStatus(): JSONResponse
     {
-        return new JSONResponse($this->caService->getStatus());
+        return new JSONResponse(data: $this->caService->getStatus());
     }//end getStatus()
 
     /**
@@ -69,11 +69,11 @@ class CACertificateController extends OCSController
     {
         try {
             $this->caService->retryBootstrap();
-            return new JSONResponse($this->caService->getStatus());
+            return new JSONResponse(data: $this->caService->getStatus());
         } catch (RuntimeException $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_INTERNAL_SERVER_ERROR
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }//end retryBootstrap()
@@ -88,16 +88,16 @@ class CACertificateController extends OCSController
         try {
             $count = $this->caService->renewIntermediate(forced: true);
             return new JSONResponse(
-                    [
-                        'message'       => "Intermediate renewed, {$count} suites re-signed",
-                        'resignedCount' => $count,
-                        'status'        => $this->caService->getStatus(),
-                    ]
-                    );
+                data: [
+                    'message'       => "Intermediate renewed, {$count} suites re-signed",
+                    'resignedCount' => $count,
+                    'status'        => $this->caService->getStatus(),
+                ]
+            );
         } catch (Exception $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_INTERNAL_SERVER_ERROR
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }//end renewIntermediate()
@@ -112,16 +112,16 @@ class CACertificateController extends OCSController
         try {
             $count = $this->caService->renewRoot();
             return new JSONResponse(
-                    [
-                        'message'       => "Root renewed, {$count} suites re-signed",
-                        'resignedCount' => $count,
-                        'status'        => $this->caService->getStatus(),
-                    ]
-                    );
+                data: [
+                    'message'       => "Root renewed, {$count} suites re-signed",
+                    'resignedCount' => $count,
+                    'status'        => $this->caService->getStatus(),
+                ]
+            );
         } catch (Exception $e) {
             return new JSONResponse(
-                ['message' => $e->getMessage()],
-                Http::STATUS_INTERNAL_SERVER_ERROR
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }//end renewRoot()
