@@ -73,12 +73,14 @@ class EncryptionSuiteServiceTest extends TestCase
         $this->mapper    = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
         $this->caService = $this->createMock(originalClassName: CertificateAuthorityService::class);
         $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $userManager     = $this->createMock(originalClassName: \OCP\IUserManager::class);
         $logger          = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->service = new EncryptionSuiteService(
             mapper: $this->mapper,
             caService: $this->caService,
             appConfig: $this->appConfig,
+            userManager: $userManager,
             logger: $logger,
         );
     }//end setUp()
