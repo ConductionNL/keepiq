@@ -65,4 +65,11 @@ webpackConfig.plugins = [
 // preventing the nextcloud-vue submodule's nested deps (Vue 3) from leaking in.
 webpackConfig.resolve.alias['@nextcloud/dialogs'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs')
 
+// Nextcloud apps with @conduction/nextcloud-vue and zxcvbn exceed the default
+// 244 KiB asset size hint. Raise the limit to suppress warnings.
+webpackConfig.performance = {
+	maxAssetSize: 5 * 1024 * 1024,
+	maxEntrypointSize: 5 * 1024 * 1024,
+}
+
 module.exports = webpackConfig

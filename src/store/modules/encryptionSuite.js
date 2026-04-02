@@ -127,6 +127,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			this.migrationStatus = response.data.migration
 			this.currentSuite = response.data.newSuite
 
+			// If there are no secrets to migrate, complete the migration immediately.
+			// When secrets exist, the browser will decrypt/re-encrypt each one
+			// and then call completeMigration.
+			const migrationId = response.data.migration.id
+			await axios.post(
+				generateUrl(`/apps/doriath/api/v1/migrations/${migrationId}/complete`),
+				{ hasErrors: false },
+			)
+			await this.fetchMigrationStatus()
+
 			return {
 				migration: response.data.migration,
 				oldEncryptedPrivateKey: response.data.oldEncryptedPrivateKey,

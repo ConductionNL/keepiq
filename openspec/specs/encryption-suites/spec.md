@@ -78,6 +78,8 @@ The session is scoped per device. Unlocking Doriath on one device MUST NOT propa
 
 When the session timeout elapses or all tabs of the Nextcloud instance are closed, the in-memory key MUST be cleared immediately and the user MUST be redirected to the Doriath lock screen. The lock screen is a full page — not an overlay. The API always returns encrypted blobs regardless — there is no server-side session state that could be bypassed.
 
+The user MUST be able to lock the vault immediately via a "Lock vault" button in the app navigation. This clears the in-memory CryptoKey and redirects to the lock screen without waiting for the timeout.
+
 The session timeout MUST be configurable per user (Nextcloud session duration, 10 minutes, or 30 minutes). The timeout is enforced client-side (the browser clears the key); the server has no session state to expire.
 
 #### Scenario: Session expiry
@@ -300,6 +302,7 @@ The admin panel MUST display the current CA status at all times.
 - [ ] CryptoKey is held in a JS variable, never in localStorage or sessionStorage
 - [ ] Session timeout is configurable per user (Nextcloud session / 10 min / 30 min), enforced client-side
 - [ ] Session expiry clears the in-memory CryptoKey and redirects to the lock screen (full page, not overlay)
+- [x] A "Lock vault" button in the app navigation immediately clears keys and redirects to the lock screen
 - [ ] Closing all tabs releases JavaScript memory (CryptoKey lost)
 - [ ] Unlocking Doriath on one device does not affect other devices
 - [ ] Master password strength is enforced using entropy-based scoring (zxcvbn ≥ 3, length ≥ 12 by default)

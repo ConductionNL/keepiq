@@ -4,7 +4,6 @@ import { generateUrl } from '@nextcloud/router'
 import Dashboard from '../views/Dashboard.vue'
 import LockScreen from '../views/LockScreen.vue'
 import AdminRoot from '../views/settings/AdminRoot.vue'
-import { useSessionStore } from '../store/modules/session.js'
 
 Vue.use(Router)
 
@@ -20,20 +19,33 @@ const router = new Router({
 })
 
 // Lock screen navigation guard.
+// Note: useSessionStore() is imported lazily inside the guard because Pinia
+// is not yet active when this module is first loaded (Vue 2 + PiniaVuePlugin
+// requires the Vue instance to exist before store access).
+let sessionStore = null
+
 router.beforeEach((to, from, next) => {
-	const session = useSessionStore()
+	// Lazy-load the session store on first navigation.
+	if (sessionStore === null) {
+		try {
+			const { useSessionStore } = require('../store/modules/session.js')
+			sessionStore = useSessionStore()
+		} catch {
+			// Pinia not ready yet — allow navigation (App.vue will handle loading state).
+			return next()
+		}
+	}
 
 	// Public routes skip the lock screen.
 	if (to.meta?.public === true || to.name === 'Lock') {
-		// If already unlocked and going to lock, redirect to dashboard.
-		if (to.name === 'Lock' && !session.isLocked) {
+		if (to.name === 'Lock' && !sessionStore.isLocked) {
 			return next({ name: 'Dashboard' })
 		}
 		return next()
 	}
 
 	// If locked, redirect to lock screen with return URL.
-	if (session.isLocked) {
+	if (sessionStore.isLocked) {
 		return next({
 			name: 'Lock',
 			query: { returnUrl: to.fullPath },
@@ -41,7 +53,7 @@ router.beforeEach((to, from, next) => {
 	}
 
 	// Update activity on route change.
-	session.updateActivity()
+	sessionStore.updateActivity()
 	next()
 })
 

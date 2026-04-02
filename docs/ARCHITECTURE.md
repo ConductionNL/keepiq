@@ -492,6 +492,8 @@ router.beforeEach((to, from, next) => {
 Key files: `src/router/index.js`, registered in `main.js`, `<router-view />` in `App.vue`.
 MainMenu navigation: use `:to` prop on `NcAppNavigationItem` (NOT `@click` + `$router.push()`).
 
+The MainMenu footer contains two items: **"Lock vault"** (lock icon — calls `session.lock()` and navigates to `/lock`) and **"Settings"** (gear icon — opens `NcAppSettingsDialog` for user preferences).
+
 ### 3.7 OpenConnector Integration
 
 Doriath acts as a **secret store for OpenConnector**. When OpenConnector needs API keys or credentials to connect to external services, it can retrieve them from Doriath's application vault via the API.

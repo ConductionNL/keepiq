@@ -129,6 +129,8 @@ A Vue Router `beforeEach` guard checks `sessionStore.isLocked`. If locked and th
 
 A `setInterval` timer (every 10 seconds) calls `checkTimeout()`. A `visibilitychange` listener calls `checkTimeout()` when the tab becomes visible. A `beforeunload` listener calls `lock()` to clear keys on tab close (best-effort — JS memory release on tab destruction is the real guarantee).
 
+The app navigation footer includes a **"Lock vault"** button (lock icon) that calls `session.lock()` and navigates to `/lock`. This gives users an immediate, deliberate way to lock the vault when stepping away — rather than waiting for the timeout.
+
 ### D9: Lock Screen Route Guard
 
 The lock screen is implemented as a named route (`/lock`) with a `beforeEach` navigation guard:
