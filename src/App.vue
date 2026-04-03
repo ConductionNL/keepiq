@@ -75,14 +75,7 @@ export default {
 		// Session timeout check every 10 seconds.
 		this.timeoutInterval = setInterval(() => {
 			const session = useSessionStore()
-			const wasLocked = session.isLocked
 			session.checkTimeout()
-			if (!wasLocked && session.isLocked && this.$route.name !== 'Lock') {
-				this.$router.replace({
-					name: 'Lock',
-					query: { returnUrl: this.$route.fullPath },
-				})
-			}
 		}, 10000)
 
 		// Check timeout when tab becomes visible.
@@ -104,14 +97,7 @@ export default {
 		handleVisibilityChange() {
 			if (document.visibilityState === 'visible') {
 				const session = useSessionStore()
-				const wasLocked = session.isLocked
 				session.checkTimeout()
-				if (!wasLocked && session.isLocked && this.$route.name !== 'Lock') {
-					this.$router.replace({
-						name: 'Lock',
-						query: { returnUrl: this.$route.fullPath },
-					})
-				}
 			}
 		},
 
