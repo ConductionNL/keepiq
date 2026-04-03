@@ -43,6 +43,17 @@ export default {
 		},
 	},
 
+	watch: {
+		isLocked(locked) {
+			if (locked && this.$route.name !== 'Lock') {
+				this.$router.replace({
+					name: 'Lock',
+					query: { returnUrl: this.$route.fullPath },
+				})
+			}
+		},
+	},
+
 	async created() {
 		await initializeStores()
 		this.storesReady = true
