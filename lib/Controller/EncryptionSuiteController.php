@@ -101,29 +101,35 @@ class EncryptionSuiteController extends OCSController
     }//end show()
 
     /**
-     * Create a new EncryptionSuite for the current user.
+     * Create a new EncryptionSuite for the current user (Phase 1).
      *
-     * @param string $publicKey           The PEM-encoded public key
-     * @param string $encryptedPrivateKey The encrypted private key
+     * Returns the suite, a passphrase-encrypted private key, the temporary
+     * passphrase, and the public key PEM. The browser decrypts the private key
+     * with the passphrase, re-encrypts with the master password, and sends
+     * the final blob back via updatePrivateKey (Phase 2).
      *
      * @NoAdminRequired
      *
      * @return JSONResponse
      */
-    public function create(
-        string $publicKey,
-        string $encryptedPrivateKey,
-    ): JSONResponse {
+    public function create(): JSONResponse
+    {
         $userId = $this->userSession->getUser()->getUID();
 
         try {
-            $suite = $this->suiteService->createSuite(
+            $result = $this->suiteService->createSuite(
                 ownerType: 'user',
-                ownerId: $userId,
-                publicKeyPem: $publicKey,
-                encryptedPrivateKey: $encryptedPrivateKey
+                ownerId: $userId
             );
-            return new JSONResponse(data: $suite->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+            return new JSONResponse(
+                data: [
+                    'suite'               => $result['suite']->jsonSerialize(),
+                    'encryptedPrivateKey' => $result['encryptedPrivateKey'],
+                    'passphrase'          => $result['passphrase'],
+                    'publicKeyPem'        => $result['publicKeyPem'],
+                ],
+                statusCode: Http::STATUS_CREATED
+            );
         } catch (RuntimeException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
@@ -209,40 +215,40 @@ class EncryptionSuiteController extends OCSController
     /**
      * Initiate compromise recovery: create new suite and migration record.
      *
-     * @param string $publicKey           The PEM-encoded public key
-     * @param string $encryptedPrivateKey The encrypted private key
+     * Uses the same two-phase key generation as create(). The server generates
+     * a new key pair, signs the certificate, and returns the private key
+     * encrypted with a temporary passphrase. The browser decrypts, re-encrypts
+     * with the new master password, and sends the blob back via updatePrivateKey.
      *
      * @NoAdminRequired
      *
      * @return JSONResponse
      */
-    public function compromiseRecovery(
-        string $publicKey,
-        string $encryptedPrivateKey,
-    ): JSONResponse {
+    public function compromiseRecovery(): JSONResponse
+    {
         $userId = $this->userSession->getUser()->getUID();
 
         try {
             $oldSuite = $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId);
 
-            // Mark the old suite as compromised immediately — it must not be
-            // used for new encryption operations from this point on.
+            // Mark the old suite as compromised immediately.
             $this->suiteService->markCompromised(id: $oldSuite->getId(), compromisedBy: $userId);
 
-            $newSuite  = $this->suiteService->createSuite(
+            $result    = $this->suiteService->createSuite(
                 ownerType: 'user',
-                ownerId: $userId,
-                publicKeyPem: $publicKey,
-                encryptedPrivateKey: $encryptedPrivateKey
+                ownerId: $userId
             );
             $migration = $this->migrationService->initiateCompromiseRecovery(
                 oldSuiteId: $oldSuite->getId(),
-                newSuiteId: $newSuite->getId()
+                newSuiteId: $result['suite']->getId()
             );
 
             return new JSONResponse(
                 data: [
-                    'newSuite'               => $newSuite->jsonSerialize(),
+                    'newSuite'               => $result['suite']->jsonSerialize(),
+                    'encryptedPrivateKey'    => $result['encryptedPrivateKey'],
+                    'passphrase'             => $result['passphrase'],
+                    'publicKeyPem'           => $result['publicKeyPem'],
                     'migration'              => $migration->jsonSerialize(),
                     'oldEncryptedPrivateKey' => $oldSuite->getPrivateKey(),
                 ],
@@ -255,6 +261,74 @@ class EncryptionSuiteController extends OCSController
             );
         }//end try
     }//end compromiseRecovery()
+
+    /**
+     * Repair a suite that has no private key (Phase 1 — generate new key pair).
+     * Returns encrypted PK + passphrase + nonce for identity verification.
+     *
+     * @param string $id The suite ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     */
+    public function repair(string $id): JSONResponse
+    {
+        try {
+            $result = $this->suiteService->repairSuite(suiteId: $id);
+            return new JSONResponse(
+                data: [
+                    'suite'               => $result['suite']->jsonSerialize(),
+                    'encryptedPrivateKey' => $result['encryptedPrivateKey'],
+                    'passphrase'          => $result['passphrase'],
+                    'publicKeyPem'        => $result['publicKeyPem'],
+                    'nonce'               => $result['nonce'],
+                ]
+            );
+        } catch (Exception $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+    }//end repair()
+
+    /**
+     * Confirm suite repair by verifying a nonce signed with the old private key.
+     *
+     * @param string $id                  The new suite ID
+     * @param string $oldSuiteId          The old compromised suite ID
+     * @param string $nonce               The nonce that was signed
+     * @param string $signature           Base64-encoded signature
+     * @param string $encryptedPrivateKey The master-password-encrypted private key
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     */
+    public function confirmRepair(
+        string $id,
+        string $oldSuiteId='',
+        string $nonce='',
+        string $signature='',
+        string $encryptedPrivateKey='',
+    ): JSONResponse {
+        try {
+            $suite = $this->suiteService->confirmRepair(
+                suiteId: $id,
+                oldSuiteId: $oldSuiteId,
+                nonce: $nonce,
+                signature: $signature,
+                encryptedPrivateKey: $encryptedPrivateKey
+            );
+            return new JSONResponse(data: $suite->jsonSerialize());
+        } catch (Exception $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
+        }
+    }//end confirmRepair()
 
     /**
      * Validate that the current user owns the suite (or is admin).

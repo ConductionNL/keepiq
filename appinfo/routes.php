@@ -18,6 +18,8 @@ return [
         ['name' => 'encryption_suite#revoke',            'url' => '/api/v1/suites/{id}/revoke',              'verb' => 'POST'],
         ['name' => 'encryption_suite#reinstate',         'url' => '/api/v1/suites/{id}/reinstate',           'verb' => 'POST'],
         ['name' => 'encryption_suite#compromiseRecovery','url' => '/api/v1/suites/compromise-recovery',      'verb' => 'POST'],
+        ['name' => 'encryption_suite#repair',           'url' => '/api/v1/suites/{id}/repair',              'verb' => 'POST'],
+        ['name' => 'encryption_suite#confirmRepair',    'url' => '/api/v1/suites/{id}/repair/confirm',      'verb' => 'POST'],
 
         // CA management (admin-only).
         ['name' => 'c_a_certificate#getStatus',          'url' => '/api/v1/ca/status',                      'verb' => 'GET'],
@@ -36,6 +38,8 @@ return [
         ['name' => 'secret#create',  'url' => '/api/v1/secrets',          'verb' => 'POST'],
         ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}',     'verb' => 'PUT'],
         ['name' => 'secret#destroy', 'url' => '/api/v1/secrets/{id}',     'verb' => 'DELETE'],
+        ['name' => 'secret#migrate',          'url' => '/api/v1/secrets/{id}/migrate',       'verb' => 'PUT'],
+        ['name' => 'secret#showForMigration', 'url' => '/api/v1/secrets/{id}/for-migration', 'verb' => 'GET'],
 
         // SecretType CRUD.
         ['name' => 'secret_type#index',   'url' => '/api/v1/secret-types',      'verb' => 'GET'],

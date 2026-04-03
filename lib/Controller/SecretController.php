@@ -102,7 +102,7 @@ class SecretController extends OCSController
 
         try {
             $secret = $this->secretService->get(id: $id, userId: $userId);
-            return new JSONResponse(data: $secret->jsonSerialize());
+            return new JSONResponse(data: $secret->toArray(includeEncrypted: true));
         } catch (OCSForbiddenException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
@@ -155,7 +155,7 @@ class SecretController extends OCSController
                 ],
                 userId: $userId
             );
-            return new JSONResponse(data: $secret->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+            return new JSONResponse(data: $secret->toArray(includeEncrypted: true), statusCode: Http::STATUS_CREATED);
         } catch (OCSForbiddenException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
@@ -230,7 +230,7 @@ class SecretController extends OCSController
 
         try {
             $secret = $this->secretService->update(id: $id, data: $data, userId: $userId);
-            return new JSONResponse(data: $secret->jsonSerialize());
+            return new JSONResponse(data: $secret->toArray(includeEncrypted: true));
         } catch (OCSForbiddenException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
@@ -267,6 +267,70 @@ class SecretController extends OCSController
             );
         }
     }//end destroy()
+
+    /**
+     * Migrate a secret to a new encryption suite during compromise recovery.
+     *
+     * @param string      $id               The secret ID
+     * @param string      $key              The re-encrypted key blob
+     * @param string|null $login            The re-encrypted login blob
+     * @param string|null $additionalFields The re-encrypted additional fields blob
+     * @param string      $newSuiteId       The new EncryptionSuite ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     */
+    public function migrate(
+        string $id,
+        string $key,
+        ?string $login=null,
+        ?string $additionalFields=null,
+        string $newSuiteId='',
+    ): JSONResponse {
+        $userId = $this->userSession->getUser()->getUID();
+
+        try {
+            $secret = $this->secretService->migrateSecret(
+                id: $id,
+                key: $key,
+                login: $login,
+                additionalFields: $additionalFields,
+                newSuiteId: $newSuiteId,
+                userId: $userId
+            );
+            return new JSONResponse(data: $secret->toArray(includeEncrypted: true));
+        } catch (Exception $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+    }//end migrate()
+
+    /**
+     * Get a secret for migration purposes (bypasses suite status check).
+     *
+     * @param string $id The secret ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     */
+    public function showForMigration(string $id): JSONResponse
+    {
+        $userId = $this->userSession->getUser()->getUID();
+
+        try {
+            $secret = $this->secretService->getForMigration(id: $id, userId: $userId);
+            return new JSONResponse(data: $secret->toArray(includeEncrypted: true));
+        } catch (Exception $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
+        }
+    }//end showForMigration()
 
     /**
      * Search secrets for the current user.

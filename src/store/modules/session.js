@@ -39,7 +39,11 @@ export const useSessionStore = defineStore('session', {
 				generateUrl('/apps/doriath/api/v1/suites'),
 			)
 			const suites = response.data
-			const activeSuite = suites.find(s => s.status === 'active')
+			console.debug('Doriath unlock: suites response type:', typeof suites, Array.isArray(suites), suites)
+			const activeSuite = Array.isArray(suites)
+				? suites.find(s => s.status === 'active')
+				: null
+			console.debug('Doriath unlock: activeSuite:', activeSuite?.id, 'publicKey present:', !!activeSuite?.publicKey)
 
 			if (!activeSuite) {
 				throw new Error('No active EncryptionSuite found')
@@ -56,7 +60,7 @@ export const useSessionStore = defineStore('session', {
 
 			this.cryptoKey = cryptoKey
 			this.encryptedPrivateKey = activeSuite.privateKey
-			this.certificate = activeSuite.certificate
+			this.certificate = activeSuite.publicKey || activeSuite.certificate
 			this.suiteId = activeSuite.id
 			this.lastActivity = Date.now()
 		},

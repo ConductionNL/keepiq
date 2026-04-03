@@ -21,6 +21,10 @@ Entities available from dependency changes: Secret, SecretType, Folder, SecretSh
 - Bulk admin operations (bulk approve applications)
 - Admin audit log of setting changes (Enterprise tier)
 - Custom notification sound/vibration settings
+- Admin-initiated compromise marking for user suites (future — see note below)
+
+**Future consideration — Admin-initiated compromise marking:**
+An admin should be able to mark a user's EncryptionSuite as compromised from the admin settings panel. This would block the suite immediately and generate a new key pair server-side. The user would see the migration resume screen on their next login and provide their old master password to complete the migration. This requires a per-user suite management section in admin settings (listing all users with their suite status, with actions: revoke, mark compromised, reinstate). Not in scope for this change — tracked as an open question in the encryption-suites spec.
 
 ## Decisions
 

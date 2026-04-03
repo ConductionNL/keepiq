@@ -343,6 +343,7 @@ The admin panel MUST display the current CA status at all times.
 ## Open Questions
 
 - **Forced intermediate revocation and secret compromise**: when an admin force-revokes the intermediate certificate (e.g. leaked intermediate key), should all secrets be flagged `possibly_compromised_at`? The intermediate key is used for signing certificates, not for encrypting secrets directly — but a compromised intermediate could allow forged certificates. To be decided when certificate management is specced further.
+- **Admin-initiated compromise marking** (future): Currently only the user can trigger compromise recovery (because the migration requires their master password to decrypt the old private key and re-encrypt secrets). An admin can revoke a suite (blocking access) but cannot trigger key rotation for another user. A future enhancement could allow an admin to mark a user's suite as compromised, which would: (1) immediately block the suite, (2) generate a new key pair server-side, and (3) present the user with the migration resume screen on their next login. The user would need to provide their old master password to complete the migration. This requires the admin settings UI to have a per-user suite management panel, and the lock screen to handle the case where someone else initiated the compromise flag.
 
 ## Notes
 

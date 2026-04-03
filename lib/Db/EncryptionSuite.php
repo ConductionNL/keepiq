@@ -188,11 +188,23 @@ class EncryptionSuite extends Entity implements JsonSerializable
      */
     public function jsonSerialize(): array
     {
+        // Extract the SPKI public key PEM from the X.509 certificate
+        // so the frontend can use it with WebCrypto's importKey('spki').
+        $publicKeyPem = null;
+        if ($this->certificate !== null) {
+            $pubKey = openssl_pkey_get_public($this->certificate);
+            if ($pubKey !== false) {
+                $details      = openssl_pkey_get_details($pubKey);
+                $publicKeyPem = $details['key'] ?? null;
+            }
+        }
+
         return [
             'id'            => $this->getId(),
             'ownerType'     => $this->ownerType,
             'ownerId'       => $this->ownerId,
             'certificate'   => $this->certificate,
+            'publicKey'     => $publicKeyPem,
             'privateKey'    => $this->privateKey,
             'status'        => $this->status,
             'revokedAt'     => $this->revokedAt?->format('c'),

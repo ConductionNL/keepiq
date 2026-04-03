@@ -153,3 +153,47 @@ export async function rsaDecrypt(ciphertext, privateKey) {
 
 	return plaintext
 }
+
+/**
+ * Import a PEM private key for signing (RSASSA-PKCS1-v1_5).
+ * Separate from importPrivateKey which uses RSA-OAEP for decryption.
+ *
+ * @param {string} pem PEM-encoded PKCS#8 private key
+ * @return {Promise<CryptoKey>}
+ */
+export async function importPrivateKeyForSigning(pem) {
+	const pemBody = pem
+		.replace(/-----BEGIN PRIVATE KEY-----/, '')
+		.replace(/-----END PRIVATE KEY-----/, '')
+		.replace(/-----BEGIN RSA PRIVATE KEY-----/, '')
+		.replace(/-----END RSA PRIVATE KEY-----/, '')
+		.replace(/\s/g, '')
+
+	const binary = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0))
+
+	return crypto.subtle.importKey(
+		'pkcs8',
+		binary,
+		{ name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+		false,
+		['sign'],
+	)
+}
+
+/**
+ * Sign data with an RSA private key (RSASSA-PKCS1-v1_5 + SHA-256).
+ * Compatible with PHP's openssl_verify($data, $sig, $pubKey, OPENSSL_ALGO_SHA256).
+ *
+ * @param {string} data The data to sign
+ * @param {CryptoKey} privateKey RSASSA-PKCS1-v1_5 signing key
+ * @return {Promise<string>} Base64-encoded signature
+ */
+export async function rsaSign(data, privateKey) {
+	const encoder = new TextEncoder()
+	const signature = await crypto.subtle.sign(
+		'RSASSA-PKCS1-v1_5',
+		privateKey,
+		encoder.encode(data),
+	)
+	return btoa(String.fromCharCode(...new Uint8Array(signature)))
+}

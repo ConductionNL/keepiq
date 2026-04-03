@@ -208,6 +208,48 @@ class CertificateAuthorityService
     }//end signPublicKey()
 
     /**
+     * Sign a key pair with the active intermediate, returning an X.509 certificate PEM.
+     * Uses the private key to create a proper CSR (unlike signPublicKey which only has the public key).
+     *
+     * @param \OpenSSLAsymmetricKey $privateKey The private key resource
+     * @param string                $commonName The CN for the certificate
+     *
+     * @return string PEM-encoded X.509 certificate
+     */
+    public function signKeyPair(\OpenSSLAsymmetricKey $privateKey, string $commonName): string
+    {
+        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
+        $intermediateKey  = openssl_pkey_get_private(
+            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
+        );
+        $intermediateCert = $intermediate->getCertificate();
+
+        $csr = openssl_csr_new(
+            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $commonName]),
+            private_key: $privateKey,
+            options: ['digest_alg' => 'sha256']
+        );
+
+        $cert = openssl_csr_sign(
+            csr: $csr,
+            ca_certificate: $intermediateCert,
+            private_key: $intermediateKey,
+            days: 365,
+            options: ['digest_alg' => 'sha256'],
+            serial: random_int(1, PHP_INT_MAX)
+        );
+
+        // @codeCoverageIgnoreStart
+        if ($cert === false) {
+            throw new RuntimeException('Failed to sign certificate: '.openssl_error_string());
+        }
+
+        // @codeCoverageIgnoreEnd
+        openssl_x509_export(certificate: $cert, output: $certPem);
+        return $certPem;
+    }//end signKeyPair()
+
+    /**
      * Sign a PKCS#10 CSR with the active intermediate certificate.
      *
      * @param string $csrPem The PEM-encoded CSR
