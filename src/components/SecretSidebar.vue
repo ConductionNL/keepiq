@@ -111,7 +111,38 @@
 					{{ t('doriath', 'Delete') }}
 				</NcButton>
 			</div>
+
+			<!-- Sharing section (visible when the current user owns the secret) -->
+			<div v-if="isOwner" class="secret-sidebar__section">
+				<h3 class="secret-sidebar__section-title">
+					{{ t('doriath', 'Sharing') }}
+				</h3>
+
+				<div class="secret-sidebar__field">
+					<label class="secret-sidebar__label">{{ t('doriath', 'User shares') }}</label>
+					<RecipientList :secret-id="secret.id" :is-owner="isOwner" />
+					<NcButton type="secondary" @click="shareDialogOpen = true">
+						{{ t('doriath', 'Share with user') }}
+					</NcButton>
+				</div>
+
+				<div class="secret-sidebar__field">
+					<label class="secret-sidebar__label">{{ t('doriath', 'Group shares') }}</label>
+					<GroupShareList :secret-id="secret.id" :is-owner="isOwner" />
+				</div>
+
+				<div class="secret-sidebar__field">
+					<label class="secret-sidebar__label">{{ t('doriath', 'Delegation') }}</label>
+					<DelegationManager :secret-id="secret.id" :is-owner="isOwner" />
+				</div>
+			</div>
 		</div>
+
+		<ShareDialog
+			v-if="isOwner"
+			:open.sync="shareDialogOpen"
+			:secret-id="secret.id"
+			@shared="onShared" />
 	</NcAppSidebar>
 </template>
 
@@ -120,9 +151,14 @@ import { NcAppSidebar, NcButton, NcInputField, NcLoadingIcon, NcNoteCard, NcPass
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CopyButton from './CopyButton.vue'
+import DelegationManager from './DelegationManager.vue'
+import GroupShareList from './GroupShareList.vue'
 import PasswordField from './PasswordField.vue'
+import RecipientList from './RecipientList.vue'
+import ShareDialog from './ShareDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'SecretSidebar',
@@ -135,9 +171,13 @@ export default {
 		NcPasswordField,
 		NcSelect,
 		CopyButton,
+		DelegationManager,
 		DeleteIcon,
-		PencilIcon,
+		GroupShareList,
 		PasswordField,
+		PencilIcon,
+		RecipientList,
+		ShareDialog,
 	},
 
 	data() {
@@ -146,6 +186,7 @@ export default {
 			editData: {},
 			saving: false,
 			saveError: null,
+			shareDialogOpen: false,
 		}
 	},
 
@@ -156,8 +197,27 @@ export default {
 		folderStore() {
 			return useFolderStore()
 		},
+		sessionStore() {
+			return useSessionStore()
+		},
 		secret() {
 			return this.secretStore.currentSecret
+		},
+		/**
+		 * True when the logged-in user is the owner of the current secret.
+		 *
+		 * @return {boolean}
+		 */
+		isOwner() {
+			if (!this.secret) return false
+			// getCurrentUser() from @nextcloud/auth provides the logged-in user.
+			// As a fallback we check the session store's suiteId or compare ownerId.
+			const ncUser = window.OC?.currentUser ?? null
+			if (ncUser && this.secret.ownerId) {
+				return ncUser === this.secret.ownerId
+			}
+			// If ownerId is not set, assume the current user owns it.
+			return true
 		},
 		folderOptions() {
 			return [
@@ -230,6 +290,11 @@ export default {
 				return dateString
 			}
 		},
+
+		onShared() {
+			// Shares list is refreshed inside ShareDialog after a successful share.
+			// This hook is available for future use (e.g. toast notifications).
+		},
 	},
 }
 </script>
@@ -268,5 +333,22 @@ export default {
 	margin-top: 16px;
 	padding-top: 16px;
 	border-top: 1px solid var(--color-border);
+}
+
+.secret-sidebar__section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--color-border);
+}
+
+.secret-sidebar__section-title {
+	font-size: 0.875rem;
+	font-weight: 600;
+	margin: 0;
+	color: var(--color-text-maxcontrast);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
 </style>

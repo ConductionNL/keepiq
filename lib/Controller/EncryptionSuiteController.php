@@ -78,6 +78,39 @@ class EncryptionSuiteController extends OCSController
     }//end index()
 
     /**
+     * Get the public key of another user's active encryption suite.
+     * Public keys are not secret — this is needed for sharing (encrypting
+     * a secret for a recipient).
+     *
+     * @param string $userId The target user ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     */
+    public function publicKey(string $userId): JSONResponse
+    {
+        try {
+            $suite      = $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId);
+            $serialized = $suite->jsonSerialize();
+
+            // Only return the public key and certificate — not the encrypted private key.
+            return new JSONResponse(
+                data: [
+                    'id'        => $serialized['id'],
+                    'publicKey' => $serialized['publicKey'] ?? null,
+                    'ownerId'   => $userId,
+                ]
+            );
+        } catch (Exception $e) {
+            return new JSONResponse(
+                data: ['message' => 'No active encryption suite found for user: '.$userId],
+                statusCode: Http::STATUS_NOT_FOUND
+            );
+        }
+    }//end publicKey()
+
+    /**
      * Get a specific suite.
      *
      * @param string $id The suite ID

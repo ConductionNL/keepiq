@@ -24,8 +24,11 @@ namespace OCA\Doriath\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\FolderMapper;
+use OCA\Doriath\Db\GroupShareMapper;
 use OCA\Doriath\Db\Secret;
+use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Db\SecretShareMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\OCS\OCSForbiddenException;
 use Psr\Log\LoggerInterface;
@@ -39,12 +42,15 @@ class SecretService
     /**
      * Constructor for SecretService.
      *
-     * @param SecretMapper           $secretMapper     The secret mapper
-     * @param SecretTypeService      $typeService      The secret type service
-     * @param EncryptionSuiteService $suiteService     The encryption suite service
-     * @param MigrationService       $migrationService The migration service
-     * @param FolderMapper           $folderMapper     The folder mapper (for validation)
-     * @param LoggerInterface        $logger           The logger interface
+     * @param SecretMapper           $secretMapper      The secret mapper
+     * @param SecretTypeService      $typeService       The secret type service
+     * @param EncryptionSuiteService $suiteService      The encryption suite service
+     * @param MigrationService       $migrationService  The migration service
+     * @param FolderMapper           $folderMapper      The folder mapper (for validation)
+     * @param SecretShareMapper      $secretShareMapper The secret share mapper
+     * @param GroupShareMapper       $groupShareMapper  The group share mapper
+     * @param SecretDelegationMapper $delegationMapper  The secret delegation mapper
+     * @param LoggerInterface        $logger            The logger interface
      *
      * @return void
      */
@@ -54,6 +60,9 @@ class SecretService
         private EncryptionSuiteService $suiteService,
         private MigrationService $migrationService,
         private FolderMapper $folderMapper,
+        private SecretShareMapper $secretShareMapper,
+        private GroupShareMapper $groupShareMapper,
+        private SecretDelegationMapper $delegationMapper,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -288,6 +297,11 @@ class SecretService
         if ($secret->getOwnerId() !== $userId) {
             throw new InvalidArgumentException('You do not own this secret');
         }
+
+        // Cascade: delete all shares, group shares and delegations linked to this secret.
+        $this->secretShareMapper->deleteBySourceSecret(sourceSecretId: $id);
+        $this->groupShareMapper->deleteBySecret(secretId: $id);
+        $this->delegationMapper->deleteBySecret(secretId: $id);
 
         $this->secretMapper->delete($secret);
 
