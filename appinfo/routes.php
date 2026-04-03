@@ -12,6 +12,7 @@ return [
 
         // EncryptionSuite CRUD.
         ['name' => 'encryption_suite#index',             'url' => '/api/v1/suites',                          'verb' => 'GET'],
+        ['name' => 'encryption_suite#publicKey',         'url' => '/api/v1/suites/public-key/{userId}',      'verb' => 'GET'],
         ['name' => 'encryption_suite#show',              'url' => '/api/v1/suites/{id}',                     'verb' => 'GET'],
         ['name' => 'encryption_suite#create',            'url' => '/api/v1/suites',                          'verb' => 'POST'],
         ['name' => 'encryption_suite#updatePrivateKey',  'url' => '/api/v1/suites/{id}/private-key',         'verb' => 'PUT'],
@@ -53,6 +54,23 @@ return [
         ['name' => 'folder#update',   'url' => '/api/v1/folders/{id}',          'verb' => 'PUT'],
         ['name' => 'folder#destroy',  'url' => '/api/v1/folders/{id}',          'verb' => 'DELETE'],
         ['name' => 'folder#children', 'url' => '/api/v1/folders/{id}/children', 'verb' => 'GET'],
+
+        // Sharing — user-level shares.
+        ['name' => 'share#index',       'url' => '/api/v1/shares',                   'verb' => 'GET'],
+        ['name' => 'share#create',      'url' => '/api/v1/shares',                   'verb' => 'POST'],
+        ['name' => 'share#createBatch', 'url' => '/api/v1/shares/batch',             'verb' => 'POST'],
+        ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',              'verb' => 'DELETE'],
+        ['name' => 'share#sync',        'url' => '/api/v1/shares/sync/{secretId}',   'verb' => 'PUT'],
+
+        // Sharing — group-level shares.
+        ['name' => 'group_share#index',   'url' => '/api/v1/group-shares',        'verb' => 'GET'],
+        ['name' => 'group_share#create',  'url' => '/api/v1/group-shares',        'verb' => 'POST'],
+        ['name' => 'group_share#destroy', 'url' => '/api/v1/group-shares/{id}',   'verb' => 'DELETE'],
+
+        // Delegation.
+        ['name' => 'delegation#index',   'url' => '/api/v1/delegations',                        'verb' => 'GET'],
+        ['name' => 'delegation#create',  'url' => '/api/v1/delegations',                        'verb' => 'POST'],
+        ['name' => 'delegation#reclaim', 'url' => '/api/v1/delegations/reclaim/{secretId}',     'verb' => 'POST'],
 
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],

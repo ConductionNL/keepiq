@@ -93,6 +93,9 @@ class SecretServiceTest extends TestCase
         $this->suiteService     = $this->createMock(originalClassName: EncryptionSuiteService::class);
         $this->migrationService = $this->createMock(originalClassName: MigrationService::class);
         $this->folderMapper     = $this->createMock(originalClassName: FolderMapper::class);
+        $secretShareMapper      = $this->createMock(originalClassName: \OCA\Doriath\Db\SecretShareMapper::class);
+        $groupShareMapper       = $this->createMock(originalClassName: \OCA\Doriath\Db\GroupShareMapper::class);
+        $delegationMapper       = $this->createMock(originalClassName: \OCA\Doriath\Db\SecretDelegationMapper::class);
         $logger                 = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->service = new SecretService(
@@ -101,6 +104,9 @@ class SecretServiceTest extends TestCase
             suiteService: $this->suiteService,
             migrationService: $this->migrationService,
             folderMapper: $this->folderMapper,
+            secretShareMapper: $secretShareMapper,
+            groupShareMapper: $groupShareMapper,
+            delegationMapper: $delegationMapper,
             logger: $logger,
         );
     }//end setUp()
