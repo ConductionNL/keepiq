@@ -11,10 +11,10 @@
 				<TimerIcon :size="20" />
 			</template>
 			<div class="user-settings__field">
-				<label for="session-timeout">{{ t('doriath', 'Session timeout') }}</label>
 				<NcSelect
 					v-model="sessionTimeout"
 					:options="timeoutOptions"
+					:input-label="t('doriath', 'Session timeout')"
 					label="label"
 					:reduce="opt => opt.value"
 					@input="saveTimeout" />
