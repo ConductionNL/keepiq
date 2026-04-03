@@ -44,51 +44,41 @@
 			<NcInputField
 				ref="newFolderInput"
 				v-model="newFolderName"
+				v-tooltip="isNewFolderDuplicate ? t('doriath', 'A folder with this name already exists in the same location') : ''"
 				:label="t('doriath', 'Folder name')"
 				:disabled="creating"
+				:error="!!newFolderName && isNewFolderDuplicate"
 				@keyup.enter="createFolder"
 				@keyup.escape="cancelNewFolder"
 				@blur="handleNewFolderBlur" />
 		</div>
 
-		<!-- Rename dialog -->
-		<NcDialog
+		<RenameFolderDialog
 			:open.sync="showRenameDialog"
-			:name="t('doriath', 'Rename folder')">
-			<NcInputField
-				v-model="renameName"
-				:label="t('doriath', 'New name')" />
-			<template #actions>
-				<NcButton @click="showRenameDialog = false">
-					{{ t('doriath', 'Cancel') }}
-				</NcButton>
-				<NcButton type="primary" :disabled="!renameName" @click="confirmRename">
-					{{ t('doriath', 'Rename') }}
-				</NcButton>
-			</template>
-		</NcDialog>
+			:folder="renameFolder"
+			@renamed="onRenamed" />
 	</div>
 </template>
 
 <script>
-import { NcAppNavigationItem, NcButton, NcDialog, NcInputField } from '@nextcloud/vue'
+import { NcAppNavigationItem, NcInputField } from '@nextcloud/vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
 import InboxIcon from 'vue-material-design-icons/Inbox.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import FolderTreeNode from './FolderTreeNode.vue'
+import RenameFolderDialog from '../dialog/RenameFolderDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
 export default {
 	name: 'FolderTree',
 	components: {
 		NcAppNavigationItem,
-		NcButton,
-		NcDialog,
 		NcInputField,
 		FolderPlusIcon,
 		InboxIcon,
 		KeyVariantIcon,
 		FolderTreeNode,
+		RenameFolderDialog,
 	},
 	props: {
 		currentFolderId: {
@@ -110,8 +100,7 @@ export default {
 			newFolderName: '',
 			creating: false,
 			showRenameDialog: false,
-			renameFolderId: null,
-			renameName: '',
+			renameFolder: null,
 		}
 	},
 	computed: {
@@ -120,6 +109,10 @@ export default {
 		},
 		folderTree() {
 			return this.folderStore.folderTree
+		},
+		isNewFolderDuplicate() {
+			if (!this.newFolderName.trim()) return false
+			return this.folderStore.isDuplicateName(this.newFolderName, null)
 		},
 	},
 	methods: {
@@ -149,7 +142,7 @@ export default {
 			}
 		},
 		async createFolder() {
-			if (!this.newFolderName.trim()) return
+			if (!this.newFolderName.trim() || this.isNewFolderDuplicate) return
 			this.creating = true
 			try {
 				await this.folderStore.createFolder(this.newFolderName.trim(), null)
@@ -161,19 +154,11 @@ export default {
 			}
 		},
 		startRename(folder) {
-			this.renameFolderId = folder.id
-			this.renameName = folder.name
+			this.renameFolder = folder
 			this.showRenameDialog = true
 		},
-		async confirmRename() {
-			if (!this.renameName.trim() || !this.renameFolderId) return
-			try {
-				await this.folderStore.updateFolder(this.renameFolderId, this.renameName.trim())
-				await this.folderStore.fetchFolders()
-			} catch {
-				// Silently handled.
-			}
-			this.showRenameDialog = false
+		onRenamed() {
+			this.renameFolder = null
 		},
 		async handleDelete(folder) {
 			try {
