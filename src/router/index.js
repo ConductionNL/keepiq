@@ -3,7 +3,6 @@ import Router from 'vue-router'
 import { generateUrl } from '@nextcloud/router'
 import Dashboard from '../views/Dashboard.vue'
 import LockScreen from '../views/LockScreen.vue'
-import AdminRoot from '../views/settings/AdminRoot.vue'
 
 Vue.use(Router)
 
@@ -13,7 +12,6 @@ const router = new Router({
 	routes: [
 		{ path: '/', name: 'Dashboard', component: Dashboard },
 		{ path: '/lock', name: 'Lock', component: LockScreen },
-		{ path: '/settings', name: 'Settings', component: AdminRoot },
 		{ path: '*', redirect: '/' },
 	],
 })
