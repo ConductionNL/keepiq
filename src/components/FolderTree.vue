@@ -2,7 +2,7 @@
 	<div class="folder-tree">
 		<NcAppNavigationItem
 			:name="t('doriath', 'All secrets')"
-			:class="{ 'folder-tree__item--active': isAllSecrets }"
+			:active="isAllSecrets"
 			@click="navigate(null)">
 			<template #icon>
 				<KeyVariantIcon :size="20" />
@@ -11,7 +11,7 @@
 
 		<NcAppNavigationItem
 			:name="t('doriath', 'Secrets')"
-			:class="{ 'folder-tree__item--active': isRootFolder }"
+			:active="isRootFolder"
 			@click="navigateRoot">
 			<template #icon>
 				<InboxIcon :size="20" />
@@ -176,10 +176,6 @@ export default {
 </script>
 
 <style scoped>
-.folder-tree__item--active :deep(.app-navigation-entry) {
-	background: var(--color-background-hover);
-}
-
 .folder-tree__new :deep(.app-navigation-entry__name) {
 	color: var(--color-text-maxcontrast);
 	font-style: italic;
