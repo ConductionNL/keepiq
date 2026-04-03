@@ -214,8 +214,8 @@ export default {
 }
 
 .separator {
-    height: 1px;
-    background: var(--color-border);
-    margin: 8px 0;
+	height: 1px;
+	background: var(--color-border);
+	margin: 8px 0;
 }
 </style>
