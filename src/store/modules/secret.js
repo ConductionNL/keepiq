@@ -33,7 +33,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string|null} folderId Optional folder to filter by
 		 * @return {Promise<void>}
 		 */
-		async fetchSecrets(folderId = null) {
+		async fetchSecrets(folderId = null, rootOnly = false) {
 			this.loading = true
 			try {
 				const params = {
@@ -42,7 +42,9 @@ export const useSecretStore = defineStore('secret', {
 					page: this.page,
 					limit: 50,
 				}
-				if (folderId) {
+				if (rootOnly) {
+					params.rootOnly = true
+				} else if (folderId) {
 					params.folderId = folderId
 				}
 				const response = await axios.get(
