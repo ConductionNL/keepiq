@@ -1,10 +1,10 @@
 <template>
 	<NcAppNavigationItem
 		:name="folder.name"
-		:class="{ 'folder-tree-node--active': currentFolderId === folder.id }"
-		@click="$emit('navigate', folder.id)">
+		:class="{ 'folder-tree-node--active': isCurrentFolder }"
+		@click="handleClick">
 		<template #icon>
-			<FolderOpenIcon v-if="currentFolderId === folder.id" :size="20" />
+			<FolderOpenIcon v-if="isOpen" :size="20" />
 			<FolderIcon v-else :size="20" />
 		</template>
 		<template #actions>
@@ -21,7 +21,7 @@
 				{{ t('doriath', 'Delete') }}
 			</NcActionButton>
 		</template>
-		<template v-if="hasChildren || isCurrentFolder" #default>
+		<template v-if="isOpen" #default>
 			<FolderTreeNode
 				v-for="child in folder.children"
 				:key="child.id"
@@ -35,13 +35,13 @@
 				v-if="isCurrentFolder && !showNewSubfolder"
 				:name="t('doriath', 'New folder')"
 				class="folder-tree-node__new"
-				@click="startNewSubfolder">
+				@click.stop="startNewSubfolder">
 				<template #icon>
 					<FolderPlusIcon :size="20" />
 				</template>
 			</NcAppNavigationItem>
 
-			<div v-if="isCurrentFolder && showNewSubfolder" class="folder-tree-node__inline-input">
+			<div v-if="isCurrentFolder && showNewSubfolder" class="folder-tree-node__inline-input" @click.stop>
 				<FolderPlusIcon :size="20" class="folder-tree-node__inline-input-icon" />
 				<NcInputField
 					ref="newSubfolderInput"
@@ -90,6 +90,7 @@ export default {
 	emits: ['navigate', 'rename', 'delete'],
 	data() {
 		return {
+			isOpen: false,
 			showNewSubfolder: false,
 			newSubfolderName: '',
 			creating: false,
@@ -99,11 +100,16 @@ export default {
 		isCurrentFolder() {
 			return this.currentFolderId === this.folder.id
 		},
-		hasChildren() {
-			return this.folder.children && this.folder.children.length
-		},
 	},
 	methods: {
+		handleClick() {
+			if (this.isOpen && this.isCurrentFolder) {
+				this.isOpen = false
+			} else {
+				this.isOpen = true
+				this.$emit('navigate', this.folder.id)
+			}
+		},
 		startNewSubfolder() {
 			this.showNewSubfolder = true
 			this.$nextTick(() => {
