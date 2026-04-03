@@ -68,6 +68,8 @@
 </template>
 
 <script>
+// for some reason CnDashboardPage import shows ESlint error without there actually being one
+// eslint-disable-next-line import/named
 import { CnDashboardPage, CnStatsBlock } from '@conduction/nextcloud-vue'
 import AccountGroupOutline from 'vue-material-design-icons/AccountGroupOutline.vue'
 import CalendarClock from 'vue-material-design-icons/CalendarClock.vue'
