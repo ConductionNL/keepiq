@@ -348,6 +348,7 @@ class SecretService
      *
      * @param string      $userId    The Nextcloud user ID
      * @param string|null $folderId  Optional folder ID to filter by
+     * @param bool        $rootOnly  If true, return only secrets without a folder
      * @param string      $sort      The field to sort by
      * @param string      $direction The sort direction ('ASC' or 'DESC')
      * @param int         $page      The 1-based page number
@@ -360,6 +361,7 @@ class SecretService
     public function list(
         string $userId,
         ?string $folderId,
+        bool $rootOnly,
         string $sort,
         string $direction,
         int $page,
@@ -370,6 +372,7 @@ class SecretService
             ownerType: 'user',
             ownerId: $userId,
             folderId: $folderId,
+            rootOnly: $rootOnly,
             sort: $sort,
             direction: $direction,
             limit: $limit,
@@ -378,7 +381,8 @@ class SecretService
         $total   = $this->secretMapper->countByOwner(
             ownerType: 'user',
             ownerId: $userId,
-            folderId: $folderId
+            folderId: $folderId,
+            rootOnly: $rootOnly
         );
 
         $result = [];

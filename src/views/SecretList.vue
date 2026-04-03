@@ -191,6 +191,10 @@ export default {
 			type: String,
 			default: null,
 		},
+		rootOnly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -254,7 +258,7 @@ export default {
 		async loadSecrets() {
 			this.secretStore.page = 1
 			this.searchTerm = ''
-			await this.secretStore.fetchSecrets(this.folderId)
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 		},
 		async openSecret(id) {
 			console.debug('Doriath: openSecret called with id:', id)
@@ -271,7 +275,7 @@ export default {
 				if (this.searchTerm.trim()) {
 					await this.secretStore.searchSecrets(this.searchTerm.trim(), 1)
 				} else {
-					await this.secretStore.fetchSecrets(this.folderId)
+					await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 				}
 			}, 300)
 		},
@@ -280,7 +284,7 @@ export default {
 			if (this.searchTerm.trim()) {
 				await this.secretStore.searchSecrets(this.searchTerm.trim(), page)
 			} else {
-				await this.secretStore.fetchSecrets(this.folderId)
+				await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 			}
 		},
 		async handleCreate() {
@@ -301,7 +305,7 @@ export default {
 				const created = await this.secretStore.createSecret(data)
 				this.showCreateDialog = false
 				this.newSecret = { name: '', url: '', login: '', key: '', typeId: null, folderId: null }
-				await this.secretStore.fetchSecrets(this.folderId)
+				await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 				await this.openSecret(created.id)
 			} catch (e) {
 				this.createError = e.response?.data?.message || e.message || t('doriath', 'Failed to create secret')
