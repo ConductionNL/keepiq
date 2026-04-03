@@ -22,6 +22,7 @@
 <script>
 import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import Settings from './Settings.vue'
+import { loadState } from '@nextcloud/initial-state'
 import { initializeStores } from '../../store/store.js'
 
 export default {
@@ -33,7 +34,7 @@ export default {
 	data() {
 		return {
 			storesReady: false,
-			appVersion: document.getElementById('doriath-settings')?.dataset?.version || 'Unknown',
+			appVersion: loadState('doriath', 'version', 'Unknown'),
 		}
 	},
 	async created() {
