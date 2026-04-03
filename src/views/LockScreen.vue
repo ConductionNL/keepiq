@@ -8,55 +8,64 @@
 				{{ isFirstSetup ? t('doriath', 'Set up your master password') : t('doriath', 'Unlock Doriath') }}
 			</h1>
 
-			<!-- Migration paused banner -->
-			<NcNoteCard v-if="hasPausedMigration" type="warning">
-				{{ t('doriath', 'Key migration paused — enter your master password to resume') }}
-			</NcNoteCard>
-
-			<!-- First-time setup mode -->
-			<template v-if="isFirstSetup">
-				<NcPasswordField
-					v-model="masterPassword"
-					:label="t('doriath', 'Master password')"
-					:disabled="loading"
-					@keyup.enter="handleSetup" />
-				<PasswordStrengthMeter
-					v-if="masterPassword"
-					:password="masterPassword"
-					@strength-change="onStrengthChange" />
-				<NcPasswordField
-					v-model="confirmPassword"
-					:label="t('doriath', 'Confirm master password')"
-					:disabled="loading"
-					@keyup.enter="handleSetup" />
-				<NcButton
-					type="primary"
-					:disabled="!canSubmitSetup || loading"
-					:wide="true"
-					@click="handleSetup">
-					{{ loading ? t('doriath', 'Setting up...') : t('doriath', 'Set up vault') }}
-				</NcButton>
+			<!-- Insecure context warning -->
+			<template v-if="!isSecureContext">
+				<NcNoteCard type="error">
+					{{ t('doriath', 'Doriath requires a secure connection (HTTPS) to function. Please access this instance over HTTPS.') }}
+				</NcNoteCard>
 			</template>
 
-			<!-- Normal unlock mode -->
 			<template v-else>
-				<NcPasswordField
-					v-model="masterPassword"
-					:label="t('doriath', 'Master password')"
-					:disabled="loading"
-					@keyup.enter="handleUnlock" />
-				<NcButton
-					type="primary"
-					:disabled="!masterPassword || loading"
-					:wide="true"
-					@click="handleUnlock">
-					{{ loading ? t('doriath', 'Unlocking...') : t('doriath', 'Unlock') }}
-				</NcButton>
-			</template>
+				<!-- Migration paused banner -->
+				<NcNoteCard v-if="hasPausedMigration" type="warning">
+					{{ t('doriath', 'Key migration paused — enter your master password to resume') }}
+				</NcNoteCard>
 
-			<NcNoteCard v-if="error" type="error">
-				{{ error }}
-			</NcNoteCard>
+				<!-- First-time setup mode -->
+				<template v-if="isFirstSetup">
+					<NcPasswordField
+						v-model="masterPassword"
+						:label="t('doriath', 'Master password')"
+						:disabled="loading"
+						@keyup.enter="handleSetup" />
+					<PasswordStrengthMeter
+						v-if="masterPassword"
+						:password="masterPassword"
+						@strength-change="onStrengthChange" />
+					<NcPasswordField
+						v-model="confirmPassword"
+						:label="t('doriath', 'Confirm master password')"
+						:disabled="loading"
+						@keyup.enter="handleSetup" />
+					<NcButton
+						type="primary"
+						:disabled="!canSubmitSetup || loading"
+						:wide="true"
+						@click="handleSetup">
+						{{ loading ? t('doriath', 'Setting up...') : t('doriath', 'Set up vault') }}
+					</NcButton>
+				</template>
+
+				<!-- Normal unlock mode -->
+				<template v-else>
+					<NcPasswordField
+						v-model="masterPassword"
+						:label="t('doriath', 'Master password')"
+						:disabled="loading"
+						@keyup.enter="handleUnlock" />
+					<NcButton
+						type="primary"
+						:disabled="!masterPassword || loading"
+						:wide="true"
+						@click="handleUnlock">
+						{{ loading ? t('doriath', 'Unlocking...') : t('doriath', 'Unlock') }}
+					</NcButton>
+				</template>
+
+				<NcNoteCard v-if="error" type="error">
+					{{ error }}
+				</NcNoteCard>
+			</template>
 		</div>
 	</div>
 </template>
@@ -100,6 +109,9 @@ export default {
 		},
 		hasPausedMigration() {
 			return this.suiteStore.migrationStatus?.status === 'in_progress'
+		},
+		isSecureContext() {
+			return window.isSecureContext
 		},
 		canSubmitSetup() {
 			return this.masterPassword
