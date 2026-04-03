@@ -12,8 +12,10 @@ export const useSecretStore = defineStore('secret', {
 		currentSecret: null,
 		/** @type {number} Total number of secrets (for pagination) */
 		totalCount: 0,
-		/** @type {boolean} */
+		/** @type {boolean} Loading state for list operations */
 		loading: false,
+		/** @type {boolean} Loading state for sidebar/detail */
+		detailLoading: false,
 		/** @type {object} Active filters */
 		filters: {},
 		/** @type {string} Sort field */
@@ -47,7 +49,7 @@ export const useSecretStore = defineStore('secret', {
 					generateUrl('/apps/doriath/api/v1/secrets'),
 					{ params },
 				)
-				this.secrets = response.data.results ?? response.data
+				this.secrets = response.data.results ?? []
 				this.totalCount = response.data.total ?? this.secrets.length
 			} finally {
 				this.loading = false
@@ -61,33 +63,44 @@ export const useSecretStore = defineStore('secret', {
 		 * @return {Promise<void>}
 		 */
 		async fetchSecret(id) {
-			this.loading = true
+			this.detailLoading = true
 			try {
 				const response = await axios.get(
 					generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
 				)
 				const secret = { ...response.data }
+
+				// Show sidebar immediately with metadata.
+				this.currentSecret = { ...secret }
+
+				// Attempt client-side decryption.
 				const session = useSessionStore()
-
+				console.debug('Doriath: cryptoKey present:', !!session.cryptoKey, 'key blob length:', secret.key?.length)
 				if (session.cryptoKey) {
-					if (secret.key) {
-						secret.key = await rsaDecrypt(secret.key, session.cryptoKey)
-					}
-					if (secret.login) {
-						secret.login = await rsaDecrypt(secret.login, session.cryptoKey)
-					}
-					if (secret.additionalFields) {
-						const decrypted = {}
-						for (const [field, value] of Object.entries(secret.additionalFields)) {
-							decrypted[field] = value ? await rsaDecrypt(value, session.cryptoKey) : value
+					try {
+						if (secret.key) {
+							console.debug('Doriath: Decrypting key field...')
+							secret.key = await rsaDecrypt(secret.key, session.cryptoKey)
+							console.debug('Doriath: Key decrypted successfully')
 						}
-						secret.additionalFields = decrypted
+						if (secret.login) {
+							console.debug('Doriath: Decrypting login field...')
+							secret.login = await rsaDecrypt(secret.login, session.cryptoKey)
+							console.debug('Doriath: Login decrypted successfully')
+						}
+						if (secret.additionalFields && typeof secret.additionalFields === 'string') {
+							console.debug('Doriath: Decrypting additionalFields...')
+							secret.additionalFields = await rsaDecrypt(secret.additionalFields, session.cryptoKey)
+						}
+						this.currentSecret = { ...secret }
+					} catch (e) {
+						console.error('Doriath: Failed to decrypt secret fields', e)
 					}
+				} else {
+					console.warn('Doriath: No cryptoKey in session, cannot decrypt')
 				}
-
-				this.currentSecret = secret
 			} finally {
-				this.loading = false
+				this.detailLoading = false
 			}
 		},
 
@@ -101,8 +114,19 @@ export const useSecretStore = defineStore('secret', {
 			const session = useSessionStore()
 			const payload = { ...data }
 
+			console.debug('Doriath createSecret: certificate present:', !!session.certificate, 'cryptoKey present:', !!session.cryptoKey)
 			if (session.certificate) {
 				const publicKey = await importPublicKey(session.certificate)
+
+				// Round-trip test: encrypt then immediately decrypt to verify key pair match.
+				try {
+					const testBlob = await rsaEncrypt('round-trip-test', publicKey)
+					const testResult = await rsaDecrypt(testBlob, session.cryptoKey)
+					console.debug('Doriath createSecret: round-trip test passed:', testResult)
+				} catch (e) {
+					console.error('Doriath createSecret: ROUND-TRIP TEST FAILED — public key does not match private key!', e)
+				}
+
 				if (payload.key) {
 					payload.key = await rsaEncrypt(payload.key, publicKey)
 				}
@@ -190,7 +214,7 @@ export const useSecretStore = defineStore('secret', {
 					generateUrl('/apps/doriath/api/v1/secrets/search'),
 					{ params: { term, page } },
 				)
-				this.secrets = response.data.results ?? response.data
+				this.secrets = response.data.results ?? []
 				this.totalCount = response.data.total ?? this.secrets.length
 				this.page = page
 			} finally {

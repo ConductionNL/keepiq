@@ -165,6 +165,35 @@ class SecretService
     }//end get()
 
     /**
+     * Get a secret for migration — bypasses suite status check.
+     * Only allowed when there is an active migration (write lock).
+     *
+     * @param string $id     The secret ID
+     * @param string $userId The authenticated user ID
+     *
+     * @return Secret
+     *
+     * @throws InvalidArgumentException When the user does not own the secret
+     * @throws OCSForbiddenException    When there is no active migration
+     */
+    public function getForMigration(string $id, string $userId): Secret
+    {
+        if ($this->migrationService->isWriteLocked(ownerType: 'user', ownerId: $userId) === false) {
+            throw new OCSForbiddenException(
+                message: 'Migration-only access requires an active migration'
+            );
+        }
+
+        $secret = $this->secretMapper->findById(id: $id);
+
+        if ($secret->getOwnerId() !== $userId) {
+            throw new InvalidArgumentException(message: 'You do not own this secret');
+        }
+
+        return $secret;
+    }//end getForMigration()
+
+    /**
      * Update an existing secret.
      *
      * Only fields present in $data are updated; absent keys are left unchanged.
@@ -222,6 +251,16 @@ class SecretService
             $secret->setAdditionalFields($data['additionalFields']);
         }
 
+        // If any encrypted field was updated and the secret was flagged as
+        // possibly compromised, clear the flag — the credential has been rotated.
+        $encryptedFieldUpdated = array_key_exists(key: 'key', array: $data)
+            || array_key_exists(key: 'login', array: $data)
+            || array_key_exists(key: 'additionalFields', array: $data);
+
+        if ($encryptedFieldUpdated === true && $secret->getPossiblyCompromisedAt() !== null) {
+            $secret->setPossiblyCompromisedAt(null);
+        }
+
         $secret->setUpdatedAt(new DateTime());
 
         $this->secretMapper->update($secret);
@@ -256,6 +295,51 @@ class SecretService
     }//end delete()
 
     /**
+     * Migrate a secret to a new encryption suite during compromise recovery.
+     *
+     * Bypasses the write lock — this is the only write operation allowed during migration.
+     * Updates the encrypted fields and switches the encryption_suite_id.
+     *
+     * @param string $id               The secret ID
+     * @param string $key              The re-encrypted key blob
+     * @param string $login            The re-encrypted login blob (nullable)
+     * @param string $additionalFields The re-encrypted additional fields blob (nullable)
+     * @param string $newSuiteId       The new EncryptionSuite ID
+     * @param string $userId           The authenticated user ID
+     *
+     * @return Secret
+     *
+     * @throws InvalidArgumentException When the user does not own the secret
+     */
+    public function migrateSecret(
+        string $id,
+        string $key,
+        ?string $login,
+        ?string $additionalFields,
+        string $newSuiteId,
+        string $userId,
+    ): Secret {
+        $secret = $this->secretMapper->findById(id: $id);
+
+        if ($secret->getOwnerId() !== $userId) {
+            throw new InvalidArgumentException('You do not own this secret');
+        }
+
+        $secret->setKey($key);
+        $secret->setLogin($login);
+        $secret->setAdditionalFields($additionalFields);
+        $secret->setEncryptionSuiteId($newSuiteId);
+        $secret->setPossiblyCompromisedAt(new DateTime());
+        $secret->setUpdatedAt(new DateTime());
+
+        $this->secretMapper->update($secret);
+
+        $this->logger->info("Doriath: Secret {$id} migrated to suite {$newSuiteId}");
+
+        return $secret;
+    }//end migrateSecret()
+
+    /**
      * List secrets for a user with optional folder filter, sorting and pagination.
      *
      * For each secret whose encryption suite is revoked or compromised, the
@@ -269,7 +353,7 @@ class SecretService
      * @param int         $page      The 1-based page number
      * @param int         $limit     The number of results per page
      *
-     * @return array{secrets: array<int,array<string,mixed>>, total: int}
+     * @return array{results: array<int,array<string,mixed>>, total: int}
      *
      * @SuppressWarnings(PHPMD.LongVariable)
      */
@@ -305,23 +389,17 @@ class SecretService
                 $suite  = $this->suiteService->getSuite(id: $secret->getEncryptionSuiteId());
                 $status = $suite->getStatus();
                 if ($status === 'revoked' || $status === 'compromised') {
-                    $serialised['key']   = null;
-                    $serialised['login'] = null;
-                    $serialised['additionalFields'] = null;
-                    $serialised['blocked']          = true;
+                    $serialised['blocked'] = true;
                 }
             } catch (DoesNotExistException) {
-                $serialised['key']   = null;
-                $serialised['login'] = null;
-                $serialised['additionalFields'] = null;
-                $serialised['blocked']          = true;
+                $serialised['blocked'] = true;
             }
 
             $result[] = $serialised;
         }//end foreach
 
         return [
-            'secrets' => $result,
+            'results' => $result,
             'total'   => $total,
         ];
     }//end list()
@@ -342,7 +420,7 @@ class SecretService
      * @param int    $page   The 1-based page number
      * @param int    $limit  The number of results per page
      *
-     * @return array{secrets: array<int,array<string,mixed>>, total: int}
+     * @return array{results: array<int,array<string,mixed>>, total: int}
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
@@ -394,7 +472,7 @@ class SecretService
         }//end foreach
 
         return [
-            'secrets' => $result,
+            'results' => $result,
             'total'   => $total,
         ];
     }//end search()

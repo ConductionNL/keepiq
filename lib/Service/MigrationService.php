@@ -152,4 +152,18 @@ class MigrationService
             return false;
         }
     }//end isWriteLocked()
+
+    /**
+     * Get an EncryptionSuite by ID (for migration status enrichment).
+     *
+     * @param string $id The suite ID
+     *
+     * @return \OCA\Doriath\Db\EncryptionSuite
+     *
+     * @throws DoesNotExistException
+     */
+    public function getSuiteById(string $id): \OCA\Doriath\Db\EncryptionSuite
+    {
+        return $this->suiteMapper->findById(id: $id);
+    }//end getSuiteById()
 }//end class

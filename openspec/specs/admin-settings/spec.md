@@ -129,3 +129,4 @@ The admin settings MUST provide access to the application approval queue.
 - Admin settings are registered via `OCP\Settings\ISettings` and `OCP\AppFramework\Http\TemplateResponse`.
 - The admin settings page is accessible at `/settings/admin/doriath`.
 - Related specs: encryption-suites (CA management), application-mgmt (approval queue)
+- **Future: per-user suite management** — A future version of admin settings should include a section for managing individual users' EncryptionSuites (list users with suite status, actions: revoke, mark compromised, reinstate). Admin-initiated compromise marking would trigger key rotation that the user completes on next login. See encryption-suites spec open questions for the full flow description.

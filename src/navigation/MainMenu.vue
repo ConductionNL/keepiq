@@ -9,13 +9,6 @@
 					<HomeIcon :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem
-				:name="t('doriath', 'Secrets')"
-				:to="{ name: 'SecretList' }">
-				<template #icon>
-					<KeyVariantIcon :size="20" />
-				</template>
-			</NcAppNavigationItem>
 			<FolderTree :current-folder-id="currentFolderId" />
 			<NcAppNavigationItem
 				:name="t('doriath', 'Documentation')"

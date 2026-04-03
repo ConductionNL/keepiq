@@ -5,6 +5,7 @@
 			<NcAppContent>
 				<router-view />
 			</NcAppContent>
+			<SecretSidebar v-if="!isLocked" />
 		</template>
 		<NcAppContent v-else>
 			<div style="display: flex; justify-content: center; align-items: center; height: 100%;">
@@ -19,6 +20,7 @@ import { NcContent, NcAppContent, NcLoadingIcon } from '@nextcloud/vue'
 import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import MainMenu from './navigation/MainMenu.vue'
+import SecretSidebar from './components/SecretSidebar.vue'
 
 export default {
 	name: 'App',
@@ -27,6 +29,7 @@ export default {
 		NcAppContent,
 		NcLoadingIcon,
 		MainMenu,
+		SecretSidebar,
 	},
 
 	data() {
@@ -61,7 +64,14 @@ export default {
 		// Session timeout check every 10 seconds.
 		this.timeoutInterval = setInterval(() => {
 			const session = useSessionStore()
+			const wasLocked = session.isLocked
 			session.checkTimeout()
+			if (!wasLocked && session.isLocked && this.$route.name !== 'Lock') {
+				this.$router.replace({
+					name: 'Lock',
+					query: { returnUrl: this.$route.fullPath },
+				})
+			}
 		}, 10000)
 
 		// Check timeout when tab becomes visible.
@@ -83,7 +93,14 @@ export default {
 		handleVisibilityChange() {
 			if (document.visibilityState === 'visible') {
 				const session = useSessionStore()
+				const wasLocked = session.isLocked
 				session.checkTimeout()
+				if (!wasLocked && session.isLocked && this.$route.name !== 'Lock') {
+					this.$router.replace({
+						name: 'Lock',
+						query: { returnUrl: this.$route.fullPath },
+					})
+				}
 			}
 		},
 

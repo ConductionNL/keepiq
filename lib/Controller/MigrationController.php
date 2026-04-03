@@ -66,10 +66,36 @@ class MigrationController extends OCSController
 
         try {
             $migration = $this->migrationService->getInProgressMigration(ownerType: 'user', ownerId: $userId);
-            return new JSONResponse(data: $migration->jsonSerialize());
+
+            // Include the old suite's encrypted PK (so the browser can decrypt with old password)
+            // and the new suite's public key (for re-encryption).
+            $data = $migration->jsonSerialize();
+            try {
+                $oldSuite = $this->migrationService->getSuiteById(id: $migration->getOldSuiteId());
+                $data['oldEncryptedPrivateKey'] = $oldSuite->getPrivateKey();
+            } catch (DoesNotExistException) {
+                $data['oldEncryptedPrivateKey'] = null;
+            }
+
+            try {
+                $newSuite = $this->migrationService->getSuiteById(id: $migration->getNewSuiteId());
+                $data['newSuiteNeedsRepair'] = ($newSuite->getPrivateKey() === null);
+                $data['newPublicKeyPem']     = null;
+                if ($newSuite->getCertificate() !== null) {
+                    $pubKey = openssl_pkey_get_public($newSuite->getCertificate());
+                    if ($pubKey !== false) {
+                        $details = openssl_pkey_get_details($pubKey);
+                        $data['newPublicKeyPem'] = $details['key'] ?? null;
+                    }
+                }
+            } catch (DoesNotExistException) {
+                $data['newPublicKeyPem'] = null;
+            }
+
+            return new JSONResponse(data: $data);
         } catch (DoesNotExistException) {
             return new JSONResponse(data: ['status' => 'none']);
-        }
+        }//end try
     }//end getStatus()
 
     /**

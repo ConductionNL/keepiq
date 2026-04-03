@@ -213,12 +213,25 @@ class Secret extends Entity implements JsonSerializable
 
     /**
      * Serialize the entity to an array for JSON output.
+     * Defaults to excluding encrypted fields (list-safe).
      *
      * @return array<string,mixed>
      */
     public function jsonSerialize(): array
     {
-        return [
+        return $this->toArray(includeEncrypted: false);
+    }//end jsonSerialize()
+
+    /**
+     * Serialize the entity with control over encrypted field inclusion.
+     *
+     * @param bool $includeEncrypted Whether to include key, login, additionalFields
+     *
+     * @return array<string,mixed>
+     */
+    public function toArray(bool $includeEncrypted=false): array
+    {
+        $data = [
             'id'                    => $this->getId(),
             'name'                  => $this->name,
             'url'                   => $this->url,
@@ -232,5 +245,13 @@ class Secret extends Entity implements JsonSerializable
             'createdAt'             => $this->createdAt?->format('c'),
             'updatedAt'             => $this->updatedAt?->format('c'),
         ];
-    }//end jsonSerialize()
+
+        if ($includeEncrypted === true) {
+            $data['key']   = $this->key;
+            $data['login'] = $this->login;
+            $data['additionalFields'] = $this->additionalFields;
+        }
+
+        return $data;
+    }//end toArray()
 }//end class

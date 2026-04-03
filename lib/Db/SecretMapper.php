@@ -93,7 +93,9 @@ class SecretMapper extends QBMapper
             ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
             ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
 
-        if ($folderId !== null) {
+        if ($folderId === 'root') {
+            $qb->andWhere($qb->expr()->isNull('folder_id'));
+        } else if ($folderId !== null) {
             $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
         }
 
@@ -121,7 +123,9 @@ class SecretMapper extends QBMapper
             ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
             ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
 
-        if ($folderId !== null) {
+        if ($folderId === 'root') {
+            $qb->andWhere($qb->expr()->isNull('folder_id'));
+        } else if ($folderId !== null) {
             $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
         }
 
