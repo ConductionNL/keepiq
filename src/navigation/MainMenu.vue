@@ -43,7 +43,6 @@ import { NcAppNavigation, NcAppNavigationItem } from '@nextcloud/vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import CogIcon from 'vue-material-design-icons/Cog.vue'
 import HomeIcon from 'vue-material-design-icons/Home.vue'
-import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import FolderTree from '../components/FolderTree.vue'
 import UserSettings from '../views/settings/UserSettings.vue'
@@ -59,7 +58,6 @@ export default {
 		CogIcon,
 		FolderTree,
 		HomeIcon,
-		KeyVariantIcon,
 		LockIcon,
 		UserSettings,
 	},

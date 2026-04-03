@@ -72,6 +72,7 @@ class EncryptionSuiteServiceTest extends TestCase
     {
         $this->mapper    = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
         $this->caService = $this->createMock(originalClassName: CertificateAuthorityService::class);
+        $encryptService  = $this->createMock(originalClassName: \OCA\Doriath\Service\EncryptService::class);
         $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
         $userManager     = $this->createMock(originalClassName: \OCP\IUserManager::class);
         $logger          = $this->createMock(originalClassName: LoggerInterface::class);
@@ -79,6 +80,7 @@ class EncryptionSuiteServiceTest extends TestCase
         $this->service = new EncryptionSuiteService(
             mapper: $this->mapper,
             caService: $this->caService,
+            encryptService: $encryptService,
             appConfig: $this->appConfig,
             userManager: $userManager,
             logger: $logger,
@@ -93,14 +95,17 @@ class EncryptionSuiteServiceTest extends TestCase
     public function testCreateSuiteSuccess(): void
     {
         $this->appConfig->method('getValueString')->willReturn('healthy');
-        $this->caService->method('signPublicKey')->willReturn('-----BEGIN CERTIFICATE-----...');
+        $this->caService->method('signKeyPair')->willReturn('-----BEGIN CERTIFICATE-----...');
         $this->mapper->expects($this->once())->method('insert');
 
-        $suite = $this->service->createSuite('user', 'testuser', 'pubkey-pem', 'encrypted-pk');
+        $result = $this->service->createSuite(ownerType: 'user', ownerId: 'testuser');
 
-        $this->assertEquals(expected: 'active', actual: $suite->getStatus());
-        $this->assertEquals(expected: 'user', actual: $suite->getOwnerType());
-        $this->assertEquals(expected: 'testuser', actual: $suite->getOwnerId());
+        $this->assertArrayHasKey(key: 'suite', array: $result);
+        $this->assertArrayHasKey(key: 'publicKeyPem', array: $result);
+        $this->assertArrayHasKey(key: 'passphrase', array: $result);
+        $this->assertEquals(expected: 'active', actual: $result['suite']->getStatus());
+        $this->assertEquals(expected: 'user', actual: $result['suite']->getOwnerType());
+        $this->assertEquals(expected: 'testuser', actual: $result['suite']->getOwnerId());
     }//end testCreateSuiteSuccess()
 
     /**
@@ -115,7 +120,7 @@ class EncryptionSuiteServiceTest extends TestCase
         $this->expectException(exception: RuntimeException::class);
         $this->expectExceptionMessageMatches(regularExpression: '/not healthy/');
 
-        $this->service->createSuite('user', 'testuser', 'pubkey', 'pk');
+        $this->service->createSuite(ownerType: 'user', ownerId: 'testuser');
     }//end testCreateSuiteFailsWhenCaDegraded()
 
     /**

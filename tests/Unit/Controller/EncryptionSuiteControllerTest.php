@@ -201,13 +201,18 @@ class EncryptionSuiteControllerTest extends TestCase
         $suite->setStatus('active');
 
         $this->suiteService->method('createSuite')
-            ->with('user', 'testuser', 'pub-key-pem', 'encrypted-pk')
-            ->willReturn($suite);
+            ->willReturn([
+                'suite'               => $suite,
+                'encryptedPrivateKey'  => 'encrypted-pem',
+                'passphrase'          => 'temp-pass',
+                'publicKeyPem'        => '-----BEGIN PUBLIC KEY-----...',
+            ]);
 
-        $response = $this->controller->create('pub-key-pem', 'encrypted-pk');
+        $response = $this->controller->create();
 
         $this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
-        $this->assertSame(expected: 'new-suite', actual: $response->getData()['id']);
+        $this->assertSame(expected: 'new-suite', actual: $response->getData()['suite']['id']);
+        $this->assertArrayHasKey(key: 'passphrase', array: $response->getData());
     }//end testCreateReturns201OnSuccess()
 
     /**
@@ -343,21 +348,25 @@ class EncryptionSuiteControllerTest extends TestCase
         $migration->setStatus('in_progress');
 
         $this->suiteService->method('getActiveSuite')
-            ->with('user', 'testuser')
             ->willReturn($oldSuite);
         $this->suiteService->method('createSuite')
-            ->willReturn($newSuite);
+            ->willReturn([
+                'suite'               => $newSuite,
+                'encryptedPrivateKey'  => 'encrypted-pem',
+                'passphrase'          => 'temp-pass',
+                'publicKeyPem'        => '-----BEGIN PUBLIC KEY-----...',
+            ]);
         $this->migrationService->method('initiateCompromiseRecovery')
-            ->with('old-suite', 'new-suite')
             ->willReturn($migration);
 
-        $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+        $response = $this->controller->compromiseRecovery();
 
         $this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
         $data = $response->getData();
         $this->assertSame(expected: 'new-suite', actual: $data['newSuite']['id']);
         $this->assertSame(expected: 'migr-1', actual: $data['migration']['id']);
         $this->assertSame(expected: 'old-encrypted-pk', actual: $data['oldEncryptedPrivateKey']);
+        $this->assertArrayHasKey(key: 'passphrase', array: $data);
     }//end testCompromiseRecoverySuccess()
 
     /**
@@ -370,7 +379,7 @@ class EncryptionSuiteControllerTest extends TestCase
         $this->suiteService->method('getActiveSuite')
             ->willThrowException(new DoesNotExistException('No active suite'));
 
-        $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+        $response = $this->controller->compromiseRecovery();
 
         $this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
     }//end testCompromiseRecoveryReturns500OnFailure()
