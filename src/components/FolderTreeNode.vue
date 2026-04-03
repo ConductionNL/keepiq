@@ -109,8 +109,26 @@ export default {
 			if (!this.newSubfolderName.trim()) return false
 			return this.folderStore.isDuplicateName(this.newSubfolderName, this.folder.id)
 		},
+		containsCurrentFolder() {
+			if (!this.currentFolderId) return false
+			return this._subtreeContains(this.folder, this.currentFolderId)
+		},
+	},
+	watch: {
+		containsCurrentFolder: {
+			immediate: true,
+			handler(val) {
+				if (val) {
+					this.isOpen = true
+				}
+			},
+		},
 	},
 	methods: {
+		_subtreeContains(node, targetId) {
+			if (node.id === targetId) return true
+			return (node.children || []).some(child => this._subtreeContains(child, targetId))
+		},
 		handleClick() {
 			if (this.isOpen && this.isCurrentFolder) {
 				this.isOpen = false
