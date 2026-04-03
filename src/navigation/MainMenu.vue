@@ -9,7 +9,10 @@
 					<HomeIcon :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<FolderTree :current-folder-id="currentFolderId" />
+			<FolderTree
+				:current-folder-id="currentFolderId"
+				:is-all-secrets="isAllSecrets"
+				:is-root-folder="isRootFolder" />
 		</template>
 		<template #footer>
 			<NcAppNavigationItem
@@ -69,6 +72,12 @@ export default {
 	computed: {
 		currentFolderId() {
 			return this.$route.params.id ?? null
+		},
+		isAllSecrets() {
+			return this.$route.name === 'SecretList'
+		},
+		isRootFolder() {
+			return this.$route.name === 'RootFolder'
 		},
 	},
 	async created() {
