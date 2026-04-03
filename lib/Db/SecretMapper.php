@@ -71,7 +71,6 @@ class SecretMapper extends QBMapper
      * @param string      $ownerType The owner type
      * @param string      $ownerId   The owner ID
      * @param string|null $folderId  Optional folder ID to filter by
-     * @param bool        $rootOnly  If true, return only secrets without a folder
      * @param string      $sort      The field to sort by
      * @param string      $direction The sort direction (ASC/DESC)
      * @param int         $limit     The maximum number of results
@@ -83,7 +82,6 @@ class SecretMapper extends QBMapper
         string $ownerType,
         string $ownerId,
         ?string $folderId=null,
-        bool $rootOnly=false,
         string $sort='name',
         string $direction='ASC',
         int $limit=50,
@@ -95,7 +93,7 @@ class SecretMapper extends QBMapper
             ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
             ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
 
-        if ($rootOnly === true) {
+        if ($folderId === 'root') {
             $qb->andWhere($qb->expr()->isNull('folder_id'));
         } else if ($folderId !== null) {
             $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
@@ -114,11 +112,10 @@ class SecretMapper extends QBMapper
      * @param string      $ownerType The owner type
      * @param string      $ownerId   The owner ID
      * @param string|null $folderId  Optional folder ID to filter by
-     * @param bool        $rootOnly  If true, count only secrets without a folder
      *
      * @return int
      */
-    public function countByOwner(string $ownerType, string $ownerId, ?string $folderId=null, bool $rootOnly=false): int
+    public function countByOwner(string $ownerType, string $ownerId, ?string $folderId=null): int
     {
         $qb = $this->db->getQueryBuilder();
         $qb->select($qb->createFunction('COUNT(*)'))
@@ -126,7 +123,7 @@ class SecretMapper extends QBMapper
             ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
             ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
 
-        if ($rootOnly === true) {
+        if ($folderId === 'root') {
             $qb->andWhere($qb->expr()->isNull('folder_id'));
         } else if ($folderId !== null) {
             $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
