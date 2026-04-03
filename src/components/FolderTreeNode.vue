@@ -46,8 +46,10 @@
 				<NcInputField
 					ref="newSubfolderInput"
 					v-model="newSubfolderName"
+					v-tooltip="isNewSubfolderDuplicate ? t('doriath', 'A folder with this name already exists in the same location') : ''"
 					:label="t('doriath', 'Folder name')"
 					:disabled="creating"
+					:error="!!newSubfolderName && isNewSubfolderDuplicate"
 					@keyup.enter="createSubfolder"
 					@keyup.escape="cancelNewSubfolder"
 					@blur="handleSubfolderBlur" />
@@ -97,8 +99,15 @@ export default {
 		}
 	},
 	computed: {
+		folderStore() {
+			return useFolderStore()
+		},
 		isCurrentFolder() {
 			return this.currentFolderId === this.folder.id
+		},
+		isNewSubfolderDuplicate() {
+			if (!this.newSubfolderName.trim()) return false
+			return this.folderStore.isDuplicateName(this.newSubfolderName, this.folder.id)
 		},
 	},
 	methods: {
@@ -126,7 +135,7 @@ export default {
 			}
 		},
 		async createSubfolder() {
-			if (!this.newSubfolderName.trim()) return
+			if (!this.newSubfolderName.trim() || this.isNewSubfolderDuplicate) return
 			this.creating = true
 			try {
 				const folderStore = useFolderStore()
