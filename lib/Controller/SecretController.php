@@ -58,6 +58,7 @@ class SecretController extends OCSController
      * List secrets for the current user.
      *
      * @param string|null $folderId  Optional folder ID to filter by
+     * @param bool        $rootOnly  If true, return only secrets without a folder
      * @param string      $sort      The field to sort by
      * @param string      $direction The sort direction ('ASC' or 'DESC')
      * @param int         $page      The 1-based page number
@@ -69,6 +70,7 @@ class SecretController extends OCSController
      */
     public function index(
         ?string $folderId=null,
+        bool $rootOnly=false,
         string $sort='name',
         string $direction='ASC',
         int $page=1,
@@ -78,6 +80,7 @@ class SecretController extends OCSController
         $result = $this->secretService->list(
             userId: $userId,
             folderId: $folderId,
+            rootOnly: $rootOnly,
             sort: $sort,
             direction: $direction,
             page: $page,

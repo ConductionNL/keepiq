@@ -26,6 +26,12 @@ const router = new Router({
 			props: route => ({ secretId: route.params.id }),
 		},
 		{
+			path: '/folders',
+			name: 'RootFolder',
+			component: SecretList,
+			props: () => ({ rootOnly: true }),
+		},
+		{
 			path: '/folders/:id',
 			name: 'FolderSecretList',
 			component: SecretList,

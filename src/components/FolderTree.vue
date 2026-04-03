@@ -2,7 +2,7 @@
 	<div class="folder-tree">
 		<NcAppNavigationItem
 			:name="t('doriath', 'All secrets')"
-			:class="{ 'folder-tree__item--active': currentFolderId === null }"
+			:class="{ 'folder-tree__item--active': isAllSecrets }"
 			@click="navigate(null)">
 			<template #icon>
 				<KeyVariantIcon :size="20" />
@@ -11,8 +11,8 @@
 
 		<NcAppNavigationItem
 			:name="t('doriath', 'Secrets')"
-			:class="{ 'folder-tree__item--active': currentFolderId === 'root' }"
-			@click="navigate('root')">
+			:class="{ 'folder-tree__item--active': isRootFolder }"
+			@click="navigateRoot">
 			<template #icon>
 				<InboxIcon :size="20" />
 			</template>
@@ -95,6 +95,14 @@ export default {
 			type: String,
 			default: null,
 		},
+		isAllSecrets: {
+			type: Boolean,
+			default: false,
+		},
+		isRootFolder: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
@@ -130,10 +138,11 @@ export default {
 				this.showNewFolder = false
 			}
 		},
+		navigateRoot() {
+			this.$router.push({ name: 'RootFolder' })
+		},
 		navigate(folderId) {
-			if (folderId === 'root') {
-				this.$router.push({ path: '/folders/root' })
-			} else if (folderId) {
+			if (folderId) {
 				this.$router.push({ path: `/folders/${folderId}` })
 			} else {
 				this.$router.push({ path: '/secrets' })
