@@ -10,6 +10,8 @@
 				</template>
 			</NcAppNavigationItem>
 			<FolderTree :current-folder-id="currentFolderId" />
+		</template>
+		<template #footer>
 			<NcAppNavigationItem
 				:name="t('doriath', 'Documentation')"
 				@click="openLink('https://conduction.nl', '_blank')">
@@ -17,8 +19,6 @@
 					<BookOpenVariantOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-		</template>
-		<template #footer>
 			<NcAppNavigationItem
 				:name="t('doriath', 'Lock vault')"
 				@click="lockVault">

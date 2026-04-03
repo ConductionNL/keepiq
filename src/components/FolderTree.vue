@@ -18,6 +18,8 @@
 			</template>
 		</NcAppNavigationItem>
 
+		<div class="separator" />
+
 		<FolderTreeNode
 			v-for="folder in folderTree"
 			:key="folder.id"
@@ -28,22 +30,25 @@
 			@delete="handleDelete" />
 
 		<NcAppNavigationItem
+			v-if="!showNewFolder"
 			:name="t('doriath', 'New folder')"
 			class="folder-tree__new"
-			@click="showNewFolder = true">
+			@click="startNewFolder">
 			<template #icon>
 				<FolderPlusIcon :size="20" />
 			</template>
 		</NcAppNavigationItem>
 
-		<!-- New folder inline input -->
-		<div v-if="showNewFolder" class="folder-tree__input">
+		<div v-else class="folder-tree__inline-input">
+			<FolderPlusIcon :size="20" class="folder-tree__inline-input-icon" />
 			<NcInputField
+				ref="newFolderInput"
 				v-model="newFolderName"
 				:label="t('doriath', 'Folder name')"
 				:disabled="creating"
 				@keyup.enter="createFolder"
-				@keyup.escape="showNewFolder = false" />
+				@keyup.escape="cancelNewFolder"
+				@blur="handleNewFolderBlur" />
 		</div>
 
 		<!-- Rename dialog -->
@@ -110,6 +115,21 @@ export default {
 		},
 	},
 	methods: {
+		startNewFolder() {
+			this.showNewFolder = true
+			this.$nextTick(() => {
+				this.$refs.newFolderInput?.$el?.querySelector('input')?.focus()
+			})
+		},
+		cancelNewFolder() {
+			this.newFolderName = ''
+			this.showNewFolder = false
+		},
+		handleNewFolderBlur() {
+			if (!this.newFolderName.trim()) {
+				this.showNewFolder = false
+			}
+		},
 		navigate(folderId) {
 			if (folderId === 'root') {
 				this.$router.push({ path: '/folders/root' })
@@ -171,7 +191,22 @@ export default {
 	font-style: italic;
 }
 
-.folder-tree__input {
-	padding: 0 8px 8px;
+.folder-tree__inline-input {
+	display: flex;
+	align-items: center;
+	height: 44px;
+	padding: 0 8px;
+	gap: 8px;
+}
+
+.folder-tree__inline-input-icon {
+	flex-shrink: 0;
+	color: var(--color-text-maxcontrast);
+}
+
+.separator {
+    height: 1px;
+    background: var(--color-border);
+    margin: 8px 0;
 }
 </style>
