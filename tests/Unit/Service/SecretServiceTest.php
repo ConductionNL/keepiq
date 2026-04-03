@@ -305,8 +305,8 @@ class SecretServiceTest extends TestCase
         $result = $this->service->list('testuser', null, 'name', 'ASC', 1, 50);
 
         $this->assertEquals(expected: 1, actual: $result['total']);
-        $this->assertCount(expectedCount: 1, haystack: $result['secrets']);
-        $this->assertEquals(expected: 'secret-1', actual: $result['secrets'][0]['id']);
+        $this->assertCount(expectedCount: 1, haystack: $result['results']);
+        $this->assertEquals(expected: 'secret-1', actual: $result['results'][0]['id']);
     }//end testListSecretsSuccess()
 
     /**
@@ -336,10 +336,11 @@ class SecretServiceTest extends TestCase
 
         $result = $this->service->list('testuser', null, 'name', 'ASC', 1, 50);
 
-        $row = $result['secrets'][0];
-        $this->assertNull(actual: $row['key'] ?? null);
-        $this->assertNull(actual: $row['login'] ?? null);
-        $this->assertNull(actual: $row['additionalFields'] ?? null);
+        $row = $result['results'][0];
+        // jsonSerialize() excludes encrypted fields by default (list-safe).
+        $this->assertArrayNotHasKey(key: 'key', array: $row);
+        $this->assertArrayNotHasKey(key: 'login', array: $row);
+        $this->assertArrayNotHasKey(key: 'additionalFields', array: $row);
         $this->assertTrue(condition: $row['blocked'] ?? false);
     }//end testListSecretsMasksBlockedSuites()
 
