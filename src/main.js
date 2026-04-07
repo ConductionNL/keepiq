@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import Tooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
 import pinia from './pinia.js'
 import router from './router/index.js'
 import App from './App.vue'
@@ -13,6 +14,7 @@ import '@conduction/nextcloud-vue/css/index.css'
 import './assets/app.css'
 
 Vue.mixin({ methods: { t, n } })
+Vue.directive('tooltip', Tooltip)
 Vue.use(PiniaVuePlugin)
 
 loadTranslations('doriath', () => {

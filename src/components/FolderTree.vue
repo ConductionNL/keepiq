@@ -2,7 +2,7 @@
 	<div class="folder-tree">
 		<NcAppNavigationItem
 			:name="t('doriath', 'All secrets')"
-			:class="{ 'folder-tree__item--active': currentFolderId === null }"
+			:active="isAllSecrets"
 			@click="navigate(null)">
 			<template #icon>
 				<KeyVariantIcon :size="20" />
@@ -11,12 +11,14 @@
 
 		<NcAppNavigationItem
 			:name="t('doriath', 'Secrets')"
-			:class="{ 'folder-tree__item--active': currentFolderId === 'root' }"
-			@click="navigate('root')">
+			:active="isRootFolder"
+			@click="navigateRoot">
 			<template #icon>
 				<InboxIcon :size="20" />
 			</template>
 		</NcAppNavigationItem>
+
+		<div class="separator" />
 
 		<FolderTreeNode
 			v-for="folder in folderTree"
@@ -28,67 +30,68 @@
 			@delete="handleDelete" />
 
 		<NcAppNavigationItem
+			v-if="!showNewFolder"
 			:name="t('doriath', 'New folder')"
 			class="folder-tree__new"
-			@click="showNewFolder = true">
+			@click="startNewFolder">
 			<template #icon>
 				<FolderPlusIcon :size="20" />
 			</template>
 		</NcAppNavigationItem>
 
-		<!-- New folder inline input -->
-		<div v-if="showNewFolder" class="folder-tree__input">
+		<div v-else class="folder-tree__inline-input">
+			<FolderPlusIcon :size="20" class="folder-tree__inline-input-icon" />
 			<NcInputField
+				ref="newFolderInput"
 				v-model="newFolderName"
+				v-tooltip="isNewFolderDuplicate ? t('doriath', 'A folder with this name already exists in the same location') : ''"
 				:label="t('doriath', 'Folder name')"
 				:disabled="creating"
+				:error="!!newFolderName && isNewFolderDuplicate"
 				@keyup.enter="createFolder"
-				@keyup.escape="showNewFolder = false" />
+				@keyup.escape="cancelNewFolder"
+				@blur="handleNewFolderBlur" />
 		</div>
 
-		<!-- Rename dialog -->
-		<NcDialog
+		<RenameFolderDialog
 			:open.sync="showRenameDialog"
-			:name="t('doriath', 'Rename folder')">
-			<NcInputField
-				v-model="renameName"
-				:label="t('doriath', 'New name')" />
-			<template #actions>
-				<NcButton @click="showRenameDialog = false">
-					{{ t('doriath', 'Cancel') }}
-				</NcButton>
-				<NcButton type="primary" :disabled="!renameName" @click="confirmRename">
-					{{ t('doriath', 'Rename') }}
-				</NcButton>
-			</template>
-		</NcDialog>
+			:folder="renameFolder"
+			@renamed="onRenamed" />
 	</div>
 </template>
 
 <script>
-import { NcAppNavigationItem, NcButton, NcDialog, NcInputField } from '@nextcloud/vue'
+import { NcAppNavigationItem, NcInputField } from '@nextcloud/vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
 import InboxIcon from 'vue-material-design-icons/Inbox.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import FolderTreeNode from './FolderTreeNode.vue'
+import RenameFolderDialog from '../dialog/RenameFolderDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
 export default {
 	name: 'FolderTree',
 	components: {
 		NcAppNavigationItem,
-		NcButton,
-		NcDialog,
 		NcInputField,
 		FolderPlusIcon,
 		InboxIcon,
 		KeyVariantIcon,
 		FolderTreeNode,
+		RenameFolderDialog,
 	},
 	props: {
 		currentFolderId: {
 			type: String,
 			default: null,
+		},
+		isAllSecrets: {
+			type: Boolean,
+			default: false,
+		},
+		isRootFolder: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	data() {
@@ -97,8 +100,7 @@ export default {
 			newFolderName: '',
 			creating: false,
 			showRenameDialog: false,
-			renameFolderId: null,
-			renameName: '',
+			renameFolder: null,
 		}
 	},
 	computed: {
@@ -108,19 +110,39 @@ export default {
 		folderTree() {
 			return this.folderStore.folderTree
 		},
+		isNewFolderDuplicate() {
+			if (!this.newFolderName.trim()) return false
+			return this.folderStore.isDuplicateName(this.newFolderName, null)
+		},
 	},
 	methods: {
+		startNewFolder() {
+			this.showNewFolder = true
+			this.$nextTick(() => {
+				this.$refs.newFolderInput?.$el?.querySelector('input')?.focus()
+			})
+		},
+		cancelNewFolder() {
+			this.newFolderName = ''
+			this.showNewFolder = false
+		},
+		handleNewFolderBlur() {
+			if (!this.newFolderName.trim()) {
+				this.showNewFolder = false
+			}
+		},
+		navigateRoot() {
+			this.$router.push({ name: 'RootFolder' })
+		},
 		navigate(folderId) {
-			if (folderId === 'root') {
-				this.$router.push({ path: '/folders/root' })
-			} else if (folderId) {
+			if (folderId) {
 				this.$router.push({ path: `/folders/${folderId}` })
 			} else {
 				this.$router.push({ path: '/secrets' })
 			}
 		},
 		async createFolder() {
-			if (!this.newFolderName.trim()) return
+			if (!this.newFolderName.trim() || this.isNewFolderDuplicate) return
 			this.creating = true
 			try {
 				await this.folderStore.createFolder(this.newFolderName.trim(), null)
@@ -132,19 +154,11 @@ export default {
 			}
 		},
 		startRename(folder) {
-			this.renameFolderId = folder.id
-			this.renameName = folder.name
+			this.renameFolder = folder
 			this.showRenameDialog = true
 		},
-		async confirmRename() {
-			if (!this.renameName.trim() || !this.renameFolderId) return
-			try {
-				await this.folderStore.updateFolder(this.renameFolderId, this.renameName.trim())
-				await this.folderStore.fetchFolders()
-			} catch {
-				// Silently handled.
-			}
-			this.showRenameDialog = false
+		onRenamed() {
+			this.renameFolder = null
 		},
 		async handleDelete(folder) {
 			try {
@@ -162,16 +176,27 @@ export default {
 </script>
 
 <style scoped>
-.folder-tree__item--active :deep(.app-navigation-entry) {
-	background: var(--color-background-hover);
-}
-
 .folder-tree__new :deep(.app-navigation-entry__name) {
 	color: var(--color-text-maxcontrast);
 	font-style: italic;
 }
 
-.folder-tree__input {
-	padding: 0 8px 8px;
+.folder-tree__inline-input {
+	display: flex;
+	align-items: center;
+	height: 44px;
+	padding: 0 8px;
+	gap: 8px;
+}
+
+.folder-tree__inline-input-icon {
+	flex-shrink: 0;
+	color: var(--color-text-maxcontrast);
+}
+
+.separator {
+	height: 1px;
+	background: var(--color-border);
+	margin: 8px 0;
 }
 </style>
