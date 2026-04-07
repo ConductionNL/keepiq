@@ -16,54 +16,11 @@
 		</div>
 
 		<!-- Create Secret Dialog -->
-		<NcDialog
-			:open.sync="showCreateDialog"
-			:name="t('doriath', 'Create secret')">
-			<div class="create-secret-form">
-				<NcInputField
-					v-model="newSecret.name"
-					:label="t('doriath', 'Name')"
-					:placeholder="t('doriath', 'e.g. GitHub, AWS Console')"
-					required />
-				<NcInputField
-					v-model="newSecret.url"
-					:label="t('doriath', 'URL')"
-					:placeholder="t('doriath', 'e.g. https://github.com')" />
-				<NcInputField
-					v-model="newSecret.login"
-					:label="t('doriath', 'Username / Login')"
-					:placeholder="t('doriath', 'e.g. user@example.com')" />
-				<NcPasswordField
-					v-model="newSecret.key"
-					:label="t('doriath', 'Password / Key')" />
-				<NcSelect
-					v-model="newSecret.typeId"
-					:options="typeOptions"
-					label="label"
-					:reduce="opt => opt.value"
-					:placeholder="t('doriath', 'Type')" />
-				<NcSelect
-					v-model="newSecret.folderId"
-					:options="folderOptions"
-					label="label"
-					:reduce="opt => opt.value"
-					:placeholder="t('doriath', 'Folder (optional)')" />
-				<NcNoteCard v-if="createError" type="error">
-					{{ createError }}
-				</NcNoteCard>
-				<div class="create-secret-form__actions">
-					<NcButton type="tertiary" @click="showCreateDialog = false">
-						{{ t('doriath', 'Cancel') }}
-					</NcButton>
-					<NcButton
-						type="primary"
-						:disabled="!newSecret.name || !newSecret.key || creating"
-						@click="handleCreate">
-						{{ creating ? t('doriath', 'Creating...') : t('doriath', 'Create') }}
-					</NcButton>
-				</div>
-			</div>
-		</NcDialog>
+		<CreateSecretDialog
+			:open="showCreateDialog"
+			:folder-id="folderId"
+			@update:open="showCreateDialog = $event"
+			@created="onSecretCreated" />
 
 		<NcLoadingIcon v-if="secretStore.loading" class="secret-list__loading" />
 
@@ -156,18 +113,16 @@
 				{{ t('doriath', 'Next') }}
 			</NcButton>
 		</div>
-
 	</div>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcEmptyContent, NcInputField, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
+import { NcButton, NcEmptyContent, NcInputField, NcLoadingIcon } from '@nextcloud/vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import PlusIcon from 'vue-material-design-icons/Plus.vue'
-import { useFolderStore } from '../store/modules/folder.js'
+import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import { useSecretStore } from '../store/modules/secret.js'
-import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSettingsStore } from '../store/modules/settings.js'
 import { getFaviconUrl } from '../utils/favicon.js'
 
@@ -175,14 +130,11 @@ export default {
 	name: 'SecretList',
 	components: {
 		NcButton,
-		NcDialog,
 		NcEmptyContent,
 		NcInputField,
 		NcLoadingIcon,
-		NcNoteCard,
-		NcPasswordField,
-		NcSelect,
 		AlertIcon,
+		CreateSecretDialog,
 		KeyVariantIcon,
 		PlusIcon,
 	},
@@ -201,16 +153,6 @@ export default {
 			searchTerm: '',
 			searchTimer: null,
 			showCreateDialog: false,
-			creating: false,
-			createError: null,
-			newSecret: {
-				name: '',
-				folderId: null,
-				url: '',
-				login: '',
-				key: '',
-				typeId: null,
-			},
 		}
 	},
 	computed: {
@@ -219,24 +161,6 @@ export default {
 		},
 		settingsStore() {
 			return useSettingsStore()
-		},
-		secretTypeStore() {
-			return useSecretTypeStore()
-		},
-		folderStore() {
-			return useFolderStore()
-		},
-		folderOptions() {
-			return this.folderStore.folders.map(f => ({
-				value: f.id,
-				label: f.name,
-			}))
-		},
-		typeOptions() {
-			return this.secretTypeStore.types.map(t => ({
-				value: t.id,
-				label: t.label,
-			}))
 		},
 		totalPages() {
 			return Math.ceil(this.secretStore.totalCount / 50)
@@ -248,7 +172,6 @@ export default {
 		},
 	},
 	async created() {
-		await this.secretTypeStore.fetchTypes()
 		await this.loadSecrets()
 	},
 	beforeDestroy() {
@@ -287,31 +210,9 @@ export default {
 				await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 			}
 		},
-		async handleCreate() {
-			this.creating = true
-			this.createError = null
-
-			try {
-				const data = {
-					name: this.newSecret.name,
-					key: this.newSecret.key,
-				}
-				if (this.newSecret.url) data.url = this.newSecret.url
-				if (this.newSecret.login) data.login = this.newSecret.login
-				if (this.newSecret.typeId) data.typeId = this.newSecret.typeId
-				if (this.newSecret.folderId) data.folderId = this.newSecret.folderId
-				else if (this.folderId) data.folderId = this.folderId
-
-				const created = await this.secretStore.createSecret(data)
-				this.showCreateDialog = false
-				this.newSecret = { name: '', url: '', login: '', key: '', typeId: null, folderId: null }
-				await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
-				await this.openSecret(created.id)
-			} catch (e) {
-				this.createError = e.response?.data?.message || e.message || t('doriath', 'Failed to create secret')
-			} finally {
-				this.creating = false
-			}
+		async onSecretCreated(created) {
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			await this.openSecret(created.id)
 		},
 		getFavicon(url) {
 			const faviconServiceUrl = this.settingsStore?.settings?.faviconServiceUrl ?? null
@@ -446,17 +347,4 @@ export default {
 	font-size: 0.9em;
 }
 
-.create-secret-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 8px 0;
-}
-
-.create-secret-form__actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 8px;
-	margin-top: 8px;
-}
 </style>

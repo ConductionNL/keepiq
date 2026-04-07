@@ -5,7 +5,7 @@
 			<NcAppContent>
 				<router-view />
 			</NcAppContent>
-			<SecretSidebar v-if="!isLocked" />
+			<Sidebars v-if="!isLocked" />
 		</template>
 		<NcAppContent v-else>
 			<div style="display: flex; justify-content: center; align-items: center; height: 100%;">
@@ -20,7 +20,7 @@ import { NcContent, NcAppContent, NcLoadingIcon } from '@nextcloud/vue'
 import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import MainMenu from './navigation/MainMenu.vue'
-import SecretSidebar from './components/SecretSidebar.vue'
+import Sidebars from './sidebars/Sidebars.vue'
 
 export default {
 	name: 'App',
@@ -29,7 +29,7 @@ export default {
 		NcAppContent,
 		NcLoadingIcon,
 		MainMenu,
-		SecretSidebar,
+		Sidebars,
 	},
 
 	data() {
