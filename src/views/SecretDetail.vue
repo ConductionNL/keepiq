@@ -1,40 +1,39 @@
 <template>
 	<div class="secret-detail">
-		<!-- Loading state -->
-		<NcLoadingIcon v-if="secretStore.loading" class="secret-detail__loading" />
-
-		<!-- Error state -->
-		<NcNoteCard v-else-if="loadError" type="error">
-			{{ loadError }}
-		</NcNoteCard>
-
-		<!-- Content -->
-		<template v-else-if="secret">
-			<div class="secret-detail__header">
+		<CnDetailPage
+			:title="secret?.name || ''"
+			:loading="secretStore.loading"
+			:error="!!loadError"
+			:error-message="loadError || ''"
+			:on-retry="() => load(secretId)">
+			<!-- Header actions -->
+			<template #header-actions>
 				<NcButton type="tertiary" @click="$router.back()">
 					<template #icon>
 						<ArrowLeftIcon :size="20" />
 					</template>
 					{{ t('doriath', 'Back') }}
 				</NcButton>
-				<h2 class="secret-detail__title">
-					{{ secret.name }}
-				</h2>
-				<div class="secret-detail__actions">
-					<NcButton v-if="!editMode" type="secondary" @click="enterEditMode">
-						<template #icon>
-							<PencilIcon :size="20" />
-						</template>
-						{{ t('doriath', 'Edit') }}
-					</NcButton>
-					<NcButton v-if="!editMode" type="error" @click="showDeleteConfirm = true">
-						<template #icon>
-							<DeleteIcon :size="20" />
-						</template>
-						{{ t('doriath', 'Delete') }}
-					</NcButton>
-				</div>
-			</div>
+				<NcButton v-if="!editMode" type="secondary" @click="enterEditMode">
+					<template #icon>
+						<PencilIcon :size="20" />
+					</template>
+					{{ t('doriath', 'Edit') }}
+				</NcButton>
+				<NcButton v-if="!editMode" type="error" @click="showDeleteConfirm = true">
+					<template #icon>
+						<DeleteIcon :size="20" />
+					</template>
+					{{ t('doriath', 'Delete') }}
+				</NcButton>
+			</template>
+
+			<!-- Error actions -->
+			<template #error-actions>
+				<NcButton @click="$router.push({ path: '/secrets' })">
+					{{ t('doriath', 'Back to secrets') }}
+				</NcButton>
+			</template>
 
 			<!-- View mode -->
 			<div v-if="!editMode" class="secret-detail__fields">
@@ -128,7 +127,7 @@
 					</NcButton>
 				</div>
 			</form>
-		</template>
+		</CnDetailPage>
 
 		<!-- Delete confirmation dialog -->
 		<DeleteSecretDialog
@@ -142,7 +141,9 @@
 </template>
 
 <script>
-import { NcButton, NcInputField, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcInputField, NcNoteCard } from '@nextcloud/vue'
+// eslint-disable-next-line import/named
+import { CnDetailPage } from '@conduction/nextcloud-vue'
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
@@ -156,8 +157,8 @@ export default {
 	components: {
 		NcButton,
 		NcInputField,
-		NcLoadingIcon,
 		NcNoteCard,
+		CnDetailPage,
 		ArrowLeftIcon,
 		DeleteIcon,
 		DeleteSecretDialog,
@@ -249,37 +250,6 @@ export default {
 </script>
 
 <style scoped>
-.secret-detail {
-	padding: 8px 4px 24px;
-	max-width: 800px;
-}
-
-.secret-detail__loading {
-	display: flex;
-	justify-content: center;
-	padding: 48px 0;
-}
-
-.secret-detail__header {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin-bottom: 24px;
-	flex-wrap: wrap;
-}
-
-.secret-detail__title {
-	flex: 1;
-	margin: 0;
-	font-size: 1.25rem;
-	font-weight: 600;
-}
-
-.secret-detail__actions {
-	display: flex;
-	gap: 8px;
-}
-
 .secret-detail__fields {
 	display: flex;
 	flex-direction: column;
