@@ -33,6 +33,7 @@ export const useSecretStore = defineStore('secret', {
 		 * Fetch a paginated list of secrets.
 		 *
 		 * @param {string|null} folderId Optional folder to filter by
+		 * @param {boolean} rootOnly if it should get the root folder or not
 		 * @return {Promise<void>}
 		 */
 		async fetchSecrets(folderId = null, rootOnly = false) {
@@ -45,7 +46,7 @@ export const useSecretStore = defineStore('secret', {
 					limit: 50,
 				}
 				if (rootOnly) {
-					params.rootOnly = true
+					params.folderId = 'root'
 				} else if (folderId) {
 					params.folderId = folderId
 				}
