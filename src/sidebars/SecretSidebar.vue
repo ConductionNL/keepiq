@@ -213,7 +213,7 @@ export default {
 			try {
 				await this.secretStore.updateSecret(this.secret.id, this.editData)
 				await this.secretStore.fetchSecret(this.secret.id)
-				await this.secretStore.fetchSecrets()
+				await this.secretStore.refetchSecrets()
 				this.editMode = false
 			} catch (e) {
 				this.saveError = e.response?.data?.message || e.message || t('doriath', 'Failed to save')
@@ -226,7 +226,7 @@ export default {
 			const id = this.secret.id
 			this.secretStore.currentSecret = null
 			await this.secretStore.deleteSecret(id)
-			await this.secretStore.fetchSecrets()
+			await this.secretStore.refetchSecrets()
 		},
 		formatDate(dateString) {
 			if (!dateString) return '—'
