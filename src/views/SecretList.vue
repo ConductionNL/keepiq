@@ -2,11 +2,12 @@
 	<div class="secret-list">
 		<CnIndexPage
 			ref="indexPage"
-			:title="t('doriath', 'Secrets')"
+			:title="pageTitle"
+			:show-title="true"
 			:objects="filteredSecrets"
 			:columns="tableColumns"
 			:pagination="paginationData"
-			:loading="secretStore.loading"
+			:refreshing="secretStore.loading"
 			:selectable="false"
 			:show-form-dialog="false"
 			:show-edit-action="false"
@@ -108,6 +109,7 @@ import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
+import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSettingsStore } from '../store/modules/settings.js'
 import { getFaviconUrl } from '../utils/favicon.js'
@@ -139,11 +141,21 @@ export default {
 		}
 	},
 	computed: {
+		folderStore() {
+			return useFolderStore()
+		},
 		secretStore() {
 			return useSecretStore()
 		},
 		settingsStore() {
 			return useSettingsStore()
+		},
+		pageTitle() {
+			if (this.folderId) {
+				const folder = this.folderStore.folders.find(f => f.id === this.folderId)
+				if (folder) return folder.name
+			}
+			return t('doriath', 'Secrets')
 		},
 		tableColumns() {
 			return [
