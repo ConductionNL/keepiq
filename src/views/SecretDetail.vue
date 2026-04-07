@@ -131,29 +131,23 @@
 		</template>
 
 		<!-- Delete confirmation dialog -->
-		<NcDialog
+		<DeleteSecretDialog
 			:open="showDeleteConfirm"
-			:name="t('doriath', 'Delete secret')"
-			@update:open="showDeleteConfirm = $event">
-			<p>{{ t('doriath', 'Are you sure you want to delete "{name}"? This cannot be undone.', { name: secret ? secret.name : '' }) }}</p>
-			<template #actions>
-				<NcButton @click="showDeleteConfirm = false">
-					{{ t('doriath', 'Cancel') }}
-				</NcButton>
-				<NcButton type="error" :disabled="deleting" @click="confirmDelete">
-					{{ deleting ? t('doriath', 'Deleting...') : t('doriath', 'Delete') }}
-				</NcButton>
-			</template>
-		</NcDialog>
+			:secret-id="secretId"
+			:secret-name="secret ? secret.name : ''"
+			@update:open="showDeleteConfirm = $event"
+			@deleted="$router.push({ path: '/secrets' })"
+			@error="loadError = $event" />
 	</div>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcInputField, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcInputField, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CopyButton from '../components/CopyButton.vue'
+import DeleteSecretDialog from '../dialog/DeleteSecretDialog.vue'
 import PasswordField from '../components/PasswordField.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 
@@ -161,12 +155,12 @@ export default {
 	name: 'SecretDetail',
 	components: {
 		NcButton,
-		NcDialog,
 		NcInputField,
 		NcLoadingIcon,
 		NcNoteCard,
 		ArrowLeftIcon,
 		DeleteIcon,
+		DeleteSecretDialog,
 		PencilIcon,
 		CopyButton,
 		PasswordField,
@@ -185,7 +179,6 @@ export default {
 			saving: false,
 			saveError: null,
 			showDeleteConfirm: false,
-			deleting: false,
 		}
 	},
 	computed: {
@@ -241,18 +234,6 @@ export default {
 				this.saveError = e.message || t('doriath', 'Failed to save secret')
 			} finally {
 				this.saving = false
-			}
-		},
-		async confirmDelete() {
-			this.deleting = true
-			try {
-				await this.secretStore.deleteSecret(this.secretId)
-				this.$router.push({ path: '/secrets' })
-			} catch (e) {
-				this.showDeleteConfirm = false
-				this.loadError = e.message || t('doriath', 'Failed to delete secret')
-			} finally {
-				this.deleting = false
 			}
 		},
 		formatDate(dateString) {

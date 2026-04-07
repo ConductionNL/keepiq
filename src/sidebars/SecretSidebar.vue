@@ -119,8 +119,8 @@
 import { NcAppSidebar, NcButton, NcInputField, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
-import CopyButton from './CopyButton.vue'
-import PasswordField from './PasswordField.vue'
+import CopyButton from '../components/CopyButton.vue'
+import PasswordField from '../components/PasswordField.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 
