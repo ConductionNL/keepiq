@@ -219,7 +219,7 @@ export default {
 		},
 	},
 	watch: {
-		folderId() {
+		$route() {
 			this.loadSecrets()
 		},
 	},

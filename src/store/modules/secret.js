@@ -26,6 +26,10 @@ export const useSecretStore = defineStore('secret', {
 		page: 1,
 		/** @type {boolean} Whether the sidebar should open in edit mode */
 		editRequested: false,
+		/** @type {string|null} Active folder filter for the list */
+		currentFolderId: null,
+		/** @type {boolean} Whether the list is showing root-only secrets */
+		currentRootOnly: false,
 	}),
 
 	actions: {
@@ -37,6 +41,8 @@ export const useSecretStore = defineStore('secret', {
 		 * @return {Promise<void>}
 		 */
 		async fetchSecrets(folderId = null, rootOnly = false) {
+			this.currentFolderId = folderId
+			this.currentRootOnly = rootOnly
 			this.loading = true
 			try {
 				const params = {
@@ -59,6 +65,17 @@ export const useSecretStore = defineStore('secret', {
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Re-fetch secrets using the most recently applied filter context.
+		 * Use this from components that need to refresh the list but don't
+		 * own the filter state (e.g. the sidebar).
+		 *
+		 * @return {Promise<void>}
+		 */
+		async refetchSecrets() {
+			await this.fetchSecrets(this.currentFolderId, this.currentRootOnly)
 		},
 
 		/**
