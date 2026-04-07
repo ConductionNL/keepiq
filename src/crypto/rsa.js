@@ -92,8 +92,8 @@ export async function importPublicKey(pem) {
 /**
  * Encrypt plaintext with RSA-OAEP-SHA256, chunking if needed.
  *
- * @param {string} plaintext
- * @param {CryptoKey} publicKey
+ * @param {string} plaintext - content to encrypt
+ * @param {CryptoKey} publicKey - public key
  * @return {Promise<string>} Base64-encoded chunked ciphertext
  */
 export async function rsaEncrypt(plaintext, publicKey) {
@@ -130,7 +130,7 @@ export async function rsaEncrypt(plaintext, publicKey) {
  * Decrypt RSA-OAEP-SHA256 chunked ciphertext.
  *
  * @param {string} ciphertext Base64-encoded chunked ciphertext
- * @param {CryptoKey} privateKey
+ * @param {CryptoKey} privateKey - private key
  * @return {Promise<string>} Decrypted plaintext
  */
 export async function rsaDecrypt(ciphertext, privateKey) {

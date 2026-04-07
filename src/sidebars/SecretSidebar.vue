@@ -150,12 +150,12 @@
 import { NcAppSidebar, NcButton, NcInputField, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
-import CopyButton from './CopyButton.vue'
-import DelegationManager from './DelegationManager.vue'
-import GroupShareList from './GroupShareList.vue'
-import PasswordField from './PasswordField.vue'
-import RecipientList from './RecipientList.vue'
-import ShareDialog from './ShareDialog.vue'
+import CopyButton from '../components/CopyButton.vue'
+import DelegationManager from '../components/DelegationManager.vue'
+import GroupShareList from '../components/GroupShareList.vue'
+import PasswordField from '../components/PasswordField.vue'
+import RecipientList from '../components/RecipientList.vue'
+import ShareDialog from '../components/ShareDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -232,10 +232,16 @@ export default {
 
 	watch: {
 		// Reset edit mode when a different secret is selected.
-		secret() {
+		secret(newVal) {
 			this.editMode = false
 			this.editData = {}
 			this.saveError = null
+
+			// If the list requested edit mode, enter it once the secret is loaded.
+			if (newVal && this.secretStore.editRequested) {
+				this.secretStore.editRequested = false
+				this.$nextTick(() => this.enterEdit())
+			}
 		},
 	},
 
@@ -267,7 +273,7 @@ export default {
 			try {
 				await this.secretStore.updateSecret(this.secret.id, this.editData)
 				await this.secretStore.fetchSecret(this.secret.id)
-				await this.secretStore.fetchSecrets()
+				await this.secretStore.refetchSecrets()
 				this.editMode = false
 			} catch (e) {
 				this.saveError = e.response?.data?.message || e.message || t('doriath', 'Failed to save')
@@ -280,7 +286,7 @@ export default {
 			const id = this.secret.id
 			this.secretStore.currentSecret = null
 			await this.secretStore.deleteSecret(id)
-			await this.secretStore.fetchSecrets()
+			await this.secretStore.refetchSecrets()
 		},
 		formatDate(dateString) {
 			if (!dateString) return '—'

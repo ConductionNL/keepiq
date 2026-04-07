@@ -1,3 +1,6 @@
+/* eslint-disable jsdoc/require-param */
+/* eslint-disable jsdoc/check-param-names */
+// Functions often start with `(state) => ` which is not needed in JSdoc, so these check has been disabled to still allow regular JSdoc.
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -13,6 +16,24 @@ export const useFolderStore = defineStore('folder', {
 	}),
 
 	getters: {
+		/**
+		 * Check whether a folder name is already taken by a sibling
+		 * (same parentId, different folder ID). Comparison is case-insensitive.
+		 *
+		 * @param {string} name Folder name to check
+		 * @param {string|null} parentId Parent folder ID (null for root)
+		 * @param {string|null} excludeId Folder ID to exclude (for rename scenarios)
+		 * @return {boolean} True if a duplicate exists
+		 */
+		isDuplicateName: (state) => (name, parentId = null, excludeId = null) => {
+			const trimmed = name.trim().toLowerCase()
+			return state.folders.some(
+				(f) => f.id !== excludeId
+					&& (f.parentId ?? null) === parentId
+					&& f.name.toLowerCase() === trimmed,
+			)
+		},
+
 		/**
 		 * Computed tree structure from the flat folder list, grouped by parentId.
 		 *

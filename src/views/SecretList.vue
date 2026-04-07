@@ -1,313 +1,305 @@
 <template>
 	<div class="secret-list">
-		<div class="secret-list__toolbar">
-			<NcInputField
-				v-model="searchTerm"
-				:label="t('doriath', 'Search secrets')"
-				type="search"
-				class="secret-list__search"
-				@input="onSearch" />
-			<NcButton type="primary" @click="showCreateDialog = true">
-				<template #icon>
-					<PlusIcon :size="20" />
-				</template>
-				{{ t('doriath', 'New secret') }}
-			</NcButton>
-		</div>
-
-		<!-- Create Secret Dialog -->
-		<NcDialog
-			:open.sync="showCreateDialog"
-			:name="t('doriath', 'Create secret')">
-			<div class="create-secret-form">
+		<CnIndexPage
+			ref="indexPage"
+			:title="pageTitle"
+			:show-title="true"
+			:objects="filteredSecrets"
+			:columns="tableColumns"
+			:pagination="paginationData"
+			:refreshing="secretStore.loading"
+			:selectable="false"
+			:show-form-dialog="false"
+			:show-edit-action="false"
+			:show-copy-action="false"
+			:show-delete-action="true"
+			:show-mass-import="false"
+			:show-mass-export="false"
+			:show-mass-copy="false"
+			:show-mass-delete="false"
+			:show-view-toggle="false"
+			:actions="rowActions"
+			:add-label="t('doriath', 'New secret')"
+			:sort-key="secretStore.sort"
+			:sort-order="secretStore.direction.toLowerCase()"
+			:empty-text="emptyText"
+			row-key="id"
+			mass-action-name-field="name"
+			@add="showCreateDialog = true"
+			@row-click="onRowClick"
+			@sort="onSort"
+			@page-changed="onPageChanged"
+			@page-size-changed="onPageSizeChanged"
+			@delete="onDeleteConfirm"
+			@refresh="loadSecrets">
+			<template #header-actions>
 				<NcInputField
-					v-model="newSecret.name"
-					:label="t('doriath', 'Name')"
-					:placeholder="t('doriath', 'e.g. GitHub, AWS Console')"
-					required />
-				<NcInputField
-					v-model="newSecret.url"
-					:label="t('doriath', 'URL')"
-					:placeholder="t('doriath', 'e.g. https://github.com')" />
-				<NcInputField
-					v-model="newSecret.login"
-					:label="t('doriath', 'Username / Login')"
-					:placeholder="t('doriath', 'e.g. user@example.com')" />
-				<NcPasswordField
-					v-model="newSecret.key"
-					:label="t('doriath', 'Password / Key')" />
-				<NcSelect
-					v-model="newSecret.typeId"
-					:options="typeOptions"
-					label="label"
-					:reduce="opt => opt.value"
-					:placeholder="t('doriath', 'Type')" />
-				<NcSelect
-					v-model="newSecret.folderId"
-					:options="folderOptions"
-					label="label"
-					:reduce="opt => opt.value"
-					:placeholder="t('doriath', 'Folder (optional)')" />
-				<NcNoteCard v-if="createError" type="error">
-					{{ createError }}
-				</NcNoteCard>
-				<div class="create-secret-form__actions">
-					<NcButton type="tertiary" @click="showCreateDialog = false">
-						{{ t('doriath', 'Cancel') }}
-					</NcButton>
-					<NcButton
-						type="primary"
-						:disabled="!newSecret.name || !newSecret.key || creating"
-						@click="handleCreate">
-						{{ creating ? t('doriath', 'Creating...') : t('doriath', 'Create') }}
-					</NcButton>
-				</div>
-			</div>
-		</NcDialog>
-
-		<NcLoadingIcon v-if="secretStore.loading" class="secret-list__loading" />
-
-		<NcEmptyContent
-			v-else-if="!secretStore.loading && secretStore.secrets.length === 0"
-			:name="t('doriath', 'No secrets found')"
-			:description="searchTerm ? t('doriath', 'Try a different search term') : t('doriath', 'Add your first secret using the button above')">
-			<template #icon>
-				<KeyVariantIcon :size="64" />
+					v-model="searchTerm"
+					:label="t('doriath', 'Search secrets')"
+					type="search"
+					class="secret-list__search" />
 			</template>
-		</NcEmptyContent>
 
-		<table v-else class="secret-list__table">
-			<thead>
-				<tr>
-					<th class="secret-list__col-icon" />
-					<th>{{ t('doriath', 'Name') }}</th>
-					<th class="secret-list__col-url">
-						{{ t('doriath', 'URL') }}
-					</th>
-					<th class="secret-list__col-type">
-						{{ t('doriath', 'Type') }}
-					</th>
-					<th class="secret-list__col-date">
-						{{ t('doriath', 'Created') }}
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr
-					v-for="secret in secretStore.secrets"
-					:key="secret.id"
-					class="secret-list__row"
-					tabindex="0"
-					@click="openSecret(secret.id)"
-					@keyup.enter="openSecret(secret.id)">
-					<td class="secret-list__col-icon">
-						<img
-							v-if="getFavicon(secret.url)"
-							:src="getFavicon(secret.url)"
-							:alt="secret.name"
-							class="secret-list__favicon"
-							@error="$event.target.style.display = 'none'">
-						<KeyVariantIcon v-else :size="20" />
-					</td>
-					<td class="secret-list__name">
-						{{ secret.name }}
-						<AlertIcon
-							v-if="secret.possiblyCompromisedAt"
-							:size="16"
-							class="secret-list__compromised-icon"
-							:title="t('doriath', 'Possibly compromised — consider rotating this credential')" />
-					</td>
-					<td class="secret-list__col-url">
-						<a
-							v-if="secret.url"
-							:href="secret.url"
-							class="secret-list__url"
-							target="_blank"
-							rel="noopener noreferrer"
-							@click.stop>
-							{{ secret.url }}
-						</a>
-						<span v-else class="secret-list__empty-cell">—</span>
-					</td>
-					<td class="secret-list__col-type">
-						{{ secret.type || '—' }}
-					</td>
-					<td class="secret-list__col-date">
-						{{ formatDate(secret.createdAt) }}
-					</td>
-				</tr>
-			</tbody>
-		</table>
+			<template #empty>
+				<NcEmptyContent
+					:name="t('doriath', 'No secrets found')"
+					:description="searchTerm ? t('doriath', 'Try a different search term') : t('doriath', 'Add your first secret using the button above')">
+					<template #icon>
+						<KeyVariantIcon :size="64" />
+					</template>
+				</NcEmptyContent>
+			</template>
 
-		<div v-if="totalPages > 1" class="secret-list__pagination">
-			<NcButton
-				:disabled="secretStore.page <= 1"
-				type="tertiary"
-				@click="changePage(secretStore.page - 1)">
-				{{ t('doriath', 'Previous') }}
-			</NcButton>
-			<span class="secret-list__page-info">
-				{{ t('doriath', 'Page {page} of {total}', { page: secretStore.page, total: totalPages }) }}
-			</span>
-			<NcButton
-				:disabled="secretStore.page >= totalPages"
-				type="tertiary"
-				@click="changePage(secretStore.page + 1)">
-				{{ t('doriath', 'Next') }}
-			</NcButton>
-		</div>
+			<template #column-name="{ row }">
+				<div class="secret-list__name-cell">
+					<img
+						v-if="getFavicon(row.url)"
+						:src="getFavicon(row.url)"
+						:alt="row.name"
+						class="secret-list__favicon"
+						@error="$event.target.style.display = 'none'">
+					<KeyVariantIcon v-else :size="20" />
+					<!-- eslint-disable-next-line vue/no-v-html -->
+					<span v-html="highlight(row.name, row.id, 'name')" />
+					<AlertIcon
+						v-if="row.possiblyCompromisedAt"
+						:size="16"
+						class="secret-list__compromised-icon"
+						:title="t('doriath', 'Possibly compromised — consider rotating this credential')" />
+				</div>
+			</template>
 
+			<template #column-url="{ row }">
+				<a
+					v-if="row.url"
+					:href="row.url"
+					class="secret-list__url"
+					target="_blank"
+					rel="noopener noreferrer"
+					@click.stop>
+					<!-- eslint-disable-next-line vue/no-v-html -->
+					<span v-html="highlight(row.url, row.id, 'url')" />
+				</a>
+				<span v-else class="secret-list__empty-cell">—</span>
+			</template>
+
+			<template #column-type="{ row }">
+				<!-- eslint-disable-next-line vue/no-v-html -->
+				<span v-html="highlight(row.type, row.id, 'type')" />
+			</template>
+
+			<template #column-createdAt="{ row }">
+				{{ formatDate(row.createdAt) }}
+			</template>
+		</CnIndexPage>
+
+		<CreateSecretDialog
+			:open="showCreateDialog"
+			:folder-id="folderId"
+			@update:open="showCreateDialog = $event"
+			@created="onSecretCreated" />
 	</div>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcEmptyContent, NcInputField, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
+import Fuse from 'fuse.js'
+import { NcEmptyContent, NcInputField } from '@nextcloud/vue'
+import { CnIndexPage } from '@conduction/nextcloud-vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
-import PlusIcon from 'vue-material-design-icons/Plus.vue'
+import PencilIcon from 'vue-material-design-icons/Pencil.vue'
+import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
-import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSettingsStore } from '../store/modules/settings.js'
 import { getFaviconUrl } from '../utils/favicon.js'
 
 export default {
 	name: 'SecretList',
 	components: {
-		NcButton,
-		NcDialog,
+		CnIndexPage,
 		NcEmptyContent,
 		NcInputField,
-		NcLoadingIcon,
-		NcNoteCard,
-		NcPasswordField,
-		NcSelect,
 		AlertIcon,
+		CreateSecretDialog,
 		KeyVariantIcon,
-		PlusIcon,
 	},
 	props: {
 		folderId: {
 			type: String,
 			default: null,
 		},
+		rootOnly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data() {
 		return {
 			searchTerm: '',
-			searchTimer: null,
 			showCreateDialog: false,
-			creating: false,
-			createError: null,
-			newSecret: {
-				name: '',
-				folderId: null,
-				url: '',
-				login: '',
-				key: '',
-				typeId: null,
-			},
 		}
 	},
 	computed: {
+		folderStore() {
+			return useFolderStore()
+		},
 		secretStore() {
 			return useSecretStore()
 		},
 		settingsStore() {
 			return useSettingsStore()
 		},
-		secretTypeStore() {
-			return useSecretTypeStore()
+		pageTitle() {
+			if (this.folderId) {
+				const folder = this.folderStore.folders.find(f => f.id === this.folderId)
+				if (folder) return folder.name
+			}
+			return t('doriath', 'Secrets')
 		},
-		folderStore() {
-			return useFolderStore()
+		tableColumns() {
+			return [
+				{ key: 'name', label: t('doriath', 'Name'), sortable: true },
+				{ key: 'url', label: t('doriath', 'URL') },
+				{ key: 'type', label: t('doriath', 'Type') },
+				{ key: 'createdAt', label: t('doriath', 'Created'), sortable: true },
+			]
 		},
-		folderOptions() {
-			return this.folderStore.folders.map(f => ({
-				value: f.id,
-				label: f.name,
-			}))
+		fuse() {
+			return new Fuse(this.secretStore.secrets, {
+				keys: ['name', 'url', 'type'],
+				threshold: 0.4,
+				includeMatches: true,
+			})
 		},
-		typeOptions() {
-			return this.secretTypeStore.types.map(t => ({
-				value: t.id,
-				label: t.label,
-			}))
+		fuseResults() {
+			const query = this.searchTerm.trim()
+			if (!query) return null
+			return this.fuse.search(query)
 		},
-		totalPages() {
-			return Math.ceil(this.secretStore.totalCount / 50)
+		filteredSecrets() {
+			if (!this.fuseResults) return this.secretStore.secrets
+			return this.fuseResults.map(r => r.item)
+		},
+		matchesById() {
+			if (!this.fuseResults) return {}
+			const map = {}
+			for (const result of this.fuseResults) {
+				map[result.item.id] = result.matches
+			}
+			return map
+		},
+		paginationData() {
+			if (this.searchTerm.trim()) {
+				// Local search: show filtered count, single page
+				const total = this.filteredSecrets.length
+				return { page: 1, pages: 1, total, limit: total || 1 }
+			}
+			const page = this.secretStore.page
+			const limit = 50
+			const total = this.secretStore.totalCount
+			const pages = Math.ceil(total / limit) || 1
+			return { page, pages, total, limit }
+		},
+		emptyText() {
+			return this.searchTerm
+				? t('doriath', 'No secrets found for your search')
+				: t('doriath', 'No secrets found')
+		},
+		rowActions() {
+			return [
+				{
+					label: t('doriath', 'Edit'),
+					icon: PencilIcon,
+					handler: (row) => {
+						this.openSecretForEdit(row.id)
+					},
+				},
+			]
 		},
 	},
 	watch: {
-		folderId() {
+		$route() {
 			this.loadSecrets()
 		},
 	},
 	async created() {
-		await this.secretTypeStore.fetchTypes()
 		await this.loadSecrets()
-	},
-	beforeDestroy() {
-		clearTimeout(this.searchTimer)
 	},
 	methods: {
 		async loadSecrets() {
 			this.secretStore.page = 1
 			this.searchTerm = ''
-			await this.secretStore.fetchSecrets(this.folderId)
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 		},
 		async openSecret(id) {
-			console.debug('Doriath: openSecret called with id:', id)
 			try {
 				await this.secretStore.fetchSecret(id)
-				console.debug('Doriath: fetchSecret completed, currentSecret:', this.secretStore.currentSecret?.name)
 			} catch (e) {
 				console.error('Doriath: openSecret failed:', e)
 			}
 		},
-		onSearch() {
-			clearTimeout(this.searchTimer)
-			this.searchTimer = setTimeout(async () => {
-				if (this.searchTerm.trim()) {
-					await this.secretStore.searchSecrets(this.searchTerm.trim(), 1)
-				} else {
-					await this.secretStore.fetchSecrets(this.folderId)
-				}
-			}, 300)
+		async openSecretForEdit(id) {
+			this.secretStore.editRequested = true
+			await this.openSecret(id)
 		},
-		async changePage(page) {
+		onRowClick(row) {
+			this.openSecret(row.id)
+		},
+		onSort({ key, order }) {
+			this.secretStore.sort = key
+			this.secretStore.direction = order.toUpperCase()
+			this.secretStore.page = 1
+			this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+		},
+		async onPageChanged(page) {
 			this.secretStore.page = page
-			if (this.searchTerm.trim()) {
-				await this.secretStore.searchSecrets(this.searchTerm.trim(), page)
-			} else {
-				await this.secretStore.fetchSecrets(this.folderId)
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+		},
+		async onPageSizeChanged() {
+			this.secretStore.page = 1
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+		},
+		async onDeleteConfirm(id) {
+			try {
+				await this.secretStore.deleteSecret(id)
+				await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+				this.$refs.indexPage.setSingleDeleteResult({ success: true })
+			} catch (e) {
+				this.$refs.indexPage.setSingleDeleteResult({
+					error: e.message || t('doriath', 'Failed to delete'),
+				})
 			}
 		},
-		async handleCreate() {
-			this.creating = true
-			this.createError = null
+		async onSecretCreated(created) {
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			await this.openSecret(created.id)
+		},
+		escapeHtml(text) {
+			return text
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+		},
+		highlight(text, rowId, key) {
+			if (!text) return ''
+			const escaped = this.escapeHtml(text)
+			const matches = this.matchesById[rowId]
+			if (!matches) return escaped
 
-			try {
-				const data = {
-					name: this.newSecret.name,
-					key: this.newSecret.key,
-				}
-				if (this.newSecret.url) data.url = this.newSecret.url
-				if (this.newSecret.login) data.login = this.newSecret.login
-				if (this.newSecret.typeId) data.typeId = this.newSecret.typeId
-				if (this.newSecret.folderId) data.folderId = this.newSecret.folderId
-				else if (this.folderId) data.folderId = this.folderId
+			const fieldMatch = matches.find(m => m.key === key)
+			if (!fieldMatch) return escaped
 
-				const created = await this.secretStore.createSecret(data)
-				this.showCreateDialog = false
-				this.newSecret = { name: '', url: '', login: '', key: '', typeId: null, folderId: null }
-				await this.secretStore.fetchSecrets(this.folderId)
-				await this.openSecret(created.id)
-			} catch (e) {
-				this.createError = e.response?.data?.message || e.message || t('doriath', 'Failed to create secret')
-			} finally {
-				this.creating = false
+			const indices = [...fieldMatch.indices].sort((a, b) => a[0] - b[0])
+			let result = ''
+			let lastEnd = 0
+			for (const [start, end] of indices) {
+				result += this.escapeHtml(text.slice(lastEnd, start))
+				result += '<mark>' + this.escapeHtml(text.slice(start, end + 1)) + '</mark>'
+				lastEnd = end + 1
 			}
+			result += this.escapeHtml(text.slice(lastEnd))
+			return result
 		},
 		getFavicon(url) {
 			const faviconServiceUrl = this.settingsStore?.settings?.faviconServiceUrl ?? null
@@ -326,80 +318,27 @@ export default {
 </script>
 
 <style scoped>
-.secret-list__compromised-icon {
-	color: var(--color-warning);
-	vertical-align: middle;
-	margin-left: 4px;
-}
-
-.secret-list {
-	padding: 8px 4px 24px;
-	max-width: 1200px;
-}
-
-.secret-list__toolbar {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin-bottom: 16px;
-}
-
 .secret-list__search {
+	order: -1;
 	max-width: 320px;
 }
 
-.secret-list__loading {
+.secret-list__name-cell {
 	display: flex;
-	justify-content: center;
-	padding: 48px 0;
-}
-
-.secret-list__table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
-.secret-list__table th {
-	text-align: left;
-	padding: 8px 12px;
-	font-weight: 600;
-	border-bottom: 1px solid var(--color-border);
-	color: var(--color-text-maxcontrast);
-	font-size: 0.85rem;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
-.secret-list__row {
-	cursor: pointer;
-	border-bottom: 1px solid var(--color-border-dark);
-	transition: background 0.1s;
-}
-
-.secret-list__row:hover,
-.secret-list__row:focus {
-	background: var(--color-background-hover);
-	outline: none;
-}
-
-.secret-list__row td {
-	padding: 10px 12px;
-	vertical-align: middle;
-}
-
-.secret-list__col-icon {
-	width: 36px;
-	text-align: center;
+	align-items: center;
+	gap: 8px;
 }
 
 .secret-list__favicon {
 	width: 16px;
 	height: 16px;
 	object-fit: contain;
+	flex-shrink: 0;
 }
 
-.secret-list__col-url {
-	max-width: 200px;
+.secret-list__compromised-icon {
+	color: var(--color-warning);
+	flex-shrink: 0;
 }
 
 .secret-list__url {
@@ -415,44 +354,13 @@ export default {
 	text-decoration: underline;
 }
 
-.secret-list__col-type {
-	width: 120px;
-}
-
-.secret-list__col-date {
-	width: 120px;
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-}
-
 .secret-list__empty-cell {
 	color: var(--color-text-maxcontrast);
 }
 
-.secret-list__pagination {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 16px;
-	margin-top: 24px;
-}
-
-.secret-list__page-info {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-}
-
-.create-secret-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 8px 0;
-}
-
-.create-secret-form__actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 8px;
-	margin-top: 8px;
+:deep(mark) {
+	color: inherit;
+	border-radius: 2px;
+	padding: 0 1px;
 }
 </style>

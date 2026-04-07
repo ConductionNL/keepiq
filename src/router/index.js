@@ -3,9 +3,9 @@ import Router from 'vue-router'
 import { generateUrl } from '@nextcloud/router'
 import Dashboard from '../views/Dashboard.vue'
 import LockScreen from '../views/LockScreen.vue'
-import AdminRoot from '../views/settings/AdminRoot.vue'
 import SecretList from '../views/SecretList.vue'
 import SecretDetail from '../views/SecretDetail.vue'
+import SecretSidebar from '../sidebars/SecretSidebar.vue'
 
 Vue.use(Router)
 
@@ -13,25 +13,30 @@ const router = new Router({
 	mode: 'history',
 	base: generateUrl('/apps/doriath'),
 	routes: [
-		{ path: '/', name: 'Dashboard', component: Dashboard },
-		{ path: '/lock', name: 'Lock', component: LockScreen },
-		{ path: '/settings', name: 'Settings', component: AdminRoot },
+		{ path: '/', name: 'Dashboard', components: { default: Dashboard } },
+		{ path: '/lock', name: 'Lock', components: { default: LockScreen } },
 		{
 			path: '/secrets',
 			name: 'SecretList',
-			component: SecretList,
+			components: { default: SecretList, sidebar: SecretSidebar },
 		},
 		{
 			path: '/secrets/:id',
 			name: 'SecretDetail',
-			component: SecretDetail,
-			props: route => ({ secretId: route.params.id }),
+			components: { default: SecretDetail },
+			props: { default: route => ({ secretId: route.params.id }) },
+		},
+		{
+			path: '/folders',
+			name: 'RootFolder',
+			components: { default: SecretList, sidebar: SecretSidebar },
+			props: { default: () => ({ rootOnly: true }) },
 		},
 		{
 			path: '/folders/:id',
 			name: 'FolderSecretList',
-			component: SecretList,
-			props: route => ({ folderId: route.params.id }),
+			components: { default: SecretList, sidebar: SecretSidebar },
+			props: { default: route => ({ folderId: route.params.id }) },
 		},
 		{ path: '*', redirect: '/' },
 	],

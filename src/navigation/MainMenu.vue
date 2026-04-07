@@ -9,7 +9,12 @@
 					<HomeIcon :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<FolderTree :current-folder-id="currentFolderId" />
+			<FolderTree
+				:current-folder-id="currentFolderId"
+				:is-all-secrets="isAllSecrets"
+				:is-root-folder="isRootFolder" />
+		</template>
+		<template #footer>
 			<NcAppNavigationItem
 				:name="t('doriath', 'Documentation')"
 				@click="openLink('https://conduction.nl', '_blank')">
@@ -17,8 +22,6 @@
 					<BookOpenVariantOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-		</template>
-		<template #footer>
 			<NcAppNavigationItem
 				:name="t('doriath', 'Lock vault')"
 				@click="lockVault">
@@ -69,6 +72,12 @@ export default {
 	computed: {
 		currentFolderId() {
 			return this.$route.params.id ?? null
+		},
+		isAllSecrets() {
+			return this.$route.name === 'SecretList'
+		},
+		isRootFolder() {
+			return this.$route.name === 'RootFolder'
 		},
 	},
 	async created() {
