@@ -58,7 +58,8 @@
 						class="secret-list__favicon"
 						@error="$event.target.style.display = 'none'">
 					<KeyVariantIcon v-else :size="20" />
-					<span>{{ row.name }}</span>
+					<!-- eslint-disable-next-line vue/no-v-html -->
+					<span v-html="highlight(row.name, row.id, 'name')" />
 					<AlertIcon
 						v-if="row.possiblyCompromisedAt"
 						:size="16"
@@ -75,9 +76,15 @@
 					target="_blank"
 					rel="noopener noreferrer"
 					@click.stop>
-					{{ row.url }}
+					<!-- eslint-disable-next-line vue/no-v-html -->
+					<span v-html="highlight(row.url, row.id, 'url')" />
 				</a>
 				<span v-else class="secret-list__empty-cell">—</span>
+			</template>
+
+			<template #column-type="{ row }">
+				<!-- eslint-disable-next-line vue/no-v-html -->
+				<span v-html="highlight(row.type, row.id, 'type')" />
 			</template>
 
 			<template #column-createdAt="{ row }">
@@ -150,12 +157,25 @@ export default {
 			return new Fuse(this.secretStore.secrets, {
 				keys: ['name', 'url', 'type'],
 				threshold: 0.4,
+				includeMatches: true,
 			})
 		},
-		filteredSecrets() {
+		fuseResults() {
 			const query = this.searchTerm.trim()
-			if (!query) return this.secretStore.secrets
-			return this.fuse.search(query).map(r => r.item)
+			if (!query) return null
+			return this.fuse.search(query)
+		},
+		filteredSecrets() {
+			if (!this.fuseResults) return this.secretStore.secrets
+			return this.fuseResults.map(r => r.item)
+		},
+		matchesById() {
+			if (!this.fuseResults) return {}
+			const map = {}
+			for (const result of this.fuseResults) {
+				map[result.item.id] = result.matches
+			}
+			return map
 		},
 		paginationData() {
 			if (this.searchTerm.trim()) {
@@ -243,6 +263,32 @@ export default {
 			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 			await this.openSecret(created.id)
 		},
+		escapeHtml(text) {
+			return text
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+		},
+		highlight(text, rowId, key) {
+			if (!text) return ''
+			const escaped = this.escapeHtml(text)
+			const matches = this.matchesById[rowId]
+			if (!matches) return escaped
+
+			const fieldMatch = matches.find(m => m.key === key)
+			if (!fieldMatch) return escaped
+
+			const indices = [...fieldMatch.indices].sort((a, b) => a[0] - b[0])
+			let result = ''
+			let lastEnd = 0
+			for (const [start, end] of indices) {
+				result += this.escapeHtml(text.slice(lastEnd, start))
+				result += '<mark>' + this.escapeHtml(text.slice(start, end + 1)) + '</mark>'
+				lastEnd = end + 1
+			}
+			result += this.escapeHtml(text.slice(lastEnd))
+			return result
+		},
 		getFavicon(url) {
 			const faviconServiceUrl = this.settingsStore?.settings?.faviconServiceUrl ?? null
 			return getFaviconUrl(url, faviconServiceUrl)
@@ -298,5 +344,11 @@ export default {
 
 .secret-list__empty-cell {
 	color: var(--color-text-maxcontrast);
+}
+
+:deep(mark) {
+	color: inherit;
+	border-radius: 2px;
+	padding: 0 1px;
 }
 </style>
