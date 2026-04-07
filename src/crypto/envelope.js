@@ -14,9 +14,9 @@ const HEADER_LENGTH = 4 + SALT_LENGTH + IV_LENGTH // version + salt + IV
 /**
  * Encode an envelope from its components.
  *
- * @param {number} version
- * @param {Uint8Array} salt
- * @param {Uint8Array} iv
+ * @param {number} version version
+ * @param {Uint8Array} salt salt
+ * @param {Uint8Array} iv iv
  * @param {Uint8Array} ciphertext (includes GCM tag appended by WebCrypto)
  * @return {string} Base64-encoded envelope
  */
