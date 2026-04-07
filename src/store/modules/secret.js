@@ -24,6 +24,8 @@ export const useSecretStore = defineStore('secret', {
 		direction: 'ASC',
 		/** @type {number} Current page (1-indexed) */
 		page: 1,
+		/** @type {boolean} Whether the sidebar should open in edit mode */
+		editRequested: false,
 	}),
 
 	actions: {
