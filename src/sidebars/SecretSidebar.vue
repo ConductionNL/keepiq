@@ -172,10 +172,16 @@ export default {
 
 	watch: {
 		// Reset edit mode when a different secret is selected.
-		secret() {
+		secret(newVal) {
 			this.editMode = false
 			this.editData = {}
 			this.saveError = null
+
+			// If the list requested edit mode, enter it once the secret is loaded.
+			if (newVal && this.secretStore.editRequested) {
+				this.secretStore.editRequested = false
+				this.$nextTick(() => this.enterEdit())
+			}
 		},
 	},
 
