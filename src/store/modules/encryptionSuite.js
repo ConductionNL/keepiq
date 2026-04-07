@@ -34,7 +34,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Create a new EncryptionSuite (first-time setup).
 		 *
-		 * @param {string} masterPassword
+		 * @param {string} masterPassword - the master password
 		 */
 		async createSuite(masterPassword) {
 			this.loading = true
@@ -95,8 +95,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Change master password (routine — re-wrap private key only).
 		 *
-		 * @param {string} oldPassword
-		 * @param {string} newPassword
+		 * @param {string} oldPassword - old password
+		 * @param {string} newPassword - new password to replace the old password
 		 */
 		async changePassword(oldPassword, newPassword) {
 			const session = useSessionStore()
@@ -122,8 +122,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Initiate compromise recovery (full key rotation).
 		 *
-		 * @param {string} oldPassword
-		 * @param {string} newPassword
+		 * @param {string} oldPassword - old password
+		 * @param {string} newPassword - new password to replace the old password
 		 */
 		async initiateCompromiseRecovery(oldPassword, newPassword) {
 			// Phase 1: Server generates new key pair, signs cert, returns

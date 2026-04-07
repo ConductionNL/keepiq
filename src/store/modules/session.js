@@ -31,7 +31,7 @@ export const useSessionStore = defineStore('session', {
 		/**
 		 * Unlock the vault with the master password.
 		 *
-		 * @param {string} masterPassword
+		 * @param {string} masterPassword - The master password to unlock
 		 */
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.
