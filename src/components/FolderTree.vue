@@ -57,6 +57,11 @@
 			:open.sync="showRenameDialog"
 			:folder="renameFolder"
 			@renamed="onRenamed" />
+
+		<RemoveFolderDialog
+			:open.sync="showDeleteDialog"
+			:folder="folderToDelete"
+			@deleted="onDeleted" />
 	</div>
 </template>
 
@@ -67,6 +72,7 @@ import InboxIcon from 'vue-material-design-icons/Inbox.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import FolderTreeNode from './FolderTreeNode.vue'
 import RenameFolderDialog from '../dialog/RenameFolderDialog.vue'
+import RemoveFolderDialog from '../dialog/RemoveFolderDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
 export default {
@@ -79,6 +85,7 @@ export default {
 		KeyVariantIcon,
 		FolderTreeNode,
 		RenameFolderDialog,
+		RemoveFolderDialog,
 	},
 	props: {
 		currentFolderId: {
@@ -101,6 +108,8 @@ export default {
 			creating: false,
 			showRenameDialog: false,
 			renameFolder: null,
+			showDeleteDialog: false,
+			folderToDelete: null,
 		}
 	},
 	computed: {
@@ -160,16 +169,16 @@ export default {
 		onRenamed() {
 			this.renameFolder = null
 		},
-		async handleDelete(folder) {
-			try {
-				await this.folderStore.deleteFolder(folder.id, 'move')
-				await this.folderStore.fetchFolders()
-				if (this.currentFolderId === folder.id) {
-					this.$router.push({ path: '/secrets' })
-				}
-			} catch {
-				// Silently handled.
+		handleDelete(folder) {
+			this.folderToDelete = folder
+			this.showDeleteDialog = true
+		},
+		async onDeleted() {
+			await this.folderStore.fetchFolders()
+			if (this.currentFolderId === this.folderToDelete?.id) {
+				this.$router.push({ path: '/secrets' })
 			}
+			this.folderToDelete = null
 		},
 	},
 }
