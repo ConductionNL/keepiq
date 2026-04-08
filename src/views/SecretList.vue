@@ -87,7 +87,8 @@
 
 			<template #column-type="{ row }">
 				<!-- eslint-disable-next-line vue/no-v-html -->
-				<span v-html="highlight(row.type, row.id, 'type')" />
+				<span v-if="row.typeName" v-html="highlight(row.typeName, row.id, 'typeName')" />
+				<span v-else class="secret-list__empty-cell">—</span>
 			</template>
 
 			<template #column-createdAt="{ row }">
@@ -116,6 +117,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSettingsStore } from '../store/modules/settings.js'
 import { getFaviconUrl } from '../utils/favicon.js'
 
@@ -154,8 +156,18 @@ export default {
 		secretStore() {
 			return useSecretStore()
 		},
+		secretTypeStore() {
+			return useSecretTypeStore()
+		},
 		settingsStore() {
 			return useSettingsStore()
+		},
+		typesById() {
+			const map = {}
+			for (const t of this.secretTypeStore.types) {
+				map[t.id] = t.label
+			}
+			return map
 		},
 		pageTitle() {
 			if (this.folderId) {
@@ -172,9 +184,15 @@ export default {
 				{ key: 'createdAt', label: t('doriath', 'Created'), sortable: true },
 			]
 		},
+		enrichedSecrets() {
+			return this.secretStore.secrets.map(s => ({
+				...s,
+				typeName: this.typesById[s.typeId] || '',
+			}))
+		},
 		fuse() {
-			return new Fuse(this.secretStore.secrets, {
-				keys: ['name', 'url', 'type'],
+			return new Fuse(this.enrichedSecrets, {
+				keys: ['name', 'url', 'typeName'],
 				threshold: 0.4,
 				includeMatches: true,
 			})
@@ -185,7 +203,7 @@ export default {
 			return this.fuse.search(query)
 		},
 		filteredSecrets() {
-			if (!this.fuseResults) return this.secretStore.secrets
+			if (!this.fuseResults) return this.enrichedSecrets
 			return this.fuseResults.map(r => r.item)
 		},
 		matchesById() {
@@ -231,7 +249,10 @@ export default {
 		},
 	},
 	async created() {
-		await this.loadSecrets()
+		await Promise.all([
+			this.loadSecrets(),
+			this.secretTypeStore.fetchTypes(),
+		])
 	},
 	methods: {
 		async loadSecrets() {
