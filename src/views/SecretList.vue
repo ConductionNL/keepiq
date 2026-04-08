@@ -419,6 +419,5 @@ export default {
 :deep(mark) {
 	color: inherit;
 	border-radius: 2px;
-	padding: 0 1px;
 }
 </style>
