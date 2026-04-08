@@ -1,32 +1,41 @@
 <template>
-	<div>
+	<Fragment>
 		<NcDialog
 			:open="open"
-			:name="t('doriath', 'Create secret')"
+			:name="isEditMode ? t('doriath', 'Edit secret') : t('doriath', 'Create secret')"
 			@update:open="$emit('update:open', $event)">
 			<div class="create-secret-form">
 				<p class="create-secret-form__subtitle">
-					{{ t('doriath', 'Store a new credential safely in your vault.') }}
+					{{ isEditMode
+						? t('doriath', 'Update the credential details below.')
+						: t('doriath', 'Store a new credential safely in your vault.')
+					}}
 				</p>
 
 				<div class="create-secret-form__section">
 					<h4 class="create-secret-form__section-label">
 						{{ t('doriath', 'Credentials') }}
 					</h4>
-					<NcInputField
-						v-model="newSecret.name"
-						:label="t('doriath', 'Name')"
-						:placeholder="t('doriath', 'e.g. GitHub, AWS Console')"
-						required />
-					<NcInputField
-						v-model="newSecret.url"
-						:label="t('doriath', 'URL')"
-						:placeholder="t('doriath', 'e.g. https://github.com')" />
-					<NcInputField
-						v-model="newSecret.login"
-						:label="t('doriath', 'Username / Login')"
-						:placeholder="t('doriath', 'e.g. user@example.com')" />
-					<div class="create-secret-form__password-row">
+					<div :class="fieldClass('name')">
+						<NcInputField
+							v-model="newSecret.name"
+							:label="t('doriath', 'Name')"
+							:placeholder="t('doriath', 'e.g. GitHub, AWS Console')"
+							required />
+					</div>
+					<div :class="fieldClass('url')">
+						<NcInputField
+							v-model="newSecret.url"
+							:label="t('doriath', 'URL')"
+							:placeholder="t('doriath', 'e.g. https://github.com')" />
+					</div>
+					<div :class="fieldClass('login')">
+						<NcInputField
+							v-model="newSecret.login"
+							:label="t('doriath', 'Username / Login')"
+							:placeholder="t('doriath', 'e.g. user@example.com')" />
+					</div>
+					<div :class="['create-secret-form__password-row', fieldClass('key')]">
 						<NcPasswordField
 							v-model="newSecret.key"
 							:label="t('doriath', 'Password / Key')"
@@ -51,22 +60,34 @@
 					<h4 class="create-secret-form__section-label">
 						{{ t('doriath', 'Organize') }}
 					</h4>
-					<NcSelect
-						v-model="newSecret.typeId"
-						:options="typeOptions"
-						label="label"
-						:reduce="opt => opt.value"
-						:placeholder="t('doriath', 'Type')" />
-					<NcSelect
-						v-model="newSecret.folderId"
-						:options="folderOptions"
-						label="label"
-						:reduce="opt => opt.value"
-						:placeholder="t('doriath', 'Folder (optional)')" />
+					<div :class="fieldClass('typeId')">
+						<NcSelect
+							v-model="newSecret.typeId"
+							:options="typeOptions"
+							label="label"
+							class="organize-max-width"
+							:reduce="opt => opt.value"
+							:placeholder="t('doriath', 'Type')"
+							taggable
+							:create-option="createTypeOption"
+							@option:created="onTypeCreated" />
+					</div>
+					<div :class="fieldClass('folderId')">
+						<NcSelect
+							v-model="newSecret.folderId"
+							:options="folderOptions"
+							label="label"
+							class="organize-max-width"
+							:reduce="opt => opt.value"
+							:placeholder="t('doriath', 'Folder (optional)')" />
+					</div>
 				</div>
 
-				<NcNoteCard v-if="createError" type="error">
-					{{ createError }}
+				<NcNoteCard v-if="formError" type="error">
+					{{ formError }}
+				</NcNoteCard>
+				<NcNoteCard v-if="isEditMode && hasChanges && !formError" type="warning">
+					{{ t('doriath', 'Properties have been modified. Changes will only take effect after the secret is saved.') }}
 				</NcNoteCard>
 				<div class="create-secret-form__actions">
 					<NcButton type="tertiary" @click="$emit('update:open', false)">
@@ -74,9 +95,14 @@
 					</NcButton>
 					<NcButton
 						type="primary"
-						:disabled="!newSecret.name || !newSecret.key || creating"
-						@click="handleCreate">
-						{{ creating ? t('doriath', 'Creating...') : t('doriath', 'Create') }}
+						:disabled="!canSubmit || submitting"
+						@click="handleSubmit">
+						<template v-if="isEditMode">
+							{{ submitting ? t('doriath', 'Saving...') : t('doriath', 'Save') }}
+						</template>
+						<template v-else>
+							{{ submitting ? t('doriath', 'Creating...') : t('doriath', 'Create') }}
+						</template>
 					</NcButton>
 				</div>
 			</div>
@@ -86,7 +112,7 @@
 			:open="showGenerateDialog"
 			@update:open="showGenerateDialog = $event"
 			@accept="onGeneratedPassword" />
-	</div>
+	</Fragment>
 </template>
 
 <script>
@@ -120,13 +146,18 @@ export default {
 			type: String,
 			default: null,
 		},
+		secret: {
+			type: Object,
+			default: null,
+		},
 	},
-	emits: ['update:open', 'created'],
+	emits: ['update:open', 'created', 'updated'],
 	data() {
 		return {
-			creating: false,
-			createError: null,
+			submitting: false,
+			formError: null,
 			showGenerateDialog: false,
+			originalValues: null,
 			newSecret: {
 				name: '',
 				folderId: null,
@@ -146,6 +177,20 @@ export default {
 		},
 		folderStore() {
 			return useFolderStore()
+		},
+		isEditMode() {
+			return !!this.secret
+		},
+		hasChanges() {
+			if (!this.originalValues) return true
+			return ['name', 'url', 'login', 'key', 'typeId', 'folderId']
+				.some(f => this.newSecret[f] !== this.originalValues[f])
+		},
+		canSubmit() {
+			if (!this.newSecret.name) return false
+			if (!this.isEditMode && !this.newSecret.key) return false
+			if (this.isEditMode && !this.hasChanges) return false
+			return true
 		},
 		folderOptions() {
 			const foldersById = {}
@@ -178,44 +223,102 @@ export default {
 	watch: {
 		open(val) {
 			if (val) {
-				this.newSecret = {
-					name: '',
-					url: '',
-					login: '',
-					key: '',
-					typeId: null,
-					folderId: this.folderId ?? null,
+				this.formError = null
+				this.secretTypeStore.fetchTypes()
+				if (this.secret) {
+					const values = {
+						name: this.secret.name ?? '',
+						url: this.secret.url ?? '',
+						login: this.secret.login ?? '',
+						key: this.secret.key ?? '',
+						typeId: this.secret.typeId ?? null,
+						folderId: this.secret.folderId ?? null,
+					}
+					this.newSecret = { ...values }
+					this.originalValues = { ...values }
+				} else {
+					this.newSecret = {
+						name: '',
+						url: '',
+						login: '',
+						key: '',
+						typeId: null,
+						folderId: this.folderId ?? null,
+					}
+					this.originalValues = null
 				}
-				this.createError = null
 			}
 		},
 	},
 	methods: {
+		isFieldModified(field) {
+			if (!this.originalValues) return false
+			return this.newSecret[field] !== this.originalValues[field]
+		},
+		fieldClass(field) {
+			return {
+				'create-secret-form__field': true,
+				'create-secret-form__field--modified': this.isFieldModified(field),
+			}
+		},
+		createTypeOption(label) {
+			return { value: label, label }
+		},
+		async onTypeCreated(option) {
+			try {
+				const slug = option.label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+				const created = await this.secretTypeStore.createType(slug, option.label, 'personal')
+				this.newSecret.typeId = created.id
+			} catch (e) {
+				this.formError = e.response?.data?.message || e.message || t('doriath', 'Failed to create type')
+			}
+		},
 		onGeneratedPassword(password) {
 			this.newSecret.key = password
 		},
-		async handleCreate() {
-			this.creating = true
-			this.createError = null
+		async handleSubmit() {
+			this.submitting = true
+			this.formError = null
 
 			try {
-				const data = {
-					name: this.newSecret.name,
-					key: this.newSecret.key,
+				if (this.isEditMode) {
+					await this.handleUpdate()
+				} else {
+					await this.handleCreate()
 				}
-				if (this.newSecret.url) data.url = this.newSecret.url
-				if (this.newSecret.login) data.login = this.newSecret.login
-				if (this.newSecret.typeId) data.typeId = this.newSecret.typeId
-				if (this.newSecret.folderId) data.folderId = this.newSecret.folderId
-
-				const created = await this.secretStore.createSecret(data)
-				this.$emit('update:open', false)
-				this.$emit('created', created)
 			} catch (e) {
-				this.createError = e.response?.data?.message || e.message || t('doriath', 'Failed to create secret')
+				this.formError = e.response?.data?.message || e.message || t('doriath', 'Something went wrong')
 			} finally {
-				this.creating = false
+				this.submitting = false
 			}
+		},
+		async handleCreate() {
+			const data = {
+				name: this.newSecret.name,
+				key: this.newSecret.key,
+			}
+			if (this.newSecret.url) data.url = this.newSecret.url
+			if (this.newSecret.login) data.login = this.newSecret.login
+			if (this.newSecret.typeId) data.typeId = this.newSecret.typeId
+			if (this.newSecret.folderId) data.folderId = this.newSecret.folderId
+
+			const created = await this.secretStore.createSecret(data)
+			this.$emit('update:open', false)
+			this.$emit('created', created)
+		},
+		async handleUpdate() {
+			const data = {}
+
+			if (this.isFieldModified('name')) data.name = this.newSecret.name
+			if (this.isFieldModified('url')) data.url = this.newSecret.url
+			if (this.isFieldModified('login')) data.login = this.newSecret.login
+			if (this.isFieldModified('key')) data.key = this.newSecret.key
+			if (this.isFieldModified('typeId')) data.typeId = this.newSecret.typeId
+			if (this.isFieldModified('folderId')) data.folderId = this.newSecret.folderId
+
+			await this.secretStore.updateSecret(this.secret.id, data)
+			this.$emit('update:open', false)
+			this.$emit('updated')
 		},
 	},
 }
@@ -255,6 +358,16 @@ export default {
 	margin: 0;
 }
 
+.create-secret-form__field {
+	border-left: 3px solid transparent;
+	padding-left: 8px;
+	transition: border-color 0.15s ease;
+}
+
+.create-secret-form__field--modified {
+	border-left-color: var(--color-primary-element);
+}
+
 .create-secret-form__password-row {
 	display: flex;
 	align-items: flex-start;
@@ -276,6 +389,11 @@ export default {
 	gap: 8px;
 	margin-top: 4px;
 	padding-top: 12px;
+	padding-bottom: 8px;
 	border-top: 1px solid var(--color-border);
+}
+
+.organize-max-width {
+	width: 100%;
 }
 </style>
