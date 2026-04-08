@@ -2,6 +2,7 @@
 	<NcAppSidebar
 		v-if="secret"
 		:name="secret.name"
+		class="secret-sidebar-container"
 		@close="close">
 		<template #secondary-actions>
 			<NcActionButton @click="handleEdit">
@@ -89,6 +90,12 @@
 			:open.sync="shareDialogOpen"
 			:secret-id="secret.id"
 			@shared="onShared" />
+
+		<CreateSecretDialog
+			:open="editDialogOpen"
+			:secret="secret"
+			@update:open="editDialogOpen = $event"
+			@updated="onUpdated" />
 	</NcAppSidebar>
 </template>
 
@@ -97,6 +104,7 @@ import { NcActionButton, NcAppSidebar, NcButton, NcDateTime, NcLoadingIcon, NcNo
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import ShareVariantIcon from 'vue-material-design-icons/ShareVariant.vue'
+import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import DelegationManager from '../components/DelegationManager.vue'
 import GroupShareList from '../components/GroupShareList.vue'
 import RecipientList from '../components/RecipientList.vue'
@@ -113,6 +121,7 @@ export default {
 		NcDateTime,
 		NcLoadingIcon,
 		NcNoteCard,
+		CreateSecretDialog,
 		DelegationManager,
 		DeleteIcon,
 		GroupShareList,
@@ -125,6 +134,7 @@ export default {
 
 	data() {
 		return {
+			editDialogOpen: false,
 			shareDialogOpen: false,
 		}
 	},
@@ -166,13 +176,17 @@ export default {
 			this.secretStore.currentSecret = null
 		},
 		handleEdit() {
-			// TODO: open edit modal once implemented
+			this.editDialogOpen = true
 		},
 		async handleDelete() {
 			if (!this.secret) return
 			const id = this.secret.id
 			this.secretStore.currentSecret = null
 			await this.secretStore.deleteSecret(id)
+			await this.secretStore.refetchSecrets()
+		},
+		async onUpdated() {
+			await this.secretStore.fetchSecret(this.secret.id)
 			await this.secretStore.refetchSecrets()
 		},
 		onShared() {
@@ -183,6 +197,11 @@ export default {
 </script>
 
 <style scoped>
+.secret-sidebar-container :global(.app-sidebar-header__mainname) {
+	/* make sure the title lines up with the sidebar content */
+	padding-inline-start: 8px !important;
+}
+
 .secret-sidebar {
 	padding: 8px 16px 16px;
 	display: flex;
