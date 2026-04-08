@@ -5,8 +5,14 @@
 			:class="{ 'folder-picker-node__row--selected': isSelected }"
 			:style="{ paddingLeft: (depth * 24 + 8) + 'px' }"
 			@click="onSelect">
-			<ChevronDownIcon v-if="hasChildren && isOpen" :size="16" class="folder-picker-node__chevron" @click.stop="toggle" />
-			<ChevronRightIcon v-else-if="hasChildren" :size="16" class="folder-picker-node__chevron" @click.stop="toggle" />
+			<ChevronDownIcon v-if="hasChildren && isOpen"
+				:size="16"
+				class="folder-picker-node__chevron"
+				@click.stop="toggle" />
+			<ChevronRightIcon v-else-if="hasChildren"
+				:size="16"
+				class="folder-picker-node__chevron"
+				@click.stop="toggle" />
 			<span v-else class="folder-picker-node__spacer" />
 			<FolderOpenIcon v-if="isOpen && hasChildren" :size="20" />
 			<FolderIcon v-else :size="20" />
