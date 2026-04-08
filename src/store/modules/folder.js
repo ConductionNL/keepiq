@@ -117,12 +117,12 @@ export const useFolderStore = defineStore('folder', {
 		 * Delete a folder, optionally cascading to subfolders and secrets.
 		 *
 		 * @param {string} id Folder ID
-		 * @param {boolean} cascade Whether to delete subfolders and secrets
+		 * @param {string|null} cascade Cascade action ('delete' or 'move'), or null
 		 * @param {object|null} resolution Resolution instructions for secrets/subfolders
 		 * @return {Promise<void>}
 		 */
-		async deleteFolder(id, cascade = false, resolution = null) {
-			const params = cascade ? { cascade: true } : {}
+		async deleteFolder(id, cascade = null, resolution = null) {
+			const params = cascade ? { cascade } : {}
 			await axios.delete(
 				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
 				{ params, data: resolution ? { resolution } : undefined },
