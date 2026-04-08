@@ -225,7 +225,7 @@ class SecretController extends OCSController
         }
 
         if ($folderId !== null) {
-            $data['folderId'] = $folderId;
+            $data['folderId'] = $folderId === 'root' ? null : $folderId;
         }
 
         try {

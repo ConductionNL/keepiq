@@ -103,6 +103,14 @@
 			@update:open="showSecretDialog = $event"
 			@created="onSecretCreated"
 			@updated="onSecretUpdated" />
+
+		<MoveSecretDialog
+			:open="showMoveDialog"
+			:secret-id="moveSecret?.id"
+			:secret-name="moveSecret?.name || ''"
+			:current-folder-id="moveSecret?.folderId ?? null"
+			@update:open="showMoveDialog = $event"
+			@moved="onSecretMoved" />
 	</div>
 </template>
 
@@ -113,8 +121,10 @@ import { CnIndexPage } from '@conduction/nextcloud-vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
 import OpenInNewIcon from 'vue-material-design-icons/OpenInNew.vue'
+import FolderMoveOutlineIcon from 'vue-material-design-icons/FolderMoveOutline.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
+import MoveSecretDialog from '../dialog/MoveSecretDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -129,6 +139,7 @@ export default {
 		NcInputField,
 		AlertIcon,
 		CreateSecretDialog,
+		MoveSecretDialog,
 		KeyVariantIcon,
 		OpenInNewIcon,
 	},
@@ -147,6 +158,8 @@ export default {
 			searchTerm: '',
 			showSecretDialog: false,
 			editSecret: null,
+			showMoveDialog: false,
+			moveSecret: null,
 		}
 	},
 	computed: {
@@ -240,6 +253,14 @@ export default {
 						this.openSecretForEdit(row.id)
 					},
 				},
+				{
+					label: t('doriath', 'Move'),
+					icon: FolderMoveOutlineIcon,
+					handler: (row) => {
+						this.moveSecret = row
+						this.showMoveDialog = true
+					},
+				},
 			]
 		},
 	},
@@ -307,6 +328,9 @@ export default {
 		async onSecretCreated(created) {
 			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 			await this.openSecret(created.id)
+		},
+		async onSecretMoved() {
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 		},
 		async onSecretUpdated() {
 			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
