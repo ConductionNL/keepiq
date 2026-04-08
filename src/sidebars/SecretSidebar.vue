@@ -51,9 +51,9 @@
 					sensitive />
 			</template>
 
-			<div v-if="secret.type" class="secret-sidebar__meta">
+			<div v-if="typeLabel" class="secret-sidebar__meta">
 				<label class="secret-sidebar__meta-label">{{ t('doriath', 'Type') }}</label>
-				<span class="secret-sidebar__meta-value">{{ secret.type }}</span>
+				<span class="secret-sidebar__meta-value">{{ typeLabel }}</span>
 			</div>
 
 			<div v-if="createdDate" class="secret-sidebar__meta">
@@ -111,6 +111,7 @@ import RecipientList from '../components/RecipientList.vue'
 import SecretFieldCard from '../components/SecretFieldCard.vue'
 import ShareDialog from '../components/ShareDialog.vue'
 import { useSecretStore } from '../store/modules/secret.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
 
 export default {
 	name: 'SecretSidebar',
@@ -143,6 +144,9 @@ export default {
 		secretStore() {
 			return useSecretStore()
 		},
+		secretTypeStore() {
+			return useSecretTypeStore()
+		},
 		secret() {
 			return this.secretStore.currentSecret
 		},
@@ -159,6 +163,15 @@ export default {
 			}
 			return true
 		},
+		typeLabel() {
+			if (!this.secret) return null
+			if (this.secret.type) return this.secret.type
+			if (this.secret.typeId) {
+				const match = this.secretTypeStore.types.find(t => t.id === this.secret.typeId)
+				return match?.label ?? null
+			}
+			return null
+		},
 		createdDate() {
 			if (!this.secret?.createdAt) return null
 			const d = new Date(this.secret.createdAt)
@@ -168,6 +181,14 @@ export default {
 			if (!this.createdDate) return false
 			const weekMs = 7 * 24 * 60 * 60 * 1000
 			return (Date.now() - this.createdDate.getTime()) < weekMs ? 'long' : false
+		},
+	},
+
+	watch: {
+		secret() {
+			if (this.secret?.typeId && !this.secretTypeStore.types.length) {
+				this.secretTypeStore.fetchTypes()
+			}
 		},
 	},
 

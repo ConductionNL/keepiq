@@ -25,7 +25,7 @@
 			:empty-text="emptyText"
 			row-key="id"
 			mass-action-name-field="name"
-			@add="showCreateDialog = true"
+			@add="editSecret = null; showSecretDialog = true"
 			@row-click="onRowClick"
 			@sort="onSort"
 			@page-changed="onPageChanged"
@@ -96,10 +96,12 @@
 		</CnIndexPage>
 
 		<CreateSecretDialog
-			:open="showCreateDialog"
+			:open="showSecretDialog"
+			:secret="editSecret"
 			:folder-id="folderId"
-			@update:open="showCreateDialog = $event"
-			@created="onSecretCreated" />
+			@update:open="showSecretDialog = $event"
+			@created="onSecretCreated"
+			@updated="onSecretUpdated" />
 	</div>
 </template>
 
@@ -141,7 +143,8 @@ export default {
 	data() {
 		return {
 			searchTerm: '',
-			showCreateDialog: false,
+			showSecretDialog: false,
+			editSecret: null,
 		}
 	},
 	computed: {
@@ -244,8 +247,13 @@ export default {
 			}
 		},
 		async openSecretForEdit(id) {
-			this.secretStore.editRequested = true
-			await this.openSecret(id)
+			try {
+				await this.secretStore.fetchSecret(id)
+				this.editSecret = this.secretStore.currentSecret
+				this.showSecretDialog = true
+			} catch (e) {
+				console.error('Doriath: openSecretForEdit failed:', e)
+			}
 		},
 		onRowClick(row) {
 			this.openSecret(row.id)
@@ -278,6 +286,12 @@ export default {
 		async onSecretCreated(created) {
 			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
 			await this.openSecret(created.id)
+		},
+		async onSecretUpdated() {
+			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			if (this.editSecret?.id && this.secretStore.currentSecret?.id === this.editSecret.id) {
+				await this.secretStore.fetchSecret(this.editSecret.id)
+			}
 		},
 		escapeHtml(text) {
 			return text
