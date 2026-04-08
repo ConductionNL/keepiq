@@ -164,13 +164,9 @@ export default {
 			return true
 		},
 		typeLabel() {
-			if (!this.secret) return null
-			if (this.secret.type) return this.secret.type
-			if (this.secret.typeId) {
-				const match = this.secretTypeStore.types.find(t => t.id === this.secret.typeId)
-				return match?.label ?? null
-			}
-			return null
+			if (!this.secret?.typeId) return null
+			const match = this.secretTypeStore.types.find(t => t.id === this.secret.typeId)
+			return match?.label ?? null
 		},
 		createdDate() {
 			if (!this.secret?.createdAt) return null
