@@ -11,15 +11,23 @@
 				v-for="gs in shareStore.groupShares"
 				:key="gs.id"
 				class="group-share-list__item">
-				<span class="group-share-list__group">{{ gs.groupId }}</span>
+				<AccountGroupIcon :size="20" class="group-share-list__icon" />
+				<div class="group-share-list__info">
+					<span class="group-share-list__group">{{ gs.groupId }}</span>
+					<NcDateTime
+						v-if="gs.createdAt"
+						class="group-share-list__date"
+						:timestamp="new Date(gs.createdAt)"
+						:relative-time="isRecent(gs.createdAt) ? 'long' : false" />
+				</div>
 				<NcButton
 					v-if="isOwner"
 					type="tertiary"
-					:aria-label="t('doriath', 'Revoke group share')"
+					:aria-label="t('doriath', 'Revoke group share for {group}', { group: gs.groupId })"
 					:disabled="revoking === gs.id"
 					@click="revoke(gs.id)">
 					<template #icon>
-						<CloseIcon :size="16" />
+						<CloseIcon :size="20" />
 					</template>
 				</NcButton>
 			</li>
@@ -28,7 +36,8 @@
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcDateTime, NcLoadingIcon } from '@nextcloud/vue'
+import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import { useShareStore } from '../store/modules/share.js'
 
@@ -37,7 +46,9 @@ export default {
 
 	components: {
 		NcButton,
+		NcDateTime,
 		NcLoadingIcon,
+		AccountGroupIcon,
 		CloseIcon,
 	},
 
@@ -75,6 +86,11 @@ export default {
 	},
 
 	methods: {
+		isRecent(dateString) {
+			if (!dateString) return false
+			const weekMs = 7 * 24 * 60 * 60 * 1000
+			return (Date.now() - new Date(dateString).getTime()) < weekMs
+		},
 		async revoke(groupShareId) {
 			this.revoking = groupShareId
 			try {
@@ -100,17 +116,38 @@ export default {
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
 }
 
 .group-share-list__item {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 4px 0;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 6px 0;
+}
+
+.group-share-list__icon {
+	color: var(--color-text-maxcontrast);
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.group-share-list__info {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	flex: 1;
+	min-width: 0;
 }
 
 .group-share-list__group {
 	font-size: 0.875rem;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.group-share-list__date {
+	font-size: 0.75rem;
+	color: var(--color-text-maxcontrast);
 }
 </style>

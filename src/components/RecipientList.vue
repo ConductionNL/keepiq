@@ -11,15 +11,23 @@
 				v-for="share in shareStore.shares"
 				:key="share.id"
 				class="recipient-list__item">
-				<span class="recipient-list__user">{{ share.targetUserId }}</span>
+				<AccountIcon :size="20" class="recipient-list__icon" />
+				<div class="recipient-list__info">
+					<span class="recipient-list__user">{{ share.targetUserId }}</span>
+					<NcDateTime
+						v-if="share.createdAt"
+						class="recipient-list__date"
+						:timestamp="new Date(share.createdAt)"
+						:relative-time="isRecent(share.createdAt) ? 'long' : false" />
+				</div>
 				<NcButton
 					v-if="isOwner"
 					type="tertiary"
-					:aria-label="t('doriath', 'Revoke share')"
+					:aria-label="t('doriath', 'Revoke share for {user}', { user: share.targetUserId })"
 					:disabled="revoking === share.id"
 					@click="revoke(share.id)">
 					<template #icon>
-						<CloseIcon :size="16" />
+						<CloseIcon :size="20" />
 					</template>
 				</NcButton>
 			</li>
@@ -28,7 +36,8 @@
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcDateTime, NcLoadingIcon } from '@nextcloud/vue'
+import AccountIcon from 'vue-material-design-icons/Account.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import { useShareStore } from '../store/modules/share.js'
 
@@ -37,7 +46,9 @@ export default {
 
 	components: {
 		NcButton,
+		NcDateTime,
 		NcLoadingIcon,
+		AccountIcon,
 		CloseIcon,
 	},
 
@@ -75,6 +86,11 @@ export default {
 	},
 
 	methods: {
+		isRecent(dateString) {
+			if (!dateString) return false
+			const weekMs = 7 * 24 * 60 * 60 * 1000
+			return (Date.now() - new Date(dateString).getTime()) < weekMs
+		},
 		async revoke(shareId) {
 			this.revoking = shareId
 			try {
@@ -100,17 +116,38 @@ export default {
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
 }
 
 .recipient-list__item {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 4px 0;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 6px 0;
+}
+
+.recipient-list__icon {
+	color: var(--color-text-maxcontrast);
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.recipient-list__info {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	flex: 1;
+	min-width: 0;
 }
 
 .recipient-list__user {
 	font-size: 0.875rem;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.recipient-list__date {
+	font-size: 0.75rem;
+	color: var(--color-text-maxcontrast);
 }
 </style>
