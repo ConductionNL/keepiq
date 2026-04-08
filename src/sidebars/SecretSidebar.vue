@@ -62,24 +62,22 @@
 
 			<!-- Sharing section (visible when the current user owns the secret) -->
 			<div v-if="isOwner" class="secret-sidebar__section">
-				<h3 class="secret-sidebar__section-title">
-					{{ t('doriath', 'Sharing') }}
-				</h3>
-
-				<div class="secret-sidebar__field">
-					<label class="secret-sidebar__label">{{ t('doriath', 'User shares') }}</label>
-					<RecipientList :secret-id="secret.id" :is-owner="isOwner" />
-					<NcButton type="secondary" @click="shareDialogOpen = true">
-						{{ t('doriath', 'Share with user') }}
+				<div class="secret-sidebar__section-header">
+					<h3 class="secret-sidebar__section-title">
+						{{ t('doriath', 'Sharing') }}
+					</h3>
+					<NcButton type="tertiary" @click="shareDialogOpen = true">
+						<template #icon>
+							<ShareVariantIcon :size="20" />
+						</template>
+						{{ t('doriath', 'Share') }}
 					</NcButton>
 				</div>
 
-				<div class="secret-sidebar__field">
-					<label class="secret-sidebar__label">{{ t('doriath', 'Group shares') }}</label>
-					<GroupShareList :secret-id="secret.id" :is-owner="isOwner" />
-				</div>
+				<RecipientList :secret-id="secret.id" :is-owner="isOwner" />
+				<GroupShareList :secret-id="secret.id" :is-owner="isOwner" />
 
-				<div class="secret-sidebar__field">
+				<div class="secret-sidebar__subsection">
 					<label class="secret-sidebar__label">{{ t('doriath', 'Delegation') }}</label>
 					<DelegationManager :secret-id="secret.id" :is-owner="isOwner" />
 				</div>
@@ -98,6 +96,7 @@
 import { NcActionButton, NcAppSidebar, NcButton, NcDateTime, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
+import ShareVariantIcon from 'vue-material-design-icons/ShareVariant.vue'
 import DelegationManager from '../components/DelegationManager.vue'
 import GroupShareList from '../components/GroupShareList.vue'
 import RecipientList from '../components/RecipientList.vue'
@@ -121,6 +120,7 @@ export default {
 		RecipientList,
 		SecretFieldCard,
 		ShareDialog,
+		ShareVariantIcon,
 	},
 
 	data() {
@@ -232,6 +232,12 @@ export default {
 	border-top: 1px solid var(--color-border);
 }
 
+.secret-sidebar__section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
 .secret-sidebar__section-title {
 	font-size: 0.875rem;
 	font-weight: 600;
@@ -239,5 +245,13 @@ export default {
 	color: var(--color-text-maxcontrast);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+}
+
+.secret-sidebar__subsection {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding-top: 8px;
+	border-top: 1px solid var(--color-border);
 }
 </style>
