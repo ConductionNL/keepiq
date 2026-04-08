@@ -70,16 +70,18 @@
 			</template>
 
 			<template #column-url="{ row }">
-				<a
-					v-if="row.url"
-					:href="row.url"
-					class="secret-list__url"
-					target="_blank"
-					rel="noopener noreferrer"
-					@click.stop>
-					<!-- eslint-disable-next-line vue/no-v-html -->
-					<span v-html="highlight(row.url, row.id, 'url')" />
-				</a>
+				<div v-if="row.url" class="secret-list__url-cell">
+					<a
+						:href="normalizeUrl(row.url)"
+						class="secret-list__url"
+						target="_blank"
+						rel="noopener noreferrer"
+						@click.stop>
+						<!-- eslint-disable-next-line vue/no-v-html -->
+						<span v-html="highlight(row.url, row.id, 'url')" />
+						<OpenInNewIcon :size="14" class="secret-list__external-icon" />
+					</a>
+				</div>
 				<span v-else class="secret-list__empty-cell">—</span>
 			</template>
 
@@ -107,6 +109,7 @@ import { NcEmptyContent, NcInputField } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
+import OpenInNewIcon from 'vue-material-design-icons/OpenInNew.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
@@ -123,6 +126,7 @@ export default {
 		AlertIcon,
 		CreateSecretDialog,
 		KeyVariantIcon,
+		OpenInNewIcon,
 	},
 	props: {
 		folderId: {
@@ -301,6 +305,10 @@ export default {
 			result += this.escapeHtml(text.slice(lastEnd))
 			return result
 		},
+		normalizeUrl(url) {
+			if (!url) return ''
+			return /^https?:\/\//i.test(url) ? url : 'https://' + url
+		},
 		getFavicon(url) {
 			const faviconServiceUrl = this.settingsStore?.settings?.faviconServiceUrl ?? null
 			return getFaviconUrl(url, faviconServiceUrl)
@@ -341,17 +349,32 @@ export default {
 	flex-shrink: 0;
 }
 
-.secret-list__url {
-	display: block;
+.secret-list__url-cell {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.secret-list__url {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: 100%;
 	color: var(--color-primary-element);
 	text-decoration: none;
 }
 
 .secret-list__url:hover {
 	text-decoration: underline;
+}
+
+.secret-list__external-icon {
+	flex-shrink: 0;
+	opacity: 0.6;
+}
+
+.secret-list__url:hover .secret-list__external-icon {
+	opacity: 1;
 }
 
 .secret-list__empty-cell {
