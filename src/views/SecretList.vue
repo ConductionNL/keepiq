@@ -32,6 +32,32 @@
 			@page-size-changed="onPageSizeChanged"
 			@delete="onDeleteConfirm"
 			@refresh="loadSecrets">
+			<template #below-header>
+				<nav v-if="breadcrumbs.length" class="secret-list__breadcrumbs">
+					<template v-for="(crumb, i) in breadcrumbs">
+						<router-link
+							v-if="i < breadcrumbs.length - 1"
+							:key="'link-' + (crumb.id ?? 'root')"
+							:to="crumb.to"
+							class="secret-list__breadcrumb">
+							<HomeIcon v-if="i === 0" :size="16" />
+							<span v-else>{{ crumb.name }}</span>
+						</router-link>
+						<span
+							v-else
+							:key="'cur-' + (crumb.id ?? 'root')"
+							class="secret-list__breadcrumb secret-list__breadcrumb--current">
+							{{ crumb.name }}
+						</span>
+						<ChevronRightIcon
+							v-if="i < breadcrumbs.length - 1"
+							:key="'sep-' + i"
+							:size="16"
+							class="secret-list__breadcrumb-sep" />
+					</template>
+				</nav>
+			</template>
+
 			<template #header-actions>
 				<NcInputField
 					v-model="searchTerm"
@@ -120,6 +146,8 @@ import { NcEmptyContent, NcInputField } from '@nextcloud/vue'
 import { CnIndexPage } from '@conduction/nextcloud-vue'
 import AlertIcon from 'vue-material-design-icons/Alert.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
+import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue'
+import HomeIcon from 'vue-material-design-icons/Home.vue'
 import OpenInNewIcon from 'vue-material-design-icons/OpenInNew.vue'
 import FolderMoveOutlineIcon from 'vue-material-design-icons/FolderMoveOutline.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
@@ -138,7 +166,9 @@ export default {
 		NcEmptyContent,
 		NcInputField,
 		AlertIcon,
+		ChevronRightIcon,
 		CreateSecretDialog,
+		HomeIcon,
 		MoveSecretDialog,
 		KeyVariantIcon,
 		OpenInNewIcon,
@@ -243,6 +273,34 @@ export default {
 			return this.searchTerm
 				? t('doriath', 'No secrets found for your search')
 				: t('doriath', 'No secrets found')
+		},
+		foldersById() {
+			const map = {}
+			for (const f of this.folderStore.folders) {
+				map[f.id] = f
+			}
+			return map
+		},
+		breadcrumbs() {
+			if (!this.folderId) return []
+
+			const crumbs = []
+			let current = this.foldersById[this.folderId]
+			while (current) {
+				crumbs.push({
+					id: current.id,
+					name: current.name,
+					to: { name: 'FolderSecretList', params: { id: current.id } },
+				})
+				current = current.parentId ? this.foldersById[current.parentId] : null
+			}
+			crumbs.reverse()
+			crumbs.unshift({
+				id: null,
+				name: '/',
+				to: { name: 'RootFolder' },
+			})
+			return crumbs
 		},
 		rowActions() {
 			return [
@@ -385,6 +443,40 @@ export default {
 </script>
 
 <style scoped>
+.secret-list__breadcrumbs {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	font-size: 14px;
+	padding: 0 8px;
+}
+
+.secret-list__breadcrumb {
+	display: inline-flex;
+	align-items: center;
+	color: var(--color-text-maxcontrast);
+	text-decoration: none;
+	padding: 4px 6px;
+	border-radius: var(--border-radius);
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.secret-list__breadcrumb:hover {
+	color: var(--color-main-text);
+	background-color: var(--color-background-hover);
+}
+
+.secret-list__breadcrumb--current {
+	color: var(--color-main-text);
+	font-weight: 500;
+	padding: 4px 6px;
+}
+
+.secret-list__breadcrumb-sep {
+	color: var(--color-text-maxcontrast);
+	flex-shrink: 0;
+}
+
 .secret-list__search {
 	order: -1;
 	max-width: 320px;
