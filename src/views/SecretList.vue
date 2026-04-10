@@ -335,6 +335,7 @@ export default {
 	},
 	methods: {
 		async loadSecrets() {
+			this.secretStore.currentSecret = null
 			this.secretStore.page = 1
 			this.searchTerm = ''
 			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
