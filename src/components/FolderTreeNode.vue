@@ -2,24 +2,11 @@
 	<NcAppNavigationItem
 		:name="folder.name"
 		:class="{ 'folder-tree-node--active': isCurrentFolder }"
-		@click="handleClick">
+		@click="handleClick"
+		@contextmenu.native.prevent="onContextMenu">
 		<template #icon>
 			<FolderOpenIcon v-if="isOpen" :size="20" />
 			<FolderIcon v-else :size="20" />
-		</template>
-		<template #actions>
-			<NcActionButton @click="$emit('rename', folder)">
-				<template #icon>
-					<PencilIcon :size="20" />
-				</template>
-				{{ t('doriath', 'Rename') }}
-			</NcActionButton>
-			<NcActionButton @click="$emit('delete', folder)">
-				<template #icon>
-					<DeleteIcon :size="20" />
-				</template>
-				{{ t('doriath', 'Delete') }}
-			</NcActionButton>
 		</template>
 		<template v-if="isOpen" #default>
 			<FolderTreeNode
@@ -27,21 +14,11 @@
 				:key="child.id"
 				:folder="child"
 				:current-folder-id="currentFolderId"
+				:trigger-action="triggerAction"
 				@navigate="$emit('navigate', $event)"
-				@rename="$emit('rename', $event)"
-				@delete="$emit('delete', $event)" />
+				@context-menu="$emit('context-menu', $event)" />
 
-			<NcAppNavigationItem
-				v-if="isCurrentFolder && !showNewSubfolder"
-				:name="t('doriath', 'New folder')"
-				class="folder-tree-node__new"
-				@click.stop="startNewSubfolder">
-				<template #icon>
-					<FolderPlusIcon :size="20" />
-				</template>
-			</NcAppNavigationItem>
-
-			<div v-if="isCurrentFolder && showNewSubfolder" class="folder-tree-node__inline-input" @click.stop>
+			<div v-if="showNewSubfolder" class="folder-tree-node__inline-input" @click.stop>
 				<FolderPlusIcon :size="20" class="folder-tree-node__inline-input-icon" />
 				<NcInputField
 					ref="newSubfolderInput"
@@ -59,25 +36,20 @@
 </template>
 
 <script>
-import { NcActionButton, NcAppNavigationItem, NcInputField } from '@nextcloud/vue'
-import DeleteIcon from 'vue-material-design-icons/Delete.vue'
+import { NcAppNavigationItem, NcInputField } from '@nextcloud/vue'
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
 import FolderOpenIcon from 'vue-material-design-icons/FolderOpen.vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
-import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
 export default {
 	name: 'FolderTreeNode',
 	components: {
-		NcActionButton,
 		NcAppNavigationItem,
 		NcInputField,
-		DeleteIcon,
 		FolderIcon,
 		FolderOpenIcon,
 		FolderPlusIcon,
-		PencilIcon,
 	},
 	props: {
 		folder: {
@@ -88,8 +60,12 @@ export default {
 			type: String,
 			default: null,
 		},
+		triggerAction: {
+			type: Object,
+			default: null,
+		},
 	},
-	emits: ['navigate', 'rename', 'delete'],
+	emits: ['navigate', 'context-menu'],
 	data() {
 		return {
 			isOpen: false,
@@ -123,8 +99,18 @@ export default {
 				}
 			},
 		},
+		triggerAction(val) {
+			if (!val || val.folderId !== this.folder.id) return
+			if (val.action === 'new-subfolder') {
+				if (!this.isOpen) this.isOpen = true
+				this.$nextTick(() => this.startNewSubfolder())
+			}
+		},
 	},
 	methods: {
+		onContextMenu(event) {
+			this.$emit('context-menu', { folderId: this.folder.id, event })
+		},
 		_subtreeContains(node, targetId) {
 			if (node.id === targetId) return true
 			return (node.children || []).some(child => this._subtreeContains(child, targetId))
@@ -176,11 +162,6 @@ export default {
 
 :deep(.app-navigation-entry__children) {
 	gap: 0;
-}
-
-.folder-tree-node__new :deep(.app-navigation-entry__name) {
-	color: var(--color-text-maxcontrast);
-	font-style: italic;
 }
 
 .folder-tree-node__inline-input {
