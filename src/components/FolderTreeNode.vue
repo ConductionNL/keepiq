@@ -109,6 +109,7 @@ export default {
 	},
 	methods: {
 		onContextMenu(event) {
+			event.stopPropagation()
 			this.$emit('context-menu', { folderId: this.folder.id, event })
 		},
 		_subtreeContains(node, targetId) {
