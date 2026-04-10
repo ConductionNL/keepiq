@@ -534,6 +534,7 @@ export default {
 }
 
 :deep(mark) {
+	background-color: var(--color-warning);
 	color: inherit;
 	border-radius: 2px;
 }
