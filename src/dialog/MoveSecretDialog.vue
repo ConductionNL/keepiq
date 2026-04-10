@@ -13,7 +13,8 @@
 				<button
 					class="move-secret__root-row"
 					:class="{ 'move-secret__root-row--selected': selectedFolderId === 'root' }"
-					@click="selectedFolderId = 'root'">
+					@click="selectedFolderId = 'root'"
+					@contextmenu.prevent="onRootContextMenu">
 					<HomeIcon :size="20" />
 					<span>{{ t('doriath', '/ (Root)') }}</span>
 				</button>
@@ -24,22 +25,16 @@
 					:folder="folder"
 					:selected-folder-id="selectedFolderId"
 					:is-duplicate-name="checkDuplicateName"
+					:trigger-action="triggerAction"
 					@select="selectedFolderId = $event"
 					@create-folder="onCreatePendingFolder"
 					@rename-folder="onRenamePendingFolder"
 					@revert-rename="onRevertRename"
-					@remove-folder="onRemovePendingFolder" />
-
-				<button
-					v-if="selectedFolderId === 'root' && !showRootNewFolder"
-					class="move-secret__new-folder-btn"
-					@click.stop="startRootNewFolder">
-					<FolderPlusIcon :size="20" />
-					<span>{{ t('doriath', 'New folder') }}</span>
-				</button>
+					@remove-folder="onRemovePendingFolder"
+					@context-menu="onFolderContextMenu" />
 
 				<div
-					v-if="selectedFolderId === 'root' && showRootNewFolder"
+					v-if="showRootNewFolder"
 					class="move-secret__inline-input"
 					@click.stop>
 					<FolderPlusIcon :size="20" class="move-secret__inline-input-icon" />
@@ -54,6 +49,48 @@
 						@blur="handleRootNewFolderBlur" />
 				</div>
 			</div>
+
+			<NcActions
+				:open.sync="contextMenuOpen"
+				:manual-open="true"
+				:force-menu="true"
+				class="move-secret__context-menu"
+				container="body"
+				@close="onContextMenuClose">
+				<NcActionButton close-after-click @click="onContextNewSubfolder">
+					<template #icon>
+						<FolderPlusIcon :size="20" />
+					</template>
+					{{ t('doriath', 'New subfolder') }}
+				</NcActionButton>
+				<NcActionButton
+					v-if="contextMenuFolderId && contextMenuFolderId !== 'root'"
+					close-after-click
+					@click="onContextRename">
+					<template #icon>
+						<PencilIcon :size="20" />
+					</template>
+					{{ t('doriath', 'Rename') }}
+				</NcActionButton>
+				<NcActionButton
+					v-if="contextMenuFolder && contextMenuFolder.isRenamed"
+					close-after-click
+					@click="onContextUndoRename">
+					<template #icon>
+						<UndoIcon :size="20" />
+					</template>
+					{{ t('doriath', 'Undo rename') }}
+				</NcActionButton>
+				<NcActionButton
+					v-if="contextMenuFolder && contextMenuFolder.isPending"
+					close-after-click
+					@click="onContextRemove">
+					<template #icon>
+						<CloseIcon :size="20" />
+					</template>
+					{{ t('doriath', 'Remove') }}
+				</NcActionButton>
+			</NcActions>
 
 			<NcNoteCard v-if="isSameFolder" type="info">
 				{{ t('doriath', 'This secret is already in the selected folder.') }}
@@ -76,9 +113,12 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcInputField, NcNoteCard } from '@nextcloud/vue'
+import { NcActionButton, NcActions, NcButton, NcDialog, NcInputField, NcNoteCard } from '@nextcloud/vue'
+import CloseIcon from 'vue-material-design-icons/Close.vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
 import HomeIcon from 'vue-material-design-icons/Home.vue'
+import PencilIcon from 'vue-material-design-icons/Pencil.vue'
+import UndoIcon from 'vue-material-design-icons/Undo.vue'
 import FolderPickerNode from '../components/FolderPickerNode.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -86,12 +126,17 @@ import { useSecretStore } from '../store/modules/secret.js'
 export default {
 	name: 'MoveSecretDialog',
 	components: {
+		NcActionButton,
+		NcActions,
 		NcButton,
 		NcDialog,
 		NcInputField,
 		NcNoteCard,
+		CloseIcon,
 		FolderPlusIcon,
 		HomeIcon,
+		PencilIcon,
+		UndoIcon,
 		FolderPickerNode,
 	},
 	props: {
@@ -122,6 +167,9 @@ export default {
 			pendingRenames: {},
 			showRootNewFolder: false,
 			rootNewFolderName: '',
+			contextMenuOpen: false,
+			contextMenuFolderId: null,
+			triggerAction: null,
 		}
 	},
 	computed: {
@@ -156,6 +204,20 @@ export default {
 			})
 			return roots
 		},
+		contextMenuFolder() {
+			if (!this.contextMenuFolderId || this.contextMenuFolderId === 'root') return null
+			const findFolder = (folders) => {
+				for (const f of folders) {
+					if (f.id === this.contextMenuFolderId) return f
+					if (f.children) {
+						const found = findFolder(f.children)
+						if (found) return found
+					}
+				}
+				return null
+			}
+			return findFolder(this.mergedFolderTree)
+		},
 		normalizedCurrentFolderId() {
 			return this.currentFolderId ?? 'root'
 		},
@@ -183,11 +245,63 @@ export default {
 				this.pendingRenames = {}
 				this.showRootNewFolder = false
 				this.rootNewFolderName = ''
+				this.contextMenuOpen = false
+				this.contextMenuFolderId = null
+				this.triggerAction = null
 				this.folderStore.fetchFolders()
 			}
 		},
 	},
 	methods: {
+		openContextMenu(folderId, event) {
+			document.documentElement.style.setProperty('--folder-ctx-x', event.clientX + 'px')
+			document.documentElement.style.setProperty('--folder-ctx-y', event.clientY + 'px')
+			document.documentElement.setAttribute('data-folder-context-menu', '')
+			this.contextMenuFolderId = folderId
+			this.contextMenuOpen = true
+		},
+		onFolderContextMenu({ folderId, event }) {
+			this.openContextMenu(folderId, event)
+		},
+		onRootContextMenu(event) {
+			this.openContextMenu('root', event)
+		},
+		onContextMenuClose() {
+			this.contextMenuOpen = false
+			document.documentElement.style.removeProperty('--folder-ctx-x')
+			document.documentElement.style.removeProperty('--folder-ctx-y')
+			document.documentElement.removeAttribute('data-folder-context-menu')
+			this.contextMenuFolderId = null
+		},
+		onContextNewSubfolder() {
+			const folderId = this.contextMenuFolderId
+			this.contextMenuOpen = false
+			this.selectedFolderId = folderId
+			this.$nextTick(() => {
+				if (folderId === 'root') {
+					this.startRootNewFolder()
+				} else {
+					this.triggerAction = { folderId, action: 'new-subfolder' }
+					this.$nextTick(() => { this.triggerAction = null })
+				}
+			})
+		},
+		onContextRename() {
+			const folderId = this.contextMenuFolderId
+			this.contextMenuOpen = false
+			this.$nextTick(() => {
+				this.triggerAction = { folderId, action: 'rename' }
+				this.$nextTick(() => { this.triggerAction = null })
+			})
+		},
+		onContextUndoRename() {
+			this.onRevertRename(this.contextMenuFolderId)
+			this.contextMenuOpen = false
+		},
+		onContextRemove() {
+			this.onRemovePendingFolder(this.contextMenuFolderId)
+			this.contextMenuOpen = false
+		},
 		checkDuplicateName(name, parentId, excludeId = null) {
 			const trimmed = name.trim().toLowerCase()
 			const storeHasDuplicate = this.folderStore.folders.some(f => {
@@ -400,25 +514,14 @@ export default {
 	background: var(--color-primary-element-light);
 }
 
-.move-secret__new-folder-btn {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	height: 36px;
-	padding: 0 8px 0 32px;
-	width: 100%;
-	margin: 0 !important;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	border-radius: var(--border-radius);
-	color: var(--color-text-maxcontrast);
-	font-style: italic;
-	font-size: inherit;
-}
-
-.move-secret__new-folder-btn:hover {
-	background: var(--color-background-hover);
+/* Hide the NcActions trigger button — menu opens via right-click only */
+.move-secret__context-menu {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	pointer-events: none;
 }
 
 .move-secret__inline-input {
@@ -432,5 +535,18 @@ export default {
 .move-secret__inline-input-icon {
 	flex-shrink: 0;
 	color: var(--color-text-maxcontrast);
+}
+</style>
+
+<style>
+/* Position the context menu at the cursor (follows Nextcloud Files app pattern) */
+html[data-folder-context-menu] .v-popper__popper {
+	transform: translate3d(var(--folder-ctx-x), var(--folder-ctx-y), 0px) !important;
+}
+html[data-folder-context-menu] .v-popper__popper[data-popper-placement="top"] {
+	transform: translate3d(var(--folder-ctx-x), calc(var(--folder-ctx-y) - 50vh + 34px), 0px) !important;
+}
+html[data-folder-context-menu] .v-popper__popper .v-popper__arrow-container {
+	display: none;
 }
 </style>

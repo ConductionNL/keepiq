@@ -9,7 +9,8 @@
 				'folder-picker-node__row--renamed': folder.isRenamed,
 			}"
 			:style="{ paddingLeft: (depth * 24 + 8) + 'px' }"
-			@click="onSelect">
+			@click="onSelect"
+			@contextmenu.prevent="onContextMenu">
 			<ChevronDownIcon v-if="hasChildren && isOpen"
 				:size="16"
 				class="folder-picker-node__chevron"
@@ -23,22 +24,6 @@
 			<FolderIcon v-else :size="20" />
 			<span class="folder-picker-node__name">
 				{{ folder.name }}{{ folder.isPending ? ' ✨' : '' }}{{ folder.isRenamed ? ' ✏️' : '' }}
-			</span>
-			<span class="folder-picker-node__actions">
-				<PencilIcon
-					:size="16"
-					class="folder-picker-node__action-btn"
-					@click.stop="startEditing" />
-				<UndoIcon
-					v-if="folder.isRenamed"
-					:size="16"
-					class="folder-picker-node__action-btn"
-					@click.stop="$emit('revert-rename', folder.id)" />
-				<CloseIcon
-					v-if="folder.isPending"
-					:size="16"
-					class="folder-picker-node__action-btn folder-picker-node__action-btn--danger"
-					@click.stop="$emit('remove-folder', folder.id)" />
 			</span>
 		</button>
 		<div
@@ -65,20 +50,13 @@
 				:selected-folder-id="selectedFolderId"
 				:depth="depth + 1"
 				:is-duplicate-name="isDuplicateName"
+				:trigger-action="triggerAction"
 				@select="$emit('select', $event)"
 				@create-folder="$emit('create-folder', $event)"
 				@rename-folder="$emit('rename-folder', $event)"
 				@revert-rename="$emit('revert-rename', $event)"
-				@remove-folder="$emit('remove-folder', $event)" />
-
-			<button
-				v-if="isSelected && !showNewSubfolder"
-				class="folder-picker-node__new-folder-btn"
-				:style="{ paddingLeft: ((depth + 2) * 24 + 8) + 'px' }"
-				@click.stop="startNewSubfolder">
-				<FolderPlusIcon :size="20" />
-				<span>{{ t('doriath', 'New folder') }}</span>
-			</button>
+				@remove-folder="$emit('remove-folder', $event)"
+				@context-menu="$emit('context-menu', $event)" />
 
 			<div
 				v-if="isSelected && showNewSubfolder"
@@ -104,12 +82,9 @@
 import { NcInputField } from '@nextcloud/vue'
 import ChevronDownIcon from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronRightIcon from 'vue-material-design-icons/ChevronRight.vue'
-import CloseIcon from 'vue-material-design-icons/Close.vue'
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
 import FolderOpenIcon from 'vue-material-design-icons/FolderOpen.vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
-import PencilIcon from 'vue-material-design-icons/Pencil.vue'
-import UndoIcon from 'vue-material-design-icons/Undo.vue'
 
 export default {
 	name: 'FolderPickerNode',
@@ -117,12 +92,9 @@ export default {
 		NcInputField,
 		ChevronDownIcon,
 		ChevronRightIcon,
-		CloseIcon,
 		FolderIcon,
 		FolderOpenIcon,
 		FolderPlusIcon,
-		PencilIcon,
-		UndoIcon,
 	},
 	props: {
 		folder: {
@@ -141,8 +113,12 @@ export default {
 			type: Function,
 			default: () => false,
 		},
+		triggerAction: {
+			type: Object,
+			default: null,
+		},
 	},
-	emits: ['select', 'create-folder', 'rename-folder', 'revert-rename', 'remove-folder'],
+	emits: ['select', 'create-folder', 'rename-folder', 'revert-rename', 'remove-folder', 'context-menu'],
 	data() {
 		return {
 			isOpen: false,
@@ -174,8 +150,20 @@ export default {
 				this.isOpen = true
 			}
 		},
+		triggerAction(val) {
+			if (!val || val.folderId !== this.folder.id) return
+			if (val.action === 'rename') {
+				this.startEditing()
+			} else if (val.action === 'new-subfolder') {
+				if (!this.isOpen) this.isOpen = true
+				this.$nextTick(() => this.startNewSubfolder())
+			}
+		},
 	},
 	methods: {
+		onContextMenu(event) {
+			this.$emit('context-menu', { folderId: this.folder.id, event })
+		},
 		toggle() {
 			this.isOpen = !this.isOpen
 		},
@@ -290,35 +278,6 @@ export default {
 	white-space: nowrap;
 }
 
-.folder-picker-node__actions {
-	display: flex;
-	align-items: center;
-	gap: 2px;
-	margin-left: auto;
-	flex-shrink: 0;
-	opacity: 0;
-	transition: opacity 0.15s;
-}
-
-.folder-picker-node__row:hover .folder-picker-node__actions {
-	opacity: 1;
-}
-
-.folder-picker-node__action-btn {
-	cursor: pointer;
-	color: var(--color-text-maxcontrast);
-	border-radius: var(--border-radius);
-	padding: 2px;
-}
-
-.folder-picker-node__action-btn:hover {
-	color: var(--color-main-text);
-}
-
-.folder-picker-node__action-btn--danger:hover {
-	color: var(--color-error);
-}
-
 .folder-picker-node__rename-input {
 	display: flex;
 	align-items: center;
@@ -330,26 +289,6 @@ export default {
 .folder-picker-node__row--pending,
 .folder-picker-node__row--renamed {
 	font-style: italic;
-}
-
-.folder-picker-node__new-folder-btn {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	height: 36px;
-	width: 100%;
-	padding-right: 8px;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	border-radius: var(--border-radius);
-	color: var(--color-text-maxcontrast);
-	font-style: italic;
-	font-size: inherit;
-}
-
-.folder-picker-node__new-folder-btn:hover {
-	background: var(--color-background-hover);
 }
 
 .folder-picker-node__inline-input {
