@@ -50,6 +50,10 @@
 				</div>
 			</div>
 
+			<p class="move-secret__hint">
+				{{ t('doriath', 'Right-click a folder for more options.') }}
+			</p>
+
 			<NcActions
 				:open.sync="contextMenuOpen"
 				:manual-open="true"
@@ -512,6 +516,13 @@ export default {
 
 .move-secret__root-row--selected:hover {
 	background: var(--color-primary-element-light);
+}
+
+.move-secret__hint {
+	color: var(--color-text-maxcontrast);
+	font-size: 0.8rem;
+	margin: 4px 0 0;
+	font-style: italic;
 }
 
 /* Hide the NcActions trigger button — menu opens via right-click only */
