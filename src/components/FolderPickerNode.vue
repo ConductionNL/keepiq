@@ -1,13 +1,16 @@
 <template>
 	<div class="folder-picker-node">
 		<button
+			v-if="!isEditing"
 			class="folder-picker-node__row"
 			:class="{
 				'folder-picker-node__row--selected': isSelected,
 				'folder-picker-node__row--pending': folder.isPending,
+				'folder-picker-node__row--renamed': folder.isRenamed,
 			}"
 			:style="{ paddingLeft: (depth * 24 + 8) + 'px' }"
-			@click="onSelect">
+			@click="onSelect"
+			@contextmenu.prevent="onContextMenu">
 			<ChevronDownIcon v-if="hasChildren && isOpen"
 				:size="16"
 				class="folder-picker-node__chevron"
@@ -19,8 +22,26 @@
 			<span v-else class="folder-picker-node__spacer" />
 			<FolderOpenIcon v-if="isOpen && hasChildren" :size="20" />
 			<FolderIcon v-else :size="20" />
-			<span class="folder-picker-node__name">{{ folder.name }}{{ folder.isPending ? ' ✨' : '' }}</span>
+			<span class="folder-picker-node__name">
+				{{ folder.name }}{{ folder.isPending ? ' ✨' : '' }}{{ folder.isRenamed ? ' ✏️' : '' }}
+			</span>
 		</button>
+		<div
+			v-else
+			class="folder-picker-node__rename-input"
+			:style="{ paddingLeft: (depth * 24 + 8) + 'px' }"
+			@click.stop>
+			<FolderIcon :size="20" class="folder-picker-node__inline-input-icon" />
+			<NcInputField
+				ref="renameInput"
+				v-model="editName"
+				v-tooltip="isEditNameDuplicate ? t('doriath', 'A folder with this name already exists in the same location') : ''"
+				:label="t('doriath', 'Folder name')"
+				:error="!!editName && isEditNameDuplicate"
+				@keyup.enter="confirmRename"
+				@keyup.escape="cancelRename"
+				@blur="handleRenameBlur" />
+		</div>
 		<template v-if="isOpen">
 			<FolderPickerNode
 				v-for="child in folder.children"
@@ -29,17 +50,13 @@
 				:selected-folder-id="selectedFolderId"
 				:depth="depth + 1"
 				:is-duplicate-name="isDuplicateName"
+				:trigger-action="triggerAction"
 				@select="$emit('select', $event)"
-				@create-folder="$emit('create-folder', $event)" />
-
-			<button
-				v-if="isSelected && !showNewSubfolder"
-				class="folder-picker-node__new-folder-btn"
-				:style="{ paddingLeft: ((depth + 2) * 24 + 8) + 'px' }"
-				@click.stop="startNewSubfolder">
-				<FolderPlusIcon :size="20" />
-				<span>{{ t('doriath', 'New folder') }}</span>
-			</button>
+				@create-folder="$emit('create-folder', $event)"
+				@rename-folder="$emit('rename-folder', $event)"
+				@revert-rename="$emit('revert-rename', $event)"
+				@remove-folder="$emit('remove-folder', $event)"
+				@context-menu="$emit('context-menu', $event)" />
 
 			<div
 				v-if="isSelected && showNewSubfolder"
@@ -96,13 +113,19 @@ export default {
 			type: Function,
 			default: () => false,
 		},
+		triggerAction: {
+			type: Object,
+			default: null,
+		},
 	},
-	emits: ['select', 'create-folder'],
+	emits: ['select', 'create-folder', 'rename-folder', 'revert-rename', 'remove-folder', 'context-menu'],
 	data() {
 		return {
 			isOpen: false,
 			showNewSubfolder: false,
 			newSubfolderName: '',
+			isEditing: false,
+			editName: '',
 		}
 	},
 	computed: {
@@ -116,6 +139,10 @@ export default {
 			if (!this.newSubfolderName.trim()) return false
 			return this.isDuplicateName(this.newSubfolderName, this.folder.id)
 		},
+		isEditNameDuplicate() {
+			if (!this.editName.trim()) return false
+			return this.isDuplicateName(this.editName, this.folder.parentId ?? null, this.folder.id)
+		},
 	},
 	watch: {
 		isSelected(val) {
@@ -123,8 +150,20 @@ export default {
 				this.isOpen = true
 			}
 		},
+		triggerAction(val) {
+			if (!val || val.folderId !== this.folder.id) return
+			if (val.action === 'rename') {
+				this.startEditing()
+			} else if (val.action === 'new-subfolder') {
+				if (!this.isOpen) this.isOpen = true
+				this.$nextTick(() => this.startNewSubfolder())
+			}
+		},
 	},
 	methods: {
+		onContextMenu(event) {
+			this.$emit('context-menu', { folderId: this.folder.id, event })
+		},
 		toggle() {
 			this.isOpen = !this.isOpen
 		},
@@ -156,6 +195,38 @@ export default {
 		handleSubfolderBlur() {
 			if (!this.newSubfolderName.trim()) {
 				this.showNewSubfolder = false
+			}
+		},
+		startEditing() {
+			this.editName = this.folder.name
+			this.isEditing = true
+			this.$nextTick(() => {
+				const input = this.$refs.renameInput?.$el?.querySelector('input')
+				input?.focus()
+				input?.select()
+			})
+		},
+		confirmRename() {
+			const trimmed = this.editName.trim()
+			if (!trimmed || this.isEditNameDuplicate) return
+			if (trimmed !== this.folder.name) {
+				this.$emit('rename-folder', {
+					folderId: this.folder.id,
+					newName: trimmed,
+				})
+			}
+			this.isEditing = false
+			this.editName = ''
+		},
+		cancelRename() {
+			this.isEditing = false
+			this.editName = ''
+		},
+		handleRenameBlur() {
+			if (this.editName.trim() && !this.isEditNameDuplicate) {
+				this.confirmRename()
+			} else {
+				this.cancelRename()
 			}
 		},
 	},
@@ -207,28 +278,17 @@ export default {
 	white-space: nowrap;
 }
 
-.folder-picker-node__row--pending {
-	font-style: italic;
-}
-
-.folder-picker-node__new-folder-btn {
+.folder-picker-node__rename-input {
 	display: flex;
 	align-items: center;
-	gap: 8px;
 	height: 36px;
-	width: 100%;
 	padding-right: 8px;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	border-radius: var(--border-radius);
-	color: var(--color-text-maxcontrast);
-	font-style: italic;
-	font-size: inherit;
+	gap: 8px;
 }
 
-.folder-picker-node__new-folder-btn:hover {
-	background: var(--color-background-hover);
+.folder-picker-node__row--pending,
+.folder-picker-node__row--renamed {
+	font-style: italic;
 }
 
 .folder-picker-node__inline-input {
