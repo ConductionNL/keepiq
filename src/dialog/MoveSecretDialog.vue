@@ -25,7 +25,10 @@
 					:selected-folder-id="selectedFolderId"
 					:is-duplicate-name="checkDuplicateName"
 					@select="selectedFolderId = $event"
-					@create-folder="onCreatePendingFolder" />
+					@create-folder="onCreatePendingFolder"
+					@rename-folder="onRenamePendingFolder"
+					@revert-rename="onRevertRename"
+					@remove-folder="onRemovePendingFolder" />
 
 				<button
 					v-if="selectedFolderId === 'root' && !showRootNewFolder"
@@ -56,8 +59,8 @@
 				{{ t('doriath', 'This secret is already in the selected folder.') }}
 			</NcNoteCard>
 
-			<NcNoteCard v-if="pendingFolders.length > 0" type="info">
-				{{ t('doriath', 'New folders marked with ✨ will only be created when you press Move.') }}
+			<NcNoteCard v-if="hasPendingChanges" type="info">
+				{{ t('doriath', 'Changes marked with ✨ or ✏️ will only be applied when you press Move.') }}
 			</NcNoteCard>
 		</div>
 
@@ -116,6 +119,7 @@ export default {
 			moving: false,
 			pendingFolders: [],
 			pendingIdCounter: 0,
+			pendingRenames: {},
 			showRootNewFolder: false,
 			rootNewFolderName: '',
 		}
@@ -134,7 +138,13 @@ export default {
 			]
 			const map = {}
 			allFolders.forEach(folder => {
-				map[folder.id] = { ...folder, children: [] }
+				const displayName = this.pendingRenames[folder.id] ?? folder.name
+				map[folder.id] = {
+					...folder,
+					name: displayName,
+					isRenamed: folder.id in this.pendingRenames,
+					children: [],
+				}
 			})
 			const roots = []
 			allFolders.forEach(folder => {
@@ -155,6 +165,9 @@ export default {
 		canMove() {
 			return !this.isSameFolder && !this.moving
 		},
+		hasPendingChanges() {
+			return this.pendingFolders.length > 0 || Object.keys(this.pendingRenames).length > 0
+		},
 		isRootNewFolderDuplicate() {
 			if (!this.rootNewFolderName.trim()) return false
 			return this.checkDuplicateName(this.rootNewFolderName, null)
@@ -167,6 +180,7 @@ export default {
 				this.moving = false
 				this.pendingFolders = []
 				this.pendingIdCounter = 0
+				this.pendingRenames = {}
 				this.showRootNewFolder = false
 				this.rootNewFolderName = ''
 				this.folderStore.fetchFolders()
@@ -174,11 +188,18 @@ export default {
 		},
 	},
 	methods: {
-		checkDuplicateName(name, parentId) {
+		checkDuplicateName(name, parentId, excludeId = null) {
 			const trimmed = name.trim().toLowerCase()
-			if (this.folderStore.isDuplicateName(name, parentId)) return true
+			const storeHasDuplicate = this.folderStore.folders.some(f => {
+				if (f.id === excludeId) return false
+				if ((f.parentId ?? null) !== parentId) return false
+				const effectiveName = this.pendingRenames[f.id] ?? f.name
+				return effectiveName.trim().toLowerCase() === trimmed
+			})
+			if (storeHasDuplicate) return true
 			return this.pendingFolders.some(
-				f => (f.parentId ?? null) === parentId
+				f => f.id !== excludeId
+					&& (f.parentId ?? null) === parentId
 					&& f.name.toLowerCase() === trimmed,
 			)
 		},
@@ -195,6 +216,42 @@ export default {
 		onCreatePendingFolder({ name, parentId }) {
 			const id = this.addPendingFolder(name, parentId)
 			this.selectedFolderId = id
+		},
+		onRenamePendingFolder({ folderId, newName }) {
+			if (this.isPendingId(folderId)) {
+				const pf = this.pendingFolders.find(f => f.id === folderId)
+				if (pf) pf.name = newName.trim()
+			} else {
+				const storeFolder = this.folderStore.folders.find(f => f.id === folderId)
+				if (storeFolder && storeFolder.name === newName.trim()) {
+					// Renamed back to original — remove from pending renames
+					const copy = { ...this.pendingRenames }
+					delete copy[folderId]
+					this.pendingRenames = copy
+				} else {
+					this.pendingRenames = { ...this.pendingRenames, [folderId]: newName.trim() }
+				}
+			}
+		},
+		onRevertRename(folderId) {
+			const copy = { ...this.pendingRenames }
+			delete copy[folderId]
+			this.pendingRenames = copy
+		},
+		onRemovePendingFolder(folderId) {
+			// Collect all IDs to remove (the folder + any pending descendants)
+			const idsToRemove = new Set()
+			const collect = (id) => {
+				idsToRemove.add(id)
+				this.pendingFolders
+					.filter(f => f.parentId === id)
+					.forEach(f => collect(f.id))
+			}
+			collect(folderId)
+			this.pendingFolders = this.pendingFolders.filter(f => !idsToRemove.has(f.id))
+			if (idsToRemove.has(this.selectedFolderId)) {
+				this.selectedFolderId = 'root'
+			}
 		},
 		isPendingId(id) {
 			return typeof id === 'string' && id.startsWith('__pending__')
@@ -229,6 +286,14 @@ export default {
 			}
 			return depth
 		},
+		async materializeAllPendingRenames() {
+			for (const [folderId, newName] of Object.entries(this.pendingRenames)) {
+				if (this.isPendingId(folderId)) continue
+				const folder = this.folderStore.folders.find(f => f.id === folderId)
+				if (!folder) continue
+				await this.folderStore.updateFolder(folderId, newName, folder.parentId ?? null)
+			}
+		},
 		async confirmMove() {
 			if (!this.secretId) return
 			this.moving = true
@@ -238,6 +303,10 @@ export default {
 				let idMapping = {}
 				if (this.pendingFolders.length > 0) {
 					idMapping = await this.materializeAllPendingFolders()
+				}
+
+				if (Object.keys(this.pendingRenames).length > 0) {
+					await this.materializeAllPendingRenames()
 				}
 
 				if (this.isPendingId(targetFolderId)) {
@@ -338,6 +407,7 @@ export default {
 	height: 36px;
 	padding: 0 8px 0 32px;
 	width: 100%;
+	margin: 0 !important;
 	border: none;
 	background: transparent;
 	cursor: pointer;
