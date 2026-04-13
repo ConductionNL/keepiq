@@ -9,37 +9,33 @@
 			</template>
 		</NcAppNavigationItem>
 
+		<div class="separator" />
+
 		<NcAppNavigationItem
-			:name="t('doriath', 'Secrets')"
+			:name="t('doriath', 'Main Folder')"
 			:active="isRootFolder"
-			@click="navigateRoot">
+			@click="navigateRoot"
+			@contextmenu.native.prevent="onRootContextMenu">
 			<template #icon>
 				<InboxIcon :size="20" />
 			</template>
 		</NcAppNavigationItem>
 
-		<div class="separator" />
+		<div class="folder-tree__children">
+			<FolderTreeNode
+				v-for="folder in folderTree"
+				:key="folder.id"
+				:folder="folder"
+				:current-folder-id="currentFolderId"
+				:trigger-action="triggerAction"
+				@navigate="navigate"
+				@context-menu="onFolderContextMenu" />
+		</div>
 
-		<FolderTreeNode
-			v-for="folder in folderTree"
-			:key="folder.id"
-			:folder="folder"
-			:current-folder-id="currentFolderId"
-			@navigate="navigate"
-			@rename="startRename"
-			@delete="handleDelete" />
-
-		<NcAppNavigationItem
-			v-if="!showNewFolder"
-			:name="t('doriath', 'New folder')"
-			class="folder-tree__new"
-			@click="startNewFolder">
-			<template #icon>
-				<FolderPlusIcon :size="20" />
-			</template>
-		</NcAppNavigationItem>
-
-		<div v-else class="folder-tree__inline-input">
+		<div
+			v-if="showNewFolder"
+			class="folder-tree__inline-input"
+			@click.stop>
 			<FolderPlusIcon :size="20" class="folder-tree__inline-input-icon" />
 			<NcInputField
 				ref="newFolderInput"
@@ -62,14 +58,46 @@
 			:open.sync="showDeleteDialog"
 			:folder="folderToDelete"
 			@deleted="onDeleted" />
+
+		<CnContextMenu
+			:open.sync="contextMenuOpen"
+			@close="closeContextMenu">
+			<NcActionButton close-after-click @click="onContextNewSubfolder">
+				<template #icon>
+					<FolderPlusIcon :size="20" />
+				</template>
+				{{ t('doriath', 'New subfolder') }}
+			</NcActionButton>
+			<NcActionButton
+				v-if="contextMenuFolderId && contextMenuFolderId !== '__root__'"
+				close-after-click
+				@click="onContextRename">
+				<template #icon>
+					<PencilIcon :size="20" />
+				</template>
+				{{ t('doriath', 'Rename') }}
+			</NcActionButton>
+			<NcActionButton
+				v-if="contextMenuFolderId && contextMenuFolderId !== '__root__'"
+				close-after-click
+				@click="onContextDelete">
+				<template #icon>
+					<DeleteIcon :size="20" />
+				</template>
+				{{ t('doriath', 'Delete') }}
+			</NcActionButton>
+		</CnContextMenu>
 	</div>
 </template>
 
 <script>
-import { NcAppNavigationItem, NcInputField } from '@nextcloud/vue'
+import { NcActionButton, NcAppNavigationItem, NcInputField } from '@nextcloud/vue'
+import { CnContextMenu, useContextMenu } from '@conduction/nextcloud-vue'
+import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
 import InboxIcon from 'vue-material-design-icons/Inbox.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
+import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import FolderTreeNode from './FolderTreeNode.vue'
 import RenameFolderDialog from '../dialog/RenameFolderDialog.vue'
 import RemoveFolderDialog from '../dialog/RemoveFolderDialog.vue'
@@ -78,11 +106,15 @@ import { useFolderStore } from '../store/modules/folder.js'
 export default {
 	name: 'FolderTree',
 	components: {
+		NcActionButton,
 		NcAppNavigationItem,
 		NcInputField,
+		CnContextMenu,
+		DeleteIcon,
 		FolderPlusIcon,
 		InboxIcon,
 		KeyVariantIcon,
+		PencilIcon,
 		FolderTreeNode,
 		RenameFolderDialog,
 		RemoveFolderDialog,
@@ -101,6 +133,21 @@ export default {
 			default: false,
 		},
 	},
+	setup() {
+		const {
+			isOpen: contextMenuOpen,
+			targetItem: contextMenuFolderId,
+			open: openContextMenu,
+			close: closeContextMenu,
+		} = useContextMenu()
+
+		return {
+			contextMenuOpen,
+			contextMenuFolderId,
+			openContextMenu,
+			closeContextMenu,
+		}
+	},
 	data() {
 		return {
 			showNewFolder: false,
@@ -110,6 +157,7 @@ export default {
 			renameFolder: null,
 			showDeleteDialog: false,
 			folderToDelete: null,
+			triggerAction: null,
 		}
 	},
 	computed: {
@@ -125,6 +173,53 @@ export default {
 		},
 	},
 	methods: {
+		onFolderContextMenu({ folderId, event }) {
+			this.openContextMenu({ item: folderId, event })
+		},
+		onRootContextMenu(event) {
+			this.openContextMenu({ item: '__root__', event })
+		},
+		onContextNewSubfolder() {
+			const folderId = this.contextMenuFolderId
+			this.closeContextMenu()
+			this.$nextTick(() => {
+				if (folderId === '__root__') {
+					this.startNewFolder()
+				} else {
+					this.triggerAction = { folderId, action: 'new-subfolder' }
+					this.$nextTick(() => { this.triggerAction = null })
+				}
+			})
+		},
+		onContextRename() {
+			const folderId = this.contextMenuFolderId
+			this.closeContextMenu()
+			const folder = this._findFolder(folderId)
+			if (folder) {
+				this.startRename(folder)
+			}
+		},
+		onContextDelete() {
+			const folderId = this.contextMenuFolderId
+			this.closeContextMenu()
+			const folder = this._findFolder(folderId)
+			if (folder) {
+				this.handleDelete(folder)
+			}
+		},
+		_findFolder(folderId) {
+			const search = (folders) => {
+				for (const f of folders) {
+					if (f.id === folderId) return f
+					if (f.children) {
+						const found = search(f.children)
+						if (found) return found
+					}
+				}
+				return null
+			}
+			return search(this.folderTree)
+		},
 		startNewFolder() {
 			this.showNewFolder = true
 			this.$nextTick(() => {
@@ -185,9 +280,8 @@ export default {
 </script>
 
 <style scoped>
-.folder-tree__new :deep(.app-navigation-entry__name) {
-	color: var(--color-text-maxcontrast);
-	font-style: italic;
+.folder-tree__children {
+	padding-inline-start: 16px;
 }
 
 .folder-tree__inline-input {
