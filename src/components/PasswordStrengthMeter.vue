@@ -82,6 +82,15 @@ export default {
 	},
 
 	methods: {
+		countCharacterClasses(password) {
+			let classes = 0
+			if (/[a-z]/.test(password)) classes++
+			if (/[A-Z]/.test(password)) classes++
+			if (/[0-9]/.test(password)) classes++
+			if (/[^a-zA-Z0-9]/.test(password)) classes++
+			return classes
+		},
+
 		evaluate() {
 			if (!this.password) {
 				this.score = 0
@@ -90,8 +99,20 @@ export default {
 				return
 			}
 			const result = zxcvbn(this.password)
-			this.score = result.score
-			this.feedback = result.feedback
+			let score = result.score
+			let feedback = result.feedback
+
+			const charClasses = this.countCharacterClasses(this.password)
+			if (charClasses <= 1 && score > 1) {
+				score = 1
+				feedback = {
+					warning: t('doriath', 'Use a mix of letters, numbers, and symbols'),
+					suggestions: feedback.suggestions || [],
+				}
+			}
+
+			this.score = score
+			this.feedback = feedback
 			this.$emit('strength-change', { isValid: this.isValid, score: this.score })
 		},
 	},
