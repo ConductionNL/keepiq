@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import { Fragment } from 'vue-frag'
 import Tooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
 import pinia from './pinia.js'
 import router from './router/index.js'
@@ -16,6 +17,8 @@ import './assets/app.css'
 Vue.mixin({ methods: { t, n } })
 Vue.directive('tooltip', Tooltip)
 Vue.use(PiniaVuePlugin)
+
+Vue.component('Fragment', Fragment)
 
 loadTranslations('doriath', () => {
 	// Create Vue instance to activate Pinia context, then initialize stores.
