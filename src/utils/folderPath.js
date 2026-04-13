@@ -1,9 +1,4 @@
 /**
- * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
- * SPDX-License-Identifier: AGPL-3.0-or-later
- */
-
-/**
  * Build a human-readable path string from a folder ID by walking up the
  * parentId chain. Returns '/' for root (null/undefined folderId).
  *
