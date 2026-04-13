@@ -53,7 +53,8 @@
 					</div>
 					<PasswordStrengthMeter
 						v-if="newSecret.key"
-						:password="newSecret.key" />
+						:password="newSecret.key"
+						:enforcing="false" />
 				</div>
 
 				<div class="create-secret-form__section">

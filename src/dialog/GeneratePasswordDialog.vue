@@ -89,7 +89,8 @@
 				<PasswordStrengthMeter
 					v-if="generated"
 					:password="generated"
-					:min-length="minLength" />
+					:min-length="minLength"
+					:enforcing="false" />
 			</div>
 
 			<div class="generate-password__actions">

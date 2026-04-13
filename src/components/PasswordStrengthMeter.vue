@@ -31,6 +31,10 @@ export default {
 			type: Number,
 			default: 12,
 		},
+		enforcing: {
+			type: Boolean,
+			default: true,
+		},
 	},
 
 	emits: ['strength-change'],
@@ -52,7 +56,9 @@ export default {
 		feedbackText() {
 			if (!this.password) return ''
 			if (this.password.length < this.minLength) {
-				return t('doriath', 'At least {length} characters required', { length: this.minLength })
+				return this.enforcing
+					? t('doriath', 'At least {length} characters required', { length: this.minLength })
+					: t('doriath', 'At least {length} characters recommended', { length: this.minLength })
 			}
 			if (this.feedback?.warning) return this.feedback.warning
 			const labels = [
