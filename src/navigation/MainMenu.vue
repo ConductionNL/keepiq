@@ -51,6 +51,7 @@ import FolderTree from '../components/FolderTree.vue'
 import UserSettings from '../views/settings/UserSettings.vue'
 import { useSessionStore } from '../store/modules/session.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { pathToFolderId } from '../utils/folderPath.js'
 
 export default {
 	name: 'MainMenu',
@@ -71,13 +72,19 @@ export default {
 	},
 	computed: {
 		currentFolderId() {
-			return this.$route.params.id ?? null
+			const dir = this.$route.query?.dir
+			if (!dir || dir === '/') return null
+			const folderStore = useFolderStore()
+			if (folderStore.folders.length === 0) return null
+			return pathToFolderId(dir, folderStore.folders) ?? null
 		},
 		isAllSecrets() {
 			return this.$route.name === 'SecretList'
 		},
 		isRootFolder() {
-			return this.$route.name === 'RootFolder'
+			if (this.$route.name !== 'FolderView') return false
+			const dir = this.$route.query?.dir
+			return !dir || dir === '/'
 		},
 	},
 	async created() {

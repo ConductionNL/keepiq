@@ -17,3 +17,4 @@ Unlike standalone password managers (Bitwarden, 1Password) or infrastructure sec
 - [Architecture & Data Model](./ARCHITECTURE) — Standards research, encryption architecture, entity definitions
 - [Feature Analysis](./FEATURES) — Competitive landscape, 90-feature roadmap, and strategic positioning
 - [Design References](./DESIGN-REFERENCES) — Wireframes, UX patterns, and design inspiration
+- [Folder Routing](./ROUTING) — Path-based URL scheme, path/ID resolution, and encoding rules

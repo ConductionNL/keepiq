@@ -9,9 +9,35 @@ import SecretSidebar from '../sidebars/SecretSidebar.vue'
 
 Vue.use(Router)
 
+/**
+ * Custom query serializer that keeps the `dir` parameter human-readable.
+ * Only &, =, and # are encoded in folder-name segments; slashes stay literal.
+ * All other query parameters use standard encodeURIComponent.
+ *
+ * @param {object} query The query object to serialize
+ * @return {string} Serialized query string (including leading '?'), or ''
+ */
+function stringifyQuery(query) {
+	const parts = []
+	for (const key of Object.keys(query)) {
+		if (query[key] == null) continue
+		const val = String(query[key])
+		if (key === 'dir') {
+			const encoded = val.split('/').map(s =>
+				s.replace(/&/g, '%26').replace(/=/g, '%3D').replace(/#/g, '%23'),
+			).join('/')
+			parts.push(`dir=${encoded}`)
+		} else {
+			parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
+		}
+	}
+	return parts.length ? '?' + parts.join('&') : ''
+}
+
 const router = new Router({
 	mode: 'history',
 	base: generateUrl('/apps/doriath'),
+	stringifyQuery,
 	routes: [
 		{ path: '/', name: 'Dashboard', components: { default: Dashboard } },
 		{ path: '/lock', name: 'Lock', components: { default: LockScreen } },
@@ -28,15 +54,9 @@ const router = new Router({
 		},
 		{
 			path: '/folders',
-			name: 'RootFolder',
+			name: 'FolderView',
 			components: { default: SecretList, sidebar: SecretSidebar },
-			props: { default: () => ({ rootOnly: true }) },
-		},
-		{
-			path: '/folders/:id',
-			name: 'FolderSecretList',
-			components: { default: SecretList, sidebar: SecretSidebar },
-			props: { default: route => ({ folderId: route.params.id }) },
+			props: { default: route => ({ dirPath: route.query.dir || '/' }) },
 		},
 		{ path: '*', redirect: '/' },
 	],
