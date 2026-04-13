@@ -155,7 +155,7 @@ import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import MoveSecretDialog from '../dialog/MoveSecretDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
-import { pathToFolderId, folderDirQuery } from '../utils/folderPath.js'
+import { pathToFolderId, folderIdToPath, folderDirQuery } from '../utils/folderPath.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSettingsStore } from '../store/modules/settings.js'
 import { getFaviconUrl } from '../utils/favicon.js'
@@ -187,6 +187,7 @@ export default {
 			editSecret: null,
 			showMoveDialog: false,
 			moveSecret: null,
+			lastResolvedFolderId: null,
 		}
 	},
 	computed: {
@@ -325,6 +326,22 @@ export default {
 		dirPath() {
 			this.loadSecrets()
 		},
+		'folderStore.folders': {
+			deep: true,
+			handler() {
+				// After folder data changes (rename, move, etc.), sync the URL
+				// if the path for the current folder has changed.
+				// Use lastResolvedFolderId because the old dirPath can no longer
+				// resolve against the updated folder data.
+				const folderId = this.lastResolvedFolderId
+				if (!folderId) return
+				if (!this.folderStore.foldersById[folderId]) return
+				const correctPath = folderIdToPath(folderId, this.folderStore.foldersById)
+				if (correctPath !== this.dirPath) {
+					this.$router.replace({ name: 'FolderView', query: { dir: correctPath } })
+				}
+			},
+		},
 	},
 	async created() {
 		await Promise.all([
@@ -353,6 +370,7 @@ export default {
 				return
 			}
 
+			this.lastResolvedFolderId = folderId
 			await this.secretStore.fetchSecrets(folderId, this.isRootView)
 		},
 		fetchCurrentSecrets() {

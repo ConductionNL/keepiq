@@ -102,7 +102,7 @@ import FolderTreeNode from './FolderTreeNode.vue'
 import RenameFolderDialog from '../dialog/RenameFolderDialog.vue'
 import RemoveFolderDialog from '../dialog/RemoveFolderDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
-import { folderIdToPath, folderDirQuery } from '../utils/folderPath.js'
+import { folderDirQuery } from '../utils/folderPath.js'
 
 export default {
 	name: 'FolderTree',
@@ -267,17 +267,6 @@ export default {
 		},
 		onRenamed() {
 			this.renameFolder = null
-			// If current path is stale after rename, update URL
-			const dir = this.$route.query?.dir
-			if (dir && dir !== '/' && this.currentFolderId) {
-				const foldersById = this.folderStore.foldersById
-				if (foldersById[this.currentFolderId]) {
-					const newDir = folderIdToPath(this.currentFolderId, foldersById)
-					if (newDir !== dir) {
-						this.$router.replace({ name: 'FolderView', query: { dir: newDir } })
-					}
-				}
-			}
 		},
 		handleDelete(folder) {
 			this.folderToDelete = folder
