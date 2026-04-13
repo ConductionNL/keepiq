@@ -35,6 +35,20 @@ export const useFolderStore = defineStore('folder', {
 		},
 
 		/**
+		 * Lookup map from folder ID to folder object.
+		 *
+		 * @param {object} state Pinia state
+		 * @return {object} Map of folder ID → folder object
+		 */
+		foldersById: (state) => {
+			const map = {}
+			for (const f of state.folders) {
+				map[f.id] = f
+			}
+			return map
+		},
+
+		/**
 		 * Computed tree structure from the flat folder list, grouped by parentId.
 		 *
 		 * @param {object} state Pinia state

@@ -125,7 +125,7 @@
 		<CreateSecretDialog
 			:open="showSecretDialog"
 			:secret="editSecret"
-			:folder-id="folderId"
+			:folder-id="resolvedFolderId"
 			@update:open="showSecretDialog = $event"
 			@created="onSecretCreated"
 			@updated="onSecretUpdated" />
@@ -155,6 +155,7 @@ import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import MoveSecretDialog from '../dialog/MoveSecretDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
+import { pathToFolderId, folderDirQuery } from '../utils/folderPath.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSettingsStore } from '../store/modules/settings.js'
 import { getFaviconUrl } from '../utils/favicon.js'
@@ -174,13 +175,9 @@ export default {
 		OpenInNewIcon,
 	},
 	props: {
-		folderId: {
+		dirPath: {
 			type: String,
 			default: null,
-		},
-		rootOnly: {
-			type: Boolean,
-			default: false,
 		},
 	},
 	data() {
@@ -212,9 +209,17 @@ export default {
 			}
 			return map
 		},
+		isRootView() {
+			return this.dirPath === '/'
+		},
+		resolvedFolderId() {
+			if (!this.dirPath || this.dirPath === '/') return null
+			if (this.folderStore.folders.length === 0) return null
+			return pathToFolderId(this.dirPath, this.folderStore.folders) ?? null
+		},
 		pageTitle() {
-			if (this.folderId) {
-				const folder = this.folderStore.folders.find(f => f.id === this.folderId)
+			if (this.resolvedFolderId) {
+				const folder = this.folderStore.foldersById[this.resolvedFolderId]
 				if (folder) return folder.name
 			}
 			return t('doriath', 'Secrets')
@@ -274,31 +279,25 @@ export default {
 				? t('doriath', 'No secrets found for your search')
 				: t('doriath', 'No secrets found')
 		},
-		foldersById() {
-			const map = {}
-			for (const f of this.folderStore.folders) {
-				map[f.id] = f
-			}
-			return map
-		},
 		breadcrumbs() {
-			if (!this.folderId) return []
+			if (!this.resolvedFolderId) return []
 
+			const foldersById = this.folderStore.foldersById
 			const crumbs = []
-			let current = this.foldersById[this.folderId]
+			let current = foldersById[this.resolvedFolderId]
 			while (current) {
 				crumbs.push({
 					id: current.id,
 					name: current.name,
-					to: { name: 'FolderSecretList', params: { id: current.id } },
+					to: { name: 'FolderView', query: folderDirQuery(current.id, foldersById) },
 				})
-				current = current.parentId ? this.foldersById[current.parentId] : null
+				current = current.parentId ? foldersById[current.parentId] : null
 			}
 			crumbs.reverse()
 			crumbs.unshift({
 				id: null,
 				name: '/',
-				to: { name: 'RootFolder' },
+				to: { name: 'FolderView', query: { dir: '/' } },
 			})
 			return crumbs
 		},
@@ -323,7 +322,7 @@ export default {
 		},
 	},
 	watch: {
-		$route() {
+		dirPath() {
 			this.loadSecrets()
 		},
 	},
@@ -338,7 +337,26 @@ export default {
 			this.secretStore.currentSecret = null
 			this.secretStore.page = 1
 			this.searchTerm = ''
-			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+
+			// For non-root paths, ensure folders are loaded for resolution
+			if (this.dirPath && this.dirPath !== '/' && this.folderStore.folders.length === 0) {
+				await this.folderStore.fetchFolders()
+			}
+
+			const folderId = (!this.dirPath || this.dirPath === '/')
+				? null
+				: pathToFolderId(this.dirPath, this.folderStore.folders)
+
+			if (folderId === undefined) {
+				// Invalid path — redirect to root
+				this.$router.replace({ name: 'FolderView', query: { dir: '/' } })
+				return
+			}
+
+			await this.secretStore.fetchSecrets(folderId, this.isRootView)
+		},
+		fetchCurrentSecrets() {
+			return this.secretStore.fetchSecrets(this.resolvedFolderId, this.isRootView)
 		},
 		async openSecret(id) {
 			try {
@@ -363,20 +381,20 @@ export default {
 			this.secretStore.sort = key
 			this.secretStore.direction = order.toUpperCase()
 			this.secretStore.page = 1
-			this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			this.fetchCurrentSecrets()
 		},
 		async onPageChanged(page) {
 			this.secretStore.page = page
-			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			await this.fetchCurrentSecrets()
 		},
 		async onPageSizeChanged() {
 			this.secretStore.page = 1
-			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			await this.fetchCurrentSecrets()
 		},
 		async onDeleteConfirm(id) {
 			try {
 				await this.secretStore.deleteSecret(id)
-				await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+				await this.fetchCurrentSecrets()
 				this.$refs.indexPage.setSingleDeleteResult({ success: true })
 			} catch (e) {
 				this.$refs.indexPage.setSingleDeleteResult({
@@ -385,14 +403,14 @@ export default {
 			}
 		},
 		async onSecretCreated(created) {
-			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			await this.fetchCurrentSecrets()
 			await this.openSecret(created.id)
 		},
 		async onSecretMoved() {
-			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			await this.fetchCurrentSecrets()
 		},
 		async onSecretUpdated() {
-			await this.secretStore.fetchSecrets(this.folderId, this.rootOnly)
+			await this.fetchCurrentSecrets()
 			if (this.editSecret?.id && this.secretStore.currentSecret?.id === this.editSecret.id) {
 				await this.secretStore.fetchSecret(this.editSecret.id)
 			}
