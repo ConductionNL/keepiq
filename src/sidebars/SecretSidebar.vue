@@ -27,20 +27,21 @@
 			</NcNoteCard>
 
 			<SecretFieldCard
-				v-if="secret.url"
-				:label="t('doriath', 'URL')"
+				v-if="typeConfig.url.visible && secret.url"
+				:label="typeConfig.url.label"
 				:value="secret.url" />
 
 			<SecretFieldCard
-				v-if="secret.login"
-				:label="t('doriath', 'Login')"
+				v-if="typeConfig.login.visible && secret.login"
+				:label="typeConfig.login.label"
 				:value="secret.login" />
 
 			<SecretFieldCard
 				v-if="secret.key"
-				:label="t('doriath', 'Password / Key')"
+				:label="typeConfig.key.label"
 				:value="secret.key"
-				sensitive />
+				:sensitive="typeConfig.key.sensitive"
+				:multiline="typeConfig.key.multiline" />
 
 			<template v-if="secret.additionalFields && typeof secret.additionalFields === 'object'">
 				<SecretFieldCard
@@ -106,6 +107,7 @@ import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import ShareVariantIcon from 'vue-material-design-icons/ShareVariant.vue'
 import CreateSecretDialog from '../dialog/CreateSecretDialog.vue'
 import DelegationManager from '../components/DelegationManager.vue'
+import { getTypeFieldConfig } from '../utils/secretTypeFields.js'
 import GroupShareList from '../components/GroupShareList.vue'
 import RecipientList from '../components/RecipientList.vue'
 import SecretFieldCard from '../components/SecretFieldCard.vue'
@@ -149,6 +151,9 @@ export default {
 		},
 		secret() {
 			return this.secretStore.currentSecret
+		},
+		typeConfig() {
+			return getTypeFieldConfig(this.secretTypeStore.types, this.secret?.typeId, this.t)
 		},
 		/**
 		 * True when the logged-in user is the owner of the current secret.

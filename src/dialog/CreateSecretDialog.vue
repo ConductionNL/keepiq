@@ -19,40 +19,66 @@
 					<div :class="fieldClass('name')">
 						<NcInputField
 							v-model="newSecret.name"
-							:label="t('doriath', 'Name')"
-							:placeholder="t('doriath', 'e.g. GitHub, AWS Console')"
+							:label="typeConfig.name.label"
+							:placeholder="typeConfig.name.placeholder"
 							required />
 					</div>
-					<div :class="fieldClass('url')">
+					<div :class="fieldClass('typeId')">
+						<NcSelect
+							v-model="newSecret.typeId"
+							input-label="Type"
+							:options="typeOptions"
+							label="label"
+							class="organize-max-width"
+							:reduce="opt => opt.value"
+							:placeholder="t('doriath', 'Type')"
+							taggable
+							:clearable="false"
+							:create-option="createTypeOption"
+							@option:created="onTypeCreated" />
+					</div>
+					<div v-if="typeConfig.url.visible" :class="fieldClass('url')">
 						<NcInputField
 							v-model="newSecret.url"
-							:label="t('doriath', 'URL')"
-							:placeholder="t('doriath', 'e.g. https://github.com')" />
+							:label="typeConfig.url.label"
+							:placeholder="typeConfig.url.placeholder" />
 					</div>
-					<div :class="fieldClass('login')">
+					<div v-if="typeConfig.login.visible" :class="fieldClass('login')">
 						<NcInputField
 							v-model="newSecret.login"
-							:label="t('doriath', 'Username / Login')"
-							:placeholder="t('doriath', 'e.g. user@example.com')" />
+							:label="typeConfig.login.label"
+							:placeholder="typeConfig.login.placeholder" />
 					</div>
-					<div :class="['create-secret-form__password-row', fieldClass('key')]">
-						<NcPasswordField
-							v-model="newSecret.key"
-							:label="t('doriath', 'Password / Key')"
-							class="create-secret-form__password-field" />
-						<NcButton
-							type="tertiary"
-							:aria-label="t('doriath', 'Generate password')"
-							:title="t('doriath', 'Generate password')"
-							class="create-secret-form__generate-btn"
-							@click="showGenerateDialog = true">
-							<template #icon>
-								<DiceMultipleOutlineIcon :size="20" />
-							</template>
-						</NcButton>
-					</div>
+					<template v-if="typeConfig.key.multiline">
+						<div :class="fieldClass('key')">
+							<NcTextArea
+								v-model="newSecret.key"
+								:label="typeConfig.key.label"
+								:placeholder="typeConfig.key.placeholder"
+								resize="vertical" />
+						</div>
+					</template>
+					<template v-else>
+						<div :class="['create-secret-form__password-row', fieldClass('key')]">
+							<NcPasswordField
+								v-model="newSecret.key"
+								:label="typeConfig.key.label"
+								class="create-secret-form__password-field" />
+							<NcButton
+								v-if="typeConfig.key.showGenerator"
+								type="tertiary"
+								:aria-label="t('doriath', 'Generate password')"
+								:title="t('doriath', 'Generate password')"
+								class="create-secret-form__generate-btn"
+								@click="showGenerateDialog = true">
+								<template #icon>
+									<DiceMultipleOutlineIcon :size="20" />
+								</template>
+							</NcButton>
+						</div>
+					</template>
 					<PasswordStrengthMeter
-						v-if="newSecret.key"
+						v-if="typeConfig.key.showStrengthMeter && newSecret.key"
 						:password="newSecret.key"
 						:enforcing="false" />
 				</div>
@@ -61,18 +87,6 @@
 					<h4 class="create-secret-form__section-label">
 						{{ t('doriath', 'Organize') }}
 					</h4>
-					<div :class="fieldClass('typeId')">
-						<NcSelect
-							v-model="newSecret.typeId"
-							:options="typeOptions"
-							label="label"
-							class="organize-max-width"
-							:reduce="opt => opt.value"
-							:placeholder="t('doriath', 'Type')"
-							taggable
-							:create-option="createTypeOption"
-							@option:created="onTypeCreated" />
-					</div>
 					<div :class="fieldClass('folderId')">
 						<NcSelect
 							v-model="newSecret.folderId"
@@ -117,10 +131,11 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcInputField, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcInputField, NcNoteCard, NcPasswordField, NcSelect, NcTextArea } from '@nextcloud/vue'
 import DiceMultipleOutlineIcon from 'vue-material-design-icons/DiceMultipleOutline.vue'
 import GeneratePasswordDialog from './GeneratePasswordDialog.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+import { getTypeFieldConfig } from '../utils/secretTypeFields.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -134,6 +149,7 @@ export default {
 		NcNoteCard,
 		NcPasswordField,
 		NcSelect,
+		NcTextArea,
 		DiceMultipleOutlineIcon,
 		GeneratePasswordDialog,
 		PasswordStrengthMeter,
@@ -179,6 +195,9 @@ export default {
 		folderStore() {
 			return useFolderStore()
 		},
+		typeConfig() {
+			return getTypeFieldConfig(this.secretTypeStore.types, this.newSecret.typeId, this.t)
+		},
 		isEditMode() {
 			return !!this.secret
 		},
@@ -222,17 +241,18 @@ export default {
 		},
 	},
 	watch: {
-		open(val) {
+		async open(val) {
 			if (val) {
 				this.formError = null
-				this.secretTypeStore.fetchTypes()
+				await this.secretTypeStore.fetchTypes()
+				const loginType = this.secretTypeStore.types.find(t => t.name === 'login')
 				if (this.secret) {
 					const values = {
 						name: this.secret.name ?? '',
 						url: this.secret.url ?? '',
 						login: this.secret.login ?? '',
 						key: this.secret.key ?? '',
-						typeId: this.secret.typeId ?? null,
+						typeId: this.secret.typeId ?? loginType?.id ?? null,
 						folderId: this.secret.folderId ?? null,
 					}
 					this.newSecret = { ...values }
@@ -243,7 +263,7 @@ export default {
 						url: '',
 						login: '',
 						key: '',
-						typeId: null,
+						typeId: loginType?.id ?? null,
 						folderId: this.folderId ?? null,
 					}
 					this.originalValues = null
