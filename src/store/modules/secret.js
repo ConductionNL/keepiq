@@ -18,10 +18,10 @@ export const useSecretStore = defineStore('secret', {
 		detailLoading: false,
 		/** @type {object} Active filters */
 		filters: {},
-		/** @type {string} Sort field */
-		sort: 'name',
-		/** @type {string} Sort direction */
-		direction: 'ASC',
+		/** @type {string|null} Sort field (null = server default) */
+		sort: null,
+		/** @type {string|null} Sort direction (null = server default) */
+		direction: null,
 		/** @type {number} Current page (1-indexed) */
 		page: 1,
 		/** @type {boolean} Whether the sidebar should open in edit mode */
@@ -46,10 +46,12 @@ export const useSecretStore = defineStore('secret', {
 			this.loading = true
 			try {
 				const params = {
-					sort: this.sort,
-					direction: this.direction,
 					page: this.page,
 					limit: 50,
+				}
+				if (this.sort) {
+					params.sort = this.sort
+					params.direction = this.direction ?? 'ASC'
 				}
 				if (rootOnly) {
 					params.folderId = 'root'
