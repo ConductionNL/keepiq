@@ -21,7 +21,7 @@
 			:actions="rowActions"
 			:add-label="t('doriath', 'New secret')"
 			:sort-key="secretStore.sort"
-			:sort-order="secretStore.direction.toLowerCase()"
+			:sort-order="secretStore.direction?.toLowerCase() ?? null"
 			:empty-text="emptyText"
 			row-key="id"
 			mass-action-name-field="name"
@@ -396,8 +396,8 @@ export default {
 			this.openSecret(row.id)
 		},
 		onSort({ key, order }) {
-			this.secretStore.sort = key
-			this.secretStore.direction = order.toUpperCase()
+			this.secretStore.sort = key ?? null
+			this.secretStore.direction = order ? order.toUpperCase() : null
 			this.secretStore.page = 1
 			this.fetchCurrentSecrets()
 		},
