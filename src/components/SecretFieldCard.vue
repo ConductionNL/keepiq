@@ -16,7 +16,7 @@
 				<CopyButton :value="value" />
 			</div>
 		</div>
-		<span class="field-card__value">{{ displayValue }}</span>
+		<span :class="['field-card__value', { 'field-card__value--multiline': multiline }]">{{ displayValue }}</span>
 	</div>
 </template>
 
@@ -44,6 +44,10 @@ export default {
 			default: '',
 		},
 		sensitive: {
+			type: Boolean,
+			default: false,
+		},
+		multiline: {
 			type: Boolean,
 			default: false,
 		},
@@ -99,5 +103,12 @@ export default {
 	word-break: break-all;
 	color: var(--color-main-text);
 	user-select: all;
+}
+
+.field-card__value--multiline {
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-family: var(--font-monospace, monospace);
+	font-size: 0.8125rem;
 }
 </style>

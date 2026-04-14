@@ -42,8 +42,8 @@
 					<span>{{ secret.name }}</span>
 				</div>
 
-				<div v-if="secret.url" class="secret-detail__field">
-					<label class="secret-detail__field-label">{{ t('doriath', 'URL') }}</label>
+				<div v-if="typeConfig.url.visible && secret.url" class="secret-detail__field">
+					<label class="secret-detail__field-label">{{ typeConfig.url.label }}</label>
 					<a
 						:href="secret.url"
 						target="_blank"
@@ -58,8 +58,8 @@
 					<span>{{ secret.type }}</span>
 				</div>
 
-				<div v-if="secret.login" class="secret-detail__field">
-					<label class="secret-detail__field-label">{{ t('doriath', 'Login') }}</label>
+				<div v-if="typeConfig.login.visible && secret.login" class="secret-detail__field">
+					<label class="secret-detail__field-label">{{ typeConfig.login.label }}</label>
 					<div class="secret-detail__secret-row">
 						<span>{{ secret.login }}</span>
 						<CopyButton :value="secret.login" />
@@ -67,9 +67,25 @@
 				</div>
 
 				<div v-if="secret.key" class="secret-detail__field">
-					<label class="secret-detail__field-label">{{ t('doriath', 'Password / Key') }}</label>
-					<div class="secret-detail__secret-row">
-						<PasswordField :value="secret.key" :label="t('doriath', 'Password / Key')" />
+					<label class="secret-detail__field-label">{{ typeConfig.key.label }}</label>
+					<template v-if="typeConfig.key.multiline">
+						<div class="secret-detail__secret-row">
+							<pre v-if="keyRevealed" class="secret-detail__pre">{{ secret.key }}</pre>
+							<span v-else>{{ '\u2022'.repeat(16) }}</span>
+							<NcButton
+								type="tertiary"
+								:title="keyRevealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
+								@click="keyRevealed = !keyRevealed">
+								<template #icon>
+									<EyeOffIcon v-if="keyRevealed" :size="16" />
+									<EyeIcon v-else :size="16" />
+								</template>
+							</NcButton>
+							<CopyButton :value="secret.key" />
+						</div>
+					</template>
+					<div v-else class="secret-detail__secret-row">
+						<PasswordField :value="secret.key" :label="typeConfig.key.label" />
 						<CopyButton :value="secret.key" />
 					</div>
 				</div>
@@ -101,18 +117,28 @@
 
 				<NcInputField
 					v-model="editData.name"
-					:label="t('doriath', 'Name')"
+					:label="typeConfig.name.label"
 					required />
 				<NcInputField
+					v-if="typeConfig.url.visible"
 					v-model="editData.url"
-					:label="t('doriath', 'URL')"
+					:label="typeConfig.url.label"
+					:placeholder="typeConfig.url.placeholder"
 					type="url" />
 				<NcInputField
+					v-if="typeConfig.login.visible"
 					v-model="editData.login"
-					:label="t('doriath', 'Login')" />
-				<PasswordField
+					:label="typeConfig.login.label"
+					:placeholder="typeConfig.login.placeholder" />
+				<NcTextArea
+					v-if="typeConfig.key.multiline"
 					v-model="editData.key"
-					:label="t('doriath', 'Password / Key')"
+					:label="typeConfig.key.label"
+					resize="vertical" />
+				<PasswordField
+					v-else
+					v-model="editData.key"
+					:label="typeConfig.key.label"
 					@input="editData.key = $event" />
 
 				<div class="secret-detail__edit-actions">
@@ -141,16 +167,20 @@
 </template>
 
 <script>
-import { NcButton, NcInputField, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcInputField, NcNoteCard, NcTextArea } from '@nextcloud/vue'
 // eslint-disable-next-line import/named
 import { CnDetailPage } from '@conduction/nextcloud-vue'
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
+import EyeIcon from 'vue-material-design-icons/Eye.vue'
+import EyeOffIcon from 'vue-material-design-icons/EyeOff.vue'
 import CopyButton from '../components/CopyButton.vue'
 import DeleteSecretDialog from '../dialog/DeleteSecretDialog.vue'
 import PasswordField from '../components/PasswordField.vue'
+import { getTypeFieldConfig } from '../utils/secretTypeFields.js'
 import { useSecretStore } from '../store/modules/secret.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
 
 export default {
 	name: 'SecretDetail',
@@ -158,10 +188,13 @@ export default {
 		NcButton,
 		NcInputField,
 		NcNoteCard,
+		NcTextArea,
 		CnDetailPage,
 		ArrowLeftIcon,
 		DeleteIcon,
 		DeleteSecretDialog,
+		EyeIcon,
+		EyeOffIcon,
 		PencilIcon,
 		CopyButton,
 		PasswordField,
@@ -180,14 +213,21 @@ export default {
 			saving: false,
 			saveError: null,
 			showDeleteConfirm: false,
+			keyRevealed: false,
 		}
 	},
 	computed: {
 		secretStore() {
 			return useSecretStore()
 		},
+		secretTypeStore() {
+			return useSecretTypeStore()
+		},
 		secret() {
 			return this.secretStore.currentSecret
+		},
+		typeConfig() {
+			return getTypeFieldConfig(this.secretTypeStore.types, this.secret?.typeId, this.t)
 		},
 	},
 	watch: {
@@ -197,11 +237,13 @@ export default {
 	},
 	created() {
 		this.load(this.secretId)
+		this.secretTypeStore.fetchTypes()
 	},
 	methods: {
 		async load(id) {
 			this.loadError = null
 			this.editMode = false
+			this.keyRevealed = false
 			try {
 				await this.secretStore.fetchSecret(id)
 			} catch (e) {
@@ -283,6 +325,15 @@ export default {
 
 .secret-detail__link:hover {
 	text-decoration: underline;
+}
+
+.secret-detail__pre {
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-family: var(--font-monospace, monospace);
+	font-size: 0.8125rem;
+	line-height: 1.5;
 }
 
 .secret-detail__edit-form {
