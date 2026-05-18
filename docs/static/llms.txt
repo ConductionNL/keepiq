@@ -1,0 +1,27 @@
+# Doriath
+
+> Doriath is an open-source password and secrets vault app for the Nextcloud workspace.
+
+Doriath is an open-source password and secrets vault app for the Nextcloud workspace. It stores per-user and per-team credentials with audited access and integrates with the Nextcloud authentication stack, replacing standalone password managers in the workspace. The app is in active development; consult the docs for the current release status. Released under EUPL-1.2 and maintained by Conduction since 2019.
+
+## Docs
+
+- [Tutorials](https://doriath.conduction.nl/tutorials): step-by-step walkthroughs.
+- [Features](https://doriath.conduction.nl/Features): what the app does, organised by capability.
+- [Use cases](https://doriath.conduction.nl/UseCases): real customer scenarios.
+- [Integrations](https://doriath.conduction.nl/Integrations): which external systems the app talks to.
+- [Technical](https://doriath.conduction.nl/Technical): architecture, data model, security posture.
+- [User guide](https://doriath.conduction.nl/user-guide): end-user documentation.
+- [API](https://doriath.conduction.nl/api): OpenAPI reference.
+
+## Optional
+
+- [Install](https://doriath.conduction.nl/installation): install from the Nextcloud app store.
+- [Source](https://doriath.conduction.nl): repository and issue tracker.
+- [App page](https://www.conduction.nl/apps/doriath): product positioning on conduction.nl.
+
+## Contact
+
+- Email: info@conduction.nl
+- GitHub: https://github.com/ConductionNL/doriath
+- Conduction B.V. · KvK 76741850 · Lauriergracht 14h, Amsterdam, Netherlands
