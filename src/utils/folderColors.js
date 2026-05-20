@@ -14,10 +14,12 @@ const FOLDER_COLOR_MAP = Object.fromEntries(FOLDER_COLORS.map(c => [c.key, c]))
 /**
  * Resolve a stored color value to a hex string for the current theme.
  *
- * Accepts a key (e.g. 'blue') and looks up the theme-appropriate variant.
- * As a backwards-compatible fallthrough, a value that starts with '#' is
- * treated as a literal hex (legacy storage from before the key-based
- * palette landed) and returned unchanged.
+ * Accepts a palette key (e.g. 'blue') and returns the theme-appropriate
+ * variant. As a backwards-compatible fallthrough for legacy rows that still
+ * store a literal hex string: if the hex matches any palette entry's light
+ * or dark variant, it's resolved back to that key's theme-appropriate hex
+ * (so legacy data adapts to the theme automatically). Unknown hex values
+ * pass through unchanged.
  *
  * @param {string|null|undefined} value The stored customColor value.
  * @param {'dark'|'light'} theme The current Nextcloud theme.
@@ -25,7 +27,14 @@ const FOLDER_COLOR_MAP = Object.fromEntries(FOLDER_COLORS.map(c => [c.key, c]))
  */
 export function resolveFolderColor(value, theme) {
 	if (!value) return null
-	if (value.startsWith('#')) return value
+	if (value.startsWith('#')) {
+		const lc = value.toLowerCase()
+		const match = FOLDER_COLORS.find(
+			c => c.light.toLowerCase() === lc || c.dark.toLowerCase() === lc,
+		)
+		if (match) return theme === 'dark' ? match.dark : match.light
+		return value
+	}
 	const entry = FOLDER_COLOR_MAP[value]
 	if (!entry) return null
 	return theme === 'dark' ? entry.dark : entry.light

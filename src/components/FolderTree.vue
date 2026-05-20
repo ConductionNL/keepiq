@@ -295,7 +295,7 @@ export default {
 			this.iconSearchQuery = ''
 			this.closeContextMenu()
 		},
-		async applyColor(hex) {
+		async applyColor(colorKey) {
 			const folder = this._findFolder(this.contextMenuFolderId)
 			this.closeContextMenu()
 			if (!folder) return
@@ -305,7 +305,7 @@ export default {
 					folder.name,
 					folder.parentId ?? null,
 					undefined,
-					hex,
+					colorKey,
 				)
 			} catch {
 				// Silently handled.
