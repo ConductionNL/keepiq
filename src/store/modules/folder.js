@@ -96,29 +96,50 @@ export const useFolderStore = defineStore('folder', {
 		 *
 		 * @param {string} name Folder name
 		 * @param {string|null} parentId Parent folder ID, or null for root
+		 * @param {string|null} [customIcon] Optional custom icon identifier
+		 * @param {string|null} [customColor] Optional custom color value
 		 * @return {Promise<object>} The created folder
 		 */
-		async createFolder(name, parentId = null) {
+		async createFolder(name, parentId = null, customIcon, customColor) {
+			const payload = { name, parentId }
+			if (customIcon !== undefined) {
+				payload.customIcon = customIcon
+			}
+			if (customColor !== undefined) {
+				payload.customColor = customColor
+			}
 			const response = await axios.post(
 				generateUrl('/apps/doriath/api/v1/folders'),
-				{ name, parentId },
+				payload,
 			)
 			this.folders.push(response.data)
 			return response.data
 		},
 
 		/**
-		 * Update an existing folder's name or parent.
+		 * Update an existing folder's name, parent, or presentation attributes.
+		 *
+		 * Pass `undefined` for a field to leave it untouched; pass `null` to explicitly
+		 * clear `customIcon` or `customColor`.
 		 *
 		 * @param {string} id Folder ID
 		 * @param {string} name Updated folder name
 		 * @param {string|null} parentId Updated parent folder ID
+		 * @param {string|null} [customIcon] Updated custom icon (null clears, undefined leaves untouched)
+		 * @param {string|null} [customColor] Updated custom color (null clears, undefined leaves untouched)
 		 * @return {Promise<object>} The updated folder
 		 */
-		async updateFolder(id, name, parentId = null) {
+		async updateFolder(id, name, parentId = null, customIcon, customColor) {
+			const payload = { name, parentId }
+			if (customIcon !== undefined) {
+				payload.customIcon = customIcon
+			}
+			if (customColor !== undefined) {
+				payload.customColor = customColor
+			}
 			const response = await axios.put(
 				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
-				{ name, parentId },
+				payload,
 			)
 			const index = this.folders.findIndex(f => f.id === id)
 			if (index !== -1) {
