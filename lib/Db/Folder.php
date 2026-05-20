@@ -40,6 +40,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(?DateTime $createdAt)
  * @method DateTime|null getUpdatedAt()
  * @method void setUpdatedAt(?DateTime $updatedAt)
+ * @method string|null getCustomIcon()
+ * @method void setCustomIcon(?string $customIcon)
+ * @method string|null getCustomColor()
+ * @method void setCustomColor(?string $customColor)
  */
 class Folder extends Entity implements JsonSerializable
 {
@@ -87,6 +91,20 @@ class Folder extends Entity implements JsonSerializable
     protected ?DateTime $updatedAt = null;
 
     /**
+     * Custom icon identifier for the folder.
+     *
+     * @var string|null
+     */
+    protected ?string $customIcon = null;
+
+    /**
+     * Custom color value for the folder.
+     *
+     * @var string|null
+     */
+    protected ?string $customColor = null;
+
+    /**
      * The UUID primary key.
      *
      * @var string
@@ -129,6 +147,8 @@ class Folder extends Entity implements JsonSerializable
         $this->addType(fieldName: 'ownerId', type: 'string');
         $this->addType(fieldName: 'createdAt', type: 'datetime');
         $this->addType(fieldName: 'updatedAt', type: 'datetime');
+        $this->addType(fieldName: 'customIcon', type: 'string');
+        $this->addType(fieldName: 'customColor', type: 'string');
     }//end __construct()
 
     /**
@@ -139,13 +159,15 @@ class Folder extends Entity implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'id'        => $this->getId(),
-            'name'      => $this->name,
-            'parentId'  => $this->parentId,
-            'ownerType' => $this->ownerType,
-            'ownerId'   => $this->ownerId,
-            'createdAt' => $this->createdAt?->format('c'),
-            'updatedAt' => $this->updatedAt?->format('c'),
+            'id'          => $this->getId(),
+            'name'        => $this->name,
+            'parentId'    => $this->parentId,
+            'ownerType'   => $this->ownerType,
+            'ownerId'     => $this->ownerId,
+            'createdAt'   => $this->createdAt?->format('c'),
+            'updatedAt'   => $this->updatedAt?->format('c'),
+            'customIcon'  => $this->customIcon,
+            'customColor' => $this->customColor,
         ];
     }//end jsonSerialize()
 }//end class

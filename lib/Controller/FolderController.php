@@ -26,11 +26,13 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Service\FolderService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 
 /**
  * API controller for Folder CRUD operations.
@@ -52,6 +54,7 @@ class FolderController extends OCSController
         private FolderService $folderService,
         private FolderMapper $folderMapper,
         private IUserSession $userSession,
+        private LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -79,15 +82,21 @@ class FolderController extends OCSController
     /**
      * Create a new folder for the current user.
      *
-     * @param string      $name     The folder name
-     * @param string|null $parentId The parent folder ID, or null for a root folder
+     * @param string      $name        The folder name
+     * @param string|null $parentId    The parent folder ID, or null for a root folder
+     * @param string|null $customIcon  Optional custom icon identifier
+     * @param string|null $customColor Optional custom color value
      *
      * @NoAdminRequired
      *
      * @return JSONResponse
      */
-    public function create(string $name, ?string $parentId=null): JSONResponse
-    {
+    public function create(
+        string $name,
+        ?string $parentId=null,
+        ?string $customIcon=null,
+        ?string $customColor=null,
+    ): JSONResponse {
         $userId = $this->userSession->getUser()->getUID();
 
         try {
@@ -95,7 +104,9 @@ class FolderController extends OCSController
                 name: $name,
                 parentId: $parentId,
                 ownerType: 'user',
-                ownerId: $userId
+                ownerId: $userId,
+                customIcon: $customIcon,
+                customColor: $customColor
             );
             return new JSONResponse(data: $folder->jsonSerialize(), statusCode: Http::STATUS_CREATED);
         } catch (Exception $e) {
@@ -107,21 +118,30 @@ class FolderController extends OCSController
     }//end create()
 
     /**
-     * Update a folder (rename and/or move).
+     * Update a folder (rename, move, and/or update presentation attributes).
      *
      * If $name is provided, renames the folder.
      * If $parentId is provided (including explicit null to move to root), moves the folder.
+     * If customIcon/customColor keys are present in the body (including explicit null
+     * to clear), those attributes are updated.
      *
-     * @param string      $id       The folder ID
-     * @param string|null $name     The new folder name
-     * @param string|null $parentId The new parent folder ID, or null to move to root
+     * @param string      $id          The folder ID
+     * @param string|null $name        The new folder name
+     * @param string|null $parentId    The new parent folder ID, or null to move to root
+     * @param string|null $customIcon  The new custom icon identifier, or null to clear
+     * @param string|null $customColor The new custom color value, or null to clear
      *
      * @NoAdminRequired
      *
      * @return JSONResponse
      */
-    public function update(string $id, ?string $name=null, ?string $parentId=null): JSONResponse
-    {
+    public function update(
+        string $id,
+        ?string $name=null,
+        ?string $parentId=null,
+        ?string $customIcon=null,
+        ?string $customColor=null,
+    ): JSONResponse {
         $userId = $this->userSession->getUser()->getUID();
 
         try {
@@ -136,6 +156,23 @@ class FolderController extends OCSController
                 $folder = $this->folderService->move(id: $id, newParentId: $parentId, userId: $userId);
             }
 
+            $attributeChanges = [];
+            if (array_key_exists(key: 'customIcon', array: $requestParams) === true) {
+                $attributeChanges['customIcon'] = $customIcon;
+            }
+
+            if (array_key_exists(key: 'customColor', array: $requestParams) === true) {
+                $attributeChanges['customColor'] = $customColor;
+            }
+
+            if (empty($attributeChanges) === false) {
+                $folder = $this->folderService->updateAttributes(
+                    id: $id,
+                    changes: $attributeChanges,
+                    userId: $userId
+                );
+            }
+
             if ($folder === null) {
                 $folder = $this->folderService->validateOwnership(id: $id, userId: $userId);
             }
@@ -146,10 +183,16 @@ class FolderController extends OCSController
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_FORBIDDEN
             );
-        } catch (Exception $e) {
+        } catch (DoesNotExistException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_NOT_FOUND
+            );
+        } catch (Exception $e) {
+            $this->logger->error('Doriath: Folder update failed', ['exception' => $e]);
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }//end try
     }//end update()
@@ -192,10 +235,16 @@ class FolderController extends OCSController
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_CONFLICT
             );
-        } catch (Exception $e) {
+        } catch (DoesNotExistException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_NOT_FOUND
+            );
+        } catch (Exception $e) {
+            $this->logger->error('Doriath: Folder destroy failed', ['exception' => $e]);
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }//end destroy()
@@ -223,10 +272,16 @@ class FolderController extends OCSController
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_FORBIDDEN
             );
-        } catch (Exception $e) {
+        } catch (DoesNotExistException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_NOT_FOUND
+            );
+        } catch (Exception $e) {
+            $this->logger->error('Doriath: Folder children fetch failed', ['exception' => $e]);
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
     }//end children()

@@ -1,12 +1,16 @@
 <template>
 	<NcAppNavigationItem
 		:name="folder.name"
+		class="folder-tree-node"
 		:class="{ 'folder-tree-node--active': isCurrentFolder }"
+		:style="tintStyle"
 		@click="handleClick"
 		@contextmenu.native.prevent="onContextMenu">
 		<template #icon>
-			<FolderOpenIcon v-if="isOpen" :size="20" />
-			<FolderIcon v-else :size="20" />
+			<component
+				:is="displayedIconComponent"
+				:size="20"
+				:fill-color="resolvedColor || undefined" />
 		</template>
 		<template v-if="isOpen" #default>
 			<FolderTreeNode
@@ -41,6 +45,20 @@ import FolderIcon from 'vue-material-design-icons/Folder.vue'
 import FolderOpenIcon from 'vue-material-design-icons/FolderOpen.vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
 import { useFolderStore } from '../store/modules/folder.js'
+import { resolveFolderIcon } from '../utils/folderIcons.js'
+import { resolveFolderColor } from '../utils/folderColors.js'
+import { currentTheme } from '../utils/theme.js'
+
+function hexToRgba(hex, alpha) {
+	const h = String(hex).replace('#', '')
+	if (h.length !== 3 && h.length !== 6) return null
+	const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h
+	const r = parseInt(full.slice(0, 2), 16)
+	const g = parseInt(full.slice(2, 4), 16)
+	const b = parseInt(full.slice(4, 6), 16)
+	if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 export default {
 	name: 'FolderTreeNode',
@@ -88,6 +106,25 @@ export default {
 		containsCurrentFolder() {
 			if (!this.currentFolderId) return false
 			return this._subtreeContains(this.folder, this.currentFolderId)
+		},
+		displayedIconComponent() {
+			const custom = resolveFolderIcon(this.folder.customIcon)
+			if (custom) return custom
+			return this.isOpen ? FolderOpenIcon : FolderIcon
+		},
+		resolvedColor() {
+			return resolveFolderColor(this.folder.customColor, currentTheme())
+		},
+		tintStyle() {
+			const hex = this.resolvedColor
+			if (!hex) return null
+			const tint = hexToRgba(hex, 0.12)
+			const tintActive = hexToRgba(hex, 0.28)
+			if (!tint || !tintActive) return null
+			return {
+				'--folder-tint': tint,
+				'--folder-tint-active': tintActive,
+			}
 		},
 	},
 	watch: {
@@ -157,8 +194,20 @@ export default {
 </script>
 
 <style scoped>
+/* css code to give the background color when NOT selected */
+/* .folder-tree-node :deep(> .app-navigation-entry) {
+	background: var(--folder-tint, transparent);
+} */
+
 .folder-tree-node--active :deep(> .app-navigation-entry) {
-	background: var(--color-background-hover);
+	background: var(--folder-tint-active, var(--color-background-hover));
+}
+
+/* Stop the tint custom properties from cascading into the children list,
+   so subfolders do not inherit the parent folder's color. */
+.folder-tree-node :deep(> .app-navigation-entry__children) {
+	--folder-tint: initial;
+	--folder-tint-active: initial;
 }
 
 :deep(.app-navigation-entry__children) {
