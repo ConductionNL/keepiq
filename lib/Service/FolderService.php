@@ -57,18 +57,26 @@ class FolderService
      * The folder name must not contain slashes. If a parent ID is supplied the
      * parent must exist and belong to the same owner.
      *
-     * @param string      $name      The folder name
-     * @param string|null $parentId  The parent folder ID, or null for a root folder
-     * @param string      $ownerType The owner type
-     * @param string      $ownerId   The owner ID
+     * @param string      $name        The folder name
+     * @param string|null $parentId    The parent folder ID, or null for a root folder
+     * @param string      $ownerType   The owner type
+     * @param string      $ownerId     The owner ID
+     * @param string|null $customIcon  Optional custom icon identifier
+     * @param string|null $customColor Optional custom color value
      *
      * @return Folder
      *
      * @throws InvalidArgumentException When the name contains slashes or the parent is invalid
      * @throws DoesNotExistException    When the parent folder does not exist
      */
-    public function create(string $name, ?string $parentId, string $ownerType, string $ownerId): Folder
-    {
+    public function create(
+        string $name,
+        ?string $parentId,
+        string $ownerType,
+        string $ownerId,
+        ?string $customIcon=null,
+        ?string $customColor=null,
+    ): Folder {
         if (str_contains(haystack: $name, needle: '/') === true) {
             throw new InvalidArgumentException('Folder name must not contain slashes');
         }
@@ -86,6 +94,8 @@ class FolderService
         $folder->setParentId($parentId);
         $folder->setOwnerType($ownerType);
         $folder->setOwnerId($ownerId);
+        $folder->setCustomIcon($customIcon);
+        $folder->setCustomColor($customColor);
         $folder->setCreatedAt(new DateTime());
         $folder->setUpdatedAt(new DateTime());
 
@@ -95,6 +105,41 @@ class FolderService
 
         return $folder;
     }//end create()
+
+    /**
+     * Update presentation attributes (customIcon, customColor) on a folder.
+     *
+     * Only the owner may update their folder. Only keys present in $changes are
+     * applied; explicit null clears the value.
+     *
+     * @param string              $id      The folder ID
+     * @param array<string,mixed> $changes Map of attribute name to new value
+     * @param string              $userId  The Nextcloud user ID performing the update
+     *
+     * @return Folder
+     *
+     * @throws InvalidArgumentException When the user does not own the folder
+     * @throws DoesNotExistException    When the folder does not exist
+     */
+    public function updateAttributes(string $id, array $changes, string $userId): Folder
+    {
+        $folder = $this->validateOwnership(id: $id, userId: $userId);
+
+        if (array_key_exists(key: 'customIcon', array: $changes) === true) {
+            $folder->setCustomIcon($changes['customIcon']);
+        }
+
+        if (array_key_exists(key: 'customColor', array: $changes) === true) {
+            $folder->setCustomColor($changes['customColor']);
+        }
+
+        $folder->setUpdatedAt(new DateTime());
+        $this->folderMapper->update($folder);
+
+        $this->logger->info("Doriath: Folder {$id} attributes updated by {$userId}");
+
+        return $folder;
+    }//end updateAttributes()
 
     /**
      * Rename a folder.
