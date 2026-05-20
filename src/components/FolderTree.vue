@@ -61,7 +61,8 @@
 
 		<CnContextMenu
 			:open.sync="contextMenuOpen"
-			@close="closeContextMenu">
+			:active-panel.sync="contextMenuPanel"
+			@close="onContextMenuClose">
 			<NcActionButton close-after-click @click="onContextNewSubfolder">
 				<template #icon>
 					<FolderPlusIcon :size="20" />
@@ -79,6 +80,22 @@
 			</NcActionButton>
 			<NcActionButton
 				v-if="contextMenuFolderId && contextMenuFolderId !== '__root__'"
+				@click="contextMenuPanel = 'icon'">
+				<template #icon>
+					<PaletteSwatchIcon :size="20" />
+				</template>
+				{{ t('doriath', 'Change icon') }}
+			</NcActionButton>
+			<NcActionButton
+				v-if="contextMenuFolderId && contextMenuFolderId !== '__root__'"
+				@click="contextMenuPanel = 'color'">
+				<template #icon>
+					<PaletteIcon :size="20" />
+				</template>
+				{{ t('doriath', 'Change color') }}
+			</NcActionButton>
+			<NcActionButton
+				v-if="contextMenuFolderId && contextMenuFolderId !== '__root__'"
 				close-after-click
 				@click="onContextDelete">
 				<template #icon>
@@ -86,6 +103,73 @@
 				</template>
 				{{ t('doriath', 'Delete') }}
 			</NcActionButton>
+
+			<template #panel:color="{ back }">
+				<div class="folder-customize__panel">
+					<div class="folder-customize__panel-header">
+						<button
+							type="button"
+							class="folder-customize__panel-back"
+							@click="back">
+							<ArrowLeftIcon :size="16" />
+							{{ t('doriath', 'Back') }}
+						</button>
+						<button
+							type="button"
+							class="folder-customize__panel-reset"
+							@click="applyColor(null)">
+							{{ t('doriath', 'Reset') }}
+						</button>
+					</div>
+					<div class="folder-customize__swatches">
+						<button
+							v-for="c in FOLDER_COLORS"
+							:key="c.key"
+							type="button"
+							class="folder-customize__swatch"
+							:style="{ backgroundColor: resolveFolderColor(c.key, theme) }"
+							:title="t('doriath', c.label)"
+							:aria-label="t('doriath', c.label)"
+							@click="applyColor(c.key)" />
+					</div>
+				</div>
+			</template>
+
+			<template #panel:icon="{ back }">
+				<div class="folder-customize__panel">
+					<div class="folder-customize__panel-header">
+						<button
+							type="button"
+							class="folder-customize__panel-back"
+							@click="back">
+							<ArrowLeftIcon :size="16" />
+							{{ t('doriath', 'Back') }}
+						</button>
+						<button
+							type="button"
+							class="folder-customize__panel-reset"
+							@click="applyIcon(null)">
+							{{ t('doriath', 'Reset') }}
+						</button>
+					</div>
+					<NcInputField
+						v-model="iconSearchQuery"
+						:label="t('doriath', 'Search icons')"
+						class="folder-customize__icon-search" />
+					<div class="folder-customize__icons">
+						<button
+							v-for="entry in filteredIcons"
+							:key="entry.key"
+							type="button"
+							class="folder-customize__icon-btn"
+							:title="t('doriath', entry.label)"
+							:aria-label="t('doriath', entry.label)"
+							@click="applyIcon(entry.key)">
+							<component :is="entry.component" :size="20" />
+						</button>
+					</div>
+				</div>
+			</template>
 		</CnContextMenu>
 	</div>
 </template>
@@ -93,16 +177,22 @@
 <script>
 import { NcActionButton, NcAppNavigationItem, NcInputField } from '@nextcloud/vue'
 import { CnContextMenu, useContextMenu } from '@conduction/nextcloud-vue'
+import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue'
 import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import FolderPlusIcon from 'vue-material-design-icons/FolderPlus.vue'
 import InboxIcon from 'vue-material-design-icons/Inbox.vue'
 import KeyVariantIcon from 'vue-material-design-icons/KeyVariant.vue'
+import PaletteIcon from 'vue-material-design-icons/Palette.vue'
+import PaletteSwatchIcon from 'vue-material-design-icons/PaletteSwatch.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import FolderTreeNode from './FolderTreeNode.vue'
 import RenameFolderDialog from '../dialog/RenameFolderDialog.vue'
 import RemoveFolderDialog from '../dialog/RemoveFolderDialog.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { folderDirQuery } from '../utils/folderPath.js'
+import { FOLDER_COLORS, resolveFolderColor } from '../utils/folderColors.js'
+import { FOLDER_ICONS, searchFolderIcons } from '../utils/folderIcons.js'
+import { currentTheme } from '../utils/theme.js'
 
 export default {
 	name: 'FolderTree',
@@ -111,10 +201,13 @@ export default {
 		NcAppNavigationItem,
 		NcInputField,
 		CnContextMenu,
+		ArrowLeftIcon,
 		DeleteIcon,
 		FolderPlusIcon,
 		InboxIcon,
 		KeyVariantIcon,
+		PaletteIcon,
+		PaletteSwatchIcon,
 		PencilIcon,
 		FolderTreeNode,
 		RenameFolderDialog,
@@ -159,6 +252,8 @@ export default {
 			showDeleteDialog: false,
 			folderToDelete: null,
 			triggerAction: null,
+			contextMenuPanel: null,
+			iconSearchQuery: '',
 		}
 	},
 	computed: {
@@ -172,13 +267,65 @@ export default {
 			if (!this.newFolderName.trim()) return false
 			return this.folderStore.isDuplicateName(this.newFolderName, null)
 		},
+		FOLDER_COLORS() {
+			return FOLDER_COLORS
+		},
+		theme() {
+			return currentTheme()
+		},
+		filteredIcons() {
+			const q = this.iconSearchQuery.trim()
+			return q ? searchFolderIcons(q) : FOLDER_ICONS
+		},
 	},
 	methods: {
+		resolveFolderColor,
 		onFolderContextMenu({ folderId, event }) {
+			this.contextMenuPanel = null
+			this.iconSearchQuery = ''
 			this.openContextMenu({ item: folderId, event })
 		},
 		onRootContextMenu(event) {
+			this.contextMenuPanel = null
+			this.iconSearchQuery = ''
 			this.openContextMenu({ item: '__root__', event })
+		},
+		onContextMenuClose() {
+			this.contextMenuPanel = null
+			this.iconSearchQuery = ''
+			this.closeContextMenu()
+		},
+		async applyColor(colorKey) {
+			const folder = this._findFolder(this.contextMenuFolderId)
+			this.closeContextMenu()
+			if (!folder) return
+			try {
+				await this.folderStore.updateFolder(
+					folder.id,
+					folder.name,
+					folder.parentId ?? null,
+					undefined,
+					colorKey,
+				)
+			} catch {
+				// Silently handled.
+			}
+		},
+		async applyIcon(key) {
+			const folder = this._findFolder(this.contextMenuFolderId)
+			this.closeContextMenu()
+			if (!folder) return
+			try {
+				await this.folderStore.updateFolder(
+					folder.id,
+					folder.name,
+					folder.parentId ?? null,
+					key,
+					undefined,
+				)
+			} catch {
+				// Silently handled.
+			}
 		},
 		onContextNewSubfolder() {
 			const folderId = this.contextMenuFolderId
@@ -305,5 +452,96 @@ export default {
 	height: 1px;
 	background: var(--color-border);
 	margin: 8px 0;
+}
+
+.folder-customize__panel {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 4px;
+	min-width: 240px;
+}
+
+.folder-customize__panel-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+}
+
+.folder-customize__panel-back,
+.folder-customize__panel-reset {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 8px;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--border-radius);
+	color: var(--color-main-text);
+	cursor: pointer;
+	font-size: 13px;
+}
+
+.folder-customize__panel-back:hover,
+.folder-customize__panel-reset:hover {
+	background: var(--color-background-hover);
+}
+
+.folder-customize__swatches {
+	display: grid;
+	grid-template-columns: repeat(8, 24px);
+	gap: 6px;
+	padding: 4px;
+	justify-content: center;
+}
+
+.folder-customize__swatch {
+	box-sizing: border-box;
+	width: 24px;
+	height: 24px;
+	min-width: 24px;
+	min-height: 24px;
+	aspect-ratio: 1 / 1;
+	border-radius: 50%;
+	border: 1px solid var(--color-border);
+	cursor: pointer;
+	padding: 0;
+	margin: 0;
+	appearance: none;
+}
+
+.folder-customize__swatch:hover {
+	transform: scale(1.1);
+}
+
+.folder-customize__icon-search {
+	padding: 0 4px;
+}
+
+.folder-customize__icons {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 4px;
+	max-height: 240px;
+	overflow-y: auto;
+	padding: 4px;
+}
+
+.folder-customize__icon-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--border-radius);
+	color: var(--color-main-text);
+	cursor: pointer;
+}
+
+.folder-customize__icon-btn:hover {
+	background: var(--color-background-hover);
 }
 </style>
