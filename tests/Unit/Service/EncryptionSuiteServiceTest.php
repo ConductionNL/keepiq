@@ -185,7 +185,6 @@ class EncryptionSuiteServiceTest extends TestCase
         $suite->setRevokedBy('admin');
 
         $this->mapper->method('findById')->willReturn($suite);
-        $this->caService->method('signPublicKey')->willReturn('-----BEGIN CERTIFICATE-----...');
         $this->mapper->expects($this->once())->method('update');
 
         $result = $this->service->reinstateSuite('suite-1', 'admin');

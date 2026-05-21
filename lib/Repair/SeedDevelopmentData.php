@@ -111,18 +111,31 @@ class SeedDevelopmentData implements IRepairStep
         }
 
         openssl_pkey_export(key: $keyPair, output: $privateKeyPem);
-        $keyDetails   = openssl_pkey_get_details(key: $keyPair);
-        $publicKeyPem = $keyDetails['key'];
 
-        // Sign the public key with the CA.
+        // Sign with a proper CSR built from the private key. signPublicKey() would
+        // silently sign a throwaway keypair because openssl_csr_new requires a real
+        // private key and falls back to generating one when handed a public-only
+        // handle, producing a certificate that doesn't match $privateKeyPem.
         try {
-            $certificate = $this->caService->signPublicKey(
-                publicKeyPem: $publicKeyPem,
+            $certificate = $this->caService->signKeyPair(
+                privateKey: $keyPair,
                 commonName: self::DEV_USER_ID
             );
         } catch (Exception $e) {
             $output->warning('CA not available for dev seed: '.$e->getMessage());
             return;
+        }
+
+        // Defensive round-trip self-test: confirm the cert's public half pairs
+        // with the private key before we persist anything. Catches regressions
+        // in the CA path loudly instead of producing a silently-broken admin.
+        $certPubKey = openssl_pkey_get_public($certificate);
+        if ($certPubKey === false || openssl_public_encrypt('seed-self-test', $cipher, $certPubKey, OPENSSL_PKCS1_OAEP_PADDING) === false) {
+            throw new \RuntimeException('Doriath dev seed: failed to encrypt with cert public key');
+        }
+
+        if (openssl_private_decrypt($cipher, $plain, $keyPair, OPENSSL_PKCS1_OAEP_PADDING) === false || $plain !== 'seed-self-test') {
+            throw new \RuntimeException('Doriath dev seed: certificate public key does not pair with generated private key — refusing to persist a broken suite');
         }
 
         // Encrypt the private key with the dev master password.
