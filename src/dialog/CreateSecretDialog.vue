@@ -98,6 +98,15 @@
 					</div>
 				</div>
 
+				<div class="create-secret-form__section">
+					<h4 class="create-secret-form__section-label">
+						{{ t('doriath', 'Additional fields') }}
+					</h4>
+					<div :class="fieldClass('additionalFields')">
+						<AdditionalFieldsEditor v-model="newSecret.additionalFields" />
+					</div>
+				</div>
+
 				<NcNoteCard v-if="formError" type="error">
 					{{ formError }}
 				</NcNoteCard>
@@ -134,6 +143,7 @@
 import { NcButton, NcDialog, NcInputField, NcNoteCard, NcPasswordField, NcSelect, NcTextArea } from '@nextcloud/vue'
 import DiceMultipleOutlineIcon from 'vue-material-design-icons/DiceMultipleOutline.vue'
 import GeneratePasswordDialog from './GeneratePasswordDialog.vue'
+import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
 import { getTypeFieldConfig } from '../utils/secretTypeFields.js'
 import { useFolderStore } from '../store/modules/folder.js'
@@ -152,6 +162,7 @@ export default {
 		NcTextArea,
 		DiceMultipleOutlineIcon,
 		GeneratePasswordDialog,
+		AdditionalFieldsEditor,
 		PasswordStrengthMeter,
 	},
 	props: {
@@ -182,6 +193,7 @@ export default {
 				login: '',
 				key: '',
 				typeId: null,
+				additionalFields: {},
 			},
 		}
 	},
@@ -203,8 +215,8 @@ export default {
 		},
 		hasChanges() {
 			if (!this.originalValues) return true
-			return ['name', 'url', 'login', 'key', 'typeId', 'folderId']
-				.some(f => this.newSecret[f] !== this.originalValues[f])
+			return ['name', 'url', 'login', 'key', 'typeId', 'folderId', 'additionalFields']
+				.some(f => this.isFieldModified(f))
 		},
 		canSubmit() {
 			if (!this.newSecret.name) return false
@@ -247,6 +259,9 @@ export default {
 				await this.secretTypeStore.fetchTypes()
 				const loginType = this.secretTypeStore.types.find(t => t.name === 'login')
 				if (this.secret) {
+					const additionalFields = (this.secret.additionalFields && typeof this.secret.additionalFields === 'object')
+						? JSON.parse(JSON.stringify(this.secret.additionalFields))
+						: {}
 					const values = {
 						name: this.secret.name ?? '',
 						url: this.secret.url ?? '',
@@ -254,9 +269,10 @@ export default {
 						key: this.secret.key ?? '',
 						typeId: this.secret.typeId ?? loginType?.id ?? null,
 						folderId: this.secret.folderId ?? null,
+						additionalFields,
 					}
-					this.newSecret = { ...values }
-					this.originalValues = { ...values }
+					this.newSecret = { ...values, additionalFields: JSON.parse(JSON.stringify(additionalFields)) }
+					this.originalValues = values
 				} else {
 					this.newSecret = {
 						name: '',
@@ -265,6 +281,7 @@ export default {
 						key: '',
 						typeId: loginType?.id ?? null,
 						folderId: this.folderId ?? null,
+						additionalFields: {},
 					}
 					this.originalValues = null
 				}
@@ -274,7 +291,12 @@ export default {
 	methods: {
 		isFieldModified(field) {
 			if (!this.originalValues) return false
-			return this.newSecret[field] !== this.originalValues[field]
+			const a = this.newSecret[field]
+			const b = this.originalValues[field]
+			if (a !== null && typeof a === 'object') {
+				return JSON.stringify(a ?? {}) !== JSON.stringify(b ?? {})
+			}
+			return a !== b
 		},
 		fieldClass(field) {
 			return {
@@ -322,6 +344,9 @@ export default {
 			if (this.newSecret.login) data.login = this.newSecret.login
 			if (this.newSecret.typeId) data.typeId = this.newSecret.typeId
 			if (this.newSecret.folderId) data.folderId = this.newSecret.folderId
+			if (this.newSecret.additionalFields && Object.keys(this.newSecret.additionalFields).length > 0) {
+				data.additionalFields = this.newSecret.additionalFields
+			}
 
 			const created = await this.secretStore.createSecret(data)
 			this.$emit('update:open', false)
@@ -336,6 +361,7 @@ export default {
 			if (this.isFieldModified('key')) data.key = this.newSecret.key
 			if (this.isFieldModified('typeId')) data.typeId = this.newSecret.typeId
 			if (this.isFieldModified('folderId')) data.folderId = this.newSecret.folderId
+			if (this.isFieldModified('additionalFields')) data.additionalFields = this.newSecret.additionalFields
 
 			await this.secretStore.updateSecret(this.secret.id, data)
 			this.$emit('update:open', false)

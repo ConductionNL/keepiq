@@ -48,8 +48,9 @@
 					v-for="(val, field) in secret.additionalFields"
 					:key="field"
 					:label="String(field)"
-					:value="val"
-					sensitive />
+					:value="normaliseAdditionalField(val).value"
+					:sensitive="normaliseAdditionalField(val).type === 'hidden'"
+					:multiline="normaliseAdditionalField(val).type === 'textarea'" />
 			</template>
 
 			<div v-if="typeLabel" class="secret-sidebar__meta">
@@ -194,6 +195,12 @@ export default {
 	},
 
 	methods: {
+		normaliseAdditionalField(val) {
+			if (val == null) return { type: 'text', value: '' }
+			if (typeof val === 'string') return { type: 'hidden', value: val }
+			const type = ['text', 'hidden', 'textarea'].includes(val.type) ? val.type : 'text'
+			return { type, value: typeof val.value === 'string' ? val.value : '' }
+		},
 		close() {
 			this.secretStore.currentSecret = null
 		},

@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace OCA\Doriath\Controller;
 
 use Exception;
-use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Http;
@@ -123,7 +122,7 @@ class SecretController extends OCSController
      * @param string|null $key              The encrypted key/password
      * @param string|null $login            The login/username
      * @param string|null $url              The associated URL
-     * @param string|null $additionalFields Additional encrypted fields (JSON)
+     * @param string|null $additionalFields RSA-encrypted ciphertext of a JSON object of extra key-value pairs (stringified+encrypted client-side)
      * @param string|null $typeId           The secret type ID
      * @param string|null $folderId         The folder ID to store the secret in
      *
@@ -179,7 +178,7 @@ class SecretController extends OCSController
      * @param string|null $key              The new encrypted key/password
      * @param string|null $login            The new login/username
      * @param string|null $url              The new associated URL
-     * @param string|null $additionalFields The new additional encrypted fields (JSON)
+     * @param string|null $additionalFields RSA-encrypted ciphertext of a JSON object of extra key-value pairs (stringified+encrypted client-side)
      * @param string|null $typeId           The new secret type ID
      * @param string|null $folderId         The new folder ID
      *
