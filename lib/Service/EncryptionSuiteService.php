@@ -330,24 +330,12 @@ class EncryptionSuiteService
             );
         }
 
-        // Re-sign the existing public key with the active intermediate.
-        $publicKey = openssl_pkey_get_public(public_key: $suite->getCertificate());
-        if ($publicKey === false) {
-            throw new RuntimeException('Could not extract public key from suite certificate');
-        }
-
-        $details        = openssl_pkey_get_details(key: $publicKey);
-        $publicKeyPem   = $details['key'];
-        $commonName     = $this->resolveCommonName(
-            ownerType: $suite->getOwnerType(),
-            ownerId: $suite->getOwnerId()
-        );
-        $newCertificate = $this->caService->signPublicKey(
-            publicKeyPem: $publicKeyPem,
-            commonName: $commonName
-        );
-
-        $suite->setCertificate($newCertificate);
+        // Keep the existing certificate. Re-signing would require the user's
+        // private key (only the holder of the private half can produce a valid
+        // PKCS#10 CSR), which the server does not have. The existing certificate's
+        // signature is still cryptographically valid, so reinstatement only flips
+        // status back to 'active'. A proper "rotate cert under same key" flow
+        // (driven by the unlocked browser session) is a separate feature.
         $suite->setStatus('active');
         $suite->setReinstatedAt(new DateTime());
         $suite->setReinstatedBy($reinstatedBy);
