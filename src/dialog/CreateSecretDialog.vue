@@ -16,7 +16,7 @@
 					<h4 class="create-secret-form__section-label">
 						{{ t('doriath', 'Credentials') }}
 					</h4>
-					<div :class="fieldClass('name')">
+					<div :class="[fieldClass('name'), 'create-secret-form__field--required']">
 						<NcInputField
 							v-model="newSecret.name"
 							:label="typeConfig.name.label"
@@ -50,7 +50,7 @@
 							:placeholder="typeConfig.login.placeholder" />
 					</div>
 					<template v-if="typeConfig.key.multiline">
-						<div :class="fieldClass('key')">
+						<div :class="[fieldClass('key'), { 'create-secret-form__field--required': !isEditMode }]">
 							<NcTextArea
 								v-model="newSecret.key"
 								:label="typeConfig.key.label"
@@ -59,7 +59,7 @@
 						</div>
 					</template>
 					<template v-else>
-						<div :class="['create-secret-form__password-row', fieldClass('key')]">
+						<div :class="['create-secret-form__password-row', fieldClass('key'), { 'create-secret-form__field--required': !isEditMode }]">
 							<NcPasswordField
 								v-model="newSecret.key"
 								:label="typeConfig.key.label"
@@ -413,6 +413,12 @@ export default {
 
 .create-secret-form__field--modified {
 	border-left-color: var(--color-primary-element);
+}
+
+.create-secret-form__field--required::v-deep .input-field__label::after,
+.create-secret-form__field--required::v-deep .textarea__label::after {
+	content: ' *';
+	color: var(--color-element-error);
 }
 
 .create-secret-form__password-row {
