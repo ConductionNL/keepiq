@@ -97,8 +97,15 @@
 						class="secret-detail__field">
 						<label class="secret-detail__field-label">{{ field }}</label>
 						<div class="secret-detail__secret-row">
-							<PasswordField :value="val" :label="field" />
-							<CopyButton :value="val" />
+							<PasswordField
+								v-if="normaliseAdditionalField(val).type === 'hidden'"
+								:value="normaliseAdditionalField(val).value"
+								:label="field" />
+							<span
+								v-else-if="normaliseAdditionalField(val).type === 'textarea'"
+								class="secret-detail__multiline-value">{{ normaliseAdditionalField(val).value }}</span>
+							<span v-else class="secret-detail__plain-value">{{ normaliseAdditionalField(val).value }}</span>
+							<CopyButton :value="normaliseAdditionalField(val).value" />
 						</div>
 					</div>
 				</template>
@@ -240,6 +247,12 @@ export default {
 		this.secretTypeStore.fetchTypes()
 	},
 	methods: {
+		normaliseAdditionalField(val) {
+			if (val == null) return { type: 'text', value: '' }
+			if (typeof val === 'string') return { type: 'hidden', value: val }
+			const type = ['text', 'hidden', 'textarea'].includes(val.type) ? val.type : 'text'
+			return { type, value: typeof val.value === 'string' ? val.value : '' }
+		},
 		async load(id) {
 			this.loadError = null
 			this.editMode = false
@@ -316,6 +329,21 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+.secret-detail__plain-value {
+	flex: 1 1 auto;
+	user-select: all;
+	word-break: break-all;
+}
+
+.secret-detail__multiline-value {
+	flex: 1 1 auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	font-family: var(--font-monospace, monospace);
+	font-size: 0.8125rem;
+	user-select: all;
 }
 
 .secret-detail__link {

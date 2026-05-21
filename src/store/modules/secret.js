@@ -114,7 +114,13 @@ export const useSecretStore = defineStore('secret', {
 						}
 						if (secret.additionalFields && typeof secret.additionalFields === 'string') {
 							console.debug('Doriath: Decrypting additionalFields...')
-							secret.additionalFields = await rsaDecrypt(secret.additionalFields, session.cryptoKey)
+							const plaintext = await rsaDecrypt(secret.additionalFields, session.cryptoKey)
+							try {
+								secret.additionalFields = JSON.parse(plaintext)
+							} catch (e) {
+								console.warn('Doriath: additionalFields decrypted but not valid JSON; keeping raw string', e)
+								secret.additionalFields = plaintext
+							}
 						}
 						this.currentSecret = { ...secret }
 					} catch (e) {
@@ -158,11 +164,7 @@ export const useSecretStore = defineStore('secret', {
 					payload.login = await rsaEncrypt(payload.login, publicKey)
 				}
 				if (payload.additionalFields) {
-					const encrypted = {}
-					for (const [field, value] of Object.entries(payload.additionalFields)) {
-						encrypted[field] = value ? await rsaEncrypt(value, publicKey) : value
-					}
-					payload.additionalFields = encrypted
+					payload.additionalFields = await rsaEncrypt(JSON.stringify(payload.additionalFields), publicKey)
 				}
 			}
 
@@ -193,11 +195,7 @@ export const useSecretStore = defineStore('secret', {
 					payload.login = await rsaEncrypt(payload.login, publicKey)
 				}
 				if (payload.additionalFields) {
-					const encrypted = {}
-					for (const [field, value] of Object.entries(payload.additionalFields)) {
-						encrypted[field] = value ? await rsaEncrypt(value, publicKey) : value
-					}
-					payload.additionalFields = encrypted
+					payload.additionalFields = await rsaEncrypt(JSON.stringify(payload.additionalFields), publicKey)
 				}
 			}
 

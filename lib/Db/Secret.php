@@ -103,7 +103,12 @@ class Secret extends Entity implements JsonSerializable
     protected ?string $login = null;
 
     /**
-     * The encrypted additional fields blob.
+     * Additional fields as an RSA-encrypted JSON blob.
+     *
+     * Plaintext is a free-form JSON object of extra key-value pairs. The
+     * frontend stringifies the object and RSA-encrypts the result once,
+     * producing a single ciphertext stored here. The server treats this as
+     * an opaque ciphertext string and never sees plaintext.
      *
      * @var string|null
      */

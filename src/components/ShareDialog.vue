@@ -38,7 +38,7 @@ import { NcButton, NcDialog, NcInputField, NcNoteCard } from '@nextcloud/vue'
 import { useShareStore } from '../store/modules/share.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSessionStore } from '../store/modules/session.js'
-import { importPublicKey, rsaEncrypt, rsaDecrypt } from '../crypto/index.js'
+import { importPublicKey, rsaEncrypt } from '../crypto/index.js'
 
 export default {
 	name: 'ShareDialog',
@@ -137,13 +137,7 @@ export default {
 					encryptedData.login = await rsaEncrypt(secret.login, targetPublicKey)
 				}
 				if (secret.additionalFields) {
-					// additionalFields is stored as a single encrypted blob.
-					// If it was decrypted to a string, encrypt that string.
-					// If it was decrypted to an object, JSON.stringify it first.
-					const plainAf = typeof secret.additionalFields === 'object'
-						? JSON.stringify(secret.additionalFields)
-						: secret.additionalFields
-					encryptedData.additionalFields = await rsaEncrypt(plainAf, targetPublicKey)
+					encryptedData.additionalFields = await rsaEncrypt(JSON.stringify(secret.additionalFields), targetPublicKey)
 				}
 
 				// Include secret metadata for the recipient's copy.
