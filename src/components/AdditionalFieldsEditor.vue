@@ -3,57 +3,59 @@
 		<div
 			v-for="(row, index) in rows"
 			:key="row.uid"
-			class="additional-fields-editor__row">
-			<div class="additional-fields-editor__row-controls">
+			:class="['additional-fields-editor__row-wrapper', { 'additional-fields-editor__row-wrapper--modified': rowModifiedState[row.uid] }]">
+			<div class="additional-fields-editor__row">
+				<div class="additional-fields-editor__row-controls">
+					<NcInputField
+						v-model="row.label"
+						:label="t('doriath', 'Field name')"
+						:placeholder="t('doriath', 'Field name')"
+						class="additional-fields-editor__label-input"
+						@update:model-value="emitChange" />
+					<NcSelect
+						v-model="row.type"
+						:options="typeOptions"
+						label="label"
+						:reduce="opt => opt.value"
+						:clearable="false"
+						:placeholder="t('doriath', 'Type')"
+						class="additional-fields-editor__type-select"
+						@update:model-value="emitChange" />
+					<NcButton
+						type="tertiary"
+						:aria-label="t('doriath', 'Remove field')"
+						:title="t('doriath', 'Remove field')"
+						@click="removeRow(index)">
+						<template #icon>
+							<DeleteIcon :size="20" />
+						</template>
+					</NcButton>
+				</div>
+				<NcPasswordField
+					v-if="row.type === 'hidden'"
+					v-model="row.value"
+					:label="t('doriath', 'Field value')"
+					class="additional-fields-editor__value-input"
+					@update:model-value="emitChange" />
+				<NcTextArea
+					v-else-if="row.type === 'textarea'"
+					v-model="row.value"
+					:label="t('doriath', 'Field value')"
+					resize="vertical"
+					class="additional-fields-editor__value-input"
+					@update:model-value="emitChange" />
 				<NcInputField
-					v-model="row.label"
-					:label="t('doriath', 'Field name')"
-					:placeholder="t('doriath', 'Field name')"
-					class="additional-fields-editor__label-input"
+					v-else
+					v-model="row.value"
+					:label="t('doriath', 'Field value')"
+					class="additional-fields-editor__value-input"
 					@update:model-value="emitChange" />
-				<NcSelect
-					v-model="row.type"
-					:options="typeOptions"
-					label="label"
-					:reduce="opt => opt.value"
-					:clearable="false"
-					:placeholder="t('doriath', 'Type')"
-					class="additional-fields-editor__type-select"
-					@update:model-value="emitChange" />
-				<NcButton
-					type="tertiary"
-					:aria-label="t('doriath', 'Remove field')"
-					:title="t('doriath', 'Remove field')"
-					@click="removeRow(index)">
-					<template #icon>
-						<DeleteIcon :size="20" />
-					</template>
-				</NcButton>
+				<span
+					v-if="duplicateLabels.has(row.label) && row.label"
+					class="additional-fields-editor__warning">
+					{{ t('doriath', 'Duplicate field name — only the last entry will be saved.') }}
+				</span>
 			</div>
-			<NcPasswordField
-				v-if="row.type === 'hidden'"
-				v-model="row.value"
-				:label="t('doriath', 'Field value')"
-				class="additional-fields-editor__value-input"
-				@update:model-value="emitChange" />
-			<NcTextArea
-				v-else-if="row.type === 'textarea'"
-				v-model="row.value"
-				:label="t('doriath', 'Field value')"
-				resize="vertical"
-				class="additional-fields-editor__value-input"
-				@update:model-value="emitChange" />
-			<NcInputField
-				v-else
-				v-model="row.value"
-				:label="t('doriath', 'Field value')"
-				class="additional-fields-editor__value-input"
-				@update:model-value="emitChange" />
-			<span
-				v-if="duplicateLabels.has(row.label) && row.label"
-				class="additional-fields-editor__warning">
-				{{ t('doriath', 'Duplicate field name — only the last entry will be saved.') }}
-			</span>
 		</div>
 
 		<NcButton
@@ -96,16 +98,23 @@ export default {
 		DeleteIcon,
 		PlusIcon,
 	},
+	model: {
+		prop: 'value',
+		event: 'input',
+	},
 	props: {
-		modelValue: {
+		value: {
 			type: Object,
 			default: () => ({}),
 		},
+		originalValue: {
+			type: Object,
+			default: null,
+		},
 	},
-	emits: ['update:modelValue'],
 	data() {
 		return {
-			rows: this.rowsFromModel(this.modelValue),
+			rows: this.rowsFromModel(this.value),
 		}
 	},
 	computed: {
@@ -124,9 +133,27 @@ export default {
 			}
 			return new Set([...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k))
 		},
+		rowModifiedState() {
+			if (!this.originalValue) return {}
+			const result = {}
+			for (const row of this.rows) {
+				const label = (row.label ?? '').trim()
+				if (!label) {
+					result[row.uid] = false
+					continue
+				}
+				if (!(label in this.originalValue)) {
+					result[row.uid] = true
+					continue
+				}
+				const orig = normaliseValue(this.originalValue[label])
+				result[row.uid] = orig.type !== row.type || orig.value !== row.value
+			}
+			return result
+		},
 	},
 	watch: {
-		modelValue(next) {
+		value(next) {
 			if (this.objectsEqual(next, this.rowsToObject(this.rows))) return
 			this.rows = this.rowsFromModel(next)
 		},
@@ -153,13 +180,14 @@ export default {
 		},
 		addRow() {
 			this.rows.push({ uid: uid(), label: '', type: 'text', value: '' })
+			this.emitChange()
 		},
 		removeRow(index) {
 			this.rows.splice(index, 1)
 			this.emitChange()
 		},
 		emitChange() {
-			this.$emit('update:modelValue', this.rowsToObject(this.rows))
+			this.$emit('input', this.rowsToObject(this.rows))
 		},
 	},
 }
@@ -170,6 +198,16 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+}
+
+.additional-fields-editor__row-wrapper {
+	border-left: 3px solid transparent;
+	padding-left: 8px;
+	transition: border-color 0.15s ease;
+}
+
+.additional-fields-editor__row-wrapper--modified {
+	border-left-color: var(--color-primary-element);
 }
 
 .additional-fields-editor__row {
