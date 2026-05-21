@@ -102,9 +102,9 @@
 					<h4 class="create-secret-form__section-label">
 						{{ t('doriath', 'Additional fields') }}
 					</h4>
-					<div :class="fieldClass('additionalFields')">
-						<AdditionalFieldsEditor v-model="newSecret.additionalFields" />
-					</div>
+					<AdditionalFieldsEditor
+						v-model="newSecret.additionalFields"
+						:original-value="originalValues ? originalValues.additionalFields : null" />
 				</div>
 
 				<NcNoteCard v-if="formError" type="error">
