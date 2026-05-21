@@ -232,6 +232,11 @@ export default {
 	margin: 0;
 }
 
+.additional-fields-editor__label-input::v-deep .input-field__label::after {
+	content: ' *';
+	color: var(--color-element-error);
+}
+
 .additional-fields-editor__type-select {
 	flex: 0 0 160px;
 	min-width: 120px;
