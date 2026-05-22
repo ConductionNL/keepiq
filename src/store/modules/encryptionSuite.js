@@ -229,10 +229,13 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			await this.fetchMigrationStatus()
 
 			// Refresh the secret list so compromised flags are visible.
+			// Use refetchSecrets() to preserve the current folder filter — calling
+			// fetchSecrets() with no args would reset currentFolderId to null and
+			// render every folder's secrets in the currently-open folder view.
 			try {
 				const { useSecretStore } = await import('./secret.js')
 				const secretStore = useSecretStore()
-				await secretStore.fetchSecrets()
+				await secretStore.refetchSecrets()
 			} catch {
 				// Secret store may not be initialized yet — that's fine.
 			}

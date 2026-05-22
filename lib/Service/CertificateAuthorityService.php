@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace OCA\Doriath\Service;
 
 use DateTime;
-use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\CACertificate;
 use OCA\Doriath\Db\CACertificateMapper;
@@ -157,59 +156,12 @@ class CertificateAuthorityService
     }//end retryBootstrap()
 
     /**
-     * Sign a public key PEM with the active intermediate, returning an X.509 certificate PEM.
-     *
-     * @param string $publicKeyPem The PEM-encoded public key
-     * @param string $commonName   The common name for the certificate (e.g. user ID or app name)
-     *
-     * @return string
-     */
-    public function signPublicKey(string $publicKeyPem, string $commonName='Doriath User'): string
-    {
-        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
-        $intermediateKey  = openssl_pkey_get_private(
-            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
-        );
-        $intermediateCert = $intermediate->getCertificate();
-
-        // Create a CSR from the public key to sign it.
-        $tempKey = openssl_pkey_get_public(public_key: $publicKeyPem);
-        if ($tempKey === false) {
-            throw new InvalidArgumentException('Invalid public key PEM');
-        }
-
-        $csr = openssl_csr_new(
-            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $commonName]),
-            private_key: $tempKey,
-            options: ['digest_alg' => 'sha256']
-        );
-
-        // Note: openssl_csr_new requires a private key. For signing an external public key
-        // (CSR-based registration), the caller must provide a proper PKCS#10 CSR.
-        // For generated key pairs, we create the CSR with the generated private key.
-        // This method is called with a proper CSR or after key generation.
-        $cert = openssl_csr_sign(
-            csr: $csr,
-            ca_certificate: $intermediateCert,
-            private_key: $intermediateKey,
-            days: 365,
-            options: ['digest_alg' => 'sha256'],
-            serial: random_int(1, PHP_INT_MAX)
-        );
-
-        // @codeCoverageIgnoreStart
-        if ($cert === false) {
-            throw new RuntimeException('Failed to sign certificate: '.openssl_error_string());
-        }
-
-        // @codeCoverageIgnoreEnd
-        openssl_x509_export(certificate: $cert, output: $certPem);
-        return $certPem;
-    }//end signPublicKey()
-
-    /**
      * Sign a key pair with the active intermediate, returning an X.509 certificate PEM.
-     * Uses the private key to create a proper CSR (unlike signPublicKey which only has the public key).
+     * Uses the private key to create a proper PKCS#10 CSR. Callers that only have a
+     * public key (CSR-based registration) must build a real CSR client-side and use
+     * signCsr() — openssl_csr_new() requires a private key and silently generates a
+     * throwaway one when handed a public-only handle, which historically produced
+     * certificates whose public half did not match the caller's intended key.
      *
      * @param \OpenSSLAsymmetricKey $privateKey The private key resource
      * @param string                $commonName The CN for the certificate

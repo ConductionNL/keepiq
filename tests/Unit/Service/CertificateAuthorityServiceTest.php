@@ -19,7 +19,6 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Tests\Unit\Service;
 
-use InvalidArgumentException;
 use OCA\Doriath\Db\CACertificate;
 use OCA\Doriath\Db\CACertificateMapper;
 use OCA\Doriath\Db\EncryptionSuite;
@@ -507,43 +506,6 @@ class CertificateAuthorityServiceTest extends TestCase
     }//end testRenewRoot()
 
     /**
-     * Test that signPublicKey returns a valid certificate PEM.
-     *
-     * @return void
-     */
-    public function testSignPublicKey(): void
-    {
-        $intKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-        openssl_pkey_export($intKey, $intKeyPem);
-        $intCsr  = openssl_csr_new(['commonName' => 'Int CA'], $intKey);
-        $intCert = openssl_csr_sign($intCsr, null, $intKey, 365);
-        openssl_x509_export($intCert, $intCertPem);
-
-        $intermediate = new CACertificate();
-        $intermediate->setId('int-1');
-        $intermediate->setCertificate($intCertPem);
-        $intermediate->setPrivateKey('enc:'.$intKeyPem);
-
-        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
-
-        // Generate a user key pair to sign.
-        $userKey      = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-        $details      = openssl_pkey_get_details($userKey);
-        $publicKeyPem = $details['key'];
-
-        // The service triggers an OpenSSL warning when passing a public key to openssl_csr_new
-        // (pre-existing design: signPublicKey wraps a public-key-only CSR). Suppress in test.
-        set_error_handler(static fn () => true, E_WARNING);
-        try {
-            $certPem = $this->service->signPublicKey($publicKeyPem);
-        } finally {
-            restore_error_handler();
-        }
-
-        $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $certPem);
-    }//end testSignPublicKey()
-
-    /**
      * Test that signCsr returns a valid certificate PEM.
      *
      * @return void
@@ -573,27 +535,4 @@ class CertificateAuthorityServiceTest extends TestCase
         $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $certPem);
     }//end testSignCsr()
 
-    /**
-     * Test that signPublicKey throws on an invalid PEM string.
-     *
-     * @return void
-     */
-    public function testSignPublicKeyWithInvalidPem(): void
-    {
-        $intKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-        openssl_pkey_export($intKey, $intKeyPem);
-        $intCsr  = openssl_csr_new(['commonName' => 'Int CA'], $intKey);
-        $intCert = openssl_csr_sign($intCsr, null, $intKey, 365);
-        openssl_x509_export($intCert, $intCertPem);
-
-        $intermediate = new CACertificate();
-        $intermediate->setCertificate($intCertPem);
-        $intermediate->setPrivateKey('enc:'.$intKeyPem);
-
-        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
-
-        $this->expectException(exception: InvalidArgumentException::class);
-        $this->expectExceptionMessage(message: 'Invalid public key PEM');
-        $this->service->signPublicKey('not-a-valid-pem');
-    }//end testSignPublicKeyWithInvalidPem()
 }//end class

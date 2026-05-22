@@ -43,23 +43,29 @@
 				:sensitive="typeConfig.key.sensitive"
 				:multiline="typeConfig.key.multiline" />
 
-			<template v-if="secret.additionalFields && typeof secret.additionalFields === 'object'">
+			<div v-if="hasAdditionalFields" class="secret-sidebar__section">
+				<h3 class="secret-sidebar__section-title">
+					{{ t('doriath', 'Additional fields') }}
+				</h3>
 				<SecretFieldCard
 					v-for="(val, field) in secret.additionalFields"
 					:key="field"
 					:label="String(field)"
-					:value="val"
-					sensitive />
-			</template>
-
-			<div v-if="typeLabel" class="secret-sidebar__meta">
-				<label class="secret-sidebar__meta-label">{{ t('doriath', 'Type') }}</label>
-				<span class="secret-sidebar__meta-value">{{ typeLabel }}</span>
+					:value="normaliseAdditionalField(val).value"
+					:sensitive="normaliseAdditionalField(val).type === 'hidden'"
+					:multiline="normaliseAdditionalField(val).type === 'textarea'" />
 			</div>
 
-			<div v-if="createdDate" class="secret-sidebar__meta">
-				<label class="secret-sidebar__meta-label">{{ t('doriath', 'Created') }}</label>
-				<NcDateTime class="secret-sidebar__meta-value" :timestamp="createdDate" :relative-time="createdRelativeTime" />
+			<div v-if="hasAdditionalFields" class="secret-sidebar__section">
+				<div v-if="typeLabel" class="secret-sidebar__meta">
+					<label class="secret-sidebar__meta-label">{{ t('doriath', 'Type') }}</label>
+					<span class="secret-sidebar__meta-value">{{ typeLabel }}</span>
+				</div>
+
+				<div v-if="createdDate" class="secret-sidebar__meta">
+					<label class="secret-sidebar__meta-label">{{ t('doriath', 'Created') }}</label>
+					<NcDateTime class="secret-sidebar__meta-value" :timestamp="createdDate" :relative-time="createdRelativeTime" />
+				</div>
 			</div>
 
 			<!-- Sharing section (visible when the current user owns the secret) -->
@@ -155,6 +161,10 @@ export default {
 		typeConfig() {
 			return getTypeFieldConfig(this.secretTypeStore.types, this.secret?.typeId, this.t)
 		},
+		hasAdditionalFields() {
+			const af = this.secret?.additionalFields
+			return af && typeof af === 'object' && Object.keys(af).length > 0
+		},
 		/**
 		 * True when the logged-in user is the owner of the current secret.
 		 *
@@ -194,6 +204,12 @@ export default {
 	},
 
 	methods: {
+		normaliseAdditionalField(val) {
+			if (val == null) return { type: 'text', value: '' }
+			if (typeof val === 'string') return { type: 'hidden', value: val }
+			const type = ['text', 'hidden', 'textarea'].includes(val.type) ? val.type : 'text'
+			return { type, value: typeof val.value === 'string' ? val.value : '' }
+		},
 		close() {
 			this.secretStore.currentSecret = null
 		},
