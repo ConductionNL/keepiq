@@ -125,6 +125,12 @@ class SettingsService
     /**
      * Load configuration from doriath_register.json via OpenRegister.
      *
+     * Reads the bundled register configuration file from
+     * `lib/Settings/doriath_register.json`, parses it, and passes it
+     * to OpenRegister's `ConfigurationService::importFromApp()` using
+     * the ADR-022 4-arg signature (appId, data, version, force).
+     * Mirrors the scholiq / procest / decidesk pattern.
+     *
      * @param bool $force Force re-import even if already configured.
      *
      * @return array<string,mixed> Result with success flag, message, and version.
@@ -142,8 +148,42 @@ class SettingsService
         }
 
         try {
+            $configPath = __DIR__.'/../Settings/doriath_register.json';
+            if (file_exists($configPath) === false) {
+                $this->logger->error('Doriath: doriath_register.json not found at '.$configPath);
+                return [
+                    'success' => false,
+                    'message' => 'Configuration file doriath_register.json not found.',
+                ];
+            }
+
+            $configContent = file_get_contents($configPath);
+            if ($configContent === false) {
+                $this->logger->error('Doriath: failed to read doriath_register.json');
+                return [
+                    'success' => false,
+                    'message' => 'Failed to read configuration file.',
+                ];
+            }
+
+            $configData = json_decode($configContent, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->logger->error('Doriath: failed to parse doriath_register.json: '.json_last_error_msg());
+                return [
+                    'success' => false,
+                    'message' => 'Failed to parse configuration file: '.json_last_error_msg(),
+                ];
+            }
+
+            $configVersion = ($configData['info']['version'] ?? '0.0.0');
+
             $configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
-            $result = $configurationService->importFromApp(appId: Application::APP_ID, force: $force);
+            $result = $configurationService->importFromApp(
+                appId: Application::APP_ID,
+                data: $configData,
+                version: $configVersion,
+                force: $force
+            );
 
             if (empty($result) === false) {
                 $this->logger->info('Doriath: register configuration imported successfully');
