@@ -14,6 +14,11 @@
  *     are looked up against this registry via `CnWidgetGrid` (the
  *     `kind:"widget"` entries below).
  *
+ * Widget metadata fields (ADR-036): every `kind:"widget"` entry
+ * declares `defaultSize`, `minSize`, `maxSize`, `allowedSlots`, and
+ * `propsSchema` so `CnAppRoot` can validate the manifest against the
+ * widget's contract. Missing fields trigger console-warn noise.
+ *
  * Current entries:
  *   - LockScreen (page) — master-password setup + unlock flow.
  *     `type:"custom"` because the lock owns its own full-page layout
@@ -50,6 +55,22 @@ export default {
 		allowedSlots: ['body'],
 		propsSchema: {},
 	},
-	'doriath-recent-activity': { kind: 'widget', component: RecentActivityWidget },
-	'doriath-quick-actions': { kind: 'widget', component: QuickActionsWidget },
+	'doriath-recent-activity': {
+		kind: 'widget',
+		component: RecentActivityWidget,
+		defaultSize: { w: 6, h: 4 },
+		minSize: { w: 4, h: 3 },
+		maxSize: { w: 12, h: 8 },
+		allowedSlots: ['body'],
+		propsSchema: {},
+	},
+	'doriath-quick-actions': {
+		kind: 'widget',
+		component: QuickActionsWidget,
+		defaultSize: { w: 6, h: 4 },
+		minSize: { w: 3, h: 2 },
+		maxSize: { w: 12, h: 8 },
+		allowedSlots: ['body'],
+		propsSchema: {},
+	},
 }
