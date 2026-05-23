@@ -1,3 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
-  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 24 24">
+  <g>
+    <!-- Lock body -->
+    <rect x="5" y="11" width="14" height="10" rx="2"/>
+    <!-- Lock shackle -->
+    <path d="M8,11V7a4,4,0,0,1,8,0v4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
 </svg>

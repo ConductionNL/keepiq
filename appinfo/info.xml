@@ -1,34 +1,34 @@
 <?xml version="1.0"?>
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
-    <id>app-template</id>
-    <name lang="en">Nextcloud App Template</name>
-    <name lang="nl">Nextcloud App Template</name>
-    <summary lang="en">A template for creating new Nextcloud apps</summary>
-    <summary lang="nl">Een sjabloon voor het maken van nieuwe Nextcloud-apps</summary>
-    <description lang="en"><![CDATA[A starting point for building Nextcloud apps following ConductionNL conventions.
+    <id>doriath</id>
+    <name lang="en">Doriath</name>
+    <name lang="nl">Doriath</name>
+    <summary lang="en">Encrypted secrets manager for Nextcloud — password manager and key store for users and applications</summary>
+    <summary lang="nl">Versleutelde geheimenbeheerder voor Nextcloud — wachtwoordmanager en sleutelopslag voor gebruikers en applicaties</summary>
+    <description lang="en"><![CDATA[Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
 **Key Features**
 
-- **Vue 2 + Pinia frontend** — Modern reactive UI with state management
-- **OpenRegister integration** — Built-in support for the OpenRegister data layer
-- **Admin settings** — Pre-wired settings page with version info
+- **End-to-end encryption** — RSA-4096 + AES-256 with a private Certificate Authority
+- **Secret sharing** — Share with Nextcloud users and groups, link sharing, secret requests
+- **Application management** — Register applications with CSR-based onboarding, write-without-read
+- **Admin settings** — CA health monitoring, password policies, application approval queue
 - **NL Design System ready** — CSS variables, WCAG AA, government theming
-- **Full quality pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
 
 Free and open source under the EUPL-1.2 license.
 
 **Support:** For support, contact support@conduction.nl.
     ]]></description>
-    <description lang="nl"><![CDATA[Een startpunt voor het bouwen van Nextcloud-apps volgens ConductionNL-conventies.
+    <description lang="nl"><![CDATA[Veilig opslaan en delen van geheimen (wachtwoorden, API-sleutels, certificaten) voor Nextcloud-gebruikers en applicaties, met end-to-end RSA/AES-versleuteling ondersteund door een privé-certificaatautoriteit.
 
 **Belangrijkste functies**
 
-- **Vue 2 + Pinia frontend** — Moderne reactieve UI met state management
-- **OpenRegister-integratie** — Ingebouwde ondersteuning voor de OpenRegister-datalaag
-- **Beheerdersinstell ingen** — Voorgeconfigureerde instellingenpagina met versie-informatie
+- **End-to-end versleuteling** — RSA-4096 + AES-256 met een privé-certificaatautoriteit
+- **Geheimen delen** — Delen met Nextcloud-gebruikers en -groepen, linkdeling, geheimeaanvragen
+- **Applicatiebeheer** — Registreer applicaties met CSR-onboarding, schrijven-zonder-lezen
+- **Beheerdersinstellingen** — CA-gezondheid, wachtwoordbeleid, goedkeuringswachtrij
 - **NL Design System klaar** — CSS-variabelen, WCAG AA, overheidsthema
-- **Volledige kwaliteitspipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
 
 Vrij en open source onder de EUPL-1.2-licentie.
 
@@ -37,36 +37,54 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <version>0.1.0</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
-    <namespace>AppTemplate</namespace>
+    <namespace>Doriath</namespace>
     <documentation>
-        <user>https://github.com/ConductionNL/nextcloud-app-template</user>
-        <admin>https://github.com/ConductionNL/nextcloud-app-template</admin>
-        <developer>https://github.com/ConductionNL/nextcloud-app-template</developer>
+        <user>https://github.com/ConductionNL/doriath</user>
+        <admin>https://github.com/ConductionNL/doriath</admin>
+        <developer>https://github.com/ConductionNL/doriath</developer>
     </documentation>
-    <category>tools</category>
-    <website>https://github.com/ConductionNL/nextcloud-app-template</website>
-    <discussion>https://github.com/ConductionNL/nextcloud-app-template/discussions</discussion>
-    <bugs>https://github.com/ConductionNL/nextcloud-app-template/issues</bugs>
-    <repository>https://github.com/ConductionNL/nextcloud-app-template</repository>
+    <category>security</category>
+    <website>https://github.com/ConductionNL/doriath</website>
+    <discussion>https://github.com/ConductionNL/doriath/discussions</discussion>
+    <bugs>https://github.com/ConductionNL/doriath/issues</bugs>
+    <repository>https://github.com/ConductionNL/doriath</repository>
 
-    <screenshot>https://raw.githubusercontent.com/ConductionNL/nextcloud-app-template/main/img/app-store.svg</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/doriath/main/img/app-store.svg</screenshot>
 
     <dependencies>
-        <nextcloud min-version="28" max-version="33"/>
-        <php min-version="8.1"/>
+        <nextcloud min-version="31" max-version="34"/>
+        <php min-version="8.3"/>
     </dependencies>
 
     <navigations>
         <navigation>
-            <id>app-template</id>
-            <name>App Template</name>
-            <route>app_template.dashboard.page</route>
+            <id>doriath</id>
+            <name>Doriath</name>
+            <route>doriath.dashboard.page</route>
             <icon>app.svg</icon>
         </navigation>
     </navigations>
 
+    <background-jobs>
+        <job>OCA\Doriath\BackgroundJob\RenewIntermediateCertificate</job>
+        <job>OCA\Doriath\BackgroundJob\CheckRootCertificateExpiry</job>
+    </background-jobs>
+
+    <repair-steps>
+        <install>
+            <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
+            <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+        </install>
+        <post-migration>
+            <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
+            <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+        </post-migration>
+    </repair-steps>
+
     <settings>
-        <admin>OCA\AppTemplate\Settings\AdminSettings</admin>
-        <admin-section>OCA\AppTemplate\Sections\SettingsSection</admin-section>
+        <admin>OCA\Doriath\Settings\AdminSettings</admin>
+        <admin-section>OCA\Doriath\Sections\SettingsSection</admin-section>
     </settings>
 </info>

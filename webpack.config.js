@@ -13,7 +13,7 @@ webpackConfig.stats = {
 	modules: false,
 }
 
-const appId = 'app-template'
+const appId = 'doriath'
 webpackConfig.entry = {
 	main: {
 		import: path.join(__dirname, 'src', 'main.js'),
@@ -36,27 +36,17 @@ webpackConfig.resolve = {
 		...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
 		// Deduplicate shared packages so the aliased library source uses
 		// the same instances as the app (prevents dual-Pinia / dual-Vue bugs).
-		'vue$': path.resolve(__dirname, 'node_modules/vue'),
-		'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
+		vue$: path.resolve(__dirname, 'node_modules/vue'),
+		pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	},
 }
 
-webpackConfig.module = {
-	rules: [
-		{
-			test: /\.vue$/,
-			loader: 'vue-loader',
-		},
-		{
-			test: /\.css$/,
-			use: ['style-loader', 'css-loader'],
-		},
-	],
-}
-
+// Replace VueLoaderPlugin (don't push — duplicates break templates when using local package)
+const otherPlugins = (webpackConfig.plugins || []).filter((p) => p.constructor.name !== 'VueLoaderPlugin')
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
+	...otherPlugins,
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
 	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
 ]
@@ -64,5 +54,12 @@ webpackConfig.plugins = [
 // Force @nextcloud/dialogs to resolve from this app's node_modules,
 // preventing the nextcloud-vue submodule's nested deps (Vue 3) from leaking in.
 webpackConfig.resolve.alias['@nextcloud/dialogs'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs')
+
+// Nextcloud apps with @conduction/nextcloud-vue and zxcvbn exceed the default
+// 244 KiB asset size hint. Raise the limit to suppress warnings.
+webpackConfig.performance = {
+	maxAssetSize: 5 * 1024 * 1024,
+	maxEntrypointSize: 5 * 1024 * 1024,
+}
 
 module.exports = webpackConfig

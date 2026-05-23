@@ -1,25 +1,30 @@
 {
-  "id": "app-template",
-  "name": "Nextcloud App Template",
-  "namespace": "AppTemplate",
-  "summary": "A template for creating new Nextcloud apps",
-  "goal": "A starting point for building Nextcloud apps following ConductionNL conventions",
-  "category": "tools",
+  "id": "doriath",
+  "name": "Doriath",
+  "namespace": "Doriath",
+  "summary": "Encrypted secrets manager for Nextcloud — password manager and key store for users and applications",
+  "goal": "Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority",
+  "category": "security",
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "author": "Conduction B.V.",
-  "repository": "https://github.com/ConductionNL/nextcloud-app-template",
+  "repository": "https://github.com/ConductionNL/doriath",
   "dependencies": {
-    "requiresOpenRegister": true,
-    "additionalCiApps": [
-      {"repo": "ConductionNL/openregister", "app": "openregister", "ref": "main"}
-    ]
+    "requiresOpenRegister": false,
+    "additionalCiApps": []
   },
   "cicd": {
     "phpVersions": ["8.3", "8.4"],
     "nextcloudRefs": ["stable31", "stable32"],
     "enableNewman": false
   },
-  "createdAt": "2025-01-01",
-  "updatedAt": "2026-03-23"
+  "architecture": {
+    "dataLayer": "own-database-tables",
+    "pattern": "Thick backend — Doriath owns its own encrypted database tables; no OpenRegister, no n8n",
+    "encryption": "RSA-4096 + AES-256 via OpenSSL; private CA with root and intermediate certificates",
+    "frontend": "Vue 2.7 + Pinia, queries Doriath REST API",
+    "authentication": "Nextcloud session (users) or X-Vault-Password header (external apps)"
+  },
+  "createdAt": "2026-03-23",
+  "updatedAt": "2026-03-30"
 }

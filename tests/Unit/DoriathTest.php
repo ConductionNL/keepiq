@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\Tests\Unit;
+namespace OCA\Doriath\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
 /**
  * Placeholder unit test — replace with real tests for your app logic.
  */
-class AppTemplateTest extends TestCase
+class DoriathTest extends TestCase
 {
 
     public function testPlaceholder(): void

@@ -1,15 +1,15 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "App Template Register",
-    "description": "Register containing all schemas for the App Template application.",
+    "title": "Doriath Register",
+    "description": "Register containing all schemas for the Doriath application.",
     "version": "0.1.0"
   },
   "x-openregister": {
     "type": "application",
-    "app": "app-template",
+    "app": "doriath",
     "openregister": "^v0.2.10",
-    "description": "App Template — replace with your app description"
+    "description": "Doriath — replace with your app description"
   },
   "paths": {},
   "components": {

@@ -1,12 +1,12 @@
 <?php
 
 /**
- * AppTemplate Application
+ * Doriath Application
  *
- * Main application class for the AppTemplate Nextcloud app.
+ * Main application class for the Doriath Nextcloud app.
  *
  * @category AppInfo
- * @package  OCA\AppTemplate\AppInfo
+ * @package  OCA\Doriath\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,10 +19,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\AppTemplate\AppInfo;
+namespace OCA\Doriath\AppInfo;
 
-use OCA\AppTemplate\Listener\DeepLinkRegistrationListener;
-use OCA\AppTemplate\Repair\InitializeSettings;
+use OCA\Doriath\Listener\DeepLinkRegistrationListener;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -30,11 +29,11 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Main application class for the AppTemplate Nextcloud app.
+ * Main application class for the Doriath Nextcloud app.
  */
 class Application extends App implements IBootstrap
 {
-    public const APP_ID = 'app-template';
+    public const APP_ID = 'doriath';
 
     /**
      * Constructor for the Application class.
@@ -57,6 +56,8 @@ class Application extends App implements IBootstrap
      */
     public function register(IRegistrationContext $context): void
     {
+        include_once __DIR__.'/../../vendor/autoload.php';
+
         // Register deep link patterns with OpenRegister's unified search provider.
         // Only fires when OpenRegister is installed and dispatches the event.
         $context->registerEventListener(
@@ -64,9 +65,8 @@ class Application extends App implements IBootstrap
             listener: DeepLinkRegistrationListener::class
         );
 
-        // Initialize register and schemas on install/upgrade.
-        $context->registerRepairStep(InitializeSettings::class);
-
+        // Repair steps (BootstrapCertificateAuthority, InitializeSettings,
+        // SeedDevelopmentData) are registered via info.xml <repair-steps>.
     }//end register()
 
     /**

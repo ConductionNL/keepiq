@@ -1,29 +1,7 @@
 <template>
-	<NcContent app-name="app-template">
-		<template v-if="storesReady && !hasOpenRegisters">
-			<NcAppContent class="open-register-missing">
-				<NcEmptyContent
-					:name="t('app-template', 'OpenRegister is required')"
-					:description="t('app-template', 'This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.')">
-					<template #icon>
-						<img :src="appIcon"
-							alt=""
-							width="64"
-							height="64">
-					</template>
-					<template #action>
-						<NcButton
-							v-if="isAdmin"
-							type="primary"
-							:href="appStoreUrl">
-							{{ t('app-template', 'Install OpenRegister') }}
-						</NcButton>
-					</template>
-				</NcEmptyContent>
-			</NcAppContent>
-		</template>
-		<template v-else-if="storesReady && hasOpenRegisters">
-			<MainMenu />
+	<NcContent app-name="doriath">
+		<template v-if="storesReady">
+			<MainMenu v-if="!isLocked" />
 			<NcAppContent>
 				<router-view />
 			</NcAppContent>
@@ -37,19 +15,16 @@
 </template>
 
 <script>
-import { NcButton, NcContent, NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl, imagePath } from '@nextcloud/router'
+import { NcContent, NcAppContent, NcLoadingIcon } from '@nextcloud/vue'
 import { initializeStores } from './store/store.js'
-import { useSettingsStore } from './store/modules/settings.js'
+import { useSessionStore } from './store/modules/session.js'
 import MainMenu from './navigation/MainMenu.vue'
 
 export default {
 	name: 'App',
 	components: {
-		NcButton,
 		NcContent,
 		NcAppContent,
-		NcEmptyContent,
 		NcLoadingIcon,
 		MainMenu,
 	},
@@ -57,29 +32,76 @@ export default {
 	data() {
 		return {
 			storesReady: false,
+			timeoutInterval: null,
 		}
 	},
 
 	computed: {
-		hasOpenRegisters() {
-			const settingsStore = useSettingsStore()
-			return settingsStore.hasOpenRegisters
+		isLocked() {
+			const session = useSessionStore()
+			return session.isLocked
 		},
-		isAdmin() {
-			const settingsStore = useSettingsStore()
-			return settingsStore.getIsAdmin
-		},
-		appIcon() {
-			return imagePath('app-template', 'app-dark.svg')
-		},
-		appStoreUrl() {
-			return generateUrl('/settings/apps/integration/openregister')
+	},
+
+	watch: {
+		isLocked(locked) {
+			if (locked && this.$route.name !== 'Lock') {
+				this.$router.replace({
+					name: 'Lock',
+					query: { returnUrl: this.$route.fullPath },
+				})
+			}
 		},
 	},
 
 	async created() {
 		await initializeStores()
 		this.storesReady = true
+
+		// Now that Pinia is ready, check if we need the lock screen.
+		// The router guard may have let us through on the initial navigation
+		// because Pinia wasn't active yet.
+		const session = useSessionStore()
+		if (session.isLocked && this.$route.name !== 'Lock') {
+			this.$router.replace({
+				name: 'Lock',
+				query: { returnUrl: this.$route.fullPath },
+			})
+		}
+
+		// Session timeout check every 10 seconds.
+		this.timeoutInterval = setInterval(() => {
+			const session = useSessionStore()
+			session.checkTimeout()
+		}, 10000)
+
+		// Check timeout when tab becomes visible.
+		document.addEventListener('visibilitychange', this.handleVisibilityChange)
+
+		// Best-effort key clear on tab close.
+		window.addEventListener('beforeunload', this.handleBeforeUnload)
+	},
+
+	beforeDestroy() {
+		if (this.timeoutInterval) {
+			clearInterval(this.timeoutInterval)
+		}
+		document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+		window.removeEventListener('beforeunload', this.handleBeforeUnload)
+	},
+
+	methods: {
+		handleVisibilityChange() {
+			if (document.visibilityState === 'visible') {
+				const session = useSessionStore()
+				session.checkTimeout()
+			}
+		},
+
+		handleBeforeUnload() {
+			const session = useSessionStore()
+			session.lock()
+		},
 	},
 }
 </script>
