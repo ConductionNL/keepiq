@@ -98,20 +98,72 @@ class CertificateAuthorityServiceTest extends TestCase
     }//end setUp()
 
     /**
-     * Test that bootstrap skips when a CA already exists.
+     * Test that bootstrap skips when a CA already exists (root + active intermediate).
      *
      * @return void
      */
     public function testBootstrapSkipsIfCaExists(): void
     {
-        $root = new CACertificate();
+        $root         = new CACertificate();
+        $intermediate = new CACertificate();
         $this->caCertMapper->method('findRoot')->willReturn($root);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
 
         // Should not insert anything.
         $this->caCertMapper->expects($this->never())->method('insert');
 
+        // Healthy state should re-assert ca_status=healthy.
+        $this->appConfig->expects($this->once())
+            ->method('setValueString')
+            ->with('doriath', 'ca_status', 'healthy');
+
         $this->service->bootstrap();
     }//end testBootstrapSkipsIfCaExists()
+
+    /**
+     * Test that bootstrap recovers the intermediate when root exists but no
+     * active intermediate does (partial-state recovery — see issue #41).
+     *
+     * @return void
+     */
+    public function testBootstrapRecoversIntermediateWhenMissing(): void
+    {
+        // Build a real root key + cert (2048-bit for test speed) so recoverIntermediate
+        // can decrypt and re-use the persisted root to sign a new intermediate.
+        $rootKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($rootKey, $rootKeyPem);
+        $rootCsr  = openssl_csr_new(['commonName' => 'Root CA'], $rootKey);
+        $rootCert = openssl_csr_sign($rootCsr, null, $rootKey, 365);
+        openssl_x509_export($rootCert, $rootCertPem);
+
+        $root = new CACertificate();
+        $root->setId('root-1');
+        $root->setType('root');
+        $root->setCertificate($rootCertPem);
+        // Crypto mock returns 'enc:'.$plain on encrypt and strips the prefix on decrypt.
+        $root->setPrivateKey('enc:'.$rootKeyPem);
+
+        $this->caCertMapper->method('findRoot')->willReturn($root);
+        $this->caCertMapper->method('findActiveIntermediate')
+            ->willThrowException(new DoesNotExistException('No intermediate'));
+
+        // Recovery path: exactly one insert (the new intermediate), no root recreation.
+        $this->caCertMapper->expects($this->once())
+            ->method('insert')
+            ->willReturnCallback(
+                function (CACertificate $entity): CACertificate {
+                    $this->assertEquals(expected: 'intermediate', actual: $entity->getType());
+                    $this->assertTrue(condition: $entity->getIsActive());
+                    return $entity;
+                }
+            );
+
+        $this->appConfig->expects($this->once())
+            ->method('setValueString')
+            ->with('doriath', 'ca_status', 'healthy');
+
+        $this->service->bootstrap();
+    }//end testBootstrapRecoversIntermediateWhenMissing()
 
     /**
      * Test that getStatus returns not_configured when CA is degraded.
@@ -266,9 +318,11 @@ class CertificateAuthorityServiceTest extends TestCase
      */
     public function testRetryBootstrapDelegatesToBootstrap(): void
     {
-        // If root already exists, bootstrap is a no-op (idempotent).
-        $root = new CACertificate();
+        // If root + active intermediate already exist, bootstrap is a no-op (idempotent).
+        $root         = new CACertificate();
+        $intermediate = new CACertificate();
         $this->caCertMapper->method('findRoot')->willReturn($root);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
         $this->caCertMapper->expects($this->never())->method('insert');
 
         $this->service->retryBootstrap();

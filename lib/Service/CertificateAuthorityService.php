@@ -73,18 +73,44 @@ class CertificateAuthorityService
 
     /**
      * Bootstrap the CA: generate root + intermediate certificates.
-     * Idempotent — skips if CA already exists.
+     *
+     * Idempotent in three ways:
+     *  - Skips entirely when both root and an active intermediate already exist (healthy).
+     *  - Recovers (creates only the missing intermediate) when a root exists but no
+     *    active intermediate does — this is the half-broken state left behind by the
+     *    pre-#40 Postgres SMALLINT/boolean mismatch that aborted the second insert
+     *    after the root was already persisted.
+     *  - Performs the full root + intermediate bootstrap when neither exists.
      *
      * @return void
      */
     public function bootstrap(): void
     {
         try {
-            $this->caCertificateMapper->findRoot();
-            $this->logger->info('Doriath: CA already bootstrapped, skipping');
-            return;
+            $root = $this->caCertificateMapper->findRoot();
         } catch (DoesNotExistException) {
-            // No root exists — proceed with bootstrap.
+            $root = null;
+        }
+
+        if ($root !== null) {
+            try {
+                $this->caCertificateMapper->findActiveIntermediate();
+                $this->logger->info('Doriath: CA already bootstrapped, skipping');
+                // Healthy state — make sure ca_status reflects it in case a prior
+                // partial-state install left it unset or degraded.
+                $this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
+                return;
+            } catch (DoesNotExistException) {
+                // Partial state: root exists but intermediate does not.
+                // Recover by issuing only the missing intermediate against the existing root.
+                $this->logger->warning(
+                    'Doriath: detected partial CA state (root present, no active intermediate) — recovering intermediate'
+                );
+                $this->recoverIntermediate(root: $root);
+                $this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
+                $this->logger->info('Doriath: CA partial-state recovery complete');
+                return;
+            }
         }
 
         $this->logger->info('Doriath: Bootstrapping Certificate Authority');
@@ -411,6 +437,34 @@ class CertificateAuthorityService
             'intermediate' => $intermediate->jsonSerialize(),
         ];
     }//end getStatus()
+
+    /**
+     * Issue the intermediate certificate against an existing persisted root.
+     *
+     * Used by partial-state recovery in {@see self::bootstrap()} when a previous
+     * bootstrap attempt persisted the root but failed to persist the intermediate
+     * (the pre-#40 Postgres SMALLINT/boolean mismatch). The root row is reused
+     * as-is — only the intermediate is generated and persisted.
+     *
+     * @param CACertificate $root The existing root certificate entity
+     *
+     * @return CACertificate The newly created intermediate
+     */
+    private function recoverIntermediate(CACertificate $root): CACertificate
+    {
+        $rootKey = openssl_pkey_get_private(
+            private_key: $this->crypto->decrypt($root->getPrivateKey())
+        );
+
+        // @codeCoverageIgnoreStart
+        if ($rootKey === false) {
+            $this->setDegraded();
+            throw new RuntimeException('Failed to load persisted root CA private key: '.openssl_error_string());
+        }
+
+        // @codeCoverageIgnoreEnd
+        return $this->generateIntermediate(rootKey: $rootKey, rootCert: $root->getCertificate());
+    }//end recoverIntermediate()
 
     /**
      * Generate a new intermediate certificate signed by the given root.
