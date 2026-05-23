@@ -6,12 +6,29 @@ declare(strict_types=1);
 define('PHPUNIT_RUN', 1);
 
 // Include Composer's autoloader.
-require_once __DIR__ . '/../vendor/autoload.php';
+$autoloader = require __DIR__ . '/../vendor/autoload.php';
 
 // Bootstrap Nextcloud — since we run inside the Docker container,
 // the full environment (including \OC::$server) is available.
-if (file_exists(__DIR__ . '/../../../lib/base.php')) {
-    require_once __DIR__ . '/../../../lib/base.php';
+// Only attempt to load base.php if a valid NC config exists (with a DB).
+$ncBasePath   = __DIR__ . '/../../../lib/base.php';
+$ncConfigPath = __DIR__ . '/../../../config/config.php';
+$ncLoaded     = false;
+
+if (file_exists($ncBasePath) && file_exists($ncConfigPath)) {
+    $ncConfig = [];
+    include $ncConfigPath;
+    $ncConfig = $CONFIG ?? [];
+    if (isset($ncConfig['dbtype']) || isset($ncConfig['dbhost'])) {
+        require_once $ncBasePath;
+        $ncLoaded = true;
+    }
+}
+
+// If Nextcloud could not be loaded, register OCP stubs for pure unit tests.
+if ($ncLoaded === false && $autoloader instanceof \Composer\Autoload\ClassLoader) {
+    $autoloader->addPsr4('OCP\\', __DIR__ . '/../vendor/nextcloud/ocp/OCP/');
+    $autoloader->addPsr4('NCU\\', __DIR__ . '/../vendor/nextcloud/ocp/NCU/');
 }
 
 // Register Test\ namespace for NC test classes.
