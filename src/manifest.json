@@ -1,0 +1,143 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"version": "1.0.0",
+	"dependencies": [],
+	"menu": [
+		{
+			"id": "Dashboard",
+			"label": "Dashboard",
+			"icon": "icon-category-dashboard",
+			"route": "Dashboard",
+			"order": 10
+		},
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "icon-info",
+			"href": "https://conduction.nl",
+			"section": "settings",
+			"order": 80
+		},
+		{
+			"id": "LockVault",
+			"label": "Lock vault",
+			"icon": "icon-password",
+			"route": "Lock",
+			"section": "settings",
+			"order": 90
+		},
+		{
+			"id": "Settings",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"action": "user-settings",
+			"section": "settings",
+			"order": 99
+		}
+	],
+	"pages": [
+		{
+			"id": "Dashboard",
+			"route": "/",
+			"type": "dashboard",
+			"title": "Dashboard",
+			"config": {},
+			"widgets": [
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Open items",
+						"iconClass": "icon-folder",
+						"count": 12,
+						"countLabel": "sample",
+						"variant": "primary",
+						"showTitle": true
+					}
+				},
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 3,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Due this week",
+						"iconClass": "icon-calendar",
+						"count": 5,
+						"countLabel": "sample",
+						"variant": "warning",
+						"showTitle": true
+					}
+				},
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Completed",
+						"iconClass": "icon-checkmark",
+						"count": 48,
+						"countLabel": "sample",
+						"variant": "success",
+						"showTitle": true
+					}
+				},
+				{
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 9,
+					"gridY": 0,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"title": "Team members",
+						"iconClass": "icon-group",
+						"count": 7,
+						"countLabel": "sample",
+						"variant": "default",
+						"showTitle": true
+					}
+				},
+				{
+					"widgetKey": "doriath-recent-activity",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 6,
+					"gridHeight": 4,
+					"props": {
+						"title": "Recent activity"
+					}
+				},
+				{
+					"widgetKey": "doriath-quick-actions",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 2,
+					"gridWidth": 6,
+					"gridHeight": 4,
+					"props": {
+						"title": "Quick actions"
+					}
+				}
+			]
+		},
+		{
+			"id": "Lock",
+			"route": "/lock",
+			"type": "custom",
+			"title": "Unlock Doriath",
+			"component": "LockScreen",
+			"_note": "Master-password setup + unlock flow. Cannot use a built-in page type because the lock screen owns its own full-page layout (no app nav / header / sidebar) and gates router navigation via App.vue's lock-redirect watcher. Stays type:\"custom\" until the lib gains a dedicated unlock-page primitive."
+		}
+	]
+}
