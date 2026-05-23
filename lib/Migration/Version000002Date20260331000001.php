@@ -100,10 +100,10 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                 );
         $table->addColumn(
                 'is_active',
-                Types::SMALLINT,
+                Types::BOOLEAN,
                 [
                     'notnull' => true,
-                    'default' => 0,
+                    'default' => false,
                 ]
                 );
         $table->addColumn(
