@@ -53,12 +53,10 @@
 					"props": {
 						"title": "Open items",
 						"iconClass": "icon-folder",
-						"props": {
-							"count": 12,
-							"countLabel": "sample",
-							"variant": "primary"
-						},
-						"showTitle": false
+						"count": 12,
+						"countLabel": "sample",
+						"variant": "primary",
+						"showTitle": true
 					}
 				},
 				{
@@ -71,12 +69,10 @@
 					"props": {
 						"title": "Due this week",
 						"iconClass": "icon-calendar",
-						"props": {
-							"count": 5,
-							"countLabel": "sample",
-							"variant": "warning"
-						},
-						"showTitle": false
+						"count": 5,
+						"countLabel": "sample",
+						"variant": "warning",
+						"showTitle": true
 					}
 				},
 				{
@@ -89,12 +85,10 @@
 					"props": {
 						"title": "Completed",
 						"iconClass": "icon-checkmark",
-						"props": {
-							"count": 48,
-							"countLabel": "sample",
-							"variant": "success"
-						},
-						"showTitle": false
+						"count": 48,
+						"countLabel": "sample",
+						"variant": "success",
+						"showTitle": true
 					}
 				},
 				{
@@ -107,12 +101,10 @@
 					"props": {
 						"title": "Team members",
 						"iconClass": "icon-group",
-						"props": {
-							"count": 7,
-							"countLabel": "sample",
-							"variant": "default"
-						},
-						"showTitle": false
+						"count": 7,
+						"countLabel": "sample",
+						"variant": "default",
+						"showTitle": true
 					}
 				},
 				{
