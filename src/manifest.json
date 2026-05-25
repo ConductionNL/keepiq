@@ -19,6 +19,14 @@
 			"order": 80
 		},
 		{
+			"id": "FeaturesRoadmapMenu",
+			"label": "Features & roadmap",
+			"icon": "icon-toggle",
+			"route": "FeaturesRoadmap",
+			"section": "footer",
+			"order": 85
+		},
+		{
 			"id": "LockVault",
 			"label": "Lock vault",
 			"icon": "icon-password",
@@ -122,6 +130,15 @@
 					}
 				}
 			]
+		},
+		{
+			"id": "FeaturesRoadmap",
+			"route": "/features-roadmap",
+			"type": "roadmap",
+			"title": "Features & roadmap",
+			"config": {
+				"documentationUrl": "https://doriath.conduction.nl"
+			}
 		},
 		{
 			"id": "Lock",
