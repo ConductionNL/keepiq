@@ -63,6 +63,8 @@ class EncryptionSuiteController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function index(): JSONResponse
     {
@@ -85,6 +87,8 @@ class EncryptionSuiteController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function show(string $id): JSONResponse
     {
@@ -109,6 +113,8 @@ class EncryptionSuiteController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function create(
         string $publicKey,
@@ -141,6 +147,8 @@ class EncryptionSuiteController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function updatePrivateKey(string $id, string $encryptedPrivateKey): JSONResponse
     {
@@ -168,6 +176,8 @@ class EncryptionSuiteController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function revoke(string $id, string $reason): JSONResponse
     {
@@ -190,6 +200,8 @@ class EncryptionSuiteController extends OCSController
      * @param string $id The suite ID
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function reinstate(string $id): JSONResponse
     {
@@ -215,6 +227,8 @@ class EncryptionSuiteController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function compromiseRecovery(
         string $publicKey,

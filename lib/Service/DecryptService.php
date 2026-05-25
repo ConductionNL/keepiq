@@ -50,6 +50,8 @@ class DecryptService
      * @return string Decrypted plaintext
      *
      * @throws DecryptionException
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function rsaDecrypt(string $ciphertext, string $privateKeyPem): string
     {
@@ -103,6 +105,8 @@ class DecryptService
      * @return string Decrypted plaintext
      *
      * @throws DecryptionException
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function aesDecrypt(string $envelope, string $key): string
     {
@@ -153,6 +157,8 @@ class DecryptService
      * @return string PEM-encoded private key
      *
      * @throws DecryptionException
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function decryptPrivateKey(string $blob, string $password): string
     {
@@ -204,6 +210,8 @@ class DecryptService
      * @param string $salt     16-byte salt
      *
      * @return string Raw 32-byte key
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function deriveKey(string $password, string $salt): string
     {

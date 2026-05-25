@@ -64,6 +64,8 @@ class CACertificateController extends OCSController
      * Retry CA bootstrap.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function retryBootstrap(): JSONResponse
     {
@@ -82,6 +84,8 @@ class CACertificateController extends OCSController
      * Force renew the intermediate certificate.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function renewIntermediate(): JSONResponse
     {
@@ -106,6 +110,8 @@ class CACertificateController extends OCSController
      * Trigger root renewal.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function renewRoot(): JSONResponse
     {

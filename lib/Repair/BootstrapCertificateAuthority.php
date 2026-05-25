@@ -63,6 +63,8 @@ class BootstrapCertificateAuthority implements IRepairStep
      * @param IOutput $output The output interface for progress reporting
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function run(IOutput $output): void
     {

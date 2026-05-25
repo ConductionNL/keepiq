@@ -52,6 +52,12 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Map CA status to a colour class for the health indicator.
+		 *
+		 * @return {string} Colour token.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		statusClass() {
 			const map = {
 				healthy: 'green',
@@ -61,6 +67,12 @@ export default {
 			}
 			return map[this.caStatus?.status] || 'grey'
 		},
+		/**
+		 * Map CA status to a translated, human-readable label.
+		 *
+		 * @return {string} Status label.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		statusLabel() {
 			const map = {
 				healthy: t('doriath', 'Healthy'),
@@ -77,16 +89,31 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Fetch current CA health from the API.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		async fetchStatus() {
 			const response = await axios.get(generateUrl('/apps/doriath/api/v1/ca/status'))
 			this.caStatus = response.data
 		},
+		/**
+		 * Admin action: retry a failed CA bootstrap, then refresh status.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		async retryBootstrap() {
 			this.loading = true
 			await axios.post(generateUrl('/apps/doriath/api/v1/ca/bootstrap-retry'))
 			await this.fetchStatus()
 			this.loading = false
 		},
+		/**
+		 * Admin action: force-renew the intermediate certificate, then refresh status.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		async forceRenewIntermediate() {
 			this.loading = true
 			await axios.post(generateUrl('/apps/doriath/api/v1/ca/renew-intermediate'))

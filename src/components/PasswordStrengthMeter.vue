@@ -44,11 +44,24 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Map the zxcvbn score (0-4) to a severity colour class for the bar.
+		 *
+		 * @return {string} Severity token.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		scoreClass() {
 			const classes = ['danger', 'danger', 'warning', 'success', 'success']
 			return classes[this.score] || 'danger'
 		},
 
+		/**
+		 * Human-readable strength feedback: minimum-length hint, zxcvbn
+		 * warning, or a strength label keyed by score.
+		 *
+		 * @return {string} Feedback text.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		feedbackText() {
 			if (!this.password) return ''
 			if (this.password.length < this.minLength) {
@@ -71,6 +84,11 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Debounce strength re-evaluation as the password changes (300ms).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		password() {
 			clearTimeout(this.debounceTimer)
 			this.debounceTimer = setTimeout(() => this.evaluate(), 300)
@@ -82,6 +100,12 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Run zxcvbn on the current password, store the score + feedback,
+		 * and emit a strength-change event with validity to the parent form.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		evaluate() {
 			if (!this.password) {
 				this.score = 0
