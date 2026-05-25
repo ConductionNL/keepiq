@@ -66,6 +66,8 @@ class EncryptionSuiteService
      * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
      *
      * @return EncryptionSuite
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function createSuite(
         string $ownerType,
@@ -107,6 +109,8 @@ class EncryptionSuiteService
      * @return EncryptionSuite
      *
      * @throws DoesNotExistException
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function revokeSuite(string $id, string $reason, string $revokedBy): EncryptionSuite
     {
@@ -137,6 +141,8 @@ class EncryptionSuiteService
      * @return EncryptionSuite
      *
      * @throws DoesNotExistException
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function reinstateSuite(string $id, string $reinstatedBy): EncryptionSuite
     {
@@ -187,6 +193,8 @@ class EncryptionSuiteService
      * @return EncryptionSuite
      *
      * @throws DoesNotExistException
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function markCompromised(string $id, string $compromisedBy): EncryptionSuite
     {
@@ -209,6 +217,8 @@ class EncryptionSuiteService
      * @param EncryptionSuite $suite The suite to update
      *
      * @return EncryptionSuite
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
     public function updateSuite(EncryptionSuite $suite): EncryptionSuite
     {

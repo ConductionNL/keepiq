@@ -57,6 +57,8 @@ class MigrationService
      * @param string $newSuiteId The new suite ID
      *
      * @return SuiteMigration
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
     public function initiateCompromiseRecovery(string $oldSuiteId, string $newSuiteId): SuiteMigration
     {
@@ -83,6 +85,8 @@ class MigrationService
      * @return SuiteMigration
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
     public function completeMigration(string $migrationId, bool $hasErrors=false): SuiteMigration
     {
@@ -121,6 +125,8 @@ class MigrationService
      * @return SuiteMigration
      *
      * @throws DoesNotExistException if no in-progress migration exists
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
     public function getInProgressMigration(string $ownerType, string $ownerId): SuiteMigration
     {
@@ -142,6 +148,8 @@ class MigrationService
      * @param string $ownerId   The owner ID
      *
      * @return bool
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
     public function isWriteLocked(string $ownerType, string $ownerId): bool
     {

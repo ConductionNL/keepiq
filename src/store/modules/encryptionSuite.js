@@ -17,6 +17,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 	actions: {
 		/**
 		 * Fetch the current user's active suite.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async fetchSuite() {
 			this.loading = true
@@ -35,6 +37,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * Create a new EncryptionSuite (first-time setup).
 		 *
 		 * @param {string} masterPassword
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async createSuite(masterPassword) {
 			this.loading = true
@@ -77,6 +80,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {string} oldPassword
 		 * @param {string} newPassword
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async changePassword(oldPassword, newPassword) {
 			const session = useSessionStore()
@@ -104,6 +108,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {string} oldPassword
 		 * @param {string} newPassword
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async initiateCompromiseRecovery(oldPassword, newPassword) {
 			const { publicKeyPem, privateKey } = await generateKeyPair()
@@ -149,6 +154,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * Revoke the current user's active encryption suite.
 		 *
 		 * @param {string} reason The reason for revocation
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async revokeSuite(reason) {
 			if (!this.currentSuite) {
@@ -165,6 +171,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 		/**
 		 * Check migration status.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async fetchMigrationStatus() {
 			try {

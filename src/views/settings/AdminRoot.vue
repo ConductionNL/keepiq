@@ -37,6 +37,12 @@ export default {
 			appVersion: loadState('doriath', 'version', 'Unknown'),
 		}
 	},
+	/**
+	 * Initialise the Pinia stores backing the admin-settings sections
+	 * before rendering them.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+	 */
 	async created() {
 		await initializeStores()
 		this.storesReady = true

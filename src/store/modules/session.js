@@ -32,6 +32,7 @@ export const useSessionStore = defineStore('session', {
 		 * Unlock the vault with the master password.
 		 *
 		 * @param {string} masterPassword
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.
@@ -63,6 +64,8 @@ export const useSessionStore = defineStore('session', {
 
 		/**
 		 * Lock the vault — clear all keys from memory.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		lock() {
 			this.cryptoKey = null
@@ -74,6 +77,8 @@ export const useSessionStore = defineStore('session', {
 
 		/**
 		 * Check if the session has timed out.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		checkTimeout() {
 			if (this.cryptoKey === null) {
@@ -87,6 +92,8 @@ export const useSessionStore = defineStore('session', {
 
 		/**
 		 * Update last activity timestamp.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		updateActivity() {
 			this.lastActivity = Date.now()

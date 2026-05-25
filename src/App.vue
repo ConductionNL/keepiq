@@ -224,23 +224,46 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Current Nextcloud user permissions, surfaced to the app shell.
+		 *
+		 * @return {Array} Permission list (empty when unauthenticated).
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		permissions() {
 			return window.OC?.currentUser?.permissions ?? []
 		},
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia session store with no domain logic.
+		 */
 		sessionStore() {
 			return useSessionStore()
 		},
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia encryption-suite store with no domain logic.
+		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
 		},
+		/**
+		 * Whether the vault is locked (no in-memory CryptoKey).
+		 *
+		 * @return {boolean} True when locked.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		isLocked() {
 			return this.sessionStore.isLocked
 		},
 	},
 
 	watch: {
-		// Lock-screen gating: whenever the session locks, force the
-		// user to the Lock route. Mirrors the legacy router guard.
+		/**
+		 * Lock-screen gating: whenever the session locks, force the
+		 * user to the Lock route. Mirrors the legacy router guard.
+		 *
+		 * @param {boolean} locked New lock state.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		isLocked(locked) {
 			if (locked && this.$route?.name !== 'Lock') {
 				this.$router.replace({
@@ -249,12 +272,17 @@ export default {
 				})
 			}
 		},
-		// Inverse direction: if the user navigates to `/lock` while
-		// still unlocked (the "Lock vault" footer menu entry), call
-		// `session.lock()` so LockScreen renders the unlock form
-		// rather than the redirect-back path. Skipped when there's a
-		// returnUrl query (that path is the post-lock redirect we
-		// just emitted above and the session is already locked).
+		/**
+		 * Inverse direction: if the user navigates to `/lock` while
+		 * still unlocked (the "Lock vault" footer menu entry), call
+		 * `session.lock()` so LockScreen renders the unlock form
+		 * rather than the redirect-back path. Skipped when there's a
+		 * returnUrl query (that path is the post-lock redirect we
+		 * just emitted above and the session is already locked).
+		 *
+		 * @param {object} to Target route.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		$route(to) {
 			if (
 				to?.name === 'Lock'
@@ -267,6 +295,12 @@ export default {
 		},
 	},
 
+	/**
+	 * Boot the app shell: initialise stores, redirect to the lock screen
+	 * when already locked, and start the session-timeout poll + listeners.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+	 */
 	async created() {
 		await initializeStores()
 		this.storesReady = true
@@ -295,6 +329,11 @@ export default {
 		window.addEventListener('beforeunload', this.handleBeforeUnload)
 	},
 
+	/**
+	 * Tear down the session-timeout poll and event listeners on unmount.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+	 */
 	beforeDestroy() {
 		if (this.timeoutInterval) {
 			clearInterval(this.timeoutInterval)
@@ -311,26 +350,50 @@ export default {
 		 *
 		 * @param {string} key Translation key.
 		 * @return {string} Translated string (or the key on miss).
+		 * @spec exclude Pure i18n wrapper around Nextcloud translate — no domain logic.
 		 */
 		translateForApp(key) {
 			return ncT('doriath', key)
 		},
 
+		/**
+		 * Re-check the session timeout when the tab regains focus
+		 * (covers laptop-suspend cases where timers stall).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		handleVisibilityChange() {
 			if (document.visibilityState === 'visible') {
 				this.sessionStore.checkTimeout()
 			}
 		},
 
+		/**
+		 * Best-effort clear of the in-memory key when the tab closes.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		handleBeforeUnload() {
 			this.sessionStore.lock()
 		},
 
+		/**
+		 * Persist the chosen session-timeout preference into the store
+		 * (mapping the enum to a millisecond duration).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		saveTimeout() {
 			const timeouts = { session: 0, '10min': 600000, '30min': 1800000 }
 			this.sessionStore.timeout = timeouts[this.sessionTimeout] || 600000
 		},
 
+		/**
+		 * Revoke the current user's encryption suite from the app shell,
+		 * surfacing success/error state to the UI.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		async handleRevoke() {
 			this.revoking = true
 			this.revokeError = null

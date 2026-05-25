@@ -46,6 +46,11 @@ export default {
 		}
 	},
 
+	/**
+	 * Load the current master-password policy floors from the API.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+	 */
 	async created() {
 		const response = await axios.get(generateUrl('/apps/doriath/api/settings'))
 		const settings = response.data
@@ -54,6 +59,12 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Persist the master-password policy, clamping length to 12-20 and
+		 * score to 3-4 (the app-minimum floors cannot be lowered below).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		async save() {
 			await axios.post(generateUrl('/apps/doriath/api/settings'), {
 				master_password_min_length: String(Math.min(20, Math.max(12, this.minLength))),

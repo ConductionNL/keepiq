@@ -50,6 +50,8 @@ class DashboardController extends Controller
      * @NoCSRFRequired
      *
      * @return TemplateResponse
+     *
+     * @spec exclude SPA-shell render — returns the index TemplateResponse with no domain logic; framework plumbing.
      */
     public function page(): TemplateResponse
     {
@@ -63,6 +65,8 @@ class DashboardController extends Controller
      * @NoCSRFRequired
      *
      * @return TemplateResponse
+     *
+     * @spec exclude Vue history-mode fallback — delegates to page(); pure framework plumbing, no domain logic.
      */
     public function catchAll(): TemplateResponse
     {
