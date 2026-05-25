@@ -15,7 +15,7 @@
 			"label": "Documentation",
 			"icon": "icon-info",
 			"href": "https://conduction.nl",
-			"section": "settings",
+			"section": "footer",
 			"order": 80
 		},
 		{
@@ -25,14 +25,6 @@
 			"route": "Lock",
 			"section": "settings",
 			"order": 90
-		},
-		{
-			"id": "Settings",
-			"label": "Settings",
-			"icon": "icon-settings",
-			"action": "user-settings",
-			"section": "settings",
-			"order": 99
 		}
 	],
 	"pages": [
