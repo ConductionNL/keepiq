@@ -83,6 +83,8 @@ class CertificateAuthorityService
      *  - Performs the full root + intermediate bootstrap when neither exists.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function bootstrap(): void
     {
@@ -176,6 +178,8 @@ class CertificateAuthorityService
      * Retry bootstrap (called from admin panel when CA is degraded).
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function retryBootstrap(): void
     {
@@ -189,6 +193,8 @@ class CertificateAuthorityService
      * @param string $commonName   The common name for the certificate (e.g. user ID or app name)
      *
      * @return string
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function signPublicKey(string $publicKeyPem, string $commonName='Doriath User'): string
     {
@@ -239,6 +245,8 @@ class CertificateAuthorityService
      * @param string $csrPem The PEM-encoded CSR
      *
      * @return string
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function signCsr(string $csrPem): string
     {
@@ -275,6 +283,8 @@ class CertificateAuthorityService
      * @return int Number of suites re-signed.
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function renewIntermediate(bool $forced=false): int
     {
@@ -316,6 +326,8 @@ class CertificateAuthorityService
      * Renew the root certificate and generate a new intermediate.
      *
      * @return int Number of suites re-signed.
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function renewRoot(): int
     {
@@ -390,6 +402,8 @@ class CertificateAuthorityService
      * Get the current CA status.
      *
      * @return array{status: string, root: ?array, intermediate: ?array}
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function getStatus(): array
     {

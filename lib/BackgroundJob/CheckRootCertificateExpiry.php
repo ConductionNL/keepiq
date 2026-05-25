@@ -62,6 +62,8 @@ class CheckRootCertificateExpiry extends TimedJob
      * @return void
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     protected function run($argument): void
     {

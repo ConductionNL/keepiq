@@ -59,6 +59,8 @@ class MigrationController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
     public function getStatus(): JSONResponse
     {
@@ -83,6 +85,8 @@ class MigrationController extends OCSController
      * @return JSONResponse
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
     public function complete(string $id, bool $hasErrors=false): JSONResponse
     {

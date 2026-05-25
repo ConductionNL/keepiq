@@ -14,11 +14,27 @@ export const useObjectStore = defineStore('object', {
 	}),
 
 	actions: {
+		/**
+		 * Set the OpenRegister object/schema base URLs for this store.
+		 *
+		 * @param {object} root0 Config.
+		 * @param {string} root0.baseUrl Objects API base URL.
+		 * @param {string} root0.schemaBaseUrl Schema API base URL.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		configure({ baseUrl, schemaBaseUrl }) {
 			this.baseUrl = baseUrl
 			this.schemaBaseUrl = schemaBaseUrl
 		},
 
+		/**
+		 * Register a register/schema pairing under a logical object type.
+		 *
+		 * @param {string} type Object type key.
+		 * @param {string} schema Schema slug/id.
+		 * @param {string} register Register slug/id.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		registerObjectType(type, schema, register) {
 			this.objectTypes[type] = { schema, register }
 			if (!this.objects[type]) {
@@ -26,6 +42,15 @@ export const useObjectStore = defineStore('object', {
 			}
 		},
 
+		/**
+		 * Fetch objects of a registered type from OpenRegister (feeds the
+		 * dashboard summary cards), applying query params.
+		 *
+		 * @param {string} type Registered object type.
+		 * @param {object} params Query parameters.
+		 * @return {Array} The fetched objects (empty on failure).
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		async fetchObjects(type, params = {}) {
 			if (!this.objectTypes[type]) {
 				console.warn(`Object type "${type}" is not registered`)

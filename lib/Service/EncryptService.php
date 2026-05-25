@@ -50,6 +50,8 @@ class EncryptService
      * @param string $publicKeyPem PEM-encoded public key or certificate
      *
      * @return string Base64-encoded ciphertext: [4-byte chunk count][512-byte blocks...]
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function rsaEncrypt(string $plaintext, string $publicKeyPem): string
     {
@@ -102,6 +104,8 @@ class EncryptService
      * @param string $key       Raw 32-byte AES key
      *
      * @return string Base64-encoded envelope
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function aesEncrypt(string $plaintext, string $key): string
     {
@@ -143,6 +147,8 @@ class EncryptService
      * @param string $password The master password (or passphrase)
      *
      * @return string Base64-encoded envelope with salt embedded
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function encryptPrivateKey(string $pem, string $password): string
     {
@@ -185,6 +191,8 @@ class EncryptService
      * @param string $salt     16-byte salt
      *
      * @return string Raw 32-byte key
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
      */
     public function deriveKey(string $password, string $salt): string
     {

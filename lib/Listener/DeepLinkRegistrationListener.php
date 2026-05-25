@@ -41,6 +41,8 @@ class DeepLinkRegistrationListener implements IEventListener
      * @param Event $event The event to handle
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-9
      */
     public function handle(Event $event): void
     {

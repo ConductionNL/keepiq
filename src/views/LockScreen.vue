@@ -98,9 +98,15 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia session store with no domain logic.
+		 */
 		sessionStore() {
 			return useSessionStore()
 		},
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia encryption-suite store with no domain logic.
+		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
 		},
@@ -113,6 +119,12 @@ export default {
 		isSecureContext() {
 			return window.isSecureContext
 		},
+		/**
+		 * Gate the first-time setup submit on matching, strength-valid passwords.
+		 *
+		 * @return {boolean} True when setup may be submitted.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		canSubmitSetup() {
 			return this.masterPassword
 				&& this.confirmPassword
@@ -121,12 +133,24 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the user's suite and migration status to decide between the
+	 * unlock, first-setup, and paused-migration screens.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+	 */
 	async created() {
 		await this.suiteStore.fetchSuite()
 		await this.suiteStore.fetchMigrationStatus()
 	},
 
 	methods: {
+		/**
+		 * Derive the AES key from the master password, unlock the vault,
+		 * and redirect to the return URL (or root).
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		async handleUnlock() {
 			this.loading = true
 			this.error = null
@@ -143,6 +167,12 @@ export default {
 			}
 		},
 
+		/**
+		 * First-time suite setup: create the encryption suite from the
+		 * new master password and navigate into the vault.
+		 *
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		async handleSetup() {
 			if (!this.canSubmitSetup) return
 
@@ -161,6 +191,13 @@ export default {
 			}
 		},
 
+		/**
+		 * Track password-strength validity emitted by the strength meter.
+		 *
+		 * @param {object} root0 Strength event.
+		 * @param {boolean} root0.isValid Whether the password meets the floor.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
 		onStrengthChange({ isValid }) {
 			this.strengthValid = isValid
 		},

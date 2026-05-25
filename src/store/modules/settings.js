@@ -15,6 +15,12 @@ export const useSettingsStore = defineStore('settings', {
 	},
 
 	actions: {
+		/**
+		 * Load app + user settings (and admin/openregister flags) from the API.
+		 *
+		 * @return {object|null} Settings payload, or null on failure.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		async fetchSettings() {
 			this.loading = true
 			try {
@@ -36,6 +42,13 @@ export const useSettingsStore = defineStore('settings', {
 			return null
 		},
 
+		/**
+		 * Persist settings to the API and update local state on success.
+		 *
+		 * @param {object} settings Settings to save.
+		 * @return {object|null} Updated settings, or null on failure.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 */
 		async saveSettings(settings) {
 			this.loading = true
 			try {
