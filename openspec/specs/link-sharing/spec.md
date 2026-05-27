@@ -7,6 +7,8 @@
 
 ## Purpose
 
+@e2e exclude No link-sharing UI is built in v0.1; all scenarios exercise Argon2id snapshot encryption and brute-force-protection logic at the API layer — covered by integration tests, not Playwright UI flows.
+
 A user can share a secret with an external party via a one-time or limited-use link. The link recipient enters a password to decrypt the secret. The sharing user sets how many times the link can be used; when the limit is reached, the share is automatically removed.
 
 This allows secrets to be securely handed off to parties without Nextcloud accounts.
