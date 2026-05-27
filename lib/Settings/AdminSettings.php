@@ -25,12 +25,16 @@ use OCA\Doriath\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
-use OCP\Settings\ISettings;
+use OCP\Settings\IDelegatedSettings;
 
 /**
  * Provides the admin settings form for the Doriath application.
+ *
+ * Implements IDelegatedSettings (extends ISettings) so that the
+ * #[AuthorizedAdminSetting(AdminSettings::class)] attribute on controller methods
+ * satisfies PHPStan's class-string<IDelegatedSettings> constraint.
  */
-class AdminSettings implements ISettings
+class AdminSettings implements IDelegatedSettings
 {
     /**
      * Constructor.
@@ -79,4 +83,32 @@ class AdminSettings implements ISettings
     {
         return 10;
     }//end getPriority()
+
+    /**
+     * Get the human-readable name of this settings panel, or null to show only
+     * the section name.
+     *
+     * Required by IDelegatedSettings (since NC 23).
+     *
+     * @return string|null
+     */
+    public function getName(): ?string
+    {
+        return null;
+    }//end getName()
+
+    /**
+     * Get a list of authorized app config keys this settings panel may modify.
+     *
+     * Returns all Doriath app config keys as authorised for delegated settings
+     * access. Required by IDelegatedSettings (since NC 23).
+     *
+     * @return array<string, list<string>>
+     */
+    public function getAuthorizedAppConfig(): array
+    {
+        return [
+            Application::APP_ID => ['/.*/'],
+        ];
+    }//end getAuthorizedAppConfig()
 }//end class

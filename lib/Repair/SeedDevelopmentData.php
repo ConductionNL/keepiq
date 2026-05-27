@@ -80,6 +80,9 @@ class SeedDevelopmentData implements IRepairStep
      *
      * @return void
      *
+     * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_pkey_export populates $privateKeyPem
+     *   via by-reference output param — PHPMD cannot trace by-ref semantics.
+     *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
      */
     public function run(IOutput $output): void

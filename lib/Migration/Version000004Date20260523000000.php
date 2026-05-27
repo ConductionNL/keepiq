@@ -140,6 +140,9 @@ class Version000004Date20260523000000 extends SimpleMigrationStep
      * @return null|ISchemaWrapper
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.StaticAccess)          Doctrine\DBAL\Types\Type::getType() is a static
+     *   factory required by the DBAL API for type resolution — no instance-based alternative
+     *   exists.
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {

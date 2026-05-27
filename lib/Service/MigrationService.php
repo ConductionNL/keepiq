@@ -142,6 +142,22 @@ class MigrationService
     }//end getInProgressMigration()
 
     /**
+     * Fetch a migration by its ID.
+     *
+     * @param string $migrationId The migration ID
+     *
+     * @return SuiteMigration
+     *
+     * @throws DoesNotExistException if no migration with that ID exists
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
+     */
+    public function getMigration(string $migrationId): SuiteMigration
+    {
+        return $this->mapper->findById($migrationId);
+    }//end getMigration()
+
+    /**
      * Check if an owner is write-locked due to an active migration.
      *
      * @param string $ownerType The owner type
