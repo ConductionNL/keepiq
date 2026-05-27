@@ -40,16 +40,19 @@ The admin settings page MUST start with a `CnVersionInfoCard` showing the app na
 The admin MUST be able to configure the minimum master password strength requirements.
 
 #### Scenario: Admin raises minimum length
+@e2e exclude The settings form is rendered in the admin page, but verifying rejection of a user's password requires running the lock-screen setup flow with a too-short password — cross-page flow that crosses into the encryption-suites spec; covered by PHPUnit SettingsControllerTest.
 - GIVEN an admin sets `min_password_length` to 16
 - WHEN a user creates or changes their master password
 - THEN the system MUST reject passwords shorter than 16 characters
 
 #### Scenario: Admin raises minimum score
+@e2e exclude Same cross-page dependency as admin-raises-minimum-length — password rejection is validated server-side; covered by PHPUnit SettingsControllerTest.
 - GIVEN an admin sets `min_password_score` to 4
 - WHEN a user creates or changes their master password
 - THEN the system MUST reject passwords with zxcvbn score below 4
 
 #### Scenario: Cannot lower below app minimum
+@e2e exclude Server-side validation of below-minimum values — the settings form API response is tested in PHPUnit; the UI does not surface a separate rejection message panel in v0.1.
 - GIVEN the hardcoded app minimum is length 12 and score 3
 - WHEN an admin attempts to set values below these minimums
 - THEN the system MUST reject the change
@@ -63,11 +66,13 @@ The admin settings MUST display the current CA status with health indicator.
 - THEN the CA section MUST show "Healthy" status with root and intermediate expiry dates
 
 #### Scenario: CA not configured
+@e2e exclude Requires the CA bootstrap to have failed — cannot reliably put the test environment into a CA-absent state without destroying the running instance's CA; covered by PHPUnit with a mocked CACertificateService.
 - GIVEN the CA bootstrap failed
 - WHEN admin views settings
 - THEN the CA section MUST show "Not configured" with a "Retry bootstrap" button
 
 #### Scenario: CA expiring soon
+@e2e exclude Requires the intermediate certificate to be within 30 days of expiry — cannot manipulate certificate timestamps in a running test environment without replacing the DB record; covered by PHPUnit with a mocked CA status.
 - GIVEN the intermediate certificate is within 30 days of expiry
 - WHEN admin views settings
 - THEN the CA section MUST show "Expiring soon" in warning state
@@ -76,6 +81,7 @@ The admin settings MUST display the current CA status with health indicator.
 The admin MUST be able to perform CA management actions.
 
 #### Scenario: Force intermediate renewal
+@e2e exclude The "Force renew intermediate" button is a V1 admin action; triggering it in a live test environment would revoke the running instance's intermediate certificate and re-sign all suites — destructive side-effect not safe in a shared dev environment; covered by PHPUnit CACertificateControllerTest.
 - GIVEN the admin clicks "Force renew intermediate"
 - WHEN the operation completes
 - THEN the old intermediate MUST be revoked
@@ -83,6 +89,7 @@ The admin MUST be able to perform CA management actions.
 - AND a confirmation MUST show how many suites were re-signed
 
 #### Scenario: Retry CA bootstrap
+@e2e exclude Requires the CA to be in "Not configured" state (see ca-not-configured exclude); covered by PHPUnit CACertificateControllerTest.
 - GIVEN the CA is in "Not configured" state
 - WHEN the admin clicks "Retry bootstrap"
 - THEN the system MUST attempt to generate root + intermediate certificates
@@ -91,11 +98,13 @@ The admin MUST be able to perform CA management actions.
 The admin settings MUST provide access to the application approval queue.
 
 #### Scenario: Pending applications exist
+@e2e exclude Requires seeding an Application row with status=pending — no registration UI built in v0.1 and no public test-seed API; covered by PHPUnit.
 - GIVEN one or more applications have `status = pending`
 - WHEN admin views settings
 - THEN the applications section MUST list pending applications with approve/reject actions
 
 #### Scenario: No pending applications
+@e2e exclude Application section rendering depends on the approval-queue UI sub-component not yet built in v0.1; the empty state is not rendered at the admin settings page in this version.
 - GIVEN no applications are pending
 - WHEN admin views settings
 - THEN the applications section MUST show an empty state

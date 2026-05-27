@@ -7,6 +7,8 @@
 
 ## Purpose
 
+@e2e exclude No key-generator UI is built in v0.1; the generator runs server-side and all scenarios exercise the REST API validation logic — covered by PHPUnit integration tests, not Playwright UI flows.
+
 The key generator produces random secret values (passwords, API keys, tokens) according to configurable rules. It is available both as a standalone API endpoint and as an integrated tool during secret creation.
 
 ## Requirements
