@@ -83,17 +83,20 @@ The user MUST be able to lock the vault immediately via a "Lock vault" button in
 The session timeout MUST be configurable per user (Nextcloud session duration, 10 minutes, or 30 minutes). The timeout is enforced client-side (the browser clears the key); the server has no session state to expire.
 
 #### Scenario: Session expiry
+@e2e exclude Pure client-side WebCrypto in-memory key expiry — the in-memory CryptoKey cannot be inspected or triggered via Playwright DOM interaction; covered by unit tests of the session-timeout timer logic.
 - GIVEN a user's Doriath session timeout has elapsed
 - WHEN any Doriath route is accessed
 - THEN the browser MUST clear the in-memory CryptoKey
 - AND redirect the user to the Doriath lock screen
 
 #### Scenario: All tabs closed
+@e2e exclude JavaScript memory is released by the runtime when tabs are closed — not observable or triggerable via Playwright DOM; covered by code review and unit tests.
 - GIVEN a user has Doriath open in one or more tabs
 - WHEN all tabs of that Nextcloud instance are closed
 - THEN the in-memory CryptoKey MUST be lost (JavaScript memory is released)
 
 #### Scenario: Cross-device isolation
+@e2e exclude Multi-device isolation is a property of browser-isolated WebCrypto key storage — requires two separate browser contexts and server-state verification; covered by architecture review (ADR-003) and PHPUnit, not a single-browser Playwright flow.
 - GIVEN a user has unlocked Doriath on device A
 - WHEN they open Doriath on device B
 - THEN device B MUST show the lock screen and require master password entry independently
@@ -116,6 +119,7 @@ Score meaning: 3 = strong (resists online attacks); 4 = very strong (resists off
 - THEN the system MUST reject it with feedback explaining why
 
 #### Scenario: Admin raises the floor
+@e2e exclude Admin floor configuration is tested within the admin-settings spec (admin raises minimum score/length) where the settings UI is the entry point; the lock-screen rejection itself is a server-side validation covered by PHPUnit.
 - GIVEN an admin has set minimum score to 4 and minimum length to 20
 - WHEN a user submits a password with score 3 or length below 20
 - THEN the system MUST reject it
@@ -124,6 +128,7 @@ Score meaning: 3 = strong (resists online attacks); 4 = very strong (resists off
 The system MUST allow a user to change their master password for routine hygiene reasons. In this case, the RSA key pair MUST remain unchanged — only the AES wrapping of the private key changes.
 
 #### Scenario: Routine password change
+@e2e exclude The password-change form is rendered inside the user-settings dialog; verifying that AES key re-wrapping succeeded requires reading back the encrypted private-key blob — a crypto-API assertion, not DOM-observable. The form's UI surface is captured in user-settings::user-opens-settings.
 - GIVEN a user provides their current master password and a new master password
 - AND the new master password meets the configured strength floor
 - WHEN the change is submitted
@@ -136,6 +141,7 @@ The system MUST allow a user to change their master password for routine hygiene
 When a user indicates their master password has been compromised, the system MUST initiate a full key rotation: a new RSA key pair is generated, all secrets are re-encrypted, and the old EncryptionSuite is flagged as compromised.
 
 #### Scenario: Compromise recovery initiated
+@e2e exclude Verifying RSA key pair generation, SuiteMigration record creation, and write-lock application requires inspecting server-side crypto state — not DOM-observable. The recovery UI form renders in the user-settings dialog and its presence is captured in user-settings::user-opens-settings.
 - GIVEN a user selects "my master password was leaked" as the reason for changing their password
 - AND provides their old master password and a new master password
 - WHEN the change is submitted
@@ -165,6 +171,7 @@ After all secrets are processed:
 - The write lock MUST be released
 
 #### Scenario: Tab closed mid-migration
+@e2e exclude The "migration paused" screen and resume flow are not yet built in v0.1; the SuiteMigration record and write-lock persistence are server-side API state, not DOM-observable via Playwright.
 - GIVEN a SuiteMigration is in progress
 - WHEN the user closes all browser tabs
 - THEN the write lock MUST remain active
@@ -175,6 +182,7 @@ After all secrets are processed:
 - AND only unmigrated secrets (still pointing to old_suite_id) MUST be processed
 
 #### Scenario: Secret migration fails
+@e2e exclude The per-secret migration-error UI and retry flow are not yet built in v0.1; migration_error is a server-side record field not visible in any rendered DOM.
 - GIVEN a secret fails re-encryption during migration
 - WHEN the migration run completes
 - THEN the failed secret MUST have `migration_error` set
@@ -182,6 +190,7 @@ After all secrets are processed:
 - AND retrying requires providing the old (compromised) master password again
 
 #### Scenario: Retry after session ends
+@e2e exclude The retry-after-failure flow (old master password prompt + possibly_compromised_at clearing) is not yet built in v0.1; all assertions require crypto-API or DB-level verification, not DOM.
 - GIVEN one or more secrets failed migration in a previous session
 - WHEN the user chooses to retry later
 - THEN the system MUST warn that secrets remaining on the compromised key are at increased risk
@@ -192,6 +201,7 @@ After all secrets are processed:
 The system MUST allow a user or administrator to revoke an EncryptionSuite. Revocation assumes the private key is intact but access should be blocked — it is an administrative action, not a key compromise. When a suite is revoked, all secrets encrypted with it become immediately inaccessible. The private key remains in the database, AES-encrypted, unchanged.
 
 #### Scenario: Revoke suite
+@e2e exclude No suite-revocation UI is built in v0.1; revocation is an API-only action verified by PHPUnit and the Postman collection.
 - GIVEN an EncryptionSuite is active
 - WHEN it is revoked by a user or admin with a reason
 - THEN its status MUST be set to `revoked` with `revoked_at`, `revoked_reason`, and `revoked_by`
@@ -202,6 +212,7 @@ The system MUST allow a user or administrator to revoke an EncryptionSuite. Revo
 The system MUST allow an administrator to reinstate a revoked EncryptionSuite. Because revocation does not assume key compromise, reinstatement re-signs the existing public key with the active CA intermediate — no new key pair is generated and no migration is required. The user's secrets become accessible again immediately after reinstatement, requiring only their master password.
 
 #### Scenario: Reinstate revoked suite
+@e2e exclude No suite-reinstatement UI is built in v0.1; reinstatement is an API-only action (POST /api/v1/suites/{id}/reinstate) verified by PHPUnit, not a Playwright flow.
 - GIVEN an EncryptionSuite has status `revoked`
 - WHEN an administrator reinstates it
 - THEN the system MUST sign a new certificate for the existing public key using the active CA intermediate
@@ -212,6 +223,7 @@ The system MUST allow an administrator to reinstate a revoked EncryptionSuite. B
 - AND the user MUST be able to access all their secrets by entering their master password — no migration required
 
 #### Scenario: Reinstatement not available for compromised suites
+@e2e exclude API-level error contract (HTTP 422 on POST /reinstate for compromised suite) — no UI surface; covered by PHPUnit.
 - GIVEN an EncryptionSuite has status `compromised`
 - WHEN an administrator attempts to reinstate it
 - THEN the system MUST return an error — compromised suites cannot be reinstated, only replaced via compromise recovery
@@ -232,12 +244,14 @@ When a certificate is re-signed during CA renewal, the original `commonName` MUS
 The system MUST generate a private CA (root + intermediate) on first setup if no CA has been configured. If bootstrap fails, the app MUST boot in a degraded state rather than failing installation.
 
 #### Scenario: CA bootstrap success
+@e2e exclude CA bootstrap runs during the Nextcloud repair/install step (PHP Repair class) — not a browser-visible action; verified by PHPUnit and by the CA-healthy state observable in admin-settings.
 - GIVEN Doriath has no CA certificates
 - WHEN the repair/install step runs
 - THEN the system MUST generate a root certificate (20-year lifetime) and a signing intermediate certificate (3-year lifetime)
 - AND store the intermediate's private key AES-encrypted in the database
 
 #### Scenario: CA bootstrap failure
+@e2e exclude Bootstrap failure triggers a degraded-state server response; the observable UI outcome ("not configured" + retry button) is covered by the admin-settings::ca-not-configured scenario.
 - GIVEN the bootstrap step encounters an error (database failure, insufficient entropy, etc.)
 - WHEN the repair/install step completes
 - THEN Doriath MUST install successfully but boot in a degraded state
@@ -265,11 +279,13 @@ The system MUST manage CA certificate expiry and renewal to ensure uninterrupted
 - On forced renewal: new intermediate generated, all active EncryptionSuites re-signed, old intermediate immediately flagged revoked (not retained for verification)
 
 #### Scenario: Intermediate auto-renewal
+@e2e exclude Auto-renewal runs as a background cron job — not triggered or observable via Playwright DOM; verified by PHPUnit and the CA-health state visible in admin-settings.
 - GIVEN the active intermediate certificate is approaching expiry
 - WHEN the background renewal job runs
 - THEN the system MUST generate a new intermediate, re-sign all active EncryptionSuites, and notify the admin
 
 #### Scenario: Forced intermediate renewal
+@e2e exclude The "Force renew intermediate" button and its result are tested within admin-settings::force-intermediate-renewal where the admin settings page is the UI entry point.
 - GIVEN an admin triggers forced intermediate renewal
 - WHEN the operation completes
 - THEN the old intermediate MUST be immediately revoked

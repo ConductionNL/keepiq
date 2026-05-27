@@ -7,6 +7,8 @@
 
 ## Purpose
 
+@e2e exclude No secrets CRUD UI is built in v0.1; all scenarios exercise the encrypted REST API or WebCrypto client logic — covered by integration tests (Postman/PHPUnit), not Playwright UI flows.
+
 Secrets are the core data entity in Doriath. A secret holds sensitive information (passwords, API keys, tokens, etc.) for a user or application. All sensitive fields are encrypted at rest using the owner's EncryptionSuite public certificate. Only the secret's name and URL are stored in plain text to allow listing and searching without decryption. Secrets can be organised into a folder hierarchy per user.
 
 ## Data Model

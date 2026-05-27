@@ -7,6 +7,8 @@
 
 ## Purpose
 
+@e2e exclude No application-management UI is built in v0.1; all scenarios exercise registration, CSR/key-pair handling, and JWT-auth API flows — covered by integration tests, not Playwright UI flows.
+
 External and internal applications can be registered in Doriath so that secrets can be attributed to them. An application gets its own EncryptionSuite, allowing secrets to be encrypted specifically for that application. The application can then retrieve and decrypt its own secrets via the API.
 
 Registration is open (anyone can register, even anonymously), but non-admin registrations go into a pending queue for approval by the vault administrator. Secrets cannot be attributed to a pending application.

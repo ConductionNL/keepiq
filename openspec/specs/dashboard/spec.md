@@ -37,6 +37,7 @@ The dashboard MUST display KPI summary cards showing the user's vault status at 
   - Compromised secrets count (where `possibly_compromised_at` is set, highlighted in warning color)
 
 #### Scenario: Empty vault
+@e2e exclude Dashboard in v0.1 renders placeholder/sample counts from the manifest — dynamic real vault stats (0 secrets → empty state with guidance) are not yet wired to any backend API; covered when the vault-stats API is implemented.
 - GIVEN a new user has just created their EncryptionSuite
 - WHEN they view the dashboard
 - THEN the system MUST show an empty state with guidance to create their first secret
@@ -45,12 +46,14 @@ The dashboard MUST display KPI summary cards showing the user's vault status at 
 The dashboard MUST display a prominent banner when a suite migration is in progress or completed with errors.
 
 #### Scenario: Migration in progress
+@e2e exclude Migration banner requires a SuiteMigration row in `in_progress` state — no API to seed this in v0.1 without running an actual compromise recovery; and the migration-resume screen it links to is not yet built.
 - GIVEN a `SuiteMigration` record exists with status `in_progress`
 - WHEN the user views the dashboard
 - THEN the system MUST display a warning banner: "Key migration in progress — {N} secrets remaining"
 - AND the banner MUST link to the migration resume screen
 
 #### Scenario: Migration completed with errors
+@e2e exclude Requires a SuiteMigration row with `completed_with_errors` and a failed-secrets list screen — neither seeding API nor the target screen is built in v0.1.
 - GIVEN a `SuiteMigration` record exists with status `completed_with_errors`
 - WHEN the user views the dashboard
 - THEN the system MUST display an error banner: "{N} secrets failed migration — retry required"
@@ -60,6 +63,7 @@ The dashboard MUST display a prominent banner when a suite migration is in progr
 The dashboard MUST display a pending application counter to vault administrators. Non-administrators MUST NOT see this counter.
 
 #### Scenario: Pending applications exist
+@e2e exclude Pending application counter requires seeding an Application row with status=pending via an unbuilt registration UI; the application-mgmt UI is not built in v0.1 and there is no public seed API.
 - GIVEN one or more applications are in `pending` status
 - WHEN a vault administrator views the dashboard
 - THEN the counter MUST show the number of pending registrations
@@ -69,11 +73,13 @@ The dashboard MUST display a pending application counter to vault administrators
 The admin dashboard MUST display a card showing the Certificate Authority health status.
 
 #### Scenario: CA healthy
+@e2e exclude CA health card on the dashboard is a V1 feature (not yet built) per the spec; the CA health display is tested in admin-settings::ca-healthy where the admin settings page is the built UI entry point.
 - GIVEN the CA is configured and no renewal is needed soon
 - WHEN an admin views the dashboard
 - THEN the CA card MUST show "Healthy" with the intermediate expiry date
 
 #### Scenario: CA action required
+@e2e exclude V1 dashboard CA card is not yet built; the admin-settings spec covers the observable CA-expiring-soon state in the admin settings page.
 - GIVEN the intermediate certificate is within 30 days of expiry
 - WHEN an admin views the dashboard
 - THEN the CA card MUST show "Expiring soon" in warning state
@@ -83,6 +89,7 @@ The admin dashboard MUST display a card showing the Certificate Authority health
 The dashboard SHOULD display a widget showing the user's most recently accessed secrets for quick navigation.
 
 #### Scenario: User with recent activity
+@e2e exclude V1 recently-accessed-secrets widget depends on an unbuilt access-log table and secrets-access flow; the widget body shows placeholder text in v0.1 only.
 - GIVEN a user has accessed secrets in the past 7 days
 - WHEN they view the dashboard
 - THEN the system SHOULD display up to 5 recently accessed secrets with name and type icon
