@@ -41,12 +41,14 @@ The app MUST provide user settings via `NcAppSettingsDialog` (NOT `NcDialog`), a
 The user MUST be able to configure how long their master password session stays active.
 
 #### Scenario: User selects 10-minute timeout
+@e2e exclude Verifying the AES-key clear after 10 minutes of inactivity requires waiting or fast-forwarding a timer — not reliably testable via Playwright DOM interaction; covered by unit tests of the session-timeout timer logic.
 - GIVEN a user sets session timeout to "10 minutes"
 - WHEN 10 minutes of inactivity pass
 - THEN the AES-derived key MUST be cleared from session
 - AND the user MUST be redirected to the lock screen
 
 #### Scenario: User selects Nextcloud session duration
+@e2e exclude Verifying that the Doriath session stays active while the NC session is valid requires inspecting the in-memory WebCrypto key lifetime — not DOM-observable; covered by unit tests of the session-timeout guard.
 - GIVEN a user sets session timeout to "Nextcloud session"
 - WHEN the Nextcloud session is valid
 - THEN the Doriath session remains active
@@ -55,11 +57,13 @@ The user MUST be able to configure how long their master password session stays 
 The user MUST be able to toggle notification categories on or off.
 
 #### Scenario: User disables share notifications
+@e2e exclude Verifying that the NC notification is suppressed after toggling off requires triggering a share (unbuilt sharing UI) and asserting no bell notification was sent — not a DOM-only Playwright flow; covered by PHPUnit (NotificationService tests).
 - GIVEN a user sets `notify_shares` to false
 - WHEN another user shares a secret with them
 - THEN the system MUST NOT send a notification for this event
 
 #### Scenario: Notification toggle respects categories
+@e2e exclude Category-level notification suppression (V1 feature, `notify_group_shares` unbuilt) requires triggering both share types and asserting delivery differences — covered by PHPUnit, not a single-browser Playwright flow.
 - GIVEN a user has `notify_shares` enabled but `notify_group_shares` disabled (V1)
 - WHEN a direct share is created → notification sent
 - AND when a group share addition occurs → notification NOT sent
@@ -68,6 +72,7 @@ The user MUST be able to toggle notification categories on or off.
 The user SHOULD be able to set a default secret type for new secrets.
 
 #### Scenario: User sets default to api_key
+@e2e exclude V1 feature — default_secret_type preference depends on the secret-creation UI (unbuilt in v0.1); verified via PHPUnit settings persistence test.
 - GIVEN a user sets `default_secret_type` to `api_key`
 - WHEN they create a new secret without specifying a type
 - THEN the type SHOULD default to `api_key` instead of `login`
@@ -76,6 +81,7 @@ The user SHOULD be able to set a default secret type for new secrets.
 The user SHOULD be able to choose between list view and folder tree view as their default vault display.
 
 #### Scenario: User prefers folder view
+@e2e exclude V1 feature — folder-view preference depends on the secrets-list/folder-tree UI (unbuilt in v0.1); verified via PHPUnit settings persistence test.
 - GIVEN a user sets `default_view` to `folders`
 - WHEN they navigate to the vault
 - THEN the system SHOULD display the folder tree view by default

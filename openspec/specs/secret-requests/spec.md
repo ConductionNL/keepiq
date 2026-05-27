@@ -7,6 +7,8 @@
 
 ## Purpose
 
+@e2e exclude No secret-request UI is built in v0.1; all scenarios exercise fill-in-link crypto flows and write-without-read API semantics — covered by integration tests, not Playwright UI flows.
+
 A user or application can request that a secret be filled in by an external party. Doriath creates an unfilled Secret (a placeholder with no key value) and generates a fill-in link. Anyone with the link can submit the secret values; the data is encrypted immediately on receipt using the requester's public certificate.
 
 Critically, the requester cannot read the submitted values after they have been stored. This is by design: it prevents the requester from becoming a point of leakage (e.g., an administrator requesting application secrets from a vendor — the vendor fills them in, and the administrator cannot see them).
