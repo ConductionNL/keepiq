@@ -25,9 +25,11 @@ use Exception;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\CertificateAuthorityService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
+use OCA\Doriath\Settings\AdminSettings;
 use RuntimeException;
 
 /**
@@ -53,8 +55,11 @@ class CACertificateController extends OCSController
     /**
      * Get CA health status.
      *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
      * @return JSONResponse
      */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function getStatus(): JSONResponse
     {
         return new JSONResponse(data: $this->caService->getStatus());
@@ -63,10 +68,13 @@ class CACertificateController extends OCSController
     /**
      * Retry CA bootstrap.
      *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function retryBootstrap(): JSONResponse
     {
         try {
@@ -83,10 +91,13 @@ class CACertificateController extends OCSController
     /**
      * Force renew the intermediate certificate.
      *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function renewIntermediate(): JSONResponse
     {
         try {
@@ -109,10 +120,13 @@ class CACertificateController extends OCSController
     /**
      * Trigger root renewal.
      *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function renewRoot(): JSONResponse
     {
         try {
