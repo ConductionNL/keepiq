@@ -26,7 +26,10 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\MigrationService;
+use OCA\Doriath\Settings\AdminSettings;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -66,9 +69,15 @@ class EncryptionSuiteController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
+    #[NoAdminRequired]
     public function index(): JSONResponse
     {
-        $userId = $this->userSession->getUser()->getUID();
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId = $user->getUID();
         $suites = $this->suiteService->getSuitesByOwner(ownerType: 'user', ownerId: $userId);
 
         return new JSONResponse(
@@ -90,8 +99,13 @@ class EncryptionSuiteController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
+    #[NoAdminRequired]
     public function show(string $id): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
             $suite = $this->suiteService->getSuite($id);
             $this->validateOwnership(suite: $suite);
@@ -116,11 +130,26 @@ class EncryptionSuiteController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
+    #[NoAdminRequired]
     public function create(
         string $publicKey,
         string $encryptedPrivateKey,
     ): JSONResponse {
-        $userId = $this->userSession->getUser()->getUID();
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId = $user->getUID();
+
+        // Reject suite creation while a key-compromise migration is in progress —
+        // the old suite must finish re-encrypting data before a new one is registered.
+        if ($this->migrationService->isWriteLocked(ownerType: 'user', ownerId: $userId) === true) {
+            return new JSONResponse(
+                data: ['message' => 'Write locked: an active key migration is in progress'],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
+        }
 
         try {
             $suite = $this->suiteService->createSuite(
@@ -150,6 +179,7 @@ class EncryptionSuiteController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
+    #[NoAdminRequired]
     public function updatePrivateKey(string $id, string $encryptedPrivateKey): JSONResponse
     {
         try {
@@ -179,9 +209,15 @@ class EncryptionSuiteController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
+    #[NoAdminRequired]
     public function revoke(string $id, string $reason): JSONResponse
     {
-        $userId = $this->userSession->getUser()->getUID();
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId = $user->getUID();
 
         try {
             $suite = $this->suiteService->revokeSuite(id: $id, reason: $reason, revokedBy: $userId);
@@ -199,10 +235,13 @@ class EncryptionSuiteController extends OCSController
      *
      * @param string $id The suite ID
      *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function reinstate(string $id): JSONResponse
     {
         $userId = $this->userSession->getUser()->getUID();
@@ -230,11 +269,17 @@ class EncryptionSuiteController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
      */
+    #[NoAdminRequired]
     public function compromiseRecovery(
         string $publicKey,
         string $encryptedPrivateKey,
     ): JSONResponse {
-        $userId = $this->userSession->getUser()->getUID();
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId = $user->getUID();
 
         try {
             $oldSuite = $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId);

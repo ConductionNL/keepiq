@@ -84,6 +84,12 @@ class CertificateAuthorityService
      *
      * @return void
      *
+     * @SuppressWarnings(PHPMD.UndefinedVariable) PHP's openssl_x509_export / openssl_pkey_export
+     *   populate $rootCertPem / $rootKeyPem via by-reference output params — PHPMD cannot trace
+     *   by-ref semantics and incorrectly reports these as undefined.
+     * @SuppressWarnings(PHPMD.StaticAccess)      Ramsey\Uuid\Uuid::uuid4() is a value-object factory;
+     *   its static API is the standard idiomatic usage — injection is not warranted.
+     *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function bootstrap(): void
@@ -108,12 +114,13 @@ class CertificateAuthorityService
                 $this->logger->warning(
                     'Doriath: detected partial CA state (root present, no active intermediate) — recovering intermediate'
                 );
-                $this->recoverIntermediate(root: $root);
+                $recovered = $this->recoverIntermediate(root: $root);
+                $this->logger->info('Doriath: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
                 $this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
                 $this->logger->info('Doriath: CA partial-state recovery complete');
                 return;
             }
-        }
+        }//end if
 
         $this->logger->info('Doriath: Bootstrapping Certificate Authority');
 
@@ -194,6 +201,9 @@ class CertificateAuthorityService
      *
      * @return string
      *
+     * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export populates $certPem via
+     *   by-reference output param — PHPMD cannot trace by-ref semantics.
+     *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
     public function signPublicKey(string $publicKeyPem, string $commonName='Doriath User'): string
@@ -245,6 +255,9 @@ class CertificateAuthorityService
      * @param string $csrPem The PEM-encoded CSR
      *
      * @return string
+     *
+     * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export populates $certPem via
+     *   by-reference output param — PHPMD cannot trace by-ref semantics.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
@@ -326,6 +339,12 @@ class CertificateAuthorityService
      * Renew the root certificate and generate a new intermediate.
      *
      * @return int Number of suites re-signed.
+     *
+     * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export / openssl_pkey_export
+     *   populate $rootCertPem / $rootKeyPem via by-reference output params — PHPMD cannot
+     *   trace by-ref semantics.
+     * @SuppressWarnings(PHPMD.StaticAccess)      Ramsey\Uuid\Uuid::uuid4() is a value-object
+     *   factory; its static API is the standard idiomatic usage.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
@@ -487,6 +506,12 @@ class CertificateAuthorityService
      * @param \OpenSSLCertificate|string $rootCert Root certificate
      *
      * @return CACertificate
+     *
+     * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export / openssl_pkey_export
+     *   populate $intCertPem / $intKeyPem via by-reference output params — PHPMD cannot
+     *   trace by-ref semantics.
+     * @SuppressWarnings(PHPMD.StaticAccess)      Ramsey\Uuid\Uuid::uuid4() is a value-object
+     *   factory; its static API is the standard idiomatic usage.
      */
     private function generateIntermediate($rootKey, $rootCert): CACertificate
     {
@@ -540,6 +565,13 @@ class CertificateAuthorityService
      * Re-sign all active EncryptionSuites with the current active intermediate.
      *
      * @return int Number of suites re-signed.
+     *
+     * @SuppressWarnings(PHPMD.UndefinedVariable)    openssl_x509_export populates $newCertPem via
+     *   by-reference output param — PHPMD cannot trace by-ref semantics.
+     * @SuppressWarnings(PHPMD.ErrorControlOperator) The @ on openssl_csr_new is intentional:
+     *   PHP emits a "Supplied key param is a public key" warning when passing a public-only
+     *   key during re-signing; we own the intent and silence the noise rather than suppressing
+     *   all PHP errors globally.
      */
     private function resignAllActiveSuites(): int
     {
