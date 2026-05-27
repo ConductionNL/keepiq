@@ -268,6 +268,20 @@ class EncryptionSuiteService
     }//end getSuitesByOwner()
 
     /**
+     * Count the total number of active (non-revoked, non-compromised) suites.
+     *
+     * Used by the metrics endpoint for Prometheus instrumentation.
+     *
+     * @return int
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+     */
+    public function countActiveSuites(): int
+    {
+        return count($this->mapper->findAllActive());
+    }//end countActiveSuites()
+
+    /**
      * Resolve the certificate common name for an owner.
      *
      * For users, returns the federated cloud ID (user@instance) if available,

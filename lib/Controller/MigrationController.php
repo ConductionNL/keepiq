@@ -23,9 +23,11 @@ namespace OCA\Doriath\Controller;
 
 use Exception;
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -39,15 +41,17 @@ class MigrationController extends OCSController
     /**
      * Constructor for MigrationController.
      *
-     * @param IRequest         $request          The request object
-     * @param MigrationService $migrationService The migration service
-     * @param IUserSession     $userSession      The user session
+     * @param IRequest               $request          The request object
+     * @param MigrationService       $migrationService The migration service
+     * @param EncryptionSuiteService $suiteService     The suite service (ownership check)
+     * @param IUserSession           $userSession      The user session
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private MigrationService $migrationService,
+        private EncryptionSuiteService $suiteService,
         private IUserSession $userSession,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -62,9 +66,15 @@ class MigrationController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
+    #[NoAdminRequired]
     public function getStatus(): JSONResponse
     {
-        $userId = $this->userSession->getUser()->getUID();
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId = $user->getUID();
 
         try {
             $migration = $this->migrationService->getInProgressMigration(ownerType: 'user', ownerId: $userId);
@@ -88,9 +98,26 @@ class MigrationController extends OCSController
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
+    #[NoAdminRequired]
     public function complete(string $id, bool $hasErrors=false): JSONResponse
     {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         try {
+            // Enforce ownership: verify the migration's old suite belongs to the
+            // current user before allowing them to mark it complete.
+            $migration = $this->migrationService->getMigration(migrationId: $id);
+            $oldSuite  = $this->suiteService->getSuite($migration->getOldSuiteId());
+            if ($oldSuite->getOwnerType() !== 'user' || $oldSuite->getOwnerId() !== $user->getUID()) {
+                return new JSONResponse(
+                    data: ['message' => 'Forbidden: migration does not belong to you'],
+                    statusCode: Http::STATUS_FORBIDDEN
+                );
+            }
+
             $migration = $this->migrationService->completeMigration(migrationId: $id, hasErrors: $hasErrors);
             return new JSONResponse(data: $migration->jsonSerialize());
         } catch (Exception $e) {
