@@ -53,10 +53,17 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	const page = await context.newPage()
 
 	await page.goto('/index.php/login')
-	await page.locator('input[name="user"]').fill(username)
-	await page.locator('input[name="password"]').fill(password)
-	await page.locator('button[type="submit"]').first().click()
-	await page.waitForSelector('#header, header.header', { timeout: 20_000 })
+	// NC32 renders a Vue login form — wait for the account input to appear (JS-driven).
+	await page.waitForSelector(
+		'input[name="user"], input[autocomplete="username"], [aria-label*="Account name" i], textbox',
+		{ timeout: 20_000 },
+	)
+	await page.locator(
+		'input[name="user"], input[autocomplete="username"], [placeholder=""], [aria-label*="Account name" i]',
+	).first().fill(username)
+	await page.locator('input[type="password"], input[name="password"]').first().fill(password)
+	await page.locator('button[type="submit"], button:has-text("Log in")').first().click()
+	await page.waitForSelector('#header, header.header, #header-menu-user-menu', { timeout: 25_000 })
 
 	const currentUrl = page.url()
 	if (/\/login(\?|$|\/)/.test(currentUrl)) {
