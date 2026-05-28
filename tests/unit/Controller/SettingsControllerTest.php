@@ -23,6 +23,8 @@ use OCA\Doriath\Controller\SettingsController;
 use OCA\Doriath\Service\SettingsService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -54,6 +56,13 @@ class SettingsControllerTest extends TestCase
     private SettingsService&MockObject $settingsService;
 
     /**
+     * Mock IUserSession.
+     *
+     * @var IUserSession&MockObject
+     */
+    private IUserSession&MockObject $userSession;
+
+    /**
      * Set up test fixtures.
      *
      * @return void
@@ -64,10 +73,16 @@ class SettingsControllerTest extends TestCase
 
         $this->request         = $this->createMock(IRequest::class);
         $this->settingsService = $this->createMock(SettingsService::class);
+        $this->userSession     = $this->createMock(IUserSession::class);
+
+        $user = $this->createMock(IUser::class);
+        $user->method('getUID')->willReturn('testuser');
+        $this->userSession->method('getUser')->willReturn($user);
 
         $this->controller = new SettingsController(
-            request: $this->request,
-            settingsService: $this->settingsService,
+            $this->request,
+            $this->settingsService,
+            $this->userSession,
         );
 
     }//end setUp()
