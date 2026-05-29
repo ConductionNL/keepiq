@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ConductionNL/doriath/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/doriath" alt="Latest release"></a>
-  <a href="https://github.com/ConductionNL/doriath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
-  <a href="https://github.com/ConductionNL/doriath/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/doriath/code-quality.yml?label=quality" alt="Code quality"></a>
+  <a href="https://codeberg.org/Conduction/doriath/releases"><img src="https://img.shields.io/gitea/v/release/Conduction/doriath?gitea_url=https%3A%2F%2Fcodeberg.org" alt="Latest release"></a>
+  <a href="https://codeberg.org/Conduction/doriath/src/branch/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
+  <a href="https://ci.codeberg.org/repos/Conduction/doriath"><img src="https://ci.codeberg.org/api/badges/Conduction/doriath/status.svg" alt="Code quality"></a>
 </p>
 
 ---
@@ -127,7 +127,7 @@ doriath/
 
 ```bash
 cd /var/www/html/custom_apps
-git clone https://github.com/ConductionNL/doriath.git doriath
+git clone https://codeberg.org/Conduction/doriath.git doriath
 cd doriath
 npm install && npm run build
 php occ app:enable doriath
@@ -211,7 +211,7 @@ docker exec nextcloud php occ app:enable doriath
 
 ## Related Apps
 
-- **[OpenConnector](https://github.com/ConductionNL/openconnector)** — Uses Doriath as a secret store for connector API credentials
+- **[OpenConnector](https://codeberg.org/Conduction/openconnector)** — Uses Doriath as a secret store for connector API credentials
 
 _Add related apps here as integrations are built._
 
