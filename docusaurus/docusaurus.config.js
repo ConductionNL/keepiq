@@ -29,7 +29,7 @@ const config = {
           path: '../docs',
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl:
-            'https://github.com/ConductionNL/doriath/tree/main/docusaurus/',
+            'https://codeberg.org/Conduction/doriath/src/branch/main/docusaurus/',
         },
         blog: false,
         theme: {
@@ -56,8 +56,8 @@ const config = {
             label: 'Documentation',
           },
           {
-            href: 'https://github.com/ConductionNL/doriath',
-            label: 'GitHub',
+            href: 'https://codeberg.org/Conduction/doriath',
+            label: 'Codeberg',
             position: 'right',
           },
         ],
@@ -78,8 +78,8 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'GitHub',
-                href: 'https://github.com/ConductionNL/doriath',
+                label: 'Codeberg',
+                href: 'https://codeberg.org/Conduction/doriath',
               },
             ],
           },
