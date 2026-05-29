@@ -12,7 +12,7 @@ group-level sharing policy, audit retention.
 > **This guide is being written as Doriath approaches feature-completeness.**
 > The structure below mirrors the journeydoc shape the rest of the
 > fleet uses; bodies and screenshots fill in once the admin UI lands.
-> Follow the [GitHub repository](https://github.com/ConductionNL/doriath)
+> Follow the [GitHub repository](https://codeberg.org/Conduction/doriath)
 > for milestones.
 
 ## Goal
@@ -54,4 +54,4 @@ entry appears in the audit log within a few seconds.
 ## Reference
 
 - [Open Doriath for the first time](../user/01-first-launch.md) — the user-side journey.
-- Doriath on GitHub: [ConductionNL/doriath](https://github.com/ConductionNL/doriath).
+- Doriath on GitHub: [ConductionNL/doriath](https://codeberg.org/Conduction/doriath).

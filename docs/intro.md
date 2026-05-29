@@ -9,7 +9,7 @@ An encrypted secrets manager for Nextcloud — password manager and key store fo
 > **Status: in development.** This documentation site is up so the
 > brand surface and the eventual journeydoc tutorials have a stable
 > home. Real walkthroughs and screenshots land as the UI lands. Watch
-> the [GitHub repository](https://github.com/ConductionNL/doriath) for
+> the [GitHub repository](https://codeberg.org/Conduction/doriath) for
 > milestones.
 
 ## What is Doriath?

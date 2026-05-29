@@ -1,4 +1,4 @@
-# Regression Report: doriath manifest-v2 + universal-widgets ([PR #40](https://github.com/ConductionNL/doriath/pull/40))
+# Regression Report: doriath manifest-v2 + universal-widgets ([PR #40](https://codeberg.org/Conduction/doriath/pulls/40))
 
 ## Overall: TWO NEW BLOCKING ISSUES + WIDGET-METADATA WARNING NOISE
 

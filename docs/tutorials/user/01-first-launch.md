@@ -12,7 +12,7 @@ navigation gives you, and how to add your first secret.
 > **This guide is being written as Doriath approaches feature-completeness.**
 > The structure below mirrors the journeydoc shape the rest of the
 > fleet uses; bodies and screenshots fill in once the UI lands. Follow
-> the [GitHub repository](https://github.com/ConductionNL/doriath) for
+> the [GitHub repository](https://codeberg.org/Conduction/doriath) for
 > milestones.
 
 ## Goal
@@ -55,4 +55,4 @@ gate — never inline as plain text.
 ## Reference
 
 - [Manage Doriath settings](../admin/01-admin-settings.md) — encryption setup, group-level policies.
-- Doriath on GitHub: [ConductionNL/doriath](https://github.com/ConductionNL/doriath).
+- Doriath on GitHub: [ConductionNL/doriath](https://codeberg.org/Conduction/doriath).

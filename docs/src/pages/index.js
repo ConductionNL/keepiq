@@ -239,7 +239,7 @@ export default function Home() {
           tagline={TAGLINE}
           primaryCta={{
             label: 'View on GitHub',
-            href: 'https://github.com/ConductionNL/doriath',
+            href: 'https://codeberg.org/Conduction/doriath',
             tone: 'orange',
           }}
           secondaryCta={{ label: 'Read the docs', href: '/docs/intro' }}

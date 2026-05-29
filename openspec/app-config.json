@@ -8,7 +8,7 @@
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "author": "Conduction B.V.",
-  "repository": "https://github.com/ConductionNL/doriath",
+  "repository": "https://codeberg.org/Conduction/doriath",
   "dependencies": {
     "requiresOpenRegister": false,
     "additionalCiApps": []
