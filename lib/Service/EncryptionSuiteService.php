@@ -26,7 +26,9 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
@@ -43,8 +45,9 @@ class EncryptionSuiteService
      * @param EncryptionSuiteMapper       $mapper      The encryption suite mapper
      * @param CertificateAuthorityService $caService   The CA service
      * @param IAppConfig                  $appConfig   The app config interface
-     * @param IUserManager                $userManager The user manager
-     * @param LoggerInterface             $logger      The logger interface
+     * @param IUserManager                $userManager     The user manager
+     * @param LoggerInterface             $logger          The logger interface
+     * @param IEventDispatcher            $eventDispatcher The event dispatcher
      *
      * @return void
      */
@@ -54,6 +57,7 @@ class EncryptionSuiteService
         private IAppConfig $appConfig,
         private IUserManager $userManager,
         private LoggerInterface $logger,
+        private IEventDispatcher $eventDispatcher,
     ) {
     }//end __construct()
 
@@ -128,6 +132,16 @@ class EncryptionSuiteService
         $this->mapper->update($suite);
 
         $this->logger->info("Doriath: EncryptionSuite {$id} revoked by {$revokedBy}: {$reason}");
+
+        // Notify sharing listeners so they can cascade-delete the owner's
+        // shares and finalise any temporary delegations (ADR-019 / D10).
+        $this->eventDispatcher->dispatchTyped(
+            new EncryptionSuiteRevokedEvent(
+                suiteId: $suite->getId(),
+                ownerType: $suite->getOwnerType(),
+                ownerId: $suite->getOwnerId()
+            )
+        );
 
         return $suite;
     }//end revokeSuite()
