@@ -85,7 +85,7 @@ class SecretDelegation extends Entity implements JsonSerializable
     /**
      * Whether the delegation is permanent (transfer of ownership).
      *
-     * @var bool
+     * @var boolean
      */
     protected bool $isPermanent = false;
 

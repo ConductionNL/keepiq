@@ -71,7 +71,7 @@ class GroupShareController extends OCSController
         $groupShares = $this->groupShareService->getGroupSharesForSecret($secretId, $userId);
 
         return new JSONResponse(
-            data: array_map(static fn ($gs) => $gs->jsonSerialize(), $groupShares)
+            data: array_map(static fn ($groupShare) => $groupShare->jsonSerialize(), $groupShares)
         );
     }//end index()
 
@@ -138,7 +138,7 @@ class GroupShareController extends OCSController
      * @return JSONResponse
      */
     #[NoAdminRequired]
-    public function approveNewMember(string $id, string $newMemberId, array $encryptedData = []): JSONResponse
+    public function approveNewMember(string $id, string $newMemberId, array $encryptedData=[]): JSONResponse
     {
         $userId = $this->requireUserId();
         if ($userId === null) {
@@ -184,7 +184,11 @@ class GroupShareController extends OCSController
     private function requireUserId(): ?string
     {
         $user = $this->userSession->getUser();
-        return ($user === null ? null : $user->getUID());
+        if ($user === null) {
+            return null;
+        }
+
+        return $user->getUID();
     }//end requireUserId()
 
     /**

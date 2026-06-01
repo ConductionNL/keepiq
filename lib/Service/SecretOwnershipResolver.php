@@ -45,8 +45,8 @@ class SecretOwnershipResolver
     /**
      * Constructor for SecretOwnershipResolver.
      *
-     * @param IDBConnection          $db              The database connection
-     * @param EncryptionSuiteMapper  $suiteMapper     The encryption suite mapper
+     * @param IDBConnection          $db               The database connection
+     * @param EncryptionSuiteMapper  $suiteMapper      The encryption suite mapper
      * @param SecretDelegationMapper $delegationMapper The delegation mapper
      *
      * @return void
@@ -81,7 +81,11 @@ class SecretOwnershipResolver
         $ownerId = $result->fetchOne();
         $result->closeCursor();
 
-        return ($ownerId === false ? null : (string) $ownerId);
+        if ($ownerId === false) {
+            return null;
+        }
+
+        return (string) $ownerId;
     }//end getOwnerId()
 
     /**
@@ -107,7 +111,11 @@ class SecretOwnershipResolver
         $suiteId = $result->fetchOne();
         $result->closeCursor();
 
-        return ($suiteId === false ? null : (string) $suiteId);
+        if ($suiteId === false) {
+            return null;
+        }
+
+        return (string) $suiteId;
     }//end getSuiteId()
 
     /**
@@ -120,12 +128,12 @@ class SecretOwnershipResolver
      */
     public function canManageShares(string $secretId, string $userId): bool
     {
-        $ownerId = $this->getOwnerId($secretId);
+        $ownerId = $this->getOwnerId(secretId: $secretId);
         if ($ownerId !== null && $ownerId === $userId) {
             return true;
         }
 
-        return $this->delegationMapper->findActiveBySecretAndUser($secretId, $userId) !== null;
+        return $this->delegationMapper->findActiveBySecretAndUser(secretId: $secretId, userId: $userId) !== null;
     }//end canManageShares()
 
     /**
@@ -138,7 +146,7 @@ class SecretOwnershipResolver
      */
     public function isOwner(string $secretId, string $userId): bool
     {
-        return $this->getOwnerId($secretId) === $userId;
+        return $this->getOwnerId(secretId: $secretId) === $userId;
     }//end isOwner()
 
     /**

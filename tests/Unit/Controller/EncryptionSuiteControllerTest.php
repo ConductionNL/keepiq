@@ -81,6 +81,9 @@ class EncryptionSuiteControllerTest extends TestCase
         $this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
         $this->migrationService = $this->createMock(originalClassName: MigrationService::class);
         $this->userSession      = $this->createMock(originalClassName: IUserSession::class);
+        $eventDispatcher        = $this->createMock(
+            originalClassName: \OCP\EventDispatcher\IEventDispatcher::class
+        );
 
         $user = $this->createMock(originalClassName: IUser::class);
         $user->method('getUID')->willReturn('testuser');
@@ -91,6 +94,7 @@ class EncryptionSuiteControllerTest extends TestCase
             suiteService: $this->suiteService,
             migrationService: $this->migrationService,
             userSession: $this->userSession,
+            eventDispatcher: $eventDispatcher,
         );
     }//end setUp()
 

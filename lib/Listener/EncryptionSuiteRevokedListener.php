@@ -69,11 +69,11 @@ class EncryptionSuiteRevokedListener implements IEventListener
         $ownerId = $event->getOwnerId();
 
         // 1. Cascade-delete all shares targeting this user (their copies are
-        //    now undecryptable). Original secrets of other owners are untouched.
+        // now undecryptable). Original secrets of other owners are untouched.
         $this->shareService->deleteAllSharesForTargetUser($ownerId);
 
         // 2. Make temporary delegations this user granted permanent, and drop
-        //    their now-inaccessible original copies.
+        // their now-inaccessible original copies.
         $this->delegationService->makePermanent($ownerId);
     }//end handle()
 }//end class

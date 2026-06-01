@@ -24,6 +24,7 @@ namespace OCA\Doriath\Controller;
 use Exception;
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\MigrationService;
 use OCA\Doriath\Settings\AdminSettings;
@@ -32,6 +33,7 @@ use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;
 use OCP\IUserSession;
 use RuntimeException;
@@ -48,6 +50,7 @@ class EncryptionSuiteController extends OCSController
      * @param EncryptionSuiteService $suiteService     The suite service
      * @param MigrationService       $migrationService The migration service
      * @param IUserSession           $userSession      The user session
+     * @param IEventDispatcher       $eventDispatcher  The event dispatcher
      *
      * @return void
      */
@@ -56,6 +59,7 @@ class EncryptionSuiteController extends OCSController
         private EncryptionSuiteService $suiteService,
         private MigrationService $migrationService,
         private IUserSession $userSession,
+        private IEventDispatcher $eventDispatcher,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -221,6 +225,17 @@ class EncryptionSuiteController extends OCSController
 
         try {
             $suite = $this->suiteService->revokeSuite(id: $id, reason: $reason, revokedBy: $userId);
+
+            // Cascade the revocation into the sharing layer (delete the owner's
+            // shares, finalise their temporary delegations — D10) via a listener.
+            $this->eventDispatcher->dispatchTyped(
+                new EncryptionSuiteRevokedEvent(
+                    suiteId: $suite->getId(),
+                    ownerType: $suite->getOwnerType(),
+                    ownerId: $suite->getOwnerId()
+                )
+            );
+
             return new JSONResponse(data: $suite->jsonSerialize());
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(

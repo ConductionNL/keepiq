@@ -107,15 +107,12 @@ class DoriathNotifier implements INotifier
 
             case 'share_request_result':
                 $approved = ($params['approved'] ?? false) === true;
+                $message  = $l->t('Your request to share "%1$s" was denied', [$secret]);
                 if ($approved === true) {
-                    $notification->setParsedSubject(
-                        $l->t('Your request to share "%1$s" was approved', [$secret])
-                    );
-                } else {
-                    $notification->setParsedSubject(
-                        $l->t('Your request to share "%1$s" was denied', [$secret])
-                    );
+                    $message = $l->t('Your request to share "%1$s" was approved', [$secret]);
                 }
+
+                $notification->setParsedSubject($message);
                 break;
 
             case 'group_member_added':

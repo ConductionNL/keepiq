@@ -26,6 +26,7 @@ namespace OCA\Doriath\Service;
 use DateTime;
 use OCA\Doriath\Db\GroupShare;
 use OCA\Doriath\Db\GroupShareMapper;
+use OCA\Doriath\Db\SecretShare;
 use OCA\Doriath\Db\SecretShareMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
@@ -85,7 +86,7 @@ class GroupShareService
             throw new RuntimeException('Group not found');
         }
 
-        $eligible = $this->resolveEligibleMembers($group->getUsers(), $userId);
+        $eligible = $this->resolveEligibleMembers(users: $group->getUsers(), ownerId: $userId);
 
         $groupShare = new GroupShare();
         $groupShare->setId(Uuid::uuid4()->toString());
@@ -244,7 +245,7 @@ class GroupShareService
 
         $copyId = $this->copyGateway->createCopy($newMemberId, $suite->getId(), $encryptedData);
 
-        $share = new \OCA\Doriath\Db\SecretShare();
+        $share = new SecretShare();
         $share->setId(Uuid::uuid4()->toString());
         $share->setSourceSecretId($secretId);
         $share->setTargetUserId($newMemberId);

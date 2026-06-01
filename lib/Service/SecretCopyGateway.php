@@ -78,9 +78,9 @@ class SecretCopyGateway
      * @param string              $targetUserId The recipient user ID
      * @param string              $suiteId      The recipient's encryption suite ID
      * @param array<string,mixed> $encrypted    Encrypted blobs + metadata: keys
-     *                                           encrypted_key, encrypted_login,
-     *                                           encrypted_additional_fields, name,
-     *                                           url, type_id, folder_id
+     *                                          encrypted_key, encrypted_login,
+     *                                          encrypted_additional_fields, name,
+     *                                          url, type_id, folder_id
      *
      * @return string|null The new secret copy ID, or null when the secrets
      *                     table is not yet available
@@ -129,8 +129,8 @@ class SecretCopyGateway
      *
      * @param string              $secretId  The secret copy ID
      * @param array<string,mixed> $encrypted Encrypted blobs: encrypted_key,
-     *                                        encrypted_login,
-     *                                        encrypted_additional_fields
+     *                                       encrypted_login,
+     *                                       encrypted_additional_fields
      *
      * @return void
      */
@@ -172,4 +172,34 @@ class SecretCopyGateway
             ->where($qb->expr()->eq('id', $qb->createNamedParameter($secretId)));
         $qb->executeStatement();
     }//end deleteCopy()
+
+    /**
+     * Read the updated_at timestamp of a secret, for optimistic locking.
+     *
+     * @param string $secretId The secret ID
+     *
+     * @return string|null The updated_at value, or null when unavailable/missing
+     */
+    public function getUpdatedAt(string $secretId): ?string
+    {
+        if ($this->isAvailable() === false || $secretId === '') {
+            return null;
+        }
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('updated_at')
+            ->from(self::SECRETS_TABLE)
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($secretId)))
+            ->setMaxResults(1);
+
+        $result    = $qb->executeQuery();
+        $updatedAt = $result->fetchOne();
+        $result->closeCursor();
+
+        if ($updatedAt === false) {
+            return null;
+        }
+
+        return (string) $updatedAt;
+    }//end getUpdatedAt()
 }//end class

@@ -71,7 +71,7 @@ class DelegationController extends OCSController
         $delegations = $this->delegationService->getDelegationsForSecret($secretId, $userId);
 
         return new JSONResponse(
-            data: array_map(static fn ($d) => $d->jsonSerialize(), $delegations)
+            data: array_map(static fn ($delegation) => $delegation->jsonSerialize(), $delegations)
         );
     }//end index()
 
@@ -130,7 +130,11 @@ class DelegationController extends OCSController
     private function requireUserId(): ?string
     {
         $user = $this->userSession->getUser();
-        return ($user === null ? null : $user->getUID());
+        if ($user === null) {
+            return null;
+        }
+
+        return $user->getUID();
     }//end requireUserId()
 
     /**

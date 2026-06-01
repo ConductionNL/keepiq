@@ -149,9 +149,9 @@ class SecretShareMapper extends QBMapper
      */
     public function deleteBySourceSecret(string $sourceSecretId): array
     {
-        $shares = $this->findBySourceSecret($sourceSecretId);
+        $shares = $this->findBySourceSecret(sourceSecretId: $sourceSecretId);
         foreach ($shares as $share) {
-            $this->delete($share);
+            $this->delete(entity: $share);
         }
 
         return $shares;
@@ -166,9 +166,9 @@ class SecretShareMapper extends QBMapper
      */
     public function deleteByTargetUser(string $targetUserId): array
     {
-        $shares = $this->findByTargetUser($targetUserId);
+        $shares = $this->findByTargetUser(targetUserId: $targetUserId);
         foreach ($shares as $share) {
-            $this->delete($share);
+            $this->delete(entity: $share);
         }
 
         return $shares;
@@ -183,9 +183,9 @@ class SecretShareMapper extends QBMapper
      */
     public function deleteByGroupShare(string $groupShareId): array
     {
-        $shares = $this->findByGroupShare($groupShareId);
+        $shares = $this->findByGroupShare(groupShareId: $groupShareId);
         foreach ($shares as $share) {
-            $this->delete($share);
+            $this->delete(entity: $share);
         }
 
         return $shares;

@@ -41,11 +41,11 @@ class ShareService
     /**
      * Constructor for ShareService.
      *
-     * @param SecretShareMapper        $shareMapper        The secret share mapper
-     * @param SecretOwnershipResolver  $ownership          The ownership resolver
-     * @param SecretCopyGateway        $copyGateway        The secret copy gateway
-     * @param NotificationService      $notificationService The notification service
-     * @param IDBConnection            $db                 The database connection
+     * @param SecretShareMapper       $shareMapper         The secret share mapper
+     * @param SecretOwnershipResolver $ownership           The ownership resolver
+     * @param SecretCopyGateway       $copyGateway         The secret copy gateway
+     * @param NotificationService     $notificationService The notification service
+     * @param IDBConnection           $db                  The database connection
      *
      * @return void
      */
@@ -77,7 +77,7 @@ class ShareService
         string $targetUserId,
         array $encryptedData,
         string $userId,
-        ?string $groupShareId = null,
+        ?string $groupShareId=null,
     ): SecretShare {
         if ($targetUserId === $userId) {
             throw new InvalidArgumentException('A user cannot share a secret with themselves');
@@ -124,10 +124,10 @@ class ShareService
     /**
      * Create several shares for a group expansion within one transaction.
      *
-     * @param string                    $sourceSecretId The original secret ID
-     * @param array<int,array<string,mixed>> $shares    List of {targetUserId, encryptedData}
-     * @param string                    $groupShareId   The owning group share ID
-     * @param string                    $userId         The acting user
+     * @param string                         $sourceSecretId The original secret ID
+     * @param array<int,array<string,mixed>> $shares         List of {targetUserId, encryptedData}
+     * @param string                         $groupShareId   The owning group share ID
+     * @param string                         $userId         The acting user
      *
      * @return SecretShare[]
      */
@@ -159,13 +159,13 @@ class ShareService
                 }
 
                 $created[] = $this->createShare(
-                    $sourceSecretId,
-                    $targetUserId,
-                    (array) ($share['encryptedData'] ?? []),
-                    $userId,
-                    $groupShareId
+                    sourceSecretId: $sourceSecretId,
+                    targetUserId: $targetUserId,
+                    encryptedData: (array) ($share['encryptedData'] ?? []),
+                    userId: $userId,
+                    groupShareId: $groupShareId
                 );
-            }
+            }//end foreach
 
             $this->db->commit();
         } catch (\Throwable $e) {
@@ -241,22 +241,20 @@ class ShareService
         string $sourceSecretId,
         array $updates,
         string $userId,
-        ?string $expectedUpdatedAt = null,
+        ?string $expectedUpdatedAt=null,
     ): int {
-        $authorized = $this->ownership->canManageShares($sourceSecretId, $userId);
-        if ($authorized === false) {
-            // A recipient may sync their own and sibling copies.
-            $recipientShares = $this->shareMapper->findByTargetUser($userId);
-            foreach ($recipientShares as $rShare) {
-                if ($rShare->getSourceSecretId() === $sourceSecretId) {
-                    $authorized = true;
-                    break;
-                }
-            }
+        if ($this->canSyncSecret(sourceSecretId: $sourceSecretId, userId: $userId) === false) {
+            throw new RuntimeException('Not authorized to sync this secret');
         }
 
-        if ($authorized === false) {
-            throw new RuntimeException('Not authorized to sync this secret');
+        // Optimistic lock: reject the sync if the source secret has changed
+        // since the caller read it (concurrent update). The browser retries by
+        // re-reading and re-encrypting.
+        if ($expectedUpdatedAt !== null) {
+            $current = $this->copyGateway->getUpdatedAt(secretId: $sourceSecretId);
+            if ($current !== null && $current !== $expectedUpdatedAt) {
+                throw new RuntimeException('Concurrent update detected; retry the sync');
+            }
         }
 
         $count = 0;
@@ -268,7 +266,7 @@ class ShareService
                     continue;
                 }
 
-                $this->copyGateway->updateCopyBlobs($secretId, $update);
+                $this->copyGateway->updateCopyBlobs(secretId: $secretId, encrypted: $update);
                 $count++;
             }
 
@@ -280,6 +278,30 @@ class ShareService
 
         return $count;
     }//end syncUpdate()
+
+    /**
+     * Whether a user may sync a shared secret (owner, delegate or recipient).
+     *
+     * @param string $sourceSecretId The original secret ID
+     * @param string $userId         The acting user
+     *
+     * @return bool
+     */
+    private function canSyncSecret(string $sourceSecretId, string $userId): bool
+    {
+        if ($this->ownership->canManageShares(secretId: $sourceSecretId, userId: $userId) === true) {
+            return true;
+        }
+
+        // A recipient may sync their own and sibling copies.
+        foreach ($this->shareMapper->findByTargetUser(targetUserId: $userId) as $recipientShare) {
+            if ($recipientShare->getSourceSecretId() === $sourceSecretId) {
+                return true;
+            }
+        }
+
+        return false;
+    }//end canSyncSecret()
 
     /**
      * Cascade-delete every share artefact for a secret (used on secret delete).

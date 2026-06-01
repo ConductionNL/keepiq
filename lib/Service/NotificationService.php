@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use DateTime;
 use OCA\Doriath\AppInfo\Application;
 use OCP\IConfig;
 use OCP\Notification\IManager;
@@ -38,11 +39,11 @@ class NotificationService
      * @var array<string,string>
      */
     public const SUBJECT_SETTING_MAP = [
-        'secret_shared'         => 'notify_shares',
-        'share_request'         => 'notify_shares',
-        'share_request_result'  => 'notify_shares',
-        'group_member_added'    => 'notify_group_shares',
-        'secret_compromised'    => 'notify_security',
+        'secret_shared'        => 'notify_shares',
+        'share_request'        => 'notify_shares',
+        'share_request_result' => 'notify_shares',
+        'group_member_added'   => 'notify_group_shares',
+        'secret_compromised'   => 'notify_security',
     ];
 
     /**
@@ -95,16 +96,16 @@ class NotificationService
      *
      * @return void
      */
-    public function notify(string $subject, string $recipientId, array $params, ?string $objectId = null): void
+    public function notify(string $subject, string $recipientId, array $params, ?string $objectId=null): void
     {
-        if ($this->isEnabled($subject, $recipientId) === false) {
+        if ($this->isEnabled(subject: $subject, recipientId: $recipientId) === false) {
             return;
         }
 
         $notification = $this->manager->createNotification();
         $notification->setApp(Application::APP_ID)
             ->setUser($recipientId)
-            ->setDateTime(new \DateTime())
+            ->setDateTime(new DateTime())
             ->setObject('secret', ($objectId ?? $subject))
             ->setSubject($subject, $params);
 

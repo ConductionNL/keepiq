@@ -40,9 +40,9 @@ class ShareController extends OCSController
     /**
      * Constructor for ShareController.
      *
-     * @param IRequest      $request      The request object
-     * @param ShareService  $shareService The share service
-     * @param IUserSession  $userSession  The user session
+     * @param IRequest     $request      The request object
+     * @param ShareService $shareService The share service
+     * @param IUserSession $userSession  The user session
      *
      * @return void
      */
@@ -72,7 +72,7 @@ class ShareController extends OCSController
         $shares = $this->shareService->getSharesForSecret($sourceSecretId, $userId);
 
         return new JSONResponse(
-            data: array_map(static fn ($s) => $s->jsonSerialize(), $shares)
+            data: array_map(static fn ($share) => $share->jsonSerialize(), $shares)
         );
     }//end index()
 
@@ -86,7 +86,7 @@ class ShareController extends OCSController
      * @return JSONResponse
      */
     #[NoAdminRequired]
-    public function create(string $sourceSecretId, string $targetUserId, array $encryptedData = []): JSONResponse
+    public function create(string $sourceSecretId, string $targetUserId, array $encryptedData=[]): JSONResponse
     {
         $userId = $this->requireUserId();
         if ($userId === null) {
@@ -113,7 +113,7 @@ class ShareController extends OCSController
      * @return JSONResponse
      */
     #[NoAdminRequired]
-    public function createBatch(string $sourceSecretId, array $shares = [], string $groupShareId = ''): JSONResponse
+    public function createBatch(string $sourceSecretId, array $shares=[], string $groupShareId=''): JSONResponse
     {
         $userId = $this->requireUserId();
         if ($userId === null) {
@@ -123,7 +123,7 @@ class ShareController extends OCSController
         try {
             $created = $this->shareService->createBatchShares($sourceSecretId, $shares, $groupShareId, $userId);
             return new JSONResponse(
-                data: array_map(static fn ($s) => $s->jsonSerialize(), $created),
+                data: array_map(static fn ($share) => $share->jsonSerialize(), $created),
                 statusCode: Http::STATUS_CREATED
             );
         } catch (RuntimeException $e) {
@@ -164,7 +164,7 @@ class ShareController extends OCSController
      * @return JSONResponse
      */
     #[NoAdminRequired]
-    public function sync(string $id, array $updates = [], ?string $expectedUpdatedAt = null): JSONResponse
+    public function sync(string $id, array $updates=[], ?string $expectedUpdatedAt=null): JSONResponse
     {
         $userId = $this->requireUserId();
         if ($userId === null) {
@@ -187,7 +187,11 @@ class ShareController extends OCSController
     private function requireUserId(): ?string
     {
         $user = $this->userSession->getUser();
-        return ($user === null ? null : $user->getUID());
+        if ($user === null) {
+            return null;
+        }
+
+        return $user->getUID();
     }//end requireUserId()
 
     /**

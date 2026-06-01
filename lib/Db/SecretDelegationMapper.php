@@ -152,9 +152,9 @@ class SecretDelegationMapper extends QBMapper
      */
     public function deleteBySecret(string $secretId): array
     {
-        $delegations = $this->findBySecret($secretId);
+        $delegations = $this->findBySecret(secretId: $secretId);
         foreach ($delegations as $delegation) {
-            $this->delete($delegation);
+            $this->delete(entity: $delegation);
         }
 
         return $delegations;
@@ -169,12 +169,12 @@ class SecretDelegationMapper extends QBMapper
      */
     public function makePermanentByOriginalOwner(string $originalOwnerId): array
     {
-        $delegations = $this->findTemporaryByOriginalOwner($originalOwnerId);
+        $delegations = $this->findTemporaryByOriginalOwner(originalOwnerId: $originalOwnerId);
         $now         = new DateTime();
         foreach ($delegations as $delegation) {
             $delegation->setIsPermanent(true);
             $delegation->setMadePermanentAt($now);
-            $this->update($delegation);
+            $this->update(entity: $delegation);
         }
 
         return $delegations;

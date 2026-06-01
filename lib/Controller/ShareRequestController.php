@@ -94,7 +94,7 @@ class ShareRequestController extends OCSController
         string $sourceSecretId,
         string $targetUserId,
         string $requesterId,
-        array $encryptedData = [],
+        array $encryptedData=[],
     ): JSONResponse {
         $userId = $this->requireUserId();
         if ($userId === null) {
@@ -144,7 +144,11 @@ class ShareRequestController extends OCSController
     private function requireUserId(): ?string
     {
         $user = $this->userSession->getUser();
-        return ($user === null ? null : $user->getUID());
+        if ($user === null) {
+            return null;
+        }
+
+        return $user->getUID();
     }//end requireUserId()
 
     /**

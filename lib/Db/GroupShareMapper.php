@@ -132,9 +132,9 @@ class GroupShareMapper extends QBMapper
      */
     public function deleteBySecret(string $secretId): array
     {
-        $groupShares = $this->findBySecret($secretId);
+        $groupShares = $this->findBySecret(secretId: $secretId);
         foreach ($groupShares as $groupShare) {
-            $this->delete($groupShare);
+            $this->delete(entity: $groupShare);
         }
 
         return $groupShares;
