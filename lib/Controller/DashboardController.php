@@ -22,9 +22,15 @@ declare(strict_types=1);
 namespace OCA\Doriath\Controller;
 
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Service\DashboardService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Controller for the main Doriath dashboard page.
@@ -34,12 +40,19 @@ class DashboardController extends Controller
     /**
      * Constructor for the DashboardController.
      *
-     * @param IRequest $request The request object
+     * @param IRequest         $request          The request object
+     * @param DashboardService $dashboardService The dashboard aggregation service
+     * @param IUserSession     $userSession      The user session
+     * @param IGroupManager    $groupManager     The group manager
      *
      * @return void
      */
-    public function __construct(IRequest $request)
-    {
+    public function __construct(
+        IRequest $request,
+        private DashboardService $dashboardService,
+        private IUserSession $userSession,
+        private IGroupManager $groupManager,
+    ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
@@ -72,4 +85,34 @@ class DashboardController extends Controller
     {
         return $this->page();
     }//end catchAll()
+
+    /**
+     * Return the aggregated vault summary for the current user.
+     *
+     * Determines admin status server-side (never trusted from the
+     * client) and delegates aggregation to the DashboardService. The
+     * endpoint is per-user: the summary only ever describes the
+     * authenticated caller's own vault.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/specs/dashboard/spec.md
+     */
+    #[NoAdminRequired]
+    public function summary(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId  = $user->getUID();
+        $isAdmin = $this->groupManager->isAdmin($userId);
+
+        return new JSONResponse(
+            data: $this->dashboardService->fetchSummary($userId, $isAdmin)
+        );
+    }//end summary()
 }//end class

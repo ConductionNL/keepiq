@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
 
+use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\SettingsService;
 use OCA\Doriath\Settings\AdminSettings;
@@ -117,4 +118,110 @@ class SettingsController extends Controller
 
         return new JSONResponse(data: $result);
     }//end load()
+
+    /**
+     * Return the administrator-configurable settings (admin only).
+     *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/specs/admin-settings/spec.md
+     */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
+    public function getAdminSettings(): JSONResponse
+    {
+        return new JSONResponse(data: $this->settingsService->getAdminSettings());
+    }//end getAdminSettings()
+
+    /**
+     * Validate and persist administrator settings (admin only).
+     *
+     * Out-of-bounds values raise an InvalidArgumentException in the
+     * service, surfaced here as a 400 with the validation message.
+     *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/specs/admin-settings/spec.md
+     */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
+    public function updateAdminSettings(): JSONResponse
+    {
+        try {
+            $data    = $this->request->getParams();
+            $updated = $this->settingsService->updateAdminSettings($data);
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(
+            data: [
+                'success' => true,
+                'config'  => $updated,
+            ]
+        );
+    }//end updateAdminSettings()
+
+    /**
+     * Return the current user's per-user preferences.
+     *
+     * Scoped to the authenticated caller — the user identifier comes
+     * from the session, never from the request, so a user can only ever
+     * read their own preferences.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/specs/user-settings/spec.md
+     */
+    #[NoAdminRequired]
+    public function getUserSettings(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        return new JSONResponse(
+            data: $this->settingsService->getUserPreferences($user->getUID())
+        );
+    }//end getUserSettings()
+
+    /**
+     * Update the current user's per-user preferences.
+     *
+     * Scoped to the authenticated caller — the user identifier comes
+     * from the session, never the request. Only whitelisted keys are
+     * persisted; the service silently ignores any other key.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/specs/user-settings/spec.md
+     */
+    #[NoAdminRequired]
+    public function updateUserSettings(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $data    = $this->request->getParams();
+        $updated = $this->settingsService->updateUserPreferences($user->getUID(), $data);
+
+        return new JSONResponse(
+            data: [
+                'success'     => true,
+                'preferences' => $updated,
+            ]
+        );
+    }//end updateUserSettings()
 }//end class
