@@ -38,3 +38,17 @@ if (is_dir($serverTestsLib)) {
     $loader->addPsr4('Test\\', $serverTestsLib);
     $loader->register(true);
 }
+
+// When running pure unit tests outside the Nextcloud container, the
+// server-provided doctrine/dbal package is absent from the app vendor dir.
+// OCP\DB\QueryBuilder\IQueryBuilder references Doctrine\DBAL\ParameterType in
+// its method signatures, so mocking IDBConnection/IQueryBuilder fails to
+// reflect. Provide a minimal stub enum so those mocks can be built.
+if ($ncLoaded === false && enum_exists('Doctrine\\DBAL\\ParameterType') === false) {
+    eval(
+        'namespace Doctrine\\DBAL; '
+        .'enum ParameterType: int { '
+        .'case NULL = 0; case INTEGER = 1; case STRING = 2; '
+        .'case LARGE_OBJECT = 3; case BOOLEAN = 5; case BINARY = 16; case ASCII = 17; }'
+    );
+}
