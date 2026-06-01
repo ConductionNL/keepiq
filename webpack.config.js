@@ -68,6 +68,14 @@ webpackConfig.module = {
 				filename: 'img/[name][ext]',
 			},
 		},
+		{
+			// Argon2id WASM binary (argon2-browser) used for link share
+			// snapshot key derivation. Served as a static asset.
+			test: /\.wasm$/,
+			type: 'javascript/auto',
+			loader: 'file-loader',
+			options: { name: '[name].[hash].[ext]' },
+		},
 	],
 }
 
