@@ -29,6 +29,30 @@ return [
         ['name' => 'migration#getStatus',                'url' => '/api/v1/migrations/status',               'verb' => 'GET'],
         ['name' => 'migration#complete',                 'url' => '/api/v1/migrations/{id}/complete',        'verb' => 'POST'],
 
+        // User-to-user sharing.
+        ['name' => 'share#index',       'url' => '/api/v1/shares',            'verb' => 'GET'],
+        ['name' => 'share#create',      'url' => '/api/v1/shares',            'verb' => 'POST'],
+        ['name' => 'share#createBatch', 'url' => '/api/v1/shares/batch',      'verb' => 'POST'],
+        ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',       'verb' => 'DELETE'],
+        ['name' => 'share#sync',        'url' => '/api/v1/secrets/{id}/sync', 'verb' => 'PUT'],
+
+        // Group-based sharing.
+        ['name' => 'groupShare#index',           'url' => '/api/v1/group-shares',                      'verb' => 'GET'],
+        ['name' => 'groupShare#create',          'url' => '/api/v1/group-shares',                      'verb' => 'POST'],
+        ['name' => 'groupShare#destroy',         'url' => '/api/v1/group-shares/{id}',                 'verb' => 'DELETE'],
+        ['name' => 'groupShare#approveNewMember','url' => '/api/v1/group-shares/{id}/approve-member',  'verb' => 'POST'],
+        ['name' => 'groupShare#denyNewMember',   'url' => '/api/v1/group-shares/{id}/deny-member',     'verb' => 'POST'],
+
+        // Share requests (recipient-initiated).
+        ['name' => 'shareRequest#create',  'url' => '/api/v1/share-requests',                'verb' => 'POST'],
+        ['name' => 'shareRequest#approve', 'url' => '/api/v1/share-requests/approve',         'verb' => 'POST'],
+        ['name' => 'shareRequest#deny',    'url' => '/api/v1/share-requests/deny',            'verb' => 'POST'],
+
+        // Ownership delegation.
+        ['name' => 'delegation#index',   'url' => '/api/v1/delegations',                     'verb' => 'GET'],
+        ['name' => 'delegation#create',  'url' => '/api/v1/delegations',                     'verb' => 'POST'],
+        ['name' => 'delegation#reclaim', 'url' => '/api/v1/delegations/{secretId}',          'verb' => 'DELETE'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.
