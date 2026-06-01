@@ -1,75 +1,115 @@
+<!--
+  SPDX-License-Identifier: EUPL-1.2
+  SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+
+  PasswordPolicySection — admin settings section for the master-password
+  policy (minimum length + minimum zxcvbn score). Reads / writes the
+  admin settings via the shared settings Pinia store (GET/PUT
+  /api/settings/admin). The backend enforces the hardcoded security
+  floors (length 12-20, score 3-4); this section validates client-side
+  too and surfaces the backend's 400 message inline.
+
+  @spec openspec/changes/implement-dashboard-settings/specs/admin-settings/spec.md
+-->
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Password Policy')"
 		:description="t('doriath', 'Configure master password requirements for all users')">
 		<div class="password-policy">
 			<div class="password-policy__field">
-				<label for="min-length">{{ t('doriath', 'Minimum length') }}</label>
-				<input
-					id="min-length"
-					v-model.number="minLength"
+				<NcTextField
+					:value.sync="minLengthInput"
 					type="number"
 					min="12"
 					max="20"
-					@change="save">
+					:label="t('doriath', 'Minimum length')"
+					@change="save" />
 				<span class="password-policy__hint">{{ t('doriath', '12–20 characters') }}</span>
 			</div>
 
 			<div class="password-policy__field">
-				<label for="min-score">{{ t('doriath', 'Minimum strength score') }}</label>
-				<select id="min-score" v-model.number="minScore" @change="save">
-					<option :value="3">
-						{{ t('doriath', 'Strong (score 3)') }}
-					</option>
-					<option :value="4">
-						{{ t('doriath', 'Very strong (score 4)') }}
-					</option>
-				</select>
+				<NcSelect
+					v-model="selectedScore"
+					:options="scoreOptions"
+					:input-label="t('doriath', 'Minimum strength score')"
+					label="label"
+					:reduce="opt => opt.value"
+					:clearable="false"
+					@input="save" />
 			</div>
+
+			<NcNoteCard v-if="error" type="error">
+				{{ error }}
+			</NcNoteCard>
 		</div>
 	</CnSettingsSection>
 </template>
 
 <script>
+import { NcSelect, NcTextField, NcNoteCard } from '@nextcloud/vue'
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { translate as ncT } from '@nextcloud/l10n'
+import { useSettingsStore } from '../../store/modules/settings.js'
 
 export default {
 	name: 'PasswordPolicySection',
-	components: { CnSettingsSection },
+
+	components: { NcSelect, NcTextField, NcNoteCard, CnSettingsSection },
 
 	data() {
 		return {
-			minLength: 12,
-			minScore: 3,
+			minLengthInput: '12',
+			selectedScore: 3,
+			error: null,
+			scoreOptions: [
+				{ value: 3, label: ncT('doriath', 'Strong (score 3)') },
+				{ value: 4, label: ncT('doriath', 'Very strong (score 4)') },
+			],
 		}
 	},
 
+	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia settings store with no domain logic.
+		 */
+		settingsStore() {
+			return useSettingsStore()
+		},
+	},
+
 	/**
-	 * Load the current master-password policy floors from the API.
+	 * Load the current master-password policy from the admin settings API.
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+	 * @spec openspec/changes/implement-dashboard-settings/specs/admin-settings/spec.md
 	 */
 	async created() {
-		const response = await axios.get(generateUrl('/apps/doriath/api/settings'))
-		const settings = response.data
-		this.minLength = parseInt(settings.master_password_min_length) || 12
-		this.minScore = parseInt(settings.master_password_min_score) || 3
+		await this.settingsStore.fetchAdminSettings()
+		const policy = this.settingsStore.passwordPolicy
+		this.minLengthInput = String(policy.minLength)
+		this.selectedScore = policy.minScore
 	},
 
 	methods: {
 		/**
-		 * Persist the master-password policy, clamping length to 12-20 and
-		 * score to 3-4 (the app-minimum floors cannot be lowered below).
+		 * Persist the master-password policy. Clamps the length to the
+		 * 12-20 floor/ceiling client-side, then defers to the backend
+		 * which re-validates and may still reject with a 400 surfaced
+		 * inline.
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 * @spec openspec/changes/implement-dashboard-settings/specs/admin-settings/spec.md
 		 */
 		async save() {
-			await axios.post(generateUrl('/apps/doriath/api/settings'), {
-				master_password_min_length: String(Math.min(20, Math.max(12, this.minLength))),
-				master_password_min_score: String(Math.min(4, Math.max(3, this.minScore))),
-			})
+			this.error = null
+			const length = Math.min(20, Math.max(12, parseInt(this.minLengthInput, 10) || 12))
+			this.minLengthInput = String(length)
+			try {
+				await this.settingsStore.saveAdminSettings({
+					min_password_length: length,
+					min_password_score: this.selectedScore,
+				})
+			} catch (e) {
+				this.error = e.response?.data?.message || ncT('doriath', 'Failed to save password policy')
+			}
 		},
 	},
 }
@@ -79,11 +119,7 @@ export default {
 .password-policy__field {
 	margin-bottom: 1rem;
 }
-.password-policy__field label {
-	display: block;
-	font-weight: 600;
-	margin-bottom: 4px;
-}
+
 .password-policy__hint {
 	color: var(--color-text-lighter);
 	font-size: 0.85rem;

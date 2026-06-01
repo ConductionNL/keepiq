@@ -40,22 +40,9 @@
 		     cnOpenUserSettings inject). Sections preserve the legacy
 		     UserSettings.vue surface unchanged. -->
 		<template #user-settings>
-			<NcAppSettingsSection
-				id="session"
-				:name="t('doriath', 'Session')">
-				<template #icon>
-					<TimerIcon :size="20" />
-				</template>
-				<div class="user-settings__field">
-					<NcSelect
-						v-model="sessionTimeout"
-						:options="timeoutOptions"
-						:input-label="t('doriath', 'Session timeout')"
-						label="label"
-						:reduce="opt => opt.value"
-						@input="saveTimeout" />
-				</div>
-			</NcAppSettingsSection>
+			<SessionTimeoutSection />
+
+			<NotificationTogglesSection />
 
 			<NcAppSettingsSection
 				id="security"
@@ -138,12 +125,13 @@
 import { translate as ncT } from '@nextcloud/l10n'
 // eslint-disable-next-line import/named
 import { CnAppRoot } from '@conduction/nextcloud-vue'
-import { NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
-import TimerIcon from 'vue-material-design-icons/Timer.vue'
+import { NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
+import SessionTimeoutSection from './components/settings/SessionTimeoutSection.vue'
+import NotificationTogglesSection from './components/settings/NotificationTogglesSection.vue'
 import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
@@ -157,13 +145,13 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcNoteCard,
-		NcSelect,
 		NcTextField,
-		TimerIcon,
 		ShieldIcon,
 		KeyIcon,
 		MasterPasswordForm,
 		CompromiseRecoveryForm,
+		SessionTimeoutSection,
+		NotificationTogglesSection,
 	},
 
 	props: {
@@ -208,18 +196,12 @@ export default {
 		return {
 			storesReady: false,
 			timeoutInterval: null,
-			sessionTimeout: 'session',
 			showRecovery: false,
 			revokeConfirm: false,
 			revokeReason: '',
 			revoking: false,
 			revokeSuccess: false,
 			revokeError: null,
-			timeoutOptions: [
-				{ value: 'session', label: ncT('doriath', 'Nextcloud session') },
-				{ value: '10min', label: ncT('doriath', '10 minutes') },
-				{ value: '30min', label: ncT('doriath', '30 minutes') },
-			],
 		}
 	},
 
@@ -375,17 +357,6 @@ export default {
 		 */
 		handleBeforeUnload() {
 			this.sessionStore.lock()
-		},
-
-		/**
-		 * Persist the chosen session-timeout preference into the store
-		 * (mapping the enum to a millisecond duration).
-		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
-		 */
-		saveTimeout() {
-			const timeouts = { session: 0, '10min': 600000, '30min': 1800000 }
-			this.sessionStore.timeout = timeouts[this.sessionTimeout] || 600000
 		},
 
 		/**
