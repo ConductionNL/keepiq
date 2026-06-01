@@ -11,6 +11,13 @@
 			"order": 10
 		},
 		{
+			"id": "Secrets",
+			"label": "Secrets",
+			"icon": "icon-password",
+			"route": "SecretList",
+			"order": 20
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -147,6 +154,30 @@
 			"title": "Unlock Doriath",
 			"component": "LockScreen",
 			"_note": "Master-password setup + unlock flow. Cannot use a built-in page type because the lock screen owns its own full-page layout (no app nav / header / sidebar) and gates router navigation via App.vue's lock-redirect watcher. Stays type:\"custom\" until the lib gains a dedicated unlock-page primitive."
+		},
+		{
+			"id": "SecretList",
+			"route": "/secrets",
+			"type": "custom",
+			"title": "Secrets",
+			"component": "SecretList",
+			"_note": "Vault list view. type:\"custom\" because the secrets UI owns its own search/sort/pagination toolbar and on-demand client-side decryption boundary, which no built-in index page primitive models."
+		},
+		{
+			"id": "SecretDetail",
+			"route": "/secrets/:id",
+			"type": "custom",
+			"title": "Secret",
+			"component": "SecretDetail",
+			"_note": "Single-secret detail with client-side decryption + type-specific field layout. Deep-linked from unified search via the lock screen returnUrl."
+		},
+		{
+			"id": "FolderView",
+			"route": "/folders/:id",
+			"type": "custom",
+			"title": "Folder",
+			"component": "SecretList",
+			"_note": "Folder-scoped vault list — reuses SecretList, passing the route :id as the folderId prop."
 		}
 	]
 }
