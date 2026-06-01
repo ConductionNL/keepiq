@@ -35,9 +35,16 @@ use Throwable;
 class InitializeSettings implements IRepairStep
 {
     private const DEFAULT_CONFIG = [
-        'master_password_min_length' => '12',
-        'master_password_min_score'  => '3',
-        'session_timeout_default'    => '600000',
+        'master_password_min_length'  => '12',
+        'master_password_min_score'   => '3',
+        'session_timeout_default'     => '600000',
+        // App-wide default for per-user notification preferences. These map
+        // to NotificationService::SUBJECT_SETTING_MAP setting keys. Per-user
+        // overrides live in oc_preferences and default to opt-in ('true') via
+        // NotificationService when a user has not set an explicit value.
+        'notify_shares_default'       => 'true',
+        'notify_group_shares_default' => 'true',
+        'notify_security_default'     => 'true',
     ];
 
     /**
