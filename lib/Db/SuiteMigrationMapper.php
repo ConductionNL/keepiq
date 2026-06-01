@@ -24,6 +24,7 @@ namespace OCA\Doriath\Db;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -124,4 +125,37 @@ class SuiteMigrationMapper extends QBMapper
             return false;
         }
     }//end hasInProgress()
+
+    /**
+     * Find the first in-progress migration whose old suite is one of the
+     * given suite IDs.
+     *
+     * Used by the dashboard summary to surface a "migration in progress"
+     * banner for the suites a user owns. Returns null when no in-progress
+     * migration touches any of the supplied suites (including the empty
+     * input case).
+     *
+     * @param string[] $suiteIds The suite IDs to scope the search to.
+     *
+     * @return SuiteMigration|null The in-progress migration, or null.
+     */
+    public function findInProgressBySuiteIds(array $suiteIds): ?SuiteMigration
+    {
+        if (empty($suiteIds) === true) {
+            return null;
+        }
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->in('old_suite_id', $qb->createNamedParameter($suiteIds, IQueryBuilder::PARAM_STR_ARRAY)))
+            ->andWhere($qb->expr()->eq('status', $qb->createNamedParameter('in_progress')))
+            ->setMaxResults(1);
+
+        try {
+            return $this->findEntity(query: $qb);
+        } catch (DoesNotExistException) {
+            return null;
+        }
+    }//end findInProgressBySuiteIds()
 }//end class
