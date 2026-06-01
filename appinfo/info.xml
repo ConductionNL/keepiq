@@ -74,12 +74,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <install>
             <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
             <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
         </install>
         <post-migration>
             <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
             <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
         </post-migration>
     </repair-steps>
 
