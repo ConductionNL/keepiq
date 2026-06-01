@@ -43,9 +43,29 @@ import LockScreen from './views/LockScreen.vue'
 import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
 import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
 import StatsBlockWidget from './widgets/StatsBlockWidget.vue'
+import DashboardKpiCard from './components/dashboard/DashboardKpiCard.vue'
+import MigrationBanner from './components/dashboard/MigrationBanner.vue'
 
 export default {
 	LockScreen: { kind: 'page', component: LockScreen },
+	'doriath-kpi-card': {
+		kind: 'widget',
+		component: DashboardKpiCard,
+		defaultSize: { w: 3, h: 2 },
+		minSize: { w: 2, h: 2 },
+		maxSize: { w: 6, h: 3 },
+		allowedSlots: ['body'],
+		propsSchema: {},
+	},
+	'doriath-migration-banner': {
+		kind: 'widget',
+		component: MigrationBanner,
+		defaultSize: { w: 12, h: 1 },
+		minSize: { w: 6, h: 1 },
+		maxSize: { w: 12, h: 2 },
+		allowedSlots: ['body'],
+		propsSchema: {},
+	},
 	'stats-block': {
 		kind: 'widget',
 		component: StatsBlockWidget,
