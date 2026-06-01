@@ -87,4 +87,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <admin>OCA\Doriath\Settings\AdminSettings</admin>
         <admin-section>OCA\Doriath\Sections\SettingsSection</admin-section>
     </settings>
+
+    <notifications>
+        <notifier>OCA\Doriath\Notification\DoriathNotifier</notifier>
+    </notifications>
 </info>
