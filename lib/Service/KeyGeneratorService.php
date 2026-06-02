@@ -27,8 +27,8 @@ use RuntimeException;
 /**
  * Stateless service that produces cryptographically random strings.
  *
- * All randomness is derived from PHP's CSPRNG via random_int(); no rand(),
- * mt_rand() or array_rand() is used anywhere in this service.
+ * All randomness is derived from PHP's CSPRNG via random_int(); no non-CSPRNG
+ * randomness source is used anywhere in this service.
  */
 class KeyGeneratorService
 {
@@ -52,6 +52,13 @@ class KeyGeneratorService
      * @var int
      */
     public const MIN_CHARSET_SIZE = 2;
+
+    /**
+     * Maximum regex post-condition retries before giving up.
+     *
+     * @var int
+     */
+    private const MAX_REGEX_ATTEMPTS = 3;
 
     /**
      * Uppercase letters of the default character set.
@@ -82,20 +89,36 @@ class KeyGeneratorService
     private const SPECIAL = '!@#$%^&*()-_=+[]{}|;:,.<>?/';
 
     /**
+     * Constructor.
+     *
+     * @param KeyGeneratorRegexParser $regexParser The regex parser
+     *
+     * @return void
+     */
+    public function __construct(
+        private KeyGeneratorRegexParser $regexParser=new KeyGeneratorRegexParser(),
+    ) {
+    }//end __construct()
+
+    /**
      * Generate a random string from the supplied configuration.
      *
      * When a non-empty regex is provided it overrides length,
-     * includeSpecialCharacters and excludedCharacters.
+     * includeSpecialCharacters and excludedCharacters. The boolean
+     * includeSpecialCharacters flag is part of the public API contract.
      *
      * @param int    $length                   Desired output length (default mode)
      * @param bool   $includeSpecialCharacters Whether to include the OWASP special set
      * @param string $excludedCharacters       Characters to remove from the resolved set
-     * @param string $regex                     Optional regex override
+     * @param string $regex                    Optional regex override
      *
      * @return string The generated key
      *
      * @throws InvalidArgumentException When validation fails
      * @throws RuntimeException         When generation cannot satisfy the regex
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.LongVariable)
      */
     public function generate(
         int $length=16,
@@ -109,7 +132,7 @@ class KeyGeneratorService
 
         return $this->generateFromCharset(
             length: $length,
-            includeSpecialCharacters: $includeSpecialCharacters,
+            includeSpecial: $includeSpecialCharacters,
             excludedCharacters: $excludedCharacters
         );
     }//end generate()
@@ -117,19 +140,45 @@ class KeyGeneratorService
     /**
      * Generate a string using the default/explicit character-set mode.
      *
-     * @param int    $length                   Desired output length
-     * @param bool   $includeSpecialCharacters Whether to include the OWASP special set
-     * @param string $excludedCharacters       Characters to remove from the resolved set
+     * @param int    $length             Desired output length
+     * @param bool   $includeSpecial     Whether to include the OWASP special set
+     * @param string $excludedCharacters Characters to remove from the resolved set
      *
      * @return string The generated key
      *
      * @throws InvalidArgumentException When validation fails
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     private function generateFromCharset(
         int $length,
-        bool $includeSpecialCharacters,
+        bool $includeSpecial,
         string $excludedCharacters,
     ): string {
+        $this->assertLengthInRange(length: $length);
+
+        $charset = self::UPPERCASE.self::LOWERCASE.self::DIGITS;
+        if ($includeSpecial === true) {
+            $charset .= self::SPECIAL;
+        }
+
+        $charset = $this->applyExclusions(charset: $charset, excludedCharacters: $excludedCharacters);
+        $this->assertCharsetViable(charset: $charset);
+
+        return $this->buildString(charset: $charset, length: $length);
+    }//end generateFromCharset()
+
+    /**
+     * Assert that an explicit length is within the permitted range.
+     *
+     * @param int $length The requested length
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the length is out of range
+     */
+    private function assertLengthInRange(int $length): void
+    {
         if ($length < self::MIN_LENGTH) {
             throw new InvalidArgumentException(
                 message: sprintf('Length must be at least %d characters', self::MIN_LENGTH)
@@ -141,17 +190,7 @@ class KeyGeneratorService
                 message: sprintf('Length must not exceed %d characters', self::MAX_LENGTH)
             );
         }
-
-        $charset = self::UPPERCASE.self::LOWERCASE.self::DIGITS;
-        if ($includeSpecialCharacters === true) {
-            $charset .= self::SPECIAL;
-        }
-
-        $charset = $this->applyExclusions(charset: $charset, excludedCharacters: $excludedCharacters);
-        $this->assertCharsetViable(charset: $charset);
-
-        return $this->buildString(charset: $charset, length: $length);
-    }//end generateFromCharset()
+    }//end assertLengthInRange()
 
     /**
      * Remove excluded characters from a character set and return the unique remainder.
@@ -164,16 +203,15 @@ class KeyGeneratorService
     private function applyExclusions(string $charset, string $excludedCharacters): string
     {
         $excluded = [];
-        $excludedLength = strlen($excludedCharacters);
-        for ($i = 0; $i < $excludedLength; $i++) {
-            $excluded[$excludedCharacters[$i]] = true;
+        if ($excludedCharacters !== '') {
+            foreach (str_split($excludedCharacters) as $char) {
+                $excluded[$char] = true;
+            }
         }
 
         $resolved = '';
         $seen     = [];
-        $charsetLength = strlen($charset);
-        for ($i = 0; $i < $charsetLength; $i++) {
-            $char = $charset[$i];
+        foreach (str_split($charset) as $char) {
             if (isset($excluded[$char]) === true || isset($seen[$char]) === true) {
                 continue;
             }
@@ -223,7 +261,7 @@ class KeyGeneratorService
     {
         $max    = (strlen($charset) - 1);
         $result = '';
-        for ($i = 0; $i < $length; $i++) {
+        for ($index = 0; $index < $length; $index++) {
             $result .= $charset[random_int(min: 0, max: $max)];
         }
 
@@ -242,12 +280,11 @@ class KeyGeneratorService
      */
     private function generateFromRegex(string $regex): string
     {
-        if (@preg_match($regex, '') === false) {
-            throw new InvalidArgumentException(message: 'The regex pattern is syntactically invalid');
-        }
+        $delimited = $this->regexParser->delimit(pattern: $regex);
+        $this->regexParser->assertValid(delimited: $delimited);
 
-        [$minLength, $maxLength] = $this->extractLength(regex: $regex);
-        $charset                 = $this->extractCharset(regex: $regex);
+        [$minLength, $maxLength] = $this->regexParser->extractLength(regex: $regex);
+        $charset = $this->regexParser->extractCharset(regex: $regex);
 
         if ($minLength < self::MIN_LENGTH) {
             throw new InvalidArgumentException(
@@ -259,195 +296,14 @@ class KeyGeneratorService
 
         // Generate a length within the quantifier range, then validate against
         // the original regex as a post-condition (catches parser mismatches).
-        $attempts = 0;
-        do {
+        for ($attempt = 0; $attempt < self::MAX_REGEX_ATTEMPTS; $attempt++) {
             $length    = random_int(min: $minLength, max: $maxLength);
             $candidate = $this->buildString(charset: $charset, length: $length);
-            if (preg_match($regex, $candidate) === 1) {
+            if (preg_match($delimited, $candidate) === 1) {
                 return $candidate;
             }
-
-            $attempts++;
-        } while ($attempts < 3);
+        }
 
         throw new RuntimeException(message: 'Unable to generate a value matching the supplied regex');
     }//end generateFromRegex()
-
-    /**
-     * Extract the length quantifier ({n} or {n,m}) from a regex.
-     *
-     * @param string $regex The regex pattern
-     *
-     * @return array{0:int,1:int} The [minLength, maxLength] pair
-     *
-     * @throws InvalidArgumentException When no quantifier is present
-     */
-    private function extractLength(string $regex): array
-    {
-        if (preg_match('/\{(\d+)(?:,(\d+))?\}/', $regex, $matches) !== 1) {
-            throw new InvalidArgumentException(
-                message: 'The regex must contain a length quantifier (e.g. {16} or {8,16})'
-            );
-        }
-
-        $min = (int) $matches[1];
-        $max = $min;
-        if (isset($matches[2]) === true && $matches[2] !== '') {
-            $max = (int) $matches[2];
-        }
-
-        if ($max < $min) {
-            throw new InvalidArgumentException(message: 'The regex length range is invalid (max < min)');
-        }
-
-        return [$min, $max];
-    }//end extractLength()
-
-    /**
-     * Extract the resolvable character set from a regex character class.
-     *
-     * Supports a single character class. Negated classes ([^...]) are resolved
-     * as the complement against printable ASCII (0x21-0x7E).
-     *
-     * @param string $regex The regex pattern
-     *
-     * @return string The resolved character set
-     *
-     * @throws InvalidArgumentException When no character class can be determined
-     */
-    private function extractCharset(string $regex): string
-    {
-        if (preg_match('/\[(\^?)((?:\\\\.|[^\]\\\\])*)\]/', $regex, $matches) !== 1) {
-            throw new InvalidArgumentException(
-                message: 'The regex must contain a character class (e.g. [a-zA-Z0-9])'
-            );
-        }
-
-        $negated   = ($matches[1] === '^');
-        $classBody = $matches[2];
-
-        $allowed = $this->expandCharacterClass(classBody: $classBody);
-
-        if ($negated === true) {
-            $allowed = $this->complementAscii(disallowed: $allowed);
-        }
-
-        // De-duplicate while preserving order.
-        $resolved = '';
-        $seen     = [];
-        foreach ($allowed as $char) {
-            if (isset($seen[$char]) === true) {
-                continue;
-            }
-
-            $seen[$char] = true;
-            $resolved   .= $char;
-        }
-
-        return $resolved;
-    }//end extractCharset()
-
-    /**
-     * Expand a character-class body into a flat list of characters.
-     *
-     * Handles ranges (a-z), common escapes (\s \d \w) and literal escapes (\.).
-     *
-     * @param string $classBody The inside of the character class
-     *
-     * @return array<int,string> The expanded characters
-     */
-    private function expandCharacterClass(string $classBody): array
-    {
-        $chars  = [];
-        $length = strlen($classBody);
-        $i      = 0;
-
-        while ($i < $length) {
-            $char = $classBody[$i];
-
-            // Escape sequences.
-            if ($char === '\\' && ($i + 1) < $length) {
-                $next = $classBody[($i + 1)];
-                $i   += 2;
-                $chars = array_merge($chars, $this->expandEscape(escape: $next));
-                continue;
-            }
-
-            // Range (a-z): a literal, a dash, a literal — neither end escaped.
-            if (($i + 2) < $length && $classBody[($i + 1)] === '-' && $classBody[($i + 2)] !== ']') {
-                $start = ord($char);
-                $end   = ord($classBody[($i + 2)]);
-                if ($end >= $start) {
-                    for ($code = $start; $code <= $end; $code++) {
-                        $chars[] = chr($code);
-                    }
-
-                    $i += 3;
-                    continue;
-                }
-            }
-
-            $chars[] = $char;
-            $i++;
-        }
-
-        return $chars;
-    }//end expandCharacterClass()
-
-    /**
-     * Expand a single-character escape inside a character class.
-     *
-     * @param string $escape The escaped character (the part after the backslash)
-     *
-     * @return array<int,string> The characters the escape represents
-     */
-    private function expandEscape(string $escape): array
-    {
-        switch ($escape) {
-            case 'd':
-                return str_split(self::DIGITS);
-            case 'w':
-                return str_split(self::UPPERCASE.self::LOWERCASE.self::DIGITS.'_');
-            case 's':
-                // Whitespace is not a useful generation set; represent as a space.
-                return [' '];
-            default:
-                // Literal escaped character (e.g. \. \\ \] ).
-                return [$escape];
-        }
-    }//end expandEscape()
-
-    /**
-     * Compute the complement of a disallowed set against printable ASCII (0x21-0x7E).
-     *
-     * @param array<int,string> $disallowed The disallowed characters
-     *
-     * @return array<int,string> The allowed characters
-     */
-    private function complementAscii(array $disallowed): array
-    {
-        $blocked = [];
-        foreach ($disallowed as $char) {
-            $blocked[$char] = true;
-        }
-
-        // \s in a negated class blocks all whitespace, not just space.
-        if (isset($blocked[' ']) === true) {
-            $blocked["\t"] = true;
-            $blocked["\n"] = true;
-            $blocked["\r"] = true;
-        }
-
-        $allowed = [];
-        for ($code = 0x21; $code <= 0x7E; $code++) {
-            $char = chr($code);
-            if (isset($blocked[$char]) === true) {
-                continue;
-            }
-
-            $allowed[] = $char;
-        }
-
-        return $allowed;
-    }//end complementAscii()
 }//end class

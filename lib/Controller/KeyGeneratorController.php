@@ -63,11 +63,14 @@ class KeyGeneratorController extends OCSController
      * @param int    $length                   Desired output length
      * @param bool   $includeSpecialCharacters Whether to include the OWASP special set
      * @param string $excludedCharacters       Characters to remove from the resolved set
-     * @param string $regex                     Optional regex override
+     * @param string $regex                    Optional regex override
      *
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.LongVariable)
      */
     #[NoAdminRequired]
     public function generate(
