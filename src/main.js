@@ -73,6 +73,34 @@ function tryLoadTranslations() {
 const RoutePageRenderer = { ...CnPageRenderer }
 
 /**
+ * ADR-037: merge modular manifest fragments from src/manifest.d/*.json onto the
+ * bundled base manifest. Each OpenSpec change drops its own fragment (pages/menu)
+ * instead of editing the monolith src/manifest.json, so concurrent builds touch
+ * disjoint files. `pages` and `menu` arrays are concatenated.
+ *
+ * @param {object} base The bundled base manifest.
+ * @return {object} The manifest with all fragment pages/menu appended.
+ */
+function mergeManifestFragments(base) {
+	const merged = { ...base, pages: [...(base.pages || [])], menu: [...(base.menu || [])] }
+	// require.context is resolved at build time; src/manifest.d/ must exist (it
+	// ships with a placeholder). It is a no-op when the directory holds no fragments.
+	const ctx = require.context('./manifest.d/', false, /\.json$/)
+	ctx.keys().sort().forEach((key) => {
+		const frag = ctx(key)
+		if (Array.isArray(frag.pages)) {
+			merged.pages.push(...frag.pages)
+		}
+		if (Array.isArray(frag.menu)) {
+			merged.menu.push(...frag.menu)
+		}
+	})
+	return merged
+}
+
+const mergedManifest = mergeManifestFragments(bundledManifest)
+
+/**
  * Build the vue-router config from the manifest. Each manifest page
  * becomes one route; the route's `name` IS `page.id` (per the lib's
  * manifest contract). Routes whose path declares a `:` parameter pass
@@ -96,7 +124,7 @@ function routesFromManifest(manifest) {
 const router = new VueRouter({
 	mode: 'history',
 	base: generateUrl('/apps/doriath'),
-	routes: routesFromManifest(bundledManifest),
+	routes: routesFromManifest(mergedManifest),
 })
 
 tryLoadTranslations()
@@ -127,7 +155,7 @@ new Vue({
 	router,
 	render: (h) => h(App, {
 		props: {
-			manifest: bundledManifest,
+			manifest: mergedManifest,
 			customComponents: customComponentsProp,
 			pageTypes: pageTypesProp,
 			registry: registryProp,
