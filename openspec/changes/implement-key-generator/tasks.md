@@ -17,7 +17,7 @@
 
 ## 3. Frontend Component
 
-- [x] 3.1 Create `src/components/KeyGeneratorModal.vue` using NcDialog with configuration inputs: length number input (8-128, default 16), special characters NcCheckboxRadioSwitch (default on), excluded characters NcInputField, regex NcInputField (in a collapsible "Advanced" section)
+- [x] 3.1 Create `src/dialogs/KeyGeneratorModal.vue` (NcDialog-based modals live under `src/dialogs/` per ADR-004 modal-isolation, not `src/components/`) using NcDialog with configuration inputs: length number input (8-128, default 16), special characters NcCheckboxRadioSwitch (default on), excluded characters NcInputField, regex NcInputField (in a collapsible "Advanced" section)
 - [x] 3.2 Add "Generate" button in the modal that calls `POST /api/v1/generate-key` via Axios and displays the result in a read-only preview field with a copy button
 - [x] 3.3 Add "Use" button that emits the generated value to the parent component and closes the modal
 - [x] 3.4 Add error handling: display validation error messages from the API in the modal (inline NcNoteCard with type="error")
