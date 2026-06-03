@@ -1,0 +1,219 @@
+<template>
+	<NcDialog :name="t('doriath', 'Generate key')"
+		:open="open"
+		size="normal"
+		@update:open="onUpdateOpen">
+		<div class="key-generator-modal">
+			<NcNoteCard v-if="error" type="error">
+				{{ error }}
+			</NcNoteCard>
+
+			<fieldset :disabled="regex.length > 0" class="key-generator-modal__basic">
+				<NcInputField :value.sync="lengthInput"
+					type="number"
+					:label="t('doriath', 'Length')"
+					:min="minLength"
+					:max="maxLength" />
+
+				<NcCheckboxRadioSwitch :checked.sync="includeSpecialCharacters" type="switch">
+					{{ t('doriath', 'Include special characters') }}
+				</NcCheckboxRadioSwitch>
+
+				<NcInputField :value.sync="excludedCharacters"
+					:label="t('doriath', 'Exclude characters')" />
+			</fieldset>
+
+			<details class="key-generator-modal__advanced">
+				<summary>{{ t('doriath', 'Advanced') }}</summary>
+				<NcInputField :value.sync="regex"
+					:label="t('doriath', 'Regex pattern')"
+					:helper-text="t('doriath', 'When set, overrides length, special characters and exclusions.')" />
+			</details>
+
+			<div v-if="generatedKey" class="key-generator-modal__preview">
+				<NcInputField :value="generatedKey"
+					:label="t('doriath', 'Generated key')"
+					:read-only="true"
+					:show-trailing-button="true"
+					:trailing-button-label="t('doriath', 'Copy to clipboard')"
+					@trailing-button-click="copyToClipboard">
+					<template #trailing-button-icon>
+						<ContentCopy :size="20" />
+					</template>
+				</NcInputField>
+			</div>
+		</div>
+
+		<template #actions>
+			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+				{{ t('doriath', 'Cancel') }}
+			</NcButton>
+			<NcButton type="secondary" :disabled="loading" @click="generate">
+				<template #icon>
+					<NcLoadingIcon v-if="loading" :size="20" />
+					<Dice5 v-else :size="20" />
+				</template>
+				{{ t('doriath', 'Generate') }}
+			</NcButton>
+			<NcButton type="primary" :disabled="!generatedKey" @click="use">
+				{{ t('doriath', 'Use') }}
+			</NcButton>
+		</template>
+	</NcDialog>
+</template>
+
+<script>
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcInputField,
+	NcLoadingIcon,
+	NcNoteCard,
+} from '@nextcloud/vue'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
+import Dice5 from 'vue-material-design-icons/Dice5.vue'
+
+export default {
+	name: 'KeyGeneratorModal',
+
+	components: {
+		NcButton,
+		NcCheckboxRadioSwitch,
+		NcDialog,
+		NcInputField,
+		NcLoadingIcon,
+		NcNoteCard,
+		ContentCopy,
+		Dice5,
+	},
+
+	props: {
+		/**
+		 * Whether the dialog is open.
+		 */
+		open: {
+			type: Boolean,
+			default: false,
+		},
+	},
+
+	data() {
+		return {
+			lengthInput: 16,
+			includeSpecialCharacters: true,
+			excludedCharacters: '',
+			regex: '',
+			generatedKey: '',
+			loading: false,
+			error: null,
+			minLength: 8,
+			maxLength: 128,
+		}
+	},
+
+	methods: {
+		/**
+		 * Proxy the dialog's open state to the parent and reset on close.
+		 *
+		 * @param {boolean} value The new open state.
+		 */
+		onUpdateOpen(value) {
+			if (value === false) {
+				this.reset()
+			}
+			this.$emit('update:open', value)
+		},
+
+		/**
+		 * Reset transient state (preview + error) when the dialog closes.
+		 */
+		reset() {
+			this.generatedKey = ''
+			this.error = null
+			this.loading = false
+		},
+
+		/**
+		 * Call the server-side generator and display the result.
+		 */
+		async generate() {
+			this.loading = true
+			this.error = null
+
+			try {
+				const payload = this.regex
+					? { regex: this.regex }
+					: {
+						length: Number(this.lengthInput),
+						includeSpecialCharacters: this.includeSpecialCharacters,
+						excludedCharacters: this.excludedCharacters,
+					}
+
+				const response = await axios.post(
+					generateUrl('/apps/doriath/api/v1/generate-key'),
+					payload,
+				)
+				this.generatedKey = response.data.generatedKey
+			} catch (e) {
+				this.generatedKey = ''
+				this.error = e?.response?.data?.message
+					|| t('doriath', 'Failed to generate key')
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Emit the generated value to the parent and close the dialog.
+		 */
+		use() {
+			if (!this.generatedKey) {
+				return
+			}
+			this.$emit('generated', this.generatedKey)
+			this.onUpdateOpen(false)
+		},
+
+		/**
+		 * Copy the generated key to the clipboard.
+		 */
+		async copyToClipboard() {
+			if (!this.generatedKey || !navigator.clipboard) {
+				return
+			}
+			await navigator.clipboard.writeText(this.generatedKey)
+		},
+	},
+}
+</script>
+
+<style scoped>
+.key-generator-modal {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 0 8px 8px;
+}
+
+.key-generator-modal__basic {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.key-generator-modal__advanced summary {
+	cursor: pointer;
+	padding: 8px 0;
+	font-weight: bold;
+}
+
+.key-generator-modal__preview {
+	margin-top: 8px;
+}
+</style>

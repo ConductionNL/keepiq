@@ -28,7 +28,20 @@
         "Settings saved successfully": "Instellingen succesvol opgeslagen",
         "Saving...": "Opslaan...",
         "This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.": "Deze app heeft OpenRegister nodig om gegevens op te slaan en te beheren. Installeer OpenRegister via de app store om te beginnen.",
-        "User settings will appear here in a future update.": "Gebruikersinstellingen verschijnen hier in een toekomstige update."
+        "User settings will appear here in a future update.": "Gebruikersinstellingen verschijnen hier in een toekomstige update.",
+        "Generate key": "Sleutel genereren",
+        "Length": "Lengte",
+        "Include special characters": "Speciale tekens opnemen",
+        "Exclude characters": "Tekens uitsluiten",
+        "Advanced": "Geavanceerd",
+        "Regex pattern": "Regex-patroon",
+        "When set, overrides length, special characters and exclusions.": "Indien ingesteld, vervangt dit de lengte, speciale tekens en uitsluitingen.",
+        "Generated key": "Gegenereerde sleutel",
+        "Copy to clipboard": "Kopiëren naar klembord",
+        "Cancel": "Annuleren",
+        "Generate": "Genereren",
+        "Use": "Gebruiken",
+        "Failed to generate key": "Genereren van sleutel mislukt"
     },
     "plurals": ""
 }
