@@ -1,6 +1,6 @@
 {
-	"name": "conductionnl/app-template",
-	"description": "A template for creating new Nextcloud apps",
+	"name": "conductionnl/doriath",
+	"description": "Encrypted secrets manager for Nextcloud",
 	"license": "EUPL-1.2",
 	"authors": [
 		{
@@ -11,11 +11,12 @@
 	],
 	"autoload": {
 		"psr-4": {
-			"OCA\\AppTemplate\\": "lib/"
+			"OCA\\Doriath\\": "lib/"
 		}
 	},
 	"require": {
-		"php": "^8.1"
+		"php": "^8.3",
+		"ramsey/uuid": "^4.9"
 	},
 	"require-dev": {
 		"cyclonedx/cyclonedx-php-composer": "^6.2",
@@ -28,6 +29,7 @@
 		"phpstan/phpstan": "^1.10",
 		"phpunit/phpunit": "^10.5",
 		"roave/security-advisories": "dev-latest",
+		"twig/twig": "^3.27.0",
 		"squizlabs/php_codesniffer": "^3.9",
 		"vimeo/psalm": "^5.26"
 	},
@@ -75,7 +77,7 @@
 		"optimize-autoloader": true,
 		"sort-packages": true,
 		"platform": {
-			"php": "8.1"
+			"php": "8.3"
 		}
 	}
 }

@@ -1,35 +1,57 @@
 ---
 sidebar_position: 1
-title: Manage settings
-description: Step-by-step guide to manage the app's settings from the Nextcloud admin settings panel
+title: Manage Doriath settings
+description: Configure encryption, group-level sharing policies, and the audit log from the Nextcloud admin settings panel.
 ---
 
-# Manage settings
+# Manage Doriath settings
 
-Step-by-step guide to manage the app's settings from the Nextcloud admin settings panel.
+The admin-side configuration for Doriath — encryption back end,
+group-level sharing policy, audit retention.
+
+> **This guide is being written as Doriath approaches feature-completeness.**
+> The structure below mirrors the journeydoc shape the rest of the
+> fleet uses; bodies and screenshots fill in once the admin UI lands.
+> Follow the [GitHub repository](https://github.com/ConductionNL/doriath)
+> for milestones.
 
 ## Goal
 
-<!-- TODO: write the goal — what the reader will have accomplished by the end (e.g. "you have opened the admin settings panel, changed a setting, and confirmed it took effect"). -->
+By the end of this guide you will have opened the Doriath admin panel
+under **Settings → Administration → Doriath**, verified that the
+encryption back end is wired up, set a default sharing policy for new
+team vaults, and confirmed that the audit log is being written.
 
 ## Prerequisites
 
-<!-- TODO: list prerequisites — the app installed and enabled, Nextcloud admin rights, OpenRegister installed (the settings register lives there), etc. -->
+- A Nextcloud admin account on an instance where Doriath is installed
+  and enabled.
+- The **OpenRegister** app installed and enabled.
+- Nextcloud server-side encryption configured at the platform level
+  (Doriath does not enable it for you — it relies on it).
 
 ## Steps
 
-<!-- TODO: write the numbered steps for opening Settings → Administration → <App> and changing a setting. Each step that warrants a screenshot gets a matching shoot() call in tests/e2e/docs-screenshots.spec.ts — see /journeydoc-add-story. -->
+The numbered steps land here once the admin UI is built. The journeydoc
+capture spec (see ADR-030) ships a placeholder; the real shoot() calls
+are added together with the implementation.
 
 ## Verification
 
-<!-- TODO: how the reader confirms it worked — e.g. the setting persists after a reload and the app reflects the change. -->
+You are set up correctly when: the Doriath settings panel renders
+without an error banner, the encryption-back-end indicator is green,
+saving a sharing policy persists across a reload, and a freshly created
+entry appears in the audit log within a few seconds.
 
 ## Common issues
 
 | Symptom | Fix |
 |---|---|
-<!-- TODO: list common symptoms and fixes — e.g. "Settings panel not visible" → "the app is not enabled, or OpenRegister is not installed". -->
+| Settings panel not visible | The app is not enabled, or OpenRegister is missing. |
+| Encryption indicator stays red | Nextcloud server-side encryption is not configured at the platform level; configure it first, then reload Doriath. |
+| Audit log is empty after creating an entry | OpenRegister's audit trail is not enabled for the Doriath register — re-import the configuration from **Settings → Registers**. |
 
 ## Reference
 
-<!-- TODO: link related docs — the feature spec for Admin Settings, the *_register.json definition under lib/Settings/, relevant ADRs. -->
+- [Open Doriath for the first time](../user/01-first-launch.md) — the user-side journey.
+- Doriath on GitHub: [ConductionNL/doriath](https://github.com/ConductionNL/doriath).

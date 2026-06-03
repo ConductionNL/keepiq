@@ -1,17 +1,15 @@
 /**
- * Nextcloud App Template landing page.
+ * Doriath landing page.
  *
  * Composes the brand <DetailHero> + <WidgetShelf> from
  * @conduction/docusaurus-preset/components, mirroring the OpenRegister
  * landing page at openregister.conduction.nl (docs/src/pages/index.js).
  *
- * This is the *default* landing page every new Conduction app inherits
- * from the template. When you scaffold a new app, the renaming pass
- * swaps `app-template` / `Nextcloud App Template` for your slug /
- * title — then replace the placeholder glyph, tagline, and the three
- * mock widget panels below with your app's real surface (use
- * <AppMock app="…" /> from the preset once your app has a registered
- * mock variant).
+ * Doriath is in development — this page tells visitors what the app
+ * is going to be (self-hosted password and secrets vault, per-user,
+ * per-team, audited) and previews the three surfaces the UI will
+ * land with. No <AppMock> yet (no doriath variant in the preset);
+ * the widget panels are token-built sketches.
  *
  * Written as .js (not .mdx) because the docs site has the docs plugin
  * pointed at `path: './'`, and an MDX file in src/pages/ trips the
@@ -28,42 +26,100 @@ import {
   WidgetShelf,
 } from '@conduction/docusaurus-preset/components';
 
-/* Placeholder glyph — a generic stroke "stacked layers" mark. Swap
-   for your app's Material Design Icons glyph (the same path used in
-   `img/app.svg`) when you scaffold a new app. */
-const APP_TEMPLATE_ICON = (
+/* Padlock glyph — the body of the doriath identity, lifted straight
+   from the apps-catalog entry on conduction-website. Stroke-only so it
+   inherits hero `iconColor` without any fill override. */
+const DORIATH_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3 3 8l9 5 9-5-9-5z" />
-    <path d="M3 16l9 5 9-5" />
-    <path d="M3 12l9 5 9-5" />
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    <rect x="4" y="10" width="16" height="11" rx="2" />
   </svg>
 );
 
 const TAGLINE = (
   <>
-    A starting point for building Nextcloud apps the Conduction way:
-    a manifest-first Vue 2 frontend rendered by CnAppRoot, an
-    OpenRegister data layer, a Dashboard widget, an admin settings
-    panel, an AI Chat Companion tool provider, and the full quality
-    pipeline — clone it, rename it, ship it.
+    Password en secrets management op je eigen Nextcloud. Voor jezelf,
+    voor je team, met een volledig audit trail — wie heeft welk
+    secret aangemaakt, gedeeld, gebruikt, en wanneer. Geen externe
+    vault, geen extra leverancier. In ontwikkeling.
   </>
 );
 
-/* --- Generic mock widget panels --------------------------------------
-   Token-only abstractions of the surfaces a fresh app starts with.
-   Replace these with your app's real widget mocks (or <AppMock>) once
-   the UI exists. */
+/* --- Token-built mock widget panels -----------------------------------
+   Sketches of the three surfaces Doriath will land with: a personal
+   vault, items shared with a team, and a recent-activity feed. All
+   token-only so they restyle automatically with the brand palette. */
 
-function DashboardPanel() {
+function MyVaultPanel() {
   const rows = [
-    { tone: 'var(--c-cobalt-300)', w: '70%' },
-    { tone: 'var(--c-lavender-300)', w: '55%' },
-    { tone: 'var(--c-mint-500)', w: '40%' },
+    { tone: 'var(--c-cobalt-300)', label: 'GH · admin' },
+    { tone: 'var(--c-lavender-300)', label: 'AWS · prod' },
+    { tone: 'var(--c-mint-500)', label: 'SMTP · relay' },
+    { tone: 'var(--c-forest-300)', label: 'Stripe · live' },
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {rows.map((row, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div
+          key={i}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '4px 0',
+            borderBottom:
+              i < rows.length - 1 ? '1px solid var(--c-cobalt-50)' : 'none',
+          }}
+        >
+          <span
+            style={{
+              width: 12,
+              height: 14,
+              clipPath: 'var(--hex-pointy-top)',
+              background: row.tone,
+              flexShrink: 0,
+            }}
+          />
+          <div
+            style={{
+              flex: 1,
+              fontFamily: 'var(--conduction-typography-font-family-code)',
+              fontSize: 9,
+              color: 'var(--c-cobalt-700)',
+            }}
+          >
+            {row.label}
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--conduction-typography-font-family-code)',
+              fontSize: 8,
+              letterSpacing: '0.05em',
+              color: 'var(--c-cobalt-500)',
+            }}
+          >
+            ••••••••
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SharedWithTeamPanel() {
+  const rows = [
+    { tone: 'var(--c-mint-500)', who: 'platform-ops', n: 12 },
+    { tone: 'var(--c-cobalt-300)', who: 'engineering', n: 28 },
+    { tone: 'var(--c-lavender-300)', who: 'sales', n: 6 },
+    { tone: 'var(--c-orange-knvb)', who: 'finance', n: 4 },
+  ];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {rows.map((row, i) => (
+        <div
+          key={i}
+          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+        >
           <span
             style={{
               width: 14,
@@ -76,20 +132,22 @@ function DashboardPanel() {
           <div
             style={{
               flex: 1,
-              height: 6,
-              background: 'var(--c-cobalt-50)',
-              borderRadius: 1,
-              overflow: 'hidden',
+              fontFamily: 'var(--conduction-typography-font-family-code)',
+              fontSize: 9,
+              color: 'var(--c-cobalt-700)',
             }}
           >
-            <div
-              style={{
-                height: '100%',
-                width: row.w,
-                background: 'var(--c-cobalt-300)',
-                borderRadius: 1,
-              }}
-            />
+            {row.who}
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--conduction-typography-font-family-code)',
+              fontSize: 8,
+              fontWeight: 700,
+              color: 'var(--c-cobalt-500)',
+            }}
+          >
+            {row.n} secrets
           </div>
         </div>
       ))}
@@ -97,68 +155,49 @@ function DashboardPanel() {
   );
 }
 
-function ManifestPanel() {
-  const lines = ['{', '  "pages": [ … ],', '  "menu": [ … ],', '  "dependencies": [ … ]', '}'];
-  return (
-    <div
-      style={{
-        fontFamily: 'var(--conduction-typography-font-family-code)',
-        fontSize: 10,
-        lineHeight: 1.6,
-        color: 'var(--c-cobalt-700)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-      }}
-    >
-      {lines.map((line, i) => (
-        <div key={i}>{line}</div>
-      ))}
-    </div>
-  );
-}
-
-function SettingsPanel() {
+function RecentActivityPanel() {
   const rows = [
-    { tone: 'var(--c-mint-500)', on: true },
-    { tone: 'var(--c-cobalt-300)', on: true },
-    { tone: 'var(--c-cobalt-100)', on: false },
-    { tone: 'var(--c-cobalt-100)', on: false },
+    { tone: 'var(--c-mint-500)', what: 'rotated', when: '2m ago' },
+    { tone: 'var(--c-cobalt-300)', what: 'viewed', when: '14m ago' },
+    { tone: 'var(--c-lavender-300)', what: 'shared', when: '1h ago' },
+    { tone: 'var(--c-orange-knvb)', what: 'created', when: 'today' },
+    { tone: 'var(--c-forest-300)', what: 'revoked', when: 'yesterday' },
   ];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {rows.map((row, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div
+        <div
+          key={i}
+          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+        >
+          <span
             style={{
-              flex: 1,
-              height: 4,
-              width: '60%',
-              background: 'var(--c-cobalt-200)',
-              borderRadius: 1,
+              width: 10,
+              height: 12,
+              clipPath: 'var(--hex-pointy-top)',
+              background: row.tone,
+              flexShrink: 0,
             }}
           />
           <div
             style={{
-              width: 22,
-              height: 12,
-              borderRadius: 6,
-              background: row.on ? row.tone : 'var(--c-cobalt-50)',
-              position: 'relative',
-              flexShrink: 0,
+              flex: 1,
+              fontFamily: 'var(--conduction-typography-font-family-code)',
+              fontSize: 9,
+              color: 'var(--c-cobalt-700)',
             }}
           >
-            <span
-              style={{
-                position: 'absolute',
-                top: 2,
-                left: row.on ? 12 : 2,
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#fff',
-              }}
-            />
+            {row.what}
+          </div>
+          <div
+            style={{
+              fontFamily: 'var(--conduction-typography-font-family-code)',
+              fontSize: 8,
+              letterSpacing: '0.05em',
+              color: 'var(--c-cobalt-500)',
+            }}
+          >
+            {row.when}
           </div>
         </div>
       ))}
@@ -168,50 +207,50 @@ function SettingsPanel() {
 
 const WIDGETS = [
   {
-    title: 'Dashboard widget, ready to copy',
-    desc: 'The template ships a working ExampleWidget — PHP IWidget class, webpack entry, and a NcDashboardWidget renderer. Three files plus two registration points; rename and replace the data.',
-    panel: <DashboardPanel />,
+    title: 'My vault',
+    desc: 'Persoonlijke wachtwoorden en API-keys, encrypted op de Nextcloud-server. Per item: een naam, een waarde, een notitie, en wie het mag zien.',
+    panel: <MyVaultPanel />,
   },
   {
-    title: 'Manifest-first, no per-page Vue',
-    desc: 'Pages, navigation, and dependencies live in src/manifest.json. CnAppRoot reads the manifest at boot and renders index / detail / dashboard / settings pages — you only write a Vue file for type: "custom".',
-    panel: <ManifestPanel />,
+    title: 'Shared with team',
+    desc: 'Secrets per Nextcloud-groep. Een nieuwe medewerker krijgt automatisch toegang tot wat de groep deelt; iemand die vertrekt verliest het in één klik.',
+    panel: <SharedWithTeamPanel />,
   },
   {
-    title: 'Admin settings + AI companion',
-    desc: 'An admin settings panel wired through NcAppSettingsDialog, an OpenRegister-backed settings register, and an ExampleToolProvider that exposes the app over MCP to the in-app AI Chat Companion.',
-    panel: <SettingsPanel />,
+    title: 'Recent activity',
+    desc: 'Wie heeft welk secret aangemaakt, geopend, gedeeld, geroteerd, of ingetrokken — met tijdstempel. Auditeerbaar, ook achteraf.',
+    panel: <RecentActivityPanel />,
   },
 ];
 
 export default function Home() {
   return (
     <Layout
-      title="Nextcloud App Template, the Conduction scaffold for new apps"
-      description="Conduction-style scaffold for Nextcloud apps. Manifest-first Vue 2, OpenRegister data layer, Dashboard widget, AI tools, and full quality pipeline."
+      title="Doriath"
+      description="Self-hosted password and secrets vault for Nextcloud. Per-user, per-team, audited. In development."
     >
       <main className="marketing-page">
         <DetailHero
           background="cobalt"
-          status={{ label: 'Template', color: 'var(--c-orange-knvb)' }}
-          version="v0.1"
+          status={{ label: 'In development', color: 'var(--c-orange-knvb)' }}
+          version="pre-release"
           locales="NL · EN"
-          title="Nextcloud App Template"
+          title="Doriath"
           tagline={TAGLINE}
           primaryCta={{
             label: 'View on GitHub',
-            href: 'https://codeberg.org/Conduction/nextcloud-app-template',
+            href: 'https://github.com/ConductionNL/doriath',
             tone: 'orange',
           }}
           secondaryCta={{ label: 'Read the docs', href: '/docs/intro' }}
           iconColor="var(--c-orange-knvb)"
-          icon={APP_TEMPLATE_ICON}
+          icon={DORIATH_ICON}
         />
 
         <WidgetShelf
-          eyebrow="What you start with"
-          title="Born docs-ready, born OpenRegister-wired."
-          lede="Clone the template and you already have a Dashboard widget, a manifest-driven UI, an admin settings panel, an MCP tool provider, and this very documentation site — rename, rewire, ship."
+          eyebrow="What Doriath will land with"
+          title="Eén plek voor wachtwoorden en secrets — op je eigen Nextcloud."
+          lede="Een password manager mag niet wéér een extra leverancier zijn. Doriath leeft binnen je bestaande Nextcloud: dezelfde users, dezelfde groepen, dezelfde audit log. Per-user vaults, gedeelde team-secrets, en een activity feed die zegt wie wat heeft gedaan."
           widgets={WIDGETS}
         />
       </main>

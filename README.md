@@ -1,124 +1,253 @@
-# Nextcloud App Template
+<p align="center">
+  <img src="img/app-store.svg" alt="Doriath logo" width="80" height="80">
+</p>
 
-A starting point for building Nextcloud apps following [ConductionNL](https://github.com/ConductionNL) conventions.
+<h1 align="center">Doriath</h1>
 
-## What's included
+<p align="center">
+  <strong>Encrypted secrets manager for Nextcloud — password manager and key store for users and applications</strong>
+</p>
 
-- **PHP scaffold** — `Application`, `DashboardController`, `AdminSettings`, `SettingsSection`
-- **Vue 2 + Pinia frontend** — `App.vue`, router, settings store, object store
-- **Admin settings page** — version card + configurable settings form
-- **OpenRegister integration** — pre-wired object store for the OpenRegister data layer
-- **Full quality pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
-- **CI/CD workflows** — code quality, beta/stable releases, branch protection, OpenSpec sync, issue triage
-- **Custom PHPCS sniff** — enforces named parameters on all internal code calls
+<p align="center">
+  <a href="https://github.com/ConductionNL/doriath/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/doriath" alt="Latest release"></a>
+  <a href="https://github.com/ConductionNL/doriath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
+  <a href="https://github.com/ConductionNL/doriath/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/doriath/code-quality.yml?label=quality" alt="Code quality"></a>
+</p>
 
-## Quick start
+---
 
-### 1. Use this template
+> [!WARNING]
+> **Early development** — Doriath is in an early stage of development. Versions
+> published to the app store at this time are **not ready for production use**,
+> or for any critical use whatsoever. Do not entrust it with real secrets yet.
 
-Click **Use this template** on GitHub, or use the `/app-create` skill in the workspace.
+Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
-### 2. Replace placeholders
+> **Thick backend architecture** — Doriath owns its own encrypted database tables. No OpenRegister dependency. All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
 
-| Placeholder | Replace with |
-|---|---|
-| `app-template` | Your app ID (kebab-case, e.g. `my-new-app`) |
-| `app_template` | Snake-case variant (e.g. `my_new_app`) |
-| `AppTemplate` | PascalCase namespace (e.g. `MyNewApp`) |
-| `APP_TEMPLATE` | SCREAMING_SNAKE constant (e.g. `MY_NEW_APP`) |
-| `Nextcloud App Template` | Human-readable name |
-| `A template for creating new Nextcloud apps` | Your app description |
+## Screenshots
 
-### 3. Install dependencies
+_Add screenshots here once the app has a UI._
 
-```bash
-composer install
-npm install
+## Features
+
+Features are defined in [`openspec/specs/`](openspec/specs/). See the [roadmap](openspec/ROADMAP.md) for planned work. See [`docs/FEATURES.md`](docs/FEATURES.md) for the full competitive analysis and feature matrix.
+
+### Core
+- **Encrypted vault** — RSA-4096 + AES-256 encryption with a private Certificate Authority
+- **Secret management** — Store passwords, API keys, SSH keys, certificates, and notes
+- **Sharing** — Share with Nextcloud users/groups, password-protected links, secret requests
+- **Application management** — CSR-based registration, write-without-read for application secrets
+- **Key generator** — Configurable password generation with strength feedback
+
+### Supporting
+- **Lock screen** — Full-page master password entry with session timeout
+- **Admin settings** — CA health, password policies, application approval queue
+- **NL Design System** — Government theming support, WCAG AA compliance
+- **Quality pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
+
+## Architecture
+
+```mermaid
+graph TD
+    A[Vue 2 Frontend] -->|REST API| B[PHP Backend]
+    B --> C[(PostgreSQL - encrypted tables)]
+    B --> D[OpenSSL - RSA/AES encryption]
+    B --> E[Private CA - root + intermediate]
+    A --> F[Nextcloud Notifications]
+    A --> G[Nextcloud Search]
 ```
 
-### 4. Build frontend
+_See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full architecture document._
 
-```bash
-npm run dev       # development build with watch
-npm run build     # production build
-```
+### Data Model
 
-### 5. Enable in Nextcloud
+| Entity | Description |
+|--------|-------------|
+| EncryptionSuite | RSA key pair + CA certificate per user/application |
+| CACertificate | Root (20yr) and intermediate (3yr) CA certificates |
+| Secret | Encrypted credential with type-specific fields |
+| SecretType | Classification system (login, api_key, ssh_key, certificate, note, database) |
+| Folder | Hierarchical organization (tree per user) |
+| Application | External system with its own EncryptionSuite |
+| SecretShare | User-to-user encrypted secret copy |
+| LinkShare | Password-protected point-in-time snapshot |
+| SecretRequest | Write-without-read fill-in link |
 
-```bash
-docker exec nextcloud php occ app:enable app-template
-```
-
-## Code quality
-
-```bash
-composer check:strict   # lint + phpcs + phpmd + psalm + phpstan + tests
-composer cs:fix         # auto-fix PHPCS issues
-npm run lint            # ESLint
-npm run stylelint       # Stylelint
-```
-
-## Project structure
+### Directory Structure
 
 ```
-app-template/
-├── appinfo/
-│   ├── info.xml              # App metadata
-│   └── routes.php            # API + SPA routes
-├── lib/
+doriath/
+├── appinfo/                    # Nextcloud app manifest, routes, navigation
+├── lib/                        # PHP backend
 │   ├── AppInfo/Application.php
-│   ├── Controller/DashboardController.php
-│   ├── Settings/AdminSettings.php
-│   └── Sections/SettingsSection.php
-├── templates/
-│   ├── index.php             # Main SPA shell
-│   └── settings/admin.php   # Admin settings shell
-├── src/
-│   ├── main.js               # Main app entry
-│   ├── settings.js           # Admin settings entry
-│   ├── App.vue               # Root component
-│   ├── pinia.js              # Pinia instance
-│   ├── router/index.js       # Vue Router
-│   ├── store/
-│   │   ├── store.js          # Store initializer
-│   │   └── modules/
-│   │       ├── settings.js   # Settings Pinia store
-│   │       └── object.js     # Generic OpenRegister object store
-│   ├── views/
-│   │   ├── Dashboard.vue
-│   │   └── settings/
-│   │       ├── AdminRoot.vue
-│   │       └── Settings.vue
-│   └── assets/app.css
-├── .github/workflows/        # CI/CD pipelines
-├── phpcs-custom-sniffs/      # Named parameters enforcement
-├── composer.json
-├── package.json
-├── webpack.config.js
-├── psalm.xml
-├── phpstan.neon
-├── phpcs.xml
-└── phpmd.xml
+│   ├── Controller/             # DashboardController, SettingsController
+│   ├── Service/SettingsService.php
+│   ├── Listener/DeepLinkRegistrationListener.php
+│   ├── Repair/InitializeSettings.php
+│   └── Settings/               # AdminSettings, doriath_register.json
+├── templates/                  # PHP templates (SPA shells)
+├── src/                        # Vue 2 frontend
+│   ├── main.js                 # App entry point
+│   ├── App.vue                 # Root component
+│   ├── navigation/MainMenu.vue # App navigation sidebar
+│   ├── router/                 # Vue Router
+│   ├── store/                  # Pinia stores
+│   └── views/                  # Route-level views + UserSettings.vue
+├── openspec/                   # Specifications, decisions, and roadmap
+│   ├── app-config.json         # Canonical app config (id, goal, dependencies, CI)
+│   ├── config.yaml             # OpenSpec CLI configuration
+│   ├── specs/                  # Feature specs (input for OpenSpec changes)
+│   ├── architecture/           # App-specific Architectural Decision Records
+│   ├── ROADMAP.md              # Product roadmap
+│   └── changes/                # OpenSpec change directories (created on first change)
+├── docs/                       # Design documentation
+│   ├── ARCHITECTURE.md         # Standards, data model, integrations
+│   ├── FEATURES.md             # Competitive analysis, feature matrix
+│   └── DESIGN-REFERENCES.md    # Design patterns, ASCII wireframes
+├── docusaurus/                 # Documentation site
+├── tests/                      # Unit and integration tests
+├── l10n/                       # Translations (en, nl)
+├── .github/workflows/          # CI/CD pipelines
+└── img/                        # App icons and screenshots
 ```
+
+## Requirements
+
+| Dependency | Version |
+|-----------|---------|
+| Nextcloud | 28 – 33 |
+| PHP | 8.1+ |
+| Node.js | 20+ |
+
+## Installation
+
+### From the Nextcloud App Store
+
+1. Go to **Apps** in your Nextcloud instance
+2. Search for **Doriath**
+3. Click **Download and enable**
+
+### From Source
+
+```bash
+cd /var/www/html/custom_apps
+git clone https://github.com/ConductionNL/doriath.git doriath
+cd doriath
+npm install && npm run build
+php occ app:enable doriath
+```
+
+## Development
+
+### Start the environment
+
+```bash
+docker compose -f ../.github/docker-compose.yml up -d
+```
+
+### Frontend development
+
+```bash
+npm install
+npm run dev        # Watch mode
+npm run build      # Production build
+```
+
+### Code quality
+
+```bash
+# PHP
+composer check:strict   # All quality checks (PHPCS, PHPMD, Psalm, PHPStan, tests)
+composer cs:fix         # Auto-fix PHPCS issues
+composer phpmd          # Mess detection
+composer phpmetrics     # HTML metrics report
+
+# Frontend
+npm run lint            # ESLint
+npm run stylelint       # CSS linting
+```
+
+### Enable locally
+
+```bash
+npm install && npm run build
+docker exec nextcloud php occ app:enable doriath
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Vue 2.7, Pinia, @nextcloud/vue |
+| Build | Webpack 5, @nextcloud/webpack-vue-config |
+| Backend | PHP 8.1+, Nextcloud App Framework, OpenSSL |
+| Data | PostgreSQL (own encrypted tables) |
+| UX | @conduction/nextcloud-vue |
+| Quality | PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint |
 
 ## Branches
 
 | Branch | Purpose |
-|---|---|
+|--------|---------|
 | `main` | Stable releases — triggers release workflow |
-| `development` | Active development — auto-syncs to `beta` |
-| `beta` | Beta releases |
-| `documentation` | Docs site (GitHub Pages) |
+| `beta` | Beta / pre-release builds |
+| `development` | Active development — merge target for feature branches |
 
-## Requirements
+## Documentation
 
-- PHP 8.1+
-- Nextcloud 28–33
-- Node.js 20+, npm 10+
-- [OpenRegister](https://github.com/ConductionNL/openregister) (runtime dependency)
+| Resource | Description |
+|----------|-------------|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Standards research, data model, Nextcloud integration |
+| [`docs/FEATURES.md`](docs/FEATURES.md) | Competitive analysis, feature matrix (90 features) |
+| [`docs/DESIGN-REFERENCES.md`](docs/DESIGN-REFERENCES.md) | Design patterns, 12 ASCII wireframes |
+| [`openspec/app-config.json`](openspec/app-config.json) | App identity, goals, dependencies, and CI configuration |
+| [`openspec/specs/`](openspec/specs/) | Feature specs — what the app should do |
+| [`openspec/architecture/`](openspec/architecture/) | App-specific Architectural Decision Records (3 ADRs) |
+| [`openspec/ROADMAP.md`](openspec/ROADMAP.md) | Product roadmap |
+
+## Standards & Compliance
+
+- **Encryption:** RSA-4096 + AES-256, X.509 PKI, NIST SP 800-57
+- **Password Policy:** zxcvbn scoring, NIST SP 800-63B
+- **Accessibility:** WCAG AA (Dutch government requirement)
+- **Localization:** English and Dutch
+- **Audit trail:** Full change history on all operations
+
+## Related Apps
+
+- **[OpenConnector](https://github.com/ConductionNL/openconnector)** — Uses Doriath as a secret store for connector API credentials
+
+_Add related apps here as integrations are built._
+
+## Troubleshooting
+
+### App UI is blank after enabling
+
+The `js/` build output is not committed to the repo. Run the frontend build before enabling the app:
+
+```bash
+npm install && npm run build
+```
+
+## Support
+
+For support, contact us at [support@conduction.nl](mailto:support@conduction.nl).
+
+For a Service Level Agreement (SLA), contact [sales@conduction.nl](mailto:sales@conduction.nl).
 
 ## License
 
-EUPL-1.2 — see [LICENSE](LICENSE)
+This project is licensed under the [EUPL-1.2](LICENSE).
 
-**Support:** support@conduction.nl | [conduction.nl](https://conduction.nl)
+### Dependency license policy
+
+All dependencies (PHP and JavaScript) are automatically checked against an approved license allowlist during CI. The following SPDX license families are approved:
+
+- **Permissive:** MIT, ISC, BSD-2-Clause, BSD-3-Clause, 0BSD, Apache-2.0, Unlicense, CC0-1.0, CC-BY-3.0, CC-BY-4.0, Zlib, BlueOak-1.0.0, Artistic-2.0, BSL-1.0
+- **Copyleft (EUPL-compatible):** LGPL-2.0/2.1/3.0, GPL-2.0/3.0, AGPL-3.0, EUPL-1.1/1.2, MPL-2.0
+- **Font licenses:** OFL-1.0, OFL-1.1
+
+## Authors
+
+Built by [Conduction](https://conduction.nl) — open-source software for Dutch government and public sector organizations.

@@ -8,8 +8,8 @@ on:
 
 jobs:
   sync:
-    uses: ConductionNL/.github/.github/workflows/openspec-sync.yml@main
+    uses: Conduction/.github/.github/workflows/openspec-sync.yml@main
     with:
-      app-name: app-template
+      app-name: doriath
     secrets:
       PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
