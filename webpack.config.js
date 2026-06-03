@@ -13,7 +13,7 @@ webpackConfig.stats = {
 	modules: false,
 }
 
-const appId = 'app-template'
+const appId = 'doriath'
 webpackConfig.entry = {
 	main: {
 		import: path.join(__dirname, 'src', 'main.js'),
@@ -36,8 +36,8 @@ webpackConfig.resolve = {
 		...(useLocalLib ? { '@conduction/nextcloud-vue': localLib } : {}),
 		// Deduplicate shared packages so the aliased library source uses
 		// the same instances as the app (prevents dual-Pinia / dual-Vue bugs).
-		'vue$': path.resolve(__dirname, 'node_modules/vue'),
-		'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
+		vue$: path.resolve(__dirname, 'node_modules/vue'),
+		pinia$: path.resolve(__dirname, 'node_modules/pinia'),
 		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	},
 }
@@ -52,11 +52,30 @@ webpackConfig.module = {
 			test: /\.css$/,
 			use: ['style-loader', 'css-loader'],
 		},
+		{
+			// SCSS used by the aliased @conduction/nextcloud-vue components
+			// (CnCard, CnDataTable, CnAppRoot internals, …) when building
+			// against the monorepo-dev source tree.
+			test: /\.scss$/,
+			use: ['style-loader', 'css-loader', 'sass-loader'],
+		},
+		{
+			// Image assets referenced by library components (e.g. Leaflet
+			// marker icons pulled in transitively).
+			test: /\.(png|jpe?g|gif|svg)$/,
+			type: 'asset/resource',
+			generator: {
+				filename: 'img/[name][ext]',
+			},
+		},
 	],
 }
 
+// Replace VueLoaderPlugin (don't push — duplicates break templates when using local package)
+const otherPlugins = (webpackConfig.plugins || []).filter((p) => p.constructor.name !== 'VueLoaderPlugin')
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
+	...otherPlugins,
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
 	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
 ]
@@ -64,5 +83,55 @@ webpackConfig.plugins = [
 // Force @nextcloud/dialogs to resolve from this app's node_modules,
 // preventing the nextcloud-vue submodule's nested deps (Vue 3) from leaking in.
 webpackConfig.resolve.alias['@nextcloud/dialogs'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs')
+
+// Share Vue + @nextcloud/vue + pinia + icons + @conduction/nextcloud-vue
+// across the main / settings entry-points so each bundle no longer
+// inlines its own ~3 MB framework copy. Stable filenames mean each
+// entry's `Util::addScript` PHP call can reference the chunk directly
+// without a manifest. The shared chunks are loaded once per page and
+// cached across navigations between doriath's own pages.
+//
+// CRITICAL: templates/index.php + templates/settings/admin.php MUST
+// addScript these shared chunks BEFORE the entry script — without
+// them the webpack runtime sits forever in `chunkOnLoad` and the app
+// renders blank with no console error (same gotcha that bit
+// docudesk#242).
+webpackConfig.optimization = {
+	...(webpackConfig.optimization || {}),
+	splitChunks: {
+		...(webpackConfig.optimization?.splitChunks || {}),
+		chunks: 'all',
+		cacheGroups: {
+			default: false,
+			defaultVendors: false,
+			ncVue: {
+				name: appId + '-shared-nc-vue',
+				// Matches both node_modules entries AND the monorepo-dev alias
+				// `../nextcloud-vue/src/...` which webpack resolves outside
+				// node_modules when @conduction/nextcloud-vue is aliased to it.
+				test: /[\\/]node_modules[\\/](@nextcloud[\\/]vue|@conduction[\\/]nextcloud-vue)[\\/]|[\\/]nextcloud-vue[\\/]src[\\/]/,
+				priority: 30,
+				reuseExistingChunk: true,
+				enforce: true,
+				filename: appId + '-shared-nc-vue.js',
+			},
+			vendor: {
+				name: appId + '-shared-vendor',
+				test: /[\\/]node_modules[\\/](vue|pinia|vue-material-design-icons|@vueuse|core-js)[\\/]/,
+				priority: 20,
+				reuseExistingChunk: true,
+				enforce: true,
+				filename: appId + '-shared-vendor.js',
+			},
+		},
+	},
+}
+
+// Nextcloud apps with @conduction/nextcloud-vue and zxcvbn exceed the default
+// 244 KiB asset size hint. Raise the limit to suppress warnings.
+webpackConfig.performance = {
+	maxAssetSize: 5 * 1024 * 1024,
+	maxEntrypointSize: 5 * 1024 * 1024,
+}
 
 module.exports = webpackConfig

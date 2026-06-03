@@ -1,26 +1,23 @@
-# {{APP_NAME}}
+# Doriath
 
-> {{ONE_SENTENCE_DESCRIPTION}}
+> Doriath is an open-source password and secrets vault app for the Nextcloud workspace.
 
-{{APP_NAME}} is an open-source app for the Nextcloud workspace, built on the @conduction/docusaurus-preset documentation framework. Replace this placeholder content with a Wikipedia-style 2 to 4 sentence intro explaining what your app does, who uses it, and the key capabilities. End with the licence and maintainer line (most Conduction apps end "Released under EUPL-1.2 and maintained by {{ORG}} since {{YEAR}}.").
+Doriath is an open-source password and secrets vault app for the Nextcloud workspace. It stores per-user and per-team credentials with audited access and integrates with the Nextcloud authentication stack, replacing standalone password managers in the workspace. The app is in active development; consult the docs for the current release status. Released under EUPL-1.2 and maintained by Conduction since 2019.
 
 ## Docs
 
-- [Tutorials](https://{{slug}}.conduction.nl/tutorials): step-by-step walkthroughs for first-time users.
-- [Features](https://{{slug}}.conduction.nl/Features): what the app does, organised by capability.
-- [Use cases](https://{{slug}}.conduction.nl/UseCases): real customer scenarios the app solves.
-- [Integrations](https://{{slug}}.conduction.nl/Integrations): which external systems and standards the app talks to.
-- [Technical](https://{{slug}}.conduction.nl/Technical): architecture, data model, security posture, deployment notes.
-- [User guide](https://{{slug}}.conduction.nl/user-guide): end-user documentation.
-- [API](https://{{slug}}.conduction.nl/api): OpenAPI reference (when the app ships an HTTP API).
+- [Documentation](https://doriath.conduction.nl/docs/intro): main entry, including tutorials, user guide, and admin guide.
+- [API reference](https://doriath.conduction.nl/api): OpenAPI documentation.
 
 ## Optional
 
-- [Install](https://{{slug}}.conduction.nl/installation): how to install from the Nextcloud app store.
-- [Repository](https://github.com/{{ORG}}/{{slug}}): source code and issue tracker.
-- [App page on conduction.nl](https://www.conduction.nl/apps/{{slug}}): product positioning, pricing, support paths.
+- [Install](https://www.conduction.nl/install): self-host on your Nextcloud instance.
+- [Source code](https://github.com/ConductionNL/doriath): repository and issue tracker.
+- [App page](https://www.conduction.nl/apps/doriath): product positioning on conduction.nl.
 
 ## Contact
 
 - Email: info@conduction.nl
-- GitHub: https://github.com/{{ORG}}
+- Web: https://www.conduction.nl
+- GitHub: https://github.com/ConductionNL
+- Conduction B.V. · KvK 76741850 · Lauriergracht 14h, Amsterdam, Netherlands

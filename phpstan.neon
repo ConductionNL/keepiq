@@ -19,6 +19,13 @@ parameters:
         - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'
         - '#on an unknown class OCA\\OpenRegister\\#'
         - '#has invalid return type OCA\\OpenRegister\\#'
+        # Doctrine\DBAL classes (used in migrations for cross-dialect column type changes;
+        # not in vendor stubs because doriath doesn't directly require doctrine/dbal — it
+        # comes through Nextcloud's runtime via OCP\DB\Types).
+        - '#unknown class Doctrine\\DBAL\\#'
+        - '#class Doctrine\\DBAL\\#'
+        - '#Class Doctrine\\DBAL\\#'
+        - '#Doctrine\\DBAL\\Platforms\\#'
         # GuzzleHttp is available at runtime via Nextcloud but not in composer require
         - '#unknown class GuzzleHttp\\#'
         - '#GuzzleHttp\\[a-zA-Z\\]+.*not found#'
@@ -27,3 +34,18 @@ parameters:
         - '#Caught class GuzzleHttp\\#'
         # Dynamic HTTP status codes from business rule validation results
         - '#Parameter \$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
+        # registerRepairStep exists on server; not yet in nextcloud/ocp stub used for analysis
+        - '#Call to an undefined method OCP\\AppFramework\\Bootstrap\\IRegistrationContext::registerRepairStep#'
+        # Entities use string UUIDs as primary keys instead of auto-increment ints;
+        # getId() returns int per OCP\Entity but the actual value is a UUID string at runtime
+        - '#Parameter \#1 \$id of method OCP\\AppFramework\\Db\\Entity::setId\(\) expects int, string given#'
+        - '#expects string(\|null)?, int given#'
+        # Companion of the setId ignore above: the entity overrides $id with a string
+        # PHPDoc type which PHPStan flags as non-covariant against OCP\Entity::$id (int).
+        # Same UUID-PK rationale.
+        - '#PHPDoc type string of property OCA\\Doriath\\Db\\[A-Za-z]+::\$id is not covariant with PHPDoc type int of overridden property OCP\\AppFramework\\Db\\Entity::\$id#'
+        # str_split with positive chunk size always returns non-empty array
+        - '#Variable \$chunks in empty\(\) always exists and is not falsy#'
+        - '#Strict comparison using === between false and true will always evaluate to false#'
+        # PHPDoc type refinement: nullable DateTime checked at runtime
+        - '#Strict comparison using === between DateTime and null will always evaluate to false#'

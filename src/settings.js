@@ -7,9 +7,9 @@ import AdminRoot from './views/settings/AdminRoot.vue'
 Vue.mixin({ methods: { t, n } })
 Vue.use(PiniaVuePlugin)
 
-loadTranslations('app-template', () => {
+loadTranslations('doriath', () => {
 	new Vue({
 		pinia,
 		render: h => h(AdminRoot),
-	}).$mount('#app-template-settings')
+	}).$mount('#doriath-settings')
 })

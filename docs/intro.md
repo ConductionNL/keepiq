@@ -1,33 +1,27 @@
 ---
 sidebar_position: 1
-title: Introduction
-description: Federated identity and access management for Conduction apps. Built on OpenRegister and the Conduction quality pipeline.
 ---
 
 # Doriath
 
-Federated identity and access management for Conduction apps. Built on OpenRegister and the Conduction quality pipeline.
+An encrypted secrets manager for Nextcloud — password manager and key store for users and applications.
 
-## What's in this site
+> **Status: in development.** This documentation site is up so the
+> brand surface and the eventual journeydoc tutorials have a stable
+> home. Real walkthroughs and screenshots land as the UI lands. Watch
+> the [GitHub repository](https://github.com/ConductionNL/doriath) for
+> milestones.
 
-The Doriath documentation is organised in three lanes:
+## What is Doriath?
 
-- **User track** — how an end user works with Doriath day to day.
-- **Admin track** — how an administrator installs and configures it.
-- **Technical** — architecture, schemas, APIs, and integration patterns for developers.
+Doriath is an encrypted vault built natively into Nextcloud. It stores secrets — passwords, API keys, tokens, SSH keys, certificates, and database credentials — encrypted at rest using RSA-4096 public-key cryptography. Private keys are protected by AES-256 encryption derived from a user's master password, ensuring zero-knowledge security: not even the server administrator can read your secrets.
 
-The user and admin tracks ship as journeydoc tutorials with Playwright-captured
-screenshots (see ADR-030); the technical track is plain Markdown that lives
-alongside the source.
+Unlike standalone password managers (Bitwarden, 1Password) or infrastructure secret engines (HashiCorp Vault), Doriath lives where your team already works. It leverages Nextcloud's identity layer, group management, unified search, and notification system — so sharing a secret is as natural as sharing a file. A built-in private Certificate Authority (root + intermediate) signs all user and application certificates, enabling enterprise patterns like write-without-read secret requests and CSR-based application onboarding.
 
-## Where to go from here
+## Getting Started
 
-The sidebar on the left lists every available page. If you're new, start with
-the [getting started](./tutorials/) section. If you're integrating, jump to
-the [technical reference](./architecture/) or the API specs under `/api/`.
+- [Architecture & Data Model](./ARCHITECTURE) — Standards research, encryption architecture, entity definitions
+- [Feature Analysis](./FEATURES) — Competitive landscape, 90-feature roadmap, and strategic positioning
+- [Design References](./DESIGN-REFERENCES) — Wireframes, UX patterns, and design inspiration
 
-Source for this site lives at
-[codeberg.org/Conduction/doriath](https://codeberg.org/Conduction/doriath)
-on the `main` branch under `docs/`. Every push to `documentation`, `main`, or
-`development` rebuilds and republishes the site via the central
-`Conduction/.github/.forgejo/workflows/documentation.yml` workflow.
+Free and open source under the EUPL-1.2 license. For support, contact support@conduction.nl.
