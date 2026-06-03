@@ -16,6 +16,11 @@
 
 ---
 
+> [!WARNING]
+> **Early development** — Doriath is in an early stage of development. Versions
+> published to the app store at this time are **not ready for production use**,
+> or for any critical use whatsoever. Do not entrust it with real secrets yet.
+
 Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
 > **Thick backend architecture** — Doriath owns its own encrypted database tables. No OpenRegister dependency. All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
