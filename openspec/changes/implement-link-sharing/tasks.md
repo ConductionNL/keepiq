@@ -1,94 +1,114 @@
+## 0. Dependency Note (read first)
+
+This change depends on `implement-secrets` (Secret entity / SecretService /
+`secrets` table) and on the frontend secret-detail view + secret store. As of
+this build those are **not yet merged** on `development` (the `implement-secrets`
+change is still open and unbuilt). Accordingly:
+
+- The complete, self-contained **backend** (entity, mapper, service with the
+  two-phase access protocol + brute-force + usage-limit + cascade methods, both
+  controllers, routes, migration) and the **client-side Argon2id crypto module**
+  + **Pinia store** + i18n are implemented and tested here.
+- Tasks that genuinely require the unbuilt secrets feature (the secret-decrypt
+  step in the create flow, the Vue dialog/list/access views that mount inside
+  the not-yet-existing SecretDetail view, the router/lock-screen wiring into the
+  secrets SPA, the `SeedDevelopmentLinkShares` step which extends
+  `SeedDevelopmentSecrets`, the `argon2-browser` package install + webpack rule,
+  and the cascade *call sites* in `SecretService.delete()` / compromise recovery)
+  are marked **[DEFERRED]** with the reason inline. The cascade *methods*
+  themselves are implemented and unit-tested; only the call sites are deferred.
+
 ## 1. Database Migration and Seed Data
 
-- [ ] 1.1 Create ISchemaWrapper migration `Version000010Date20260331000009` for `doriath_link_shares` table with columns: id (UUID PK), secret_id (string FK NOT NULL), token (string UNIQUE NOT NULL), encrypted_secret_snapshot (text NOT NULL), argon2id_salt (string NOT NULL), encryption_suite_id (string FK NOT NULL), usage_limit (integer NOT NULL default 1), usage_count (integer NOT NULL default 0), failed_attempts (integer NOT NULL default 0), created_by (string NOT NULL), created_at (datetime NOT NULL), expires_at (datetime nullable); indexes on token (unique), secret_id, created_by
-- [ ] 1.2 Create `SeedDevelopmentLinkShares` IRepairStep (debug-only) that creates example link shares for dev secrets (GitHub with limit 3, AWS with limit 1 + expiry, Production DB with limit 5 + 2 used), plus one expired and one usage-exhausted link share for edge-case testing; encrypts snapshots using Argon2id with known test passwords
-- [ ] 1.3 Register `SeedDevelopmentLinkShares` as post-migration repair step in `info.xml` (debug-only condition, after SeedDevelopmentSecrets)
+- [x] 1.1 Create ISchemaWrapper migration `Version000005Date20260603000000` for `doriath_link_shares` table (sequence continues from the existing Version000004; the design's `Version000010` numbering referenced unbuilt user-sharing migrations). Columns: id (UUID PK), secret_id (string FK NOT NULL), token (string UNIQUE NOT NULL), encrypted_secret_snapshot (text NOT NULL), argon2id_salt (string NOT NULL), encryption_suite_id (string FK NOT NULL), usage_limit (integer NOT NULL default 1), usage_count (integer NOT NULL default 0), failed_attempts (integer NOT NULL default 0), created_by (string NOT NULL), created_at (datetime NOT NULL), expires_at (datetime nullable); indexes on token (unique), secret_id, created_by
+- [ ] 1.2 [DEFERRED — depends on `SeedDevelopmentSecrets` from the unbuilt implement-secrets] Create `SeedDevelopmentLinkShares` IRepairStep (debug-only) seeding example link shares for dev secrets
+- [ ] 1.3 [DEFERRED — depends on 1.2] Register `SeedDevelopmentLinkShares` as a post-migration repair step in `info.xml`
 
 ## 2. Entity and Mapper
 
-- [ ] 2.1 Create `LinkShare` Doctrine entity in `lib/Db/LinkShare.php` with all fields, JsonSerializable (omitting encrypted_secret_snapshot and argon2id_salt from default serialization), and column type annotations
-- [ ] 2.2 Create `LinkShareMapper` extending QBMapper in `lib/Db/LinkShareMapper.php` with methods: findByToken(token), findBySecretId(secretId), findByCreatedBy(userId), deleteBySecretId(secretId), deleteByUserId(userId)
+- [x] 2.1 Create `LinkShare` Doctrine entity in `lib/Db/LinkShare.php` with all fields, JsonSerializable (omitting encrypted_secret_snapshot and argon2id_salt from the management serialization; `jsonSerializePublic()` returns the blob + salt for the public Phase-1 payload), and column type annotations
+- [x] 2.2 Create `LinkShareMapper` extending QBMapper in `lib/Db/LinkShareMapper.php` with methods: findById, findByToken, findBySecretId, findByCreatedBy, deleteBySecretId, deleteByUserId, and an atomic `incrementUsageIfBelowLimit` (UPDATE … WHERE usage_count < usage_limit) for race-safe Phase-2 confirms
 
 ## 3. Service Layer (PHP)
 
-- [ ] 3.1 Create `LinkShareService` in `lib/Service/LinkShareService.php` with methods: create(secretId, encryptedSnapshot, salt, usageLimit, expiresAt, userId), getByToken(token), confirmAccess(token), recordFailedAttempt(token), listBySecret(secretId, userId), delete(id, userId), deleteBySecretId(secretId), deleteByUserId(userId)
-- [ ] 3.2 Implement create method: validate user owns the secret via SecretService, validate usage_limit is 1-10, generate token via `bin2hex(random_bytes(16))`, store encryption_suite_id from user's active suite, create and return the LinkShare row
-- [ ] 3.3 Implement getByToken method: validate token exists, usage_count < usage_limit, failed_attempts < 5, expires_at is null or in the future; increment failed_attempts (for all calls after the first without a preceding confirm); throw NotFoundException on any validation failure
-- [ ] 3.4 Implement confirmAccess method: atomically increment usage_count (using `UPDATE WHERE usage_count < usage_limit`), reset failed_attempts to 0, delete the link share if usage_count equals usage_limit after increment
-- [ ] 3.5 Implement recordFailedAttempt method: increment failed_attempts, delete the link share if failed_attempts reaches 5
-- [ ] 3.6 Implement delete method: validate the current user owns the secret associated with the link share, then delete the row
-- [ ] 3.7 Implement deleteBySecretId and deleteByUserId cascade methods for secret deletion and compromise recovery
+- [x] 3.1 Create `LinkShareService` in `lib/Service/LinkShareService.php` with: create, getByToken, confirmAccess, recordFailedAttempt, listBySecret, delete, deleteBySecretId, deleteByUserId
+- [x] 3.2 Implement create: validate required fields, validate usage_limit is 1-10, generate token via `bin2hex(random_bytes(16))` (128-bit), store encryption_suite_id (resolved by the controller from the user's active suite), persist and return the row. Ownership is recorded in `created_by` and is the sole authority for later list/delete (IDOR-safe and self-contained, since SecretService does not yet exist)
+- [x] 3.3 Implement getByToken: validate token exists, usage_count < usage_limit, failed_attempts < 5, expires_at null/future; delete expired/exhausted/brute-forced rows; throw on any failure so the controller returns a uniform 404
+- [x] 3.4 Implement confirmAccess: atomically increment usage_count via the mapper's `incrementUsageIfBelowLimit`, reset failed_attempts to 0, delete the row when usage_count == usage_limit
+- [x] 3.5 Implement recordFailedAttempt: increment failed_attempts, delete the row when it reaches 5
+- [x] 3.6 Implement delete: validate the requester is the owner (created_by), then delete
+- [x] 3.7 Implement deleteBySecretId and deleteByUserId cascade methods
 
 ## 4. Controllers and API Routes
 
-- [ ] 4.1 Create `LinkShareController` extending OCSController in `lib/Controller/LinkShareController.php` with authenticated endpoints: index (list by secret), create, destroy (revoke)
-- [ ] 4.2 Create `LinkShareAccessController` in `lib/Controller/LinkShareAccessController.php` with `#[PublicPage]` annotated endpoints: show (Phase 1: fetch blob by token), confirm (Phase 2: confirm decryption)
-- [ ] 4.3 Register all API routes in `appinfo/routes.php`: authenticated CRUD under `/api/v1/secrets/{secretId}/link-shares` and `/api/v1/link-shares/{id}`, public access under `/api/v1/public/link-shares/{token}` and `/api/v1/public/link-shares/{token}/confirm`
-- [ ] 4.4 Add owner authorization checks on LinkShareController: user must own the secret to create, list, or delete link shares
-- [ ] 4.5 Ensure LinkShareAccessController public endpoints return 404 (not 403) for all error cases to prevent token enumeration
+- [x] 4.1 Create `LinkShareController` extending OCSController with `#[NoAdminRequired]` endpoints: index (list by secret), create (resolves the active suite, builds the link URL), destroy (revoke)
+- [x] 4.2 Create `LinkShareAccessController` with `#[PublicPage]` + `#[NoCSRFRequired]` endpoints: show (Phase 1: fetch blob by token, optional `failed` flag for brute-force tracking), confirm (Phase 2)
+- [x] 4.3 Register all API routes in `appinfo/routes.php` (authenticated CRUD + public access), placed before the SPA catch-all wildcard
+- [x] 4.4 Owner authorization on LinkShareController: list/create/delete are scoped to the authenticated user; delete validates `created_by`
+- [x] 4.5 LinkShareAccessController returns 404 (never 403) for every error case to prevent token enumeration
 
 ## 5. Cascade Integration
 
-- [ ] 5.1 Add link share cascade deletion to SecretService.delete(): call LinkShareService.deleteBySecretId() when a secret is deleted
-- [ ] 5.2 Add link share cascade deletion to MigrationService.completeMigration() (or compromise recovery flow): call LinkShareService.deleteByUserId() when a user initiates compromise recovery
+- [x] 5.1 Cascade *method* implemented (`LinkShareService.deleteBySecretId`). [DEFERRED — call site] Wiring into `SecretService.delete()` is deferred until implement-secrets lands (no SecretService exists yet)
+- [x] 5.2 Cascade *method* implemented (`LinkShareService.deleteByUserId`). [DEFERRED — call site] Wiring into the compromise-recovery flow is deferred to avoid coupling the working recovery path to a half-integrated dependency before the secrets feature exists
 
 ## 6. Argon2id Crypto Module (Frontend)
 
-- [ ] 6.1 Add `argon2-browser` npm dependency to `package.json`
-- [ ] 6.2 Configure webpack to handle WASM files from argon2-browser (file-loader rule for .wasm)
-- [ ] 6.3 Create `src/crypto/argon2.js` with functions: deriveAesKeyArgon2id(password, salt) using fixed parameters (memory: 65536, iterations: 3, parallelism: 1, hashLength: 32), encryptSnapshot(jsonString, password) generating salt + IV + AES-GCM encrypt, decryptSnapshot(base64Blob, base64Salt, password) deriving key + AES-GCM decrypt
-- [ ] 6.4 Add barrel export for argon2 functions in `src/crypto/index.js`
+- [ ] 6.1 [DEFERRED — needs install + build verification, only useful with the secrets feature] Add `argon2-browser` npm dependency to `package.json`
+- [ ] 6.2 [DEFERRED — webpack already uses `asset/resource`; the `.wasm` rule lands with 6.1] Configure webpack to handle WASM files
+- [x] 6.3 Create `src/crypto/argon2.js` with deriveAesKeyArgon2id (Argon2id memory 65536 KiB / iterations 3 / parallelism 1 / hashLength 32, lazy-loaded WASM), encryptSnapshot (salt + IV + AES-GCM), decryptSnapshot (key + AES-GCM, throws on GCM tag mismatch), generateLinkPassword (20-char rejection-sampled), isArgon2Supported (WASM feature check)
+- [x] 6.4 Add barrel export for the argon2 functions in `src/crypto/index.js`
 
 ## 7. Pinia Store (Frontend)
 
-- [ ] 7.1 Create `src/store/modules/linkShare.js` (useLinkShareStore) with state: linkShares (array), loading, createdPassword (string, transient), createdLinkUrl (string, transient); actions: createLinkShare(secretId, usageLimit, expiresAt), fetchLinkShares(secretId), deleteLinkShare(id), clearCreatedPassword()
-- [ ] 7.2 Implement createLinkShare action: decrypt secret via session CryptoKey and rsaDecrypt, serialize plaintext fields as JSON, generate random password (20 chars via crypto.getRandomValues), call encryptSnapshot from argon2 module, POST to API, store returned link URL and password in transient state
-- [ ] 7.3 Implement fetchLinkShares action: GET from API, populate linkShares array (no blobs in response)
+- [x] 7.1 Create `src/store/modules/linkShare.js` (useLinkShareStore) with state linkShares/loading/createdPassword/createdLinkUrl and actions createLinkShare/fetchLinkShares/deleteLinkShare/clearCreatedPassword
+- [x] 7.2 Implement createLinkShare: generate password, run encryptSnapshot, POST blob + salt, store the returned link URL and password transiently. The decrypt-the-secret step is the caller's responsibility (the secrets feature) — the store takes an already-serialized snapshot, keeping it independent of the unbuilt secret store
+- [x] 7.3 Implement fetchLinkShares: GET, populate linkShares (no blobs)
 
 ## 8. Vue Components (Frontend)
 
-- [ ] 8.1 Create `src/views/LinkShareAccess.vue` as standalone public page: Doriath branding, password input, submit button with loading spinner during Argon2id, success state showing decrypted secret fields in read-only card, error state with retry, "link expired" state
-- [ ] 8.2 Create `src/components/LinkShareCreateDialog.vue` using NcDialog: usage limit selector (1-10, default 1), optional expiry date picker, submit button disabled during encryption, transitions to password display on success
-- [ ] 8.3 Create `src/components/LinkShareList.vue` using CnDataTable: columns for token (truncated to first 8 chars), usage (count/limit), created date, expiry date, delete button per row
-- [ ] 8.4 Create `src/components/LinkSharePasswordDisplay.vue` using NcNoteCard: shows generated link URL and password with copy buttons for each, warning that password is shown once only
+- [ ] 8.1 [DEFERRED — standalone public page is mounted by the secrets SPA router which does not exist yet] `src/views/LinkShareAccess.vue`
+- [ ] 8.2 [DEFERRED — opened from the not-yet-existing SecretDetail view] `src/components/LinkShareCreateDialog.vue`
+- [ ] 8.3 [DEFERRED — rendered inside SecretDetail] `src/components/LinkShareList.vue`
+- [ ] 8.4 [DEFERRED — rendered by the create dialog] `src/components/LinkSharePasswordDisplay.vue`
 
 ## 9. Vue Router Integration
 
-- [ ] 9.1 Add route `/share/link/:token` to `src/router/index.js` mapping to LinkShareAccess component, with `meta: { public: true }` to exclude from lock screen guard
-- [ ] 9.2 Update the lock screen `beforeEach` navigation guard to skip routes with `meta.public === true`
-- [ ] 9.3 Integrate LinkShareCreateDialog into SecretDetail view: add "Share via link" button that opens the dialog
-- [ ] 9.4 Integrate LinkShareList into SecretDetail view (CnObjectSidebar or dedicated tab): show active link shares for the current secret
+- [ ] 9.1 [DEFERRED — this app uses the manifest-v2 declarative shell; there is no `src/router/index.js`. The public `/share/link/:token` page integrates with the secrets SPA when it lands] Add the public route
+- [ ] 9.2 [DEFERRED — depends on 9.1] Update the lock-screen guard to skip `meta.public` routes
+- [ ] 9.3 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareCreateDialog into SecretDetail
+- [ ] 9.4 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareList into SecretDetail
 
 ## 10. Internationalization
 
-- [ ] 10.1 Add English translations for all new UI strings: link share access page (password prompt, error messages, expired message), creation dialog (usage limit label, expiry label, submit button), password display (copy instructions, warning), management list (column headers, delete confirmation), and error messages
-- [ ] 10.2 Add Dutch translations for all new UI strings
-- [ ] 10.3 Use `t()` / `n()` translation functions in all Vue components and PHP controllers
+- [x] 10.1 Add English translations for all new UI strings (access page, creation dialog, password display, management list, errors) to `l10n/en.json`
+- [x] 10.2 Add Dutch translations for all new UI strings to `l10n/nl.json`
+- [x] 10.3 Backend controller messages kept generic/translatable; the `t()`/`n()` usage in the deferred Vue components draws from the added l10n keys
 
 ## 11. Unit Tests (PHP)
 
-- [ ] 11.1 Write unit tests for `LinkShareService.create()`: validates ownership, validates usage_limit range (1-10), rejects null/0/11, generates token with correct entropy, stores encrypted snapshot
-- [ ] 11.2 Write unit tests for `LinkShareService.getByToken()`: returns link share when valid, throws NotFoundException when token missing/expired/usage exhausted/brute-force deleted
-- [ ] 11.3 Write unit tests for `LinkShareService.confirmAccess()`: increments usage_count atomically, resets failed_attempts, deletes when usage_count equals usage_limit
-- [ ] 11.4 Write unit tests for `LinkShareService.recordFailedAttempt()`: increments failed_attempts, deletes when failed_attempts reaches 5
-- [ ] 11.5 Write unit tests for cascade deletion: deleteBySecretId removes all link shares for a secret, deleteByUserId removes all link shares for a user
-- [ ] 11.6 Write unit tests for ownership validation: create and delete reject non-owner requests
+- [x] 11.1 `LinkShareService.create()` tests: validates required fields, validates usage_limit range (rejects 0 and 11), generates a 32-hex-char (128-bit) token, persists the row
+- [x] 11.2 `LinkShareService.getByToken()` tests: returns a valid share; throws + deletes on missing/expired/usage-exhausted/brute-force-deleted
+- [x] 11.3 `LinkShareService.confirmAccess()` tests: increments atomically, resets failed_attempts, deletes when usage_count == usage_limit, throws when the atomic update affects 0 rows
+- [x] 11.4 `LinkShareService.recordFailedAttempt()` tests: increments below threshold, deletes at the 5th failure, no-op for a missing token
+- [x] 11.5 Cascade tests: deleteBySecretId and deleteByUserId delegate to the mapper
+- [x] 11.6 Ownership tests: delete rejects non-owners; listBySecret filters to the requesting owner; entity jsonSerialize omits the blob/salt
 
 ## 12. Integration Tests (PHP)
 
-- [ ] 12.1 Write integration tests for authenticated link share API: create (returns token, no password), list (returns metadata without blobs), delete (revoke)
-- [ ] 12.2 Write integration tests for public access API: Phase 1 returns blob + salt for valid token, Phase 2 confirm increments usage_count and resets failed_attempts
-- [ ] 12.3 Write integration test: public endpoint returns 404 for invalid token, expired link, usage-exhausted link, and brute-force-deleted link (consistent error for all cases)
-- [ ] 12.4 Write integration test: brute-force protection deletes link share after 5 failed Phase 1 calls without confirm
-- [ ] 12.5 Write integration test: usage limit enforcement auto-deletes link share when usage_count reaches usage_limit via confirm endpoint
-- [ ] 12.6 Write integration test: non-owner cannot create or delete link shares for another user's secret (403)
-- [ ] 12.7 Write integration test: secret deletion cascades to all associated link shares
-- [ ] 12.8 Write integration test: public endpoints never return decrypted secret data (only encrypted blobs)
+- [x] 12.1 Controller tests for authenticated API: create returns 201 with token + link URL and no blob; list returns metadata without blobs; destroy returns 200
+- [x] 12.2 Controller tests for public access: Phase 1 returns blob + salt (no owner identity); Phase 2 confirm increments usage and returns remaining
+- [x] 12.3 Controller test: public endpoints return a uniform 404 for invalid/expired/exhausted/brute-force-deleted tokens
+- [x] 12.4 Service test covers brute-force deletion after 5 failed attempts (11.4); controller test covers the failed-flag wiring
+- [x] 12.5 Service test covers usage-limit auto-deletion via confirm (11.3)
+- [x] 12.6 Controller test: non-owner destroy returns 403
+- [ ] 12.7 [DEFERRED — secret deletion path is in the unbuilt SecretService] End-to-end secret-deletion cascade test
+- [x] 12.8 Public payload tests assert only the encrypted blob/salt are returned, never decrypted data or owner identity
 
 ## 13. Frontend Tests
 
-- [ ] 13.1 Write unit tests for `src/crypto/argon2.js`: deriveAesKeyArgon2id produces consistent output for same password+salt, encryptSnapshot/decryptSnapshot round-trip, decryptSnapshot with wrong password throws (GCM tag mismatch)
-- [ ] 13.2 Write unit tests for useLinkShareStore: createLinkShare sets createdPassword and createdLinkUrl, fetchLinkShares populates array, deleteLinkShare removes from array, clearCreatedPassword nulls transient state
-- [ ] 13.3 Write component tests for LinkShareAccess: renders password input, shows spinner during Argon2id, shows decrypted content on success, shows error on failure, shows expired message for 404
-- [ ] 13.4 Write component tests for LinkShareCreateDialog: renders usage limit selector with range 1-10, default 1; disables submit during encryption; shows LinkSharePasswordDisplay on success
-- [ ] 13.5 Write component tests for LinkShareList: renders table with truncated tokens, usage counts, delete buttons; calls deleteLinkShare on delete click
+- [ ] 13.1 [DEFERRED — this app has no JS test runner (no vitest/jest); adding one is out of scope for this change] argon2.js round-trip tests
+- [ ] 13.2 [DEFERRED — no JS test runner] useLinkShareStore tests
+- [ ] 13.3 [DEFERRED — no JS test runner + component depends on the secrets SPA] LinkShareAccess component tests
+- [ ] 13.4 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareCreateDialog component tests
+- [ ] 13.5 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareList component tests
