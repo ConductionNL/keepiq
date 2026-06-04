@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\AppInfo;
 
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Search\SecretSearchProvider;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -65,8 +66,14 @@ class Application extends App implements IBootstrap
             listener: DeepLinkRegistrationListener::class
         );
 
+        // Register the Nextcloud unified search provider for secrets. It
+        // queries unencrypted name/url metadata only and needs no vault
+        // session (ADR-003).
+        $context->registerSearchProvider(SecretSearchProvider::class);
+
         // Repair steps (BootstrapCertificateAuthority, InitializeSettings,
-        // SeedDevelopmentData) are registered via info.xml <repair-steps>.
+        // SeedDevelopmentData, SeedSecretTypes, SeedDevelopmentSecrets) are
+        // registered via info.xml <repair-steps>.
     }//end register()
 
     /**

@@ -32,6 +32,27 @@ return [
         // Key generator endpoint (stateless, authenticated).
         ['name' => 'keyGenerator#generate', 'url' => '/api/v1/generate-key', 'verb' => 'POST'],
 
+        // Secret types CRUD (specific paths before the {id} secrets wildcard).
+        ['name' => 'secretType#index',   'url' => '/api/v1/secret-types',      'verb' => 'GET'],
+        ['name' => 'secretType#create',  'url' => '/api/v1/secret-types',      'verb' => 'POST'],
+        ['name' => 'secretType#update',  'url' => '/api/v1/secret-types/{id}', 'verb' => 'PUT'],
+        ['name' => 'secretType#destroy', 'url' => '/api/v1/secret-types/{id}', 'verb' => 'DELETE'],
+
+        // Folder CRUD + children (children route before the {id} wildcard).
+        ['name' => 'folder#index',    'url' => '/api/v1/folders',             'verb' => 'GET'],
+        ['name' => 'folder#create',   'url' => '/api/v1/folders',             'verb' => 'POST'],
+        ['name' => 'folder#children', 'url' => '/api/v1/folders/{id}/children', 'verb' => 'GET'],
+        ['name' => 'folder#update',   'url' => '/api/v1/folders/{id}',        'verb' => 'PUT'],
+        ['name' => 'folder#destroy',  'url' => '/api/v1/folders/{id}',        'verb' => 'DELETE'],
+
+        // Secret CRUD. The nested link-shares route below is more specific and
+        // is registered immediately after, so it still resolves correctly.
+        ['name' => 'secret#index',   'url' => '/api/v1/secrets',      'verb' => 'GET'],
+        ['name' => 'secret#create',  'url' => '/api/v1/secrets',      'verb' => 'POST'],
+        ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}', 'verb' => 'GET'],
+        ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
+        ['name' => 'secret#destroy', 'url' => '/api/v1/secrets/{id}', 'verb' => 'DELETE'],
+
         // Link sharing — authenticated CRUD (secret owner).
         ['name' => 'linkShare#index',   'url' => '/api/v1/secrets/{secretId}/link-shares', 'verb' => 'GET'],
         ['name' => 'linkShare#create',  'url' => '/api/v1/secrets/{secretId}/link-shares', 'verb' => 'POST'],

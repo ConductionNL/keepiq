@@ -1,0 +1,113 @@
+<template>
+	<div class="doriath-password-field">
+		<NcInputField :value="displayValue"
+			:label="label"
+			:type="revealed ? 'text' : 'password'"
+			:read-only="true" />
+		<NcButton type="tertiary"
+			:aria-label="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
+			:title="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
+			@click="toggle">
+			<template #icon>
+				<EyeOff v-if="revealed" :size="20" />
+				<Eye v-else :size="20" />
+			</template>
+		</NcButton>
+		<CopyButton :resolve="resolvePlain" :label="t('doriath', 'Copy password')" />
+	</div>
+</template>
+
+<script>
+import { NcButton, NcInputField } from '@nextcloud/vue'
+import Eye from 'vue-material-design-icons/Eye.vue'
+import EyeOff from 'vue-material-design-icons/EyeOff.vue'
+import CopyButton from './CopyButton.vue'
+
+/**
+ * A masked key/password field with a show/hide eye toggle and a copy button.
+ *
+ * The plaintext value is produced lazily by the `resolve` async function so
+ * that decryption only happens on the first reveal or copy (a performance
+ * optimisation for list rows). Fields default to masked.
+ */
+export default {
+	name: 'PasswordField',
+
+	components: {
+		NcButton,
+		NcInputField,
+		Eye,
+		EyeOff,
+		CopyButton,
+	},
+
+	props: {
+		/** The field label. */
+		label: {
+			type: String,
+			default() {
+				return t('doriath', 'Password')
+			},
+		},
+		/** An async resolver that returns the plaintext value (e.g. decrypt). */
+		resolve: {
+			type: Function,
+			required: true,
+		},
+	},
+
+	data() {
+		return {
+			revealed: false,
+			plain: null,
+			masked: '••••••••••',
+		}
+	},
+
+	computed: {
+		displayValue() {
+			return this.revealed ? (this.plain ?? '') : this.masked
+		},
+	},
+
+	methods: {
+		t,
+
+		/**
+		 * Toggle the visibility, decrypting on the first reveal.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async toggle() {
+			if (!this.revealed && this.plain === null) {
+				this.plain = await this.resolve()
+			}
+			this.revealed = !this.revealed
+		},
+
+		/**
+		 * Resolve the plaintext for the copy button, decrypting if needed.
+		 *
+		 * @return {Promise<string>}
+		 */
+		async resolvePlain() {
+			if (this.plain === null) {
+				this.plain = await this.resolve()
+			}
+			return this.plain
+		},
+	},
+}
+</script>
+
+<style scoped>
+.doriath-password-field {
+	display: flex;
+	align-items: flex-end;
+	gap: 4px;
+}
+
+.doriath-password-field :deep(.input-field) {
+	flex: 1 1 auto;
+}
+</style>

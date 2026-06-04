@@ -24,6 +24,8 @@ namespace OCA\Doriath\Controller;
 use OCA\Doriath\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Services\IInitialState;
+use OCP\IAppConfig;
 use OCP\IRequest;
 
 /**
@@ -34,12 +36,17 @@ class DashboardController extends Controller
     /**
      * Constructor for the DashboardController.
      *
-     * @param IRequest $request The request object
+     * @param IRequest      $request      The request object
+     * @param IInitialState $initialState The initial state service
+     * @param IAppConfig    $appConfig    The app config interface
      *
      * @return void
      */
-    public function __construct(IRequest $request)
-    {
+    public function __construct(
+        IRequest $request,
+        private IInitialState $initialState,
+        private IAppConfig $appConfig,
+    ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
@@ -55,6 +62,10 @@ class DashboardController extends Controller
      */
     public function page(): TemplateResponse
     {
+        // Privacy-respecting default: favicons disabled unless an admin opts in.
+        $faviconServiceUrl = $this->appConfig->getValueString(Application::APP_ID, 'favicon_service_url', '');
+        $this->initialState->provideInitialState(key: 'faviconServiceUrl', data: $faviconServiceUrl);
+
         return new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
     }//end page()
 

@@ -40,12 +40,16 @@
  */
 
 import LockScreen from './views/LockScreen.vue'
+import SecretList from './views/SecretList.vue'
+import SecretDetail from './views/SecretDetail.vue'
 import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
 import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
 import StatsBlockWidget from './widgets/StatsBlockWidget.vue'
 
 export default {
 	LockScreen: { kind: 'page', component: LockScreen },
+	SecretList: { kind: 'page', component: SecretList },
+	SecretDetail: { kind: 'page', component: SecretDetail },
 	'stats-block': {
 		kind: 'widget',
 		component: StatsBlockWidget,
