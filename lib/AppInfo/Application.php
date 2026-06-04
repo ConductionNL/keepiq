@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\AppInfo;
 
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Middleware\JwtAuthMiddleware;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -64,6 +65,10 @@ class Application extends App implements IBootstrap
             event: DeepLinkRegistrationEvent::class,
             listener: DeepLinkRegistrationListener::class
         );
+
+        // Register the JWT Bearer middleware for application API controllers.
+        // It only activates for controllers extending ApplicationApiController.
+        $context->registerMiddleware(JwtAuthMiddleware::class);
 
         // Repair steps (BootstrapCertificateAuthority, InitializeSettings,
         // SeedDevelopmentData) are registered via info.xml <repair-steps>.

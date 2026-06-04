@@ -41,6 +41,21 @@ return [
         ['name' => 'linkShareAccess#show',    'url' => '/api/v1/public/link-shares/{token}',         'verb' => 'GET'],
         ['name' => 'linkShareAccess#confirm', 'url' => '/api/v1/public/link-shares/{token}/confirm', 'verb' => 'POST'],
 
+        // Application management — Nextcloud session auth.
+        // Static/verb routes are listed BEFORE the {id} wildcard.
+        ['name' => 'application#index',    'url' => '/api/v1/applications',             'verb' => 'GET'],
+        ['name' => 'application#register', 'url' => '/api/v1/applications',             'verb' => 'POST'],
+        ['name' => 'application#pending',  'url' => '/api/v1/applications/pending',     'verb' => 'GET'],
+        ['name' => 'application#approve',  'url' => '/api/v1/applications/{id}/approve','verb' => 'POST'],
+        ['name' => 'application#reject',   'url' => '/api/v1/applications/{id}/reject', 'verb' => 'POST'],
+        ['name' => 'application#show',     'url' => '/api/v1/applications/{id}',        'verb' => 'GET'],
+        ['name' => 'application#destroy',  'url' => '/api/v1/applications/{id}',        'verb' => 'DELETE'],
+
+        // Application API — RFC 7523 JWT Bearer (public token + Bearer-guarded secrets).
+        ['name' => 'applicationToken#exchange', 'url' => '/api/v1/token',            'verb' => 'POST'],
+        ['name' => 'applicationSecrets#index',  'url' => '/api/v1/app/secrets',      'verb' => 'GET'],
+        ['name' => 'applicationSecrets#show',   'url' => '/api/v1/app/secrets/{id}', 'verb' => 'GET'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.

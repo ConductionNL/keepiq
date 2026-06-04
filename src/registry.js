@@ -40,12 +40,19 @@
  */
 
 import LockScreen from './views/LockScreen.vue'
+import ApplicationList from './views/ApplicationList.vue'
+import ApplicationDetail from './views/ApplicationDetail.vue'
 import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
 import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
 import StatsBlockWidget from './widgets/StatsBlockWidget.vue'
 
 export default {
 	LockScreen: { kind: 'page', component: LockScreen },
+	// Application management pages (implement-application-mgmt). Both own
+	// their own full layout, so they register as custom pages and are
+	// referenced from the manifest.d fragment with type:"custom".
+	ApplicationList: { kind: 'page', component: ApplicationList },
+	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
 	'stats-block': {
 		kind: 'widget',
 		component: StatsBlockWidget,

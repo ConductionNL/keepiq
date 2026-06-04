@@ -100,6 +100,51 @@ class EncryptionSuiteService
     }//end createSuite()
 
     /**
+     * Create an application-owned EncryptionSuite.
+     *
+     * The application always holds its own private key (either from its CSR
+     * or from the one-time generated key pair), so the suite stores an empty
+     * private key. The supplied public key is signed by the CA intermediate
+     * with a deterministic application common name.
+     *
+     * @param string $applicationId The owning application ID
+     * @param string $publicKeyPem  The PEM-encoded public key to sign
+     * @param string $commonName    The certificate common name (e.g. 'app:{id}')
+     *
+     * @return EncryptionSuite
+     *
+     * @throws RuntimeException When the CA is not healthy
+     */
+    public function createSuiteForApplication(
+        string $applicationId,
+        string $publicKeyPem,
+        string $commonName,
+    ): EncryptionSuite {
+        $caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
+        if ($caStatus !== 'healthy') {
+            throw new RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')');
+        }
+
+        $certificate = $this->caService->signPublicKey(publicKeyPem: $publicKeyPem, commonName: $commonName);
+
+        $suite = new EncryptionSuite();
+        $suite->setId(Uuid::uuid4()->toString());
+        $suite->setOwnerType('application');
+        $suite->setOwnerId($applicationId);
+        $suite->setCertificate($certificate);
+        // Application private keys are held externally and never stored.
+        $suite->setPrivateKey(null);
+        $suite->setStatus('active');
+        $suite->setCreatedAt(new DateTime());
+
+        $this->mapper->insert($suite);
+
+        $this->logger->info("Doriath: EncryptionSuite created for application/{$applicationId}");
+
+        return $suite;
+    }//end createSuiteForApplication()
+
+    /**
      * Revoke an EncryptionSuite.
      *
      * @param string $id        The suite ID

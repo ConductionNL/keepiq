@@ -227,21 +227,27 @@ class SettingsService
     private static function deepMergeConfig(array $base, array $overlay): array
     {
         foreach ($overlay as $key => $value) {
-            if (is_array($value) === true
-                && isset($base[$key]) === true
-                && is_array($base[$key]) === true
-            ) {
-                $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
-                $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
-                if ($baseIsList === true && $overlayIsList === true) {
-                    $base[$key] = array_merge($base[$key], $value);
-                } else {
-                    $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
-                }
-            } else {
+            $overlayIsArray = is_array($value);
+            $baseHasArray   = (isset($base[$key]) === true && is_array($base[$key]) === true);
+            $bothArrays     = ($overlayIsArray === true && $baseHasArray === true);
+
+            if ($bothArrays === false) {
+                // Scalars (or new keys) in the overlay overwrite the base.
                 $base[$key] = $value;
+                continue;
             }
-        }
+
+            $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
+            $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
+            if ($baseIsList === true && $overlayIsList === true) {
+                // Two lists: additively union (ADR-037 fragment merge rule).
+                $base[$key] = array_merge($base[$key], $value);
+                continue;
+            }
+
+            // Two associative arrays: recurse to merge disjoint keys.
+            $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
+        }//end foreach
 
         return $base;
 

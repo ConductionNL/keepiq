@@ -1,0 +1,29 @@
+{
+	"menu": [
+		{
+			"id": "Applications",
+			"label": "Applications",
+			"icon": "icon-category-integration",
+			"route": "Applications",
+			"order": 30
+		}
+	],
+	"pages": [
+		{
+			"id": "Applications",
+			"route": "/applications",
+			"type": "custom",
+			"title": "Applications",
+			"component": "ApplicationList",
+			"_note": "Application registration + approval list. type:custom because the view owns its own list layout and dialogs."
+		},
+		{
+			"id": "ApplicationDetail",
+			"route": "/applications/:id",
+			"type": "custom",
+			"title": "Application",
+			"component": "ApplicationDetail",
+			"_note": "Application detail with secrets panel and admin delete. type:custom; receives the :id route param as a prop."
+		}
+	]
+}
