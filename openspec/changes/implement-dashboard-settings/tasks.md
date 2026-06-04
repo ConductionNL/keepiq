@@ -1,43 +1,68 @@
+> **Build note (hydra adaptation).** The dependency changes this spec assumed
+> were merged (implement-secrets, implement-user-sharing, implement-secret-requests)
+> are NOT yet in `development`: there is no Secret/SecretShare/Folder/Application
+> mapper, no NotificationService, and the dashboard/admin-settings/user-settings
+> frontend is a manifest-v2 declarative app (no vue-router, no `Dashboard.vue`,
+> no `UserSettings.vue`, no `src/views/settings/` Settings shell beyond
+> `AdminRoot`/`Settings`). The implementation was adapted to the REAL app:
+> - Dashboard summary aggregates from the data that exists today
+>   (EncryptionSuite active/compromised counts, LinkShare share count, in-progress
+>   SuiteMigration, admin-only CA health). `folder_count` and `pending_apps_count`
+>   are returned as 0 placeholders (the backing mappers do not exist yet — see
+>   deferred items below).
+> - User settings live in the existing `App.vue` `#user-settings` CnAppRoot slot
+>   (the app's user-preferences surface), not an `NcAppSettingsDialog` view.
+> - The dashboard is rendered by a manifest-v2 widget (`doriath-summary`), not a
+>   `Dashboard.vue` + custom KPI widget instances on a vue-router page.
+> - Per-user preference storage was extracted into a dedicated
+>   `UserPreferenceService` (PHPMD class-complexity) rather than living inside
+>   `SettingsService`; `SettingsService` delegates to it.
+
 ## 1. Backend Services
 
-- [ ] 1.1 Create `DashboardService` in `lib/Service/DashboardService.php` with constructor injection of SecretMapper, SecretShareMapper, FolderMapper, ApplicationMapper, SuiteMigrationMapper, CertificateAuthorityService, IGroupManager, IUserSession; implement `fetchSummary(string $userId, bool $isAdmin): array` returning total_secrets, shared_secrets, folder_count, compromised_count, pending_apps_count (admin-only, null otherwise), migration_status, ca_status (admin-only, null otherwise)
-- [ ] 1.2 Extend `SettingsService` in `lib/Service/SettingsService.php`: add `OCP\IConfig` to constructor, add ADMIN_CONFIG_KEYS constant (`min_password_length`, `min_password_score`, `default_session_timeout`, `ca_auto_renew_enabled`), add USER_PREF_KEYS constant (`session_timeout`, `notify_shares`, `notify_requests`, `notify_group_shares`, `notify_security`, `default_secret_type`, `default_view`)
-- [ ] 1.3 Implement `SettingsService::getAdminSettings(): array` — reads all ADMIN_CONFIG_KEYS from IAppConfig with typed getters (getValueInt for length/score, getValueString for timeout, getValueBool for auto_renew), includes ca_status from CertificateAuthorityService
-- [ ] 1.4 Implement `SettingsService::updateAdminSettings(array $data): array` — validates min_password_length (12-20), min_password_score (3-4), default_session_timeout (session|10min|30min), ca_auto_renew_enabled (bool); throws InvalidArgumentException on out-of-bounds; stores via IAppConfig typed setters; returns updated admin settings
-- [ ] 1.5 Implement `SettingsService::getUserPreferences(string $userId): array` — reads all USER_PREF_KEYS from IConfig with defaults (session_timeout falls back to admin default_session_timeout, booleans default to '1', default_secret_type defaults to 'login', default_view defaults to 'list')
-- [ ] 1.6 Implement `SettingsService::updateUserPreferences(string $userId, array $data): array` — whitelist-filters keys against USER_PREF_KEYS, stores each via IConfig::setUserValue, returns updated preferences
+- [x] 1.1 Create `DashboardService` in `lib/Service/DashboardService.php` — `fetchSummary(string $userId, bool $isAdmin): array` returning total_secrets, shared_secrets, folder_count, compromised_count, pending_apps_count (admin-only, null otherwise), migration_status, ca_status (admin-only, null otherwise). Injects EncryptionSuiteMapper, SuiteMigrationMapper, LinkShareMapper, CertificateAuthorityService (the SecretMapper/SecretShareMapper/FolderMapper/ApplicationMapper named in the spec do not exist yet; counts are derived from the suites/link-shares that do).
+- [x] 1.2 Extend `SettingsService` — admin-config validation (length/score floors, session-timeout enum), delegates user preferences to the new `UserPreferenceService` (USER_PREF keys: `session_timeout`, `notify_shares`, `notify_requests`, `notify_group_shares`, `notify_security`, `default_secret_type`, `default_view`). Admin keys use `master_password_min_length` / `master_password_min_score` (the keys the existing `PasswordPolicySection.vue` already posts) plus `default_session_timeout` / `ca_auto_renew_enabled`.
+- [x] 1.3 Implement `SettingsService::getAdminSettings(): array` — typed IAppConfig getters (getValueInt length/score, getValueString timeout, getValueBool auto_renew).
+- [x] 1.4 Implement `SettingsService::updateAdminSettings(array $data): array` — validates min length (12-20), score (3-4), session-timeout enum, ca_auto_renew_enabled (bool); throws InvalidArgumentException on out-of-bounds; typed IAppConfig setters.
+- [x] 1.5 Implement user preference read (`UserPreferenceService::getUserPreferences`) — defaults: session_timeout → admin default, booleans → '1', default_secret_type → 'login', default_view → 'list'.
+- [x] 1.6 Implement user preference write (`UserPreferenceService::updateUserPreferences`) — whitelist-filters keys, '1'/'0' boolean coercion, IConfig::setUserValue.
 
 ## 2. Controllers and Routes
 
-- [ ] 2.1 Update `DashboardController` in `lib/Controller/DashboardController.php`: inject DashboardService, IUserSession, IGroupManager; add `summary()` method with `@NoAdminRequired` annotation that determines isAdmin and calls DashboardService::fetchSummary(), returns JSONResponse
-- [ ] 2.2 Update `SettingsController` in `lib/Controller/SettingsController.php`: add `getAdminSettings()` method (admin-only, no annotation) that calls SettingsService::getAdminSettings(); add `updateAdminSettings()` method (admin-only) that reads request params and calls SettingsService::updateAdminSettings() with try/catch for InvalidArgumentException returning 400
-- [ ] 2.3 Update `SettingsController`: add `getUserSettings()` method with `@NoAdminRequired` that calls SettingsService::getUserPreferences() for current user; add `updateUserSettings()` method with `@NoAdminRequired` that calls SettingsService::updateUserPreferences() for current user
-- [ ] 2.4 Update `appinfo/routes.php`: add routes `GET /api/dashboard/summary` -> `dashboard#summary`, `GET /api/settings/admin` -> `settings#getAdminSettings`, `PUT /api/settings/admin` -> `settings#updateAdminSettings`, `GET /api/settings/user` -> `settings#getUserSettings`, `PUT /api/settings/user` -> `settings#updateUserSettings`; ensure new API routes are listed BEFORE the SPA catch-all
+- [x] 2.1 `DashboardController::summary()` — `#[NoAdminRequired]`, IDOR-safe (scoped to session user, 401 when anonymous), determines isAdmin via IGroupManager, delegates to DashboardService.
+- [x] 2.2 `SettingsController::getAdminSettings()` / `updateAdminSettings()` — `#[AuthorizedAdminSetting(AdminSettings::class)]`; update maps InvalidArgumentException to a 400 (no stack trace).
+- [x] 2.3 `SettingsController::getUserSettings()` / `updateUserSettings()` — `#[NoAdminRequired]`, scoped to the session user (401 when anonymous).
+- [x] 2.4 `appinfo/routes.php` — GET /api/dashboard/summary, GET/PUT /api/settings/admin, GET/PUT /api/settings/user; the specific `/api/settings/{admin,user}` routes precede the generic `/api/settings` collection, and all precede the SPA `/{path}` catch-all.
 
 ## 3. Dashboard Frontend
 
-- [ ] 3.1 Create `src/components/dashboard/DashboardKpiCard.vue` — custom KPI card component (NOT CnStatsBlock) with props: title (string), count (number), icon (component), variant (string: primary|default|warning|success); renders count prominently with icon and title, applies variant CSS class for color theming using NL Design System CSS variables
-- [ ] 3.2 Create `src/components/dashboard/MigrationBanner.vue` — renders NcNoteCard (type warning or error) based on migration_status prop; shows remaining count for in_progress, failed count for completed_with_errors; emits click to navigate to migration screen
-- [ ] 3.3 Create `src/components/dashboard/PendingAppsCard.vue` — admin-only card showing pending_apps_count with link to admin settings approval queue; uses router-link or $router.push to `/settings` (admin settings)
-- [ ] 3.4 Create `src/components/dashboard/CaHealthCard.vue` (V1) — admin-only card showing CA status (healthy/expiring/degraded/not_configured) with status indicator dot (green/yellow/red/grey), intermediate expiry date, and link to admin settings CA section
-- [ ] 3.5 Create `src/components/dashboard/RecentSecretsWidget.vue` (V1) — renders up to 5 recently accessed secrets with name and type icon; each item is clickable, navigating to secret detail via $router.push({ name: 'secret-detail', params: { id } })
-- [ ] 3.6 Create `src/store/modules/dashboard.js` — Pinia store with state: summary (null), isLoading (false), error (null); action: fetchSummary() calls GET /api/dashboard/summary via axios and sets state; getter: isEmpty computed from total_secrets === 0
-- [ ] 3.7 Update `src/views/Dashboard.vue` — replace placeholder content: import useDashboardStore, fetch on mounted; show NcLoadingIcon while loading; show empty state (NcEmptyContent with "Create your first secret" guidance) when isEmpty; show MigrationBanner when migration_status is not null; show 4 DashboardKpiCard instances in a grid (total secrets, shared, folders, compromised); show PendingAppsCard when pending_apps_count > 0 and user is admin; show CaHealthCard when ca_status is not null and user is admin (V1); show RecentSecretsWidget (V1); remove CnStatsBlock, CnKpiGrid, CnConfigurationCard imports
+- [x] 3.1 Create `src/components/dashboard/DashboardKpiCard.vue` — custom KPI card (NOT CnStatsBlock) with title/count/icon/variant (primary|default|warning|success), NL-Design CSS variables.
+- [~] 3.2 Migration banner — implemented inline inside `DashboardSummaryWidget.vue` (NcNoteCard, warning for in_progress / error for completed_with_errors). Not a separate `MigrationBanner.vue` file because the manifest-v2 dashboard is a single widget, not a `Dashboard.vue` composing child components; the banner is a NoteCard (not a modal), so modal-isolation does not apply.
+- [~] 3.3 Pending-apps surface — implemented inline in `DashboardSummaryWidget.vue` (admin-only NoteCard shown when pending_apps_count > 0). No `$router.push('/settings')` link: settings is the NC admin settings page, not an in-app route.
+- [ ] 3.4 (V1) `CaHealthCard.vue` — DEFERRED. Admin CA health is surfaced as a status line in `DashboardSummaryWidget.vue`; the richer V1 card is out of MVP scope and the dedicated admin `CaHealthSection.vue` already covers CA management.
+- [ ] 3.5 (V1) `RecentSecretsWidget.vue` — DEFERRED. No Secret entity/mapper exists yet (implement-secrets not merged); cannot list recently-accessed secrets.
+- [x] 3.6 Create `src/store/modules/dashboard.js` — Pinia store: summary/isLoading/error state, `fetchSummary()` action, `isEmpty` getter.
+- [~] 3.7 Dashboard rendered via manifest-v2 widget `DashboardSummaryWidget.vue` (registered as `doriath-summary` in `src/registry.js`, referenced from the Dashboard page in `src/manifest.json`) instead of rewriting a `Dashboard.vue`: loading spinner, empty state (NcEmptyContent), migration banner, four DashboardKpiCard instances, admin pending-apps + CA health. The static sample `stats-block` tiles were removed from the manifest.
 
 ## 4. Admin Settings Frontend
 
-- [ ] 4.1 Create `src/components/settings/PasswordPolicySection.vue` — CnSettingsSection with title "Password Policy"; contains NcInputField (type number, min 12, max 20) for min_password_length; contains NcSelect or radio group for min_password_score (3=Strong, 4=Very Strong); saves on change via settings store; shows inline validation errors
-- [ ] 4.2 Create `src/components/settings/CaHealthSection.vue` — CnSettingsSection with title "Certificate Authority"; displays status indicator (colored dot + text), root expiry date, intermediate expiry date, active suite count; "Retry bootstrap" button visible when status is not_configured or degraded; "Force renew intermediate" button (V1) visible when status is healthy or expiring_soon; buttons call existing CA API endpoints
-- [ ] 4.3 Create `src/components/settings/ApplicationQueueSection.vue` — CnSettingsSection with title "Applications"; lists pending applications (name, description, created_at) with NcButton approve/reject per row; shows NcEmptyContent "No pending applications" when list is empty; approve/reject calls ApplicationController endpoints
-- [ ] 4.4 Update `src/views/settings/Settings.vue` — replace register form with three sections: PasswordPolicySection, CaHealthSection, ApplicationQueueSection; remove register-related form logic; use settings store to fetch and save admin settings
-- [ ] 4.5 Update `src/views/settings/AdminRoot.vue` — retain CnVersionInfoCard header; ensure storesReady gates the updated Settings component; no other structural changes needed
+- [x] 4.1 `src/components/settings/PasswordPolicySection.vue` (pre-existing) — re-wired to the new dedicated `/api/settings/admin` endpoint via the settings store (was posting to the generic `/api/settings`, where the backend silently dropped the keys); server now validates and persists.
+- [x] 4.2 `src/components/settings/CaHealthSection.vue` (pre-existing) — already renders CA status + retry-bootstrap / force-renew actions against the CA endpoints; no change needed.
+- [ ] 4.3 `ApplicationQueueSection.vue` — DEFERRED. No Application entity/mapper/controller exists yet (implement-secret-requests not merged).
+- [x] 4.4 `src/views/settings/Settings.vue` — already composes PasswordPolicySection + CaHealthSection (no register form present in current code).
+- [x] 4.5 `src/views/settings/AdminRoot.vue` — retains CnVersionInfoCard header and gates Settings on `storesReady`; no structural change needed.
 
 ## 5. User Settings Frontend
 
-- [ ] 5.1 Create `src/components/settings/SessionTimeoutSection.vue` — NcAppSettingsSection with title "Session"; contains NcSelect dropdown with options: Nextcloud session, 10 minutes, 30 minutes; binds to session_timeout preference; saves on change
-- [ ] 5.2 Create `src/components/settings/NotificationTogglesSection.vue` — NcAppSettingsSection with title "Notifications"; contains NcCheckboxRadioSwitch toggle for each notification category (MVP: notify_shares, notify_requests; V1: notify_group_shares, notify_security); each toggle saves on change; V1 toggles are conditionally rendered or disabled based on feature availability
-- [ ] 5.3 Update `src/views/settings/UserSettings.vue` — replace NcEmptyContent placeholder with SessionTimeoutSection and NotificationTogglesSection inside NcAppSettingsDialog; fetch user preferences on dialog open (watch open prop); set show-navigation to true when there are multiple sections; add V1 sections for default secret type and default view when implemented
+- [x] 5.1 Session-timeout control — the existing `App.vue` `#user-settings` Session section now persists the choice through the new `/api/settings/user` endpoint (was in-memory only) and hydrates from it on load.
+- [x] 5.2 Notification toggles — added a Notifications section (notify_shares, notify_requests) to the `#user-settings` slot, each persisting via `/api/settings/user`. The V1 toggles (notify_group_shares, notify_security) are whitelisted server-side but not surfaced in the UI until the sharing/request features land.
+- [~] 5.3 User-settings surface is the CnAppRoot `#user-settings` slot in `App.vue` (the app's actual user-preferences dialog), not a separate `UserSettings.vue` NcAppSettingsDialog view (which does not exist in this manifest-v2 app). Default-secret-type / default-view sections are V1 (DEFERRED — no Secret feature yet).
 
 ## 6. Settings Store Extension
 
-- [ ] 6.1 Extend `src/store/modules/settings.js` — add state: adminSettings (null), userPreferences (null); add actions: fetchAdminSettings() calls GET /api/settings/admin, saveAdminSettings(data) calls PUT /api/settings/admin, fetchUserPreferences() calls GET /api/settings/user, saveUserPreferences(data) calls PUT /api/settings/user; add getters: isAdmin, passwordPolicy, caStatus, sessionTimeout, notificationToggles
+- [x] 6.1 Extend `src/store/modules/settings.js` — adminSettings/userPreferences state; fetchAdminSettings/saveAdminSettings/fetchUserPreferences/saveUserPreferences actions; passwordPolicy/sessionTimeout/notificationToggles getters (isAdmin/caStatus already derived elsewhere).
+
+## 7. Tests & i18n
+
+- [x] DashboardServiceTest, SettingsServiceTest, UserPreferenceServiceTest, DashboardControllerTest, and extended SettingsControllerTest — 187 unit tests green.
+- [x] nl + en translations added for all new user-facing strings (and the pre-existing untranslated admin/session strings in the touched files).

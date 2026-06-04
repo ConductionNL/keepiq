@@ -162,4 +162,116 @@ class SettingsControllerTest extends TestCase
         self::assertTrue($result->getData()['success']);
 
     }//end testLoadReturnsConfigurationResult()
+
+    /**
+     * Test that getAdminSettings() returns the service payload.
+     *
+     * @return void
+     */
+    public function testGetAdminSettingsReturnsServicePayload(): void
+    {
+        $admin = [
+            'master_password_min_length' => 12,
+            'master_password_min_score'  => 3,
+            'default_session_timeout'    => 'session',
+            'ca_auto_renew_enabled'      => true,
+        ];
+
+        $this->settingsService->expects($this->once())
+            ->method('getAdminSettings')
+            ->willReturn($admin);
+
+        $result = $this->controller->getAdminSettings();
+
+        self::assertInstanceOf(JSONResponse::class, $result);
+        self::assertSame($admin, $result->getData());
+
+    }//end testGetAdminSettingsReturnsServicePayload()
+
+    /**
+     * Test that updateAdminSettings() returns the updated settings on success.
+     *
+     * @return void
+     */
+    public function testUpdateAdminSettingsReturnsUpdated(): void
+    {
+        $params  = ['master_password_min_length' => 14];
+        $updated = [
+            'master_password_min_length' => 14,
+            'master_password_min_score'  => 3,
+            'default_session_timeout'    => 'session',
+            'ca_auto_renew_enabled'      => true,
+        ];
+
+        $this->request->method('getParams')->willReturn($params);
+        $this->settingsService->expects($this->once())
+            ->method('updateAdminSettings')
+            ->with($params)
+            ->willReturn($updated);
+
+        $result = $this->controller->updateAdminSettings();
+
+        self::assertSame($updated, $result->getData());
+
+    }//end testUpdateAdminSettingsReturnsUpdated()
+
+    /**
+     * Test that updateAdminSettings() maps a validation error to a 400.
+     *
+     * @return void
+     */
+    public function testUpdateAdminSettingsReturns400OnValidationError(): void
+    {
+        $this->request->method('getParams')->willReturn(['master_password_min_length' => 8]);
+        $this->settingsService->method('updateAdminSettings')
+            ->willThrowException(new \InvalidArgumentException('out of bounds'));
+
+        $result = $this->controller->updateAdminSettings();
+
+        self::assertSame(\OCP\AppFramework\Http::STATUS_BAD_REQUEST, $result->getStatus());
+        self::assertSame('out of bounds', $result->getData()['message']);
+
+    }//end testUpdateAdminSettingsReturns400OnValidationError()
+
+    /**
+     * Test that getUserSettings() returns the current user's preferences.
+     *
+     * @return void
+     */
+    public function testGetUserSettingsReturnsPreferences(): void
+    {
+        $prefs = ['session_timeout' => '10min', 'notify_shares' => true];
+
+        $this->settingsService->expects($this->once())
+            ->method('getUserPreferences')
+            ->with('testuser')
+            ->willReturn($prefs);
+
+        $result = $this->controller->getUserSettings();
+
+        self::assertSame($prefs, $result->getData());
+
+    }//end testGetUserSettingsReturnsPreferences()
+
+    /**
+     * Test that updateUserSettings() persists for the current user.
+     *
+     * @return void
+     */
+    public function testUpdateUserSettingsPersistsForCurrentUser(): void
+    {
+        $params  = ['session_timeout' => '30min'];
+        $updated = ['session_timeout' => '30min', 'notify_shares' => true];
+
+        $this->request->method('getParams')->willReturn($params);
+        $this->settingsService->expects($this->once())
+            ->method('updateUserPreferences')
+            ->with('testuser', $params)
+            ->willReturn($updated);
+
+        $result = $this->controller->updateUserSettings();
+
+        self::assertSame($updated, $result->getData());
+
+    }//end testUpdateUserSettingsPersistsForCurrentUser()
 }//end class

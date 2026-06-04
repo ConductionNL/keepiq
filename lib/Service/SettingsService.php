@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -46,14 +47,58 @@ class SettingsService
     ];
 
     /**
+     * Hard floor / ceiling for the configurable master-password minimum length.
+     *
+     * Even an administrator may not lower the minimum length below 12; the
+     * ceiling of 20 prevents misconfiguration while still allowing a stricter
+     * organisational policy. See design.md D4.
+     *
+     * @var int
+     */
+    private const MIN_PASSWORD_LENGTH_FLOOR = 12;
+
+    /**
+     * Ceiling for the configurable master-password minimum length.
+     *
+     * @var int
+     */
+    private const MIN_PASSWORD_LENGTH_CEILING = 20;
+
+    /**
+     * Hard floor for the configurable master-password minimum zxcvbn score.
+     *
+     * @var int
+     */
+    private const MIN_PASSWORD_SCORE_FLOOR = 3;
+
+    /**
+     * Ceiling for the configurable master-password minimum zxcvbn score.
+     *
+     * @var int
+     */
+    private const MIN_PASSWORD_SCORE_CEILING = 4;
+
+    /**
+     * Allowed values for the session-timeout admin default and user preference.
+     *
+     * @var array<string>
+     */
+    private const SESSION_TIMEOUT_VALUES = [
+        'session',
+        '10min',
+        '30min',
+    ];
+
+    /**
      * Constructor for the SettingsService.
      *
-     * @param IAppConfig         $appConfig    The app config interface
-     * @param IAppManager        $appManager   The app manager
-     * @param ContainerInterface $container    The container
-     * @param IGroupManager      $groupManager The group manager
-     * @param IUserSession       $userSession  The user session
-     * @param LoggerInterface    $logger       The logger
+     * @param IAppConfig             $appConfig             The app config interface
+     * @param IAppManager            $appManager            The app manager
+     * @param ContainerInterface     $container             The container
+     * @param IGroupManager          $groupManager          The group manager
+     * @param IUserSession           $userSession           The user session
+     * @param LoggerInterface        $logger                The logger
+     * @param UserPreferenceService  $prefService           The per-user preference service
      *
      * @return void
      */
@@ -64,6 +109,7 @@ class SettingsService
         private IGroupManager $groupManager,
         private IUserSession $userSession,
         private LoggerInterface $logger,
+        private UserPreferenceService $prefService,
     ) {
     }//end __construct()
 
@@ -125,6 +171,162 @@ class SettingsService
 
         return $this->getSettings();
     }//end updateSettings()
+
+    /**
+     * Retrieve the administrator-configurable settings.
+     *
+     * Reads the master-password policy and session/CA defaults from IAppConfig
+     * using typed getters, falling back to the app's security floors when unset.
+     * The values are global (app-level), so this method is admin-only at the
+     * controller boundary.
+     *
+     * @return array<string,mixed> The admin settings.
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.3
+     */
+    public function getAdminSettings(): array
+    {
+        return [
+            'master_password_min_length' => $this->appConfig->getValueInt(
+                Application::APP_ID,
+                'master_password_min_length',
+                self::MIN_PASSWORD_LENGTH_FLOOR
+            ),
+            'master_password_min_score'  => $this->appConfig->getValueInt(
+                Application::APP_ID,
+                'master_password_min_score',
+                self::MIN_PASSWORD_SCORE_FLOOR
+            ),
+            'default_session_timeout'    => $this->appConfig->getValueString(
+                Application::APP_ID,
+                'default_session_timeout',
+                'session'
+            ),
+            'ca_auto_renew_enabled'      => $this->appConfig->getValueBool(
+                Application::APP_ID,
+                'ca_auto_renew_enabled',
+                true
+            ),
+        ];
+    }//end getAdminSettings()
+
+    /**
+     * Validate and persist administrator-configurable settings.
+     *
+     * Each provided key is validated against the app's hardcoded security floors
+     * (length 12-20, score 3-4) and enumerations before being written with a
+     * typed IAppConfig setter. Out-of-bounds or unrecognised values raise an
+     * InvalidArgumentException so the controller can surface a 400. Unknown keys
+     * are ignored.
+     *
+     * @param array<string,mixed> $data The submitted admin settings.
+     *
+     * @return array<string,mixed> The updated admin settings.
+     *
+     * @throws InvalidArgumentException When a provided value is out of bounds.
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.4
+     */
+    public function updateAdminSettings(array $data): array
+    {
+        if (isset($data['master_password_min_length']) === true) {
+            $length = $this->validateIntRange(
+                key: 'master_password_min_length',
+                value: $data['master_password_min_length'],
+                floor: self::MIN_PASSWORD_LENGTH_FLOOR,
+                ceiling: self::MIN_PASSWORD_LENGTH_CEILING
+            );
+            $this->appConfig->setValueInt(Application::APP_ID, 'master_password_min_length', $length);
+        }
+
+        if (isset($data['master_password_min_score']) === true) {
+            $score = $this->validateIntRange(
+                key: 'master_password_min_score',
+                value: $data['master_password_min_score'],
+                floor: self::MIN_PASSWORD_SCORE_FLOOR,
+                ceiling: self::MIN_PASSWORD_SCORE_CEILING
+            );
+            $this->appConfig->setValueInt(Application::APP_ID, 'master_password_min_score', $score);
+        }
+
+        if (isset($data['default_session_timeout']) === true) {
+            $timeout = (string) $data['default_session_timeout'];
+            if (in_array($timeout, self::SESSION_TIMEOUT_VALUES, true) === false) {
+                throw new InvalidArgumentException(
+                    'default_session_timeout must be one of: '.implode(', ', self::SESSION_TIMEOUT_VALUES).'.'
+                );
+            }
+
+            $this->appConfig->setValueString(Application::APP_ID, 'default_session_timeout', $timeout);
+        }
+
+        if (isset($data['ca_auto_renew_enabled']) === true) {
+            $this->appConfig->setValueBool(
+                Application::APP_ID,
+                'ca_auto_renew_enabled',
+                filter_var($data['ca_auto_renew_enabled'], FILTER_VALIDATE_BOOLEAN)
+            );
+        }
+
+        return $this->getAdminSettings();
+    }//end updateAdminSettings()
+
+    /**
+     * Validate that an integer config value falls within an inclusive range.
+     *
+     * @param string $key     The config key (used in the error message).
+     * @param mixed  $value   The submitted value.
+     * @param int    $floor   The inclusive minimum.
+     * @param int    $ceiling The inclusive maximum.
+     *
+     * @return int The validated integer.
+     *
+     * @throws InvalidArgumentException When the value is out of range.
+     */
+    private function validateIntRange(string $key, mixed $value, int $floor, int $ceiling): int
+    {
+        $intValue = (int) $value;
+        if ($intValue < $floor || $intValue > $ceiling) {
+            throw new InvalidArgumentException($key.' must be between '.$floor.' and '.$ceiling.'.');
+        }
+
+        return $intValue;
+    }//end validateIntRange()
+
+    /**
+     * Retrieve the per-user preferences for the given user.
+     *
+     * Booleans are normalised to PHP bools, the session_timeout falls back to the
+     * admin-configured default when the user has not chosen one, and the remaining
+     * keys fall back to their hardcoded defaults.
+     *
+     * @param string $userId The user identifier.
+     *
+     * @return array<string,mixed> The resolved user preferences.
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.5
+     */
+    public function getUserPreferences(string $userId): array
+    {
+        return $this->prefService->getUserPreferences(userId: $userId);
+    }//end getUserPreferences()
+
+    /**
+     * Whitelist-filter and persist per-user preferences.
+     *
+     * Delegates to {@see UserPreferenceService}; only whitelisted keys are stored.
+     *
+     * @param string              $userId The user identifier.
+     * @param array<string,mixed> $data   The submitted preferences.
+     *
+     * @return array<string,mixed> The updated, resolved user preferences.
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.6
+     */
+    public function updateUserPreferences(string $userId, array $data): array
+    {
+        return $this->prefService->updateUserPreferences(userId: $userId, data: $data);
+    }//end updateUserPreferences()
 
     /**
      * Load and parse the doriath_register.json configuration file.
@@ -227,20 +429,26 @@ class SettingsService
     private static function deepMergeConfig(array $base, array $overlay): array
     {
         foreach ($overlay as $key => $value) {
-            if (is_array($value) === true
+            $bothArrays = (is_array($value) === true
                 && isset($base[$key]) === true
-                && is_array($base[$key]) === true
-            ) {
-                $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
-                $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
-                if ($baseIsList === true && $overlayIsList === true) {
-                    $base[$key] = array_merge($base[$key], $value);
-                } else {
-                    $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
-                }
-            } else {
+                && is_array($base[$key]) === true);
+
+            if ($bothArrays === false) {
+                // Scalar (or new key): the fragment value wins.
                 $base[$key] = $value;
+                continue;
             }
+
+            $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
+            $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
+            if ($baseIsList === true && $overlayIsList === true) {
+                // Two list arrays concatenate.
+                $base[$key] = array_merge($base[$key], $value);
+                continue;
+            }
+
+            // Two associative arrays merge recursively by key union.
+            $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
         }
 
         return $base;

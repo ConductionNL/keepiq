@@ -32,8 +32,7 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { useSettingsStore } from '../../store/modules/settings.js'
 
 export default {
 	name: 'PasswordPolicySection',
@@ -46,30 +45,45 @@ export default {
 		}
 	},
 
+	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia settings store with no domain logic.
+		 */
+		settingsStore() {
+			return useSettingsStore()
+		},
+	},
+
 	/**
-	 * Load the current master-password policy floors from the API.
+	 * Load the current master-password policy floors from the admin API.
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-4.1
 	 */
 	async created() {
-		const response = await axios.get(generateUrl('/apps/doriath/api/settings'))
-		const settings = response.data
-		this.minLength = parseInt(settings.master_password_min_length) || 12
-		this.minScore = parseInt(settings.master_password_min_score) || 3
+		const settings = await this.settingsStore.fetchAdminSettings()
+		if (settings !== null) {
+			this.minLength = parseInt(settings.master_password_min_length) || 12
+			this.minScore = parseInt(settings.master_password_min_score) || 3
+		}
 	},
 
 	methods: {
 		/**
 		 * Persist the master-password policy, clamping length to 12-20 and
-		 * score to 3-4 (the app-minimum floors cannot be lowered below).
+		 * score to 3-4 (the app-minimum floors cannot be lowered below; the
+		 * server re-validates and rejects out-of-bounds values).
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
+		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-4.1
 		 */
 		async save() {
-			await axios.post(generateUrl('/apps/doriath/api/settings'), {
-				master_password_min_length: String(Math.min(20, Math.max(12, this.minLength))),
-				master_password_min_score: String(Math.min(4, Math.max(3, this.minScore))),
+			const updated = await this.settingsStore.saveAdminSettings({
+				master_password_min_length: Math.min(20, Math.max(12, this.minLength)),
+				master_password_min_score: Math.min(4, Math.max(3, this.minScore)),
 			})
+			if (updated !== null) {
+				this.minLength = updated.master_password_min_length
+				this.minScore = updated.master_password_min_score
+			}
 		},
 	},
 }
@@ -79,11 +93,13 @@ export default {
 .password-policy__field {
 	margin-bottom: 1rem;
 }
+
 .password-policy__field label {
 	display: block;
 	font-weight: 600;
 	margin-bottom: 4px;
 }
+
 .password-policy__hint {
 	color: var(--color-text-lighter);
 	font-size: 0.85rem;

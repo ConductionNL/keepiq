@@ -117,4 +117,105 @@ class SettingsController extends Controller
 
         return new JSONResponse(data: $result);
     }//end load()
+
+    /**
+     * Retrieve the administrator-configurable settings (admin only).
+     *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
+     */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
+    public function getAdminSettings(): JSONResponse
+    {
+        return new JSONResponse(data: $this->settingsService->getAdminSettings());
+    }//end getAdminSettings()
+
+    /**
+     * Validate and persist administrator-configurable settings (admin only).
+     *
+     * Out-of-bounds values raise an InvalidArgumentException in the service,
+     * which is translated to a 400 with the validation message (no stack trace).
+     *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
+     */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
+    public function updateAdminSettings(): JSONResponse
+    {
+        try {
+            $updated = $this->settingsService->updateAdminSettings($this->request->getParams());
+        } catch (\InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(data: $updated);
+    }//end updateAdminSettings()
+
+    /**
+     * Retrieve the current user's preferences.
+     *
+     * Scoped to the authenticated user (IDOR-safe: a user can only read their own
+     * preferences). Returns 401 when there is no session user.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.3
+     */
+    #[NoAdminRequired]
+    public function getUserSettings(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(
+                data: ['message' => 'Unauthorized'],
+                statusCode: Http::STATUS_UNAUTHORIZED
+            );
+        }
+
+        return new JSONResponse(
+            data: $this->settingsService->getUserPreferences($user->getUID())
+        );
+    }//end getUserSettings()
+
+    /**
+     * Update the current user's preferences.
+     *
+     * Only whitelisted keys are persisted (service-side filter); writes are scoped
+     * to the authenticated user. Returns 401 when there is no session user.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.3
+     */
+    #[NoAdminRequired]
+    public function updateUserSettings(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(
+                data: ['message' => 'Unauthorized'],
+                statusCode: Http::STATUS_UNAUTHORIZED
+            );
+        }
+
+        return new JSONResponse(
+            data: $this->settingsService->updateUserPreferences(
+                $user->getUID(),
+                $this->request->getParams()
+            )
+        );
+    }//end updateUserSettings()
 }//end class

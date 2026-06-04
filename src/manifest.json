@@ -44,86 +44,22 @@
 			"config": {},
 			"widgets": [
 				{
-					"widgetKey": "stats-block",
+					"widgetKey": "doriath-summary",
 					"slot": "body",
 					"gridX": 0,
 					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Open items",
-						"iconClass": "icon-folder",
-						"count": 12,
-						"countLabel": "sample",
-						"variant": "primary",
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 3,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Due this week",
-						"iconClass": "icon-calendar",
-						"count": 5,
-						"countLabel": "sample",
-						"variant": "warning",
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Completed",
-						"iconClass": "icon-checkmark",
-						"count": 48,
-						"countLabel": "sample",
-						"variant": "success",
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 9,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Team members",
-						"iconClass": "icon-group",
-						"count": 7,
-						"countLabel": "sample",
-						"variant": "default",
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "doriath-recent-activity",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 2,
-					"gridWidth": 6,
+					"gridWidth": 12,
 					"gridHeight": 4,
 					"props": {
-						"title": "Recent activity"
+						"title": "Vault summary"
 					}
 				},
 				{
 					"widgetKey": "doriath-quick-actions",
 					"slot": "body",
-					"gridX": 6,
-					"gridY": 2,
-					"gridWidth": 6,
+					"gridX": 0,
+					"gridY": 4,
+					"gridWidth": 12,
 					"gridHeight": 4,
 					"props": {
 						"title": "Quick actions"

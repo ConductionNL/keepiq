@@ -58,6 +58,30 @@
 			</NcAppSettingsSection>
 
 			<NcAppSettingsSection
+				id="notifications"
+				:name="t('doriath', 'Notifications')">
+				<template #icon>
+					<BellIcon :size="20" />
+				</template>
+				<div class="user-settings__field">
+					<NcCheckboxRadioSwitch
+						:checked="notifyShares"
+						type="switch"
+						@update:checked="updateNotify('notify_shares', $event)">
+						{{ t('doriath', 'Notify me when a secret is shared with me') }}
+					</NcCheckboxRadioSwitch>
+				</div>
+				<div class="user-settings__field">
+					<NcCheckboxRadioSwitch
+						:checked="notifyRequests"
+						type="switch"
+						@update:checked="updateNotify('notify_requests', $event)">
+						{{ t('doriath', 'Notify me about access requests') }}
+					</NcCheckboxRadioSwitch>
+				</div>
+			</NcAppSettingsSection>
+
+			<NcAppSettingsSection
 				id="security"
 				:name="t('doriath', 'Security')">
 				<template #icon>
@@ -138,15 +162,17 @@
 import { translate as ncT } from '@nextcloud/l10n'
 // eslint-disable-next-line import/named
 import { CnAppRoot } from '@conduction/nextcloud-vue'
-import { NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
+import { NcAppSettingsSection, NcButton, NcCheckboxRadioSwitch, NcEmptyContent, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
+import BellIcon from 'vue-material-design-icons/Bell.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
+import { useSettingsStore } from './store/modules/settings.js'
 
 export default {
 	name: 'App',
@@ -155,6 +181,7 @@ export default {
 		CnAppRoot,
 		NcAppSettingsSection,
 		NcButton,
+		NcCheckboxRadioSwitch,
 		NcEmptyContent,
 		NcNoteCard,
 		NcSelect,
@@ -162,6 +189,7 @@ export default {
 		TimerIcon,
 		ShieldIcon,
 		KeyIcon,
+		BellIcon,
 		MasterPasswordForm,
 		CompromiseRecoveryForm,
 	},
@@ -209,6 +237,8 @@ export default {
 			storesReady: false,
 			timeoutInterval: null,
 			sessionTimeout: 'session',
+			notifyShares: true,
+			notifyRequests: true,
 			showRecovery: false,
 			revokeConfirm: false,
 			revokeReason: '',
@@ -244,6 +274,12 @@ export default {
 		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
+		},
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia settings store with no domain logic.
+		 */
+		settingsStore() {
+			return useSettingsStore()
 		},
 		/**
 		 * Whether the vault is locked (no in-memory CryptoKey).
@@ -304,6 +340,17 @@ export default {
 	async created() {
 		await initializeStores()
 		this.storesReady = true
+
+		// Hydrate the user-settings dialog from the persisted per-user
+		// preferences (session timeout + notification toggles). Falls
+		// back to the in-data defaults when the fetch yields nothing.
+		const prefs = await this.settingsStore.fetchUserPreferences()
+		if (prefs !== null) {
+			this.sessionTimeout = prefs.session_timeout ?? this.sessionTimeout
+			this.notifyShares = prefs.notify_shares ?? this.notifyShares
+			this.notifyRequests = prefs.notify_requests ?? this.notifyRequests
+			this.applyTimeout()
+		}
 
 		// Mirror the legacy App.vue boot: on first paint, if the
 		// session is already locked, push to /lock with the current
@@ -378,14 +425,43 @@ export default {
 		},
 
 		/**
-		 * Persist the chosen session-timeout preference into the store
-		 * (mapping the enum to a millisecond duration).
+		 * Map the session-timeout enum to a millisecond duration on the
+		 * session store (client-side timeout enforcement).
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-5.1
 		 */
-		saveTimeout() {
+		applyTimeout() {
 			const timeouts = { session: 0, '10min': 600000, '30min': 1800000 }
 			this.sessionStore.timeout = timeouts[this.sessionTimeout] || 600000
+		},
+
+		/**
+		 * Persist the chosen session-timeout preference: apply it to the
+		 * session store for immediate effect and write it through to the
+		 * per-user settings API so it survives reloads / other devices.
+		 *
+		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-5.1
+		 */
+		async saveTimeout() {
+			this.applyTimeout()
+			await this.settingsStore.saveUserPreferences({ session_timeout: this.sessionTimeout })
+		},
+
+		/**
+		 * Persist a notification-toggle change to the per-user settings API
+		 * and reflect it locally.
+		 *
+		 * @param {string} key The notification preference key.
+		 * @param {boolean} value The new toggle value.
+		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-5.2
+		 */
+		async updateNotify(key, value) {
+			if (key === 'notify_shares') {
+				this.notifyShares = value
+			} else if (key === 'notify_requests') {
+				this.notifyRequests = value
+			}
+			await this.settingsStore.saveUserPreferences({ [key]: value })
 		},
 
 		/**

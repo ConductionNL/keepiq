@@ -25,11 +25,17 @@
  *     (no app nav / header / sidebar) and the existing lock-redirect
  *     watcher in App.vue must short-circuit normal navigation. No lib
  *     primitive matches yet.
+ *   - doriath-summary (widget) — the real per-user vault summary tile.
+ *     Fetches GET /api/dashboard/summary and renders KPI cards, a
+ *     migration banner, the empty state, and admin-only CA health /
+ *     pending-applications. Replaces the static `stats-block` sample
+ *     tiles on the Dashboard page.
  *   - stats-block (widget) — local placeholder KPI tile. Overrides the
  *     library's `CnStatsBlockWidget` (which requires a `dataSource`
  *     block pointing at an OR schema) until doriath registers its own
  *     OR-backed schemas; until then the manifest passes static
- *     `count` / `title` / `variant` props directly.
+ *     `count` / `title` / `variant` props directly. Retained for the
+ *     library contract but no longer referenced from the manifest.
  *   - doriath-recent-activity (widget) — sample activity stream
  *     placeholder for the dashboard. Replace with a real feed widget
  *     once the underlying schema lands.
@@ -43,9 +49,19 @@ import LockScreen from './views/LockScreen.vue'
 import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
 import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
 import StatsBlockWidget from './widgets/StatsBlockWidget.vue'
+import DashboardSummaryWidget from './widgets/DashboardSummaryWidget.vue'
 
 export default {
 	LockScreen: { kind: 'page', component: LockScreen },
+	'doriath-summary': {
+		kind: 'widget',
+		component: DashboardSummaryWidget,
+		defaultSize: { w: 12, h: 4 },
+		minSize: { w: 6, h: 3 },
+		maxSize: { w: 12, h: 8 },
+		allowedSlots: ['body'],
+		propsSchema: {},
+	},
 	'stats-block': {
 		kind: 'widget',
 		component: StatsBlockWidget,

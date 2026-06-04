@@ -6,9 +6,15 @@ return [
     'routes' => [
         // Dashboard + Settings.
         ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
+        ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
+        // Specific settings routes BEFORE the generic GET/POST /api/settings collection.
+        ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
+        ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
+        ['name' => 'settings#getUserSettings',     'url' => '/api/settings/user',  'verb' => 'GET'],
+        ['name' => 'settings#updateUserSettings',  'url' => '/api/settings/user',  'verb' => 'PUT'],
+        ['name' => 'settings#load',  'url' => '/api/settings/load', 'verb' => 'POST'],
         ['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
         ['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
-        ['name' => 'settings#load',  'url' => '/api/settings/load', 'verb' => 'POST'],
 
         // EncryptionSuite CRUD.
         ['name' => 'encryptionSuite#index',             'url' => '/api/v1/suites',                          'verb' => 'GET'],
