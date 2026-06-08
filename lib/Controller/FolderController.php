@@ -25,6 +25,7 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\FolderMapper;
+use OCA\Doriath\Exception\DuplicateFolderNameException;
 use OCA\Doriath\Service\FolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -109,12 +110,17 @@ class FolderController extends OCSController
                 customColor: $customColor
             );
             return new JSONResponse(data: $folder->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+        } catch (DuplicateFolderNameException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_CONFLICT
+            );
         } catch (Exception $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_BAD_REQUEST
             );
-        }
+        }//end try
     }//end create()
 
     /**
@@ -178,6 +184,11 @@ class FolderController extends OCSController
             }
 
             return new JSONResponse(data: $folder->jsonSerialize());
+        } catch (DuplicateFolderNameException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_CONFLICT
+            );
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
@@ -230,6 +241,11 @@ class FolderController extends OCSController
                 userId: $userId
             );
             return new JSONResponse(data: ['message' => 'Folder deleted successfully']);
+        } catch (DuplicateFolderNameException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_CONFLICT
+            );
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
@@ -246,7 +262,7 @@ class FolderController extends OCSController
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
-        }
+        }//end try
     }//end destroy()
 
     /**

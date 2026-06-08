@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Exception\DuplicateFolderNameException;
 use OCA\Doriath\Service\FolderService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -304,4 +305,112 @@ class FolderServiceTest extends TestCase
 
         $this->service->validateOwnership('folder-1', 'userB');
     }//end testValidateOwnershipThrowsForWrongUser()
+
+    /**
+     * Test that create rejects a name that already exists in the parent.
+     *
+     * @return void
+     */
+    public function testCreateDuplicateNameRejected(): void
+    {
+        $this->folderMapper->method('existsInParent')->willReturn(true);
+        $this->folderMapper->expects($this->never())->method('insert');
+
+        $this->expectException(exception: DuplicateFolderNameException::class);
+        $this->expectExceptionMessageMatches(regularExpression: '/already exists/');
+
+        $this->service->create('Duplicate', null, 'user', 'testuser');
+    }//end testCreateDuplicateNameRejected()
+
+    /**
+     * Test that rename rejects a name that already exists among siblings.
+     *
+     * @return void
+     */
+    public function testRenameDuplicateNameRejected(): void
+    {
+        $folder = new Folder();
+        $folder->setId('folder-1');
+        $folder->setName('Old Name');
+        $folder->setOwnerType('user');
+        $folder->setOwnerId('testuser');
+        $folder->setParentId('parent-1');
+
+        $this->folderMapper->method('findById')->willReturn($folder);
+        $this->folderMapper->method('existsInParent')
+            ->with('user', 'testuser', 'parent-1', 'New Name', 'folder-1')
+            ->willReturn(true);
+        $this->folderMapper->expects($this->never())->method('update');
+
+        $this->expectException(exception: DuplicateFolderNameException::class);
+
+        $this->service->rename('folder-1', 'New Name', 'testuser');
+    }//end testRenameDuplicateNameRejected()
+
+    /**
+     * Test that move rejects when the new parent already contains the name.
+     *
+     * @return void
+     */
+    public function testMoveDuplicateNameRejected(): void
+    {
+        $folder = new Folder();
+        $folder->setId('folder-1');
+        $folder->setName('My Folder');
+        $folder->setOwnerType('user');
+        $folder->setOwnerId('testuser');
+        $folder->setParentId(null);
+
+        $newParent = new Folder();
+        $newParent->setId('parent-folder-id');
+        $newParent->setOwnerType('user');
+        $newParent->setOwnerId('testuser');
+
+        $this->folderMapper->method('findById')
+            ->willReturnMap([
+                ['folder-1', $folder],
+                ['parent-folder-id', $newParent],
+            ]);
+        $this->folderMapper->method('existsInParent')
+            ->with('user', 'testuser', 'parent-folder-id', 'My Folder', 'folder-1')
+            ->willReturn(true);
+        $this->folderMapper->expects($this->never())->method('update');
+
+        $this->expectException(exception: DuplicateFolderNameException::class);
+
+        $this->service->move('folder-1', 'parent-folder-id', 'testuser');
+    }//end testMoveDuplicateNameRejected()
+
+    /**
+     * Test that deleting with a 'keep' resolution rejects a colliding subfolder.
+     *
+     * @return void
+     */
+    public function testDeleteKeepDuplicateNameRejected(): void
+    {
+        $folder = new Folder();
+        $folder->setId('folder-1');
+        $folder->setName('Parent');
+        $folder->setOwnerType('user');
+        $folder->setOwnerId('testuser');
+        $folder->setParentId('grandparent-1');
+
+        $subfolder = new Folder();
+        $subfolder->setId('subfolder-1');
+        $subfolder->setName('Sub');
+        $subfolder->setOwnerType('user');
+        $subfolder->setOwnerId('testuser');
+        $subfolder->setParentId('folder-1');
+
+        $this->folderMapper->method('findById')->willReturn($folder);
+        $this->folderMapper->method('countSecrets')->willReturn(0);
+        $this->folderMapper->method('findChildren')->willReturn([$subfolder]);
+        $this->folderMapper->method('existsInParent')
+            ->with('user', 'testuser', 'grandparent-1', 'Sub', 'subfolder-1')
+            ->willReturn(true);
+
+        $this->expectException(exception: DuplicateFolderNameException::class);
+
+        $this->service->delete('folder-1', null, ['subfolder-1' => 'keep'], 'testuser');
+    }//end testDeleteKeepDuplicateNameRejected()
 }//end class

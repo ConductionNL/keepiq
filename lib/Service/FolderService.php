@@ -26,6 +26,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Exception\DuplicateFolderNameException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -66,8 +67,9 @@ class FolderService
      *
      * @return Folder
      *
-     * @throws InvalidArgumentException When the name contains slashes or the parent is invalid
-     * @throws DoesNotExistException    When the parent folder does not exist
+     * @throws InvalidArgumentException     When the name contains slashes or the parent is invalid
+     * @throws DuplicateFolderNameException When a folder with the same name already exists in the parent
+     * @throws DoesNotExistException        When the parent folder does not exist
      */
     public function create(
         string $name,
@@ -87,6 +89,13 @@ class FolderService
                 throw new InvalidArgumentException('Parent folder does not belong to the same owner');
             }
         }
+
+        $this->assertNameUnique(
+            ownerType: $ownerType,
+            ownerId: $ownerId,
+            parentId: $parentId,
+            name: $name
+        );
 
         $folder = new Folder();
         $folder->setId(Uuid::uuid4()->toString());
@@ -152,8 +161,9 @@ class FolderService
      *
      * @return Folder
      *
-     * @throws InvalidArgumentException When the name contains slashes or the user is not the owner
-     * @throws DoesNotExistException    When the folder does not exist
+     * @throws InvalidArgumentException     When the name contains slashes or the user is not the owner
+     * @throws DuplicateFolderNameException When a sibling folder with the same name already exists
+     * @throws DoesNotExistException        When the folder does not exist
      */
     public function rename(string $id, string $name, string $userId): Folder
     {
@@ -162,6 +172,14 @@ class FolderService
         }
 
         $folder = $this->validateOwnership(id: $id, userId: $userId);
+
+        $this->assertNameUnique(
+            ownerType: $folder->getOwnerType(),
+            ownerId: $folder->getOwnerId(),
+            parentId: $folder->getParentId(),
+            name: $name,
+            excludeId: $id
+        );
 
         $folder->setName($name);
         $folder->setUpdatedAt(new DateTime());
@@ -185,8 +203,9 @@ class FolderService
      *
      * @return Folder
      *
-     * @throws InvalidArgumentException When the new parent is invalid or the user is not the owner
-     * @throws DoesNotExistException    When the folder or new parent does not exist
+     * @throws InvalidArgumentException     When the new parent is invalid or the user is not the owner
+     * @throws DuplicateFolderNameException When the new parent already contains a folder with the same name
+     * @throws DoesNotExistException        When the folder or new parent does not exist
      */
     public function move(string $id, ?string $newParentId, string $userId): Folder
     {
@@ -198,6 +217,14 @@ class FolderService
                 throw new InvalidArgumentException('New parent folder does not belong to the same owner');
             }
         }
+
+        $this->assertNameUnique(
+            ownerType: $folder->getOwnerType(),
+            ownerId: $folder->getOwnerId(),
+            parentId: $newParentId,
+            name: $folder->getName(),
+            excludeId: $id
+        );
 
         $folder->setParentId($newParentId);
         $folder->setUpdatedAt(new DateTime());
@@ -225,8 +252,9 @@ class FolderService
      *
      * @return void
      *
-     * @throws InvalidArgumentException When cascade/resolution params are missing or invalid
-     * @throws DoesNotExistException    When the folder does not exist
+     * @throws InvalidArgumentException     When cascade/resolution params are missing or invalid
+     * @throws DuplicateFolderNameException When a kept subfolder collides with a name in the destination parent
+     * @throws DoesNotExistException        When the folder does not exist
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
@@ -393,6 +421,45 @@ class FolderService
     }//end validateOwnership()
 
     /**
+     * Assert that a folder name is unique among its siblings.
+     *
+     * Siblings share the same owner and the same parent. Pass $excludeId to
+     * ignore the folder being renamed, moved, or re-parented so it does not
+     * conflict with itself.
+     *
+     * @param string      $ownerType The owner type
+     * @param string      $ownerId   The owner ID
+     * @param string|null $parentId  The parent folder ID, or null for root level
+     * @param string      $name      The folder name to check
+     * @param string|null $excludeId A folder ID to exclude from the check, or null
+     *
+     * @return void
+     *
+     * @throws DuplicateFolderNameException When a sibling with the same name exists
+     */
+    private function assertNameUnique(
+        string $ownerType,
+        string $ownerId,
+        ?string $parentId,
+        string $name,
+        ?string $excludeId=null,
+    ): void {
+        $exists = $this->folderMapper->existsInParent(
+            ownerType: $ownerType,
+            ownerId: $ownerId,
+            parentId: $parentId,
+            name: $name,
+            excludeId: $excludeId
+        );
+
+        if ($exists === true) {
+            throw new DuplicateFolderNameException(
+                message: "A folder named '{$name}' already exists in this location"
+            );
+        }
+    }//end assertNameUnique()
+
+    /**
      * Apply cascade action to direct secrets in a folder.
      *
      * @param string      $cascade  The cascade action ('delete' or 'move')
@@ -467,6 +534,14 @@ class FolderService
             }//end foreach
         } else if ($action === 'keep') {
             // Re-parent the subfolder to the deleted folder's parent.
+            $this->assertNameUnique(
+                ownerType: $subfolder->getOwnerType(),
+                ownerId: $subfolder->getOwnerId(),
+                parentId: $parentId,
+                name: $subfolder->getName(),
+                excludeId: $subId
+            );
+
             $subfolder->setParentId($parentId);
             $subfolder->setUpdatedAt(new DateTime());
             $this->folderMapper->update($subfolder);

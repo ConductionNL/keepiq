@@ -143,6 +143,53 @@ class FolderMapper extends QBMapper
     }//end countSecrets()
 
     /**
+     * Check whether a sibling folder with the given name already exists.
+     *
+     * A sibling shares the same owner and the same parent. Root folders
+     * (parent_id IS NULL) are handled via an IS NULL comparison. An optional
+     * folder ID can be excluded so a folder does not conflict with itself on
+     * rename, move, or re-parent.
+     *
+     * @param string      $ownerType The owner type
+     * @param string      $ownerId   The owner ID
+     * @param string|null $parentId  The parent folder ID, or null for root level
+     * @param string      $name      The folder name to check
+     * @param string|null $excludeId A folder ID to exclude from the check, or null
+     *
+     * @return bool True when a conflicting sibling exists
+     */
+    public function existsInParent(
+        string $ownerType,
+        string $ownerId,
+        ?string $parentId,
+        string $name,
+        ?string $excludeId=null,
+    ): bool {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->createFunction('COUNT(*)'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+            ->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($name)));
+
+        if ($parentId === null) {
+            $qb->andWhere($qb->expr()->isNull('parent_id'));
+        } else {
+            $qb->andWhere($qb->expr()->eq('parent_id', $qb->createNamedParameter($parentId)));
+        }
+
+        if ($excludeId !== null) {
+            $qb->andWhere($qb->expr()->neq('id', $qb->createNamedParameter($excludeId)));
+        }
+
+        $result = $qb->executeQuery();
+        $count  = (int) $result->fetchOne();
+        $result->closeCursor();
+
+        return $count > 0;
+    }//end existsInParent()
+
+    /**
      * Count all secrets in a folder subtree (including nested folders).
      *
      * Uses a recursive CTE to traverse the folder hierarchy.
