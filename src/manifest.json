@@ -40,6 +40,14 @@
 			"route": "Lock",
 			"section": "settings",
 			"order": 90
+		},
+		{
+			"id": "UserSettings",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"action": "user-settings",
+			"section": "settings",
+			"order": 99
 		}
 	],
 	"pages": [

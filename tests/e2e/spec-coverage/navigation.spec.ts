@@ -26,6 +26,18 @@ function appNav(page: import('@playwright/test').Page) {
 	return page.locator('.app-navigation').first()
 }
 
+// Settings-section menu entries (Lock vault, Settings) render inside the
+// NcAppNavigationSettings foldout, which starts collapsed. Expand it so those
+// entries become visible. The toggle is clicked via a real DOM `.click()` so
+// the full-page lock-screen layout cannot swallow the synthetic pointer event.
+async function expandSettingsFoldout(page: import('@playwright/test').Page) {
+	const toggle = page.locator(
+		'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',
+	).first()
+	await expect(toggle).toBeVisible({ timeout: 5_000 })
+	await toggle.evaluate((el: HTMLElement) => el.click())
+}
+
 test.describe('App navigation — manifest menu', () => {
 	test('left navigation renders the manifest menu entries', async ({ page }) => {
 		const errors = collectDoriathErrors(page)
@@ -37,8 +49,11 @@ test.describe('App navigation — manifest menu', () => {
 
 		// The Dashboard entry points at the doriath app root (not /apps/dashboard).
 		await expect(nav.locator('a[href="/apps/doriath/"]').first()).toBeVisible()
-		// Footer entries: Documentation + Lock vault (-> doriath lock route).
+		// Footer entry: Documentation (pinned, always visible).
 		await expect(nav.getByText(/Documentation/i).first()).toBeVisible()
+		// Lock vault lives in the settings foldout (section: "settings"); expand
+		// it so the doriath-owned lock route becomes visible.
+		await expandSettingsFoldout(page)
 		await expect(nav.locator('a[href="/apps/doriath/lock"]').first()).toBeVisible()
 
 		assertNoDoriathErrors(errors)
@@ -48,11 +63,13 @@ test.describe('App navigation — manifest menu', () => {
 		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 
-		// "Lock vault" is a doriath-owned route (/apps/doriath/lock) — clicking it
-		// is a safe in-app navigation that stays on the lock gate.
+		// "Lock vault" is a doriath-owned route (/apps/doriath/lock) in the
+		// settings foldout — expand it, then clicking the entry is a safe in-app
+		// navigation that stays on the lock gate.
+		await expandSettingsFoldout(page)
 		const lockEntry = appNav(page).locator('a[href="/apps/doriath/lock"]').first()
 		await expect(lockEntry).toBeVisible()
-		await lockEntry.click()
+		await lockEntry.evaluate((el: HTMLElement) => el.click())
 
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 		await expect(page).toHaveURL(/\/apps\/doriath\/lock/)

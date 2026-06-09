@@ -137,56 +137,56 @@ test.describe('User Settings — spec: user-settings/spec.md', () => {
 
 	/**
 	 * @e2e user-settings::user-opens-settings
-	 * GIVEN a user clicks the gear icon in the Doriath navigation
-	 * WHEN the dialog opens
-	 * THEN the system MUST display NcAppSettingsDialog with user preference sections.
+	 * GIVEN a user opens the settings foldout in the Doriath navigation
+	 * WHEN they click the "Settings" entry
+	 * THEN the system MUST display the NcAppSettingsDialog with the user
+	 *      preference sections (Session timeout / master-password / recovery).
 	 *
-	 * BUG (flagged, not fixed — tests must not modify source):
-	 *   App.vue populates CnAppRoot's `#user-settings` slot (Session timeout,
-	 *   master-password change, compromise recovery), but the NcAppSettingsDialog
-	 *   it hosts can only be opened from a manifest *menu* entry carrying
-	 *   `action: "user-settings"` (CnAppNav binds `cnOpenUserSettings` to it —
-	 *   see CnAppNav.vue). src/manifest.json declares no such entry, so there is
-	 *   no gear/menu affordance to open the dialog: the user-settings surface
-	 *   (and therefore the session-timeout / password-change / compromise-recovery
-	 *   controls) is currently UNREACHABLE from the Doriath UI.
-	 *
-	 *   Fix: add a `section: "settings"` menu entry with
-	 *   `"action": "user-settings"` to src/manifest.json. Marked test.fixme until
-	 *   that ships; the assertion below documents the expected post-fix behaviour.
+	 * The opener is a `section: "settings"` menu entry carrying
+	 * `action: "user-settings"` (id `UserSettings`) in src/manifest.json.
+	 * CnAppNav renders it inside the NcAppNavigationSettings foldout and binds
+	 * the click to the `cnOpenUserSettings` inject provided by CnAppRoot, which
+	 * opens App.vue's `#user-settings` slot dialog. (The foldout toggle and the
+	 * entry are clicked via a real DOM `.click()` so the lock-screen layout
+	 * cannot swallow the synthetic pointer event.)
 	 */
-	test.fixme('user-opens-settings — manifest is missing the action:"user-settings" menu entry, so the dialog cannot be opened', async ({ page }) => {
+	test('user-opens-settings — the action:"user-settings" menu entry opens the user-settings dialog', async ({ page }) => {
 		// @e2e user-settings::user-opens-settings
 
 		await page.goto('/index.php/apps/doriath/lock', { waitUntil: 'domcontentloaded' })
 		await expect(
 			page.locator('h1.lock-screen__title, .lock-screen h1').first(),
 		).toBeVisible({ timeout: 15_000 })
+		await expect(page.locator('.app-navigation').first()).toBeVisible({ timeout: 15_000 })
 
-		// Once a manifest entry with action:"user-settings" exists, CnAppNav
-		// renders it in the settings footer and clicking it opens the dialog.
-		const settingsEntry = page.locator(
-			'.app-navigation a[data-doriath-action="user-settings"], '
-			+ '.app-navigation__footer button[aria-label*="settings" i]',
+		// Expand the settings foldout (NcAppNavigationSettings) that hosts the
+		// settings-section entries (Lock vault, Settings).
+		const foldoutToggle = page.locator(
+			'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',
 		).first()
-		await expect(settingsEntry).toBeVisible({ timeout: 5_000 })
-		await settingsEntry.click()
+		await expect(foldoutToggle).toBeVisible({ timeout: 5_000 })
+		await foldoutToggle.evaluate((el: HTMLElement) => el.click())
 
-		const dialog = page.locator('[class*="settings-dialog"], [role="dialog"]').first()
-		await expect(dialog).toBeVisible({ timeout: 10_000 })
+		// The manifest-declared user-settings opener now renders and is visible.
+		const settingsEntry = page.locator('[data-testid="cn-nav-entry-UserSettings"]')
+		await expect(settingsEntry.first()).toBeVisible({ timeout: 5_000 })
+
+		// Clicking it invokes cnOpenUserSettings -> App.vue's #user-settings dialog.
+		await settingsEntry.locator('a').first().evaluate((el: HTMLElement) => el.click())
+
 		// The Session and Security sections from App.vue's #user-settings slot.
-		await expect(dialog.getByText(/Session/i).first()).toBeVisible()
-		await expect(dialog.getByText(/Security/i).first()).toBeVisible()
+		await expect(page.getByText('Session timeout').first()).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByText('Security', { exact: true }).first()).toBeVisible()
+		await expect(page.getByText(/master password/i).first()).toBeVisible()
 	})
 
 	/**
-	 * Companion (always-running) assertion of the SAME gap: there is currently
-	 * NO settings menu entry / gear affordance in the Doriath nav, so a user
-	 * cannot reach the user-settings dialog. This stays green until the manifest
-	 * gains an action:"user-settings" entry, at which point it must be updated to
-	 * assert the entry IS present (and the test.fixme above un-fixmed).
+	 * Companion assertion: the user-settings opener IS present in the manifest —
+	 * exactly one `action: "user-settings"` menu entry (id `UserSettings`) renders
+	 * in the settings foldout, giving the user a reachable affordance to open the
+	 * user-settings dialog.
 	 */
-	test('user-settings dialog has no opener in the current manifest (documents the gap)', async ({ page }) => {
+	test('user-settings dialog has a manifest opener in the settings foldout', async ({ page }) => {
 		await page.goto('/index.php/apps/doriath/lock', { waitUntil: 'domcontentloaded' })
 		await expect(
 			page.locator('h1.lock-screen__title, .lock-screen h1').first(),
@@ -195,13 +195,13 @@ test.describe('User Settings — spec: user-settings/spec.md', () => {
 		const nav = page.locator('.app-navigation').first()
 		await expect(nav).toBeVisible({ timeout: 15_000 })
 
-		// No nav entry currently triggers the user-settings action. (The footer
-		// holds Documentation + Features & roadmap + Lock vault — all route/href
-		// entries, none with action:"user-settings".)
-		const settingsOpener = nav.locator(
-			'a[data-doriath-action="user-settings"], '
-			+ '.app-navigation__footer button[aria-label*="settings" i]',
-		)
-		expect(await settingsOpener.count()).toBe(0)
+		// Expand the foldout, then assert the user-settings entry exists.
+		await nav.locator(
+			'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',
+		).first().evaluate((el: HTMLElement) => el.click())
+
+		const settingsOpener = nav.locator('[data-testid="cn-nav-entry-UserSettings"]')
+		await expect(settingsOpener.first()).toBeVisible({ timeout: 5_000 })
+		expect(await settingsOpener.count()).toBe(1)
 	})
 })

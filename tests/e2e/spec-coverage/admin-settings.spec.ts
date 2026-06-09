@@ -14,10 +14,20 @@
  * @e2e openspec/specs/admin-settings/spec.md#password-policy-section
  * @e2e openspec/specs/admin-settings/spec.md#ca-health-section
  */
+import * as fs from 'fs'
+import * as path from 'path'
 import { test, expect } from '@playwright/test'
 import { collectDoriathErrors, assertNoDoriathErrors } from './_helpers'
 
 const ADMIN_SETTINGS = '/index.php/settings/admin/doriath'
+
+// Read the app version from appinfo/info.xml so the version-card assertion
+// tracks the real deployed version instead of a hard-coded literal that breaks
+// on every cache-bust bump.
+const APP_VERSION = (() => {
+	const infoXml = fs.readFileSync(path.resolve(__dirname, '../../../appinfo/info.xml'), 'utf8')
+	return infoXml.match(/<version>([^<]+)<\/version>/)?.[1] ?? ''
+})()
 
 test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 	test('settings section loads with the Doriath administration heading', async ({ page }) => {
@@ -31,15 +41,16 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 		assertNoDoriathErrors(errors)
 	})
 
-	test('Version Information card shows app name and version 0.2.0', async ({ page }) => {
+	test('Version Information card shows app name and the current app version', async ({ page }) => {
 		const errors = collectDoriathErrors(page)
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 
 		const content = page.locator('#app-content, #content').first()
 		await expect(content.getByText(/Version Information/i).first()).toBeVisible({ timeout: 15_000 })
-		// CnVersionInfoCard renders the app name and the current version.
+		// CnVersionInfoCard renders the app name and the current version
+		// (read from appinfo/info.xml so this tracks cache-bust bumps).
 		await expect(content.getByText(/Application Name/i).first()).toBeVisible()
-		await expect(content.getByText(/0\.2\.0/).first()).toBeVisible()
+		await expect(content.getByText(APP_VERSION, { exact: false }).first()).toBeVisible()
 		// Support footer slot is rendered by AdminRoot.vue.
 		await expect(content.getByText(/support@conduction\.nl/i).first()).toBeVisible()
 
