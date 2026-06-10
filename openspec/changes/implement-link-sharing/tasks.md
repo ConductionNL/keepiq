@@ -21,8 +21,8 @@ change is still open and unbuilt). Accordingly:
 ## 1. Database Migration and Seed Data
 
 - [x] 1.1 Create ISchemaWrapper migration `Version000005Date20260603000000` for `doriath_link_shares` table (sequence continues from the existing Version000004; the design's `Version000010` numbering referenced unbuilt user-sharing migrations). Columns: id (UUID PK), secret_id (string FK NOT NULL), token (string UNIQUE NOT NULL), encrypted_secret_snapshot (text NOT NULL), argon2id_salt (string NOT NULL), encryption_suite_id (string FK NOT NULL), usage_limit (integer NOT NULL default 1), usage_count (integer NOT NULL default 0), failed_attempts (integer NOT NULL default 0), created_by (string NOT NULL), created_at (datetime NOT NULL), expires_at (datetime nullable); indexes on token (unique), secret_id, created_by
-- [ ] 1.2 [DEFERRED — depends on `SeedDevelopmentSecrets` from the unbuilt implement-secrets] Create `SeedDevelopmentLinkShares` IRepairStep (debug-only) seeding example link shares for dev secrets
-- [ ] 1.3 [DEFERRED — depends on 1.2] Register `SeedDevelopmentLinkShares` as a post-migration repair step in `info.xml`
+- [~] 1.2 [DEFERRED — depends on `SeedDevelopmentSecrets` from the unbuilt implement-secrets] Create `SeedDevelopmentLinkShares` IRepairStep (debug-only) seeding example link shares for dev secrets
+- [~] 1.3 [DEFERRED — depends on 1.2] Register `SeedDevelopmentLinkShares` as a post-migration repair step in `info.xml`
 
 ## 2. Entity and Mapper
 
@@ -54,8 +54,8 @@ change is still open and unbuilt). Accordingly:
 
 ## 6. Argon2id Crypto Module (Frontend)
 
-- [ ] 6.1 [DEFERRED — needs install + build verification, only useful with the secrets feature] Add `argon2-browser` npm dependency to `package.json`
-- [ ] 6.2 [DEFERRED — webpack already uses `asset/resource`; the `.wasm` rule lands with 6.1] Configure webpack to handle WASM files
+- [~] 6.1 [DEFERRED — needs install + build verification, only useful with the secrets feature] Add `argon2-browser` npm dependency to `package.json`
+- [~] 6.2 [DEFERRED — webpack already uses `asset/resource`; the `.wasm` rule lands with 6.1] Configure webpack to handle WASM files
 - [x] 6.3 Create `src/crypto/argon2.js` with deriveAesKeyArgon2id (Argon2id memory 65536 KiB / iterations 3 / parallelism 1 / hashLength 32, lazy-loaded WASM), encryptSnapshot (salt + IV + AES-GCM), decryptSnapshot (key + AES-GCM, throws on GCM tag mismatch), generateLinkPassword (20-char rejection-sampled), isArgon2Supported (WASM feature check)
 - [x] 6.4 Add barrel export for the argon2 functions in `src/crypto/index.js`
 
@@ -67,17 +67,17 @@ change is still open and unbuilt). Accordingly:
 
 ## 8. Vue Components (Frontend)
 
-- [ ] 8.1 [DEFERRED — standalone public page is mounted by the secrets SPA router which does not exist yet] `src/views/LinkShareAccess.vue`
-- [ ] 8.2 [DEFERRED — opened from the not-yet-existing SecretDetail view] `src/components/LinkShareCreateDialog.vue`
-- [ ] 8.3 [DEFERRED — rendered inside SecretDetail] `src/components/LinkShareList.vue`
-- [ ] 8.4 [DEFERRED — rendered by the create dialog] `src/components/LinkSharePasswordDisplay.vue`
+- [~] 8.1 [DEFERRED — standalone public page is mounted by the secrets SPA router which does not exist yet] `src/views/LinkShareAccess.vue`
+- [~] 8.2 [DEFERRED — opened from the not-yet-existing SecretDetail view] `src/components/LinkShareCreateDialog.vue`
+- [~] 8.3 [DEFERRED — rendered inside SecretDetail] `src/components/LinkShareList.vue`
+- [~] 8.4 [DEFERRED — rendered by the create dialog] `src/components/LinkSharePasswordDisplay.vue`
 
 ## 9. Vue Router Integration
 
-- [ ] 9.1 [DEFERRED — this app uses the manifest-v2 declarative shell; there is no `src/router/index.js`. The public `/share/link/:token` page integrates with the secrets SPA when it lands] Add the public route
-- [ ] 9.2 [DEFERRED — depends on 9.1] Update the lock-screen guard to skip `meta.public` routes
-- [ ] 9.3 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareCreateDialog into SecretDetail
-- [ ] 9.4 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareList into SecretDetail
+- [~] 9.1 [DEFERRED — this app uses the manifest-v2 declarative shell; there is no `src/router/index.js`. The public `/share/link/:token` page integrates with the secrets SPA when it lands] Add the public route
+- [~] 9.2 [DEFERRED — depends on 9.1] Update the lock-screen guard to skip `meta.public` routes
+- [~] 9.3 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareCreateDialog into SecretDetail
+- [~] 9.4 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareList into SecretDetail
 
 ## 10. Internationalization
 
@@ -102,13 +102,13 @@ change is still open and unbuilt). Accordingly:
 - [x] 12.4 Service test covers brute-force deletion after 5 failed attempts (11.4); controller test covers the failed-flag wiring
 - [x] 12.5 Service test covers usage-limit auto-deletion via confirm (11.3)
 - [x] 12.6 Controller test: non-owner destroy returns 403
-- [ ] 12.7 [DEFERRED — secret deletion path is in the unbuilt SecretService] End-to-end secret-deletion cascade test
+- [~] 12.7 [DEFERRED — secret deletion path is in the unbuilt SecretService] End-to-end secret-deletion cascade test
 - [x] 12.8 Public payload tests assert only the encrypted blob/salt are returned, never decrypted data or owner identity
 
 ## 13. Frontend Tests
 
-- [ ] 13.1 [DEFERRED — this app has no JS test runner (no vitest/jest); adding one is out of scope for this change] argon2.js round-trip tests
-- [ ] 13.2 [DEFERRED — no JS test runner] useLinkShareStore tests
-- [ ] 13.3 [DEFERRED — no JS test runner + component depends on the secrets SPA] LinkShareAccess component tests
-- [ ] 13.4 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareCreateDialog component tests
-- [ ] 13.5 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareList component tests
+- [~] 13.1 [DEFERRED — this app has no JS test runner (no vitest/jest); adding one is out of scope for this change] argon2.js round-trip tests
+- [~] 13.2 [DEFERRED — no JS test runner] useLinkShareStore tests
+- [~] 13.3 [DEFERRED — no JS test runner + component depends on the secrets SPA] LinkShareAccess component tests
+- [~] 13.4 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareCreateDialog component tests
+- [~] 13.5 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareList component tests
