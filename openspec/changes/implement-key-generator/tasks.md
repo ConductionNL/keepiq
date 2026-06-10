@@ -32,9 +32,9 @@
 > reusable; wiring its trigger button into the secret creation form is a one-import
 > follow-up once `implement-secrets` lands. Tracked for that change.
 
-- [~] 4.1 Add a generator button (dice icon) next to the key/password field in the secret creation form component — DEFERRED (no secret creation form exists) — deferred to downstream cycle (handoff)
-- [~] 4.2 Wire the button to open `KeyGeneratorModal.vue` and listen for the emitted generated value — DEFERRED (no secret creation form exists) — deferred to downstream cycle (handoff)
-- [~] 4.3 Insert the emitted value into the key/password field of the secret creation form when the user clicks "Use" — DEFERRED (no secret creation form exists) — deferred to downstream cycle (handoff)
+- [ ] 4.1 Add a generator button (dice icon) next to the key/password field in the secret creation form component — DEFERRED (no secret creation form exists)
+- [ ] 4.2 Wire the button to open `KeyGeneratorModal.vue` and listen for the emitted generated value — DEFERRED (no secret creation form exists)
+- [ ] 4.3 Insert the emitted value into the key/password field of the secret creation form when the user clicks "Use" — DEFERRED (no secret creation form exists)
 
 ## 5. Internationalization
 
@@ -78,6 +78,6 @@
 > integration test (8.3) is additionally blocked on the absent secret creation
 > form (see section 4).
 
-- [~] 8.1 Component test for `KeyGeneratorModal.vue` (renders inputs, calls API, previews key, emits on "Use") — DEFERRED (no JS test runner) — deferred to downstream cycle (handoff)
-- [~] 8.2 Component test for error display in NcNoteCard — DEFERRED (no JS test runner) — deferred to downstream cycle (handoff)
-- [~] 8.3 Component test for generator button integration — DEFERRED (no JS test runner + no secret creation form) — deferred to downstream cycle (handoff)
+- [ ] 8.1 Component test for `KeyGeneratorModal.vue` (renders inputs, calls API, previews key, emits on "Use") — DEFERRED (no JS test runner)
+- [ ] 8.2 Component test for error display in NcNoteCard — DEFERRED (no JS test runner)
+- [ ] 8.3 Component test for generator button integration — DEFERRED (no JS test runner + no secret creation form)
