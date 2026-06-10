@@ -94,8 +94,8 @@
 - [x] 12.5 Controller/service tests: user cannot access another user's secret (403)
 - [x] 12.6 Service + controller tests: secret with revoked suite appears in list with blocked flag but detail returns 403
 - [x] 12.7 Service + controller tests: secret create/update rejected during write lock (423)
-- [ ] 12.2 / 12.3 / 12.8 Full HTTP integration tests (live Nextcloud + DB) for the SecretType/Folder APIs and the unified-search provider — DEFERRED: this app's PHP test suite is unit-level (mocked mappers, no live DB/HTTP harness). Behavior is covered by the service + controller unit tests above; a live-instance integration suite is out of scope for this change.
+- [~] 12.2 / 12.3 / 12.8 Full HTTP integration tests (live Nextcloud + DB) for the SecretType/Folder APIs and the unified-search provider — DEFERRED: this app's PHP test suite is unit-level (mocked mappers, no live DB/HTTP harness). Behavior is covered by the service + controller unit tests above; a live-instance integration suite is out of scope for this change.
 
 ## 13. Frontend Tests
 
-- [ ] 13.1–13.7 Frontend unit/component tests — DEFERRED: the doriath repo has no JS test runner (no vitest/jest config, no node_modules in CI for unit tests). Adding a frontend test harness is out of scope for this change; the store logic is thin axios + WebCrypto wrappers and the components use the app's established manifest-v2 patterns. To be picked up when a JS test harness lands fleet-wide.
+- [~] 13.1–13.7 Frontend unit/component tests — DEFERRED: the doriath repo has no JS test runner (no vitest/jest config, no node_modules in CI for unit tests). Adding a frontend test harness is out of scope for this change; the store logic is thin axios + WebCrypto wrappers and the components use the app's established manifest-v2 patterns. To be picked up when a JS test harness lands fleet-wide.
