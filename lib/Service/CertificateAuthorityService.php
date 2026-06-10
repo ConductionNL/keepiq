@@ -196,8 +196,16 @@ class CertificateAuthorityService
     /**
      * Sign a public key PEM with the active intermediate, returning an X.509 certificate PEM.
      *
-     * @param string $publicKeyPem The PEM-encoded public key
-     * @param string $commonName   The common name for the certificate (e.g. user ID or app name)
+     * When the matching private key is supplied (server-side key generation, e.g.
+     * the dev seed), the CSR is built from that real keypair so the issued
+     * certificate carries the caller's actual public key. Without it,
+     * openssl_csr_new() cannot sign with a public-only key and would silently
+     * generate a throwaway keypair, producing a certificate whose private key
+     * nobody holds — breaking the whole encrypt/decrypt model.
+     *
+     * @param string      $publicKeyPem  The PEM-encoded public key
+     * @param string      $commonName    The common name for the certificate (e.g. user ID or app name)
+     * @param string|null $privateKeyPem The PEM-encoded matching private key, when available
      *
      * @return string
      *
@@ -206,30 +214,41 @@ class CertificateAuthorityService
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
-    public function signPublicKey(string $publicKeyPem, string $commonName='Doriath User'): string
-    {
+    public function signPublicKey(
+        string $publicKeyPem,
+        string $commonName='Doriath User',
+        ?string $privateKeyPem=null,
+    ): string {
         $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
         $intermediateKey  = openssl_pkey_get_private(
             private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
         );
         $intermediateCert = $intermediate->getCertificate();
 
-        // Create a CSR from the public key to sign it.
-        $tempKey = openssl_pkey_get_public(public_key: $publicKeyPem);
-        if ($tempKey === false) {
+        // Build the CSR. openssl_csr_new() needs a PRIVATE key: when the caller
+        // owns the keypair (server-side generation) we use it directly so the
+        // signed certificate carries the caller's real public key. A public-only
+        // key cannot sign a CSR.
+        $csrKey = openssl_pkey_get_public(public_key: $publicKeyPem);
+        if ($privateKeyPem !== null) {
+            $csrKey = openssl_pkey_get_private(private_key: $privateKeyPem);
+            if ($csrKey === false) {
+                throw new InvalidArgumentException('Invalid private key PEM');
+            }
+        }
+
+        if ($csrKey === false) {
             throw new InvalidArgumentException('Invalid public key PEM');
         }
 
         $csr = openssl_csr_new(
             distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $commonName]),
-            private_key: $tempKey,
+            private_key: $csrKey,
             options: ['digest_alg' => 'sha256']
         );
 
-        // Note: openssl_csr_new requires a private key. For signing an external public key
-        // (CSR-based registration), the caller must provide a proper PKCS#10 CSR.
-        // For generated key pairs, we create the CSR with the generated private key.
-        // This method is called with a proper CSR or after key generation.
+        // For external-public-key registration without the private key, the caller
+        // should instead provide a proper PKCS#10 CSR (see signCsr()).
         $cert = openssl_csr_sign(
             csr: $csr,
             ca_certificate: $intermediateCert,

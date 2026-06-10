@@ -72,14 +72,13 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	})
 
 	/*
-	 * BUG #5 — the seeded PHP-written private-key envelope is JS-incompatible:
-	 * decryptPrivateKey() rejects the dev master password `Oj` (and every other)
-	 * with OperationError, so the seeded vault is permanently un-unlockable in the
-	 * browser. Un-fixme once the PHP EncryptService and the JS envelope/PBKDF2
-	 * formats agree (same version header, salt/IV layout, iteration count, and
-	 * GCM tag handling) so `Oj` decrypts the seeded suite.
+	 * FIXED — the seeded PHP-written private-key envelope is now JS-compatible.
+	 * The AES-GCM envelope (PBKDF2-SHA256 600k → AES-256-GCM, version/salt/IV
+	 * layout) round-trips, and the CA now issues a certificate carrying the
+	 * user's real public key (previously openssl_csr_new generated a throwaway
+	 * keypair). decryptPrivateKey() unlocks the seeded suite with `Oj`.
 	 */
-	test.fixme('correct dev master password unlocks the seeded vault', async ({ page }) => {
+	test('correct dev master password unlocks the seeded vault', async ({ page }) => {
 		await gotoLockSettled(page)
 		await page.locator('.lock-screen input[type="password"]').first().fill(DEV_MASTER_PASSWORD, { force: true })
 		await page.locator('.lock-screen button').filter({ hasText: /^\s*Unlock\s*$/i }).first().click({ force: true })

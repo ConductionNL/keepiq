@@ -65,12 +65,107 @@ export async function importPrivateKey(pem) {
 }
 
 /**
- * Import a PEM public key or certificate for encryption.
+ * Read a single ASN.1 DER length field.
  *
- * @param {string} pem PEM-encoded public key (SPKI format)
+ * @param {Uint8Array} der The DER bytes
+ * @param {number} offset Offset of the length byte (immediately after the tag)
+ * @return {{ length: number, headerEnd: number }} The content length and the
+ *   offset of the first content byte.
+ */
+function readDerLength(der, offset) {
+	const first = der[offset]
+	if ((first & 0x80) === 0) {
+		// Short form.
+		return { length: first, headerEnd: offset + 1 }
+	}
+
+	// Long form: low 7 bits give the number of subsequent length bytes.
+	const numBytes = first & 0x7f
+	let length = 0
+	for (let i = 0; i < numBytes; i++) {
+		length = (length << 8) | der[offset + 1 + i]
+	}
+
+	return { length, headerEnd: offset + 1 + numBytes }
+}
+
+/**
+ * Extract the DER-encoded SubjectPublicKeyInfo (SPKI) from an X.509 certificate.
+ *
+ * X.509: Certificate ::= SEQUENCE {
+ *   tbsCertificate       TBSCertificate,   -- SEQUENCE
+ *   signatureAlgorithm   AlgorithmIdentifier,
+ *   signatureValue       BIT STRING }
+ *
+ * TBSCertificate ::= SEQUENCE {
+ *   [0] version, serialNumber, signature, issuer, validity, subject,
+ *   subjectPublicKeyInfo SubjectPublicKeyInfo, ... }
+ *
+ * The SPKI is itself a SEQUENCE. We walk the TBSCertificate's children and
+ * return the AlgorithmIdentifier+BIT STRING SEQUENCE that follows the `subject`
+ * Name (the 6th top-level TBS element, after the optional [0] version tag).
+ *
+ * @param {Uint8Array} certDer The full certificate DER bytes
+ * @return {Uint8Array} The DER bytes of the SubjectPublicKeyInfo SEQUENCE
+ */
+function extractSpkiFromCertificate(certDer) {
+	const SEQUENCE = 0x30
+	const CONTEXT_0 = 0xa0 // [0] EXPLICIT version
+
+	// Outer Certificate SEQUENCE.
+	if (certDer[0] !== SEQUENCE) {
+		throw new Error('Not a DER SEQUENCE (certificate expected)')
+	}
+	const { headerEnd } = readDerLength(certDer, 1)
+
+	// tbsCertificate SEQUENCE.
+	if (certDer[headerEnd] !== SEQUENCE) {
+		throw new Error('Malformed certificate: tbsCertificate not a SEQUENCE')
+	}
+	const tbs = readDerLength(certDer, headerEnd + 1)
+	let pos = tbs.headerEnd
+	const tbsEnd = tbs.headerEnd + tbs.length
+
+	// Skip the optional [0] version, then walk fields by index. The 6th field
+	// (index 5, 0-based) after an explicit version — or 5th without one — is the
+	// SubjectPublicKeyInfo. Robust approach: the SPKI is the first SEQUENCE whose
+	// content begins with an AlgorithmIdentifier SEQUENCE followed by a BIT STRING.
+	// We index the TBS children and pick the one at the SPKI position.
+	const fields = []
+	while (pos < tbsEnd) {
+		const tag = certDer[pos]
+		const { length, headerEnd: contentStart } = readDerLength(certDer, pos + 1)
+		const fieldEnd = contentStart + length
+		fields.push({ tag, start: pos, contentStart, end: fieldEnd })
+		pos = fieldEnd
+	}
+
+	// Determine the SPKI index: skip a leading [0] version if present.
+	const hasVersion = fields.length > 0 && fields[0].tag === CONTEXT_0
+	// Order: (version?) serialNumber, signature, issuer, validity, subject, SPKI.
+	const spkiIndex = hasVersion ? 6 : 5
+	const spki = fields[spkiIndex]
+	if (spki === undefined || certDer[spki.start] !== SEQUENCE) {
+		throw new Error('Could not locate SubjectPublicKeyInfo in certificate')
+	}
+
+	return certDer.slice(spki.start, spki.end)
+}
+
+/**
+ * Import a PEM public key or X.509 certificate for encryption.
+ *
+ * Accepts either a `SubjectPublicKeyInfo` (`-----BEGIN PUBLIC KEY-----`) or a
+ * full X.509 certificate (`-----BEGIN CERTIFICATE-----`). For a certificate the
+ * embedded SubjectPublicKeyInfo is extracted before importKey('spki', …), which
+ * rejects a raw certificate DER with DataError.
+ *
+ * @param {string} pem PEM-encoded SPKI public key or X.509 certificate
  * @return {Promise<CryptoKey>}
  */
 export async function importPublicKey(pem) {
+	const isCertificate = /-----BEGIN CERTIFICATE-----/.test(pem)
+
 	const pemBody = pem
 		.replace(/-----BEGIN PUBLIC KEY-----/, '')
 		.replace(/-----END PUBLIC KEY-----/, '')
@@ -78,11 +173,14 @@ export async function importPublicKey(pem) {
 		.replace(/-----END CERTIFICATE-----/, '')
 		.replace(/\s/g, '')
 
-	const binary = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0))
+	let spki = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0))
+	if (isCertificate === true) {
+		spki = extractSpkiFromCertificate(spki)
+	}
 
 	return crypto.subtle.importKey(
 		'spki',
-		binary,
+		spki,
 		{ name: 'RSA-OAEP', hash: 'SHA-256' },
 		false,
 		['encrypt'],

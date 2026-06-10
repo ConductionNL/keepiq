@@ -123,7 +123,8 @@ class SeedDevelopmentData implements IRepairStep
         try {
             $certificate = $this->caService->signPublicKey(
                 publicKeyPem: $publicKeyPem,
-                commonName: self::DEV_USER_ID
+                commonName: self::DEV_USER_ID,
+                privateKeyPem: $privateKeyPem
             );
         } catch (Exception $e) {
             $output->warning('CA not available for dev seed: '.$e->getMessage());

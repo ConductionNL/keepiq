@@ -63,9 +63,13 @@ class Folder extends Entity implements JsonSerializable
     /**
      * The owner type: user or application.
      *
+     * Defaults to an empty string (not 'user') so that an explicit
+     * setOwnerType('user') call marks the column dirty in NC's QBMapper and
+     * is written on INSERT — the column is NOT NULL.
+     *
      * @var string
      */
-    protected string $ownerType = 'user';
+    protected string $ownerType = '';
 
     /**
      * The owner ID (Nextcloud user ID or application ID).
