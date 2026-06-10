@@ -81,4 +81,38 @@ class SecretTest extends TestCase
         $this->assertSame('Encryption suite is revoked', $data['blockedReason']);
         $this->assertSame('GitHub', $data['name']);
     }//end testJsonSerializeBlockedOmitsBlobs()
+
+    /**
+     * Regression lock for the owner_type NOT-NULL fix (Phase-0).
+     *
+     * The ownerType property defaults to '' (NOT 'user'). NC's QBMapper only
+     * writes columns that getUpdatedFields() reports as dirty, and Entity::setter
+     * skips marking a field dirty when the new value equals the current one. If
+     * the default were 'user', setOwnerType('user') would be a no-op, ownerType
+     * would NOT be in getUpdatedFields(), and the INSERT would omit it — leaving
+     * the NOT-NULL column null and failing the write. With default '', the setter
+     * marks it dirty so 'user' is persisted on INSERT.
+     *
+     * @return void
+     */
+    public function testSetOwnerTypeUserMarksColumnDirtyForInsert(): void
+    {
+        $secret = new Secret();
+
+        // Fresh entity: nothing dirty yet, ownerType is the '' default.
+        $this->assertSame('', $secret->getOwnerType());
+        $this->assertArrayNotHasKey('ownerType', $secret->getUpdatedFields());
+
+        // Setting the common-case 'user' value MUST mark the column dirty so the
+        // QBMapper INSERT writes it (the column is NOT NULL). getUpdatedFields()
+        // is keyed by property name.
+        $secret->setOwnerType('user');
+
+        $this->assertSame('user', $secret->getOwnerType());
+        $this->assertArrayHasKey(
+            'ownerType',
+            $secret->getUpdatedFields(),
+            'setOwnerType("user") must mark ownerType dirty so it is written on INSERT'
+        );
+    }//end testSetOwnerTypeUserMarksColumnDirtyForInsert()
 }//end class

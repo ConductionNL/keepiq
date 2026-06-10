@@ -247,7 +247,7 @@ class SettingsService
 
             // Two associative arrays: recurse.
             $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
-        }
+        }//end foreach
 
         return $base;
 

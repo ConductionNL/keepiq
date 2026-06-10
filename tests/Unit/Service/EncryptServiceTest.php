@@ -112,6 +112,83 @@ class EncryptServiceTest extends TestCase
         $this->encrypt->rsaEncrypt('data', 'not-a-pem-key');
     }
 
+    /**
+     * Regression lock for the SHA-1 -> SHA-256 OAEP/MGF1 fix (Phase-0).
+     *
+     * PHP's native openssl_public_encrypt(OPENSSL_PKCS1_OAEP_PADDING) hard-codes
+     * the OAEP label hash and the MGF1 hash to SHA-1, which is INCOMPATIBLE with
+     * the browser's WebCrypto RSA-OAEP keys imported with hash:'SHA-256'. The fix
+     * pads/unpads OAEP with SHA-256 by hand.
+     *
+     * This test takes the inner raw-RSA block produced by EncryptService and
+     * tries to strip its padding with PHP's native SHA-1 OAEP. If the service had
+     * regressed to SHA-1 OAEP, that strip would SUCCEED and return the plaintext.
+     * Because the block is SHA-256 OAEP-padded, the SHA-1 strip MUST fail. This
+     * pins the encrypt side to SHA-256 independently of the (also-SHA-256) decrypt
+     * side, so a both-sides-SHA-1 regression cannot hide behind a green round-trip.
+     */
+    public function testRsaEncryptUsesSha256OaepNotSha1(): void
+    {
+        $plaintext = 'lock-the-oaep-hash';
+
+        // EncryptService output: base64( [4-byte chunk count][512-byte block] ).
+        $raw = base64_decode($this->encrypt->rsaEncrypt($plaintext, $this->publicKeyPem), true);
+        $this->assertIsString($raw);
+        $chunkCount = unpack('N', substr($raw, 0, 4))[1];
+        $this->assertSame(1, $chunkCount, 'short plaintext must be a single 512-byte block');
+        $block = substr($raw, 4, 512);
+        $this->assertSame(512, strlen($block));
+
+        $privateKey = openssl_pkey_get_private($this->privateKeyPem);
+
+        // Native SHA-1 OAEP strip of a SHA-256 OAEP block must NOT recover the
+        // plaintext (it fails, or at best yields garbage that is not the input).
+        $sha1Out = '';
+        set_error_handler(static fn () => true, E_WARNING);
+        try {
+            $sha1Ok = openssl_private_decrypt($block, $sha1Out, $privateKey, OPENSSL_PKCS1_OAEP_PADDING);
+        } finally {
+            restore_error_handler();
+        }
+        if ($sha1Ok === true) {
+            $this->assertNotSame(
+                $plaintext,
+                $sha1Out,
+                'SHA-1 OAEP strip recovered the plaintext -> encrypt side regressed to SHA-1 OAEP'
+            );
+        } else {
+            $this->assertFalse($sha1Ok, 'SHA-1 OAEP strip of a SHA-256 OAEP block must fail');
+        }
+
+        // And the service's own SHA-256 unpad MUST recover it exactly.
+        $this->assertSame(
+            $plaintext,
+            $this->decrypt->rsaDecrypt(base64_encode($raw), $this->privateKeyPem)
+        );
+    }
+
+    /**
+     * Regression lock: decrypting RSA ciphertext with the WRONG private key
+     * fails cleanly with a DecryptionException, never silently returning data.
+     *
+     * A different keypair turns the raw-RSA block into noise; the SHA-256 OAEP
+     * unpad then rejects it (bad leading byte / label-hash mismatch / no marker)
+     * and raises a typed DecryptionException rather than leaking partial output.
+     */
+    public function testRsaDecryptWrongKeyFailsCleanly(): void
+    {
+        $ciphertext = $this->encrypt->rsaEncrypt('top secret', $this->publicKeyPem);
+
+        $wrongPair = openssl_pkey_new([
+            'private_key_bits' => 4096,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+        openssl_pkey_export($wrongPair, $wrongPrivateKeyPem);
+
+        $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+        $this->decrypt->rsaDecrypt($ciphertext, $wrongPrivateKeyPem);
+    }
+
     public function testDeriveKeyConsistency(): void
     {
         $salt = random_bytes(16);
