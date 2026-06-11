@@ -52,8 +52,8 @@
 ## 5. Modify Existing Services for Secret Request Integration
 
 - [~] 5.1 Update `SecretService.delete()` to cascade-delete all SecretRequests for the deleted secret via SecretRequestMapper.deleteBySecretId
-- [~] 5.2 Add notification subject `request_fulfilled` to `NotificationService::SUBJECT_SETTING_MAP` mapping to `notify_requests` user setting
-- [~] 5.3 Add `request_fulfilled` subject rendering to `DoriathNotifier`: subject "Secret request fulfilled", message "Your request for {secret_name} has been filled in", action link to `/secrets/{secret_id}`
+- [x] 5.2 Add notification subject `request_fulfilled` to `NotificationService::SUBJECT_SETTING_MAP` mapping to `notify_requests` user setting
+- [x] 5.3 Add `request_fulfilled` subject rendering to `DoriathNotifier`: subject "Secret request fulfilled", message "Your request for {secret_name} has been filled in", action link to `/secrets/{secret_id}`
 
 ## 6. Compromise Recovery Integration
 
