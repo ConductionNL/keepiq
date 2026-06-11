@@ -107,8 +107,8 @@ change is still open and unbuilt). Accordingly:
 
 ## 13. Frontend Tests
 
-- [~] 13.1 [DEFERRED — this app has no JS test runner (no vitest/jest); adding one is out of scope for this change] argon2.js round-trip tests
-- [~] 13.2 [DEFERRED — no JS test runner] useLinkShareStore tests
-- [~] 13.3 [DEFERRED — no JS test runner + component depends on the secrets SPA] LinkShareAccess component tests
-- [~] 13.4 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareCreateDialog component tests
-- [~] 13.5 [DEFERRED — no JS test runner + depends on SecretDetail] LinkShareList component tests
+- [~] 13.1 [DEFERRED — the vitest harness (added 2026-06-10 in `tests/vitest/`) currently runs in the `node` env for crypto only; the `argon2-browser` WASM peer is not yet installed (task 6.1 deferred), and component tests need a jsdom env + `@vitejs/plugin-vue2`] argon2.js round-trip tests
+- [~] 13.2 [DEFERRED — useLinkShareStore tests need a jsdom env + `@vue/test-utils`; component-test harness not yet wired in vitest] useLinkShareStore tests
+- [~] 13.3 [DEFERRED — component-test harness not yet wired in vitest + component depends on the secrets SPA] LinkShareAccess component tests
+- [~] 13.4 [DEFERRED — component-test harness not yet wired in vitest + depends on SecretDetail] LinkShareCreateDialog component tests
+- [~] 13.5 [DEFERRED — component-test harness not yet wired in vitest + depends on SecretDetail] LinkShareList component tests

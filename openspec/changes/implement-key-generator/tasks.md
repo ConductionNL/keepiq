@@ -71,13 +71,14 @@
 
 ## 8. Frontend Tests
 
-> DEFERRED — the repo has no JS unit-test runner (no jest/vitest, no
-> `@vue/test-utils`); the only frontend test tooling is the Playwright e2e
-> coverage spec. Adding Vue component tests requires standing up a test-runner
-> toolchain, which is a separate infrastructure change. The generator-button
-> integration test (8.3) is additionally blocked on the absent secret creation
-> form (see section 4).
+> DEFERRED — the repo's vitest harness (added 2026-06-10 in `tests/vitest/`)
+> runs in the `node` environment for the crypto unit suite only. Vue component
+> tests require switching to the `jsdom` environment + adding
+> `@vitejs/plugin-vue2` + `@vue/test-utils`; the harness extension is tracked
+> as a separate infrastructure change. The generator-button integration test
+> (8.3) is additionally blocked on the absent secret creation form (see
+> section 4).
 
-- [~] 8.1 Component test for `KeyGeneratorModal.vue` (renders inputs, calls API, previews key, emits on "Use") — DEFERRED (no JS test runner)
-- [~] 8.2 Component test for error display in NcNoteCard — DEFERRED (no JS test runner)
-- [~] 8.3 Component test for generator button integration — DEFERRED (no JS test runner + no secret creation form)
+- [~] 8.1 Component test for `KeyGeneratorModal.vue` (renders inputs, calls API, previews key, emits on "Use") — DEFERRED (component harness not yet wired in vitest)
+- [~] 8.2 Component test for error display in NcNoteCard — DEFERRED (component harness not yet wired in vitest)
+- [~] 8.3 Component test for generator button integration — DEFERRED (component harness not yet wired in vitest + no secret creation form)
