@@ -105,26 +105,26 @@
 
 ## 11. Pinia Stores (Frontend)
 
-- [~] 11.1 Create `src/store/modules/share.js` (useShareStore) with state: shares, groupShares, loading; actions: fetchShares(secretId), createShare(secretId, targetUserId, encryptedData), createBatchShares(secretId, shares, groupShareId), revokeShare(shareId), fetchGroupShares(secretId), createGroupShare(secretId, groupId), revokeGroupShare(groupShareId), submitShareRequest(secretId, targetUserId), syncUpdate(secretId, updates)
+- [x] 11.1 Create `src/store/modules/share.js` (useShareStore) with state: shares, groupShares, loading; actions: fetchShares(secretId), createShare(secretId, targetUserId, encryptedData), createBatchShares(secretId, shares, groupShareId), revokeShare(shareId), fetchGroupShares(secretId), createGroupShare(secretId, groupId), revokeGroupShare(groupShareId), submitShareRequest(secretId, targetUserId), syncUpdate(secretId, updates)
 - [~] 11.2 Create `src/store/modules/delegation.js` (useDelegationStore) with state: delegations, loading; actions: fetchDelegations(secretId), createDelegation(secretId, delegateTo), reclaimDelegation(secretId)
-- [~] 11.3 Implement client-side encryption in useShareStore.createShare: decrypt secret with own CryptoKey, fetch recipient's public certificate, encrypt with rsaEncrypt() from src/crypto/rsa.js, POST encrypted blob
-- [~] 11.4 Implement client-side batch encryption in useShareStore.createGroupShare: fetch group members from API, encrypt for each eligible member, POST batch of encrypted blobs
+- [x] 11.3 Implement client-side encryption in useShareStore.createShare: decrypt secret with own CryptoKey, fetch recipient's public certificate, encrypt with rsaEncrypt() from src/crypto/rsa.js, POST encrypted blob
+- [x] 11.4 Implement client-side batch encryption in useShareStore.createGroupShare: fetch group members from API, encrypt for each eligible member, POST batch of encrypted blobs
 - [~] 11.5 Implement sync-on-update in useShareStore.syncUpdate: fetch all shares for source secret, encrypt updated value for each recipient, PUT batch to /api/v1/secrets/{id}/sync
 - [~] 11.6 Update useSecretStore.updateSecret to call useShareStore.syncUpdate after successful update if the secret has active shares
 
 ## 12. Vue Components (Frontend)
 
-- [~] 12.1 Create `src/components/ShareDialog.vue` using NcDialog with NcSelect for user/group picker (Nextcloud user autocomplete via OCS API); allows selecting a user or group and triggering the share flow
-- [~] 12.2 Create `src/components/RecipientList.vue` using NcListItem and NcActions; shows list of users the secret is shared with, each with a revoke action button; visible only to owner/delegates
-- [~] 12.3 Create `src/components/GroupShareList.vue` using NcListItem and NcActions; shows list of groups the secret is shared with, each with a revoke action button; visible only to owner/delegates
+- [x] 12.1 Create `src/components/ShareDialog.vue` using NcDialog with NcSelect for user/group picker (Nextcloud user autocomplete via OCS API); allows selecting a user or group and triggering the share flow
+- [x] 12.2 Create `src/components/RecipientList.vue` using NcListItem and NcActions; shows list of users the secret is shared with, each with a revoke action button; visible only to owner/delegates
+- [x] 12.3 Create `src/components/GroupShareList.vue` using NcListItem and NcActions; shows list of groups the secret is shared with, each with a revoke action button; visible only to owner/delegates
 - [~] 12.4 Create `src/components/ShareRequestForm.vue` using NcDialog with NcSelect for target user picker; allows recipients to request the owner share with a third party
 - [~] 12.5 Create `src/components/DelegationManager.vue` using NcListItem and NcActions; shows active delegations with delegate name and status (temporary/permanent), reclaim button for owner; visible only to owner/delegates
 - [~] 12.6 Integrate sharing components into SecretDetail.vue sidebar (CnObjectSidebar): add a "Sharing" tab containing ShareDialog trigger, RecipientList, GroupShareList, ShareRequestForm (for recipients), and DelegationManager; tab visibility based on owner/delegate/recipient role
 
 ## 13. Internationalization
 
-- [~] 13.1 Add English translations for all new UI strings: share dialog labels, recipient list headers, share request form text, delegation labels, notification messages, error messages, empty states
-- [~] 13.2 Add Dutch translations for all new UI strings
+- [x] 13.1 Add English translations for all new UI strings: share dialog labels, recipient list headers, share request form text, delegation labels, notification messages, error messages, empty states
+- [x] 13.2 Add Dutch translations for all new UI strings
 - [~] 13.3 Use `t()` / `n()` translation functions in all Vue components and PHP controllers/services/notifier
 
 ## 14. Unit Tests (PHP)
@@ -149,10 +149,10 @@
 
 ## 16. Frontend Tests
 
-- [~] 16.1 Write unit tests for useShareStore: createShare with encryption, revokeShare, syncUpdate, fetchShares
+- [x] 16.1 Write unit tests for useShareStore: createShare with encryption, revokeShare, syncUpdate, fetchShares
 - [~] 16.2 Write unit tests for useDelegationStore: createDelegation, reclaimDelegation, fetchDelegations
-- [~] 16.3 Write component tests for ShareDialog: user/group picker renders, share triggers encryption flow
-- [~] 16.4 Write component tests for RecipientList: renders recipients, revoke button dispatches action, hidden for non-owners
+- [x] 16.3 Write component tests for ShareDialog: user/group picker renders, share triggers encryption flow
+- [x] 16.4 Write component tests for RecipientList: renders recipients, revoke button dispatches action, hidden for non-owners
 - [~] 16.5 Write component tests for DelegationManager: renders delegations, reclaim button, permanent delegation indicator
 
 ## 17. Ownership Delegation (Deferrable Task Group)

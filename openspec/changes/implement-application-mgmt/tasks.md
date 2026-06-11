@@ -103,10 +103,10 @@
 
 ## 10. Vue Components (Frontend)
 
-- [~] 10.1 Create `src/views/ApplicationList.vue` using CnDataTable, CnFilterBar, CnPagination, and CnEmptyState; shows application name, type badge, status badge, registered_by, created_at; click row navigates to ApplicationDetail; "Register Application" button opens dialog
+- [x] 10.1 Create `src/views/ApplicationList.vue` using CnDataTable, CnFilterBar, CnPagination, and CnEmptyState; shows application name, type badge, status badge, registered_by, created_at; click row navigates to ApplicationDetail; "Register Application" button opens dialog
 - [~] 10.2 Create `src/views/ApplicationDetail.vue` using CnDetailPage, CnDetailCard, and CnObjectSidebar; shows application metadata (name, description, type, status, registered_by, approved_by, dates); sidebar shows EncryptionSuite info (certificate, status) and secrets list; delete button (admin-only) with confirmation dialog; "Write Secret" button for active apps
-- [~] 10.3 Create `src/components/ApplicationRegisterDialog.vue` using NcDialog, NcInputField, NcSelect, NcTextArea: name field (required), description field (optional), type dropdown (internal/external), CSR textarea with file upload button (optional); submit calls registerApplication; on success shows PrivateKeyDownloadDialog if key returned
-- [~] 10.4 Create `src/components/PrivateKeyDownloadDialog.vue` using NcDialog, NcButton, NcNoteCard: displays private key PEM in a read-only textarea with monospace font; copy-to-clipboard button; download as .pem file button; warning NcNoteCard: "This is the only time this private key will be shown. Save it securely. It cannot be recovered."; dismiss only after explicit acknowledgment checkbox
+- [x] 10.3 Create `src/components/ApplicationRegisterDialog.vue` using NcDialog, NcInputField, NcSelect, NcTextArea: name field (required), description field (optional), type dropdown (internal/external), CSR textarea with file upload button (optional); submit calls registerApplication; on success shows PrivateKeyDownloadDialog if key returned
+- [x] 10.4 Create `src/components/PrivateKeyDownloadDialog.vue` using NcDialog, NcButton, NcNoteCard: displays private key PEM in a read-only textarea with monospace font; copy-to-clipboard button; download as .pem file button; warning NcNoteCard: "This is the only time this private key will be shown. Save it securely. It cannot be recovered."; dismiss only after explicit acknowledgment checkbox
 - [~] 10.5 Create `src/components/ApplicationSecretsPanel.vue` using CnDataTable: lists secrets attributed to the application (name, type, created_at); click navigates to SecretDetail (read-only for user -- encrypted blobs only); "Write Secret" button opens WriteSecretForAppDialog
 - [~] 10.6 Create `src/components/WriteSecretForAppDialog.vue` using NcDialog, NcInputField: form with name, key (password), login (optional), URL (optional), additional fields; on submit: fetches app's public certificate, encrypts with rsaEncrypt, POSTs secret; shows confirmation on success
 - [x] 10.7 Wire `ApplicationQueueSection.vue` (from implement-dashboard-settings) to ApplicationService endpoints: fetch pending apps via fetchPending(), approve button calls approveApplication(id), reject button calls rejectApplication(id); handle private key response from approve <!-- W18: shipped as src/views/AdminApplicationsView.vue (inline queue + private-key dialog block) -->
@@ -114,14 +114,14 @@
 
 ## 11. Vue Router Integration
 
-- [~] 11.1 Add routes to `src/router/index.js`: `/applications` (ApplicationList), `/applications/:id` (ApplicationDetail with props function)
-- [~] 11.2 Add navigation item for Applications in the app sidebar (MainMenu): NcAppNavigationItem with `:to="{ name: 'Applications' }"` and appropriate icon
+- [x] 11.1 Add routes to `src/router/index.js`: `/applications` (ApplicationList), `/applications/:id` (ApplicationDetail with props function)
+- [x] 11.2 Add navigation item for Applications in the app sidebar (MainMenu): NcAppNavigationItem with `:to="{ name: 'Applications' }"` and appropriate icon
 
 ## 12. Internationalization
 
-- [~] 12.1 Add English translations for all new UI strings: application list headers, detail labels, registration form labels, approval actions, private key warning, write-secret dialog, notification texts, error messages, empty states
-- [~] 12.2 Add Dutch translations for all new UI strings
-- [~] 12.3 Use `t()` / `n()` translation functions in all Vue components and PHP controllers/services
+- [x] 12.1 Add English translations for all new UI strings: application list headers, detail labels, registration form labels, approval actions, private key warning, write-secret dialog, notification texts, error messages, empty states
+- [x] 12.2 Add Dutch translations for all new UI strings
+- [x] 12.3 Use `t()` / `n()` translation functions in all Vue components and PHP controllers/services
 
 ## 13. Unit Tests (PHP)
 
@@ -134,8 +134,8 @@
 
 ## 14. Integration Tests (PHP)
 
-- [~] 14.1 Write integration tests for Application API: register as admin (201, status=active), register as non-admin (201, status=pending), register anonymously (201, status=pending), get application, list applications (admin sees all, user sees own + active), delete application (admin only, cascade verified)
-- [~] 14.2 Write integration tests for approval flow: approve with CSR (EncryptionSuite created, CSR cleared), approve without CSR (EncryptionSuite created, private key in response), reject (hard delete confirmed)
+- [x] 14.1 Write integration tests for Application API: register as admin (201, status=active), register as non-admin (201, status=pending), register anonymously (201, status=pending), get application, list applications (admin sees all, user sees own + active), delete application (admin only, cascade verified)
+- [x] 14.2 Write integration tests for approval flow: approve with CSR (EncryptionSuite created, CSR cleared), approve without CSR (EncryptionSuite created, private key in response), reject (hard delete confirmed)
 - [~] 14.3 Write integration tests for JWT auth: exchange valid assertion (200, access token returned), exchange with invalid signature (401), exchange for pending app (401), use access token to list secrets (200), use expired access token (401)
 - [~] 14.4 Write integration test: non-admin cannot approve/reject applications (403)
 - [~] 14.5 Write integration test: non-admin cannot delete applications (403)
@@ -147,9 +147,9 @@
 
 - [x] 15.1 Write unit tests for useApplicationStore: fetchApplications, registerApplication (with and without CSR), approveApplication (with and without private key response), rejectApplication, deleteApplication, fetchPending <!-- W18: 10 tests -->
 
-- [~] 15.2 Write component tests for ApplicationList: renders table, pagination, register button, empty state
-- [~] 15.3 Write component tests for ApplicationRegisterDialog: form validation (name required), CSR upload, submit
-- [~] 15.4 Write component tests for PrivateKeyDownloadDialog: displays key, copy button works, acknowledgment checkbox required before dismiss
+- [x] 15.2 Write component tests for ApplicationList: renders table, pagination, register button, empty state
+- [x] 15.3 Write component tests for ApplicationRegisterDialog: form validation (name required), CSR upload, submit
+- [x] 15.4 Write component tests for PrivateKeyDownloadDialog: displays key, copy button works, acknowledgment checkbox required before dismiss
 - [~] 15.5 Write component tests for WriteSecretForAppDialog: encrypts with app's public key, submits encrypted blob, shows confirmation
 - [x] 15.6 Write component tests for ApplicationQueueSection: lists pending apps, approve/reject buttons call correct actions, handles private key response on approve <!-- W18: AdminApplicationsView.spec.js — 6 tests -->
 
