@@ -82,8 +82,8 @@
 
 ## 7. Notification Integration
 
-- [~] 7.1 Add notification subject `app_pending` to `NotificationService::SUBJECT_SETTING_MAP` with null setting key (always sent to admins, not suppressible)
-- [~] 7.2 Add `app_pending` subject rendering to `DoriathNotifier`: subject "New application pending approval", message "Application '{app_name}' was registered by {registered_by} and is awaiting approval.", action link to admin settings application queue deep-link
+- [x] 7.1 Add notification subject `app_pending` to `NotificationService::SUBJECT_SETTING_MAP` with null setting key (always sent to admins, not suppressible)
+- [x] 7.2 Add `app_pending` subject rendering to `DoriathNotifier`: subject "New application pending approval", message "Application '{app_name}' was registered by {registered_by} and is awaiting approval.", action link to admin settings application queue deep-link
 - [~] 7.3 Implement admin notification dispatch in ApplicationService::register(): when status=pending, query admin group via IGroupManager, dispatch `app_pending` notification to each admin user
 
 ## 8. Dashboard Integration

@@ -74,10 +74,11 @@
 
 ## 7. Services (PHP) -- Notifications
 
-- [~] 7.1 Create `NotificationService` in `lib/Service/NotificationService.php` with SUBJECT_SETTING_MAP constant mapping subjects to user setting keys (secret_shared -> notify_shares, share_request -> notify_shares, share_request_result -> notify_shares, group_member_added -> notify_group_shares, secret_compromised -> notify_security)
-- [~] 7.2 Implement notify(subject, recipientId, params): check user preference via SUBJECT_SETTING_MAP, create and dispatch notification via OCP\Notification\IManager
-- [~] 7.3 Create `DoriathNotifier` implementing OCP\Notification\INotifier in `lib/Notification/DoriathNotifier.php`: render all sharing subjects into localized messages with display names and secret names, include deep-link to affected secret
-- [~] 7.4 Register DoriathNotifier in `info.xml` as a notification notifier
+- [x] 7.1 Create `NotificationService` in `lib/Service/NotificationService.php` with SUBJECT_SETTING_MAP constant mapping subjects to user setting keys (secret_shared -> notify_shares, share_request -> notify_shares, share_request_result -> notify_shares, group_member_added -> notify_group_shares, secret_compromised -> notify_security)
+- [x] 7.2 Implement notify(subject, recipientId, params): check user preference via SUBJECT_SETTING_MAP, create and dispatch notification via OCP\Notification\IManager
+- [x] 7.3 Create `DoriathNotifier` implementing OCP\Notification\INotifier in `lib/Notification/DoriathNotifier.php`: render all sharing subjects into localized messages with display names and secret names, include deep-link to affected secret
+- [x] 7.4 Register DoriathNotifier in `info.xml` as a notification notifier <!-- W16: registered via registerNotifierService in Application::register() — equivalent + modern NC pattern -->
+- [x] 7.5 W16: unit tests cover SUBJECT_SETTING_MAP coverage, opt-out suppression, null-setting bypass, default opt-in dispatch (tests/Unit/Service/NotificationServiceTest.php)
 
 ## 8. Event Listeners
 
@@ -131,7 +132,7 @@
 - [x] 14.1 Write unit tests for `ShareService`: createShare (valid, no suite, self-share error), revokeShare (owner, delegate, unauthorized), syncUpdate (optimistic lock, compromise flag unset), getSharesForSecret (owner sees all, recipient sees empty) — W14 scaffold: `tests/Unit/Service/ShareServiceTest.php` covers createShare insert + self-share reject + empty-source reject + list + revoke creator + revoke non-creator reject + revoke 404 (7 tests); syncUpdate / no-suite / delegate-vs-owner ship with the full build cycle. Plus `tests/Unit/Db/ShareTargetTest.php` covers the entity itself (5 tests)
 - [~] 14.2 Write unit tests for `GroupShareService`: createGroupShare (expansion, skip no-suite, skip owner), revokeGroupShare (cascade), handleNewGroupMember (notification per owner, batching), handleMemberLeave (group-derived only, direct untouched)
 - [~] 14.3 Write unit tests for `DelegationService`: createDelegation (owner, admin, no-share error), reclaimDelegation (success, permanent error), makePermanent (sets flag, deletes owner copies)
-- [~] 14.4 Write unit tests for `NotificationService`: SUBJECT_SETTING_MAP lookup, preference check (enabled, disabled, default), notification dispatch
+- [x] 14.4 Write unit tests for `NotificationService`: SUBJECT_SETTING_MAP lookup, preference check (enabled, disabled, default), notification dispatch
 - [~] 14.5 Write unit tests for share request flow: submit (valid, non-recipient error), approve (creates share), deny (no share, notifies requester)
 
 ## 15. Integration Tests (PHP)
