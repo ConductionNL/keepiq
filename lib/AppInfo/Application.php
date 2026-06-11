@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\AppInfo;
 
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Middleware\JwtAuthMiddleware;
 use OCA\Doriath\Notification\DoriathNotifier;
 use OCA\Doriath\Search\SecretSearchProvider;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -75,6 +76,11 @@ class Application extends App implements IBootstrap
         // Register the notifier responsible for rendering sharing,
         // secret-request and application-management notification subjects.
         $context->registerNotifierService(DoriathNotifier::class);
+
+        // Register the JWT-Bearer middleware for application-authenticated
+        // routes. Fires only on ApplicationApiController subclasses; session
+        // controllers pass through untouched.
+        $context->registerMiddleware(JwtAuthMiddleware::class);
 
         // Repair steps (BootstrapCertificateAuthority, InitializeSettings,
         // SeedDevelopmentData, SeedSecretTypes, SeedDevelopmentSecrets) are
