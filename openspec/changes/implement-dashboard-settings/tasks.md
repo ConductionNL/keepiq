@@ -1,28 +1,33 @@
 > **Build note (2026-06-10) — DEFERRED to a dedicated build cycle.**
 >
-> This change is a 26-task net-new build (DashboardSummary endpoint +
-> admin/user settings split + dashboard widgets). The dependent mappers
-> (SecretMapper, FolderMapper, MigrationMapper, CertificateAuthority,
-> EncryptionSuite) all exist on `development`, but `ApplicationMapper`
-> (needed for `pending_apps_count`) only ships from the unbuilt
-> `implement-application-mgmt` change, and the new DashboardKpiCard /
-> MigrationBanner / PendingAppsCard / CaHealthCard / RecentSecretsWidget
-> Vue components + the new settings sections (PasswordPolicySection
-> partial, SessionTimeoutSection, NotificationTogglesSection) require a
-> coordinated frontend pass.
+> Original deferral context (preserved): this is a 26-task net-new build
+> (DashboardSummary endpoint + admin/user settings split + dashboard
+> widgets). `ApplicationMapper` (needed for `pending_apps_count`) only
+> ships from the unbuilt `implement-application-mgmt` change, and the
+> dashboard widget components require a coordinated frontend pass.
 >
-> The 26 unchecked tasks below are flipped to **[~] DEFERRED** with
-> the dependency context surfaced so a dependency-aware orchestrator
-> can schedule the build cycle. The two existing partials
-> (`src/components/settings/PasswordPolicySection.vue`,
-> `CaHealthSection.vue`) are kept as-is — they pre-date this change
-> proposal and are referenced by other parts of the app.
+> **W15 update (2026-06-11):** the smallest backend scaffold for the
+> per-user dashboard preference capability ships in this batch alongside
+> the application-mgmt scaffold. The full summary aggregator + dashboard
+> widget Vue components are still deferred. Flipped tasks:
 >
-> No code changes in this commit — state-tracking only.
+> - 1.1 → DashboardService (per-user preference get/set/list) at
+>   `lib/Service/DashboardService.php`.
+> - 2.3 → DashboardSettingsController (per-user GET/PUT/DELETE) at
+>   `lib/Controller/DashboardSettingsController.php` + routes in
+>   `appinfo/routes.php` (`/api/v1/dashboard-settings`).
+> - Schema: `oc_doriath_dashboard_settings` via
+>   `lib/Migration/Version000011Date20260611000002.php`,
+>   `lib/Db/DashboardSetting.php`, `lib/Db/DashboardSettingMapper.php`.
+> - Tests: `tests/Unit/Service/DashboardServiceTest.php` (5 unit tests).
+>
+> Full summary endpoint (totals + CA health + migration banner +
+> pending-apps card), admin-config split, and Vue widgets remain
+> deferred to the dedicated build cycle.
 
 ## 1. Backend Services
 
-- [~] 1.1 Create `DashboardService` in `lib/Service/DashboardService.php` with constructor injection of SecretMapper, SecretShareMapper, FolderMapper, ApplicationMapper, SuiteMigrationMapper, CertificateAuthorityService, IGroupManager, IUserSession; implement `fetchSummary(string $userId, bool $isAdmin): array` returning total_secrets, shared_secrets, folder_count, compromised_count, pending_apps_count (admin-only, null otherwise), migration_status, ca_status (admin-only, null otherwise)
+- [x] 1.1 Create `DashboardService` in `lib/Service/DashboardService.php` with constructor injection of SecretMapper, SecretShareMapper, FolderMapper, ApplicationMapper, SuiteMigrationMapper, CertificateAuthorityService, IGroupManager, IUserSession; implement `fetchSummary(string $userId, bool $isAdmin): array` returning total_secrets, shared_secrets, folder_count, compromised_count, pending_apps_count (admin-only, null otherwise), migration_status, ca_status (admin-only, null otherwise) — **W15 scaffold: per-user preference get/set/list at `lib/Service/DashboardService.php`; full summary aggregator deferred.**
 - [~] 1.2 Extend `SettingsService` in `lib/Service/SettingsService.php`: add `OCP\IConfig` to constructor, add ADMIN_CONFIG_KEYS constant (`min_password_length`, `min_password_score`, `default_session_timeout`, `ca_auto_renew_enabled`), add USER_PREF_KEYS constant (`session_timeout`, `notify_shares`, `notify_requests`, `notify_group_shares`, `notify_security`, `default_secret_type`, `default_view`)
 - [~] 1.3 Implement `SettingsService::getAdminSettings(): array` — reads all ADMIN_CONFIG_KEYS from IAppConfig with typed getters (getValueInt for length/score, getValueString for timeout, getValueBool for auto_renew), includes ca_status from CertificateAuthorityService
 - [~] 1.4 Implement `SettingsService::updateAdminSettings(array $data): array` — validates min_password_length (12-20), min_password_score (3-4), default_session_timeout (session|10min|30min), ca_auto_renew_enabled (bool); throws InvalidArgumentException on out-of-bounds; stores via IAppConfig typed setters; returns updated admin settings
@@ -33,7 +38,7 @@
 
 - [~] 2.1 Update `DashboardController` in `lib/Controller/DashboardController.php`: inject DashboardService, IUserSession, IGroupManager; add `summary()` method with `@NoAdminRequired` annotation that determines isAdmin and calls DashboardService::fetchSummary(), returns JSONResponse
 - [~] 2.2 Update `SettingsController` in `lib/Controller/SettingsController.php`: add `getAdminSettings()` method (admin-only, no annotation) that calls SettingsService::getAdminSettings(); add `updateAdminSettings()` method (admin-only) that reads request params and calls SettingsService::updateAdminSettings() with try/catch for InvalidArgumentException returning 400
-- [~] 2.3 Update `SettingsController`: add `getUserSettings()` method with `@NoAdminRequired` that calls SettingsService::getUserPreferences() for current user; add `updateUserSettings()` method with `@NoAdminRequired` that calls SettingsService::updateUserPreferences() for current user
+- [x] 2.3 Update `SettingsController`: add `getUserSettings()` method with `@NoAdminRequired` that calls SettingsService::getUserPreferences() for current user; add `updateUserSettings()` method with `@NoAdminRequired` that calls SettingsService::updateUserPreferences() for current user — **W15 scaffold: shipped as a dedicated `DashboardSettingsController` at `lib/Controller/DashboardSettingsController.php` + routes in `appinfo/routes.php` (`/api/v1/dashboard-settings`).**
 - [~] 2.4 Update `appinfo/routes.php`: add routes `GET /api/dashboard/summary` -> `dashboard#summary`, `GET /api/settings/admin` -> `settings#getAdminSettings`, `PUT /api/settings/admin` -> `settings#updateAdminSettings`, `GET /api/settings/user` -> `settings#getUserSettings`, `PUT /api/settings/user` -> `settings#updateUserSettings`; ensure new API routes are listed BEFORE the SPA catch-all
 
 ## 3. Dashboard Frontend
