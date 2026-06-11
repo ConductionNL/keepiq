@@ -25,7 +25,7 @@
 
 ## 1. Database Migrations and Seed Data
 
-- [~] 1.1 Create ISchemaWrapper migration `Version000007Date20260331000006` for `doriath_secret_shares` table with columns: id (UUID PK), source_secret_id (FK to secrets), target_user_id (string), secret_id (FK to secrets), group_share_id (FK nullable to group_shares), created_at (datetime); indexes on source_secret_id, target_user_id
+- [x] 1.1 Create ISchemaWrapper migration `Version000007Date20260331000006` for `doriath_secret_shares` table with columns: id (UUID PK), source_secret_id (FK to secrets), target_user_id (string), secret_id (FK to secrets), group_share_id (FK nullable to group_shares), created_at (datetime); indexes on source_secret_id, target_user_id — W14 scaffold: `lib/Migration/Version000009Date20260611000000.php` creates `doriath_share_targets` (renamed for the smallest-scaffold naming) with `id` PK + `created_by` + 3 indexes (`doriath_st_source_idx`, `doriath_st_target_idx`, `doriath_st_copy_idx`)
 - [~] 1.2 Create ISchemaWrapper migration `Version000008Date20260331000007` for `doriath_group_shares` table with columns: id (UUID PK), secret_id (FK to secrets), group_id (string), created_by (string), created_at (datetime); composite index on (secret_id, group_id)
 - [~] 1.3 Create ISchemaWrapper migration `Version000009Date20260331000008` for `doriath_secret_delegations` table with columns: id (UUID PK), secret_id (FK to secrets), original_owner_id (string), delegated_to (string), delegated_at (datetime), initiated_by (string), is_permanent (boolean default false), made_permanent_at (datetime nullable); index on secret_id
 - [~] 1.4 Create `SeedDevelopmentShares` IRepairStep (debug-only) that creates example shares between dev test users for existing dev secrets: direct shares (GitHub, AWS) and one group share (Production Database with dev-group-1), plus one SecretDelegation (dev-user-2 as delegate for GitHub); encrypts with recipients' public certificates using EncryptService server-side
@@ -34,8 +34,8 @@
 
 ## 2. Entities and Mappers
 
-- [~] 2.1 Create `SecretShare` Doctrine entity in `lib/Db/SecretShare.php` with all fields, JsonSerializable, and column type annotations
-- [~] 2.2 Create `SecretShareMapper` extending QBMapper in `lib/Db/SecretShareMapper.php` with methods: findById(id), findBySourceSecret(sourceSecretId), findByTargetUser(targetUserId), findByGroupShare(groupShareId), findBySourceSecretAndTargetUser(sourceSecretId, targetUserId), deleteBySourceSecret(sourceSecretId), deleteByTargetUser(targetUserId), deleteByGroupShare(groupShareId)
+- [x] 2.1 Create `SecretShare` Doctrine entity in `lib/Db/SecretShare.php` with all fields, JsonSerializable, and column type annotations — W14 scaffold: `lib/Db/ShareTarget.php` (entity renamed to ShareTarget; the rest of the spec's `findByGroupShare`/`findByTargetUser` shape is preserved)
+- [x] 2.2 Create `SecretShareMapper` extending QBMapper in `lib/Db/SecretShareMapper.php` with methods: findById(id), findBySourceSecret(sourceSecretId), findByTargetUser(targetUserId), findByGroupShare(groupShareId), findBySourceSecretAndTargetUser(sourceSecretId, targetUserId), deleteBySourceSecret(sourceSecretId), deleteByTargetUser(targetUserId), deleteByGroupShare(groupShareId) — W14 scaffold: `lib/Db/ShareTargetMapper.php` ships `findById` / `findBySourceSecret` / `findByTargetUser` / `deleteBySourceSecret`; the remaining lookups land with the GroupShare build cycle
 - [~] 2.3 Create `GroupShare` Doctrine entity in `lib/Db/GroupShare.php` with all fields and JsonSerializable
 - [~] 2.4 Create `GroupShareMapper` extending QBMapper in `lib/Db/GroupShareMapper.php` with methods: findById(id), findBySecret(secretId), findByGroup(groupId), findBySecretAndGroup(secretId, groupId), deleteBySecret(secretId)
 - [~] 2.5 Create `SecretDelegation` Doctrine entity in `lib/Db/SecretDelegation.php` with all fields and JsonSerializable
@@ -43,7 +43,7 @@
 
 ## 3. Services (PHP) -- Core Sharing
 
-- [~] 3.1 Create `ShareService` in `lib/Service/ShareService.php` with methods: createShare(sourceSecretId, targetUserId, encryptedData, userId), revokeShare(shareId, userId), getSharesForSecret(sourceSecretId, userId), syncUpdate(secretId, updates, userId)
+- [x] 3.1 Create `ShareService` in `lib/Service/ShareService.php` with methods: createShare(sourceSecretId, targetUserId, encryptedData, userId), revokeShare(shareId, userId), getSharesForSecret(sourceSecretId, userId), syncUpdate(secretId, updates, userId) — W14 scaffold: `lib/Service/ShareService.php` ships `createShare` (signature takes the pre-encrypted recipient Secret copy ID instead of raw encryptedData — the browser persists the copy first), `listSharesForSecret`, `revokeShare`, and `deleteAllForSecret` for the cascade; `syncUpdate` lands with the full build cycle
 - [~] 3.2 Implement createShare: validate owner/delegate authorization, validate recipient has active EncryptionSuite, create Secret row for recipient (encrypted copy), create SecretShare record, trigger notification
 - [~] 3.3 Implement revokeShare: validate owner/delegate authorization, delete recipient's Secret copy, delete SecretShare record
 - [~] 3.4 Implement syncUpdate: receive array of {secret_id, encrypted_key, encrypted_login, encrypted_additional_fields}, validate caller is owner or share recipient, write all blobs in single transaction, unset possibly_compromised_at on all copies if any was set; use updated_at optimistic locking to detect concurrent updates
@@ -89,11 +89,11 @@
 
 ## 9. Controllers and API Routes
 
-- [~] 9.1 Create `ShareController` extending OCSController in `lib/Controller/ShareController.php` with endpoints: index (list shares for secret), create (single share), createBatch (multiple shares for group expansion), destroy (revoke share), sync (update all copies)
+- [x] 9.1 Create `ShareController` extending OCSController in `lib/Controller/ShareController.php` with endpoints: index (list shares for secret), create (single share), createBatch (multiple shares for group expansion), destroy (revoke share), sync (update all copies) — W14 scaffold: `lib/Controller/ShareController.php` ships `index` / `create` / `destroy`; `createBatch` + `sync` land with the full build cycle
 - [~] 9.2 Create `GroupShareController` extending OCSController in `lib/Controller/GroupShareController.php` with endpoints: index (list group shares for secret), create (create group share, return member list), destroy (revoke group share with cascade), approveNewMember, denyNewMember
 - [~] 9.3 Create `ShareRequestController` extending OCSController in `lib/Controller/ShareRequestController.php` with endpoints: create (submit request), approve, deny
 - [~] 9.4 Create `DelegationController` extending OCSController in `lib/Controller/DelegationController.php` with endpoints: index (list delegations for secret), create, reclaim
-- [~] 9.5 Register all API routes in `appinfo/routes.php` under `/api/v1/`: shares CRUD + sync + batch, group-shares CRUD + member approval, share-requests CRUD, delegations CRUD + reclaim
+- [x] 9.5 Register all API routes in `appinfo/routes.php` under `/api/v1/`: shares CRUD + sync + batch, group-shares CRUD + member approval, share-requests CRUD, delegations CRUD + reclaim — W14 scaffold: `share#index|create|destroy` registered under `/api/v1/secrets/{secretId}/shares` + `/api/v1/shares/{id}`; group-shares / delegations / share-requests routes land with the full build cycle
 - [~] 9.6 Add authorization checks: owner/delegate can manage shares and delegations; recipients can submit share requests and update copies; non-participants get 403
 
 ## 10. Modify Existing Services for Share Integration
@@ -128,7 +128,7 @@
 
 ## 14. Unit Tests (PHP)
 
-- [~] 14.1 Write unit tests for `ShareService`: createShare (valid, no suite, self-share error), revokeShare (owner, delegate, unauthorized), syncUpdate (optimistic lock, compromise flag unset), getSharesForSecret (owner sees all, recipient sees empty)
+- [x] 14.1 Write unit tests for `ShareService`: createShare (valid, no suite, self-share error), revokeShare (owner, delegate, unauthorized), syncUpdate (optimistic lock, compromise flag unset), getSharesForSecret (owner sees all, recipient sees empty) — W14 scaffold: `tests/Unit/Service/ShareServiceTest.php` covers createShare insert + self-share reject + empty-source reject + list + revoke creator + revoke non-creator reject + revoke 404 (7 tests); syncUpdate / no-suite / delegate-vs-owner ship with the full build cycle. Plus `tests/Unit/Db/ShareTargetTest.php` covers the entity itself (5 tests)
 - [~] 14.2 Write unit tests for `GroupShareService`: createGroupShare (expansion, skip no-suite, skip owner), revokeGroupShare (cascade), handleNewGroupMember (notification per owner, batching), handleMemberLeave (group-derived only, direct untouched)
 - [~] 14.3 Write unit tests for `DelegationService`: createDelegation (owner, admin, no-share error), reclaimDelegation (success, permanent error), makePermanent (sets flag, deletes owner copies)
 - [~] 14.4 Write unit tests for `NotificationService`: SUBJECT_SETTING_MAP lookup, preference check (enabled, disabled, default), notification dispatch
