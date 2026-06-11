@@ -13,6 +13,21 @@
 		</div>
 
 		<div class="secret-list-view__main">
+			<div class="secret-list-view__actions">
+				<NcButton type="primary" @click="openCreateSecret">
+					<template #icon>
+						<Plus :size="20" />
+					</template>
+					{{ t('doriath', 'New secret') }}
+				</NcButton>
+				<NcButton type="secondary" @click="openCreateFolder">
+					<template #icon>
+						<FolderPlus :size="20" />
+					</template>
+					{{ t('doriath', 'New folder') }}
+				</NcButton>
+			</div>
+
 			<div class="secret-list-view__toolbar">
 				<NcTextField :value.sync="searchTerm"
 					:label="t('doriath', 'Search secrets')"
@@ -36,6 +51,14 @@
 				:description="t('doriath', 'Create your first secret to get started.')">
 				<template #icon>
 					<KeyIcon />
+				</template>
+				<template #action>
+					<NcButton type="primary" @click="openCreateSecret">
+						<template #icon>
+							<Plus :size="20" />
+						</template>
+						{{ t('doriath', 'New secret') }}
+					</NcButton>
 				</template>
 			</NcEmptyContent>
 
@@ -68,6 +91,8 @@ import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect, NcTextField } from '
 import AllInclusive from 'vue-material-design-icons/AllInclusive.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import FolderTree from '../components/FolderTree.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -93,8 +118,18 @@ export default {
 		AllInclusive,
 		KeyIcon,
 		Magnify,
+		Plus,
+		FolderPlus,
 		FolderTree,
 		SecretListItem,
+	},
+
+	inject: {
+		/**
+		 * Open a registry-registered modal. Provided by CnAppRoot; defaults to a
+		 * no-op so the view still mounts in isolation (e.g. unit tests).
+		 */
+		cnOpenModal: { default: () => () => {} },
 	},
 
 	data() {
@@ -222,6 +257,31 @@ export default {
 		},
 
 		/**
+		 * Open the create-secret dialog, defaulting the folder to the current
+		 * view, and reload the list on success.
+		 *
+		 * @return {void}
+		 */
+		openCreateSecret() {
+			this.cnOpenModal('secret-create', {
+				folderId: this.selectedFolderId,
+				onSaved: () => this.reload(),
+			})
+		},
+
+		/**
+		 * Open the create-folder dialog and reload the folder tree on success.
+		 *
+		 * @return {void}
+		 */
+		openCreateFolder() {
+			this.cnOpenModal('folder-create', {
+				parentId: this.selectedFolderId,
+				onSaved: () => this.folderStore.fetchFolders(),
+			})
+		},
+
+		/**
 		 * Go to a specific page.
 		 *
 		 * @param {number} target The target page number.
@@ -255,6 +315,12 @@ export default {
 .secret-list-view__main {
 	flex: 1 1 auto;
 	min-width: 0;
+}
+
+.secret-list-view__actions {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 12px;
 }
 
 .secret-list-view__toolbar {

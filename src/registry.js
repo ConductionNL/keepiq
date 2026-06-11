@@ -45,11 +45,21 @@ import SecretDetail from './views/SecretDetail.vue'
 import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
 import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
 import StatsBlockWidget from './widgets/StatsBlockWidget.vue'
+import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
+import SecretEditDialog from './dialogs/SecretEditDialog.vue'
+import FolderCreateDialog from './dialogs/FolderCreateDialog.vue'
+import SecretMoveDialog from './dialogs/SecretMoveDialog.vue'
+import SecretShareDialog from './dialogs/SecretShareDialog.vue'
 
 export default {
 	LockScreen: { kind: 'page', component: LockScreen },
 	SecretList: { kind: 'page', component: SecretList },
 	SecretDetail: { kind: 'page', component: SecretDetail },
+	'secret-create': { kind: 'modal', component: SecretCreateDialog, propsSchema: {} },
+	'secret-edit': { kind: 'modal', component: SecretEditDialog, propsSchema: {} },
+	'folder-create': { kind: 'modal', component: FolderCreateDialog, propsSchema: {} },
+	'secret-move': { kind: 'modal', component: SecretMoveDialog, propsSchema: {} },
+	'secret-share': { kind: 'modal', component: SecretShareDialog, propsSchema: {} },
 	'stats-block': {
 		kind: 'widget',
 		component: StatsBlockWidget,

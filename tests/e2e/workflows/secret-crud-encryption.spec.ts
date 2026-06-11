@@ -7,36 +7,26 @@
  * GOAL: prove you can store a secret, retrieve its plaintext (decrypt), edit it,
  * delete it, and that the value is encrypted at rest.
  *
- * HONEST STATUS (verified live 2026-06-10): the create / edit round-trip is NOT
- * drivable, for TWO independent, reproduced reasons documented as test.fixme:
+ * HONEST STATUS (verified live 2026-06-11): the full create → encrypt → persist
+ * → retrieve → decrypt → edit round-trip IS now drivable end-to-end through the
+ * real write-UI (implement-secrets-write-ui change). The three former blockers
+ * are resolved:
  *
- *   (A) NO create/edit UI exists. The Pinia secret store defines createSecret()
- *       and updateSecret(), but NO Vue component imports or wires them — neither
- *       SecretList.vue nor SecretDetail.vue offers a "New secret" / "Edit" form.
- *       SecretDetail can only VIEW (decrypt) and DELETE. So a UI-driven create is
- *       impossible.
+ *   (A) FIXED — the write-UI now exists. SecretList.vue offers a "New secret"
+ *       affordance that opens SecretCreateDialog (src/dialogs/), wired to the
+ *       secret store; SecretDetail.vue offers Edit / Move / Share. The dialogs
+ *       RSA-encrypt the value in the browser before the POST.
+ *   (B) FIXED — the Secret entity `ownerType` default is '' so setOwnerType('user')
+ *       marks the column dirty and QBMapper writes it; POST /api/v1/secrets
+ *       persists owner_type cleanly (HTTP 201).
+ *   (C) FIXED — importPublicKey() extracts the SubjectPublicKeyInfo from the
+ *       X.509 certificate (walking the TBSCertificate DER) before importKey, and
+ *       the seeded suite certificate now carries the public key that matches the
+ *       wrapped private key (so a UI-created secret decrypts back).
  *
- *   (B) The REST create path is broken server-side. POST /api/v1/secrets returns
- *       HTTP 500 with `null value in column "owner_type" of relation
- *       "oc_doriath_secrets" violates not-null constraint`, even though
- *       SecretService::create() calls $secret->setOwnerType('user'). Root cause:
- *       the entity's default `protected string $ownerType = 'user'` already equals
- *       the value being set, so NC's magic setter never marks the field dirty and
- *       QBMapper::insert omits the column from the INSERT (→ DB NULL). The same
- *       defect breaks the folder seed (SeedDevelopmentSecrets).
- *
- *   (C) Even if (B) were fixed, the client-side encryption step throws. The store's
- *       createSecret() calls importPublicKey(session.certificate), but the suite's
- *       `certificate` field is a full X.509 CERTIFICATE while importPublicKey feeds
- *       its DER straight into crypto.subtle.importKey('spki', ...) — which expects a
- *       SubjectPublicKeyInfo, not a certificate — throwing DataError. So the
- *       browser cannot encrypt a secret value at all.
- *
- * Net effect: with no suite-owner able to write a secret, the encrypt → store →
- * fetch → decrypt → assert-match round-trip and the encryption-at-rest check
- * cannot be exercised end-to-end. The legs below assert everything that IS
- * verifiable today (route gating, list contract, type contract, encryption-at-rest
- * CONTRACT shape) and fixme the blocked legs with their precise blockers.
+ * The vault unlocks headlessly with the dev master password; the unlockVault()
+ * helper dispatches a native button click because the themed NcButton swallows
+ * Playwright's synthetic click.
  *
  * @e2e openspec/specs/secrets/spec.md#user-stores-a-secret
  */
@@ -45,6 +35,8 @@ import {
 	APP_BASE,
 	gotoLockSettled,
 	lockHeading,
+	unlockVault,
+	openVault,
 } from './_workflow-helpers'
 
 const REQ_TOKEN = `(() => {
@@ -52,6 +44,52 @@ const REQ_TOKEN = `(() => {
 	return (head && head.getAttribute('data-requesttoken'))
 		|| (window.OC && window.OC.requestToken) || '';
 })()`
+
+/** Click the first button matching `text` within `selector` (native DOM click). */
+async function nativeClickByText(page, selector: string, text: string): Promise<void> {
+	await page.evaluate(({ selector, text }) => {
+		const b = (Array.from(document.querySelectorAll(selector)) as HTMLButtonElement[])
+			.find((x) => new RegExp(text, 'i').test(x.textContent || ''))
+		if (b) {
+			b.click()
+		}
+	}, { selector, text })
+}
+
+/** Click a button by its aria-label / title (native DOM click). */
+async function nativeClickByLabel(page, label: string): Promise<void> {
+	await page.evaluate((label) => {
+		const b = (Array.from(document.querySelectorAll('button')) as HTMLButtonElement[])
+			.find((x) => (x.getAttribute('aria-label') || x.getAttribute('title') || '') === label)
+		if (b) {
+			b.click()
+		}
+	}, label)
+}
+
+/** Find a secret by exact name through the list API; returns it or null. */
+async function apiFind(page, name: string) {
+	return page.evaluate(async ({ tokExpr, name }) => {
+		// eslint-disable-next-line no-eval
+		const token = eval(tokExpr)
+		const res = await fetch('/index.php/apps/doriath/api/v1/secrets?limit=200', {
+			credentials: 'include', headers: { requesttoken: token },
+		})
+		const body = await res.json()
+		return (body.items || []).find((s) => s.name === name) || null
+	}, { tokExpr: REQ_TOKEN, name })
+}
+
+/** Delete a secret by id through the API (cleanup). */
+async function apiDelete(page, id: string): Promise<void> {
+	await page.evaluate(async ({ tokExpr, id }) => {
+		// eslint-disable-next-line no-eval
+		const token = eval(tokExpr)
+		await fetch(`/index.php/apps/doriath/api/v1/secrets/${id}`, {
+			method: 'DELETE', credentials: 'include', headers: { requesttoken: token },
+		})
+	}, { tokExpr: REQ_TOKEN, id })
+}
 
 test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	test('secret routes are gated behind the lock screen (no plaintext leaks while locked)', async ({ page }) => {
@@ -199,14 +237,73 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	})
 
 	/*
-	 * CORE PROOF — blocked by (A)+(B)+(C). The full zero-knowledge round-trip:
-	 * create (encrypt in browser) → list → open → decrypt → assert plaintext
-	 * matches → edit → assert persisted → delete → assert gone. Un-fixme once a
-	 * secret can be written (needs a create UI or a working create API + client
-	 * encryption).
+	 * CORE PROOF — the full zero-knowledge round-trip driven through the real
+	 * write-UI (implement-secrets-write-ui): unlock → New secret dialog → type
+	 * value → submit (browser RSA-encrypts) → assert encrypted-at-rest blob (no
+	 * plaintext) → open in the UI → reveal/decrypt → assert plaintext matches →
+	 * edit the value → assert the new value round-trips → delete → assert gone.
 	 */
-	test.fixme('zero-knowledge round-trip: store → retrieve plaintext → edit → delete', async () => {
-		// Intentionally empty — see (A)/(B)/(C) above for the blockers.
+	test('zero-knowledge round-trip via the UI: create → encrypt → persist → retrieve → edit → delete', async ({ page }) => {
+		const NAME = `__e2e_rt_${Date.now()}`
+		const VALUE = 'S3cr3t-roundtrip-Æ-✓-1234567890'
+		const NEW_VALUE = 'edited-value-Ø-9876543210'
+
+		await unlockVault(page)
+		await openVault(page)
+
+		// --- CREATE via the dialog (browser-side RSA encryption) ---
+		await nativeClickByText(page, '.secret-list-view__actions button', 'New secret')
+		const createDialog = page.locator('.secret-form')
+		await expect(createDialog).toBeVisible({ timeout: 10_000 })
+		await page.locator('.secret-form input[type="text"]').first().fill(NAME, { force: true })
+		await page.locator('.secret-form input[type="password"]').first().fill(VALUE, { force: true })
+		await page.waitForTimeout(300)
+		await nativeClickByText(page, 'body button', 'Create secret')
+
+		await expect(createDialog).toHaveCount(0, { timeout: 15_000 })
+		const created = await apiFind(page, NAME)
+		expect(created, 'created secret must exist').toBeTruthy()
+		// Encryption-at-rest: the stored key is a ciphertext blob, never the plaintext.
+		expect(typeof created.key).toBe('string')
+		expect(created.key.length).toBeGreaterThan(100)
+		expect(created.key).not.toContain(VALUE)
+		expect(created.ownerType).toBe('user')
+
+		// --- RETRIEVE + DECRYPT via the detail UI (click the list row) ---
+		const row = page.locator('.secret-list-item', { hasText: NAME })
+		await expect(row).toBeVisible({ timeout: 15_000 })
+		await page.evaluate((name) => {
+			const r = Array.from(document.querySelectorAll('.secret-list-item'))
+				.find((i) => (i.querySelector('.secret-list-item__name')?.textContent || '').trim() === name)
+			if (r) {
+				(r as HTMLElement).click()
+			}
+		}, NAME)
+		await expect(page.locator('.secret-detail__card')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('.secret-detail__title')).toHaveText(NAME)
+		await nativeClickByLabel(page, 'Show')
+		await expect(
+			page.locator('.secret-detail .doriath-password-field input'),
+		).toHaveValue(VALUE, { timeout: 10_000 })
+
+		// --- EDIT the value via the Edit dialog ---
+		await nativeClickByText(page, '.secret-detail__actions button', 'Edit')
+		await expect(page.locator('.secret-form')).toBeVisible({ timeout: 10_000 })
+		await page.locator('.secret-form input[type="password"]').first().fill(NEW_VALUE, { force: true })
+		await page.waitForTimeout(300)
+		await nativeClickByText(page, 'body button', 'Save')
+		await expect(page.locator('.secret-form')).toHaveCount(0, { timeout: 15_000 })
+
+		await expect(page.locator('.secret-detail__card')).toBeVisible({ timeout: 20_000 })
+		await nativeClickByLabel(page, 'Show')
+		await expect(
+			page.locator('.secret-detail .doriath-password-field input'),
+		).toHaveValue(NEW_VALUE, { timeout: 10_000 })
+
+		// --- DELETE (cleanup + assert gone) ---
+		await apiDelete(page, created.id)
+		const afterDelete = await apiFind(page, NAME)
+		expect(afterDelete, 'secret must be gone after delete').toBeFalsy()
 	})
 
 	/*

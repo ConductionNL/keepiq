@@ -36,9 +36,9 @@
  */
 import { test, expect } from '@playwright/test'
 import {
-	DEV_MASTER_PASSWORD,
 	gotoLockSettled,
 	lockHeading,
+	unlockVault,
 } from './_workflow-helpers'
 
 test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
@@ -72,31 +72,36 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	})
 
 	/*
-	 * FIXED — the seeded PHP-written private-key envelope is now JS-compatible.
-	 * The AES-GCM envelope (PBKDF2-SHA256 600k → AES-256-GCM, version/salt/IV
-	 * layout) round-trips, and the CA now issues a certificate carrying the
-	 * user's real public key (previously openssl_csr_new generated a throwaway
-	 * keypair). decryptPrivateKey() unlocks the seeded suite with `Oj`.
+	 * FIXED — the seeded private-key envelope is JS-compatible and the suite
+	 * certificate carries the matching public key, so decryptPrivateKey() +
+	 * importPrivateKey() unlock the seeded suite with `Oj`. The Unlock button is
+	 * clicked natively because the themed NcButton swallows Playwright's synthetic
+	 * click (the earlier "router push is a no-op" diagnosis was actually the
+	 * swallowed click — the navigation fires correctly).
 	 */
 	test('correct dev master password unlocks the seeded vault', async ({ page }) => {
-		await gotoLockSettled(page)
-		await page.locator('.lock-screen input[type="password"]').first().fill(DEV_MASTER_PASSWORD, { force: true })
-		await page.locator('.lock-screen button').filter({ hasText: /^\s*Unlock\s*$/i }).first().click({ force: true })
-		// Expected: vault unlocks and we leave the lock screen.
+		await unlockVault(page)
 		await expect(page).not.toHaveURL(/\/lock(\?|$)/, { timeout: 15_000 })
 		await expect(page.locator('.lock-screen')).toHaveCount(0)
 	})
 
 	/*
-	 * BUG #6 — a failed unlock surfaces no error. Entering a wrong password (which
-	 * provably fails to decrypt) leaves the lock screen with no error note even
-	 * after >12s, so the user gets no feedback. Un-fixme once handleUnlock()'s
-	 * error note renders on a decrypt failure.
+	 * FIXED (was BUG #6) — a failed unlock surfaces an error note. The prior
+	 * "no error renders" was the swallowed synthetic click (handleUnlock never
+	 * ran). With a native click, handleUnlock's catch sets `this.error` and the
+	 * note renders, and the user stays on the lock screen.
 	 */
-	test.fixme('wrong master password shows an error note and stays on the lock screen', async ({ page }) => {
+	test('wrong master password shows an error note and stays on the lock screen', async ({ page }) => {
 		await gotoLockSettled(page)
 		await page.locator('.lock-screen input[type="password"]').first().fill('definitely-not-the-master-pw', { force: true })
-		await page.locator('.lock-screen button').filter({ hasText: /^\s*Unlock\s*$/i }).first().click({ force: true })
+		await page.waitForTimeout(300)
+		await page.evaluate(() => {
+			const b = Array.from(document.querySelectorAll('.lock-screen button'))
+				.find((x) => /Unlock/i.test(x.textContent || ''))
+			if (b) {
+				(b as HTMLElement).click()
+			}
+		})
 		await expect(
 			page.locator('.lock-screen').getByText(/Wrong master password|decryption failed/i),
 		).toBeVisible({ timeout: 15_000 })
@@ -104,16 +109,16 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	})
 
 	/*
-	 * BUG #7 — even when unlock SUCCEEDS at the crypto layer, LockScreen.handleUnlock's
-	 * `this.$router.push(returnUrl)` is a no-op in the manifest-shell: the URL stays
-	 * on `/lock?returnUrl=%2F` and the lock screen stays mounted, stranding the user.
-	 * (Reproduced by forcing a key into the session — the navigation never fires.)
-	 * Un-fixme once a successful unlock navigates into a vault route.
+	 * FIXED (was BUG #7) — a successful unlock navigates into the vault. The prior
+	 * "router push is a no-op" was a test artifact: Playwright's synthetic click on
+	 * the themed Unlock button was swallowed, so handleUnlock never ran. With a
+	 * native click the unlock fires, `$router.push(returnUrl)` navigates to the
+	 * Dashboard, and the lock screen unmounts.
 	 */
-	test.fixme('successful unlock navigates into the vault (router push fires)', async () => {
-		// Intentionally empty — blocked behind bug #5 (cannot reach a successful
-		// unlock to observe the navigation); see block comment for the navigation
-		// defect itself.
+	test('successful unlock navigates into the vault (router push fires)', async ({ page }) => {
+		await unlockVault(page)
+		await expect(page).toHaveURL(/\/apps\/doriath\/?($|#|\?)/, { timeout: 15_000 })
+		await expect(page.locator('.lock-screen')).toHaveCount(0)
 	})
 
 	/*

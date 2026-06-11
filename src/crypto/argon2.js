@@ -83,6 +83,23 @@ export async function deriveAesKeyArgon2id(password, salt) {
 		throw new Error('WebAssembly is required for Argon2id but is not available')
 	}
 
+	// Resolve the webpack-emitted argon2.wasm URL. The webpack `asset/resource`
+	// rule turns `require('argon2.wasm')` into the hashed asset URL (served from
+	// `/custom_apps/doriath/js/argon2.wasm`). argon2-browser's own loader would
+	// otherwise `atob()` that URL string as if it were embedded base64 and throw
+	// "string to be decoded is not correctly encoded". Provide a binary loader so
+	// it fetches the real .wasm bytes instead.
+	const globalScope = (typeof globalThis !== 'undefined' && globalThis)
+		|| (typeof window !== 'undefined' && window)
+		|| null
+	if (globalScope && !globalScope.loadArgon2WasmBinary) {
+		// eslint-disable-next-line import/no-unresolved
+		const wasmUrl = (await import('argon2-browser/dist/argon2.wasm')).default
+		globalScope.loadArgon2WasmBinary = () => fetch(wasmUrl)
+			.then((res) => res.arrayBuffer())
+			.then((ab) => new Uint8Array(ab))
+	}
+
 	// Lazy-load the WASM KDF so it is excluded from the initial vault bundle.
 	// argon2-browser is installed with the secrets-feature wiring (tasks.md §6.1);
 	// the import is intentionally lazy and dynamic.

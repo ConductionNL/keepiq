@@ -92,6 +92,61 @@ export async function attemptUnlock(page: Page, password: string): Promise<strin
 }
 
 /**
+ * Drive the lock screen all the way into an UNLOCKED vault session and wait for
+ * a vault route to render. Returns when the lock screen is gone.
+ *
+ * Two harness facts make this reliable:
+ *   - The themed `NcButton` swallows Playwright's synthetic `.click()`, so we
+ *     dispatch a native `HTMLButtonElement.click()` via `page.evaluate` to fire
+ *     the Vue `@click="handleUnlock"` handler (the same trick documented for the
+ *     themed-submit swallow elsewhere in the fleet).
+ *   - `session.unlock()` decrypts the seeded AES-GCM private-key envelope with
+ *     the dev master password in-browser (PBKDF2 600k → AES-256-GCM), imports
+ *     the RSA-OAEP key, and `handleUnlock` then pushes to the return URL.
+ *
+ * @param page The Playwright page.
+ * @param password The master password (defaults to the dev password).
+ * @return Resolves once the vault is unlocked and off the lock screen.
+ */
+export async function unlockVault(page: Page, password: string = DEV_MASTER_PASSWORD): Promise<void> {
+	await gotoLockSettled(page)
+	await page.locator('.lock-screen input[type="password"]').first().fill(password, { force: true })
+	// Give the v-model a tick so the Unlock button enables.
+	await page.waitForTimeout(300)
+	// Native click — the themed NcButton swallows Playwright's synthetic click.
+	await page.evaluate(() => {
+		const btns = Array.from(document.querySelectorAll('.lock-screen button')) as HTMLButtonElement[]
+		const unlock = btns.find((b) => /Unlock/i.test(b.textContent || ''))
+		if (unlock) {
+			unlock.click()
+		}
+	})
+	// Wait for the unlock + router push to settle off the lock screen.
+	await expect(page.locator('.lock-screen')).toHaveCount(0, { timeout: 20_000 })
+}
+
+/**
+ * Open the vault list WITHIN the unlocked SPA by clicking the "Vault" nav link
+ * (a vue-router-link). A full `page.goto` reload would wipe the in-memory
+ * CryptoKey and bounce to the lock screen; a router-link click navigates the
+ * SPA in place and keeps the session unlocked. The click is dispatched natively
+ * because the themed nav entry can swallow Playwright's synthetic click.
+ *
+ * @param page The Playwright page (must already be unlocked).
+ */
+export async function openVault(page: Page): Promise<void> {
+	await page.evaluate(() => {
+		const a = Array.from(document.querySelectorAll('a')).find(
+			(x) => /\/apps\/doriath\/secrets$/.test(x.getAttribute('href') || ''),
+		)
+		if (a) {
+			(a as HTMLElement).click()
+		}
+	})
+	await expect(page.locator('.secret-list-view')).toBeVisible({ timeout: 20_000 })
+}
+
+/**
  * The Nextcloud request token, read from the document. Required for
  * state-changing API calls made from within page.evaluate.
  */

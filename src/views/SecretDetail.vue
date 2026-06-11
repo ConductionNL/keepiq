@@ -53,6 +53,24 @@
 			</div>
 
 			<div class="secret-detail__actions">
+				<NcButton type="primary" @click="openEdit">
+					<template #icon>
+						<Pencil :size="20" />
+					</template>
+					{{ t('doriath', 'Edit') }}
+				</NcButton>
+				<NcButton type="secondary" @click="openMove">
+					<template #icon>
+						<FolderMove :size="20" />
+					</template>
+					{{ t('doriath', 'Move') }}
+				</NcButton>
+				<NcButton type="secondary" @click="openShare">
+					<template #icon>
+						<ShareVariant :size="20" />
+					</template>
+					{{ t('doriath', 'Share') }}
+				</NcButton>
 				<NcButton type="error" @click="remove">
 					<template #icon>
 						<Delete :size="20" />
@@ -69,6 +87,9 @@ import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import FolderMove from 'vue-material-design-icons/FolderMove.vue'
+import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import CopyButton from '../components/CopyButton.vue'
 import PasswordField from '../components/PasswordField.vue'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -88,8 +109,19 @@ export default {
 		ArrowLeft,
 		Delete,
 		Lock,
+		Pencil,
+		FolderMove,
+		ShareVariant,
 		CopyButton,
 		PasswordField,
+	},
+
+	inject: {
+		/**
+		 * Open a registry-registered modal. Provided by CnAppRoot; defaults to a
+		 * no-op so the view still mounts in isolation.
+		 */
+		cnOpenModal: { default: () => () => {} },
 	},
 
 	data() {
@@ -158,6 +190,42 @@ export default {
 		},
 
 		/**
+		 * Open the edit dialog for this secret and reload on success.
+		 *
+		 * @return {void}
+		 */
+		openEdit() {
+			this.cnOpenModal('secret-edit', {
+				secretId: this.secretId,
+				onSaved: () => this.load(),
+			})
+		},
+
+		/**
+		 * Open the move dialog for this secret and reload on success.
+		 *
+		 * @return {void}
+		 */
+		openMove() {
+			this.cnOpenModal('secret-move', {
+				secretId: this.secretId,
+				currentFolderId: this.secret ? (this.secret.folderId || null) : null,
+				onSaved: () => this.load(),
+			})
+		},
+
+		/**
+		 * Open the share dialog for this secret.
+		 *
+		 * @return {void}
+		 */
+		openShare() {
+			this.cnOpenModal('secret-share', {
+				secretId: this.secretId,
+			})
+		},
+
+		/**
 		 * Delete the secret and return to the vault.
 		 *
 		 * @return {Promise<void>}
@@ -209,6 +277,9 @@ export default {
 }
 
 .secret-detail__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 	margin-top: 24px;
 }
 </style>

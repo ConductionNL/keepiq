@@ -14,6 +14,18 @@ webpackConfig.stats = {
 }
 
 const appId = 'doriath'
+
+// Lazy-loaded chunks (the argon2-browser WASM loader for link-share encryption)
+// must resolve relative to the script that loaded them. Nextcloud serves the
+// entry bundle from `/custom_apps/<app>/js/`, but the default publicPath points
+// lazy chunks at `/apps/<app>/js/` which 401s. `publicPath: 'auto'` makes
+// webpack derive the chunk base from the executing script's own URL, so chunks
+// load from the same `/custom_apps/doriath/js/` directory as the main bundle.
+webpackConfig.output = {
+	...(webpackConfig.output || {}),
+	publicPath: 'auto',
+}
+
 webpackConfig.entry = {
 	main: {
 		import: path.join(__dirname, 'src', 'main.js'),
