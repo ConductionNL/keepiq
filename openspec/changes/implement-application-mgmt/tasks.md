@@ -88,8 +88,8 @@
 
 ## 8. Dashboard Integration
 
-- [~] 8.1 Implement `ApplicationMapper::countPending(): int` (already declared in task 2.2, ensure DashboardService from implement-dashboard-settings can call it)
-- [~] 8.2 Verify DashboardService::fetchSummary() correctly calls ApplicationMapper::countPending() and includes the count in the response under `pending_apps_count` for admin users
+- [x] 8.1 Implement `ApplicationMapper::countPending(): int` (already declared in task 2.2, ensure DashboardService from implement-dashboard-settings can call it)
+- [x] 8.2 Verify DashboardService::fetchSummary() correctly calls ApplicationMapper::countPending() and includes the count in the response under `pending_apps_count` for admin users
 
 ## 9. Pinia Store (Frontend)
 
