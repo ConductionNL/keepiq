@@ -60,25 +60,27 @@
 
 ## 4. JwtAuthService (PHP)
 
-- [~] 4.1 Add `web-token/jwt-framework` to `composer.json` dependencies
-- [~] 4.2 Create `JwtAuthService` in `lib/Service/JwtAuthService.php` with dependencies: ApplicationMapper, EncryptionSuiteMapper, ICacheFactory
-- [~] 4.3 Implement `exchangeAssertion(string $assertion): array`: deserialize JWT using JWSSerializerManager (CompactSerializer), create JWSVerifier with RS256 (AlgorithmManager + RS256 algorithm from web-token/jwt-framework), extract `iss` claim, look up Application by id, validate status=active, get EncryptionSuite public certificate, extract public key from certificate, verify JWT signature, validate claims (aud='doriath', exp > now, iat <= now + 60s clock skew, jti not in replay cache), store jti in cache with 5-min TTL, generate access token via `bin2hex(random_bytes(32))`, store token in cache with application_id and 5-min TTL, return { access_token, token_type: 'Bearer', expires_in: 300 }
-- [~] 4.4 Implement `validateAccessToken(string $token): ?Application`: look up token in cache, if found return Application from ApplicationMapper, if not found return null
-- [~] 4.5 Implement replay prevention: use `ICacheFactory::createDistributed('doriath_jwt')` for jti cache, check before verification and store after successful verification with TTL matching assertion max lifetime (5 minutes)
+- [x] 4.1 Add `web-token/jwt-framework` to `composer.json` dependencies <!-- W18: ^3.4 installed -->
+- [x] 4.2 Create `JwtAuthService` in `lib/Service/JwtAuthService.php` with dependencies: ApplicationMapper, EncryptionSuiteMapper, ICacheFactory <!-- W18 -->
+- [x] 4.3 Implement `exchangeAssertion(string $assertion): array`: deserialize JWT using JWSSerializerManager (CompactSerializer), create JWSVerifier with RS256 (AlgorithmManager + RS256 algorithm from web-token/jwt-framework), extract `iss` claim, look up Application by id, validate status=active, get EncryptionSuite public certificate, extract public key from certificate, verify JWT signature, validate claims (aud='doriath', exp > now, iat <= now + 60s clock skew, jti not in replay cache), store jti in cache with 5-min TTL, generate access token via `bin2hex(random_bytes(32))`, store token in cache with application_id and 5-min TTL, return { access_token, token_type: 'Bearer', expires_in: 300 } <!-- W18: RS256 primary + ES256 fallback -->
+- [x] 4.4 Implement `validateAccessToken(string $token): ?Application`: look up token in cache, if found return Application from ApplicationMapper, if not found return null <!-- W18 -->
+- [x] 4.5 Implement replay prevention: use `ICacheFactory::createDistributed('doriath_jwt')` for jti cache, check before verification and store after successful verification with TTL matching assertion max lifetime (5 minutes) <!-- W18: doriath_jwt_jti + doriath_jwt_token namespaces -->
 
 ## 5. JwtAuthMiddleware (PHP)
 
-- [~] 5.1 Create `JwtAuthMiddleware` extending `OCP\AppFramework\Middleware` in `lib/Middleware/JwtAuthMiddleware.php`: in beforeController check if controller is instance of ApplicationApiController, extract Bearer token from Authorization header, call JwtAuthService::validateAccessToken, throw NotAuthenticatedException if invalid, store Application entity on request via IRequest attribute or controller setter
-- [~] 5.2 Register JwtAuthMiddleware in `lib/AppInfo/Application.php` via container registerMiddleware
-- [~] 5.3 Create `ApplicationApiController` base class or interface in `lib/Controller/ApplicationApiController.php` that JwtAuthMiddleware checks against
+- [x] 5.1 Create `JwtAuthMiddleware` extending `OCP\AppFramework\Middleware` in `lib/Middleware/JwtAuthMiddleware.php`: in beforeController check if controller is instance of ApplicationApiController, extract Bearer token from Authorization header, call JwtAuthService::validateAccessToken, throw NotAuthenticatedException if invalid, store Application entity on request via IRequest attribute or controller setter <!-- W18: raises RuntimeException; afterException → 401 JSON -->
+- [x] 5.2 Register JwtAuthMiddleware in `lib/AppInfo/Application.php` via container registerMiddleware <!-- W18 -->
+- [x] 5.3 Create `ApplicationApiController` base class or interface in `lib/Controller/ApplicationApiController.php` that JwtAuthMiddleware checks against <!-- W18: abstract Controller subclass -->
+
 
 ## 6. Controllers and API Routes
 
 - [x] 6.1 Create `ApplicationController` extending OCSController in `lib/Controller/ApplicationController.php` with endpoints: index (GET, list apps), show (GET, get app detail), register (POST, create app), destroy (DELETE, hard cascade delete), approve (POST /{id}/approve), reject (POST /{id}/reject), pending (GET /pending, admin-only list)
 - [~] 6.2 Add `#[PublicPage]` attribute on the register endpoint to support anonymous registration; validate request params (name required, type in [internal, external], CSR optional)
-- [~] 6.3 Create `ApplicationTokenController` in `lib/Controller/ApplicationTokenController.php` with `#[PublicPage]` attribute; endpoint: exchange (POST /api/v1/token) accepting grant_type and assertion parameters, delegates to JwtAuthService::exchangeAssertion, returns token response or 401
-- [~] 6.4 Create `ApplicationSecretsController` extending ApplicationApiController in `lib/Controller/ApplicationSecretsController.php` with endpoints: index (GET, list app's secrets), show (GET, get specific secret); the Application entity is injected by JwtAuthMiddleware; returns encrypted blobs only
-- [~] 6.5 Register all API routes in `appinfo/routes.php`: NC session routes under `/api/v1/applications` (GET index, POST register, GET {id}, DELETE {id}, POST {id}/approve, POST {id}/reject, GET pending); public route POST `/api/v1/token`; Bearer-authenticated routes under `/api/v1/app/secrets` (GET index, GET {id}); ensure routes are listed BEFORE the SPA catch-all
+- [x] 6.3 Create `ApplicationTokenController` in `lib/Controller/ApplicationTokenController.php` with `#[PublicPage]` attribute; endpoint: exchange (POST /api/v1/token) accepting grant_type and assertion parameters, delegates to JwtAuthService::exchangeAssertion, returns token response or 401 <!-- W18 -->
+- [x] 6.4 Create `ApplicationSecretsController` extending ApplicationApiController in `lib/Controller/ApplicationSecretsController.php` with endpoints: index (GET, list app's secrets), show (GET, get specific secret); the Application entity is injected by JwtAuthMiddleware; returns encrypted blobs only <!-- W18 -->
+- [x] 6.5 Register all API routes in `appinfo/routes.php`: NC session routes under `/api/v1/applications` (GET index, POST register, GET {id}, DELETE {id}, POST {id}/approve, POST {id}/reject, GET pending); public route POST `/api/v1/token`; Bearer-authenticated routes under `/api/v1/app/secrets` (GET index, GET {id}); ensure routes are listed BEFORE the SPA catch-all <!-- W18: /api/v1/token + /api/v1/app/secrets routes added -->
+
 
 ## 7. Notification Integration
 
@@ -93,9 +95,10 @@
 
 ## 9. Pinia Store (Frontend)
 
-- [~] 9.1 Create `src/store/modules/application.js` (useApplicationStore) with state: applications (array), currentApplication (object), pendingApplications (array), totalCount (number), loading (boolean); actions: fetchApplications(filters, sort, page), fetchApplication(id), registerApplication({ name, description, type, csr }), deleteApplication(id), approveApplication(id), rejectApplication(id), fetchPending()
-- [~] 9.2 Implement registerApplication action: POST to /api/v1/applications, if response contains `private_key` field emit event or set store state to trigger PrivateKeyDownloadDialog
-- [~] 9.3 Implement approveApplication action: POST to /api/v1/applications/{id}/approve, if response contains `private_key` trigger PrivateKeyDownloadDialog (admin approving a no-CSR app)
+- [x] 9.1 Create `src/store/modules/application.js` (useApplicationStore) with state: applications (array), currentApplication (object), pendingApplications (array), totalCount (number), loading (boolean); actions: fetchApplications(filters, sort, page), fetchApplication(id), registerApplication({ name, description, type, csr }), deleteApplication(id), approveApplication(id), rejectApplication(id), fetchPending() <!-- W18 -->
+- [x] 9.2 Implement registerApplication action: POST to /api/v1/applications, if response contains `private_key` field emit event or set store state to trigger PrivateKeyDownloadDialog <!-- W18: store carries oneTimePrivateKey + oneTimePrivateKeyAppId -->
+- [x] 9.3 Implement approveApplication action: POST to /api/v1/applications/{id}/approve, if response contains `private_key` trigger PrivateKeyDownloadDialog (admin approving a no-CSR app) <!-- W18 -->
+
 - [~] 9.4 Implement write-secret-for-app flow in useSecretStore or useApplicationStore: fetch app's EncryptionSuite certificate, import public key via importPublicKey() from src/crypto/rsa.js, encrypt secret fields with rsaEncrypt(), POST to /api/v1/secrets with owner_type=application and owner_id
 
 ## 10. Vue Components (Frontend)
@@ -106,7 +109,8 @@
 - [~] 10.4 Create `src/components/PrivateKeyDownloadDialog.vue` using NcDialog, NcButton, NcNoteCard: displays private key PEM in a read-only textarea with monospace font; copy-to-clipboard button; download as .pem file button; warning NcNoteCard: "This is the only time this private key will be shown. Save it securely. It cannot be recovered."; dismiss only after explicit acknowledgment checkbox
 - [~] 10.5 Create `src/components/ApplicationSecretsPanel.vue` using CnDataTable: lists secrets attributed to the application (name, type, created_at); click navigates to SecretDetail (read-only for user -- encrypted blobs only); "Write Secret" button opens WriteSecretForAppDialog
 - [~] 10.6 Create `src/components/WriteSecretForAppDialog.vue` using NcDialog, NcInputField: form with name, key (password), login (optional), URL (optional), additional fields; on submit: fetches app's public certificate, encrypts with rsaEncrypt, POSTs secret; shows confirmation on success
-- [~] 10.7 Wire `ApplicationQueueSection.vue` (from implement-dashboard-settings) to ApplicationService endpoints: fetch pending apps via fetchPending(), approve button calls approveApplication(id), reject button calls rejectApplication(id); handle private key response from approve
+- [x] 10.7 Wire `ApplicationQueueSection.vue` (from implement-dashboard-settings) to ApplicationService endpoints: fetch pending apps via fetchPending(), approve button calls approveApplication(id), reject button calls rejectApplication(id); handle private key response from approve <!-- W18: shipped as src/views/AdminApplicationsView.vue (inline queue + private-key dialog block) -->
+
 
 ## 11. Vue Router Integration
 
@@ -122,8 +126,9 @@
 ## 13. Unit Tests (PHP)
 
 - [x] 13.1 Write unit tests for `ApplicationService`: register as admin (auto-approve), register as non-admin (pending), register with valid CSR, register with invalid CSR (rejected), register with weak key CSR (< 4096 bits, rejected), register without CSR (generated key pair), approve pending app with CSR, approve pending app without CSR, reject pending app (hard delete), delete active app (cascade verification), get/list authorization checks
-- [~] 13.2 Write unit tests for `JwtAuthService`: valid JWT exchange produces access token, invalid signature rejected, expired JWT rejected, future iat rejected, wrong audience rejected, jti replay rejected, access token validation success, access token validation after TTL expiry fails, inactive application rejected
-- [~] 13.3 Write unit tests for `JwtAuthMiddleware`: non-ApplicationApiController passes through, missing Authorization header throws exception, invalid Bearer token throws exception, valid token sets Application on controller
+- [x] 13.2 Write unit tests for `JwtAuthService`: valid JWT exchange produces access token, invalid signature rejected, expired JWT rejected, future iat rejected, wrong audience rejected, jti replay rejected, access token validation success, access token validation after TTL expiry fails, inactive application rejected <!-- W18: 11 tests -->
+- [x] 13.3 Write unit tests for `JwtAuthMiddleware`: non-ApplicationApiController passes through, missing Authorization header throws exception, invalid Bearer token throws exception, valid token sets Application on controller <!-- W18: 7 tests -->
+
 - [x] 13.4 Write unit tests for `ApplicationMapper`: countPending returns correct count, findPending returns only pending, findByRegistrant filters correctly, findActiveByName returns only active
 - [~] 13.5 Write unit tests for `SeedDevelopmentApplications` repair step: creates 3 applications on first run, idempotent on re-run, active apps have EncryptionSuites, pending app has no EncryptionSuite
 
@@ -140,9 +145,11 @@
 
 ## 15. Frontend Tests
 
-- [~] 15.1 Write unit tests for useApplicationStore: fetchApplications, registerApplication (with and without CSR), approveApplication (with and without private key response), rejectApplication, deleteApplication, fetchPending
+- [x] 15.1 Write unit tests for useApplicationStore: fetchApplications, registerApplication (with and without CSR), approveApplication (with and without private key response), rejectApplication, deleteApplication, fetchPending <!-- W18: 10 tests -->
+
 - [~] 15.2 Write component tests for ApplicationList: renders table, pagination, register button, empty state
 - [~] 15.3 Write component tests for ApplicationRegisterDialog: form validation (name required), CSR upload, submit
 - [~] 15.4 Write component tests for PrivateKeyDownloadDialog: displays key, copy button works, acknowledgment checkbox required before dismiss
 - [~] 15.5 Write component tests for WriteSecretForAppDialog: encrypts with app's public key, submits encrypted blob, shows confirmation
-- [~] 15.6 Write component tests for ApplicationQueueSection: lists pending apps, approve/reject buttons call correct actions, handles private key response on approve
+- [x] 15.6 Write component tests for ApplicationQueueSection: lists pending apps, approve/reject buttons call correct actions, handles private key response on approve <!-- W18: AdminApplicationsView.spec.js — 6 tests -->
+
