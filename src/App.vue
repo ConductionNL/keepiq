@@ -148,6 +148,34 @@ import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 
+/**
+ * Route names that are publicly accessible without an unlocked vault
+ * (recipient-facing token URLs). Mirrors the manifest's `meta.public`
+ * pages so the lock-screen guard can short-circuit.
+ *
+ * @spec openspec/changes/implement-secret-requests/tasks.md#task-9.2
+ */
+const PUBLIC_ROUTE_NAMES = ['SecretRequestFill']
+
+/**
+ * Whether a vue-router route lives outside the locked-vault guard.
+ *
+ * @param {object|null} route The current $route object.
+ * @return {boolean}
+ */
+function isPublicRoute(route) {
+	if (route == null) {
+		return false
+	}
+	// Allow either explicit per-route `meta.public:true` (when the
+	// shared manifest schema ships that field) or membership in the
+	// PUBLIC_ROUTE_NAMES allow-list maintained alongside this module.
+	if (route.meta && route.meta.public === true) {
+		return true
+	}
+	return PUBLIC_ROUTE_NAMES.includes(route.name)
+}
+
 export default {
 	name: 'App',
 
@@ -265,7 +293,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		isLocked(locked) {
-			if (locked && this.$route?.name !== 'Lock') {
+			if (locked && this.$route?.name !== 'Lock' && !isPublicRoute(this.$route)) {
 				this.$router.replace({
 					name: 'Lock',
 					query: { returnUrl: this.$route?.fullPath },
@@ -310,7 +338,7 @@ export default {
 		// path as the return URL. The router-level guard from the
 		// pre-Tier-4 router is gone (vue-router is now built from
 		// the manifest), so the App.vue lifecycle owns the redirect.
-		if (this.sessionStore.isLocked && this.$route?.name !== 'Lock') {
+		if (this.sessionStore.isLocked && this.$route?.name !== 'Lock' && !isPublicRoute(this.$route)) {
 			this.$router.replace({
 				name: 'Lock',
 				query: { returnUrl: this.$route?.fullPath },
