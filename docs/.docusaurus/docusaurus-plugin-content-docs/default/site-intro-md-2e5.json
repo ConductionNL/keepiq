@@ -1,0 +1,23 @@
+{
+  "id": "intro",
+  "title": "Doriath",
+  "description": "An encrypted secrets manager for Nextcloud — password manager and key store for users and applications.",
+  "source": "@site/intro.md",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/docs/intro",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/intro.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "next": {
+    "title": "Tutorials",
+    "permalink": "/docs/category/tutorials"
+  }
+}
