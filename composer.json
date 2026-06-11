@@ -16,7 +16,8 @@
 	},
 	"require": {
 		"php": "^8.3",
-		"ramsey/uuid": "^4.9"
+		"ramsey/uuid": "^4.9",
+		"web-token/jwt-framework": "^3.4"
 	},
 	"require-dev": {
 		"cyclonedx/cyclonedx-php-composer": "^6.2",
