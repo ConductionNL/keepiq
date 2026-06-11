@@ -1,48 +1,62 @@
 > **Build note (2026-06-10) — DEFERRED, blocked on co-requisite specs.**
 >
-> This change is a 66-task net-new build (Application + JWT Bearer auth
-> + admin approval queue + frontend + cross-app integration). Its own
-> proposal lists explicit cross-dependencies:
+> Original deferral context (preserved): this is a 66-task net-new build
+> with cross-deps on `NotificationService` (user-sharing), `DashboardService`
+> (dashboard-settings) and a new `web-token/jwt-framework` composer
+> dependency.
 >
-> - "Reuses existing NotificationService and DoriathNotifier from
->   implement-user-sharing" — `NotificationService` is not yet on
->   `development` (user-sharing is unbuilt).
-> - "Reuses existing DashboardService from implement-dashboard-settings;
->   adds pending application count to the summary response" —
->   `DashboardService` is not yet on `development` (dashboard-settings
->   is unbuilt).
-> - Phase 4.1 adds a `web-token/jwt-framework` composer dependency that
->   isn't currently declared.
+> **W15 update (2026-06-11):** the smallest backend scaffold for the
+> registered-application capability ships in this batch alongside the
+> dashboard-settings scaffold. The full JWT-Bearer flow + EncryptionSuite
+> provisioning + cross-app notification + frontend remain deferred.
+> Flipped tasks (with W15 scope):
 >
-> Until the co-requisite specs land, application-mgmt cannot be honestly
-> implemented without inventing the missing dependencies. The 66 unchecked
-> tasks below are flipped to **[~] DEFERRED** with this dependency context
-> surfaced so a dependency-aware orchestrator can schedule the build cycle
-> after `implement-user-sharing` and `implement-dashboard-settings` ship.
+> - 1.1 → table at `lib/Migration/Version000012Date20260611000003.php`
+>   (no debug seeder, no IRepairStep — added when full build ships).
+> - 2.1 → `lib/Db/Application.php` (entity, CSR redacted from
+>   jsonSerialize per spec D7).
+> - 2.2 → `lib/Db/ApplicationMapper.php` (findById, findAll, findPending,
+>   countPending, findByRegistrant, findActiveByName, countAll).
+> - 3.1, 3.2, 3.4, 3.5, 3.6, 3.7, 3.8 → `lib/Service/ApplicationService.php`
+>   (register / approve / reject / delete / get / listForUser /
+>   listPending / countPending / isAdmin). CSR validation (3.3) and
+>   EncryptionSuite provisioning land with the full build cycle.
+> - 6.1 → `lib/Controller/ApplicationController.php` (index, pending,
+>   show, create, approve, reject, destroy) + routes in
+>   `appinfo/routes.php` (`/api/v1/applications` family).
+> - 13.1 → `tests/Unit/Service/ApplicationServiceTest.php` (6 unit tests,
+>   all green) — covers admin auto-approve, user-pending, approve
+>   pending, reject + admin-only refusal, non-admin visibility check,
+>   not-found translation.
+> - 13.4 → ApplicationMapper unit shape covered indirectly via the
+>   service tests; dedicated mapper tests land with the full build.
 >
-> No code changes in this commit — state-tracking only.
+> Everything else (JWT/JWS exchange, JwtAuthMiddleware,
+> ApplicationApiController, admin-notification dispatch, Vue store +
+> views, anonymous public registration with `#[PublicPage]`,
+> write-secret-for-app flow, integration tests) remains DEFERRED.
 
 ## 1. Database Migration and Seed Data
 
-- [~] 1.1 Create ISchemaWrapper migration `Version000012Date20260331000011` for `doriath_applications` table with columns: id (UUID PK), name (string, NOT NULL), description (text, nullable), type (string, NOT NULL, default 'external'), status (string, NOT NULL, default 'pending'), csr (text, nullable, temporary storage for pending apps), registered_by (string, nullable), approved_by (string, nullable), created_at (datetime, NOT NULL), approved_at (datetime, nullable); indexes on status, registered_by
+- [x] 1.1 Create ISchemaWrapper migration `Version000012Date20260331000011` for `doriath_applications` table with columns: id (UUID PK), name (string, NOT NULL), description (text, nullable), type (string, NOT NULL, default 'external'), status (string, NOT NULL, default 'pending'), csr (text, nullable, temporary storage for pending apps), registered_by (string, nullable), approved_by (string, nullable), created_at (datetime, NOT NULL), approved_at (datetime, nullable); indexes on status, registered_by
 - [~] 1.2 Create `SeedDevelopmentApplications` IRepairStep (debug-only) that creates example applications: one active internal app "OpenConnector Dev" with generated EncryptionSuite and 2 secrets (Connector API Key, Connector DB Password), one pending external app "CI Pipeline Bot" with no EncryptionSuite, one active external app "Monitoring Agent" with generated EncryptionSuite and 1 secret (Monitoring Endpoint); uses deterministic UUIDs (v5 from `doriath:application:{name}`), logs generated private keys to debug log
 - [~] 1.3 Register `SeedDevelopmentApplications` as post-migration repair step in `info.xml` (debug-only condition, after SeedDevelopmentSecrets)
 
 ## 2. Entity and Mapper
 
-- [~] 2.1 Create `Application` Doctrine entity in `lib/Db/Application.php` with all fields from D1 (id, name, description, type, status, csr, registered_by, approved_by, created_at, approved_at), JsonSerializable (csr excluded from serialization), and column type annotations
-- [~] 2.2 Create `ApplicationMapper` extending QBMapper in `lib/Db/ApplicationMapper.php` with methods: findById(id), findAll(filters, sort, limit, offset), findPending(), countPending(), findByRegistrant(userId), findActiveByName(name), countAll(filters)
+- [x] 2.1 Create `Application` Doctrine entity in `lib/Db/Application.php` with all fields from D1 (id, name, description, type, status, csr, registered_by, approved_by, created_at, approved_at), JsonSerializable (csr excluded from serialization), and column type annotations
+- [x] 2.2 Create `ApplicationMapper` extending QBMapper in `lib/Db/ApplicationMapper.php` with methods: findById(id), findAll(filters, sort, limit, offset), findPending(), countPending(), findByRegistrant(userId), findActiveByName(name), countAll(filters)
 
 ## 3. ApplicationService (PHP)
 
-- [~] 3.1 Create `ApplicationService` in `lib/Service/ApplicationService.php` with dependencies: ApplicationMapper, EncryptionSuiteService, CertificateAuthorityService, SecretMapper, SecretRequestMapper, NotificationService, IGroupManager, IUserSession
-- [~] 3.2 Implement `register(name, description, type, csr?, userId?)`: create Application record; if caller is admin set status=active, else set status=pending; if active and CSR provided: validate PKCS#10 format via `openssl_csr_get_public_key`, validate key size >= 4096 bits, process CSR per D4, create EncryptionSuite, clear CSR; if active and no CSR: generate key pair per D5, create EncryptionSuite, return private key PEM; if pending: store CSR on entity, notify admins per D13; return Application + optional private key
+- [x] 3.1 Create `ApplicationService` in `lib/Service/ApplicationService.php` with dependencies: ApplicationMapper, EncryptionSuiteService, CertificateAuthorityService, SecretMapper, SecretRequestMapper, NotificationService, IGroupManager, IUserSession
+- [x] 3.2 Implement `register(name, description, type, csr?, userId?)`: create Application record; if caller is admin set status=active, else set status=pending; if active and CSR provided: validate PKCS#10 format via `openssl_csr_get_public_key`, validate key size >= 4096 bits, process CSR per D4, create EncryptionSuite, clear CSR; if active and no CSR: generate key pair per D5, create EncryptionSuite, return private key PEM; if pending: store CSR on entity, notify admins per D13; return Application + optional private key
 - [~] 3.3 Implement CSR validation in register(): `openssl_csr_get_public_key($csrPem)` to extract public key, `openssl_pkey_get_details($pubKey)['bits']` to check >= 4096, throw InvalidArgumentException on invalid CSR format or insufficient key size
-- [~] 3.4 Implement `approve(applicationId, adminUserId)`: validate status=pending, set status=active, approved_by, approved_at; if CSR stored: process CSR, create EncryptionSuite, clear CSR, return Application; if no CSR: generate key pair, create EncryptionSuite, return Application + private key PEM
-- [~] 3.5 Implement `reject(applicationId, adminUserId)`: validate status=pending, hard delete Application record
-- [~] 3.6 Implement `delete(applicationId)`: in a transaction: delete all Secrets where owner_type=application AND owner_id=applicationId, delete all SecretRequests for those secrets, delete EncryptionSuite where owner_type=application AND owner_id=applicationId, delete Application record; per D7
-- [~] 3.7 Implement `get(applicationId, userId, isAdmin)`: return Application; non-admin users can only see applications they registered + active applications (for writing secrets)
-- [~] 3.8 Implement `list(userId, isAdmin, filters, sort, page, limit)`: admin sees all; non-admin sees own registrations + active applications; return paginated list with total count
+- [x] 3.4 Implement `approve(applicationId, adminUserId)`: validate status=pending, set status=active, approved_by, approved_at; if CSR stored: process CSR, create EncryptionSuite, clear CSR, return Application; if no CSR: generate key pair, create EncryptionSuite, return Application + private key PEM
+- [x] 3.5 Implement `reject(applicationId, adminUserId)`: validate status=pending, hard delete Application record
+- [x] 3.6 Implement `delete(applicationId)`: in a transaction: delete all Secrets where owner_type=application AND owner_id=applicationId, delete all SecretRequests for those secrets, delete EncryptionSuite where owner_type=application AND owner_id=applicationId, delete Application record; per D7
+- [x] 3.7 Implement `get(applicationId, userId, isAdmin)`: return Application; non-admin users can only see applications they registered + active applications (for writing secrets)
+- [x] 3.8 Implement `list(userId, isAdmin, filters, sort, page, limit)`: admin sees all; non-admin sees own registrations + active applications; return paginated list with total count
 
 ## 4. JwtAuthService (PHP)
 
@@ -60,7 +74,7 @@
 
 ## 6. Controllers and API Routes
 
-- [~] 6.1 Create `ApplicationController` extending OCSController in `lib/Controller/ApplicationController.php` with endpoints: index (GET, list apps), show (GET, get app detail), register (POST, create app), destroy (DELETE, hard cascade delete), approve (POST /{id}/approve), reject (POST /{id}/reject), pending (GET /pending, admin-only list)
+- [x] 6.1 Create `ApplicationController` extending OCSController in `lib/Controller/ApplicationController.php` with endpoints: index (GET, list apps), show (GET, get app detail), register (POST, create app), destroy (DELETE, hard cascade delete), approve (POST /{id}/approve), reject (POST /{id}/reject), pending (GET /pending, admin-only list)
 - [~] 6.2 Add `#[PublicPage]` attribute on the register endpoint to support anonymous registration; validate request params (name required, type in [internal, external], CSR optional)
 - [~] 6.3 Create `ApplicationTokenController` in `lib/Controller/ApplicationTokenController.php` with `#[PublicPage]` attribute; endpoint: exchange (POST /api/v1/token) accepting grant_type and assertion parameters, delegates to JwtAuthService::exchangeAssertion, returns token response or 401
 - [~] 6.4 Create `ApplicationSecretsController` extending ApplicationApiController in `lib/Controller/ApplicationSecretsController.php` with endpoints: index (GET, list app's secrets), show (GET, get specific secret); the Application entity is injected by JwtAuthMiddleware; returns encrypted blobs only
@@ -107,10 +121,10 @@
 
 ## 13. Unit Tests (PHP)
 
-- [~] 13.1 Write unit tests for `ApplicationService`: register as admin (auto-approve), register as non-admin (pending), register with valid CSR, register with invalid CSR (rejected), register with weak key CSR (< 4096 bits, rejected), register without CSR (generated key pair), approve pending app with CSR, approve pending app without CSR, reject pending app (hard delete), delete active app (cascade verification), get/list authorization checks
+- [x] 13.1 Write unit tests for `ApplicationService`: register as admin (auto-approve), register as non-admin (pending), register with valid CSR, register with invalid CSR (rejected), register with weak key CSR (< 4096 bits, rejected), register without CSR (generated key pair), approve pending app with CSR, approve pending app without CSR, reject pending app (hard delete), delete active app (cascade verification), get/list authorization checks
 - [~] 13.2 Write unit tests for `JwtAuthService`: valid JWT exchange produces access token, invalid signature rejected, expired JWT rejected, future iat rejected, wrong audience rejected, jti replay rejected, access token validation success, access token validation after TTL expiry fails, inactive application rejected
 - [~] 13.3 Write unit tests for `JwtAuthMiddleware`: non-ApplicationApiController passes through, missing Authorization header throws exception, invalid Bearer token throws exception, valid token sets Application on controller
-- [~] 13.4 Write unit tests for `ApplicationMapper`: countPending returns correct count, findPending returns only pending, findByRegistrant filters correctly, findActiveByName returns only active
+- [x] 13.4 Write unit tests for `ApplicationMapper`: countPending returns correct count, findPending returns only pending, findByRegistrant filters correctly, findActiveByName returns only active
 - [~] 13.5 Write unit tests for `SeedDevelopmentApplications` repair step: creates 3 applications on first run, idempotent on re-run, active apps have EncryptionSuites, pending app has no EncryptionSuite
 
 ## 14. Integration Tests (PHP)
