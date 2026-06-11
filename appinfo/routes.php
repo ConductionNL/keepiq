@@ -62,6 +62,18 @@ return [
         ['name' => 'linkShareAccess#show',    'url' => '/api/v1/public/link-shares/{token}',         'verb' => 'GET'],
         ['name' => 'linkShareAccess#confirm', 'url' => '/api/v1/public/link-shares/{token}/confirm', 'verb' => 'POST'],
 
+        // User-to-user sharing — scaffold (implement-user-sharing).
+        ['name' => 'share#index',   'url' => '/api/v1/secrets/{secretId}/shares', 'verb' => 'GET'],
+        ['name' => 'share#create',  'url' => '/api/v1/secrets/{secretId}/shares', 'verb' => 'POST'],
+        ['name' => 'share#destroy', 'url' => '/api/v1/shares/{id}',                'verb' => 'DELETE'],
+
+        // Secret requests — scaffold (implement-secret-requests).
+        ['name' => 'secretRequest#index',   'url' => '/api/v1/secret-requests',              'verb' => 'GET'],
+        ['name' => 'secretRequest#create',  'url' => '/api/v1/secret-requests',              'verb' => 'POST'],
+        ['name' => 'secretRequest#approve', 'url' => '/api/v1/secret-requests/{id}/approve', 'verb' => 'POST'],
+        ['name' => 'secretRequest#decline', 'url' => '/api/v1/secret-requests/{id}/decline', 'verb' => 'POST'],
+        ['name' => 'secretRequest#destroy', 'url' => '/api/v1/secret-requests/{id}',         'verb' => 'DELETE'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.
