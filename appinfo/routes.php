@@ -91,6 +91,14 @@ return [
         ['name' => 'application#show',    'url' => '/api/v1/applications/{id}',              'verb' => 'GET'],
         ['name' => 'application#destroy', 'url' => '/api/v1/applications/{id}',              'verb' => 'DELETE'],
 
+        // JWT-Bearer token exchange (public; signature-verified).
+        ['name' => 'applicationToken#exchange', 'url' => '/api/v1/token', 'verb' => 'POST'],
+
+        // Bearer-authenticated application secrets API. JwtAuthMiddleware
+        // enforces the Authorization header before the controller runs.
+        ['name' => 'applicationSecrets#index', 'url' => '/api/v1/app/secrets',       'verb' => 'GET'],
+        ['name' => 'applicationSecrets#show',  'url' => '/api/v1/app/secrets/{id}',  'verb' => 'GET'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.
