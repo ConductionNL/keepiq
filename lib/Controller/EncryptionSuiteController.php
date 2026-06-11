@@ -25,6 +25,7 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCA\Doriath\Settings\AdminSettings;
 use OCP\AppFramework\Http;
@@ -47,6 +48,7 @@ class EncryptionSuiteController extends OCSController
      * @param IRequest               $request          The request object
      * @param EncryptionSuiteService $suiteService     The suite service
      * @param MigrationService       $migrationService The migration service
+     * @param LinkShareService       $linkShareService The link share service (cascade on compromise recovery)
      * @param IUserSession           $userSession      The user session
      *
      * @return void
@@ -55,6 +57,7 @@ class EncryptionSuiteController extends OCSController
         IRequest $request,
         private EncryptionSuiteService $suiteService,
         private MigrationService $migrationService,
+        private LinkShareService $linkShareService,
         private IUserSession $userSession,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -287,6 +290,15 @@ class EncryptionSuiteController extends OCSController
             // Mark the old suite as compromised immediately — it must not be
             // used for new encryption operations from this point on.
             $this->suiteService->markCompromised(id: $oldSuite->getId(), compromisedBy: $userId);
+
+            // Cascade-revoke every link share created by this user: the
+            // public-key fingerprint baked into each share's encrypted
+            // snapshot now belongs to a compromised key pair. Any holder of
+            // an outstanding link must be force-locked-out so a re-share
+            // under the new suite is required.
+            //
+            // @spec openspec/changes/implement-link-sharing/tasks.md#5.2
+            $this->linkShareService->deleteByUserId(userId: $userId);
 
             $newSuite  = $this->suiteService->createSuite(
                 ownerType: 'user',

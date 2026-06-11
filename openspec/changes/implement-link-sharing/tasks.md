@@ -57,8 +57,8 @@ the 2026-06-11 second pass:
 
 ## 5. Cascade Integration
 
-- [x] 5.1 Cascade *method* implemented (`LinkShareService.deleteBySecretId`). [DEFERRED — call site] Wiring into `SecretService.delete()` is deferred until implement-secrets lands (no SecretService exists yet)
-- [x] 5.2 Cascade *method* implemented (`LinkShareService.deleteByUserId`). [DEFERRED — call site] Wiring into the compromise-recovery flow is deferred to avoid coupling the working recovery path to a half-integrated dependency before the secrets feature exists
+- [x] 5.1 Cascade *method* + call site complete: `SecretService::delete()` (lib/Service/SecretService.php:261) invokes `$this->linkShareService->deleteBySecretId($id)` before deleting the secret row, so every link share signed against the destroyed secret is invalidated synchronously
+- [x] 5.2 Cascade *method* + call site complete: `EncryptionSuiteController::compromiseRecovery()` (lib/Controller/EncryptionSuiteController.php) injects `LinkShareService` and calls `deleteByUserId($userId)` immediately after the old suite is marked compromised — every outstanding link share signed against the now-compromised public key is wiped before the new suite is provisioned. Covered by `testCompromiseRecoveryCascadesLinkShareDeleteByUserId` in `tests/Unit/Controller/EncryptionSuiteControllerTest.php`
 
 ## 6. Argon2id Crypto Module (Frontend)
 
