@@ -74,6 +74,22 @@ return [
         ['name' => 'secretRequest#decline', 'url' => '/api/v1/secret-requests/{id}/decline', 'verb' => 'POST'],
         ['name' => 'secretRequest#destroy', 'url' => '/api/v1/secret-requests/{id}',         'verb' => 'DELETE'],
 
+        // Dashboard settings — scaffold (implement-dashboard-settings).
+        ['name' => 'dashboardSettings#index',   'url' => '/api/v1/dashboard-settings',         'verb' => 'GET'],
+        ['name' => 'dashboardSettings#show',    'url' => '/api/v1/dashboard-settings/{key}',   'verb' => 'GET'],
+        ['name' => 'dashboardSettings#update',  'url' => '/api/v1/dashboard-settings',         'verb' => 'PUT'],
+        ['name' => 'dashboardSettings#destroy', 'url' => '/api/v1/dashboard-settings',         'verb' => 'DELETE'],
+
+        // Applications — scaffold (implement-application-mgmt). Specific
+        // /pending route comes before the {id} wildcard.
+        ['name' => 'application#pending', 'url' => '/api/v1/applications/pending',          'verb' => 'GET'],
+        ['name' => 'application#index',   'url' => '/api/v1/applications',                  'verb' => 'GET'],
+        ['name' => 'application#create',  'url' => '/api/v1/applications',                  'verb' => 'POST'],
+        ['name' => 'application#approve', 'url' => '/api/v1/applications/{id}/approve',     'verb' => 'POST'],
+        ['name' => 'application#reject',  'url' => '/api/v1/applications/{id}/reject',      'verb' => 'POST'],
+        ['name' => 'application#show',    'url' => '/api/v1/applications/{id}',              'verb' => 'GET'],
+        ['name' => 'application#destroy', 'url' => '/api/v1/applications/{id}',              'verb' => 'DELETE'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.
