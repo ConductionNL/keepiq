@@ -98,4 +98,4 @@
 
 ## 13. Frontend Tests
 
-- [~] 13.1–13.7 Frontend unit/component tests — DEFERRED: the doriath repo has no JS test runner (no vitest/jest config, no node_modules in CI for unit tests). Adding a frontend test harness is out of scope for this change; the store logic is thin axios + WebCrypto wrappers and the components use the app's established manifest-v2 patterns. To be picked up when a JS test harness lands fleet-wide.
+- [~] 13.1–13.7 Frontend unit/component tests — DEFERRED: the doriath repo's vitest harness (added 2026-06-10 in `tests/vitest/`) runs only in the `node` environment for crypto unit tests. Vue component tests require switching to the `jsdom` environment and adding `@vitejs/plugin-vue2` + `@vue/test-utils`; that harness extension is tracked as a separate infrastructure change. The store logic is thin axios + WebCrypto wrappers and the components use the app's established manifest-v2 patterns.
