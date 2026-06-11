@@ -134,4 +134,66 @@ class SecretRequestMapper extends QBMapper
 
         $qb->executeStatement();
     }//end deleteBySecretId()
+
+    /**
+     * Find a pending request for a given Secret, when one exists.
+     *
+     * @param string $secretId The Secret ID
+     *
+     * @return SecretRequest
+     *
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     */
+    public function findPendingBySecretId(string $secretId): SecretRequest
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)))
+            ->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(SecretRequest::STATUS_PENDING)));
+
+        return $this->findEntity(query: $qb);
+    }//end findPendingBySecretId()
+
+    /**
+     * Lock all pending requests bound to a given EncryptionSuite — used
+     * by the compromise-recovery flow to freeze public fill links while
+     * the recipient migrates to a new suite.
+     *
+     * @param string $encryptionSuiteId The recipient's old EncryptionSuite ID
+     *
+     * @return int The number of rows affected.
+     */
+    public function lockByEncryptionSuiteId(string $encryptionSuiteId): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->update($this->getTableName())
+            ->set('status', $qb->createNamedParameter(SecretRequest::STATUS_LOCKED))
+            ->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(SecretRequest::STATUS_PENDING)));
+
+        return $qb->executeStatement();
+    }//end lockByEncryptionSuiteId()
+
+    /**
+     * Re-point all locked requests bound to the old EncryptionSuite at
+     * the new EncryptionSuite + return them to pending.
+     *
+     * @param string $oldEncryptionSuiteId The old EncryptionSuite ID
+     * @param string $newEncryptionSuiteId The new EncryptionSuite ID
+     *
+     * @return int The number of rows affected.
+     */
+    public function unlockAndUpdateSuite(string $oldEncryptionSuiteId, string $newEncryptionSuiteId): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->update($this->getTableName())
+            ->set('encryption_suite_id', $qb->createNamedParameter($newEncryptionSuiteId))
+            ->set('status', $qb->createNamedParameter(SecretRequest::STATUS_PENDING))
+            ->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($oldEncryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(SecretRequest::STATUS_LOCKED)));
+
+        return $qb->executeStatement();
+    }//end unlockAndUpdateSuite()
 }//end class
