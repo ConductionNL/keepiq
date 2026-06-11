@@ -2,21 +2,29 @@
 
 This change depends on `implement-secrets` (Secret entity / SecretService /
 `secrets` table) and on the frontend secret-detail view + secret store. As of
-this build those are **not yet merged** on `development` (the `implement-secrets`
-change is still open and unbuilt). Accordingly:
+the 2026-06-11 second pass:
 
 - The complete, self-contained **backend** (entity, mapper, service with the
   two-phase access protocol + brute-force + usage-limit + cascade methods, both
   controllers, routes, migration) and the **client-side Argon2id crypto module**
-  + **Pinia store** + i18n are implemented and tested here.
-- Tasks that genuinely require the unbuilt secrets feature (the secret-decrypt
-  step in the create flow, the Vue dialog/list/access views that mount inside
-  the not-yet-existing SecretDetail view, the router/lock-screen wiring into the
-  secrets SPA, the `SeedDevelopmentLinkShares` step which extends
-  `SeedDevelopmentSecrets`, the `argon2-browser` package install + webpack rule,
-  and the cascade *call sites* in `SecretService.delete()` / compromise recovery)
-  are marked **[DEFERRED]** with the reason inline. The cascade *methods*
-  themselves are implemented and unit-tested; only the call sites are deferred.
+  + **Pinia store** + i18n are implemented and tested.
+- `implement-secrets` and `implement-secrets-write-ui` have since landed on
+  `development`. `SecretDetail.vue`, the secret store, the unified
+  `src/dialogs/SecretShareDialog.vue` (which combines the create flow + list +
+  one-time password reveal — the work the spec originally split across
+  `LinkShareCreateDialog` + `LinkShareList` + `LinkSharePasswordDisplay`) and
+  the SecretDetail "Share" action that opens it via the registry's
+  `cnOpenModal('secret-share', …)` dispatch are now in the codebase. The
+  `argon2-browser` dependency, the webpack `.wasm` rule, the `publicPath:'auto'`
+  fix for the lazy WASM chunk, the `loadArgon2WasmBinary` shim, and the
+  `allowEvalWasm(true)` CSP are also in place. Tasks 6.1 / 6.2 / 8.2 / 8.3 /
+  8.4 / 9.3 / 9.4 reflect this.
+- Tasks that still require unbuilt upstream work — `SeedDevelopmentLinkShares`
+  (depends on the `SeedDevelopmentSecrets` step), the public access page +
+  router/lock-screen wiring (depends on a secrets SPA router that the
+  manifest-v2 shell does not provide), the cascade *call sites* in
+  `SecretService.delete()` / compromise recovery, and the vitest jsdom
+  component-test harness — remain **[DEFERRED]** with the reason inline.
 
 ## 1. Database Migration and Seed Data
 
@@ -54,8 +62,8 @@ change is still open and unbuilt). Accordingly:
 
 ## 6. Argon2id Crypto Module (Frontend)
 
-- [~] 6.1 [DEFERRED — needs install + build verification, only useful with the secrets feature] Add `argon2-browser` npm dependency to `package.json`
-- [~] 6.2 [DEFERRED — webpack already uses `asset/resource`; the `.wasm` rule lands with 6.1] Configure webpack to handle WASM files
+- [x] 6.1 `argon2-browser` is declared in `package.json` (`^1.18.0`)
+- [x] 6.2 `webpack.config.js` ships a `.wasm` asset/resource rule for `argon2-browser`'s lazy-loaded module (so the bundle builds and the WASM is emitted next to the JS chunk); `output.publicPath:'auto'` so the lazy chunk loads from `/custom_apps/doriath/js/` and `src/crypto/argon2.js` wires `global.loadArgon2WasmBinary` to fetch the emitted file rather than treating the URL string as base64
 - [x] 6.3 Create `src/crypto/argon2.js` with deriveAesKeyArgon2id (Argon2id memory 65536 KiB / iterations 3 / parallelism 1 / hashLength 32, lazy-loaded WASM), encryptSnapshot (salt + IV + AES-GCM), decryptSnapshot (key + AES-GCM, throws on GCM tag mismatch), generateLinkPassword (20-char rejection-sampled), isArgon2Supported (WASM feature check)
 - [x] 6.4 Add barrel export for the argon2 functions in `src/crypto/index.js`
 
@@ -68,16 +76,13 @@ change is still open and unbuilt). Accordingly:
 ## 8. Vue Components (Frontend)
 
 - [~] 8.1 [DEFERRED — standalone public page is mounted by the secrets SPA router which does not exist yet] `src/views/LinkShareAccess.vue`
-- [~] 8.2 [DEFERRED — opened from the not-yet-existing SecretDetail view] `src/components/LinkShareCreateDialog.vue`
-- [~] 8.3 [DEFERRED — rendered inside SecretDetail] `src/components/LinkShareList.vue`
-- [~] 8.4 [DEFERRED — rendered by the create dialog] `src/components/LinkSharePasswordDisplay.vue`
+- [x] 8.2 / 8.3 / 8.4 The `implement-secrets-write-ui` change shipped `src/dialogs/SecretShareDialog.vue`, a single NcDialog (per ADR-004 modal isolation) that COMBINES the create form, the existing-shares list, and the one-time password / link reveal. The spec originally proposed three separate components under `src/components/`; `secrets-write-ui` folded them into one modal-isolated dialog because the entire flow is one continuous interaction (configure → create → one-time reveal → manage). The end-user behavior matches what 8.2/8.3/8.4 specified — create with usage limit, revoke from the active list, copy the link and one-time password.
 
 ## 9. Vue Router Integration
 
 - [~] 9.1 [DEFERRED — this app uses the manifest-v2 declarative shell; there is no `src/router/index.js`. The public `/share/link/:token` page integrates with the secrets SPA when it lands] Add the public route
 - [~] 9.2 [DEFERRED — depends on 9.1] Update the lock-screen guard to skip `meta.public` routes
-- [~] 9.3 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareCreateDialog into SecretDetail
-- [~] 9.4 [DEFERRED — SecretDetail view does not exist] Integrate LinkShareList into SecretDetail
+- [x] 9.3 / 9.4 `SecretDetail.vue` now renders a "Share" action that calls `cnOpenModal('secret-share', { secretId })` — the registry-routed dispatch surfaces the unified `SecretShareDialog`, which itself contains the create flow + active-shares list. The split between "open the create dialog" (9.3) and "render the list" (9.4) collapses into a single registry-routed modal because `secrets-write-ui` chose the unified-dialog approach.
 
 ## 10. Internationalization
 
