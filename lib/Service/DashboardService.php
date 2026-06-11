@@ -27,11 +27,16 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\DashboardSetting;
 use OCA\Doriath\Db\DashboardSettingMapper;
+use OCA\Doriath\Db\FolderMapper;
+use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 /**
  * Business logic for per-user dashboard settings (scaffold).
@@ -64,16 +69,106 @@ class DashboardService
     /**
      * Constructor for DashboardService.
      *
-     * @param DashboardSettingMapper $mapper The mapper
-     * @param LoggerInterface        $logger The logger
+     * The aggregator dependencies (SecretMapper, FolderMapper, ShareTargetMapper,
+     * ApplicationMapper) are nullable so callers / unit tests of the pure
+     * preference path keep their original two-argument signature. The
+     * Nextcloud DI container injects them in production.
+     *
+     * @param DashboardSettingMapper $mapper            The dashboard-setting mapper
+     * @param LoggerInterface        $logger            The logger
+     * @param SecretMapper|null      $secretMapper      Secret counter (summary aggregator)
+     * @param FolderMapper|null      $folderMapper      Folder counter (summary aggregator)
+     * @param ShareTargetMapper|null $shareTargetMapper Shared-with-me counter (summary aggregator)
+     * @param ApplicationMapper|null $applicationMapper Pending-application counter (summary aggregator)
      *
      * @return void
      */
     public function __construct(
         private DashboardSettingMapper $mapper,
         private LoggerInterface $logger,
+        private ?SecretMapper $secretMapper = null,
+        private ?FolderMapper $folderMapper = null,
+        private ?ShareTargetMapper $shareTargetMapper = null,
+        private ?ApplicationMapper $applicationMapper = null,
     ) {
     }//end __construct()
+
+    /**
+     * Aggregate the dashboard summary for the given user.
+     *
+     * The shape matches the OpenAPI contract sketched in
+     * implement-dashboard-settings (§D6 fetchSummary):
+     *
+     * - total_secrets: count of secrets owned by the user
+     * - shared_with_me_count: count of secret shares targeting the user
+     * - folders_count: count of folders owned by the user
+     * - pending_apps_count: admin-only, omitted for non-admins (null)
+     * - last_updated: ISO-8601 timestamp of the aggregation
+     *
+     * Mapper failures are logged and degraded to zero so a partial DB
+     * outage cannot wipe the dashboard render.
+     *
+     * @param string $userId  The Nextcloud user ID
+     * @param bool   $isAdmin Whether the caller is an admin
+     *
+     * @return array<string,mixed>
+     */
+    public function fetchSummary(string $userId, bool $isAdmin): array
+    {
+        $this->validateUserId($userId);
+
+        $summary = [
+            'total_secrets'        => $this->safeCount(
+                fn () => $this->secretMapper?->countByOwner('user', $userId, null) ?? 0,
+                'total_secrets',
+            ),
+            'shared_with_me_count' => $this->safeCount(
+                fn () => $this->shareTargetMapper === null
+                    ? 0
+                    : count($this->shareTargetMapper->findByTargetUser($userId)),
+                'shared_with_me_count',
+            ),
+            'folders_count'        => $this->safeCount(
+                fn () => $this->folderMapper === null
+                    ? 0
+                    : count($this->folderMapper->findByOwner('user', $userId)),
+                'folders_count',
+            ),
+            'pending_apps_count'   => null,
+            'is_admin'             => $isAdmin,
+            'last_updated'         => (new DateTime())->format('c'),
+        ];
+
+        if ($isAdmin === true) {
+            $summary['pending_apps_count'] = $this->safeCount(
+                fn () => $this->applicationMapper?->countPending() ?? 0,
+                'pending_apps_count',
+            );
+        }
+
+        return $summary;
+    }//end fetchSummary()
+
+    /**
+     * Run a counter callback, logging+degrading to zero on failure.
+     *
+     * @param callable():int $fn       The counter
+     * @param string         $metricId Human-readable metric label for logs
+     *
+     * @return int
+     */
+    private function safeCount(callable $fn, string $metricId): int
+    {
+        try {
+            return $fn();
+        } catch (Throwable $e) {
+            $this->logger->warning(
+                'DashboardService::fetchSummary() failed to compute '.$metricId.': '.$e->getMessage(),
+                ['app' => 'doriath']
+            );
+            return 0;
+        }
+    }//end safeCount()
 
     /**
      * Get a single setting for a user (returns null if unset).
