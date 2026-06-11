@@ -18,6 +18,13 @@
 			"order": 20
 		},
 		{
+			"id": "ApplicationsMenu",
+			"label": "Applications",
+			"icon": "icon-category-integration",
+			"route": "ApplicationRegister",
+			"order": 30
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -186,6 +193,22 @@
 			"title": "Secret",
 			"component": "SecretDetail",
 			"_note": "Secret detail with type-specific fields, decrypted client-side; show/hide toggle keeps the key masked until revealed."
+		},
+		{
+			"id": "ApplicationRegister",
+			"route": "/applications",
+			"type": "custom",
+			"title": "Applications",
+			"component": "ApplicationRegisterView",
+			"_note": "Developer-facing app registration page. Owner sees their own apps + can register new ones; admin queue lives on AdminApplicationsView under settings."
+		},
+		{
+			"id": "SecretRequestFill",
+			"route": "/share/request/:token",
+			"type": "custom",
+			"title": "Fill in secret",
+			"component": "SecretRequestFill",
+			"_note": "Public fill-in page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the flow without a Nextcloud account; the controller runs as #[PublicPage]."
 		}
 	]
 }
