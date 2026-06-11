@@ -31,6 +31,7 @@ use OCA\Doriath\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 
 /**
  * Business logic for SecretRequest lifecycle (scaffold).
@@ -44,16 +45,192 @@ class SecretRequestService
     /**
      * Constructor for SecretRequestService.
      *
-     * @param SecretRequestMapper $mapper The mapper
-     * @param LoggerInterface     $logger The logger
+     * @param SecretRequestMapper      $mapper              The mapper
+     * @param LoggerInterface          $logger              The logger
+     * @param NotificationService|null $notificationService Optional notification dispatcher
      *
      * @return void
      */
     public function __construct(
         private SecretRequestMapper $mapper,
         private LoggerInterface $logger,
+        private ?NotificationService $notificationService = null,
     ) {
     }//end __construct()
+
+    /**
+     * Look up a pending, non-expired request by its public access token.
+     *
+     * Distinguishes locked / expired / fulfilled / unknown via specific
+     * error codes so the public fill page can render targeted messaging.
+     *
+     * @param string $token The access token
+     *
+     * @return SecretRequest
+     *
+     * @throws InvalidArgumentException With code 404 (unknown), 410 (fulfilled),
+     *                                  423 (locked) or 408 (expired).
+     */
+    public function getByToken(string $token): SecretRequest
+    {
+        if ($token === '') {
+            throw new InvalidArgumentException(message: 'token is required', code: 400);
+        }
+
+        try {
+            $entity = $this->mapper->findByToken($token);
+        } catch (DoesNotExistException) {
+            throw new InvalidArgumentException(message: 'Request not found', code: 404);
+        }
+
+        switch ($entity->getStatus()) {
+            case SecretRequest::STATUS_LOCKED:
+                throw new InvalidArgumentException(message: 'Request is temporarily unavailable', code: 423);
+
+            case SecretRequest::STATUS_FULFILLED:
+                throw new InvalidArgumentException(message: 'Request was already fulfilled', code: 410);
+
+            case SecretRequest::STATUS_DECLINED:
+                throw new InvalidArgumentException(message: 'Request was declined', code: 410);
+
+            case SecretRequest::STATUS_PENDING:
+                if ($entity->isExpired() === true) {
+                    throw new InvalidArgumentException(message: 'Request has expired', code: 408);
+                }
+
+                return $entity;
+
+            default:
+                throw new InvalidArgumentException(message: 'Request is in an unknown state', code: 500);
+        }
+    }//end getByToken()
+
+    /**
+     * Mark a pending request as fulfilled from the public fill endpoint.
+     *
+     * The caller (controller) is responsible for writing the encrypted
+     * blobs to the linked Secret row. This method validates the
+     * lifecycle / expiry / requested-fields invariants and atomically
+     * flips status to fulfilled, then dispatches the request_fulfilled
+     * notification to the original requester.
+     *
+     * @param string              $token           The access token
+     * @param array<string,mixed> $encryptedFields A map of fieldName => encryptedValue
+     *
+     * @return SecretRequest
+     *
+     * @throws InvalidArgumentException
+     */
+    public function fill(string $token, array $encryptedFields): SecretRequest
+    {
+        $entity = $this->getByToken(token: $token);
+
+        $requested = json_decode(json: $entity->getRequestedFields(), associative: true);
+        if (is_array($requested) === false) {
+            $requested = [];
+        }
+
+        foreach ($requested as $field) {
+            if (array_key_exists($field, $encryptedFields) === false) {
+                throw new InvalidArgumentException(message: 'Missing required field: '.$field, code: 400);
+            }
+
+            $value = $encryptedFields[$field];
+            if (is_string($value) === false || $value === '') {
+                throw new InvalidArgumentException(message: 'Empty value for field: '.$field, code: 400);
+            }
+        }
+
+        // Atomic transition: re-load + flip to defend against a parallel
+        // fill that may have raced us between getByToken() and here.
+        try {
+            $current = $this->mapper->findById($entity->getId());
+        } catch (DoesNotExistException) {
+            throw new InvalidArgumentException(message: 'Request not found', code: 404);
+        }
+
+        if ($current->getStatus() !== SecretRequest::STATUS_PENDING) {
+            throw new InvalidArgumentException(message: 'Request is not pending', code: 409);
+        }
+
+        $current->setStatus(SecretRequest::STATUS_FULFILLED);
+        $current->setFulfilledAt(new DateTime());
+        $persisted = $this->mapper->update($current);
+
+        $this->logger->info(
+            'Filled secret request '.$current->getId().' for secret '.$current->getSecretId(),
+            ['app' => 'doriath']
+        );
+
+        // Notify the requester — silently noop when the dependency was
+        // not wired (legacy call sites still using the 2-arg constructor).
+        if ($this->notificationService !== null && $current->getCreatedBy() !== '') {
+            $this->notificationService->notify(
+                subject: 'request_fulfilled',
+                recipientId: $current->getCreatedBy(),
+                params: ['secret_id' => $current->getSecretId()],
+                objectType: 'secret',
+                objectId: $current->getSecretId(),
+            );
+        }
+
+        return $persisted;
+    }//end fill()
+
+    /**
+     * Lock all pending requests bound to an EncryptionSuite. Invoked by
+     * the compromise-recovery flow when the recipient's keys are flagged.
+     *
+     * @param string $encryptionSuiteId The recipient's old EncryptionSuite ID
+     *
+     * @return int The number of rows affected.
+     */
+    public function lockByEncryptionSuiteId(string $encryptionSuiteId): int
+    {
+        if ($encryptionSuiteId === '') {
+            throw new InvalidArgumentException(message: 'encryptionSuiteId is required');
+        }
+
+        $count = $this->mapper->lockByEncryptionSuiteId($encryptionSuiteId);
+
+        $this->logger->info(
+            'Locked '.$count.' pending secret requests for compromised suite '.$encryptionSuiteId,
+            ['app' => 'doriath']
+        );
+
+        return $count;
+    }//end lockByEncryptionSuiteId()
+
+    /**
+     * Re-point locked requests at a new EncryptionSuite + reopen them.
+     *
+     * @param string $oldEncryptionSuiteId The old EncryptionSuite ID
+     * @param string $newEncryptionSuiteId The new EncryptionSuite ID
+     *
+     * @return int The number of rows affected.
+     *
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
+    public function unlockAndUpdateSuite(string $oldEncryptionSuiteId, string $newEncryptionSuiteId): int
+    {
+        if ($oldEncryptionSuiteId === '' || $newEncryptionSuiteId === '') {
+            throw new InvalidArgumentException(message: 'Both suite IDs are required');
+        }
+
+        if ($oldEncryptionSuiteId === $newEncryptionSuiteId) {
+            throw new RuntimeException(message: 'oldEncryptionSuiteId and newEncryptionSuiteId must differ');
+        }
+
+        $count = $this->mapper->unlockAndUpdateSuite($oldEncryptionSuiteId, $newEncryptionSuiteId);
+
+        $this->logger->info(
+            'Unlocked '.$count.' secret requests by migrating suite '.$oldEncryptionSuiteId.' -> '.$newEncryptionSuiteId,
+            ['app' => 'doriath']
+        );
+
+        return $count;
+    }//end unlockAndUpdateSuite()
 
     /**
      * Create a new pending secret request.
