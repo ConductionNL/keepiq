@@ -1,0 +1,29 @@
+{
+  "id": "tutorials/admin/admin-settings",
+  "title": "Manage Doriath settings",
+  "description": "Configure encryption, group-level sharing policies, and the audit log from the Nextcloud admin settings panel.",
+  "source": "@site/tutorials/admin/01-admin-settings.md",
+  "sourceDirName": "tutorials/admin",
+  "slug": "/tutorials/admin/admin-settings",
+  "permalink": "/docs/tutorials/admin/admin-settings",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/tutorials/admin/01-admin-settings.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1,
+    "title": "Manage Doriath settings",
+    "description": "Configure encryption, group-level sharing policies, and the audit log from the Nextcloud admin settings panel."
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Admin guide",
+    "permalink": "/docs/category/admin-guide"
+  },
+  "next": {
+    "title": "Doriath — Architecture & Data Model",
+    "permalink": "/docs/ARCHITECTURE"
+  }
+}
