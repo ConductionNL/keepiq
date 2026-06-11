@@ -45,7 +45,7 @@
 ## 4. Controllers and API Routes
 
 - [x] 4.1 Create `SecretRequestController` extending OCSController in `lib/Controller/SecretRequestController.php` with authenticated endpoints: index (GET, list by secret_id or by user), create (POST, new request or re-request based on presence of secret_id), destroy (DELETE, revoke pending request) — W14 scaffold: `lib/Controller/SecretRequestController.php` ships `index` (list-by-user) / `create` / `approve` / `decline` / `destroy`; the list-by-secret-id branch lands with the full build cycle
-- [~] 4.2 Create `SecretRequestFillController` in `lib/Controller/SecretRequestFillController.php` with #[PublicPage] attribute; endpoints: show (GET /api/v1/public/secret-requests/{token}, returns requested_fields + public_certificate + status), fill (POST /api/v1/public/secret-requests/{token}/fill, accepts encrypted_fields map)
+- [x] 4.2 Create `SecretRequestFillController` in `lib/Controller/SecretRequestFillController.php` with #[PublicPage] attribute; endpoints: show (GET /api/v1/public/secret-requests/{token}, returns requested_fields + public_certificate + status), fill (POST /api/v1/public/secret-requests/{token}/fill, accepts encrypted_fields map)
 - [x] 4.3 Register all API routes in `appinfo/routes.php`: authenticated routes under `/api/v1/secret-requests` (GET index, POST create, DELETE {id}); public routes under `/api/v1/public/secret-requests` (GET {token}, POST {token}/fill) — W14 scaffold: `secretRequest#index|create|approve|decline|destroy` registered under `/api/v1/secret-requests` + `/{id}/approve` + `/{id}/decline`; the `#[PublicPage]` public fill routes land with the full build cycle
 - [x] 4.4 Add authorization checks in SecretRequestController: validate caller owns the secret (directly or via application ownership); return 403 for unauthorized access — W14 scaffold: every endpoint requires `IUserSession::getUser()` + service-layer `findOwnedRequest()` ownership check (createdBy == current user) emitting 403/400; application-ownership branch lands with the full build cycle
 
@@ -63,27 +63,27 @@
 
 ## 7. Pinia Store (Frontend)
 
-- [~] 7.1 Create `src/store/modules/secretRequest.js` (useSecretRequestStore) with state: secretRequests (array per current secret), loading; actions: createRequest(requestedFields, expiresAt), createReRequest(secretId, requestedFields, expiresAt), fetchRequests(secretId), revokeRequest(requestId)
-- [~] 7.2 Add public actions to useSecretRequestStore: fetchPublicRequest(token) calls GET /api/v1/public/secret-requests/{token}, returns requested_fields + public_certificate; submitFill(token, encryptedFields) calls POST /api/v1/public/secret-requests/{token}/fill
-- [~] 7.3 Implement browser-side RSA encryption in submitFill: import public key from certificate via importPublicKey() from src/crypto/rsa.js, for each field value call rsaEncrypt(value, publicKey) with chunking, POST encrypted field map
+- [x] 7.1 Create `src/store/modules/secretRequest.js` (useSecretRequestStore) with state: secretRequests (array per current secret), loading; actions: createRequest(requestedFields, expiresAt), createReRequest(secretId, requestedFields, expiresAt), fetchRequests(secretId), revokeRequest(requestId)
+- [x] 7.2 Add public actions to useSecretRequestStore: fetchPublicRequest(token) calls GET /api/v1/public/secret-requests/{token}, returns requested_fields + public_certificate; submitFill(token, encryptedFields) calls POST /api/v1/public/secret-requests/{token}/fill
+- [x] 7.3 Implement browser-side RSA encryption in submitFill: import public key from certificate via importPublicKey() from src/crypto/rsa.js, for each field value call rsaEncrypt(value, publicKey) with chunking, POST encrypted field map
 
 ## 8. Vue Components (Frontend)
 
-- [~] 8.1 Create `src/views/SecretRequestFill.vue` as standalone public page at /share/request/:token: on mount call fetchPublicRequest(token), render form with labeled inputs for each requested field (password type for fields named key/password/secret, text for others), submit button disabled during encryption, success/error messages, "temporarily unavailable" for locked status, error for expired/fulfilled
+- [x] 8.1 Create `src/views/SecretRequestFill.vue` as standalone public page at /share/request/:token: on mount call fetchPublicRequest(token), render form with labeled inputs for each requested field (password type for fields named key/password/secret, text for others), submit button disabled during encryption, success/error messages, "temporarily unavailable" for locked status, error for expired/fulfilled
 - [~] 8.2 Create `src/components/SecretRequestCreateDialog.vue` using NcDialog, NcInputField, NcDateTimePicker, NcButton: field selector with checkboxes for secret fields (key, login, additional_fields keys), optional expiry date picker, on submit creates request via store, displays fill-in link with copy button; for re-requests shows a note that existing values will be overwritten
-- [~] 8.3 Create `src/components/SecretRequestList.vue` using CnDataTable: table of requests for a secret showing status (pending/fulfilled/locked), token (truncated), requested fields, created date, expiry, revoke button (only for pending); integrated into SecretDetail.vue sidebar
+- [x] 8.3 Create `src/components/SecretRequestList.vue` using CnDataTable: table of requests for a secret showing status (pending/fulfilled/locked), token (truncated), requested fields, created date, expiry, revoke button (only for pending); integrated into SecretDetail.vue sidebar
 - [~] 8.4 Integrate SecretRequestCreateDialog and SecretRequestList into SecretDetail.vue sidebar (CnObjectSidebar) as a "Requests" section; create request button visible to secret owner; list shows all requests for the secret
 
 ## 9. Vue Router Integration
 
-- [~] 9.1 Add `/share/request/:token` route to `src/router/index.js` mapping to SecretRequestFill component with props: `route => ({ token: route.params.token })`; already defined in ARCHITECTURE.md
-- [~] 9.2 Verify route guard exemption: SecretRequestFill route name MUST be in the public routes list alongside LinkShareAccess and Lock (no lock screen redirect)
+- [x] 9.1 Add `/share/request/:token` route to `src/router/index.js` mapping to SecretRequestFill component with props: `route => ({ token: route.params.token })`; already defined in ARCHITECTURE.md
+- [x] 9.2 Verify route guard exemption: SecretRequestFill route name MUST be in the public routes list alongside LinkShareAccess and Lock (no lock screen redirect)
 
 ## 10. Internationalization
 
-- [~] 10.1 Add English translations for all new UI strings: fill-in page labels (heading, field labels, submit button, success/error messages, expired/locked messages), create dialog labels (field selector, expiry, copy link), request list headers (status, token, fields, created, expires), notification messages
-- [~] 10.2 Add Dutch translations for all new UI strings
-- [~] 10.3 Use `t()` / `n()` translation functions in all Vue components and PHP controllers/services/notifier
+- [x] 10.1 Add English translations for all new UI strings: fill-in page labels (heading, field labels, submit button, success/error messages, expired/locked messages), create dialog labels (field selector, expiry, copy link), request list headers (status, token, fields, created, expires), notification messages
+- [x] 10.2 Add Dutch translations for all new UI strings
+- [x] 10.3 Use `t()` / `n()` translation functions in all Vue components and PHP controllers/services/notifier
 
 ## 11. Unit Tests (PHP)
 
@@ -97,7 +97,7 @@
 ## 12. Integration Tests (PHP)
 
 - [~] 12.1 Write integration tests for SecretRequest API: create request (returns token), list requests (requester sees all), revoke request (deletes correctly based on new/re-request)
-- [~] 12.2 Write integration tests for public fill-in API: fetch metadata (returns requested_fields + certificate), fill request (stores blobs, sets fulfilled), access fulfilled request (error), access expired request (error), access invalid token (404)
+- [x] 12.2 Write integration tests for public fill-in API: fetch metadata (returns requested_fields + certificate), fill request (stores blobs, sets fulfilled), access fulfilled request (error), access expired request (error), access invalid token (404)
 - [~] 12.3 Write integration test: field validation — missing field returns error and Secret unchanged, empty field returns error and Secret unchanged
 - [~] 12.4 Write integration test: re-request flow — create re-request, existing values readable, fill re-request, values overwritten, possibly_compromised_at unset
 - [~] 12.5 Write integration test: delete secret cascades to SecretRequests (both pending and fulfilled)
@@ -107,8 +107,8 @@
 
 ## 13. Frontend Tests
 
-- [~] 13.1 Write unit tests for useSecretRequestStore: createRequest, createReRequest, fetchRequests, revokeRequest, fetchPublicRequest, submitFill
-- [~] 13.2 Write component tests for SecretRequestFill: renders form fields from requested_fields, encrypts values on submit, shows success message, shows error for expired/fulfilled/locked
+- [x] 13.1 Write unit tests for useSecretRequestStore: createRequest, createReRequest, fetchRequests, revokeRequest, fetchPublicRequest, submitFill
+- [x] 13.2 Write component tests for SecretRequestFill: renders form fields from requested_fields, encrypts values on submit, shows success message, shows error for expired/fulfilled/locked
 - [~] 13.3 Write component tests for SecretRequestCreateDialog: field selector renders available fields, expiry picker works, submit triggers store action, copy button works for generated link
-- [~] 13.4 Write component tests for SecretRequestList: renders request rows, revoke button dispatches action, status badges display correctly
+- [x] 13.4 Write component tests for SecretRequestList: renders request rows, revoke button dispatches action, status badges display correctly
 - [~] 13.5 Write cross-implementation encryption test: encrypt value in browser (WebCrypto RSA-OAEP-SHA256) via fill-in flow, verify PHP (OpenSSL) can decrypt with the matching private key
