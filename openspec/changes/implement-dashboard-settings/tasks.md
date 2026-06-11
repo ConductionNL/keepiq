@@ -36,10 +36,10 @@
 
 ## 2. Controllers and Routes
 
-- [~] 2.1 Update `DashboardController` in `lib/Controller/DashboardController.php`: inject DashboardService, IUserSession, IGroupManager; add `summary()` method with `@NoAdminRequired` annotation that determines isAdmin and calls DashboardService::fetchSummary(), returns JSONResponse
+- [x] 2.1 Update `DashboardController` in `lib/Controller/DashboardController.php`: inject DashboardService, IUserSession, IGroupManager; add `summary()` method with `@NoAdminRequired` annotation that determines isAdmin and calls DashboardService::fetchSummary(), returns JSONResponse
 - [~] 2.2 Update `SettingsController` in `lib/Controller/SettingsController.php`: add `getAdminSettings()` method (admin-only, no annotation) that calls SettingsService::getAdminSettings(); add `updateAdminSettings()` method (admin-only) that reads request params and calls SettingsService::updateAdminSettings() with try/catch for InvalidArgumentException returning 400
 - [x] 2.3 Update `SettingsController`: add `getUserSettings()` method with `@NoAdminRequired` that calls SettingsService::getUserPreferences() for current user; add `updateUserSettings()` method with `@NoAdminRequired` that calls SettingsService::updateUserPreferences() for current user — **W15 scaffold: shipped as a dedicated `DashboardSettingsController` at `lib/Controller/DashboardSettingsController.php` + routes in `appinfo/routes.php` (`/api/v1/dashboard-settings`).**
-- [~] 2.4 Update `appinfo/routes.php`: add routes `GET /api/dashboard/summary` -> `dashboard#summary`, `GET /api/settings/admin` -> `settings#getAdminSettings`, `PUT /api/settings/admin` -> `settings#updateAdminSettings`, `GET /api/settings/user` -> `settings#getUserSettings`, `PUT /api/settings/user` -> `settings#updateUserSettings`; ensure new API routes are listed BEFORE the SPA catch-all
+- [~] 2.4 Update `appinfo/routes.php`: add routes `GET /api/dashboard/summary` -> `dashboard#summary`, `GET /api/settings/admin` -> `settings#getAdminSettings`, `PUT /api/settings/admin` -> `settings#updateAdminSettings`, `GET /api/settings/user` -> `settings#getUserSettings`, `PUT /api/settings/user` -> `settings#updateUserSettings`; ensure new API routes are listed BEFORE the SPA catch-all <!-- W16: dashboard#summary route added; settings admin/user routes still deferred -->
 
 ## 3. Dashboard Frontend
 

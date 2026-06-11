@@ -22,12 +22,17 @@ declare(strict_types=1);
 namespace OCA\Doriath\Controller;
 
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Service\DashboardService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Controller for the main Doriath dashboard page.
@@ -37,9 +42,12 @@ class DashboardController extends Controller
     /**
      * Constructor for the DashboardController.
      *
-     * @param IRequest      $request      The request object
-     * @param IInitialState $initialState The initial state service
-     * @param IAppConfig    $appConfig    The app config interface
+     * @param IRequest         $request          The request object
+     * @param IInitialState    $initialState     The initial state service
+     * @param IAppConfig       $appConfig        The app config interface
+     * @param DashboardService $dashboardService The dashboard aggregator
+     * @param IUserSession     $userSession      The user session
+     * @param IGroupManager    $groupManager     The group manager
      *
      * @return void
      */
@@ -47,9 +55,34 @@ class DashboardController extends Controller
         IRequest $request,
         private IInitialState $initialState,
         private IAppConfig $appConfig,
+        private DashboardService $dashboardService,
+        private IUserSession $userSession,
+        private IGroupManager $groupManager,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
+
+    /**
+     * Return the dashboard summary payload for the current user.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/specs/dashboard-settings/spec.md#requirement-the-system-provides-an-aggregated-dashboard-summary
+     */
+    public function summary(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['error' => 'unauthenticated'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId  = $user->getUID();
+        $isAdmin = $this->groupManager->isAdmin($userId);
+
+        return new JSONResponse(data: $this->dashboardService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
+    }//end summary()
 
     /**
      * Render the main dashboard page.

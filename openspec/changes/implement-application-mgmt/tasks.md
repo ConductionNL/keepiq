@@ -82,14 +82,14 @@
 
 ## 7. Notification Integration
 
-- [~] 7.1 Add notification subject `app_pending` to `NotificationService::SUBJECT_SETTING_MAP` with null setting key (always sent to admins, not suppressible)
-- [~] 7.2 Add `app_pending` subject rendering to `DoriathNotifier`: subject "New application pending approval", message "Application '{app_name}' was registered by {registered_by} and is awaiting approval.", action link to admin settings application queue deep-link
+- [x] 7.1 Add notification subject `app_pending` to `NotificationService::SUBJECT_SETTING_MAP` with null setting key (always sent to admins, not suppressible)
+- [x] 7.2 Add `app_pending` subject rendering to `DoriathNotifier`: subject "New application pending approval", message "Application '{app_name}' was registered by {registered_by} and is awaiting approval.", action link to admin settings application queue deep-link
 - [~] 7.3 Implement admin notification dispatch in ApplicationService::register(): when status=pending, query admin group via IGroupManager, dispatch `app_pending` notification to each admin user
 
 ## 8. Dashboard Integration
 
-- [~] 8.1 Implement `ApplicationMapper::countPending(): int` (already declared in task 2.2, ensure DashboardService from implement-dashboard-settings can call it)
-- [~] 8.2 Verify DashboardService::fetchSummary() correctly calls ApplicationMapper::countPending() and includes the count in the response under `pending_apps_count` for admin users
+- [x] 8.1 Implement `ApplicationMapper::countPending(): int` (already declared in task 2.2, ensure DashboardService from implement-dashboard-settings can call it)
+- [x] 8.2 Verify DashboardService::fetchSummary() correctly calls ApplicationMapper::countPending() and includes the count in the response under `pending_apps_count` for admin users
 
 ## 9. Pinia Store (Frontend)
 

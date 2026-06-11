@@ -23,10 +23,12 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Doriath\Service\NotificationService;
 use OCA\Doriath\Service\SecretRequestService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests for SecretRequestService.
@@ -259,5 +261,239 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionMessage('Request not found');
 
         $this->service->approve(requestId: 'missing', userId: 'alice');
+    }
+
+    /**
+     * getByToken returns the entity for a healthy pending request.
+     *
+     * @return void
+     */
+    public function testGetByTokenReturnsPendingEntity(): void
+    {
+        $entity = $this->buildPending();
+
+        $this->mapper->expects($this->once())
+            ->method('findByToken')
+            ->with('tok-good')
+            ->willReturn($entity);
+
+        $this->assertSame($entity, $this->service->getByToken(token: 'tok-good'));
+    }
+
+    /**
+     * getByToken throws 404 when no row exists.
+     *
+     * @return void
+     */
+    public function testGetByTokenThrows404OnUnknown(): void
+    {
+        $this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('nope'));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionCode(404);
+
+        $this->service->getByToken(token: 'tok-bogus');
+    }
+
+    /**
+     * getByToken throws 423 for locked requests.
+     *
+     * @return void
+     */
+    public function testGetByTokenThrows423OnLocked(): void
+    {
+        $entity = $this->buildPending();
+        $entity->setStatus(SecretRequest::STATUS_LOCKED);
+        $this->mapper->method('findByToken')->willReturn($entity);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionCode(423);
+
+        $this->service->getByToken(token: 'tok-locked');
+    }
+
+    /**
+     * getByToken throws 410 for fulfilled requests.
+     *
+     * @return void
+     */
+    public function testGetByTokenThrows410OnFulfilled(): void
+    {
+        $entity = $this->buildPending();
+        $entity->setStatus(SecretRequest::STATUS_FULFILLED);
+        $this->mapper->method('findByToken')->willReturn($entity);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionCode(410);
+
+        $this->service->getByToken(token: 'tok-done');
+    }
+
+    /**
+     * getByToken throws 408 when the request has expired.
+     *
+     * @return void
+     */
+    public function testGetByTokenThrows408OnExpired(): void
+    {
+        $entity = $this->buildPending();
+        $entity->setExpiresAt(new DateTime('2020-01-01'));
+        $this->mapper->method('findByToken')->willReturn($entity);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionCode(408);
+
+        $this->service->getByToken(token: 'tok-stale');
+    }
+
+    /**
+     * fill flips status to fulfilled + dispatches request_fulfilled.
+     *
+     * @return void
+     */
+    public function testFillMarksFulfilledAndNotifies(): void
+    {
+        $entity = $this->buildPending();
+        $entity->setRequestedFields(json_encode(['key', 'login']));
+
+        // First lookup via getByToken, second atomic re-read.
+        $this->mapper->method('findByToken')->willReturn($entity);
+        $this->mapper->method('findById')->willReturn($entity);
+
+        $this->mapper->expects($this->once())
+            ->method('update')
+            ->willReturnArgument(0);
+
+        $notifier = $this->createMock(originalClassName: NotificationService::class);
+        $notifier->expects($this->once())
+            ->method('notify')
+            ->with(
+                $this->equalTo('request_fulfilled'),
+                $this->equalTo('requester'),
+                $this->arrayHasKey('secret_id'),
+                $this->equalTo('secret'),
+                $this->equalTo('sec-1'),
+            )
+            ->willReturn(true);
+
+        $logger  = $this->createMock(originalClassName: LoggerInterface::class);
+        $service = new SecretRequestService(
+            mapper: $this->mapper,
+            logger: $logger,
+            notificationService: $notifier,
+        );
+
+        $result = $service->fill(
+            token: 'tok-good',
+            encryptedFields: ['key' => 'CIPHER_KEY', 'login' => 'CIPHER_LOGIN'],
+        );
+
+        $this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+        $this->assertNotNull($result->getFulfilledAt());
+    }
+
+    /**
+     * fill rejects payloads that omit a required field.
+     *
+     * @return void
+     */
+    public function testFillRejectsMissingField(): void
+    {
+        $entity = $this->buildPending();
+        $entity->setRequestedFields(json_encode(['key', 'login']));
+        $this->mapper->method('findByToken')->willReturn($entity);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Missing required field: login');
+
+        $this->service->fill(token: 'tok-good', encryptedFields: ['key' => 'X']);
+    }
+
+    /**
+     * fill rejects empty values for required fields.
+     *
+     * @return void
+     */
+    public function testFillRejectsEmptyValue(): void
+    {
+        $entity = $this->buildPending();
+        $entity->setRequestedFields(json_encode(['key']));
+        $this->mapper->method('findByToken')->willReturn($entity);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Empty value for field: key');
+
+        $this->service->fill(token: 'tok-good', encryptedFields: ['key' => '']);
+    }
+
+    /**
+     * lockByEncryptionSuiteId delegates to the mapper.
+     *
+     * @return void
+     */
+    public function testLockByEncryptionSuiteIdDelegates(): void
+    {
+        $this->mapper->expects($this->once())
+            ->method('lockByEncryptionSuiteId')
+            ->with('suite-old')
+            ->willReturn(4);
+
+        $this->assertSame(4, $this->service->lockByEncryptionSuiteId(encryptionSuiteId: 'suite-old'));
+    }
+
+    /**
+     * unlockAndUpdateSuite delegates to the mapper.
+     *
+     * @return void
+     */
+    public function testUnlockAndUpdateSuiteDelegates(): void
+    {
+        $this->mapper->expects($this->once())
+            ->method('unlockAndUpdateSuite')
+            ->with('suite-old', 'suite-new')
+            ->willReturn(2);
+
+        $this->assertSame(
+            2,
+            $this->service->unlockAndUpdateSuite(
+                oldEncryptionSuiteId: 'suite-old',
+                newEncryptionSuiteId: 'suite-new',
+            )
+        );
+    }
+
+    /**
+     * unlockAndUpdateSuite rejects identical suite IDs.
+     *
+     * @return void
+     */
+    public function testUnlockAndUpdateSuiteRejectsSameSuite(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        $this->service->unlockAndUpdateSuite(
+            oldEncryptionSuiteId: 'suite-x',
+            newEncryptionSuiteId: 'suite-x',
+        );
+    }
+
+    /**
+     * Build a baseline pending request for getByToken/fill assertions.
+     *
+     * @return SecretRequest
+     */
+    private function buildPending(): SecretRequest
+    {
+        $entity = new SecretRequest();
+        $entity->setId('req-1');
+        $entity->setSecretId('sec-1');
+        $entity->setEncryptionSuiteId('suite-1');
+        $entity->setToken('tok-good');
+        $entity->setRequestedFields('["key"]');
+        $entity->setStatus(SecretRequest::STATUS_PENDING);
+        $entity->setCreatedBy('requester');
+        $entity->setCreatedAt(new DateTime());
+
+        return $entity;
     }
 }

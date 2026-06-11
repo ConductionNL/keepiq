@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\AppInfo;
 
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Notification\DoriathNotifier;
 use OCA\Doriath\Search\SecretSearchProvider;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
@@ -70,6 +71,10 @@ class Application extends App implements IBootstrap
         // queries unencrypted name/url metadata only and needs no vault
         // session (ADR-003).
         $context->registerSearchProvider(SecretSearchProvider::class);
+
+        // Register the notifier responsible for rendering sharing,
+        // secret-request and application-management notification subjects.
+        $context->registerNotifierService(DoriathNotifier::class);
 
         // Repair steps (BootstrapCertificateAuthority, InitializeSettings,
         // SeedDevelopmentData, SeedSecretTypes, SeedDevelopmentSecrets) are
