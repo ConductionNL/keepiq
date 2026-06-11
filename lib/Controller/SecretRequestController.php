@@ -1,0 +1,240 @@
+<?php
+
+/**
+ * Doriath Secret Request Controller
+ *
+ * Authenticated API controller for SecretRequest CRUD (scaffold). The
+ * #[PublicPage] two-phase fill-in endpoint is deferred to the full
+ * implement-secret-requests build cycle.
+ *
+ * @category Controller
+ * @package  OCA\Doriath\Controller
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Doriath\Controller;
+
+use DateTime;
+use Exception;
+use InvalidArgumentException;
+use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Service\SecretRequestService;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\OCSController;
+use OCP\IRequest;
+use OCP\IUserSession;
+
+/**
+ * Authenticated API controller for SecretRequest CRUD.
+ */
+class SecretRequestController extends OCSController
+{
+    /**
+     * Constructor for SecretRequestController.
+     *
+     * @param IRequest             $request The request object
+     * @param SecretRequestService $service The secret-request service
+     * @param IUserSession         $session The user session
+     *
+     * @return void
+     */
+    public function __construct(
+        IRequest $request,
+        private SecretRequestService $service,
+        private IUserSession $session,
+    ) {
+        parent::__construct(appName: Application::APP_ID, request: $request);
+    }//end __construct()
+
+    /**
+     * List secret requests created by the current user.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+     */
+    #[NoAdminRequired]
+    public function index(): JSONResponse
+    {
+        $user = $this->session->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $requests = $this->service->listByUser($user->getUID());
+
+        return new JSONResponse(
+            data: array_map(static fn ($r) => $r->jsonSerialize(), $requests)
+        );
+    }//end index()
+
+    /**
+     * Create a new pending secret request.
+     *
+     * @param string        $secretId          The Secret ID (unfilled or to-be-overwritten)
+     * @param string        $encryptionSuiteId The recipient's active suite ID
+     * @param array<string> $requestedFields   Field names to be filled in
+     * @param bool          $isReRequest       Whether this is a re-request
+     * @param string|null   $expiresAt         Optional ISO-8601 expiry
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+     */
+    #[NoAdminRequired]
+    public function create(
+        string $secretId,
+        string $encryptionSuiteId,
+        array $requestedFields,
+        bool $isReRequest=false,
+        ?string $expiresAt=null,
+    ): JSONResponse {
+        $user = $this->session->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $expiry = null;
+        if ($expiresAt !== null && $expiresAt !== '') {
+            try {
+                $expiry = new DateTime($expiresAt);
+            } catch (Exception) {
+                return new JSONResponse(
+                    data: ['message' => 'Invalid expiry timestamp'],
+                    statusCode: Http::STATUS_BAD_REQUEST
+                );
+            }
+        }
+
+        try {
+            $entity = $this->service->create(
+                secretId: $secretId,
+                encryptionSuiteId: $encryptionSuiteId,
+                requestedFields: $requestedFields,
+                isReRequest: $isReRequest,
+                expiresAt: $expiry,
+                userId: $user->getUID()
+            );
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+    }//end create()
+
+    /**
+     * Approve a pending secret request.
+     *
+     * @param string $id The request ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+     */
+    #[NoAdminRequired]
+    public function approve(string $id): JSONResponse
+    {
+        $user = $this->session->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $entity = $this->service->approve(requestId: $id, userId: $user->getUID());
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(data: $entity->jsonSerialize());
+    }//end approve()
+
+    /**
+     * Decline a pending secret request.
+     *
+     * @param string $id The request ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+     */
+    #[NoAdminRequired]
+    public function decline(string $id): JSONResponse
+    {
+        $user = $this->session->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $entity = $this->service->decline(requestId: $id, userId: $user->getUID());
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(data: $entity->jsonSerialize());
+    }//end decline()
+
+    /**
+     * Revoke (cascade-delete) all requests for the secret bound to $id.
+     *
+     * Scaffold-level revoke: deletes the row through the mapper by relying
+     * on the service's owned-request lookup; the full revoke semantics
+     * (delete unfilled Secret with new requests, keep Secret on
+     * re-requests) ship with the dedicated build cycle.
+     *
+     * @param string $id The request ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+     */
+    #[NoAdminRequired]
+    public function destroy(string $id): JSONResponse
+    {
+        $user = $this->session->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $entity = $this->service->decline(requestId: $id, userId: $user->getUID());
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
+        }
+
+        return new JSONResponse(data: ['status' => 'deleted', 'request' => $entity->jsonSerialize()]);
+    }//end destroy()
+}//end class
