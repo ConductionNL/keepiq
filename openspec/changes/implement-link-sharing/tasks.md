@@ -57,8 +57,8 @@ the 2026-06-11 second pass:
 
 ## 5. Cascade Integration
 
-- [x] 5.1 Cascade *method* implemented (`LinkShareService.deleteBySecretId`). [DEFERRED — call site] Wiring into `SecretService.delete()` is deferred until implement-secrets lands (no SecretService exists yet)
-- [x] 5.2 Cascade *method* implemented (`LinkShareService.deleteByUserId`). [DEFERRED — call site] Wiring into the compromise-recovery flow is deferred to avoid coupling the working recovery path to a half-integrated dependency before the secrets feature exists
+- [x] 5.1 Cascade *method* + call site complete: `SecretService::delete()` (lib/Service/SecretService.php:261) invokes `$this->linkShareService->deleteBySecretId($id)` before deleting the secret row, so every link share signed against the destroyed secret is invalidated synchronously
+- [x] 5.2 Cascade *method* + call site complete: `EncryptionSuiteController::compromiseRecovery()` (lib/Controller/EncryptionSuiteController.php) injects `LinkShareService` and calls `deleteByUserId($userId)` immediately after the old suite is marked compromised — every outstanding link share signed against the now-compromised public key is wiped before the new suite is provisioned. Covered by `testCompromiseRecoveryCascadesLinkShareDeleteByUserId` in `tests/Unit/Controller/EncryptionSuiteControllerTest.php`
 
 ## 6. Argon2id Crypto Module (Frontend)
 
@@ -112,8 +112,7 @@ the 2026-06-11 second pass:
 
 ## 13. Frontend Tests
 
-- [~] 13.1 [DEFERRED — the vitest harness (added 2026-06-10 in `tests/vitest/`) currently runs in the `node` env for crypto only; the `argon2-browser` WASM peer is not yet installed (task 6.1 deferred), and component tests need a jsdom env + `@vitejs/plugin-vue2`] argon2.js round-trip tests
-- [~] 13.2 [DEFERRED — useLinkShareStore tests need a jsdom env + `@vue/test-utils`; component-test harness not yet wired in vitest] useLinkShareStore tests
-- [~] 13.3 [DEFERRED — component-test harness not yet wired in vitest + component depends on the secrets SPA] LinkShareAccess component tests
-- [~] 13.4 [DEFERRED — component-test harness not yet wired in vitest + depends on SecretDetail] LinkShareCreateDialog component tests
-- [~] 13.5 [DEFERRED — component-test harness not yet wired in vitest + depends on SecretDetail] LinkShareList component tests
+- [x] 13.1 argon2.js round-trip + tag-mismatch + salt/IV-randomisation tests in `tests/vitest/argon2.spec.js` (6 tests). The Argon2 WASM is alias-stubbed to a deterministic SHA-512 KDF (`tests/vitest/stubs/argon2-browser.js`) so the AES-256-GCM round-trip + auth-tag enforcement run cleanly under vitest's node env; the real KDF is exercised by the Playwright e2e suite in the browser
+- [x] 13.2 useLinkShareStore tests in `tests/store/linkShare.spec.js` (8 tests): client-side encryption-before-POST, plaintext never in request body, one-time password/URL transient state, persistence-leak guard (no localStorage / sessionStorage writes), fetchLinkShares populates state, deleteLinkShare removes by id, clearCreatedPassword resets transient fields. Pinia-backed under jsdom
+- [~] 13.3 [DEFERRED — component depends on the secrets SPA + standalone public access page (task 8.1 / 9.1) which is still gated on the manifest-v2-shell SPA work] LinkShareAccess component tests
+- [x] 13.4 / 13.5 SecretShareDialog component tests in `tests/dialogs/SecretShareDialog.spec.js` (4 tests). The unified dialog (the consolidation of the create / list / one-time-reveal flows per 8.2 / 8.3 / 8.4) is mounted via `@vue/test-utils` with render-function stubs for `@nextcloud/vue` primitives: on mount fetches existing shares for the secret; createLink decrypts the secret, runs the snapshot encryption, surfaces the one-time URL + password; revoke delegates to the store; close clears the transient password and emits `close`. The vitest jsdom harness (`@vitejs/plugin-vue2` + `@vue/test-utils` + `jsdom`) is now wired in `vitest.config.js` with the `environmentMatchGlobs` split (crypto specs run in `node`, DOM specs run in `jsdom`)

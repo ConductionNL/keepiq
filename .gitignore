@@ -54,6 +54,10 @@ phpqa_output.log
 **/update*Settings*
 **/rebase*
 **/setup*
+# vitest harness setup MUST ship — re-allow it (the catch-all above was
+# intended for stray "setup.txt" / "setup-rebase" workspace artefacts).
+!tests/vitest/setup.js
+!tests/**/setup.js
 
 # Temporary test files that shouldn't be committed
 simple-solr-test.php
