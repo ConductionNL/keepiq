@@ -170,8 +170,8 @@ class SecretController extends OCSController
      */
     #[NoAdminRequired]
     public function create(
-        string $name,
-        string $key,
+        ?string $name=null,
+        ?string $key=null,
         ?string $url=null,
         ?string $typeId=null,
         ?string $folderId=null,
@@ -181,6 +181,15 @@ class SecretController extends OCSController
         $userId = $this->uid();
         if ($userId === null) {
             return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        // Validate required params HERE so a missing body returns 400, not a 500
+        // from the framework dispatcher failing to bind non-nullable arguments.
+        if ($name === null || $name === '' || $key === null || $key === '') {
+            return new JSONResponse(
+                data: ['message' => 'Missing required parameters: name and key are required'],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
         }
 
         $data = [

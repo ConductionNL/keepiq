@@ -135,12 +135,21 @@ class EncryptionSuiteController extends OCSController
      */
     #[NoAdminRequired]
     public function create(
-        string $publicKey,
-        string $encryptedPrivateKey,
+        ?string $publicKey=null,
+        ?string $encryptedPrivateKey=null,
     ): JSONResponse {
         $user = $this->userSession->getUser();
         if ($user === null) {
             return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        // Validate required params HERE so a missing body returns 400, not a 500
+        // from the framework dispatcher failing to bind non-nullable arguments.
+        if ($publicKey === null || $publicKey === '' || $encryptedPrivateKey === null || $encryptedPrivateKey === '') {
+            return new JSONResponse(
+                data: ['message' => 'Missing required parameters: publicKey and encryptedPrivateKey are required'],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
         }
 
         $userId = $user->getUID();
@@ -162,12 +171,19 @@ class EncryptionSuiteController extends OCSController
                 encryptedPrivateKey: $encryptedPrivateKey
             );
             return new JSONResponse(data: $suite->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+        } catch (InvalidArgumentException $e) {
+            // Malformed key material (e.g. a non-PEM publicKey) is a client error,
+            // not a server fault — surface it as a 400 instead of a 500.
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
         } catch (RuntimeException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_SERVICE_UNAVAILABLE
             );
-        }
+        }//end try
     }//end create()
 
     /**
@@ -271,6 +287,7 @@ class EncryptionSuiteController extends OCSController
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+     * @spec openspec/changes/implement-link-sharing/tasks.md#5.2
      */
     #[NoAdminRequired]
     public function compromiseRecovery(
@@ -295,9 +312,8 @@ class EncryptionSuiteController extends OCSController
             // public-key fingerprint baked into each share's encrypted
             // snapshot now belongs to a compromised key pair. Any holder of
             // an outstanding link must be force-locked-out so a re-share
-            // under the new suite is required.
-            //
-            // @spec openspec/changes/implement-link-sharing/tasks.md#5.2
+            // under the new suite is required. See the method docblock @spec
+            // implement-link-sharing#5.2 for the cascade-revoke requirement.
             $this->linkShareService->deleteByUserId(userId: $userId);
 
             $newSuite  = $this->suiteService->createSuite(

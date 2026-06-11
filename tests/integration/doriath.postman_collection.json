@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Doriath API Contract Suite",
-		"description": "Newman/Postman API-contract tests for the Doriath (vault) Nextcloud app. Locks the HTTP contract of doriath's controllers (appinfo/routes.php + lib/Controller/*): secrets, encryption suites, CA status, folders, secret-types, and the public link-share access endpoint. Every family is exercised for a happy path, an error/validation case (4xx, not 500 where the controller is correct), and an authorization case (no auth -> 401, or 404 for the public token route). The suite is self-contained and idempotent: it creates the vault objects it needs (a secret, a folder) and deletes them again in teardown.\n\nThis suite asserts the Phase-0 fixes: secret create returns 201 with ownerType:\"user\" (not 500); secret/suite/folder reads return their list/object shape; the public link-share token route is reachable without NC auth and 404s on an unknown token.\n\nMost vault WRITES that mint or use key material (suite create, private-key upload, link-share create) require the in-browser RSA crypto flow and an unlocked vault with a freshly-generated key — they are not drivable from a headless API client and are QUARANTINED honestly below (covered by Playwright). What IS drivable from the API — because the dev vault already has an unlocked suite — is the full secret CRUD round-trip, folder create, and all the reads + authz, which this suite exercises.\n\nAUTH MODEL: collection auth is noauth; every authenticated request carries an EXPLICIT basic-auth block (admin:admin via adminUser/adminPass). The no-auth requests target {{noAuthBase}} (127.0.0.1) so the host-scoped NC session cookie established on {{baseUrl}} (localhost) is never sent to them. Run with --ignore-redirects. See run-newman.sh.\n\nKNOWN BUG (quarantined, NOT a fake pass): SecretController::create declares non-nullable string $name/$key params, so a request OMITTING a required field triggers NC's reflection param-injection 500 (HTML error page) instead of a clean 400. The controller should validate presence and return 400. The 'create missing-required-field QUARANTINED' test asserts the CURRENT 500 so the suite stays green without faking a pass; flip it to expect 400 once the controller validates presence (an empty-string key already correctly returns 400 via the service's InvalidArgumentException — see the real validation test).",
+		"description": "Newman/Postman API-contract tests for the Doriath (vault) Nextcloud app. Locks the HTTP contract of doriath's controllers (appinfo/routes.php + lib/Controller/*): secrets, encryption suites, CA status, folders, secret-types, and the public link-share access endpoint. Every family is exercised for a happy path, an error/validation case (4xx, not 500 where the controller is correct), and an authorization case (no auth -> 401, or 404 for the public token route). The suite is self-contained and idempotent: it creates the vault objects it needs (a secret, a folder) and deletes them again in teardown.\n\nThis suite asserts the Phase-0 fixes: secret create returns 201 with ownerType:\"user\" (not 500); secret/suite/folder reads return their list/object shape; the public link-share token route is reachable without NC auth and 404s on an unknown token.\n\nMost vault WRITES that mint or use key material (suite create, private-key upload, link-share create) require the in-browser RSA crypto flow and an unlocked vault with a freshly-generated key — they are not drivable from a headless API client and are QUARANTINED honestly below (covered by Playwright). What IS drivable from the API — because the dev vault already has an unlocked suite — is the full secret CRUD round-trip, folder create, and all the reads + authz, which this suite exercises.\n\nAUTH MODEL: collection auth is noauth; every authenticated request carries an EXPLICIT basic-auth block (admin:admin via adminUser/adminPass). The no-auth requests target {{noAuthBase}} (127.0.0.1) so the host-scoped NC session cookie established on {{baseUrl}} (localhost) is never sent to them. Run with --ignore-redirects. See run-newman.sh.\n\nGAP-4 FIX (previously quarantined): SecretController::create and EncryptionSuiteController::create now declare their required params nullable and validate presence in the body, so OMITTING a required field returns a clean JSON 400 instead of NC's reflection param-injection 500 HTML page. EncryptionSuiteController::create additionally catches InvalidArgumentException from the key-signing path, so an invalid public key also degrades to a 400. The corresponding create-error tests now assert 400 (not the old quarantined 500).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -55,7 +55,7 @@
 					"request": { "method": "GET", "header": [ { "key": "Accept", "value": "application/json" } ], "url": { "raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/ca/status", "host": [ "{{noAuthBase}}" ], "path": [ "index.php", "apps", "doriath", "api", "v1", "ca", "status" ] } }
 				},
 				{
-					"name": "Create suite QUARANTINED: placeholder key -> 500 (BUG, should be 400)",
+					"name": "Create suite ERROR: invalid public key -> 400 (not 500)",
 					"event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
 						"// Suite creation mints/uploads RSA key material generated in the browser",
 						"// (the unlock/keygen flow); the real happy path is covered by Playwright",
@@ -68,10 +68,10 @@
 						"// key makes CaService::signPublicKey throw an InvalidArgumentException, but",
 						"// create() only catches RuntimeException, so it escapes -> 500 HTML page",
 						"// instead of a clean 400.",
-						"// We assert the CURRENT 500 so the suite stays green WITHOUT faking a pass;",
-						"// when the controller validates presence AND catches the bad-key path it",
-						"// returns 400 and this goes RED -- flip it to expect 400 then.",
-						"pm.test('QUARANTINE: placeholder suite create currently 500 (bug)', () => pm.response.to.have.status(500));"
+						"// GAP-4 fix: the controller now validates presence AND catches the bad-key",
+						"// path (InvalidArgumentException), so this invalid-key request returns a",
+						"// clean 400 instead of a 500. (Was QUARANTINED at 500.)",
+						"pm.test('invalid public key is a 400 client error (not 500)', () => pm.response.to.have.status(400));"
 					] } } ],
 					"request": { "auth": { "type": "basic", "basic": [ { "key": "username", "value": "{{adminUser}}", "type": "string" }, { "key": "password", "value": "{{adminPass}}", "type": "string" } ] }, "method": "POST", "header": [ { "key": "OCS-APIRequest", "value": "true" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"publicKey\": \"not-a-real-rsa-public-key\",\n  \"encryptedPrivateKey\": \"NEWMAN-placeholder-encrypted-private-key\"\n}" }, "url": { "raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites", "host": [ "{{baseUrl}}" ], "path": [ "index.php", "apps", "doriath", "api", "v1", "suites" ] } }
 				}
@@ -138,15 +138,12 @@
 					"request": { "auth": { "type": "basic", "basic": [ { "key": "username", "value": "{{adminUser}}", "type": "string" }, { "key": "password", "value": "{{adminPass}}", "type": "string" } ] }, "method": "POST", "header": [ { "key": "OCS-APIRequest", "value": "true" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"name\": \"bad\",\n  \"key\": \"\"\n}" }, "url": { "raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets", "host": [ "{{baseUrl}}" ], "path": [ "index.php", "apps", "doriath", "api", "v1", "secrets" ] } }
 				},
 				{
-					"name": "Create secret QUARANTINED: missing required field -> 500 (BUG, should be 400)",
+					"name": "Create secret ERROR: missing required field -> 400 (not 500)",
 					"event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
-						"// BUG: SecretController::create declares non-nullable string $name/$key, so",
-						"// OMITTING a required field triggers NC's reflection param-injection 500",
-						"// (HTML error page) instead of a clean 400. The controller should validate",
-						"// presence and return 400. We assert the CURRENT 500 so the suite stays",
-						"// green WITHOUT faking a pass; when the controller validates presence this",
-						"// test goes RED — flip it to expect 400 at that point.",
-						"pm.test('QUARANTINE: missing-required currently 500 (bug)', () => pm.response.to.have.status(500));"
+						"// GAP-4 fix: SecretController::create now validates name/key are present, so",
+						"// OMITTING a required field returns a clean JSON 400 instead of NC's",
+						"// reflection param-injection 500 HTML error page. (Was QUARANTINED at 500.)",
+						"pm.test('missing-required field is a 400 client error (not 500)', () => pm.response.to.have.status(400));"
 					] } } ],
 					"request": { "auth": { "type": "basic", "basic": [ { "key": "username", "value": "{{adminUser}}", "type": "string" }, { "key": "password", "value": "{{adminPass}}", "type": "string" } ] }, "method": "POST", "header": [ { "key": "OCS-APIRequest", "value": "true" }, { "key": "Content-Type", "value": "application/json" }, { "key": "Accept", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"name\": \"missing key only\"\n}" }, "url": { "raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets", "host": [ "{{baseUrl}}" ], "path": [ "index.php", "apps", "doriath", "api", "v1", "secrets" ] } }
 				},
