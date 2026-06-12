@@ -162,4 +162,97 @@ class SettingsControllerTest extends TestCase
         self::assertTrue($result->getData()['success']);
 
     }//end testLoadReturnsConfigurationResult()
+
+    /**
+     * Test that getAdminSettings() returns the admin settings from the service.
+     *
+     * @return void
+     */
+    public function testGetAdminSettingsReturnsServiceResponse(): void
+    {
+        $expected = [
+            'min_password_length'     => 12,
+            'min_password_score'      => 3,
+            'default_session_timeout' => 'session',
+            'ca_auto_renew_enabled'   => true,
+        ];
+
+        $this->settingsService->expects($this->once())
+            ->method('getAdminSettings')
+            ->willReturn($expected);
+
+        $result = $this->controller->getAdminSettings();
+
+        self::assertInstanceOf(JSONResponse::class, $result);
+        self::assertSame($expected, $result->getData());
+
+    }//end testGetAdminSettingsReturnsServiceResponse()
+
+    /**
+     * Test that updateAdminSettings() returns 400 on InvalidArgumentException.
+     *
+     * @return void
+     */
+    public function testUpdateAdminSettingsReturns400OnInvalidInput(): void
+    {
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn(['min_password_length' => 5]);
+
+        $this->settingsService->expects($this->once())
+            ->method('updateAdminSettings')
+            ->willThrowException(new \InvalidArgumentException('min_password_length must be between 12 and 20'));
+
+        $result = $this->controller->updateAdminSettings();
+
+        self::assertInstanceOf(JSONResponse::class, $result);
+        self::assertSame(400, $result->getStatus());
+
+    }//end testUpdateAdminSettingsReturns400OnInvalidInput()
+
+    /**
+     * Test that getUserSettings() returns prefs for the authenticated user.
+     *
+     * @return void
+     */
+    public function testGetUserSettingsReturnsPrefs(): void
+    {
+        $expected = ['notify_shares' => '1', 'default_view' => 'list'];
+        $this->settingsService->expects($this->once())
+            ->method('getUserPreferences')
+            ->with('testuser')
+            ->willReturn($expected);
+
+        $result = $this->controller->getUserSettings();
+
+        self::assertInstanceOf(JSONResponse::class, $result);
+        self::assertSame($expected, $result->getData());
+
+    }//end testGetUserSettingsReturnsPrefs()
+
+    /**
+     * Test that updateUserSettings() forwards to the service for the user.
+     *
+     * @return void
+     */
+    public function testUpdateUserSettingsForwardsToService(): void
+    {
+        $params  = ['notify_shares' => '0'];
+        $updated = ['notify_shares' => '0', 'default_view' => 'list'];
+
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($params);
+
+        $this->settingsService->expects($this->once())
+            ->method('updateUserPreferences')
+            ->with('testuser', $params)
+            ->willReturn($updated);
+
+        $result = $this->controller->updateUserSettings();
+
+        self::assertInstanceOf(JSONResponse::class, $result);
+        self::assertSame($updated, $result->getData());
+
+    }//end testUpdateUserSettingsForwardsToService()
 }//end class
