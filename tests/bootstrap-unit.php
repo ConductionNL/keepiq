@@ -38,3 +38,21 @@ if (is_dir($serverTestsLib)) {
     $loader->addPsr4('Test\\', $serverTestsLib);
     $loader->register(true);
 }
+
+// Stub Doctrine\DBAL\ParameterType for unit tests that mock IDBConnection or
+// IQueryBuilder. The real class lives in doctrine/dbal which is provided by
+// Nextcloud at runtime but not part of doriath's composer dev deps.
+if (class_exists('Doctrine\\DBAL\\ParameterType') === false) {
+    eval(
+        'namespace Doctrine\\DBAL; '
+        . 'enum ParameterType: int { '
+        . 'case NULL = 0; '
+        . 'case INTEGER = 1; '
+        . 'case STRING = 2; '
+        . 'case LARGE_OBJECT = 3; '
+        . 'case BOOLEAN = 5; '
+        . 'case BINARY = 6; '
+        . 'case ASCII = 7; '
+        . '}'
+    );
+}
