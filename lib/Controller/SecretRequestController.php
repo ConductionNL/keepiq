@@ -132,10 +132,11 @@ class SecretRequestController extends OCSController
     #[NoAdminRequired]
     public function create(
         string $secretId,
-        string $encryptionSuiteId,
-        array $requestedFields,
+        string $encryptionSuiteId='',
+        array $requestedFields=[],
         bool $isReRequest=false,
         ?string $expiresAt=null,
+        ?string $applicationId=null,
     ): JSONResponse {
         $user = $this->session->getUser();
         if ($user === null) {
@@ -155,18 +156,37 @@ class SecretRequestController extends OCSController
         }
 
         try {
-            $entity = $this->service->create(
-                secretId: $secretId,
-                encryptionSuiteId: $encryptionSuiteId,
-                requestedFields: $requestedFields,
-                isReRequest: $isReRequest,
-                expiresAt: $expiry,
-                userId: $user->getUID()
-            );
+            if ($applicationId !== null && $applicationId !== '') {
+                $entity = $this->service->createForApplication(
+                    secretId: $secretId,
+                    applicationId: $applicationId,
+                    requestedFields: $requestedFields,
+                    expiresAt: $expiry,
+                    userId: $user->getUID(),
+                );
+            } elseif ($isReRequest === true) {
+                $entity = $this->service->createReRequest(
+                    secretId: $secretId,
+                    requestedFields: $requestedFields,
+                    expiresAt: $expiry,
+                    userId: $user->getUID(),
+                );
+            } else {
+                $entity = $this->service->create(
+                    secretId: $secretId,
+                    encryptionSuiteId: $encryptionSuiteId,
+                    requestedFields: $requestedFields,
+                    isReRequest: false,
+                    expiresAt: $expiry,
+                    userId: $user->getUID(),
+                );
+            }
         } catch (InvalidArgumentException $e) {
+            $code   = $e->getCode();
+            $status = ($code === 403 || $code === 404 || $code === 409) ? $code : Http::STATUS_BAD_REQUEST;
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
-                statusCode: Http::STATUS_BAD_REQUEST
+                statusCode: $status
             );
         }
 

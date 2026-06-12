@@ -156,6 +156,80 @@ class SecretService
     }//end create()
 
     /**
+     * Create a secret keyed to an application's EncryptionSuite.
+     *
+     * Used by the write-secret-for-app flow: an authenticated NC user
+     * encrypts a secret with the application's public key client-side
+     * and POSTs the ciphertext + metadata; the server stores the row
+     * with `owner_type=application` / `owner_id=$applicationId` and
+     * links it to the application's active EncryptionSuite. The writing
+     * user is NOT recorded on the row — once written, only the
+     * application can decrypt (it holds the private key).
+     *
+     * @param array<string,mixed> $data          The submitted fields (ciphertext + metadata)
+     * @param string              $applicationId The owning application ID
+     * @param string              $writingUserId The NC user performing the write (audit only)
+     *
+     * @return Secret
+     *
+     * @throws InvalidArgumentException When required fields are missing
+     * @throws SuiteBlockedException When the application has no active suite
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
+     */
+    public function createForApplication(array $data, string $applicationId, string $writingUserId): Secret
+    {
+        if ($applicationId === '') {
+            throw new InvalidArgumentException('applicationId is required');
+        }
+
+        $name = trim((string) ($data['name'] ?? ''));
+        $key  = (string) ($data['key'] ?? '');
+        if ($name === '' || $key === '') {
+            throw new InvalidArgumentException('A secret requires a name and a key');
+        }
+
+        try {
+            $suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            throw new SuiteBlockedException(
+                message: 'No active EncryptionSuite for application '.$applicationId
+            );
+        }
+
+        // Resolve the type under the writing user's namespace so the
+        // SecretType resolver still finds a default; application secrets
+        // do not own a type-namespace yet.
+        $typeId = $this->typeService->resolveTypeForSecret(
+            $data['typeId'] ?? null,
+            $writingUserId
+        );
+
+        $now    = new DateTime();
+        $secret = new Secret();
+        $secret->setId(Uuid::uuid4()->toString());
+        $secret->setName($name);
+        $secret->setUrl($this->nullableString(value: $data['url'] ?? null));
+        $secret->setTypeId($typeId);
+        $secret->setFolderId($this->nullableString(value: $data['folderId'] ?? null));
+        $secret->setKey($key);
+        $secret->setLogin($this->nullableString(value: $data['login'] ?? null));
+        $secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+        $secret->setEncryptionSuiteId($suite->getId());
+        $secret->setOwnerType('application');
+        $secret->setOwnerId($applicationId);
+        $secret->setCreatedAt($now);
+        $secret->setUpdatedAt($now);
+
+        $this->mapper->insert($secret);
+        $this->logger->info(
+            "Doriath: application-secret {$secret->getId()} created for app {$applicationId} by {$writingUserId}"
+        );
+
+        return $secret;
+    }//end createForApplication()
+
+    /**
      * Get a secret owned by the user, enforcing revoked-suite blocking.
      *
      * @param string $id     The secret ID

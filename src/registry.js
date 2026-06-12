@@ -44,6 +44,7 @@ import SecretList from './views/SecretList.vue'
 import SecretDetail from './views/SecretDetail.vue'
 import SecretRequestFill from './views/SecretRequestFill.vue'
 import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
+import ApplicationDetail from './views/ApplicationDetail.vue'
 import DashboardSummaryView from './views/DashboardSummaryView.vue'
 import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
 import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
@@ -70,6 +71,7 @@ export default {
 	SecretDetail: { kind: 'page', component: SecretDetail },
 	SecretRequestFill: { kind: 'page', component: SecretRequestFill },
 	ApplicationRegisterView: { kind: 'page', component: ApplicationRegisterView },
+	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
 	DashboardSummaryView: { kind: 'page', component: DashboardSummaryView },
 	'secret-create': { kind: 'modal', component: SecretCreateDialog, propsSchema: {} },
 	'secret-edit': { kind: 'modal', component: SecretEditDialog, propsSchema: {} },
