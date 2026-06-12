@@ -59,6 +59,7 @@ class ApplicationService
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
         private ?NotificationService $notificationService = null,
+        private ?EncryptionSuiteService $encryptionSuiteService = null,
     ) {
     }//end __construct()
 
@@ -127,6 +128,19 @@ class ApplicationService
         }
 
         $persisted = $this->mapper->insert($entity);
+
+        // §9.1 — Provision an EncryptionSuite for any application that
+        // becomes active immediately (admin auto-approval with CSR).
+        // Pending rows wait for the admin approval path to call
+        // `provisionForApplication()` below. The hook is best-effort:
+        // suite provisioning failure logs + leaves the row active but
+        // suite-less; the admin queue can retry via re-approval.
+        if ($persisted->isActive() === true
+            && $csr !== null && $csr !== ''
+            && $this->encryptionSuiteService !== null
+        ) {
+            $this->tryProvisionSuite(application: $persisted, csr: $csr);
+        }
 
         $this->logger->info(
             'Registered application '.$persisted->getId().' ('.$name.') status='.$persisted->getStatus(),
@@ -235,8 +249,51 @@ class ApplicationService
             ['app' => 'doriath']
         );
 
-        return $this->mapper->update($entity);
+        $updated = $this->mapper->update($entity);
+
+        // §9.1 — Provision the application's EncryptionSuite as part of
+        // the approval transaction. If the CSR is missing the suite is
+        // skipped; the admin queue can re-submit a CSR via re-registration.
+        if ($storedCsr !== null && $storedCsr !== ''
+            && $this->encryptionSuiteService !== null
+        ) {
+            $this->tryProvisionSuite(application: $updated, csr: $storedCsr);
+        }
+
+        return $updated;
     }//end approve()
+
+    /**
+     * Provision an EncryptionSuite for an application. Failures are
+     * logged + swallowed — a missing suite is recoverable via re-approval
+     * and must never roll back the approval transaction.
+     *
+     * @param Application $application The newly active application
+     * @param string      $csr         The PEM-encoded PKCS#10 CSR
+     *
+     * @return void
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
+     */
+    private function tryProvisionSuite(Application $application, string $csr): void
+    {
+        try {
+            $this->encryptionSuiteService?->provisionForApplication(
+                applicationId: $application->getId(),
+                csrPem: $csr,
+            );
+            $this->logger->info(
+                'Provisioned EncryptionSuite for application '.$application->getId(),
+                ['app' => 'doriath']
+            );
+        } catch (Throwable $exception) {
+            $this->logger->warning(
+                'Failed to provision EncryptionSuite for application '
+                .$application->getId().': '.$exception->getMessage(),
+                ['app' => 'doriath']
+            );
+        }
+    }//end tryProvisionSuite()
 
     /**
      * Reject a pending application — hard-deletes the row per spec D7.
@@ -293,6 +350,43 @@ class ApplicationService
 
         $this->logger->info('Deleted application '.$applicationId, ['app' => 'doriath']);
     }//end delete()
+
+    /**
+     * Get the active EncryptionSuite certificate for an application.
+     *
+     * Used by the write-secret-for-app flow: the caller fetches the
+     * application's public certificate, encrypts the secret with the
+     * embedded public key client-side, and POSTs the encrypted blob to
+     * the secrets API. Active applications without a suite return null
+     * (admin must re-approve to provision).
+     *
+     * @param string $applicationId The application ID
+     *
+     * @return string|null The PEM-encoded certificate or null when no suite exists.
+     *
+     * @throws InvalidArgumentException When the application is not active.
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
+     */
+    public function getCertificate(string $applicationId): ?string
+    {
+        $entity = $this->findOr400($applicationId);
+
+        if ($entity->isActive() === false) {
+            throw new InvalidArgumentException(message: 'Application is not active');
+        }
+
+        if ($this->encryptionSuiteService === null) {
+            return null;
+        }
+
+        try {
+            $suite = $this->encryptionSuiteService->getActiveSuite('application', $entity->getId());
+            return $suite->getCertificate();
+        } catch (Throwable) {
+            return null;
+        }
+    }//end getCertificate()
 
     /**
      * Get a single application. Admin sees any; non-admin only sees apps

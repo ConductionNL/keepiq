@@ -118,6 +118,7 @@ return [
         ['name' => 'application#create',  'url' => '/api/v1/applications',                  'verb' => 'POST'],
         ['name' => 'application#approve', 'url' => '/api/v1/applications/{id}/approve',     'verb' => 'POST'],
         ['name' => 'application#reject',  'url' => '/api/v1/applications/{id}/reject',      'verb' => 'POST'],
+        ['name' => 'application#certificate', 'url' => '/api/v1/applications/{id}/certificate', 'verb' => 'GET'],
         ['name' => 'application#show',    'url' => '/api/v1/applications/{id}',              'verb' => 'GET'],
         ['name' => 'application#destroy', 'url' => '/api/v1/applications/{id}',              'verb' => 'DELETE'],
 

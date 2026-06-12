@@ -203,6 +203,14 @@
 			"_note": "Developer-facing app registration page. Owner sees their own apps + can register new ones; admin queue lives on AdminApplicationsView under settings."
 		},
 		{
+			"id": "ApplicationDetail",
+			"route": "/applications/:id",
+			"type": "custom",
+			"title": "Application",
+			"component": "ApplicationDetail",
+			"_note": "Per-application detail page. Shows metadata, EncryptionSuite info, application-attributed secrets list, and the write-secret-for-app dialog. Owner sees own + active; admin sees all (server enforces)."
+		},
+		{
 			"id": "SecretRequestFill",
 			"route": "/share/request/:token",
 			"type": "custom",

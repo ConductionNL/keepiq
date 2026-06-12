@@ -287,4 +287,72 @@ class EncryptionSuiteServiceTest extends TestCase
         $this->assertSame(expected: 'suite-1', actual: $result[0]->getId());
         $this->assertSame(expected: 'suite-2', actual: $result[1]->getId());
     }//end testGetSuitesByOwnerDelegatesToMapper()
+
+    /**
+     * provisionForApplication extracts the public key from the CSR and
+     * keys the new suite to owner_type=application.
+     *
+     * @return void
+     */
+    public function testProvisionForApplicationKeysSuiteToApplication(): void
+    {
+        $csr = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+
+        $this->appConfig->method('getValueString')
+            ->with('doriath', 'ca_status', 'unknown')
+            ->willReturn('healthy');
+
+        $this->caService->expects($this->once())
+            ->method('signPublicKey')
+            ->with($this->isType('string'), 'app-42')
+            ->willReturn('-----BEGIN CERTIFICATE-----STUB-----END CERTIFICATE-----');
+
+        $captured = null;
+        $this->mapper->expects($this->once())
+            ->method('insert')
+            ->willReturnCallback(
+                static function (EncryptionSuite $entity) use (&$captured) {
+                    $captured = $entity;
+                    return $entity;
+                }
+            );
+
+        $result = $this->service->provisionForApplication(
+            applicationId: 'app-42',
+            csrPem: $csr,
+        );
+
+        $this->assertSame($captured, $result);
+        $this->assertSame('application', $result->getOwnerType());
+        $this->assertSame('app-42', $result->getOwnerId());
+        $this->assertSame('', $result->getPrivateKey(), 'application suites store no private key');
+        $this->assertSame('active', $result->getStatus());
+    }//end testProvisionForApplicationKeysSuiteToApplication()
+
+    /**
+     * provisionForApplication rejects a malformed CSR.
+     *
+     * @return void
+     */
+    public function testProvisionForApplicationRejectsMalformedCsr(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Could not extract public key from CSR');
+        $this->service->provisionForApplication(
+            applicationId: 'app-42',
+            csrPem: 'not-a-csr',
+        );
+    }//end testProvisionForApplicationRejectsMalformedCsr()
+
+    /**
+     * provisionForApplication requires non-empty arguments.
+     *
+     * @return void
+     */
+    public function testProvisionForApplicationRequiresApplicationId(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('applicationId is required');
+        $this->service->provisionForApplication(applicationId: '', csrPem: 'csr');
+    }//end testProvisionForApplicationRequiresApplicationId()
 }//end class

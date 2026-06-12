@@ -411,4 +411,66 @@ class SecretServiceTest extends TestCase
         $this->assertSame(0, $result['total']);
         $this->assertSame([], $result['items']);
     }//end testSearchEmptyTerm()
+
+    /**
+     * createForApplication resolves the application's active suite and persists
+     * the row with owner_type=application.
+     *
+     * @return void
+     */
+    public function testCreateForApplicationPersistsApplicationOwnedSecret(): void
+    {
+        $suite = $this->makeSuite(status: 'active', id: 'app-suite-1');
+        $this->suiteMapper->expects($this->once())
+            ->method('findActiveByOwner')
+            ->with('application', 'app-1')
+            ->willReturn($suite);
+
+        $this->typeService->method('resolveTypeForSecret')->willReturn('type-default');
+
+        $captured = null;
+        $this->mapper->expects($this->once())
+            ->method('insert')
+            ->willReturnCallback(
+                static function (Secret $entity) use (&$captured) {
+                    $captured = $entity;
+                    return $entity;
+                }
+            );
+
+        $result = $this->service->createForApplication(
+            data: ['name' => 'PROD-DB', 'key' => 'cipher'],
+            applicationId: 'app-1',
+            writingUserId: 'alice',
+        );
+
+        $this->assertSame($captured, $result);
+        $this->assertSame('application', $result->getOwnerType());
+        $this->assertSame('app-1', $result->getOwnerId());
+        $this->assertSame('app-suite-1', $result->getEncryptionSuiteId());
+        $this->assertSame('PROD-DB', $result->getName());
+    }//end testCreateForApplicationPersistsApplicationOwnedSecret()
+
+    /**
+     * createForApplication blocks when the application has no active suite.
+     *
+     * @return void
+     */
+    public function testCreateForApplicationRejectsMissingSuite(): void
+    {
+        $this->suiteMapper->expects($this->once())
+            ->method('findActiveByOwner')
+            ->willThrowException(new DoesNotExistException('no suite'));
+
+        $this->mapper->expects($this->never())->method('insert');
+
+        $this->expectException(SuiteBlockedException::class);
+        $this->expectExceptionMessage('No active EncryptionSuite for application app-1');
+
+        $this->service->createForApplication(
+            data: ['name' => 'X', 'key' => 'cipher'],
+            applicationId: 'app-1',
+            writingUserId: 'alice',
+        );
+    }//end testCreateForApplicationRejectsMissingSuite()
 }//end class
