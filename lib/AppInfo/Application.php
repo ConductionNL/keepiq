@@ -21,7 +21,11 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\AppInfo;
 
+use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
+use OCA\Doriath\Event\SuiteMigrationStartedEvent;
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
+use OCA\Doriath\Listener\SuiteMigrationStartedListener;
 use OCA\Doriath\Middleware\JwtAuthMiddleware;
 use OCA\Doriath\Notification\DoriathNotifier;
 use OCA\Doriath\Search\SecretSearchProvider;
@@ -66,6 +70,18 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: DeepLinkRegistrationEvent::class,
             listener: DeepLinkRegistrationListener::class
+        );
+
+        // Compromise-recovery: lock SecretRequests when migration starts and
+        // unlock + re-suite them when it completes
+        // (implement-secret-requests §6.1-6.3).
+        $context->registerEventListener(
+            event: SuiteMigrationStartedEvent::class,
+            listener: SuiteMigrationStartedListener::class
+        );
+        $context->registerEventListener(
+            event: SuiteMigrationCompletedEvent::class,
+            listener: SuiteMigrationCompletedListener::class
         );
 
         // Register the Nextcloud unified search provider for secrets. It
