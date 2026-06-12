@@ -23,8 +23,11 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Service\ApplicationService;
+use OCA\Doriath\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IGroup;
 use OCP\IGroupManager;
+use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -367,5 +370,92 @@ class ApplicationServiceTest extends TestCase
 
         $result = $this->service->approve(applicationId: 'app-ok', adminUserId: 'admin', isAdmin: true);
         $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
+    }
+
+    /**
+     * §7.3 — When a non-admin (or anonymous) caller submits a
+     * registration, the service notifies every admin via the
+     * NotificationService with subject `app_pending`.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-7.3
+     */
+    public function testRegisterPendingDispatchesAdminNotification(): void
+    {
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $logger        = $this->createMock(LoggerInterface::class);
+        $notifications = $this->createMock(NotificationService::class);
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+            notificationService: $notifications,
+        );
+
+        $mapper->method('insert')->willReturnArgument(0);
+
+        $adminUser = $this->createMock(IUser::class);
+        $adminUser->method('getUID')->willReturn('admin1');
+        $adminGroup = $this->createMock(IGroup::class);
+        $adminGroup->method('getUsers')->willReturn([$adminUser]);
+        $groupManager->method('get')->with('admin')->willReturn($adminGroup);
+
+        $notifications->expects($this->once())
+            ->method('notify')
+            ->with(
+                'app_pending',
+                'admin1',
+                $this->callback(static function (array $params): bool {
+                    return ($params['applicationName'] ?? null) === 'Bot'
+                        && ($params['registeredBy'] ?? null) === 'alice';
+                }),
+                'application',
+                $this->anything(),
+            );
+
+        $service->register(
+            name: 'Bot',
+            description: null,
+            type: Application::TYPE_EXTERNAL,
+            csr: null,
+            userId: 'alice',
+            isAdmin: false,
+        );
+    }
+
+    /**
+     * §7.3 — Admin-registered (auto-approved) apps do NOT trigger the
+     * admin notification (the approve queue exists only for pending
+     * rows).
+     *
+     * @return void
+     */
+    public function testRegisterActiveDoesNotDispatchAdminNotification(): void
+    {
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $notifications = $this->createMock(NotificationService::class);
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $this->createMock(LoggerInterface::class),
+            notificationService: $notifications,
+        );
+
+        $mapper->method('insert')->willReturnArgument(0);
+        $notifications->expects($this->never())->method('notify');
+
+        $service->register(
+            name: 'AdminApp',
+            description: null,
+            type: Application::TYPE_INTERNAL,
+            csr: null,
+            userId: 'admin',
+            isAdmin: true,
+        );
     }
 }
