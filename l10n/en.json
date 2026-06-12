@@ -319,7 +319,23 @@
         "Widgets": "Widgets",
         "Will share with {count} member(s) with an active suite.": "Will share with {count} member(s) with an active suite.",
         "You have not registered any applications yet.": "You have not registered any applications yet.",
-        "Your private key": "Your private key"
+        "Your private key": "Your private key",
+        "Delegations": "Delegations",
+        "No active delegations for this secret.": "No active delegations for this secret.",
+        "Permanent": "Permanent",
+        "Temporary": "Temporary",
+        "Reclaim temporary delegations": "Reclaim temporary delegations",
+        "Request the owner share this secret with someone": "Request the owner share this secret with someone",
+        "Target Nextcloud user ID": "Target Nextcloud user ID",
+        "Pick a recipient user": "Pick a recipient user",
+        "Send request": "Send request",
+        "Submitting…": "Submitting…",
+        "Failed to send the share request": "Failed to send the share request",
+        "{requester} requested a share of {secret}": "{requester} requested a share of {secret}",
+        "Your share request for {secret} was denied": "Your share request for {secret} was denied",
+        "New member {user} joined a group sharing {secret}": "New member {user} joined a group sharing {secret}",
+        "{secret} may have been compromised — review recommended": "{secret} may have been compromised — review recommended",
+        "{sharedBy} shared {secret} with you": "{sharedBy} shared {secret} with you"
     },
     "plurals": ""
 }
