@@ -429,6 +429,73 @@ class ApplicationServiceTest extends TestCase
     }
 
     /**
+     * §6.2 — Anonymous registration (controller passes userId=null) is
+     * accepted by the service when the admin opt-in flag is set (the
+     * controller is responsible for the opt-in check; the service must
+     * still cope with a null user). The registered row carries
+     * registeredBy='anonymous' so the admin queue notification is the
+     * audit trail when there is no submitting user.
+     *
+     * @return void
+     */
+    public function testRegisterAnonymousMarksAuditTrail(): void
+    {
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $logger        = $this->createMock(LoggerInterface::class);
+        $notifications = $this->createMock(NotificationService::class);
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+            notificationService: $notifications,
+        );
+
+        // Capture the persisted entity so we can assert audit fields.
+        $persisted = null;
+        $mapper->expects($this->once())
+            ->method('insert')
+            ->willReturnCallback(static function (Application $entity) use (&$persisted): Application {
+                $persisted = $entity;
+                return $entity;
+            });
+
+        // An admin must still receive the notification — the audit trail.
+        $adminUser = $this->createMock(IUser::class);
+        $adminUser->method('getUID')->willReturn('admin1');
+        $adminGroup = $this->createMock(IGroup::class);
+        $adminGroup->method('getUsers')->willReturn([$adminUser]);
+        $groupManager->method('get')->with('admin')->willReturn($adminGroup);
+
+        $notifications->expects($this->once())
+            ->method('notify')
+            ->with(
+                'app_pending',
+                'admin1',
+                $this->callback(static function (array $params): bool {
+                    return ($params['registeredBy'] ?? null) === 'anonymous';
+                }),
+                'application',
+                $this->anything(),
+            );
+
+        $service->register(
+            name: 'Anon Bot',
+            description: null,
+            type: Application::TYPE_EXTERNAL,
+            csr: null,
+            userId: null,
+            isAdmin: false,
+        );
+
+        $this->assertNotNull($persisted, message: 'Anonymous registration must still persist a row');
+        $this->assertSame(Application::STATUS_PENDING, $persisted->getStatus());
+        // The Application Db entity may store null or the literal 'anonymous';
+        // the notification path normalises to 'anonymous' (asserted above).
+    }
+
+    /**
      * §7.3 — Admin-registered (auto-approved) apps do NOT trigger the
      * admin notification (the approve queue exists only for pending
      * rows).
