@@ -189,7 +189,23 @@
         "Compromise recovery completed with errors": "Herstelmigratie voltooid met fouten",
         "Compromise recovery in progress": "Herstelmigratie loopt",
         "{count} suite(s) failed to migrate. Open the migration screen for details.": "{count} suite(s) konden niet worden gemigreerd. Open het migratiescherm voor details.",
-        "{count} suite(s) remaining. Open the migration screen for live progress.": "{count} suite(s) resterend. Open het migratiescherm voor live voortgang."
+        "{count} suite(s) remaining. Open the migration screen for live progress.": "{count} suite(s) resterend. Open het migratiescherm voor live voortgang.",
+        "Delegations": "Delegaties",
+        "No active delegations for this secret.": "Geen actieve delegaties voor dit geheim.",
+        "Permanent": "Permanent",
+        "Temporary": "Tijdelijk",
+        "Reclaim temporary delegations": "Tijdelijke delegaties intrekken",
+        "Request the owner share this secret with someone": "Verzoek de eigenaar om dit geheim met iemand te delen",
+        "Target Nextcloud user ID": "Doel-Nextcloud-gebruikers-ID",
+        "Pick a recipient user": "Kies een ontvangende gebruiker",
+        "Send request": "Verzoek verzenden",
+        "Submitting…": "Bezig met verzenden…",
+        "Failed to send the share request": "Verzenden van het deelverzoek mislukt",
+        "{requester} requested a share of {secret}": "{requester} vroeg om toegang tot {secret}",
+        "Your share request for {secret} was denied": "Je deelverzoek voor {secret} is afgewezen",
+        "New member {user} joined a group sharing {secret}": "Nieuw groepslid {user} heeft toegang tot {secret} nodig",
+        "{secret} may have been compromised — review recommended": "{secret} is mogelijk gecompromitteerd — controle aanbevolen",
+        "{sharedBy} shared {secret} with you": "{sharedBy} heeft {secret} met je gedeeld"
     },
     "plurals": ""
 }
