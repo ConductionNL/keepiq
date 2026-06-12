@@ -21,6 +21,17 @@
 > cycle (recommended FIRST in the doriath unbuilt-spec dependency order,
 > before application-mgmt and secret-requests).
 >
+> **W23 (2026-06-12) status update:** the SuiteMigration event-driven
+> lock/unlock primitives that this spec's §6 plans (compromise recovery
+> listeners) shipped in this batch as event classes
+> (`SuiteMigrationStartedEvent` / `SuiteMigrationCompletedEvent`) +
+> listeners + dispatch wiring in `MigrationService`. The dispatcher /
+> listener pattern is now the canonical mechanism — when this spec lands
+> it inherits that infrastructure rather than re-building it. The
+> SecretService cascade-delete to user shares is also wired (W23 §5.1).
+> SecretDelegation entity + GroupShareService + full ShareService methods
+> remain genuinely deferred until the foundation build cycle is funded.
+>
 > No code changes in this commit — state-tracking only.
 
 ## 1. Database Migrations and Seed Data

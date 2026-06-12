@@ -107,7 +107,7 @@ the 2026-06-11 second pass:
 - [x] 12.4 Service test covers brute-force deletion after 5 failed attempts (11.4); controller test covers the failed-flag wiring
 - [x] 12.5 Service test covers usage-limit auto-deletion via confirm (11.3)
 - [x] 12.6 Controller test: non-owner destroy returns 403
-- [~] 12.7 [DEFERRED — secret deletion path is in the unbuilt SecretService] End-to-end secret-deletion cascade test
+- [~] 12.7 [DEFERRED — live HTTP harness] End-to-end secret-deletion cascade test — **W23 status update: SecretService.delete() now cascades to link shares + secret requests + user shares (W23 §5.1).** The cascade wiring is asserted at the unit level by SecretServiceTest::testDeleteCascadesLinkShares. A full live-instance end-to-end cascade belongs in the fleet-wide Newman + Playwright gate (gate-19).
 - [x] 12.8 Public payload tests assert only the encrypted blob/salt are returned, never decrypted data or owner identity
 
 ## 13. Frontend Tests
