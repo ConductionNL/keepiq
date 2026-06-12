@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
 
+use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\SettingsService;
 use OCA\Doriath\Settings\AdminSettings;
@@ -117,4 +118,88 @@ class SettingsController extends Controller
 
         return new JSONResponse(data: $result);
     }//end load()
+
+    /**
+     * Get admin-scoped settings (implement-dashboard-settings §2.2).
+     *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
+     */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
+    public function getAdminSettings(): JSONResponse
+    {
+        return new JSONResponse(data: $this->settingsService->getAdminSettings());
+    }//end getAdminSettings()
+
+    /**
+     * Update admin-scoped settings (implement-dashboard-settings §2.2).
+     *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
+     */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
+    public function updateAdminSettings(): JSONResponse
+    {
+        $data = $this->request->getParams();
+
+        try {
+            $result = $this->settingsService->updateAdminSettings($data);
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(data: $result);
+    }//end updateAdminSettings()
+
+    /**
+     * Get the current user's preferences (implement-dashboard-settings §2.3).
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.3
+     */
+    #[NoAdminRequired]
+    public function getUserSettings(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        return new JSONResponse(data: $this->settingsService->getUserPreferences($user->getUID()));
+    }//end getUserSettings()
+
+    /**
+     * Update the current user's preferences (implement-dashboard-settings §2.3).
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.3
+     */
+    #[NoAdminRequired]
+    public function updateUserSettings(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $data   = $this->request->getParams();
+        $result = $this->settingsService->updateUserPreferences($user->getUID(), $data);
+
+        return new JSONResponse(data: $result);
+    }//end updateUserSettings()
 }//end class
