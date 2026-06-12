@@ -36,6 +36,8 @@ const stubAll = {
 	ShareList: { template: '<div data-testid="stub-share-list" />' },
 	DelegationManager: { template: '<div data-testid="stub-delegation-manager" />' },
 	ShareRequestForm: { template: '<div data-testid="stub-share-request-form" />' },
+	SecretRequestList: { template: '<div data-testid="stub-request-list" />' },
+	SecretRequestCreateDialog: { template: '<div data-testid="stub-request-dialog" />' },
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -116,5 +118,26 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 		})
 
 		expect(wrapper.find('[data-testid="secret-detail-share-list"]').exists()).toBe(true)
+	})
+
+	it('renders the Requests section + SecretRequestList for the owner', async () => {
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+
+		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="secret-detail-request-list"]').exists()).toBe(true)
+		// The dialog is mounted lazily; not visible until the create button fires.
+		expect(wrapper.find('[data-testid="secret-detail-request-dialog"]').exists()).toBe(false)
+	})
+
+	it('hides the Requests section from non-owner recipients', async () => {
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'bob',
+		})
+
+		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(false)
 	})
 })

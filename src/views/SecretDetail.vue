@@ -112,6 +112,38 @@
 					:secret-id="secretId"
 					data-testid="secret-detail-share-request" />
 			</section>
+
+			<!--
+			  Requests section — implement-secret-requests §8.4. Owners see
+			  a paginated list of pending/fulfilled/locked SecretRequests +
+			  a "Request fill-in" button that opens SecretRequestCreateDialog
+			  for write-without-read filling.
+			-->
+			<section v-if="isOwner"
+				class="secret-detail__requests"
+				data-testid="secret-detail-requests">
+				<h3 class="secret-detail__requests-heading">
+					{{ t('doriath', 'Requests') }}
+				</h3>
+
+				<div class="secret-detail__requests-actions">
+					<NcButton type="secondary" @click="openRequestCreate">
+						{{ t('doriath', 'Request fill-in') }}
+					</NcButton>
+				</div>
+
+				<SecretRequestList
+					:secret-id="secretId"
+					data-testid="secret-detail-request-list" />
+
+				<SecretRequestCreateDialog
+					v-if="requestDialogOpen"
+					:open="requestDialogOpen"
+					:secret="secret"
+					data-testid="secret-detail-request-dialog"
+					@update:open="requestDialogOpen = $event"
+					@created="onRequestCreated" />
+			</section>
 		</div>
 	</div>
 </template>
@@ -129,6 +161,8 @@ import PasswordField from '../components/PasswordField.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
+import SecretRequestCreateDialog from '../components/secretRequest/SecretRequestCreateDialog.vue'
+import SecretRequestList from '../components/secretRequest/SecretRequestList.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 
@@ -154,6 +188,8 @@ export default {
 		DelegationManager,
 		ShareList,
 		ShareRequestForm,
+		SecretRequestCreateDialog,
+		SecretRequestList,
 	},
 
 	inject: {
@@ -169,6 +205,7 @@ export default {
 			secret: null,
 			loading: true,
 			error: '',
+			requestDialogOpen: false,
 		}
 	},
 
@@ -339,6 +376,26 @@ export default {
 		onReclaimed() {
 			this.load()
 		},
+
+		/**
+		 * Open the SecretRequestCreateDialog (§8.4 Requests section).
+		 *
+		 * @return {void}
+		 */
+		openRequestCreate() {
+			this.requestDialogOpen = true
+		},
+
+		/**
+		 * Close the dialog after the new request was created — the
+		 * SecretRequestList re-fetches on its own via the store, so
+		 * no extra refresh is required.
+		 *
+		 * @return {void}
+		 */
+		onRequestCreated() {
+			this.requestDialogOpen = false
+		},
 	},
 }
 </script>
@@ -389,5 +446,21 @@ export default {
 	margin: 0 0 12px;
 	font-size: 1.1rem;
 	color: var(--color-main-text);
+}
+
+.secret-detail__requests {
+	margin-top: 24px;
+	padding-top: 16px;
+	border-top: 1px solid var(--color-border);
+}
+
+.secret-detail__requests-heading {
+	margin: 0 0 12px;
+	font-size: 1.1rem;
+	color: var(--color-main-text);
+}
+
+.secret-detail__requests-actions {
+	margin-bottom: 12px;
 }
 </style>
