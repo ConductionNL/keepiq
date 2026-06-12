@@ -34,7 +34,9 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretDelegation;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -44,11 +46,24 @@ use Ramsey\Uuid\Uuid;
 class DelegationService
 {
     /**
+     * The Nextcloud group whose members can initiate admin-handover
+     * delegations (override the owner-consent requirement). Members of
+     * this group still MUST already hold a share of the target Secret —
+     * the admin path widens *who* can create the delegation, not what
+     * can be delegated without a pre-existing share.
+     *
+     * @var string
+     */
+    public const VAULT_ADMIN_GROUP = 'vault_admin';
+
+    /**
      * Constructor for DelegationService.
      *
-     * @param SecretDelegationMapper $mapper       The delegation mapper
-     * @param SecretMapper           $secretMapper The Secret mapper (owner lookup)
-     * @param LoggerInterface        $logger       The logger
+     * @param SecretDelegationMapper $mapper            The delegation mapper
+     * @param SecretMapper           $secretMapper      The Secret mapper (owner lookup)
+     * @param LoggerInterface        $logger            The logger
+     * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
+     * @param IGroupManager|null     $groupManager      Group membership check (admin path)
      *
      * @return void
      */
@@ -56,40 +71,92 @@ class DelegationService
         private SecretDelegationMapper $mapper,
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
+        private ?ShareTargetMapper $shareTargetMapper = null,
+        private ?IGroupManager $groupManager = null,
     ) {
     }//end __construct()
 
     /**
-     * Create a temporary delegation — the original owner hands share/revoke
-     * authority over the Secret to `delegatedTo`. The initiator must be the
-     * current owner of the Secret (admin-handover lands with §6.2 admin path).
+     * Create a temporary delegation.
      *
-     * @param string $secretId    The Secret ID
-     * @param string $delegatedTo The user receiving delegation rights
-     * @param string $initiatedBy The user initiating the delegation
+     * Two paths are supported (FEATURES.md V1 §17.1, ownership-delegation
+     * spec.md):
+     *
+     *  - **Owner self-delegation** — `initiatedBy === secret.owner_id`. The
+     *    owner hands share/revoke authority to `delegatedTo`. The delegate
+     *    MUST already hold a share of the Secret (when ShareTargetMapper
+     *    is wired); otherwise the call is rejected because a delegation
+     *    promotes an *existing* recipient copy to co-owner status.
+     *  - **Admin power grab** — `initiatedBy ∈ vault_admin` (Nextcloud
+     *    group) AND `initiatedBy` already holds a share of the Secret. The
+     *    delegation is created with `delegated_to = initiatedBy` so the
+     *    admin's own copy is promoted. Owner consent is NOT required, but
+     *    the admin must already be a recipient — the path widens *who*
+     *    can act, not what can be acted on.
+     *
+     * @param string      $secretId    The Secret ID
+     * @param string      $delegatedTo The user receiving delegation rights
+     * @param string      $initiatedBy The user initiating the delegation
+     * @param bool        $isAdminPath When true, validate via admin-handover branch
+     *                                 instead of owner-self-delegation.
      *
      * @return SecretDelegation
      *
      * @throws InvalidArgumentException When the Secret does not exist,
-     *                                  the initiator is not the owner, or
-     *                                  the delegate is the owner themselves.
+     *                                  the caller is not authorized, the
+     *                                  delegate is the original owner, or
+     *                                  the delegate holds no pre-existing
+     *                                  share of the Secret.
      *
      * @spec openspec/changes/implement-user-sharing/tasks.md#task-6.2
      */
-    public function createDelegation(string $secretId, string $delegatedTo, string $initiatedBy): SecretDelegation
-    {
+    public function createDelegation(
+        string $secretId,
+        string $delegatedTo,
+        string $initiatedBy,
+        bool $isAdminPath = false,
+    ): SecretDelegation {
         $secret = $this->loadSecret($secretId);
-
-        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $initiatedBy) {
-            throw new InvalidArgumentException(message: 'Not authorized to delegate this secret');
-        }
-
-        if ($delegatedTo === $initiatedBy) {
-            throw new InvalidArgumentException(message: 'Cannot delegate to self');
-        }
 
         if ($delegatedTo === '') {
             throw new InvalidArgumentException(message: 'delegated_to is required');
+        }
+
+        if ($isAdminPath === true) {
+            // Admin-handover branch: the initiator must be a vault admin
+            // AND already hold a share of the Secret. The delegation
+            // promotes the admin's own existing recipient copy, so the
+            // delegate is always the initiator on this path.
+            $this->assertVaultAdmin(userId: $initiatedBy);
+
+            if ($delegatedTo !== $initiatedBy) {
+                throw new InvalidArgumentException(
+                    message: 'Admin handover promotes the initiating admin; delegated_to must match the initiator'
+                );
+            }
+
+            if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() === $initiatedBy) {
+                throw new InvalidArgumentException(
+                    message: 'Admin handover does not apply to the secret owner themselves'
+                );
+            }
+
+            $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $initiatedBy);
+        } else {
+            // Owner self-delegation branch: the initiator must BE the
+            // current owner of the Secret.
+            if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $initiatedBy) {
+                throw new InvalidArgumentException(message: 'Not authorized to delegate this secret');
+            }
+
+            if ($delegatedTo === $initiatedBy) {
+                throw new InvalidArgumentException(message: 'Cannot delegate to self');
+            }
+
+            // Delegate MUST already hold a share when the share-target
+            // mapper is wired; this preserves the "delegations promote
+            // existing recipients" invariant from spec.md.
+            $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $delegatedTo);
         }
 
         $entity = new SecretDelegation();
@@ -103,6 +170,64 @@ class DelegationService
 
         return $this->mapper->insert($entity);
     }//end createDelegation()
+
+    /**
+     * Assert that $userId is a member of the vault_admin group.
+     *
+     * @param string $userId The candidate admin user ID
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the group manager is wired
+     *                                  but the user is not a vault admin.
+     */
+    private function assertVaultAdmin(string $userId): void
+    {
+        if ($this->groupManager === null) {
+            // No group manager wired — admin path cannot be authorized.
+            throw new InvalidArgumentException(
+                message: 'Admin handover is not available in this context'
+            );
+        }
+
+        if ($this->groupManager->isInGroup($userId, self::VAULT_ADMIN_GROUP) === false) {
+            throw new InvalidArgumentException(
+                message: 'Admin handover requires membership in the vault_admin group'
+            );
+        }
+    }//end assertVaultAdmin()
+
+    /**
+     * Assert that $userId already holds a share of $secretId. No-op when
+     * the share-target mapper is not wired (preserves backward compat with
+     * existing constructors that pre-date the §17.1 hardening).
+     *
+     * @param string $secretId The source Secret ID
+     * @param string $userId   The candidate recipient
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the share-target mapper is
+     *                                  wired but no share row exists for
+     *                                  (sourceSecret, user).
+     */
+    private function assertHoldsPreExistingShare(string $secretId, string $userId): void
+    {
+        if ($this->shareTargetMapper === null) {
+            return;
+        }
+
+        try {
+            $this->shareTargetMapper->findBySourceSecretAndTargetUser(
+                sourceSecretId: $secretId,
+                targetUserId: $userId,
+            );
+        } catch (DoesNotExistException) {
+            throw new InvalidArgumentException(
+                message: 'Delegation requires the recipient to already hold a share of the secret'
+            );
+        }
+    }//end assertHoldsPreExistingShare()
 
     /**
      * Reclaim — the original owner revokes all TEMPORARY delegations they
