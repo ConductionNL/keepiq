@@ -33,6 +33,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 /**
  * Business logic for the registered-application lifecycle (scaffold).
@@ -57,6 +58,7 @@ class ApplicationService
         private ApplicationMapper $mapper,
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
+        private ?NotificationService $notificationService = null,
     ) {
     }//end __construct()
 
@@ -131,8 +133,65 @@ class ApplicationService
             ['app' => 'doriath']
         );
 
+        // §7.3 — Admin notification dispatch. When the new row is
+        // pending, notify every member of the NC admin group via
+        // NotificationService with subject `app_pending`. The
+        // SUBJECT_SETTING_MAP entry for `app_pending` is null-keyed so
+        // the notification is always sent (admins cannot opt out of
+        // the approval-queue surface). Failures are swallowed so a
+        // missing notification service or a single bad recipient cannot
+        // block the registration.
+        if ($persisted->isPending() === true && $this->notificationService !== null) {
+            $this->dispatchAdminPendingNotification(application: $persisted, registeredBy: $userId);
+        }
+
         return $persisted;
     }//end register()
+
+    /**
+     * Notify every admin that a pending application is waiting for
+     * approval. Idempotent failure path — exceptions are logged and
+     * swallowed; never propagate to the registration caller.
+     *
+     * @param Application $application  The pending application row
+     * @param string|null $registeredBy The user that submitted the row (null = anonymous)
+     *
+     * @return void
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-7.3
+     */
+    private function dispatchAdminPendingNotification(
+        Application $application,
+        ?string $registeredBy,
+    ): void {
+        try {
+            $admins = $this->groupManager->get('admin');
+            if ($admins === null) {
+                return;
+            }
+
+            $params = [
+                'applicationId'   => $application->getId(),
+                'applicationName' => $application->getName(),
+                'registeredBy'    => $registeredBy ?? 'anonymous',
+            ];
+
+            foreach ($admins->getUsers() as $admin) {
+                $this->notificationService->notify(
+                    subject: 'app_pending',
+                    recipientId: $admin->getUID(),
+                    params: $params,
+                    objectType: 'application',
+                    objectId: $application->getId(),
+                );
+            }
+        } catch (Throwable $exception) {
+            $this->logger->warning(
+                'Failed to dispatch app_pending notifications: '.$exception->getMessage(),
+                ['app' => 'doriath']
+            );
+        }
+    }//end dispatchAdminPendingNotification()
 
     /**
      * Approve a pending application.

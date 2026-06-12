@@ -319,6 +319,42 @@ class SecretServiceTest extends TestCase
     }//end testDeleteCascadesToLinkShares()
 
     /**
+     * Delete cascades to GroupShares and SecretDelegations when the
+     * optional mappers are wired (W29 §10.1).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#task-10.1
+     */
+    public function testDeleteCascadesToGroupSharesAndDelegations(): void
+    {
+        $groupShareMapper = $this->createMock(\OCA\Doriath\Db\GroupShareMapper::class);
+        $delegationMapper = $this->createMock(\OCA\Doriath\Db\SecretDelegationMapper::class);
+        $logger           = $this->createMock(LoggerInterface::class);
+
+        $service = new SecretService(
+            mapper: $this->mapper,
+            typeService: $this->typeService,
+            suiteMapper: $this->suiteMapper,
+            migrationService: $this->migrationService,
+            linkShareService: $this->linkShareService,
+            logger: $logger,
+            secretRequestService: null,
+            shareService: null,
+            groupShareMapper: $groupShareMapper,
+            secretDelegationMapper: $delegationMapper,
+        );
+
+        $this->mapper->method('findById')->willReturn($this->makeSecret());
+        $this->linkShareService->expects($this->once())->method('deleteBySecretId')->with('s-1');
+        $groupShareMapper->expects($this->once())->method('deleteBySecret')->with('s-1');
+        $delegationMapper->expects($this->once())->method('deleteBySecret')->with('s-1');
+        $this->mapper->expects($this->once())->method('delete');
+
+        $service->delete(id: 's-1', userId: 'alice');
+    }//end testDeleteCascadesToGroupSharesAndDelegations()
+
+    /**
      * Fuzzy search matches an exact substring.
      *
      * @return void

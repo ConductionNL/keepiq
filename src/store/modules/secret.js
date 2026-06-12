@@ -198,6 +198,46 @@ export const useSecretStore = defineStore('secret', {
 				generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
 				payload,
 			)
+
+			// §11.6 — Sync-on-update: if the owner just changed any
+			// sensitive blob (key/login/additionalFields) AND the secret
+			// has active shares, re-encrypt the plaintext for every
+			// recipient via useShareStore.syncUpdate. The plaintext is
+			// the *just-submitted* value (not the freshly returned
+			// ciphertext); the share store imports each recipient's
+			// public certificate and runs the RSA encryption loop.
+			const sensitiveChanged = data.key !== undefined
+				|| data.login !== undefined
+				|| data.additionalFields !== undefined
+			if (sensitiveChanged === true) {
+				try {
+					// Lazy import to avoid a circular dep between the
+					// secret and share stores at module load time.
+					const { useShareStore } = await import('./share.js')
+					const shareStore = useShareStore()
+					await shareStore.syncUpdate(
+						id,
+						{
+							key: data.key,
+							login: data.login,
+							additionalFields:
+								data.additionalFields !== undefined
+									? (typeof data.additionalFields === 'string'
+										? data.additionalFields
+										: JSON.stringify(data.additionalFields))
+									: undefined,
+						},
+						response.data?.updatedAt ?? response.data?.updated_at ?? null,
+					)
+				} catch (e) {
+					// Sync failure should not roll back the owner's
+					// update — the owner's copy is already persisted.
+					// Surface the error to the share store's `error`
+					// field so the sharing sidebar can render a banner.
+					// The session encryption flow itself is unaffected.
+				}
+			}
+
 			return response.data
 		},
 
