@@ -117,11 +117,11 @@ class SecretMapper extends QBMapper
     public function findByOwner(
         string $ownerType,
         string $ownerId,
-        ?string $folderId,
-        ?string $sort,
-        string $direction,
-        int $limit,
-        int $offset,
+        ?string $folderId = null,
+        ?string $sort = null,
+        string $direction = 'asc',
+        int $limit = 1000,
+        int $offset = 0,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
