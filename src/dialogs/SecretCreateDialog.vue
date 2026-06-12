@@ -29,8 +29,24 @@
 				:input-label="t('doriath', 'Type')"
 				:clearable="false" />
 
-			<NcPasswordField :value.sync="value"
-				:label="valueLabel" />
+			<div class="secret-form__value-row">
+				<NcPasswordField :value.sync="value"
+					class="secret-form__value-field"
+					:label="valueLabel" />
+				<NcButton type="tertiary-no-background"
+					:title="t('doriath', 'Generate a strong key')"
+					:aria-label="t('doriath', 'Generate a strong key')"
+					@click="openGenerator">
+					<template #icon>
+						<Dice5 :size="20" />
+					</template>
+				</NcButton>
+			</div>
+
+			<KeyGeneratorModal v-if="generatorOpen"
+				:open="generatorOpen"
+				@update:open="generatorOpen = $event"
+				@generated="onGenerated" />
 
 			<NcTextField :value.sync="url"
 				:label="t('doriath', 'URL (optional)')" />
@@ -65,6 +81,8 @@
 <script>
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSelect, NcTextField } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import Dice5 from 'vue-material-design-icons/Dice5.vue'
+import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useFolderStore } from '../store/modules/folder.js'
@@ -87,6 +105,8 @@ export default {
 		NcSelect,
 		NcTextField,
 		Plus,
+		Dice5,
+		KeyGeneratorModal,
 	},
 
 	props: {
@@ -113,6 +133,7 @@ export default {
 			selectedFolderId: this.folderId,
 			saving: false,
 			error: '',
+			generatorOpen: false,
 		}
 	},
 
@@ -178,6 +199,27 @@ export default {
 		},
 
 		/**
+		 * Open the key generator dialog.
+		 *
+		 * @return {void}
+		 */
+		openGenerator() {
+			this.generatorOpen = true
+		},
+
+		/**
+		 * Receive the generated key from the modal and copy it into the value field.
+		 *
+		 * @param {string} key The generated key.
+		 * @return {void}
+		 */
+		onGenerated(key) {
+			if (typeof key === 'string' && key.length > 0) {
+				this.value = key
+			}
+		},
+
+		/**
 		 * Encrypt (in the store) and create the secret.
 		 *
 		 * @return {Promise<void>}
@@ -218,5 +260,15 @@ export default {
 	flex-direction: column;
 	gap: 12px;
 	padding: 4px 0;
+}
+
+.secret-form__value-row {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.secret-form__value-field {
+	flex: 1 1 auto;
 }
 </style>

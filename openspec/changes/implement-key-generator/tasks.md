@@ -32,9 +32,9 @@
 > reusable; wiring its trigger button into the secret creation form is a one-import
 > follow-up once `implement-secrets` lands. Tracked for that change.
 
-- [~] 4.1 Add a generator button (dice icon) next to the key/password field in the secret creation form component — DEFERRED (no secret creation form exists)
-- [~] 4.2 Wire the button to open `KeyGeneratorModal.vue` and listen for the emitted generated value — DEFERRED (no secret creation form exists)
-- [~] 4.3 Insert the emitted value into the key/password field of the secret creation form when the user clicks "Use" — DEFERRED (no secret creation form exists)
+- [x] 4.1 Add a generator button (dice icon) next to the key/password field in the secret creation form component — W24: `SecretCreateDialog.vue` + `SecretEditDialog.vue` render a `Dice5` tertiary button alongside the value field; aria-label + title use the t('doriath', 'Generate a strong key') string.
+- [x] 4.2 Wire the button to open `KeyGeneratorModal.vue` and listen for the emitted generated value — W24: both dialogs import `KeyGeneratorModal`, gate it on local `generatorOpen` state, and listen for `@generated="onGenerated"`.
+- [x] 4.3 Insert the emitted value into the key/password field of the secret creation form when the user clicks "Use" — W24: `onGenerated(key)` writes the non-empty string payload into the local `value` field (NcPasswordField); empty/null/undefined payloads are ignored.
 
 ## 5. Internationalization
 
@@ -71,14 +71,12 @@
 
 ## 8. Frontend Tests
 
-> DEFERRED — the repo's vitest harness (added 2026-06-10 in `tests/vitest/`)
-> runs in the `node` environment for the crypto unit suite only. Vue component
-> tests require switching to the `jsdom` environment + adding
-> `@vitejs/plugin-vue2` + `@vue/test-utils`; the harness extension is tracked
-> as a separate infrastructure change. The generator-button integration test
-> (8.3) is additionally blocked on the absent secret creation form (see
-> section 4).
+> W24: the jsdom + `@vitejs/plugin-vue2` + `@vue/test-utils` component harness
+> is now wired (it ships in this repo's `tests/components/` + `tests/dialogs/`
+> tree, see e.g. `SecretShareDialog.spec.js`), and SecretCreateDialog +
+> SecretEditDialog now embed the generator button. All three component tests
+> below ship in this batch.
 
-- [~] 8.1 Component test for `KeyGeneratorModal.vue` (renders inputs, calls API, previews key, emits on "Use") — DEFERRED (component harness not yet wired in vitest)
-- [~] 8.2 Component test for error display in NcNoteCard — DEFERRED (component harness not yet wired in vitest)
-- [~] 8.3 Component test for generator button integration — DEFERRED (component harness not yet wired in vitest + no secret creation form)
+- [x] 8.1 Component test for `KeyGeneratorModal.vue` (renders inputs, calls API, previews key, emits on "Use") — W24: `tests/dialogs/KeyGeneratorModal.spec.js` covers the basic payload, regex override payload, the Use emission, and the no-key-yet no-op.
+- [x] 8.2 Component test for error display in NcNoteCard — W24: same spec asserts the NcNoteCard renders when axios rejects with a server message.
+- [x] 8.3 Component test for generator button integration — W24: `tests/dialogs/SecretCreateDialog.generator.spec.js` covers `openGenerator()`, `onGenerated()` writing the key into the value field, and the empty/non-string ignore path.

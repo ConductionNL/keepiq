@@ -29,8 +29,8 @@ the 2026-06-11 second pass:
 ## 1. Database Migration and Seed Data
 
 - [x] 1.1 Create ISchemaWrapper migration `Version000005Date20260603000000` for `doriath_link_shares` table (sequence continues from the existing Version000004; the design's `Version000010` numbering referenced unbuilt user-sharing migrations). Columns: id (UUID PK), secret_id (string FK NOT NULL), token (string UNIQUE NOT NULL), encrypted_secret_snapshot (text NOT NULL), argon2id_salt (string NOT NULL), encryption_suite_id (string FK NOT NULL), usage_limit (integer NOT NULL default 1), usage_count (integer NOT NULL default 0), failed_attempts (integer NOT NULL default 0), created_by (string NOT NULL), created_at (datetime NOT NULL), expires_at (datetime nullable); indexes on token (unique), secret_id, created_by
-- [~] 1.2 [DEFERRED — depends on `SeedDevelopmentSecrets` from the unbuilt implement-secrets] Create `SeedDevelopmentLinkShares` IRepairStep (debug-only) seeding example link shares for dev secrets
-- [~] 1.3 [DEFERRED — depends on 1.2] Register `SeedDevelopmentLinkShares` as a post-migration repair step in `info.xml`
+- [x] 1.2 Create `SeedDevelopmentLinkShares` IRepairStep (debug-only) seeding example link shares for dev secrets — W24: `lib/Repair/SeedDevelopmentLinkShares.php` seeds 3 LinkShare rows (single-use future, multi-use one-access-recorded, expired) gated on `debug=true` + active dev EncryptionSuite + ≥1 dev secret. Idempotent via `findBySecretId()` precheck. Unit-covered by `tests/Unit/Repair/SeedDevelopmentLinkSharesTest.php` (5 tests, 35 assertions; debug-off no-op, missing-suite no-op, no-secrets no-op, idempotency, full 3-row happy path). `SecretMapper::findByOwner()` gained sensible defaults so the seeder + sibling `SeedDevelopmentSecretRequests` can call the 2-arg variant.
+- [x] 1.3 Register `SeedDevelopmentLinkShares` as a post-migration repair step in `info.xml` — W24: registered in both `<install>` and `<post-migration>` repair-step lists, after `SeedDevelopmentSecretRequests`.
 
 ## 2. Entity and Mapper
 
