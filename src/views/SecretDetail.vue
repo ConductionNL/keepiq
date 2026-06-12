@@ -78,6 +78,40 @@
 					{{ t('doriath', 'Delete secret') }}
 				</NcButton>
 			</div>
+
+			<!--
+			  Sharing sidebar — §12.6 integration. Renders the RecipientList,
+			  ShareRequestForm (recipient role), and DelegationManager
+			  stand-alone primitives the §12.x build cycle shipped. Tab
+			  visibility derives from the current user's role:
+			    - owner / delegate → ShareList + DelegationManager;
+			    - recipient        → ShareRequestForm (request that the
+			                          owner share with a third party).
+			-->
+			<section v-if="canSeeSharing"
+				class="secret-detail__sharing"
+				data-testid="secret-detail-sharing">
+				<h3 class="secret-detail__sharing-heading">
+					{{ t('doriath', 'Sharing') }}
+				</h3>
+
+				<ShareList
+					v-if="isOwner"
+					:secret-id="secretId"
+					data-testid="secret-detail-share-list" />
+
+				<DelegationManager
+					v-if="isOwner"
+					:secret-id="secretId"
+					:can-reclaim="true"
+					data-testid="secret-detail-delegation-manager"
+					@reclaimed="onReclaimed" />
+
+				<ShareRequestForm
+					v-if="isRecipient && !isOwner"
+					:secret-id="secretId"
+					data-testid="secret-detail-share-request" />
+			</section>
 		</div>
 	</div>
 </template>
@@ -92,6 +126,9 @@ import FolderMove from 'vue-material-design-icons/FolderMove.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import CopyButton from '../components/CopyButton.vue'
 import PasswordField from '../components/PasswordField.vue'
+import DelegationManager from '../components/share/DelegationManager.vue'
+import ShareList from '../components/share/ShareList.vue'
+import ShareRequestForm from '../components/share/ShareRequestForm.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 
@@ -114,6 +151,9 @@ export default {
 		ShareVariant,
 		CopyButton,
 		PasswordField,
+		DelegationManager,
+		ShareList,
+		ShareRequestForm,
 	},
 
 	inject: {
@@ -148,6 +188,52 @@ export default {
 				return t('doriath', 'Note')
 			}
 			return t('doriath', 'Key')
+		},
+
+		/**
+		 * The current Nextcloud user ID, or null when unauthenticated.
+		 *
+		 * @return {string|null}
+		 */
+		currentUserId() {
+			return window.OC?.currentUser ?? null
+		},
+
+		/**
+		 * True when the current user owns the secret. Owners see the
+		 * recipient list + delegation manager.
+		 *
+		 * @return {boolean}
+		 */
+		isOwner() {
+			if (this.secret === null || this.currentUserId === null) {
+				return false
+			}
+			// Backend serializes ownerType / ownerId on the Secret entity;
+			// fallback to userId for legacy responses.
+			const owner = this.secret.ownerId ?? this.secret.owner_id ?? this.secret.userId
+			return owner === this.currentUserId
+		},
+
+		/**
+		 * True when the current user is a non-owner recipient — they
+		 * see the share-request form so they can ask the owner to
+		 * share with a third party.
+		 *
+		 * @return {boolean}
+		 */
+		isRecipient() {
+			return this.secret !== null && this.isOwner === false
+		},
+
+		/**
+		 * Show the sharing section whenever the role is known (owner
+		 * or recipient).
+		 *
+		 * @return {boolean}
+		 */
+		canSeeSharing() {
+			return this.isOwner === true || this.isRecipient === true
 		},
 	},
 
@@ -243,6 +329,16 @@ export default {
 		goBack() {
 			this.$router.push('/secrets')
 		},
+
+		/**
+		 * Refresh the secret detail after a delegation reclaim so the
+		 * sidebar caches stay consistent.
+		 *
+		 * @return {void}
+		 */
+		onReclaimed() {
+			this.load()
+		},
 	},
 }
 </script>
@@ -281,5 +377,17 @@ export default {
 	flex-wrap: wrap;
 	gap: 8px;
 	margin-top: 24px;
+}
+
+.secret-detail__sharing {
+	margin-top: 24px;
+	padding-top: 16px;
+	border-top: 1px solid var(--color-border);
+}
+
+.secret-detail__sharing-heading {
+	margin: 0 0 12px;
+	font-size: 1.1rem;
+	color: var(--color-main-text);
 }
 </style>
