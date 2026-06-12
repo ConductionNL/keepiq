@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { encryptSnapshot, generateLinkPassword } from '../../crypto/index.js'
+import { decryptSnapshot, encryptSnapshot, generateLinkPassword } from '../../crypto/index.js'
 
 /**
  * Pinia store for password-protected link shares.
@@ -97,6 +97,65 @@ export const useLinkShareStore = defineStore('linkShare', {
 		clearCreatedPassword() {
 			this.createdPassword = null
 			this.createdLinkUrl = null
+		},
+
+		/**
+		 * Phase 1 — fetch the public-share metadata (ciphertext blob +
+		 * salt) by token. Runs with NO Nextcloud session — the
+		 * controller is `#[PublicPage]`. A 404 is the generic
+		 * not-found-or-expired response.
+		 *
+		 * @param {string} token The public token from the share URL
+		 * @return {Promise<object>} The public link-share metadata
+		 *
+		 * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
+		 */
+		async fetchPublicLinkShare(token, failed = false) {
+			const response = await axios.get(
+				generateUrl(`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}`),
+				{ params: failed ? { failed: '1' } : {} },
+			)
+			return response.data
+		},
+
+		/**
+		 * Phase 2 — confirm that the recipient successfully decrypted
+		 * the blob. The server increments the usage count atomically
+		 * and auto-deletes when the cap is hit.
+		 *
+		 * @param {string} token The public token
+		 * @return {Promise<object>} The updated usage envelope
+		 *   `{ usageCount, usageLimit, remaining }`
+		 *
+		 * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
+		 */
+		async confirmPublicLinkShare(token) {
+			const response = await axios.post(
+				generateUrl(`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}/confirm`),
+				{},
+			)
+			return response.data
+		},
+
+		/**
+		 * Decrypt the public-share blob with the recipient-supplied
+		 * password. Wraps the shared Argon2id-AES-GCM decrypt step so
+		 * the LinkShareAccess view stays thin.
+		 *
+		 * @param {object} share The Phase-1 public-share payload (carries
+		 *   `encryptedSecretSnapshot`, `argon2idSalt`)
+		 * @param {string} password The user-supplied access password
+		 * @return {Promise<object>} The decrypted snapshot object
+		 *
+		 * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
+		 */
+		async decryptPublicSnapshot(share, password) {
+			const plaintext = await decryptSnapshot(
+				share.encryptedSecretSnapshot,
+				share.argon2idSalt,
+				password,
+			)
+			return JSON.parse(plaintext)
 		},
 	},
 })
