@@ -21,11 +21,18 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\AppInfo;
 
+use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
 use OCA\Doriath\Event\SuiteMigrationStartedEvent;
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
+use OCA\Doriath\Listener\SuiteCompromiseListener;
 use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
 use OCA\Doriath\Listener\SuiteMigrationStartedListener;
+use OCA\Doriath\Listener\UserAddedToGroupListener;
+use OCA\Doriath\Listener\UserRemovedFromGroupListener;
+use OCP\Group\Events\UserAddedEvent;
+use OCP\Group\Events\UserRemovedEvent;
 use OCA\Doriath\Middleware\JwtAuthMiddleware;
 use OCA\Doriath\Notification\DoriathNotifier;
 use OCA\Doriath\Search\SecretSearchProvider;
@@ -82,6 +89,26 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: SuiteMigrationCompletedEvent::class,
             listener: SuiteMigrationCompletedListener::class
+        );
+
+        // implement-user-sharing §8 — sharing-graph reactions to
+        // group membership churn, suite revocation, and
+        // post-migration possibly-compromised flagging.
+        $context->registerEventListener(
+            event: UserAddedEvent::class,
+            listener: UserAddedToGroupListener::class
+        );
+        $context->registerEventListener(
+            event: UserRemovedEvent::class,
+            listener: UserRemovedFromGroupListener::class
+        );
+        $context->registerEventListener(
+            event: EncryptionSuiteRevokedEvent::class,
+            listener: EncryptionSuiteRevokedListener::class
+        );
+        $context->registerEventListener(
+            event: SuiteMigrationCompletedEvent::class,
+            listener: SuiteCompromiseListener::class
         );
 
         // Register the Nextcloud unified search provider for secrets. It
