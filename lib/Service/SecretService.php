@@ -32,7 +32,9 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Db\GroupShareMapper;
 use OCA\Doriath\Db\Secret;
+use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
@@ -97,6 +99,8 @@ class SecretService
         private LoggerInterface $logger,
         private ?SecretRequestService $secretRequestService = null,
         private ?ShareService $shareService = null,
+        private ?GroupShareMapper $groupShareMapper = null,
+        private ?SecretDelegationMapper $secretDelegationMapper = null,
     ) {
     }//end __construct()
 
@@ -259,7 +263,11 @@ class SecretService
     {
         $secret = $this->loadOwned(id: $id, userId: $userId);
 
-        // Cascade to derived link shares + secret requests + user shares.
+        // Cascade to derived link shares + secret requests + user shares
+        // (ShareTargets) + group shares + secret delegations. The mappers
+        // for group shares + delegations are optional dependencies so the
+        // existing constructors without them keep compiling; when wired,
+        // a secret delete leaves no orphan sharing-graph rows behind.
         $this->linkShareService->deleteBySecretId($id);
         if ($this->secretRequestService !== null) {
             $this->secretRequestService->deleteAllForSecret($id);
@@ -267,6 +275,14 @@ class SecretService
 
         if ($this->shareService !== null) {
             $this->shareService->deleteAllForSecret($id);
+        }
+
+        if ($this->groupShareMapper !== null) {
+            $this->groupShareMapper->deleteBySecret($id);
+        }
+
+        if ($this->secretDelegationMapper !== null) {
+            $this->secretDelegationMapper->deleteBySecret($id);
         }
 
         $this->mapper->delete($secret);

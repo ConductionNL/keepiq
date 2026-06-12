@@ -113,4 +113,74 @@ describe('useShareStore', () => {
 			expect(store.error).toBeNull()
 		})
 	})
+
+	describe('syncUpdate (§11.5)', () => {
+		it('returns updated:0 when the secret has no recipients', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+			const put = vi.spyOn(axios, 'put')
+			const store = useShareStore()
+
+			const result = await store.syncUpdate('sec-1', { key: 'newPW' }, '2026-06-12T00:00:00Z')
+
+			expect(result.updated).toBe(0)
+			expect(put).not.toHaveBeenCalled()
+		})
+
+		it('encrypts the plaintext for each recipient and PUTs the batch', async () => {
+			const store = useShareStore()
+			// Pre-seed the share list so fetchShares is short-circuited
+			// (the recipient certificates are attached to each row).
+			store.shares = [
+				{ id: 'sh1', secretId: 'copy-bob', recipientCertificate: 'PEM-bob' },
+				{ id: 'sh2', secretId: 'copy-carol', recipientCertificate: 'PEM-carol' },
+			]
+
+			const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { updated: 2 } })
+			const result = await store.syncUpdate(
+				'sec-1',
+				{ key: 'newPW', login: 'bob@example.com' },
+				'2026-06-12T00:00:00Z',
+			)
+
+			expect(put).toHaveBeenCalledTimes(1)
+			const [url, body] = put.mock.calls[0]
+			expect(url).toContain('/api/v1/secrets/sec-1/sync')
+			expect(body.expectedUpdatedAt).toBe('2026-06-12T00:00:00Z')
+			expect(body.updates).toHaveLength(2)
+			expect(body.updates[0].encryptedKey).toBe('ENC(newPW)')
+			expect(body.updates[0].encryptedLogin).toBe('ENC(bob@example.com)')
+			expect(body.updates[0].secretId).toBe('copy-bob')
+			expect(result.updated).toBe(2)
+		})
+
+		it('skips recipients whose certificate has been cleared', async () => {
+			const store = useShareStore()
+			store.shares = [
+				{ id: 'sh1', secretId: 'copy-bob', recipientCertificate: 'PEM-bob' },
+				{ id: 'sh2', secretId: 'copy-stale', recipientCertificate: '' },
+			]
+
+			const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { updated: 1 } })
+			await store.syncUpdate('sec-1', { key: 'newPW' }, null)
+
+			const body = put.mock.calls[0][1]
+			expect(body.updates).toHaveLength(1)
+			expect(body.updates[0].secretId).toBe('copy-bob')
+		})
+
+		it('surfaces 409 conflicts via the error field and rethrows', async () => {
+			const store = useShareStore()
+			store.shares = [
+				{ id: 'sh1', secretId: 'copy-bob', recipientCertificate: 'PEM-bob' },
+			]
+			vi.spyOn(axios, 'put').mockRejectedValue({
+				response: { status: 409, data: { message: 'stale lock' } },
+			})
+
+			await expect(
+				store.syncUpdate('sec-1', { key: 'newPW' }, '2026-06-12T00:00:00Z'),
+			).rejects.toBeTruthy()
+			expect(store.error).toBe('stale lock')
+		})
+	})
 })

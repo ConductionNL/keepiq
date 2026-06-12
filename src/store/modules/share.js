@@ -175,6 +175,89 @@ export const useShareStore = defineStore('share', {
 		},
 
 		/**
+		 * Sync an updated plaintext to every recipient. Implements
+		 * tasks §11.5 (browser-side encryption loop) + §11.6 (called by
+		 * useSecretStore.updateSecret after a successful owner update if
+		 * the secret has active shares).
+		 *
+		 * Flow:
+		 *  1. Hydrate the current share list for the secret (if not yet
+		 *     loaded).
+		 *  2. For each recipient, fetch their active EncryptionSuite
+		 *     certificate and RSA-encrypt the new plaintext for them.
+		 *  3. PUT the batch to `/api/v1/secrets/{id}/sync` along with the
+		 *     `expectedUpdatedAt` for optimistic-lock validation.
+		 *
+		 * The server side (ShareService::syncUpdate) does the atomic
+		 * write inside a transaction, clears the `possiblyCompromisedAt`
+		 * flag if previously set, and rejects stale locks with HTTP 409
+		 * so the caller can re-encrypt.
+		 *
+		 * @param {string}              secretId          The source secret ID.
+		 * @param {object}              plaintext         New plaintext field map
+		 *   ({ key, login, additionalFields } — only fields that should be
+		 *   re-encrypted for recipients).
+		 * @param {string}              expectedUpdatedAt The owner's last-seen updatedAt (ISO).
+		 * @return {Promise<{updated: number}>}
+		 */
+		async syncUpdate(secretId, plaintext, expectedUpdatedAt) {
+			this.loading = true
+			this.error = null
+			try {
+				if (this.shares.length === 0) {
+					await this.fetchShares(secretId)
+				}
+
+				if (this.shares.length === 0) {
+					// No recipients — nothing to sync. The UI uses this
+					// as a fast-path skip in useSecretStore.updateSecret.
+					return { updated: 0 }
+				}
+
+				// Build the per-recipient encrypted blob batch. The
+				// recipient's PEM certificate is returned by the share
+				// row (the server hydrates it from the active
+				// EncryptionSuite of the recipient).
+				const updates = []
+				for (const share of this.shares) {
+					const certificate = share.recipientCertificate || share.certificate
+					if (certificate == null || certificate === '') {
+						// Skip recipients whose suite was revoked while the
+						// owner edited; the server-side cascade has already
+						// cleaned them up but the UI list may be stale.
+						continue
+					}
+					// eslint-disable-next-line no-await-in-loop
+					const blob = await this.encryptForRecipient(plaintext, certificate)
+					updates.push({
+						secretId: share.secretId,
+						encryptedKey: blob.key ?? null,
+						encryptedLogin: blob.login ?? null,
+						encryptedAdditionalFields: blob.additionalFields ?? null,
+					})
+				}
+
+				if (updates.length === 0) {
+					return { updated: 0 }
+				}
+
+				const response = await axios.put(
+					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/sync`),
+					{
+						expectedUpdatedAt,
+						updates,
+					},
+				)
+				return response.data ?? { updated: updates.length }
+			} catch (e) {
+				this.error = e?.response?.data?.message || e?.message || 'Failed to sync update'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
 		 * Reset the store (used on secret detail unmount).
 		 *
 		 * @return {void}
