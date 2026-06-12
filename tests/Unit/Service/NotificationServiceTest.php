@@ -174,6 +174,69 @@ class NotificationServiceTest extends TestCase
     }
 
     /**
+     * §11.6 — request_fulfilled honours the notify_requests user pref.
+     * Each subject in SUBJECT_SETTING_MAP must consult its mapped pref
+     * key for opt-out; the matrix here locks the request_fulfilled row
+     * specifically (opt-out suppresses, default-opt-in delivers).
+     *
+     * @return void
+     */
+    public function testNotifyRequestFulfilledRespectsUserPreference(): void
+    {
+        // Opt-out path: notify_requests=0 -> dispatch suppressed.
+        $this->config
+            ->method('getUserValue')
+            ->with('alice', 'doriath', 'notify_requests', '1')
+            ->willReturn('0');
+
+        $this->manager->expects($this->never())->method('createNotification');
+
+        $this->assertFalse(
+            condition: $this->service->notify(
+                subject: 'request_fulfilled',
+                recipientId: 'alice',
+                params: ['secretName' => 'GitHub'],
+                objectType: 'secret_request',
+                objectId: 'req-1',
+            )
+        );
+    }
+
+    /**
+     * §11.6 — request_fulfilled delivers when the pref is opted-in
+     * (default '1' returned when the user has not set the value).
+     *
+     * @return void
+     */
+    public function testNotifyRequestFulfilledDeliversWhenOptedIn(): void
+    {
+        $this->config
+            ->method('getUserValue')
+            ->with('alice', 'doriath', 'notify_requests', '1')
+            ->willReturn('1');
+
+        $notification = $this->createMock(originalClassName: INotification::class);
+        $notification->method('setApp')->willReturnSelf();
+        $notification->method('setUser')->willReturnSelf();
+        $notification->method('setDateTime')->willReturnSelf();
+        $notification->method('setObject')->willReturnSelf();
+        $notification->method('setSubject')->willReturnSelf();
+
+        $this->manager->method('createNotification')->willReturn($notification);
+        $this->manager->expects($this->once())->method('notify')->with($notification);
+
+        $this->assertTrue(
+            condition: $this->service->notify(
+                subject: 'request_fulfilled',
+                recipientId: 'alice',
+                params: ['secretName' => 'GitHub'],
+                objectType: 'secret_request',
+                objectId: 'req-1',
+            )
+        );
+    }
+
+    /**
      * SUBJECT_SETTING_MAP covers every spec'd subject.
      *
      * @return void

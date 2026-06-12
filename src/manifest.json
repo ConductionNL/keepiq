@@ -217,6 +217,14 @@
 			"title": "Fill in secret",
 			"component": "SecretRequestFill",
 			"_note": "Public fill-in page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the flow without a Nextcloud account; the controller runs as #[PublicPage]."
+		},
+		{
+			"id": "LinkShareAccess",
+			"route": "/share/link/:token",
+			"type": "custom",
+			"title": "Shared secret",
+			"component": "LinkShareAccess",
+			"_note": "Public link-share access page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the password-protected flow without a Nextcloud account; the LinkShareAccessController endpoints run as #[PublicPage]. Implements the two-phase recipient protocol: Phase 1 fetches the ciphertext + Argon2id salt; Phase 2 confirms a successful client-side decrypt so the server can increment the usage count and auto-delete on cap."
 		}
 	]
 }
