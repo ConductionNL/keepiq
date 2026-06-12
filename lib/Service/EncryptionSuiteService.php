@@ -103,6 +103,59 @@ class EncryptionSuiteService
     }//end createSuite()
 
     /**
+     * Provision an EncryptionSuite for a registered application.
+     *
+     * The application supplies its public key via a PKCS#10 CSR; the
+     * private key never leaves the application's possession, so the
+     * stored `private_key` blob is intentionally empty (applications
+     * decrypt server-issued ciphertext with their own private key).
+     *
+     * The CSR is parsed via OpenSSL, the public key extracted as PEM,
+     * and the public key is then signed by the active CA intermediate
+     * via `createSuite()`. The resulting suite is keyed to
+     * `owner_type=application` / `owner_id=$applicationId`.
+     *
+     * @param string $applicationId The Application ID
+     * @param string $csrPem        The PEM-encoded PKCS#10 CSR
+     *
+     * @return EncryptionSuite
+     *
+     * @throws RuntimeException When the CSR's public key cannot be extracted.
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
+     */
+    public function provisionForApplication(string $applicationId, string $csrPem): EncryptionSuite
+    {
+        if ($applicationId === '') {
+            throw new InvalidArgumentException('applicationId is required');
+        }
+
+        if ($csrPem === '') {
+            throw new InvalidArgumentException('csrPem is required');
+        }
+
+        $publicKeyResource = @openssl_csr_get_public_key($csrPem);
+        if ($publicKeyResource === false) {
+            throw new RuntimeException('Could not extract public key from CSR');
+        }
+
+        $details = openssl_pkey_get_details($publicKeyResource);
+        if ($details === false || isset($details['key']) === false) {
+            throw new RuntimeException('Public key details unreadable from CSR');
+        }
+
+        $publicKeyPem = (string) $details['key'];
+
+        return $this->createSuite(
+            ownerType: 'application',
+            ownerId: $applicationId,
+            publicKeyPem: $publicKeyPem,
+            // Applications hold their own private key — server stores no envelope.
+            encryptedPrivateKey: '',
+        );
+    }//end provisionForApplication()
+
+    /**
      * Revoke an EncryptionSuite.
      *
      * @param string $id        The suite ID
