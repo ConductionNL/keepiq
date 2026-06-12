@@ -78,6 +78,8 @@ class ApplicationService
      * @return Application
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-3.2
      */
     public function register(
         string $name,
@@ -93,6 +95,16 @@ class ApplicationService
 
         if (in_array($type, [Application::TYPE_INTERNAL, Application::TYPE_EXTERNAL], true) === false) {
             throw new InvalidArgumentException(message: 'type must be internal or external');
+        }
+
+        // Per implement-application-mgmt §3.2 / §3.3: when an admin-registered
+        // application supplies a CSR (status will be `active`, suite is
+        // provisioned immediately), gate on PKCS#10 format + >= 4096-bit key
+        // BEFORE the row is persisted. Pending rows (non-admin / anonymous)
+        // store the CSR verbatim; validation runs again when the admin
+        // approves the row, so a malformed CSR is caught there too.
+        if ($isAdmin === true && $csr !== null && $csr !== '') {
+            $this->validateCsr(csr: $csr);
         }
 
         $entity = new Application();
@@ -132,6 +144,8 @@ class ApplicationService
      * @return Application
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-3.4
      */
     public function approve(string $applicationId, string $adminUserId, bool $isAdmin): Application
     {
@@ -143,6 +157,14 @@ class ApplicationService
 
         if ($entity->isPending() === false) {
             throw new InvalidArgumentException(message: 'Application is not pending');
+        }
+
+        // Per implement-application-mgmt §3.3: validate the stored CSR
+        // (if any) at approval time too, so a malformed or weak CSR
+        // surfaced before the EncryptionSuite signer ever runs.
+        $storedCsr = $entity->getCsr();
+        if ($storedCsr !== null && $storedCsr !== '') {
+            $this->validateCsr(csr: $storedCsr);
         }
 
         $entity->setStatus(Application::STATUS_ACTIVE);
@@ -331,4 +353,46 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'Application not found');
         }
     }//end findOr400()
+
+    /**
+     * Validate a supplied PKCS#10 CSR — format + minimum key size.
+     *
+     * Per implement-application-mgmt §3.3, when a registering caller supplies
+     * a CSR the server must:
+     *   1. parse it via `openssl_csr_get_public_key()` (rejects malformed PEM)
+     *   2. read the public-key bit length via `openssl_pkey_get_details()`
+     *   3. enforce `bits >= 4096`
+     * Any failure throws InvalidArgumentException — the registration row is
+     * never persisted and the EncryptionSuite-provisioning pipeline never
+     * sees a sub-4096 key.
+     *
+     * @param string $csr The PEM-encoded PKCS#10 CSR
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the CSR is malformed or the
+     *                                  key is below 4096 bits.
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-3.3
+     */
+    private function validateCsr(string $csr): void
+    {
+        // openssl_csr_get_public_key() emits a warning on malformed input
+        // and returns false; we suppress the warning + check the return.
+        $publicKey = @openssl_csr_get_public_key($csr);
+        if ($publicKey === false) {
+            throw new InvalidArgumentException(message: 'Invalid CSR: PKCS#10 format not recognised');
+        }
+
+        $details = openssl_pkey_get_details($publicKey);
+        if ($details === false || isset($details['bits']) === false) {
+            throw new InvalidArgumentException(message: 'Invalid CSR: public key not readable');
+        }
+
+        if ((int) $details['bits'] < 4096) {
+            throw new InvalidArgumentException(
+                message: 'Invalid CSR: key size '.(int) $details['bits'].' bits is below the 4096-bit minimum'
+            );
+        }
+    }//end validateCsr()
 }//end class

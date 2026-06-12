@@ -233,4 +233,139 @@ class ApplicationServiceTest extends TestCase
 
         $this->service->get(applicationId: 'missing', userId: 'alice', isAdmin: false);
     }
+
+    /**
+     * Admin registration with a valid >=4096-bit CSR persists the row.
+     *
+     * @return void
+     */
+    public function testRegisterAdminAcceptsValid4096Csr(): void
+    {
+        $csr = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+        $this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+        $result = $this->service->register(
+            name: 'OK',
+            description: null,
+            type: Application::TYPE_INTERNAL,
+            csr: $csr,
+            userId: 'admin',
+            isAdmin: true
+        );
+
+        $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
+        $this->assertSame($csr, $result->getCsr());
+    }
+
+    /**
+     * Admin registration with a sub-4096-bit CSR is rejected.
+     *
+     * @return void
+     */
+    public function testRegisterAdminRejectsWeakCsr(): void
+    {
+        $csr = (string) file_get_contents(__DIR__.'/../fixtures/csr-2048.pem');
+        $this->mapper->expects($this->never())->method('insert');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/below the 4096-bit minimum/');
+        $this->service->register(
+            name: 'Weak',
+            description: null,
+            type: Application::TYPE_INTERNAL,
+            csr: $csr,
+            userId: 'admin',
+            isAdmin: true
+        );
+    }
+
+    /**
+     * Admin registration with a malformed CSR is rejected with a clear message.
+     *
+     * @return void
+     */
+    public function testRegisterAdminRejectsMalformedCsr(): void
+    {
+        $this->mapper->expects($this->never())->method('insert');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/PKCS#10 format not recognised/');
+        $this->service->register(
+            name: 'Malformed',
+            description: null,
+            type: Application::TYPE_INTERNAL,
+            csr: 'not-a-csr',
+            userId: 'admin',
+            isAdmin: true
+        );
+    }
+
+    /**
+     * Non-admin (pending) registration stores the CSR verbatim — validation
+     * is deferred to approval time so anonymous registrants don't leak the
+     * format/size checks back via 400-status timing.
+     *
+     * @return void
+     */
+    public function testRegisterPendingStoresAnyCsr(): void
+    {
+        $this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+        $result = $this->service->register(
+            name: 'Pending',
+            description: null,
+            type: Application::TYPE_INTERNAL,
+            csr: 'not-validated-here',
+            userId: 'alice',
+            isAdmin: false
+        );
+
+        $this->assertSame(Application::STATUS_PENDING, $result->getStatus());
+        $this->assertSame('not-validated-here', $result->getCsr());
+    }
+
+    /**
+     * Approval re-validates the stored CSR — a malformed pending CSR is
+     * rejected when the admin tries to approve.
+     *
+     * @return void
+     */
+    public function testApproveRejectsMalformedStoredCsr(): void
+    {
+        $entity = new Application();
+        $entity->setId('app-bad');
+        $entity->setStatus(Application::STATUS_PENDING);
+        $entity->setCsr('not-a-csr');
+
+        $this->mapper->expects($this->once())
+            ->method('findById')
+            ->with('app-bad')
+            ->willReturn($entity);
+        $this->mapper->expects($this->never())->method('update');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/PKCS#10 format not recognised/');
+        $this->service->approve(applicationId: 'app-bad', adminUserId: 'admin', isAdmin: true);
+    }
+
+    /**
+     * Approval accepts a stored >=4096-bit CSR.
+     *
+     * @return void
+     */
+    public function testApproveAcceptsValidStoredCsr(): void
+    {
+        $csr = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+
+        $entity = new Application();
+        $entity->setId('app-ok');
+        $entity->setStatus(Application::STATUS_PENDING);
+        $entity->setCsr($csr);
+
+        $this->mapper->expects($this->once())->method('findById')->willReturn($entity);
+        $this->mapper->expects($this->once())->method('update')->willReturnArgument(0);
+
+        $result = $this->service->approve(applicationId: 'app-ok', adminUserId: 'admin', isAdmin: true);
+        $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
+    }
 }
