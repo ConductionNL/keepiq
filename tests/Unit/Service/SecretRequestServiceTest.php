@@ -21,6 +21,8 @@ namespace OCA\Doriath\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\EncryptionSuite;
+use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
@@ -593,5 +595,237 @@ class SecretRequestServiceTest extends TestCase
         $entity->setCreatedAt(new DateTime());
 
         return $entity;
+    }
+
+    /**
+     * createForApplication resolves the application's active suite and persists the row.
+     *
+     * @return void
+     */
+    public function testCreateForApplicationResolvesSuite(): void
+    {
+        $mapper       = $this->createMock(SecretRequestMapper::class);
+        $suiteMapper  = $this->createMock(EncryptionSuiteMapper::class);
+        $logger       = $this->createMock(LoggerInterface::class);
+
+        $suite = new EncryptionSuite();
+        $suite->setId('app-suite-1');
+        $suite->setOwnerType('application');
+        $suite->setOwnerId('app-1');
+
+        $suiteMapper->expects($this->once())
+            ->method('findActiveByOwner')
+            ->with('application', 'app-1')
+            ->willReturn($suite);
+
+        $captured = null;
+        $mapper->expects($this->once())
+            ->method('insert')
+            ->willReturnCallback(
+                static function (SecretRequest $entity) use (&$captured) {
+                    $captured = $entity;
+                    return $entity;
+                }
+            );
+
+        $service = new SecretRequestService(
+            mapper: $mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: null,
+            suiteMapper: $suiteMapper,
+        );
+
+        $result = $service->createForApplication(
+            secretId: 'sec-1',
+            applicationId: 'app-1',
+            requestedFields: ['key'],
+            expiresAt: null,
+            userId: 'requester',
+        );
+
+        $this->assertSame($captured, $result);
+        $this->assertSame('app-suite-1', $result->getEncryptionSuiteId());
+        $this->assertSame('sec-1', $result->getSecretId());
+        $this->assertFalse($result->getIsReRequest());
+    }
+
+    /**
+     * createForApplication throws when the application has no active suite.
+     *
+     * @return void
+     */
+    public function testCreateForApplicationRejectsMissingSuite(): void
+    {
+        $mapper       = $this->createMock(SecretRequestMapper::class);
+        $suiteMapper  = $this->createMock(EncryptionSuiteMapper::class);
+        $logger       = $this->createMock(LoggerInterface::class);
+
+        $suiteMapper->expects($this->once())
+            ->method('findActiveByOwner')
+            ->willThrowException(new DoesNotExistException('no suite'));
+
+        $mapper->expects($this->never())->method('insert');
+
+        $service = new SecretRequestService(
+            mapper: $mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: null,
+            suiteMapper: $suiteMapper,
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No active EncryptionSuite for application app-1');
+
+        $service->createForApplication(
+            secretId: 'sec-1',
+            applicationId: 'app-1',
+            requestedFields: ['key'],
+            expiresAt: null,
+            userId: 'requester',
+        );
+    }
+
+    /**
+     * createReRequest reuses the secret's suite + flags isReRequest.
+     *
+     * @return void
+     */
+    public function testCreateReRequestReusesSecretSuite(): void
+    {
+        $mapper       = $this->createMock(SecretRequestMapper::class);
+        $secretMapper = $this->createMock(SecretMapper::class);
+        $logger       = $this->createMock(LoggerInterface::class);
+
+        $secret = new Secret();
+        $secret->setId('sec-1');
+        $secret->setOwnerType('user');
+        $secret->setOwnerId('alice');
+        $secret->setEncryptionSuiteId('user-suite-1');
+
+        $secretMapper->expects($this->once())
+            ->method('findById')
+            ->with('sec-1')
+            ->willReturn($secret);
+
+        // No pending request exists → continue.
+        $mapper->expects($this->once())
+            ->method('findPendingBySecretId')
+            ->with('sec-1')
+            ->willThrowException(new DoesNotExistException('none'));
+
+        $captured = null;
+        $mapper->expects($this->once())
+            ->method('insert')
+            ->willReturnCallback(
+                static function (SecretRequest $entity) use (&$captured) {
+                    $captured = $entity;
+                    return $entity;
+                }
+            );
+
+        $service = new SecretRequestService(
+            mapper: $mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: $secretMapper,
+        );
+
+        $result = $service->createReRequest(
+            secretId: 'sec-1',
+            requestedFields: ['key'],
+            expiresAt: null,
+            userId: 'alice',
+        );
+
+        $this->assertSame($captured, $result);
+        $this->assertSame('user-suite-1', $result->getEncryptionSuiteId());
+        $this->assertTrue($result->getIsReRequest());
+    }
+
+    /**
+     * createReRequest rejects a non-owner caller.
+     *
+     * @return void
+     */
+    public function testCreateReRequestRejectsNonOwner(): void
+    {
+        $mapper       = $this->createMock(SecretRequestMapper::class);
+        $secretMapper = $this->createMock(SecretMapper::class);
+        $logger       = $this->createMock(LoggerInterface::class);
+
+        $secret = new Secret();
+        $secret->setId('sec-1');
+        $secret->setOwnerId('bob');
+
+        $secretMapper->expects($this->once())
+            ->method('findById')
+            ->willReturn($secret);
+
+        $mapper->expects($this->never())->method('insert');
+
+        $service = new SecretRequestService(
+            mapper: $mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: $secretMapper,
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only the secret owner may create a re-request');
+
+        $service->createReRequest(
+            secretId: 'sec-1',
+            requestedFields: ['key'],
+            expiresAt: null,
+            userId: 'alice',
+        );
+    }
+
+    /**
+     * createReRequest rejects when a pending request is already open.
+     *
+     * @return void
+     */
+    public function testCreateReRequestRejectsExistingPending(): void
+    {
+        $mapper       = $this->createMock(SecretRequestMapper::class);
+        $secretMapper = $this->createMock(SecretMapper::class);
+        $logger       = $this->createMock(LoggerInterface::class);
+
+        $secret = new Secret();
+        $secret->setId('sec-1');
+        $secret->setOwnerId('alice');
+        $secret->setEncryptionSuiteId('user-suite-1');
+
+        $secretMapper->expects($this->once())
+            ->method('findById')
+            ->willReturn($secret);
+
+        $pending = new SecretRequest();
+        $pending->setId('req-existing');
+        $mapper->expects($this->once())
+            ->method('findPendingBySecretId')
+            ->willReturn($pending);
+
+        $mapper->expects($this->never())->method('insert');
+
+        $service = new SecretRequestService(
+            mapper: $mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: $secretMapper,
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A pending request already exists for this secret');
+
+        $service->createReRequest(
+            secretId: 'sec-1',
+            requestedFields: ['key'],
+            expiresAt: null,
+            userId: 'alice',
+        );
     }
 }
