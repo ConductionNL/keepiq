@@ -74,7 +74,10 @@ class ShareController extends OCSController
             return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        $shares = $this->shareService->listSharesForSecret(sourceSecretId: $secretId);
+        $shares = $this->shareService->listSharesForSecret(
+            sourceSecretId: $secretId,
+            userId: $user->getUID()
+        );
 
         return new JSONResponse(
             data: array_map(
@@ -162,4 +165,89 @@ class ShareController extends OCSController
 
         return new JSONResponse(data: ['status' => 'deleted']);
     }//end destroy()
+
+    /**
+     * Create a batch of share targets — the group-share expansion path.
+     *
+     * @param string $secretId     The source secret ID
+     * @param array  $shares       The per-recipient batch (each {targetUserId, recipientSecretId})
+     * @param string $groupShareId The GroupShare ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#9.1
+     */
+    #[NoAdminRequired]
+    public function createBatch(
+        string $secretId,
+        array $shares,
+        string $groupShareId,
+    ): JSONResponse {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $created = $this->shareService->createBatchShares(
+                sourceSecretId: $secretId,
+                shares: $shares,
+                groupShareId: $groupShareId,
+                userId: $user->getUID()
+            );
+        } catch (InvalidArgumentException $exception) {
+            return new JSONResponse(
+                data: ['message' => $exception->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(
+            data: array_map(static fn ($row) => $row->jsonSerialize(), $created),
+            statusCode: Http::STATUS_CREATED
+        );
+    }//end createBatch()
+
+    /**
+     * Push an updated encrypted blob to every recipient.
+     *
+     * @param string $secretId          The source secret ID
+     * @param array  $updates           The per-recipient blobs
+     * @param string $expectedUpdatedAt The owner-side expected ISO timestamp
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#9.1
+     */
+    #[NoAdminRequired]
+    public function sync(
+        string $secretId,
+        array $updates,
+        string $expectedUpdatedAt = '',
+    ): JSONResponse {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $written = $this->shareService->syncUpdate(
+                secretId: $secretId,
+                updates: $updates,
+                expectedUpdatedAt: $expectedUpdatedAt,
+                userId: $user->getUID()
+            );
+        } catch (InvalidArgumentException $exception) {
+            return new JSONResponse(
+                data: ['message' => $exception->getMessage()],
+                statusCode: Http::STATUS_CONFLICT
+            );
+        }
+
+        return new JSONResponse(data: ['updated' => $written]);
+    }//end sync()
 }//end class
