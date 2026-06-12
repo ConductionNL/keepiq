@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 
 /**
  * Pinia store for the registered-application admin queue + user
@@ -213,6 +214,91 @@ export const useApplicationStore = defineStore('application', {
 		clearOneTimePrivateKey() {
 			this.oneTimePrivateKey = null
 			this.oneTimePrivateKeyAppId = null
+		},
+
+		/**
+		 * Fetch the active EncryptionSuite certificate for an application.
+		 * Caller imports the embedded public key client-side for the
+		 * write-secret-for-app flow.
+		 *
+		 * @param {string} id The application ID.
+		 * @return {Promise<string>} The PEM-encoded certificate.
+		 */
+		async fetchCertificate(id) {
+			const response = await axios.get(
+				generateUrl(`/apps/doriath/api/v1/applications/${id}/certificate`),
+			)
+			return response.data?.certificate ?? ''
+		},
+
+		/**
+		 * Write a secret on behalf of an application.
+		 *
+		 * Steps:
+		 *   1. fetch the application's EncryptionSuite certificate;
+		 *   2. import the public key (WebCrypto RSA-OAEP-SHA256);
+		 *   3. encrypt key + optional login + additionalFields;
+		 *   4. POST to /api/v1/secrets with owner_type=application + owner_id.
+		 *
+		 * Plaintext NEVER hits the wire — the encrypted blobs are the
+		 * only secret-bearing payload.
+		 *
+		 * @param {string} applicationId The owning application ID.
+		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, typeId, folderId).
+		 * @return {Promise<object>} The created Secret row (server response).
+		 */
+		async writeSecretForApplication(applicationId, data) {
+			const pem = await this.fetchCertificate(applicationId)
+			if (!pem) {
+				throw new Error('Application has no active EncryptionSuite')
+			}
+			const publicKey = await importPublicKey(pem)
+
+			const payload = {
+				name: data.name,
+				url: data.url ?? null,
+				typeId: data.typeId ?? null,
+				folderId: data.folderId ?? null,
+				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
+				ownerType: 'application',
+				ownerId: applicationId,
+			}
+			if (data.login !== undefined && data.login !== null && data.login !== '') {
+				payload.login = await rsaEncrypt(String(data.login), publicKey)
+			}
+			if (data.additionalFields) {
+				const json = typeof data.additionalFields === 'string'
+					? data.additionalFields
+					: JSON.stringify(data.additionalFields)
+				payload.additionalFields = await rsaEncrypt(json, publicKey)
+			}
+
+			const response = await axios.post(
+				generateUrl('/apps/doriath/api/v1/secrets'),
+				payload,
+			)
+			return response.data
+		},
+
+		/**
+		 * List secrets owned by an application. Returns the ciphertext
+		 * rows — only the application itself can decrypt them; the UI
+		 * shows metadata (name, type, created_at).
+		 *
+		 * @param {string} applicationId The owning application ID.
+		 * @return {Promise<Array<object>>} The application's secrets.
+		 */
+		async listApplicationSecrets(applicationId) {
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/secrets'),
+				{ params: { ownerType: 'application', ownerId: applicationId } },
+			)
+			// SecretController.index returns a paginated envelope; fall
+			// back to the response body itself when the shape is a bare
+			// array (legacy unit fixtures).
+			return Array.isArray(response.data)
+				? response.data
+				: (response.data?.items ?? [])
 		},
 	},
 })
