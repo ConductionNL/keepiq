@@ -23,11 +23,14 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
-use Ramsey\Uuid\Uuid;
 use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Db\SuiteMigrationMapper;
+use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
+use OCA\Doriath\Event\SuiteMigrationStartedEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 
 /**
  * Tracks compromise recovery migrations (suite to suite).
@@ -37,9 +40,10 @@ class MigrationService
     /**
      * Constructor for MigrationService.
      *
-     * @param SuiteMigrationMapper  $mapper      The suite migration mapper
-     * @param EncryptionSuiteMapper $suiteMapper The encryption suite mapper
-     * @param LoggerInterface       $logger      The logger interface
+     * @param SuiteMigrationMapper   $mapper          The suite migration mapper
+     * @param EncryptionSuiteMapper  $suiteMapper     The encryption suite mapper
+     * @param LoggerInterface        $logger          The logger interface
+     * @param IEventDispatcher|null  $eventDispatcher The optional event dispatcher
      *
      * @return void
      */
@@ -47,6 +51,7 @@ class MigrationService
         private SuiteMigrationMapper $mapper,
         private EncryptionSuiteMapper $suiteMapper,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
 
@@ -72,6 +77,12 @@ class MigrationService
         $this->mapper->insert($migration);
 
         $this->logger->info("Doriath: Compromise recovery started, migrating from {$oldSuiteId} to {$newSuiteId}");
+
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatchTyped(
+                new SuiteMigrationStartedEvent($oldSuiteId, $newSuiteId, $migration->getId())
+            );
+        }
 
         return $migration;
     }//end initiateCompromiseRecovery()
@@ -112,6 +123,17 @@ class MigrationService
                     'hasErrors' => $hasErrors,
                 ]
                 );
+
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatchTyped(
+                new SuiteMigrationCompletedEvent(
+                    $migration->getOldSuiteId(),
+                    $migration->getNewSuiteId(),
+                    $migration->getId(),
+                    $hasErrors,
+                )
+            );
+        }
 
         return $migration;
     }//end completeMigration()

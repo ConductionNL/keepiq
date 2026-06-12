@@ -95,6 +95,8 @@ class SecretService
         private MigrationService $migrationService,
         private LinkShareService $linkShareService,
         private LoggerInterface $logger,
+        private ?SecretRequestService $secretRequestService = null,
+        private ?ShareService $shareService = null,
     ) {
     }//end __construct()
 
@@ -257,8 +259,15 @@ class SecretService
     {
         $secret = $this->loadOwned(id: $id, userId: $userId);
 
-        // Cascade to derived link shares (and, when present, requests).
+        // Cascade to derived link shares + secret requests + user shares.
         $this->linkShareService->deleteBySecretId($id);
+        if ($this->secretRequestService !== null) {
+            $this->secretRequestService->deleteAllForSecret($id);
+        }
+
+        if ($this->shareService !== null) {
+            $this->shareService->deleteAllForSecret($id);
+        }
 
         $this->mapper->delete($secret);
         $this->logger->info("Doriath: secret {$id} deleted by {$userId}");
