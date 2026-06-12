@@ -30,8 +30,11 @@ use OCA\Doriath\Db\Application;
 use OCA\Doriath\Service\ApplicationService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
+use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -56,6 +59,7 @@ class ApplicationController extends OCSController
         private ApplicationService $service,
         private IUserSession $session,
         private IGroupManager $groupManager,
+        private IAppConfig $appConfig,
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
@@ -157,8 +161,19 @@ class ApplicationController extends OCSController
     /**
      * Register a new application.
      *
-     * Admin callers auto-approve (status=active); non-admin callers
-     * create a pending row.
+     * Three authorization branches:
+     *  1. Admin caller: auto-approve (status=active).
+     *  2. Authenticated non-admin: create a pending row, admin queue.
+     *  3. Anonymous (no NC session): ONLY accepted when the admin has
+     *     explicitly opted in via the app-config flag
+     *     `anonymous_application_registration_enabled` = "1". The row is
+     *     created with registeredBy='anonymous' and goes through the
+     *     standard pending queue — the admin-notification dispatch in
+     *     ApplicationService::register is the audit trail.
+     *
+     * The route is declared PublicPage so the NC framework lets
+     * anonymous traffic through; the opt-in check runs at the top of
+     * the controller body so a non-opted-in instance still 401s.
      *
      * @param string      $name        The application name
      * @param string|null $description Optional description
@@ -166,12 +181,17 @@ class ApplicationController extends OCSController
      * @param string|null $csr         Optional PKCS#10 CSR
      *
      * @NoAdminRequired
+     * @PublicPage
+     * @NoCSRFRequired
      *
      * @return JSONResponse
      *
      * @spec openspec/changes/implement-application-mgmt/tasks.md#task-6.1
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-6.2
      */
     #[NoAdminRequired]
+    #[PublicPage]
+    #[NoCSRFRequired]
     public function create(
         string $name,
         ?string $description=null,
@@ -179,12 +199,29 @@ class ApplicationController extends OCSController
         ?string $csr=null,
     ): JSONResponse {
         $user = $this->session->getUser();
-        if ($user === null) {
-            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
 
-        $uid     = $user->getUID();
-        $isAdmin = $this->groupManager->isAdmin($uid);
+        if ($user === null) {
+            // Anonymous branch: only honoured when the admin opts in via
+            // app-config. The flag is read on every call (cheap key
+            // lookup) so toggling it takes effect immediately.
+            $anonEnabled = $this->appConfig->getValueString(
+                DoriathApp::APP_ID,
+                'anonymous_application_registration_enabled',
+                '0'
+            );
+            if ($anonEnabled !== '1') {
+                return new JSONResponse(
+                    data: ['message' => 'Unauthorized'],
+                    statusCode: Http::STATUS_UNAUTHORIZED
+                );
+            }
+
+            $uid     = null;
+            $isAdmin = false;
+        } else {
+            $uid     = $user->getUID();
+            $isAdmin = $this->groupManager->isAdmin($uid);
+        }
 
         try {
             $entity = $this->service->register(
