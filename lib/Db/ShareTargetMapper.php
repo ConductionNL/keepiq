@@ -114,4 +114,98 @@ class ShareTargetMapper extends QBMapper
 
         $qb->executeStatement();
     }//end deleteBySourceSecret()
+
+    /**
+     * Find all share targets that descend from a given group share.
+     *
+     * The returned set is the per-member fan-out the GroupShareService
+     * created when the source secret was shared with the group; revoking
+     * the GroupShare cascades through this lookup.
+     *
+     * @param string $groupShareId The group-share ID
+     *
+     * @return ShareTarget[]
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#2.2
+     */
+    public function findByGroupShare(string $groupShareId): array
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('group_share_id', $qb->createNamedParameter($groupShareId)));
+
+        return $this->findEntities(query: $qb);
+    }//end findByGroupShare()
+
+    /**
+     * Find the share target identifying a (source secret, recipient user) pair.
+     *
+     * Used by the authorization path before creating a new share to enforce
+     * the "one share per recipient per source secret" invariant.
+     *
+     * @param string $sourceSecretId The owner's source secret ID
+     * @param string $targetUserId   The recipient Nextcloud user ID
+     *
+     * @return ShareTarget
+     *
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#2.2
+     */
+    public function findBySourceSecretAndTargetUser(string $sourceSecretId, string $targetUserId): ShareTarget
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('source_secret_id', $qb->createNamedParameter($sourceSecretId)))
+            ->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)));
+
+        return $this->findEntity(query: $qb);
+    }//end findBySourceSecretAndTargetUser()
+
+    /**
+     * Delete every share target where the recipient is the given user.
+     *
+     * Invoked from the EncryptionSuite-revocation listener and the
+     * group-member-leave listener so a departing recipient's encrypted
+     * copies disappear in a single statement.
+     *
+     * @param string $targetUserId The recipient Nextcloud user ID
+     *
+     * @return void
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#2.2
+     */
+    public function deleteByTargetUser(string $targetUserId): void
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)));
+
+        $qb->executeStatement();
+    }//end deleteByTargetUser()
+
+    /**
+     * Delete every share target derived from a given group share (cascade).
+     *
+     * Pair with `deleteBySourceSecret` on the GroupShare cascade so the
+     * recipient's encrypted copies vanish together with the group-share
+     * row that created them.
+     *
+     * @param string $groupShareId The group-share ID
+     *
+     * @return void
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#2.2
+     */
+    public function deleteByGroupShare(string $groupShareId): void
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('group_share_id', $qb->createNamedParameter($groupShareId)));
+
+        $qb->executeStatement();
+    }//end deleteByGroupShare()
 }//end class
