@@ -21,6 +21,8 @@ namespace OCA\Doriath\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\Secret;
+use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Service\NotificationService;
@@ -475,6 +477,102 @@ class SecretRequestServiceTest extends TestCase
             oldEncryptionSuiteId: 'suite-x',
             newEncryptionSuiteId: 'suite-x',
         );
+    }
+
+    /**
+     * listBySecret returns all requests when the caller owns the secret.
+     *
+     * @return void
+     */
+    public function testListBySecretReturnsRequestsForOwner(): void
+    {
+        $secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+        $secret       = new Secret();
+        $secret->setId('sec-1');
+        $secret->setOwnerType('user');
+        $secret->setOwnerId('owner');
+
+        $secretMapper->method('findById')->with('sec-1')->willReturn($secret);
+
+        $requests = [$this->buildPending()];
+        $this->mapper->expects(matcher: $this->once())
+            ->method('findBySecretId')
+            ->with('sec-1')
+            ->willReturn($requests);
+
+        $logger  = $this->createMock(originalClassName: LoggerInterface::class);
+        $service = new SecretRequestService(
+            mapper: $this->mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: $secretMapper,
+        );
+
+        $result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
+        $this->assertSame(expected: $requests, actual: $result);
+    }
+
+    /**
+     * listBySecret rejects callers who do not own the secret.
+     *
+     * @return void
+     */
+    public function testListBySecretRejectsNonOwner(): void
+    {
+        $secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+        $secret       = new Secret();
+        $secret->setId('sec-1');
+        $secret->setOwnerType('user');
+        $secret->setOwnerId('owner');
+        $secretMapper->method('findById')->willReturn($secret);
+
+        $this->mapper->expects(matcher: $this->never())->method('findBySecretId');
+
+        $logger  = $this->createMock(originalClassName: LoggerInterface::class);
+        $service = new SecretRequestService(
+            mapper: $this->mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: $secretMapper,
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $service->listBySecret(secretId: 'sec-1', userId: 'someone-else');
+    }
+
+    /**
+     * listBySecret throws when the Secret does not exist.
+     *
+     * @return void
+     */
+    public function testListBySecretRejectsUnknownSecret(): void
+    {
+        $secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+        $secretMapper->method('findById')->willThrowException(new DoesNotExistException(msg: 'gone'));
+
+        $this->mapper->expects(matcher: $this->never())->method('findBySecretId');
+
+        $logger  = $this->createMock(originalClassName: LoggerInterface::class);
+        $service = new SecretRequestService(
+            mapper: $this->mapper,
+            logger: $logger,
+            notificationService: null,
+            secretMapper: $secretMapper,
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $service->listBySecret(secretId: 'sec-missing', userId: 'owner');
+    }
+
+    /**
+     * listBySecret fails closed when the SecretMapper bind is missing.
+     *
+     * @return void
+     */
+    public function testListBySecretFailsClosedWithoutSecretMapper(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->service->listBySecret(secretId: 'sec-1', userId: 'owner');
     }
 
     /**
