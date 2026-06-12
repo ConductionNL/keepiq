@@ -177,6 +177,8 @@ class SecretController extends OCSController
         ?string $folderId=null,
         ?string $login=null,
         ?string $additionalFields=null,
+        ?string $ownerType=null,
+        ?string $ownerId=null,
     ): JSONResponse {
         $userId = $this->uid();
         if ($userId === null) {
@@ -203,7 +205,22 @@ class SecretController extends OCSController
         ];
 
         try {
-            $secret = $this->secretService->create($data, $userId);
+            if ($ownerType === 'application') {
+                if ($ownerId === null || $ownerId === '') {
+                    return new JSONResponse(
+                        data: ['message' => 'ownerId is required when ownerType=application'],
+                        statusCode: Http::STATUS_BAD_REQUEST
+                    );
+                }
+
+                $secret = $this->secretService->createForApplication(
+                    data: $data,
+                    applicationId: $ownerId,
+                    writingUserId: $userId,
+                );
+            } else {
+                $secret = $this->secretService->create($data, $userId);
+            }
         } catch (SuiteBlockedException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
         } catch (WriteLockedException $e) {

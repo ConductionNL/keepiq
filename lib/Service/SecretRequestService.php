@@ -26,10 +26,12 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
@@ -58,6 +60,7 @@ class SecretRequestService
         private LoggerInterface $logger,
         private ?NotificationService $notificationService = null,
         private ?SecretMapper $secretMapper = null,
+        private ?EncryptionSuiteMapper $suiteMapper = null,
     ) {
     }//end __construct()
 
@@ -287,6 +290,134 @@ class SecretRequestService
 
         return $this->mapper->insert($entity);
     }//end create()
+
+    /**
+     * Create a new pending secret request keyed to an application.
+     *
+     * Resolves the application's active EncryptionSuite via the injected
+     * EncryptionSuiteMapper so the caller does not need to know the
+     * suite ID. Enforces the same invariants as `create()` plus an
+     * explicit application-active check (no requests for pending or
+     * rejected applications).
+     *
+     * @param string        $secretId        The Secret ID
+     * @param string        $applicationId   The recipient application ID
+     * @param array<string> $requestedFields Field names to be filled in
+     * @param DateTime|null $expiresAt       Optional expiry
+     * @param string        $userId          The Nextcloud user creating the request
+     *
+     * @return SecretRequest
+     *
+     * @throws InvalidArgumentException When the application has no active suite
+     * @throws RuntimeException When the suite mapper dependency is not wired
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.3
+     */
+    public function createForApplication(
+        string $secretId,
+        string $applicationId,
+        array $requestedFields,
+        ?DateTime $expiresAt,
+        string $userId,
+    ): SecretRequest {
+        if ($applicationId === '') {
+            throw new InvalidArgumentException(message: 'applicationId is required');
+        }
+
+        if ($this->suiteMapper === null) {
+            throw new RuntimeException(message: 'EncryptionSuite mapper not wired for application requests');
+        }
+
+        try {
+            $suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            throw new InvalidArgumentException(
+                message: 'No active EncryptionSuite for application '.$applicationId,
+                code: 400,
+            );
+        }
+
+        return $this->create(
+            secretId: $secretId,
+            encryptionSuiteId: $suite->getId(),
+            requestedFields: $requestedFields,
+            isReRequest: false,
+            expiresAt: $expiresAt,
+            userId: $userId,
+        );
+    }//end createForApplication()
+
+    /**
+     * Create a re-request for an existing secret.
+     *
+     * A re-request renews the access to a Secret whose recipient lost
+     * the plaintext (rotation, recovery, etc). Guards:
+     *   - the Secret must already exist (lookup via SecretMapper);
+     *   - no other pending request may be open for the same Secret;
+     *   - the caller must own the Secret being re-requested.
+     *
+     * The EncryptionSuite is reused from the Secret's current suite ID
+     * (the recipient encrypts under their existing key material).
+     *
+     * @param string        $secretId        The Secret ID
+     * @param array<string> $requestedFields Field names to be re-filled
+     * @param DateTime|null $expiresAt       Optional expiry
+     * @param string        $userId          The Nextcloud user creating the re-request
+     *
+     * @return SecretRequest
+     *
+     * @throws InvalidArgumentException When the Secret is missing, a pending request exists,
+     *                                  or the caller is not the owner.
+     * @throws RuntimeException When the Secret mapper dependency is not wired.
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.4
+     */
+    public function createReRequest(
+        string $secretId,
+        array $requestedFields,
+        ?DateTime $expiresAt,
+        string $userId,
+    ): SecretRequest {
+        if ($secretId === '') {
+            throw new InvalidArgumentException(message: 'secretId is required');
+        }
+
+        if ($this->secretMapper === null) {
+            throw new RuntimeException(message: 'Secret mapper not wired for re-requests');
+        }
+
+        try {
+            $secret = $this->secretMapper->findById($secretId);
+        } catch (DoesNotExistException) {
+            throw new InvalidArgumentException(message: 'Secret not found', code: 404);
+        }
+
+        if ($secret->getOwnerId() !== $userId) {
+            throw new InvalidArgumentException(message: 'Only the secret owner may create a re-request', code: 403);
+        }
+
+        // Reject if a pending request is already open — fence-posts both
+        // double-submits and the spec invariant "one pending request per
+        // secret at a time".
+        try {
+            $this->mapper->findPendingBySecretId($secretId);
+            throw new InvalidArgumentException(
+                message: 'A pending request already exists for this secret',
+                code: 409,
+            );
+        } catch (DoesNotExistException) {
+            // expected — no pending request, continue.
+        }
+
+        return $this->create(
+            secretId: $secretId,
+            encryptionSuiteId: $secret->getEncryptionSuiteId(),
+            requestedFields: $requestedFields,
+            isReRequest: true,
+            expiresAt: $expiresAt,
+            userId: $userId,
+        );
+    }//end createReRequest()
 
     /**
      * Approve (mark fulfilled) a pending secret request.
