@@ -299,4 +299,48 @@ class ApplicationController extends OCSController
 
         return new JSONResponse(data: ['status' => 'deleted', 'id' => $id]);
     }//end destroy()
+
+    /**
+     * Get the active EncryptionSuite certificate for an application.
+     *
+     * Used by the write-secret-for-app flow: the caller imports the
+     * embedded public key client-side, encrypts the plaintext, and
+     * POSTs the ciphertext to /api/v1/secrets with owner_type=application.
+     * Authenticated NC users only; the certificate is non-secret but the
+     * existence/status leak is gated to active applications.
+     *
+     * @param string $id The application ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
+     */
+    #[NoAdminRequired]
+    public function certificate(string $id): JSONResponse
+    {
+        $user = $this->session->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $certificate = $this->service->getCertificate(applicationId: $id);
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        if ($certificate === null) {
+            return new JSONResponse(
+                data: ['message' => 'No active EncryptionSuite for this application'],
+                statusCode: Http::STATUS_NOT_FOUND
+            );
+        }
+
+        return new JSONResponse(data: ['id' => $id, 'certificate' => $certificate]);
+    }//end certificate()
 }//end class

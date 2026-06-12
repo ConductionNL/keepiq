@@ -22,7 +22,9 @@ namespace OCA\Doriath\Tests\Unit\Service;
 use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
+use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Service\ApplicationService;
+use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroup;
@@ -457,5 +459,185 @@ class ApplicationServiceTest extends TestCase
             userId: 'admin',
             isAdmin: true,
         );
+    }
+
+    /**
+     * Admin auto-approval with a CSR triggers EncryptionSuite provisioning.
+     *
+     * @return void
+     */
+    public function testRegisterAdminWithCsrProvisionsSuite(): void
+    {
+        $csr           = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+        $suiteService  = $this->createMock(EncryptionSuiteService::class);
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $logger        = $this->createMock(LoggerInterface::class);
+
+        $mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+        $suiteService->expects($this->once())
+            ->method('provisionForApplication')
+            ->with($this->isType('string'), $csr)
+            ->willReturn(new EncryptionSuite());
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+            notificationService: null,
+            encryptionSuiteService: $suiteService,
+        );
+
+        $service->register(
+            name: 'AdminApp',
+            description: null,
+            type: Application::TYPE_INTERNAL,
+            csr: $csr,
+            userId: 'admin',
+            isAdmin: true,
+        );
+    }
+
+    /**
+     * Approval of a pending row provisions the EncryptionSuite from the
+     * stored CSR.
+     *
+     * @return void
+     */
+    public function testApproveWithStoredCsrProvisionsSuite(): void
+    {
+        $csr           = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+        $suiteService  = $this->createMock(EncryptionSuiteService::class);
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $logger        = $this->createMock(LoggerInterface::class);
+
+        $entity = new Application();
+        $entity->setId('app-1');
+        $entity->setStatus(Application::STATUS_PENDING);
+        $entity->setCsr($csr);
+
+        $mapper->method('findById')->with('app-1')->willReturn($entity);
+        $mapper->method('update')->willReturnArgument(0);
+
+        $suiteService->expects($this->once())
+            ->method('provisionForApplication')
+            ->with('app-1', $csr)
+            ->willReturn(new EncryptionSuite());
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+            notificationService: null,
+            encryptionSuiteService: $suiteService,
+        );
+
+        $result = $service->approve(applicationId: 'app-1', adminUserId: 'admin', isAdmin: true);
+        $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
+    }
+
+    /**
+     * Suite-provisioning failures are swallowed and never roll back approval.
+     *
+     * @return void
+     */
+    public function testApproveSwallowsSuiteProvisioningFailure(): void
+    {
+        $csr           = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+        $suiteService  = $this->createMock(EncryptionSuiteService::class);
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $logger        = $this->createMock(LoggerInterface::class);
+
+        $entity = new Application();
+        $entity->setId('app-1');
+        $entity->setStatus(Application::STATUS_PENDING);
+        $entity->setCsr($csr);
+
+        $mapper->method('findById')->willReturn($entity);
+        $mapper->method('update')->willReturnArgument(0);
+
+        $suiteService->expects($this->once())
+            ->method('provisionForApplication')
+            ->willThrowException(new \RuntimeException('CA down'));
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+            notificationService: null,
+            encryptionSuiteService: $suiteService,
+        );
+
+        $result = $service->approve(applicationId: 'app-1', adminUserId: 'admin', isAdmin: true);
+        // Approval still succeeds — re-approval can retry suite provisioning.
+        $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
+    }
+
+    /**
+     * getCertificate returns the active suite's certificate on success.
+     *
+     * @return void
+     */
+    public function testGetCertificateReturnsActiveSuiteCertificate(): void
+    {
+        $suiteService  = $this->createMock(EncryptionSuiteService::class);
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $logger        = $this->createMock(LoggerInterface::class);
+
+        $entity = new Application();
+        $entity->setId('app-1');
+        $entity->setStatus(Application::STATUS_ACTIVE);
+        $mapper->method('findById')->willReturn($entity);
+
+        $suite = new EncryptionSuite();
+        $suite->setCertificate('-----BEGIN CERTIFICATE-----PEMDATA-----END CERTIFICATE-----');
+        $suiteService->expects($this->once())
+            ->method('getActiveSuite')
+            ->with('application', 'app-1')
+            ->willReturn($suite);
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+            notificationService: null,
+            encryptionSuiteService: $suiteService,
+        );
+
+        $this->assertSame(
+            '-----BEGIN CERTIFICATE-----PEMDATA-----END CERTIFICATE-----',
+            $service->getCertificate('app-1'),
+        );
+    }
+
+    /**
+     * getCertificate rejects inactive applications.
+     *
+     * @return void
+     */
+    public function testGetCertificateRejectsInactiveApplication(): void
+    {
+        $mapper        = $this->createMock(ApplicationMapper::class);
+        $groupManager  = $this->createMock(IGroupManager::class);
+        $logger        = $this->createMock(LoggerInterface::class);
+
+        $entity = new Application();
+        $entity->setId('app-1');
+        $entity->setStatus(Application::STATUS_PENDING);
+        $mapper->method('findById')->willReturn($entity);
+
+        $service = new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Application is not active');
+        $service->getCertificate('app-1');
     }
 }
