@@ -26,6 +26,7 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -48,6 +49,7 @@ class SecretRequestService
      * @param SecretRequestMapper      $mapper              The mapper
      * @param LoggerInterface          $logger              The logger
      * @param NotificationService|null $notificationService Optional notification dispatcher
+     * @param SecretMapper|null        $secretMapper        Optional Secret mapper for owner lookups
      *
      * @return void
      */
@@ -55,6 +57,7 @@ class SecretRequestService
         private SecretRequestMapper $mapper,
         private LoggerInterface $logger,
         private ?NotificationService $notificationService = null,
+        private ?SecretMapper $secretMapper = null,
     ) {
     }//end __construct()
 
@@ -362,6 +365,44 @@ class SecretRequestService
     {
         return $this->mapper->findByCreatedBy($userId);
     }//end listByUser()
+
+    /**
+     * List all secret requests for a given Secret — visible only to the
+     * Secret owner. Used by the Secret detail sidebar to render the
+     * "Requests" history block.
+     *
+     * @param string $secretId The Secret ID
+     * @param string $userId   The requesting Nextcloud user ID
+     *
+     * @return SecretRequest[]
+     *
+     * @throws InvalidArgumentException When the Secret does not exist or
+     *                                  the caller is not its owner.
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.8
+     */
+    public function listBySecret(string $secretId, string $userId): array
+    {
+        if ($this->secretMapper === null) {
+            // Defensive: the bind is optional only to preserve test-mock
+            // call sites that do not exercise this path. When invoked
+            // without the mapper, refuse rather than skip the ownership
+            // check (fail closed).
+            throw new InvalidArgumentException(message: 'Ownership lookup unavailable');
+        }
+
+        try {
+            $secret = $this->secretMapper->findById($secretId);
+        } catch (DoesNotExistException) {
+            throw new InvalidArgumentException(message: 'Secret not found');
+        }
+
+        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+            throw new InvalidArgumentException(message: 'Not authorized for this secret');
+        }
+
+        return $this->mapper->findBySecretId($secretId);
+    }//end listBySecret()
 
     /**
      * Cascade-delete all secret requests for a Secret.

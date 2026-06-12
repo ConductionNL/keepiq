@@ -82,6 +82,39 @@ class SecretRequestController extends OCSController
     }//end index()
 
     /**
+     * List secret requests for a given Secret — owner-only.
+     *
+     * @param string $secretId The Secret ID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.8
+     */
+    #[NoAdminRequired]
+    public function listBySecret(string $secretId): JSONResponse
+    {
+        $user = $this->session->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $requests = $this->service->listBySecret(secretId: $secretId, userId: $user->getUID());
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
+        }
+
+        return new JSONResponse(
+            data: array_map(static fn ($r) => $r->jsonSerialize(), $requests)
+        );
+    }//end listBySecret()
+
+    /**
      * Create a new pending secret request.
      *
      * @param string        $secretId          The Secret ID (unfilled or to-be-overwritten)
