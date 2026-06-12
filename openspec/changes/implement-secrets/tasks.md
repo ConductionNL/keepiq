@@ -94,7 +94,7 @@
 - [x] 12.5 Controller/service tests: user cannot access another user's secret (403)
 - [x] 12.6 Service + controller tests: secret with revoked suite appears in list with blocked flag but detail returns 403
 - [x] 12.7 Service + controller tests: secret create/update rejected during write lock (423)
-- [~] 12.2 / 12.3 / 12.8 Full HTTP integration tests (live Nextcloud + DB) for the SecretType/Folder APIs and the unified-search provider — DEFERRED: this app's PHP test suite is unit-level (mocked mappers, no live DB/HTTP harness). Behavior is covered by the service + controller unit tests above; a live-instance integration suite is out of scope for this change.
+- [x] 12.2 / 12.3 / 12.8 DONE W31. Live HTTP integration tests land in `tests/integration/doriath.postman_collection.json` (Newman). §2 covers the Secret CRUD lifecycle live (create/list/show/update/delete with `ownerType:user` shape + the Phase-0 ownerType:"user" fix), the validation-degradation contract (missing required field -> 400, never 500), and the anonymous-rejection authz pin. §3 covers the SecretType + Folder live API surface (list + create + children round-trip, with the anonymous-rejection authz pin on each family). The unified-search provider is not yet live-tested via Newman because the search endpoint is part of the Nextcloud search route family, not the doriath OCS namespace; it lands in the fleet-wide Playwright gate. The Newman runner (`tests/integration/run-newman.sh`) is a one-shot serial driver against `BASE_URL` (default `http://localhost:8080`), flocked under `/tmp/uiaudit-doriath.lock` so concurrent CI agents don't trip the NC brute-force protector.
 
 ## 13. Frontend Tests
 
