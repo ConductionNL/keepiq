@@ -167,4 +167,56 @@ describe('useApplicationStore', () => {
 			expect(store.oneTimePrivateKeyAppId).toBeNull()
 		})
 	})
+
+	describe('fetchCertificate', () => {
+		it('returns the certificate from the API', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({
+				data: { id: 'app-1', certificate: '-----BEGIN CERTIFICATE-----STUB-----END CERTIFICATE-----' },
+			})
+			const store = useApplicationStore()
+			const cert = await store.fetchCertificate('app-1')
+			expect(cert).toBe('-----BEGIN CERTIFICATE-----STUB-----END CERTIFICATE-----')
+		})
+
+		it('returns empty when the API omits the certificate field', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
+			const store = useApplicationStore()
+			const cert = await store.fetchCertificate('app-1')
+			expect(cert).toBe('')
+		})
+	})
+
+	describe('listApplicationSecrets', () => {
+		it('returns the secrets array from the paginated envelope', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({
+				data: { items: [{ id: 'sec-1', name: 'X' }], total: 1 },
+			})
+			const store = useApplicationStore()
+			const secrets = await store.listApplicationSecrets('app-1')
+			expect(secrets).toHaveLength(1)
+			expect(secrets[0].id).toBe('sec-1')
+		})
+
+		it('returns the array directly when the API serves a bare list', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({
+				data: [{ id: 'sec-1' }, { id: 'sec-2' }],
+			})
+			const store = useApplicationStore()
+			const secrets = await store.listApplicationSecrets('app-1')
+			expect(secrets).toHaveLength(2)
+		})
+	})
+
+	describe('writeSecretForApplication', () => {
+		it('throws when the application has no active suite', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({
+				data: { id: 'app-1', certificate: '' },
+			})
+
+			const store = useApplicationStore()
+			await expect(
+				store.writeSecretForApplication('app-1', { name: 'X', key: 'k' }),
+			).rejects.toThrow('Application has no active EncryptionSuite')
+		})
+	})
 })
