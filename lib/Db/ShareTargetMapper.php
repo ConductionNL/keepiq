@@ -208,4 +208,30 @@ class ShareTargetMapper extends QBMapper
 
         $qb->executeStatement();
     }//end deleteByGroupShare()
+
+    /**
+     * Reverse-lookup a ShareTarget by the recipient Secret copy ID.
+     *
+     * Used by the SuiteCompromiseListener to walk from a flagged
+     * recipient copy back to the source secret (and thus the owner who
+     * needs the compromise notification).
+     *
+     * @param string $recipientSecretId The recipient's encrypted Secret copy ID
+     *
+     * @return ShareTarget
+     *
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#8.4
+     */
+    public function findByRecipientSecret(string $recipientSecretId): ShareTarget
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($recipientSecretId)));
+
+        return $this->findEntity(query: $qb);
+    }//end findByRecipientSecret()
 }//end class

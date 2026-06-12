@@ -339,4 +339,31 @@ class SecretMapper extends QBMapper
 
         $qb->executeStatement();
     }//end reassignType()
+
+    /**
+     * Find every Secret encrypted under a given EncryptionSuite. Used by
+     * compromise-recovery listeners to fan over the freshly re-suited
+     * copies and surface the ones the migration flagged as possibly
+     * compromised.
+     *
+     * @param string $encryptionSuiteId The suite ID
+     *
+     * @return Secret[]
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#8.4
+     */
+    public function findByEncryptionSuiteId(string $encryptionSuiteId): array
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where(
+                $qb->expr()->eq(
+                    'encryption_suite_id',
+                    $qb->createNamedParameter($encryptionSuiteId)
+                )
+            );
+
+        return $this->findEntities(query: $qb);
+    }//end findByEncryptionSuiteId()
 }//end class
