@@ -95,10 +95,10 @@ export default {
 	methods: {
 		statusLabel(status) {
 			switch (status) {
-				case 'active': return t('doriath', 'Active')
-				case 'pending': return t('doriath', 'Pending approval')
-				case 'rejected': return t('doriath', 'Rejected')
-				default: return status || ''
+			case 'active': return t('doriath', 'Active')
+			case 'pending': return t('doriath', 'Pending approval')
+			case 'rejected': return t('doriath', 'Rejected')
+			default: return status || ''
 			}
 		},
 		onRegistered() {

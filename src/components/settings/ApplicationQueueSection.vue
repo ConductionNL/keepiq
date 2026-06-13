@@ -16,8 +16,12 @@
 					<span class="application-queue__date">{{ formatDate(app.created_at) }}</span>
 				</div>
 				<div class="application-queue__actions">
-					<button class="primary" @click="approve(app)">{{ t('doriath', 'Approve') }}</button>
-					<button @click="reject(app)">{{ t('doriath', 'Reject') }}</button>
+					<button class="primary" @click="approve(app)">
+						{{ t('doriath', 'Approve') }}
+					</button>
+					<button @click="reject(app)">
+						{{ t('doriath', 'Reject') }}
+					</button>
 				</div>
 			</li>
 		</ul>

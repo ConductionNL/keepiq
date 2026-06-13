@@ -106,12 +106,12 @@ export default {
 		},
 		statusLabel(status) {
 			switch (status) {
-				case 'pending': return t('doriath', 'Pending')
-				case 'fulfilled': return t('doriath', 'Fulfilled')
-				case 'declined': return t('doriath', 'Declined')
-				case 'locked': return t('doriath', 'Locked')
-				case 'expired': return t('doriath', 'Expired')
-				default: return status
+			case 'pending': return t('doriath', 'Pending')
+			case 'fulfilled': return t('doriath', 'Fulfilled')
+			case 'declined': return t('doriath', 'Declined')
+			case 'locked': return t('doriath', 'Locked')
+			case 'expired': return t('doriath', 'Expired')
+			default: return status
 			}
 		},
 		onRevoke(id) {

@@ -14,7 +14,10 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.3
 -->
 <template>
-	<section v-if="open" class="doriath-app-register-dialog" role="dialog" data-testid="application-register-dialog">
+	<section v-if="open"
+		class="doriath-app-register-dialog"
+		role="dialog"
+		data-testid="application-register-dialog">
 		<header class="doriath-app-register-dialog__header">
 			<h3>{{ t('doriath', 'Register application') }}</h3>
 			<button type="button" data-testid="application-register-close" @click="$emit('close')">

@@ -73,8 +73,8 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string} payload.secretId          The Secret ID.
 		 * @param {string} payload.encryptionSuiteId The recipient suite ID.
 		 * @param {Array<string>} payload.requestedFields The field names to ask for.
-		 * @param {boolean} [payload.isReRequest=false] Whether this is a re-request.
-		 * @param {string|null} [payload.expiresAt=null] Optional ISO-8601 expiry.
+		 * @param {boolean} [payload.isReRequest] Whether this is a re-request.
+		 * @param {string|null} [payload.expiresAt] Optional ISO-8601 expiry.
 		 * @return {Promise<object>}
 		 */
 		async createRequest(payload) {
@@ -107,7 +107,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string}        secretId          The Secret ID.
 		 * @param {string}        encryptionSuiteId The recipient suite ID.
 		 * @param {Array<string>} requestedFields   The field names to ask for.
-		 * @param {string|null}   [expiresAt=null]  Optional ISO-8601 expiry.
+		 * @param {string|null}   [expiresAt]  Optional ISO-8601 expiry.
 		 * @return {Promise<object>}
 		 */
 		async createReRequest(secretId, encryptionSuiteId, requestedFields, expiresAt = null) {
