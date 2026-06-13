@@ -50,7 +50,7 @@
 					type="password"
 					autocomplete="off"
 					required
-					data-testid="link-share-password" />
+					data-testid="link-share-password">
 			</label>
 
 			<p v-if="unlockError" class="doriath-link-share-access__error" data-testid="link-share-unlock-error">

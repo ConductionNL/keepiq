@@ -106,6 +106,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 * not-found-or-expired response.
 		 *
 		 * @param {string} token The public token from the share URL
+		 * @param failed
 		 * @return {Promise<object>} The public link-share metadata
 		 *
 		 * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
