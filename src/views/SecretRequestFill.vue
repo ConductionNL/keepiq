@@ -96,16 +96,16 @@ export default {
 		unavailableMessage() {
 			const status = this.store.publicRequest?.status
 			switch (status) {
-				case 'fulfilled':
-					return t('doriath', 'This request has already been fulfilled.')
-				case 'declined':
-					return t('doriath', 'This request was declined.')
-				case 'locked':
-					return t('doriath', 'This request is temporarily unavailable while a compromise recovery is in progress.')
-				case 'expired':
-					return t('doriath', 'This request has expired.')
-				default:
-					return null
+			case 'fulfilled':
+				return t('doriath', 'This request has already been fulfilled.')
+			case 'declined':
+				return t('doriath', 'This request was declined.')
+			case 'locked':
+				return t('doriath', 'This request is temporarily unavailable while a compromise recovery is in progress.')
+			case 'expired':
+				return t('doriath', 'This request has expired.')
+			default:
+				return null
 			}
 		},
 	},

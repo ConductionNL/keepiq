@@ -26,7 +26,8 @@
 			{{ t('doriath', 'Loading…') }}
 		</p>
 
-		<p v-else-if="store.count === 0" class="doriath-delegation-manager__empty"
+		<p v-else-if="store.count === 0"
+			class="doriath-delegation-manager__empty"
 			data-testid="delegation-manager-empty">
 			{{ t('doriath', 'No active delegations for this secret.') }}
 		</p>
@@ -64,7 +65,8 @@
 			</button>
 		</div>
 
-		<p v-if="store.error" class="doriath-delegation-manager__error"
+		<p v-if="store.error"
+			class="doriath-delegation-manager__error"
 			data-testid="delegation-manager-error">
 			{{ store.error }}
 		</p>

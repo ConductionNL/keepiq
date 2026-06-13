@@ -32,7 +32,9 @@
 				<label>{{ t('doriath', 'Share this link with the recipient') }}</label>
 				<div class="secret-request-create-dialog__url-row">
 					<input type="text" readonly :value="fillUrl">
-					<button @click="copyUrl">{{ copied ? t('doriath', 'Copied!') : t('doriath', 'Copy') }}</button>
+					<button @click="copyUrl">
+						{{ copied ? t('doriath', 'Copied!') : t('doriath', 'Copy') }}
+					</button>
 				</div>
 			</div>
 
@@ -42,11 +44,18 @@
 		</div>
 
 		<template #actions>
-			<button @click="onClose(false)">{{ t('doriath', 'Cancel') }}</button>
-			<button v-if="!fillUrl" class="primary" :disabled="submitting" @click="submit">
+			<button @click="onClose(false)">
+				{{ t('doriath', 'Cancel') }}
+			</button>
+			<button v-if="!fillUrl"
+				class="primary"
+				:disabled="submitting"
+				@click="submit">
 				{{ submitting ? t('doriath', 'Creating…') : t('doriath', 'Create request') }}
 			</button>
-			<button v-else class="primary" @click="onClose(true)">{{ t('doriath', 'Done') }}</button>
+			<button v-else class="primary" @click="onClose(true)">
+				{{ t('doriath', 'Done') }}
+			</button>
 		</template>
 	</NcDialog>
 </template>

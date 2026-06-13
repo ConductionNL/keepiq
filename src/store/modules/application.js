@@ -110,7 +110,7 @@ export const useApplicationStore = defineStore('application', {
 		 * @param {object} payload The registration payload.
 		 * @param {string} payload.name The application name.
 		 * @param {string|null} [payload.description] Optional description.
-		 * @param {string} [payload.type='external'] Application type.
+		 * @param {string} [payload.type] Application type.
 		 * @param {string|null} [payload.csr] Optional PKCS#10 CSR PEM.
 		 * @return {Promise<object>} The created application row.
 		 */

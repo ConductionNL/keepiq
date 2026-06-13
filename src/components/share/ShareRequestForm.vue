@@ -14,7 +14,10 @@
   @spec openspec/changes/implement-user-sharing/tasks.md#12.4
 -->
 <template>
-	<section v-if="open" class="doriath-share-request-form" role="dialog" data-testid="share-request-form">
+	<section v-if="open"
+		class="doriath-share-request-form"
+		role="dialog"
+		data-testid="share-request-form">
 		<header class="doriath-share-request-form__header">
 			<h3>{{ t('doriath', 'Request the owner share this secret with someone') }}</h3>
 			<button

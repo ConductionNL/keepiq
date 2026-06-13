@@ -15,10 +15,16 @@
   @spec openspec/changes/implement-user-sharing/tasks.md#task-12.1
 -->
 <template>
-	<section v-if="open" class="doriath-share-dialog" role="dialog" data-testid="share-dialog">
+	<section v-if="open"
+		class="doriath-share-dialog"
+		role="dialog"
+		data-testid="share-dialog">
 		<header class="doriath-share-dialog__header">
 			<h3>{{ t('doriath', 'Share with a Nextcloud user') }}</h3>
-			<button type="button" class="doriath-share-dialog__close" data-testid="share-dialog-close" @click="$emit('close')">
+			<button type="button"
+				class="doriath-share-dialog__close"
+				data-testid="share-dialog-close"
+				@click="$emit('close')">
 				×
 			</button>
 		</header>
