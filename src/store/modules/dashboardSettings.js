@@ -76,7 +76,7 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 		 * default when not set.
 		 *
 		 * @param {string} key The preference key.
-		 * @param {string|null} [fallback=null] The fallback.
+		 * @param {string|null} [fallback] The fallback.
 		 * @return {string|null}
 		 */
 		get(key, fallback = null) {

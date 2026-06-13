@@ -11,7 +11,10 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.4
 -->
 <template>
-	<section v-if="open" class="doriath-private-key-dialog" role="dialog" data-testid="private-key-dialog">
+	<section v-if="open"
+		class="doriath-private-key-dialog"
+		role="dialog"
+		data-testid="private-key-dialog">
 		<header>
 			<h3>{{ t('doriath', 'Your private key') }}</h3>
 		</header>

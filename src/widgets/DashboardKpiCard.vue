@@ -14,7 +14,10 @@
 		class="doriath-kpi-card"
 		:class="`doriath-kpi-card--${variant}`"
 		data-testid="dashboard-kpi-card">
-		<span v-if="iconClass" class="doriath-kpi-card__icon" :class="iconClass" aria-hidden="true" />
+		<span v-if="iconClass"
+			class="doriath-kpi-card__icon"
+			:class="iconClass"
+			aria-hidden="true" />
 		<span class="doriath-kpi-card__count" data-testid="dashboard-kpi-count">{{ count }}</span>
 		<span class="doriath-kpi-card__title">{{ title }}</span>
 		<span v-if="subtitle" class="doriath-kpi-card__subtitle">{{ subtitle }}</span>
