@@ -83,6 +83,7 @@ export const useHealthStore = defineStore('health', {
 		 * @param {string|number} [opts.stalenessThreshold] User threshold.
 		 * @param {boolean} [opts.breachEnabled] Whether breach checking is active.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 */
 		async analyseVault(opts = {}) {
 			const session = useSessionStore()
@@ -130,6 +131,7 @@ export const useHealthStore = defineStore('health', {
 		 *
 		 * @param {object} session The session store (holds the CryptoKey).
 		 * @return {Promise<Array<object>>} Decrypted rows.
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 */
 		async loadDecryptedRows(session) {
 			const response = await axios.get(
@@ -170,6 +172,7 @@ export const useHealthStore = defineStore('health', {
 		 *
 		 * @param {Array<object>} rows Decrypted rows.
 		 * @return {Promise<Map<string, object>>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
 		 */
 		async runBreachChecks(rows) {
 			const results = new Map()
@@ -201,6 +204,7 @@ export const useHealthStore = defineStore('health', {
 		 * @param {Array<object>} rows    Decrypted rows.
 		 * @param {object}        options Engine options.
 		 * @return {Promise<object>} The engine result.
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 */
 		async runEngine(rows, options) {
 			if (typeof Worker === 'undefined') {
@@ -241,6 +245,7 @@ export const useHealthStore = defineStore('health', {
 		 * lock and session timeout so no derived signal survives a locked vault.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 */
 		reset() {
 			this.findings = []
@@ -261,6 +266,7 @@ export const useHealthStore = defineStore('health', {
 		 * state and terminates the worker.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 */
 		registerLockReset() {
 			onVaultLock(() => this.reset())
