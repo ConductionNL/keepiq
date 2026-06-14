@@ -41,6 +41,14 @@
 			"order": 85
 		},
 		{
+			"id": "MyActivityMenu",
+			"label": "My activity",
+			"icon": "icon-history",
+			"route": "PersonalActivity",
+			"section": "footer",
+			"order": 86
+		},
+		{
 			"id": "LockVault",
 			"label": "Lock vault",
 			"icon": "icon-password",
@@ -163,6 +171,14 @@
 			"config": {
 				"documentationUrl": "https://doriath.conduction.nl"
 			}
+		},
+		{
+			"id": "PersonalActivity",
+			"route": "/my-activity",
+			"type": "custom",
+			"title": "My activity",
+			"component": "PersonalActivityView",
+			"_note": "The session user's own audit-trail entries (add-secret-audit-trail §5.3). type:\"custom\" — a simple actor-scoped feed view, no built-in page type models it."
 		},
 		{
 			"id": "Lock",

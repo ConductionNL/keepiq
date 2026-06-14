@@ -256,7 +256,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | NL Design System theming support | **V1** | Government visual compliance |
 | GDPR data export (all user secrets + metadata) | **V1** | Right of access |
 | GDPR data deletion (user + all shares) | **V1** | Right to erasure |
-| Audit trail on all secret operations | **V1** | Accountability |
+| Audit trail on all secret operations | **V1** ✅ Built | Accountability |
 | Field-level encryption audit (verify encrypted fields) | **Enterprise** | Compliance verification |
 | Data retention policies | **Enterprise** | Automated cleanup |
 

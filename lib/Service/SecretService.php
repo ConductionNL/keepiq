@@ -36,12 +36,15 @@ use OCA\Doriath\Db\GroupShareMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
 use OCA\Doriath\Exception\SuiteBlockedException;
 use OCA\Doriath\Exception\WriteLockedException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -101,8 +104,29 @@ class SecretService
         private ?ShareService $shareService = null,
         private ?GroupShareMapper $groupShareMapper = null,
         private ?SecretDelegationMapper $secretDelegationMapper = null,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * The optional dispatcher keeps existing call sites that construct the
+     * service without it compiling; when wired, every audited secret operation
+     * emits an AuditEvent the AuditListener turns into an append-only row. The
+     * dispatch is the only audit coupling in the service — a listener failure is
+     * swallowed by the listener, never here.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create a secret for a user.
@@ -151,6 +175,17 @@ class SecretService
 
         $this->mapper->insert($secret);
         $this->logger->info("Doriath: secret {$secret->getId()} created by {$userId}");
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_CREATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['typeId' => $typeId, 'folderId' => $secret->getFolderId()],
+            )
+        );
 
         return $secret;
     }//end create()
@@ -250,6 +285,18 @@ class SecretService
             throw new SuiteBlockedException(message: $blockReason);
         }
 
+        // secret.read fires on an individual encrypted-blob fetch only — never
+        // on list/search (those do not call get()). Audit-trail §3.1.
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_READ,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+            )
+        );
+
         return $secret;
     }//end get()
 
@@ -319,6 +366,23 @@ class SecretService
         $secret->setUpdatedAt(new DateTime());
         $this->mapper->update($secret);
 
+        $changedFields = array_values(
+            array_intersect(
+                ['name', 'url', 'folderId', 'typeId', 'key', 'login', 'additionalFields'],
+                array_keys($data)
+            )
+        );
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_UPDATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['changedFields' => $changedFields],
+            )
+        );
+
         return $secret;
     }//end update()
 
@@ -361,6 +425,16 @@ class SecretService
 
         $this->mapper->delete($secret);
         $this->logger->info("Doriath: secret {$id} deleted by {$userId}");
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_DELETED,
+                objectType: 'secret',
+                objectId: $id,
+                objectName: $secret->getName(),
+            )
+        );
     }//end delete()
 
     /**

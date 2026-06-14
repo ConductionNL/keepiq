@@ -30,8 +30,11 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
@@ -61,8 +64,23 @@ class SecretRequestService
         private ?NotificationService $notificationService = null,
         private ?SecretMapper $secretMapper = null,
         private ?EncryptionSuiteMapper $suiteMapper = null,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Look up a pending, non-expired request by its public access token.
@@ -180,6 +198,14 @@ class SecretRequestService
             );
         }
 
+        $this->dispatchAudit(
+            AuditEvent::forLinkVisitor(
+                eventType: AuditEventTypes::REQUEST_FULFILLED,
+                objectType: 'secret_request',
+                objectId: $current->getId(),
+            )
+        );
+
         return $persisted;
     }//end fill()
 
@@ -288,7 +314,22 @@ class SecretRequestService
         $entity->setCreatedBy($userId);
         $entity->setCreatedAt(new DateTime());
 
-        return $this->mapper->insert($entity);
+        $persisted = $this->mapper->insert($entity);
+
+        // Re-requests dispatch their own REQUEST_RE_REQUESTED event from
+        // createReRequest(); a plain create dispatches REQUEST_CREATED.
+        if ($isReRequest === false) {
+            $this->dispatchAudit(
+                AuditEvent::forUser(
+                    actorId: $userId,
+                    eventType: AuditEventTypes::REQUEST_CREATED,
+                    objectType: 'secret_request',
+                    objectId: $persisted->getId(),
+                )
+            );
+        }
+
+        return $persisted;
     }//end create()
 
     /**
@@ -409,7 +450,7 @@ class SecretRequestService
             // expected — no pending request, continue.
         }
 
-        return $this->create(
+        $persisted = $this->create(
             secretId: $secretId,
             encryptionSuiteId: $secret->getEncryptionSuiteId(),
             requestedFields: $requestedFields,
@@ -417,6 +458,17 @@ class SecretRequestService
             expiresAt: $expiresAt,
             userId: $userId,
         );
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::REQUEST_RE_REQUESTED,
+                objectType: 'secret_request',
+                objectId: $persisted->getId(),
+            )
+        );
+
+        return $persisted;
     }//end createReRequest()
 
     /**
@@ -482,7 +534,18 @@ class SecretRequestService
             ['app' => 'doriath']
         );
 
-        return $this->mapper->update($entity);
+        $updated = $this->mapper->update($entity);
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::REQUEST_REVOKED,
+                objectType: 'secret_request',
+                objectId: $requestId,
+            )
+        );
+
+        return $updated;
     }//end decline()
 
     /**

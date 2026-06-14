@@ -26,6 +26,8 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -59,6 +61,20 @@ class EncryptionSuiteService
         private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create an EncryptionSuite for a user or application.
@@ -199,6 +215,16 @@ class EncryptionSuiteService
             );
         }
 
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $revokedBy,
+                eventType: AuditEventTypes::SUITE_REVOKED,
+                objectType: 'suite',
+                objectId: $id,
+                metadata: ['reason' => $reason],
+            )
+        );
+
         return $suite;
     }//end revokeSuite()
 
@@ -250,6 +276,15 @@ class EncryptionSuiteService
 
         $this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $reinstatedBy,
+                eventType: AuditEventTypes::SUITE_REINSTATED,
+                objectType: 'suite',
+                objectId: $id,
+            )
+        );
+
         return $suite;
     }//end reinstateSuite()
 
@@ -278,6 +313,16 @@ class EncryptionSuiteService
         $this->mapper->update($suite);
 
         $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $compromisedBy,
+                eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
+                objectType: 'suite',
+                objectId: $id,
+            )
+        );
+
         return $suite;
     }//end markCompromised()
 
