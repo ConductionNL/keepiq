@@ -58,6 +58,7 @@ class SettingsService
         'default_session_timeout'   => 'string',
         'ca_auto_renew_enabled'     => 'bool',
         'audit_retention_days'      => 'int',
+        'breach_check_enabled'      => 'bool',
     ];
 
     /**
@@ -73,7 +74,19 @@ class SettingsService
         'notify_security'      => '1',
         'default_secret_type'  => 'login',
         'default_view'         => 'list',
+        // Password-health staleness threshold in days: '90' | '180' | '365' |
+        // 'never' (password-health §1.6, default 365). Per-user opt-in for breach
+        // checking; UI is shown only when the admin gate is also on.
+        'health_staleness_days' => '365',
+        'breach_check_opt_in'  => '0',
     ];
+
+    /**
+     * Permitted password-health staleness threshold values (password-health §1.6).
+     *
+     * @var string[]
+     */
+    private const VALID_STALENESS_DAYS = ['90', '180', '365', 'never'];
 
     /**
      * Admin default bounds for validation.
@@ -142,6 +155,7 @@ class SettingsService
                 'audit_retention_days',
                 self::AUDIT_RETENTION_DEFAULT
             ),
+            'breach_check_enabled'    => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
         ];
 
         // Best-effort CA status; never blocks if the service is unavailable.
@@ -221,6 +235,10 @@ class SettingsService
             $this->appConfig->setValueInt($appId, 'audit_retention_days', $days);
         }
 
+        if (isset($data['breach_check_enabled']) === true) {
+            $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
+        }
+
         return $this->getAdminSettings();
     }//end updateAdminSettings()
 
@@ -272,6 +290,16 @@ class SettingsService
 
             if (is_bool($value) === true) {
                 $value = ($value === true) ? '1' : '0';
+            }
+
+            // Reject an out-of-set staleness threshold so the client cannot store
+            // an arbitrary "never-stale" sentinel (password-health §1.6).
+            if ($key === 'health_staleness_days'
+                && in_array((string) $value, self::VALID_STALENESS_DAYS, true) === false
+            ) {
+                throw new InvalidArgumentException(
+                    'health_staleness_days must be one of: '.implode(', ', self::VALID_STALENESS_DAYS)
+                );
             }
 
             $this->config->setUserValue($userId, $appId, $key, (string) $value);
