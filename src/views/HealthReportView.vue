@@ -122,15 +122,30 @@ export default {
 	},
 
 	computed: {
-		/** @return {boolean} Whether the vault is locked. */
+		/**
+		 * Whether the vault is locked.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+		 */
 		locked() {
 			return this.session.isLocked
 		},
-		/** @return {boolean} Whether breach checking is active (both gates on). */
+		/**
+		 * Whether breach checking is active (both gates on).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
+		 */
 		breachActive() {
 			return this.breachGateOn && this.breachOptIn
 		},
-		/** @return {Array<object>} Staleness threshold options for the select. */
+		/**
+		 * Staleness threshold options for the select.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+		 */
 		stalenessOptions() {
 			return [
 				{ value: '90', label: t('doriath', '90 days') },
@@ -145,6 +160,7 @@ export default {
 	 * Register the lock reset, load user prefs, then analyse the vault.
 	 *
 	 * @return {Promise<void>}
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 	 */
 	async created() {
 		this.store.registerLockReset()
@@ -159,6 +175,7 @@ export default {
 		 * Load the user's staleness threshold and breach opt-in preferences.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
 		 */
 		async loadPrefs() {
 			try {
@@ -178,6 +195,7 @@ export default {
 		 * Run a fresh analysis with the current threshold + breach gate.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 		 */
 		async reanalyse() {
 			await this.store.analyseVault({
@@ -190,6 +208,7 @@ export default {
 		 * Persist the breach opt-in and re-analyse.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
 		 */
 		async onBreachToggle() {
 			try {
@@ -207,6 +226,7 @@ export default {
 		 * triggered by the same @input handler binding to reanalyse.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
 		 */
 		async persistStaleness() {
 			try {
@@ -223,6 +243,7 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 		 */
 		openSecret(secretId) {
 			this.$router.push({ name: 'SecretDetail', params: { id: secretId } }).catch(() => {})
@@ -230,6 +251,12 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Persist the staleness threshold whenever the select changes.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+		 */
 		stalenessOption() {
 			this.persistStaleness()
 		},

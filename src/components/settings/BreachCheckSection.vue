@@ -50,6 +50,7 @@ export default {
 	 * Load the current instance-wide breach-check gate.
 	 *
 	 * @return {Promise<void>}
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
 	 */
 	async created() {
 		try {
@@ -65,6 +66,7 @@ export default {
 		 * Persist the instance-wide breach-check gate.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
 		 */
 		async save() {
 			await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {

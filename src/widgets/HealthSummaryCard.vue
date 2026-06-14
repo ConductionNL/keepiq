@@ -53,7 +53,12 @@ export default {
 	},
 
 	computed: {
-		/** @return {boolean} Whether the vault is locked. */
+		/**
+		 * Whether the vault is locked.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
+		 */
 		locked() {
 			return this.session.isLocked
 		},
@@ -64,6 +69,7 @@ export default {
 		 * Navigate to the full password-health report.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 		 */
 		openReport() {
 			this.$router.push({ name: 'PasswordHealth' }).catch(() => {})

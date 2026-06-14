@@ -40,6 +40,7 @@ export default {
 		 * The zxcvbn score (0–4) for this secret, or null when not scored.
 		 *
 		 * @return {number|null}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
 		 */
 		score() {
 			const store = useHealthStore()
@@ -51,6 +52,7 @@ export default {
 		 * Severity token (CSS class + semantic), mapped from the zxcvbn score.
 		 *
 		 * @return {string}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
 		 */
 		severity() {
 			const tokens = ['danger', 'danger', 'warning', 'success', 'success']
@@ -61,6 +63,7 @@ export default {
 		 * Accessible strength label (never colour-alone).
 		 *
 		 * @return {string}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
 		 */
 		label() {
 			const labels = [

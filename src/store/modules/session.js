@@ -19,6 +19,7 @@ const lockHooks = []
  *
  * @param {Function} fn The lock callback.
  * @return {void}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
 export function onVaultLock(fn) {
 	if (typeof fn === 'function' && !lockHooks.includes(fn)) {
