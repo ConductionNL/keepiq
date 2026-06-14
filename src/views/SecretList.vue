@@ -26,6 +26,15 @@
 					</template>
 					{{ t('doriath', 'New folder') }}
 				</NcButton>
+				<NcButton type="secondary"
+					:disabled="vaultLocked"
+					data-testid="import-secrets"
+					@click="openImport">
+					<template #icon>
+						<Import :size="20" />
+					</template>
+					{{ t('doriath', 'Import') }}
+				</NcButton>
 
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
 				<NcActions :menu-name="t('doriath', 'My data')">
@@ -52,6 +61,9 @@
 			<AccountDeletionDialog :open="deletionOpen"
 				@update:open="deletionOpen = $event"
 				@export-first="onExportFirst" />
+			<ImportWizardDialog :open="importOpen"
+				@update:open="importOpen = $event"
+				@imported="onImported" />
 
 			<div class="secret-list-view__toolbar">
 				<NcTextField :value.sync="searchTerm"
@@ -118,15 +130,18 @@ import KeyIcon from 'vue-material-design-icons/Key.vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
+import Import from 'vue-material-design-icons/Import.vue'
 import FolderTree from '../components/FolderTree.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import ExportDialog from '../dialogs/ExportDialog.vue'
 import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
+import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useHealthStore } from '../store/modules/health.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 const PAGE_SIZE = 50
 
@@ -151,11 +166,13 @@ export default {
 		Magnify,
 		Plus,
 		FolderPlus,
+		Import,
 		FolderTree,
 		SecretListItem,
 		ExportDialog,
 		GdprExportDialog,
 		AccountDeletionDialog,
+		ImportWizardDialog,
 	},
 
 	inject: {
@@ -174,6 +191,7 @@ export default {
 			exportOpen: false,
 			gdprOpen: false,
 			deletionOpen: false,
+			importOpen: false,
 			decryptedSecrets: [],
 		}
 	},
@@ -209,6 +227,16 @@ export default {
 		 */
 		folders() {
 			return this.folderStore.folders
+		},
+		/**
+		 * Whether the vault is locked — the Import action is disabled while
+		 * locked (import requires the session CryptoKey to encrypt rows).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 */
+		vaultLocked() {
+			return useSessionStore().isLocked
 		},
 		selectedFolderId() {
 			return this.$route.params.folderId || null
@@ -296,6 +324,34 @@ export default {
 		async openGdpr() {
 			this.decryptedSecrets = await this.decryptAllSecrets()
 			this.gdprOpen = true
+		},
+
+		/**
+		 * Open the import wizard. Guarded against a locked vault — import needs
+		 * the session CryptoKey to encrypt rows client-side. When locked, the
+		 * wizard is not opened and reads no file; the toolbar button is also
+		 * disabled while locked, and the wizard itself renders a lock guard.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 */
+		openImport() {
+			if (this.vaultLocked) {
+				return
+			}
+			this.importOpen = true
+		},
+
+		/**
+		 * After an import completes, reload the secret list + folder tree so the
+		 * imported secrets and any created folders appear.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-import-summary-report
+		 */
+		async onImported() {
+			await this.folderStore.fetchFolders()
+			await this.reload()
 		},
 
 		/**
