@@ -98,6 +98,8 @@ class DeletionReport implements JsonSerializable
      * Serialize the report for the API response and the audit event.
      *
      * @return array<string,mixed>
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
      */
     public function jsonSerialize(): array
     {
