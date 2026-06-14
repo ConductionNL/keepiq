@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Ownership Delegation
-A secret's ownership can be delegated to one or more other users, granting them co-owner rights (share management, full recipient visibility, value updates). Multiple active delegations for the same secret are allowed simultaneously.
+A secret's ownership MUST be delegatable to one or more other users, granting them co-owner rights (share management, full recipient visibility, value updates). Multiple active delegations for the same secret MUST be allowed simultaneously.
 
 Who can create a delegation:
 - **Admin power grab**: a vault administrator can create a delegation for any secret that has already been shared with them. No owner consent is required.
