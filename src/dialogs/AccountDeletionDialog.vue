@@ -96,6 +96,12 @@ export default {
 		},
 	},
 	emits: ['update:open', 'export-first'],
+	/**
+	 * Provide the export + session Pinia stores to the component.
+	 *
+	 * @return {object}
+	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 */
 	setup() {
 		return {
 			exportStore: useExportStore(),
@@ -111,17 +117,43 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * Whether a deletion is in flight (from the store).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		loading() {
 			return this.exportStore.loading
 		},
+		/**
+		 * The confirmation-field label including the exact required phrase.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		confirmationLabel() {
 			return this.t('doriath', 'Type "{phrase}" to confirm', { phrase: CONFIRMATION_PHRASE })
 		},
+		/**
+		 * Whether deletion may be submitted: BOTH a master password and the exact
+		 * confirmation phrase must be present (double-gated).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		canSubmit() {
 			return this.masterPassword.length > 0 && this.confirmation === CONFIRMATION_PHRASE
 		},
 	},
 	methods: {
+		/**
+		 * Verify the master password client-side, then run the deletion cascade
+		 * and lock the vault on success.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		async onDelete() {
 			this.error = null
 			const ok = await verifyMasterPassword(
@@ -140,12 +172,25 @@ export default {
 				this.error = this.exportStore.error || (e && e.message) || this.t('doriath', 'Deletion failed')
 			}
 		},
+		/**
+		 * Reset the dialog state (no master password retained).
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		reset() {
 			this.masterPassword = ''
 			this.confirmation = ''
 			this.report = null
 			this.error = null
 		},
+		/**
+		 * Handle open-state changes, clearing state on close.
+		 *
+		 * @param {boolean} value The new open state.
+		 * @return {void}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		onUpdateOpen(value) {
 			if (!value) {
 				this.reset()

@@ -131,6 +131,12 @@ export default {
 		},
 	},
 	emits: ['update:open'],
+	/**
+	 * Provide the export + session Pinia stores to the component.
+	 *
+	 * @return {object}
+	 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+	 */
 	setup() {
 		return {
 			exportStore: useExportStore(),
@@ -149,9 +155,21 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * Whether an export is in flight (from the store).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		loading() {
 			return this.exportStore.loading
 		},
+		/**
+		 * The scope selector options: the whole vault plus each folder.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		scopeOptions() {
 			const opts = [{ label: this.t('doriath', 'Entire vault'), value: 'vault' }]
 			for (const folder of this.folders) {
@@ -159,12 +177,26 @@ export default {
 			}
 			return opts
 		},
+		/**
+		 * The live passphrase-strength feedback label.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		strengthLabel() {
 			if (this.passphraseScore >= PASSPHRASE_FLOOR) {
 				return this.t('doriath', 'Passphrase strength: strong enough')
 			}
 			return this.t('doriath', 'Passphrase too weak — choose a longer, less predictable passphrase')
 		},
+		/**
+		 * Whether the export may be submitted: backup needs a passphrase at/above
+		 * the strength floor; plaintext CSV needs the warning acknowledged and a
+		 * master password entered.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		canSubmit() {
 			if (this.mode === 'encrypted-backup') {
 				return this.passphrase.length > 0 && this.passphraseScore >= PASSPHRASE_FLOOR
@@ -174,15 +206,34 @@ export default {
 		},
 	},
 	methods: {
+		/**
+		 * Recompute the live zxcvbn passphrase score on each keystroke.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		onPassphraseInput() {
 			this.passphraseScore = this.passphrase ? zxcvbn(this.passphrase).score : 0
 		},
+		/**
+		 * Build the scope selector for the store action.
+		 *
+		 * @return {object}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		buildScope() {
 			if (this.scopeFolder === 'vault') {
 				return { mode: 'vault' }
 			}
 			return { mode: 'folders', folderIds: [this.scopeFolder] }
 		},
+		/**
+		 * Run the chosen export. Plaintext CSV is gated by a client-side
+		 * master-password re-auth before the store action runs.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		async onExport() {
 			this.error = null
 			try {
@@ -207,6 +258,12 @@ export default {
 				this.error = this.exportStore.error || (e && e.message) || this.t('doriath', 'Export failed')
 			}
 		},
+		/**
+		 * Reset the dialog to its initial state (no plaintext retained).
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		reset() {
 			this.mode = 'encrypted-backup'
 			this.passphrase = ''
@@ -216,6 +273,13 @@ export default {
 			this.scopeFolder = 'vault'
 			this.error = null
 		},
+		/**
+		 * Handle open-state changes, clearing transient secrets on close.
+		 *
+		 * @param {boolean} value The new open state.
+		 * @return {void}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		onUpdateOpen(value) {
 			if (!value) {
 				this.reset()

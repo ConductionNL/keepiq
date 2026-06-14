@@ -200,6 +200,13 @@ export default {
 		folderTree() {
 			return this.folderStore.folderTree
 		},
+		/**
+		 * The flat folder list, used to populate the export scope selector and
+		 * resolve relative folder paths in the export serializer.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
 		folders() {
 			return this.folderStore.folders
 		},
@@ -273,6 +280,7 @@ export default {
 		 * Open the export dialog after decrypting the vault client-side.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
 		 */
 		async openExport() {
 			this.decryptedSecrets = await this.decryptAllSecrets()
@@ -283,6 +291,7 @@ export default {
 		 * Open the GDPR export dialog; decrypt the vault if it is unlocked.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 		 */
 		async openGdpr() {
 			this.decryptedSecrets = await this.decryptAllSecrets()
@@ -294,6 +303,7 @@ export default {
 		 * the export dialog.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 		 */
 		async onExportFirst() {
 			this.deletionOpen = false

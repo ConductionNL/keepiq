@@ -77,6 +77,12 @@ export default {
 		},
 	},
 	emits: ['update:open'],
+	/**
+	 * Provide the export + session Pinia stores to the component.
+	 *
+	 * @return {object}
+	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 */
 	setup() {
 		return {
 			exportStore: useExportStore(),
@@ -89,14 +95,33 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * Whether an export is in flight (from the store).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		loading() {
 			return this.exportStore.loading
 		},
+		/**
+		 * Whether the vault is locked (drives the metadata-only vs full variant).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		locked() {
 			return this.sessionStore.isLocked
 		},
 	},
 	methods: {
+		/**
+		 * Produce and download the GDPR package; vault half included only when
+		 * unlocked.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		async onDownload() {
 			this.error = null
 			try {
@@ -107,6 +132,13 @@ export default {
 				this.error = this.exportStore.error || (e && e.message) || this.t('doriath', 'GDPR export failed')
 			}
 		},
+		/**
+		 * Handle open-state changes, clearing the error on close.
+		 *
+		 * @param {boolean} value The new open state.
+		 * @return {void}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
 		onUpdateOpen(value) {
 			if (!value) {
 				this.error = null

@@ -70,7 +70,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Deep-link from search results via lock screen | **MVP** | Seamless search → vault flow |
 | Bulk secret operations (delete, move folder) | **V1** | Efficiency for large vaults |
 | Secret import (CSV, Bitwarden JSON, KeePass XML) | **V1** | Migration from other tools |
-| Secret export (encrypted backup, CSV) | **V1** | Data portability |
+| Secret export (encrypted backup, CSV) | **V1** ✅ Built | Data portability — client-side Argon2id+AES-256-GCM `.doriath-backup` + warning/re-auth-gated plaintext CSV (see `docs/gdpr.md`) |
 | Favorite/pinned secrets | **V1** | Quick access to frequently used secrets |
 | Recently accessed secrets | **V1** | Convenience pattern from all major vaults |
 | Password health scoring per secret | **V1** ✅ | Flag weak, reused, or old passwords (Bitwarden Reports, 1Password Watchtower) — implemented in `password-health` (client-side vault health report) |
@@ -254,8 +254,8 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | WCAG AA compliance | **MVP** | Accessibility requirement |
 | English + Dutch localization | **MVP** | Primary markets |
 | NL Design System theming support | **V1** | Government visual compliance |
-| GDPR data export (all user secrets + metadata) | **V1** | Right of access |
-| GDPR data deletion (user + all shares) | **V1** | Right to erasure |
+| GDPR data export (all user secrets + metadata) | **V1** ✅ Built | Right of access (Art. 15) — browser-assembled package = server metadata + client-decrypted vault (see `docs/gdpr.md`) |
+| GDPR data deletion (user + all shares) | **V1** ✅ Built | Right to erasure (Art. 17) — in-app + `UserDeletedEvent` cascade with defined shared-secret semantics (see `docs/gdpr.md`) |
 | Audit trail on all secret operations | **V1** ✅ Built | Accountability |
 | Field-level encryption audit (verify encrypted fields) | **Enterprise** | Compliance verification |
 | Data retention policies | **Enterprise** | Automated cleanup |
