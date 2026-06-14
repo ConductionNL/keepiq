@@ -15,11 +15,11 @@ The Application entity gains two fields not in the base spec:
 
 The `description` field is stored in plaintext and returned in API responses. The `csr` field is internal-only (excluded from JsonSerializable output).
 
-## New Requirements
+## ADDED Requirements
 
 ### Requirement: RFC 7523 JWT Bearer API Authentication
 
-Applications authenticate to Doriath's REST API using RFC 7523 (JWT Bearer assertion grant).
+Applications MUST authenticate to Doriath's REST API using RFC 7523 (JWT Bearer assertion grant).
 
 #### Scenario: Exchange JWT assertion for access token
 - GIVEN an active application with an EncryptionSuite
