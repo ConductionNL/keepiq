@@ -47,6 +47,7 @@ import LinkShareAccess from './views/LinkShareAccess.vue'
 import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
 import ApplicationDetail from './views/ApplicationDetail.vue'
 import DashboardSummaryView from './views/DashboardSummaryView.vue'
+import PersonalActivityView from './views/PersonalActivityView.vue'
 import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
 import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
 import StatsBlockWidget from './widgets/StatsBlockWidget.vue'
@@ -75,6 +76,7 @@ export default {
 	ApplicationRegisterView: { kind: 'page', component: ApplicationRegisterView },
 	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
 	DashboardSummaryView: { kind: 'page', component: DashboardSummaryView },
+	PersonalActivityView: { kind: 'page', component: PersonalActivityView },
 	'secret-create': { kind: 'modal', component: SecretCreateDialog, propsSchema: {} },
 	'secret-edit': { kind: 'modal', component: SecretEditDialog, propsSchema: {} },
 	'folder-create': { kind: 'modal', component: FolderCreateDialog, propsSchema: {} },
