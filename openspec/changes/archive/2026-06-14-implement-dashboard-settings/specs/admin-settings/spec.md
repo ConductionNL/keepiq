@@ -9,8 +9,23 @@ The existing admin Settings.vue (register form) MUST be replaced with security-f
 
 Each section MUST use `CnSettingsSection` with appropriate title and description.
 
+#### Scenario: Admin opens the settings page
+- GIVEN an admin navigates to the Doriath admin settings page
+- THEN the CnVersionInfoCard header MUST be shown
+- AND the Password Policy, Certificate Authority, and Applications sections MUST be rendered in order using CnSettingsSection
+- AND the legacy register form MUST NOT be shown
+
 ### Requirement: SettingsController Admin Endpoints — MODIFIED
 The existing SettingsController MUST be extended with admin-specific endpoints for reading and writing IAppConfig values. The `create()` method (currently generic) MUST validate admin config bounds (min_password_length: 12-20, min_password_score: 3-4). A new `getUserSettings()` endpoint MUST return per-user settings via IConfig.
+
+#### Scenario: Admin saves config within bounds
+- GIVEN an admin submits min_password_length=16 and min_password_score=4
+- WHEN the SettingsController create() method runs
+- THEN the values MUST pass bounds validation and be stored via IAppConfig
+
+#### Scenario: User settings endpoint returns per-user values
+- GIVEN a user calls the getUserSettings() endpoint
+- THEN the response MUST return per-user settings read via IConfig
 
 ## ADDED Requirements
 

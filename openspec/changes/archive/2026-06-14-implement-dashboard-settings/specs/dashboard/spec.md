@@ -96,7 +96,7 @@ The dashboard MUST display a CA health card for administrators showing certifica
 - THEN a card MUST show warning state with a link to admin settings CA management
 
 ### Requirement: Recently Accessed Secrets Widget [V1]
-The dashboard SHOULD display up to 5 recently accessed secrets for quick navigation. Access tracking uses a dedicated `doriath_access_log` table (separate from the secrets table) with columns: id, secret_id (FK), user_id, accessed_at. This table is created by the implement-secrets change (or a dedicated migration if needed) and populated by the SecretService on each secret read. The dashboard queries this table for the 5 most recent distinct secrets per user.
+The dashboard MUST display up to 5 recently accessed secrets for quick navigation. Access tracking uses a dedicated `doriath_access_log` table (separate from the secrets table) with columns: id, secret_id (FK), user_id, accessed_at. This table is created by the implement-secrets change (or a dedicated migration if needed) and populated by the SecretService on each secret read. The dashboard queries this table for the 5 most recent distinct secrets per user.
 
 #### Scenario: User with recent activity
 - GIVEN a user has accessed secrets in the past 7 days

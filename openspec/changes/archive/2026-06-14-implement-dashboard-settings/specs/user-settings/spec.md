@@ -3,6 +3,11 @@
 ### Requirement: User Settings Dialog [MVP] — MODIFIED
 The existing placeholder UserSettings.vue (NcEmptyContent "No settings available yet") MUST be replaced with functional preference controls. The dialog MUST retain the NcAppSettingsDialog component (NOT NcDialog) and the gear icon trigger in the app navigation.
 
+#### Scenario: User opens the settings dialog
+- GIVEN a user clicks the gear icon trigger in the app navigation
+- THEN the NcAppSettingsDialog MUST open with functional preference controls
+- AND the placeholder NcEmptyContent MUST NOT be shown
+
 ## ADDED Requirements
 
 ### Requirement: Session Timeout Preference [MVP]
@@ -49,7 +54,7 @@ The user settings dialog MUST provide toggles for notification categories. Each 
 - THEN IConfig MUST store `notify_security = true` for the user
 
 ### Requirement: Default Secret Type [V1]
-The user settings dialog SHOULD provide a dropdown to select the default secret type when creating new secrets.
+The user settings dialog MUST provide a dropdown to select the default secret type when creating new secrets.
 
 | Option | Value |
 |--------|-------|
@@ -65,7 +70,7 @@ The user settings dialog SHOULD provide a dropdown to select the default secret 
 - THEN the type selector MUST default to api_key instead of login
 
 ### Requirement: Default View Preference [V1]
-The user settings dialog SHOULD provide a toggle or dropdown to choose the default vault display mode.
+The user settings dialog MUST provide a toggle or dropdown to choose the default vault display mode.
 
 | Option | Value |
 |--------|-------|
