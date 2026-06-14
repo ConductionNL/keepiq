@@ -63,7 +63,9 @@
 			"route": "/",
 			"type": "dashboard",
 			"title": "Dashboard",
-			"config": {},
+			"config": {
+				"documentationUrl": "https://doriath.conduction.nl"
+			},
 			"widgets": [
 				{
 					"widgetKey": "stats-block",
