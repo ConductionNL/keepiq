@@ -6,15 +6,18 @@ The system MUST parse import files entirely in the browser. The plaintext conten
 An import MUST only be possible while the vault is unlocked (the owner's CryptoKey is in the browser session per the encryption-suites Session Mechanism requirement). Parsed plaintext rows MUST be held only in JavaScript memory — never written to `localStorage`, `sessionStorage`, or IndexedDB — and MUST be discarded when the import wizard closes.
 
 #### Scenario: Plaintext never sent to server
+@e2e exclude Covered by the import-store vitest plaintext-never-in-request-body assertion + the ImportService envelope-validation PHPUnit; a Playwright DOM check cannot prove ciphertext-only payloads.
 - **WHEN** a user imports a file containing plaintext credentials
 - **THEN** every HTTP request issued by the import flow MUST contain only encrypted blobs for key, login, and additional_fields
 - **AND** the plaintext-permitted fields in any request MUST be limited to name, url, type, and folder path — the same fields the secrets spec stores unencrypted
 
 #### Scenario: Import requires unlocked vault
+@e2e exclude Lock guard covered by the ImportWizardDialog vitest (locked vault blocks the wizard + reads no file); the seeded e2e vault is always unlocked.
 - **WHEN** a user opens the import wizard while the vault is locked (no CryptoKey in session)
 - **THEN** the system MUST redirect to the lock screen and MUST NOT read the file
 
 #### Scenario: Wizard closed mid-import
+@e2e exclude Abandon-resets-and-creates-nothing covered by the ImportWizardDialog vitest (reset releases rows; no POST issued).
 - **WHEN** the user closes the import wizard before committing
 - **THEN** no secrets or folders are created
 - **AND** the parsed plaintext rows MUST be released from memory
@@ -25,21 +28,25 @@ The system MUST support importing from: generic CSV, Bitwarden JSON export, Bitw
 KDBX (`.kdbx` binary KeePass container) import is OUT OF SCOPE for v1: KDBX is an encrypted container, not an interchange format — supporting it would require shipping a second full crypto stack in the browser and prompting users for a foreign master password inside Doriath. When a KDBX file is detected (magic bytes), the system MUST reject it with guidance to use KeePass's `File → Export → KeePass XML (2.x)` function and import the resulting XML.
 
 #### Scenario: Bitwarden JSON import
+@e2e exclude Format parsing (login items, TOTP, collections) covered exhaustively by the import-parsers vitest with fixtures; the e2e drives the generic-CSV path end-to-end.
 - **WHEN** a user selects Bitwarden JSON and provides a valid Bitwarden export file
 - **THEN** the system MUST parse login items into rows with name, url, login, key, and additional fields (including notes and the TOTP seed as an opaque additional field)
 - **AND** Bitwarden folder/collection names MUST be captured as folder paths
 
 #### Scenario: KeePass XML import
+@e2e exclude Nested-group + History-ignored parsing covered by the import-parsers vitest with a KeePass XML fixture.
 - **WHEN** a user selects KeePass XML and provides a KeePass 2.x XML export
 - **THEN** the system MUST parse entries with their group hierarchy as folder paths
 - **AND** entry `History` elements MUST be ignored (only current values import)
 
 #### Scenario: KDBX file rejected with guidance
+@e2e exclude KDBX magic-byte detection + guidance covered by the ImportWizardDialog vitest (kdbxDetected set, no parse) + the isKdbx model vitest.
 - **WHEN** a user provides a `.kdbx` file
 - **THEN** the system MUST refuse to parse it
 - **AND** MUST display instructions for producing a KeePass XML export instead
 
 #### Scenario: File does not match selected format
+@e2e exclude Parse-step failure on a wrong-format file covered by the per-parser vitest (each parser throws on a non-matching structure) + the store surfaces the error.
 - **WHEN** the file content cannot be parsed as the selected format (e.g. invalid JSON, wrong structure)
 - **THEN** the system MUST fail at the parse step with a format-specific error message
 - **AND** MUST NOT create any secrets or folders
@@ -50,6 +57,7 @@ The system MUST provide a dedicated migration path for the Nextcloud Passwords a
 Migration is file-based only: the system MUST NOT read the Passwords app's database or API, because a server-side migration would decrypt credentials on the server, violating the always-E2E architecture (ADR-003).
 
 #### Scenario: Passwords app backup imported with folders
+@e2e exclude Passwords-app field mapping + folder-hierarchy resolution covered by the ncPasswords import-parsers vitest.
 - **WHEN** a user imports a Nextcloud Passwords JSON backup containing passwords organised in folders
 - **THEN** each password MUST become a Doriath secret with its custom fields and notes preserved as encrypted additional fields
 - **AND** the folder hierarchy MUST be recreated per the folder mapping step
@@ -65,6 +73,7 @@ For known formats (Bitwarden, KeePass XML, Nextcloud Passwords) the mapping is f
 - **AND** the preview MUST update to reflect the corrected mapping before confirmation
 
 #### Scenario: Nothing persisted before confirmation
+@e2e exclude Abandon-before-commit-creates-nothing covered by the ImportWizardDialog vitest (reset, no POST).
 - **WHEN** a user reaches the mapping preview and abandons the import
 - **THEN** no secrets, folders, or server-side records of the import attempt exist
 
@@ -72,10 +81,12 @@ For known formats (Bitwarden, KeePass XML, Nextcloud Passwords) the mapping is f
 The system MUST map source hierarchies (CSV folder column, Bitwarden folders/collections, KeePass groups, Passwords folders) onto Doriath folders. For each source root folder, the user MUST be able to choose an existing Doriath folder as the target or have it created (default), and MUST be able to place the entire import under a single new folder. Nested hierarchy MUST be preserved beneath the chosen target. Folders MUST be created idempotently at commit time, and folders whose rows were all rejected or skipped MUST NOT be created.
 
 #### Scenario: Bitwarden collections become folders
+@e2e exclude Nested-folder idempotent ensuring covered by the ImportService PHPUnit (Work reused, Work/CI created once); the e2e CSV path drives single-folder creation.
 - **WHEN** a user imports a Bitwarden export with collections "Work" and "Work/CI"
 - **THEN** committed secrets MUST be placed in Doriath folders "Work" and "Work/CI" with the same nesting
 
 #### Scenario: Import under a single new folder
+@e2e exclude "Import under one folder" toggle is a client-side folder-path rewrite; folder-ensuring is covered by the ImportService PHPUnit.
 - **WHEN** the user enables "import under one folder"
 - **THEN** all imported folders and secrets MUST be created beneath a single new folder
 
@@ -88,6 +99,7 @@ The system MUST detect duplicates client-side before commit by comparing each ca
 - **AND** with the default resolution, zero secrets are created and the summary reports them as skipped
 
 #### Scenario: Duplicate imported as copy
+@e2e exclude Import-as-copy name suffix + existing-secret-untouched covered by the import-store vitest.
 - **WHEN** the user resolves a duplicate row with "import as copy"
 - **THEN** a new secret MUST be created with a distinguishing name suffix
 - **AND** the existing secret MUST remain unchanged
@@ -96,12 +108,14 @@ The system MUST detect duplicates client-side before commit by comparing each ca
 The system MUST provide an authenticated batch endpoint that accepts arrays of already-encrypted secret payloads plus the folder paths to ensure, and creates them on behalf of the session user. The browser MUST submit accepted rows in bounded chunks with progress indication. The endpoint MUST validate each item independently and return per-index results, so one invalid item does not fail the rest of its chunk. The endpoint MUST derive ownership exclusively from the authenticated session user and MUST reject requests when the user has no active EncryptionSuite.
 
 #### Scenario: Partial chunk failure
+@e2e exclude API-contract: per-index partial-failure results covered by the ImportController/ImportService PHPUnit + the import-store vitest (failed index lands in rejected list).
 - **WHEN** a chunk of 50 items contains one item with a missing name
 - **THEN** the other 49 items MUST be created
 - **AND** the response MUST identify the failed index and reason
 - **AND** the failed row MUST appear in the rejected list of the summary report
 
 #### Scenario: Large vault import shows progress
+@e2e exclude Chunking at 50 + progress counters covered by the import-store vitest (120 rows produce three chunks of 50/50/20, committedChunks tracked); a 2,000-row Playwright import is impractical.
 - **WHEN** a user commits an import of 2,000 accepted rows
 - **THEN** the rows MUST be submitted in multiple chunks
 - **AND** the wizard MUST show progress as chunks complete
@@ -110,11 +124,13 @@ The system MUST provide an authenticated batch endpoint that accepts arrays of a
 A malformed row MUST NOT abort the import. Rows that fail at parse time (unparseable structure, missing required name, oversized field), mapping time, or commit time MUST be collected into a rejected list carrying the source row number and a human-readable reason. The user MUST be able to download the rejected rows as a client-side-generated CSV for correction and re-import; this file MUST be generated in the browser and never uploaded.
 
 #### Scenario: Mixed valid and malformed rows
+@e2e exclude Per-row fault isolation (missing-name rejected, others proceed) covered by the csv import-parsers vitest.
 - **WHEN** a CSV with 100 rows contains 3 rows without a name value
 - **THEN** 97 rows MUST proceed through the wizard
 - **AND** the 3 rejected rows MUST be listed with their row numbers and reason
 
 #### Scenario: Rejected rows downloadable
+@e2e exclude Client-side Blob CSV generation covered by the import-store rejectedCsv() vitest; the Blob download is local-only.
 - **WHEN** the summary reports rejected rows
 - **THEN** the user MUST be able to download them as a CSV generated locally in the browser
 
