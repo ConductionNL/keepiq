@@ -122,7 +122,7 @@ function routesFromManifest(manifest) {
 }
 
 const router = new VueRouter({
-	mode: 'history',
+	mode: 'hash',
 	base: generateUrl('/apps/doriath'),
 	routes: routesFromManifest(mergedManifest),
 })
