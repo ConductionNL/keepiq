@@ -145,6 +145,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {number} sourceRow The duplicate row's source position.
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveDuplicate(sourceRow, resolution) {
 			this.duplicateResolutions = { ...this.duplicateResolutions, [sourceRow]: resolution }
@@ -155,6 +156,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveAllDuplicates(resolution) {
 			const resolutions = {}
@@ -172,6 +174,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {CryptoKey} publicKey The owner's imported public key.
 		 * @param {boolean} asCopy Whether to apply the "(imported)" copy suffix.
 		 * @return {Promise<object>} The ciphertext-only item.
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		async encryptRow(row, publicKey, asCopy) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
@@ -283,6 +286,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {object} body The chunk body ({ folders, items }).
 		 * @return {Promise<object|null>} The response data, or null after two failures.
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async postChunk(body) {
 			for (let attempt = 0; attempt < 2; attempt++) {
@@ -326,6 +330,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} step The target step.
 		 * @return {void}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		goToStep(step) {
 			this.step = step

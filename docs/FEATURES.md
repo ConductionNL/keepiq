@@ -69,7 +69,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Nextcloud unified search integration (IProvider) | **MVP** | Find secrets from Ctrl+F without opening Doriath |
 | Deep-link from search results via lock screen | **MVP** | Seamless search → vault flow |
 | Bulk secret operations (delete, move folder) | **V1** | Efficiency for large vaults |
-| Secret import (CSV, Bitwarden JSON, KeePass XML) | **V1** | Migration from other tools |
+| Secret import (CSV, Bitwarden JSON/CSV, KeePass 2.x XML, Nextcloud Passwords backup) | **V1** ✅ Built | Migration from other tools — client-side parse + encrypt, field-mapping preview, folder/collection mapping, duplicate detection, chunked encrypted commit, malformed-row rejection (see `docs/importing.md`) |
 | Secret export (encrypted backup, CSV) | **V1** ✅ Built | Data portability — client-side Argon2id+AES-256-GCM `.doriath-backup` + warning/re-auth-gated plaintext CSV (see `docs/gdpr.md`) |
 | Favorite/pinned secrets | **V1** | Quick access to frequently used secrets |
 | Recently accessed secrets | **V1** | Convenience pattern from all major vaults |
