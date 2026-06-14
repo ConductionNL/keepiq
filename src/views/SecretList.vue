@@ -26,7 +26,32 @@
 					</template>
 					{{ t('doriath', 'New folder') }}
 				</NcButton>
+
+				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
+				<NcActions :menu-name="t('doriath', 'My data')">
+					<NcActionButton @click="openExport">
+						{{ t('doriath', 'Export data') }}
+					</NcActionButton>
+					<NcActionButton @click="openGdpr">
+						{{ t('doriath', 'GDPR export') }}
+					</NcActionButton>
+					<NcActionButton @click="deletionOpen = true">
+						{{ t('doriath', 'Delete my Doriath data') }}
+					</NcActionButton>
+				</NcActions>
 			</div>
+
+			<ExportDialog :open="exportOpen"
+				:secrets="decryptedSecrets"
+				:folders="folders"
+				@update:open="exportOpen = $event" />
+			<GdprExportDialog :open="gdprOpen"
+				:secrets="decryptedSecrets"
+				:folders="folders"
+				@update:open="gdprOpen = $event" />
+			<AccountDeletionDialog :open="deletionOpen"
+				@update:open="deletionOpen = $event"
+				@export-first="onExportFirst" />
 
 			<div class="secret-list-view__toolbar">
 				<NcTextField :value.sync="searchTerm"
@@ -87,7 +112,7 @@
 </template>
 
 <script>
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect, NcTextField } from '@nextcloud/vue'
+import { NcActionButton, NcActions, NcButton, NcEmptyContent, NcLoadingIcon, NcSelect, NcTextField } from '@nextcloud/vue'
 import AllInclusive from 'vue-material-design-icons/AllInclusive.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import Magnify from 'vue-material-design-icons/Magnify.vue'
@@ -95,6 +120,9 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import FolderTree from '../components/FolderTree.vue'
 import SecretListItem from '../components/SecretListItem.vue'
+import ExportDialog from '../dialogs/ExportDialog.vue'
+import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
+import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useHealthStore } from '../store/modules/health.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -111,6 +139,8 @@ export default {
 	name: 'SecretList',
 
 	components: {
+		NcActionButton,
+		NcActions,
 		NcButton,
 		NcEmptyContent,
 		NcLoadingIcon,
@@ -123,6 +153,9 @@ export default {
 		FolderPlus,
 		FolderTree,
 		SecretListItem,
+		ExportDialog,
+		GdprExportDialog,
+		AccountDeletionDialog,
 	},
 
 	inject: {
@@ -138,6 +171,10 @@ export default {
 			searchTerm: '',
 			sortField: 'name',
 			searchTimer: null,
+			exportOpen: false,
+			gdprOpen: false,
+			deletionOpen: false,
+			decryptedSecrets: [],
 		}
 	},
 
@@ -162,6 +199,9 @@ export default {
 		},
 		folderTree() {
 			return this.folderStore.folderTree
+		},
+		folders() {
+			return this.folderStore.folders
 		},
 		selectedFolderId() {
 			return this.$route.params.folderId || null
@@ -203,6 +243,62 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Decrypt every secret the user can read, in the browser, so the export
+		 * dialogs can serialize the full vault. Returns [] when the vault is
+		 * locked (the dialogs then fall back to metadata-only where applicable).
+		 *
+		 * @return {Promise<Array<object>>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
+		async decryptAllSecrets() {
+			const store = this.secretStore
+			// Pull a full page set (the export covers the whole vault, not the
+			// paginated view). The list already lives in the store.
+			await store.fetchSecrets({ page: 1, limit: 100000 })
+			const out = []
+			for (const secret of store.secrets) {
+				try {
+					out.push(await store.decryptSecret(secret))
+				} catch {
+					// A secret whose suite is blocked/revoked cannot be decrypted;
+					// skip it rather than failing the whole export.
+				}
+			}
+			return out
+		},
+
+		/**
+		 * Open the export dialog after decrypting the vault client-side.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async openExport() {
+			this.decryptedSecrets = await this.decryptAllSecrets()
+			this.exportOpen = true
+		},
+
+		/**
+		 * Open the GDPR export dialog; decrypt the vault if it is unlocked.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async openGdpr() {
+			this.decryptedSecrets = await this.decryptAllSecrets()
+			this.gdprOpen = true
+		},
+
+		/**
+		 * "Export first" suggestion from the deletion dialog: close it and open
+		 * the export dialog.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async onExportFirst() {
+			this.deletionOpen = false
+			await this.openExport()
+		},
 
 		/**
 		 * Lazily run the password-health analysis so the list shows strength
