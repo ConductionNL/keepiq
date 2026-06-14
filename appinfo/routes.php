@@ -140,6 +140,18 @@ return [
         // k-anonymity forward to HIBP; double-gated (admin setting + user opt-in).
         ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range/{prefix}', 'verb' => 'GET'],
 
+        // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
+        // to the session user — no user selector. Master-password re-auth on the
+        // delete is enforced client-side (ADR-003); the typed confirmation phrase
+        // is the server-checkable gate.
+        ['name' => 'gdpr#metadata',          'url' => '/api/v1/gdpr/metadata',     'verb' => 'GET'],
+        ['name' => 'gdpr#deleteAccountData', 'url' => '/api/v1/gdpr/account-data', 'verb' => 'DELETE'],
+
+        // Export-event emission (secret-export-gdpr D5). The client reports a
+        // completed export before offering the local download; this dispatches
+        // SecretExportedEvent for the session user. No secret material is sent.
+        ['name' => 'export#events', 'url' => '/api/v1/export/events', 'verb' => 'POST'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.
