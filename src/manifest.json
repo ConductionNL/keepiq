@@ -49,6 +49,14 @@
 			"order": 86
 		},
 		{
+			"id": "PasswordHealthMenu",
+			"label": "Password health",
+			"icon": "icon-checkmark",
+			"route": "PasswordHealth",
+			"section": "footer",
+			"order": 87
+		},
+		{
 			"id": "LockVault",
 			"label": "Lock vault",
 			"icon": "icon-password",
@@ -179,6 +187,14 @@
 			"title": "My activity",
 			"component": "PersonalActivityView",
 			"_note": "The session user's own audit-trail entries (add-secret-audit-trail §5.3). type:\"custom\" — a simple actor-scoped feed view, no built-in page type models it."
+		},
+		{
+			"id": "PasswordHealth",
+			"route": "/password-health",
+			"type": "custom",
+			"title": "Password health",
+			"component": "HealthReportView",
+			"_note": "Client-side vault health report (password-health). type:\"custom\" — the analysis runs in-browser over the unlocked vault; no built-in page type models a memory-only analysis surface."
 		},
 		{
 			"id": "Lock",

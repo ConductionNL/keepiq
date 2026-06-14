@@ -58,6 +58,8 @@
 				v-if="isAdmin"
 				:count="store.pendingAppsCount"
 				@navigate="$emit('navigate', 'applications')" />
+
+			<HealthSummaryCard />
 		</div>
 	</section>
 </template>
@@ -67,10 +69,11 @@ import { useDashboardStore } from '../store/modules/dashboard.js'
 import DashboardKpiCard from '../widgets/DashboardKpiCard.vue'
 import MigrationBanner from '../widgets/MigrationBanner.vue'
 import PendingAppsCard from '../widgets/PendingAppsCard.vue'
+import HealthSummaryCard from '../widgets/HealthSummaryCard.vue'
 
 export default {
 	name: 'DashboardSummaryView',
-	components: { DashboardKpiCard, MigrationBanner, PendingAppsCard },
+	components: { DashboardKpiCard, MigrationBanner, PendingAppsCard, HealthSummaryCard },
 	props: {
 		isAdmin: {
 			type: Boolean,
