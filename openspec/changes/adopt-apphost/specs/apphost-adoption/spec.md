@@ -12,7 +12,7 @@ Doriath's `/api/health` and `/api/metrics` run on the AppHost declarative engine
 
 ---
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Public Declarative Health Endpoint
 
