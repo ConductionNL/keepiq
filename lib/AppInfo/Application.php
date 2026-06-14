@@ -32,9 +32,11 @@ use OCA\Doriath\Listener\SuiteCompromiseListener;
 use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
 use OCA\Doriath\Listener\SuiteMigrationStartedListener;
 use OCA\Doriath\Listener\UserAddedToGroupListener;
+use OCA\Doriath\Listener\UserDeletedListener;
 use OCA\Doriath\Listener\UserRemovedFromGroupListener;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
+use OCP\User\Events\UserDeletedEvent;
 use OCA\Doriath\Middleware\JwtAuthMiddleware;
 use OCA\Doriath\Notification\DoriathNotifier;
 use OCA\Doriath\Search\SecretSearchProvider;
@@ -111,6 +113,15 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: SuiteMigrationCompletedEvent::class,
             listener: SuiteCompromiseListener::class
+        );
+
+        // secret-export-gdpr D4 — cascade-delete all of a user's Doriath data
+        // when their Nextcloud account is removed, so vault data never outlives
+        // its account. The cascade is idempotent and shares its implementation
+        // with the in-app GDPR Art. 17 deletion flow.
+        $context->registerEventListener(
+            event: UserDeletedEvent::class,
+            listener: UserDeletedListener::class
         );
 
         // add-secret-audit-trail §2.6 — the single AuditListener turns every

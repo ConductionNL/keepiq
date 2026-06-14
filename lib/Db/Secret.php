@@ -57,6 +57,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setKeyUpdatedAt(?DateTime $keyUpdatedAt)
  * @method string|null getMigrationError()
  * @method void setMigrationError(?string $migrationError)
+ * @method DateTime|null getTombstonedAt()
+ * @method void setTombstonedAt(?DateTime $tombstonedAt)
+ * @method string|null getTombstoneReason()
+ * @method void setTombstoneReason(?string $tombstoneReason)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getUpdatedAt()
@@ -168,6 +172,27 @@ class Secret extends Entity implements JsonSerializable
     protected ?string $migrationError = null;
 
     /**
+     * When this secret was tombstoned as a detached recipient copy (nullable).
+     *
+     * Set on a recipient's share-copy when the sharer's account is deleted
+     * (secret-export-gdpr D4 step 2). Display metadata only — it imposes no
+     * access restriction; the recipient fully owns the copy.
+     *
+     * @var DateTime|null
+     */
+    protected ?DateTime $tombstonedAt = null;
+
+    /**
+     * The non-personal reason a copy was tombstoned (nullable).
+     *
+     * A short enum-ish token (e.g. 'owner-account-deleted'). MUST NOT contain
+     * the deleted user's ID, display name, or any other personal data.
+     *
+     * @var string|null
+     */
+    protected ?string $tombstoneReason = null;
+
+    /**
      * When the secret was created.
      *
      * @var DateTime|null
@@ -231,6 +256,8 @@ class Secret extends Entity implements JsonSerializable
         $this->addType(fieldName: 'possiblyCompromisedAt', type: 'datetime');
         $this->addType(fieldName: 'keyUpdatedAt', type: 'datetime');
         $this->addType(fieldName: 'migrationError', type: 'string');
+        $this->addType(fieldName: 'tombstonedAt', type: 'datetime');
+        $this->addType(fieldName: 'tombstoneReason', type: 'string');
         $this->addType(fieldName: 'createdAt', type: 'datetime');
         $this->addType(fieldName: 'updatedAt', type: 'datetime');
     }//end __construct()
@@ -259,6 +286,8 @@ class Secret extends Entity implements JsonSerializable
             'updatedAt'         => $this->updatedAt?->format('c'),
             'keyUpdatedAt'      => $this->keyUpdatedAt?->format('c'),
             'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
+            'tombstonedAt'      => $this->tombstonedAt?->format('c'),
+            'tombstoneReason'   => $this->tombstoneReason,
         ];
     }//end jsonSerialize()
 
