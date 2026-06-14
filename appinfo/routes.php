@@ -136,6 +136,10 @@ return [
         ['name' => 'audit#me',     'url' => '/api/v1/audit/me',          'verb' => 'GET'],
         ['name' => 'audit#index',  'url' => '/api/v1/audit',             'verb' => 'GET'],
 
+        // Password-health breach-check proxy (password-health §1.5). Prefix-only
+        // k-anonymity forward to HIBP; double-gated (admin setting + user opt-in).
+        ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range/{prefix}', 'verb' => 'GET'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Health check endpoint.

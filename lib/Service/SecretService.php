@@ -174,6 +174,8 @@ class SecretService
         $secret->setOwnerId($userId);
         $secret->setCreatedAt($now);
         $secret->setUpdatedAt($now);
+        // Ciphertext age starts at creation; never decrypts (password-health D4).
+        $secret->setKeyUpdatedAt($now);
 
         $this->mapper->insert($secret);
         $this->logger->info("Doriath: secret {$secret->getId()} created by {$userId}");
@@ -257,6 +259,8 @@ class SecretService
         $secret->setOwnerId($applicationId);
         $secret->setCreatedAt($now);
         $secret->setUpdatedAt($now);
+        // Ciphertext age starts at creation; never decrypts (password-health D4).
+        $secret->setKeyUpdatedAt($now);
 
         $this->mapper->insert($secret);
         $this->logger->info(
@@ -358,7 +362,14 @@ class SecretService
                 throw new InvalidArgumentException('Secret key cannot be empty');
             }
 
-            $secret->setKey($key);
+            // Stamp ciphertext age ONLY when the encrypted key blob actually
+            // changes — a no-op re-submit of the same ciphertext (or a rename
+            // that happens to also resend key) must not un-stale the credential
+            // (password-health design D4). Pure string inequality; no decryption.
+            if ($key !== $secret->getKey()) {
+                $secret->setKey($key);
+                $secret->setKeyUpdatedAt(new DateTime());
+            }
         }
 
         if (array_key_exists('login', $data) === true) {
