@@ -25,8 +25,8 @@ import { APP_BASE, DEV_MASTER_PASSWORD, gotoLockSettled, unlockVault } from './_
 
 test.describe('secret export + GDPR', () => {
 	test('encrypted backup export downloads a .doriath-backup file client-side', async ({ page }) => {
-		// @e2e secret-export/encrypted-backup-export/backup-created-client-side
-		// @e2e secret-export/backup-format-versioning-and-round-trip/export-restore-round-trip
+		// @e2e secret-export::backup-created-client-side
+		// @e2e secret-export::export-restore-round-trip
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
@@ -47,8 +47,8 @@ test.describe('secret export + GDPR', () => {
 	})
 
 	test('plaintext CSV requires warning acknowledgement and a correct master password', async ({ page }) => {
-		// @e2e secret-export/plaintext-csv-export-with-re-authentication/warning-precedes-plaintext-export
-		// @e2e secret-export/plaintext-csv-export-with-re-authentication/re-auth-required-despite-unlocked-session
+		// @e2e secret-export::warning-precedes-plaintext-export
+		// @e2e secret-export::re-auth-required-despite-unlocked-session
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
@@ -69,7 +69,7 @@ test.describe('secret export + GDPR', () => {
 	})
 
 	test('in-app account deletion is double-gated by phrase + master password', async ({ page }) => {
-		// @e2e gdpr-compliance/account-data-deletion/in-app-deletion-double-gated
+		// @e2e gdpr-compliance::in-app-deletion-double-gated
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
@@ -88,7 +88,7 @@ test.describe('secret export + GDPR', () => {
 	})
 
 	test('GDPR export dialog offers a downloadable package', async ({ page }) => {
-		// @e2e gdpr-compliance/gdpr-personal-data-export/full-package-with-unlocked-vault
+		// @e2e gdpr-compliance::full-package-with-unlocked-vault
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
