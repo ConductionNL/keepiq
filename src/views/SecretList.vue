@@ -39,9 +39,9 @@
 				</NcTextField>
 
 				<NcSelect v-model="sortField"
+					:input-label="t('doriath', 'Sort by')"
 					:options="sortOptions"
 					:reduce="opt => opt.value"
-					:input-label="t('doriath', 'Sort by')"
 					:clearable="false"
 					@update:model-value="reload" />
 			</div>
@@ -182,6 +182,13 @@ export default {
 		},
 	},
 
+	/**
+	 * Load types + folders + the first secrets page, then lazily run the
+	 * client-side password-health pass so strength badges appear.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+	 */
 	async mounted() {
 		await Promise.all([
 			useSecretTypeStore().fetchTypes(),

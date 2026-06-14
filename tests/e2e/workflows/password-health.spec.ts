@@ -11,8 +11,8 @@
  *   - the breach-check gating (no opt-in / proxy traffic when the admin gate
  *     is off).
  *
- * The non-DOM contracts are NOT driven here and carry an `@e2e exclude`
- * directive on their spec scenarios per gate-19: the in-memory plaintext/worker
+ * The non-DOM contracts are NOT driven here and carry an exclusion directive
+ * on their spec scenarios per gate-19: the in-memory plaintext/worker
  * discard, the SHA-256 reuse-map internals, the prefix-only HIBP wire shape, the
  * key_updated_at server-maintenance, the no-health-write-surface route
  * enumeration, and the proxy logging — all covered by vitest + PHPUnit.
@@ -27,7 +27,7 @@ import { APP_BASE, DEV_MASTER_PASSWORD, gotoLockSettled, unlockVault } from './_
 
 test.describe('password health', () => {
 	test('the secrets list shows a strength badge after unlock', async ({ page }) => {
-		// @e2e password-health/strength-scoring-and-badges/weak-password-badged
+		// @e2e password-health::weak-password-badged
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 
@@ -42,7 +42,7 @@ test.describe('password health', () => {
 	})
 
 	test('the health report lists categories and deep-links to a secret', async ({ page }) => {
-		// @e2e password-health/vault-health-report/report-lists-findings-with-deep-links
+		// @e2e password-health::report-lists-findings-with-deep-links
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 
@@ -66,7 +66,7 @@ test.describe('password health', () => {
 	})
 
 	test('a locked vault shows no badges and an unlock placeholder on the dashboard', async ({ page }) => {
-		// @e2e password-health/client-side-health-analysis/locked-vault-shows-no-health-data
+		// @e2e password-health::locked-vault-shows-no-health-data
 		await gotoLockSettled(page)
 		// Do NOT unlock — assert the locked state.
 
@@ -80,7 +80,7 @@ test.describe('password health', () => {
 	})
 
 	test('breach opt-in is absent when the admin gate is off', async ({ page }) => {
-		// @e2e password-health/opt-in-breach-checking-via-k-anonymity/admin-gate-off-means-no-traffic
+		// @e2e password-health::admin-gate-off-means-no-traffic
 		const breachRequests: string[] = []
 		page.on('request', (req) => {
 			if (/breach-check\/range/.test(req.url())) {
