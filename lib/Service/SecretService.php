@@ -683,6 +683,27 @@ class SecretService
     }//end loadOwned()
 
     /**
+     * Assert the user has an active encryption suite, or block.
+     *
+     * Public probe used by the batch-import commit (ImportService) so a whole
+     * chunk fails fast with a 412 when the user cannot create secrets, rather
+     * than each item throwing the same block independently. Reuses the same
+     * suite resolution as create() — no duplicated suite logic.
+     *
+     * @param string $userId The Nextcloud user ID
+     *
+     * @return void
+     *
+     * @throws SuiteBlockedException When no active suite exists
+     *
+     * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+     */
+    public function assertActiveSuite(string $userId): void
+    {
+        $this->getActiveSuiteOrBlock(userId: $userId);
+    }//end assertActiveSuite()
+
+    /**
      * Resolve the user's active encryption suite or block with a 403.
      *
      * @param string $userId The Nextcloud user ID
