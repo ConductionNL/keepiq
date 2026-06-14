@@ -145,6 +145,8 @@ class JwtAuthService
      * @throws RuntimeException When the assertion is malformed, has
      *                          invalid claims, fails signature
      *                          verification, or replays a known jti.
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
      */
     public function exchangeAssertion(string $assertion): array
     {

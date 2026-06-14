@@ -59,6 +59,7 @@ export const useAuditStore = defineStore('audit', {
 		 *
 		 * @param {string} secretId The secret ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.1
 		 */
 		async fetchSecretActivity(secretId) {
 			this.loading = true
@@ -78,6 +79,7 @@ export const useAuditStore = defineStore('audit', {
 		 * Fetch the session user's personal activity.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.1
 		 */
 		async fetchPersonalActivity() {
 			this.loading = true
@@ -96,6 +98,7 @@ export const useAuditStore = defineStore('audit', {
 		 *
 		 * @param {number} page The 1-based page.
 		 * @return {object} The axios params object (empty filters omitted).
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.1
 		 */
 		buildAdminParams(page) {
 			const params = { page, limit: this.adminLimit }
@@ -113,6 +116,7 @@ export const useAuditStore = defineStore('audit', {
 		 *
 		 * @param {number} [page] The 1-based page to fetch (default current).
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.1
 		 */
 		async fetchAdminAudit(page = this.adminPage) {
 			this.loading = true
@@ -135,6 +139,7 @@ export const useAuditStore = defineStore('audit', {
 		 *
 		 * @param {object} filters The (partial) filter object.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.1
 		 */
 		async applyAdminFilters(filters) {
 			this.adminFilters = { ...this.adminFilters, ...filters }
@@ -147,6 +152,7 @@ export const useAuditStore = defineStore('audit', {
 		 * reflects the whole filter result, not just the visible page.
 		 *
 		 * @return {Promise<Array<object>>} All matching entries.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.5
 		 */
 		async fetchAllAdminForExport() {
 			const all = []

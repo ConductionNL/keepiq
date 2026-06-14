@@ -59,9 +59,21 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The audit entries for the current secret.
+		 *
+		 * @return {object[]} The secret's audit entries.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
+		 */
 		entries() {
 			return useAuditStore().secretEntries
 		},
+		/**
+		 * Whether the audit store is loading.
+		 *
+		 * @return {boolean} The loading state.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
+		 */
 		loading() {
 			return useAuditStore().loading
 		},
@@ -70,6 +82,12 @@ export default {
 	watch: {
 		secretId: {
 			immediate: true,
+			/**
+			 * Fetch activity when the watched secret ID changes.
+			 *
+			 * @param {string} id The new secret ID.
+			 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
+			 */
 			handler(id) {
 				if (id) {
 					useAuditStore().fetchSecretActivity(id)
@@ -79,9 +97,23 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Resolve a human-readable label for an event type.
+		 *
+		 * @param {string} eventType The audit event type.
+		 * @return {string} The label.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
+		 */
 		label(eventType) {
 			return auditEventLabel(eventType)
 		},
+		/**
+		 * Resolve a human-readable actor label for an entry.
+		 *
+		 * @param {object} entry The audit entry.
+		 * @return {string} The actor label.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
+		 */
 		actor(entry) {
 			return auditActorLabel(entry)
 		},
@@ -90,6 +122,7 @@ export default {
 		 *
 		 * @param {string} iso The ISO-8601 timestamp.
 		 * @return {string} A human-readable relative time.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
 		 */
 		relativeTime(iso) {
 			if (!iso) {

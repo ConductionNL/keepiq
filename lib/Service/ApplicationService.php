@@ -356,6 +356,8 @@ class ApplicationService
      * @return void
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
      */
     public function reject(string $applicationId, string $adminUserId, bool $isAdmin): void
     {
@@ -400,6 +402,8 @@ class ApplicationService
      * @return void
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
      */
     public function delete(string $applicationId, bool $isAdmin): void
     {

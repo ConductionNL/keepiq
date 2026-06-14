@@ -13,6 +13,7 @@
  *
  * @param {*} value The field value (coerced to string; null/undefined → '').
  * @return {string} The quoted field.
+ * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.5
  */
 export function csvField(value) {
 	const str = value === null || value === undefined ? '' : String(value)
@@ -28,6 +29,7 @@ export function csvField(value) {
  * @param {Array<string>} headers The header labels.
  * @param {Array<Array<*>>} rows The data rows.
  * @return {string} The CSV text (CRLF line endings).
+ * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.5
  */
 export function buildCsv(headers, rows) {
 	const lines = [headers.map(csvField).join(',')]
@@ -43,6 +45,7 @@ export function buildCsv(headers, rows) {
  * @param {string} filename The download filename.
  * @param {string} csv The CSV text.
  * @return {void}
+ * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.5
  */
 export function downloadCsv(filename, csv) {
 	const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

@@ -112,6 +112,8 @@ class LinkShareService
      * @return LinkShare
      *
      * @throws InvalidArgumentException When validation fails
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function create(
         string $secretId,
@@ -221,6 +223,8 @@ class LinkShareService
      * @return LinkShare The updated (or, when exhausted, last-known) link share
      *
      * @throws RuntimeException When the token is invalid or the limit was already reached
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function confirmAccess(string $token): LinkShare
     {
@@ -257,6 +261,8 @@ class LinkShareService
      * @param string $token The access token
      *
      * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function recordFailedAttempt(string $token): void
     {
@@ -340,6 +346,8 @@ class LinkShareService
      *
      * @throws RuntimeException When the link share does not exist
      * @throws InvalidArgumentException When the requester is not the owner
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function delete(string $id, string $userId): void
     {

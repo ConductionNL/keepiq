@@ -66,6 +66,8 @@ class AuditListener implements IEventListener
      * @param Event $event The dispatched event
      *
      * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.4
      */
     public function handle(Event $event): void
     {
