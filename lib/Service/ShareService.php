@@ -34,7 +34,10 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -79,8 +82,23 @@ class ShareService
         private NotificationService $notificationService,
         private IDBConnection $db,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create a single share target record.
@@ -169,6 +187,20 @@ class ShareService
             ],
             objectType: 'secret',
             objectId: $sourceSecretId,
+        );
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SHARE_GRANTED,
+                objectType: 'share',
+                objectId: $persisted->getId(),
+                objectName: $source->getName(),
+                metadata: [
+                    'recipientType' => 'user',
+                    'recipientId'   => $targetUserId,
+                ],
+            )
         );
 
         return $persisted;
@@ -308,6 +340,20 @@ class ShareService
         $this->logger->info(
             'Revoked share '.$shareId.' for source '.$entity->getSourceSecretId(),
             ['app' => 'doriath']
+        );
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SHARE_REVOKED,
+                objectType: 'share',
+                objectId: $shareId,
+                objectName: $source->getName(),
+                metadata: [
+                    'recipientType' => 'user',
+                    'recipientId'   => $entity->getTargetUserId(),
+                ],
+            )
         );
     }//end revokeShare()
 

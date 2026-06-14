@@ -29,7 +29,10 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -60,8 +63,23 @@ class ApplicationService
         private LoggerInterface $logger,
         private ?NotificationService $notificationService = null,
         private ?EncryptionSuiteService $encryptionSuiteService = null,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Register a new application.
@@ -157,6 +175,29 @@ class ApplicationService
         // block the registration.
         if ($persisted->isPending() === true && $this->notificationService !== null) {
             $this->dispatchAdminPendingNotification(application: $persisted, registeredBy: $userId);
+        }
+
+        // Anonymous (null) registrants have no NC actor — record as a
+        // system-actored event so the audit trail still captures the row.
+        if ($userId !== null && $userId !== '') {
+            $this->dispatchAudit(
+                AuditEvent::forUser(
+                    actorId: $userId,
+                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                    objectType: 'application',
+                    objectId: $persisted->getId(),
+                    objectName: $persisted->getName(),
+                )
+            );
+        } else {
+            $this->dispatchAudit(
+                AuditEvent::forSystem(
+                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                    objectType: 'application',
+                    objectId: $persisted->getId(),
+                    objectName: $persisted->getName(),
+                )
+            );
         }
 
         return $persisted;
@@ -260,6 +301,16 @@ class ApplicationService
             $this->tryProvisionSuite(application: $updated, csr: $storedCsr);
         }
 
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $adminUserId,
+                eventType: AuditEventTypes::APPLICATION_APPROVED,
+                objectType: 'application',
+                objectId: $applicationId,
+                objectName: $updated->getName(),
+            )
+        );
+
         return $updated;
     }//end approve()
 
@@ -318,11 +369,23 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'Only pending applications may be rejected');
         }
 
+        $applicationName = $entity->getName();
+
         $this->mapper->delete($entity);
 
         $this->logger->info(
             'Rejected application '.$applicationId.' by admin '.$adminUserId,
             ['app' => 'doriath']
+        );
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $adminUserId,
+                eventType: AuditEventTypes::APPLICATION_REJECTED,
+                objectType: 'application',
+                objectId: $applicationId,
+                objectName: $applicationName,
+            )
         );
     }//end reject()
 
@@ -346,9 +409,20 @@ class ApplicationService
 
         $entity = $this->findOr400($applicationId);
 
+        $applicationName = $entity->getName();
+
         $this->mapper->delete($entity);
 
         $this->logger->info('Deleted application '.$applicationId, ['app' => 'doriath']);
+
+        $this->dispatchAudit(
+            AuditEvent::forSystem(
+                eventType: AuditEventTypes::APPLICATION_DELETED,
+                objectType: 'application',
+                objectId: $applicationId,
+                objectName: $applicationName,
+            )
+        );
     }//end delete()
 
     /**

@@ -36,7 +36,10 @@ use Jose\Component\Signature\Serializer\JWSSerializerManager;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -106,8 +109,24 @@ class JwtAuthService
         private EncryptionSuiteMapper $suiteMapper,
         private ICacheFactory $cacheFactory,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
 
     /**
@@ -224,6 +243,16 @@ class JwtAuthService
         $accessToken = bin2hex(random_bytes(32));
         $tokenCache  = $this->cacheFactory->createDistributed(self::TOKEN_CACHE_NS);
         $tokenCache->set($accessToken, $application->getId(), self::ACCESS_TOKEN_TTL);
+
+        $this->dispatchAudit(
+            AuditEvent::forApplication(
+                actorId: $application->getId(),
+                eventType: AuditEventTypes::APPLICATION_TOKEN_ISSUED,
+                objectType: 'application',
+                objectId: $application->getId(),
+                objectName: $application->getName(),
+            )
+        );
 
         return [
             'access_token' => $accessToken,
