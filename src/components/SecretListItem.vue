@@ -11,7 +11,10 @@
 		</span>
 
 		<span class="secret-list-item__main">
-			<span class="secret-list-item__name">{{ secret.name }}</span>
+			<span class="secret-list-item__name">
+				{{ secret.name }}
+				<StrengthBadge v-if="!secret.blocked" :secret-id="secret.id" />
+			</span>
 			<span v-if="secret.url" class="secret-list-item__url">{{ secret.url }}</span>
 		</span>
 
@@ -37,6 +40,7 @@ import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
 import NoteText from 'vue-material-design-icons/NoteText.vue'
 import Database from 'vue-material-design-icons/Database.vue'
 import CopyButton from './CopyButton.vue'
+import StrengthBadge from './StrengthBadge.vue'
 import { resolveFaviconUrl, typeIconName } from '../utils/favicon.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -57,6 +61,7 @@ export default {
 		NoteText,
 		Database,
 		CopyButton,
+		StrengthBadge,
 	},
 
 	props: {

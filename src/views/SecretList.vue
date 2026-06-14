@@ -96,6 +96,7 @@ import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import FolderTree from '../components/FolderTree.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import { useSecretStore } from '../store/modules/secret.js'
+import { useHealthStore } from '../store/modules/health.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useFolderStore } from '../store/modules/folder.js'
 
@@ -187,10 +188,29 @@ export default {
 			this.folderStore.fetchFolders(),
 		])
 		await this.reload()
+		// Lazily run the client-side password-health pass after the first list
+		// render so strength badges appear without blocking the render. Fire and
+		// forget; it aborts cleanly when the vault is locked (password-health D2).
+		this.triggerHealthPass()
 	},
 
 	methods: {
 		t,
+
+		/**
+		 * Lazily run the password-health analysis so the list shows strength
+		 * badges. Memory-only; aborts when the vault is locked.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+		 */
+		triggerHealthPass() {
+			const health = useHealthStore()
+			health.registerLockReset()
+			if (health.status === 'idle') {
+				health.analyseVault({ stalenessThreshold: '365', breachEnabled: false }).catch(() => {})
+			}
+		},
 
 		/**
 		 * Reload the current page of secrets with the active filters.
