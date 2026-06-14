@@ -1,0 +1,259 @@
+<!--
+  SPDX-License-Identifier: EUPL-1.2
+  SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+
+  Export dialog (secret-export-gdpr D1/D2, tasks §6.2). Two modes, with the
+  encrypted backup visually primary:
+
+  - Encrypted backup (.doriath-backup): a backup passphrase with a zxcvbn ≥ 3
+    strength floor (submit disabled below it). Generated fully client-side
+    (Argon2id + AES-256-GCM); the passphrase never reaches the server.
+  - Plaintext CSV: gated by an explicit unencrypted-file warning that must be
+    acknowledged, THEN fresh master-password re-entry (client-side proof of
+    knowledge — verified by decrypting the private-key blob, never sent to the
+    server), THEN download.
+
+  Both modes support scope selection (whole vault or a folder subtree). The
+  caller passes already-decrypted secrets + the folder list.
+
+  @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+-->
+<template>
+	<NcDialog :name="t('doriath', 'Export vault')"
+		:open="open"
+		size="normal"
+		@update:open="onUpdateOpen">
+		<div class="export-dialog">
+			<NcNoteCard v-if="error" type="error">
+				{{ error }}
+			</NcNoteCard>
+
+			<fieldset class="export-dialog__modes">
+				<legend>{{ t('doriath', 'Export format') }}</legend>
+				<NcCheckboxRadioSwitch :model-value="mode"
+					value="encrypted-backup"
+					name="export-mode"
+					type="radio"
+					@update:model-value="mode = $event">
+					{{ t('doriath', 'Encrypted backup (recommended)') }}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch :model-value="mode"
+					value="plaintext-csv"
+					name="export-mode"
+					type="radio"
+					@update:model-value="mode = $event">
+					{{ t('doriath', 'Plaintext CSV (unencrypted)') }}
+				</NcCheckboxRadioSwitch>
+			</fieldset>
+
+			<NcSelect v-model="scopeFolder"
+				:input-label="t('doriath', 'Scope')"
+				:options="scopeOptions"
+				:reduce="opt => opt.value"
+				:clearable="false" />
+
+			<!-- Encrypted backup path -->
+			<div v-if="mode === 'encrypted-backup'" class="export-dialog__backup">
+				<NcPasswordField :value.sync="passphrase"
+					:label="t('doriath', 'Backup passphrase')"
+					@update:value="onPassphraseInput" />
+				<p class="export-dialog__hint">
+					{{ t('doriath', 'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.') }}
+				</p>
+				<p v-if="passphrase" class="export-dialog__strength" :class="'export-dialog__strength--' + passphraseScore">
+					{{ strengthLabel }}
+				</p>
+			</div>
+
+			<!-- Plaintext CSV path: warning -> ack -> re-auth -->
+			<div v-else class="export-dialog__csv">
+				<NcNoteCard type="warning">
+					{{ t('doriath', 'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.') }}
+				</NcNoteCard>
+				<NcCheckboxRadioSwitch :model-value="warningAcknowledged"
+					@update:model-value="warningAcknowledged = $event">
+					{{ t('doriath', 'I understand the file is unencrypted and will delete it after use') }}
+				</NcCheckboxRadioSwitch>
+				<NcPasswordField v-if="warningAcknowledged"
+					:value.sync="masterPassword"
+					:label="t('doriath', 'Re-enter your master password')" />
+			</div>
+		</div>
+
+		<template #actions>
+			<NcButton @click="onUpdateOpen(false)">
+				{{ t('doriath', 'Cancel') }}
+			</NcButton>
+			<NcButton type="primary"
+				:disabled="!canSubmit || loading"
+				@click="onExport">
+				{{ t('doriath', 'Export') }}
+			</NcButton>
+		</template>
+	</NcDialog>
+</template>
+
+<script>
+import { NcButton, NcCheckboxRadioSwitch, NcDialog, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
+import zxcvbn from 'zxcvbn'
+import { useExportStore } from '../store/modules/export.js'
+import { useSessionStore } from '../store/modules/session.js'
+import { verifyMasterPassword } from '../crypto/reauth.js'
+
+/** The zxcvbn score floor for a backup passphrase (D1). */
+const PASSPHRASE_FLOOR = 3
+
+export default {
+	name: 'ExportDialog',
+	components: {
+		NcDialog,
+		NcButton,
+		NcNoteCard,
+		NcSelect,
+		NcPasswordField,
+		NcCheckboxRadioSwitch,
+	},
+	props: {
+		/** Whether the dialog is open. */
+		open: {
+			type: Boolean,
+			default: false,
+		},
+		/** Already-decrypted secrets to export. */
+		secrets: {
+			type: Array,
+			default: () => [],
+		},
+		/** Folder rows ({ id, name, parentId }). */
+		folders: {
+			type: Array,
+			default: () => [],
+		},
+	},
+	emits: ['update:open'],
+	setup() {
+		return {
+			exportStore: useExportStore(),
+			sessionStore: useSessionStore(),
+		}
+	},
+	data() {
+		return {
+			mode: 'encrypted-backup',
+			passphrase: '',
+			passphraseScore: 0,
+			masterPassword: '',
+			warningAcknowledged: false,
+			scopeFolder: 'vault',
+			error: null,
+		}
+	},
+	computed: {
+		loading() {
+			return this.exportStore.loading
+		},
+		scopeOptions() {
+			const opts = [{ label: this.t('doriath', 'Entire vault'), value: 'vault' }]
+			for (const folder of this.folders) {
+				opts.push({ label: folder.name, value: folder.id })
+			}
+			return opts
+		},
+		strengthLabel() {
+			if (this.passphraseScore >= PASSPHRASE_FLOOR) {
+				return this.t('doriath', 'Passphrase strength: strong enough')
+			}
+			return this.t('doriath', 'Passphrase too weak — choose a longer, less predictable passphrase')
+		},
+		canSubmit() {
+			if (this.mode === 'encrypted-backup') {
+				return this.passphrase.length > 0 && this.passphraseScore >= PASSPHRASE_FLOOR
+			}
+			// Plaintext CSV: warning acknowledged + a master password entered.
+			return this.warningAcknowledged && this.masterPassword.length > 0
+		},
+	},
+	methods: {
+		onPassphraseInput() {
+			this.passphraseScore = this.passphrase ? zxcvbn(this.passphrase).score : 0
+		},
+		buildScope() {
+			if (this.scopeFolder === 'vault') {
+				return { mode: 'vault' }
+			}
+			return { mode: 'folders', folderIds: [this.scopeFolder] }
+		},
+		async onExport() {
+			this.error = null
+			try {
+				const scope = this.buildScope()
+				if (this.mode === 'encrypted-backup') {
+					await this.exportStore.exportBackup(this.secrets, this.folders, this.passphrase, scope)
+				} else {
+					// Fresh master-password re-auth (client-side proof of knowledge).
+					const ok = await verifyMasterPassword(
+						this.sessionStore.encryptedPrivateKey,
+						this.masterPassword,
+					)
+					if (!ok) {
+						this.error = this.t('doriath', 'Incorrect master password')
+						return
+					}
+					await this.exportStore.exportCsv(this.secrets, this.folders, scope)
+				}
+				this.reset()
+				this.$emit('update:open', false)
+			} catch (e) {
+				this.error = this.exportStore.error || (e && e.message) || this.t('doriath', 'Export failed')
+			}
+		},
+		reset() {
+			this.mode = 'encrypted-backup'
+			this.passphrase = ''
+			this.passphraseScore = 0
+			this.masterPassword = ''
+			this.warningAcknowledged = false
+			this.scopeFolder = 'vault'
+			this.error = null
+		},
+		onUpdateOpen(value) {
+			if (!value) {
+				this.reset()
+			}
+			this.$emit('update:open', value)
+		},
+	},
+}
+</script>
+
+<style scoped>
+.export-dialog {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 8px 4px;
+	min-width: 320px;
+}
+
+.export-dialog__modes {
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.export-dialog__hint {
+	color: var(--color-text-maxcontrast);
+	font-size: 0.85em;
+}
+
+.export-dialog__strength--0,
+.export-dialog__strength--1,
+.export-dialog__strength--2 {
+	color: var(--color-error);
+}
+
+.export-dialog__strength--3,
+.export-dialog__strength--4 {
+	color: var(--color-success);
+}
+</style>
