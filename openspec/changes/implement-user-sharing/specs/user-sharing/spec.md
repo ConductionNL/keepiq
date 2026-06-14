@@ -107,7 +107,7 @@ When a recipient's EncryptionSuite is revoked (deliberate decommissioning), all 
 - **AND** the original secrets owned by their respective owners remain intact
 
 ### Requirement: EncryptionSuite Compromise Notification for Shared Copies
-When a recipient's EncryptionSuite is replaced due to compromise, the suite migration process naturally covers all Secret rows encrypted with the old suite, including shared copies. Those copies are re-encrypted with the new suite and flagged possibly_compromised_at.
+When a recipient's EncryptionSuite is replaced due to compromise, the suite migration process MUST cover all Secret rows encrypted with the old suite, including shared copies. Those copies MUST be re-encrypted with the new suite and flagged `possibly_compromised_at`.
 
 When a shared copy is flagged possibly_compromised_at during migration, the original owner of the secret MUST be notified that the secret may have been compromised and its value should be replaced.
 
