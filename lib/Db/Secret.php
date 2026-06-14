@@ -53,6 +53,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setOwnerId(string $ownerId)
  * @method DateTime|null getPossiblyCompromisedAt()
  * @method void setPossiblyCompromisedAt(?DateTime $possiblyCompromisedAt)
+ * @method DateTime|null getKeyUpdatedAt()
+ * @method void setKeyUpdatedAt(?DateTime $keyUpdatedAt)
  * @method string|null getMigrationError()
  * @method void setMigrationError(?string $migrationError)
  * @method DateTime|null getCreatedAt()
@@ -147,6 +149,18 @@ class Secret extends Entity implements JsonSerializable
     protected ?DateTime $possiblyCompromisedAt = null;
 
     /**
+     * When the secret's encrypted `key` ciphertext last changed (nullable).
+     *
+     * Maintained server-side by SecretService whenever the stored `key` blob
+     * changes; renames / folder moves / metadata edits do NOT touch it. Records
+     * ciphertext age only — the server performs no decryption (password-health
+     * design D4).
+     *
+     * @var DateTime|null
+     */
+    protected ?DateTime $keyUpdatedAt = null;
+
+    /**
      * A migration error message, if re-encryption failed (nullable).
      *
      * @var string|null
@@ -215,6 +229,7 @@ class Secret extends Entity implements JsonSerializable
         $this->addType(fieldName: 'ownerType', type: 'string');
         $this->addType(fieldName: 'ownerId', type: 'string');
         $this->addType(fieldName: 'possiblyCompromisedAt', type: 'datetime');
+        $this->addType(fieldName: 'keyUpdatedAt', type: 'datetime');
         $this->addType(fieldName: 'migrationError', type: 'string');
         $this->addType(fieldName: 'createdAt', type: 'datetime');
         $this->addType(fieldName: 'updatedAt', type: 'datetime');
@@ -242,6 +257,8 @@ class Secret extends Entity implements JsonSerializable
             'blocked'           => false,
             'createdAt'         => $this->createdAt?->format('c'),
             'updatedAt'         => $this->updatedAt?->format('c'),
+            'keyUpdatedAt'      => $this->keyUpdatedAt?->format('c'),
+            'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
         ];
     }//end jsonSerialize()
 
