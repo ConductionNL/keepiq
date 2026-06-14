@@ -55,6 +55,12 @@ return [
         // is registered immediately after, so it still resolves correctly.
         ['name' => 'secret#index',   'url' => '/api/v1/secrets',      'verb' => 'GET'],
         ['name' => 'secret#create',  'url' => '/api/v1/secrets',      'verb' => 'POST'],
+        // Batch import commit (secret-import D7). Accepts arrays of already
+        // client-encrypted items; owner-scoped to the session user. The literal
+        // /import-batch path is registered before the {id} wildcard so a POST
+        // here never collides with the secret routes, and well before the SPA
+        // catch-all wildcard at the foot of this file.
+        ['name' => 'import#batchCreate', 'url' => '/api/v1/secrets/import-batch', 'verb' => 'POST'],
         ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}', 'verb' => 'GET'],
         ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
         ['name' => 'secret#destroy', 'url' => '/api/v1/secrets/{id}', 'verb' => 'DELETE'],
