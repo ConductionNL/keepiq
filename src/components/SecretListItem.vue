@@ -16,6 +16,9 @@
 				<StrengthBadge v-if="!secret.blocked" :secret-id="secret.id" />
 			</span>
 			<span v-if="secret.url" class="secret-list-item__url">{{ secret.url }}</span>
+			<span v-if="secret.tombstonedAt" class="secret-list-item__tombstone">
+				{{ t('doriath', 'Shared by a deleted account — no longer synced') }}
+			</span>
 		</span>
 
 		<span v-if="secret.blocked" class="secret-list-item__blocked">

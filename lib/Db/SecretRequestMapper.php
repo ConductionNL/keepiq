@@ -196,4 +196,24 @@ class SecretRequestMapper extends QBMapper
 
         return $qb->executeStatement();
     }//end unlockAndUpdateSuite()
+
+    /**
+     * Delete every secret request created by a user (account-deletion cascade).
+     *
+     * Idempotent: a second call simply matches no rows.
+     *
+     * @param string $userId The Nextcloud user ID that created the requests
+     *
+     * @return int The number of rows deleted
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function deleteByCreatedBy(string $userId): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('created_by', $qb->createNamedParameter($userId)));
+
+        return $qb->executeStatement();
+    }//end deleteByCreatedBy()
 }//end class

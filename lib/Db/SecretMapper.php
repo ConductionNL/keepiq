@@ -341,6 +341,72 @@ class SecretMapper extends QBMapper
     }//end reassignType()
 
     /**
+     * Delete every secret owned by a user (account-deletion cascade).
+     *
+     * Idempotent: a second call simply matches no rows.
+     *
+     * @param string $ownerId The Nextcloud user ID
+     *
+     * @return int The number of rows deleted
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function deleteByOwnerUser(string $ownerId): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+        return $qb->executeStatement();
+    }//end deleteByOwnerUser()
+
+    /**
+     * Mark a recipient copy as a tombstoned, detached share-copy.
+     *
+     * Writes only display metadata (timestamp + non-personal reason token). The
+     * recipient retains full ownership and access; no personal data of the
+     * deleted sharer is written (secret-export-gdpr D4 step 2).
+     *
+     * @param string $secretId The recipient copy's Secret ID
+     * @param string $reason   The non-personal tombstone reason token
+     *
+     * @return void
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function tombstone(string $secretId, string $reason): void
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->update($this->getTableName())
+            ->set('tombstoned_at', $qb->createNamedParameter((new \DateTime())->format('Y-m-d H:i:s')))
+            ->set('tombstone_reason', $qb->createNamedParameter($reason))
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($secretId)));
+
+        $qb->executeStatement();
+    }//end tombstone()
+
+    /**
+     * Reassign the owner of a single secret (delegation ownership transfer).
+     *
+     * @param string $secretId   The Secret ID
+     * @param string $newOwnerId The delegate's Nextcloud user ID
+     *
+     * @return void
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function reassignOwner(string $secretId, string $newOwnerId): void
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->update($this->getTableName())
+            ->set('owner_id', $qb->createNamedParameter($newOwnerId))
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($secretId)));
+
+        $qb->executeStatement();
+    }//end reassignOwner()
+
+    /**
      * Find every Secret encrypted under a given EncryptionSuite. Used by
      * compromise-recovery listeners to fan over the freshly re-suited
      * copies and surface the ones the migration flagged as possibly

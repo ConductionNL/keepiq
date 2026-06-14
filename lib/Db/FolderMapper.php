@@ -192,4 +192,25 @@ class FolderMapper extends QBMapper
 
         return $collected;
     }//end getSubtreeIds()
+
+    /**
+     * Delete every folder owned by a user (account-deletion cascade).
+     *
+     * Idempotent: a second call simply matches no rows.
+     *
+     * @param string $ownerId The Nextcloud user ID
+     *
+     * @return int The number of rows deleted
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function deleteByOwnerUser(string $ownerId): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+        return $qb->executeStatement();
+    }//end deleteByOwnerUser()
 }//end class
