@@ -73,14 +73,14 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Secret export (encrypted backup, CSV) | **V1** | Data portability |
 | Favorite/pinned secrets | **V1** | Quick access to frequently used secrets |
 | Recently accessed secrets | **V1** | Convenience pattern from all major vaults |
-| Password health scoring per secret | **V1** | Flag weak, reused, or old passwords (Bitwarden Reports, 1Password Watchtower) |
-| Secret strength indicator in list view | **V1** | Color-coded strength badge next to each secret (Passbolt, Bitwarden) |
+| Password health scoring per secret | **V1** ✅ | Flag weak, reused, or old passwords (Bitwarden Reports, 1Password Watchtower) — implemented in `password-health` (client-side vault health report) |
+| Secret strength indicator in list view | **V1** ✅ | Color-coded strength badge next to each secret (Passbolt, Bitwarden) — implemented in `password-health` (in-session zxcvbn badge) |
 | Vault search with keyboard shortcut (Ctrl+K) | **V1** | Power-user quick access (1Password pattern) |
 | Dark mode support | **V1** | User preference; Nextcloud supports dark mode natively |
 | Secret tags (in addition to folders) | **Enterprise** | Cross-cutting categorization |
 | Custom fields per secret type (admin-defined) | **Enterprise** | Organization-specific field requirements |
-| Breach detection (HaveIBeenPwned) for secret URLs | **Enterprise** | Proactive security alerts for compromised URLs (1Password Watchtower) |
-| Password age indicator | **Enterprise** | Show how old each secret is; flag stale credentials |
+| Breach detection (HaveIBeenPwned) for secret values | **V1** ✅ | Opt-in k-anonymity breach check (5-char prefix proxy) — implemented in `password-health`, double-gated (admin + per-user), default off |
+| Password age indicator | **V1** ✅ | Show how old each secret is; flag stale credentials — implemented in `password-health` via server-maintained `key_updated_at` |
 | Export to PDF (single secret) | **Enterprise** | Print-friendly credential sheet for offline backup (KeePassXC) |
 
 ### Encryption & Key Management
