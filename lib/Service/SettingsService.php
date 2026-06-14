@@ -57,6 +57,7 @@ class SettingsService
         'min_password_score'        => 'int',
         'default_session_timeout'   => 'string',
         'ca_auto_renew_enabled'     => 'bool',
+        'audit_retention_days'      => 'int',
     ];
 
     /**
@@ -81,6 +82,21 @@ class SettingsService
     private const MIN_PASSWORD_LENGTH_MAX = 20;
     private const VALID_PASSWORD_SCORES   = [3, 4];
     private const VALID_SESSION_TIMEOUTS  = ['session', '10min', '30min'];
+
+    /**
+     * Default audit-log retention window in days (add-secret-audit-trail §4.2).
+     *
+     * @var int
+     */
+    public const AUDIT_RETENTION_DEFAULT = 365;
+
+    /**
+     * Hard minimum audit-log retention window — below this the trail cannot
+     * serve its incident-investigation purpose, so it is rejected (design D5).
+     *
+     * @var int
+     */
+    public const AUDIT_RETENTION_MIN = 30;
 
     /**
      * Constructor for the SettingsService.
@@ -121,6 +137,11 @@ class SettingsService
             'min_password_score'      => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
             'default_session_timeout' => $this->appConfig->getValueString($appId, 'default_session_timeout', 'session'),
             'ca_auto_renew_enabled'   => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
+            'audit_retention_days'    => $this->appConfig->getValueInt(
+                $appId,
+                'audit_retention_days',
+                self::AUDIT_RETENTION_DEFAULT
+            ),
         ];
 
         // Best-effort CA status; never blocks if the service is unavailable.
@@ -186,6 +207,18 @@ class SettingsService
 
         if (isset($data['ca_auto_renew_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool) $data['ca_auto_renew_enabled']);
+        }
+
+        if (isset($data['audit_retention_days']) === true) {
+            $days = (int) $data['audit_retention_days'];
+            if ($days < self::AUDIT_RETENTION_MIN) {
+                throw new InvalidArgumentException(
+                    'audit_retention_days must be at least '.self::AUDIT_RETENTION_MIN
+                    .' days — below that the audit trail cannot serve incident investigation'
+                );
+            }
+
+            $this->appConfig->setValueInt($appId, 'audit_retention_days', $days);
         }
 
         return $this->getAdminSettings();

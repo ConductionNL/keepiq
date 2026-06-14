@@ -29,11 +29,14 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -55,8 +58,23 @@ class FolderService
         private FolderMapper $mapper,
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * List the folders owned by a user.
@@ -257,27 +275,61 @@ class FolderService
      * @throws ForbiddenException When not owned
      * @throws ConflictException When a non-empty folder is deleted without a plan
      * @throws InvalidArgumentException When the resolution body is incomplete
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.2
      */
     public function delete(string $id, ?string $cascade, ?array $resolution, string $userId): void
     {
-        $folder     = $this->getOwned(id: $id, userId: $userId);
-        $children   = $this->mapper->findChildren($id);
-        $hasSecrets = ($this->secretMapper->countByFolder($id) > 0);
+        $folder      = $this->getOwned(id: $id, userId: $userId);
+        $children    = $this->mapper->findChildren($id);
+        $secretCount = $this->secretMapper->countByFolder($id);
+        $hasSecrets  = ($secretCount > 0);
 
         if ($children === [] && $hasSecrets === false) {
-            // Empty folder — direct delete.
+            // Empty folder — direct delete. No cascade event.
             $this->mapper->delete($folder);
             $this->logger->info("Doriath: empty folder {$id} deleted by {$userId}");
             return;
         }
 
+        $folderName     = $folder->getName();
+        $subfolderCount = count($children);
+
         if ($children !== []) {
             $this->deleteWithSubfolders(folder: $folder, children: $children, resolution: $resolution, userId: $userId);
+
+            $this->dispatchAudit(
+                AuditEvent::forUser(
+                    actorId: $userId,
+                    eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
+                    objectType: 'folder',
+                    objectId: $id,
+                    objectName: $folderName,
+                    metadata: [
+                        'secretCount'    => $secretCount,
+                        'subfolderCount' => $subfolderCount,
+                    ],
+                )
+            );
             return;
         }
 
         // Non-empty leaf folder (secrets, no subfolders) — requires cascade.
         $this->deleteLeafWithSecrets(folder: $folder, cascade: $cascade);
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
+                objectType: 'folder',
+                objectId: $id,
+                objectName: $folderName,
+                metadata: [
+                    'secretCount'    => $secretCount,
+                    'subfolderCount' => 0,
+                ],
+            )
+        );
     }//end delete()
 
     /**

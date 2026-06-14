@@ -144,6 +144,15 @@
 					@update:open="requestDialogOpen = $event"
 					@created="onRequestCreated" />
 			</section>
+
+			<!--
+			  Activity section — add-secret-audit-trail §5.2. The audit trail
+			  for this secret, owner-scoped, newest first.
+			-->
+			<SecretActivityTab
+				v-if="isOwner"
+				:secret-id="secretId"
+				data-testid="secret-detail-activity" />
 		</div>
 	</div>
 </template>
@@ -163,6 +172,7 @@ import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
 import SecretRequestCreateDialog from '../components/secretRequest/SecretRequestCreateDialog.vue'
 import SecretRequestList from '../components/secretRequest/SecretRequestList.vue'
+import SecretActivityTab from '../components/SecretActivityTab.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 
@@ -190,6 +200,7 @@ export default {
 		ShareRequestForm,
 		SecretRequestCreateDialog,
 		SecretRequestList,
+		SecretActivityTab,
 	},
 
 	inject: {

@@ -16,6 +16,7 @@
 		<PasswordPolicySection />
 		<CaHealthSection />
 		<ApplicationQueueSection />
+		<AdminAuditSection />
 	</div>
 </template>
 
@@ -23,6 +24,7 @@
 import PasswordPolicySection from '../../components/settings/PasswordPolicySection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
+import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 
 export default {
 	name: 'Settings',
@@ -30,6 +32,7 @@ export default {
 		PasswordPolicySection,
 		CaHealthSection,
 		ApplicationQueueSection,
+		AdminAuditSection,
 	},
 }
 </script>

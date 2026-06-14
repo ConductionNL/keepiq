@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\AppInfo;
 
+use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
 use OCA\Doriath\Event\SuiteMigrationStartedEvent;
+use OCA\Doriath\Listener\AuditListener;
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
 use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
 use OCA\Doriath\Listener\SuiteCompromiseListener;
@@ -110,6 +112,32 @@ class Application extends App implements IBootstrap
             event: SuiteMigrationCompletedEvent::class,
             listener: SuiteCompromiseListener::class
         );
+
+        // add-secret-audit-trail §2.6 — the single AuditListener turns every
+        // dispatched AuditEvent into an append-only doriath_audit_log row. The
+        // listener is fail-soft: a record failure is logged at error level and
+        // never propagates into the audited business operation.
+        $context->registerEventListener(
+            event: AuditEvent::class,
+            listener: AuditListener::class
+        );
+
+        // The three secret-export-gdpr events are this change's scoped consumer
+        // (design D2/D5). They belong to the secret-export-gdpr change; bind the
+        // same AuditListener to them only when that capability's event classes
+        // are present, so this registration never references a missing class.
+        foreach ([
+            'OCA\\Doriath\\Event\\SecretExportedEvent',
+            'OCA\\Doriath\\Event\\GdprExportPerformedEvent',
+            'OCA\\Doriath\\Event\\AccountDataDeletedEvent',
+        ] as $exportEventClass) {
+            if (class_exists($exportEventClass) === true) {
+                $context->registerEventListener(
+                    event: $exportEventClass,
+                    listener: AuditListener::class
+                );
+            }
+        }
 
         // Register the Nextcloud unified search provider for secrets. It
         // queries unencrypted name/url metadata only and needs no vault
