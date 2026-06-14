@@ -162,15 +162,39 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The instance-wide audit entries for the current page.
+		 *
+		 * @return {object[]} The admin audit entries.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
+		 */
 		entries() {
 			return useAuditStore().adminEntries
 		},
+		/**
+		 * Whether the audit store is loading.
+		 *
+		 * @return {boolean} The loading state.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
+		 */
 		loading() {
 			return useAuditStore().loading
 		},
+		/**
+		 * The current 1-based admin page number.
+		 *
+		 * @return {number} The page number.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
+		 */
 		page() {
 			return useAuditStore().adminPage
 		},
+		/**
+		 * The total number of admin pages.
+		 *
+		 * @return {number} The page count.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
+		 */
 		pageCount() {
 			return useAuditStore().adminPageCount
 		},
@@ -180,6 +204,7 @@ export default {
 	 * Load the retention setting and the first audit page.
 	 *
 	 * @return {Promise<void>}
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
 	 */
 	async created() {
 		await this.loadRetention()
@@ -187,12 +212,33 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Resolve a human-readable label for an event type.
+		 *
+		 * @param {string} eventType The audit event type.
+		 * @return {string} The label.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
+		 */
 		label(eventType) {
 			return auditEventLabel(eventType)
 		},
+		/**
+		 * Resolve a human-readable actor label for an entry.
+		 *
+		 * @param {object} entry The audit entry.
+		 * @return {string} The actor label.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
+		 */
 		actor(entry) {
 			return auditActorLabel(entry)
 		},
+		/**
+		 * Format an ISO timestamp as a localized date-time.
+		 *
+		 * @param {string} iso The ISO-8601 timestamp.
+		 * @return {string} The formatted time.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
+		 */
 		formatTime(iso) {
 			if (!iso) {
 				return ''
@@ -208,6 +254,7 @@ export default {
 		 * Load the current retention window from the admin settings API.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
 		 */
 		async loadRetention() {
 			try {
@@ -222,6 +269,7 @@ export default {
 		 * Persist the retention window; surfaces the server-side 30-day floor.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
 		 */
 		async saveRetention() {
 			this.retentionError = ''
@@ -240,6 +288,7 @@ export default {
 		 * Apply the current filter selection and reload from page 1.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
 		 */
 		async onFilterChange() {
 			await useAuditStore().applyAdminFilters({
@@ -255,6 +304,7 @@ export default {
 		 *
 		 * @param {number} target The 1-based page.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
 		 */
 		async goToPage(target) {
 			await useAuditStore().fetchAdminAudit(target)
@@ -264,6 +314,7 @@ export default {
 		 * Export the whole current filter result as a client-side CSV.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.5
 		 */
 		async exportCsv() {
 			const rows = await useAuditStore().fetchAllAdminForExport()

@@ -7,6 +7,7 @@ import { translate as t } from '@nextcloud/l10n'
  *
  * @param {string} eventType The dot-namespaced event type.
  * @return {string} A human-readable, localized label.
+ * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.6
  */
 export function auditEventLabel(eventType) {
 	const labels = {
@@ -49,6 +50,7 @@ export function auditEventLabel(eventType) {
  * The full list of event types, for the admin filter dropdown.
  *
  * @return {Array<{id: string, label: string}>} Options sorted by label.
+ * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.6
  */
 export function auditEventOptions() {
 	const types = [
@@ -73,6 +75,7 @@ export function auditEventOptions() {
  *
  * @param {object} entry An audit entry (actorType / actorId).
  * @return {string} A human-readable actor label.
+ * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.6
  */
 export function auditActorLabel(entry) {
 	if (entry.actorType === 'link_visitor') {

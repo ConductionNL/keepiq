@@ -174,6 +174,8 @@ class AuditService
      * @param int    $offset     Row offset
      *
      * @return AuditEntry[]
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
      */
     public function listForObject(string $objectType, string $objectId, int $limit=50, int $offset=0): array
     {
@@ -188,6 +190,8 @@ class AuditService
      * @param int    $offset  Row offset
      *
      * @return AuditEntry[]
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
      */
     public function listForActor(string $actorId, int $limit=50, int $offset=0): array
     {
@@ -217,6 +221,8 @@ class AuditService
      * @param int                 $limit   Page size
      *
      * @return array{entries: AuditEntry[], total: int, page: int, limit: int}
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
      */
     public function adminQuery(array $filters, int $page=1, int $limit=50): array
     {
@@ -244,6 +250,8 @@ class AuditService
      * @param int $batchSize     Rows deleted per batch
      *
      * @return int Total rows deleted
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
      */
     public function purge(int $retentionDays, int $batchSize=1000): int
     {
@@ -270,6 +278,8 @@ class AuditService
      * @param string $userId The deleted user id
      *
      * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.3
      */
     public function anonymizeUser(string $userId): void
     {

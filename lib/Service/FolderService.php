@@ -275,6 +275,8 @@ class FolderService
      * @throws ForbiddenException When not owned
      * @throws ConflictException When a non-empty folder is deleted without a plan
      * @throws InvalidArgumentException When the resolution body is incomplete
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.2
      */
     public function delete(string $id, ?string $cascade, ?array $resolution, string $userId): void
     {

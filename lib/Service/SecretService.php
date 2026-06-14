@@ -139,6 +139,8 @@ class SecretService
      * @throws InvalidArgumentException When required fields are missing or invalid
      * @throws SuiteBlockedException When the user has no active suite
      * @throws WriteLockedException When a compromise-recovery migration is in progress
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function create(array $data, string $userId): Secret
     {
@@ -275,6 +277,8 @@ class SecretService
      * @throws NotFoundException When the secret does not exist
      * @throws ForbiddenException When the secret belongs to another user
      * @throws SuiteBlockedException When the encryption suite is revoked/compromised
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function get(string $id, string $userId): Secret
     {
@@ -318,6 +322,8 @@ class SecretService
      *   independent, flat partial-update branch.
      * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
      *   independent partial-update guards, not nested logic.
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function update(string $id, array $data, string $userId): Secret
     {
@@ -396,6 +402,8 @@ class SecretService
      *
      * @throws NotFoundException When the secret does not exist
      * @throws ForbiddenException When the secret belongs to another user
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function delete(string $id, string $userId): void
     {

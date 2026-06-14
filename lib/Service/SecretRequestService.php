@@ -144,6 +144,8 @@ class SecretRequestService
      * @return SecretRequest
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
      */
     public function fill(string $token, array $encryptedFields): SecretRequest
     {
@@ -277,6 +279,8 @@ class SecretRequestService
      * @return SecretRequest
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
      */
     public function create(
         string $secretId,
@@ -518,6 +522,8 @@ class SecretRequestService
      * @return SecretRequest
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
      */
     public function decline(string $requestId, string $userId): SecretRequest
     {

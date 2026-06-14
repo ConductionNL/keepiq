@@ -59,9 +59,21 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The session user's personal audit entries.
+		 *
+		 * @return {object[]} The personal audit entries.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.3
+		 */
 		entries() {
 			return useAuditStore().personalEntries
 		},
+		/**
+		 * Whether the audit store is loading.
+		 *
+		 * @return {boolean} The loading state.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.3
+		 */
 		loading() {
 			return useAuditStore().loading
 		},
@@ -77,9 +89,23 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Resolve a human-readable label for an event type.
+		 *
+		 * @param {string} eventType The audit event type.
+		 * @return {string} The label.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.3
+		 */
 		label(eventType) {
 			return auditEventLabel(eventType)
 		},
+		/**
+		 * Format an ISO timestamp as a localized date-time.
+		 *
+		 * @param {string} iso The ISO-8601 timestamp.
+		 * @return {string} The formatted time.
+		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.3
+		 */
 		formatTime(iso) {
 			if (!iso) {
 				return ''
