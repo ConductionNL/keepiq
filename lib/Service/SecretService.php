@@ -271,6 +271,179 @@ class SecretService
     }//end createForApplication()
 
     /**
+     * Create a secret written by the application itself (machine write-back).
+     *
+     * The application is the principal — it submits metadata plus fields it
+     * already encrypted with its own public certificate (which it trivially
+     * holds). The server validates shape only and can never inspect the
+     * plaintext. The audit actor is the application, not a user. Used by the
+     * machine secret-store API `POST /api/v1/app/secrets`.
+     *
+     * @param array<string,mixed> $data          The submitted fields (ciphertext + metadata)
+     * @param string              $applicationId The owning application ID
+     *
+     * @return Secret
+     *
+     * @throws InvalidArgumentException When required fields are missing
+     * @throws SuiteBlockedException When the application has no active suite
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+     */
+    public function createByApplication(array $data, string $applicationId): Secret
+    {
+        if ($applicationId === '') {
+            throw new InvalidArgumentException('applicationId is required');
+        }
+
+        $name = trim((string) ($data['name'] ?? ''));
+        $key  = (string) ($data['key'] ?? '');
+        if ($name === '' || $key === '') {
+            throw new InvalidArgumentException('A secret requires a name and a key');
+        }
+
+        try {
+            $suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            throw new SuiteBlockedException(
+                message: 'No active EncryptionSuite for application '.$applicationId
+            );
+        }
+
+        $typeId = $this->typeService->resolveTypeForSecret(
+            $data['typeId'] ?? null,
+            $applicationId
+        );
+
+        $now    = new DateTime();
+        $secret = new Secret();
+        $secret->setId(Uuid::uuid4()->toString());
+        $secret->setName($name);
+        $secret->setUrl($this->nullableString(value: $data['url'] ?? null));
+        $secret->setTypeId($typeId);
+        $secret->setFolderId($this->nullableString(value: $data['folderId'] ?? null));
+        $secret->setKey($key);
+        $secret->setLogin($this->nullableString(value: $data['login'] ?? null));
+        $secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+        $secret->setEncryptionSuiteId($suite->getId());
+        $secret->setOwnerType('application');
+        $secret->setOwnerId($applicationId);
+        $secret->setCreatedAt($now);
+        $secret->setUpdatedAt($now);
+        $secret->setKeyUpdatedAt($now);
+
+        $this->mapper->insert($secret);
+
+        $this->dispatchAudit(
+            AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::SECRET_CREATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['typeId' => $typeId, 'folderId' => $secret->getFolderId()],
+            )
+        );
+
+        return $secret;
+    }//end createByApplication()
+
+
+    /**
+     * Update a secret written by the application itself (machine write-back).
+     *
+     * Strictly own-vault scoped: the secret must belong to the calling
+     * application or a NotFoundException is raised (no existence oracle).
+     * Replaces the client-encrypted ciphertext and advances updatedAt;
+     * advances keyUpdatedAt only when the `key` ciphertext blob changes
+     * (ciphertext-age tracking, never decrypts). The server validates shape
+     * only. Used by `PUT /api/v1/app/secrets/{id}`.
+     *
+     * @param string              $id            The secret ID
+     * @param array<string,mixed> $data          The submitted fields (ciphertext + metadata)
+     * @param string              $applicationId The owning application ID
+     *
+     * @return Secret
+     *
+     * @throws NotFoundException When the secret does not exist in this vault
+     * @throws InvalidArgumentException When a submitted field is invalid
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+     */
+    public function updateByApplication(string $id, array $data, string $applicationId): Secret
+    {
+        try {
+            $secret = $this->mapper->findById($id);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            throw new NotFoundException(message: 'Secret not found');
+        }
+
+        // Own-vault scoping: a row owned by another vault is indistinguishable
+        // from a nonexistent one — same NotFoundException, no existence oracle.
+        if ($secret->getOwnerType() !== 'application'
+            || $secret->getOwnerId() !== $applicationId
+        ) {
+            throw new NotFoundException(message: 'Secret not found');
+        }
+
+        $now        = new DateTime();
+        $keyChanged = false;
+
+        if (array_key_exists('name', $data) === true) {
+            $name = trim((string) $data['name']);
+            if ($name === '') {
+                throw new InvalidArgumentException('Secret name cannot be empty');
+            }
+
+            $secret->setName($name);
+        }
+
+        if (array_key_exists('url', $data) === true) {
+            $secret->setUrl($this->nullableString(value: $data['url']));
+        }
+
+        if (array_key_exists('folderId', $data) === true) {
+            $secret->setFolderId($this->nullableString(value: $data['folderId']));
+        }
+
+        if (array_key_exists('login', $data) === true) {
+            $secret->setLogin($this->nullableString(value: $data['login']));
+        }
+
+        if (array_key_exists('additionalFields', $data) === true) {
+            $secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
+        }
+
+        if (array_key_exists('key', $data) === true) {
+            $key = (string) $data['key'];
+            if ($key === '') {
+                throw new InvalidArgumentException('Secret key cannot be empty');
+            }
+
+            if ($key !== $secret->getKey()) {
+                $secret->setKey($key);
+                $secret->setKeyUpdatedAt($now);
+                $keyChanged = true;
+            }
+        }
+
+        $secret->setUpdatedAt($now);
+        $this->mapper->update($secret);
+
+        $this->dispatchAudit(
+            AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::SECRET_UPDATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['changedFields' => $keyChanged === true ? ['key'] : array_keys($data)],
+            )
+        );
+
+        return $secret;
+    }//end updateByApplication()
+
+    /**
      * Get a secret owned by the user, enforcing revoked-suite blocking.
      *
      * @param string $id     The secret ID

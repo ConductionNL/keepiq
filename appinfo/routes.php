@@ -128,13 +128,22 @@ return [
         ['name' => 'application#show',    'url' => '/api/v1/applications/{id}',              'verb' => 'GET'],
         ['name' => 'application#destroy', 'url' => '/api/v1/applications/{id}',              'verb' => 'DELETE'],
 
+        // Machine secret-store API discovery document (public, no auth —
+        // reveals only endpoint shapes; openconnector-secret-store-api §1.1).
+        ['name' => 'discovery#document', 'url' => '/api/v1/app/.well-known/doriath', 'verb' => 'GET'],
+
         // JWT-Bearer token exchange (public; signature-verified).
         ['name' => 'applicationToken#exchange', 'url' => '/api/v1/token', 'verb' => 'POST'],
 
-        // Bearer-authenticated application secrets API. JwtAuthMiddleware
-        // enforces the Authorization header before the controller runs.
-        ['name' => 'applicationSecrets#index', 'url' => '/api/v1/app/secrets',       'verb' => 'GET'],
-        ['name' => 'applicationSecrets#show',  'url' => '/api/v1/app/secrets/{id}',  'verb' => 'GET'],
+        // Bearer-authenticated application secrets API (openconnector-secret-store-api).
+        // JwtAuthMiddleware enforces the Authorization header before the controller runs.
+        // The by-name route precedes {id} so its extra path segment resolves first.
+        ['name' => 'applicationSecrets#index',  'url' => '/api/v1/app/secrets',                 'verb' => 'GET'],
+        ['name' => 'applicationSecrets#create', 'url' => '/api/v1/app/secrets',                 'verb' => 'POST'],
+        ['name' => 'applicationSecrets#byName', 'url' => '/api/v1/app/secrets/by-name/{name}',  'verb' => 'GET',
+            'requirements' => ['name' => '.+']],
+        ['name' => 'applicationSecrets#show',   'url' => '/api/v1/app/secrets/{id}',            'verb' => 'GET'],
+        ['name' => 'applicationSecrets#update', 'url' => '/api/v1/app/secrets/{id}',            'verb' => 'PUT'],
 
         // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
         // /me routes come before the admin instance-wide /audit collection.
