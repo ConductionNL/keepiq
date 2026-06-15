@@ -182,7 +182,8 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Write secret for application (write-without-read) | **MVP** | Core security pattern |
 | Application API authentication (RFC 7523 JWT Bearer) | **V1** | Standardized API access |
 | Application secret retrieval via REST API | **V1** | Programmatic consumption |
-| OpenConnector integration (secret store for connectors) | **V1** | Sister app integration |
+| Machine secret-store API contract (discovery, name-addressing, encrypted envelope, ETag/`updated_since` rotation, write-back) | **V1 (implemented)** | Stable cross-repo contract — see [integration-openconnector.md](./integration-openconnector.md) |
+| OpenConnector integration (secret store for connectors) | **V1 (Doriath side implemented)** | Sister app integration — the `doriath://` reference resolver lives in the OpenConnector repo, contract-tested against `tests/integration/machine-secret-api.postman_collection.json` |
 
 ### Dashboard & Reporting
 

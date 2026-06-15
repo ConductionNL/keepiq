@@ -226,7 +226,10 @@ class SecretRequestFillControllerTest extends TestCase
                 new InvalidArgumentException(message: 'Missing required field: key', code: Http::STATUS_BAD_REQUEST)
             );
 
-        $response = $this->controller->fill(token: 'tok-1', encryptedFields: []);
+        // Pass a non-empty body so the request reaches the service — the
+        // controller short-circuits an empty/missing body with its own
+        // 'encryptedFields is required' guard before calling fill().
+        $response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
         $this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
         $this->assertSame(expected: 'Missing required field: key', actual: $response->getData()['message']);
 
