@@ -197,6 +197,16 @@ class JwtAuthService
             throw new RuntimeException(message: 'Assertion iat in future');
         }
 
+        // Bound the assertion lifetime to the documented maximum so a
+        // consumer cannot mint a long-lived signed assertion that would
+        // sit replayable in the jti window for hours (secret-store-api D7).
+        if (((int) $claims['exp'] - (int) $claims['iat']) > self::ACCESS_TOKEN_TTL) {
+            throw new RuntimeException(
+                message: 'Assertion lifetime exceeds the maximum of '
+                .self::ACCESS_TOKEN_TTL.' seconds'
+            );
+        }
+
         $jtiCache = $this->cacheFactory->createDistributed(self::JTI_CACHE_NS);
         $jti      = (string) $claims['jti'];
         if ($jtiCache->hasKey($jti) === true) {
