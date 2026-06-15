@@ -73,6 +73,8 @@ class ApplicationTokenController extends Controller
      * @param string $assertion The JWS compact serialization
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]

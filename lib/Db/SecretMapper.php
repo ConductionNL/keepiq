@@ -118,11 +118,11 @@ class SecretMapper extends QBMapper
     public function findByOwner(
         string $ownerType,
         string $ownerId,
-        ?string $folderId = null,
-        ?string $sort = null,
-        string $direction = 'asc',
-        int $limit = 1000,
-        int $offset = 0,
+        ?string $folderId=null,
+        ?string $sort=null,
+        string $direction='asc',
+        int $limit=1000,
+        int $offset=0,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
@@ -166,7 +166,7 @@ class SecretMapper extends QBMapper
         string $ownerType,
         string $ownerId,
         string $name,
-        ?string $folderId = null,
+        ?string $folderId=null,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
@@ -203,7 +203,7 @@ class SecretMapper extends QBMapper
         string $ownerType,
         string $ownerId,
         DateTime $since,
-        int $limit = 1000,
+        int $limit=1000,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
