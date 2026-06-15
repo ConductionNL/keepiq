@@ -20,7 +20,7 @@
  * secret to read/update.
  */
 import { test, expect } from '@playwright/test'
-import { APP_BASE, DEV_MASTER_PASSWORD, gotoLockSettled, unlockVault } from './_workflow-helpers'
+import { DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } from './_workflow-helpers'
 
 test.describe('audit trail', () => {
 	test('updating a secret records a secret.updated entry on its Activity tab', async ({ page }) => {
@@ -28,10 +28,14 @@ test.describe('audit trail', () => {
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 
-		// Open the first secret in the vault.
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		// Open the first secret in the vault (in-place hash nav keeps the
+		// CryptoKey alive; a full reload would bounce back to the lock gate).
+		await gotoVaultRoute(page, 'secrets')
 		const firstSecret = page.locator('[data-testid="secret-list-item"], .secret-list-item').first()
-		await firstSecret.click()
+		await expect(firstSecret).toBeVisible({ timeout: 20_000 })
+		// The post-unlock health pass keeps repainting strength badges on the rows,
+		// so the row never reaches Playwright's "stable" gate — force the click.
+		await firstSecret.click({ force: true })
 
 		// The owner sees the Activity section on the detail view.
 		const activity = page.locator('[data-testid="secret-detail-activity"]')

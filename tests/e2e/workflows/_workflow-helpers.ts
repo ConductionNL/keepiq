@@ -135,15 +135,43 @@ export async function unlockVault(page: Page, password: string = DEV_MASTER_PASS
  * @param page The Playwright page (must already be unlocked).
  */
 export async function openVault(page: Page): Promise<void> {
+	// The router runs in hash mode (createWebHashHistory / mode:'hash'), so the
+	// in-app Vault route is `#/secrets`. Click the manifest nav entry whose href
+	// is the hash route; fall back to an in-place `location.hash` navigation
+	// (which does NOT reload the page, so the in-memory CryptoKey survives and
+	// the vault stays unlocked, unlike a full `page.goto`).
 	await page.evaluate(() => {
 		const a = Array.from(document.querySelectorAll('a')).find(
-			(x) => /\/apps\/doriath\/secrets$/.test(x.getAttribute('href') || ''),
+			(x) => /(#\/secrets$)|(\/apps\/doriath\/?#\/secrets$)/.test(x.getAttribute('href') || ''),
 		)
 		if (a) {
 			(a as HTMLElement).click()
+		} else if (!/#\/secrets$/.test(window.location.hash)) {
+			window.location.hash = '#/secrets'
 		}
 	})
 	await expect(page.locator('.secret-list-view')).toBeVisible({ timeout: 20_000 })
+}
+
+/**
+ * Navigate to an in-app route WITHIN the already-unlocked SPA, in place.
+ *
+ * The router runs in hash mode, so routes are `#/<route>`. A full `page.goto`
+ * to a path-form URL (e.g. `/apps/doriath/secrets`) reloads the page, which
+ * wipes the in-memory CryptoKey and bounces back to the lock gate. Setting
+ * `location.hash` navigates the SPA in place and keeps the vault unlocked.
+ *
+ * @param page  The Playwright page (must already be unlocked).
+ * @param route The in-app route WITHOUT the leading hash, e.g. 'secrets',
+ *              'password-health', or '' for the dashboard root.
+ */
+export async function gotoVaultRoute(page: Page, route: string): Promise<void> {
+	const hash = `#/${route}`.replace(/\/$/, route === '' ? '/' : '')
+	await page.evaluate((h) => { window.location.hash = h }, hash)
+	// Let the hashchange-driven router transition settle. Polling surfaces never
+	// reach networkidle, so wait on the DOM instead.
+	await page.waitForLoadState('domcontentloaded')
+	await page.waitForTimeout(500)
 }
 
 /**
