@@ -87,6 +87,8 @@ class MachineSecretEnvelopeService
      * @param Secret $secret The secret to serialize
      *
      * @return array<string,mixed> The envelope
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
      */
     public function serialize(Secret $secret): array
     {
@@ -126,6 +128,8 @@ class MachineSecretEnvelopeService
      * @param Secret $secret The secret to describe
      *
      * @return array<string,mixed>
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
      */
     public function candidate(Secret $secret): array
     {
@@ -149,6 +153,8 @@ class MachineSecretEnvelopeService
      * @param Secret $secret The secret
      *
      * @return string A quoted strong ETag value (e.g. `"<hex>"`)
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
      */
     public function etag(Secret $secret): string
     {
@@ -178,6 +184,8 @@ class MachineSecretEnvelopeService
      * @param string $suiteId The encryption-suite id
      *
      * @return string|null The `sha256:<hex>` fingerprint, or null
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
      */
     public function certificateFingerprint(string $suiteId): ?string
     {
