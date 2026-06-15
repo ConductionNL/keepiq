@@ -108,11 +108,29 @@ The system MUST decrypt and return secret fields when the user has their master 
 ### Requirement: Update Secret
 The system MUST allow a user to update any field of a secret they own, including moving it to a different folder. Updated encrypted fields MUST be re-encrypted before storage.
 
+#### Scenario: Owner updates a secret
+- GIVEN a user owns a secret
+- WHEN they update one of its fields
+- THEN the system MUST persist the change
+- AND any updated encrypted fields MUST be re-encrypted before storage
+
 ### Requirement: Delete Secret
 The system MUST allow a user to delete a secret they own. Deletion MUST cascade to any SecretShares derived from this secret and any SecretRequests linked to it.
 
+#### Scenario: Owner deletes a secret
+- GIVEN a user owns a secret that has derived shares or linked requests
+- WHEN they delete the secret
+- THEN the secret MUST be removed
+- AND deletion MUST cascade to its SecretShares and linked SecretRequests
+
 ### Requirement: Encryption Suite Link
 Each secret MUST record which EncryptionSuite was used to encrypt it, so that the correct private key can be identified for decryption (relevant when multiple encryption suites exist).
+
+#### Scenario: Secret records its encryption suite
+@e2e exclude Server-side data-model contract — the encryption_suite_id linkage is set on encryption; covered by PHPUnit, not browser-observable.
+- GIVEN a secret is created or re-encrypted
+- WHEN it is stored
+- THEN it MUST record the EncryptionSuite used, so the correct private key can be identified for decryption
 
 ### Requirement: Revoked Suite Access Block
 The system MUST refuse to decrypt any secret whose `encryption_suite_id` points to a suite with status `revoked` or `compromised`. This applies regardless of whether the user has their master password in session.
