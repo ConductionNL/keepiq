@@ -21,7 +21,7 @@
  * password, and the dev seed provides at least one secret.
  */
 import { test, expect } from '@playwright/test'
-import { APP_BASE, DEV_MASTER_PASSWORD, gotoLockSettled, unlockVault } from './_workflow-helpers'
+import { DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } from './_workflow-helpers'
 
 test.describe('secret export + GDPR', () => {
 	test('encrypted backup export downloads a .doriath-backup file client-side', async ({ page }) => {
@@ -29,11 +29,13 @@ test.describe('secret export + GDPR', () => {
 		// @e2e secret-export::export-restore-round-trip
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		await gotoVaultRoute(page, 'secrets')
 
 		// Open the "My data" actions and start an export.
-		await page.getByRole('button', { name: /My data/i }).click()
-		await page.getByRole('button', { name: /Export data/i }).click()
+		// The themed NcButton swallows Playwright's synthetic click; fire a native
+		// click so the "My data" actions menu opens.
+		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
+		await page.getByRole('menuitem', { name: /Export data/i }).evaluate((el: HTMLElement) => el.click())
 
 		// Backup is the visually-primary option; enter a strong passphrase.
 		const passphrase = page.getByLabel(/Backup passphrase/i)
@@ -51,10 +53,12 @@ test.describe('secret export + GDPR', () => {
 		// @e2e secret-export::re-auth-required-despite-unlocked-session
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		await gotoVaultRoute(page, 'secrets')
 
-		await page.getByRole('button', { name: /My data/i }).click()
-		await page.getByRole('button', { name: /Export data/i }).click()
+		// The themed NcButton swallows Playwright's synthetic click; fire a native
+		// click so the "My data" actions menu opens.
+		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
+		await page.getByRole('menuitem', { name: /Export data/i }).evaluate((el: HTMLElement) => el.click())
 
 		// Select the plaintext CSV mode and confirm the warning gates the flow.
 		await page.getByText(/Plaintext CSV/i).click()
@@ -72,10 +76,12 @@ test.describe('secret export + GDPR', () => {
 		// @e2e gdpr-compliance::in-app-deletion-double-gated
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		await gotoVaultRoute(page, 'secrets')
 
-		await page.getByRole('button', { name: /My data/i }).click()
-		await page.getByRole('button', { name: /Delete my Doriath data/i }).click()
+		// The themed NcButton swallows Playwright's synthetic click; fire a native
+		// click so the "My data" actions menu opens.
+		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
+		await page.getByRole('menuitem', { name: /Delete my Doriath data/i }).evaluate((el: HTMLElement) => el.click())
 
 		// The delete action stays disabled until BOTH gates are satisfied.
 		const deleteBtn = page.getByRole('button', { name: /Delete everything/i })
@@ -91,10 +97,12 @@ test.describe('secret export + GDPR', () => {
 		// @e2e gdpr-compliance::full-package-with-unlocked-vault
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		await gotoVaultRoute(page, 'secrets')
 
-		await page.getByRole('button', { name: /My data/i }).click()
-		await page.getByRole('button', { name: /GDPR export/i }).click()
+		// The themed NcButton swallows Playwright's synthetic click; fire a native
+		// click so the "My data" actions menu opens.
+		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
+		await page.getByRole('menuitem', { name: /GDPR export/i }).evaluate((el: HTMLElement) => el.click())
 
 		// Unlocked: the dialog offers the full package download.
 		await expect(page.getByText(/will include both your account metadata/i)).toBeVisible({ timeout: 20_000 })

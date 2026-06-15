@@ -146,8 +146,18 @@ class SecretRequestFillController extends OCSController
      */
     #[PublicPage]
     #[NoCSRFRequired]
-    public function fill(string $token, array $encryptedFields): JSONResponse
+    public function fill(string $token, ?array $encryptedFields=null): JSONResponse
     {
+        // A missing field body is a client validation error, not a 500. Without
+        // a nullable default, NC's dispatcher passes null for an omitted
+        // `encryptedFields` and PHP raises a TypeError before the body runs.
+        if ($encryptedFields === null || $encryptedFields === []) {
+            return new JSONResponse(
+                data: ['message' => 'encryptedFields is required'],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
         try {
             $entity = $this->secretRequestService->fill(token: $token, encryptedFields: $encryptedFields);
         } catch (InvalidArgumentException $e) {

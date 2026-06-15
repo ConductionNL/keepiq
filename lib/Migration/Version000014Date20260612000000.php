@@ -68,7 +68,9 @@ class Version000014Date20260612000000 extends SimpleMigrationStep
         $table->addColumn('delegated_to', Types::STRING, ['notnull' => true, 'length' => 64]);
         $table->addColumn('delegated_at', Types::DATETIME, ['notnull' => true]);
         $table->addColumn('initiated_by', Types::STRING, ['notnull' => true, 'length' => 64]);
-        $table->addColumn('is_permanent', Types::BOOLEAN, ['notnull' => true, 'default' => false]);
+        // NC 32's MigrationService forbids a NOT NULL BOOLEAN column (it cannot
+        // safely store 0/false), so the flag is nullable with a false default.
+        $table->addColumn('is_permanent', Types::BOOLEAN, ['notnull' => false, 'default' => false]);
         $table->addColumn('made_permanent_at', Types::DATETIME, ['notnull' => false]);
 
         $table->setPrimaryKey(['id']);

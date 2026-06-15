@@ -117,6 +117,11 @@ class DashboardController extends Controller
         // app-local (served from custom_apps/doriath/js/argon2.wasm).
         $csp = new ContentSecurityPolicy();
         $csp->allowEvalWasm(true);
+        // The password-health analysis runs in a dedicated same-origin web worker
+        // (src/health/worker.js, bundled to custom_apps/doriath/js). NC's default
+        // CSP has no `worker-src`, so it falls back to the nonce-only `script-src`
+        // and blocks the dynamically-created worker. Allow workers from 'self'.
+        $csp->addAllowedWorkerSrcDomain("'self'");
         $response->setContentSecurityPolicy($csp);
 
         return $response;
