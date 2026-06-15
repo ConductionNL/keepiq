@@ -23,6 +23,11 @@ The key generator MUST accept the following configuration:
 | `excluded_characters` | string | `""` | Characters to exclude from the character set |
 | `regex` | string | `""` | When valid (see below), overrides all other fields |
 
+#### Scenario: Configuration accepted
+- GIVEN a key-generation request providing `length`, `include_special_characters`, `excluded_characters`, or `regex`
+- WHEN the generator parses the configuration
+- THEN the system MUST accept the recognized fields and apply their documented defaults for any omitted field
+
 ### Requirement: Minimum Length
 The system MUST reject generation requests where the resolved length is less than 8 characters.
 
@@ -61,7 +66,7 @@ When no regex is provided, the system MUST generate a key from the resolved char
 - THEN the system MUST return a 16-character random string using alphanumeric and special characters
 
 ### Requirement: Special Characters Definition
-The special characters set is defined as the OWASP recommended symbol set:
+The special characters set MUST be the OWASP recommended symbol set:
 
 ```
 !@#$%^&*()-_=+[]{}|;:,.<>?/
@@ -69,8 +74,18 @@ The special characters set is defined as the OWASP recommended symbol set:
 
 This is the authoritative set used when `include_special_characters = true`. Users requiring finer control may use `excluded_characters` or `regex`.
 
+#### Scenario: Special characters included
+- GIVEN a request with `include_special_characters = true`
+- WHEN the generator resolves the character set
+- THEN the resolved set MUST include the OWASP recommended symbol set
+
 ### Requirement: Character Exclusion
 Characters listed in `excluded_characters` MUST be removed from the character set before generation.
+
+#### Scenario: Excluded characters removed
+- GIVEN a request listing characters in `excluded_characters`
+- WHEN the generator resolves the character set
+- THEN those characters MUST be removed before generation
 
 ### Requirement: Minimum Viable Character Set
 After applying `excluded_characters`, the resolved character set MUST contain at least 2 distinct characters. If the resolved set contains fewer than 2 characters, the system MUST return a validation error before attempting generation.
@@ -83,8 +98,20 @@ After applying `excluded_characters`, the resolved character set MUST contain at
 ### Requirement: Authentication
 The key generator API endpoint MUST require a valid Nextcloud session. Unauthenticated requests MUST be rejected with HTTP 401.
 
+#### Scenario: Unauthenticated request rejected
+@e2e exclude Server-side auth contract — HTTP 401 for a session-less request to the generator endpoint; covered by PHPUnit, not browser-observable.
+- GIVEN a request to the key generator endpoint without a valid Nextcloud session
+- WHEN the request reaches the controller
+- THEN the system MUST reject it with HTTP 401
+
 ### Requirement: Frontend Integration
 The key generator MUST be callable from the secret creation UI with a configuration modal, and the generated value MUST be inserted directly into the key field.
+
+#### Scenario: Generate from the secret creation UI
+@e2e exclude Key-generator modal is a sub-interaction of secret creation; the generated-value insertion is exercised within the secret-crud-encryption e2e flow and the generator's own vitest unit tests.
+- GIVEN a user is creating a secret
+- WHEN they open the key generator modal and generate a value
+- THEN the generated value MUST be inserted directly into the key field
 
 ## User Stories
 

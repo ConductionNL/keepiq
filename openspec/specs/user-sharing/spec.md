@@ -201,7 +201,7 @@ When a recipient's EncryptionSuite is **revoked** (deliberate decommissioning), 
 - AND the original secrets owned by their respective owners remain intact
 
 ### Requirement: EncryptionSuite Compromise — Shared Copy Migration and Owner Notification
-When a recipient's EncryptionSuite is **replaced due to compromise**, the suite migration process (see encryption-suites spec) naturally covers all `Secret` rows encrypted with the old suite — including shared copies held by the recipient. Those copies are re-encrypted with the new suite and flagged `possibly_compromised_at` as part of the standard migration.
+When a recipient's EncryptionSuite is **replaced due to compromise**, the suite migration process (see encryption-suites spec) MUST cover all `Secret` rows encrypted with the old suite — including shared copies held by the recipient. Those copies MUST be re-encrypted with the new suite and flagged `possibly_compromised_at` as part of the standard migration.
 
 The additional responsibility of User Sharing is: when a shared copy is flagged `possibly_compromised_at` during migration, the **original owner of the secret MUST be notified** that the secret may have been compromised and its value should be replaced.
 
@@ -220,7 +220,7 @@ When the owner replaces the secret value, sync-on-update (see Requirement: Sync 
 - AND `possibly_compromised_at` MUST be unset on the original and all copies
 
 ### Requirement: Ownership Delegation
-A secret's ownership can be delegated to one or more other users, granting them co-owner rights (share management, full recipient visibility, value updates). Multiple active delegations for the same secret are allowed simultaneously.
+The system MUST allow a secret's ownership to be delegated to one or more other users, granting them co-owner rights (share management, full recipient visibility, value updates). Multiple active delegations for the same secret MUST be allowed simultaneously.
 
 **Who can create a delegation:**
 - **Admin power grab**: a vault administrator can create a delegation for any secret that has already been shared with them. No owner consent is required.

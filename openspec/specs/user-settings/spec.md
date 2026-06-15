@@ -69,7 +69,7 @@ The user MUST be able to toggle notification categories on or off.
 - AND when a group share addition occurs → notification NOT sent
 
 ### Requirement: Default Secret Type [V1]
-The user SHOULD be able to set a default secret type for new secrets.
+The user MUST be able to set a default secret type for new secrets.
 
 #### Scenario: User sets default to api_key
 @e2e exclude V1 feature — default_secret_type preference depends on the secret-creation UI (unbuilt in v0.1); verified via PHPUnit settings persistence test.
@@ -78,7 +78,7 @@ The user SHOULD be able to set a default secret type for new secrets.
 - THEN the type SHOULD default to `api_key` instead of `login`
 
 ### Requirement: Default View Preference [V1]
-The user SHOULD be able to choose between list view and folder tree view as their default vault display.
+The user MUST be able to choose between list view and folder tree view as their default vault display.
 
 #### Scenario: User prefers folder view
 @e2e exclude V1 feature — folder-view preference depends on the secrets-list/folder-tree UI (unbuilt in v0.1); verified via PHPUnit settings persistence test.
