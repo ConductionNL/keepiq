@@ -121,6 +121,8 @@ class FolderController extends OCSController
             $folder = $this->folderService->create($name, $parentId, $userId);
         } catch (ForbiddenException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+        } catch (ConflictException $e) {
+            return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
         }
@@ -171,6 +173,8 @@ class FolderController extends OCSController
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
         } catch (ForbiddenException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+        } catch (ConflictException $e) {
+            return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
         }
