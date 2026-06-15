@@ -24,6 +24,7 @@ use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Exception\ConflictException;
+use OCA\Doriath\Exception\DuplicateFolderNameException;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
 use OCA\Doriath\Service\FolderService;
@@ -325,4 +326,99 @@ class FolderServiceTest extends TestCase
         $this->expectException(ForbiddenException::class);
         $this->service->getChildren(id: 'f-1', userId: 'alice');
     }//end testGetChildrenForeignForbidden()
+
+    /**
+     * Creating a folder whose name already exists in the parent is rejected.
+     *
+     * @return void
+     */
+    public function testCreateDuplicateNameRejected(): void
+    {
+        $this->mapper->method('existsInParent')->willReturn(true);
+        $this->mapper->expects($this->never())->method('insert');
+
+        $this->expectException(DuplicateFolderNameException::class);
+        $this->expectExceptionMessageMatches('/already exists/');
+
+        $this->service->create(name: 'Duplicate', parentId: null, userId: 'alice');
+    }//end testCreateDuplicateNameRejected()
+
+    /**
+     * Renaming a folder to a name an existing sibling already uses is rejected.
+     *
+     * @return void
+     */
+    public function testRenameDuplicateNameRejected(): void
+    {
+        $folder = $this->makeFolder(id: 'f-1', parentId: 'parent-1');
+
+        $this->mapper->method('findById')->willReturn($folder);
+        $this->mapper->method('existsInParent')
+            ->with('user', 'alice', 'parent-1', 'New Name', 'f-1')
+            ->willReturn(true);
+        $this->mapper->expects($this->never())->method('update');
+
+        $this->expectException(DuplicateFolderNameException::class);
+
+        $this->service->rename(id: 'f-1', name: 'New Name', userId: 'alice');
+    }//end testRenameDuplicateNameRejected()
+
+    /**
+     * Moving a folder into a parent that already contains its name is rejected.
+     *
+     * @return void
+     */
+    public function testMoveDuplicateNameRejected(): void
+    {
+        $folder = $this->makeFolder(id: 'f-1', parentId: null);
+        $parent = $this->makeFolder(id: 'parent-folder-id', parentId: null);
+
+        $this->mapper->method('findById')->willReturnMap(
+            [
+                ['f-1', $folder],
+                ['parent-folder-id', $parent],
+            ]
+        );
+        $this->mapper->method('getSubtreeIds')->willReturn(['f-1']);
+        $this->mapper->method('existsInParent')
+            ->with('user', 'alice', 'parent-folder-id', 'Folder f-1', 'f-1')
+            ->willReturn(true);
+        $this->mapper->expects($this->never())->method('update');
+
+        $this->expectException(DuplicateFolderNameException::class);
+
+        $this->service->move(id: 'f-1', newParentId: 'parent-folder-id', userId: 'alice');
+    }//end testMoveDuplicateNameRejected()
+
+    /**
+     * A kept subfolder that would collide in the destination parent is rejected.
+     *
+     * @return void
+     */
+    public function testDeleteKeepDuplicateNameRejected(): void
+    {
+        $parent = $this->makeFolder(id: 'f-1', parentId: 'grandparent-1');
+        $sub    = $this->makeFolder(id: 'sub', parentId: 'f-1');
+
+        $this->mapper->method('findById')->willReturnMap(
+            [
+                ['f-1', $parent],
+                ['sub', $sub],
+            ]
+        );
+        $this->mapper->method('findChildren')->willReturn([$sub]);
+        $this->secretMapper->method('countByFolder')->willReturn(0);
+        $this->mapper->method('existsInParent')
+            ->with('user', 'alice', 'grandparent-1', 'Folder sub', 'sub')
+            ->willReturn(true);
+
+        $this->expectException(DuplicateFolderNameException::class);
+
+        $this->service->delete(
+            id: 'f-1',
+            cascade: null,
+            resolution: ['directSecrets' => 'move', 'subfolders' => ['sub' => 'keep']],
+            userId: 'alice',
+        );
+    }//end testDeleteKeepDuplicateNameRejected()
 }//end class
