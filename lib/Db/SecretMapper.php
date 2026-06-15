@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -117,11 +118,11 @@ class SecretMapper extends QBMapper
     public function findByOwner(
         string $ownerType,
         string $ownerId,
-        ?string $folderId = null,
-        ?string $sort = null,
-        string $direction = 'asc',
-        int $limit = 1000,
-        int $offset = 0,
+        ?string $folderId=null,
+        ?string $sort=null,
+        string $direction='asc',
+        int $limit=1000,
+        int $offset=0,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
@@ -144,6 +145,85 @@ class SecretMapper extends QBMapper
 
         return $this->findEntities(query: $qb);
     }//end findByOwner()
+
+    /**
+     * Find an owner's secrets by exact (case-sensitive) plaintext name,
+     * optionally constrained to a single folder.
+     *
+     * Returns every match — name uniqueness is not enforced in the data
+     * model, so the caller decides the ambiguity policy (the machine API
+     * returns 409 on more than one). The query is keyed by owner so it can
+     * never reach another vault.
+     *
+     * @param string      $ownerType The owner type (e.g. 'application')
+     * @param string      $ownerId   The owner ID
+     * @param string      $name      The exact secret name to match
+     * @param string|null $folderId  Restrict to this folder (null = whole vault)
+     *
+     * @return Secret[] Zero, one, or many matches (ordered by id for stability)
+     */
+    public function findByName(
+        string $ownerType,
+        string $ownerId,
+        string $name,
+        ?string $folderId=null,
+    ): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+            ->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($name)));
+
+        if ($folderId !== null) {
+            $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
+        }
+
+        $qb->orderBy('id', 'ASC');
+
+        return $this->findEntities(query: $qb);
+    }//end findByName()
+
+    /**
+     * Find an owner's secrets updated strictly after a given instant.
+     *
+     * Powers the machine API's `updated_since` rotation-polling query: a
+     * consumer passes its last-poll timestamp and receives only the
+     * secrets that changed since. Keyed by owner — cross-vault rows are
+     * structurally unreachable.
+     *
+     * @param string   $ownerType The owner type (e.g. 'application')
+     * @param string   $ownerId   The owner ID
+     * @param DateTime $since     Return secrets with updated_at later than this
+     * @param int      $limit     Maximum rows
+     *
+     * @return Secret[]
+     */
+    public function findByOwnerUpdatedSince(
+        string $ownerType,
+        string $ownerId,
+        DateTime $since,
+        int $limit=1000,
+    ): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+            ->andWhere(
+                $qb->expr()->gt(
+                    'updated_at',
+                    $qb->createNamedParameter(
+                        $since->format('Y-m-d H:i:s'),
+                        IQueryBuilder::PARAM_STR
+                    )
+                )
+            )
+            ->orderBy('updated_at', 'ASC')
+            ->setMaxResults($limit);
+
+        return $this->findEntities(query: $qb);
+    }//end findByOwnerUpdatedSince()
 
     /**
      * Count the secrets owned by an owner, with an optional folder filter.
