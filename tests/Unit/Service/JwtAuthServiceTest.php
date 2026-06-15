@@ -458,4 +458,53 @@ class JwtAuthServiceTest extends TestCase
     {
         $this->assertNull($this->service->validateAccessToken(''));
     }
+
+
+    /**
+     * An assertion whose lifetime (exp - iat) exceeds the 300-second
+     * maximum is rejected (secret-store-api token hardening D7).
+     *
+     * @return void
+     */
+    public function testOverlongAssertionLifetimeRejected(): void
+    {
+        $this->stubActiveApp('app-1');
+
+        $now       = time();
+        $assertion = $this->buildAssertion([
+            'iss' => 'app-1',
+            'aud' => 'doriath',
+            'iat' => $now,
+            'exp' => ($now + 3600),
+            'jti' => 'jti-long',
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('lifetime exceeds');
+        $this->service->exchangeAssertion($assertion);
+    }
+
+
+    /**
+     * An assertion whose lifetime is exactly the 300-second maximum is
+     * accepted (boundary).
+     *
+     * @return void
+     */
+    public function testAssertionLifetimeAtMaximumAccepted(): void
+    {
+        $this->stubActiveApp('app-1');
+
+        $now       = time();
+        $assertion = $this->buildAssertion([
+            'iss' => 'app-1',
+            'aud' => 'doriath',
+            'iat' => $now,
+            'exp' => ($now + 300),
+            'jti' => 'jti-boundary',
+        ]);
+
+        $result = $this->service->exchangeAssertion($assertion);
+        $this->assertSame('Bearer', $result['token_type']);
+    }
 }
