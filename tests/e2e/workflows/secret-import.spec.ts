@@ -23,7 +23,7 @@
  * master password.
  */
 import { test, expect } from '@playwright/test'
-import { APP_BASE, DEV_MASTER_PASSWORD, gotoLockSettled, unlockVault } from './_workflow-helpers'
+import { DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } from './_workflow-helpers'
 
 const CSV = 'name,url,username,password,folder\n'
 	+ 'E2E Import Sample,https://e2e-import.test,e2euser,e2epass,E2E Imports\n'
@@ -34,9 +34,11 @@ test.describe('secret import', () => {
 		// @e2e secret-import::summary-after-a-mixed-import
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		await gotoVaultRoute(page, 'secrets')
 
-		await page.getByTestId('import-secrets').click()
+		// The themed NcButton swallows Playwright's synthetic click, so fire a
+		// native HTMLButtonElement.click() to open the import wizard.
+		await page.getByTestId('import-secrets').evaluate((el: HTMLElement) => el.click())
 
 		// Upload the CSV via the file input (read entirely client-side).
 		await page.getByTestId('import-file').setInputFiles({
@@ -45,14 +47,18 @@ test.describe('secret import', () => {
 			buffer: Buffer.from(CSV),
 		})
 
-		// Mapping preview -> folders -> duplicates -> commit.
+		// Mapping preview -> folders -> duplicates -> commit. Scope the wizard
+		// buttons to the modal so the toolbar "Import" button never matches.
+		const wizard = page.locator('.modal-container')
 		await expect(page.getByText(/rows parsed/i)).toBeVisible({ timeout: 20_000 })
-		await page.getByRole('button', { name: /^Next$/ }).click() // mapping -> folders
-		await page.getByRole('button', { name: /^Next$/ }).click() // folders -> duplicates
-		await page.getByRole('button', { name: /^Import$/ }).click() // duplicates -> commit
+		await wizard.getByRole('button', { name: /^Next$/ }).click() // mapping -> folders
+		await wizard.getByRole('button', { name: /^Next$/ }).click() // folders -> duplicates
+		await wizard.getByRole('button', { name: /^Import$/ }).click() // duplicates -> commit
 
 		await expect(page.getByText(/Imported:\s*1/)).toBeVisible({ timeout: 30_000 })
-		await page.getByRole('button', { name: /^Close$/ }).click()
+		// Several "Close" affordances exist (the modal X icon + footer button);
+		// the modal X reliably dismisses the wizard.
+		await wizard.locator('.modal-container__close').first().click()
 
 		await expect(page.getByText('E2E Import Sample')).toBeVisible({ timeout: 20_000 })
 	})
@@ -61,21 +67,24 @@ test.describe('secret import', () => {
 		// @e2e secret-import::re-import-of-the-same-file
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		await gotoVaultRoute(page, 'secrets')
 
-		await page.getByTestId('import-secrets').click()
+		// The themed NcButton swallows Playwright's synthetic click, so fire a
+		// native HTMLButtonElement.click() to open the import wizard.
+		await page.getByTestId('import-secrets').evaluate((el: HTMLElement) => el.click())
 		await page.getByTestId('import-file').setInputFiles({
 			name: 'sample.csv',
 			mimeType: 'text/csv',
 			buffer: Buffer.from(CSV),
 		})
+		const wizard = page.locator('.modal-container')
 		await expect(page.getByText(/rows parsed/i)).toBeVisible({ timeout: 20_000 })
-		await page.getByRole('button', { name: /^Next$/ }).click()
-		await page.getByRole('button', { name: /^Next$/ }).click()
+		await wizard.getByRole('button', { name: /^Next$/ }).click()
+		await wizard.getByRole('button', { name: /^Next$/ }).click()
 
 		// Duplicates step: the previously-imported row is listed; skip is default.
 		await expect(page.getByText(/match an existing secret/i)).toBeVisible({ timeout: 20_000 })
-		await page.getByRole('button', { name: /^Import$/ }).click()
+		await wizard.getByRole('button', { name: /^Import$/ }).click()
 
 		await expect(page.getByText(/Skipped duplicates:\s*1/)).toBeVisible({ timeout: 30_000 })
 		await expect(page.getByText(/Imported:\s*0/)).toBeVisible()

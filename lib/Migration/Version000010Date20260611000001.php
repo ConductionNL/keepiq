@@ -65,7 +65,9 @@ class Version000010Date20260611000001 extends SimpleMigrationStep
         $table->addColumn('token', Types::STRING, ['notnull' => true, 'length' => 64]);
         $table->addColumn('requested_fields', Types::TEXT, ['notnull' => true]);
         $table->addColumn('status', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'pending']);
-        $table->addColumn('is_re_request', Types::BOOLEAN, ['notnull' => true, 'default' => false]);
+        // NC 32's MigrationService forbids a NOT NULL BOOLEAN column (it cannot
+        // safely store 0/false), so the flag is nullable with a false default.
+        $table->addColumn('is_re_request', Types::BOOLEAN, ['notnull' => false, 'default' => false]);
         $table->addColumn('expires_at', Types::DATETIME, ['notnull' => false]);
         $table->addColumn('created_by', Types::STRING, ['notnull' => true, 'length' => 64]);
         $table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);

@@ -76,7 +76,9 @@
 									"pm.test('suites (200)', () => pm.response.to.have.status(200));",
 									"const b = pm.response.json();",
 									"pm.test('is an array', () => pm.expect(b).to.be.an('array'));",
-									"if (b.length) { pm.test('suite carries ownerType', () => pm.expect(b[0]).to.have.property('ownerType')); pm.test('suite carries a certificate', () => pm.expect(b[0]).to.have.property('certificate')); }"
+									"if (b.length) { pm.test('suite carries ownerType', () => pm.expect(b[0]).to.have.property('ownerType')); pm.test('suite carries a certificate', () => pm.expect(b[0]).to.have.property('certificate')); }",
+									"const active = (b || []).find((s) => s.status === 'active') || b[0];",
+									"if (active && active.id) { pm.collectionVariables.set('reqSuiteId', active.id); }"
 								]
 							}
 						}
@@ -2055,7 +2057,7 @@
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\"secretId\": \"{{reqSecretId}}\", \"requestedFields\": [\"key\"], \"createdBy\": \"external-recipient@example.com\"}"
+							"raw": "{\"secretId\": \"{{reqSecretId}}\", \"encryptionSuiteId\": \"{{reqSuiteId}}\", \"requestedFields\": [\"key\"], \"createdBy\": \"external-recipient@example.com\"}"
 						}
 					}
 				},
