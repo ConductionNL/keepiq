@@ -59,7 +59,7 @@ Doriath SHALL serve `GET /apps/doriath/api/metrics` through the AppHost `Generic
 
 ### Requirement: Boilerplate Plumbing Served by AppHost Generics
 
-Doriath SHALL delete its local `HealthController`, `MetricsController`, `InitializeSettings`, `AdminSettings`, `SettingsSection`, and `DeepLinkRegistrationListener`, wiring their responsibilities through `AppHost\Bootstrap::register()` and `AppHost\Routes::standard()`, with all route names, URLs, and public-route postures unchanged for domain endpoints.
+Doriath SHALL delete its local `HealthController`, `MetricsController`, and `DeepLinkRegistrationListener`, and SHALL shrink `AdminSettings` and `SettingsSection` to one-line engine-backed subclasses (they must physically exist for NC class-name instantiation via info.xml and as the `#[AuthorizedAdminSetting(AdminSettings::class)]` target — the AppHost stub floor), wiring their responsibilities through `AppHost\Bootstrap::register()` and `AppHost\Routes::standard()`, with all route names, URLs, and public-route postures unchanged for domain endpoints. `InitializeSettings` SHALL be retained bespoke (it seeds domain default-config keys the generic repair step does not) and re-registered after `Bootstrap::register()` so the concrete wins over the generic alias.
 
 #### Scenario: Domain routes unchanged after Routes::standard adoption
 
@@ -68,11 +68,11 @@ Doriath SHALL delete its local `HealthController`, `MetricsController`, `Initial
 - **THEN** every domain route (secrets, suites, CA, shares, delegations, public link-share access, public secret-request fill, JWT token exchange, applications, dashboard settings) MUST resolve to the same controller method at the same URL and verb, and the SPA catch-all MUST remain the last route
 - @e2e exclude API-only endpoint — covered by the OR AppHost Newman contract collection
 
-#### Scenario: Register configuration imported by the generic repair step
+#### Scenario: Register configuration imported by the retained repair step
 
-- **GIVEN** a fresh install with `lib/Repair/InitializeSettings.php` deleted and info.xml pointing at `GenericInitializeSettings`
+- **GIVEN** a fresh install with the bespoke `lib/Repair/InitializeSettings.php` retained (it seeds domain default-config keys) and re-registered after `Bootstrap::register()`
 - **WHEN** `occ app:enable doriath` runs and repair steps execute
-- **THEN** the register configuration from `doriath_register.json` MUST be imported and the app's register/schema config keys resolved, identical to the pre-adoption repair step
+- **THEN** the register configuration from `doriath_register.json` (plus `register.d/` fragments) MUST be imported and the app's register/schema config keys resolved, identical to the pre-adoption repair step, and the domain default-config keys MUST be seeded
 - @e2e exclude install-time repair step — verified via occ in CI, no UI surface
 
 #### Scenario: Admin settings page still renders through the generic section
