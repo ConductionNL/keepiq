@@ -260,5 +260,34 @@
 			"component": "LinkShareAccess",
 			"_note": "Public link-share access page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the password-protected flow without a Nextcloud account; the LinkShareAccessController endpoints run as #[PublicPage]. Implements the two-phase recipient protocol: Phase 1 fetches the ciphertext + Argon2id salt; Phase 2 confirms a successful client-side decrypt so the server can increment the usage count and auto-delete on cap."
 		}
+	],
+	"observability": {
+		"_note": "Declarative observability via the OpenRegister AppHost engine (ADR-040 / ADR-006). These descriptors reproduce the output of the deleted hand-written HealthController + MetricsController. /api/health and /api/metrics are aliased to AppHost\\Controller\\GenericHealthController / GenericMetricsController by Bootstrap::register, so the engine reads this block at request time. Auth-posture deltas (intentional, ADR-006): health is now PUBLIC (was authenticated) and metrics are now ADMIN-ONLY (was any authenticated user). No secret material is exposed — health carries only status/app/version/checks; metrics carry only the aggregate active-suite COUNT, never any suite identifier, key material, or owner. The suites_total source is now a SQL COUNT(*) over an allowlisted table (was a PHP count() over a fetch-all). Implicit doriath_info and doriath_up metrics are added by the engine.",
+		"health": {
+			"statusCodePolicy": "adr006",
+			"checks": [
+				{ "id": "database", "type": "database", "severity": "critical" },
+				{ "id": "filesystem", "type": "filesystem", "severity": "degraded" }
+			]
+		},
+		"metrics": [
+			{
+				"name": "suites_total",
+				"type": "gauge",
+				"help": "Total number of active encryption suites",
+				"source": {
+					"kind": "tableCount",
+					"table": "doriath_enc_suites",
+					"filter": { "status": { "eq": "active" } }
+				}
+			}
+		]
+	},
+	"deepLinks": [
+		{
+			"registerSlug": "doriath",
+			"schemaSlug": "example",
+			"urlTemplate": "/apps/doriath/#/examples/{uuid}"
+		}
 	]
 }
