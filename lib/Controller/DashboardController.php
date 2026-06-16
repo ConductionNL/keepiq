@@ -22,9 +22,17 @@ declare(strict_types=1);
 namespace OCA\Doriath\Controller;
 
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Service\DashboardService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\ContentSecurityPolicy;
+use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Services\IInitialState;
+use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Controller for the main Doriath dashboard page.
@@ -34,14 +42,47 @@ class DashboardController extends Controller
     /**
      * Constructor for the DashboardController.
      *
-     * @param IRequest $request The request object
+     * @param IRequest         $request          The request object
+     * @param IInitialState    $initialState     The initial state service
+     * @param IAppConfig       $appConfig        The app config interface
+     * @param DashboardService $dashboardService The dashboard aggregator
+     * @param IUserSession     $userSession      The user session
+     * @param IGroupManager    $groupManager     The group manager
      *
      * @return void
      */
-    public function __construct(IRequest $request)
-    {
+    public function __construct(
+        IRequest $request,
+        private IInitialState $initialState,
+        private IAppConfig $appConfig,
+        private DashboardService $dashboardService,
+        private IUserSession $userSession,
+        private IGroupManager $groupManager,
+    ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
+
+    /**
+     * Return the dashboard summary payload for the current user.
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/implement-dashboard-settings/specs/dashboard-settings/spec.md#requirement-the-system-provides-an-aggregated-dashboard-summary
+     */
+    public function summary(): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['error' => 'unauthenticated'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $userId  = $user->getUID();
+        $isAdmin = $this->groupManager->isAdmin($userId);
+
+        return new JSONResponse(data: $this->dashboardService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
+    }//end summary()
 
     /**
      * Render the main dashboard page.
@@ -55,7 +96,35 @@ class DashboardController extends Controller
      */
     public function page(): TemplateResponse
     {
-        return new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
+        // Privacy-respecting default: favicons disabled unless an admin opts in.
+        $faviconServiceUrl = $this->appConfig->getValueString(Application::APP_ID, 'favicon_service_url', '');
+        $this->initialState->provideInitialState(key: 'faviconServiceUrl', data: $faviconServiceUrl);
+
+        // Password-health breach-check admin gate (password-health §1.4). The
+        // per-user opt-in lives in user prefs; the breach UI shows only when
+        // BOTH gates are on. This is the boolean instance-wide gate only.
+        $this->initialState->provideInitialState(
+            key: 'breachCheckEnabled',
+            data: $this->appConfig->getValueBool(Application::APP_ID, 'breach_check_enabled', false),
+        );
+
+        $response = new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
+
+        // Link-share encryption derives its AES key client-side via the Argon2id
+        // WASM module (argon2-browser). Nextcloud's default CSP forbids
+        // WebAssembly compilation, so opt in to `'wasm-unsafe-eval'` for this SPA
+        // page. No external script/connect domains are added — the WASM is
+        // app-local (served from custom_apps/doriath/js/argon2.wasm).
+        $csp = new ContentSecurityPolicy();
+        $csp->allowEvalWasm(true);
+        // The password-health analysis runs in a dedicated same-origin web worker
+        // (src/health/worker.js, bundled to custom_apps/doriath/js). NC's default
+        // CSP has no `worker-src`, so it falls back to the nonce-only `script-src`
+        // and blocks the dynamically-created worker. Allow workers from 'self'.
+        $csp->addAllowedWorkerSrcDomain("'self'");
+        $response->setContentSecurityPolicy($csp);
+
+        return $response;
     }//end page()
 
     /**

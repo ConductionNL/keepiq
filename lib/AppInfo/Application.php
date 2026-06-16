@@ -21,7 +21,25 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\AppInfo;
 
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
+use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
+use OCA\Doriath\Event\SuiteMigrationStartedEvent;
+use OCA\Doriath\Listener\AuditListener;
 use OCA\Doriath\Listener\DeepLinkRegistrationListener;
+use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
+use OCA\Doriath\Listener\SuiteCompromiseListener;
+use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
+use OCA\Doriath\Listener\SuiteMigrationStartedListener;
+use OCA\Doriath\Listener\UserAddedToGroupListener;
+use OCA\Doriath\Listener\UserDeletedListener;
+use OCA\Doriath\Listener\UserRemovedFromGroupListener;
+use OCP\Group\Events\UserAddedEvent;
+use OCP\Group\Events\UserRemovedEvent;
+use OCP\User\Events\UserDeletedEvent;
+use OCA\Doriath\Middleware\JwtAuthMiddleware;
+use OCA\Doriath\Notification\DoriathNotifier;
+use OCA\Doriath\Search\SecretSearchProvider;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -65,8 +83,90 @@ class Application extends App implements IBootstrap
             listener: DeepLinkRegistrationListener::class
         );
 
+        // Compromise-recovery: lock SecretRequests when migration starts and
+        // unlock + re-suite them when it completes
+        // (implement-secret-requests §6.1-6.3).
+        $context->registerEventListener(
+            event: SuiteMigrationStartedEvent::class,
+            listener: SuiteMigrationStartedListener::class
+        );
+        $context->registerEventListener(
+            event: SuiteMigrationCompletedEvent::class,
+            listener: SuiteMigrationCompletedListener::class
+        );
+
+        // implement-user-sharing §8 — sharing-graph reactions to
+        // group membership churn, suite revocation, and
+        // post-migration possibly-compromised flagging.
+        $context->registerEventListener(
+            event: UserAddedEvent::class,
+            listener: UserAddedToGroupListener::class
+        );
+        $context->registerEventListener(
+            event: UserRemovedEvent::class,
+            listener: UserRemovedFromGroupListener::class
+        );
+        $context->registerEventListener(
+            event: EncryptionSuiteRevokedEvent::class,
+            listener: EncryptionSuiteRevokedListener::class
+        );
+        $context->registerEventListener(
+            event: SuiteMigrationCompletedEvent::class,
+            listener: SuiteCompromiseListener::class
+        );
+
+        // secret-export-gdpr D4 — cascade-delete all of a user's Doriath data
+        // when their Nextcloud account is removed, so vault data never outlives
+        // its account. The cascade is idempotent and shares its implementation
+        // with the in-app GDPR Art. 17 deletion flow.
+        $context->registerEventListener(
+            event: UserDeletedEvent::class,
+            listener: UserDeletedListener::class
+        );
+
+        // add-secret-audit-trail §2.6 — the single AuditListener turns every
+        // dispatched AuditEvent into an append-only doriath_audit_log row. The
+        // listener is fail-soft: a record failure is logged at error level and
+        // never propagates into the audited business operation.
+        $context->registerEventListener(
+            event: AuditEvent::class,
+            listener: AuditListener::class
+        );
+
+        // The three secret-export-gdpr events are this change's scoped consumer
+        // (design D2/D5). They belong to the secret-export-gdpr change; bind the
+        // same AuditListener to them only when that capability's event classes
+        // are present, so this registration never references a missing class.
+        foreach ([
+            'OCA\\Doriath\\Event\\SecretExportedEvent',
+            'OCA\\Doriath\\Event\\GdprExportPerformedEvent',
+            'OCA\\Doriath\\Event\\AccountDataDeletedEvent',
+        ] as $exportEventClass) {
+            if (class_exists($exportEventClass) === true) {
+                $context->registerEventListener(
+                    event: $exportEventClass,
+                    listener: AuditListener::class
+                );
+            }
+        }
+
+        // Register the Nextcloud unified search provider for secrets. It
+        // queries unencrypted name/url metadata only and needs no vault
+        // session (ADR-003).
+        $context->registerSearchProvider(SecretSearchProvider::class);
+
+        // Register the notifier responsible for rendering sharing,
+        // secret-request and application-management notification subjects.
+        $context->registerNotifierService(DoriathNotifier::class);
+
+        // Register the JWT-Bearer middleware for application-authenticated
+        // routes. Fires only on ApplicationApiController subclasses; session
+        // controllers pass through untouched.
+        $context->registerMiddleware(JwtAuthMiddleware::class);
+
         // Repair steps (BootstrapCertificateAuthority, InitializeSettings,
-        // SeedDevelopmentData) are registered via info.xml <repair-steps>.
+        // SeedDevelopmentData, SeedSecretTypes, SeedDevelopmentSecrets) are
+        // registered via info.xml <repair-steps>.
     }//end register()
 
     /**

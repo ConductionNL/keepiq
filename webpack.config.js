@@ -14,6 +14,18 @@ webpackConfig.stats = {
 }
 
 const appId = 'doriath'
+
+// Lazy-loaded chunks (the argon2-browser WASM loader for link-share encryption)
+// must resolve relative to the script that loaded them. Nextcloud serves the
+// entry bundle from `/custom_apps/<app>/js/`, but the default publicPath points
+// lazy chunks at `/apps/<app>/js/` which 401s. `publicPath: 'auto'` makes
+// webpack derive the chunk base from the executing script's own URL, so chunks
+// load from the same `/custom_apps/doriath/js/` directory as the main bundle.
+webpackConfig.output = {
+	...(webpackConfig.output || {}),
+	publicPath: 'auto',
+}
+
 webpackConfig.entry = {
 	main: {
 		import: path.join(__dirname, 'src', 'main.js'),
@@ -133,5 +145,17 @@ webpackConfig.performance = {
 	maxAssetSize: 5 * 1024 * 1024,
 	maxEntrypointSize: 5 * 1024 * 1024,
 }
+
+// The crypto module lazy-loads the `argon2-browser` WASM library via a dynamic
+// import (src/crypto/argon2.js). argon2-browser's own loader contains a
+// `require('../dist/argon2.wasm')` that Webpack 5 cannot statically resolve
+// (it parses the binary as a module). Emit the .wasm as a static resource so
+// the bundle builds; argon2-browser falls back to fetching it from the
+// configured `argon2WasmPath` at runtime.
+webpackConfig.module.rules.push({
+	test: /argon2\.wasm$/,
+	type: 'asset/resource',
+	generator: { filename: '[name][ext]' },
+})
 
 module.exports = webpackConfig

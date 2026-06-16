@@ -24,6 +24,7 @@ use OCA\Doriath\Controller\EncryptionSuiteController;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -62,6 +63,13 @@ class EncryptionSuiteControllerTest extends TestCase
     private MigrationService&MockObject $migrationService;
 
     /**
+     * The mocked link share service.
+     *
+     * @var LinkShareService&MockObject
+     */
+    private LinkShareService&MockObject $linkShareService;
+
+    /**
      * The mocked user session.
      *
      * @var IUserSession&MockObject
@@ -80,6 +88,7 @@ class EncryptionSuiteControllerTest extends TestCase
         $request            = $this->createMock(originalClassName: IRequest::class);
         $this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
         $this->migrationService = $this->createMock(originalClassName: MigrationService::class);
+        $this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
         $this->userSession      = $this->createMock(originalClassName: IUserSession::class);
 
         $user = $this->createMock(originalClassName: IUser::class);
@@ -90,6 +99,7 @@ class EncryptionSuiteControllerTest extends TestCase
             request: $request,
             suiteService: $this->suiteService,
             migrationService: $this->migrationService,
+            linkShareService: $this->linkShareService,
             userSession: $this->userSession,
         );
     }//end setUp()
@@ -374,4 +384,50 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
     }//end testCompromiseRecoveryReturns500OnFailure()
+
+    /**
+     * Test compromiseRecovery cascades to LinkShareService.deleteByUserId.
+     *
+     * Every outstanding link share signed against the now-compromised public
+     * key must be invalidated so a holder cannot decrypt the snapshot after
+     * the user reports the breach. The cascade fires *after* markCompromised
+     * (so the old suite is already locked) and *before* createSuite (so the
+     * new suite never receives leaked references).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/implement-link-sharing/tasks.md#5.2
+     */
+    public function testCompromiseRecoveryCascadesLinkShareDeleteByUserId(): void
+    {
+        $oldSuite = new EncryptionSuite();
+        $oldSuite->setId('old-suite');
+        $oldSuite->setPrivateKey('old-encrypted-pk');
+
+        $newSuite = new EncryptionSuite();
+        $newSuite->setId('new-suite');
+        $newSuite->setStatus('active');
+
+        $migration = new SuiteMigration();
+        $migration->setId('migr-1');
+        $migration->setOldSuiteId('old-suite');
+        $migration->setNewSuiteId('new-suite');
+        $migration->setStatus('in_progress');
+
+        $this->suiteService->method('getActiveSuite')
+            ->with('user', 'testuser')
+            ->willReturn($oldSuite);
+        $this->suiteService->method('createSuite')
+            ->willReturn($newSuite);
+        $this->migrationService->method('initiateCompromiseRecovery')
+            ->willReturn($migration);
+
+        $this->linkShareService->expects($this->once())
+            ->method('deleteByUserId')
+            ->with('testuser');
+
+        $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+
+        $this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
+    }//end testCompromiseRecoveryCascadesLinkShareDeleteByUserId()
 }//end class

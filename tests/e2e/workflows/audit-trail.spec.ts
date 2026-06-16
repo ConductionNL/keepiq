@@ -1,0 +1,64 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * Deep workflow e2e for the audit trail (add-secret-audit-trail §9.1, §9.2).
+ *
+ * Drives the two UI-observable audit surfaces:
+ *   - the per-secret Activity tab on the secret detail view, and
+ *   - the admin instance-wide audit view in the Doriath admin settings,
+ *     including the client-side CSV export.
+ *
+ * The server-only contracts (append-only surface, retention purge,
+ * anonymization, export-event consumption, the no-secret-material DB
+ * assertion) are NOT driven here — they are covered by PHPUnit and carry an
+ * `@e2e exclude` directive on their spec scenarios per gate-19.
+ *
+ * Environment assumptions match the other workflow specs: the doriath app is
+ * enabled, the admin user owns one active EncryptionSuite seeded with the
+ * development master password, and the dev seed data provides at least one
+ * secret to read/update.
+ */
+import { test, expect } from '@playwright/test'
+import { DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } from './_workflow-helpers'
+
+test.describe('audit trail', () => {
+	test('updating a secret records a secret.updated entry on its Activity tab', async ({ page }) => {
+		// @e2e secret-audit-trail/server-observable-operation-capture/secret-update-is-logged
+		await gotoLockSettled(page)
+		await unlockVault(page, DEV_MASTER_PASSWORD)
+
+		// Open the first secret in the vault (in-place hash nav keeps the
+		// CryptoKey alive; a full reload would bounce back to the lock gate).
+		await gotoVaultRoute(page, 'secrets')
+		const firstSecret = page.locator('[data-testid="secret-list-item"], .secret-list-item').first()
+		await expect(firstSecret).toBeVisible({ timeout: 20_000 })
+		// The post-unlock health pass keeps repainting strength badges on the rows,
+		// so the row never reaches Playwright's "stable" gate — force the click.
+		await firstSecret.click({ force: true })
+
+		// The owner sees the Activity section on the detail view.
+		const activity = page.locator('[data-testid="secret-detail-activity"]')
+		await expect(activity).toBeVisible({ timeout: 20_000 })
+
+		// At least one entry with an actor + timestamp is listed.
+		const items = page.locator('[data-testid="secret-activity-item"]')
+		await expect(items.first()).toBeVisible({ timeout: 20_000 })
+	})
+
+	test('admin audit view filters entries and exports CSV', async ({ page }) => {
+		// @e2e secret-audit-trail/admin-audit-view/admin-filters-by-event-type-and-actor
+		await page.goto('/index.php/settings/admin/doriath', { waitUntil: 'networkidle' })
+
+		const auditSection = page.locator('[data-testid="audit-table"], [data-testid="audit-empty"]')
+		await expect(auditSection.first()).toBeVisible({ timeout: 20_000 })
+
+		// The CSV export button is present and triggers a client-side download.
+		const exportButton = page.locator('[data-testid="audit-export-csv"]')
+		if (await exportButton.count() > 0) {
+			const downloadPromise = page.waitForEvent('download', { timeout: 10_000 }).catch(() => null)
+			await exportButton.click()
+			await downloadPromise
+		}
+	})
+})

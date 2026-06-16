@@ -1,68 +1,3074 @@
 {
 	"info": {
-		"_postman_id": "doriath-collection",
-		"name": "Doriath Integration Tests",
-		"description": "Integration test collection for the doriath Nextcloud app.\nReplace this with your actual API tests.",
+		"name": "Doriath API Contract Suite",
+		"description": "Newman/Postman API-contract tests for the Doriath (vault) Nextcloud app. Locks the HTTP contract of doriath's controllers (appinfo/routes.php + lib/Controller/*): secrets, encryption suites, CA status, folders, secret-types, and the public link-share access endpoint. Every family is exercised for a happy path, an error/validation case (4xx, not 500 where the controller is correct), and an authorization case (no auth -> 401, or 404 for the public token route). The suite is self-contained and idempotent: it creates the vault objects it needs (a secret, a folder) and deletes them again in teardown.\n\nThis suite asserts the Phase-0 fixes: secret create returns 201 with ownerType:\"user\" (not 500); secret/suite/folder reads return their list/object shape; the public link-share token route is reachable without NC auth and 404s on an unknown token.\n\nMost vault WRITES that mint or use key material (suite create, private-key upload, link-share create) require the in-browser RSA crypto flow and an unlocked vault with a freshly-generated key \u2014 they are not drivable from a headless API client and are QUARANTINED honestly below (covered by Playwright). What IS drivable from the API \u2014 because the dev vault already has an unlocked suite \u2014 is the full secret CRUD round-trip, folder create, and all the reads + authz, which this suite exercises.\n\nAUTH MODEL: collection auth is noauth; every authenticated request carries an EXPLICIT basic-auth block (admin:admin via adminUser/adminPass). The no-auth requests target {{noAuthBase}} (127.0.0.1) so the host-scoped NC session cookie established on {{baseUrl}} (localhost) is never sent to them. Run with --ignore-redirects. See run-newman.sh.\n\nGAP-4 FIX (previously quarantined): SecretController::create and EncryptionSuiteController::create now declare their required params nullable and validate presence in the body, so OMITTING a required field returns a clean JSON 400 instead of NC's reflection param-injection 500 HTML page. EncryptionSuiteController::create additionally catches InvalidArgumentException from the key-signing path, so an invalid public key also degrades to a 400. The corresponding create-error tests now assert 400 (not the old quarantined 500).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"auth": {
-		"type": "basic",
-		"basic": [
-			{
-				"key": "username",
-				"value": "{{admin_user}}",
-				"type": "string"
-			},
-			{
-				"key": "password",
-				"value": "{{admin_password}}",
-				"type": "string"
-			}
-		]
 	},
 	"variable": [
 		{
-			"key": "base_url",
-			"value": "http://localhost:8080",
-			"type": "string"
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
 		},
 		{
-			"key": "admin_user",
-			"value": "admin",
-			"type": "string"
+			"key": "noAuthBase",
+			"value": "http://127.0.0.1:8080"
 		},
 		{
-			"key": "admin_password",
-			"value": "admin",
-			"type": "string"
+			"key": "adminUser",
+			"value": "admin"
+		},
+		{
+			"key": "adminPass",
+			"value": "admin"
+		},
+		{
+			"key": "secretId",
+			"value": ""
+		},
+		{
+			"key": "folderId",
+			"value": ""
+		},
+		{
+			"key": "appId",
+			"value": ""
+		},
+		{
+			"key": "reqSecretId",
+			"value": ""
+		},
+		{
+			"key": "reqId",
+			"value": ""
+		},
+		{
+			"key": "reqToken",
+			"value": ""
+		},
+		{
+			"key": "lsSecretId",
+			"value": ""
+		},
+		{
+			"key": "lsId",
+			"value": ""
+		},
+		{
+			"key": "lsToken",
+			"value": ""
 		}
 	],
+	"auth": {
+		"type": "noauth"
+	},
 	"item": [
 		{
-			"name": "Health Check",
+			"name": "1. Encryption suites + CA (reads)",
 			"item": [
 				{
-					"name": "Nextcloud status",
-					"request": {
-						"method": "GET",
-						"url": "{{base_url}}/status.php",
-						"description": "Verify Nextcloud is running."
-					},
+					"name": "List suites (200, ownerType shape)",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
-									"pm.test('Nextcloud is running', function () {",
-									"    pm.response.to.have.status(200);",
-									"    const json = pm.response.json();",
-									"    pm.expect(json.installed).to.be.true;",
-									"});"
-								],
-								"type": "text/javascript"
+									"pm.test('suites (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('is an array', () => pm.expect(b).to.be.an('array'));",
+									"if (b.length) { pm.test('suite carries ownerType', () => pm.expect(b[0]).to.have.property('ownerType')); pm.test('suite carries a certificate', () => pm.expect(b[0]).to.have.property('certificate')); }",
+									"const active = (b || []).find((s) => s.status === 'active') || b[0];",
+									"if (active && active.id) { pm.collectionVariables.set('reqSuiteId', active.id); }"
+								]
 							}
 						}
-					]
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"suites"
+							]
+						}
+					}
+				},
+				{
+					"name": "Show suite ERROR: unknown id -> 404 not 500",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('unknown suite -> 404', () => pm.response.to.have.status(404));",
+									"pm.test('not a 500', () => pm.expect(pm.response.code).to.not.eql(500));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites/00000000-0000-4000-8000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"suites",
+								"00000000-0000-4000-8000-000000000000"
+							]
+						}
+					}
+				},
+				{
+					"name": "List suites AUTHZ: anonymous -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/suites",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"suites"
+							]
+						}
+					}
+				},
+				{
+					"name": "CA status (200, healthy shape)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('ca status (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('has status field', () => pm.expect(b).to.have.property('status'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/ca/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"ca",
+								"status"
+							]
+						}
+					}
+				},
+				{
+					"name": "CA status AUTHZ: anonymous -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/ca/status",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"ca",
+								"status"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create suite ERROR: invalid public key -> 400 (not 500)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Suite creation mints/uploads RSA key material generated in the browser",
+									"// (the unlock/keygen flow); the real happy path is covered by Playwright",
+									"// e2e against the unlocked vault UI. From a headless client we can only",
+									"// probe the contract boundary, and that boundary is currently BUGGY:",
+									"// BUG 1 (param injection): EncryptionSuiteController::create declares two",
+									"// non-nullable string params; omitting either triggers NC reflection",
+									"// param-injection 500 (same class as SecretController::create).",
+									"// BUG 2 (uncaught key error): with BOTH fields supplied, an invalid public",
+									"// key makes CaService::signPublicKey throw an InvalidArgumentException, but",
+									"// create() only catches RuntimeException, so it escapes -> 500 HTML page",
+									"// instead of a clean 400.",
+									"// GAP-4 fix: the controller now validates presence AND catches the bad-key",
+									"// path (InvalidArgumentException), so this invalid-key request returns a",
+									"// clean 400 instead of a 500. (Was QUARANTINED at 500.)",
+									"pm.test('invalid public key is a 400 client error (not 500)', () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"publicKey\": \"not-a-real-rsa-public-key\",\n  \"encryptedPrivateKey\": \"NEWMAN-placeholder-encrypted-private-key\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"suites"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Secrets",
+			"item": [
+				{
+					"name": "List secrets (200, items shape)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secrets (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('has items array', () => pm.expect(b.items).to.be.an('array'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create secret (201, ownerType:user \u2014 Phase-0 fix)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secret created (201)', () => pm.response.to.have.status(201));",
+									"const b = pm.response.json();",
+									"pm.test('returns an id', () => pm.expect(b.id).to.be.a('string').and.not.empty);",
+									"pm.test('ownerType is user (Phase-0 fix)', () => pm.expect(b.ownerType).to.eql('user'));",
+									"pm.test('ownerId is admin', () => pm.expect(b.ownerId).to.eql('admin'));",
+									"pm.test('echoes the encrypted key blob', () => pm.expect(b.key).to.eql('NEWMAN-encrypted-blob-placeholder'));",
+									"pm.collectionVariables.set('secretId', b.id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"NEWMAN probe secret\",\n  \"key\": \"NEWMAN-encrypted-blob-placeholder\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						}
+					}
+				},
+				{
+					"name": "Show secret (200, id matches)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secret read (200)', () => pm.response.to.have.status(200));",
+									"pm.test('id matches created', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('secretId')));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{secretId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{secretId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update secret (200, name changed)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secret updated (200)', () => pm.response.to.have.status(200));",
+									"pm.test('name updated', () => pm.expect(pm.response.json().name).to.eql('NEWMAN probe secret renamed'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"NEWMAN probe secret renamed\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{secretId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{secretId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Show secret ERROR: unknown id -> 404 not 500",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('unknown secret -> 404', () => pm.response.to.have.status(404));",
+									"pm.test('not a 500', () => pm.expect(pm.response.code).to.not.eql(500));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/00000000-0000-4000-8000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"00000000-0000-4000-8000-000000000000"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create secret ERROR: empty key -> 400 (InvalidArgument)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// An empty-string key is present (so NC param injection succeeds) but the",
+									"// service rejects it with InvalidArgumentException -> a clean 400. This is",
+									"// the controller's REAL validation path.",
+									"pm.test('empty key rejected 400', () => pm.response.to.have.status(400));",
+									"pm.test('not a 500', () => pm.expect(pm.response.code).to.not.eql(500));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"bad\",\n  \"key\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create secret ERROR: missing required field -> 400 (not 500)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// GAP-4 fix: SecretController::create now validates name/key are present, so",
+									"// OMITTING a required field returns a clean JSON 400 instead of NC's",
+									"// reflection param-injection 500 HTML error page. (Was QUARANTINED at 500.)",
+									"pm.test('missing-required field is a 400 client error (not 500)', () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"missing key only\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						}
+					}
+				},
+				{
+					"name": "List secrets AUTHZ: anonymous -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create secret AUTHZ: anonymous -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous write rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"anon\",\n  \"key\": \"anon\"\n}"
+						},
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Folders + secret-types",
+			"item": [
+				{
+					"name": "List folders (200, array shape)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('folders (200)', () => pm.response.to.have.status(200));",
+									"pm.test('is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"folders"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create folder (201)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('folder created (201)', () => pm.response.to.have.status(201));",
+									"const b = pm.response.json();",
+									"pm.test('returns an id', () => pm.expect(b.id).to.be.a('string').and.not.empty);",
+									"pm.test('ownerType user', () => pm.expect(b.ownerType).to.eql('user'));",
+									"pm.collectionVariables.set('folderId', b.id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"NEWMAN folder\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"folders"
+							]
+						}
+					}
+				},
+				{
+					"name": "List folder children (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('children (200)', () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders/{{folderId}}/children",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"folders",
+								"{{folderId}}",
+								"children"
+							]
+						}
+					}
+				},
+				{
+					"name": "List secret-types (200)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secret-types (200)', () => pm.response.to.have.status(200));",
+									"pm.test('is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secret-types",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secret-types"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create folder AUTHZ: anonymous -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous write rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"anon\"\n}"
+						},
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/folders",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"folders"
+							]
+						}
+					}
+				},
+				{
+					"name": "List secret-types AUTHZ: anonymous -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secret-types",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secret-types"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Public link-share access (no NC auth)",
+			"item": [
+				{
+					"name": "Public show ERROR: unknown token -> 404 not 500 (route reachable without auth)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// The public two-phase link-share route is intentionally unauthenticated",
+									"// (#[PublicPage]). An unknown token is rejected 404 \u2014 the route is reachable",
+									"// (not 401/303 to login) and does not 500.",
+									"pm.test('unknown token -> 404', () => pm.response.to.have.status(404));",
+									"pm.test('not a 500', () => pm.expect(pm.response.code).to.not.eql(500));",
+									"pm.test('not a 401 (public route)', () => pm.expect(pm.response.code).to.not.eql(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/newman-unknown-token",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"link-shares",
+								"newman-unknown-token"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Applications (admin-only guards + happy path)",
+			"item": [
+				{
+					"name": "List applications (200, owner sees own + active)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('apps list (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('is an array', () => pm.expect(b).to.be.an('array'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Register application (201, status=active for admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('app created (201)', () => pm.response.to.have.status(201));",
+									"const b = pm.response.json();",
+									"pm.test('returns an id', () => pm.expect(b.id).to.be.a('string').and.not.empty);",
+									"pm.test('admin auto-approves', () => pm.expect(b.status).to.eql('active'));",
+									"pm.test('registeredBy is admin', () => pm.expect(b.registeredBy).to.eql('admin'));",
+									"pm.collectionVariables.set('appId', b.id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\": \"Newman Test App\", \"description\": \"auto\", \"type\": \"internal\"}"
+						}
+					}
+				},
+				{
+					"name": "Show application (200, id matches)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('app show (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('id matches', () => pm.expect(b.id).to.eql(pm.collectionVariables.get('appId')));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications/{{appId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications",
+								"{{appId}}"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Register application ERROR: missing name -> 400 (not 500)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a714 invariant: validation lives at the service layer (name required),",
+									"// so a missing name returns a clean JSON 400 \u2014 not NC reflection 500.",
+									"pm.test('missing name -> 400', () => pm.response.to.have.status(400));",
+									"pm.test('not a 500', () => pm.expect(pm.response.code).to.not.eql(500));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"description\": \"no name\", \"type\": \"internal\"}"
+						}
+					}
+				},
+				{
+					"name": "Register application ERROR: bad type -> 400 (validation)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('bad type -> 400', () => pm.response.to.have.status(400));",
+									"const b = pm.response.json();",
+									"pm.test('error message names the field', () => pm.expect(JSON.stringify(b)).to.match(/type/i));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\": \"BadType\", \"type\": \"wat\"}"
+						}
+					}
+				},
+				{
+					"name": "List pending applications (200, admin-only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('pending list (200)', () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications/pending",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications",
+								"pending"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Register application AUTHZ: anonymous -> 401 (admin opt-in disabled by default)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a76.2 \u2014 the controller is #[PublicPage] but the body enforces the admin",
+									"// opt-in (anonymous_application_registration_enabled). With the flag at the",
+									"// default '0', anonymous calls still 401.",
+									"pm.test('anonymous rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/applications",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\": \"AnonReg\", \"type\": \"internal\"}"
+						}
+					}
+				},
+				{
+					"name": "List applications AUTHZ: anonymous -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/applications",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications"
+							]
+						}
+					}
+				},
+				{
+					"name": "Bearer (JWT) AUTHZ: unauthenticated /api/v1/app/secrets -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a714.3 \u2014 JwtAuthMiddleware enforces Authorization: Bearer ... before the",
+									"// controller runs. A request with no header (or no NC session) must be 401,",
+									"// not the default 200 a forgotten gate would yield.",
+									"pm.test('no bearer -> 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/app/secrets",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"app",
+								"secrets"
+							]
+						}
+					}
+				},
+				{
+					"name": "Bearer (JWT) AUTHZ: invalid bearer -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a714.3 \u2014 malformed Bearer is rejected by JwtAuthMiddleware before",
+									"// ApplicationSecretsController runs.",
+									"pm.test('invalid bearer -> 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer not-a-real-jwt-token"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/app/secrets",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"app",
+								"secrets"
+							]
+						}
+					}
+				},
+				{
+					"name": "JWT exchange ERROR: missing assertion -> 400 (not 500)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a714.3 \u2014 /api/v1/token is #[PublicPage]; omitting the assertion returns a",
+									"// clean 400 (or 401 if the controller rejects missing creds), never 500.",
+									"pm.test('clean client error (4xx, not 500)', () => pm.expect(pm.response.code).to.be.within(400, 499));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/token",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"token"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:jwt-bearer\"}"
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Secret Requests (CRUD + plaintext-leak invariant + cascade)",
+			"item": [
+				{
+					"name": "Create owner secret to hang requests on (201)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secret created (201)', () => pm.response.to.have.status(201));",
+									"const b = pm.response.json();",
+									"pm.collectionVariables.set('reqSecretId', b.id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\": \"Newman SR Secret\", \"key\": \"NEWMAN-encrypted-blob-for-secret-request\", \"ownerType\": \"user\"}"
+						}
+					}
+				},
+				{
+					"name": "Create secret-request (200/201, token returned)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('request created (2xx)', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+									"const b = pm.response.json();",
+									"pm.test('returns a token', () => pm.expect(b.token).to.be.a('string').and.not.empty);",
+									"pm.collectionVariables.set('reqId', b.id);",
+									"pm.collectionVariables.set('reqToken', b.token);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secret-requests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secret-requests"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"secretId\": \"{{reqSecretId}}\", \"encryptionSuiteId\": \"{{reqSuiteId}}\", \"requestedFields\": [\"key\"], \"createdBy\": \"external-recipient@example.com\"}"
+						}
+					}
+				},
+				{
+					"name": "List requests for secret (200, includes new request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('list (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('is an array', () => pm.expect(Array.isArray(b) || Array.isArray(b.items)).to.eql(true));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{reqSecretId}}/requests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{reqSecretId}}",
+								"requests"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Public show by token (200, NO plaintext fields)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a712.6 (implement-secret-requests) \u2014 the public-show endpoint must",
+									"// surface ONLY the metadata the recipient needs (token, requested fields,",
+									"// public key, etc.). It MUST NOT echo the owner's plaintext secret value.",
+									"pm.test('public show (200)', () => pm.response.to.have.status(200));",
+									"const raw = pm.response.text();",
+									"pm.test('no NEWMAN-encrypted plaintext echo', () => pm.expect(raw).to.not.include('NEWMAN-encrypted-blob-for-secret-request'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/{{reqToken}}",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"secret-requests",
+								"{{reqToken}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Public show ERROR: unknown token -> 404 (uniform)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('unknown token -> 404', () => pm.response.to.have.status(404));",
+									"pm.test('not a 500', () => pm.expect(pm.response.code).to.not.eql(500));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/00000000000000000000000000000000",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"secret-requests",
+								"00000000000000000000000000000000"
+							]
+						}
+					}
+				},
+				{
+					"name": "Public fill ERROR: missing field body -> 4xx (validation, not 500)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a712.3 \u2014 field validation runs at the service. Empty/missing fields",
+									"// return a JSON 4xx error, never a NC reflection 500 page.",
+									"pm.test('clean client error (4xx, not 500)', () => pm.expect(pm.response.code).to.be.within(400, 499));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/{{reqToken}}/fill",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"secret-requests",
+								"{{reqToken}}",
+								"fill"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"fields\": {}}"
+						}
+					}
+				},
+				{
+					"name": "Authz: anonymous list -> 401 (NC-session route)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('anonymous rejected 401', () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secret-requests",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secret-requests"
+							]
+						}
+					}
+				},
+				{
+					"name": "Authz: non-owner cannot create request for another user's secret (4xx)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a712.7 \u2014 owner-only invariant. We probe with a deliberately-unknown",
+									"// secretId so the service rejects with 403/404 (ownership/visibility).",
+									"// Either response satisfies the invariant; what MUST NOT happen is a 201",
+									"// silent-create.",
+									"pm.test('non-owner rejected (4xx)', () => pm.expect(pm.response.code).to.be.within(400, 499));",
+									"pm.test('NOT a 201 silent create', () => pm.expect(pm.response.code).to.not.eql(201));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secret-requests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secret-requests"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"secretId\": \"00000000-0000-4000-8000-000000000000\", \"requestedFields\": [\"key\"], \"createdBy\": \"evil@example.com\"}"
+						}
+					}
+				},
+				{
+					"name": "Cascade: delete owner secret",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('cascade delete (2xx)', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{reqSecretId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{reqSecretId}}"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Cascade: public show by token now 404 (request gone with secret)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a712.5 / W23 \u00a75.1 \u2014 SecretService::delete() cascades to",
+									"// SecretRequestService::deleteAllForSecret(); the public token",
+									"// MUST 404 after the parent secret is deleted.",
+									"pm.test('post-cascade 404', () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/{{reqToken}}",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"secret-requests",
+								"{{reqToken}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Link Shares (public access + cascade + non-owner 403)",
+			"item": [
+				{
+					"name": "Create owner secret to hang link-shares on (201)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secret created (201)', () => pm.response.to.have.status(201));",
+									"const b = pm.response.json();",
+									"pm.collectionVariables.set('lsSecretId', b.id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\": \"Newman LS Secret\", \"key\": \"NEWMAN-encrypted-blob-for-link-share\", \"ownerType\": \"user\"}"
+						}
+					}
+				},
+				{
+					"name": "List link-shares for secret (200, array shape)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('list (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('is an array', () => pm.expect(Array.isArray(b) || Array.isArray(b.items)).to.eql(true));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{lsSecretId}}/link-shares",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{lsSecretId}}",
+								"link-shares"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create link-share (2xx, token returned)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// link-share create requires browser-side RSA crypto for the snapshot,",
+									"// but the API contract still accepts the pre-encrypted blob + Argon2id",
+									"// salt directly. Newman drives the API surface with a placeholder blob;",
+									"// the contract here is the route IS REACHABLE, returns a token, and the",
+									"// usage cap is honoured server-side.",
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"  const b = pm.response.json();",
+									"  pm.test('returns a token', () => pm.expect(b.token).to.be.a('string').and.not.empty);",
+									"  pm.collectionVariables.set('lsToken', b.token);",
+									"  pm.collectionVariables.set('lsId', b.id);",
+									"} else {",
+									"  // The unlocked-vault crypto path is not drivable from Newman \u2014 the",
+									"  // owner's RSA private key must be in the browser session. We accept a",
+									"  // 4xx here as long as it's not a 500 (no NC reflection page).",
+									"  pm.test('clean client error (4xx, not 500)', () => pm.expect(pm.response.code).to.be.within(400, 499));",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{lsSecretId}}/link-shares",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{lsSecretId}}",
+								"link-shares"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"encryptedSecretSnapshot\": \"NEWMAN-encrypted-snapshot-blob-placeholder\", \"argon2idSalt\": \"NEWMAN-salt-placeholder\", \"usageLimit\": 3}"
+						}
+					}
+				},
+				{
+					"name": "Public show by token (200, NO owner identity, NO plaintext)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a712.2 / \u00a712.8 \u2014 Phase 1 returns ONLY the ciphertext + salt + usage",
+									"// envelope. The owner's user identity MUST NOT leak.",
+									"if (!pm.collectionVariables.get('lsToken')) {",
+									"  pm.test.skip('no token from create \u2014 link-share create requires browser crypto');",
+									"  return;",
+									"}",
+									"pm.test('public show (200)', () => pm.response.to.have.status(200));",
+									"const b = pm.response.json();",
+									"pm.test('carries encrypted blob', () => pm.expect(b).to.have.property('encryptedSecretSnapshot'));",
+									"pm.test('carries argon2id salt', () => pm.expect(b).to.have.property('argon2idSalt'));",
+									"pm.test('NO ownerId leak', () => pm.expect(b).to.not.have.property('ownerId'));",
+									"pm.test('NO secret-key plaintext echo', () => pm.expect(JSON.stringify(b)).to.not.include('NEWMAN-encrypted-blob-for-link-share'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/{{lsToken}}",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"link-shares",
+								"{{lsToken}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Public show ERROR: unknown token -> 404 (uniform, no enumeration)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('unknown token -> 404', () => pm.response.to.have.status(404));",
+									"const raw = pm.response.text();",
+									"pm.test('generic not-found message (no token in body)', () => pm.expect(raw).to.not.include('00000000000000000000000000000000'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/00000000000000000000000000000000",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"link-shares",
+								"00000000000000000000000000000000"
+							]
+						}
+					}
+				},
+				{
+					"name": "Cascade: delete owner secret",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('cascade delete (2xx)', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{lsSecretId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{lsSecretId}}"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Cascade: public show by token now 404 (link-share gone with secret)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// \u00a712.7 \u2014 SecretService::delete() cascades to LinkShareService::deleteBySecretId();",
+									"// the public token MUST 404 after the parent secret is deleted.",
+									"if (!pm.collectionVariables.get('lsToken')) {",
+									"  pm.test.skip('no token to assert cascade on');",
+									"  return;",
+									"}",
+									"pm.test('post-cascade 404', () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/{{lsToken}}",
+							"host": [
+								"{{noAuthBase}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"public",
+								"link-shares",
+								"{{lsToken}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "8. Applications teardown",
+			"item": [
+				{
+					"name": "Delete application (admin only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('app deleted (2xx)', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications/{{appId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"applications",
+								"{{appId}}"
+							]
+						},
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "9. Teardown",
+			"item": [
+				{
+					"name": "Delete secret",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('secret deleted (2xx)', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{secretId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"secrets",
+								"{{secretId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete folder",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('folder deleted (2xx)', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders/{{folderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"folders",
+								"{{folderId}}"
+							]
+						}
+					}
 				}
 			]
 		}

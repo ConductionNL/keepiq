@@ -598,6 +598,100 @@ class CertificateAuthorityServiceTest extends TestCase
     }//end testSignPublicKey()
 
     /**
+     * Regression lock for the signPublicKey keypair fix (Phase-0).
+     *
+     * When the matching private key is supplied (server-side key generation),
+     * the issued certificate MUST carry the caller's ACTUAL public key. The
+     * previous bug fed a public-only key to openssl_csr_new(), which silently
+     * generated a throwaway keypair — producing a certificate whose private key
+     * nobody held, breaking the whole encrypt/decrypt model. This test signs a
+     * known keypair and asserts the certificate's embedded public key is byte-for-byte
+     * the user's real public key, not a throwaway.
+     *
+     * @return void
+     */
+    public function testSignPublicKeyWithPrivateKeyEmbedsRealPublicKey(): void
+    {
+        $intKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($intKey, $intKeyPem);
+        $intCsr  = openssl_csr_new(['commonName' => 'Int CA'], $intKey);
+        $intCert = openssl_csr_sign($intCsr, null, $intKey, 365);
+        openssl_x509_export($intCert, $intCertPem);
+
+        $intermediate = new CACertificate();
+        $intermediate->setId('int-1');
+        $intermediate->setCertificate($intCertPem);
+        $intermediate->setPrivateKey('enc:'.$intKeyPem);
+
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
+
+        // The user's real keypair (server-side generation supplies both halves).
+        $userKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($userKey, $userPrivateKeyPem);
+        $userDetails      = openssl_pkey_get_details($userKey);
+        $userPublicKeyPem = $userDetails['key'];
+
+        $certPem = $this->service->signPublicKey(
+            publicKeyPem: $userPublicKeyPem,
+            commonName: 'Real User',
+            privateKeyPem: $userPrivateKeyPem,
+        );
+
+        $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $certPem);
+
+        // The certificate's embedded public key MUST equal the user's real public
+        // key. A throwaway-keypair regression would make these differ.
+        $certPublicKey    = openssl_pkey_get_public(openssl_x509_read($certPem));
+        $certPublicKeyPem = openssl_pkey_get_details($certPublicKey)['key'];
+
+        $this->assertSame(
+            expected: $userPublicKeyPem,
+            actual: $certPublicKeyPem,
+            message: 'signed certificate must carry the user\'s real public key, not a throwaway'
+        );
+
+        // And the user's private key must mathematically match the cert (a
+        // throwaway public key would fail this check too).
+        $this->assertTrue(
+            condition: openssl_x509_check_private_key($certPem, $userPrivateKeyPem),
+            message: 'the user\'s private key must match the issued certificate'
+        );
+    }//end testSignPublicKeyWithPrivateKeyEmbedsRealPublicKey()
+
+    /**
+     * Regression lock: an invalid private key PEM passed to signPublicKey is
+     * rejected with a typed InvalidArgumentException (never silently falls back
+     * to generating a throwaway keypair).
+     *
+     * @return void
+     */
+    public function testSignPublicKeyWithInvalidPrivateKeyThrows(): void
+    {
+        $intKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($intKey, $intKeyPem);
+        $intCsr  = openssl_csr_new(['commonName' => 'Int CA'], $intKey);
+        $intCert = openssl_csr_sign($intCsr, null, $intKey, 365);
+        openssl_x509_export($intCert, $intCertPem);
+
+        $intermediate = new CACertificate();
+        $intermediate->setCertificate($intCertPem);
+        $intermediate->setPrivateKey('enc:'.$intKeyPem);
+
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
+
+        $userKey          = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        $userPublicKeyPem = openssl_pkey_get_details($userKey)['key'];
+
+        $this->expectException(exception: InvalidArgumentException::class);
+        $this->expectExceptionMessage(message: 'Invalid private key PEM');
+        $this->service->signPublicKey(
+            publicKeyPem: $userPublicKeyPem,
+            commonName: 'Real User',
+            privateKeyPem: 'not-a-valid-private-key',
+        );
+    }//end testSignPublicKeyWithInvalidPrivateKeyThrows()
+
+    /**
      * Test that signCsr returns a valid certificate PEM.
      *
      * @return void

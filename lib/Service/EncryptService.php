@@ -71,12 +71,18 @@ class EncryptService
         $result     = pack('N', $chunkCount);
 
         foreach ($chunks as $chunk) {
+            // EME-OAEP-SHA256 pad, then raw RSA. PHP's
+            // openssl_public_encrypt(OPENSSL_PKCS1_OAEP_PADDING) hard-codes the
+            // OAEP/MGF1 hash to SHA-1, which is INCOMPATIBLE with the browser's
+            // WebCrypto RSA-OAEP keys (imported with hash: 'SHA-256'). Padding
+            // here ourselves keeps the PHP and JS ciphertext formats aligned.
+            $padded    = $this->oaepSha256Pad(message: $chunk, blockSize: self::RSA_BLOCK_SIZE);
             $encrypted = '';
             $success   = openssl_public_encrypt(
-                data: $chunk,
+                data: $padded,
                 encrypted_data: $encrypted,
                 public_key: $publicKey,
-                padding: OPENSSL_PKCS1_OAEP_PADDING
+                padding: OPENSSL_NO_PADDING
             );
 
             // @codeCoverageIgnoreStart
@@ -96,6 +102,72 @@ class EncryptService
 
         return base64_encode($result);
     }//end rsaEncrypt()
+
+    /**
+     * Apply EME-OAEP padding (RFC 8017 §7.1.1) with SHA-256 as both the label
+     * hash and the MGF1 hash, producing a block ready for raw RSA encryption.
+     *
+     * This mirrors WebCrypto's RSA-OAEP with SHA-256, so a value encrypted here
+     * can be decrypted in the browser by a key imported with hash: 'SHA-256'.
+     *
+     * @param string $message   The chunk to pad (<= blockSize - 2*hLen - 2 bytes)
+     * @param int    $blockSize The RSA modulus size in bytes (k)
+     *
+     * @return string The padded encoded message (EM) of length $blockSize
+     *
+     * @throws RuntimeException When the message is too long for the block
+     */
+    private function oaepSha256Pad(string $message, int $blockSize): string
+    {
+        // SHA-256 output length.
+        $hLen   = 32;
+        $mLen   = strlen($message);
+        $maxLen = ($blockSize - (2 * $hLen) - 2);
+
+        // @codeCoverageIgnoreStart
+        if ($mLen > $maxLen) {
+            throw new RuntimeException('OAEP message too long: '.$mLen.' > '.$maxLen);
+        }
+
+        // @codeCoverageIgnoreEnd
+        // lHash = SHA-256("") — empty label, matching WebCrypto's default.
+        $lHash = hash('sha256', '', true);
+
+        // PS is (k - mLen - 2*hLen - 2) zero bytes; DB = lHash || PS || 0x01 || M.
+        $psLen     = ($blockSize - $mLen - (2 * $hLen) - 2);
+        $dataBlock = $lHash.str_repeat("\0", $psLen)."\x01".$message;
+
+        $seed     = random_bytes($hLen);
+        $dbMask   = $this->mgf1Sha256(seed: $seed, length: ($blockSize - $hLen - 1));
+        $maskedDb = $dataBlock ^ $dbMask;
+
+        $seedMask   = $this->mgf1Sha256(seed: $maskedDb, length: $hLen);
+        $maskedSeed = $seed ^ $seedMask;
+
+        // EM = 0x00 || maskedSeed || maskedDB.
+        return "\0".$maskedSeed.$maskedDb;
+    }//end oaepSha256Pad()
+
+    /**
+     * MGF1 mask generation function (RFC 8017 §B.2.1) using SHA-256.
+     *
+     * @param string $seed   The seed from which the mask is generated
+     * @param int    $length The intended length in bytes of the mask
+     *
+     * @return string The generated mask of $length bytes
+     */
+    private function mgf1Sha256(string $seed, int $length): string
+    {
+        $output  = '';
+        $counter = 0;
+
+        while (strlen($output) < $length) {
+            $output .= hash('sha256', $seed.pack('N', $counter), true);
+            $counter++;
+        }
+
+        return substr($output, 0, $length);
+    }//end mgf1Sha256()
 
     /**
      * Encrypt plaintext with AES-256-GCM using a raw 32-byte key.

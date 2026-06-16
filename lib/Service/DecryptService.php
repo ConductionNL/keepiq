@@ -77,11 +77,15 @@ class DecryptService
         for ($i = 0; $i < $chunkCount; $i++) {
             $block     = substr($raw, 4 + ($i * self::RSA_BLOCK_SIZE), self::RSA_BLOCK_SIZE);
             $decrypted = '';
-            $success   = openssl_private_decrypt(
+            // Raw RSA, then EME-OAEP-SHA256 unpad. PHP's
+            // openssl_private_decrypt(OPENSSL_PKCS1_OAEP_PADDING) hard-codes the
+            // OAEP/MGF1 hash to SHA-1; the ciphertext is SHA-256 OAEP (matching
+            // WebCrypto), so we strip the padding ourselves.
+            $success = openssl_private_decrypt(
                 data: $block,
                 decrypted_data: $decrypted,
                 private_key: $privateKey,
-                padding: OPENSSL_PKCS1_OAEP_PADDING
+                padding: OPENSSL_NO_PADDING
             );
 
             // @codeCoverageIgnoreStart
@@ -90,11 +94,90 @@ class DecryptService
             }
 
             // @codeCoverageIgnoreEnd
-            $plaintext .= $decrypted;
-        }
+            $plaintext .= $this->oaepSha256Unpad(encoded: $decrypted, blockSize: self::RSA_BLOCK_SIZE);
+        }//end for
 
         return $plaintext;
     }//end rsaDecrypt()
+
+    /**
+     * Remove EME-OAEP padding (RFC 8017 §7.1.2) with SHA-256 as both the label
+     * hash and the MGF1 hash, recovering the original message from a raw-RSA
+     * decrypted block.
+     *
+     * @param string $encoded   The raw-decrypted encoded message (EM), length blockSize
+     * @param int    $blockSize The RSA modulus size in bytes (k)
+     *
+     * @return string The recovered message
+     *
+     * @throws DecryptionException When the OAEP structure is invalid
+     */
+    private function oaepSha256Unpad(string $encoded, int $blockSize): string
+    {
+        // SHA-256 output length.
+        $hLen = 32;
+
+        // @codeCoverageIgnoreStart
+        if (strlen($encoded) !== $blockSize || $encoded[0] !== "\0") {
+            throw new DecryptionException(message:'Invalid OAEP block');
+        }
+
+        // @codeCoverageIgnoreEnd
+        $maskedSeed = substr($encoded, 1, $hLen);
+        $maskedDb   = substr($encoded, 1 + $hLen);
+
+        $seedMask = $this->mgf1Sha256(seed: $maskedDb, length: $hLen);
+        $seed     = $maskedSeed ^ $seedMask;
+
+        $dbMask    = $this->mgf1Sha256(seed: $seed, length: ($blockSize - $hLen - 1));
+        $dataBlock = $maskedDb ^ $dbMask;
+
+        // DB = lHash' || PS || 0x01 || M. Verify lHash and locate the 0x01 marker.
+        $lHash = hash('sha256', '', true);
+
+        // @codeCoverageIgnoreStart
+        if (hash_equals($lHash, substr($dataBlock, 0, $hLen)) === false) {
+            throw new DecryptionException(message:'OAEP label hash mismatch');
+        }
+
+        // @codeCoverageIgnoreEnd
+        $rest      = substr($dataBlock, $hLen);
+        $markerPos = strpos($rest, "\x01");
+
+        // @codeCoverageIgnoreStart
+        if ($markerPos === false) {
+            throw new DecryptionException(message:'OAEP marker not found');
+        }
+
+        // PS must be all-zero up to the marker.
+        if (substr($rest, 0, $markerPos) !== str_repeat("\0", $markerPos)) {
+            throw new DecryptionException(message:'OAEP padding string is non-zero');
+        }
+
+        // @codeCoverageIgnoreEnd
+        return substr($rest, $markerPos + 1);
+    }//end oaepSha256Unpad()
+
+    /**
+     * MGF1 mask generation function (RFC 8017 §B.2.1) using SHA-256.
+     *
+     * @param string $seed   The seed from which the mask is generated
+     * @param int    $length The intended length in bytes of the mask
+     *
+     * @return string The generated mask of $length bytes
+     */
+    private function mgf1Sha256(string $seed, int $length): string
+    {
+        $output  = '';
+        $counter = 0;
+
+        while (strlen($output) < $length) {
+            $output .= hash('sha256', $seed.pack('N', $counter), true);
+            $counter++;
+        }
+
+        return substr($output, 0, $length);
+    }//end mgf1Sha256()
 
     /**
      * Decrypt AES-256-GCM envelope with a raw 32-byte key.

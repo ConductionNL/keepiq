@@ -26,7 +26,11 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
@@ -54,8 +58,23 @@ class EncryptionSuiteService
         private IAppConfig $appConfig,
         private IUserManager $userManager,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher = null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create an EncryptionSuite for a user or application.
@@ -100,6 +119,59 @@ class EncryptionSuiteService
     }//end createSuite()
 
     /**
+     * Provision an EncryptionSuite for a registered application.
+     *
+     * The application supplies its public key via a PKCS#10 CSR; the
+     * private key never leaves the application's possession, so the
+     * stored `private_key` blob is intentionally empty (applications
+     * decrypt server-issued ciphertext with their own private key).
+     *
+     * The CSR is parsed via OpenSSL, the public key extracted as PEM,
+     * and the public key is then signed by the active CA intermediate
+     * via `createSuite()`. The resulting suite is keyed to
+     * `owner_type=application` / `owner_id=$applicationId`.
+     *
+     * @param string $applicationId The Application ID
+     * @param string $csrPem        The PEM-encoded PKCS#10 CSR
+     *
+     * @return EncryptionSuite
+     *
+     * @throws RuntimeException When the CSR's public key cannot be extracted.
+     *
+     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
+     */
+    public function provisionForApplication(string $applicationId, string $csrPem): EncryptionSuite
+    {
+        if ($applicationId === '') {
+            throw new InvalidArgumentException('applicationId is required');
+        }
+
+        if ($csrPem === '') {
+            throw new InvalidArgumentException('csrPem is required');
+        }
+
+        $publicKeyResource = @openssl_csr_get_public_key($csrPem);
+        if ($publicKeyResource === false) {
+            throw new RuntimeException('Could not extract public key from CSR');
+        }
+
+        $details = openssl_pkey_get_details($publicKeyResource);
+        if ($details === false || isset($details['key']) === false) {
+            throw new RuntimeException('Public key details unreadable from CSR');
+        }
+
+        $publicKeyPem = (string) $details['key'];
+
+        return $this->createSuite(
+            ownerType: 'application',
+            ownerId: $applicationId,
+            publicKeyPem: $publicKeyPem,
+            // Applications hold their own private key — server stores no envelope.
+            encryptedPrivateKey: '',
+        );
+    }//end provisionForApplication()
+
+    /**
      * Revoke an EncryptionSuite.
      *
      * @param string $id        The suite ID
@@ -128,6 +200,30 @@ class EncryptionSuiteService
         $this->mapper->update($suite);
 
         $this->logger->info("Doriath: EncryptionSuite {$id} revoked by {$revokedBy}: {$reason}");
+
+        // implement-user-sharing §10.3 — dispatch a revocation event so
+        // EncryptionSuiteRevokedListener can cascade share-target
+        // cleanup and promote temporary delegations to permanent.
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatchTyped(
+                new EncryptionSuiteRevokedEvent(
+                    suiteId: $id,
+                    ownerType: $suite->getOwnerType(),
+                    ownerId: $suite->getOwnerId(),
+                    revokedBy: $revokedBy,
+                )
+            );
+        }
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $revokedBy,
+                eventType: AuditEventTypes::SUITE_REVOKED,
+                objectType: 'suite',
+                objectId: $id,
+                metadata: ['reason' => $reason],
+            )
+        );
 
         return $suite;
     }//end revokeSuite()
@@ -180,6 +276,15 @@ class EncryptionSuiteService
 
         $this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $reinstatedBy,
+                eventType: AuditEventTypes::SUITE_REINSTATED,
+                objectType: 'suite',
+                objectId: $id,
+            )
+        );
+
         return $suite;
     }//end reinstateSuite()
 
@@ -208,6 +313,16 @@ class EncryptionSuiteService
         $this->mapper->update($suite);
 
         $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
+
+        $this->dispatchAudit(
+            AuditEvent::forUser(
+                actorId: $compromisedBy,
+                eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
+                objectType: 'suite',
+                objectId: $id,
+            )
+        );
+
         return $suite;
     }//end markCompromised()
 

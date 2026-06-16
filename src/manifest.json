@@ -11,10 +11,24 @@
 			"order": 10
 		},
 		{
+			"id": "Vault",
+			"label": "Vault",
+			"icon": "icon-password",
+			"route": "SecretList",
+			"order": 20
+		},
+		{
+			"id": "ApplicationsMenu",
+			"label": "Applications",
+			"icon": "icon-category-integration",
+			"route": "ApplicationRegister",
+			"order": 30
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
-			"href": "https://conduction.nl",
+			"href": "https://doriath.conduction.nl",
 			"section": "footer",
 			"order": 80
 		},
@@ -27,12 +41,36 @@
 			"order": 85
 		},
 		{
+			"id": "MyActivityMenu",
+			"label": "My activity",
+			"icon": "icon-history",
+			"route": "PersonalActivity",
+			"section": "footer",
+			"order": 86
+		},
+		{
+			"id": "PasswordHealthMenu",
+			"label": "Password health",
+			"icon": "icon-checkmark",
+			"route": "PasswordHealth",
+			"section": "footer",
+			"order": 87
+		},
+		{
 			"id": "LockVault",
 			"label": "Lock vault",
 			"icon": "icon-password",
 			"route": "Lock",
 			"section": "settings",
 			"order": 90
+		},
+		{
+			"id": "UserSettings",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"action": "user-settings",
+			"section": "settings",
+			"order": 99
 		}
 	],
 	"pages": [
@@ -41,7 +79,9 @@
 			"route": "/",
 			"type": "dashboard",
 			"title": "Dashboard",
-			"config": {},
+			"config": {
+				"documentationUrl": "https://doriath.conduction.nl"
+			},
 			"widgets": [
 				{
 					"widgetKey": "stats-block",
@@ -141,12 +181,84 @@
 			}
 		},
 		{
+			"id": "PersonalActivity",
+			"route": "/my-activity",
+			"type": "custom",
+			"title": "My activity",
+			"component": "PersonalActivityView",
+			"_note": "The session user's own audit-trail entries (add-secret-audit-trail §5.3). type:\"custom\" — a simple actor-scoped feed view, no built-in page type models it."
+		},
+		{
+			"id": "PasswordHealth",
+			"route": "/password-health",
+			"type": "custom",
+			"title": "Password health",
+			"component": "HealthReportView",
+			"_note": "Client-side vault health report (password-health). type:\"custom\" — the analysis runs in-browser over the unlocked vault; no built-in page type models a memory-only analysis surface."
+		},
+		{
 			"id": "Lock",
 			"route": "/lock",
 			"type": "custom",
 			"title": "Unlock Doriath",
 			"component": "LockScreen",
 			"_note": "Master-password setup + unlock flow. Cannot use a built-in page type because the lock screen owns its own full-page layout (no app nav / header / sidebar) and gates router navigation via App.vue's lock-redirect watcher. Stays type:\"custom\" until the lib gains a dedicated unlock-page primitive."
+		},
+		{
+			"id": "SecretList",
+			"route": "/secrets",
+			"type": "custom",
+			"title": "Vault",
+			"component": "SecretList",
+			"_note": "Main vault: folder sidebar + searchable/sortable/paginated secret list. type:\"custom\" because it owns a bespoke two-pane layout and on-demand client-side decryption that no built-in page type models yet."
+		},
+		{
+			"id": "SecretListFolder",
+			"route": "/folders/:folderId",
+			"type": "custom",
+			"title": "Vault",
+			"component": "SecretList",
+			"_note": "Same vault view filtered to a folder (folderId route param)."
+		},
+		{
+			"id": "SecretDetail",
+			"route": "/secrets/:id",
+			"type": "custom",
+			"title": "Secret",
+			"component": "SecretDetail",
+			"_note": "Secret detail with type-specific fields, decrypted client-side; show/hide toggle keeps the key masked until revealed."
+		},
+		{
+			"id": "ApplicationRegister",
+			"route": "/applications",
+			"type": "custom",
+			"title": "Applications",
+			"component": "ApplicationRegisterView",
+			"_note": "Developer-facing app registration page. Owner sees their own apps + can register new ones; admin queue lives on AdminApplicationsView under settings."
+		},
+		{
+			"id": "ApplicationDetail",
+			"route": "/applications/:id",
+			"type": "custom",
+			"title": "Application",
+			"component": "ApplicationDetail",
+			"_note": "Per-application detail page. Shows metadata, EncryptionSuite info, application-attributed secrets list, and the write-secret-for-app dialog. Owner sees own + active; admin sees all (server enforces)."
+		},
+		{
+			"id": "SecretRequestFill",
+			"route": "/share/request/:token",
+			"type": "custom",
+			"title": "Fill in secret",
+			"component": "SecretRequestFill",
+			"_note": "Public fill-in page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the flow without a Nextcloud account; the controller runs as #[PublicPage]."
+		},
+		{
+			"id": "LinkShareAccess",
+			"route": "/share/link/:token",
+			"type": "custom",
+			"title": "Shared secret",
+			"component": "LinkShareAccess",
+			"_note": "Public link-share access page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the password-protected flow without a Nextcloud account; the LinkShareAccessController endpoints run as #[PublicPage]. Implements the two-phase recipient protocol: Phase 1 fetches the ciphertext + Argon2id salt; Phase 2 confirms a successful client-side decrypt so the server can increment the usage count and auto-delete on cap."
 		}
 	]
 }

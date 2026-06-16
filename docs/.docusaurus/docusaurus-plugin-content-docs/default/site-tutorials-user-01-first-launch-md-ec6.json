@@ -1,0 +1,29 @@
+{
+  "id": "tutorials/user/first-launch",
+  "title": "Open Doriath for the first time",
+  "description": "Open Doriath, create your first vault entry, and confirm the encryption back end is connected.",
+  "source": "@site/tutorials/user/01-first-launch.md",
+  "sourceDirName": "tutorials/user",
+  "slug": "/tutorials/user/first-launch",
+  "permalink": "/docs/tutorials/user/first-launch",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/tutorials/user/01-first-launch.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1,
+    "title": "Open Doriath for the first time",
+    "description": "Open Doriath, create your first vault entry, and confirm the encryption back end is connected."
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "User guide",
+    "permalink": "/docs/category/user-guide"
+  },
+  "next": {
+    "title": "Admin guide",
+    "permalink": "/docs/category/admin-guide"
+  }
+}

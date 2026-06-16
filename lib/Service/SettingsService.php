@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -46,9 +48,74 @@ class SettingsService
     ];
 
     /**
+     * Admin-scoped app-config keys (implement-dashboard-settings §1.2).
+     *
+     * @var array<string,string> key => type (int|string|bool)
+     */
+    private const ADMIN_CONFIG_KEYS = [
+        'min_password_length'       => 'int',
+        'min_password_score'        => 'int',
+        'default_session_timeout'   => 'string',
+        'ca_auto_renew_enabled'     => 'bool',
+        'audit_retention_days'      => 'int',
+        'breach_check_enabled'      => 'bool',
+    ];
+
+    /**
+     * User-scoped preference keys (implement-dashboard-settings §1.2).
+     *
+     * @var array<string,string> key => default-value
+     */
+    private const USER_PREF_KEYS = [
+        'session_timeout'      => '',
+        'notify_shares'        => '1',
+        'notify_requests'      => '1',
+        'notify_group_shares'  => '1',
+        'notify_security'      => '1',
+        'default_secret_type'  => 'login',
+        'default_view'         => 'list',
+        // Password-health staleness threshold in days: '90' | '180' | '365' |
+        // 'never' (password-health §1.6, default 365). Per-user opt-in for breach
+        // checking; UI is shown only when the admin gate is also on.
+        'health_staleness_days' => '365',
+        'breach_check_opt_in'  => '0',
+    ];
+
+    /**
+     * Permitted password-health staleness threshold values (password-health §1.6).
+     *
+     * @var string[]
+     */
+    private const VALID_STALENESS_DAYS = ['90', '180', '365', 'never'];
+
+    /**
+     * Admin default bounds for validation.
+     */
+    private const MIN_PASSWORD_LENGTH_MIN = 12;
+    private const MIN_PASSWORD_LENGTH_MAX = 20;
+    private const VALID_PASSWORD_SCORES   = [3, 4];
+    private const VALID_SESSION_TIMEOUTS  = ['session', '10min', '30min'];
+
+    /**
+     * Default audit-log retention window in days (add-secret-audit-trail §4.2).
+     *
+     * @var int
+     */
+    public const AUDIT_RETENTION_DEFAULT = 365;
+
+    /**
+     * Hard minimum audit-log retention window — below this the trail cannot
+     * serve its incident-investigation purpose, so it is rejected (design D5).
+     *
+     * @var int
+     */
+    public const AUDIT_RETENTION_MIN = 30;
+
+    /**
      * Constructor for the SettingsService.
      *
      * @param IAppConfig         $appConfig    The app config interface
+     * @param IConfig            $config       The per-user config interface
      * @param IAppManager        $appManager   The app manager
      * @param ContainerInterface $container    The container
      * @param IGroupManager      $groupManager The group manager
@@ -59,6 +126,7 @@ class SettingsService
      */
     public function __construct(
         private IAppConfig $appConfig,
+        private IConfig $config,
         private IAppManager $appManager,
         private ContainerInterface $container,
         private IGroupManager $groupManager,
@@ -66,6 +134,179 @@ class SettingsService
         private LoggerInterface $logger,
     ) {
     }//end __construct()
+
+    /**
+     * Get admin-scoped settings (implement-dashboard-settings §1.3).
+     *
+     * @return array<string,mixed>
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.3
+     */
+    public function getAdminSettings(): array
+    {
+        $appId = Application::APP_ID;
+        $settings = [
+            'min_password_length'     => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
+            'min_password_score'      => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
+            'default_session_timeout' => $this->appConfig->getValueString($appId, 'default_session_timeout', 'session'),
+            'ca_auto_renew_enabled'   => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
+            'audit_retention_days'    => $this->appConfig->getValueInt(
+                $appId,
+                'audit_retention_days',
+                self::AUDIT_RETENTION_DEFAULT
+            ),
+            'breach_check_enabled'    => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+        ];
+
+        // Best-effort CA status; never blocks if the service is unavailable.
+        try {
+            $caService = $this->container->get('OCA\Doriath\Service\CertificateAuthorityService');
+            if (method_exists($caService, 'getStatus') === true) {
+                $settings['ca_status'] = $caService->getStatus();
+            }
+        } catch (Throwable $e) {
+            $this->logger->debug('Doriath: CA status unavailable: '.$e->getMessage());
+            $settings['ca_status'] = ['status' => 'unknown'];
+        }
+
+        return $settings;
+    }//end getAdminSettings()
+
+    /**
+     * Update admin-scoped settings with validation (implement-dashboard-settings §1.4).
+     *
+     * @param array<string,mixed> $data The input data
+     *
+     * @return array<string,mixed> The updated settings
+     *
+     * @throws InvalidArgumentException On out-of-bounds values.
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.4
+     */
+    public function updateAdminSettings(array $data): array
+    {
+        $appId = Application::APP_ID;
+
+        if (isset($data['min_password_length']) === true) {
+            $length = (int) $data['min_password_length'];
+            if ($length < self::MIN_PASSWORD_LENGTH_MIN || $length > self::MIN_PASSWORD_LENGTH_MAX) {
+                throw new InvalidArgumentException(
+                    'min_password_length must be between '.self::MIN_PASSWORD_LENGTH_MIN
+                    .' and '.self::MIN_PASSWORD_LENGTH_MAX
+                );
+            }
+
+            $this->appConfig->setValueInt($appId, 'min_password_length', $length);
+        }
+
+        if (isset($data['min_password_score']) === true) {
+            $score = (int) $data['min_password_score'];
+            if (in_array($score, self::VALID_PASSWORD_SCORES, true) === false) {
+                throw new InvalidArgumentException('min_password_score must be 3 or 4');
+            }
+
+            $this->appConfig->setValueInt($appId, 'min_password_score', $score);
+        }
+
+        if (isset($data['default_session_timeout']) === true) {
+            $timeout = (string) $data['default_session_timeout'];
+            if (in_array($timeout, self::VALID_SESSION_TIMEOUTS, true) === false) {
+                throw new InvalidArgumentException(
+                    'default_session_timeout must be one of: '.implode(', ', self::VALID_SESSION_TIMEOUTS)
+                );
+            }
+
+            $this->appConfig->setValueString($appId, 'default_session_timeout', $timeout);
+        }
+
+        if (isset($data['ca_auto_renew_enabled']) === true) {
+            $this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool) $data['ca_auto_renew_enabled']);
+        }
+
+        if (isset($data['audit_retention_days']) === true) {
+            $days = (int) $data['audit_retention_days'];
+            if ($days < self::AUDIT_RETENTION_MIN) {
+                throw new InvalidArgumentException(
+                    'audit_retention_days must be at least '.self::AUDIT_RETENTION_MIN
+                    .' days — below that the audit trail cannot serve incident investigation'
+                );
+            }
+
+            $this->appConfig->setValueInt($appId, 'audit_retention_days', $days);
+        }
+
+        if (isset($data['breach_check_enabled']) === true) {
+            $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
+        }
+
+        return $this->getAdminSettings();
+    }//end updateAdminSettings()
+
+    /**
+     * Get the per-user preferences (implement-dashboard-settings §1.5).
+     *
+     * @param string $userId The user ID
+     *
+     * @return array<string,mixed>
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.5
+     */
+    public function getUserPreferences(string $userId): array
+    {
+        $appId = Application::APP_ID;
+        $adminDefault = $this->appConfig->getValueString($appId, 'default_session_timeout', 'session');
+
+        $prefs = [];
+        foreach (self::USER_PREF_KEYS as $key => $default) {
+            if ($key === 'session_timeout') {
+                $prefs[$key] = $this->config->getUserValue($userId, $appId, $key, $adminDefault);
+                continue;
+            }
+
+            $prefs[$key] = $this->config->getUserValue($userId, $appId, $key, $default);
+        }
+
+        return $prefs;
+    }//end getUserPreferences()
+
+    /**
+     * Update per-user preferences (whitelisted; implement-dashboard-settings §1.6).
+     *
+     * @param string              $userId The user ID
+     * @param array<string,mixed> $data   The input data
+     *
+     * @return array<string,mixed> The updated preferences
+     *
+     * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.6
+     */
+    public function updateUserPreferences(string $userId, array $data): array
+    {
+        $appId = Application::APP_ID;
+
+        foreach ($data as $key => $value) {
+            if (array_key_exists($key, self::USER_PREF_KEYS) === false) {
+                continue;
+            }
+
+            if (is_bool($value) === true) {
+                $value = ($value === true) ? '1' : '0';
+            }
+
+            // Reject an out-of-set staleness threshold so the client cannot store
+            // an arbitrary "never-stale" sentinel (password-health §1.6).
+            if ($key === 'health_staleness_days'
+                && in_array((string) $value, self::VALID_STALENESS_DAYS, true) === false
+            ) {
+                throw new InvalidArgumentException(
+                    'health_staleness_days must be one of: '.implode(', ', self::VALID_STALENESS_DAYS)
+                );
+            }
+
+            $this->config->setUserValue($userId, $appId, $key, (string) $value);
+        }
+
+        return $this->getUserPreferences($userId);
+    }//end updateUserPreferences()
 
     /**
      * Check whether OpenRegister is installed and available.
@@ -227,21 +468,27 @@ class SettingsService
     private static function deepMergeConfig(array $base, array $overlay): array
     {
         foreach ($overlay as $key => $value) {
-            if (is_array($value) === true
+            $bothArrays = (is_array($value) === true
                 && isset($base[$key]) === true
-                && is_array($base[$key]) === true
-            ) {
-                $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
-                $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
-                if ($baseIsList === true && $overlayIsList === true) {
-                    $base[$key] = array_merge($base[$key], $value);
-                } else {
-                    $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
-                }
-            } else {
+                && is_array($base[$key]) === true);
+
+            if ($bothArrays === false) {
+                // Scalar (or new key): the overlay value wins.
                 $base[$key] = $value;
+                continue;
             }
-        }
+
+            $baseIsList    = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
+            $overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
+            if ($baseIsList === true && $overlayIsList === true) {
+                // Two lists: concatenate.
+                $base[$key] = array_merge($base[$key], $value);
+                continue;
+            }
+
+            // Two associative arrays: recurse.
+            $base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
+        }//end foreach
 
         return $base;
 

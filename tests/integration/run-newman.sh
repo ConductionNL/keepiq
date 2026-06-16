@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+#
+# Doriath API-contract test runner (Newman / Postman).
+#
+# Runs tests/integration/doriath.postman_collection.json against a live
+# Nextcloud instance serving the doriath (vault) app. The collection is
+# self-contained and idempotent: it creates the vault objects it needs (a
+# secret, a folder) and deletes them again in teardown.
+#
+# Usage:
+#   ./run-newman.sh                                  # defaults to localhost:8080, admin:admin
+#   BASE_URL=http://localhost:8080 ./run-newman.sh
+#   ADMIN_USER=admin ADMIN_PASS=admin ./run-newman.sh
+#
+# Uses a globally-installed `newman` if present, otherwise falls back to
+# `npx newman`. Runs are serialised via flock (when available) so concurrent
+# CI agents do not trip the Nextcloud brute-force protection.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+
+set -euo pipefail
+
+# Re-exec under an exclusive flock so parallel agents serialise.
+LOCK_FILE="/tmp/uiaudit-doriath.lock"
+if [ "${DORIATH_NEWMAN_LOCKED:-}" != "1" ] && command -v flock >/dev/null 2>&1; then
+  export DORIATH_NEWMAN_LOCKED=1
+  exec flock "${LOCK_FILE}" "$0" "$@"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COLLECTION="${SCRIPT_DIR}/doriath.postman_collection.json"
+
+BASE_URL="${BASE_URL:-http://localhost:8080}"
+ADMIN_USER="${ADMIN_USER:-admin}"
+ADMIN_PASS="${ADMIN_PASS:-admin}"
+
+# Authenticated requests use baseUrl; the authorization (no-auth) tests use a
+# DIFFERENT host alias so the session cookie that authenticated requests
+# establish (host-scoped) is never sent to them — keeping them genuinely
+# unauthenticated. Defaults to the 127.0.0.1 form of baseUrl.
+if [ -n "${NO_AUTH_BASE:-}" ]; then
+  NOAUTH_BASE="${NO_AUTH_BASE}"
+elif [[ "${BASE_URL}" == *"localhost"* ]]; then
+  NOAUTH_BASE="${BASE_URL/localhost/127.0.0.1}"
+else
+  NOAUTH_BASE="${BASE_URL/127.0.0.1/localhost}"
+fi
+
+if command -v newman >/dev/null 2>&1; then
+  NEWMAN=(newman)
+else
+  NEWMAN=(npx --yes newman)
+fi
+
+# --ignore-redirects: assert NC's 401/303 on unauthenticated requests directly
+# instead of following it to a 200 HTML login page (so authz tests are honest).
+"${NEWMAN[@]}" run "${COLLECTION}" \
+  --env-var "baseUrl=${BASE_URL}" \
+  --env-var "noAuthBase=${NOAUTH_BASE}" \
+  --env-var "adminUser=${ADMIN_USER}" \
+  --env-var "adminPass=${ADMIN_PASS}" \
+  --ignore-redirects \
+  --reporters cli \
+  --color on \
+  "$@"
+
+# Machine secret-store API contract (openconnector-secret-store-api).
+# The unauthenticated subset (discovery + token negatives + bearer-required)
+# always runs; the seeded machine flow runs only when SEEDED_APP_ID +
+# SEEDED_PRIVATE_KEY_PEM are provided (the openconnector-side CI supplies them).
+MACHINE_COLLECTION="${SCRIPT_DIR}/machine-secret-api.postman_collection.json"
+"${NEWMAN[@]}" run "${MACHINE_COLLECTION}" \
+  --env-var "baseUrl=${BASE_URL}" \
+  --env-var "noAuthBase=${NOAUTH_BASE}" \
+  --env-var "seededAppId=${SEEDED_APP_ID:-}" \
+  --env-var "seededPrivateKeyPem=${SEEDED_PRIVATE_KEY_PEM:-}" \
+  --env-var "seededSecretName=${SEEDED_SECRET_NAME:-zgw-api-token}" \
+  --ignore-redirects \
+  --reporters cli \
+  --color on \
+  "$@"

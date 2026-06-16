@@ -65,8 +65,20 @@ The system MUST allow anyone with the link and password to decrypt and retrieve 
 ### Requirement: Auto-deletion
 When the usage count reaches the usage limit, the link share and its encrypted snapshot MUST be automatically deleted.
 
+#### Scenario: Link share deleted at usage limit
+@e2e exclude Server-side lifecycle contract — auto-deletion at the usage limit is enforced on access; covered by PHPUnit, not browser-observable.
+- GIVEN a link share whose usage count has reached its usage limit
+- WHEN the next access attempt is processed
+- THEN the link share and its encrypted snapshot MUST be deleted
+
 ### Requirement: KDF for Snapshot Encryption
 The snapshot MUST be encrypted using AES-256 with a key derived from the link password via **Argon2id**. Argon2id is chosen over PBKDF2 for its memory-hardness, which significantly increases the cost of brute-force attacks against a captured snapshot.
+
+#### Scenario: Snapshot encrypted with Argon2id-derived key
+@e2e exclude Cryptographic contract — KDF and AES-256 wrapping are server/client-side primitives; covered by PHPUnit and vitest, not browser-observable.
+- GIVEN a link share is created for a secret
+- WHEN the snapshot is encrypted
+- THEN the encryption key MUST be derived from the link password via Argon2id and the snapshot MUST be encrypted with AES-256
 
 ### Requirement: Brute-Force Protection
 The system MUST rate-limit password attempts by token. After **5 consecutive failed password attempts** on a given token, the link share MUST be permanently deleted (same as reaching the usage limit). This is treated as a hostile access attempt.
@@ -78,13 +90,30 @@ The system MUST rate-limit password attempts by token. After **5 consecutive fai
 - AND subsequent requests with the same token MUST return a "not found" error
 
 ### Requirement: Snapshot Staleness (by design)
-A link share captures a snapshot of the secret at the moment of creation. If the original secret is updated after the link is created, the link continues to serve the snapshot value. This is intentional — the owner must revoke and re-create the link to share an updated value.
+A link share captures a snapshot of the secret at the moment of creation. If the original secret is updated after the link is created, the link MUST continue to serve the snapshot value. This is intentional — the owner must revoke and re-create the link to share an updated value.
+
+#### Scenario: Updated secret does not change the snapshot
+@e2e exclude By-design snapshot-immutability contract — the link serves the captured snapshot regardless of later secret edits; covered by PHPUnit, not browser-observable.
+- GIVEN a link share was created from a secret
+- WHEN the original secret is subsequently updated
+- THEN the link MUST continue to serve the original snapshot value until revoked and re-created
 
 ### Requirement: Multiple Concurrent Link Shares
-A secret MAY have multiple active link shares simultaneously. Each link has its own token, password, usage limit, and lifecycle. The owner can revoke any of them independently.
+A secret MAY have multiple active link shares simultaneously, and the system MUST treat each link independently. Each link has its own token, password, usage limit, and lifecycle, and the owner MUST be able to revoke any of them independently.
+
+#### Scenario: Concurrent links are independent
+- GIVEN a secret has more than one active link share
+- WHEN the owner revokes one of the link shares
+- THEN that link MUST become unusable
+- AND the other link shares MUST remain active with their own tokens, passwords, and usage limits
 
 ### Requirement: Manual revocation
 The secret owner MUST be able to revoke a link share before the usage limit is reached.
+
+#### Scenario: Owner revokes a link before the limit
+- GIVEN an active link share that has not reached its usage limit
+- WHEN the owner revokes it
+- THEN subsequent requests with that token MUST return a "not found" error
 
 ## User Stories
 

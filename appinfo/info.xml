@@ -34,7 +34,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.1.3</version>
+    <version>0.2.10</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Doriath</namespace>
@@ -68,18 +68,33 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <background-jobs>
         <job>OCA\Doriath\BackgroundJob\RenewIntermediateCertificate</job>
         <job>OCA\Doriath\BackgroundJob\CheckRootCertificateExpiry</job>
+        <job>OCA\Doriath\BackgroundJob\PurgeAuditLogJob</job>
     </background-jobs>
 
     <repair-steps>
         <install>
             <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
             <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentApplications</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecretRequests</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentLinkShares</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentShares</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecretDelegations</step>
         </install>
         <post-migration>
             <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
             <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentApplications</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecretRequests</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentLinkShares</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentShares</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecretDelegations</step>
         </post-migration>
     </repair-steps>
 

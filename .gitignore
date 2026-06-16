@@ -54,6 +54,10 @@ phpqa_output.log
 **/update*Settings*
 **/rebase*
 **/setup*
+# vitest harness setup MUST ship — re-allow it (the catch-all above was
+# intended for stray "setup.txt" / "setup-rebase" workspace artefacts).
+!tests/vitest/setup.js
+!tests/**/setup.js
 
 # Temporary test files that shouldn't be committed
 simple-solr-test.php
@@ -88,3 +92,11 @@ openspec/test-site-results/**/*.jpg
 openspec/test-site-results/**/*.jpeg
 openspec/test-site-results/**/*.gif
 openspec/test-site-results/**/*.webp
+
+# Playwright e2e runtime artefacts — never commit the cached session cookie
+# (.auth/admin.json) or the generated reports/results.
+/tests/e2e/.auth/
+/tests/e2e/playwright-report/
+/tests/e2e/test-results/
+/coverage-vitest/
+/coverage/

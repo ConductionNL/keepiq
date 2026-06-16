@@ -38,6 +38,31 @@ async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 	}
 }
 
+/**
+ * Returns true when the cached storageState still authenticates against NC,
+ * letting us skip a fresh (throttle-prone) login.
+ */
+async function cachedSessionValid(baseURL: string): Promise<boolean> {
+	if (!fs.existsSync(STORAGE_STATE)) {
+		return false
+	}
+	try {
+		const state = JSON.parse(fs.readFileSync(STORAGE_STATE, 'utf8'))
+		const ctx = await request.newContext({ baseURL, storageState: state })
+		try {
+			const res = await ctx.get('/ocs/v2.php/cloud/user?format=json', {
+				headers: { 'OCS-APIRequest': 'true' },
+				failOnStatusCode: false,
+			})
+			return res.status() === 200
+		} finally {
+			await ctx.dispose()
+		}
+	} catch {
+		return false
+	}
+}
+
 export default async function globalSetup(config: FullConfig): Promise<void> {
 	const baseURL = (config.projects[0]?.use?.baseURL as string | undefined)
 		?? process.env.NEXTCLOUD_URL
@@ -48,21 +73,52 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	await ensureNextcloudReachable(baseURL)
 	fs.mkdirSync(AUTH_DIR, { recursive: true })
 
+	// Reuse a still-valid cached session when possible. NC brute-force protection
+	// throttles repeated logins on a busy shared instance, so avoid re-logging in
+	// on every run: if the stored cookies still authenticate, skip the login flow.
+	if (await cachedSessionValid(baseURL)) {
+		return
+	}
+
 	const browser = await chromium.launch()
 	const context = await browser.newContext({ baseURL })
 	const page = await context.newPage()
 
-	await page.goto('/index.php/login')
-	await page.locator('input[name="user"]').fill(username)
-	await page.locator('input[name="password"]').fill(password)
-	await page.locator('button[type="submit"]').first().click()
-	await page.waitForSelector('#header, header.header', { timeout: 20_000 })
+	// The NC login form hydrates client-side and this shared dev instance can be
+	// sluggish (asset loads, brute-force throttling). Retry the whole login a few
+	// times with generous waits so a single slow hydrate doesn't fail every spec.
+	const MAX_ATTEMPTS = 4
+	let loggedIn = false
+	let lastErr: unknown
+	for (let attempt = 1; attempt <= MAX_ATTEMPTS && !loggedIn; attempt++) {
+		try {
+			await page.goto('/index.php/login', { waitUntil: 'domcontentloaded' })
+			const userField = page.locator('input[name="user"]')
+			await userField.waitFor({ state: 'visible', timeout: 40_000 })
+			await userField.fill(username)
+			await page.locator('input[name="password"]').fill(password)
+			await page.locator('button[type="submit"]').first().click()
+			await page.waitForSelector('#header, header.header', { state: 'attached', timeout: 40_000 })
+			// Give the redirect a moment to settle, then confirm we left /login.
+			await page.waitForLoadState('domcontentloaded').catch(() => {})
+			if (!/\/login(\?|$|\/)/.test(page.url())) {
+				loggedIn = true
+			} else {
+				lastErr = new Error(`still on ${page.url()} after submit`)
+			}
+		} catch (e) {
+			lastErr = e
+		}
+		if (!loggedIn && attempt < MAX_ATTEMPTS) {
+			await page.waitForTimeout(5_000 * attempt)
+		}
+	}
 
-	const currentUrl = page.url()
-	if (/\/login(\?|$|\/)/.test(currentUrl)) {
+	if (!loggedIn) {
 		throw new Error(
-			`Login appears to have failed — still on ${currentUrl}. `
-			+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).',
+			`Login failed after ${MAX_ATTEMPTS} attempts (last: ${String(lastErr)}). `
+			+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin) and that the '
+			+ 'instance is reachable / not brute-force throttled.',
 		)
 	}
 
