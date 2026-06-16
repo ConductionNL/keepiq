@@ -620,36 +620,30 @@ class CertificateAuthorityService
                 }
 
                 // @codeCoverageIgnoreEnd
-                // Preserve the original CN from the existing certificate.
-                $certData   = openssl_x509_parse(certificate: $oldCert);
-                $originalCn = $certData['subject']['CN'] ?? $suite->getOwnerId();
-
-                // Suppress the "Supplied key param is a public key" warning —
-                // this is intentional: during re-signing we only have the public key
-                // (the private key is AES-encrypted and only the user's browser can decrypt it).
-                // The CSR is created with the public key embedded, which is correct for re-signing.
-                $csr     = @openssl_csr_new(
-                    distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $originalCn]),
-                    private_key: $pubKey,
-                    options: ['digest_alg' => 'sha256']
-                );
-                $newCert = openssl_csr_sign(
-                    csr: $csr,
-                    ca_certificate: $intermediateCert,
-                    private_key: $intermediateKey,
-                    days: 365,
-                    options: ['digest_alg' => 'sha256'],
-                    serial: random_int(1, PHP_INT_MAX)
+                $newCertPem = $this->resignPreservingPublicKey(
+                    oldCert: $oldCert,
+                    fallbackCn: $suite->getOwnerId(),
+                    intermediateCert: $intermediateCert,
+                    intermediateKey: $intermediateKey,
                 );
 
-                // @codeCoverageIgnoreStart
-                if ($newCert === false) {
-                    $this->logger->warning("Doriath: Failed to re-sign suite {$suite->getId()}");
+                // A null result means it could not mint a certificate that
+                // carries the suite's ORIGINAL public key. In
+                // the zero-knowledge model the server never holds the suite's
+                // private key, so it must never replace the certificate with one
+                // bound to a different key pair — doing so silently makes every
+                // value the browser encrypts under the new certificate
+                // undecryptable with the user's wrapped private key (the
+                // read-after-write decrypt failure). When we can't preserve the
+                // key, we keep the existing certificate untouched.
+                if ($newCertPem === null) {
+                    $this->logger->warning(
+                        "Doriath: kept existing certificate for suite {$suite->getId()} — "
+                        .'could not re-sign while preserving its public key'
+                    );
                     continue;
                 }
 
-                // @codeCoverageIgnoreEnd
-                openssl_x509_export(certificate: $newCert, output: $newCertPem);
                 $suite->setCertificate($newCertPem);
                 $this->suiteMapper->update($suite);
                 $total++;
@@ -661,6 +655,101 @@ class CertificateAuthorityService
 
         return $total;
     }//end resignAllActiveSuites()
+
+    /**
+     * Re-sign a suite certificate while preserving its original public key.
+     *
+     * Re-signing exists to chain a suite certificate to a freshly-renewed
+     * intermediate. It MUST keep the suite's existing public key: the matching
+     * private key is AES-wrapped and only the user's browser can decrypt it, so
+     * the server cannot mint a new key pair for the suite.
+     *
+     * PHP's openssl_csr_new() cannot build a CSR from a public-only key — given
+     * one it SILENTLY generates a throwaway key pair, and the issued certificate
+     * then carries a public key nobody holds the private half of. Any value the
+     * browser later encrypts under that certificate is undecryptable with the
+     * user's wrapped private key (the read-after-write decrypt failure). This
+     * helper performs the re-sign and then verifies the issued certificate still
+     * carries the ORIGINAL public key, returning null when it does not so the
+     * caller keeps the existing (correct) certificate.
+     *
+     * @param string                $oldCert          The current PEM certificate to re-sign
+     * @param string                $fallbackCn       CN to use when the old cert has none
+     * @param string                $intermediateCert The signing intermediate certificate (PEM)
+     * @param \OpenSSLAsymmetricKey $intermediateKey  The intermediate private key
+     *
+     * @return string|null The new PEM certificate, or null when the public key
+     *   could not be preserved.
+     *
+     * @SuppressWarnings(PHPMD.UndefinedVariable)    openssl_x509_export populates $newCertPem via
+     *   by-reference output param — PHPMD cannot trace by-ref semantics.
+     * @SuppressWarnings(PHPMD.ErrorControlOperator) The @ on openssl_csr_new is intentional:
+     *   PHP emits a "Supplied key param is a public key" warning when passing a public-only
+     *   key during re-signing; we own the intent and silence the noise rather than suppressing
+     *   all PHP errors globally.
+     */
+    private function resignPreservingPublicKey(
+        string $oldCert,
+        string $fallbackCn,
+        string $intermediateCert,
+        \OpenSSLAsymmetricKey $intermediateKey,
+    ): ?string {
+        $oldPub = openssl_pkey_get_public(public_key: $oldCert);
+        if ($oldPub === false) {
+            return null;
+        }
+
+        $oldDetails = openssl_pkey_get_details(key: $oldPub);
+        if ($oldDetails === false || isset($oldDetails['rsa']['n']) === false) {
+            return null;
+        }
+
+        // Preserve the original CN from the existing certificate.
+        $certData   = openssl_x509_parse(certificate: $oldCert);
+        $originalCn = $certData['subject']['CN'] ?? $fallbackCn;
+
+        $csr = @openssl_csr_new(
+            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $originalCn]),
+            private_key: $oldPub,
+            options: ['digest_alg' => 'sha256']
+        );
+        if ($csr === false) {
+            return null;
+        }
+
+        $newCert = openssl_csr_sign(
+            csr: $csr,
+            ca_certificate: $intermediateCert,
+            private_key: $intermediateKey,
+            days: 365,
+            options: ['digest_alg' => 'sha256'],
+            serial: random_int(1, PHP_INT_MAX)
+        );
+        if ($newCert === false) {
+            return null;
+        }
+
+        // Guard the zero-knowledge invariant: the issued certificate MUST carry
+        // the suite's original public key. If openssl_csr_new() invented a new
+        // key pair (the public-only-key footgun), the modulus differs — reject
+        // the certificate so the caller keeps the correct existing one.
+        $newPub = openssl_pkey_get_public(public_key: $newCert);
+        if ($newPub === false) {
+            return null;
+        }
+
+        $newDetails = openssl_pkey_get_details(key: $newPub);
+        if ($newDetails === false || isset($newDetails['rsa']['n']) === false) {
+            return null;
+        }
+
+        if (hash_equals($oldDetails['rsa']['n'], $newDetails['rsa']['n']) === false) {
+            return null;
+        }
+
+        openssl_x509_export(certificate: $newCert, output: $newCertPem);
+        return $newCertPem;
+    }//end resignPreservingPublicKey()
 
     /**
      * Set the CA status to degraded.
