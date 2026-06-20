@@ -100,6 +100,7 @@ class JwtAuthService
      * @param EncryptionSuiteMapper $suiteMapper       The encryption-suite mapper
      * @param ICacheFactory         $cacheFactory      The cache factory
      * @param LoggerInterface       $logger            The logger
+     * @param IEventDispatcher|null $eventDispatcher   The event dispatcher
      *
      * @return void
      */
@@ -235,7 +236,7 @@ class JwtAuthService
             throw new RuntimeException(message: 'Application has no certificate');
         }
 
-        $jwk = $this->buildJwkFromCertificate($certificate);
+        $jwk = $this->buildJwkFromCertificate(pemCertificate: $certificate);
 
         // RS256 primary, ES256 fallback.
         $algorithmManager = new AlgorithmManager([new RS256(), new ES256()]);
@@ -254,7 +255,7 @@ class JwtAuthService
         $tokenCache->set($accessToken, $application->getId(), self::ACCESS_TOKEN_TTL);
 
         $this->dispatchAudit(
-            AuditEvent::forApplication(
+            event: AuditEvent::forApplication(
                 actorId: $application->getId(),
                 eventType: AuditEventTypes::APPLICATION_TOKEN_ISSUED,
                 objectType: 'application',
