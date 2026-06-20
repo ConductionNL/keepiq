@@ -109,7 +109,7 @@ class AccountDeletionService
      *
      * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
      */
-    public function deleteAllFor(string $userId, string $trigger = 'user-deleted'): DeletionReport
+    public function deleteAllFor(string $userId, string $trigger='user-deleted'): DeletionReport
     {
         $report = new DeletionReport();
 
@@ -158,9 +158,9 @@ class AccountDeletionService
      * uninterrupted. Transferred secrets are excluded from the later own-secret
      * hard delete because the owner_id no longer matches the departing user.
      *
-     * @param string                             $userId       The departing user
-     * @param array<int,\OCA\Doriath\Db\Secret>  $ownedSecrets The user's secrets
-     * @param DeletionReport                      $report       The running report
+     * @param string                            $userId       The departing user
+     * @param array<int,\OCA\Doriath\Db\Secret> $ownedSecrets The user's secrets
+     * @param DeletionReport                    $report       The running report
      *
      * @return void
      */
@@ -201,7 +201,7 @@ class AccountDeletionService
      * the same way (their per-member ShareTarget rows carry the groupShareId).
      *
      * @param array<int,\OCA\Doriath\Db\Secret> $ownedSecrets The user's secrets
-     * @param DeletionReport                     $report       The running report
+     * @param DeletionReport                    $report       The running report
      *
      * @return void
      */

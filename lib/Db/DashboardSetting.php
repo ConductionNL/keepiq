@@ -45,6 +45,7 @@ use OCP\AppFramework\Db\Entity;
  */
 class DashboardSetting extends Entity implements JsonSerializable
 {
+
     /**
      * The Nextcloud user this setting belongs to.
      *

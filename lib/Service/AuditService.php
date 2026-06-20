@@ -72,7 +72,7 @@ class AuditService
      */
     public function record(AuditEvent $event): AuditEntry
     {
-        $metadata = $this->sanitiseMetadata($event->getEventType(), $event->getMetadata());
+        $metadata = $this->sanitiseMetadata(eventType: $event->getEventType(), metadata: $event->getMetadata());
 
         $entry = new AuditEntry();
         $entry->setOccurredAt(new DateTime());
@@ -81,7 +81,7 @@ class AuditService
         $entry->setEventType($event->getEventType());
         $entry->setObjectType($event->getObjectType());
         $entry->setObjectId($event->getObjectId());
-        $entry->setObjectName($this->truncate($event->getObjectName(), 255));
+        $entry->setObjectName($this->truncate(value: $event->getObjectName(), maxLength: 255));
 
         if (count($metadata) > 0) {
             $entry->setMetadata((string) json_encode($metadata));
@@ -104,7 +104,7 @@ class AuditService
      */
     private function sanitiseMetadata(string $eventType, array $metadata): array
     {
-        $this->assertNoForbiddenKeys($metadata);
+        $this->assertNoForbiddenKeys(data: $metadata);
 
         $allowed = AuditEventTypes::whitelist()[$eventType] ?? [];
 
@@ -134,12 +134,12 @@ class AuditService
                 && in_array($key, AuditEventTypes::FORBIDDEN_KEYS, true) === true
             ) {
                 throw new AuditForbiddenMetadataException(
-                    'Audit metadata may not contain the forbidden key "'.$key.'"'
+                    message: 'Audit metadata may not contain the forbidden key "'.$key.'"'
                 );
             }
 
             if (is_array($value) === true) {
-                $this->assertNoForbiddenKeys($value);
+                $this->assertNoForbiddenKeys(data: $value);
             }
         }
     }//end assertNoForbiddenKeys()
@@ -308,6 +308,6 @@ class AuditService
 
                 $this->mapper->rewriteMetadata((int) $entry->getId(), $json);
             }
-        }
+        }//end foreach
     }//end anonymizeUser()
 }//end class

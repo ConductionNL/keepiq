@@ -51,12 +51,11 @@ class DiscoveryController extends Controller
      */
     public const API_VERSION = 1;
 
-
     /**
      * Constructor for DiscoveryController.
      *
-     * @param IRequest        $request      The HTTP request
-     * @param IURLGenerator   $urlGenerator The URL generator
+     * @param IRequest      $request      The HTTP request
+     * @param IURLGenerator $urlGenerator The URL generator
      *
      * @return void
      */
@@ -66,7 +65,6 @@ class DiscoveryController extends Controller
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
-
 
     /**
      * Return the machine API discovery document.
@@ -91,16 +89,16 @@ class DiscoveryController extends Controller
 
         return new JSONResponse(
             data: [
-                'apiVersion' => self::API_VERSION,
-                'tokenEndpoint' => $tokenEndpoint,
-                'grantType'  => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                'assertion'  => [
+                'apiVersion'      => self::API_VERSION,
+                'tokenEndpoint'   => $tokenEndpoint,
+                'grantType'       => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                'assertion'       => [
                     'alg'         => 'RS256',
                     'maxLifetime' => JwtAuthService::ACCESS_TOKEN_TTL,
                     'audience'    => JwtAuthService::EXPECTED_AUDIENCE,
                     'audienceUrl' => $tokenAbsolute,
                 ],
-                'secrets'    => [
+                'secrets'         => [
                     'list'   => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index'),
                     'byId'   => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index').'/{id}',
                     'byName' => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index').'/by-name/{name}',

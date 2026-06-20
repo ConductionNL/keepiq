@@ -53,12 +53,12 @@ class SettingsService
      * @var array<string,string> key => type (int|string|bool)
      */
     private const ADMIN_CONFIG_KEYS = [
-        'min_password_length'       => 'int',
-        'min_password_score'        => 'int',
-        'default_session_timeout'   => 'string',
-        'ca_auto_renew_enabled'     => 'bool',
-        'audit_retention_days'      => 'int',
-        'breach_check_enabled'      => 'bool',
+        'min_password_length'     => 'int',
+        'min_password_score'      => 'int',
+        'default_session_timeout' => 'string',
+        'ca_auto_renew_enabled'   => 'bool',
+        'audit_retention_days'    => 'int',
+        'breach_check_enabled'    => 'bool',
     ];
 
     /**
@@ -67,18 +67,18 @@ class SettingsService
      * @var array<string,string> key => default-value
      */
     private const USER_PREF_KEYS = [
-        'session_timeout'      => '',
-        'notify_shares'        => '1',
-        'notify_requests'      => '1',
-        'notify_group_shares'  => '1',
-        'notify_security'      => '1',
-        'default_secret_type'  => 'login',
-        'default_view'         => 'list',
+        'session_timeout'       => '',
+        'notify_shares'         => '1',
+        'notify_requests'       => '1',
+        'notify_group_shares'   => '1',
+        'notify_security'       => '1',
+        'default_secret_type'   => 'login',
+        'default_view'          => 'list',
         // Password-health staleness threshold in days: '90' | '180' | '365' |
         // 'never' (password-health §1.6, default 365). Per-user opt-in for breach
         // checking; UI is shown only when the admin gate is also on.
         'health_staleness_days' => '365',
-        'breach_check_opt_in'  => '0',
+        'breach_check_opt_in'   => '0',
     ];
 
     /**
@@ -144,7 +144,7 @@ class SettingsService
      */
     public function getAdminSettings(): array
     {
-        $appId = Application::APP_ID;
+        $appId    = Application::APP_ID;
         $settings = [
             'min_password_length'     => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
             'min_password_score'      => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
@@ -253,7 +253,7 @@ class SettingsService
      */
     public function getUserPreferences(string $userId): array
     {
-        $appId = Application::APP_ID;
+        $appId        = Application::APP_ID;
         $adminDefault = $this->appConfig->getValueString($appId, 'default_session_timeout', 'session');
 
         $prefs = [];
@@ -289,7 +289,11 @@ class SettingsService
             }
 
             if (is_bool($value) === true) {
-                $value = ($value === true) ? '1' : '0';
+                if ($value === true) {
+                    $value = '1';
+                } else {
+                    $value = '0';
+                }
             }
 
             // Reject an out-of-set staleness threshold so the client cannot store
@@ -303,9 +307,9 @@ class SettingsService
             }
 
             $this->config->setUserValue($userId, $appId, $key, (string) $value);
-        }
+        }//end foreach
 
-        return $this->getUserPreferences($userId);
+        return $this->getUserPreferences(userId: $userId);
     }//end updateUserPreferences()
 
     /**

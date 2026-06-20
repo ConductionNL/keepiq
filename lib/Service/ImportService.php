@@ -118,7 +118,7 @@ class ImportService
         $results = [];
         foreach ($items as $index => $item) {
             try {
-                $this->validateItem($item);
+                $this->validateItem(item: $item);
                 $folderId = $this->ensureFolderPath(
                     pathSegments: (array) ($item['folderPath'] ?? []),
                     userId: $userId,
@@ -153,7 +153,7 @@ class ImportService
                     'status' => 'failed',
                     'error'  => $e->getMessage(),
                 ];
-            }
+            }//end try
         }//end foreach
 
         return [
@@ -260,10 +260,15 @@ class ImportService
             return null;
         }
 
-        $parentId   = null;
+        $parentId    = null;
         $accumulated = '';
         foreach ($segments as $segment) {
-            $accumulated = ($accumulated === '' ? $segment : $accumulated.'/'.$segment);
+            if ($accumulated === '') {
+                $accumulated = $segment;
+            } else {
+                $accumulated = $accumulated.'/'.$segment;
+            }
+
             if (array_key_exists($accumulated, $cache) === true) {
                 $parentId = $cache[$accumulated];
                 continue;
@@ -276,8 +281,8 @@ class ImportService
                 continue;
             }
 
-            $folder              = $this->folderService->create(name: $segment, parentId: $parentId, userId: $userId);
-            $parentId            = $folder->getId();
+            $folder   = $this->folderService->create(name: $segment, parentId: $parentId, userId: $userId);
+            $parentId = $folder->getId();
             $cache[$accumulated] = $parentId;
             $created[]           = $accumulated;
         }//end foreach

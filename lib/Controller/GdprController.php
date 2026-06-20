@@ -57,11 +57,11 @@ class GdprController extends Controller
     /**
      * Constructor for GdprController.
      *
-     * @param IRequest                $request          The request
-     * @param GdprService             $gdprService      The GDPR metadata service
-     * @param AccountDeletionService  $deletionService  The deletion-cascade service
-     * @param IUserSession            $userSession      The user session
-     * @param IEventDispatcher        $dispatcher       The event dispatcher
+     * @param IRequest               $request         The request
+     * @param GdprService            $gdprService     The GDPR metadata service
+     * @param AccountDeletionService $deletionService The deletion-cascade service
+     * @param IUserSession           $userSession     The user session
+     * @param IEventDispatcher       $dispatcher      The event dispatcher
      *
      * @return void
      */

@@ -38,6 +38,7 @@ use OCP\IRequest;
  */
 abstract class ApplicationApiController extends Controller
 {
+
     /**
      * The Application entity resolved from the Bearer token. Populated
      * by JwtAuthMiddleware::beforeController before the controller
@@ -46,7 +47,6 @@ abstract class ApplicationApiController extends Controller
      * @var Application|null
      */
     private ?Application $application = null;
-
 
     /**
      * Constructor for ApplicationApiController.
@@ -61,7 +61,6 @@ abstract class ApplicationApiController extends Controller
         parent::__construct(appName: $appName, request: $request);
     }//end __construct()
 
-
     /**
      * Inject the Application entity (called by the middleware after the
      * Bearer token is validated).
@@ -74,7 +73,6 @@ abstract class ApplicationApiController extends Controller
     {
         $this->application = $application;
     }//end setApplication()
-
 
     /**
      * Get the Application entity for the current Bearer-authenticated
