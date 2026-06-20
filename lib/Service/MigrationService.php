@@ -80,7 +80,11 @@ class MigrationService
 
         if ($this->eventDispatcher !== null) {
             $this->eventDispatcher->dispatchTyped(
-                new SuiteMigrationStartedEvent($oldSuiteId, $newSuiteId, $migration->getId())
+                new SuiteMigrationStartedEvent(
+                    oldSuiteId: $oldSuiteId,
+                    newSuiteId: $newSuiteId,
+                    migrationId: $migration->getId()
+                )
             );
         }
 
@@ -127,10 +131,10 @@ class MigrationService
         if ($this->eventDispatcher !== null) {
             $this->eventDispatcher->dispatchTyped(
                 new SuiteMigrationCompletedEvent(
-                    $migration->getOldSuiteId(),
-                    $migration->getNewSuiteId(),
-                    $migration->getId(),
-                    $hasErrors,
+                    oldSuiteId: $migration->getOldSuiteId(),
+                    newSuiteId: $migration->getNewSuiteId(),
+                    migrationId: $migration->getId(),
+                    hasErrors: $hasErrors,
                 )
             );
         }

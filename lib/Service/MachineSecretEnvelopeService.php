@@ -96,7 +96,7 @@ class MachineSecretEnvelopeService
                 'id'           => $secret->getId(),
                 'name'         => $secret->getName(),
                 'url'          => $secret->getUrl(),
-                'folderPath'   => $this->resolveFolderPath($secret->getFolderId()),
+                'folderPath'   => $this->resolveFolderPath(folderId: $secret->getFolderId()),
                 'type'         => $secret->getTypeId(),
                 'createdAt'    => $secret->getCreatedAt()?->format('c'),
                 'updatedAt'    => $secret->getUpdatedAt()?->format('c'),
@@ -104,7 +104,7 @@ class MachineSecretEnvelopeService
             ],
             'encryption' => [
                 'suiteId'                => $secret->getEncryptionSuiteId(),
-                'certificateFingerprint' => $this->certificateFingerprint($secret->getEncryptionSuiteId()),
+                'certificateFingerprint' => $this->certificateFingerprint(suiteId: $secret->getEncryptionSuiteId()),
                 'scheme'                 => self::SCHEME,
             ],
             'ciphertext' => [
@@ -133,7 +133,7 @@ class MachineSecretEnvelopeService
         return [
             'id'         => $secret->getId(),
             'name'       => $secret->getName(),
-            'folderPath' => $this->resolveFolderPath($secret->getFolderId()),
+            'folderPath' => $this->resolveFolderPath(folderId: $secret->getFolderId()),
             'updatedAt'  => $secret->getUpdatedAt()?->format('c'),
         ];
     }//end candidate()
@@ -199,7 +199,7 @@ class MachineSecretEnvelopeService
             return null;
         }
 
-        $der = $this->pemToDer($pem);
+        $der = $this->pemToDer(pem: $pem);
         if ($der === null) {
             return null;
         }

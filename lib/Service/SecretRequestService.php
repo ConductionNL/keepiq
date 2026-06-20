@@ -51,10 +51,12 @@ class SecretRequestService
     /**
      * Constructor for SecretRequestService.
      *
-     * @param SecretRequestMapper      $mapper              The mapper
-     * @param LoggerInterface          $logger              The logger
-     * @param NotificationService|null $notificationService Optional notification dispatcher
-     * @param SecretMapper|null        $secretMapper        Optional Secret mapper for owner lookups
+     * @param SecretRequestMapper        $mapper              The mapper
+     * @param LoggerInterface            $logger              The logger
+     * @param NotificationService|null   $notificationService Optional notification dispatcher
+     * @param SecretMapper|null          $secretMapper        Optional Secret mapper for owner lookups
+     * @param EncryptionSuiteMapper|null $suiteMapper         Optional suite mapper
+     * @param IEventDispatcher|null      $eventDispatcher     The event dispatcher
      *
      * @return void
      */
@@ -200,7 +202,7 @@ class SecretRequestService
         }
 
         $this->dispatchAudit(
-            AuditEvent::forLinkVisitor(
+            event: AuditEvent::forLinkVisitor(
                 eventType: AuditEventTypes::REQUEST_FULFILLED,
                 objectType: 'secret_request',
                 objectId: $current->getId(),
@@ -310,7 +312,12 @@ class SecretRequestService
         $entity->setSecretId($secretId);
         $entity->setEncryptionSuiteId($encryptionSuiteId);
         $entity->setToken(bin2hex(random_bytes(16)));
-        $entity->setRequestedFields(json_encode(array_values($requestedFields)) ?: '[]');
+        $encodedFields = json_encode(array_values($requestedFields));
+        if ($encodedFields === false) {
+            $encodedFields = '[]';
+        }
+
+        $entity->setRequestedFields($encodedFields);
         $entity->setStatus(SecretRequest::STATUS_PENDING);
         $entity->setIsReRequest($isReRequest);
         $entity->setExpiresAt($expiresAt);
@@ -323,7 +330,7 @@ class SecretRequestService
         // createReRequest(); a plain create dispatches REQUEST_CREATED.
         if ($isReRequest === false) {
             $this->dispatchAudit(
-                AuditEvent::forUser(
+                event: AuditEvent::forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::REQUEST_CREATED,
                     objectType: 'secret_request',
@@ -450,7 +457,7 @@ class SecretRequestService
                 code: 409,
             );
         } catch (DoesNotExistException) {
-            // expected — no pending request, continue.
+            // Expected — no pending request, continue.
         }
 
         $persisted = $this->create(
@@ -463,7 +470,7 @@ class SecretRequestService
         );
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::REQUEST_RE_REQUESTED,
                 objectType: 'secret_request',
@@ -491,7 +498,7 @@ class SecretRequestService
      */
     public function approve(string $requestId, string $userId): SecretRequest
     {
-        $entity = $this->findOwnedRequest($requestId, $userId);
+        $entity = $this->findOwnedRequest(requestId: $requestId, userId: $userId);
 
         if ($entity->getStatus() !== SecretRequest::STATUS_PENDING) {
             throw new InvalidArgumentException(message: 'Request is not pending');
@@ -526,7 +533,7 @@ class SecretRequestService
      */
     public function decline(string $requestId, string $userId): SecretRequest
     {
-        $entity = $this->findOwnedRequest($requestId, $userId);
+        $entity = $this->findOwnedRequest(requestId: $requestId, userId: $userId);
 
         if ($entity->getStatus() !== SecretRequest::STATUS_PENDING) {
             throw new InvalidArgumentException(message: 'Request is not pending');
@@ -542,7 +549,7 @@ class SecretRequestService
         $updated = $this->mapper->update($entity);
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::REQUEST_REVOKED,
                 objectType: 'secret_request',

@@ -289,7 +289,11 @@ class SettingsService
             }
 
             if (is_bool($value) === true) {
-                $value = ($value === true) ? '1' : '0';
+                if ($value === true) {
+                    $value = '1';
+                } else {
+                    $value = '0';
+                }
             }
 
             // Reject an out-of-set staleness threshold so the client cannot store
@@ -305,7 +309,7 @@ class SettingsService
             $this->config->setUserValue($userId, $appId, $key, (string) $value);
         }//end foreach
 
-        return $this->getUserPreferences($userId);
+        return $this->getUserPreferences(userId: $userId);
     }//end updateUserPreferences()
 
     /**
