@@ -164,7 +164,7 @@ class SecretRequestController extends OCSController
                     expiresAt: $expiry,
                     userId: $user->getUID(),
                 );
-            } elseif ($isReRequest === true) {
+            } else if ($isReRequest === true) {
                 $entity = $this->service->createReRequest(
                     secretId: $secretId,
                     requestedFields: $requestedFields,
@@ -180,7 +180,7 @@ class SecretRequestController extends OCSController
                     expiresAt: $expiry,
                     userId: $user->getUID(),
                 );
-            }
+            }//end if
         } catch (InvalidArgumentException $e) {
             $code   = $e->getCode();
             $status = ($code === 403 || $code === 404 || $code === 409) ? $code : Http::STATUS_BAD_REQUEST;
@@ -188,7 +188,7 @@ class SecretRequestController extends OCSController
                 data: ['message' => $e->getMessage()],
                 statusCode: $status
             );
-        }
+        }//end try
 
         return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()

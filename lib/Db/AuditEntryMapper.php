@@ -135,8 +135,8 @@ class AuditEntryMapper extends QBMapper
      * Admin instance-wide filtered query, newest first, paginated.
      *
      * @param array<string,mixed> $filters Optional filters: eventType, actor,
-     *                                      objectType, objectId, from, to
-     *                                      (DateTime or ISO string)
+     *                                     objectType, objectId, from, to
+     *                                     (DateTime or ISO string)
      * @param int                 $limit   Maximum rows
      * @param int                 $offset  Row offset
      *
@@ -178,8 +178,8 @@ class AuditEntryMapper extends QBMapper
     /**
      * Apply admin filter clauses to a query builder.
      *
-     * @param IQueryBuilder        $qb      The query builder
-     * @param array<string,mixed>  $filters The filters
+     * @param IQueryBuilder       $qb      The query builder
+     * @param array<string,mixed> $filters The filters
      *
      * @return void
      */

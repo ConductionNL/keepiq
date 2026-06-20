@@ -231,7 +231,7 @@ class ApplicationController extends OCSController
         } else {
             $uid     = $user->getUID();
             $isAdmin = $this->groupManager->isAdmin($uid);
-        }
+        }//end if
 
         try {
             $entity = $this->service->register(

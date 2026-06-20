@@ -138,7 +138,7 @@ class Application extends App implements IBootstrap
             listener: SuiteMigrationCompletedListener::class
         );
 
-        // implement-user-sharing §8 — sharing-graph reactions to
+        // Implement-user-sharing §8 — sharing-graph reactions to
         // group membership churn, suite revocation, and
         // post-migration possibly-compromised flagging.
         $context->registerEventListener(
@@ -158,7 +158,7 @@ class Application extends App implements IBootstrap
             listener: SuiteCompromiseListener::class
         );
 
-        // secret-export-gdpr D4 — cascade-delete all of a user's Doriath data
+        // Secret-export-gdpr D4 — cascade-delete all of a user's Doriath data
         // when their Nextcloud account is removed, so vault data never outlives
         // its account. The cascade is idempotent and shares its implementation
         // with the in-app GDPR Art. 17 deletion flow.
@@ -167,7 +167,7 @@ class Application extends App implements IBootstrap
             listener: UserDeletedListener::class
         );
 
-        // add-secret-audit-trail §2.6 — the single AuditListener turns every
+        // Add-secret-audit-trail §2.6 — the single AuditListener turns every
         // dispatched AuditEvent into an append-only doriath_audit_log row. The
         // listener is fail-soft: a record failure is logged at error level and
         // never propagates into the audited business operation.

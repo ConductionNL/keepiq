@@ -100,11 +100,11 @@ class SecretService
         private MigrationService $migrationService,
         private LinkShareService $linkShareService,
         private LoggerInterface $logger,
-        private ?SecretRequestService $secretRequestService = null,
-        private ?ShareService $shareService = null,
-        private ?GroupShareMapper $groupShareMapper = null,
-        private ?SecretDelegationMapper $secretDelegationMapper = null,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?SecretRequestService $secretRequestService=null,
+        private ?ShareService $shareService=null,
+        private ?GroupShareMapper $groupShareMapper=null,
+        private ?SecretDelegationMapper $secretDelegationMapper=null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -346,7 +346,6 @@ class SecretService
 
         return $secret;
     }//end createByApplication()
-
 
     /**
      * Update a secret written by the application itself (machine write-back).

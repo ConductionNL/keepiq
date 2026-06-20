@@ -47,6 +47,7 @@ use OCP\AppFramework\Db\Entity;
  */
 class ShareTarget extends Entity implements JsonSerializable
 {
+
     /**
      * The source secret ID (owner's copy).
      *

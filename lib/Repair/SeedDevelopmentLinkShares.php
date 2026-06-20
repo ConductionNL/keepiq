@@ -130,7 +130,7 @@ class SeedDevelopmentLinkShares implements IRepairStep
 
         // Single-use link, expires in 7 days.
         $seeded += $this->seedLinkShare(
-            id: $this->deterministicId('dev_link_single_01'),
+            id: $this->deterministicId(seed: 'dev_link_single_01'),
             secret: $first,
             suiteId: $suiteId,
             usageLimit: 1,
@@ -141,7 +141,7 @@ class SeedDevelopmentLinkShares implements IRepairStep
         // Multi-use link with one access already recorded.
         if (count($secrets) >= 2) {
             $seeded += $this->seedLinkShare(
-                id: $this->deterministicId('dev_link_multi_01'),
+                id: $this->deterministicId(seed: 'dev_link_multi_01'),
                 secret: $secrets[1],
                 suiteId: $suiteId,
                 usageLimit: 5,
@@ -153,7 +153,7 @@ class SeedDevelopmentLinkShares implements IRepairStep
         // Expired single-use link — should render the expired badge.
         if (count($secrets) >= 3) {
             $seeded += $this->seedLinkShare(
-                id: $this->deterministicId('dev_link_expired_01'),
+                id: $this->deterministicId(seed: 'dev_link_expired_01'),
                 secret: $secrets[2],
                 suiteId: $suiteId,
                 usageLimit: 1,

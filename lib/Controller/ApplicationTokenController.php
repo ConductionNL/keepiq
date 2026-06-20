@@ -41,8 +41,6 @@ use RuntimeException;
  */
 class ApplicationTokenController extends Controller
 {
-
-
     /**
      * Constructor for ApplicationTokenController.
      *
@@ -57,7 +55,6 @@ class ApplicationTokenController extends Controller
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
-
 
     /**
      * Exchange a JWT-Bearer assertion for an opaque access token.

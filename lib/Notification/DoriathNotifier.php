@@ -126,9 +126,7 @@ class DoriathNotifier implements INotifier
                 $result     = (string) ($p['result'] ?? 'denied');
                 $notification->setParsedSubject((string) $l->t('Share request result'));
                 $notification->setParsedMessage(
-                    $result === 'approved'
-                        ? (string) $l->t('Your share request for "%s" was approved.', [$secretName])
-                        : (string) $l->t('Your share request for "%s" was denied.', [$secretName])
+                    $result === 'approved' ? (string) $l->t('Your share request for "%s" was approved.', [$secretName]) : (string) $l->t('Your share request for "%s" was denied.', [$secretName])
                 );
                 $this->withSecretLink($notification, $p);
                 break;
@@ -162,8 +160,8 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'app_pending':
-                $appName       = (string) ($p['app_name'] ?? $l->t('an application'));
-                $registeredBy  = (string) ($p['registered_by'] ?? $l->t('an external party'));
+                $appName      = (string) ($p['app_name'] ?? $l->t('an application'));
+                $registeredBy = (string) ($p['registered_by'] ?? $l->t('an external party'));
                 $notification->setParsedSubject((string) $l->t('New application pending approval'));
                 $notification->setParsedMessage(
                     (string) $l->t('Application "%1$s" was registered by %2$s and is awaiting approval.', [$appName, $registeredBy])
@@ -177,7 +175,7 @@ class DoriathNotifier implements INotifier
 
             default:
                 throw new UnknownNotificationException();
-        }
+        }//end switch
 
         return $notification;
     }//end prepare()

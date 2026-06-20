@@ -308,6 +308,6 @@ class AuditService
 
                 $this->mapper->rewriteMetadata((int) $entry->getId(), $json);
             }
-        }
+        }//end foreach
     }//end anonymizeUser()
 }//end class
