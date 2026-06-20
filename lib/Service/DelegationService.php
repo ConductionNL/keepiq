@@ -67,6 +67,7 @@ class DelegationService
      * @param LoggerInterface        $logger            The logger
      * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
      * @param IGroupManager|null     $groupManager      Group membership check (admin path)
+     * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
      *
      * @return void
      */
@@ -134,7 +135,7 @@ class DelegationService
         string $initiatedBy,
         bool $isAdminPath=false,
     ): SecretDelegation {
-        $secret = $this->loadSecret($secretId);
+        $secret = $this->loadSecret(secretId: $secretId);
 
         if ($delegatedTo === '') {
             throw new InvalidArgumentException(message: 'delegated_to is required');
@@ -189,7 +190,7 @@ class DelegationService
         $persisted = $this->mapper->insert($entity);
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $initiatedBy,
                 eventType: AuditEventTypes::SHARE_DELEGATED,
                 objectType: 'share',
@@ -280,7 +281,7 @@ class DelegationService
      */
     public function reclaimDelegation(string $secretId, string $ownerId): int
     {
-        $secret = $this->loadSecret($secretId);
+        $secret = $this->loadSecret(secretId: $secretId);
 
         if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(message: 'Not authorized to reclaim this delegation');
@@ -302,7 +303,7 @@ class DelegationService
 
         if ($removed > 0) {
             $this->dispatchAudit(
-                AuditEvent::forUser(
+                event: AuditEvent::forUser(
                     actorId: $ownerId,
                     eventType: AuditEventTypes::SHARE_DELEGATION_RECLAIMED,
                     objectType: 'share',
@@ -331,7 +332,7 @@ class DelegationService
      */
     public function getDelegationsForSecret(string $secretId, string $ownerId): array
     {
-        $secret = $this->loadSecret($secretId);
+        $secret = $this->loadSecret(secretId: $secretId);
 
         if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(message: 'Not authorized for this secret');

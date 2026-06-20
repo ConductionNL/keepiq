@@ -108,7 +108,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('%1$s shared the secret "%2$s" with you.', [$sharedBy, $secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'share_request':
@@ -118,17 +118,21 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('%1$s requested access to the secret "%2$s".', [$requester, $secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'share_request_result':
                 $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
                 $result     = (string) ($p['result'] ?? 'denied');
                 $notification->setParsedSubject((string) $l->t('Share request result'));
-                $notification->setParsedMessage(
-                    $result === 'approved' ? (string) $l->t('Your share request for "%s" was approved.', [$secretName]) : (string) $l->t('Your share request for "%s" was denied.', [$secretName])
-                );
-                $this->withSecretLink($notification, $p);
+                if ($result === 'approved') {
+                    $resultMessage = (string) $l->t('Your share request for "%s" was approved.', [$secretName]);
+                } else {
+                    $resultMessage = (string) $l->t('Your share request for "%s" was denied.', [$secretName]);
+                }
+
+                $notification->setParsedMessage($resultMessage);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'group_member_added':
@@ -138,7 +142,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('A new member joined the group "%1$s" — approve to share "%2$s".', [$groupId, $secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'secret_compromised':
@@ -147,7 +151,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('Your secret "%s" may be compromised and requires migration.', [$secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'request_fulfilled':
@@ -156,7 +160,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('Your request for "%s" has been filled in.', [$secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'app_pending':

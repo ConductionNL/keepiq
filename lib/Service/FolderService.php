@@ -49,9 +49,10 @@ class FolderService
     /**
      * Constructor for FolderService.
      *
-     * @param FolderMapper    $mapper       The folder mapper
-     * @param SecretMapper    $secretMapper The secret mapper (for cascade operations)
-     * @param LoggerInterface $logger       The logger interface
+     * @param FolderMapper          $mapper          The folder mapper
+     * @param SecretMapper          $secretMapper    The secret mapper (for cascade operations)
+     * @param LoggerInterface       $logger          The logger interface
+     * @param IEventDispatcher|null $eventDispatcher The event dispatcher
      *
      * @return void
      */
@@ -333,7 +334,7 @@ class FolderService
             $this->deleteWithSubfolders(folder: $folder, children: $children, resolution: $resolution, userId: $userId);
 
             $this->dispatchAudit(
-                AuditEvent::forUser(
+                event: AuditEvent::forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
                     objectType: 'folder',
@@ -352,7 +353,7 @@ class FolderService
         $this->deleteLeafWithSecrets(folder: $folder, cascade: $cascade);
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
                 objectType: 'folder',
