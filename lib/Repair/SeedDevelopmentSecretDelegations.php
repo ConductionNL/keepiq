@@ -130,7 +130,7 @@ class SeedDevelopmentSecretDelegations implements IRepairStep
         }
 
         $this->seedDelegation(
-            id: $this->deterministicId('delegation_temp_01'),
+            id: $this->deterministicId(seed: 'delegation_temp_01'),
             source: $first,
             delegate: self::DEV_DELEGATE,
         );

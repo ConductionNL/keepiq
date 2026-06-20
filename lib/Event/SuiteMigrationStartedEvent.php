@@ -32,9 +32,9 @@ class SuiteMigrationStartedEvent extends Event
     /**
      * Constructor for SuiteMigrationStartedEvent.
      *
-     * @param string $oldSuiteId   The compromised suite ID
-     * @param string $newSuiteId   The replacement suite ID
-     * @param string $migrationId  The migration record ID
+     * @param string $oldSuiteId  The compromised suite ID
+     * @param string $newSuiteId  The replacement suite ID
+     * @param string $migrationId The migration record ID
      *
      * @return void
      */

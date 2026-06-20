@@ -61,10 +61,10 @@ class SecretRequestService
     public function __construct(
         private SecretRequestMapper $mapper,
         private LoggerInterface $logger,
-        private ?NotificationService $notificationService = null,
-        private ?SecretMapper $secretMapper = null,
-        private ?EncryptionSuiteMapper $suiteMapper = null,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?NotificationService $notificationService=null,
+        private ?SecretMapper $secretMapper=null,
+        private ?EncryptionSuiteMapper $suiteMapper=null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -121,7 +121,6 @@ class SecretRequestService
                 if ($entity->isExpired() === true) {
                     throw new InvalidArgumentException(message: 'Request has expired', code: 408);
                 }
-
                 return $entity;
 
             default:

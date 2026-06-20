@@ -59,7 +59,6 @@ class MachineSecretEnvelopeService
      */
     public const SCHEME = 'rsa-oaep-sha256-chunked-v1';
 
-
     /**
      * Constructor for MachineSecretEnvelopeService.
      *
@@ -73,7 +72,6 @@ class MachineSecretEnvelopeService
         private FolderMapper $folderMapper,
     ) {
     }//end __construct()
-
 
     /**
      * Serialize a secret into the `doriath-machine-secret-v1` envelope.
@@ -117,7 +115,6 @@ class MachineSecretEnvelopeService
         ];
     }//end serialize()
 
-
     /**
      * Build a candidate descriptor for the 409-ambiguity response body.
      *
@@ -140,7 +137,6 @@ class MachineSecretEnvelopeService
             'updatedAt'  => $secret->getUpdatedAt()?->format('c'),
         ];
     }//end candidate()
-
 
     /**
      * Derive a strong ETag for a single secret.
@@ -171,7 +167,6 @@ class MachineSecretEnvelopeService
 
         return '"'.hash('sha256', $material).'"';
     }//end etag()
-
 
     /**
      * Compute the sha256 fingerprint of the DER form of a suite's
@@ -212,7 +207,6 @@ class MachineSecretEnvelopeService
         return 'sha256:'.hash('sha256', $der);
     }//end certificateFingerprint()
 
-
     /**
      * Resolve a folder id to its slash-separated path, or '' for root.
      *
@@ -228,7 +222,6 @@ class MachineSecretEnvelopeService
 
         return $this->folderMapper->getPath($folderId);
     }//end resolveFolderPath()
-
 
     /**
      * Decode a PEM certificate to its raw DER bytes.

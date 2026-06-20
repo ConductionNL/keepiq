@@ -74,7 +74,7 @@ class LinkShareService
     public function __construct(
         private LinkShareMapper $mapper,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -300,7 +300,7 @@ class LinkShareService
                 )
             );
             return;
-        }
+        }//end if
 
         $this->mapper->update($linkShare);
 

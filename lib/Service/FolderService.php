@@ -59,7 +59,7 @@ class FolderService
         private FolderMapper $mapper,
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 

@@ -48,13 +48,13 @@ class NotificationService
      * @var array<string,string|null>
      */
     public const SUBJECT_SETTING_MAP = [
-        'secret_shared'         => 'notify_shares',
-        'share_request'         => 'notify_shares',
-        'share_request_result'  => 'notify_shares',
-        'group_member_added'    => 'notify_group_shares',
-        'secret_compromised'    => 'notify_security',
-        'request_fulfilled'     => 'notify_requests',
-        'app_pending'           => null,
+        'secret_shared'        => 'notify_shares',
+        'share_request'        => 'notify_shares',
+        'share_request_result' => 'notify_shares',
+        'group_member_added'   => 'notify_group_shares',
+        'secret_compromised'   => 'notify_security',
+        'request_fulfilled'    => 'notify_requests',
+        'app_pending'          => null,
     ];
 
     /**
@@ -87,9 +87,9 @@ class NotificationService
     public function notify(
         string $subject,
         string $recipientId,
-        array $params = [],
-        ?string $objectType = null,
-        ?string $objectId = null,
+        array $params=[],
+        ?string $objectType=null,
+        ?string $objectId=null,
     ): bool {
         if (array_key_exists($subject, self::SUBJECT_SETTING_MAP) === false) {
             $this->logger->warning(

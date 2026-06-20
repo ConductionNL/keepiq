@@ -177,7 +177,7 @@ class FolderController extends OCSController
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-        }
+        }//end try
 
         return new JSONResponse(data: $folder->jsonSerialize());
     }//end update()

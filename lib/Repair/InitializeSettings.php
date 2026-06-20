@@ -35,18 +35,18 @@ use Throwable;
 class InitializeSettings implements IRepairStep
 {
     private const DEFAULT_CONFIG = [
-        'master_password_min_length' => '12',
-        'master_password_min_score'  => '3',
-        'session_timeout_default'    => '600000',
+        'master_password_min_length'  => '12',
+        'master_password_min_score'   => '3',
+        'session_timeout_default'     => '600000',
         // Default opt-in flags for sharing notifications (W29 §1.6).
         // These are admin-side defaults consumed by SettingsService when
         // a per-user pref is absent — user prefs themselves stay
         // user-scoped via IConfig::setUserValue + the SettingsService
         // USER_PREF_KEYS default map ('1' for each notify_* flag).
-        'default_notify_shares'        => '1',
-        'default_notify_group_shares'  => '1',
-        'default_notify_security'      => '1',
-        'default_notify_requests'      => '1',
+        'default_notify_shares'       => '1',
+        'default_notify_group_shares' => '1',
+        'default_notify_security'     => '1',
+        'default_notify_requests'     => '1',
     ];
 
     /**

@@ -227,7 +227,7 @@ class SecretController extends OCSController
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-        }
+        }//end try
 
         return new JSONResponse(data: $secret->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()

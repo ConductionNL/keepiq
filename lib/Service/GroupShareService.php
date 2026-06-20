@@ -277,7 +277,7 @@ class GroupShareService
                 objectId: $secret->getId(),
             );
             ++$dispatched;
-        }
+        }//end foreach
 
         return $dispatched;
     }//end handleNewGroupMember()
@@ -358,7 +358,7 @@ class GroupShareService
      */
     public function handleMemberLeave(string $userId, string $groupId): int
     {
-        $revoked = 0;
+        $revoked     = 0;
         $groupShares = $this->mapper->findByGroup($groupId);
         foreach ($groupShares as $groupShare) {
             foreach ($this->shareTargetMapper->findByGroupShare($groupShare->getId()) as $row) {

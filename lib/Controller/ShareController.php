@@ -227,7 +227,7 @@ class ShareController extends OCSController
     public function sync(
         string $secretId,
         array $updates,
-        string $expectedUpdatedAt = '',
+        string $expectedUpdatedAt='',
     ): JSONResponse {
         $user = $this->userSession->getUser();
         if ($user === null) {

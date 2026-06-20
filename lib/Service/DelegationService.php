@@ -74,9 +74,9 @@ class DelegationService
         private SecretDelegationMapper $mapper,
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
-        private ?ShareTargetMapper $shareTargetMapper = null,
-        private ?IGroupManager $groupManager = null,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?ShareTargetMapper $shareTargetMapper=null,
+        private ?IGroupManager $groupManager=null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -112,11 +112,11 @@ class DelegationService
      *    the admin must already be a recipient — the path widens *who*
      *    can act, not what can be acted on.
      *
-     * @param string      $secretId    The Secret ID
-     * @param string      $delegatedTo The user receiving delegation rights
-     * @param string      $initiatedBy The user initiating the delegation
-     * @param bool        $isAdminPath When true, validate via admin-handover branch
-     *                                 instead of owner-self-delegation.
+     * @param string $secretId    The Secret ID
+     * @param string $delegatedTo The user receiving delegation rights
+     * @param string $initiatedBy The user initiating the delegation
+     * @param bool   $isAdminPath When true, validate via admin-handover branch
+     *                            instead of owner-self-delegation.
      *
      * @return SecretDelegation
      *
@@ -132,7 +132,7 @@ class DelegationService
         string $secretId,
         string $delegatedTo,
         string $initiatedBy,
-        bool $isAdminPath = false,
+        bool $isAdminPath=false,
     ): SecretDelegation {
         $secret = $this->loadSecret($secretId);
 
@@ -175,7 +175,7 @@ class DelegationService
             // mapper is wired; this preserves the "delegations promote
             // existing recipients" invariant from spec.md.
             $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $delegatedTo);
-        }
+        }//end if
 
         $entity = new SecretDelegation();
         $entity->setId(Uuid::uuid4()->toString());

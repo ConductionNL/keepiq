@@ -86,10 +86,10 @@ class DashboardService
     public function __construct(
         private DashboardSettingMapper $mapper,
         private LoggerInterface $logger,
-        private ?SecretMapper $secretMapper = null,
-        private ?FolderMapper $folderMapper = null,
-        private ?ShareTargetMapper $shareTargetMapper = null,
-        private ?ApplicationMapper $applicationMapper = null,
+        private ?SecretMapper $secretMapper=null,
+        private ?FolderMapper $folderMapper=null,
+        private ?ShareTargetMapper $shareTargetMapper=null,
+        private ?ApplicationMapper $applicationMapper=null,
     ) {
     }//end __construct()
 
@@ -123,15 +123,11 @@ class DashboardService
                 'total_secrets',
             ),
             'shared_with_me_count' => $this->safeCount(
-                fn () => $this->shareTargetMapper === null
-                    ? 0
-                    : count($this->shareTargetMapper->findByTargetUser($userId)),
+                fn () => $this->shareTargetMapper === null ? 0 : count($this->shareTargetMapper->findByTargetUser($userId)),
                 'shared_with_me_count',
             ),
             'folders_count'        => $this->safeCount(
-                fn () => $this->folderMapper === null
-                    ? 0
-                    : count($this->folderMapper->findByOwner('user', $userId)),
+                fn () => $this->folderMapper === null ? 0 : count($this->folderMapper->findByOwner('user', $userId)),
                 'folders_count',
             ),
             'pending_apps_count'   => null,

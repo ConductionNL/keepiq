@@ -93,7 +93,6 @@ class JwtAuthService
      */
     public const EXPECTED_AUDIENCE = 'doriath';
 
-
     /**
      * Constructor for JwtAuthService.
      *
@@ -109,10 +108,9 @@ class JwtAuthService
         private EncryptionSuiteMapper $suiteMapper,
         private ICacheFactory $cacheFactory,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
-
 
     /**
      * Dispatch a typed audit event, fail-soft.
@@ -127,7 +125,6 @@ class JwtAuthService
     {
         $this->eventDispatcher?->dispatchTyped($event);
     }//end dispatchAudit()
-
 
     /**
      * Exchange a JWT bearer assertion for a short-lived opaque access
@@ -273,7 +270,6 @@ class JwtAuthService
         ];
     }//end exchangeAssertion()
 
-
     /**
      * Validate an opaque access token and resolve the bound application.
      *
@@ -309,7 +305,6 @@ class JwtAuthService
 
         return $application;
     }//end validateAccessToken()
-
 
     /**
      * Build a JWK from a PEM-encoded X.509 certificate. Supports both

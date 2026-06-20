@@ -58,7 +58,7 @@ class EncryptionSuiteService
         private IAppConfig $appConfig,
         private IUserManager $userManager,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
