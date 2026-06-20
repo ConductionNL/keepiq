@@ -84,12 +84,17 @@ class SecretService
     /**
      * Constructor for SecretService.
      *
-     * @param SecretMapper          $mapper           The secret mapper
-     * @param SecretTypeService     $typeService      The secret type service
-     * @param EncryptionSuiteMapper $suiteMapper      The encryption suite mapper
-     * @param MigrationService      $migrationService The migration (write-lock) service
-     * @param LinkShareService      $linkShareService The link share service (cascade delete)
-     * @param LoggerInterface       $logger           The logger interface
+     * @param SecretMapper                $mapper                 The secret mapper
+     * @param SecretTypeService           $typeService            The secret type service
+     * @param EncryptionSuiteMapper       $suiteMapper            The encryption suite mapper
+     * @param MigrationService            $migrationService       The migration (write-lock) service
+     * @param LinkShareService            $linkShareService       The link share service (cascade delete)
+     * @param LoggerInterface             $logger                 The logger interface
+     * @param SecretRequestService|null   $secretRequestService   The secret-request service
+     * @param ShareService|null           $shareService           The share service
+     * @param GroupShareMapper|null       $groupShareMapper       The group-share mapper
+     * @param SecretDelegationMapper|null $secretDelegationMapper The secret-delegation mapper
+     * @param IEventDispatcher|null       $eventDispatcher        The event dispatcher
      *
      * @return void
      */
@@ -181,7 +186,7 @@ class SecretService
         $this->logger->info("Doriath: secret {$secret->getId()} created by {$userId}");
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SECRET_CREATED,
                 objectType: 'secret',
@@ -334,7 +339,7 @@ class SecretService
         $this->mapper->insert($secret);
 
         $this->dispatchAudit(
-            AuditEvent::forApplication(
+            event: AuditEvent::forApplication(
                 actorId: $applicationId,
                 eventType: AuditEventTypes::SECRET_CREATED,
                 objectType: 'secret',
@@ -428,14 +433,19 @@ class SecretService
         $secret->setUpdatedAt($now);
         $this->mapper->update($secret);
 
+        $changedFields = array_keys($data);
+        if ($keyChanged === true) {
+            $changedFields = ['key'];
+        }
+
         $this->dispatchAudit(
-            AuditEvent::forApplication(
+            event: AuditEvent::forApplication(
                 actorId: $applicationId,
                 eventType: AuditEventTypes::SECRET_UPDATED,
                 objectType: 'secret',
                 objectId: $secret->getId(),
                 objectName: $secret->getName(),
-                metadata: ['changedFields' => $keyChanged === true ? ['key'] : array_keys($data)],
+                metadata: ['changedFields' => $changedFields],
             )
         );
 
@@ -465,10 +475,10 @@ class SecretService
             throw new SuiteBlockedException(message: $blockReason);
         }
 
-        // secret.read fires on an individual encrypted-blob fetch only — never
+        // The secret.read event fires on an individual encrypted-blob fetch only — never
         // on list/search (those do not call get()). Audit-trail §3.1.
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SECRET_READ,
                 objectType: 'secret',
@@ -562,7 +572,7 @@ class SecretService
             )
         );
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SECRET_UPDATED,
                 objectType: 'secret',
@@ -618,7 +628,7 @@ class SecretService
         $this->logger->info("Doriath: secret {$id} deleted by {$userId}");
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SECRET_DELETED,
                 objectType: 'secret',
