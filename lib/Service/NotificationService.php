@@ -104,7 +104,7 @@ class NotificationService
         }
 
         $settingKey = self::SUBJECT_SETTING_MAP[$subject];
-        if ($settingKey !== null && $this->isOptedOut($recipientId, $settingKey) === true) {
+        if ($settingKey !== null && $this->isOptedOut(userId: $recipientId, settingKey: $settingKey) === true) {
             $this->logger->debug(
                 'Doriath notify(): user '.$recipientId.' opted out of "'.$subject.'"',
                 ['app' => Application::APP_ID]

@@ -91,7 +91,7 @@ class ShareRequestService
             throw new InvalidArgumentException(message: 'Cannot request a share to yourself');
         }
 
-        $secret = $this->loadSecret($sourceSecretId);
+        $secret = $this->loadSecret(secretId: $sourceSecretId);
 
         // Requester must already hold a share of the secret OR be the
         // recipient themselves. The owner cannot submit a request (they
@@ -164,7 +164,7 @@ class ShareRequestService
             throw new InvalidArgumentException(message: 'Malformed share-request payload');
         }
 
-        $secret = $this->loadSecret($sourceSecretId);
+        $secret = $this->loadSecret(secretId: $sourceSecretId);
         if ($secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(
                 message: 'Not authorized to approve share requests for this secret'
@@ -201,7 +201,7 @@ class ShareRequestService
             throw new InvalidArgumentException(message: 'Malformed share-request payload');
         }
 
-        $secret = $this->loadSecret($sourceSecretId);
+        $secret = $this->loadSecret(secretId: $sourceSecretId);
         if ($secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(
                 message: 'Not authorized to deny share requests for this secret'
