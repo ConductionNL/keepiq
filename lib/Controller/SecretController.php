@@ -159,6 +159,8 @@ class SecretController extends OCSController
      * @param string|null $folderId         The folder ID (null = root)
      * @param string|null $login            The RSA-encrypted login blob
      * @param string|null $additionalFields The RSA-encrypted additional fields blob
+     * @param string|null $ownerType        The owner type (null = user; 'application' for app-owned)
+     * @param string|null $ownerId          The owner ID (required when ownerType=application)
      *
      * @NoAdminRequired
      *
@@ -227,7 +229,7 @@ class SecretController extends OCSController
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-        }
+        }//end try
 
         return new JSONResponse(data: $secret->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()

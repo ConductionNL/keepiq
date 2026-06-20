@@ -67,6 +67,7 @@ class DelegationService
      * @param LoggerInterface        $logger            The logger
      * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
      * @param IGroupManager|null     $groupManager      Group membership check (admin path)
+     * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
      *
      * @return void
      */
@@ -74,9 +75,9 @@ class DelegationService
         private SecretDelegationMapper $mapper,
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
-        private ?ShareTargetMapper $shareTargetMapper = null,
-        private ?IGroupManager $groupManager = null,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?ShareTargetMapper $shareTargetMapper=null,
+        private ?IGroupManager $groupManager=null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -112,11 +113,11 @@ class DelegationService
      *    the admin must already be a recipient — the path widens *who*
      *    can act, not what can be acted on.
      *
-     * @param string      $secretId    The Secret ID
-     * @param string      $delegatedTo The user receiving delegation rights
-     * @param string      $initiatedBy The user initiating the delegation
-     * @param bool        $isAdminPath When true, validate via admin-handover branch
-     *                                 instead of owner-self-delegation.
+     * @param string $secretId    The Secret ID
+     * @param string $delegatedTo The user receiving delegation rights
+     * @param string $initiatedBy The user initiating the delegation
+     * @param bool   $isAdminPath When true, validate via admin-handover branch
+     *                            instead of owner-self-delegation.
      *
      * @return SecretDelegation
      *
@@ -132,9 +133,9 @@ class DelegationService
         string $secretId,
         string $delegatedTo,
         string $initiatedBy,
-        bool $isAdminPath = false,
+        bool $isAdminPath=false,
     ): SecretDelegation {
-        $secret = $this->loadSecret($secretId);
+        $secret = $this->loadSecret(secretId: $secretId);
 
         if ($delegatedTo === '') {
             throw new InvalidArgumentException(message: 'delegated_to is required');
@@ -175,7 +176,7 @@ class DelegationService
             // mapper is wired; this preserves the "delegations promote
             // existing recipients" invariant from spec.md.
             $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $delegatedTo);
-        }
+        }//end if
 
         $entity = new SecretDelegation();
         $entity->setId(Uuid::uuid4()->toString());
@@ -189,7 +190,7 @@ class DelegationService
         $persisted = $this->mapper->insert($entity);
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $initiatedBy,
                 eventType: AuditEventTypes::SHARE_DELEGATED,
                 objectType: 'share',
@@ -280,7 +281,7 @@ class DelegationService
      */
     public function reclaimDelegation(string $secretId, string $ownerId): int
     {
-        $secret = $this->loadSecret($secretId);
+        $secret = $this->loadSecret(secretId: $secretId);
 
         if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(message: 'Not authorized to reclaim this delegation');
@@ -302,7 +303,7 @@ class DelegationService
 
         if ($removed > 0) {
             $this->dispatchAudit(
-                AuditEvent::forUser(
+                event: AuditEvent::forUser(
                     actorId: $ownerId,
                     eventType: AuditEventTypes::SHARE_DELEGATION_RECLAIMED,
                     objectType: 'share',
@@ -331,7 +332,7 @@ class DelegationService
      */
     public function getDelegationsForSecret(string $secretId, string $ownerId): array
     {
-        $secret = $this->loadSecret($secretId);
+        $secret = $this->loadSecret(secretId: $secretId);
 
         if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(message: 'Not authorized for this secret');

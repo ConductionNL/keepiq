@@ -41,17 +41,17 @@ final class AuditEventTypes
     public const FOLDER_DELETED_CASCADE = 'folder.deleted_cascade';
 
     // Sharing.
-    public const SHARE_GRANTED             = 'share.granted';
-    public const SHARE_REVOKED             = 'share.revoked';
-    public const SHARE_DELEGATED           = 'share.delegated';
+    public const SHARE_GRANTED   = 'share.granted';
+    public const SHARE_REVOKED   = 'share.revoked';
+    public const SHARE_DELEGATED = 'share.delegated';
     public const SHARE_DELEGATION_RECLAIMED = 'share.delegation_reclaimed';
 
     // Link share.
-    public const LINK_SHARE_CREATED      = 'link_share.created';
-    public const LINK_SHARE_ACCESSED     = 'link_share.accessed';
+    public const LINK_SHARE_CREATED       = 'link_share.created';
+    public const LINK_SHARE_ACCESSED      = 'link_share.accessed';
     public const LINK_SHARE_ACCESS_FAILED = 'link_share.access_failed';
-    public const LINK_SHARE_REVOKED      = 'link_share.revoked';
-    public const LINK_SHARE_AUTO_DELETED = 'link_share.auto_deleted';
+    public const LINK_SHARE_REVOKED       = 'link_share.revoked';
+    public const LINK_SHARE_AUTO_DELETED  = 'link_share.auto_deleted';
 
     // Secret request.
     public const REQUEST_CREATED      = 'request.created';
@@ -104,37 +104,37 @@ final class AuditEventTypes
     public static function whitelist(): array
     {
         return [
-            self::SECRET_CREATED            => ['typeId', 'folderId'],
-            self::SECRET_UPDATED            => ['changedFields'],
-            self::SECRET_READ               => [],
-            self::SECRET_DELETED            => [],
-            self::FOLDER_DELETED_CASCADE    => ['secretCount', 'subfolderCount'],
-            self::SHARE_GRANTED             => ['recipientType', 'recipientId'],
-            self::SHARE_REVOKED             => ['recipientType', 'recipientId'],
-            self::SHARE_DELEGATED           => ['delegatedTo', 'isPermanent'],
-            self::SHARE_DELEGATION_RECLAIMED => ['delegatedTo'],
-            self::LINK_SHARE_CREATED        => ['hasPassword', 'expiresAt'],
-            self::LINK_SHARE_ACCESSED       => [],
-            self::LINK_SHARE_ACCESS_FAILED  => ['reason'],
-            self::LINK_SHARE_REVOKED        => [],
-            self::LINK_SHARE_AUTO_DELETED   => ['reason'],
-            self::REQUEST_CREATED           => ['recipientType', 'recipientId'],
-            self::REQUEST_FULFILLED         => [],
-            self::REQUEST_RE_REQUESTED      => [],
-            self::REQUEST_REVOKED           => [],
-            self::SUITE_REVOKED             => ['reason'],
-            self::SUITE_REINSTATED          => [],
-            self::SUITE_RECOVERY_STARTED    => [],
-            self::SUITE_RECOVERY_COMPLETED  => ['reSuitedCount'],
-            self::APPLICATION_REGISTERED    => [],
-            self::APPLICATION_APPROVED      => [],
-            self::APPLICATION_REJECTED      => ['reason'],
-            self::APPLICATION_DELETED       => [],
-            self::APPLICATION_TOKEN_ISSUED  => [],
+            self::SECRET_CREATED               => ['typeId', 'folderId'],
+            self::SECRET_UPDATED               => ['changedFields'],
+            self::SECRET_READ                  => [],
+            self::SECRET_DELETED               => [],
+            self::FOLDER_DELETED_CASCADE       => ['secretCount', 'subfolderCount'],
+            self::SHARE_GRANTED                => ['recipientType', 'recipientId'],
+            self::SHARE_REVOKED                => ['recipientType', 'recipientId'],
+            self::SHARE_DELEGATED              => ['delegatedTo', 'isPermanent'],
+            self::SHARE_DELEGATION_RECLAIMED   => ['delegatedTo'],
+            self::LINK_SHARE_CREATED           => ['hasPassword', 'expiresAt'],
+            self::LINK_SHARE_ACCESSED          => [],
+            self::LINK_SHARE_ACCESS_FAILED     => ['reason'],
+            self::LINK_SHARE_REVOKED           => [],
+            self::LINK_SHARE_AUTO_DELETED      => ['reason'],
+            self::REQUEST_CREATED              => ['recipientType', 'recipientId'],
+            self::REQUEST_FULFILLED            => [],
+            self::REQUEST_RE_REQUESTED         => [],
+            self::REQUEST_REVOKED              => [],
+            self::SUITE_REVOKED                => ['reason'],
+            self::SUITE_REINSTATED             => [],
+            self::SUITE_RECOVERY_STARTED       => [],
+            self::SUITE_RECOVERY_COMPLETED     => ['reSuitedCount'],
+            self::APPLICATION_REGISTERED       => [],
+            self::APPLICATION_APPROVED         => [],
+            self::APPLICATION_REJECTED         => ['reason'],
+            self::APPLICATION_DELETED          => [],
+            self::APPLICATION_TOKEN_ISSUED     => [],
             self::APPLICATION_SECRET_RETRIEVED => [],
-            self::VAULT_EXPORTED            => ['mode', 'scope', 'secretCount'],
-            self::VAULT_GDPR_EXPORTED       => ['mode', 'scope', 'secretCount'],
-            self::VAULT_ACCOUNT_DELETED     => ['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'],
+            self::VAULT_EXPORTED               => ['mode', 'scope', 'secretCount'],
+            self::VAULT_GDPR_EXPORTED          => ['mode', 'scope', 'secretCount'],
+            self::VAULT_ACCOUNT_DELETED        => ['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'],
         ];
     }//end whitelist()
 

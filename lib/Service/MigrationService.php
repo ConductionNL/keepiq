@@ -40,10 +40,10 @@ class MigrationService
     /**
      * Constructor for MigrationService.
      *
-     * @param SuiteMigrationMapper   $mapper          The suite migration mapper
-     * @param EncryptionSuiteMapper  $suiteMapper     The encryption suite mapper
-     * @param LoggerInterface        $logger          The logger interface
-     * @param IEventDispatcher|null  $eventDispatcher The optional event dispatcher
+     * @param SuiteMigrationMapper  $mapper          The suite migration mapper
+     * @param EncryptionSuiteMapper $suiteMapper     The encryption suite mapper
+     * @param LoggerInterface       $logger          The logger interface
+     * @param IEventDispatcher|null $eventDispatcher The optional event dispatcher
      *
      * @return void
      */
@@ -51,7 +51,7 @@ class MigrationService
         private SuiteMigrationMapper $mapper,
         private EncryptionSuiteMapper $suiteMapper,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -80,7 +80,11 @@ class MigrationService
 
         if ($this->eventDispatcher !== null) {
             $this->eventDispatcher->dispatchTyped(
-                new SuiteMigrationStartedEvent($oldSuiteId, $newSuiteId, $migration->getId())
+                new SuiteMigrationStartedEvent(
+                    oldSuiteId: $oldSuiteId,
+                    newSuiteId: $newSuiteId,
+                    migrationId: $migration->getId()
+                )
             );
         }
 
@@ -127,10 +131,10 @@ class MigrationService
         if ($this->eventDispatcher !== null) {
             $this->eventDispatcher->dispatchTyped(
                 new SuiteMigrationCompletedEvent(
-                    $migration->getOldSuiteId(),
-                    $migration->getNewSuiteId(),
-                    $migration->getId(),
-                    $hasErrors,
+                    oldSuiteId: $migration->getOldSuiteId(),
+                    newSuiteId: $migration->getNewSuiteId(),
+                    migrationId: $migration->getId(),
+                    hasErrors: $hasErrors,
                 )
             );
         }

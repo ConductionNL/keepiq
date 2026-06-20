@@ -86,10 +86,10 @@ class DashboardService
     public function __construct(
         private DashboardSettingMapper $mapper,
         private LoggerInterface $logger,
-        private ?SecretMapper $secretMapper = null,
-        private ?FolderMapper $folderMapper = null,
-        private ?ShareTargetMapper $shareTargetMapper = null,
-        private ?ApplicationMapper $applicationMapper = null,
+        private ?SecretMapper $secretMapper=null,
+        private ?FolderMapper $folderMapper=null,
+        private ?ShareTargetMapper $shareTargetMapper=null,
+        private ?ApplicationMapper $applicationMapper=null,
     ) {
     }//end __construct()
 
@@ -115,24 +115,36 @@ class DashboardService
      */
     public function fetchSummary(string $userId, bool $isAdmin): array
     {
-        $this->validateUserId($userId);
+        $this->validateUserId(userId: $userId);
+
+        $sharedWithMeCount = function () use ($userId): int {
+            if ($this->shareTargetMapper === null) {
+                return 0;
+            }
+
+            return count($this->shareTargetMapper->findByTargetUser($userId));
+        };
+
+        $foldersCount = function () use ($userId): int {
+            if ($this->folderMapper === null) {
+                return 0;
+            }
+
+            return count($this->folderMapper->findByOwner('user', $userId));
+        };
 
         $summary = [
             'total_secrets'        => $this->safeCount(
-                fn () => $this->secretMapper?->countByOwner('user', $userId, null) ?? 0,
-                'total_secrets',
+                fn: fn () => $this->secretMapper?->countByOwner('user', $userId, null) ?? 0,
+                metricId: 'total_secrets',
             ),
             'shared_with_me_count' => $this->safeCount(
-                fn () => $this->shareTargetMapper === null
-                    ? 0
-                    : count($this->shareTargetMapper->findByTargetUser($userId)),
-                'shared_with_me_count',
+                fn: $sharedWithMeCount,
+                metricId: 'shared_with_me_count',
             ),
             'folders_count'        => $this->safeCount(
-                fn () => $this->folderMapper === null
-                    ? 0
-                    : count($this->folderMapper->findByOwner('user', $userId)),
-                'folders_count',
+                fn: $foldersCount,
+                metricId: 'folders_count',
             ),
             'pending_apps_count'   => null,
             'is_admin'             => $isAdmin,
@@ -141,8 +153,8 @@ class DashboardService
 
         if ($isAdmin === true) {
             $summary['pending_apps_count'] = $this->safeCount(
-                fn () => $this->applicationMapper?->countPending() ?? 0,
-                'pending_apps_count',
+                fn: fn () => $this->applicationMapper?->countPending() ?? 0,
+                metricId: 'pending_apps_count',
             );
         }
 
@@ -182,8 +194,8 @@ class DashboardService
      */
     public function get(string $userId, string $settingKey): mixed
     {
-        $this->validateUserId($userId);
-        $this->validateKey($settingKey);
+        $this->validateUserId(userId: $userId);
+        $this->validateKey(settingKey: $settingKey);
 
         try {
             $entity = $this->mapper->findByUserAndKey($userId, $settingKey);
@@ -203,7 +215,7 @@ class DashboardService
      */
     public function listForUser(string $userId): array
     {
-        $this->validateUserId($userId);
+        $this->validateUserId(userId: $userId);
 
         $out = [];
         foreach ($this->mapper->findByUser($userId) as $entity) {
@@ -226,8 +238,8 @@ class DashboardService
      */
     public function set(string $userId, string $settingKey, mixed $value): DashboardSetting
     {
-        $this->validateUserId($userId);
-        $this->validateKey($settingKey);
+        $this->validateUserId(userId: $userId);
+        $this->validateKey(settingKey: $settingKey);
 
         $encoded = json_encode($value);
         if ($encoded === false) {
@@ -275,10 +287,10 @@ class DashboardService
     public function setMany(string $userId, array $settings): array
     {
         foreach ($settings as $key => $value) {
-            $this->set($userId, (string) $key, $value);
+            $this->set(userId: $userId, settingKey: (string) $key, value: $value);
         }
 
-        return $this->listForUser($userId);
+        return $this->listForUser(userId: $userId);
     }//end setMany()
 
     /**

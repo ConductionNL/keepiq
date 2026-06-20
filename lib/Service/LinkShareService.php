@@ -66,15 +66,16 @@ class LinkShareService
     /**
      * Constructor for LinkShareService.
      *
-     * @param LinkShareMapper $mapper The link share mapper
-     * @param LoggerInterface $logger The logger interface
+     * @param LinkShareMapper       $mapper          The link share mapper
+     * @param LoggerInterface       $logger          The logger interface
+     * @param IEventDispatcher|null $eventDispatcher The event dispatcher
      *
      * @return void
      */
     public function __construct(
         private LinkShareMapper $mapper,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -152,15 +153,20 @@ class LinkShareService
 
         $this->logger->info("Doriath: link share created for secret {$secretId} by {$userId}");
 
+        $expiresAtIso = null;
+        if ($expiresAt !== null) {
+            $expiresAtIso = $expiresAt->format(DateTime::ATOM);
+        }
+
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::LINK_SHARE_CREATED,
                 objectType: 'link_share',
                 objectId: $linkShare->getId(),
                 metadata: [
                     'hasPassword' => ($salt !== ''),
-                    'expiresAt'   => ($expiresAt !== null ? $expiresAt->format(DateTime::ATOM) : null),
+                    'expiresAt'   => $expiresAtIso,
                 ],
             )
         );
@@ -237,7 +243,7 @@ class LinkShareService
         $linkShare = $this->mapper->findByToken($token);
 
         $this->dispatchAudit(
-            AuditEvent::forLinkVisitor(
+            event: AuditEvent::forLinkVisitor(
                 eventType: AuditEventTypes::LINK_SHARE_ACCESSED,
                 objectType: 'link_share',
                 objectId: $linkShare->getId(),
@@ -283,7 +289,7 @@ class LinkShareService
             );
 
             $this->dispatchAudit(
-                AuditEvent::forLinkVisitor(
+                event: AuditEvent::forLinkVisitor(
                     eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
                     objectType: 'link_share',
                     objectId: $linkShare->getId(),
@@ -292,7 +298,7 @@ class LinkShareService
             );
 
             $this->dispatchAudit(
-                AuditEvent::forLinkVisitor(
+                event: AuditEvent::forLinkVisitor(
                     eventType: AuditEventTypes::LINK_SHARE_AUTO_DELETED,
                     objectType: 'link_share',
                     objectId: $linkShare->getId(),
@@ -300,12 +306,12 @@ class LinkShareService
                 )
             );
             return;
-        }
+        }//end if
 
         $this->mapper->update($linkShare);
 
         $this->dispatchAudit(
-            AuditEvent::forLinkVisitor(
+            event: AuditEvent::forLinkVisitor(
                 eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
                 objectType: 'link_share',
                 objectId: $linkShare->getId(),
@@ -365,7 +371,7 @@ class LinkShareService
         $this->logger->info("Doriath: link share {$id} revoked by {$userId}");
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::LINK_SHARE_REVOKED,
                 objectType: 'link_share',

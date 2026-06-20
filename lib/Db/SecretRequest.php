@@ -55,10 +55,10 @@ use OCP\AppFramework\Db\Entity;
  */
 class SecretRequest extends Entity implements JsonSerializable
 {
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_PENDING   = 'pending';
     public const STATUS_FULFILLED = 'fulfilled';
-    public const STATUS_DECLINED = 'declined';
-    public const STATUS_LOCKED = 'locked';
+    public const STATUS_DECLINED  = 'declined';
+    public const STATUS_LOCKED    = 'locked';
 
     /**
      * The unfilled (or to-be-overwritten) Secret ID.
@@ -98,7 +98,7 @@ class SecretRequest extends Entity implements JsonSerializable
     /**
      * Whether this is a re-request (overwrite an existing Secret).
      *
-     * @var bool
+     * @var boolean
      */
     protected bool $isReRequest = false;
 
