@@ -79,9 +79,14 @@ class GdprExportPerformedEvent extends Event
      */
     public function getMetadata(): array
     {
+        $scope = 'metadata-only';
+        if ($this->includesVault === true) {
+            $scope = 'metadata-and-vault';
+        }
+
         return [
             'mode'  => 'gdpr-package',
-            'scope' => ($this->includesVault === true ? 'metadata-and-vault' : 'metadata-only'),
+            'scope' => $scope,
         ];
     }//end getMetadata()
 }//end class

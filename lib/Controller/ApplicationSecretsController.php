@@ -121,7 +121,7 @@ class ApplicationSecretsController extends ApplicationApiController
 
         $updatedSinceRaw = $this->request->getParam('updated_since');
         if ($updatedSinceRaw !== null && $updatedSinceRaw !== '') {
-            $since = $this->parseIso8601((string) $updatedSinceRaw);
+            $since = $this->parseIso8601(value: (string) $updatedSinceRaw);
             if ($since === null) {
                 return new JSONResponse(
                     data: ['message' => 'updated_since must be a valid ISO 8601 timestamp'],
@@ -176,12 +176,12 @@ class ApplicationSecretsController extends ApplicationApiController
             return $this->unauthorized();
         }
 
-        $secret = $this->loadOwnedOrNull($id, $application->getId());
+        $secret = $this->loadOwnedOrNull(id: $id, applicationId: $application->getId());
         if ($secret === null) {
             return $this->notFound();
         }
 
-        return $this->envelopeResponse($secret, $application->getId());
+        return $this->envelopeResponse(secret: $secret, applicationId: $application->getId());
     }//end show()
 
     /**
@@ -212,8 +212,8 @@ class ApplicationSecretsController extends ApplicationApiController
         $folderId   = null;
         if ($folderPath !== null && $folderPath !== '') {
             $folderId = $this->resolveFolderId(
-                (string) $folderPath,
-                $application->getId()
+                path: (string) $folderPath,
+                applicationId: $application->getId()
             );
             if ($folderId === null) {
                 // Folder does not exist in this vault → no secret can match.
@@ -245,7 +245,7 @@ class ApplicationSecretsController extends ApplicationApiController
             );
         }
 
-        return $this->envelopeResponse($matches[0], $application->getId());
+        return $this->envelopeResponse(secret: $matches[0], applicationId: $application->getId());
     }//end byName()
 
     /**
@@ -329,7 +329,7 @@ class ApplicationSecretsController extends ApplicationApiController
             );
         }
 
-        return $this->envelopeResponse($secret, $application->getId());
+        return $this->envelopeResponse(secret: $secret, applicationId: $application->getId());
     }//end update()
 
     /**
@@ -346,7 +346,7 @@ class ApplicationSecretsController extends ApplicationApiController
     {
         $etag        = $this->envelopeService->etag($secret);
         $ifNoneMatch = $this->request->getHeader('If-None-Match');
-        if ($ifNoneMatch !== '' && $this->etagMatches($ifNoneMatch, $etag) === true) {
+        if ($ifNoneMatch !== '' && $this->etagMatches(ifNoneMatch: $ifNoneMatch, etag: $etag) === true) {
             $response = new JSONResponse(data: [], statusCode: Http::STATUS_NOT_MODIFIED);
             $response->addHeader('ETag', $etag);
             return $response;
