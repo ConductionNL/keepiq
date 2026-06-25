@@ -59,7 +59,6 @@ class MachineSecretEnvelopeService
      */
     public const SCHEME = 'rsa-oaep-sha256-chunked-v1';
 
-
     /**
      * Constructor for MachineSecretEnvelopeService.
      *
@@ -73,7 +72,6 @@ class MachineSecretEnvelopeService
         private FolderMapper $folderMapper,
     ) {
     }//end __construct()
-
 
     /**
      * Serialize a secret into the `doriath-machine-secret-v1` envelope.
@@ -98,7 +96,7 @@ class MachineSecretEnvelopeService
                 'id'           => $secret->getId(),
                 'name'         => $secret->getName(),
                 'url'          => $secret->getUrl(),
-                'folderPath'   => $this->resolveFolderPath($secret->getFolderId()),
+                'folderPath'   => $this->resolveFolderPath(folderId: $secret->getFolderId()),
                 'type'         => $secret->getTypeId(),
                 'createdAt'    => $secret->getCreatedAt()?->format('c'),
                 'updatedAt'    => $secret->getUpdatedAt()?->format('c'),
@@ -106,7 +104,7 @@ class MachineSecretEnvelopeService
             ],
             'encryption' => [
                 'suiteId'                => $secret->getEncryptionSuiteId(),
-                'certificateFingerprint' => $this->certificateFingerprint($secret->getEncryptionSuiteId()),
+                'certificateFingerprint' => $this->certificateFingerprint(suiteId: $secret->getEncryptionSuiteId()),
                 'scheme'                 => self::SCHEME,
             ],
             'ciphertext' => [
@@ -116,7 +114,6 @@ class MachineSecretEnvelopeService
             ],
         ];
     }//end serialize()
-
 
     /**
      * Build a candidate descriptor for the 409-ambiguity response body.
@@ -136,11 +133,10 @@ class MachineSecretEnvelopeService
         return [
             'id'         => $secret->getId(),
             'name'       => $secret->getName(),
-            'folderPath' => $this->resolveFolderPath($secret->getFolderId()),
+            'folderPath' => $this->resolveFolderPath(folderId: $secret->getFolderId()),
             'updatedAt'  => $secret->getUpdatedAt()?->format('c'),
         ];
     }//end candidate()
-
 
     /**
      * Derive a strong ETag for a single secret.
@@ -171,7 +167,6 @@ class MachineSecretEnvelopeService
 
         return '"'.hash('sha256', $material).'"';
     }//end etag()
-
 
     /**
      * Compute the sha256 fingerprint of the DER form of a suite's
@@ -204,14 +199,13 @@ class MachineSecretEnvelopeService
             return null;
         }
 
-        $der = $this->pemToDer($pem);
+        $der = $this->pemToDer(pem: $pem);
         if ($der === null) {
             return null;
         }
 
         return 'sha256:'.hash('sha256', $der);
     }//end certificateFingerprint()
-
 
     /**
      * Resolve a folder id to its slash-separated path, or '' for root.
@@ -228,7 +222,6 @@ class MachineSecretEnvelopeService
 
         return $this->folderMapper->getPath($folderId);
     }//end resolveFolderPath()
-
 
     /**
      * Decode a PEM certificate to its raw DER bytes.

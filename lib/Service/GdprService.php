@@ -104,26 +104,26 @@ class GdprService
         );
 
         return [
-            'format'    => self::FORMAT,
-            'version'   => self::VERSION,
-            'subject'   => $userId,
-            'generated' => (new \DateTime())->format('c'),
-            'notes'     => [
+            'format'         => self::FORMAT,
+            'version'        => self::VERSION,
+            'subject'        => $userId,
+            'generated'      => (new \DateTime())->format('c'),
+            'notes'          => [
                 'privateKeyExcluded' => 'Encryption-suite private-key blobs are '
                     .'excluded: they are end-to-end encrypted and unreadable to '
                     .'the data subject without the master password they already '
                     .'hold; including them would only widen the attack surface.',
-                'vaultHalf' => 'Decrypted secret values and folder contents form '
+                'vaultHalf'          => 'Decrypted secret values and folder contents form '
                     .'the client-assembled vault half of the full export package '
                     .'and are never produced server-side (ADR-003).',
             ],
-            'suites'      => $this->collectSuites($userId),
-            'sharesGiven' => $this->collectSharesGiven($ownedSecrets),
-            'sharesReceived' => $this->collectSharesReceived($userId),
-            'delegations' => $this->collectDelegations($userId),
-            'linkShares'  => $this->collectLinkShares($userId),
-            'requests'    => $this->collectRequests($userId),
-            'settings'    => $this->settingsService->getUserPreferences(userId: $userId),
+            'suites'         => $this->collectSuites(userId: $userId),
+            'sharesGiven'    => $this->collectSharesGiven(ownedSecrets: $ownedSecrets),
+            'sharesReceived' => $this->collectSharesReceived(userId: $userId),
+            'delegations'    => $this->collectDelegations(userId: $userId),
+            'linkShares'     => $this->collectLinkShares(userId: $userId),
+            'requests'       => $this->collectRequests(userId: $userId),
+            'settings'       => $this->settingsService->getUserPreferences(userId: $userId),
         ];
     }//end collectMetadata()
 
@@ -148,7 +148,7 @@ class GdprService
                 'reinstatedAt'  => $suite->getReinstatedAt()?->format('c'),
                 'reinstatedBy'  => $suite->getReinstatedBy(),
                 'createdAt'     => $suite->getCreatedAt()?->format('c'),
-                // privateKey deliberately excluded — see package notes.
+                // The privateKey is deliberately excluded — see package notes.
             ];
         }
 
@@ -191,9 +191,9 @@ class GdprService
         $rows = [];
         foreach ($this->shareMapper->findByTargetUser(targetUserId: $userId) as $share) {
             $rows[] = [
-                'sourceSecretId' => $share->getSourceSecretId(),
+                'sourceSecretId'  => $share->getSourceSecretId(),
                 'recipientCopyId' => $share->getSecretId(),
-                'createdAt'      => $share->getCreatedAt()?->format('c'),
+                'createdAt'       => $share->getCreatedAt()?->format('c'),
             ];
         }
 
@@ -212,10 +212,10 @@ class GdprService
         $rows = [];
         foreach ($this->delegationMapper->findByOriginalOwner(originalOwnerId: $userId) as $delegation) {
             $rows[] = [
-                'secretId'     => $delegation->getSecretId(),
-                'delegatedTo'  => $delegation->getDelegatedTo(),
-                'isPermanent'  => $delegation->getIsPermanent(),
-                'delegatedAt'  => $delegation->getDelegatedAt()?->format('c'),
+                'secretId'    => $delegation->getSecretId(),
+                'delegatedTo' => $delegation->getDelegatedTo(),
+                'isPermanent' => $delegation->getIsPermanent(),
+                'delegatedAt' => $delegation->getDelegatedAt()?->format('c'),
             ];
         }
 
@@ -240,7 +240,7 @@ class GdprService
                 'usageCount' => $link->getUsageCount(),
                 'createdAt'  => $link->getCreatedAt()?->format('c'),
                 'expiresAt'  => $link->getExpiresAt()?->format('c'),
-                // token + encryptedSecretSnapshot deliberately omitted.
+                // The token + encryptedSecretSnapshot are deliberately omitted.
             ];
         }
 
@@ -265,7 +265,7 @@ class GdprService
                 'isReRequest' => $request->getIsReRequest(),
                 'createdAt'   => $request->getCreatedAt()?->format('c'),
                 'fulfilledAt' => $request->getFulfilledAt()?->format('c'),
-                // token + requestedFields content omitted (request token is a secret).
+                // The token + requestedFields content omitted (request token is a secret).
             ];
         }
 

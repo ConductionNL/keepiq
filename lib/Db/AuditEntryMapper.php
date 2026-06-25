@@ -135,8 +135,8 @@ class AuditEntryMapper extends QBMapper
      * Admin instance-wide filtered query, newest first, paginated.
      *
      * @param array<string,mixed> $filters Optional filters: eventType, actor,
-     *                                      objectType, objectId, from, to
-     *                                      (DateTime or ISO string)
+     *                                     objectType, objectId, from, to
+     *                                     (DateTime or ISO string)
      * @param int                 $limit   Maximum rows
      * @param int                 $offset  Row offset
      *
@@ -146,7 +146,7 @@ class AuditEntryMapper extends QBMapper
     {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')->from($this->getTableName());
-        $this->applyFilters($qb, $filters);
+        $this->applyFilters(qb: $qb, filters: $filters);
         $qb->orderBy('occurred_at', 'DESC')
             ->addOrderBy('id', 'DESC')
             ->setMaxResults($limit)
@@ -166,7 +166,7 @@ class AuditEntryMapper extends QBMapper
     {
         $qb = $this->db->getQueryBuilder();
         $qb->select($qb->func()->count('*', 'cnt'))->from($this->getTableName());
-        $this->applyFilters($qb, $filters);
+        $this->applyFilters(qb: $qb, filters: $filters);
 
         $result = $qb->executeQuery();
         $count  = (int) $result->fetchOne();
@@ -178,8 +178,8 @@ class AuditEntryMapper extends QBMapper
     /**
      * Apply admin filter clauses to a query builder.
      *
-     * @param IQueryBuilder        $qb      The query builder
-     * @param array<string,mixed>  $filters The filters
+     * @param IQueryBuilder       $qb      The query builder
+     * @param array<string,mixed> $filters The filters
      *
      * @return void
      */
@@ -205,7 +205,7 @@ class AuditEntryMapper extends QBMapper
             $qb->andWhere(
                 $qb->expr()->gte(
                     'occurred_at',
-                    $qb->createNamedParameter($this->normaliseDate($filters['from']), IQueryBuilder::PARAM_DATE)
+                    $qb->createNamedParameter($this->normaliseDate(value: $filters['from']), IQueryBuilder::PARAM_DATE)
                 )
             );
         }
@@ -214,7 +214,7 @@ class AuditEntryMapper extends QBMapper
             $qb->andWhere(
                 $qb->expr()->lte(
                     'occurred_at',
-                    $qb->createNamedParameter($this->normaliseDate($filters['to']), IQueryBuilder::PARAM_DATE)
+                    $qb->createNamedParameter($this->normaliseDate(value: $filters['to']), IQueryBuilder::PARAM_DATE)
                 )
             );
         }

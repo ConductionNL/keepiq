@@ -41,6 +41,7 @@ use OCP\AppFramework\Db\Entity;
  */
 class GroupShare extends Entity implements JsonSerializable
 {
+
     /**
      * The owner's source Secret ID.
      *

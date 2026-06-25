@@ -128,8 +128,8 @@ class DashboardSettingsController extends OCSController
             return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        $params  = $this->request->getParams();
-        $userId  = $user->getUID();
+        $params = $this->request->getParams();
+        $userId = $user->getUID();
 
         try {
             if (isset($params['settings']) === true && is_array($params['settings']) === true) {

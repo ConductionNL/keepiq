@@ -48,10 +48,10 @@ class AuditController extends Controller
     /**
      * Constructor for AuditController.
      *
-     * @param IRequest      $request      The request
-     * @param AuditService  $auditService The audit service
-     * @param SecretMapper  $secretMapper The secret mapper (for ownership checks)
-     * @param IUserSession  $userSession  The user session
+     * @param IRequest     $request      The request
+     * @param AuditService $auditService The audit service
+     * @param SecretMapper $secretMapper The secret mapper (for ownership checks)
+     * @param IUserSession $userSession  The user session
      *
      * @return void
      */

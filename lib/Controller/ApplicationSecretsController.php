@@ -76,8 +76,6 @@ use InvalidArgumentException;
  */
 class ApplicationSecretsController extends ApplicationApiController
 {
-
-
     /**
      * Constructor for ApplicationSecretsController.
      *
@@ -101,7 +99,6 @@ class ApplicationSecretsController extends ApplicationApiController
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
 
-
     /**
      * List the calling application's secrets as envelopes.
      *
@@ -124,7 +121,7 @@ class ApplicationSecretsController extends ApplicationApiController
 
         $updatedSinceRaw = $this->request->getParam('updated_since');
         if ($updatedSinceRaw !== null && $updatedSinceRaw !== '') {
-            $since = $this->parseIso8601((string) $updatedSinceRaw);
+            $since = $this->parseIso8601(value: (string) $updatedSinceRaw);
             if ($since === null) {
                 return new JSONResponse(
                     data: ['message' => 'updated_since must be a valid ISO 8601 timestamp'],
@@ -156,7 +153,6 @@ class ApplicationSecretsController extends ApplicationApiController
         );
     }//end index()
 
-
     /**
      * Fetch one of the calling application's secrets by id.
      *
@@ -180,14 +176,13 @@ class ApplicationSecretsController extends ApplicationApiController
             return $this->unauthorized();
         }
 
-        $secret = $this->loadOwnedOrNull($id, $application->getId());
+        $secret = $this->loadOwnedOrNull(id: $id, applicationId: $application->getId());
         if ($secret === null) {
             return $this->notFound();
         }
 
-        return $this->envelopeResponse($secret, $application->getId());
+        return $this->envelopeResponse(secret: $secret, applicationId: $application->getId());
     }//end show()
-
 
     /**
      * Resolve one of the calling application's secrets by exact name.
@@ -217,8 +212,8 @@ class ApplicationSecretsController extends ApplicationApiController
         $folderId   = null;
         if ($folderPath !== null && $folderPath !== '') {
             $folderId = $this->resolveFolderId(
-                (string) $folderPath,
-                $application->getId()
+                path: (string) $folderPath,
+                applicationId: $application->getId()
             );
             if ($folderId === null) {
                 // Folder does not exist in this vault → no secret can match.
@@ -250,9 +245,8 @@ class ApplicationSecretsController extends ApplicationApiController
             );
         }
 
-        return $this->envelopeResponse($matches[0], $application->getId());
+        return $this->envelopeResponse(secret: $matches[0], applicationId: $application->getId());
     }//end byName()
-
 
     /**
      * Create a secret in the calling application's vault (write-back).
@@ -297,7 +291,6 @@ class ApplicationSecretsController extends ApplicationApiController
         );
     }//end create()
 
-
     /**
      * Replace the ciphertext of one of the calling application's secrets.
      *
@@ -336,9 +329,8 @@ class ApplicationSecretsController extends ApplicationApiController
             );
         }
 
-        return $this->envelopeResponse($secret, $application->getId());
+        return $this->envelopeResponse(secret: $secret, applicationId: $application->getId());
     }//end update()
-
 
     /**
      * Build the envelope response for a single secret, with ETag / 304
@@ -352,9 +344,9 @@ class ApplicationSecretsController extends ApplicationApiController
      */
     private function envelopeResponse(Secret $secret, string $applicationId): JSONResponse
     {
-        $etag      = $this->envelopeService->etag($secret);
+        $etag        = $this->envelopeService->etag($secret);
         $ifNoneMatch = $this->request->getHeader('If-None-Match');
-        if ($ifNoneMatch !== '' && $this->etagMatches($ifNoneMatch, $etag) === true) {
+        if ($ifNoneMatch !== '' && $this->etagMatches(ifNoneMatch: $ifNoneMatch, etag: $etag) === true) {
             $response = new JSONResponse(data: [], statusCode: Http::STATUS_NOT_MODIFIED);
             $response->addHeader('ETag', $etag);
             return $response;
@@ -374,7 +366,6 @@ class ApplicationSecretsController extends ApplicationApiController
         $response->addHeader('ETag', $etag);
         return $response;
     }//end envelopeResponse()
-
 
     /**
      * Load a secret only when it is owned by the given application, else
@@ -402,7 +393,6 @@ class ApplicationSecretsController extends ApplicationApiController
 
         return $secret;
     }//end loadOwnedOrNull()
-
 
     /**
      * Resolve a slash-separated folder path to a folder id within the
@@ -436,7 +426,6 @@ class ApplicationSecretsController extends ApplicationApiController
         return null;
     }//end resolveFolderId()
 
-
     /**
      * Collect the plaintext-safe metadata + ciphertext fields a write
      * request may carry. The server treats every field opaquely.
@@ -455,7 +444,6 @@ class ApplicationSecretsController extends ApplicationApiController
 
         return $payload;
     }//end writePayload()
-
 
     /**
      * Parse a strict ISO 8601 timestamp, returning null on any malformed
@@ -479,7 +467,6 @@ class ApplicationSecretsController extends ApplicationApiController
             return null;
         }
     }//end parseIso8601()
-
 
     /**
      * Match an `If-None-Match` header (possibly a comma list, possibly
@@ -511,7 +498,6 @@ class ApplicationSecretsController extends ApplicationApiController
         return false;
     }//end etagMatches()
 
-
     /**
      * 401 response for a missing/invalid Bearer token (defence in depth —
      * the middleware normally rejects first).
@@ -525,7 +511,6 @@ class ApplicationSecretsController extends ApplicationApiController
             statusCode: Http::STATUS_UNAUTHORIZED
         );
     }//end unauthorized()
-
 
     /**
      * 404 response — the single shape for both nonexistent and

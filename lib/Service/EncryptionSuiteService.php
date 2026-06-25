@@ -44,11 +44,12 @@ class EncryptionSuiteService
     /**
      * Constructor for EncryptionSuiteService.
      *
-     * @param EncryptionSuiteMapper       $mapper      The encryption suite mapper
-     * @param CertificateAuthorityService $caService   The CA service
-     * @param IAppConfig                  $appConfig   The app config interface
-     * @param IUserManager                $userManager The user manager
-     * @param LoggerInterface             $logger      The logger interface
+     * @param EncryptionSuiteMapper       $mapper          The encryption suite mapper
+     * @param CertificateAuthorityService $caService       The CA service
+     * @param IAppConfig                  $appConfig       The app config interface
+     * @param IUserManager                $userManager     The user manager
+     * @param LoggerInterface             $logger          The logger interface
+     * @param IEventDispatcher|null       $eventDispatcher The event dispatcher
      *
      * @return void
      */
@@ -58,7 +59,7 @@ class EncryptionSuiteService
         private IAppConfig $appConfig,
         private IUserManager $userManager,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -201,7 +202,7 @@ class EncryptionSuiteService
 
         $this->logger->info("Doriath: EncryptionSuite {$id} revoked by {$revokedBy}: {$reason}");
 
-        // implement-user-sharing §10.3 — dispatch a revocation event so
+        // Implement-user-sharing §10.3 — dispatch a revocation event so
         // EncryptionSuiteRevokedListener can cascade share-target
         // cleanup and promote temporary delegations to permanent.
         if ($this->eventDispatcher !== null) {
@@ -216,7 +217,7 @@ class EncryptionSuiteService
         }
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $revokedBy,
                 eventType: AuditEventTypes::SUITE_REVOKED,
                 objectType: 'suite',
@@ -277,7 +278,7 @@ class EncryptionSuiteService
         $this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $reinstatedBy,
                 eventType: AuditEventTypes::SUITE_REINSTATED,
                 objectType: 'suite',
@@ -315,7 +316,7 @@ class EncryptionSuiteService
         $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
 
         $this->dispatchAudit(
-            AuditEvent::forUser(
+            event: AuditEvent::forUser(
                 actorId: $compromisedBy,
                 eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
                 objectType: 'suite',
@@ -381,20 +382,6 @@ class EncryptionSuiteService
     {
         return $this->mapper->findByOwner($ownerType, $ownerId);
     }//end getSuitesByOwner()
-
-    /**
-     * Count the total number of active (non-revoked, non-compromised) suites.
-     *
-     * Used by the metrics endpoint for Prometheus instrumentation.
-     *
-     * @return int
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-     */
-    public function countActiveSuites(): int
-    {
-        return count($this->mapper->findAllActive());
-    }//end countActiveSuites()
 
     /**
      * Resolve the certificate common name for an owner.

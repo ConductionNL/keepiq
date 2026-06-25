@@ -100,7 +100,7 @@ class GroupShareService
             throw new InvalidArgumentException(message: 'groupId is required');
         }
 
-        $secret = $this->loadSecret($secretId);
+        $secret = $this->loadSecret(secretId: $secretId);
         $this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 
         $group = $this->groupManager->get($groupId);
@@ -176,7 +176,7 @@ class GroupShareService
             throw new InvalidArgumentException(message: 'Group share not found');
         }
 
-        $secret = $this->loadSecret($entity->getSecretId());
+        $secret = $this->loadSecret(secretId: $entity->getSecretId());
         $this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 
         $this->shareTargetMapper->deleteByGroupShare(groupShareId: $groupShareId);
@@ -202,7 +202,7 @@ class GroupShareService
     public function getGroupSharesForSecret(string $secretId, string $userId): array
     {
         try {
-            $secret = $this->loadSecret($secretId);
+            $secret = $this->loadSecret(secretId: $secretId);
         } catch (InvalidArgumentException) {
             return [];
         }
@@ -277,7 +277,7 @@ class GroupShareService
                 objectId: $secret->getId(),
             );
             ++$dispatched;
-        }
+        }//end foreach
 
         return $dispatched;
     }//end handleNewGroupMember()
@@ -307,7 +307,7 @@ class GroupShareService
             throw new InvalidArgumentException(message: 'Group share not found');
         }
 
-        $secret = $this->loadSecret($entity->getSecretId());
+        $secret = $this->loadSecret(secretId: $entity->getSecretId());
         $this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 
         // Skip if a ShareTarget already exists for this pair (idempotent).
@@ -358,7 +358,7 @@ class GroupShareService
      */
     public function handleMemberLeave(string $userId, string $groupId): int
     {
-        $revoked = 0;
+        $revoked     = 0;
         $groupShares = $this->mapper->findByGroup($groupId);
         foreach ($groupShares as $groupShare) {
             foreach ($this->shareTargetMapper->findByGroupShare($groupShare->getId()) as $row) {

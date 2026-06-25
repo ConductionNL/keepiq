@@ -81,12 +81,12 @@ class BreachProxyController extends Controller
     /**
      * Constructor for BreachProxyController.
      *
-     * @param IRequest        $request        The HTTP request
-     * @param IAppConfig      $appConfig      The app config (admin gate)
-     * @param IClientService  $clientService  The HTTP client service
-     * @param ICacheFactory   $cacheFactory   The cache factory
-     * @param IUserSession    $userSession    The user session (auth posture)
-     * @param LoggerInterface $logger         The logger
+     * @param IRequest        $request       The HTTP request
+     * @param IAppConfig      $appConfig     The app config (admin gate)
+     * @param IClientService  $clientService The HTTP client service
+     * @param ICacheFactory   $cacheFactory  The cache factory
+     * @param IUserSession    $userSession   The user session (auth posture)
+     * @param LoggerInterface $logger        The logger
      *
      * @return void
      */
@@ -159,7 +159,7 @@ class BreachProxyController extends Controller
                     'headers' => ['Add-Padding' => 'true'],
                 ]
             );
-            $body = (string) $response->getBody();
+            $body     = (string) $response->getBody();
         } catch (Throwable $e) {
             // Soft-degrade: never log the prefix together with a user id (privacy).
             $this->logger->warning(
@@ -170,7 +170,7 @@ class BreachProxyController extends Controller
                 data: ['message' => 'Breach service unavailable'],
                 statusCode: Http::STATUS_SERVICE_UNAVAILABLE
             );
-        }
+        }//end try
 
         $this->cache?->set($prefix, $body, self::CACHE_TTL);
 

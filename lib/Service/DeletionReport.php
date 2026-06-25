@@ -31,66 +31,67 @@ use JsonSerializable;
  */
 class DeletionReport implements JsonSerializable
 {
+
     /**
      * Number of own secrets hard-deleted.
      *
-     * @var int
+     * @var integer
      */
     public int $secretsDeleted = 0;
 
     /**
      * Number of delegated secrets whose ownership transferred to the delegate.
      *
-     * @var int
+     * @var integer
      */
     public int $secretsTransferred = 0;
 
     /**
      * Number of recipient copies detached and tombstoned.
      *
-     * @var int
+     * @var integer
      */
     public int $sharesDetached = 0;
 
     /**
      * Number of received share copies (and their links) hard-deleted.
      *
-     * @var int
+     * @var integer
      */
     public int $sharesRemoved = 0;
 
     /**
      * Number of folders deleted.
      *
-     * @var int
+     * @var integer
      */
     public int $foldersDeleted = 0;
 
     /**
      * Number of link shares deleted.
      *
-     * @var int
+     * @var integer
      */
     public int $linkSharesDeleted = 0;
 
     /**
      * Number of secret requests deleted.
      *
-     * @var int
+     * @var integer
      */
     public int $requestsDeleted = 0;
 
     /**
      * Number of encryption suites deleted.
      *
-     * @var int
+     * @var integer
      */
     public int $suitesDeleted = 0;
 
     /**
      * Whether user settings/preferences were removed.
      *
-     * @var bool
+     * @var boolean
      */
     public bool $settingsDeleted = false;
 

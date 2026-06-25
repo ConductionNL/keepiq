@@ -77,7 +77,7 @@ class AuditListener implements IEventListener
                 return;
             }
 
-            $this->handleExportGdprEvent($event);
+            $this->handleExportGdprEvent(event: $event);
         } catch (Throwable $e) {
             // Fail-soft: never let an audit-write failure roll back or fail the
             // audited operation. Log at error level so dropped entries surface.
@@ -107,14 +107,14 @@ class AuditListener implements IEventListener
 
         switch ($shortName) {
             case 'SecretExportedEvent':
-                $this->recordVaultEvent($event, AuditEventTypes::VAULT_EXPORTED);
+                $this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_EXPORTED);
                 break;
             case 'GdprExportPerformedEvent':
-                $this->recordVaultEvent($event, AuditEventTypes::VAULT_GDPR_EXPORTED);
+                $this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_GDPR_EXPORTED);
                 break;
             case 'AccountDataDeletedEvent':
-                $this->recordVaultEvent($event, AuditEventTypes::VAULT_ACCOUNT_DELETED);
-                $userId = $this->readActorId($event);
+                $this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_ACCOUNT_DELETED);
+                $userId = $this->readActorId(event: $event);
                 if ($userId !== null && $userId !== '') {
                     $this->auditService->anonymizeUser($userId);
                 }
@@ -135,8 +135,8 @@ class AuditListener implements IEventListener
      */
     private function recordVaultEvent(Event $event, string $eventType): void
     {
-        $actorId  = $this->readActorId($event);
-        $metadata = $this->readPayload($event);
+        $actorId  = $this->readActorId(event: $event);
+        $metadata = $this->readPayload(event: $event);
 
         $auditEvent = AuditEvent::forUser(
             actorId: ($actorId ?? AuditEventTypes::VAULT_ACCOUNT_DELETED),
