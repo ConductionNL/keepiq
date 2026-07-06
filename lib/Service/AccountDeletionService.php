@@ -46,6 +46,7 @@ use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Doriath\Db\SuiteMigrationMapper;
 use OCA\Doriath\Db\DashboardSettingMapper;
 use OCA\Doriath\Event\AccountDataDeletedEvent;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -92,7 +93,7 @@ class AccountDeletionService
         private LinkShareMapper $linkShareMapper,
         private SecretRequestMapper $requestMapper,
         private EncryptionSuiteMapper $suiteMapper,
-        private \OCA\Doriath\Db\SuiteMigrationMapper $migrationMapper,
+        private SuiteMigrationMapper $migrationMapper,
         private DashboardSettingMapper $settingMapper,
         private IEventDispatcher $dispatcher,
     ) {

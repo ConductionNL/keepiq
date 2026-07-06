@@ -57,6 +57,20 @@ use Ramsey\Uuid\Uuid;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   The service legitimately
  *   coordinates the secret mapper, type/migration/link-share services, the
  *   suite mapper, and the typed domain exceptions.
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)     Same rationale: one
+ *   cohesive lifecycle owner; the length is documentation-heavy method
+ *   docblocks, not tangled logic.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)     The public surface is the
+ *   secret lifecycle itself (user CRUD + application-vault seam + search);
+ *   splitting it would scatter the own-vault scoping invariants.
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)   Constructor DI list; the
+ *   trailing optional dependencies keep pre-audit call sites compiling.
+ * @SuppressWarnings(PHPMD.LongVariable)             $secretDelegationMapper
+ *   names the collaborator exactly; abbreviating it would obscure the
+ *   sharing-graph cascade.
+ * @SuppressWarnings(PHPMD.StaticAccess)             AuditEvent::forUser /
+ *   forApplication named constructors ARE the audit API (audit-trail spec);
+ *   every audited operation calls them by design.
  */
 class SecretService
 {
@@ -371,6 +385,11 @@ class SecretService
      * @throws NotFoundException When the secret does not exist in this vault
      * @throws InvalidArgumentException When a submitted field is invalid
      *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
+     *   independent, flat partial-update branch.
+     * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
+     *   independent partial-update guards, not nested logic.
+     *
      * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
      */
     public function updateByApplication(string $id, array $data, string $applicationId): Secret
@@ -451,6 +470,176 @@ class SecretService
 
         return $secret;
     }//end updateByApplication()
+
+    /**
+     * Delete a secret from an application's own vault (in-process seam).
+     *
+     * In-process only: consumed by a same-instance trusted caller (another
+     * Nextcloud app resolving SecretService via DI, e.g. OpenRegister's
+     * credential custody). Deliberately NOT exposed on any HTTP route — the
+     * machine secret-store surface keeps its no-DELETE stance; a bearer
+     * token can never destroy credentials.
+     *
+     * Strictly own-vault scoped: only a row with owner_type=application AND
+     * owner_id=$applicationId is ever deleted. Idempotent silent no-op on a
+     * nonexistent id or a cross-vault id (another application or a user) —
+     * the two outcomes are byte-for-byte indistinguishable to the caller
+     * (void return, no exception, no log/audit difference), so there is no
+     * existence oracle and cleanup retries are always safe. Note the
+     * deliberate divergence from updateByApplication, which throws: a failed
+     * write-back must be loud, a cleanup must be retry-safe. An empty
+     * $applicationId can match no vault and no-ops naturally.
+     *
+     * An actual deletion cascades the sharing-graph cleanup exactly as the
+     * user-scoped delete() (no orphan rows survive) and dispatches exactly
+     * one secret.deleted audit event with the application as actor — never
+     * on a no-op.
+     *
+     * @param string $secretId      The secret ID
+     * @param string $applicationId The owning application ID
+     *
+     * @return void
+     *
+     * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
+     */
+    public function deleteByApplication(string $secretId, string $applicationId): void
+    {
+        try {
+            $secret = $this->mapper->findById($secretId);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            // Idempotent: a nonexistent id is a silent no-op (design D2).
+            return;
+        }
+
+        // Own-vault scoping: a row owned by another vault (another
+        // application or a user) is indistinguishable from a nonexistent
+        // one — same silent return, no existence oracle (design D2).
+        if ($secret->getOwnerType() !== 'application'
+            || $secret->getOwnerId() !== $applicationId
+        ) {
+            return;
+        }
+
+        // Cascade parity with the user-scoped delete(): link shares +
+        // secret requests + user shares + group shares + delegations.
+        // Structurally a no-op for application-vault secrets today (every
+        // sharing creation path is user-owner scoped) but kept so "a secret
+        // delete leaves no orphan sharing-graph rows" holds unconditionally
+        // (design D4).
+        $this->linkShareService->deleteBySecretId($secretId);
+        if ($this->secretRequestService !== null) {
+            $this->secretRequestService->deleteAllForSecret($secretId);
+        }
+
+        if ($this->shareService !== null) {
+            $this->shareService->deleteAllForSecret($secretId);
+        }
+
+        if ($this->groupShareMapper !== null) {
+            $this->groupShareMapper->deleteBySecret($secretId);
+        }
+
+        if ($this->secretDelegationMapper !== null) {
+            $this->secretDelegationMapper->deleteBySecret($secretId);
+        }
+
+        $this->mapper->delete($secret);
+        $this->logger->info(
+            "Doriath: application-secret {$secretId} deleted from vault of app {$applicationId}"
+        );
+
+        $this->dispatchAudit(
+            event: AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::SECRET_DELETED,
+                objectType: 'secret',
+                objectId: $secretId,
+                objectName: $secret->getName(),
+            )
+        );
+    }//end deleteByApplication()
+
+    /**
+     * Resolve a secret by exact name from an application's own vault
+     * (in-process seam).
+     *
+     * In-process only: consumed by a same-instance trusted caller (another
+     * Nextcloud app resolving SecretService via DI, e.g. OpenRegister's
+     * credential custody, which names secrets by credential UUID).
+     * Deliberately NOT exposed on any HTTP route — the machine secret-store
+     * surface (bearer token, envelope responses) remains the only remote
+     * read path.
+     *
+     * Resolution mirrors the machine HTTP by-name path: the owner-keyed
+     * exact-match SecretMapper::findByName query (owner_type=application AND
+     * owner_id=$applicationId, vault-wide) is structurally incapable of
+     * reaching another vault. Zero matches return null — a name existing
+     * only in another vault yields the same empty set, so cross-vault and
+     * nonexistent are indistinguishable (no existence oracle). More than one
+     * match returns null and logs a warning: ambiguity is never resolved by
+     * guessing (the in-process equivalent of the machine API's 409), and to
+     * the caller it is indistinguishable from absence. Null-not-throw:
+     * "absent" is a normal answer for a resolution query, unlike the loud
+     * updateByApplication write-back.
+     *
+     * A single match returns the entity with its encrypted fields (key,
+     * login, additionalFields) as stored ciphertext — nothing is ever
+     * decrypted server-side (ADR-003), the caller decrypts with its own
+     * private key. A hit dispatches exactly one application.secret_retrieved
+     * audit event with the application as actor (parity with the machine
+     * HTTP full-read dispatch); a null outcome dispatches nothing.
+     *
+     * @param string $name          The exact plaintext secret name
+     * @param string $applicationId The owning application ID
+     *
+     * @return Secret|null The secret (ciphertext intact), or null when the
+     *                     name resolves to nothing or is ambiguous
+     *
+     * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
+     */
+    public function getByNameForApplication(string $name, string $applicationId): ?Secret
+    {
+        $matches = $this->mapper->findByName(
+            ownerType: 'application',
+            ownerId: $applicationId,
+            name: $name,
+        );
+
+        if (count($matches) === 0) {
+            // Owner-keyed query: nonexistent and cross-vault names produce
+            // the same empty set — no existence oracle (design D6).
+            return null;
+        }
+
+        if (count($matches) > 1) {
+            // Never guess between same-named secrets — the in-process
+            // equivalent of the machine API's 409 (design D6). To the
+            // caller, ambiguity is indistinguishable from absence.
+            $this->logger->warning(
+                'Doriath: ambiguous secret name "'.$name.'" in vault of app '
+                .$applicationId.' — '.count($matches)
+                .' matches, returning null (never guessing)'
+            );
+            return null;
+        }
+
+        $secret = $matches[0];
+
+        // Audit parity with the machine HTTP full read (envelopeResponse):
+        // exactly one application.secret_retrieved on a hit, nothing on any
+        // null outcome (design D7).
+        $this->dispatchAudit(
+            event: AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+            )
+        );
+
+        return $secret;
+    }//end getByNameForApplication()
 
     /**
      * Get a secret owned by the user, enforcing revoked-suite blocking.

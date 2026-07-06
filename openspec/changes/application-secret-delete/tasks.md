@@ -4,29 +4,29 @@ Two new public methods on `lib/Service/SecretService.php` plus unit tests — th
 
 ## 1. Backend — SecretService
 
-- [ ] 1.1 Add `SecretService::deleteByApplication(string $secretId, string $applicationId): void` — load via `SecretMapper::findById`; on `DoesNotExistException | MultipleObjectsReturnedException` return silently; on `ownerType !== 'application'` or `ownerId !== $applicationId` return silently (cross-vault indistinguishable from nonexistent, no existence oracle)
-- [ ] 1.2 On a real match, run the same sharing-graph cascade block as the user-scoped `delete()` (linkShareService + optional secretRequestService / shareService / groupShareMapper / secretDelegationMapper) before `mapper->delete($secret)` (design D4)
-- [ ] 1.3 After actual deletion only: `logger->info` line (id + applicationId) and `dispatchAudit(AuditEvent::forApplication(actorId: $applicationId, eventType: AuditEventTypes::SECRET_DELETED, objectType: 'secret', objectId: $secretId, objectName: $secret->getName()))` — exactly once, never on a no-op
-- [ ] 1.4 Add `SecretService::getByNameForApplication(string $name, string $applicationId): ?Secret` — resolve via `SecretMapper::findByName(ownerType: 'application', ownerId: $applicationId, name: $name)` (vault-wide, no folder param); 0 matches → `null`; >1 matches → `logger->warning` + `null` (never a guess, design D6); 1 match → return the entity, ciphertext fields untouched, no decryption anywhere in the path
-- [ ] 1.5 On a single-match read only: `dispatchAudit(AuditEvent::forApplication(actorId: $applicationId, eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED, objectType: 'secret', objectId: ..., objectName: ...))` — exactly once, mirroring the HTTP `envelopeResponse` full-read dispatch; nothing on any `null` outcome (design D7)
-- [ ] 1.6 Full PHPDoc on both methods mirroring `updateByApplication` (own-vault scoping, idempotency / null-not-throw + never-guess ambiguity documented, `@spec openspec/changes/application-secret-delete/specs/secrets/spec.md`) so gate-16 spec-coverage passes
+- [x] 1.1 Add `SecretService::deleteByApplication(string $secretId, string $applicationId): void` — load via `SecretMapper::findById`; on `DoesNotExistException | MultipleObjectsReturnedException` return silently; on `ownerType !== 'application'` or `ownerId !== $applicationId` return silently (cross-vault indistinguishable from nonexistent, no existence oracle)
+- [x] 1.2 On a real match, run the same sharing-graph cascade block as the user-scoped `delete()` (linkShareService + optional secretRequestService / shareService / groupShareMapper / secretDelegationMapper) before `mapper->delete($secret)` (design D4)
+- [x] 1.3 After actual deletion only: `logger->info` line (id + applicationId) and `dispatchAudit(AuditEvent::forApplication(actorId: $applicationId, eventType: AuditEventTypes::SECRET_DELETED, objectType: 'secret', objectId: $secretId, objectName: $secret->getName()))` — exactly once, never on a no-op
+- [x] 1.4 Add `SecretService::getByNameForApplication(string $name, string $applicationId): ?Secret` — resolve via `SecretMapper::findByName(ownerType: 'application', ownerId: $applicationId, name: $name)` (vault-wide, no folder param); 0 matches → `null`; >1 matches → `logger->warning` + `null` (never a guess, design D6); 1 match → return the entity, ciphertext fields untouched, no decryption anywhere in the path
+- [x] 1.5 On a single-match read only: `dispatchAudit(AuditEvent::forApplication(actorId: $applicationId, eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED, objectType: 'secret', objectId: ..., objectName: ...))` — exactly once, mirroring the HTTP `envelopeResponse` full-read dispatch; nothing on any `null` outcome (design D7)
+- [x] 1.6 Full PHPDoc on both methods mirroring `updateByApplication` (own-vault scoping, idempotency / null-not-throw + never-guess ambiguity documented, `@spec openspec/changes/application-secret-delete/specs/secrets/spec.md`) so gate-16 spec-coverage passes
 
 ## 2. Unit Tests (tests/Unit/Service/)
 
-- [ ] 2.1 Own-vault delete: mapper `delete()` called with the loaded entity; one `dispatchTyped` with `secret.deleted`, actor type application, actor id = applicationId
-- [ ] 2.2 Cross-vault id owned by another application: mapper `delete()` never called, no exception, zero audit dispatches
-- [ ] 2.3 Cross-vault id owned by a user (`ownerType = 'user'`): same silent no-op, zero audit dispatches
-- [ ] 2.4 Nonexistent id (`findById` throws `DoesNotExistException`): silent return — and calling twice (double delete) stays a silent no-op both times (idempotency)
-- [ ] 2.5 Exactly-once delete audit: a single real deletion produces exactly one dispatch; assert cascade helpers invoked on the real-delete path
-- [ ] 2.6 Read hit: `findByName` returns one entity → same instance returned with ciphertext fields (`key`, `login`, `additionalFields`) untouched; exactly one `dispatchTyped` with `application.secret_retrieved`, actor type application, actor id = applicationId
-- [ ] 2.7 Read miss: `findByName` returns `[]` → `null`, no exception, zero audit dispatches (one case covers nonexistent and cross-vault — assert the mapper call is owner-keyed with `ownerType: 'application'` + `$applicationId`)
-- [ ] 2.8 Read ambiguity: `findByName` returns two entities → `null`, exactly one `logger->warning`, zero audit dispatches, neither candidate returned
+- [x] 2.1 Own-vault delete: mapper `delete()` called with the loaded entity; one `dispatchTyped` with `secret.deleted`, actor type application, actor id = applicationId
+- [x] 2.2 Cross-vault id owned by another application: mapper `delete()` never called, no exception, zero audit dispatches
+- [x] 2.3 Cross-vault id owned by a user (`ownerType = 'user'`): same silent no-op, zero audit dispatches
+- [x] 2.4 Nonexistent id (`findById` throws `DoesNotExistException`): silent return — and calling twice (double delete) stays a silent no-op both times (idempotency)
+- [x] 2.5 Exactly-once delete audit: a single real deletion produces exactly one dispatch; assert cascade helpers invoked on the real-delete path
+- [x] 2.6 Read hit: `findByName` returns one entity → same instance returned with ciphertext fields (`key`, `login`, `additionalFields`) untouched; exactly one `dispatchTyped` with `application.secret_retrieved`, actor type application, actor id = applicationId
+- [x] 2.7 Read miss: `findByName` returns `[]` → `null`, no exception, zero audit dispatches (one case covers nonexistent and cross-vault — assert the mapper call is owner-keyed with `ownerType: 'application'` + `$applicationId`)
+- [x] 2.8 Read ambiguity: `findByName` returns two entities → `null`, exactly one `logger->warning`, zero audit dispatches, neither candidate returned
 
 ## 3. Quality Gates & Non-Goal Guards
 
-- [ ] 3.1 `composer check:strict` passes (PHPCS, PHPMD, Psalm, PHPStan) — fix any pre-existing issues encountered in touched files in the same batch
-- [ ] 3.2 Confirm `appinfo/routes.php`, all controllers, and `AuditEventTypes.php` have zero diff; `ApplicationSecretsControllerTest::testNoDeleteHandlerExists` still passes (machine no-DELETE stance unchanged)
-- [ ] 3.3 Run hydra gates (spec-coverage, route-reachability, forbidden-patterns) on the diff
+- [x] 3.1 `composer check:strict` passes (PHPCS, PHPMD, Psalm, PHPStan) — fix any pre-existing issues encountered in touched files in the same batch
+- [x] 3.2 Confirm `appinfo/routes.php`, all controllers, and `AuditEventTypes.php` have zero diff; `ApplicationSecretsControllerTest::testNoDeleteHandlerExists` still passes (machine no-DELETE stance unchanged)
+- [x] 3.3 Run hydra gates (spec-coverage, route-reachability, forbidden-patterns) on the diff
 
 ## Acceptance Criteria
 
