@@ -4,6 +4,7 @@
 
 **OpenSpec changes:**
 - `implement-secrets` (2026-03-31) — Full implementation: Secret/Folder/SecretType CRUD, search, unified search, list/pagination, favicon, clipboard
+- `application-secret-delete` (2026-07-06) — In-process-only application-vault seam for same-instance trusted consumers (OpenRegister `credential-doriath-leaf`): `SecretService::deleteByApplication` (own-vault scoped, idempotent silent no-op, `secret.deleted` audit with application actor) + `SecretService::getByNameForApplication` (own-vault read-by-name, ciphertext intact, null on absent/cross-vault/ambiguous with no existence oracle, `application.secret_retrieved` audit parity with the machine read path); machine HTTP surface keeps its no-DELETE stance (canonical home is this spec, not `secret-store-api`, because it owns the SecretService lifecycle while store-api owns only the HTTP contract)
 
 ## Purpose
 
