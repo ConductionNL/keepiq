@@ -30,6 +30,7 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use Throwable;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\GroupShareMapper;
@@ -109,6 +110,7 @@ class SecretService
      * @param GroupShareMapper|null       $groupShareMapper       The group-share mapper
      * @param SecretDelegationMapper|null $secretDelegationMapper The secret-delegation mapper
      * @param IEventDispatcher|null       $eventDispatcher        The event dispatcher
+     * @param AuditService|null           $auditService           The audit recorder (single write path)
      *
      * @return void
      */
@@ -124,26 +126,60 @@ class SecretService
         private ?GroupShareMapper $groupShareMapper=null,
         private ?SecretDelegationMapper $secretDelegationMapper=null,
         private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditService $auditService=null,
     ) {
     }//end __construct()
 
     /**
-     * Dispatch a typed audit event, fail-soft.
+     * Record a typed audit event through the single append-only write path,
+     * fail-soft and independent of listener registration.
      *
-     * The optional dispatcher keeps existing call sites that construct the
-     * service without it compiling; when wired, every audited secret operation
-     * emits an AuditEvent the AuditListener turns into an append-only row. The
-     * dispatch is the only audit coupling in the service — a listener failure is
-     * swallowed by the listener, never here.
+     * When the AuditService recorder is wired (the DI default in every app
+     * context), the event is persisted DIRECTLY via AuditService::record — the
+     * exact same single write path the AuditListener delegates to. It is NOT
+     * also dispatched on the event bus: doing both would write the row twice
+     * whenever the listener is registered.
+     *
+     * Recording directly rather than through the event bus is what fixes
+     * doriath#54: the application-vault seam methods (getByNameForApplication /
+     * deleteByApplication) are resolved cross-app by another Nextcloud app (e.g.
+     * OpenRegister via OCP\Server::get). That caller's request never boots
+     * Doriath's frontend Application::register, so its event dispatcher carries
+     * NO AuditListener and a bus dispatch fires into a listener-less dispatcher —
+     * nothing persists. AuditService and its AuditEntryMapper are autowired from
+     * the same container that already built this SecretService (they have
+     * strictly simpler dependencies than SecretMapper), so a direct record lands
+     * the row whichever app resolved the service.
+     *
+     * Fail-soft parity with AuditListener: an audit-write failure is logged at
+     * error level and swallowed, so it can never roll back or fail the audited
+     * secret operation. The optional recorder/dispatcher keep pre-audit call
+     * sites compiling; when only the dispatcher is present (legacy fixtures) the
+     * bus dispatch remains the fallback for an in-app AuditListener.
      *
      * @param AuditEvent $event The audit event
      *
      * @return void
      *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+     * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
      */
     private function dispatchAudit(AuditEvent $event): void
     {
+        if ($this->auditService !== null) {
+            try {
+                $this->auditService->record($event);
+            } catch (Throwable $e) {
+                $this->logger->error(
+                    'Doriath: audit entry could not be recorded: '.$e->getMessage(),
+                    ['exception' => $e]
+                );
+            }
+
+            return;
+        }
+
+        // Back-compat fallback: no recorder wired (legacy call sites) — dispatch
+        // on the bus so an in-app AuditListener still persists the row.
         $this->eventDispatcher?->dispatchTyped($event);
     }//end dispatchAudit()
 
