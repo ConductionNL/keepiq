@@ -195,8 +195,8 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | CA health status card (admin only) | **V1** | Certificate lifecycle visibility |
 | Recently accessed secrets widget | **V1** | Quick access |
 | Sharing activity summary | **V1** | Collaboration overview |
-| Password health report (weak, reused, old passwords) | **Enterprise** | Security audit |
-| Breach detection (HaveIBeenPwned integration) | **Enterprise** | Proactive security |
+| Password health report (weak, reused, old passwords) | **V1** ✅ | Security audit — implemented in `password-health` (client-side vault health report) |
+| Breach detection (HaveIBeenPwned integration) | **V1** ✅ | Proactive security — implemented in `password-health` (`BreachProxyController` k-anonymity range proxy) |
 | Vault usage analytics (admin) | **Enterprise** | Adoption tracking |
 
 ### Admin Settings
