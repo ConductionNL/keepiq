@@ -87,6 +87,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'linkShareAccess#show',    'url' => '/api/v1/public/link-shares/{token}',         'verb' => 'GET'],
     ['name' => 'linkShareAccess#confirm', 'url' => '/api/v1/public/link-shares/{token}/confirm', 'verb' => 'POST'],
 
+    // Emergency access — break-glass lifecycle (add-emergency-access §2.3).
+    ['name' => 'emergencyAccess#index',              'url' => '/api/v1/emergency-access/contacts',                'verb' => 'GET'],
+    ['name' => 'emergencyAccess#incoming',           'url' => '/api/v1/emergency-access/incoming',                'verb' => 'GET'],
+    ['name' => 'emergencyAccess#granteeCertificate', 'url' => '/api/v1/emergency-access/grantee-certificate',     'verb' => 'GET'],
+    ['name' => 'emergencyAccess#create',             'url' => '/api/v1/emergency-access/contacts',                'verb' => 'POST'],
+    ['name' => 'emergencyAccess#destroy',            'url' => '/api/v1/emergency-access/contacts/{id}',           'verb' => 'DELETE'],
+    ['name' => 'emergencyAccess#request',            'url' => '/api/v1/emergency-access/contacts/{id}/request',   'verb' => 'POST'],
+    ['name' => 'emergencyAccess#decline',            'url' => '/api/v1/emergency-access/contacts/{id}/decline',   'verb' => 'POST'],
+    ['name' => 'emergencyAccess#envelope',           'url' => '/api/v1/emergency-access/contacts/{id}/envelope',  'verb' => 'GET'],
+
     // User-to-user sharing — implement-user-sharing §9.
     ['name' => 'share#index',       'url' => '/api/v1/secrets/{secretId}/shares',       'verb' => 'GET'],
     ['name' => 'share#create',      'url' => '/api/v1/secrets/{secretId}/shares',       'verb' => 'POST'],

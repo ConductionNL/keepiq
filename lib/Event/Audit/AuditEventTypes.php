@@ -73,6 +73,15 @@ final class AuditEventTypes
     public const APPLICATION_TOKEN_ISSUED     = 'application.token_issued';
     public const APPLICATION_SECRET_RETRIEVED = 'application.secret_retrieved';
 
+    // Emergency access (break-glass lifecycle — add-emergency-access).
+    public const EMERGENCY_ACCESS_GRANTED     = 'emergency_access.granted';
+    public const EMERGENCY_ACCESS_REQUESTED   = 'emergency_access.requested';
+    public const EMERGENCY_ACCESS_DECLINED    = 'emergency_access.declined';
+    public const EMERGENCY_ACCESS_APPROVED    = 'emergency_access.approved';
+    public const EMERGENCY_ACCESS_ACCESSED    = 'emergency_access.accessed';
+    public const EMERGENCY_ACCESS_REVOKED     = 'emergency_access.revoked';
+    public const EMERGENCY_ACCESS_INVALIDATED = 'emergency_access.invalidated';
+
     // Export & deletion (consumed from secret-export-gdpr events when present).
     public const VAULT_EXPORTED        = 'vault.exported';
     public const VAULT_GDPR_EXPORTED   = 'vault.gdpr_exported';
@@ -135,6 +144,15 @@ final class AuditEventTypes
             self::VAULT_EXPORTED               => ['mode', 'scope', 'secretCount'],
             self::VAULT_GDPR_EXPORTED          => ['mode', 'scope', 'secretCount'],
             self::VAULT_ACCOUNT_DELETED        => ['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'],
+            // Emergency access — only non-sensitive relationship references; the
+            // recovery envelope and any key material are NEVER recorded (design D8).
+            self::EMERGENCY_ACCESS_GRANTED     => ['grantorUserId', 'granteeUserId', 'accessLevel', 'waitPeriodDays'],
+            self::EMERGENCY_ACCESS_REQUESTED   => ['grantorUserId', 'granteeUserId', 'waitPeriodDays'],
+            self::EMERGENCY_ACCESS_DECLINED    => ['grantorUserId', 'granteeUserId'],
+            self::EMERGENCY_ACCESS_APPROVED    => ['grantorUserId', 'granteeUserId'],
+            self::EMERGENCY_ACCESS_ACCESSED    => ['grantorUserId', 'granteeUserId'],
+            self::EMERGENCY_ACCESS_REVOKED     => ['grantorUserId', 'granteeUserId'],
+            self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
         ];
     }//end whitelist()
 
@@ -147,6 +165,8 @@ final class AuditEventTypes
     public const USER_REFERENCING_METADATA_KEYS = [
         'recipientId',
         'delegatedTo',
+        'grantorUserId',
+        'granteeUserId',
     ];
 
     /**
