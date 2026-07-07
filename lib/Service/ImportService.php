@@ -97,6 +97,7 @@ class ImportService
      * @throws InvalidArgumentException When the chunk exceeds the item cap
      *
      * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+     * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
      */
     public function commitChunk(array $items, string $userId): array
     {
@@ -134,6 +135,11 @@ class ImportService
                         'folderId'         => $folderId,
                         'login'            => ($item['login'] ?? null),
                         'additionalFields' => ($item['additionalFields'] ?? null),
+                        // Optional secret-type id (UUID). Carries an imported
+                        // TOTP seed into a `totp`-typed secret (add-totp-secrets
+                        // D6); null resolves to the `login` default. The type is
+                        // a UI hint only — the seed is ciphertext in `key`.
+                        'typeId'           => ($item['typeId'] ?? null),
                     ],
                     $userId
                 );
@@ -155,6 +161,11 @@ class ImportService
                 ];
             }//end try
         }//end foreach
+
+        $createdCount = count(array_filter($results, static fn(array $r): bool => $r['status'] === 'created'));
+        $this->logger->debug(
+            'Doriath: import chunk committed '.$createdCount.' of '.count($items).' items for user '.$userId
+        );
 
         return [
             'results'        => $results,
@@ -196,7 +207,9 @@ class ImportService
         }
 
         foreach (['key', 'login', 'additionalFields'] as $field) {
-            if (isset($item[$field]) === false || $item[$field] === null) {
+            // The isset() check is already false for a null value, so a
+            // separate null comparison is redundant.
+            if (isset($item[$field]) === false) {
                 continue;
             }
 

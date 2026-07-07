@@ -20,6 +20,7 @@ import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { useSessionStore, onVaultLock } from './session.js'
+import { useSecretTypeStore } from './secretType.js'
 import { rsaDecrypt } from '../../crypto/index.js'
 import { analyse, sha256Hex } from '../../health/engine.js'
 import { isPasswordBearing } from '../../health/classify.js'
@@ -132,8 +133,25 @@ export const useHealthStore = defineStore('health', {
 		 * @param {object} session The session store (holds the CryptoKey).
 		 * @return {Promise<Array<object>>} Decrypted rows.
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
 		 */
 		async loadDecryptedRows(session) {
+			// Resolve the set of `totp` type ids so authenticator seeds — which
+			// are high-entropy machine material, not passwords — are excluded
+			// from strength / reuse / breach analysis (add-totp-secrets D7).
+			const typeStore = useSecretTypeStore()
+			if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+				try {
+					await typeStore.fetchTypes()
+				} catch {
+					// Non-fatal: without types we simply cannot exclude totp rows.
+				}
+			}
+			const types = Array.isArray(typeStore.types) ? typeStore.types : []
+			const totpTypeIds = new Set(
+				types.filter((type) => type && type.name === 'totp').map((type) => type.id),
+			)
+
 			const response = await axios.get(
 				generateUrl('/apps/doriath/api/v1/secrets'),
 				{ params: { limit: 100 } },
@@ -142,6 +160,11 @@ export const useHealthStore = defineStore('health', {
 			const rows = []
 			for (const secret of items) {
 				if (secret.blocked || !secret.key) {
+					continue
+				}
+				// Skip TOTP secrets: their seed must never be scored, reuse-matched,
+				// or breach-checked (add-totp-secrets D7).
+				if (totpTypeIds.has(secret.typeId)) {
 					continue
 				}
 				let value = ''
