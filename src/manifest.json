@@ -57,6 +57,14 @@
 			"order": 87
 		},
 		{
+			"id": "EmergencyAccessMenu",
+			"label": "Emergency access",
+			"icon": "icon-user",
+			"route": "EmergencyAccess",
+			"section": "footer",
+			"order": 88
+		},
+		{
 			"id": "LockVault",
 			"label": "Lock vault",
 			"icon": "icon-password",
@@ -261,6 +269,14 @@
 			"title": "Password health",
 			"component": "HealthReportView",
 			"_note": "Client-side vault health report (password-health). type:\"custom\" — the analysis runs in-browser over the unlocked vault; no built-in page type models a memory-only analysis surface."
+		},
+		{
+			"id": "EmergencyAccess",
+			"route": "/emergency-access",
+			"type": "custom",
+			"title": "Emergency access",
+			"component": "EmergencyAccessView",
+			"_note": "Break-glass emergency access (add-emergency-access). type:\"custom\" — the grantor designates contacts and builds recovery envelopes in-browser; a grantee requests and recovers a grantor's key client-side. No built-in page type models this zero-knowledge escrow surface."
 		},
 		{
 			"id": "Lock",

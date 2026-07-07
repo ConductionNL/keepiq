@@ -26,6 +26,8 @@ use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
 use OCA\Doriath\Event\SuiteMigrationStartedEvent;
 use OCA\Doriath\Listener\AuditListener;
+use OCA\Doriath\Listener\EmergencyAccessSuiteRevocationListener;
+use OCA\Doriath\Listener\EmergencyAccessSuiteRotationListener;
 use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
 use OCA\Doriath\Listener\SuiteCompromiseListener;
 use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
@@ -156,6 +158,17 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: SuiteMigrationCompletedEvent::class,
             listener: SuiteCompromiseListener::class
+        );
+        // Emergency access — invalidate/clear recovery envelopes on a grantor's
+        // suite rotation (compromise recovery) or revocation, and invalidate
+        // envelopes to a grantee whose suite is revoked (add-emergency-access §3).
+        $context->registerEventListener(
+            event: SuiteMigrationCompletedEvent::class,
+            listener: EmergencyAccessSuiteRotationListener::class
+        );
+        $context->registerEventListener(
+            event: EncryptionSuiteRevokedEvent::class,
+            listener: EmergencyAccessSuiteRevocationListener::class
         );
 
         // Secret-export-gdpr D4 — cascade-delete all of a user's Doriath data

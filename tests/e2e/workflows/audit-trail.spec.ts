@@ -24,7 +24,8 @@ import { DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } fro
 
 test.describe('audit trail', () => {
 	test('updating a secret records a secret.updated entry on its Activity tab', async ({ page }) => {
-		// @e2e secret-audit-trail/server-observable-operation-capture/secret-update-is-logged
+		// @e2e openspec/specs/secret-audit-trail/spec.md#secret-update-is-logged
+		// @e2e openspec/specs/secret-audit-trail/spec.md#owner-views-secret-activity
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 
@@ -47,7 +48,7 @@ test.describe('audit trail', () => {
 	})
 
 	test('admin audit view filters entries and exports CSV', async ({ page }) => {
-		// @e2e secret-audit-trail/admin-audit-view/admin-filters-by-event-type-and-actor
+		// @e2e openspec/specs/secret-audit-trail/spec.md#admin-filters-by-event-type-and-actor
 		await page.goto('/index.php/settings/admin/doriath', { waitUntil: 'networkidle' })
 
 		const auditSection = page.locator('[data-testid="audit-table"], [data-testid="audit-empty"]')

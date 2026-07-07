@@ -48,13 +48,18 @@ class NotificationService
      * @var array<string,string|null>
      */
     public const SUBJECT_SETTING_MAP = [
-        'secret_shared'        => 'notify_shares',
-        'share_request'        => 'notify_shares',
-        'share_request_result' => 'notify_shares',
-        'group_member_added'   => 'notify_group_shares',
-        'secret_compromised'   => 'notify_security',
-        'request_fulfilled'    => 'notify_requests',
-        'app_pending'          => null,
+        'secret_shared'              => 'notify_shares',
+        'share_request'              => 'notify_shares',
+        'share_request_result'       => 'notify_shares',
+        'group_member_added'         => 'notify_group_shares',
+        'secret_compromised'         => 'notify_security',
+        'request_fulfilled'          => 'notify_requests',
+        'app_pending'                => null,
+        // Emergency access — grantor is notified on a break-glass request (so
+        // the veto window is actionable) and on actual access. Gated on the
+        // existing security-notification category (add-emergency-access §4.2).
+        'emergency_access_requested' => 'notify_security',
+        'emergency_access_accessed'  => 'notify_security',
     ];
 
     /**

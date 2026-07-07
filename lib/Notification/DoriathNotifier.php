@@ -177,6 +177,26 @@ class DoriathNotifier implements INotifier
                 );
                 break;
 
+            case 'emergency_access_requested':
+                $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
+                $waitDays    = (int) ($p['waitPeriodDays'] ?? 7);
+                $notification->setParsedSubject((string) $l->t('Emergency access requested'));
+                $notification->setParsedMessage(
+                    (string) $l->t(
+                        '%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.',
+                        [$granteeName, $waitDays]
+                    )
+                );
+                break;
+
+            case 'emergency_access_accessed':
+                $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
+                $notification->setParsedSubject((string) $l->t('Emergency access used'));
+                $notification->setParsedMessage(
+                    (string) $l->t('%s accessed your vault through emergency access.', [$granteeName])
+                );
+                break;
+
             default:
                 throw new UnknownNotificationException();
         }//end switch
