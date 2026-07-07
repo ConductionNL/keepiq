@@ -3,9 +3,13 @@
 /**
  * Doriath Seed Secret Types Repair Step
  *
- * Idempotently seeds the 6 immutable system SecretTypes on install and
+ * Idempotently seeds the 7 immutable system SecretTypes on install and
  * upgrade, using deterministic (UUID v5) identifiers so the IDs are stable
- * across instances and re-runs.
+ * across instances and re-runs. The `totp` type marks a secret whose encrypted
+ * `key` field holds a TOTP seed (an `otpauth://totp` URI or bare base32 secret)
+ * — a UI hint that drives a client-side RFC 6238 code generator; the seed rides
+ * in the existing `key` ciphertext blob, so no schema column is added and the
+ * server cannot distinguish a `totp` secret from any other.
  *
  * @category Repair
  * @package  OCA\Doriath\Repair
@@ -33,7 +37,9 @@ use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
- * Seeds the 6 immutable system SecretTypes.
+ * Seeds the 7 immutable system SecretTypes.
+ *
+ * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
  */
 class SeedSecretTypes implements IRepairStep
 {
@@ -45,7 +51,11 @@ class SeedSecretTypes implements IRepairStep
     public const TYPE_NAMESPACE = '6f9619ff-8b86-d011-b42d-00c04fc964ff';
 
     /**
-     * The 6 system types as name => label pairs.
+     * The 7 system types as name => label pairs.
+     *
+     * The `totp` type is a UI hint (like every other type): its encrypted `key`
+     * field holds a TOTP seed and the client renders an RFC 6238 code generator.
+     * No schema column is introduced — the seed is ciphertext in `key`.
      *
      * @var array<string,string>
      */
@@ -56,6 +66,7 @@ class SeedSecretTypes implements IRepairStep
         'certificate' => 'Certificate',
         'note'        => 'Secure Note',
         'database'    => 'Database',
+        'totp'        => 'Authenticator (TOTP)',
     ];
 
     /**

@@ -38,6 +38,11 @@
 				<PasswordField :label="keyLabel" :resolve="resolveKey" />
 			</div>
 
+			<div v-if="isTotp" class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{ t('doriath', 'One-time code') }}</span>
+				<TotpDisplay :seed="secret.key || ''" data-testid="secret-detail-totp" />
+			</div>
+
 			<div v-if="hasAdditionalFields" class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{ t('doriath', 'Additional fields') }}</span>
 				<dl class="secret-detail__extra">
@@ -167,6 +172,7 @@ import FolderMove from 'vue-material-design-icons/FolderMove.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import CopyButton from '../components/CopyButton.vue'
 import PasswordField from '../components/PasswordField.vue'
+import TotpDisplay from '../components/TotpDisplay.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
@@ -195,6 +201,7 @@ export default {
 		ShareVariant,
 		CopyButton,
 		PasswordField,
+		TotpDisplay,
 		DelegationManager,
 		ShareList,
 		ShareRequestForm,
@@ -236,6 +243,21 @@ export default {
 				return t('doriath', 'Note')
 			}
 			return t('doriath', 'Key')
+		},
+
+		/**
+		 * True when this secret is a `totp` type — its decrypted `key` holds an
+		 * authenticator seed and the client renders a live one-time code.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
+		 */
+		isTotp() {
+			if (!this.secret) {
+				return false
+			}
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return Boolean(type) && type.name === 'totp'
 		},
 
 		/**

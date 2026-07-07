@@ -23,6 +23,7 @@ import { generateUrl } from '@nextcloud/router'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { useSessionStore } from './session.js'
 import { useSecretStore } from './secret.js'
+import { useSecretTypeStore } from './secretType.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
 // Importing the parsers module registers every format parser on the registry.
@@ -104,7 +105,9 @@ export const useImportStore = defineStore('import', {
 				}
 				const parsed = await parser.parse(text, options)
 				this.format = format
-				this.rows = parsed.filter(r => !r.errors || r.errors.length === 0)
+				this.rows = this.expandTotpRows(
+					parsed.filter(r => !r.errors || r.errors.length === 0),
+				)
 				this.rejected = parsed
 					.filter(r => r.errors && r.errors.length > 0)
 					.map(r => ({ sourceRow: r.sourceRow, reason: r.errors.join('; '), name: r.name }))
@@ -114,6 +117,50 @@ export const useImportStore = defineStore('import', {
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Split a TOTP/otp seed carried on an imported login row into its own
+		 * `totp`-typed secret so migrating users keep working authenticator codes
+		 * (add-totp-secrets D6). Bitwarden and KeePass parsers stash the seed in
+		 * `additionalFields.totp`; this routes that seed into the `password`
+		 * field (which becomes the encrypted `key` at commit) of a new `totp` row
+		 * and strips it from the login row's additional fields. The seed is
+		 * encrypted in the browser at commit like every other field — plaintext
+		 * never reaches the server.
+		 *
+		 * @param {Array<object>} rows The accepted normalized rows.
+		 * @return {Array<object>} The rows plus any extracted `totp` rows.
+		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
+		 */
+		expandTotpRows(rows) {
+			const out = []
+			let nextSourceRow = rows.reduce((max, r) => Math.max(max, r.sourceRow || 0), 0)
+			for (const row of rows) {
+				const seed = row.additionalFields && row.additionalFields.totp
+				if (typeof seed === 'string' && seed.trim() !== '') {
+					// Remove the seed from the login row's additional fields.
+					const rest = { ...row.additionalFields }
+					delete rest.totp
+					row.additionalFields = Object.keys(rest).length > 0 ? rest : null
+					nextSourceRow += 1
+					out.push(row)
+					out.push({
+						sourceRow: nextSourceRow,
+						name: `${row.name} (TOTP)`,
+						url: row.url ?? null,
+						login: row.login ?? null,
+						password: seed,
+						additionalFields: null,
+						folder: row.folder ?? '',
+						type: 'totp',
+						errors: [],
+					})
+				} else {
+					out.push(row)
+				}
+			}
+			return out
 		},
 
 		/**
@@ -173,10 +220,13 @@ export const useImportStore = defineStore('import', {
 		 * @param {object} row The plaintext row.
 		 * @param {CryptoKey} publicKey The owner's imported public key.
 		 * @param {boolean} asCopy Whether to apply the "(imported)" copy suffix.
+		 * @param {string|null} totpTypeId The resolved `totp` type id, stamped on
+		 *   `totp` rows so an imported seed lands as an Authenticator secret.
 		 * @return {Promise<object>} The ciphertext-only item.
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 */
-		async encryptRow(row, publicKey, asCopy) {
+		async encryptRow(row, publicKey, asCopy, totpTypeId = null) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
 			const item = {
 				sourceRow: row.sourceRow,
@@ -184,6 +234,13 @@ export const useImportStore = defineStore('import', {
 				url: row.url ?? null,
 				folderPath: folderSegments(row.folder),
 				key: await rsaEncrypt(String(row.password ?? ''), publicKey),
+			}
+			// A `totp` row carries its seed in `password` (now ciphertext in
+			// `key`); stamp the resolved totp type id so the server files it as
+			// an Authenticator secret (add-totp-secrets D6). The seed stays
+			// ciphertext — the type is a UI hint only.
+			if (row.type === 'totp' && totpTypeId) {
+				item.typeId = totpTypeId
 			}
 			if (row.login != null && row.login !== '') {
 				item.login = await rsaEncrypt(String(row.login), publicKey)
@@ -220,12 +277,30 @@ export const useImportStore = defineStore('import', {
 			const rows = this.acceptedRows
 			const dupRows = new Set(this.duplicates.map(d => d.sourceRow))
 
+			// Resolve the `totp` type id once so imported authenticator seeds are
+			// filed as Authenticator secrets (add-totp-secrets D6). Best-effort:
+			// if the type list is unavailable the seed still imports as a login.
+			let totpTypeId = null
+			if (rows.some((row) => row.type === 'totp')) {
+				const typeStore = useSecretTypeStore()
+				if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+					try {
+						await typeStore.fetchTypes()
+					} catch {
+						// Non-fatal.
+					}
+				}
+				const types = Array.isArray(typeStore.types) ? typeStore.types : []
+				const totpType = types.find((type) => type && type.name === 'totp')
+				totpTypeId = totpType ? totpType.id : null
+			}
+
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = []
 			const itemRowByIndex = []
 			for (const row of rows) {
 				const asCopy = dupRows.has(row.sourceRow)
-				items.push(await this.encryptRow(row, publicKey, asCopy))
+				items.push(await this.encryptRow(row, publicKey, asCopy, totpTypeId))
 				itemRowByIndex.push(row)
 			}
 

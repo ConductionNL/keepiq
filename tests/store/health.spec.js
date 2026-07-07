@@ -16,6 +16,7 @@ import axios from '@nextcloud/axios'
 
 import { useHealthStore } from '../../src/store/modules/health.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
+import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 
 // The engine decrypts via rsaDecrypt(session.cryptoKey); stub the crypto module
 // so the store test exercises orchestration, not RSA.
@@ -114,5 +115,34 @@ describe('useHealthStore', () => {
 
 		expect(store.findings).toEqual([])
 		expect(store.status).toBe('idle')
+	})
+
+	it('excludes totp-typed secrets from analysis (add-totp-secrets D7)', async () => {
+		const session = useSessionStore()
+		session.cryptoKey = { fake: true }
+
+		// Pre-populate the type store so loadDecryptedRows resolves the totp id
+		// without hitting the mocked axios (which returns secret-shaped data).
+		const typeStore = useSecretTypeStore()
+		typeStore.types = [
+			{ id: 'type-login', name: 'login' },
+			{ id: 'type-totp', name: 'totp' },
+		]
+
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				items: [
+					{ id: 'a', name: 'Weak', typeId: 'type-login', key: 'enc:password', blocked: false },
+					{ id: 't', name: 'Authenticator', typeId: 'type-totp', key: 'enc:otpauth://totp/x?secret=JBSWY3DP', blocked: false },
+				],
+			},
+		})
+
+		const store = useHealthStore()
+		await store.analyseVault({ stalenessThreshold: 'never', breachEnabled: false })
+
+		// Only the login secret is analysed; the totp seed is never scored.
+		expect(store.summary.analysedCount).toBe(1)
+		expect(store.findings.some((f) => f.id === 't')).toBe(false)
 	})
 })

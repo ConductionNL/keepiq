@@ -231,4 +231,52 @@ describe('useImportStore', () => {
 			expect(JSON.stringify(call)).not.toContain('plain-secret')
 		}
 	})
+
+	it('splits an imported TOTP seed into its own totp-typed row (add-totp-secrets D6)', () => {
+		const store = useImportStore()
+		const rows = [
+			{ sourceRow: 1, name: 'GitHub', url: 'https://github.com', login: 'alice', password: 'pw', additionalFields: { totp: 'JBSWY3DPEHPK3PXP', notes: 'n' }, folder: 'Work', errors: [] },
+			{ sourceRow: 2, name: 'Plain', url: null, login: null, password: 'x', additionalFields: null, folder: '', errors: [] },
+		]
+		const out = store.expandTotpRows(rows)
+
+		// Original login row keeps its non-totp additional fields, loses the seed.
+		const login = out.find((r) => r.name === 'GitHub')
+		expect(login.additionalFields).toEqual({ notes: 'n' })
+
+		// A new totp row carries the seed as its password (→ encrypted key).
+		const totp = out.find((r) => r.type === 'totp')
+		expect(totp).toBeTruthy()
+		expect(totp.name).toBe('GitHub (TOTP)')
+		expect(totp.password).toBe('JBSWY3DPEHPK3PXP')
+		expect(totp.folder).toBe('Work')
+
+		// The untouched row passes through unchanged.
+		expect(out.some((r) => r.name === 'Plain')).toBe(true)
+		expect(out).toHaveLength(3)
+	})
+
+	it('stamps the resolved totp type id on committed totp items, seed stays ciphertext', async () => {
+		const privateKey = await unlockSession()
+
+		// Seed the type store so commit resolves the totp type id without a fetch.
+		const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
+		useSecretTypeStore().types = [{ id: 'type-totp-uuid', name: 'totp' }]
+
+		let posted = null
+		vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
+			posted = body
+			return { data: { results: body.items.map((_, i) => ({ index: i, status: 'created', secretId: `s${i}` })), foldersCreated: [] } }
+		})
+
+		const store = useImportStore()
+		store.rows = [{ sourceRow: 1, name: 'GH (TOTP)', url: null, login: null, password: 'JBSWY3DPEHPK3PXP', additionalFields: null, folder: '', type: 'totp', errors: [] }]
+		await store.commit()
+
+		const item = posted.items[0]
+		expect(item.typeId).toBe('type-totp-uuid')
+		// The seed is ciphertext in `key`, never plaintext on the wire.
+		expect(JSON.stringify(posted)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(await rsaDecrypt(item.key, privateKey)).toBe('JBSWY3DPEHPK3PXP')
+	})
 })
