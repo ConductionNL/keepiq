@@ -62,95 +62,154 @@
 			"id": "Dashboard",
 			"route": "/",
 			"type": "dashboard",
-			"title": "Dashboard",
+			"title": "Vault overview",
 			"config": {
+				"description": "Your secrets, folders and applications at a glance",
 				"documentationUrl": "https://doriath.conduction.nl"
 			},
 			"widgets": [
 				{
-					"widgetKey": "stats-block",
+					"widgetKey": "stat",
 					"slot": "body",
 					"gridX": 0,
 					"gridY": 0,
 					"gridWidth": 3,
 					"gridHeight": 2,
 					"props": {
-						"title": "Open items",
-						"iconClass": "icon-folder",
-						"count": 12,
-						"countLabel": "sample",
-						"variant": "primary",
-						"showTitle": true
+						"content": {
+							"label": "Secrets",
+							"icon": "M7 14C5.9 14 5 13.1 5 12S5.9 10 7 10 9 10.9 9 12 8.1 14 7 14M12.6 10C11.8 7.7 9.6 6 7 6C3.7 6 1 8.7 1 12S3.7 18 7 18C9.6 18 11.8 16.3 12.6 14H16V18H20V14H23V10H12.6Z",
+							"valueColor": "#21468B",
+							"format": { "style": "number", "decimals": 0 },
+							"source": {
+								"kind": "endpoint",
+								"url": "/apps/doriath/api/dashboard/summary",
+								"path": "total_secrets"
+							},
+							"route": { "name": "SecretList" }
+						}
 					}
 				},
 				{
-					"widgetKey": "stats-block",
+					"widgetKey": "stat",
 					"slot": "body",
 					"gridX": 3,
 					"gridY": 0,
 					"gridWidth": 3,
 					"gridHeight": 2,
 					"props": {
-						"title": "Due this week",
-						"iconClass": "icon-calendar",
-						"count": 5,
-						"countLabel": "sample",
-						"variant": "warning",
-						"showTitle": true
+						"content": {
+							"label": "Folders",
+							"icon": "M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z",
+							"valueColor": "#21468B",
+							"format": { "style": "number", "decimals": 0 },
+							"source": {
+								"kind": "endpoint",
+								"url": "/apps/doriath/api/dashboard/summary",
+								"path": "folders_count"
+							},
+							"route": { "name": "SecretList" }
+						}
 					}
 				},
 				{
-					"widgetKey": "stats-block",
+					"widgetKey": "stat",
 					"slot": "body",
 					"gridX": 6,
 					"gridY": 0,
 					"gridWidth": 3,
 					"gridHeight": 2,
 					"props": {
-						"title": "Completed",
-						"iconClass": "icon-checkmark",
-						"count": 48,
-						"countLabel": "sample",
-						"variant": "success",
-						"showTitle": true
+						"content": {
+							"label": "Shared with me",
+							"icon": "M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z",
+							"valueColor": "#21468B",
+							"format": { "style": "number", "decimals": 0 },
+							"source": {
+								"kind": "endpoint",
+								"url": "/apps/doriath/api/dashboard/summary",
+								"path": "shared_with_me_count"
+							}
+						}
 					}
 				},
 				{
-					"widgetKey": "stats-block",
+					"widgetKey": "stat",
 					"slot": "body",
 					"gridX": 9,
 					"gridY": 0,
 					"gridWidth": 3,
 					"gridHeight": 2,
 					"props": {
-						"title": "Team members",
-						"iconClass": "icon-group",
-						"count": 7,
-						"countLabel": "sample",
-						"variant": "default",
-						"showTitle": true
+						"content": {
+							"label": "Pending approvals",
+							"icon": "M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z",
+							"valueColor": "#21468B",
+							"format": { "style": "number", "decimals": 0 },
+							"source": {
+								"kind": "endpoint",
+								"url": "/apps/doriath/api/dashboard/summary",
+								"path": "pending_apps_count"
+							},
+							"route": { "name": "ApplicationRegister" }
+						}
 					}
 				},
 				{
-					"widgetKey": "doriath-recent-activity",
+					"widgetKey": "tile",
 					"slot": "body",
 					"gridX": 0,
 					"gridY": 2,
-					"gridWidth": 6,
-					"gridHeight": 4,
+					"gridWidth": 4,
+					"gridHeight": 2,
 					"props": {
-						"title": "Recent activity"
+						"content": {
+							"title": "New secret",
+							"icon": "icon-add",
+							"iconType": "class",
+							"backgroundColor": "#21468B",
+							"textColor": "#ffffff",
+							"linkType": "app",
+							"linkValue": "/apps/doriath/secrets"
+						}
 					}
 				},
 				{
-					"widgetKey": "doriath-quick-actions",
+					"widgetKey": "tile",
 					"slot": "body",
-					"gridX": 6,
+					"gridX": 4,
 					"gridY": 2,
-					"gridWidth": 6,
-					"gridHeight": 4,
+					"gridWidth": 4,
+					"gridHeight": 2,
 					"props": {
-						"title": "Quick actions"
+						"content": {
+							"title": "Register application",
+							"icon": "icon-category-integration",
+							"iconType": "class",
+							"backgroundColor": "#3b82f6",
+							"textColor": "#ffffff",
+							"linkType": "app",
+							"linkValue": "/apps/doriath/applications"
+						}
+					}
+				},
+				{
+					"widgetKey": "tile",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 2,
+					"gridWidth": 4,
+					"gridHeight": 2,
+					"props": {
+						"content": {
+							"title": "Documentation",
+							"icon": "icon-info",
+							"iconType": "class",
+							"backgroundColor": "#6b7280",
+							"textColor": "#ffffff",
+							"linkType": "url",
+							"linkValue": "https://doriath.conduction.nl"
+						}
 					}
 				}
 			]
