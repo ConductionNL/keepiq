@@ -6,13 +6,14 @@
     <name lang="nl">Doriath</name>
     <summary lang="en">Encrypted secrets manager for Nextcloud — password manager and key store for users and applications</summary>
     <summary lang="nl">Versleutelde geheimenbeheerder voor Nextcloud — wachtwoordmanager en sleutelopslag voor gebruikers en applicaties</summary>
-    <description lang="en"><![CDATA[Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
+    <description lang="en"><![CDATA[A zero-knowledge encrypted secrets manager for Nextcloud — a personal vault for users and a write-without-read credential store for applications, using end-to-end RSA-4096/AES-256 encryption backed by a private Certificate Authority. Your master password is never stored: not even the server administrator can read your secrets.
 
 **Key Features**
 
-- **End-to-end encryption** — RSA-4096 + AES-256 with a private Certificate Authority
-- **Secret sharing** — Share with Nextcloud users and groups, link sharing, secret requests
-- **Application management** — Register applications with CSR-based onboarding, write-without-read
+- **End-to-end encryption** — RSA-4096 + AES-256 private-key protection with a private Certificate Authority (root + intermediate, auto-renewal)
+- **Personal vault** — folder organisation, fuzzy search, Nextcloud unified search integration
+- **Secret sharing** — share with Nextcloud users and groups, password-protected link sharing, secret requests (write-without-read), temporary ownership delegation
+- **Application management** — register applications with CSR-based onboarding, write-without-read application secrets, OAuth-style application tokens (RFC 7523 JWT Bearer)
 - **Admin settings** — CA health monitoring, password policies, application approval queue
 - **NL Design System ready** — CSS variables, WCAG AA, government theming
 
@@ -20,13 +21,14 @@ Free and open source under the EUPL-1.2 license.
 
 **Support:** For support, contact support@conduction.nl.
     ]]></description>
-    <description lang="nl"><![CDATA[Veilig opslaan en delen van geheimen (wachtwoorden, API-sleutels, certificaten) voor Nextcloud-gebruikers en applicaties, met end-to-end RSA/AES-versleuteling ondersteund door een privé-certificaatautoriteit.
+    <description lang="nl"><![CDATA[Een versleutelde geheimenbeheerder voor Nextcloud volgens het zero-knowledge principe — een persoonlijke kluis voor gebruikers en een schrijven-zonder-lezen credential store voor applicaties, met end-to-end RSA-4096/AES-256-versleuteling ondersteund door een privé-certificaatautoriteit. Je hoofdwachtwoord wordt nooit opgeslagen: zelfs de serverbeheerder kan je geheimen niet lezen.
 
 **Belangrijkste functies**
 
-- **End-to-end versleuteling** — RSA-4096 + AES-256 met een privé-certificaatautoriteit
-- **Geheimen delen** — Delen met Nextcloud-gebruikers en -groepen, linkdeling, geheimeaanvragen
-- **Applicatiebeheer** — Registreer applicaties met CSR-onboarding, schrijven-zonder-lezen
+- **End-to-end versleuteling** — RSA-4096 + AES-256 privésleutelbescherming met een privé-certificaatautoriteit (root + intermediate, automatische vernieuwing)
+- **Persoonlijke kluis** — mapstructuur, fuzzy search, integratie met Nextclouds unified search
+- **Geheimen delen** — delen met Nextcloud-gebruikers en -groepen, linkdeling met wachtwoordbeveiliging, geheimeaanvragen (schrijven-zonder-lezen), tijdelijke eigenaarsoverdracht
+- **Applicatiebeheer** — registreer applicaties met CSR-onboarding, schrijven-zonder-lezen applicatiegeheimen, OAuth-achtige applicatietokens (RFC 7523 JWT Bearer)
 - **Beheerdersinstellingen** — CA-gezondheid, wachtwoordbeleid, goedkeuringswachtrij
 - **NL Design System klaar** — CSS-variabelen, WCAG AA, overheidsthema
 
@@ -34,8 +36,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.2.10</version>
-    <licence>agpl</licence>
+    <version>0.2.11</version>
+    <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Doriath</namespace>
     <documentation>
