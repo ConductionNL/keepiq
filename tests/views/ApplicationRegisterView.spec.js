@@ -26,7 +26,7 @@ describe('ApplicationRegisterView', () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
-		expect(wrapper.find('[data-testid="application-register-empty"]').exists()).toBe(true)
+		expect(wrapper.find('.cn-index-page__empty').exists()).toBe(true)
 	})
 
 	it('renders one row per registered application', async () => {
@@ -38,14 +38,14 @@ describe('ApplicationRegisterView', () => {
 		})
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
-		expect(wrapper.findAll('[data-testid="application-register-row"]')).toHaveLength(2)
+		expect(wrapper.findAll('.cn-object-row')).toHaveLength(2)
 	})
 
-	it('opens the dialog when the register button is clicked', async () => {
+	it('opens the dialog when the register (add) button is clicked', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
-		await wrapper.find('[data-testid="application-register-open"]').trigger('click')
+		await wrapper.find('[data-testid="cn-cta-primary"]').trigger('click')
 		expect(wrapper.find('[data-testid="application-register-dialog"]').exists()).toBe(true)
 	})
 

@@ -113,7 +113,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 
-		await nativeClickByText(page, '.secret-list-view__actions button', 'New folder')
+		await nativeClickByText(page, '.secret-list-view__sidebar button', 'New folder')
 		await expect(page.locator('.folder-form')).toBeVisible({ timeout: 10_000 })
 		await page.locator('.folder-form input[type="text"]').first().fill(FOLDER, { force: true })
 		await page.waitForTimeout(300)

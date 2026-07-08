@@ -1,99 +1,59 @@
 <template>
 	<div class="secret-list-view">
+		<!-- Folder sidebar — the shared CnFolderSidebar (custom source), fed by
+		     the per-user folder store. -->
 		<div class="secret-list-view__sidebar">
-			<NcButton type="secondary" wide @click="selectFolder(null)">
-				<template #icon>
-					<AllInclusive :size="18" />
-				</template>
-				{{ t('doriath', 'All secrets') }}
-			</NcButton>
-			<FolderTree :folders="folderTree"
+			<CnFolderSidebar
+				:folders="folders"
 				:selected-id="selectedFolderId"
-				@select="selectFolder" />
+				:all-label="t('doriath', 'All secrets')"
+				allow-create
+				:create-label="t('doriath', 'New folder')"
+				@select="selectFolder"
+				@create="openCreateFolder" />
 		</div>
 
+		<!-- Main: the shared CnIndexPage in list mode. Rows are rendered by the
+		     bespoke SecretListItem (favicon/type-icon + on-demand decryption)
+		     via the #list-item slot. -->
 		<div class="secret-list-view__main">
-			<div class="secret-list-view__actions">
-				<NcButton type="primary" @click="openCreateSecret">
-					<template #icon>
-						<Plus :size="20" />
-					</template>
-					{{ t('doriath', 'New secret') }}
-				</NcButton>
-				<NcButton type="secondary" @click="openCreateFolder">
-					<template #icon>
-						<FolderPlus :size="20" />
-					</template>
-					{{ t('doriath', 'New folder') }}
-				</NcButton>
-			</div>
-
-			<div class="secret-list-view__toolbar">
-				<NcTextField :value.sync="searchTerm"
-					:label="t('doriath', 'Search secrets')"
-					trailing-button-icon="close"
-					:show-trailing-button="searchTerm !== ''"
-					@trailing-button-click="clearSearch"
-					@update:value="onSearchInput">
-					<Magnify :size="18" />
-				</NcTextField>
-
-				<NcSelect v-model="sortField"
-					:options="sortOptions"
-					:reduce="opt => opt.value"
-					:input-label="t('doriath', 'Sort by')"
-					:clearable="false"
-					@update:model-value="reload" />
-			</div>
-
-			<NcEmptyContent v-if="!loading && secrets.length === 0"
-				:name="t('doriath', 'No secrets yet')"
-				:description="t('doriath', 'Create your first secret to get started.')">
-				<template #icon>
-					<KeyIcon />
+			<CnIndexPage
+				view-mode="list"
+				:available-view-modes="['list', 'cards', 'table']"
+				list-label="List"
+				:selectable="false"
+				:objects="secrets"
+				:schema="listSchema"
+				:loading="loading"
+				:pagination="pagination"
+				:add-label="t('doriath', 'New secret')"
+				add-icon="Plus"
+				inline-search
+				:search-value="searchTerm"
+				:search-placeholder="t('doriath', 'Search secrets')"
+				show-sort-select
+				:sort-select-options="sortOptions"
+				:sort-select-value="sortField"
+				row-key="id"
+				:empty-text="t('doriath', 'No secrets yet')"
+				@add="openCreateSecret"
+				@search="onSearch"
+				@sort-change="onSort"
+				@page-changed="goToPage">
+				<template #list-item="{ object }">
+					<SecretListItem
+						:secret="object"
+						@open="openSecret"
+						@copied="onCopied" />
 				</template>
-				<template #action>
-					<NcButton type="primary" @click="openCreateSecret">
-						<template #icon>
-							<Plus :size="20" />
-						</template>
-						{{ t('doriath', 'New secret') }}
-					</NcButton>
-				</template>
-			</NcEmptyContent>
-
-			<NcLoadingIcon v-else-if="loading" :size="32" class="secret-list-view__loading" />
-
-			<div v-else class="secret-list-view__items">
-				<SecretListItem v-for="secret in secrets"
-					:key="secret.id"
-					:secret="secret"
-					@open="openSecret" />
-			</div>
-
-			<div v-if="totalPages > 1" class="secret-list-view__pagination">
-				<NcButton :disabled="page <= 1" @click="goToPage(page - 1)">
-					{{ t('doriath', 'Previous') }}
-				</NcButton>
-				<span class="secret-list-view__page-info">
-					{{ t('doriath', 'Page {page} of {total}', { page, total: totalPages }) }}
-				</span>
-				<NcButton :disabled="page >= totalPages" @click="goToPage(page + 1)">
-					{{ t('doriath', 'Next') }}
-				</NcButton>
-			</div>
+			</CnIndexPage>
 		</div>
 	</div>
 </template>
 
 <script>
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect, NcTextField } from '@nextcloud/vue'
-import AllInclusive from 'vue-material-design-icons/AllInclusive.vue'
-import KeyIcon from 'vue-material-design-icons/Key.vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
-import FolderTree from '../components/FolderTree.vue'
+// eslint-disable-next-line import/named
+import { CnIndexPage, CnFolderSidebar } from '@conduction/nextcloud-vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -103,24 +63,16 @@ const PAGE_SIZE = 50
 
 /**
  * The main vault view: a folder sidebar plus a searchable, sortable,
- * paginated secret list. Names and urls are plaintext; encrypted fields are
- * decrypted only on demand (copy / detail).
+ * paginated secret list, built on the shared CnIndexPage list view and
+ * CnFolderSidebar. Names and urls are plaintext; encrypted fields are
+ * decrypted only on demand (copy / detail) inside SecretListItem.
  */
 export default {
 	name: 'SecretList',
 
 	components: {
-		NcButton,
-		NcEmptyContent,
-		NcLoadingIcon,
-		NcSelect,
-		NcTextField,
-		AllInclusive,
-		KeyIcon,
-		Magnify,
-		Plus,
-		FolderPlus,
-		FolderTree,
+		CnIndexPage,
+		CnFolderSidebar,
 		SecretListItem,
 	},
 
@@ -153,17 +105,29 @@ export default {
 		loading() {
 			return this.secretStore.loading
 		},
-		page() {
-			return this.secretStore.page
-		},
-		totalPages() {
-			return Math.max(1, Math.ceil(this.secretStore.totalCount / PAGE_SIZE))
-		},
-		folderTree() {
-			return this.folderStore.folderTree
+		folders() {
+			return this.folderStore.folders
 		},
 		selectedFolderId() {
 			return this.$route.params.folderId || null
+		},
+		pagination() {
+			return {
+				page: this.secretStore.page,
+				pages: Math.max(1, Math.ceil(this.secretStore.totalCount / PAGE_SIZE)),
+				total: this.secretStore.totalCount,
+				limit: PAGE_SIZE,
+			}
+		},
+		/** Minimal schema so CnIndexPage can offer cards/table fallbacks. */
+		listSchema() {
+			return {
+				properties: {
+					name: { title: t('doriath', 'Name'), type: 'string' },
+					url: { title: t('doriath', 'URL'), type: 'string' },
+				},
+				configuration: { objectNameField: 'name', objectDescriptionField: 'url' },
+			}
 		},
 		sortOptions() {
 			return [
@@ -207,11 +171,13 @@ export default {
 		},
 
 		/**
-		 * Debounced search input handler.
+		 * Debounced inline-search handler.
 		 *
+		 * @param {string} value The current search value.
 		 * @return {void}
 		 */
-		onSearchInput() {
+		onSearch(value) {
+			this.searchTerm = value
 			if (this.searchTimer) {
 				clearTimeout(this.searchTimer)
 			}
@@ -221,19 +187,35 @@ export default {
 		},
 
 		/**
-		 * Clear the search and reload.
+		 * Change the sort field and reload.
 		 *
+		 * @param {string} value The chosen sort field.
 		 * @return {void}
 		 */
-		clearSearch() {
-			this.searchTerm = ''
+		onSort(value) {
+			this.sortField = value
 			this.reload()
 		},
 
 		/**
-		 * Navigate to a folder filter.
+		 * Go to a specific page.
 		 *
-		 * @param {string|null} folderId The folder ID (null = all).
+		 * @param {number} target The target page number.
+		 * @return {void}
+		 */
+		goToPage(target) {
+			this.secretStore.fetchSecrets({
+				folderId: this.selectedFolderId,
+				search: this.searchTerm,
+				sort: this.sortField,
+				page: target,
+			})
+		},
+
+		/**
+		 * Navigate to a folder filter (null = all secrets).
+		 *
+		 * @param {string|null} folderId The folder ID.
 		 * @return {void}
 		 */
 		selectFolder(folderId) {
@@ -257,6 +239,14 @@ export default {
 		},
 
 		/**
+		 * Copied-toast hook (SecretListItem @copied). No-op placeholder for
+		 * future toast wiring; kept so the event has a handler.
+		 *
+		 * @return {void}
+		 */
+		onCopied() {},
+
+		/**
 		 * Open the create-secret dialog, defaulting the folder to the current
 		 * view, and reload the list on success.
 		 *
@@ -272,27 +262,13 @@ export default {
 		/**
 		 * Open the create-folder dialog and reload the folder tree on success.
 		 *
+		 * @param {{ parentId: (string|null) }} [payload] The parent folder id.
 		 * @return {void}
 		 */
-		openCreateFolder() {
+		openCreateFolder({ parentId } = {}) {
 			this.cnOpenModal('folder-create', {
-				parentId: this.selectedFolderId,
+				parentId: parentId ?? this.selectedFolderId,
 				onSaved: () => this.folderStore.fetchFolders(),
-			})
-		},
-
-		/**
-		 * Go to a specific page.
-		 *
-		 * @param {number} target The target page number.
-		 * @return {Promise<void>}
-		 */
-		async goToPage(target) {
-			await this.secretStore.fetchSecrets({
-				folderId: this.selectedFolderId,
-				search: this.searchTerm,
-				sort: this.sortField,
-				page: target,
 			})
 		},
 	},
@@ -315,32 +291,5 @@ export default {
 .secret-list-view__main {
 	flex: 1 1 auto;
 	min-width: 0;
-}
-
-.secret-list-view__actions {
-	display: flex;
-	gap: 8px;
-	margin-bottom: 12px;
-}
-
-.secret-list-view__toolbar {
-	display: flex;
-	gap: 12px;
-	align-items: flex-end;
-	margin-bottom: 12px;
-}
-
-.secret-list-view__pagination {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 12px;
-	margin-top: 16px;
-}
-
-.secret-list-view__loading {
-	display: flex;
-	justify-content: center;
-	margin-top: 32px;
 }
 </style>
