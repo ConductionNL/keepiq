@@ -25,6 +25,20 @@
 			"order": 30
 		},
 		{
+			"id": "SecretsLabMenu",
+			"label": "Vault (lab)",
+			"icon": "icon-password",
+			"route": "SecretsLab",
+			"order": 35
+		},
+		{
+			"id": "ApplicationsLabMenu",
+			"label": "Applications (lab)",
+			"icon": "icon-category-integration",
+			"route": "ApplicationsLab",
+			"order": 36
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -187,6 +201,30 @@
 			"title": "Vault",
 			"component": "SecretList",
 			"_note": "Same vault view filtered to a folder (folderId route param)."
+		},
+		{
+			"id": "SecretsLab",
+			"route": "/secrets-lab",
+			"type": "custom",
+			"title": "Vault (lab)",
+			"component": "SecretsLabView",
+			"_note": "Side-by-side lab rebuild of the vault list on the shared CnIndexPage list view, for visual comparison against SecretList during the list-view/folder-component work. Shares the same secret/folder stores."
+		},
+		{
+			"id": "SecretsLabFolder",
+			"route": "/secrets-lab/folders/:folderId",
+			"type": "custom",
+			"title": "Vault (lab)",
+			"component": "SecretsLabView",
+			"_note": "SecretsLab filtered to a folder (folderId route param)."
+		},
+		{
+			"id": "ApplicationsLab",
+			"route": "/applications-lab",
+			"type": "custom",
+			"title": "Applications (lab)",
+			"component": "ApplicationsLabView",
+			"_note": "Side-by-side lab rebuild of My Applications on the shared CnIndexPage list view, for visual comparison against ApplicationRegisterView. Shares the application store."
 		},
 		{
 			"id": "SecretDetail",

@@ -42,6 +42,8 @@
 import LockScreen from './views/LockScreen.vue'
 import SecretList from './views/SecretList.vue'
 import SecretDetail from './views/SecretDetail.vue'
+import SecretsLabView from './views/SecretsLabView.vue'
+import ApplicationsLabView from './views/ApplicationsLabView.vue'
 import SecretRequestFill from './views/SecretRequestFill.vue'
 import LinkShareAccess from './views/LinkShareAccess.vue'
 import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
@@ -69,6 +71,8 @@ import SecretRequestList from './components/secretRequest/SecretRequestList.vue'
 export default {
 	LockScreen: { kind: 'page', component: LockScreen },
 	SecretList: { kind: 'page', component: SecretList },
+	SecretsLabView: { kind: 'page', component: SecretsLabView },
+	ApplicationsLabView: { kind: 'page', component: ApplicationsLabView },
 	SecretDetail: { kind: 'page', component: SecretDetail },
 	SecretRequestFill: { kind: 'page', component: SecretRequestFill },
 	LinkShareAccess: { kind: 'page', component: LinkShareAccess },
