@@ -252,7 +252,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		await openVault(page)
 
 		// --- CREATE via the dialog (browser-side RSA encryption) ---
-		await nativeClickByText(page, '.secret-list-view__actions button', 'New secret')
+		await nativeClickByText(page, '.secret-list-view .cn-actions-bar button', 'New secret')
 		const createDialog = page.locator('.secret-form')
 		await expect(createDialog).toBeVisible({ timeout: 10_000 })
 		await page.locator('.secret-form input[type="text"]').first().fill(NAME, { force: true })

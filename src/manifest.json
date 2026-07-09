@@ -86,8 +86,9 @@
 			"id": "Dashboard",
 			"route": "/",
 			"type": "dashboard",
-			"title": "Dashboard",
+			"title": "Vault overview",
 			"config": {
+				"description": "Your secrets, folders and applications at a glance",
 				"documentationUrl": "https://doriath.conduction.nl"
 			},
 			"widgets": [
@@ -228,18 +229,63 @@
 					}
 				},
 				{
-					"id": "quick-actions-text",
-					"widgetKey": "text",
+					"id": "quick-action-new-secret",
+					"widgetKey": "tile",
 					"slot": "body",
 					"gridX": 6,
 					"gridY": 5,
 					"gridWidth": 6,
-					"gridHeight": 4,
-					"_note": "ADR-049 dissolution of the doriath-quick-actions static placeholder widget. Replace with real action buttons once the create/list deep links exist.",
+					"gridHeight": 2,
+					"_note": "Union of the bump-ncvue branch's real quick-action tiles with development's ADR-049 placeholder text; wired here in place of the quick-actions-text placeholder since these already point at live deep links.",
 					"props": {
 						"content": {
-							"contentMode": "markdown",
-							"text": "**Quick actions**\n\nWire buttons here to create records, open lists, or deep links. Use the sidebar for Settings and Documentation."
+							"title": "New secret",
+							"icon": "icon-add",
+							"iconType": "class",
+							"backgroundColor": "#21468B",
+							"textColor": "#ffffff",
+							"linkType": "app",
+							"linkValue": "/apps/doriath/secrets"
+						}
+					}
+				},
+				{
+					"id": "quick-action-register-application",
+					"widgetKey": "tile",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 7,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"content": {
+							"title": "Register application",
+							"icon": "icon-category-integration",
+							"iconType": "class",
+							"backgroundColor": "#3b82f6",
+							"textColor": "#ffffff",
+							"linkType": "app",
+							"linkValue": "/apps/doriath/applications"
+						}
+					}
+				},
+				{
+					"id": "quick-action-documentation",
+					"widgetKey": "tile",
+					"slot": "body",
+					"gridX": 9,
+					"gridY": 7,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"props": {
+						"content": {
+							"title": "Documentation",
+							"icon": "icon-info",
+							"iconType": "class",
+							"backgroundColor": "#6b7280",
+							"textColor": "#ffffff",
+							"linkType": "url",
+							"linkValue": "https://doriath.conduction.nl"
 						}
 					}
 				}
