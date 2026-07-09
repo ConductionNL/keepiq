@@ -75,6 +75,8 @@ class SeedDevelopmentShares implements IRepairStep
     private const DEV_RECIPIENT_DIRECT = 'dev-user-2';
 
     /**
+     * The placeholder group-member recipient user ID.
+     *
      * @var string
      */
     private const DEV_RECIPIENT_GROUP_MEMBER = 'dev-user-3';
@@ -157,7 +159,7 @@ class SeedDevelopmentShares implements IRepairStep
 
         // Direct share #1: first secret (GitHub) shared to dev-user-2.
         $seeded += $this->seedDirectShare(
-            id: $this->deterministicId('share_direct_01'),
+            id: $this->deterministicId(seed: 'share_direct_01'),
             source: $first,
             targetUser: self::DEV_RECIPIENT_DIRECT,
         );
@@ -165,7 +167,7 @@ class SeedDevelopmentShares implements IRepairStep
         // Direct share #2 — second secret (AWS) shared to dev-user-2.
         if (count($secrets) >= 2) {
             $seeded += $this->seedDirectShare(
-                id: $this->deterministicId('share_direct_02'),
+                id: $this->deterministicId(seed: 'share_direct_02'),
                 source: $secrets[1],
                 targetUser: self::DEV_RECIPIENT_DIRECT,
             );
@@ -173,7 +175,7 @@ class SeedDevelopmentShares implements IRepairStep
 
         // Group share — third secret (Production Database) shared with dev-group-1.
         if (count($secrets) >= 3) {
-            $groupShareId = $this->deterministicId('share_group_01');
+            $groupShareId = $this->deterministicId(seed: 'share_group_01');
             $seeded      += $this->seedGroupShare(
                 id: $groupShareId,
                 source: $secrets[2],
@@ -184,7 +186,7 @@ class SeedDevelopmentShares implements IRepairStep
             // member so the cascade-revoke + member-leave paths have
             // something to operate on in the dev vault.
             $seeded += $this->seedFanOutShareTarget(
-                id: $this->deterministicId('share_group_member_01'),
+                id: $this->deterministicId(seed: 'share_group_member_01'),
                 source: $secrets[2],
                 targetUser: self::DEV_RECIPIENT_GROUP_MEMBER,
                 groupShareId: $groupShareId,
@@ -226,7 +228,7 @@ class SeedDevelopmentShares implements IRepairStep
         // creates a real Secret row encrypted to the recipient's public
         // key, but the dev seed has no recipient key material, so the
         // copy id is left as a deterministic placeholder.
-        $row->setSecretId($this->deterministicId('copy:'.$source->getId().':'.$targetUser));
+        $row->setSecretId($this->deterministicId(seed: 'copy:'.$source->getId().':'.$targetUser));
         $row->setGroupShareId(null);
         $row->setCreatedBy(self::DEV_USER_ID);
         $row->setCreatedAt(new DateTime());
@@ -277,7 +279,7 @@ class SeedDevelopmentShares implements IRepairStep
         $row->setId($id);
         $row->setSourceSecretId($source->getId());
         $row->setTargetUserId($targetUser);
-        $row->setSecretId($this->deterministicId('copy:'.$source->getId().':'.$targetUser));
+        $row->setSecretId($this->deterministicId(seed: 'copy:'.$source->getId().':'.$targetUser));
         $row->setGroupShareId($groupShareId);
         $row->setCreatedBy(self::DEV_USER_ID);
         $row->setCreatedAt(new DateTime());

@@ -51,17 +51,17 @@ class SeedSecretTypesTest extends TestCase
     }//end setUp()
 
     /**
-     * On a fresh install all 6 system types are inserted.
+     * On a fresh install all 7 system types are inserted.
      *
      * @return void
      */
-    public function testCreatesSixTypesOnFirstRun(): void
+    public function testCreatesSevenTypesOnFirstRun(): void
     {
         $this->mapper->method('findByName')->willThrowException(new DoesNotExistException('none'));
-        $this->mapper->expects($this->exactly(6))->method('insert');
+        $this->mapper->expects($this->exactly(7))->method('insert');
 
         $this->step->run($this->createMock(IOutput::class));
-    }//end testCreatesSixTypesOnFirstRun()
+    }//end testCreatesSevenTypesOnFirstRun()
 
     /**
      * A re-run with all types present inserts nothing (idempotent).
@@ -98,7 +98,7 @@ class SeedSecretTypesTest extends TestCase
     }//end testDeterministicIds()
 
     /**
-     * The six canonical system type names are defined.
+     * The seven canonical system type names are defined, with `totp` last.
      *
      * @return void
      */
@@ -106,8 +106,28 @@ class SeedSecretTypesTest extends TestCase
     {
         $names = array_keys(SeedSecretTypes::SYSTEM_TYPES);
         $this->assertSame(
-            ['login', 'api_key', 'ssh_key', 'certificate', 'note', 'database'],
+            ['login', 'api_key', 'ssh_key', 'certificate', 'note', 'database', 'totp'],
             $names
         );
     }//end testSystemTypeNames()
+
+    /**
+     * The `totp` system type is seeded with a stable deterministic UUID and the
+     * "Authenticator (TOTP)" label.
+     *
+     * @return void
+     */
+    public function testTotpTypeSeededDeterministically(): void
+    {
+        $this->assertArrayHasKey('totp', SeedSecretTypes::SYSTEM_TYPES);
+        $this->assertSame('Authenticator (TOTP)', SeedSecretTypes::SYSTEM_TYPES['totp']);
+
+        $id  = SeedSecretTypes::deterministicId(name: 'totp');
+        $id2 = SeedSecretTypes::deterministicId(name: 'totp');
+        $this->assertSame($id, $id2);
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/',
+            $id
+        );
+    }//end testTotpTypeSeededDeterministically()
 }//end class

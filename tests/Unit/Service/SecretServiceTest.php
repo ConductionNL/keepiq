@@ -305,6 +305,120 @@ class SecretServiceTest extends TestCase
     }//end testUpdateRejectedDuringWriteLock()
 
     /**
+     * Create stamps keyUpdatedAt — ciphertext age starts at creation.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+     */
+    public function testCreateStampsKeyUpdatedAt(): void
+    {
+        $this->migrationService->method('isWriteLocked')->willReturn(false);
+        $this->suiteMapper->method('findActiveByOwner')->willReturn($this->makeSuite());
+        $this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+        $this->mapper->expects($this->once())->method('insert');
+
+        $secret = $this->service->create(
+            data: ['name' => 'GitHub', 'key' => 'CIPHERTEXT'],
+            userId: 'alice',
+        );
+
+        $this->assertNotNull($secret->getKeyUpdatedAt());
+    }//end testCreateStampsKeyUpdatedAt()
+
+    /**
+     * Updating the encrypted key blob stamps a fresh keyUpdatedAt.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+     */
+    public function testUpdateChangedKeyStampsKeyUpdatedAt(): void
+    {
+        $this->migrationService->method('isWriteLocked')->willReturn(false);
+        $this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+        $old = $this->makeSecret();
+        $old->setKey('OLD-CIPHERTEXT');
+        $old->setKeyUpdatedAt(new \DateTime('2020-01-01T00:00:00+00:00'));
+        $this->mapper->method('findById')->willReturn($old);
+        $this->mapper->expects($this->once())->method('update');
+
+        $secret = $this->service->update(
+            id: 's-1',
+            data: ['key' => 'NEW-CIPHERTEXT'],
+            userId: 'alice',
+        );
+
+        $this->assertSame('NEW-CIPHERTEXT', $secret->getKey());
+        $this->assertGreaterThan(
+            (new \DateTime('2021-01-01T00:00:00+00:00'))->getTimestamp(),
+            $secret->getKeyUpdatedAt()->getTimestamp(),
+            'A changed key blob must refresh keyUpdatedAt.'
+        );
+    }//end testUpdateChangedKeyStampsKeyUpdatedAt()
+
+    /**
+     * Renaming a secret (or any non-key edit) MUST NOT reset keyUpdatedAt.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+     */
+    public function testRenameDoesNotResetKeyUpdatedAt(): void
+    {
+        $this->migrationService->method('isWriteLocked')->willReturn(false);
+        $this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+        $stamp = new \DateTime('2020-01-01T00:00:00+00:00');
+        $old   = $this->makeSecret();
+        $old->setKeyUpdatedAt($stamp);
+        $this->mapper->method('findById')->willReturn($old);
+        $this->mapper->expects($this->once())->method('update');
+
+        $secret = $this->service->update(
+            id: 's-1',
+            data: ['name' => 'Renamed', 'url' => 'https://new.example'],
+            userId: 'alice',
+        );
+
+        $this->assertSame(
+            $stamp->getTimestamp(),
+            $secret->getKeyUpdatedAt()->getTimestamp(),
+            'A rename must not touch ciphertext age.'
+        );
+    }//end testRenameDoesNotResetKeyUpdatedAt()
+
+    /**
+     * Re-submitting the identical key ciphertext MUST NOT reset keyUpdatedAt.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+     */
+    public function testUnchangedKeyDoesNotResetKeyUpdatedAt(): void
+    {
+        $this->migrationService->method('isWriteLocked')->willReturn(false);
+        $this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+        $stamp = new \DateTime('2020-01-01T00:00:00+00:00');
+        $old   = $this->makeSecret();
+        $old->setKey('CIPHERTEXT');
+        $old->setKeyUpdatedAt($stamp);
+        $this->mapper->method('findById')->willReturn($old);
+        $this->mapper->expects($this->once())->method('update');
+
+        $secret = $this->service->update(
+            id: 's-1',
+            data: ['key' => 'CIPHERTEXT'],
+            userId: 'alice',
+        );
+
+        $this->assertSame(
+            $stamp->getTimestamp(),
+            $secret->getKeyUpdatedAt()->getTimestamp(),
+            'A no-op key re-submit must not un-stale the credential.'
+        );
+    }//end testUnchangedKeyDoesNotResetKeyUpdatedAt()
+
+    /**
      * Delete cascades to link shares and removes the secret.
      *
      * @return void

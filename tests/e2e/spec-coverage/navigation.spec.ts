@@ -48,13 +48,13 @@ test.describe('App navigation — manifest menu', () => {
 		await expect(nav).toBeVisible({ timeout: 15_000 })
 
 		// The Dashboard entry points at the doriath app root (not /apps/dashboard).
-		await expect(nav.locator('a[href="/apps/doriath/"]').first()).toBeVisible()
+		await expect(nav.locator('a[href="/apps/doriath/#/"]').first()).toBeVisible()
 		// Footer entry: Documentation (pinned, always visible).
 		await expect(nav.getByText(/Documentation/i).first()).toBeVisible()
 		// Lock vault lives in the settings foldout (section: "settings"); expand
 		// it so the doriath-owned lock route becomes visible.
 		await expandSettingsFoldout(page)
-		await expect(nav.locator('a[href="/apps/doriath/lock"]').first()).toBeVisible()
+		await expect(nav.locator('a[href="/apps/doriath/#/lock"]').first()).toBeVisible()
 
 		assertNoDoriathErrors(errors)
 	})
@@ -67,11 +67,13 @@ test.describe('App navigation — manifest menu', () => {
 		// settings foldout — expand it, then clicking the entry is a safe in-app
 		// navigation that stays on the lock gate.
 		await expandSettingsFoldout(page)
-		const lockEntry = appNav(page).locator('a[href="/apps/doriath/lock"]').first()
+		const lockEntry = appNav(page).locator('a[href="/apps/doriath/#/lock"]').first()
 		await expect(lockEntry).toBeVisible()
 		await lockEntry.evaluate((el: HTMLElement) => el.click())
 
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
-		await expect(page).toHaveURL(/\/apps\/doriath\/lock/)
+		// Hash-mode router: the lock route is `#/lock` (the path may retain the
+		// `/lock` prefix from the initial load, so assert the hash, not the path).
+		await expect(page).toHaveURL(/#\/lock$/)
 	})
 })

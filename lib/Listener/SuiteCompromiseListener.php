@@ -107,13 +107,13 @@ class SuiteCompromiseListener implements IEventListener
                     objectId: $secret->getId(),
                 );
                 $notified[$ownerId] = true;
-            }
+            }//end foreach
         } catch (Throwable $exception) {
             $this->logger->warning(
                 'Doriath: SuiteCompromiseListener failed: '.$exception->getMessage(),
                 ['app' => 'doriath']
             );
-        }
+        }//end try
     }//end handle()
 
     /**

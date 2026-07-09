@@ -48,6 +48,7 @@ use OCP\AppFramework\Db\Entity;
  */
 class SecretDelegation extends Entity implements JsonSerializable
 {
+
     /**
      * The Secret ID under delegation.
      *
@@ -87,7 +88,7 @@ class SecretDelegation extends Entity implements JsonSerializable
     /**
      * Whether the delegation has been promoted to permanent (owner change).
      *
-     * @var bool
+     * @var boolean
      */
     protected bool $isPermanent = false;
 

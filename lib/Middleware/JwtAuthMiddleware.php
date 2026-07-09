@@ -46,8 +46,6 @@ use Throwable;
  */
 class JwtAuthMiddleware extends Middleware
 {
-
-
     /**
      * Constructor for JwtAuthMiddleware.
      *
@@ -63,7 +61,6 @@ class JwtAuthMiddleware extends Middleware
         private LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Run before each controller method. For ApplicationApiController
@@ -106,7 +103,6 @@ class JwtAuthMiddleware extends Middleware
 
         $controller->setApplication($application);
     }//end beforeController()
-
 
     /**
      * Translate auth errors raised by beforeController into a 401 JSON

@@ -53,8 +53,14 @@ use OCP\AppFramework\Db\Entity;
  * @method void setOwnerId(string $ownerId)
  * @method DateTime|null getPossiblyCompromisedAt()
  * @method void setPossiblyCompromisedAt(?DateTime $possiblyCompromisedAt)
+ * @method DateTime|null getKeyUpdatedAt()
+ * @method void setKeyUpdatedAt(?DateTime $keyUpdatedAt)
  * @method string|null getMigrationError()
  * @method void setMigrationError(?string $migrationError)
+ * @method DateTime|null getTombstonedAt()
+ * @method void setTombstonedAt(?DateTime $tombstonedAt)
+ * @method string|null getTombstoneReason()
+ * @method void setTombstoneReason(?string $tombstoneReason)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getUpdatedAt()
@@ -147,11 +153,44 @@ class Secret extends Entity implements JsonSerializable
     protected ?DateTime $possiblyCompromisedAt = null;
 
     /**
+     * When the secret's encrypted `key` ciphertext last changed (nullable).
+     *
+     * Maintained server-side by SecretService whenever the stored `key` blob
+     * changes; renames / folder moves / metadata edits do NOT touch it. Records
+     * ciphertext age only — the server performs no decryption (password-health
+     * design D4).
+     *
+     * @var DateTime|null
+     */
+    protected ?DateTime $keyUpdatedAt = null;
+
+    /**
      * A migration error message, if re-encryption failed (nullable).
      *
      * @var string|null
      */
     protected ?string $migrationError = null;
+
+    /**
+     * When this secret was tombstoned as a detached recipient copy (nullable).
+     *
+     * Set on a recipient's share-copy when the sharer's account is deleted
+     * (secret-export-gdpr D4 step 2). Display metadata only — it imposes no
+     * access restriction; the recipient fully owns the copy.
+     *
+     * @var DateTime|null
+     */
+    protected ?DateTime $tombstonedAt = null;
+
+    /**
+     * The non-personal reason a copy was tombstoned (nullable).
+     *
+     * A short enum-ish token (e.g. 'owner-account-deleted'). MUST NOT contain
+     * the deleted user's ID, display name, or any other personal data.
+     *
+     * @var string|null
+     */
+    protected ?string $tombstoneReason = null;
 
     /**
      * When the secret was created.
@@ -215,7 +254,10 @@ class Secret extends Entity implements JsonSerializable
         $this->addType(fieldName: 'ownerType', type: 'string');
         $this->addType(fieldName: 'ownerId', type: 'string');
         $this->addType(fieldName: 'possiblyCompromisedAt', type: 'datetime');
+        $this->addType(fieldName: 'keyUpdatedAt', type: 'datetime');
         $this->addType(fieldName: 'migrationError', type: 'string');
+        $this->addType(fieldName: 'tombstonedAt', type: 'datetime');
+        $this->addType(fieldName: 'tombstoneReason', type: 'string');
         $this->addType(fieldName: 'createdAt', type: 'datetime');
         $this->addType(fieldName: 'updatedAt', type: 'datetime');
     }//end __construct()
@@ -228,20 +270,24 @@ class Secret extends Entity implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'id'                => $this->getId(),
-            'name'              => $this->name,
-            'url'               => $this->url,
-            'typeId'            => $this->typeId,
-            'folderId'          => $this->folderId,
-            'key'               => $this->key,
-            'login'             => $this->login,
-            'additionalFields'  => $this->additionalFields,
-            'encryptionSuiteId' => $this->encryptionSuiteId,
-            'ownerType'         => $this->ownerType,
-            'ownerId'           => $this->ownerId,
-            'blocked'           => false,
-            'createdAt'         => $this->createdAt?->format('c'),
-            'updatedAt'         => $this->updatedAt?->format('c'),
+            'id'                    => $this->getId(),
+            'name'                  => $this->name,
+            'url'                   => $this->url,
+            'typeId'                => $this->typeId,
+            'folderId'              => $this->folderId,
+            'key'                   => $this->key,
+            'login'                 => $this->login,
+            'additionalFields'      => $this->additionalFields,
+            'encryptionSuiteId'     => $this->encryptionSuiteId,
+            'ownerType'             => $this->ownerType,
+            'ownerId'               => $this->ownerId,
+            'blocked'               => false,
+            'createdAt'             => $this->createdAt?->format('c'),
+            'updatedAt'             => $this->updatedAt?->format('c'),
+            'keyUpdatedAt'          => $this->keyUpdatedAt?->format('c'),
+            'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
+            'tombstonedAt'          => $this->tombstonedAt?->format('c'),
+            'tombstoneReason'       => $this->tombstoneReason,
         ];
     }//end jsonSerialize()
 

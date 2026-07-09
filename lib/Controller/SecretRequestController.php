@@ -122,6 +122,7 @@ class SecretRequestController extends OCSController
      * @param array<string> $requestedFields   Field names to be filled in
      * @param bool          $isReRequest       Whether this is a re-request
      * @param string|null   $expiresAt         Optional ISO-8601 expiry
+     * @param string|null   $applicationId     Optional owning application ID
      *
      * @NoAdminRequired
      *
@@ -164,7 +165,7 @@ class SecretRequestController extends OCSController
                     expiresAt: $expiry,
                     userId: $user->getUID(),
                 );
-            } elseif ($isReRequest === true) {
+            } else if ($isReRequest === true) {
                 $entity = $this->service->createReRequest(
                     secretId: $secretId,
                     requestedFields: $requestedFields,
@@ -180,15 +181,20 @@ class SecretRequestController extends OCSController
                     expiresAt: $expiry,
                     userId: $user->getUID(),
                 );
-            }
+            }//end if
         } catch (InvalidArgumentException $e) {
-            $code   = $e->getCode();
-            $status = ($code === 403 || $code === 404 || $code === 409) ? $code : Http::STATUS_BAD_REQUEST;
+            $code = $e->getCode();
+            if ($code === 403 || $code === 404 || $code === 409) {
+                $status = $code;
+            } else {
+                $status = Http::STATUS_BAD_REQUEST;
+            }
+
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
                 statusCode: $status
             );
-        }
+        }//end try
 
         return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()

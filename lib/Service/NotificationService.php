@@ -48,13 +48,18 @@ class NotificationService
      * @var array<string,string|null>
      */
     public const SUBJECT_SETTING_MAP = [
-        'secret_shared'         => 'notify_shares',
-        'share_request'         => 'notify_shares',
-        'share_request_result'  => 'notify_shares',
-        'group_member_added'    => 'notify_group_shares',
-        'secret_compromised'    => 'notify_security',
-        'request_fulfilled'     => 'notify_requests',
-        'app_pending'           => null,
+        'secret_shared'              => 'notify_shares',
+        'share_request'              => 'notify_shares',
+        'share_request_result'       => 'notify_shares',
+        'group_member_added'         => 'notify_group_shares',
+        'secret_compromised'         => 'notify_security',
+        'request_fulfilled'          => 'notify_requests',
+        'app_pending'                => null,
+        // Emergency access — grantor is notified on a break-glass request (so
+        // the veto window is actionable) and on actual access. Gated on the
+        // existing security-notification category (add-emergency-access §4.2).
+        'emergency_access_requested' => 'notify_security',
+        'emergency_access_accessed'  => 'notify_security',
     ];
 
     /**
@@ -87,9 +92,9 @@ class NotificationService
     public function notify(
         string $subject,
         string $recipientId,
-        array $params = [],
-        ?string $objectType = null,
-        ?string $objectId = null,
+        array $params=[],
+        ?string $objectType=null,
+        ?string $objectId=null,
     ): bool {
         if (array_key_exists($subject, self::SUBJECT_SETTING_MAP) === false) {
             $this->logger->warning(
@@ -104,7 +109,7 @@ class NotificationService
         }
 
         $settingKey = self::SUBJECT_SETTING_MAP[$subject];
-        if ($settingKey !== null && $this->isOptedOut($recipientId, $settingKey) === true) {
+        if ($settingKey !== null && $this->isOptedOut(userId: $recipientId, settingKey: $settingKey) === true) {
             $this->logger->debug(
                 'Doriath notify(): user '.$recipientId.' opted out of "'.$subject.'"',
                 ['app' => Application::APP_ID]
