@@ -117,7 +117,10 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 */
 	test('successful unlock navigates into the vault (router push fires)', async ({ page }) => {
 		await unlockVault(page)
-		await expect(page).toHaveURL(/\/apps\/doriath\/?($|#|\?)/, { timeout: 15_000 })
+		// Hash-mode router: after a successful unlock the router pushes off the
+		// `#/lock` gate to the return route (default `#/` dashboard). Assert the
+		// hash left the lock gate rather than the (path-form) URL prefix.
+		await expect(page).toHaveURL(/#\/(?!lock)/, { timeout: 15_000 })
 		await expect(page.locator('.lock-screen')).toHaveCount(0)
 	})
 

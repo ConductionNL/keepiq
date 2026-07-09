@@ -14,22 +14,17 @@
  *     are looked up against this registry via `CnWidgetGrid` (the
  *     `kind:"widget"` entries below).
  *
- * Widget metadata fields (ADR-036): every `kind:"widget"` entry
- * declares `defaultSize`, `minSize`, `maxSize`, `allowedSlots`, and
- * `propsSchema` so `CnAppRoot` can validate the manifest against the
- * widget's contract. Missing fields trigger console-warn noise.
+ * ZERO custom `kind:"widget"` entries (hydra ADR-049, Decision 5) —
+ * the dashboard's banners, KPI tiles, and placeholder panels are
+ * built-in manifest widgets (`banner`, `stat`, `text`) configured in
+ * src/manifest.json against the summary / migration-status endpoints.
  *
- * Current entries:
+ * Notable entries:
  *   - LockScreen (page) — master-password setup + unlock flow.
  *     `type:"custom"` because the lock owns its own full-page layout
  *     (no app nav / header / sidebar) and the existing lock-redirect
  *     watcher in App.vue must short-circuit normal navigation. No lib
  *     primitive matches yet.
- *   - The dashboard now uses the library's built-in `stat` + `tile`
- *     widgets (config-driven, wired to /api/dashboard/summary via an
- *     `endpoint` source) — the fleet pattern — so the old local
- *     placeholder widgets (stats-block / recent-activity / quick-actions)
- *     have been retired.
  *
  * @type {Record<string, { kind: string, component: object, defaultSize?: object, minSize?: object, maxSize?: object, allowedSlots?: string[], propsSchema?: object }>}
  */
@@ -41,10 +36,9 @@ import SecretRequestFill from './views/SecretRequestFill.vue'
 import LinkShareAccess from './views/LinkShareAccess.vue'
 import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
 import ApplicationDetail from './views/ApplicationDetail.vue'
-import DashboardSummaryView from './views/DashboardSummaryView.vue'
-import DashboardKpiCard from './widgets/DashboardKpiCard.vue'
-import MigrationBanner from './widgets/MigrationBanner.vue'
-import PendingAppsCard from './widgets/PendingAppsCard.vue'
+import PersonalActivityView from './views/PersonalActivityView.vue'
+import HealthReportView from './views/HealthReportView.vue'
+import EmergencyAccessView from './views/EmergencyAccessView.vue'
 import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
 import SecretEditDialog from './dialogs/SecretEditDialog.vue'
 import FolderCreateDialog from './dialogs/FolderCreateDialog.vue'
@@ -66,7 +60,9 @@ export default {
 	LinkShareAccess: { kind: 'page', component: LinkShareAccess },
 	ApplicationRegisterView: { kind: 'page', component: ApplicationRegisterView },
 	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
-	DashboardSummaryView: { kind: 'page', component: DashboardSummaryView },
+	PersonalActivityView: { kind: 'page', component: PersonalActivityView },
+	HealthReportView: { kind: 'page', component: HealthReportView },
+	EmergencyAccessView: { kind: 'page', component: EmergencyAccessView },
 	'secret-create': { kind: 'modal', component: SecretCreateDialog, propsSchema: {} },
 	'secret-edit': { kind: 'modal', component: SecretEditDialog, propsSchema: {} },
 	'folder-create': { kind: 'modal', component: FolderCreateDialog, propsSchema: {} },
@@ -79,31 +75,4 @@ export default {
 	'group-share-form': { kind: 'modal', component: GroupShareForm, propsSchema: {} },
 	'secret-request-form': { kind: 'modal', component: SecretRequestForm, propsSchema: {} },
 	'secret-request-list': { kind: 'form-field', component: SecretRequestList, propsSchema: {} },
-	'doriath-kpi-card': {
-		kind: 'widget',
-		component: DashboardKpiCard,
-		defaultSize: { w: 3, h: 2 },
-		minSize: { w: 2, h: 2 },
-		maxSize: { w: 6, h: 4 },
-		allowedSlots: ['body'],
-		propsSchema: {},
-	},
-	'doriath-migration-banner': {
-		kind: 'widget',
-		component: MigrationBanner,
-		defaultSize: { w: 12, h: 1 },
-		minSize: { w: 4, h: 1 },
-		maxSize: { w: 12, h: 2 },
-		allowedSlots: ['body'],
-		propsSchema: {},
-	},
-	'doriath-pending-apps': {
-		kind: 'widget',
-		component: PendingAppsCard,
-		defaultSize: { w: 3, h: 2 },
-		minSize: { w: 2, h: 2 },
-		maxSize: { w: 6, h: 4 },
-		allowedSlots: ['body'],
-		propsSchema: {},
-	},
 }

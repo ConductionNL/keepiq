@@ -29,11 +29,15 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ConflictException;
+use OCA\Doriath\Exception\DuplicateFolderNameException;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -45,9 +49,10 @@ class FolderService
     /**
      * Constructor for FolderService.
      *
-     * @param FolderMapper    $mapper       The folder mapper
-     * @param SecretMapper    $secretMapper The secret mapper (for cascade operations)
-     * @param LoggerInterface $logger       The logger interface
+     * @param FolderMapper          $mapper          The folder mapper
+     * @param SecretMapper          $secretMapper    The secret mapper (for cascade operations)
+     * @param LoggerInterface       $logger          The logger interface
+     * @param IEventDispatcher|null $eventDispatcher The event dispatcher
      *
      * @return void
      */
@@ -55,8 +60,23 @@ class FolderService
         private FolderMapper $mapper,
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * List the folders owned by a user.
@@ -107,6 +127,9 @@ class FolderService
      *
      * @throws InvalidArgumentException When the name is invalid
      * @throws ForbiddenException When the parent is not owned
+     * @throws DuplicateFolderNameException When a sibling folder already uses the name
+     *
+     * @spec exclude Rescued bugfix (PR #22) — folder-name uniqueness has no dedicated spec requirement yet.
      */
     public function create(string $name, ?string $parentId, string $userId): Folder
     {
@@ -127,6 +150,13 @@ class FolderService
             // Verifies ownership; throws ForbiddenException if not owned.
             $this->getOwned(id: $parentId, userId: $userId);
         }
+
+        $this->assertNameUnique(
+            ownerType: 'user',
+            ownerId: $userId,
+            parentId: $parentId,
+            name: $name
+        );
 
         $now    = new DateTime();
         $folder = new Folder();
@@ -155,6 +185,9 @@ class FolderService
      *
      * @throws InvalidArgumentException When the name is invalid
      * @throws ForbiddenException When not owned
+     * @throws DuplicateFolderNameException When a sibling folder already uses the name
+     *
+     * @spec exclude Rescued bugfix (PR #22) — folder-name uniqueness has no dedicated spec requirement yet.
      */
     public function rename(string $id, string $name, string $userId): Folder
     {
@@ -168,6 +201,15 @@ class FolderService
         }
 
         $folder = $this->getOwned(id: $id, userId: $userId);
+
+        $this->assertNameUnique(
+            ownerType: $folder->getOwnerType(),
+            ownerId: $folder->getOwnerId(),
+            parentId: $folder->getParentId(),
+            name: $name,
+            excludeId: $id
+        );
+
         $folder->setName($name);
         $folder->setUpdatedAt(new DateTime());
         $this->mapper->update($folder);
@@ -186,6 +228,9 @@ class FolderService
      *
      * @throws InvalidArgumentException When the move would create a cycle
      * @throws ForbiddenException When the folder or target is not owned
+     * @throws DuplicateFolderNameException When the target parent already contains the name
+     *
+     * @spec exclude Rescued bugfix (PR #22) — folder-name uniqueness has no dedicated spec requirement yet.
      */
     public function move(string $id, ?string $newParentId, string $userId): Folder
     {
@@ -202,6 +247,14 @@ class FolderService
                 throw new InvalidArgumentException('Cannot move a folder into itself or its own subtree');
             }
         }
+
+        $this->assertNameUnique(
+            ownerType: $folder->getOwnerType(),
+            ownerId: $folder->getOwnerId(),
+            parentId: $newParentId,
+            name: $folder->getName(),
+            excludeId: $id
+        );
 
         $folder->setParentId($newParentId);
         $folder->setUpdatedAt(new DateTime());
@@ -257,27 +310,61 @@ class FolderService
      * @throws ForbiddenException When not owned
      * @throws ConflictException When a non-empty folder is deleted without a plan
      * @throws InvalidArgumentException When the resolution body is incomplete
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.2
      */
     public function delete(string $id, ?string $cascade, ?array $resolution, string $userId): void
     {
-        $folder     = $this->getOwned(id: $id, userId: $userId);
-        $children   = $this->mapper->findChildren($id);
-        $hasSecrets = ($this->secretMapper->countByFolder($id) > 0);
+        $folder      = $this->getOwned(id: $id, userId: $userId);
+        $children    = $this->mapper->findChildren($id);
+        $secretCount = $this->secretMapper->countByFolder($id);
+        $hasSecrets  = ($secretCount > 0);
 
         if ($children === [] && $hasSecrets === false) {
-            // Empty folder — direct delete.
+            // Empty folder — direct delete. No cascade event.
             $this->mapper->delete($folder);
             $this->logger->info("Doriath: empty folder {$id} deleted by {$userId}");
             return;
         }
 
+        $folderName     = $folder->getName();
+        $subfolderCount = count($children);
+
         if ($children !== []) {
             $this->deleteWithSubfolders(folder: $folder, children: $children, resolution: $resolution, userId: $userId);
+
+            $this->dispatchAudit(
+                event: AuditEvent::forUser(
+                    actorId: $userId,
+                    eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
+                    objectType: 'folder',
+                    objectId: $id,
+                    objectName: $folderName,
+                    metadata: [
+                        'secretCount'    => $secretCount,
+                        'subfolderCount' => $subfolderCount,
+                    ],
+                )
+            );
             return;
         }
 
         // Non-empty leaf folder (secrets, no subfolders) — requires cascade.
         $this->deleteLeafWithSecrets(folder: $folder, cascade: $cascade);
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
+                objectType: 'folder',
+                objectId: $id,
+                objectName: $folderName,
+                metadata: [
+                    'secretCount'    => $secretCount,
+                    'subfolderCount' => 0,
+                ],
+            )
+        );
     }//end delete()
 
     /**
@@ -370,6 +457,7 @@ class FolderService
      * @return void
      *
      * @throws InvalidArgumentException When the action is unknown
+     * @throws DuplicateFolderNameException When a kept subfolder collides with a name in the destination parent
      */
     private function applySubfolderAction(Folder $subfolder, string $action, ?string $deletedParentId): void
     {
@@ -393,6 +481,14 @@ class FolderService
                 break;
 
             case 'keep':
+                $this->assertNameUnique(
+                    ownerType: $subfolder->getOwnerType(),
+                    ownerId: $subfolder->getOwnerId(),
+                    parentId: $deletedParentId,
+                    name: $subfolder->getName(),
+                    excludeId: $subfolder->getId()
+                );
+
                 $subfolder->setParentId($deletedParentId);
                 $subfolder->setUpdatedAt(new DateTime());
                 $this->mapper->update($subfolder);
@@ -402,6 +498,45 @@ class FolderService
                 throw new InvalidArgumentException('Unknown subfolder action: '.$action);
         }//end switch
     }//end applySubfolderAction()
+
+    /**
+     * Assert that a folder name is unique among its siblings.
+     *
+     * Siblings share the same owner and the same parent. Pass $excludeId to
+     * ignore the folder being renamed, moved, or re-parented so it does not
+     * conflict with itself.
+     *
+     * @param string      $ownerType The owner type
+     * @param string      $ownerId   The owner ID
+     * @param string|null $parentId  The parent folder ID, or null for root level
+     * @param string      $name      The folder name to check
+     * @param string|null $excludeId A folder ID to exclude from the check, or null
+     *
+     * @return void
+     *
+     * @throws DuplicateFolderNameException When a sibling with the same name exists
+     */
+    private function assertNameUnique(
+        string $ownerType,
+        string $ownerId,
+        ?string $parentId,
+        string $name,
+        ?string $excludeId=null,
+    ): void {
+        $exists = $this->mapper->existsInParent(
+            ownerType: $ownerType,
+            ownerId: $ownerId,
+            parentId: $parentId,
+            name: $name,
+            excludeId: $excludeId
+        );
+
+        if ($exists === true) {
+            throw new DuplicateFolderNameException(
+                message: "A folder named '{$name}' already exists in this location"
+            );
+        }
+    }//end assertNameUnique()
 
     /**
      * Delete a set of folder rows by ID (leaves deepest first to avoid

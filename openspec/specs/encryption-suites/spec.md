@@ -65,6 +65,7 @@ Migration progress is self-evident from secrets: secrets still pointing to `old_
 The system MUST automatically create an EncryptionSuite for a Nextcloud user the first time they open Doriath and provide a master password.
 
 #### Scenario: First-time user setup
+@e2e exclude First-time suite creation requires a suite-less account that the seeded e2e fixture never produces; the vault-unlock e2e suite marks this flow test.fixme and it is covered by PHPUnit suite-creation tests instead.
 - GIVEN a Nextcloud user has no existing EncryptionSuite
 - WHEN they open Doriath and provide a master password
 - THEN the system MUST generate a 4096-bit RSA key pair, sign the public key with the active CA intermediate, and store the private key encrypted with the AES-derived key
@@ -231,6 +232,13 @@ The system MUST allow an administrator to reinstate a revoked EncryptionSuite. B
 ### Requirement: Minimum Key Size
 The system MUST generate RSA keys of at least 4096 bits. The minimum MUST only be allowed to increase, never decrease.
 
+#### Scenario: Generated key meets the minimum size
+@e2e exclude Server-side key-generation contract — RSA key bit-length is enforced in the key-generation service; covered by PHPUnit, not browser-observable.
+- GIVEN the system generates a new RSA key pair
+- WHEN the key is created
+- THEN the key size MUST be at least 4096 bits
+- AND any configured minimum MUST only increase, never decrease
+
 ### Requirement: Certificate Distinguished Name
 All certificates issued by Doriath MUST include a complete X.509 Distinguished Name with default organizational fields (C=NL, ST=Noord-Holland, L=Amsterdam, O=Conduction, OU=Doriath). The `commonName` MUST identify the certificate owner:
 
@@ -239,6 +247,13 @@ All certificates issued by Doriath MUST include a complete X.509 Distinguished N
 - For CA certificates: `Doriath Root CA` or `Doriath Intermediate CA`
 
 When a certificate is re-signed during CA renewal, the original `commonName` MUST be preserved.
+
+#### Scenario: Issued certificate carries the full DN
+@e2e exclude Server-side certificate-issuance contract — DN fields and commonName are set by the signing service; covered by PHPUnit, not browser-observable.
+- GIVEN the system issues a certificate for a user, application, or CA
+- WHEN the certificate is signed
+- THEN it MUST include the complete X.509 Distinguished Name with the default organizational fields
+- AND the `commonName` MUST identify the certificate owner, and MUST be preserved when re-signed during CA renewal
 
 ### Requirement: CA Bootstrap
 The system MUST generate a private CA (root + intermediate) on first setup if no CA has been configured. If bootstrap fails, the app MUST boot in a degraded state rather than failing installation.
@@ -301,6 +316,12 @@ The admin panel MUST display the current CA status at all times.
 | Healthy | CA is active, no renewal needed soon |
 | Expiring soon | Intermediate within 30 days of expiry |
 | Action required | Root within 90 days of expiry, or intermediate revoked |
+
+#### Scenario: Admin panel reflects current CA status
+@e2e exclude CA health status is rendered inside the admin settings page; the admin-facing display is covered by the admin-settings spec scenarios.
+- GIVEN an administrator opens the Doriath admin panel
+- WHEN the CA health status is evaluated
+- THEN the panel MUST display the current status (Not configured, Healthy, Expiring soon, or Action required)
 
 ## User Stories
 

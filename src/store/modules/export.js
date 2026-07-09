@@ -1,0 +1,194 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * Export Pinia store (secret-export-gdpr, tasks §6.1).
+ *
+ * Owns the browser-side export flows: encrypted backup, plaintext CSV, GDPR
+ * package, and account deletion. The store is handed ALREADY-DECRYPTED secrets
+ * and folders by the caller (the export dialog), mirroring the link-share
+ * pattern — it never needs the session RSA key directly, and it never persists
+ * any plaintext, passphrase, or derived key.
+ *
+ * Each export action reports the completed export to the server BEFORE the
+ * local Blob download is offered, and surfaces any endpoint failure rather than
+ * silently skipping event emission. The event endpoint receives only the mode,
+ * scope, and secret count — never secret material or the passphrase.
+ */
+
+import { defineStore } from 'pinia'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { serializeVault } from '../../export/serializer.js'
+import { encryptBackup } from '../../export/backup.js'
+import { generateCsv } from '../../export/csv.js'
+import { assembleGdprPackage } from '../../export/gdprPackage.js'
+
+/**
+ * Trigger a local file download from a string blob. No network involved.
+ *
+ * @param {string} filename The download filename.
+ * @param {string} content The file content.
+ * @param {string} mime The MIME type.
+ * @return {void}
+ */
+function downloadBlob(filename, content, mime) {
+	const blob = new Blob([content], { type: mime })
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = filename
+	document.body.appendChild(a)
+	a.click()
+	document.body.removeChild(a)
+	URL.revokeObjectURL(url)
+}
+
+export const useExportStore = defineStore('export', {
+	state: () => ({
+		/** @type {boolean} Whether an export/deletion is in flight. */
+		loading: false,
+		/** @type {string|null} The last surfaced error. */
+		error: null,
+	}),
+
+	actions: {
+		/**
+		 * Report a completed export to the server (emits SecretExportedEvent).
+		 * Throws on failure so the caller can block the download.
+		 *
+		 * @param {string} mode 'encrypted-backup' | 'plaintext-csv'
+		 * @param {string} scope 'vault' | 'folders'
+		 * @param {number} secretCount The number of secrets exported.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
+		async reportExport(mode, scope, secretCount) {
+			await axios.post(
+				generateUrl('/apps/doriath/api/v1/export/events'),
+				{ mode, scope, secretCount },
+			)
+		},
+
+		/**
+		 * Export an encrypted `.doriath-backup` (Argon2id + AES-256-GCM).
+		 *
+		 * @param {Array<object>} secrets Decrypted secrets.
+		 * @param {Array<object>} folders Folder rows.
+		 * @param {string} passphrase The backup passphrase.
+		 * @param {object} [scope] Scope selector ({ mode, folderIds }).
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
+		async exportBackup(secrets, folders, passphrase, scope = { mode: 'vault' }) {
+			this.loading = true
+			this.error = null
+			try {
+				const payload = serializeVault(secrets, folders, scope)
+				const envelope = await encryptBackup(payload, passphrase)
+				// Report BEFORE offering the download; a failure aborts the export.
+				await this.reportExport('encrypted-backup', scope.mode || 'vault', payload.secrets.length)
+				downloadBlob(
+					'vault.doriath-backup',
+					JSON.stringify(envelope, null, 2),
+					'application/octet-stream',
+				)
+			} catch (e) {
+				this.error = e.message || 'Backup export failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Export a plaintext CSV. The warning + master-password re-auth gates are
+		 * enforced by the dialog before this is called; this only generates and
+		 * downloads. Never sends plaintext to the server.
+		 *
+		 * @param {Array<object>} secrets Decrypted secrets.
+		 * @param {Array<object>} folders Folder rows.
+		 * @param {object} [scope] Scope selector.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
+		async exportCsv(secrets, folders, scope = { mode: 'vault' }) {
+			this.loading = true
+			this.error = null
+			try {
+				const payload = serializeVault(secrets, folders, scope)
+				const csv = generateCsv(payload.secrets)
+				await this.reportExport('plaintext-csv', scope.mode || 'vault', payload.secrets.length)
+				downloadBlob('vault.csv', csv, 'text/csv')
+			} catch (e) {
+				this.error = e.message || 'CSV export failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Produce a GDPR Art. 15 package. Fetches the server metadata half, merges
+		 * the client vault half when provided (unlocked), and downloads locally.
+		 * The metadata endpoint emits GdprExportPerformedEvent.
+		 *
+		 * @param {Array<object>|null} secrets Decrypted secrets, or null when locked.
+		 * @param {Array<object>} folders Folder rows.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
+		async exportGdprPackage(secrets, folders) {
+			this.loading = true
+			this.error = null
+			try {
+				const includesVault = secrets != null
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/gdpr/metadata'),
+					{ params: { includesVault: includesVault ? 'true' : 'false' } },
+				)
+				const vaultPayload = includesVault
+					? serializeVault(secrets, folders, { mode: 'vault' })
+					: null
+				const pkg = assembleGdprPackage(response.data, vaultPayload)
+				downloadBlob(
+					'doriath-gdpr-export.json',
+					JSON.stringify(pkg, null, 2),
+					'application/json',
+				)
+			} catch (e) {
+				this.error = e.message || 'GDPR export failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Delete all of the user's Doriath data (GDPR Art. 17). The
+		 * master-password re-auth is verified client-side by the dialog before
+		 * this is called; the typed confirmation phrase is the server gate. The
+		 * password is NEVER sent.
+		 *
+		 * @param {string} confirmation The typed confirmation phrase.
+		 * @return {Promise<object>} The deletion report.
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
+		async deleteAccountData(confirmation) {
+			this.loading = true
+			this.error = null
+			try {
+				const response = await axios.delete(
+					generateUrl('/apps/doriath/api/v1/gdpr/account-data'),
+					{ data: { confirmation } },
+				)
+				return response.data
+			} catch (e) {
+				this.error = e.message || 'Account deletion failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+	},
+})

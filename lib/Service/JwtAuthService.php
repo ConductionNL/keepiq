@@ -36,7 +36,10 @@ use Jose\Component\Signature\Serializer\JWSSerializerManager;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -90,7 +93,6 @@ class JwtAuthService
      */
     public const EXPECTED_AUDIENCE = 'doriath';
 
-
     /**
      * Constructor for JwtAuthService.
      *
@@ -98,6 +100,7 @@ class JwtAuthService
      * @param EncryptionSuiteMapper $suiteMapper       The encryption-suite mapper
      * @param ICacheFactory         $cacheFactory      The cache factory
      * @param LoggerInterface       $logger            The logger
+     * @param IEventDispatcher|null $eventDispatcher   The event dispatcher
      *
      * @return void
      */
@@ -106,9 +109,23 @@ class JwtAuthService
         private EncryptionSuiteMapper $suiteMapper,
         private ICacheFactory $cacheFactory,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Exchange a JWT bearer assertion for a short-lived opaque access
@@ -126,6 +143,8 @@ class JwtAuthService
      * @throws RuntimeException When the assertion is malformed, has
      *                          invalid claims, fails signature
      *                          verification, or replays a known jti.
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
      */
     public function exchangeAssertion(string $assertion): array
     {
@@ -176,6 +195,16 @@ class JwtAuthService
             throw new RuntimeException(message: 'Assertion iat in future');
         }
 
+        // Bound the assertion lifetime to the documented maximum so a
+        // consumer cannot mint a long-lived signed assertion that would
+        // sit replayable in the jti window for hours (secret-store-api D7).
+        if (((int) $claims['exp'] - (int) $claims['iat']) > self::ACCESS_TOKEN_TTL) {
+            throw new RuntimeException(
+                message: 'Assertion lifetime exceeds the maximum of '
+                .self::ACCESS_TOKEN_TTL.' seconds'
+            );
+        }
+
         $jtiCache = $this->cacheFactory->createDistributed(self::JTI_CACHE_NS);
         $jti      = (string) $claims['jti'];
         if ($jtiCache->hasKey($jti) === true) {
@@ -207,7 +236,7 @@ class JwtAuthService
             throw new RuntimeException(message: 'Application has no certificate');
         }
 
-        $jwk = $this->buildJwkFromCertificate($certificate);
+        $jwk = $this->buildJwkFromCertificate(pemCertificate: $certificate);
 
         // RS256 primary, ES256 fallback.
         $algorithmManager = new AlgorithmManager([new RS256(), new ES256()]);
@@ -225,13 +254,22 @@ class JwtAuthService
         $tokenCache  = $this->cacheFactory->createDistributed(self::TOKEN_CACHE_NS);
         $tokenCache->set($accessToken, $application->getId(), self::ACCESS_TOKEN_TTL);
 
+        $this->dispatchAudit(
+            event: AuditEvent::forApplication(
+                actorId: $application->getId(),
+                eventType: AuditEventTypes::APPLICATION_TOKEN_ISSUED,
+                objectType: 'application',
+                objectId: $application->getId(),
+                objectName: $application->getName(),
+            )
+        );
+
         return [
             'access_token' => $accessToken,
             'token_type'   => 'Bearer',
             'expires_in'   => self::ACCESS_TOKEN_TTL,
         ];
     }//end exchangeAssertion()
-
 
     /**
      * Validate an opaque access token and resolve the bound application.
@@ -268,7 +306,6 @@ class JwtAuthService
 
         return $application;
     }//end validateAccessToken()
-
 
     /**
      * Build a JWK from a PEM-encoded X.509 certificate. Supports both

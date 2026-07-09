@@ -433,6 +433,84 @@ class CertificateAuthorityServiceTest extends TestCase
     }//end testRenewIntermediateForced()
 
     /**
+     * Re-signing a suite MUST preserve its certificate's public key.
+     *
+     * Regression for the read-after-write decrypt failure: re-signing existed to
+     * chain a suite to a renewed intermediate, but it fed a public-only key to
+     * openssl_csr_new(), which silently mints a throwaway key pair. The issued
+     * certificate then carried a public key whose private half nobody holds, so
+     * any value the browser encrypted under the new certificate could not be
+     * decrypted with the user's wrapped private key. The fix keeps the existing
+     * certificate whenever it cannot re-sign while preserving the public key, so
+     * the suite's public key is invariant across renew.
+     *
+     * @return void
+     */
+    public function testRenewIntermediatePreservesSuitePublicKey(): void
+    {
+        // Build a real root key + cert (2048-bit for speed).
+        $rootKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($rootKey, $rootKeyPem);
+        $rootCsr  = openssl_csr_new(['commonName' => 'Root CA'], $rootKey);
+        $rootCert = openssl_csr_sign($rootCsr, null, $rootKey, 365);
+        openssl_x509_export($rootCert, $rootCertPem);
+
+        $root = new CACertificate();
+        $root->setId('root-1');
+        $root->setCertificate($rootCertPem);
+        $root->setPrivateKey('enc:'.$rootKeyPem);
+
+        $intKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($intKey, $intKeyPem);
+        $intCsr  = openssl_csr_new(['commonName' => 'Int CA'], $intKey);
+        $intCert = openssl_csr_sign($intCsr, $rootCertPem, $rootKey, 365);
+        openssl_x509_export($intCert, $intCertPem);
+
+        $oldIntermediate = new CACertificate();
+        $oldIntermediate->setId('int-old');
+        $oldIntermediate->setIsActive(true);
+        $oldIntermediate->setCertificate($intCertPem);
+        $oldIntermediate->setPrivateKey('enc:'.$intKeyPem);
+
+        // A real user suite signed by the old intermediate.
+        $userKey       = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        $userCsr       = openssl_csr_new(['commonName' => 'User 1'], $userKey);
+        $userCert      = openssl_csr_sign($userCsr, $intCertPem, $intKey, 365);
+        openssl_x509_export($userCert, $userCertPem);
+
+        $originalModulus = openssl_pkey_get_details(openssl_pkey_get_public($userCertPem))['rsa']['n'];
+
+        $suite = new EncryptionSuite();
+        $suite->setId('suite-1');
+        $suite->setOwnerType('user');
+        $suite->setOwnerId('user1');
+        $suite->setStatus('active');
+        $suite->setCertificate($userCertPem);
+
+        $this->caCertMapper->method('findRoot')->willReturn($root);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($oldIntermediate);
+        $this->caCertMapper->expects($this->once())->method('insert');
+        $this->caCertMapper->expects($this->once())->method('update');
+
+        $this->suiteMapper->method('findAllActiveWithLimit')
+            ->willReturnOnConsecutiveCalls([$suite], []);
+
+        $this->service->renewIntermediate(forced: false);
+
+        // Whatever certificate the suite ends up with, its public key (modulus)
+        // MUST be the original — never a throwaway pair the server can't match.
+        $resultModulus = openssl_pkey_get_details(
+            openssl_pkey_get_public($suite->getCertificate())
+        )['rsa']['n'];
+        $this->assertSame(
+            expected: $originalModulus,
+            actual: $resultModulus,
+            message: 'Re-signing must preserve the suite certificate public key',
+        );
+        $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $suite->getCertificate());
+    }//end testRenewIntermediatePreservesSuitePublicKey()
+
+    /**
      * Test that renewIntermediate re-signs all active suites.
      *
      * @return void
@@ -501,18 +579,29 @@ class CertificateAuthorityServiceTest extends TestCase
         $this->suiteMapper->method('findAllActiveWithLimit')
             ->willReturnOnConsecutiveCalls([$suite1, $suite2], []);
 
-        // SuiteMapper->update should be called once per re-signed suite.
-        $this->suiteMapper->expects($this->exactly(count: 2))->method('update');
+        $modulus1 = openssl_pkey_get_details(openssl_pkey_get_public($userCertPem1))['rsa']['n'];
+        $modulus2 = openssl_pkey_get_details(openssl_pkey_get_public($userCertPem2))['rsa']['n'];
+
+        // The server cannot re-sign a public-only key without minting a throwaway
+        // key pair, so it keeps each suite's existing (correct) certificate rather
+        // than corrupt the key pairing — no suite is updated.
+        $this->suiteMapper->expects($this->never())->method('update');
 
         $count = $this->service->renewIntermediate(forced: false);
 
-        $this->assertEquals(expected: 2, actual: $count);
+        $this->assertEquals(expected: 0, actual: $count);
 
-        // Certificates should have been replaced (non-null and different from originals).
+        // Each suite keeps a valid certificate carrying its ORIGINAL public key.
         $this->assertNotNull(actual: $suite1->getCertificate());
         $this->assertNotNull(actual: $suite2->getCertificate());
-        $this->assertNotSame(expected: $userCertPem1, actual: $suite1->getCertificate());
-        $this->assertNotSame(expected: $userCertPem2, actual: $suite2->getCertificate());
+        $this->assertSame(
+            expected: $modulus1,
+            actual: openssl_pkey_get_details(openssl_pkey_get_public($suite1->getCertificate()))['rsa']['n'],
+        );
+        $this->assertSame(
+            expected: $modulus2,
+            actual: openssl_pkey_get_details(openssl_pkey_get_public($suite2->getCertificate()))['rsa']['n'],
+        );
         $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $suite1->getCertificate());
         $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $suite2->getCertificate());
     }//end testRenewIntermediateResignsSuites()

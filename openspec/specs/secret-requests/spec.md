@@ -104,8 +104,14 @@ All fields listed in `requested_fields` MUST be submitted with a non-empty value
 ### Requirement: Write-Once
 Once a SecretRequest is fulfilled, the fill-in link MUST be invalidated and no further submissions accepted. Write-once applies per SecretRequest — a re-request (see below) creates a new SecretRequest with its own lifecycle.
 
+#### Scenario: No second submission after fulfilment
+@e2e exclude Server-side write-once contract — the fill-in token is invalidated on fulfilment; covered by PHPUnit, not browser-observable.
+- GIVEN a SecretRequest that has already been fulfilled
+- WHEN a further submission is attempted on the same fill-in link
+- THEN the system MUST reject it and accept no further values for that SecretRequest
+
 ### Requirement: Re-request (Update in Place)
-The requester MAY create a new SecretRequest against an already-filled Secret (a re-request). This is the mechanism for credential rotation: the external party is asked to submit new values, which overwrite the existing ones in place.
+The requester MUST be able to create a new SecretRequest against an already-filled Secret (a re-request). This is the mechanism for credential rotation: the external party is asked to submit new values, which overwrite the existing ones in place.
 
 While the re-request is pending, the Secret's existing values remain readable — there is no gap in access. On fulfilment, the new values overwrite the old ones and sync-on-update propagates to all shares automatically.
 
