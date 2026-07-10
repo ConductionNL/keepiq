@@ -1,5 +1,12 @@
 <template>
-	<div class="secret-list-item" :class="{ 'secret-list-item--blocked': secret.blocked }" @click="$emit('open', secret.id)">
+	<div class="secret-list-item"
+		role="button"
+		tabindex="0"
+		:aria-label="t('doriath', 'Open {name}', { name: secret.name })"
+		:class="{ 'secret-list-item--blocked': secret.blocked }"
+		@click="$emit('open', secret.id)"
+		@keydown.enter="onRowActivate"
+		@keydown.space.prevent="onRowActivate">
 		<span class="secret-list-item__icon">
 			<img v-if="faviconUrl && !faviconFailed"
 				:src="faviconUrl"
@@ -26,7 +33,7 @@
 			{{ t('doriath', 'Locked — suite revoked') }}
 		</span>
 
-		<span v-else class="secret-list-item__actions" @click.stop>
+		<span v-else class="secret-list-item__actions" @click.stop @keydown.enter.stop @keydown.space.stop>
 			<CopyButton :resolve="resolveKey"
 				:label="t('doriath', 'Copy password')"
 				@copied="$emit('copied')" />
@@ -96,6 +103,23 @@ export default {
 		t,
 
 		/**
+		 * Open the secret when the row itself is activated via keyboard.
+		 *
+		 * Guards against keyboard activation of an inner control (e.g. the
+		 * copy-password button) bubbling up and triggering row navigation:
+		 * only the row element itself, when focused, opens the secret.
+		 *
+		 * @param {KeyboardEvent} event The keydown event.
+		 * @return {void}
+		 */
+		onRowActivate(event) {
+			if (event.target !== event.currentTarget) {
+				return
+			}
+			this.$emit('open', this.secret.id)
+		},
+
+		/**
 		 * Resolve the decrypted key for the copy button.
 		 *
 		 * @return {Promise<string>}
@@ -120,6 +144,12 @@ export default {
 }
 
 .secret-list-item:hover {
+	background-color: var(--color-background-hover);
+}
+
+.secret-list-item:focus-visible {
+	outline: 2px solid var(--color-primary-element);
+	outline-offset: -2px;
 	background-color: var(--color-background-hover);
 }
 

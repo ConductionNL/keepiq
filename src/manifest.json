@@ -22,7 +22,8 @@
 			"label": "Applications",
 			"icon": "icon-category-integration",
 			"route": "ApplicationRegister",
-			"order": 30
+			"section": "settings",
+			"order": 70
 		},
 		{
 			"id": "Documentation",

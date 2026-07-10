@@ -48,6 +48,7 @@ use OCA\Doriath\Service\MachineSecretEnvelopeService;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -112,6 +113,7 @@ class ApplicationSecretsController extends ApplicationApiController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
     public function index(): JSONResponse
     {
         $application = $this->getApplication();
@@ -169,6 +171,7 @@ class ApplicationSecretsController extends ApplicationApiController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
     public function show(string $id): JSONResponse
     {
         $application = $this->getApplication();

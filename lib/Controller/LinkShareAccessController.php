@@ -25,6 +25,7 @@ namespace OCA\Doriath\Controller;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\LinkShareService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -70,6 +71,7 @@ class LinkShareAccessController extends OCSController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 15, period: 60)]
     public function show(string $token, string $failed='0'): JSONResponse
     {
         // A reported prior failure increments the brute-force counter and may
@@ -104,6 +106,7 @@ class LinkShareAccessController extends OCSController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 15, period: 60)]
     public function confirm(string $token): JSONResponse
     {
         try {
