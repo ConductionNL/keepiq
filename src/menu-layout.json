@@ -1,0 +1,6 @@
+{
+	"$note": "hydra ADR-044 menu-layout. Declares menu placement primitives (relocations / removals / settingsSection) consumed by @conduction/nextcloud-vue's buildManifest(base, fragments, menuLayout). settingsSection lists menu ids that belong in the settings foldout (NcAppNavigationSettings) rather than the main scrollable nav. NOTE: as of @conduction/nextcloud-vue beta.144 the shared buildManifest util is not yet published (only buildManifestFromStore exists), so this layout is applied in the interim directly via the entry's own section:\"settings\" field in manifest.json; once buildManifest ships, main.js will pass this file to it and the direct section field can be dropped. See openspec/changes/adopt-buildmanifest-menu-layout/.",
+	"relocations": {},
+	"removals": {},
+	"settingsSection": ["ApplicationsMenu"]
+}

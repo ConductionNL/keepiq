@@ -72,6 +72,33 @@ class SecretService
     public const MAX_LIMIT = 100;
 
     /**
+     * The page size used when scanning the vault for the fuzzy-search
+     * Levenshtein post-filter (Stage 2). The scan reads the vault in
+     * fixed-size pages rather than loading it whole, so per-request cost
+     * is bounded regardless of vault size.
+     *
+     * @var int
+     */
+    public const FUZZY_SCAN_PAGE_SIZE = 200;
+
+    /**
+     * The hard ceiling on how many secrets the fuzzy-search Levenshtein
+     * post-filter (Stage 2) will ever load and compare in a single
+     * request. This bounds a per-keystroke O(n) DB + CPU cost.
+     *
+     * Trade-off (see openspec/changes/bound-fuzzy-secret-search/proposal.md):
+     * a user whose vault exceeds this ceiling may not have every
+     * theoretically-matching secret surfaced in one search — the scan
+     * returns matches found within the bounded window rather than across
+     * the entire vault. This edge case (a single user with more than
+     * FUZZY_SCAN_MAX_CANDIDATES secrets) is currently not observed in
+     * practice and is a deliberate exchange for bounding search cost.
+     *
+     * @var int
+     */
+    public const FUZZY_SCAN_MAX_CANDIDATES = 2000;
+
+    /**
      * The suite statuses that block access to encrypted fields.
      *
      * @var string[]
@@ -81,12 +108,16 @@ class SecretService
     /**
      * Constructor for SecretService.
      *
-     * @param SecretMapper          $mapper           The secret mapper
-     * @param SecretTypeService     $typeService      The secret type service
-     * @param EncryptionSuiteMapper $suiteMapper      The encryption suite mapper
-     * @param MigrationService      $migrationService The migration (write-lock) service
-     * @param LinkShareService      $linkShareService The link share service (cascade delete)
-     * @param LoggerInterface       $logger           The logger interface
+     * @param SecretMapper           $mapper                 The secret mapper
+     * @param SecretTypeService      $typeService            The secret type service
+     * @param EncryptionSuiteMapper  $suiteMapper            The encryption suite mapper
+     * @param MigrationService       $migrationService       The migration (write-lock) service
+     * @param LinkShareService       $linkShareService       The link share service (cascade delete)
+     * @param LoggerInterface        $logger                 The logger interface
+     * @param SecretRequestService   $secretRequestService   The secret-request service (cascade delete)
+     * @param ShareService           $shareService           The user-to-user share service (cascade delete)
+     * @param GroupShareMapper       $groupShareMapper       The group-share mapper (cascade delete)
+     * @param SecretDelegationMapper $secretDelegationMapper The delegation mapper (cascade delete)
      *
      * @return void
      */
@@ -97,10 +128,10 @@ class SecretService
         private MigrationService $migrationService,
         private LinkShareService $linkShareService,
         private LoggerInterface $logger,
-        private ?SecretRequestService $secretRequestService = null,
-        private ?ShareService $shareService = null,
-        private ?GroupShareMapper $groupShareMapper = null,
-        private ?SecretDelegationMapper $secretDelegationMapper = null,
+        private ?SecretRequestService $secretRequestService=null,
+        private ?ShareService $shareService=null,
+        private ?GroupShareMapper $groupShareMapper=null,
+        private ?SecretDelegationMapper $secretDelegationMapper=null,
     ) {
     }//end __construct()
 
@@ -421,7 +452,10 @@ class SecretService
             return ['items' => [], 'total' => 0, 'page' => $page, 'limit' => $limit];
         }
 
-        $matched = $this->fuzzyMatch(userId: $userId, term: $term);
+        // The scan may stop early once enough matches to fill the requested
+        // window (with sort margin) are found, so pass the window through.
+        $needed  = (($page * $limit) + $limit);
+        $matched = $this->fuzzyMatch(userId: $userId, term: $term, targetCount: $needed);
 
         $total  = count($matched);
         $offset = (($page - 1) * $limit);
@@ -437,15 +471,27 @@ class SecretService
 
     /**
      * Resolve the matching secrets for a fuzzy search term: SQL substring
-     * pre-filter merged with a PHP Levenshtein pass over all the user's
-     * secrets, deduplicated by ID.
+     * pre-filter merged with a PHP Levenshtein pass over a BOUNDED window of
+     * the user's secrets, deduplicated by ID.
      *
-     * @param string $userId The Nextcloud user ID
-     * @param string $term   The search term
+     * The Stage 2 Levenshtein post-filter reads the vault in fixed-size
+     * pages ({@see self::FUZZY_SCAN_PAGE_SIZE}) rather than loading it whole,
+     * and stops once either enough matches to satisfy the caller's target
+     * window are found, or the hard candidate ceiling
+     * ({@see self::FUZZY_SCAN_MAX_CANDIDATES}) is reached — whichever comes
+     * first. This bounds a per-keystroke O(n) DB + CPU cost regardless of
+     * vault size. See openspec/changes/bound-fuzzy-secret-search/proposal.md
+     * for the accuracy trade-off past the ceiling.
+     *
+     * @param string $userId      The Nextcloud user ID
+     * @param string $term        The search term
+     * @param int    $targetCount The number of matches the caller wants to be
+     *                            able to fill its result window (0 = scan up
+     *                            to the candidate ceiling)
      *
      * @return Secret[]
      */
-    public function fuzzyMatch(string $userId, string $term): array
+    public function fuzzyMatch(string $userId, string $term, int $targetCount=0): array
     {
         $tolerance = 2;
         if (mb_strlen($term) <= 5) {
@@ -456,24 +502,56 @@ class SecretService
 
         $matched = [];
 
-        // Stage 1: SQL substring pre-filter.
-        foreach ($this->mapper->searchByNameOrUrl('user', $userId, $term) as $secret) {
+        // Stage 1: SQL substring pre-filter (bounded by the mapper's own LIMIT).
+        foreach ($this->mapper->searchByNameOrUrl('user', $userId, $term, self::FUZZY_SCAN_MAX_CANDIDATES) as $secret) {
             $matched[$secret->getId()] = $secret;
         }
 
-        // Stage 2: Levenshtein post-filter over the full set.
-        $total = $this->mapper->countByOwner('user', $userId, null);
-        $all   = $this->mapper->findByOwner('user', $userId, null, 'name', 'asc', max(1, $total), 0);
+        // Stage 2: Levenshtein post-filter over a bounded, paged window.
+        $scanned = 0;
+        $offset  = 0;
 
-        foreach ($all as $secret) {
-            if (isset($matched[$secret->getId()]) === true) {
-                continue;
+        while ($scanned < self::FUZZY_SCAN_MAX_CANDIDATES) {
+            $page = $this->mapper->findByOwner(
+                'user',
+                $userId,
+                null,
+                'name',
+                'asc',
+                self::FUZZY_SCAN_PAGE_SIZE,
+                $offset
+            );
+
+            if (empty($page) === true) {
+                // No more rows in the vault.
+                break;
             }
 
-            if ($this->isFuzzyHit(secret: $secret, termLower: $termLower, tolerance: $tolerance) === true) {
-                $matched[$secret->getId()] = $secret;
+            foreach ($page as $secret) {
+                $scanned++;
+
+                if (isset($matched[$secret->getId()]) === true) {
+                    continue;
+                }
+
+                if ($this->isFuzzyHit(secret: $secret, termLower: $termLower, tolerance: $tolerance) === true) {
+                    $matched[$secret->getId()] = $secret;
+                }
             }
-        }
+
+            // Stop early once we have enough matches to fill the caller's
+            // window (with margin for sorting), if a target was given.
+            if ($targetCount > 0 && count($matched) >= $targetCount) {
+                break;
+            }
+
+            if (count($page) < self::FUZZY_SCAN_PAGE_SIZE) {
+                // Last (partial) page reached.
+                break;
+            }
+
+            $offset += self::FUZZY_SCAN_PAGE_SIZE;
+        }//end while
 
         return array_values($matched);
     }//end fuzzyMatch()

@@ -125,6 +125,23 @@ class SecretServiceTest extends TestCase
     }//end makeSecret()
 
     /**
+     * Build a secret with a specific name (and a non-matching url), for
+     * bounded-scan tests that need distinct filler vs. target rows.
+     *
+     * @param string $id   The secret ID
+     * @param string $name The plaintext name
+     *
+     * @return Secret
+     */
+    private function makeNamedSecret(string $id, string $name): Secret
+    {
+        $secret = $this->makeSecret(id: $id);
+        $secret->setName($name);
+        $secret->setUrl('https://example.invalid/'.$id);
+        return $secret;
+    }//end makeNamedSecret()
+
+    /**
      * Create stores the encrypted blob and records the suite.
      *
      * @return void
@@ -399,6 +416,95 @@ class SecretServiceTest extends TestCase
         $matched = $this->service->fuzzyMatch(userId: 'alice', term: 'xyzzyplugh');
         $this->assertCount(0, $matched);
     }//end testFuzzyNoMatch()
+
+    /**
+     * The fuzzy scan is bounded: it MUST NOT ask the mapper for the user's
+     * entire vault in one call, and it MUST stop at the candidate ceiling
+     * even when the vault appears effectively inexhaustible. Regression guard
+     * for the unbounded `findByOwner($total)` bug this change fixes.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bound-fuzzy-secret-search/tasks.md#task-2.1
+     */
+    public function testFuzzyScanIsBoundedByCandidateCeiling(): void
+    {
+        $this->mapper->method('searchByNameOrUrl')->willReturn([]);
+
+        // The mapper would happily return a full page forever; the service
+        // must stop itself at FUZZY_SCAN_MAX_CANDIDATES.
+        $requestedLimits = [];
+        $fullPage        = array_map(
+            fn (int $i): Secret => $this->makeSecret(id: 'row-'.$i),
+            range(1, SecretService::FUZZY_SCAN_PAGE_SIZE)
+        );
+
+        $this->mapper->method('findByOwner')->willReturnCallback(
+            function (...$args) use (&$requestedLimits, $fullPage): array {
+                // Signature: ownerType, ownerId, folderId, sort, direction, limit, offset.
+                $requestedLimits[] = $args[5];
+                return $fullPage;
+            }
+        );
+        // countByOwner must NOT be used to drive an unbounded load anymore.
+        $this->mapper->method('countByOwner')->willReturn(1000000);
+
+        $this->service->fuzzyMatch(userId: 'alice', term: 'zzzznomatch');
+
+        // Every page request used the fixed page size, never a full-vault limit.
+        $this->assertNotEmpty($requestedLimits);
+        foreach ($requestedLimits as $limit) {
+            $this->assertSame(SecretService::FUZZY_SCAN_PAGE_SIZE, $limit);
+        }
+
+        // Total rows scanned never exceeds the candidate ceiling.
+        $pagesScanned = count($requestedLimits);
+        $this->assertLessThanOrEqual(
+            SecretService::FUZZY_SCAN_MAX_CANDIDATES,
+            ($pagesScanned * SecretService::FUZZY_SCAN_PAGE_SIZE)
+        );
+    }//end testFuzzyScanIsBoundedByCandidateCeiling()
+
+    /**
+     * A term that only matches on a row past the first scanned page is still
+     * found within the candidate ceiling (bounded, but not broken).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bound-fuzzy-secret-search/tasks.md#task-2.2
+     */
+    public function testFuzzyFindsMatchOnLaterPage(): void
+    {
+        $this->mapper->method('searchByNameOrUrl')->willReturn([]);
+        $this->mapper->method('countByOwner')->willReturn(SecretService::FUZZY_SCAN_PAGE_SIZE + 1);
+
+        // First page: 200 non-matching rows. Second page: the matching row.
+        $filler = array_map(
+            fn (int $i): Secret => $this->makeNamedSecret(id: 'filler-'.$i, name: 'Unrelated'.$i),
+            range(1, SecretService::FUZZY_SCAN_PAGE_SIZE)
+        );
+        $target = $this->makeNamedSecret(id: 'target', name: 'GitHub');
+
+        $this->mapper->method('findByOwner')->willReturnCallback(
+            function (...$args) use ($filler, $target): array {
+                $offset = $args[6];
+                if ($offset === 0) {
+                    return $filler;
+                }
+
+                if ($offset === SecretService::FUZZY_SCAN_PAGE_SIZE) {
+                    return [$target];
+                }
+
+                return [];
+            }
+        );
+
+        $matched = $this->service->fuzzyMatch(userId: 'alice', term: 'Githb');
+
+        $ids = array_map(static fn (Secret $s): string => $s->getId(), $matched);
+        $this->assertContains('target', $ids);
+    }//end testFuzzyFindsMatchOnLaterPage()
 
     /**
      * An empty search term returns an empty result set.

@@ -395,7 +395,8 @@
         "Write failed": "Write failed",
         "Write secret": "Write secret",
         "Write secret for {app}": "Write secret for {app}",
-        "You have viewed this share. It will not be reachable again once the usage cap is reached.": "You have viewed this share. It will not be reachable again once the usage cap is reached."
+        "You have viewed this share. It will not be reachable again once the usage cap is reached.": "You have viewed this share. It will not be reachable again once the usage cap is reached.",
+        "Open {name}": "Open {name}"
     },
     "plurals": ""
 }

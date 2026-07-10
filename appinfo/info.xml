@@ -68,6 +68,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <background-jobs>
         <job>OCA\Doriath\BackgroundJob\RenewIntermediateCertificate</job>
         <job>OCA\Doriath\BackgroundJob\CheckRootCertificateExpiry</job>
+        <job>OCA\Doriath\BackgroundJob\EmergencyAccessExpiryJob</job>
     </background-jobs>
 
     <repair-steps>

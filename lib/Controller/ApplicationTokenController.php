@@ -29,6 +29,7 @@ use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Service\JwtAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -40,8 +41,6 @@ use RuntimeException;
  */
 class ApplicationTokenController extends Controller
 {
-
-
     /**
      * Constructor for ApplicationTokenController.
      *
@@ -56,7 +55,6 @@ class ApplicationTokenController extends Controller
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
-
 
     /**
      * Exchange a JWT-Bearer assertion for an opaque access token.
@@ -75,6 +73,7 @@ class ApplicationTokenController extends Controller
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 10, period: 60)]
     public function exchange(string $grantType='', string $assertion=''): JSONResponse
     {
         if ($grantType !== 'urn:ietf:params:oauth:grant-type:jwt-bearer') {
