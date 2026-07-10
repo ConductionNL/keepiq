@@ -28,6 +28,7 @@ use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -50,8 +51,6 @@ use OCP\IRequest;
  */
 class ApplicationSecretsController extends ApplicationApiController
 {
-
-
     /**
      * Constructor for ApplicationSecretsController.
      *
@@ -67,7 +66,6 @@ class ApplicationSecretsController extends ApplicationApiController
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
 
-
     /**
      * List secrets owned by the calling application.
      *
@@ -75,6 +73,7 @@ class ApplicationSecretsController extends ApplicationApiController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
     public function index(): JSONResponse
     {
         $application = $this->getApplication();
@@ -101,7 +100,6 @@ class ApplicationSecretsController extends ApplicationApiController
         );
     }//end index()
 
-
     /**
      * Fetch a single secret by ID.
      *
@@ -111,6 +109,7 @@ class ApplicationSecretsController extends ApplicationApiController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 30, period: 60)]
     public function show(string $id): JSONResponse
     {
         $application = $this->getApplication();

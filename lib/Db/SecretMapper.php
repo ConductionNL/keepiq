@@ -117,11 +117,11 @@ class SecretMapper extends QBMapper
     public function findByOwner(
         string $ownerType,
         string $ownerId,
-        ?string $folderId = null,
-        ?string $sort = null,
-        string $direction = 'asc',
-        int $limit = 1000,
-        int $offset = 0,
+        ?string $folderId=null,
+        ?string $sort=null,
+        string $direction='asc',
+        int $limit=1000,
+        int $offset=0,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
@@ -229,15 +229,18 @@ class SecretMapper extends QBMapper
      * Search a user's secrets by plaintext name or url substring match.
      *
      * Performs the SQL pre-filter stage of the two-stage fuzzy search. The
-     * Levenshtein post-filter is applied by the service over the full set.
+     * Levenshtein post-filter is applied by the service over a bounded
+     * window. The result set is capped by `$limit` so this stage itself
+     * cannot return an unbounded row set regardless of vault size.
      *
      * @param string $ownerType The owner type
      * @param string $ownerId   The owner ID
      * @param string $term      The search term
+     * @param int    $limit     The maximum number of rows to return
      *
      * @return Secret[]
      */
-    public function searchByNameOrUrl(string $ownerType, string $ownerId, string $term): array
+    public function searchByNameOrUrl(string $ownerType, string $ownerId, string $term, int $limit=200): array
     {
         $like = '%'.$this->db->escapeLikeParameter($term).'%';
 
@@ -251,7 +254,8 @@ class SecretMapper extends QBMapper
                     $qb->expr()->iLike('name', $qb->createNamedParameter($like)),
                     $qb->expr()->iLike('url', $qb->createNamedParameter($like))
                 )
-            );
+            )
+            ->setMaxResults(max(1, $limit));
 
         return $this->findEntities(query: $qb);
     }//end searchByNameOrUrl()

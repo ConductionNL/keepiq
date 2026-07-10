@@ -35,6 +35,7 @@ use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\SecretRequestService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -82,6 +83,7 @@ class SecretRequestFillController extends OCSController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 20, period: 60)]
     public function show(string $token): JSONResponse
     {
         try {
@@ -146,6 +148,7 @@ class SecretRequestFillController extends OCSController
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 20, period: 60)]
     public function fill(string $token, array $encryptedFields): JSONResponse
     {
         try {
