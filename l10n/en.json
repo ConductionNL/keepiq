@@ -554,7 +554,8 @@
         "Type \"{phrase}\" to confirm": "Type \"{phrase}\" to confirm",
         "Your Doriath data has been deleted.": "Your Doriath data has been deleted.",
         "Your vault is locked. The package will contain your account metadata only; your secrets stay end-to-end encrypted and are not included unless you unlock the vault first.": "Your vault is locked. The package will contain your account metadata only; your secrets stay end-to-end encrypted and are not included unless you unlock the vault first.",
-        "Your vault is unlocked. The package will include both your account metadata and your decrypted secrets.": "Your vault is unlocked. The package will include both your account metadata and your decrypted secrets."
+        "Your vault is unlocked. The package will include both your account metadata and your decrypted secrets.": "Your vault is unlocked. The package will include both your account metadata and your decrypted secrets.",
+        "Open {name}": "Open {name}"
     },
     "plurals": ""
 }

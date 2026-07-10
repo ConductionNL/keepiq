@@ -29,6 +29,7 @@ use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Service\JwtAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -76,6 +77,7 @@ class ApplicationTokenController extends Controller
     #[PublicPage]
     #[NoCSRFRequired]
     #[BruteForceProtection(action: 'doriathTokenExchange')]
+    #[AnonRateLimit(limit: 10, period: 60)]
     public function exchange(string $grantType='', string $assertion=''): JSONResponse
     {
         if ($grantType !== 'urn:ietf:params:oauth:grant-type:jwt-bearer') {
