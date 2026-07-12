@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -117,11 +118,11 @@ class SecretMapper extends QBMapper
     public function findByOwner(
         string $ownerType,
         string $ownerId,
-        ?string $folderId = null,
-        ?string $sort = null,
-        string $direction = 'asc',
-        int $limit = 1000,
-        int $offset = 0,
+        ?string $folderId=null,
+        ?string $sort=null,
+        string $direction='asc',
+        int $limit=1000,
+        int $offset=0,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
@@ -144,6 +145,85 @@ class SecretMapper extends QBMapper
 
         return $this->findEntities(query: $qb);
     }//end findByOwner()
+
+    /**
+     * Find an owner's secrets by exact (case-sensitive) plaintext name,
+     * optionally constrained to a single folder.
+     *
+     * Returns every match — name uniqueness is not enforced in the data
+     * model, so the caller decides the ambiguity policy (the machine API
+     * returns 409 on more than one). The query is keyed by owner so it can
+     * never reach another vault.
+     *
+     * @param string      $ownerType The owner type (e.g. 'application')
+     * @param string      $ownerId   The owner ID
+     * @param string      $name      The exact secret name to match
+     * @param string|null $folderId  Restrict to this folder (null = whole vault)
+     *
+     * @return Secret[] Zero, one, or many matches (ordered by id for stability)
+     */
+    public function findByName(
+        string $ownerType,
+        string $ownerId,
+        string $name,
+        ?string $folderId=null,
+    ): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+            ->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($name)));
+
+        if ($folderId !== null) {
+            $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
+        }
+
+        $qb->orderBy('id', 'ASC');
+
+        return $this->findEntities(query: $qb);
+    }//end findByName()
+
+    /**
+     * Find an owner's secrets updated strictly after a given instant.
+     *
+     * Powers the machine API's `updated_since` rotation-polling query: a
+     * consumer passes its last-poll timestamp and receives only the
+     * secrets that changed since. Keyed by owner — cross-vault rows are
+     * structurally unreachable.
+     *
+     * @param string   $ownerType The owner type (e.g. 'application')
+     * @param string   $ownerId   The owner ID
+     * @param DateTime $since     Return secrets with updated_at later than this
+     * @param int      $limit     Maximum rows
+     *
+     * @return Secret[]
+     */
+    public function findByOwnerUpdatedSince(
+        string $ownerType,
+        string $ownerId,
+        DateTime $since,
+        int $limit=1000,
+    ): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+            ->andWhere(
+                $qb->expr()->gt(
+                    'updated_at',
+                    $qb->createNamedParameter(
+                        $since->format('Y-m-d H:i:s'),
+                        IQueryBuilder::PARAM_STR
+                    )
+                )
+            )
+            ->orderBy('updated_at', 'ASC')
+            ->setMaxResults($limit);
+
+        return $this->findEntities(query: $qb);
+    }//end findByOwnerUpdatedSince()
 
     /**
      * Count the secrets owned by an owner, with an optional folder filter.
@@ -229,15 +309,18 @@ class SecretMapper extends QBMapper
      * Search a user's secrets by plaintext name or url substring match.
      *
      * Performs the SQL pre-filter stage of the two-stage fuzzy search. The
-     * Levenshtein post-filter is applied by the service over the full set.
+     * Levenshtein post-filter is applied by the service over a bounded
+     * window. The result set is capped by `$limit` so this stage itself
+     * cannot return an unbounded row set regardless of vault size.
      *
      * @param string $ownerType The owner type
      * @param string $ownerId   The owner ID
      * @param string $term      The search term
+     * @param int    $limit     The maximum number of rows to return
      *
      * @return Secret[]
      */
-    public function searchByNameOrUrl(string $ownerType, string $ownerId, string $term): array
+    public function searchByNameOrUrl(string $ownerType, string $ownerId, string $term, int $limit=200): array
     {
         $like = '%'.$this->db->escapeLikeParameter($term).'%';
 
@@ -251,7 +334,8 @@ class SecretMapper extends QBMapper
                     $qb->expr()->iLike('name', $qb->createNamedParameter($like)),
                     $qb->expr()->iLike('url', $qb->createNamedParameter($like))
                 )
-            );
+            )
+            ->setMaxResults(max(1, $limit));
 
         return $this->findEntities(query: $qb);
     }//end searchByNameOrUrl()
@@ -339,6 +423,72 @@ class SecretMapper extends QBMapper
 
         $qb->executeStatement();
     }//end reassignType()
+
+    /**
+     * Delete every secret owned by a user (account-deletion cascade).
+     *
+     * Idempotent: a second call simply matches no rows.
+     *
+     * @param string $ownerId The Nextcloud user ID
+     *
+     * @return int The number of rows deleted
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function deleteByOwnerUser(string $ownerId): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+            ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+        return $qb->executeStatement();
+    }//end deleteByOwnerUser()
+
+    /**
+     * Mark a recipient copy as a tombstoned, detached share-copy.
+     *
+     * Writes only display metadata (timestamp + non-personal reason token). The
+     * recipient retains full ownership and access; no personal data of the
+     * deleted sharer is written (secret-export-gdpr D4 step 2).
+     *
+     * @param string $secretId The recipient copy's Secret ID
+     * @param string $reason   The non-personal tombstone reason token
+     *
+     * @return void
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function tombstone(string $secretId, string $reason): void
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->update($this->getTableName())
+            ->set('tombstoned_at', $qb->createNamedParameter((new \DateTime())->format('Y-m-d H:i:s')))
+            ->set('tombstone_reason', $qb->createNamedParameter($reason))
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($secretId)));
+
+        $qb->executeStatement();
+    }//end tombstone()
+
+    /**
+     * Reassign the owner of a single secret (delegation ownership transfer).
+     *
+     * @param string $secretId   The Secret ID
+     * @param string $newOwnerId The delegate's Nextcloud user ID
+     *
+     * @return void
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function reassignOwner(string $secretId, string $newOwnerId): void
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->update($this->getTableName())
+            ->set('owner_id', $qb->createNamedParameter($newOwnerId))
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($secretId)));
+
+        $qb->executeStatement();
+    }//end reassignOwner()
 
     /**
      * Find every Secret encrypted under a given EncryptionSuite. Used by

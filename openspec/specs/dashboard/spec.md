@@ -28,6 +28,7 @@ See [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for entity definitions.
 The dashboard MUST display KPI summary cards showing the user's vault status at a glance.
 
 #### Scenario: User views dashboard
+@e2e exclude Dashboard in v0.1 renders placeholder/sample KPI counts from the manifest — the summary cards are not yet wired to a live vault-stats API; covered when the vault-stats API is implemented.
 - GIVEN a user has unlocked the vault
 - WHEN they view the dashboard
 - THEN the system MUST display:
@@ -86,7 +87,7 @@ The admin dashboard MUST display a card showing the Certificate Authority health
 - AND link to the CA management admin settings
 
 ### Requirement: Recently Accessed Secrets [V1]
-The dashboard SHOULD display a widget showing the user's most recently accessed secrets for quick navigation.
+The dashboard MUST be able to display a widget showing the user's most recently accessed secrets for quick navigation, where recent-access data is available.
 
 #### Scenario: User with recent activity
 @e2e exclude V1 recently-accessed-secrets widget depends on an unbuilt access-log table and secrets-access flow; the widget body shows placeholder text in v0.1 only.

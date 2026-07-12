@@ -29,7 +29,10 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -48,9 +51,12 @@ class ApplicationService
     /**
      * Constructor for ApplicationService.
      *
-     * @param ApplicationMapper $mapper       The application mapper
-     * @param IGroupManager     $groupManager The group manager (admin lookups)
-     * @param LoggerInterface   $logger       The logger
+     * @param ApplicationMapper      $mapper                 The application mapper
+     * @param IGroupManager          $groupManager           The group manager (admin lookups)
+     * @param LoggerInterface        $logger                 The logger
+     * @param NotificationService    $notificationService    The notification service
+     * @param EncryptionSuiteService $encryptionSuiteService The encryption suite service
+     * @param IEventDispatcher       $eventDispatcher        The event dispatcher
      *
      * @return void
      */
@@ -58,10 +64,25 @@ class ApplicationService
         private ApplicationMapper $mapper,
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
-        private ?NotificationService $notificationService = null,
-        private ?EncryptionSuiteService $encryptionSuiteService = null,
+        private ?NotificationService $notificationService=null,
+        private ?EncryptionSuiteService $encryptionSuiteService=null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Register a new application.
@@ -159,6 +180,29 @@ class ApplicationService
             $this->dispatchAdminPendingNotification(application: $persisted, registeredBy: $userId);
         }
 
+        // Anonymous (null) registrants have no NC actor — record as a
+        // system-actored event so the audit trail still captures the row.
+        if ($userId !== null && $userId !== '') {
+            $this->dispatchAudit(
+                event: AuditEvent::forUser(
+                    actorId: $userId,
+                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                    objectType: 'application',
+                    objectId: $persisted->getId(),
+                    objectName: $persisted->getName(),
+                )
+            );
+        } else {
+            $this->dispatchAudit(
+                event: AuditEvent::forSystem(
+                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                    objectType: 'application',
+                    objectId: $persisted->getId(),
+                    objectName: $persisted->getName(),
+                )
+            );
+        }
+
         return $persisted;
     }//end register()
 
@@ -204,7 +248,7 @@ class ApplicationService
                 'Failed to dispatch app_pending notifications: '.$exception->getMessage(),
                 ['app' => 'doriath']
             );
-        }
+        }//end try
     }//end dispatchAdminPendingNotification()
 
     /**
@@ -226,7 +270,7 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'Only an administrator may approve applications');
         }
 
-        $entity = $this->findOr400($applicationId);
+        $entity = $this->findOr400(applicationId: $applicationId);
 
         if ($entity->isPending() === false) {
             throw new InvalidArgumentException(message: 'Application is not pending');
@@ -259,6 +303,16 @@ class ApplicationService
         ) {
             $this->tryProvisionSuite(application: $updated, csr: $storedCsr);
         }
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $adminUserId,
+                eventType: AuditEventTypes::APPLICATION_APPROVED,
+                objectType: 'application',
+                objectId: $applicationId,
+                objectName: $updated->getName(),
+            )
+        );
 
         return $updated;
     }//end approve()
@@ -305,6 +359,8 @@ class ApplicationService
      * @return void
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
      */
     public function reject(string $applicationId, string $adminUserId, bool $isAdmin): void
     {
@@ -312,17 +368,29 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'Only an administrator may reject applications');
         }
 
-        $entity = $this->findOr400($applicationId);
+        $entity = $this->findOr400(applicationId: $applicationId);
 
         if ($entity->isPending() === false) {
             throw new InvalidArgumentException(message: 'Only pending applications may be rejected');
         }
+
+        $applicationName = $entity->getName();
 
         $this->mapper->delete($entity);
 
         $this->logger->info(
             'Rejected application '.$applicationId.' by admin '.$adminUserId,
             ['app' => 'doriath']
+        );
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $adminUserId,
+                eventType: AuditEventTypes::APPLICATION_REJECTED,
+                objectType: 'application',
+                objectId: $applicationId,
+                objectName: $applicationName,
+            )
         );
     }//end reject()
 
@@ -337,6 +405,8 @@ class ApplicationService
      * @return void
      *
      * @throws InvalidArgumentException
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
      */
     public function delete(string $applicationId, bool $isAdmin): void
     {
@@ -344,11 +414,22 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'Only an administrator may delete applications');
         }
 
-        $entity = $this->findOr400($applicationId);
+        $entity = $this->findOr400(applicationId: $applicationId);
+
+        $applicationName = $entity->getName();
 
         $this->mapper->delete($entity);
 
         $this->logger->info('Deleted application '.$applicationId, ['app' => 'doriath']);
+
+        $this->dispatchAudit(
+            event: AuditEvent::forSystem(
+                eventType: AuditEventTypes::APPLICATION_DELETED,
+                objectType: 'application',
+                objectId: $applicationId,
+                objectName: $applicationName,
+            )
+        );
     }//end delete()
 
     /**
@@ -370,7 +451,7 @@ class ApplicationService
      */
     public function getCertificate(string $applicationId): ?string
     {
-        $entity = $this->findOr400($applicationId);
+        $entity = $this->findOr400(applicationId: $applicationId);
 
         if ($entity->isActive() === false) {
             throw new InvalidArgumentException(message: 'Application is not active');
@@ -403,7 +484,7 @@ class ApplicationService
      */
     public function get(string $applicationId, string $userId, bool $isAdmin): Application
     {
-        $entity = $this->findOr400($applicationId);
+        $entity = $this->findOr400(applicationId: $applicationId);
 
         if ($isAdmin === false
             && $entity->getRegisteredBy() !== $userId
@@ -530,7 +611,7 @@ class ApplicationService
      */
     private function validateCsr(string $csr): void
     {
-        // openssl_csr_get_public_key() emits a warning on malformed input
+        // The openssl_csr_get_public_key() call emits a warning on malformed input
         // and returns false; we suppress the warning + check the return.
         $publicKey = @openssl_csr_get_public_key($csr);
         if ($publicKey === false) {

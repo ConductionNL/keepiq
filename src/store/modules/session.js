@@ -5,6 +5,28 @@ import { decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
 
 const DEFAULT_TIMEOUT = 600000 // 10 minutes
 
+/**
+ * Lock-time hooks invoked when the vault locks. The password-health store
+ * registers its `reset` here so locking discards all derived health state +
+ * terminates the worker, without a static circular import.
+ *
+ * @type {Array<Function>}
+ */
+const lockHooks = []
+
+/**
+ * Register a callback to run when the vault locks (e.g. health-store reset).
+ *
+ * @param {Function} fn The lock callback.
+ * @return {void}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+export function onVaultLock(fn) {
+	if (typeof fn === 'function' && !lockHooks.includes(fn)) {
+		lockHooks.push(fn)
+	}
+}
+
 export const useSessionStore = defineStore('session', {
 	state: () => ({
 		/** @type {CryptoKey|null} RSA private key (extractable: false) */
@@ -73,6 +95,15 @@ export const useSessionStore = defineStore('session', {
 			this.encryptedPrivateKey = null
 			this.certificate = null
 			this.suiteId = null
+			// Discard all derived health state + terminate the worker so no
+			// score/digest/finding survives a locked vault (password-health D2).
+			for (const hook of lockHooks) {
+				try {
+					hook()
+				} catch {
+					// A failing lock hook must never block the lock itself.
+				}
+			}
 		},
 
 		/**

@@ -33,10 +33,10 @@ class SuiteMigrationCompletedEvent extends Event
     /**
      * Constructor for SuiteMigrationCompletedEvent.
      *
-     * @param string $oldSuiteId   The compromised suite ID
-     * @param string $newSuiteId   The replacement suite ID
-     * @param string $migrationId  The migration record ID
-     * @param bool   $hasErrors    Whether the migration completed with errors
+     * @param string $oldSuiteId  The compromised suite ID
+     * @param string $newSuiteId  The replacement suite ID
+     * @param string $migrationId The migration record ID
+     * @param bool   $hasErrors   Whether the migration completed with errors
      *
      * @return void
      */
@@ -44,7 +44,7 @@ class SuiteMigrationCompletedEvent extends Event
         private string $oldSuiteId,
         private string $newSuiteId,
         private string $migrationId,
-        private bool $hasErrors = false,
+        private bool $hasErrors=false,
     ) {
         parent::__construct();
     }//end __construct()

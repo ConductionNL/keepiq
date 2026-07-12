@@ -13,10 +13,59 @@
 				@create="openCreateFolder" />
 		</div>
 
-		<!-- Main: the shared CnIndexPage in list mode. Rows are rendered by the
-		     bespoke SecretListItem (favicon/type-icon + on-demand decryption)
-		     via the #list-item slot. -->
+		<!-- Main: the shared CnIndexPage in list mode, plus the secondary
+		     actions (new folder / import / export / GDPR / account deletion)
+		     that live alongside it. -->
 		<div class="secret-list-view__main">
+			<!-- Secondary actions: new folder / import / export / GDPR / account
+			     deletion (secret-export-gdpr §6.5, secret-import). "New secret"
+			     itself is CnIndexPage's own add button below. -->
+			<div class="secret-list-view__actions">
+				<NcButton type="secondary" @click="openCreateFolder">
+					<template #icon>
+						<FolderPlus :size="20" />
+					</template>
+					{{ t('doriath', 'New folder') }}
+				</NcButton>
+				<NcButton type="secondary"
+					:disabled="vaultLocked"
+					data-testid="import-secrets"
+					@click="openImport">
+					<template #icon>
+						<Import :size="20" />
+					</template>
+					{{ t('doriath', 'Import') }}
+				</NcButton>
+
+				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
+				<NcActions :menu-name="t('doriath', 'My data')">
+					<NcActionButton @click="openExport">
+						{{ t('doriath', 'Export data') }}
+					</NcActionButton>
+					<NcActionButton @click="openGdpr">
+						{{ t('doriath', 'GDPR export') }}
+					</NcActionButton>
+					<NcActionButton @click="deletionOpen = true">
+						{{ t('doriath', 'Delete my Doriath data') }}
+					</NcActionButton>
+				</NcActions>
+			</div>
+
+			<ExportDialog :open="exportOpen"
+				:secrets="decryptedSecrets"
+				:folders="folders"
+				@update:open="exportOpen = $event" />
+			<GdprExportDialog :open="gdprOpen"
+				:secrets="decryptedSecrets"
+				:folders="folders"
+				@update:open="gdprOpen = $event" />
+			<AccountDeletionDialog :open="deletionOpen"
+				@update:open="deletionOpen = $event"
+				@export-first="onExportFirst" />
+			<ImportWizardDialog :open="importOpen"
+				@update:open="importOpen = $event"
+				@imported="onImported" />
+
 			<CnIndexPage
 				view-mode="list"
 				:available-view-modes="['list', 'cards', 'table']"
@@ -54,10 +103,19 @@
 <script>
 // eslint-disable-next-line import/named
 import { CnIndexPage, CnFolderSidebar } from '@conduction/nextcloud-vue'
+import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
+import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
+import Import from 'vue-material-design-icons/Import.vue'
 import SecretListItem from '../components/SecretListItem.vue'
+import ExportDialog from '../dialogs/ExportDialog.vue'
+import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
+import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
+import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
 import { useSecretStore } from '../store/modules/secret.js'
+import { useHealthStore } from '../store/modules/health.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 const PAGE_SIZE = 50
 
@@ -73,7 +131,16 @@ export default {
 	components: {
 		CnIndexPage,
 		CnFolderSidebar,
+		NcActionButton,
+		NcActions,
+		NcButton,
+		FolderPlus,
+		Import,
 		SecretListItem,
+		ExportDialog,
+		GdprExportDialog,
+		AccountDeletionDialog,
+		ImportWizardDialog,
 	},
 
 	inject: {
@@ -89,6 +156,11 @@ export default {
 			searchTerm: '',
 			sortField: 'name',
 			searchTimer: null,
+			exportOpen: false,
+			gdprOpen: false,
+			deletionOpen: false,
+			importOpen: false,
+			decryptedSecrets: [],
 		}
 	},
 
@@ -107,6 +179,26 @@ export default {
 		},
 		folders() {
 			return this.folderStore.folders
+		},
+		/**
+		 * The flat folder list, used to populate the export scope selector and
+		 * resolve relative folder paths in the export serializer.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
+		folders() {
+			return this.folderStore.folders
+		},
+		/**
+		 * Whether the vault is locked — the Import action is disabled while
+		 * locked (import requires the session CryptoKey to encrypt rows).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 */
+		vaultLocked() {
+			return useSessionStore().isLocked
 		},
 		selectedFolderId() {
 			return this.$route.params.folderId || null
@@ -145,16 +237,129 @@ export default {
 		},
 	},
 
+	/**
+	 * Load types + folders + the first secrets page, then lazily run the
+	 * client-side password-health pass so strength badges appear.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+	 */
 	async mounted() {
 		await Promise.all([
 			useSecretTypeStore().fetchTypes(),
 			this.folderStore.fetchFolders(),
 		])
 		await this.reload()
+		// Lazily run the client-side password-health pass after the first list
+		// render so strength badges appear without blocking the render. Fire and
+		// forget; it aborts cleanly when the vault is locked (password-health D2).
+		this.triggerHealthPass()
 	},
 
 	methods: {
 		t,
+
+		/**
+		 * Decrypt every secret the user can read, in the browser, so the export
+		 * dialogs can serialize the full vault. Returns [] when the vault is
+		 * locked (the dialogs then fall back to metadata-only where applicable).
+		 *
+		 * @return {Promise<Array<object>>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
+		async decryptAllSecrets() {
+			const store = this.secretStore
+			// Pull a full page set (the export covers the whole vault, not the
+			// paginated view). The list already lives in the store.
+			await store.fetchSecrets({ page: 1, limit: 100000 })
+			const out = []
+			for (const secret of store.secrets) {
+				try {
+					out.push(await store.decryptSecret(secret))
+				} catch {
+					// A secret whose suite is blocked/revoked cannot be decrypted;
+					// skip it rather than failing the whole export.
+				}
+			}
+			return out
+		},
+
+		/**
+		 * Open the export dialog after decrypting the vault client-side.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 */
+		async openExport() {
+			this.decryptedSecrets = await this.decryptAllSecrets()
+			this.exportOpen = true
+		},
+
+		/**
+		 * Open the GDPR export dialog; decrypt the vault if it is unlocked.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
+		async openGdpr() {
+			this.decryptedSecrets = await this.decryptAllSecrets()
+			this.gdprOpen = true
+		},
+
+		/**
+		 * Open the import wizard. Guarded against a locked vault — import needs
+		 * the session CryptoKey to encrypt rows client-side. When locked, the
+		 * wizard is not opened and reads no file; the toolbar button is also
+		 * disabled while locked, and the wizard itself renders a lock guard.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 */
+		openImport() {
+			if (this.vaultLocked) {
+				return
+			}
+			this.importOpen = true
+		},
+
+		/**
+		 * After an import completes, reload the secret list + folder tree so the
+		 * imported secrets and any created folders appear.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-import-summary-report
+		 */
+		async onImported() {
+			await this.folderStore.fetchFolders()
+			await this.reload()
+		},
+
+		/**
+		 * "Export first" suggestion from the deletion dialog: close it and open
+		 * the export dialog.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 */
+		async onExportFirst() {
+			this.deletionOpen = false
+			await this.openExport()
+		},
+
+		/**
+		 * Lazily run the password-health analysis so the list shows strength
+		 * badges. Memory-only; aborts when the vault is locked.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+		 */
+		triggerHealthPass() {
+			const health = useHealthStore()
+			health.registerLockReset()
+			if (health.status === 'idle') {
+				health.analyseVault({ stalenessThreshold: '365', breachEnabled: false }).catch(() => {})
+			}
+		},
 
 		/**
 		 * Reload the current page of secrets with the active filters.

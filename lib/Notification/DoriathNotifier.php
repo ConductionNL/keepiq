@@ -108,7 +108,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('%1$s shared the secret "%2$s" with you.', [$sharedBy, $secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'share_request':
@@ -118,19 +118,21 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('%1$s requested access to the secret "%2$s".', [$requester, $secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'share_request_result':
                 $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
                 $result     = (string) ($p['result'] ?? 'denied');
                 $notification->setParsedSubject((string) $l->t('Share request result'));
-                $notification->setParsedMessage(
-                    $result === 'approved'
-                        ? (string) $l->t('Your share request for "%s" was approved.', [$secretName])
-                        : (string) $l->t('Your share request for "%s" was denied.', [$secretName])
-                );
-                $this->withSecretLink($notification, $p);
+                if ($result === 'approved') {
+                    $resultMessage = (string) $l->t('Your share request for "%s" was approved.', [$secretName]);
+                } else {
+                    $resultMessage = (string) $l->t('Your share request for "%s" was denied.', [$secretName]);
+                }
+
+                $notification->setParsedMessage($resultMessage);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'group_member_added':
@@ -140,7 +142,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('A new member joined the group "%1$s" — approve to share "%2$s".', [$groupId, $secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'secret_compromised':
@@ -149,7 +151,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('Your secret "%s" may be compromised and requires migration.', [$secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'request_fulfilled':
@@ -158,12 +160,12 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('Your request for "%s" has been filled in.', [$secretName])
                 );
-                $this->withSecretLink($notification, $p);
+                $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
             case 'app_pending':
-                $appName       = (string) ($p['app_name'] ?? $l->t('an application'));
-                $registeredBy  = (string) ($p['registered_by'] ?? $l->t('an external party'));
+                $appName      = (string) ($p['app_name'] ?? $l->t('an application'));
+                $registeredBy = (string) ($p['registered_by'] ?? $l->t('an external party'));
                 $notification->setParsedSubject((string) $l->t('New application pending approval'));
                 $notification->setParsedMessage(
                     (string) $l->t('Application "%1$s" was registered by %2$s and is awaiting approval.', [$appName, $registeredBy])
@@ -175,9 +177,29 @@ class DoriathNotifier implements INotifier
                 );
                 break;
 
+            case 'emergency_access_requested':
+                $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
+                $waitDays    = (int) ($p['waitPeriodDays'] ?? 7);
+                $notification->setParsedSubject((string) $l->t('Emergency access requested'));
+                $notification->setParsedMessage(
+                    (string) $l->t(
+                        '%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.',
+                        [$granteeName, $waitDays]
+                    )
+                );
+                break;
+
+            case 'emergency_access_accessed':
+                $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
+                $notification->setParsedSubject((string) $l->t('Emergency access used'));
+                $notification->setParsedMessage(
+                    (string) $l->t('%s accessed your vault through emergency access.', [$granteeName])
+                );
+                break;
+
             default:
                 throw new UnknownNotificationException();
-        }
+        }//end switch
 
         return $notification;
     }//end prepare()

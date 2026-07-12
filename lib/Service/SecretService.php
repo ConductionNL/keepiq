@@ -30,18 +30,22 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use Throwable;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\GroupShareMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
 use OCA\Doriath\Exception\SuiteBlockedException;
 use OCA\Doriath\Exception\WriteLockedException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -54,6 +58,20 @@ use Ramsey\Uuid\Uuid;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   The service legitimately
  *   coordinates the secret mapper, type/migration/link-share services, the
  *   suite mapper, and the typed domain exceptions.
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)     Same rationale: one
+ *   cohesive lifecycle owner; the length is documentation-heavy method
+ *   docblocks, not tangled logic.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)     The public surface is the
+ *   secret lifecycle itself (user CRUD + application-vault seam + search);
+ *   splitting it would scatter the own-vault scoping invariants.
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)   Constructor DI list; the
+ *   trailing optional dependencies keep pre-audit call sites compiling.
+ * @SuppressWarnings(PHPMD.LongVariable)             $secretDelegationMapper
+ *   names the collaborator exactly; abbreviating it would obscure the
+ *   sharing-graph cascade.
+ * @SuppressWarnings(PHPMD.StaticAccess)             AuditEvent::forUser /
+ *   forApplication named constructors ARE the audit API (audit-trail spec);
+ *   every audited operation calls them by design.
  */
 class SecretService
 {
@@ -81,12 +99,18 @@ class SecretService
     /**
      * Constructor for SecretService.
      *
-     * @param SecretMapper          $mapper           The secret mapper
-     * @param SecretTypeService     $typeService      The secret type service
-     * @param EncryptionSuiteMapper $suiteMapper      The encryption suite mapper
-     * @param MigrationService      $migrationService The migration (write-lock) service
-     * @param LinkShareService      $linkShareService The link share service (cascade delete)
-     * @param LoggerInterface       $logger           The logger interface
+     * @param SecretMapper                $mapper                 The secret mapper
+     * @param SecretTypeService           $typeService            The secret type service
+     * @param EncryptionSuiteMapper       $suiteMapper            The encryption suite mapper
+     * @param MigrationService            $migrationService       The migration (write-lock) service
+     * @param LinkShareService            $linkShareService       The link share service (cascade delete)
+     * @param LoggerInterface             $logger                 The logger interface
+     * @param SecretRequestService|null   $secretRequestService   The secret-request service
+     * @param ShareService|null           $shareService           The share service
+     * @param GroupShareMapper|null       $groupShareMapper       The group-share mapper
+     * @param SecretDelegationMapper|null $secretDelegationMapper The secret-delegation mapper
+     * @param IEventDispatcher|null       $eventDispatcher        The event dispatcher
+     * @param AuditService|null           $auditService           The audit recorder (single write path)
      *
      * @return void
      */
@@ -97,12 +121,67 @@ class SecretService
         private MigrationService $migrationService,
         private LinkShareService $linkShareService,
         private LoggerInterface $logger,
-        private ?SecretRequestService $secretRequestService = null,
-        private ?ShareService $shareService = null,
-        private ?GroupShareMapper $groupShareMapper = null,
-        private ?SecretDelegationMapper $secretDelegationMapper = null,
+        private ?SecretRequestService $secretRequestService=null,
+        private ?ShareService $shareService=null,
+        private ?GroupShareMapper $groupShareMapper=null,
+        private ?SecretDelegationMapper $secretDelegationMapper=null,
+        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditService $auditService=null,
     ) {
     }//end __construct()
+
+    /**
+     * Record a typed audit event through the single append-only write path,
+     * fail-soft and independent of listener registration.
+     *
+     * When the AuditService recorder is wired (the DI default in every app
+     * context), the event is persisted DIRECTLY via AuditService::record — the
+     * exact same single write path the AuditListener delegates to. It is NOT
+     * also dispatched on the event bus: doing both would write the row twice
+     * whenever the listener is registered.
+     *
+     * Recording directly rather than through the event bus is what fixes
+     * doriath#54: the application-vault seam methods (getByNameForApplication /
+     * deleteByApplication) are resolved cross-app by another Nextcloud app (e.g.
+     * OpenRegister via OCP\Server::get). That caller's request never boots
+     * Doriath's frontend Application::register, so its event dispatcher carries
+     * NO AuditListener and a bus dispatch fires into a listener-less dispatcher —
+     * nothing persists. AuditService and its AuditEntryMapper are autowired from
+     * the same container that already built this SecretService (they have
+     * strictly simpler dependencies than SecretMapper), so a direct record lands
+     * the row whichever app resolved the service.
+     *
+     * Fail-soft parity with AuditListener: an audit-write failure is logged at
+     * error level and swallowed, so it can never roll back or fail the audited
+     * secret operation. The optional recorder/dispatcher keep pre-audit call
+     * sites compiling; when only the dispatcher is present (legacy fixtures) the
+     * bus dispatch remains the fallback for an in-app AuditListener.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        if ($this->auditService !== null) {
+            try {
+                $this->auditService->record($event);
+            } catch (Throwable $e) {
+                $this->logger->error(
+                    'Doriath: audit entry could not be recorded: '.$e->getMessage(),
+                    ['exception' => $e]
+                );
+            }
+
+            return;
+        }
+
+        // Back-compat fallback: no recorder wired (legacy call sites) — dispatch
+        // on the bus so an in-app AuditListener still persists the row.
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create a secret for a user.
@@ -115,6 +194,8 @@ class SecretService
      * @throws InvalidArgumentException When required fields are missing or invalid
      * @throws SuiteBlockedException When the user has no active suite
      * @throws WriteLockedException When a compromise-recovery migration is in progress
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function create(array $data, string $userId): Secret
     {
@@ -148,9 +229,22 @@ class SecretService
         $secret->setOwnerId($userId);
         $secret->setCreatedAt($now);
         $secret->setUpdatedAt($now);
+        // Ciphertext age starts at creation; never decrypts (password-health D4).
+        $secret->setKeyUpdatedAt($now);
 
         $this->mapper->insert($secret);
         $this->logger->info("Doriath: secret {$secret->getId()} created by {$userId}");
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_CREATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['typeId' => $typeId, 'folderId' => $secret->getFolderId()],
+            )
+        );
 
         return $secret;
     }//end create()
@@ -220,6 +314,8 @@ class SecretService
         $secret->setOwnerId($applicationId);
         $secret->setCreatedAt($now);
         $secret->setUpdatedAt($now);
+        // Ciphertext age starts at creation; never decrypts (password-health D4).
+        $secret->setKeyUpdatedAt($now);
 
         $this->mapper->insert($secret);
         $this->logger->info(
@@ -228,6 +324,358 @@ class SecretService
 
         return $secret;
     }//end createForApplication()
+
+    /**
+     * Create a secret written by the application itself (machine write-back).
+     *
+     * The application is the principal — it submits metadata plus fields it
+     * already encrypted with its own public certificate (which it trivially
+     * holds). The server validates shape only and can never inspect the
+     * plaintext. The audit actor is the application, not a user. Used by the
+     * machine secret-store API `POST /api/v1/app/secrets`.
+     *
+     * @param array<string,mixed> $data          The submitted fields (ciphertext + metadata)
+     * @param string              $applicationId The owning application ID
+     *
+     * @return Secret
+     *
+     * @throws InvalidArgumentException When required fields are missing
+     * @throws SuiteBlockedException When the application has no active suite
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+     */
+    public function createByApplication(array $data, string $applicationId): Secret
+    {
+        if ($applicationId === '') {
+            throw new InvalidArgumentException('applicationId is required');
+        }
+
+        $name = trim((string) ($data['name'] ?? ''));
+        $key  = (string) ($data['key'] ?? '');
+        if ($name === '' || $key === '') {
+            throw new InvalidArgumentException('A secret requires a name and a key');
+        }
+
+        try {
+            $suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            throw new SuiteBlockedException(
+                message: 'No active EncryptionSuite for application '.$applicationId
+            );
+        }
+
+        $typeId = $this->typeService->resolveTypeForSecret(
+            $data['typeId'] ?? null,
+            $applicationId
+        );
+
+        $now    = new DateTime();
+        $secret = new Secret();
+        $secret->setId(Uuid::uuid4()->toString());
+        $secret->setName($name);
+        $secret->setUrl($this->nullableString(value: $data['url'] ?? null));
+        $secret->setTypeId($typeId);
+        $secret->setFolderId($this->nullableString(value: $data['folderId'] ?? null));
+        $secret->setKey($key);
+        $secret->setLogin($this->nullableString(value: $data['login'] ?? null));
+        $secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+        $secret->setEncryptionSuiteId($suite->getId());
+        $secret->setOwnerType('application');
+        $secret->setOwnerId($applicationId);
+        $secret->setCreatedAt($now);
+        $secret->setUpdatedAt($now);
+        $secret->setKeyUpdatedAt($now);
+
+        $this->mapper->insert($secret);
+
+        $this->dispatchAudit(
+            event: AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::SECRET_CREATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['typeId' => $typeId, 'folderId' => $secret->getFolderId()],
+            )
+        );
+
+        return $secret;
+    }//end createByApplication()
+
+    /**
+     * Update a secret written by the application itself (machine write-back).
+     *
+     * Strictly own-vault scoped: the secret must belong to the calling
+     * application or a NotFoundException is raised (no existence oracle).
+     * Replaces the client-encrypted ciphertext and advances updatedAt;
+     * advances keyUpdatedAt only when the `key` ciphertext blob changes
+     * (ciphertext-age tracking, never decrypts). The server validates shape
+     * only. Used by `PUT /api/v1/app/secrets/{id}`.
+     *
+     * @param string              $id            The secret ID
+     * @param array<string,mixed> $data          The submitted fields (ciphertext + metadata)
+     * @param string              $applicationId The owning application ID
+     *
+     * @return Secret
+     *
+     * @throws NotFoundException When the secret does not exist in this vault
+     * @throws InvalidArgumentException When a submitted field is invalid
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
+     *   independent, flat partial-update branch.
+     * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
+     *   independent partial-update guards, not nested logic.
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+     */
+    public function updateByApplication(string $id, array $data, string $applicationId): Secret
+    {
+        try {
+            $secret = $this->mapper->findById($id);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            throw new NotFoundException(message: 'Secret not found');
+        }
+
+        // Own-vault scoping: a row owned by another vault is indistinguishable
+        // from a nonexistent one — same NotFoundException, no existence oracle.
+        if ($secret->getOwnerType() !== 'application'
+            || $secret->getOwnerId() !== $applicationId
+        ) {
+            throw new NotFoundException(message: 'Secret not found');
+        }
+
+        $now        = new DateTime();
+        $keyChanged = false;
+
+        if (array_key_exists('name', $data) === true) {
+            $name = trim((string) $data['name']);
+            if ($name === '') {
+                throw new InvalidArgumentException('Secret name cannot be empty');
+            }
+
+            $secret->setName($name);
+        }
+
+        if (array_key_exists('url', $data) === true) {
+            $secret->setUrl($this->nullableString(value: $data['url']));
+        }
+
+        if (array_key_exists('folderId', $data) === true) {
+            $secret->setFolderId($this->nullableString(value: $data['folderId']));
+        }
+
+        if (array_key_exists('login', $data) === true) {
+            $secret->setLogin($this->nullableString(value: $data['login']));
+        }
+
+        if (array_key_exists('additionalFields', $data) === true) {
+            $secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
+        }
+
+        if (array_key_exists('key', $data) === true) {
+            $key = (string) $data['key'];
+            if ($key === '') {
+                throw new InvalidArgumentException('Secret key cannot be empty');
+            }
+
+            if ($key !== $secret->getKey()) {
+                $secret->setKey($key);
+                $secret->setKeyUpdatedAt($now);
+                $keyChanged = true;
+            }
+        }
+
+        $secret->setUpdatedAt($now);
+        $this->mapper->update($secret);
+
+        $changedFields = array_keys($data);
+        if ($keyChanged === true) {
+            $changedFields = ['key'];
+        }
+
+        $this->dispatchAudit(
+            event: AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::SECRET_UPDATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['changedFields' => $changedFields],
+            )
+        );
+
+        return $secret;
+    }//end updateByApplication()
+
+    /**
+     * Delete a secret from an application's own vault (in-process seam).
+     *
+     * In-process only: consumed by a same-instance trusted caller (another
+     * Nextcloud app resolving SecretService via DI, e.g. OpenRegister's
+     * credential custody). Deliberately NOT exposed on any HTTP route — the
+     * machine secret-store surface keeps its no-DELETE stance; a bearer
+     * token can never destroy credentials.
+     *
+     * Strictly own-vault scoped: only a row with owner_type=application AND
+     * owner_id=$applicationId is ever deleted. Idempotent silent no-op on a
+     * nonexistent id or a cross-vault id (another application or a user) —
+     * the two outcomes are byte-for-byte indistinguishable to the caller
+     * (void return, no exception, no log/audit difference), so there is no
+     * existence oracle and cleanup retries are always safe. Note the
+     * deliberate divergence from updateByApplication, which throws: a failed
+     * write-back must be loud, a cleanup must be retry-safe. An empty
+     * $applicationId can match no vault and no-ops naturally.
+     *
+     * An actual deletion cascades the sharing-graph cleanup exactly as the
+     * user-scoped delete() (no orphan rows survive) and dispatches exactly
+     * one secret.deleted audit event with the application as actor — never
+     * on a no-op.
+     *
+     * @param string $secretId      The secret ID
+     * @param string $applicationId The owning application ID
+     *
+     * @return void
+     *
+     * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
+     */
+    public function deleteByApplication(string $secretId, string $applicationId): void
+    {
+        try {
+            $secret = $this->mapper->findById($secretId);
+        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
+            // Idempotent: a nonexistent id is a silent no-op (design D2).
+            return;
+        }
+
+        // Own-vault scoping: a row owned by another vault (another
+        // application or a user) is indistinguishable from a nonexistent
+        // one — same silent return, no existence oracle (design D2).
+        if ($secret->getOwnerType() !== 'application'
+            || $secret->getOwnerId() !== $applicationId
+        ) {
+            return;
+        }
+
+        // Cascade parity with the user-scoped delete(): link shares +
+        // secret requests + user shares + group shares + delegations.
+        // Structurally a no-op for application-vault secrets today (every
+        // sharing creation path is user-owner scoped) but kept so "a secret
+        // delete leaves no orphan sharing-graph rows" holds unconditionally
+        // (design D4).
+        $this->linkShareService->deleteBySecretId($secretId);
+        if ($this->secretRequestService !== null) {
+            $this->secretRequestService->deleteAllForSecret($secretId);
+        }
+
+        if ($this->shareService !== null) {
+            $this->shareService->deleteAllForSecret($secretId);
+        }
+
+        if ($this->groupShareMapper !== null) {
+            $this->groupShareMapper->deleteBySecret($secretId);
+        }
+
+        if ($this->secretDelegationMapper !== null) {
+            $this->secretDelegationMapper->deleteBySecret($secretId);
+        }
+
+        $this->mapper->delete($secret);
+        $this->logger->info(
+            "Doriath: application-secret {$secretId} deleted from vault of app {$applicationId}"
+        );
+
+        $this->dispatchAudit(
+            event: AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::SECRET_DELETED,
+                objectType: 'secret',
+                objectId: $secretId,
+                objectName: $secret->getName(),
+            )
+        );
+    }//end deleteByApplication()
+
+    /**
+     * Resolve a secret by exact name from an application's own vault
+     * (in-process seam).
+     *
+     * In-process only: consumed by a same-instance trusted caller (another
+     * Nextcloud app resolving SecretService via DI, e.g. OpenRegister's
+     * credential custody, which names secrets by credential UUID).
+     * Deliberately NOT exposed on any HTTP route — the machine secret-store
+     * surface (bearer token, envelope responses) remains the only remote
+     * read path.
+     *
+     * Resolution mirrors the machine HTTP by-name path: the owner-keyed
+     * exact-match SecretMapper::findByName query (owner_type=application AND
+     * owner_id=$applicationId, vault-wide) is structurally incapable of
+     * reaching another vault. Zero matches return null — a name existing
+     * only in another vault yields the same empty set, so cross-vault and
+     * nonexistent are indistinguishable (no existence oracle). More than one
+     * match returns null and logs a warning: ambiguity is never resolved by
+     * guessing (the in-process equivalent of the machine API's 409), and to
+     * the caller it is indistinguishable from absence. Null-not-throw:
+     * "absent" is a normal answer for a resolution query, unlike the loud
+     * updateByApplication write-back.
+     *
+     * A single match returns the entity with its encrypted fields (key,
+     * login, additionalFields) as stored ciphertext — nothing is ever
+     * decrypted server-side (ADR-003), the caller decrypts with its own
+     * private key. A hit dispatches exactly one application.secret_retrieved
+     * audit event with the application as actor (parity with the machine
+     * HTTP full-read dispatch); a null outcome dispatches nothing.
+     *
+     * @param string $name          The exact plaintext secret name
+     * @param string $applicationId The owning application ID
+     *
+     * @return Secret|null The secret (ciphertext intact), or null when the
+     *                     name resolves to nothing or is ambiguous
+     *
+     * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
+     */
+    public function getByNameForApplication(string $name, string $applicationId): ?Secret
+    {
+        $matches = $this->mapper->findByName(
+            ownerType: 'application',
+            ownerId: $applicationId,
+            name: $name,
+        );
+
+        if (count($matches) === 0) {
+            // Owner-keyed query: nonexistent and cross-vault names produce
+            // the same empty set — no existence oracle (design D6).
+            return null;
+        }
+
+        if (count($matches) > 1) {
+            // Never guess between same-named secrets — the in-process
+            // equivalent of the machine API's 409 (design D6). To the
+            // caller, ambiguity is indistinguishable from absence.
+            $this->logger->warning(
+                'Doriath: ambiguous secret name "'.$name.'" in vault of app '
+                .$applicationId.' — '.count($matches)
+                .' matches, returning null (never guessing)'
+            );
+            return null;
+        }
+
+        $secret = $matches[0];
+
+        // Audit parity with the machine HTTP full read (envelopeResponse):
+        // exactly one application.secret_retrieved on a hit, nothing on any
+        // null outcome (design D7).
+        $this->dispatchAudit(
+            event: AuditEvent::forApplication(
+                actorId: $applicationId,
+                eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+            )
+        );
+
+        return $secret;
+    }//end getByNameForApplication()
 
     /**
      * Get a secret owned by the user, enforcing revoked-suite blocking.
@@ -240,6 +688,8 @@ class SecretService
      * @throws NotFoundException When the secret does not exist
      * @throws ForbiddenException When the secret belongs to another user
      * @throws SuiteBlockedException When the encryption suite is revoked/compromised
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function get(string $id, string $userId): Secret
     {
@@ -249,6 +699,18 @@ class SecretService
         if ($blockReason !== null) {
             throw new SuiteBlockedException(message: $blockReason);
         }
+
+        // The secret.read event fires on an individual encrypted-blob fetch only — never
+        // on list/search (those do not call get()). Audit-trail §3.1.
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_READ,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+            )
+        );
 
         return $secret;
     }//end get()
@@ -271,6 +733,8 @@ class SecretService
      *   independent, flat partial-update branch.
      * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
      *   independent partial-update guards, not nested logic.
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function update(string $id, array $data, string $userId): Secret
     {
@@ -305,7 +769,14 @@ class SecretService
                 throw new InvalidArgumentException('Secret key cannot be empty');
             }
 
-            $secret->setKey($key);
+            // Stamp ciphertext age ONLY when the encrypted key blob actually
+            // changes — a no-op re-submit of the same ciphertext (or a rename
+            // that happens to also resend key) must not un-stale the credential
+            // (password-health design D4). Pure string inequality; no decryption.
+            if ($key !== $secret->getKey()) {
+                $secret->setKey($key);
+                $secret->setKeyUpdatedAt(new DateTime());
+            }
         }
 
         if (array_key_exists('login', $data) === true) {
@@ -318,6 +789,23 @@ class SecretService
 
         $secret->setUpdatedAt(new DateTime());
         $this->mapper->update($secret);
+
+        $changedFields = array_values(
+            array_intersect(
+                ['name', 'url', 'folderId', 'typeId', 'key', 'login', 'additionalFields'],
+                array_keys($data)
+            )
+        );
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_UPDATED,
+                objectType: 'secret',
+                objectId: $secret->getId(),
+                objectName: $secret->getName(),
+                metadata: ['changedFields' => $changedFields],
+            )
+        );
 
         return $secret;
     }//end update()
@@ -332,6 +820,8 @@ class SecretService
      *
      * @throws NotFoundException When the secret does not exist
      * @throws ForbiddenException When the secret belongs to another user
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
      */
     public function delete(string $id, string $userId): void
     {
@@ -361,6 +851,16 @@ class SecretService
 
         $this->mapper->delete($secret);
         $this->logger->info("Doriath: secret {$id} deleted by {$userId}");
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_DELETED,
+                objectType: 'secret',
+                objectId: $id,
+                objectName: $secret->getName(),
+            )
+        );
     }//end delete()
 
     /**
@@ -588,6 +1088,27 @@ class SecretService
 
         return $secret;
     }//end loadOwned()
+
+    /**
+     * Assert the user has an active encryption suite, or block.
+     *
+     * Public probe used by the batch-import commit (ImportService) so a whole
+     * chunk fails fast with a 412 when the user cannot create secrets, rather
+     * than each item throwing the same block independently. Reuses the same
+     * suite resolution as create() — no duplicated suite logic.
+     *
+     * @param string $userId The Nextcloud user ID
+     *
+     * @return void
+     *
+     * @throws SuiteBlockedException When no active suite exists
+     *
+     * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+     */
+    public function assertActiveSuite(string $userId): void
+    {
+        $this->getActiveSuiteOrBlock(userId: $userId);
+    }//end assertActiveSuite()
 
     /**
      * Resolve the user's active encryption suite or block with a 403.

@@ -553,6 +553,31 @@ All entities use Nextcloud's `ISchemaWrapper` migration pattern. Migrations are 
 | SecretRequest | `doriath_secret_requests` | Unique index on `token` |
 | SuiteMigration | `doriath_suite_migrations` | — |
 
+### 4.1 Public endpoint rate limits
+
+Every controller method registered with `#[PublicPage]` (reachable without a
+Nextcloud session) also carries a Nextcloud-native
+`#[AnonRateLimit(limit: N, period: 60)]` attribute. Limits are sized per
+endpoint sensitivity — tighter for the highest-value credential-custody
+targets, looser for polling machine clients — and are intentionally
+documented here so a future PR loosening one has to consciously edit
+documented intent rather than silently drop a limit during refactoring.
+
+| Controller::method | Limit | Rationale |
+|---|---|---|
+| `ApplicationTokenController::exchange` | 10 / 60s | JWT-bearer token exchange (`POST /api/v1/token`) is the single highest-value target — a successful forced/guessed exchange yields a bearer token good for reading an application's secrets. Legitimate callers retry infrequently. |
+| `LinkShareAccessController::show` | 15 / 60s | Phase 1 of the public link-share access protocol. Composes with the existing `recordFailedAttempt` domain-level brute-force counter (auto-delete after N failed attempts): the rate limit rejects with 429 on an over-limit burst *before* the domain counter increments, so a rate-limited request is never double-counted as a "failed attempt". |
+| `LinkShareAccessController::confirm` | 15 / 60s | Phase 2 confirmation of a successful client-side decryption. Legitimate recipients make a handful of requests per session, not bursts. |
+| `SecretRequestFillController::show` | 20 / 60s | Public token-based recipient fill-in flow, phase 1 (resolve token metadata). |
+| `SecretRequestFillController::fill` | 20 / 60s | Fill-in flow phase 2 (submit encrypted fields). |
+| `ApplicationSecretsController::index` | 30 / 60s | Bearer-authenticated but the route is `#[PublicPage]` so anonymous traffic reaches the controller before `JwtAuthMiddleware` validates the header. Limit protects the pre-auth surface; generous enough for a legitimate polling machine client. |
+| `ApplicationSecretsController::show` | 30 / 60s | Same rationale as `index`. |
+| `ApplicationController::create` | 10 / 60s | Anonymous application self-registration — only reachable when an admin opts in via `anonymous_application_registration_enabled`. Admins enabling anonymous registration inherit this rate limit. |
+
+All limits are keyed anonymously (per-IP) by Nextcloud's rate-limiter
+middleware, which is available since NC 24; Doriath's `info.xml` floor
+(NC 31) already satisfies this.
+
 ## 5. Open Research Questions
 
 1. **Application API authentication** — RFC 7523 (JWT Bearer / Private Key JWT) is the lean for how approved applications authenticate to retrieve secrets. Uses existing RSA key infrastructure, short-lived tokens, no new credential. Needs team discussion before finalizing. See [application-mgmt spec](../openspec/specs/application-mgmt/spec.md).

@@ -27,8 +27,11 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\LinkShare;
 use OCA\Doriath\Db\LinkShareMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
@@ -63,16 +66,32 @@ class LinkShareService
     /**
      * Constructor for LinkShareService.
      *
-     * @param LinkShareMapper $mapper The link share mapper
-     * @param LoggerInterface $logger The logger interface
+     * @param LinkShareMapper       $mapper          The link share mapper
+     * @param LoggerInterface       $logger          The logger interface
+     * @param IEventDispatcher|null $eventDispatcher The event dispatcher
      *
      * @return void
      */
     public function __construct(
         private LinkShareMapper $mapper,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create a link share for a secret owned by the given user.
@@ -94,6 +113,8 @@ class LinkShareService
      * @return LinkShare
      *
      * @throws InvalidArgumentException When validation fails
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function create(
         string $secretId,
@@ -131,6 +152,24 @@ class LinkShareService
         $this->mapper->insert($linkShare);
 
         $this->logger->info("Doriath: link share created for secret {$secretId} by {$userId}");
+
+        $expiresAtIso = null;
+        if ($expiresAt !== null) {
+            $expiresAtIso = $expiresAt->format(DateTime::ATOM);
+        }
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::LINK_SHARE_CREATED,
+                objectType: 'link_share',
+                objectId: $linkShare->getId(),
+                metadata: [
+                    'hasPassword' => ($salt !== ''),
+                    'expiresAt'   => $expiresAtIso,
+                ],
+            )
+        );
 
         return $linkShare;
     }//end create()
@@ -190,6 +229,8 @@ class LinkShareService
      * @return LinkShare The updated (or, when exhausted, last-known) link share
      *
      * @throws RuntimeException When the token is invalid or the limit was already reached
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function confirmAccess(string $token): LinkShare
     {
@@ -200,6 +241,14 @@ class LinkShareService
         }
 
         $linkShare = $this->mapper->findByToken($token);
+
+        $this->dispatchAudit(
+            event: AuditEvent::forLinkVisitor(
+                eventType: AuditEventTypes::LINK_SHARE_ACCESSED,
+                objectType: 'link_share',
+                objectId: $linkShare->getId(),
+            )
+        );
 
         if ($linkShare->getUsageCount() >= $linkShare->getUsageLimit()) {
             $this->mapper->delete($linkShare);
@@ -218,6 +267,8 @@ class LinkShareService
      * @param string $token The access token
      *
      * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function recordFailedAttempt(string $token): void
     {
@@ -236,10 +287,37 @@ class LinkShareService
                 "Doriath: link share {$linkShare->getId()} permanently deleted after "
                 .self::MAX_FAILED_ATTEMPTS.' failed attempts'
             );
+
+            $this->dispatchAudit(
+                event: AuditEvent::forLinkVisitor(
+                    eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
+                    objectType: 'link_share',
+                    objectId: $linkShare->getId(),
+                    metadata: ['reason' => 'invalid_password'],
+                )
+            );
+
+            $this->dispatchAudit(
+                event: AuditEvent::forLinkVisitor(
+                    eventType: AuditEventTypes::LINK_SHARE_AUTO_DELETED,
+                    objectType: 'link_share',
+                    objectId: $linkShare->getId(),
+                    metadata: ['reason' => 'too_many_failed_attempts'],
+                )
+            );
             return;
-        }
+        }//end if
 
         $this->mapper->update($linkShare);
+
+        $this->dispatchAudit(
+            event: AuditEvent::forLinkVisitor(
+                eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
+                objectType: 'link_share',
+                objectId: $linkShare->getId(),
+                metadata: ['reason' => 'invalid_password'],
+            )
+        );
     }//end recordFailedAttempt()
 
     /**
@@ -274,6 +352,8 @@ class LinkShareService
      *
      * @throws RuntimeException When the link share does not exist
      * @throws InvalidArgumentException When the requester is not the owner
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
      */
     public function delete(string $id, string $userId): void
     {
@@ -289,6 +369,15 @@ class LinkShareService
 
         $this->mapper->delete($linkShare);
         $this->logger->info("Doriath: link share {$id} revoked by {$userId}");
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::LINK_SHARE_REVOKED,
+                objectType: 'link_share',
+                objectId: $id,
+            )
+        );
     }//end delete()
 
     /**

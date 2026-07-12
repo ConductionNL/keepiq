@@ -29,6 +29,8 @@ use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Service\JwtAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
+use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -40,8 +42,6 @@ use RuntimeException;
  */
 class ApplicationTokenController extends Controller
 {
-
-
     /**
      * Constructor for ApplicationTokenController.
      *
@@ -57,7 +57,6 @@ class ApplicationTokenController extends Controller
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
 
-
     /**
      * Exchange a JWT-Bearer assertion for an opaque access token.
      *
@@ -72,41 +71,53 @@ class ApplicationTokenController extends Controller
      * @param string $assertion The JWS compact serialization
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
      */
     #[PublicPage]
     #[NoCSRFRequired]
+    #[BruteForceProtection(action: 'doriathTokenExchange')]
+    #[AnonRateLimit(limit: 10, period: 60)]
     public function exchange(string $grantType='', string $assertion=''): JSONResponse
     {
         if ($grantType !== 'urn:ietf:params:oauth:grant-type:jwt-bearer') {
-            return new JSONResponse(
+            $response = new JSONResponse(
                 data: [
                     'error'             => 'unsupported_grant_type',
                     'error_description' => 'Only urn:ietf:params:oauth:grant-type:jwt-bearer is supported',
                 ],
                 statusCode: Http::STATUS_BAD_REQUEST
             );
+            $response->throttle(['action' => 'doriathTokenExchange']);
+            return $response;
         }
 
         if ($assertion === '') {
-            return new JSONResponse(
+            $response = new JSONResponse(
                 data: [
                     'error'             => 'invalid_request',
                     'error_description' => 'assertion parameter is required',
                 ],
                 statusCode: Http::STATUS_BAD_REQUEST
             );
+            $response->throttle(['action' => 'doriathTokenExchange']);
+            return $response;
         }
 
         try {
             $result = $this->service->exchangeAssertion($assertion);
         } catch (RuntimeException $e) {
-            return new JSONResponse(
+            // Failed exchange — register a brute-force attempt so repeated
+            // invalid assertions are progressively throttled (secret-store-api D7).
+            $response = new JSONResponse(
                 data: [
                     'error'             => 'invalid_grant',
                     'error_description' => $e->getMessage(),
                 ],
                 statusCode: Http::STATUS_UNAUTHORIZED
             );
+            $response->throttle(['action' => 'doriathTokenExchange']);
+            return $response;
         }
 
         return new JSONResponse(data: $result);

@@ -100,6 +100,14 @@ class DashboardController extends Controller
         $faviconServiceUrl = $this->appConfig->getValueString(Application::APP_ID, 'favicon_service_url', '');
         $this->initialState->provideInitialState(key: 'faviconServiceUrl', data: $faviconServiceUrl);
 
+        // Password-health breach-check admin gate (password-health §1.4). The
+        // per-user opt-in lives in user prefs; the breach UI shows only when
+        // BOTH gates are on. This is the boolean instance-wide gate only.
+        $this->initialState->provideInitialState(
+            key: 'breachCheckEnabled',
+            data: $this->appConfig->getValueBool(Application::APP_ID, 'breach_check_enabled', false),
+        );
+
         $response = new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
 
         // Link-share encryption derives its AES key client-side via the Argon2id
@@ -109,6 +117,11 @@ class DashboardController extends Controller
         // app-local (served from custom_apps/doriath/js/argon2.wasm).
         $csp = new ContentSecurityPolicy();
         $csp->allowEvalWasm(true);
+        // The password-health analysis runs in a dedicated same-origin web worker
+        // (src/health/worker.js, bundled to custom_apps/doriath/js). NC's default
+        // CSP has no `worker-src`, so it falls back to the nonce-only `script-src`
+        // and blocks the dynamically-created worker. Allow workers from 'self'.
+        $csp->addAllowedWorkerSrcDomain("'self'");
         $response->setContentSecurityPolicy($csp);
 
         return $response;
