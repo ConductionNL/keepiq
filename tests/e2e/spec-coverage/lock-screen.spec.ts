@@ -49,7 +49,16 @@ test.describe('Lock screen — spec: encryption-suites/spec.md', () => {
 	test('strength meter appears and validates while typing on setup mode only', async ({ page }) => {
 		await gotoLock(page)
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
-		const heading = (await lockHeading(page).textContent())?.trim() ?? ''
+		// LockScreen.created() fetches the suite async; the heading renders the
+		// SETUP copy until it resolves, then flips to UNLOCK. Wait for the heading
+		// to stabilise (two equal reads) so we don't sample the transient flip.
+		let heading = ''
+		for (let i = 0; i < 20; i++) {
+			const cur = (await lockHeading(page).textContent())?.trim() ?? ''
+			if (cur && cur === heading) break
+			heading = cur
+			await page.waitForTimeout(250)
+		}
 
 		if (/Set up your master password/i.test(heading)) {
 			// Fresh setup: typing a password mounts the strength meter and a
@@ -79,7 +88,8 @@ test.describe('Lock screen — spec: encryption-suites/spec.md', () => {
 		test.skip(/Set up your master password/i.test(heading), 'No suite — setup mode, not unlock')
 
 		await page.locator('.lock-screen input[type="password"]').first().fill('definitely-not-the-master-pw')
-		await page.locator('.lock-screen button').filter({ hasText: /^\s*Unlock\s*$/i }).first().click()
+		// The themed button keeps repainting (loading/strength state); force the click.
+		await page.locator('.lock-screen button').filter({ hasText: /^\s*Unlock\s*$/i }).first().click({ force: true })
 
 		// Error note card appears and we remain on the lock screen.
 		await expect(

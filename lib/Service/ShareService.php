@@ -34,7 +34,10 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -61,13 +64,14 @@ class ShareService
     /**
      * Constructor for ShareService.
      *
-     * @param ShareTargetMapper       $mapper             The share-target mapper
-     * @param SecretMapper            $secretMapper       The Secret mapper (owner + recipient lookups)
-     * @param EncryptionSuiteMapper   $suiteMapper        The EncryptionSuite mapper (recipient-suite precondition)
-     * @param SecretDelegationMapper  $delegationMapper   The Delegation mapper (delegate authorization)
-     * @param NotificationService     $notificationService The notification dispatcher
-     * @param IDBConnection           $db                 The DB connection (for syncUpdate transaction)
-     * @param LoggerInterface         $logger             The logger interface
+     * @param ShareTargetMapper      $mapper              The share-target mapper
+     * @param SecretMapper           $secretMapper        The Secret mapper (owner + recipient lookups)
+     * @param EncryptionSuiteMapper  $suiteMapper         The EncryptionSuite mapper (recipient-suite precondition)
+     * @param SecretDelegationMapper $delegationMapper    The Delegation mapper (delegate authorization)
+     * @param NotificationService    $notificationService The notification dispatcher
+     * @param IDBConnection          $db                  The DB connection (for syncUpdate transaction)
+     * @param LoggerInterface        $logger              The logger interface
+     * @param IEventDispatcher|null  $eventDispatcher     The event dispatcher
      *
      * @return void
      */
@@ -79,8 +83,23 @@ class ShareService
         private NotificationService $notificationService,
         private IDBConnection $db,
         private LoggerInterface $logger,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create a single share target record.
@@ -122,7 +141,7 @@ class ShareService
             throw new InvalidArgumentException(message: 'recipientSecretId is required');
         }
 
-        $source = $this->loadSecret($sourceSecretId);
+        $source = $this->loadSecret(secretId: $sourceSecretId);
 
         if ($targetUserId === $source->getOwnerId()) {
             throw new InvalidArgumentException(message: 'Cannot share a secret with its owner');
@@ -171,6 +190,20 @@ class ShareService
             objectId: $sourceSecretId,
         );
 
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SHARE_GRANTED,
+                objectType: 'share',
+                objectId: $persisted->getId(),
+                objectName: $source->getName(),
+                metadata: [
+                    'recipientType' => 'user',
+                    'recipientId'   => $targetUserId,
+                ],
+            )
+        );
+
         return $persisted;
     }//end createShare()
 
@@ -182,10 +215,10 @@ class ShareService
      * in the browser and POSTed them. The entire batch shares one
      * `$groupShareId` so revocation/leave handling can cascade.
      *
-     * @param string                                                 $sourceSecretId The owner's source secret ID
+     * @param string                                                         $sourceSecretId The owner's source secret ID
      * @param array<int,array{targetUserId:string,recipientSecretId:string}> $shares         The per-recipient batch
-     * @param string                                                 $groupShareId   The GroupShare ID for cascade
-     * @param string                                                 $userId         The initiator
+     * @param string                                                         $groupShareId   The GroupShare ID for cascade
+     * @param string                                                         $userId         The initiator
      *
      * @return ShareTarget[]
      *
@@ -220,7 +253,7 @@ class ShareService
         } catch (Throwable $exception) {
             $this->db->rollBack();
             throw $exception;
-        }
+        }//end try
 
         return $created;
     }//end createBatchShares()
@@ -239,7 +272,7 @@ class ShareService
      *
      * @spec openspec/changes/implement-user-sharing/tasks.md#3.5
      */
-    public function listSharesForSecret(string $sourceSecretId, string $userId = ''): array
+    public function listSharesForSecret(string $sourceSecretId, string $userId=''): array
     {
         if ($userId === '') {
             // Back-compat: callers that do not provide a userId get the
@@ -248,7 +281,7 @@ class ShareService
         }
 
         try {
-            $source = $this->loadSecret($sourceSecretId);
+            $source = $this->loadSecret(secretId: $sourceSecretId);
         } catch (InvalidArgumentException) {
             return [];
         }
@@ -282,7 +315,7 @@ class ShareService
             throw new InvalidArgumentException(message: 'Share not found');
         }
 
-        $source = $this->loadSecret($entity->getSourceSecretId());
+        $source = $this->loadSecret(secretId: $entity->getSourceSecretId());
         $this->assertOwnerOrDelegate(secret: $source, userId: $userId);
 
         $this->db->beginTransaction();
@@ -309,6 +342,20 @@ class ShareService
             'Revoked share '.$shareId.' for source '.$entity->getSourceSecretId(),
             ['app' => 'doriath']
         );
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SHARE_REVOKED,
+                objectType: 'share',
+                objectId: $shareId,
+                objectName: $source->getName(),
+                metadata: [
+                    'recipientType' => 'user',
+                    'recipientId'   => $entity->getTargetUserId(),
+                ],
+            )
+        );
     }//end revokeShare()
 
     /**
@@ -321,10 +368,12 @@ class ShareService
      * `updatedAt`, writes every recipient copy in a single transaction,
      * and clears `possiblyCompromisedAt` from any copy where it was set.
      *
-     * @param string                                                                                                $secretId         The source secret ID
-     * @param array<int,array{secretId:string,key:string,login:?string,additionalFields:?string,updatedAtCheck:?string}> $updates          The per-recipient blobs
-     * @param string                                                                                                $expectedUpdatedAt The owner-side expected ISO timestamp for optimistic locking
-     * @param string                                                                                                $userId           The requesting user
+     * @param string                               $secretId          The source secret ID
+     * @param array<int,array<string,string|null>> $updates           The per-recipient blobs; each row has
+     *                                                                secretId, key, login,
+     *                                                                additionalFields, updatedAtCheck
+     * @param string                               $expectedUpdatedAt The owner-side expected ISO timestamp for optimistic locking
+     * @param string                               $userId            The requesting user
      *
      * @return int Number of recipient copies updated.
      *
@@ -338,7 +387,7 @@ class ShareService
         string $expectedUpdatedAt,
         string $userId,
     ): int {
-        $source = $this->loadSecret($secretId);
+        $source = $this->loadSecret(secretId: $secretId);
         $this->assertOwnerOrDelegate(secret: $source, userId: $userId);
 
         // Optimistic lock — if the source has moved since the browser
@@ -373,15 +422,21 @@ class ShareService
                 }
 
                 if (array_key_exists('login', $update) === true) {
-                    $copy->setLogin(
-                        $update['login'] === null ? null : (string) $update['login']
-                    );
+                    $login = null;
+                    if ($update['login'] !== null) {
+                        $login = (string) $update['login'];
+                    }
+
+                    $copy->setLogin($login);
                 }
 
                 if (array_key_exists('additionalFields', $update) === true) {
-                    $copy->setAdditionalFields(
-                        $update['additionalFields'] === null ? null : (string) $update['additionalFields']
-                    );
+                    $additionalFields = null;
+                    if ($update['additionalFields'] !== null) {
+                        $additionalFields = (string) $update['additionalFields'];
+                    }
+
+                    $copy->setAdditionalFields($additionalFields);
                 }
 
                 $copy->setUpdatedAt(new DateTime());
@@ -395,13 +450,13 @@ class ShareService
 
                 $this->secretMapper->update($copy);
                 ++$updated;
-            }
+            }//end foreach
 
             $this->db->commit();
         } catch (Throwable $exception) {
             $this->db->rollBack();
             throw $exception;
-        }
+        }//end try
 
         return $updated;
     }//end syncUpdate()

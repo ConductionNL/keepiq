@@ -64,3 +64,19 @@ fi
   --reporters cli \
   --color on \
   "$@"
+
+# Machine secret-store API contract (openconnector-secret-store-api).
+# The unauthenticated subset (discovery + token negatives + bearer-required)
+# always runs; the seeded machine flow runs only when SEEDED_APP_ID +
+# SEEDED_PRIVATE_KEY_PEM are provided (the openconnector-side CI supplies them).
+MACHINE_COLLECTION="${SCRIPT_DIR}/machine-secret-api.postman_collection.json"
+"${NEWMAN[@]}" run "${MACHINE_COLLECTION}" \
+  --env-var "baseUrl=${BASE_URL}" \
+  --env-var "noAuthBase=${NOAUTH_BASE}" \
+  --env-var "seededAppId=${SEEDED_APP_ID:-}" \
+  --env-var "seededPrivateKeyPem=${SEEDED_PRIVATE_KEY_PEM:-}" \
+  --env-var "seededSecretName=${SEEDED_SECRET_NAME:-zgw-api-token}" \
+  --ignore-redirects \
+  --reporters cli \
+  --color on \
+  "$@"

@@ -103,7 +103,7 @@ class SeedDevelopmentApplications implements IRepairStep
 
         $seeded = 0;
         foreach ($apps as $spec) {
-            $id = $this->deterministicId($spec['name']);
+            $id = $this->deterministicId(name: $spec['name']);
 
             // Idempotency: skip if the deterministic ID is already present.
             try {
@@ -128,7 +128,7 @@ class SeedDevelopmentApplications implements IRepairStep
             $application->setCreatedAt(new DateTime());
             $this->appMapper->insert($application);
             $seeded++;
-        }
+        }//end foreach
 
         $output->info('Doriath: seeded '.$seeded.' development applications');
         $this->logger->info('Doriath dev seed: created '.$seeded.' applications');

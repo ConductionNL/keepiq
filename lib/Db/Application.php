@@ -56,7 +56,7 @@ use OCP\AppFramework\Db\Entity;
 class Application extends Entity implements JsonSerializable
 {
     public const STATUS_PENDING = 'pending';
-    public const STATUS_ACTIVE = 'active';
+    public const STATUS_ACTIVE  = 'active';
 
     public const TYPE_INTERNAL = 'internal';
     public const TYPE_EXTERNAL = 'external';

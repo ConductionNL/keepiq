@@ -26,6 +26,8 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -42,11 +44,12 @@ class EncryptionSuiteService
     /**
      * Constructor for EncryptionSuiteService.
      *
-     * @param EncryptionSuiteMapper       $mapper      The encryption suite mapper
-     * @param CertificateAuthorityService $caService   The CA service
-     * @param IAppConfig                  $appConfig   The app config interface
-     * @param IUserManager                $userManager The user manager
-     * @param LoggerInterface             $logger      The logger interface
+     * @param EncryptionSuiteMapper       $mapper          The encryption suite mapper
+     * @param CertificateAuthorityService $caService       The CA service
+     * @param IAppConfig                  $appConfig       The app config interface
+     * @param IUserManager                $userManager     The user manager
+     * @param LoggerInterface             $logger          The logger interface
+     * @param IEventDispatcher|null       $eventDispatcher The event dispatcher
      *
      * @return void
      */
@@ -56,9 +59,23 @@ class EncryptionSuiteService
         private IAppConfig $appConfig,
         private IUserManager $userManager,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher = null,
+        private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
+
+    /**
+     * Dispatch a typed audit event, fail-soft.
+     *
+     * @param AuditEvent $event The audit event
+     *
+     * @return void
+     *
+     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
+     */
+    private function dispatchAudit(AuditEvent $event): void
+    {
+        $this->eventDispatcher?->dispatchTyped($event);
+    }//end dispatchAudit()
 
     /**
      * Create an EncryptionSuite for a user or application.
@@ -185,7 +202,7 @@ class EncryptionSuiteService
 
         $this->logger->info("Doriath: EncryptionSuite {$id} revoked by {$revokedBy}: {$reason}");
 
-        // implement-user-sharing §10.3 — dispatch a revocation event so
+        // Implement-user-sharing §10.3 — dispatch a revocation event so
         // EncryptionSuiteRevokedListener can cascade share-target
         // cleanup and promote temporary delegations to permanent.
         if ($this->eventDispatcher !== null) {
@@ -198,6 +215,16 @@ class EncryptionSuiteService
                 )
             );
         }
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $revokedBy,
+                eventType: AuditEventTypes::SUITE_REVOKED,
+                objectType: 'suite',
+                objectId: $id,
+                metadata: ['reason' => $reason],
+            )
+        );
 
         return $suite;
     }//end revokeSuite()
@@ -250,6 +277,15 @@ class EncryptionSuiteService
 
         $this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $reinstatedBy,
+                eventType: AuditEventTypes::SUITE_REINSTATED,
+                objectType: 'suite',
+                objectId: $id,
+            )
+        );
+
         return $suite;
     }//end reinstateSuite()
 
@@ -278,6 +314,16 @@ class EncryptionSuiteService
         $this->mapper->update($suite);
 
         $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $compromisedBy,
+                eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
+                objectType: 'suite',
+                objectId: $id,
+            )
+        );
+
         return $suite;
     }//end markCompromised()
 
@@ -336,20 +382,6 @@ class EncryptionSuiteService
     {
         return $this->mapper->findByOwner($ownerType, $ownerId);
     }//end getSuitesByOwner()
-
-    /**
-     * Count the total number of active (non-revoked, non-compromised) suites.
-     *
-     * Used by the metrics endpoint for Prometheus instrumentation.
-     *
-     * @return int
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-     */
-    public function countActiveSuites(): int
-    {
-        return count($this->mapper->findAllActive());
-    }//end countActiveSuites()
 
     /**
      * Resolve the certificate common name for an owner.

@@ -123,7 +123,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep
 
         // Pending new request — no Secret values yet.
         $seeded += $this->seedRequest(
-            id: $this->deterministicId('dev_req_pending_01'),
+            id: $this->deterministicId(seed: 'dev_req_pending_01'),
             secret: $first,
             suiteId: $suiteId,
             status: SecretRequest::STATUS_PENDING,
@@ -134,7 +134,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep
         // Re-request against an existing secret (if we have two).
         if (count($secrets) >= 2) {
             $seeded += $this->seedRequest(
-                id: $this->deterministicId('dev_req_rerequest_01'),
+                id: $this->deterministicId(seed: 'dev_req_rerequest_01'),
                 secret: $secrets[1],
                 suiteId: $suiteId,
                 status: SecretRequest::STATUS_PENDING,
@@ -146,7 +146,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep
         // Expired pending request — should render the "expired" view on the public fill page.
         if (count($secrets) >= 3) {
             $seeded += $this->seedRequest(
-                id: $this->deterministicId('dev_req_expired_01'),
+                id: $this->deterministicId(seed: 'dev_req_expired_01'),
                 secret: $secrets[2],
                 suiteId: $suiteId,
                 status: SecretRequest::STATUS_PENDING,
@@ -199,7 +199,12 @@ class SeedDevelopmentSecretRequests implements IRepairStep
         $request->setEncryptionSuiteId($suiteId);
         $request->setIsReRequest($isReRequest);
         $request->setCreatedBy(self::DEV_USER_ID);
-        $request->setRequestedFields(json_encode(['key', 'login']) ?: '[]');
+        $requestedFields = json_encode(['key', 'login']);
+        if ($requestedFields === false) {
+            $requestedFields = '[]';
+        }
+
+        $request->setRequestedFields($requestedFields);
         $request->setCreatedAt(new DateTime());
         $request->setExpiresAt($expiresAt);
 

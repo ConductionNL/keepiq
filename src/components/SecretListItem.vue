@@ -1,5 +1,12 @@
 <template>
-	<div class="secret-list-item" :class="{ 'secret-list-item--blocked': secret.blocked }" @click="$emit('open', secret.id)">
+	<div class="secret-list-item"
+		role="button"
+		tabindex="0"
+		:aria-label="t('doriath', 'Open {name}', { name: secret.name })"
+		:class="{ 'secret-list-item--blocked': secret.blocked }"
+		@click="$emit('open', secret.id)"
+		@keydown.enter="onRowActivate"
+		@keydown.space.prevent="onRowActivate">
 		<span class="secret-list-item__icon">
 			<img v-if="faviconUrl && !faviconFailed"
 				:src="faviconUrl"
@@ -11,8 +18,14 @@
 		</span>
 
 		<span class="secret-list-item__main">
-			<span class="secret-list-item__name">{{ secret.name }}</span>
+			<span class="secret-list-item__name">
+				{{ secret.name }}
+				<StrengthBadge v-if="!secret.blocked" :secret-id="secret.id" />
+			</span>
 			<span v-if="secret.url" class="secret-list-item__url">{{ secret.url }}</span>
+			<span v-if="secret.tombstonedAt" class="secret-list-item__tombstone">
+				{{ t('doriath', 'Shared by a deleted account — no longer synced') }}
+			</span>
 		</span>
 
 		<span v-if="secret.blocked" class="secret-list-item__blocked">
@@ -20,7 +33,7 @@
 			{{ t('doriath', 'Locked — suite revoked') }}
 		</span>
 
-		<span v-else class="secret-list-item__actions" @click.stop>
+		<span v-else class="secret-list-item__actions" @click.stop @keydown.enter.stop @keydown.space.stop>
 			<CopyButton :resolve="resolveKey"
 				:label="t('doriath', 'Copy password')"
 				@copied="$emit('copied')" />
@@ -37,6 +50,7 @@ import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
 import NoteText from 'vue-material-design-icons/NoteText.vue'
 import Database from 'vue-material-design-icons/Database.vue'
 import CopyButton from './CopyButton.vue'
+import StrengthBadge from './StrengthBadge.vue'
 import { resolveFaviconUrl, typeIconName } from '../utils/favicon.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -57,6 +71,7 @@ export default {
 		NoteText,
 		Database,
 		CopyButton,
+		StrengthBadge,
 	},
 
 	props: {
@@ -88,6 +103,23 @@ export default {
 		t,
 
 		/**
+		 * Open the secret when the row itself is activated via keyboard.
+		 *
+		 * Guards against keyboard activation of an inner control (e.g. the
+		 * copy-password button) bubbling up and triggering row navigation:
+		 * only the row element itself, when focused, opens the secret.
+		 *
+		 * @param {KeyboardEvent} event The keydown event.
+		 * @return {void}
+		 */
+		onRowActivate(event) {
+			if (event.target !== event.currentTarget) {
+				return
+			}
+			this.$emit('open', this.secret.id)
+		},
+
+		/**
 		 * Resolve the decrypted key for the copy button.
 		 *
 		 * @return {Promise<string>}
@@ -112,6 +144,12 @@ export default {
 }
 
 .secret-list-item:hover {
+	background-color: var(--color-background-hover);
+}
+
+.secret-list-item:focus-visible {
+	outline: 2px solid var(--color-primary-element);
+	outline-offset: -2px;
 	background-color: var(--color-background-hover);
 }
 

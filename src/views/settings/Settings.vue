@@ -14,22 +14,28 @@
 <template>
 	<div class="doriath-settings">
 		<PasswordPolicySection />
+		<BreachCheckSection />
 		<CaHealthSection />
 		<ApplicationQueueSection />
+		<AdminAuditSection />
 	</div>
 </template>
 
 <script>
 import PasswordPolicySection from '../../components/settings/PasswordPolicySection.vue'
+import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
+import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 
 export default {
 	name: 'Settings',
 	components: {
 		PasswordPolicySection,
+		BreachCheckSection,
 		CaHealthSection,
 		ApplicationQueueSection,
+		AdminAuditSection,
 	},
 }
 </script>

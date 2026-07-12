@@ -51,6 +51,7 @@ class ApplicationController extends OCSController
      * @param ApplicationService $service      The application service
      * @param IUserSession       $session      The user session
      * @param IGroupManager      $groupManager The group manager
+     * @param IAppConfig         $appConfig    The app config
      *
      * @return void
      */
@@ -193,11 +194,21 @@ class ApplicationController extends OCSController
     #[PublicPage]
     #[NoCSRFRequired]
     public function create(
-        string $name,
+        ?string $name=null,
         ?string $description=null,
         string $type=Application::TYPE_EXTERNAL,
         ?string $csr=null,
     ): JSONResponse {
+        // A missing/blank name is a client validation error, not a 500. Without
+        // a nullable default, NC's dispatcher passes null for an omitted `name`
+        // and PHP raises a TypeError before the method body runs.
+        if ($name === null || trim($name) === '') {
+            return new JSONResponse(
+                data: ['message' => 'name is required'],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
         $user = $this->session->getUser();
 
         if ($user === null) {
@@ -221,7 +232,7 @@ class ApplicationController extends OCSController
         } else {
             $uid     = $user->getUID();
             $isAdmin = $this->groupManager->isAdmin($uid);
-        }
+        }//end if
 
         try {
             $entity = $this->service->register(
@@ -267,7 +278,12 @@ class ApplicationController extends OCSController
         try {
             $entity = $this->service->approve(applicationId: $id, adminUserId: $uid, isAdmin: $isAdmin);
         } catch (InvalidArgumentException $e) {
-            $status = ($isAdmin === false) ? Http::STATUS_FORBIDDEN : Http::STATUS_BAD_REQUEST;
+            if ($isAdmin === false) {
+                $status = Http::STATUS_FORBIDDEN;
+            } else {
+                $status = Http::STATUS_BAD_REQUEST;
+            }
+
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: $status);
         }
 
@@ -299,7 +315,12 @@ class ApplicationController extends OCSController
         try {
             $this->service->reject(applicationId: $id, adminUserId: $uid, isAdmin: $isAdmin);
         } catch (InvalidArgumentException $e) {
-            $status = ($isAdmin === false) ? Http::STATUS_FORBIDDEN : Http::STATUS_BAD_REQUEST;
+            if ($isAdmin === false) {
+                $status = Http::STATUS_FORBIDDEN;
+            } else {
+                $status = Http::STATUS_BAD_REQUEST;
+            }
+
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: $status);
         }
 
@@ -330,7 +351,12 @@ class ApplicationController extends OCSController
         try {
             $this->service->delete(applicationId: $id, isAdmin: $isAdmin);
         } catch (InvalidArgumentException $e) {
-            $status = ($isAdmin === false) ? Http::STATUS_FORBIDDEN : Http::STATUS_BAD_REQUEST;
+            if ($isAdmin === false) {
+                $status = Http::STATUS_FORBIDDEN;
+            } else {
+                $status = Http::STATUS_BAD_REQUEST;
+            }
+
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: $status);
         }
 

@@ -124,4 +124,40 @@ class SuiteMigrationMapper extends QBMapper
             return false;
         }
     }//end hasInProgress()
+
+    /**
+     * Delete every migration record referencing any of the given suite IDs.
+     *
+     * Used by the account-deletion cascade after the user's suites are listed
+     * but before they are removed. Idempotent.
+     *
+     * @param string[] $suiteIds The suite IDs (old or new) to purge
+     *
+     * @return int The number of rows deleted
+     *
+     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+     */
+    public function deleteBySuiteIds(array $suiteIds): int
+    {
+        if ($suiteIds === []) {
+            return 0;
+        }
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName())
+            ->where(
+                $qb->expr()->orX(
+                    $qb->expr()->in(
+                        'old_suite_id',
+                        $qb->createNamedParameter($suiteIds, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_STR_ARRAY)
+                    ),
+                    $qb->expr()->in(
+                        'new_suite_id',
+                        $qb->createNamedParameter($suiteIds, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_STR_ARRAY)
+                    )
+                )
+            );
+
+        return $qb->executeStatement();
+    }//end deleteBySuiteIds()
 }//end class

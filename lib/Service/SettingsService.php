@@ -53,10 +53,12 @@ class SettingsService
      * @var array<string,string> key => type (int|string|bool)
      */
     private const ADMIN_CONFIG_KEYS = [
-        'min_password_length'       => 'int',
-        'min_password_score'        => 'int',
-        'default_session_timeout'   => 'string',
-        'ca_auto_renew_enabled'     => 'bool',
+        'min_password_length'     => 'int',
+        'min_password_score'      => 'int',
+        'default_session_timeout' => 'string',
+        'ca_auto_renew_enabled'   => 'bool',
+        'audit_retention_days'    => 'int',
+        'breach_check_enabled'    => 'bool',
     ];
 
     /**
@@ -65,14 +67,26 @@ class SettingsService
      * @var array<string,string> key => default-value
      */
     private const USER_PREF_KEYS = [
-        'session_timeout'      => '',
-        'notify_shares'        => '1',
-        'notify_requests'      => '1',
-        'notify_group_shares'  => '1',
-        'notify_security'      => '1',
-        'default_secret_type'  => 'login',
-        'default_view'         => 'list',
+        'session_timeout'       => '',
+        'notify_shares'         => '1',
+        'notify_requests'       => '1',
+        'notify_group_shares'   => '1',
+        'notify_security'       => '1',
+        'default_secret_type'   => 'login',
+        'default_view'          => 'list',
+        // Password-health staleness threshold in days: '90' | '180' | '365' |
+        // 'never' (password-health §1.6, default 365). Per-user opt-in for breach
+        // checking; UI is shown only when the admin gate is also on.
+        'health_staleness_days' => '365',
+        'breach_check_opt_in'   => '0',
     ];
+
+    /**
+     * Permitted password-health staleness threshold values (password-health §1.6).
+     *
+     * @var string[]
+     */
+    private const VALID_STALENESS_DAYS = ['90', '180', '365', 'never'];
 
     /**
      * Admin default bounds for validation.
@@ -81,6 +95,21 @@ class SettingsService
     private const MIN_PASSWORD_LENGTH_MAX = 20;
     private const VALID_PASSWORD_SCORES   = [3, 4];
     private const VALID_SESSION_TIMEOUTS  = ['session', '10min', '30min'];
+
+    /**
+     * Default audit-log retention window in days (add-secret-audit-trail §4.2).
+     *
+     * @var int
+     */
+    public const AUDIT_RETENTION_DEFAULT = 365;
+
+    /**
+     * Hard minimum audit-log retention window — below this the trail cannot
+     * serve its incident-investigation purpose, so it is rejected (design D5).
+     *
+     * @var int
+     */
+    public const AUDIT_RETENTION_MIN = 30;
 
     /**
      * Constructor for the SettingsService.
@@ -115,12 +144,18 @@ class SettingsService
      */
     public function getAdminSettings(): array
     {
-        $appId = Application::APP_ID;
+        $appId    = Application::APP_ID;
         $settings = [
             'min_password_length'     => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
             'min_password_score'      => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
             'default_session_timeout' => $this->appConfig->getValueString($appId, 'default_session_timeout', 'session'),
             'ca_auto_renew_enabled'   => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
+            'audit_retention_days'    => $this->appConfig->getValueInt(
+                $appId,
+                'audit_retention_days',
+                self::AUDIT_RETENTION_DEFAULT
+            ),
+            'breach_check_enabled'    => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
         ];
 
         // Best-effort CA status; never blocks if the service is unavailable.
@@ -188,6 +223,22 @@ class SettingsService
             $this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool) $data['ca_auto_renew_enabled']);
         }
 
+        if (isset($data['audit_retention_days']) === true) {
+            $days = (int) $data['audit_retention_days'];
+            if ($days < self::AUDIT_RETENTION_MIN) {
+                throw new InvalidArgumentException(
+                    'audit_retention_days must be at least '.self::AUDIT_RETENTION_MIN
+                    .' days — below that the audit trail cannot serve incident investigation'
+                );
+            }
+
+            $this->appConfig->setValueInt($appId, 'audit_retention_days', $days);
+        }
+
+        if (isset($data['breach_check_enabled']) === true) {
+            $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
+        }
+
         return $this->getAdminSettings();
     }//end updateAdminSettings()
 
@@ -202,7 +253,7 @@ class SettingsService
      */
     public function getUserPreferences(string $userId): array
     {
-        $appId = Application::APP_ID;
+        $appId        = Application::APP_ID;
         $adminDefault = $this->appConfig->getValueString($appId, 'default_session_timeout', 'session');
 
         $prefs = [];
@@ -238,13 +289,27 @@ class SettingsService
             }
 
             if (is_bool($value) === true) {
-                $value = ($value === true) ? '1' : '0';
+                if ($value === true) {
+                    $value = '1';
+                } else {
+                    $value = '0';
+                }
+            }
+
+            // Reject an out-of-set staleness threshold so the client cannot store
+            // an arbitrary "never-stale" sentinel (password-health §1.6).
+            if ($key === 'health_staleness_days'
+                && in_array((string) $value, self::VALID_STALENESS_DAYS, true) === false
+            ) {
+                throw new InvalidArgumentException(
+                    'health_staleness_days must be one of: '.implode(', ', self::VALID_STALENESS_DAYS)
+                );
             }
 
             $this->config->setUserValue($userId, $appId, $key, (string) $value);
-        }
+        }//end foreach
 
-        return $this->getUserPreferences($userId);
+        return $this->getUserPreferences(userId: $userId);
     }//end updateUserPreferences()
 
     /**

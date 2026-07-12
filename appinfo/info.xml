@@ -41,17 +41,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Doriath</namespace>
     <documentation>
-        <user>https://github.com/ConductionNL/doriath</user>
-        <admin>https://github.com/ConductionNL/doriath</admin>
-        <developer>https://github.com/ConductionNL/doriath</developer>
+        <user>https://codeberg.org/Conduction/doriath</user>
+        <admin>https://codeberg.org/Conduction/doriath</admin>
+        <developer>https://codeberg.org/Conduction/doriath</developer>
     </documentation>
     <category>security</category>
-    <website>https://github.com/ConductionNL/doriath</website>
-    <discussion>https://github.com/ConductionNL/doriath/discussions</discussion>
-    <bugs>https://github.com/ConductionNL/doriath/issues</bugs>
-    <repository>https://github.com/ConductionNL/doriath</repository>
+    <website>https://codeberg.org/Conduction/doriath</website>
+    <bugs>https://codeberg.org/Conduction/doriath/issues</bugs>
+    <repository>https://codeberg.org/Conduction/doriath</repository>
 
-    <screenshot>https://raw.githubusercontent.com/ConductionNL/doriath/main/img/app-store.svg</screenshot>
+    <screenshot>https://codeberg.org/Conduction/doriath/raw/branch/main/img/app-store.svg</screenshot>
 
     <dependencies>
         <nextcloud min-version="31" max-version="34"/>
@@ -70,6 +69,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <background-jobs>
         <job>OCA\Doriath\BackgroundJob\RenewIntermediateCertificate</job>
         <job>OCA\Doriath\BackgroundJob\CheckRootCertificateExpiry</job>
+        <job>OCA\Doriath\BackgroundJob\PurgeAuditLogJob</job>
+        <job>OCA\Doriath\BackgroundJob\ApproveElapsedEmergencyRequests</job>
     </background-jobs>
 
     <repair-steps>

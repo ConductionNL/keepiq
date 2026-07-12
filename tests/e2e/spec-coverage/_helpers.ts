@@ -29,6 +29,13 @@ export function collectDoriathErrors(page: Page): string[] {
 	page.on('console', (msg) => {
 		if (msg.type() !== 'error') return
 		const text = msg.text()
+		// Ignore expected/benign noise:
+		//  - NC theming: a token CSS file occasionally 404s mid-run.
+		//  - A parametrised route (e.g. #/secrets/placeholder-id) briefly mounts
+		//    its detail component before the lock guard redirects, firing one
+		//    expected 404 "Failed to load resource" for the non-existent id.
+		if (/Refused to apply style|MIME type/i.test(text)) return
+		if (/Failed to load resource.*404|status of 404/i.test(text)) return
 		// Only flag errors that name doriath or come from a doriath bundle.
 		const loc = msg.location()?.url ?? ''
 		if (/doriath/i.test(text) || /doriath/i.test(loc)) {

@@ -16,8 +16,15 @@
  *    propagation on the actions slot — clicking copy must not navigate)
  *  - on copy, lazily decrypt by calling useSecretStore().fetchSecret
  *
+ * Keyboard accessibility (WCAG 2.1 AA SC 2.1.1 / 4.1.2, ADR-010):
+ *  - the row exposes role="button", tabindex="0" and an aria-label so a
+ *    keyboard-only user can Tab to it and knows what it does
+ *  - Enter and Space on the focused row emit `open` (matching click)
+ *  - keyboard activation of the inner copy control does NOT bubble as `open`
+ *
  * @spec openspec/changes/implement-secrets/tasks.md#7.3
  * @spec openspec/changes/implement-secrets/tasks.md#13.4
+ * @spec openspec/changes/keyboard-accessible-secret-rows/tasks.md#2.3
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -126,6 +133,68 @@ describe('SecretListItem', () => {
 		await wrapper.find('.secret-list-item__actions').trigger('click')
 
 		// The row's `open` event must NOT have fired.
+		expect(wrapper.emitted('open')).toBeFalsy()
+	})
+
+	it('exposes an interactive role, tabindex and accessible name on the row', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-1', name: 'GitHub PAT', url: null, typeId: 'type-api' },
+			},
+		})
+
+		const row = wrapper.find('.secret-list-item')
+		expect(row.attributes('role')).toBe('button')
+		expect(row.attributes('tabindex')).toBe('0')
+		// The accessible name is built via t('doriath', 'Open {name}', ...).
+		// The global test `t` stub does not interpolate placeholders, so we
+		// assert the label is present and carries the "Open" affordance verb;
+		// interpolation of the secret name happens at runtime.
+		expect(row.attributes('aria-label')).toBeDefined()
+		expect(row.attributes('aria-label')).toContain('Open')
+	})
+
+	it('emits `open` when the focused row is activated via Enter', async () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-77', name: 'AWS', url: null, typeId: 'type-login' },
+			},
+		})
+
+		const row = wrapper.find('.secret-list-item')
+		await row.trigger('keydown.enter')
+
+		expect(wrapper.emitted('open')).toBeTruthy()
+		expect(wrapper.emitted('open')[0]).toEqual(['s-77'])
+	})
+
+	it('emits `open` when the focused row is activated via Space', async () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-88', name: 'GCP', url: null, typeId: 'type-login' },
+			},
+		})
+
+		const row = wrapper.find('.secret-list-item')
+		await row.trigger('keydown.space')
+
+		expect(wrapper.emitted('open')).toBeTruthy()
+		expect(wrapper.emitted('open')[0]).toEqual(['s-88'])
+	})
+
+	it('keyboard activation inside the copy control does NOT bubble as `open`', async () => {
+		const secretStore = useSecretStore()
+		secretStore.fetchSecret = vi.fn().mockResolvedValue({ id: 's-1', name: 'X', key: 'k' })
+
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-1', name: 'X', url: null, typeId: 'type-login' },
+			},
+		})
+
+		// Enter originating inside the actions wrapper (target !== the row).
+		await wrapper.find('.secret-list-item__actions').trigger('keydown.enter')
+
 		expect(wrapper.emitted('open')).toBeFalsy()
 	})
 
