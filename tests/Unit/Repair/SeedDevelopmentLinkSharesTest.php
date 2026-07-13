@@ -7,7 +7,8 @@
  *  - debug=false → no-op (no LinkShare insert);
  *  - missing dev EncryptionSuite → no-op;
  *  - no dev secrets → no-op;
- *  - existing link share for the first dev secret → idempotency no-op;
+ *  - version marker already matches the installed app version → no-op;
+ *  - pre-existing row for a deterministic ID → per-row idempotency no-op;
  *  - happy path (debug=true + suite + 3 secrets) → 3 LinkShare inserts
  *    with the documented usage-limit / usage-count / expiry shape.
  *
@@ -35,6 +36,7 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Repair\SeedDevelopmentLinkShares;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -74,6 +76,27 @@ class SeedDevelopmentLinkSharesTest extends TestCase
     }//end devSuite()
 
     /**
+     * Build an IAppConfig mock reporting an installed version that has NOT
+     * yet been seeded (i.e. the version-gate never blocks the run).
+     *
+     * @return IAppConfig&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private function unseededAppConfig(): IAppConfig
+    {
+        $appConfig = $this->createMock(IAppConfig::class);
+        $appConfig->method('getValueString')
+            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
+                if ($key === 'installed_version') {
+                    return '1.2.3';
+                }
+
+                return $default;
+            });
+
+        return $appConfig;
+    }//end unseededAppConfig()
+
+    /**
      * debug=false → no insert, no lookups.
      *
      * @return void
@@ -96,6 +119,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
             secretMapper: $secretMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
 
@@ -123,6 +147,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
             secretMapper: $this->createMock(SecretMapper::class),
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
 
@@ -153,6 +178,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
             secretMapper: $secretMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
 
@@ -160,7 +186,50 @@ class SeedDevelopmentLinkSharesTest extends TestCase
     }//end testNoOpWhenNoDevSecrets()
 
     /**
-     * Existing link share on the first dev secret → idempotency no-op.
+     * Version marker already matches the installed app version → the
+     * repair step short-circuits before touching any mapper.
+     *
+     * @return void
+     */
+    public function testNoOpWhenVersionMarkerMatchesInstalledVersion(): void
+    {
+        $config = $this->createMock(IConfig::class);
+        $config->method('getSystemValueBool')->willReturn(true);
+
+        $appConfig = $this->createMock(IAppConfig::class);
+        $appConfig->method('getValueString')
+            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
+                if ($key === 'installed_version') {
+                    return '1.2.3';
+                }
+
+                if ($key === 'dev_seed_link_shares_version') {
+                    return '1.2.3';
+                }
+
+                return $default;
+            });
+
+        $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+        $suiteMapper->expects($this->never())->method('findActiveByOwner');
+
+        $linkShareMapper = $this->createMock(LinkShareMapper::class);
+        $linkShareMapper->expects($this->never())->method('insert');
+
+        $step = new SeedDevelopmentLinkShares(
+            linkShareMapper: $linkShareMapper,
+            secretMapper: $this->createMock(SecretMapper::class),
+            suiteMapper: $suiteMapper,
+            config: $config,
+            appConfig: $appConfig,
+            logger: $this->createMock(LoggerInterface::class),
+        );
+
+        $step->run($this->createMock(IOutput::class));
+    }//end testNoOpWhenVersionMarkerMatchesInstalledVersion()
+
+    /**
+     * Pre-existing row for a deterministic ID → per-row idempotency no-op.
      *
      * @return void
      */
@@ -180,7 +249,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
         $existing->setSecretId('secret-1');
 
         $linkShareMapper = $this->createMock(LinkShareMapper::class);
-        $linkShareMapper->method('findBySecretId')->with('secret-1')->willReturn([$existing]);
+        $linkShareMapper->method('findById')->willReturn($existing);
         $linkShareMapper->expects($this->never())->method('insert');
 
         $step = new SeedDevelopmentLinkShares(
@@ -188,6 +257,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
             secretMapper: $secretMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
 
@@ -216,7 +286,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
         ]);
 
         $linkShareMapper = $this->createMock(LinkShareMapper::class);
-        $linkShareMapper->method('findBySecretId')->willReturn([]);
+        $linkShareMapper->method('findById')->willThrowException(new DoesNotExistException('not seeded'));
 
         /** @var list<LinkShare> $inserted */
         $inserted = [];
@@ -232,6 +302,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
             secretMapper: $secretMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
 
