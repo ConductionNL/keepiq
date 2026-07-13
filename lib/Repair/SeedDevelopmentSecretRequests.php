@@ -25,12 +25,14 @@ namespace OCA\Doriath\Repair;
 
 use DateInterval;
 use DateTime;
+use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -55,12 +57,25 @@ class SeedDevelopmentSecretRequests implements IRepairStep
     private const DEV_USER_ID = 'admin';
 
     /**
+     * App-config marker storing the app version this seed last ran for.
+     *
+     * The step is registered under <post-migration>, which Nextcloud
+     * executes on every `occ upgrade` / `occ maintenance:repair` — on a
+     * dev instance that is every boot. The marker gates the seed to one
+     * run per installed app version.
+     *
+     * @var string
+     */
+    private const SEED_VERSION_KEY = 'dev_seed_secret_requests_version';
+
+    /**
      * Constructor.
      *
      * @param SecretRequestMapper   $requestMapper The request mapper
      * @param SecretMapper          $secretMapper  The secret mapper
      * @param EncryptionSuiteMapper $suiteMapper   The suite mapper
      * @param IConfig               $config        The config
+     * @param IAppConfig            $appConfig     The app config
      * @param LoggerInterface       $logger        The logger
      *
      * @return void
@@ -70,6 +85,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep
         private SecretMapper $secretMapper,
         private EncryptionSuiteMapper $suiteMapper,
         private IConfig $config,
+        private IAppConfig $appConfig,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -90,10 +106,21 @@ class SeedDevelopmentSecretRequests implements IRepairStep
      * @param IOutput $output The output channel
      *
      * @return void
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     public function run(IOutput $output): void
     {
         if ($this->config->getSystemValueBool('debug', false) === false) {
+            return;
+        }
+
+        // Version gate: <post-migration> repair steps re-run on every
+        // upgrade/repair; only seed once per installed app version.
+        $appVersion = $this->appConfig->getValueString(Application::APP_ID, 'installed_version', '');
+        if ($appVersion !== ''
+            && $this->appConfig->getValueString(Application::APP_ID, self::SEED_VERSION_KEY, '') === $appVersion
+        ) {
             return;
         }
 
@@ -110,13 +137,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep
             return;
         }
 
-        // Idempotency: skip if any request already exists for the first dev secret.
-        $first = $secrets[0];
-        if ($this->requestMapper->findBySecretId($first->getId()) !== []) {
-            $output->info('Doriath: dev secret-requests already seeded, skipping');
-            return;
-        }
-
+        $first   = $secrets[0];
         $suiteId = $suite->getId();
         $seeded  = 0;
         $now     = new DateTime();
@@ -155,6 +176,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep
             );
         }
 
+        $this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
         $output->info('Doriath: seeded '.$seeded.' development secret requests');
         $this->logger->info('Doriath dev seed: created '.$seeded.' secret requests');
     }//end run()
@@ -182,6 +204,8 @@ class SeedDevelopmentSecretRequests implements IRepairStep
      * @param DateTime $expiresAt   The expiry timestamp
      *
      * @return int Number of rows seeded (0 or 1).
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     private function seedRequest(
         string $id,
@@ -191,6 +215,17 @@ class SeedDevelopmentSecretRequests implements IRepairStep
         bool $isReRequest,
         DateTime $expiresAt,
     ): int {
+        // Idempotency: the ID is a deterministic UUIDv5, so a pre-existing
+        // row means this seed already ran — skip quietly instead of
+        // hitting the primary-key constraint.
+        try {
+            $this->requestMapper->findById($id);
+            $this->logger->debug('Doriath dev seed: secret request '.$id.' already exists, skipping');
+            return 0;
+        } catch (DoesNotExistException) {
+            // Not seeded yet — insert below.
+        }
+
         $request = new SecretRequest();
         $request->setId($id);
         $request->setSecretId($secret->getId());

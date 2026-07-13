@@ -7,7 +7,8 @@
  *  - debug=false → no-op (no ShareTarget/GroupShare insert);
  *  - missing dev EncryptionSuite → no-op;
  *  - no dev secrets → no-op;
- *  - existing ShareTarget for the first dev secret → idempotency no-op;
+ *  - version marker already matches the installed app version → no-op;
+ *  - pre-existing ShareTarget for a deterministic ID → idempotency no-op;
  *  - happy path (debug=true + suite + 3 secrets) → 2 direct ShareTargets +
  *    1 GroupShare + 1 fan-out ShareTarget (4 inserts total) with the
  *    documented owner/recipient/group shape.
@@ -38,6 +39,7 @@ use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Repair\SeedDevelopmentShares;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -63,6 +65,27 @@ class SeedDevelopmentSharesTest extends TestCase
     }
 
     /**
+     * Build an IAppConfig mock reporting an installed version that has NOT
+     * yet been seeded (i.e. the version-gate never blocks the run).
+     *
+     * @return IAppConfig&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private function unseededAppConfig(): IAppConfig
+    {
+        $appConfig = $this->createMock(IAppConfig::class);
+        $appConfig->method('getValueString')
+            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
+                if ($key === 'installed_version') {
+                    return '1.2.3';
+                }
+
+                return $default;
+            });
+
+        return $appConfig;
+    }//end unseededAppConfig()
+
+    /**
      * debug=false → no insert, no lookups.
      *
      * @return void
@@ -86,6 +109,7 @@ class SeedDevelopmentSharesTest extends TestCase
             groupShareMapper: $groupShareMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
@@ -118,13 +142,59 @@ class SeedDevelopmentSharesTest extends TestCase
             groupShareMapper: $groupShareMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
     }
 
     /**
-     * Existing ShareTarget on the first dev secret → idempotency no-op.
+     * Version marker already matches the installed app version → the
+     * repair step short-circuits before touching any mapper.
+     *
+     * @return void
+     */
+    public function testNoOpWhenVersionMarkerMatchesInstalledVersion(): void
+    {
+        $config = $this->createMock(IConfig::class);
+        $config->method('getSystemValueBool')->willReturn(true);
+
+        $appConfig = $this->createMock(IAppConfig::class);
+        $appConfig->method('getValueString')
+            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
+                if ($key === 'installed_version') {
+                    return '1.2.3';
+                }
+
+                if ($key === 'dev_seed_user_shares_version') {
+                    return '1.2.3';
+                }
+
+                return $default;
+            });
+
+        $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+        $suiteMapper->expects($this->never())->method('findActiveByOwner');
+
+        $shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+        $groupShareMapper  = $this->createMock(GroupShareMapper::class);
+        $shareTargetMapper->expects($this->never())->method('insert');
+        $groupShareMapper->expects($this->never())->method('insert');
+
+        $step = new SeedDevelopmentShares(
+            secretMapper: $this->createMock(SecretMapper::class),
+            shareTargetMapper: $shareTargetMapper,
+            groupShareMapper: $groupShareMapper,
+            suiteMapper: $suiteMapper,
+            config: $config,
+            appConfig: $appConfig,
+            logger: $this->createMock(LoggerInterface::class),
+        );
+        $step->run($this->createMock(IOutput::class));
+    }
+
+    /**
+     * Pre-existing ShareTarget for a deterministic ID → idempotency no-op.
      *
      * @return void
      */
@@ -142,10 +212,11 @@ class SeedDevelopmentSharesTest extends TestCase
         $secretMapper->method('findByOwner')->willReturn([$this->devSecret('s-1'), $this->devSecret('s-2')]);
 
         $shareTargetMapper = $this->createMock(ShareTargetMapper::class);
-        $shareTargetMapper->method('findBySourceSecret')->with('s-1')->willReturn([new ShareTarget()]);
+        $shareTargetMapper->method('findById')->willReturn(new ShareTarget());
 
         $shareTargetMapper->expects($this->never())->method('insert');
         $groupShareMapper = $this->createMock(GroupShareMapper::class);
+        $groupShareMapper->method('findById')->willReturn(new GroupShare());
         $groupShareMapper->expects($this->never())->method('insert');
 
         $step = new SeedDevelopmentShares(
@@ -154,6 +225,7 @@ class SeedDevelopmentSharesTest extends TestCase
             groupShareMapper: $groupShareMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
@@ -184,7 +256,7 @@ class SeedDevelopmentSharesTest extends TestCase
         ]);
 
         $shareTargetMapper = $this->createMock(ShareTargetMapper::class);
-        $shareTargetMapper->method('findBySourceSecret')->willReturn([]);
+        $shareTargetMapper->method('findById')->willThrowException(new DoesNotExistException('not seeded'));
 
         $inserted = [];
         $shareTargetMapper->expects($this->exactly(3))
@@ -196,6 +268,7 @@ class SeedDevelopmentSharesTest extends TestCase
 
         $groupShareInserted = [];
         $groupShareMapper   = $this->createMock(GroupShareMapper::class);
+        $groupShareMapper->method('findById')->willThrowException(new DoesNotExistException('not seeded'));
         $groupShareMapper->expects($this->once())
             ->method('insert')
             ->willReturnCallback(static function (GroupShare $e) use (&$groupShareInserted): GroupShare {
@@ -209,6 +282,7 @@ class SeedDevelopmentSharesTest extends TestCase
             groupShareMapper: $groupShareMapper,
             suiteMapper: $suiteMapper,
             config: $config,
+            appConfig: $this->unseededAppConfig(),
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));

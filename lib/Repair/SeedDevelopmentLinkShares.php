@@ -32,12 +32,14 @@ namespace OCA\Doriath\Repair;
 
 use DateInterval;
 use DateTime;
+use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\LinkShare;
 use OCA\Doriath\Db\LinkShareMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -62,12 +64,25 @@ class SeedDevelopmentLinkShares implements IRepairStep
     private const DEV_USER_ID = 'admin';
 
     /**
+     * App-config marker storing the app version this seed last ran for.
+     *
+     * The step is registered under <post-migration>, which Nextcloud
+     * executes on every `occ upgrade` / `occ maintenance:repair` — on a
+     * dev instance that is every boot. The marker gates the seed to one
+     * run per installed app version.
+     *
+     * @var string
+     */
+    private const SEED_VERSION_KEY = 'dev_seed_link_shares_version';
+
+    /**
      * Constructor.
      *
      * @param LinkShareMapper       $linkShareMapper The link share mapper
      * @param SecretMapper          $secretMapper    The secret mapper
      * @param EncryptionSuiteMapper $suiteMapper     The suite mapper
      * @param IConfig               $config          The config
+     * @param IAppConfig            $appConfig       The app config
      * @param LoggerInterface       $logger          The logger
      *
      * @return void
@@ -77,6 +92,7 @@ class SeedDevelopmentLinkShares implements IRepairStep
         private SecretMapper $secretMapper,
         private EncryptionSuiteMapper $suiteMapper,
         private IConfig $config,
+        private IAppConfig $appConfig,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -97,10 +113,21 @@ class SeedDevelopmentLinkShares implements IRepairStep
      * @param IOutput $output The output channel
      *
      * @return void
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     public function run(IOutput $output): void
     {
         if ($this->config->getSystemValueBool('debug', false) === false) {
+            return;
+        }
+
+        // Version gate: <post-migration> repair steps re-run on every
+        // upgrade/repair; only seed once per installed app version.
+        $appVersion = $this->appConfig->getValueString(Application::APP_ID, 'installed_version', '');
+        if ($appVersion !== ''
+            && $this->appConfig->getValueString(Application::APP_ID, self::SEED_VERSION_KEY, '') === $appVersion
+        ) {
             return;
         }
 
@@ -117,13 +144,7 @@ class SeedDevelopmentLinkShares implements IRepairStep
             return;
         }
 
-        // Idempotency: skip if the first dev secret already has a link share.
-        $first = $secrets[0];
-        if ($this->linkShareMapper->findBySecretId($first->getId()) !== []) {
-            $output->info('Doriath: dev link-shares already seeded, skipping');
-            return;
-        }
-
+        $first   = $secrets[0];
         $suiteId = $suite->getId();
         $seeded  = 0;
         $now     = new DateTime();
@@ -162,6 +183,7 @@ class SeedDevelopmentLinkShares implements IRepairStep
             );
         }
 
+        $this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
         $output->info('Doriath: seeded '.$seeded.' development link shares');
         $this->logger->info('Doriath dev seed: created '.$seeded.' link shares');
     }//end run()
@@ -195,6 +217,8 @@ class SeedDevelopmentLinkShares implements IRepairStep
      * @param DateTime $expiresAt  The expiry timestamp
      *
      * @return int Number of rows seeded (0 or 1).
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     private function seedLinkShare(
         string $id,
@@ -204,6 +228,17 @@ class SeedDevelopmentLinkShares implements IRepairStep
         int $usageCount,
         DateTime $expiresAt,
     ): int {
+        // Idempotency: the ID is a deterministic UUIDv5, so a pre-existing
+        // row means this seed already ran — skip quietly instead of
+        // hitting the primary-key constraint.
+        try {
+            $this->linkShareMapper->findById($id);
+            $this->logger->debug('Doriath dev seed: link share '.$id.' already exists, skipping');
+            return 0;
+        } catch (DoesNotExistException) {
+            // Not seeded yet — insert below.
+        }
+
         $linkShare = new LinkShare();
         $linkShare->setId($id);
         $linkShare->setSecretId($secret->getId());
