@@ -13,8 +13,8 @@
  * owner-facing management UI: the list endpoint, the revoke action, the
  * group-share fan-out, and the delegation list/reclaim flow.
  *
- * Debug-only. Idempotent via `findBySourceSecret()` precheck on the first
- * dev secret.
+ * Debug-only. Idempotent via `findById()` prechecks on the deterministic
+ * row IDs, plus an app-version marker in app config.
  *
  * @category Repair
  * @package  OCA\Doriath\Repair
@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Repair;
 
 use DateTime;
+use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\GroupShare;
 use OCA\Doriath\Db\GroupShareMapper;
@@ -41,6 +42,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -91,6 +93,18 @@ class SeedDevelopmentShares implements IRepairStep
     private const DEV_GROUP_ID = 'dev-group-1';
 
     /**
+     * App-config marker storing the app version this seed last ran for.
+     *
+     * The step is registered under <post-migration>, which Nextcloud
+     * executes on every `occ upgrade` / `occ maintenance:repair` — on a
+     * dev instance that is every boot. The marker gates the seed to one
+     * run per installed app version.
+     *
+     * @var string
+     */
+    private const SEED_VERSION_KEY = 'dev_seed_user_shares_version';
+
+    /**
      * Constructor.
      *
      * @param SecretMapper          $secretMapper      The secret mapper
@@ -98,6 +112,7 @@ class SeedDevelopmentShares implements IRepairStep
      * @param GroupShareMapper      $groupShareMapper  The group-share mapper
      * @param EncryptionSuiteMapper $suiteMapper       The suite mapper
      * @param IConfig               $config            The config
+     * @param IAppConfig            $appConfig         The app config
      * @param LoggerInterface       $logger            The logger
      *
      * @return void
@@ -108,6 +123,7 @@ class SeedDevelopmentShares implements IRepairStep
         private GroupShareMapper $groupShareMapper,
         private EncryptionSuiteMapper $suiteMapper,
         private IConfig $config,
+        private IAppConfig $appConfig,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -128,10 +144,21 @@ class SeedDevelopmentShares implements IRepairStep
      * @param IOutput $output The output channel
      *
      * @return void
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     public function run(IOutput $output): void
     {
         if ($this->config->getSystemValueBool('debug', false) === false) {
+            return;
+        }
+
+        // Version gate: <post-migration> repair steps re-run on every
+        // upgrade/repair; only seed once per installed app version.
+        $appVersion = $this->appConfig->getValueString(Application::APP_ID, 'installed_version', '');
+        if ($appVersion !== ''
+            && $this->appConfig->getValueString(Application::APP_ID, self::SEED_VERSION_KEY, '') === $appVersion
+        ) {
             return;
         }
 
@@ -148,13 +175,7 @@ class SeedDevelopmentShares implements IRepairStep
             return;
         }
 
-        // Idempotency: skip if the first dev secret already has a share.
-        $first = $secrets[0];
-        if ($this->shareTargetMapper->findBySourceSecret($first->getId()) !== []) {
-            $output->info('Doriath: dev user shares already seeded, skipping');
-            return;
-        }
-
+        $first  = $secrets[0];
         $seeded = 0;
 
         // Direct share #1: first secret (GitHub) shared to dev-user-2.
@@ -193,6 +214,7 @@ class SeedDevelopmentShares implements IRepairStep
             );
         }
 
+        $this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
         $output->info('Doriath: seeded '.$seeded.' development user shares');
         $this->logger->info('Doriath dev seed: created '.$seeded.' user share rows');
     }//end run()
@@ -216,10 +238,23 @@ class SeedDevelopmentShares implements IRepairStep
      * @param Secret $source     The source secret
      * @param string $targetUser The placeholder recipient user ID
      *
-     * @return int Rows inserted (always 1).
+     * @return int Rows inserted (0 or 1).
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     private function seedDirectShare(string $id, Secret $source, string $targetUser): int
     {
+        // Idempotency: the ID is a deterministic UUIDv5, so a pre-existing
+        // row means this seed already ran — skip quietly instead of
+        // hitting the primary-key constraint.
+        try {
+            $this->shareTargetMapper->findById($id);
+            $this->logger->debug('Doriath dev seed: share target '.$id.' already exists, skipping');
+            return 0;
+        } catch (DoesNotExistException) {
+            // Not seeded yet — insert below.
+        }
+
         $row = new ShareTarget();
         $row->setId($id);
         $row->setSourceSecretId($source->getId());
@@ -244,10 +279,21 @@ class SeedDevelopmentShares implements IRepairStep
      * @param Secret $source  The source secret
      * @param string $groupId The placeholder group ID
      *
-     * @return int Rows inserted (always 1).
+     * @return int Rows inserted (0 or 1).
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     private function seedGroupShare(string $id, Secret $source, string $groupId): int
     {
+        // Idempotency: skip quietly when the deterministic row already exists.
+        try {
+            $this->groupShareMapper->findById($id);
+            $this->logger->debug('Doriath dev seed: group share '.$id.' already exists, skipping');
+            return 0;
+        } catch (DoesNotExistException) {
+            // Not seeded yet — insert below.
+        }
+
         $row = new GroupShare();
         $row->setId($id);
         $row->setSecretId($source->getId());
@@ -267,7 +313,9 @@ class SeedDevelopmentShares implements IRepairStep
      * @param string $targetUser   The placeholder member user ID
      * @param string $groupShareId The GroupShare row ID
      *
-     * @return int Rows inserted (always 1).
+     * @return int Rows inserted (0 or 1).
+     *
+     * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
      */
     private function seedFanOutShareTarget(
         string $id,
@@ -275,6 +323,15 @@ class SeedDevelopmentShares implements IRepairStep
         string $targetUser,
         string $groupShareId,
     ): int {
+        // Idempotency: skip quietly when the deterministic row already exists.
+        try {
+            $this->shareTargetMapper->findById($id);
+            $this->logger->debug('Doriath dev seed: fan-out share target '.$id.' already exists, skipping');
+            return 0;
+        } catch (DoesNotExistException) {
+            // Not seeded yet — insert below.
+        }
+
         $row = new ShareTarget();
         $row->setId($id);
         $row->setSourceSecretId($source->getId());
