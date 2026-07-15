@@ -177,12 +177,10 @@ export default {
 		loading() {
 			return this.secretStore.loading
 		},
-		folders() {
-			return this.folderStore.folders
-		},
 		/**
-		 * The flat folder list, used to populate the export scope selector and
-		 * resolve relative folder paths in the export serializer.
+		 * The flat folder list, used to feed the folder sidebar, populate the
+		 * export scope selector, and resolve relative folder paths in the
+		 * export serializer.
 		 *
 		 * @return {Array<object>}
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
