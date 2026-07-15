@@ -33,7 +33,11 @@
 			{{ t('doriath', 'Locked — suite revoked') }}
 		</span>
 
-		<span v-else class="secret-list-item__actions" @click.stop @keydown.enter.stop @keydown.space.stop>
+		<span v-else
+			class="secret-list-item__actions"
+			@click.stop
+			@keydown.enter.stop
+			@keydown.space.stop>
 			<CopyButton :resolve="resolveKey"
 				:label="t('doriath', 'Copy password')"
 				@copied="$emit('copied')" />
