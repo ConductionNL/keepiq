@@ -32,7 +32,7 @@
     "vue-router": "^3.6.5"
   },
   "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "^4.2.1",
+    "@cyclonedx/cyclonedx-npm": "^6.0.0",
     "@eslint/config-helpers": "^0.4.2",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.1",
