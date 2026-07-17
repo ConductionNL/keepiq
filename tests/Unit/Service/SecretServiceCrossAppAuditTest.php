@@ -56,13 +56,14 @@ use Psr\Log\LoggerInterface;
  * Spec: application-secret-delete/specs/secrets/spec.md
  * ("exactly one audit entry MUST be recorded ...").
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)  One test per spec scenario.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One test per spec scenario.
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The seam legitimately
  *   coordinates the secret mapper, cascade collaborators, the recorder, and
  *   the (listener-less) dispatcher.
  */
 class SecretServiceCrossAppAuditTest extends TestCase
 {
+
     /**
      * The mocked secret mapper.
      *

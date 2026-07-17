@@ -54,7 +54,7 @@ class UserDeletedListenerTest extends TestCase
             ->willReturn(new DeletionReport());
 
         (new UserDeletedListener($service, $logger))->handle($event);
-    }
+    }//end testNcUserDeletionTriggersCascade()
 
     /**
      * A non-UserDeletedEvent is ignored.
@@ -68,8 +68,11 @@ class UserDeletedListenerTest extends TestCase
 
         $service->expects($this->never())->method('deleteAllFor');
 
-        (new UserDeletedListener($service, $logger))->handle(new class extends Event {});
-    }
+        (new UserDeletedListener($service, $logger))->handle(
+                new class extends Event {
+                }
+                );
+    }//end testIgnoresOtherEvents()
 
     /**
      * A cascade failure is logged and swallowed (never blocks NC deletion).
@@ -91,5 +94,5 @@ class UserDeletedListenerTest extends TestCase
 
         // Must not throw.
         (new UserDeletedListener($service, $logger))->handle($event);
-    }
+    }//end testCascadeFailureIsSwallowed()
 }//end class

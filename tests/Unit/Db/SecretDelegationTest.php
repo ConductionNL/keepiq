@@ -45,7 +45,7 @@ class SecretDelegationTest extends TestCase
         $this->assertSame('', $entity->getInitiatedBy());
         $this->assertFalse($entity->getIsPermanent());
         $this->assertNull($entity->getMadePermanentAt());
-    }
+    }//end testConstructorSetsDefaults()
 
     /**
      * Getters and setters round-trip.
@@ -74,7 +74,7 @@ class SecretDelegationTest extends TestCase
         $this->assertSame('alice', $entity->getInitiatedBy());
         $this->assertTrue($entity->getIsPermanent());
         $this->assertSame($now, $entity->getMadePermanentAt());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * jsonSerialize emits the expected shape.
@@ -102,5 +102,5 @@ class SecretDelegationTest extends TestCase
         $this->assertFalse($payload['isPermanent']);
         $this->assertNull($payload['madePermanentAt']);
         $this->assertStringContainsString('2026-06-12', (string) $payload['delegatedAt']);
-    }
-}
+    }//end testJsonSerializeShape()
+}//end class

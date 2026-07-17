@@ -55,10 +55,11 @@ class ExportGdprEventTest extends TestCase
                 $this->assertNoSecretMaterial($value);
             }
         }
+
         foreach (self::FORBIDDEN as $forbidden) {
             $this->assertArrayNotHasKey($forbidden, $payload, "forbidden key '$forbidden' present");
         }
-    }
+    }//end assertNoSecretMaterial()
 
     /**
      * SecretExportedEvent: actor + counts/modes only, matching the whitelist.
@@ -72,7 +73,7 @@ class ExportGdprEventTest extends TestCase
         $meta = $event->getMetadata();
         $this->assertSame(['mode' => 'encrypted-backup', 'scope' => 'vault', 'secretCount' => 120], $meta);
         $this->assertNoSecretMaterial($meta);
-    }
+    }//end testSecretExportedEventPayload()
 
     /**
      * GdprExportPerformedEvent records the vault-inclusion flag, no material.
@@ -89,7 +90,7 @@ class ExportGdprEventTest extends TestCase
 
         $metaOnly = new GdprExportPerformedEvent(userId: 'alice', includesVault: false);
         $this->assertSame('metadata-only', $metaOnly->getMetadata()['scope']);
-    }
+    }//end testGdprExportPerformedEventPayload()
 
     /**
      * AccountDataDeletedEvent carries trigger + counts only, matching the
@@ -118,7 +119,7 @@ class ExportGdprEventTest extends TestCase
         $this->assertSame(4, $meta['requestCount']);
         $this->assertSame(1, $meta['suiteCount']);
         $this->assertNoSecretMaterial($meta);
-    }
+    }//end testAccountDataDeletedEventPayload()
 
     /**
      * The event classes expose NO accessor that returns secret material.
@@ -133,5 +134,5 @@ class ExportGdprEventTest extends TestCase
                 $this->assertNotContains($banned, $methods, "$class exposes $banned");
             }
         }
-    }
+    }//end testNoSecretMaterialAccessors()
 }//end class

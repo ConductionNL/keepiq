@@ -30,8 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 class DiscoveryControllerTest extends TestCase
 {
-    private DiscoveryController $controller;
 
+    private DiscoveryController $controller;
 
     /**
      * Wire the controller with a URL generator that echoes route names.
@@ -56,8 +56,7 @@ class DiscoveryControllerTest extends TestCase
         );
 
         $this->controller = new DiscoveryController(request: $request, urlGenerator: $url);
-    }
-
+    }//end setUp()
 
     /**
      * The document declares the API version, token endpoint, grant type,
@@ -78,8 +77,7 @@ class DiscoveryControllerTest extends TestCase
         $this->assertSame(300, $data['assertion']['maxLifetime']);
         $this->assertArrayHasKey('byName', $data['secrets']);
         $this->assertContains('doriath-machine-secret-v1', $data['envelopeFormats']);
-    }
-
+    }//end testDocumentShape()
 
     /**
      * The document contains no instance-private data (no keys, certs,
@@ -93,5 +91,5 @@ class DiscoveryControllerTest extends TestCase
         foreach (['privateKey', 'certificate', 'BEGIN', 'password', 'userId'] as $needle) {
             $this->assertStringNotContainsString($needle, $flat);
         }
-    }
-}
+    }//end testNoInstancePrivateData()
+}//end class

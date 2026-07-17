@@ -43,7 +43,7 @@ class GdprControllerTest extends TestCase
      *
      * @return array{0:GdprController,1:IRequest,2:GdprService,3:AccountDeletionService,4:IEventDispatcher}
      */
-    private function build(?string $userId = 'alice'): array
+    private function build(?string $userId='alice'): array
     {
         $request    = $this->createMock(IRequest::class);
         $gdpr       = $this->createMock(GdprService::class);
@@ -61,7 +61,7 @@ class GdprControllerTest extends TestCase
 
         $controller = new GdprController($request, $gdpr, $deletion, $session, $dispatcher);
         return [$controller, $request, $gdpr, $deletion, $dispatcher];
-    }
+    }//end build()
 
     /**
      * Metadata endpoint is self-scoped (collectMetadata called with session UID)
@@ -81,7 +81,7 @@ class GdprControllerTest extends TestCase
 
         $response = $controller->metadata();
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
-    }
+    }//end testMetadataSelfScopedAndEmitsEvent()
 
     /**
      * Metadata endpoint rejects an unauthenticated request.
@@ -91,9 +91,9 @@ class GdprControllerTest extends TestCase
     public function testMetadataUnauthorized(): void
     {
         [$controller] = $this->build(null);
-        $response = $controller->metadata();
+        $response     = $controller->metadata();
         $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-    }
+    }//end testMetadataUnauthorized()
 
     /**
      * Account deletion requires the exact confirmation phrase — 400 without it.
@@ -108,7 +108,7 @@ class GdprControllerTest extends TestCase
 
         $response = $controller->deleteAccountData();
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+    }//end testDeleteRequiresConfirmationPhrase()
 
     /**
      * Account deletion runs the cascade with the in-app trigger when the phrase
@@ -131,5 +131,5 @@ class GdprControllerTest extends TestCase
         $response = $controller->deleteAccountData();
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $this->assertTrue($response->getData()['deleted']);
-    }
+    }//end testDeleteRunsCascadeWithCorrectPhrase()
 }//end class

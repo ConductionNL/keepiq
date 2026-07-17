@@ -145,6 +145,23 @@ class DoriathNotifier implements INotifier
                 $this->withSecretLink(notification: $notification, params: $p);
                 break;
 
+            case 'team_folder_shared':
+                $sharedBy = (string) ($p['sharedBy'] ?? $l->t('a user'));
+                $notification->setParsedSubject((string) $l->t('Team folder shared with you'));
+                $notification->setParsedMessage(
+                    (string) $l->t('%s shared a team folder with you. Its secrets are now in your vault.', [$sharedBy])
+                );
+                break;
+
+            case 'team_folder_join_request':
+                $newMemberId = (string) ($p['newMemberId'] ?? $l->t('a user'));
+                $joinGroupId = (string) ($p['groupId'] ?? '');
+                $notification->setParsedSubject((string) $l->t('Team folder join request'));
+                $notification->setParsedMessage(
+                    (string) $l->t('%1$s joined the group "%2$s" — approve to share your team folder with them.', [$newMemberId, $joinGroupId])
+                );
+                break;
+
             case 'secret_compromised':
                 $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
                 $notification->setParsedSubject((string) $l->t('Secret may be compromised'));

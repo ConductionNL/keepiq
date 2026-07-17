@@ -39,25 +39,40 @@ use Psr\Log\LoggerInterface;
  */
 class BreachProxyControllerTest extends TestCase
 {
-    /** @var IRequest&MockObject */
+
+    /**
+     * @var IRequest&MockObject
+     */
     private IRequest&MockObject $request;
 
-    /** @var IAppConfig&MockObject */
+    /**
+     * @var IAppConfig&MockObject
+     */
     private IAppConfig&MockObject $appConfig;
 
-    /** @var IClientService&MockObject */
+    /**
+     * @var IClientService&MockObject
+     */
     private IClientService&MockObject $clientService;
 
-    /** @var ICacheFactory&MockObject */
+    /**
+     * @var ICacheFactory&MockObject
+     */
     private ICacheFactory&MockObject $cacheFactory;
 
-    /** @var ICache&MockObject */
+    /**
+     * @var ICache&MockObject
+     */
     private ICache&MockObject $cache;
 
-    /** @var IUserSession&MockObject */
+    /**
+     * @var IUserSession&MockObject
+     */
     private IUserSession&MockObject $userSession;
 
-    /** @var LoggerInterface&MockObject */
+    /**
+     * @var LoggerInterface&MockObject
+     */
     private LoggerInterface&MockObject $logger;
 
     /**
@@ -145,7 +160,7 @@ class BreachProxyControllerTest extends TestCase
         $this->appConfig->method('getValueBool')->willReturn(true);
         $this->cache->method('get')->willReturn(null);
 
-        $body = "0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n00D4F6E8FA6EECAD2A3AA415EEC418D38EC:2";
+        $body         = "0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n00D4F6E8FA6EECAD2A3AA415EEC418D38EC:2";
         $httpResponse = $this->createMock(IResponse::class);
         $httpResponse->method('getBody')->willReturn($body);
         $client = $this->createMock(IClient::class);
@@ -153,10 +168,12 @@ class BreachProxyControllerTest extends TestCase
             ->method('get')
             ->with(
                 $this->stringContains('/range/ABCDE'),
-                $this->callback(function ($opts) {
-                    return isset($opts['headers']['Add-Padding'])
-                        && $opts['headers']['Add-Padding'] === 'true';
-                })
+                $this->callback(
+                        function ($opts) {
+                            return isset($opts['headers']['Add-Padding'])
+                            && $opts['headers']['Add-Padding'] === 'true';
+                        }
+                        )
             )
             ->willReturn($httpResponse);
         $this->clientService->method('newClient')->willReturn($client);

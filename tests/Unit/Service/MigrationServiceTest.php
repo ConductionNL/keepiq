@@ -15,14 +15,17 @@ use Psr\Log\LoggerInterface;
 
 class MigrationServiceTest extends TestCase
 {
+
     private MigrationService $service;
+
     private SuiteMigrationMapper $migrationMapper;
+
     private EncryptionSuiteMapper $suiteMapper;
 
     protected function setUp(): void
     {
         $this->migrationMapper = $this->createMock(SuiteMigrationMapper::class);
-        $this->suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+        $this->suiteMapper     = $this->createMock(EncryptionSuiteMapper::class);
         $logger = $this->createMock(LoggerInterface::class);
 
         $this->service = new MigrationService(
@@ -30,7 +33,7 @@ class MigrationServiceTest extends TestCase
             $this->suiteMapper,
             $logger,
         );
-    }
+    }//end setUp()
 
     public function testInitiateCompromiseRecovery(): void
     {
@@ -41,7 +44,7 @@ class MigrationServiceTest extends TestCase
         $this->assertEquals('in_progress', $migration->getStatus());
         $this->assertEquals('old-suite', $migration->getOldSuiteId());
         $this->assertEquals('new-suite', $migration->getNewSuiteId());
-    }
+    }//end testInitiateCompromiseRecovery()
 
     public function testCompleteMigrationSetsMigrationCompleted(): void
     {
@@ -62,7 +65,7 @@ class MigrationServiceTest extends TestCase
 
         $this->assertEquals('completed', $result->getStatus());
         $this->assertNotNull($result->getCompletedAt());
-    }
+    }//end testCompleteMigrationSetsMigrationCompleted()
 
     public function testCompleteMigrationWithErrors(): void
     {
@@ -75,7 +78,7 @@ class MigrationServiceTest extends TestCase
         $result = $this->service->completeMigration('migration-1', true);
 
         $this->assertEquals('completed_with_errors', $result->getStatus());
-    }
+    }//end testCompleteMigrationWithErrors()
 
     public function testIsWriteLockedWhenMigrationInProgress(): void
     {
@@ -86,12 +89,12 @@ class MigrationServiceTest extends TestCase
         $this->migrationMapper->method('hasInProgress')->willReturn(true);
 
         $this->assertTrue($this->service->isWriteLocked('user', 'testuser'));
-    }
+    }//end testIsWriteLockedWhenMigrationInProgress()
 
     public function testIsNotWriteLockedWhenNoMigration(): void
     {
         $this->suiteMapper->method('findByOwner')->willReturn([]);
 
         $this->assertFalse($this->service->isWriteLocked('user', 'testuser'));
-    }
-}
+    }//end testIsNotWriteLockedWhenNoMigration()
+}//end class

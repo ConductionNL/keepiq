@@ -473,9 +473,9 @@ class CertificateAuthorityServiceTest extends TestCase
         $oldIntermediate->setPrivateKey('enc:'.$intKeyPem);
 
         // A real user suite signed by the old intermediate.
-        $userKey       = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-        $userCsr       = openssl_csr_new(['commonName' => 'User 1'], $userKey);
-        $userCert      = openssl_csr_sign($userCsr, $intCertPem, $intKey, 365);
+        $userKey  = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        $userCsr  = openssl_csr_new(['commonName' => 'User 1'], $userKey);
+        $userCert = openssl_csr_sign($userCsr, $intCertPem, $intKey, 365);
         openssl_x509_export($userCert, $userCertPem);
 
         $originalModulus = openssl_pkey_get_details(openssl_pkey_get_public($userCertPem))['rsa']['n'];

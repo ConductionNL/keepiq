@@ -47,8 +47,6 @@ use ReflectionMethod;
  */
 class RateLimitAttributesTest extends TestCase
 {
-
-
     /**
      * Data provider mapping each public endpoint to its documented limit.
      *
@@ -64,10 +62,9 @@ class RateLimitAttributesTest extends TestCase
             'secret request fill'       => [SecretRequestFillController::class, 'fill', 20, 60],
             'application secrets index' => [ApplicationSecretsController::class, 'index', 30, 60],
             'application secrets show'  => [ApplicationSecretsController::class, 'show', 30, 60],
-            'application create'       => [ApplicationController::class, 'create', 10, 60],
+            'application create'        => [ApplicationController::class, 'create', 10, 60],
         ];
     }//end publicEndpointsProvider()
-
 
     /**
      * Every documented public endpoint carries #[AnonRateLimit] with the
@@ -113,6 +110,4 @@ class RateLimitAttributesTest extends TestCase
             sprintf('%s::%s AnonRateLimit period changed from the documented value', $controllerClass, $method)
         );
     }//end testEndpointCarriesAnonRateLimit()
-
-
 }//end class

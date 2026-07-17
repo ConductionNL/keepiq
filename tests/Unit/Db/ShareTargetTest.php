@@ -44,7 +44,7 @@ class ShareTargetTest extends TestCase
         $this->assertSame('', $entity->getCreatedBy());
         $this->assertNull($entity->getCreatedAt());
         $this->assertSame('', $entity->getId());
-    }
+    }//end testConstructorSetsDefaults()
 
     /**
      * Test getters and setters round-trip every field.
@@ -76,7 +76,7 @@ class ShareTargetTest extends TestCase
         $createdAt = new DateTime('2026-01-01T00:00:00+00:00');
         $entity->setCreatedAt($createdAt);
         $this->assertSame($createdAt, $entity->getCreatedAt());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * Test jsonSerialize emits the expected keys.
@@ -103,7 +103,7 @@ class ShareTargetTest extends TestCase
         $this->assertNull($serialized['groupShareId']);
         $this->assertSame('alice', $serialized['createdBy']);
         $this->assertNotNull($serialized['createdAt']);
-    }
+    }//end testJsonSerializeIncludesAllFields()
 
     /**
      * Test the createdAt field formats in ISO-8601 with offset.
@@ -112,14 +112,14 @@ class ShareTargetTest extends TestCase
      */
     public function testJsonSerializeCreatedAtFormat(): void
     {
-        $entity = new ShareTarget();
+        $entity    = new ShareTarget();
         $createdAt = new DateTime('2026-06-15T14:30:00+02:00');
         $entity->setCreatedAt($createdAt);
 
         $serialized = $entity->jsonSerialize();
 
         $this->assertSame($createdAt->format('c'), $serialized['createdAt']);
-    }
+    }//end testJsonSerializeCreatedAtFormat()
 
     /**
      * Test group-share linkage is optional and round-trips correctly.
@@ -136,5 +136,5 @@ class ShareTargetTest extends TestCase
 
         $entity->setGroupShareId(null);
         $this->assertNull($entity->getGroupShareId());
-    }
-}
+    }//end testGroupShareIdIsOptional()
+}//end class

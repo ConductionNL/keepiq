@@ -37,9 +37,13 @@ use PHPUnit\Framework\TestCase;
  */
 class MigrationControllerTest extends TestCase
 {
+
     private MigrationController $controller;
+
     private MigrationService&MockObject $migrationService;
+
     private EncryptionSuiteService&MockObject $suiteService;
+
     private IUserSession&MockObject $userSession;
 
     /**
@@ -53,8 +57,8 @@ class MigrationControllerTest extends TestCase
 
         $request = $this->createMock(IRequest::class);
         $this->migrationService = $this->createMock(MigrationService::class);
-        $this->suiteService = $this->createMock(EncryptionSuiteService::class);
-        $this->userSession = $this->createMock(IUserSession::class);
+        $this->suiteService     = $this->createMock(EncryptionSuiteService::class);
+        $this->userSession      = $this->createMock(IUserSession::class);
 
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('testuser');
@@ -66,7 +70,7 @@ class MigrationControllerTest extends TestCase
             $this->suiteService,
             $this->userSession,
         );
-    }
+    }//end setUp()
 
     /**
      * Test getStatus returns migration when in progress.
@@ -90,7 +94,7 @@ class MigrationControllerTest extends TestCase
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $this->assertSame('migr-1', $response->getData()['id']);
         $this->assertSame('in_progress', $response->getData()['status']);
-    }
+    }//end testGetStatusReturnsMigration()
 
     /**
      * Test getStatus returns 'none' when no migration in progress.
@@ -106,7 +110,7 @@ class MigrationControllerTest extends TestCase
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $this->assertSame('none', $response->getData()['status']);
-    }
+    }//end testGetStatusReturnsNoneWhenNoMigration()
 
     /**
      * Build an EncryptionSuite owned by 'testuser' for ownership-check stubs.
@@ -119,7 +123,7 @@ class MigrationControllerTest extends TestCase
         $suite->setOwnerType('user');
         $suite->setOwnerId('testuser');
         return $suite;
-    }
+    }//end makeOwnedSuite()
 
     /**
      * Build a SuiteMigration with the given id and old suite reference.
@@ -135,7 +139,7 @@ class MigrationControllerTest extends TestCase
         $migration->setId($id);
         $migration->setOldSuiteId($oldSuiteId);
         return $migration;
-    }
+    }//end makeMigration()
 
     /**
      * Test complete delegates and returns migration.
@@ -165,7 +169,7 @@ class MigrationControllerTest extends TestCase
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $this->assertSame('completed', $response->getData()['status']);
-    }
+    }//end testCompleteReturnsMigration()
 
     /**
      * Test complete with errors.
@@ -195,7 +199,7 @@ class MigrationControllerTest extends TestCase
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $this->assertSame('completed_with_errors', $response->getData()['status']);
-    }
+    }//end testCompleteWithErrors()
 
     /**
      * Test complete returns 400 on failure.
@@ -210,5 +214,5 @@ class MigrationControllerTest extends TestCase
         $response = $this->controller->complete('nonexistent');
 
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
-}
+    }//end testCompleteReturns400OnFailure()
+}//end class

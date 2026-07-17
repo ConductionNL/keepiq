@@ -28,6 +28,7 @@ use PHPUnit\Framework\TestCase;
  */
 class KeyGeneratorServiceTest extends TestCase
 {
+
     /**
      * The service under test.
      *

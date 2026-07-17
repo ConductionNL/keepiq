@@ -34,11 +34,14 @@ use PHPUnit\Framework\TestCase;
  */
 class MachineSecretEnvelopeServiceTest extends TestCase
 {
-    private EncryptionSuiteMapper $suiteMapper;
-    private FolderMapper $folderMapper;
-    private MachineSecretEnvelopeService $service;
-    private string $certificatePem;
 
+    private EncryptionSuiteMapper $suiteMapper;
+
+    private FolderMapper $folderMapper;
+
+    private MachineSecretEnvelopeService $service;
+
+    private string $certificatePem;
 
     /**
      * Set up mocks and a self-signed certificate.
@@ -60,8 +63,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
         $cert   = openssl_csr_sign($csr, null, $pkey, 1, $config);
         openssl_x509_export($cert, $certPem);
         $this->certificatePem = $certPem;
-    }
-
+    }//end setUp()
 
     /**
      * Build a fully-populated secret entity.
@@ -86,8 +88,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
         $secret->setUpdatedAt(new DateTime('2026-01-02T00:00:00+00:00'));
         $secret->setKeyUpdatedAt(new DateTime('2026-01-02T00:00:00+00:00'));
         return $secret;
-    }
-
+    }//end makeSecret()
 
     /**
      * The envelope carries the format, self-describing encryption block,
@@ -114,8 +115,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
         $this->assertSame('CIPHER-KEY', $env['ciphertext']['key']);
         $this->assertSame('CIPHER-LOGIN', $env['ciphertext']['login']);
         $this->assertSame('CIPHER-EXTRA', $env['ciphertext']['additionalFields']);
-    }
-
+    }//end testEnvelopeIsSelfDescribing()
 
     /**
      * The envelope exposes no plaintext-capable field — only the named
@@ -138,8 +138,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
         $flat = json_encode($env);
         $this->assertStringNotContainsString('"plaintext"', $flat);
         $this->assertStringNotContainsString('"value"', $flat);
-    }
-
+    }//end testEnvelopeExposesCiphertextOnly()
 
     /**
      * keyUpdatedAt is nullable in the envelope.
@@ -156,8 +155,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
 
         $env = $this->service->serialize($secret);
         $this->assertNull($env['secret']['keyUpdatedAt']);
-    }
-
+    }//end testNullableKeyUpdatedAt()
 
     /**
      * A root-level secret (no folder) yields an empty folder path and never
@@ -176,8 +174,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
 
         $env = $this->service->serialize($secret);
         $this->assertSame('', $env['secret']['folderPath']);
-    }
-
+    }//end testRootSecretHasEmptyFolderPath()
 
     /**
      * The certificate fingerprint is the sha256 of the cert DER, stable and
@@ -202,8 +199,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
         $expected = 'sha256:'.hash('sha256', $der);
 
         $this->assertSame($expected, $fp);
-    }
-
+    }//end testCertificateFingerprintMatchesDer()
 
     /**
      * The ETag is stable across no-op reads and changes when ciphertext
@@ -219,8 +215,7 @@ class MachineSecretEnvelopeServiceTest extends TestCase
 
         $b->setKey('CIPHER-KEY-ROTATED');
         $this->assertNotSame($this->service->etag($a), $this->service->etag($b));
-    }
-
+    }//end testEtagStableAndChanges()
 
     /**
      * The candidate descriptor carries only non-sensitive metadata, no
@@ -236,5 +231,5 @@ class MachineSecretEnvelopeServiceTest extends TestCase
 
         $this->assertSame(['id', 'name', 'folderPath', 'updatedAt'], array_keys($cand));
         $this->assertArrayNotHasKey('key', $cand);
-    }
-}
+    }//end testCandidateHasNoCiphertext()
+}//end class

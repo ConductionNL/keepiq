@@ -168,6 +168,20 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'applicationSecrets#show',   'url' => '/api/v1/app/secrets/{id}',            'verb' => 'GET'],
     ['name' => 'applicationSecrets#update', 'url' => '/api/v1/app/secrets/{id}',            'verb' => 'PUT'],
 
+    // Team folder sharing (team-folder-sharing §4.1). Static segments
+    // (offboard) precede the {id} routes so they resolve first. Per-object
+    // owner/admin guards live in TeamFolderService method bodies.
+    ['name' => 'teamFolder#index',          'url' => '/api/v1/team-folders',                            'verb' => 'GET'],
+    ['name' => 'teamFolder#create',         'url' => '/api/v1/team-folders',                            'verb' => 'POST'],
+    ['name' => 'teamFolder#offboard',       'url' => '/api/v1/team-folders/offboard',                   'verb' => 'POST'],
+    ['name' => 'teamFolder#members',        'url' => '/api/v1/team-folders/{id}/members',               'verb' => 'GET'],
+    ['name' => 'teamFolder#addMember',      'url' => '/api/v1/team-folders/{id}/members',               'verb' => 'POST'],
+    ['name' => 'teamFolder#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}',    'verb' => 'DELETE'],
+    ['name' => 'teamFolder#reconcile',      'url' => '/api/v1/team-folders/{id}/reconcile',             'verb' => 'GET'],
+    ['name' => 'teamFolder#registerShares', 'url' => '/api/v1/team-folders/{id}/shares',                'verb' => 'POST'],
+    ['name' => 'teamFolder#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',          'verb' => 'POST'],
+    ['name' => 'teamFolder#destroy',        'url' => '/api/v1/team-folders/{id}',                       'verb' => 'DELETE'],
+
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.
     ['name' => 'audit#secret', 'url' => '/api/v1/audit/secret/{id}', 'verb' => 'GET'],

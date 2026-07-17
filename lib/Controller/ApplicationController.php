@@ -29,6 +29,7 @@ use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Service\ApplicationService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -193,6 +194,7 @@ class ApplicationController extends OCSController
     #[NoAdminRequired]
     #[PublicPage]
     #[NoCSRFRequired]
+    #[AnonRateLimit(limit: 10, period: 60)]
     public function create(
         ?string $name=null,
         ?string $description=null,
