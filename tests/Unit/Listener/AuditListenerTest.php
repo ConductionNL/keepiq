@@ -34,6 +34,7 @@ use RuntimeException;
  */
 class AuditListenerTest extends TestCase
 {
+
     /**
      * The mocked audit service.
      *

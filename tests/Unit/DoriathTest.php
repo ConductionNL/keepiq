@@ -11,11 +11,9 @@ use PHPUnit\Framework\TestCase;
  */
 class DoriathTest extends TestCase
 {
-
     public function testPlaceholder(): void
     {
         $this->assertTrue(true);
 
     }//end testPlaceholder()
-
 }//end class

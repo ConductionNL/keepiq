@@ -32,10 +32,15 @@ use Psr\Log\LoggerInterface;
  */
 class SeedSecretTypesTest extends TestCase
 {
-    /** @var SecretTypeMapper */
+
+    /**
+     * @var SecretTypeMapper
+     */
     private $mapper;
 
-    /** @var SeedSecretTypes */
+    /**
+     * @var SeedSecretTypes
+     */
     private SeedSecretTypes $step;
 
     /**

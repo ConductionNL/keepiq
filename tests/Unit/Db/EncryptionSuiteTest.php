@@ -48,7 +48,7 @@ class EncryptionSuiteTest extends TestCase
         $this->assertNull($entity->getReinstatedAt());
         $this->assertNull($entity->getReinstatedBy());
         $this->assertNull($entity->getCreatedAt());
-    }
+    }//end testConstructorSetsDefaults()
 
     /**
      * Test getters and setters for all fields.
@@ -97,7 +97,7 @@ class EncryptionSuiteTest extends TestCase
         $createdAt = new DateTime('2025-01-01');
         $entity->setCreatedAt($createdAt);
         $this->assertSame($createdAt, $entity->getCreatedAt());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * Test jsonSerialize returns all fields correctly.
@@ -129,7 +129,7 @@ class EncryptionSuiteTest extends TestCase
         $this->assertNull($serialized['reinstatedAt']);
         $this->assertNull($serialized['reinstatedBy']);
         $this->assertNotNull($serialized['createdAt']);
-    }
+    }//end testJsonSerializeReturnsAllFields()
 
     /**
      * Test jsonSerialize with revocation and reinstatement fields populated.
@@ -159,7 +159,7 @@ class EncryptionSuiteTest extends TestCase
         $this->assertSame('admin', $serialized['revokedBy']);
         $this->assertSame($reinstatedAt->format('c'), $serialized['reinstatedAt']);
         $this->assertSame('superadmin', $serialized['reinstatedBy']);
-    }
+    }//end testJsonSerializeWithRevocationAndReinstatement()
 
     /**
      * Test DateTime fields format correctly in jsonSerialize.
@@ -177,5 +177,5 @@ class EncryptionSuiteTest extends TestCase
         $serialized = $entity->jsonSerialize();
 
         $this->assertSame($created->format('c'), $serialized['createdAt']);
-    }
-}
+    }//end testJsonSerializeDateTimeFormat()
+}//end class

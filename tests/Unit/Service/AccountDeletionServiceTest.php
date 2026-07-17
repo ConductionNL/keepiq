@@ -43,6 +43,7 @@ use PHPUnit\Framework\TestCase;
  */
 class AccountDeletionServiceTest extends TestCase
 {
+
     /**
      * Collaborator mocks, keyed for per-test wiring.
      *
@@ -84,7 +85,7 @@ class AccountDeletionServiceTest extends TestCase
             settingMapper: $this->m['setting'],
             dispatcher: $this->m['dispatcher'],
         );
-    }
+    }//end build()
 
     /**
      * A Secret owned by a user.
@@ -94,14 +95,14 @@ class AccountDeletionServiceTest extends TestCase
      *
      * @return Secret
      */
-    private function secret(string $id, string $owner = 'alice'): Secret
+    private function secret(string $id, string $owner='alice'): Secret
     {
         $s = new Secret();
         $s->setId($id);
         $s->setOwnerType('user');
         $s->setOwnerId($owner);
         return $s;
-    }
+    }//end secret()
 
     /**
      * Stub the mappers to return nothing (empty vault baseline).
@@ -120,7 +121,7 @@ class AccountDeletionServiceTest extends TestCase
         $this->m['request']->method('deleteByCreatedBy')->willReturn(0);
         $this->m['suite']->method('deleteByOwnerUser')->willReturn(0);
         $this->m['migration']->method('deleteBySuiteIds')->willReturn(0);
-    }
+    }//end emptyBaseline()
 
     /**
      * Step 1: a delegated secret transfers ownership + delegation made permanent.
@@ -159,7 +160,7 @@ class AccountDeletionServiceTest extends TestCase
 
         $report = $service->deleteAllFor('alice');
         $this->assertSame(1, $report->secretsTransferred);
-    }
+    }//end testDelegatedSecretTransfersOwnership()
 
     /**
      * Step 2: a granted share detaches — link deleted, recipient copy tombstoned
@@ -203,7 +204,7 @@ class AccountDeletionServiceTest extends TestCase
         $this->assertSame(1, $report->sharesDetached);
         // The non-personal reason must not embed the deleted user's id.
         $this->assertStringNotContainsString('alice', AccountDeletionService::TOMBSTONE_REASON);
-    }
+    }//end testGrantedShareDetachedWithNonPersonalTombstone()
 
     /**
      * Step 3: received shares are removed (link severed) and the original owner's
@@ -237,7 +238,7 @@ class AccountDeletionServiceTest extends TestCase
 
         $report = $service->deleteAllFor('alice');
         $this->assertSame(1, $report->sharesRemoved);
-    }
+    }//end testReceivedSharesRemoved()
 
     /**
      * Steps 4-7: link shares, requests, secrets, folders, suites + migrations,
@@ -272,7 +273,7 @@ class AccountDeletionServiceTest extends TestCase
         $this->assertSame(7, $report->foldersDeleted);
         $this->assertSame(1, $report->suitesDeleted);
         $this->assertTrue($report->settingsDeleted);
-    }
+    }//end testFullCascadeCountsAndSuiteRemoval()
 
     /**
      * AccountDataDeletedEvent is dispatched once, on a completed run, carrying
@@ -288,9 +289,11 @@ class AccountDeletionServiceTest extends TestCase
         $captured = null;
         $this->m['dispatcher']->expects($this->once())
             ->method('dispatchTyped')
-            ->willReturnCallback(function ($event) use (&$captured) {
-                $captured = $event;
-            });
+            ->willReturnCallback(
+                    function ($event) use (&$captured) {
+                        $captured = $event;
+                    }
+                    );
 
         $service->deleteAllFor('alice', 'in-app');
 
@@ -299,7 +302,7 @@ class AccountDeletionServiceTest extends TestCase
         $this->assertSame('in-app', $captured->getTrigger());
         $meta = $captured->getMetadata();
         $this->assertSame(['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'], array_keys($meta));
-    }
+    }//end testEventDispatchedOnCompletionWithCountsOnly()
 
     /**
      * Idempotency: running the cascade twice completes without error.
@@ -317,5 +320,5 @@ class AccountDeletionServiceTest extends TestCase
 
         $this->assertSame(0, $first->secretsDeleted);
         $this->assertSame(0, $second->secretsDeleted);
-    }
+    }//end testIdempotentReRun()
 }//end class

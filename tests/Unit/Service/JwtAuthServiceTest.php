@@ -43,10 +43,15 @@ use RuntimeException;
  */
 class JwtAuthServiceTest extends TestCase
 {
+
     private ApplicationMapper $applicationMapper;
+
     private EncryptionSuiteMapper $suiteMapper;
+
     private ICacheFactory $cacheFactory;
+
     private LoggerInterface $logger;
+
     private JwtAuthService $service;
 
     /**
@@ -56,13 +61,19 @@ class JwtAuthServiceTest extends TestCase
      */
     private array $cacheStore = ['doriath_jwt_jti' => [], 'doriath_jwt_token' => []];
 
-    /** A self-signed certificate (PEM) the test app "owns". */
+    /**
+     * A self-signed certificate (PEM) the test app "owns".
+     */
     private string $certificatePem;
 
-    /** Matching private key (PEM) used to sign assertions in the test. */
+    /**
+     * Matching private key (PEM) used to sign assertions in the test.
+     */
     private string $privateKeyPem;
 
-    /** JWK derived from $privateKeyPem (for signing). */
+    /**
+     * JWK derived from $privateKeyPem (for signing).
+     */
     private JWK $signingKey;
 
     /**
@@ -85,13 +96,13 @@ class JwtAuthServiceTest extends TestCase
             'private_key_type' => OPENSSL_KEYTYPE_RSA,
             'private_key_bits' => 2048,
         ];
-        $pkey = openssl_pkey_new($config);
-        $csr  = openssl_csr_new(
+        $pkey   = openssl_pkey_new($config);
+        $csr    = openssl_csr_new(
             ['CN' => 'test-app', 'O' => 'doriath-tests'],
             $pkey,
             $config
         );
-        $cert = openssl_csr_sign($csr, null, $pkey, 1, $config);
+        $cert   = openssl_csr_sign($csr, null, $pkey, 1, $config);
         openssl_x509_export($cert, $certPem);
         openssl_pkey_export($pkey, $privPem);
         $this->certificatePem = $certPem;
@@ -104,8 +115,7 @@ class JwtAuthServiceTest extends TestCase
             cacheFactory: $this->cacheFactory,
             logger: $this->logger,
         );
-    }
-
+    }//end setUp()
 
     /**
      * Build an in-memory cache for the given namespace, backed by
@@ -144,8 +154,7 @@ class JwtAuthServiceTest extends TestCase
         );
 
         return $cache;
-    }
-
+    }//end buildInMemoryCache()
 
     /**
      * Build a Compact-serialized JWS with the test signing key.
@@ -166,8 +175,7 @@ class JwtAuthServiceTest extends TestCase
             ->build();
 
         return (new CompactSerializer())->serialize($jws, 0);
-    }
-
+    }//end buildAssertion()
 
     /**
      * Stub the application + suite lookups with an active app whose
@@ -193,8 +201,7 @@ class JwtAuthServiceTest extends TestCase
 
         $this->applicationMapper->method('findById')->willReturn($app);
         $this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
-    }
-
+    }//end stubActiveApp()
 
     /**
      * A valid assertion exchanges for a Bearer access token.
@@ -206,13 +213,15 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => $now,
-            'exp' => ($now + 60),
-            'jti' => 'jti-1',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => $now,
+                    'exp' => ($now + 60),
+                    'jti' => 'jti-1',
+                ]
+                );
 
         $result = $this->service->exchangeAssertion($assertion);
 
@@ -221,8 +230,7 @@ class JwtAuthServiceTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $result['access_token']);
         // jti recorded for replay protection.
         $this->assertArrayHasKey('jti-1', $this->cacheStore['doriath_jwt_jti']);
-    }
-
+    }//end testValidAssertionExchanges()
 
     /**
      * A signature mismatch fails the verifier — different signing key.
@@ -242,24 +250,27 @@ class JwtAuthServiceTest extends TestCase
         $otherKey         = JWKFactory::createFromKey($otherPem);
         $algorithmManager = new AlgorithmManager([new RS256()]);
         $builder          = new JWSBuilder($algorithmManager);
-        $now              = time();
-        $jws              = $builder->create()
-            ->withPayload(json_encode([
-                'iss' => 'app-1',
-                'aud' => 'doriath',
-                'iat' => $now,
-                'exp' => ($now + 60),
-                'jti' => 'jti-evil',
-            ]))
+        $now       = time();
+        $jws       = $builder->create()
+            ->withPayload(
+                    json_encode(
+                    [
+                        'iss' => 'app-1',
+                        'aud' => 'doriath',
+                        'iat' => $now,
+                        'exp' => ($now + 60),
+                        'jti' => 'jti-evil',
+                    ]
+                    )
+                    )
             ->addSignature($otherKey, ['alg' => 'RS256', 'typ' => 'JWT'])
             ->build();
-        $assertion        = (new CompactSerializer())->serialize($jws, 0);
+        $assertion = (new CompactSerializer())->serialize($jws, 0);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('signature verification failed');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testInvalidSignatureRejected()
 
     /**
      * An expired assertion is rejected.
@@ -271,19 +282,20 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => ($now - 600),
-            'exp' => ($now - 300),
-            'jti' => 'jti-expired',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => ($now - 600),
+                    'exp' => ($now - 300),
+                    'jti' => 'jti-expired',
+                ]
+                );
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('expired');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testExpiredAssertionRejected()
 
     /**
      * An assertion with iat far in the future is rejected.
@@ -295,19 +307,20 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => ($now + 600),
-            'exp' => ($now + 1200),
-            'jti' => 'jti-future',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => ($now + 600),
+                    'exp' => ($now + 1200),
+                    'jti' => 'jti-future',
+                ]
+                );
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('iat in future');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testFutureIatRejected()
 
     /**
      * Wrong audience claim is rejected.
@@ -319,19 +332,20 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'someoneelse',
-            'iat' => $now,
-            'exp' => ($now + 60),
-            'jti' => 'jti-aud',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'someoneelse',
+                    'iat' => $now,
+                    'exp' => ($now + 60),
+                    'jti' => 'jti-aud',
+                ]
+                );
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Wrong audience');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testWrongAudienceRejected()
 
     /**
      * Replayed jti is rejected on second use.
@@ -343,20 +357,21 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => $now,
-            'exp' => ($now + 60),
-            'jti' => 'jti-replay',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => $now,
+                    'exp' => ($now + 60),
+                    'jti' => 'jti-replay',
+                ]
+                );
 
         $this->service->exchangeAssertion($assertion);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('replayed');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testJtiReplayRejected()
 
     /**
      * Unknown issuer is rejected.
@@ -369,19 +384,20 @@ class JwtAuthServiceTest extends TestCase
             ->willThrowException(new DoesNotExistException('no'));
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-unknown',
-            'aud' => 'doriath',
-            'iat' => $now,
-            'exp' => ($now + 60),
-            'jti' => 'jti-unknown',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-unknown',
+                    'aud' => 'doriath',
+                    'iat' => $now,
+                    'exp' => ($now + 60),
+                    'jti' => 'jti-unknown',
+                ]
+                );
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unknown issuer');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testUnknownIssuerRejected()
 
     /**
      * Inactive application is rejected.
@@ -399,19 +415,20 @@ class JwtAuthServiceTest extends TestCase
         $this->applicationMapper->method('findById')->willReturn($app);
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => $now,
-            'exp' => ($now + 60),
-            'jti' => 'jti-inactive',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => $now,
+                    'exp' => ($now + 60),
+                    'jti' => 'jti-inactive',
+                ]
+                );
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('not active');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testInactiveApplicationRejected()
 
     /**
      * validateAccessToken returns the bound application for a stored token.
@@ -423,20 +440,21 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => $now,
-            'exp' => ($now + 60),
-            'jti' => 'jti-token',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => $now,
+                    'exp' => ($now + 60),
+                    'jti' => 'jti-token',
+                ]
+                );
         $result    = $this->service->exchangeAssertion($assertion);
 
         $app = $this->service->validateAccessToken($result['access_token']);
         $this->assertNotNull($app);
         $this->assertSame('app-1', $app->getId());
-    }
-
+    }//end testValidateAccessTokenSuccess()
 
     /**
      * validateAccessToken returns null for unknown tokens.
@@ -446,8 +464,7 @@ class JwtAuthServiceTest extends TestCase
     public function testValidateAccessTokenUnknownReturnsNull(): void
     {
         $this->assertNull($this->service->validateAccessToken('not-a-real-token'));
-    }
-
+    }//end testValidateAccessTokenUnknownReturnsNull()
 
     /**
      * validateAccessToken returns null for an empty token.
@@ -457,8 +474,7 @@ class JwtAuthServiceTest extends TestCase
     public function testValidateAccessTokenEmptyReturnsNull(): void
     {
         $this->assertNull($this->service->validateAccessToken(''));
-    }
-
+    }//end testValidateAccessTokenEmptyReturnsNull()
 
     /**
      * An assertion whose lifetime (exp - iat) exceeds the 300-second
@@ -471,19 +487,20 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => $now,
-            'exp' => ($now + 3600),
-            'jti' => 'jti-long',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => $now,
+                    'exp' => ($now + 3600),
+                    'jti' => 'jti-long',
+                ]
+                );
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('lifetime exceeds');
         $this->service->exchangeAssertion($assertion);
-    }
-
+    }//end testOverlongAssertionLifetimeRejected()
 
     /**
      * An assertion whose lifetime is exactly the 300-second maximum is
@@ -496,15 +513,17 @@ class JwtAuthServiceTest extends TestCase
         $this->stubActiveApp('app-1');
 
         $now       = time();
-        $assertion = $this->buildAssertion([
-            'iss' => 'app-1',
-            'aud' => 'doriath',
-            'iat' => $now,
-            'exp' => ($now + 300),
-            'jti' => 'jti-boundary',
-        ]);
+        $assertion = $this->buildAssertion(
+                [
+                    'iss' => 'app-1',
+                    'aud' => 'doriath',
+                    'iat' => $now,
+                    'exp' => ($now + 300),
+                    'jti' => 'jti-boundary',
+                ]
+                );
 
         $result = $this->service->exchangeAssertion($assertion);
         $this->assertSame('Bearer', $result['token_type']);
-    }
-}
+    }//end testAssertionLifetimeAtMaximumAccepted()
+}//end class

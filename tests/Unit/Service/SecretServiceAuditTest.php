@@ -40,6 +40,7 @@ use Psr\Log\LoggerInterface;
  */
 class SecretServiceAuditTest extends TestCase
 {
+
     /**
      * The mocked secret mapper.
      *
@@ -75,13 +76,13 @@ class SecretServiceAuditTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->mapper          = $this->createMock(SecretMapper::class);
-        $this->suiteMapper     = $this->createMock(EncryptionSuiteMapper::class);
-        $this->dispatcher      = $this->createMock(IEventDispatcher::class);
-        $typeService           = $this->createMock(SecretTypeService::class);
-        $migrationService      = $this->createMock(MigrationService::class);
-        $linkShareService      = $this->createMock(LinkShareService::class);
-        $logger                = $this->createMock(LoggerInterface::class);
+        $this->mapper      = $this->createMock(SecretMapper::class);
+        $this->suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+        $this->dispatcher  = $this->createMock(IEventDispatcher::class);
+        $typeService       = $this->createMock(SecretTypeService::class);
+        $migrationService  = $this->createMock(MigrationService::class);
+        $linkShareService  = $this->createMock(LinkShareService::class);
+        $logger            = $this->createMock(LoggerInterface::class);
 
         $migrationService->method('isWriteLocked')->willReturn(false);
 

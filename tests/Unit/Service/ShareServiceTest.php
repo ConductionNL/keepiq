@@ -45,6 +45,7 @@ use Psr\Log\LoggerInterface;
  */
 class ShareServiceTest extends TestCase
 {
+
     /**
      * Service under test.
      *
@@ -101,13 +102,13 @@ class ShareServiceTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->mapper              = $this->createMock(originalClassName: ShareTargetMapper::class);
-        $this->secretMapper        = $this->createMock(originalClassName: SecretMapper::class);
-        $this->suiteMapper         = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
-        $this->delegationMapper    = $this->createMock(originalClassName: SecretDelegationMapper::class);
+        $this->mapper           = $this->createMock(originalClassName: ShareTargetMapper::class);
+        $this->secretMapper     = $this->createMock(originalClassName: SecretMapper::class);
+        $this->suiteMapper      = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
+        $this->delegationMapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
         $this->notificationService = $this->createMock(originalClassName: NotificationService::class);
-        $this->db                  = $this->createMock(originalClassName: IDBConnection::class);
-        $logger                    = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->db = $this->createMock(originalClassName: IDBConnection::class);
+        $logger   = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->service = new ShareService(
             mapper: $this->mapper,
@@ -118,13 +119,13 @@ class ShareServiceTest extends TestCase
             db: $this->db,
             logger: $logger
         );
-    }
+    }//end setUp()
 
     /**
      * Helper: build a Secret with user owner.
      *
-     * @param string $id       The secret ID
-     * @param string $ownerId  The owner Nextcloud user ID
+     * @param string $id      The secret ID
+     * @param string $ownerId The owner Nextcloud user ID
      *
      * @return Secret
      */
@@ -136,7 +137,7 @@ class ShareServiceTest extends TestCase
         $secret->setOwnerId($ownerId);
         $secret->setName('demo-secret');
         return $secret;
-    }
+    }//end makeOwnerSecret()
 
     /**
      * Helper: stub the recipient as having an active EncryptionSuite.
@@ -147,7 +148,7 @@ class ShareServiceTest extends TestCase
     {
         $this->suiteMapper->method('findActiveByOwner')
             ->willReturn(new EncryptionSuite());
-    }
+    }//end stubRecipientHasSuite()
 
     /**
      * Helper: stub recipient as having NO active suite.
@@ -158,7 +159,7 @@ class ShareServiceTest extends TestCase
     {
         $this->suiteMapper->method('findActiveByOwner')
             ->willThrowException(new DoesNotExistException('no suite'));
-    }
+    }//end stubRecipientNoSuite()
 
     /**
      * Test createShare persists a row when the owner shares with a
@@ -202,7 +203,7 @@ class ShareServiceTest extends TestCase
         $this->assertSame('bob', $result->getTargetUserId());
         $this->assertSame('alice', $result->getCreatedBy());
         $this->assertNotSame('', $result->getId(), 'UUID should be generated');
-    }
+    }//end testCreateShareInsertsRowWhenOwnerWithSuite()
 
     /**
      * Test createShare allows an active delegate to share.
@@ -232,7 +233,7 @@ class ShareServiceTest extends TestCase
         );
 
         $this->assertSame('carol', $result->getCreatedBy());
-    }
+    }//end testCreateShareAllowsActiveDelegate()
 
     /**
      * Test createShare rejects a non-owner non-delegate.
@@ -258,7 +259,7 @@ class ShareServiceTest extends TestCase
             groupShareId: null,
             userId: 'mallory'
         );
-    }
+    }//end testCreateShareRejectsNonOwnerNonDelegate()
 
     /**
      * Test createShare rejects when the recipient has no active suite.
@@ -283,7 +284,7 @@ class ShareServiceTest extends TestCase
             groupShareId: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateShareRejectsRecipientWithoutSuite()
 
     /**
      * Test createShare rejects duplicate (source, recipient) pair.
@@ -310,7 +311,7 @@ class ShareServiceTest extends TestCase
             groupShareId: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateShareRejectsDuplicateRecipient()
 
     /**
      * Test createShare rejects sharing with self.
@@ -334,7 +335,7 @@ class ShareServiceTest extends TestCase
             groupShareId: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateShareRejectsSelfShare()
 
     /**
      * Test createShare rejects empty source secret.
@@ -355,7 +356,7 @@ class ShareServiceTest extends TestCase
             groupShareId: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateShareRejectsEmptySource()
 
     /**
      * Test listSharesForSecret without userId returns raw mapper result.
@@ -374,7 +375,7 @@ class ShareServiceTest extends TestCase
         $result = $this->service->listSharesForSecret('src-1');
 
         $this->assertCount(1, $result);
-    }
+    }//end testListSharesForSecretBackCompatNoUser()
 
     /**
      * Test listSharesForSecret returns rows when caller is owner.
@@ -394,7 +395,7 @@ class ShareServiceTest extends TestCase
         $result = $this->service->listSharesForSecret('src-1', 'alice');
 
         $this->assertCount(1, $result);
-    }
+    }//end testListSharesForSecretOwnerSeesRows()
 
     /**
      * Test listSharesForSecret returns empty array when caller is recipient.
@@ -413,7 +414,7 @@ class ShareServiceTest extends TestCase
         $result = $this->service->listSharesForSecret('src-1', 'bob');
 
         $this->assertSame([], $result);
-    }
+    }//end testListSharesForSecretRecipientSeesEmpty()
 
     /**
      * Test revokeShare deletes both the recipient copy and the share row when
@@ -437,16 +438,18 @@ class ShareServiceTest extends TestCase
             ->with('st-1')
             ->willReturn($entity);
 
-        $this->secretMapper->method('findById')->willReturnMap([
-            ['src-1', $source],
-            ['copy-1', $copy],
-        ]);
+        $this->secretMapper->method('findById')->willReturnMap(
+                [
+                    ['src-1', $source],
+                    ['copy-1', $copy],
+                ]
+                );
 
         $this->secretMapper->expects($this->once())->method('delete')->with($copy);
         $this->mapper->expects($this->once())->method('delete')->with($entity);
 
         $this->service->revokeShare(shareId: 'st-1', userId: 'alice');
-    }
+    }//end testRevokeShareDeletesWhenAuthorized()
 
     /**
      * Test revokeShare rejects unauthorized callers.
@@ -463,9 +466,11 @@ class ShareServiceTest extends TestCase
         $source = $this->makeOwnerSecret('src-1', 'alice');
 
         $this->mapper->method('findById')->willReturn($entity);
-        $this->secretMapper->method('findById')->willReturnMap([
-            ['src-1', $source],
-        ]);
+        $this->secretMapper->method('findById')->willReturnMap(
+                [
+                    ['src-1', $source],
+                ]
+                );
         $this->delegationMapper->method('findActiveBySecretAndUser')
             ->willThrowException(new DoesNotExistException('no'));
 
@@ -475,7 +480,7 @@ class ShareServiceTest extends TestCase
         $this->expectExceptionMessage('Not authorized');
 
         $this->service->revokeShare(shareId: 'st-1', userId: 'mallory');
-    }
+    }//end testRevokeShareRejectsNonOwnerNonDelegate()
 
     /**
      * Test revokeShare 404 when the row is missing.
@@ -492,7 +497,7 @@ class ShareServiceTest extends TestCase
         $this->expectExceptionMessage('Share not found');
 
         $this->service->revokeShare(shareId: 'missing', userId: 'alice');
-    }
+    }//end testRevokeShareThrowsWhenNotFound()
 
     /**
      * Test syncUpdate writes every recipient copy and clears the compromise
@@ -511,11 +516,13 @@ class ShareServiceTest extends TestCase
         $copy2 = new Secret();
         $copy2->setId('copy-2');
 
-        $this->secretMapper->method('findById')->willReturnMap([
-            ['src-1',  $source],
-            ['copy-1', $copy1],
-            ['copy-2', $copy2],
-        ]);
+        $this->secretMapper->method('findById')->willReturnMap(
+                [
+                    ['src-1',  $source],
+                    ['copy-1', $copy1],
+                    ['copy-2', $copy2],
+                ]
+                );
 
         $this->secretMapper->expects($this->exactly(2))->method('update');
 
@@ -531,7 +538,7 @@ class ShareServiceTest extends TestCase
 
         $this->assertSame(2, $written);
         $this->assertNull($copy1->getPossiblyCompromisedAt());
-    }
+    }//end testSyncUpdateWritesEveryCopyAndClearsCompromise()
 
     /**
      * Test syncUpdate optimistic-lock failure.
@@ -553,7 +560,7 @@ class ShareServiceTest extends TestCase
             expectedUpdatedAt: '2026-01-01T00:00:00+00:00',
             userId: 'alice'
         );
-    }
+    }//end testSyncUpdateRejectsStaleExpectedTimestamp()
 
     /**
      * Test createBatchShares creates each row inside one transaction.
@@ -583,5 +590,5 @@ class ShareServiceTest extends TestCase
 
         $this->assertCount(2, $created);
         $this->assertSame('gs-1', $created[0]->getGroupShareId());
-    }
-}
+    }//end testCreateBatchSharesAllRecipients()
+}//end class

@@ -62,7 +62,7 @@ class SeedDevelopmentSharesTest extends TestCase
         $secret = new Secret();
         $secret->setId($id);
         return $secret;
-    }
+    }//end devSecret()
 
     /**
      * Build an IAppConfig mock reporting an installed version that has NOT
@@ -74,13 +74,15 @@ class SeedDevelopmentSharesTest extends TestCase
     {
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')
-            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
-                if ($key === 'installed_version') {
-                    return '1.2.3';
-                }
+            ->willReturnCallback(
+                    static function (string $app, string $key, string $default='') {
+                        if ($key === 'installed_version') {
+                            return '1.2.3';
+                        }
 
-                return $default;
-            });
+                        return $default;
+                    }
+                    );
 
         return $appConfig;
     }//end unseededAppConfig()
@@ -113,7 +115,7 @@ class SeedDevelopmentSharesTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testNoOpWhenDebugDisabled()
 
     /**
      * Missing dev EncryptionSuite → no-op.
@@ -146,7 +148,7 @@ class SeedDevelopmentSharesTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testNoOpWhenSuiteMissing()
 
     /**
      * Version marker already matches the installed app version → the
@@ -161,17 +163,19 @@ class SeedDevelopmentSharesTest extends TestCase
 
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')
-            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
-                if ($key === 'installed_version') {
-                    return '1.2.3';
-                }
+            ->willReturnCallback(
+                    static function (string $app, string $key, string $default='') {
+                        if ($key === 'installed_version') {
+                            return '1.2.3';
+                        }
 
-                if ($key === 'dev_seed_user_shares_version') {
-                    return '1.2.3';
-                }
+                        if ($key === 'dev_seed_user_shares_version') {
+                            return '1.2.3';
+                        }
 
-                return $default;
-            });
+                        return $default;
+                    }
+                    );
 
         $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
         $suiteMapper->expects($this->never())->method('findActiveByOwner');
@@ -191,7 +195,7 @@ class SeedDevelopmentSharesTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testNoOpWhenVersionMarkerMatchesInstalledVersion()
 
     /**
      * Pre-existing ShareTarget for a deterministic ID → idempotency no-op.
@@ -229,7 +233,7 @@ class SeedDevelopmentSharesTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testIdempotencyWhenFirstSecretAlreadyShared()
 
     /**
      * Happy path: debug + suite + 3 secrets → 2 direct ShareTargets +
@@ -249,11 +253,13 @@ class SeedDevelopmentSharesTest extends TestCase
         $suiteMapper->method('findActiveByOwner')->willReturn($suite);
 
         $secretMapper = $this->createMock(SecretMapper::class);
-        $secretMapper->method('findByOwner')->willReturn([
-            $this->devSecret('s-github'),
-            $this->devSecret('s-aws'),
-            $this->devSecret('s-db'),
-        ]);
+        $secretMapper->method('findByOwner')->willReturn(
+                [
+                    $this->devSecret('s-github'),
+                    $this->devSecret('s-aws'),
+                    $this->devSecret('s-db'),
+                ]
+                );
 
         $shareTargetMapper = $this->createMock(ShareTargetMapper::class);
         $shareTargetMapper->method('findById')->willThrowException(new DoesNotExistException('not seeded'));
@@ -261,20 +267,24 @@ class SeedDevelopmentSharesTest extends TestCase
         $inserted = [];
         $shareTargetMapper->expects($this->exactly(3))
             ->method('insert')
-            ->willReturnCallback(static function (ShareTarget $e) use (&$inserted): ShareTarget {
-                $inserted[] = $e;
-                return $e;
-            });
+            ->willReturnCallback(
+                    static function (ShareTarget $e) use (&$inserted): ShareTarget {
+                        $inserted[] = $e;
+                        return $e;
+                    }
+                    );
 
         $groupShareInserted = [];
         $groupShareMapper   = $this->createMock(GroupShareMapper::class);
         $groupShareMapper->method('findById')->willThrowException(new DoesNotExistException('not seeded'));
         $groupShareMapper->expects($this->once())
             ->method('insert')
-            ->willReturnCallback(static function (GroupShare $e) use (&$groupShareInserted): GroupShare {
-                $groupShareInserted[] = $e;
-                return $e;
-            });
+            ->willReturnCallback(
+                    static function (GroupShare $e) use (&$groupShareInserted): GroupShare {
+                        $groupShareInserted[] = $e;
+                        return $e;
+                    }
+                    );
 
         $step = new SeedDevelopmentShares(
             secretMapper: $secretMapper,
@@ -304,5 +314,5 @@ class SeedDevelopmentSharesTest extends TestCase
         // The fan-out ShareTarget references the GroupShare row.
         $this->assertSame($groupShareInserted[0]->getId(), $groupShareRow[0]->getGroupShareId());
         $this->assertSame('dev-user-3', $groupShareRow[0]->getTargetUserId());
-    }
-}
+    }//end testHappyPathInsertsAllRows()
+}//end class

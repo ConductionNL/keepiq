@@ -54,7 +54,7 @@ class DelegationServiceTest extends TestCase
         );
 
         return [$service, $mapper, $secretMapper];
-    }
+    }//end build()
 
     /**
      * Build a baseline Secret for assertions.
@@ -63,14 +63,14 @@ class DelegationServiceTest extends TestCase
      *
      * @return Secret
      */
-    private function buildSecret(string $ownerId = 'alice'): Secret
+    private function buildSecret(string $ownerId='alice'): Secret
     {
         $secret = new Secret();
         $secret->setId('sec-1');
         $secret->setOwnerType('user');
         $secret->setOwnerId($ownerId);
         return $secret;
-    }
+    }//end buildSecret()
 
     /**
      * createDelegation persists a temporary delegation row.
@@ -95,7 +95,7 @@ class DelegationServiceTest extends TestCase
         $this->assertSame('alice', $entity->getInitiatedBy());
         $this->assertFalse($entity->getIsPermanent());
         $this->assertNotSame('', $entity->getId());
-    }
+    }//end testCreateDelegationPersistsTemporary()
 
     /**
      * createDelegation refuses non-owners.
@@ -110,7 +110,7 @@ class DelegationServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->createDelegation(secretId: 'sec-1', delegatedTo: 'bob', initiatedBy: 'mallory');
-    }
+    }//end testCreateDelegationRejectsNonOwner()
 
     /**
      * createDelegation refuses self-delegation.
@@ -125,7 +125,7 @@ class DelegationServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->createDelegation(secretId: 'sec-1', delegatedTo: 'alice', initiatedBy: 'alice');
-    }
+    }//end testCreateDelegationRejectsSelf()
 
     /**
      * createDelegation refuses unknown secrets.
@@ -140,7 +140,7 @@ class DelegationServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->createDelegation(secretId: 'sec-missing', delegatedTo: 'bob', initiatedBy: 'alice');
-    }
+    }//end testCreateDelegationRejectsUnknownSecret()
 
     /**
      * reclaimDelegation removes only temporary rows owned by the caller.
@@ -172,15 +172,17 @@ class DelegationServiceTest extends TestCase
         $deleted = [];
         $mapper->expects(matcher: $this->once())
             ->method('delete')
-            ->willReturnCallback(static function (SecretDelegation $e) use (&$deleted): SecretDelegation {
-                $deleted[] = $e->getId();
-                return $e;
-            });
+            ->willReturnCallback(
+                    static function (SecretDelegation $e) use (&$deleted): SecretDelegation {
+                        $deleted[] = $e->getId();
+                        return $e;
+                    }
+                    );
 
         $count = $service->reclaimDelegation(secretId: 'sec-1', ownerId: 'alice');
         $this->assertSame(1, $count);
         $this->assertSame(['d-1'], $deleted);
-    }
+    }//end testReclaimDelegationRemovesOnlyTemporaryOwnedRows()
 
     /**
      * reclaimDelegation refuses non-owners.
@@ -195,7 +197,7 @@ class DelegationServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->reclaimDelegation(secretId: 'sec-1', ownerId: 'mallory');
-    }
+    }//end testReclaimDelegationRejectsNonOwner()
 
     /**
      * getDelegationsForSecret returns rows only for the owner.
@@ -216,7 +218,7 @@ class DelegationServiceTest extends TestCase
 
         $rows = $service->getDelegationsForSecret(secretId: 'sec-1', ownerId: 'alice');
         $this->assertCount(1, $rows);
-    }
+    }//end testGetDelegationsForSecretReturnsForOwner()
 
     /**
      * getDelegationsForSecret refuses non-owners.
@@ -231,7 +233,7 @@ class DelegationServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->getDelegationsForSecret(secretId: 'sec-1', ownerId: 'mallory');
-    }
+    }//end testGetDelegationsForSecretRejectsNonOwner()
 
     /**
      * Build a service with the share-target mapper + group manager wired
@@ -256,7 +258,7 @@ class DelegationServiceTest extends TestCase
         );
 
         return [$service, $mapper, $secretMapper, $shareTargetMapper, $groupManager];
-    }
+    }//end buildWithAdmin()
 
     /**
      * Owner self-delegation is rejected when the delegate holds no share
@@ -277,7 +279,7 @@ class DelegationServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->createDelegation(secretId: 'sec-1', delegatedTo: 'bob', initiatedBy: 'alice');
-    }
+    }//end testCreateDelegationRejectsDelegateWithoutPreExistingShare()
 
     /**
      * Owner self-delegation succeeds when the delegate already holds a
@@ -298,7 +300,7 @@ class DelegationServiceTest extends TestCase
 
         $entity = $service->createDelegation(secretId: 'sec-1', delegatedTo: 'bob', initiatedBy: 'alice');
         $this->assertSame('bob', $entity->getDelegatedTo());
-    }
+    }//end testCreateDelegationAcceptsDelegateWithPreExistingShare()
 
     /**
      * Admin handover: a vault_admin who already holds a share of someone
@@ -333,7 +335,7 @@ class DelegationServiceTest extends TestCase
         $this->assertSame('mallory', $entity->getDelegatedTo());
         $this->assertSame('mallory', $entity->getInitiatedBy());
         $this->assertFalse($entity->getIsPermanent());
-    }
+    }//end testCreateDelegationAdminHandoverPromotesAdminCopy()
 
     /**
      * Admin handover is rejected when the caller is not in the
@@ -357,7 +359,7 @@ class DelegationServiceTest extends TestCase
             initiatedBy: 'mallory',
             isAdminPath: true,
         );
-    }
+    }//end testCreateDelegationAdminHandoverRejectsNonAdmin()
 
     /**
      * Admin handover is rejected when the admin holds no share of the
@@ -383,7 +385,7 @@ class DelegationServiceTest extends TestCase
             initiatedBy: 'mallory',
             isAdminPath: true,
         );
-    }
+    }//end testCreateDelegationAdminHandoverRejectsWithoutShare()
 
     /**
      * Admin handover is rejected when the initiator is already the
@@ -407,7 +409,7 @@ class DelegationServiceTest extends TestCase
             initiatedBy: 'alice',
             isAdminPath: true,
         );
-    }
+    }//end testCreateDelegationAdminHandoverRejectsOwnerAsInitiator()
 
     /**
      * makePermanent delegates to the mapper update.
@@ -423,5 +425,5 @@ class DelegationServiceTest extends TestCase
             ->willReturn(3);
 
         $this->assertSame(3, $service->makePermanent(originalOwnerId: 'alice'));
-    }
-}
+    }//end testMakePermanentDelegatesToMapper()
+}//end class

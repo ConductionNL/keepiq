@@ -94,7 +94,7 @@ class EmergencyAccessController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-break-glass-request-and-wait-timer
+     * @spec     openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-break-glass-request-and-wait-timer
      * @contract exclude Thin read delegate; unit-covered by EmergencyAccessServiceTest; live Newman contract test deferred (worktree not deployed).
      */
     #[NoAdminRequired]
@@ -123,8 +123,9 @@ class EmergencyAccessController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-designate-emergency-contact
-     * @contract exclude Thin read delegate; no-active-suite rejection unit-covered by EmergencyAccessServiceTest; live Newman contract test deferred (worktree not deployed).
+     * @spec     openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-designate-emergency-contact
+     * @contract exclude Thin read delegate; no-active-suite rejection unit-covered by
+     *                    EmergencyAccessServiceTest; live Newman contract test deferred (worktree not deployed).
      */
     #[NoAdminRequired]
     public function granteeCertificate(string $granteeUserId): JSONResponse

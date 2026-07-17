@@ -40,6 +40,7 @@ use RuntimeException;
  */
 class LinkShareControllerTest extends TestCase
 {
+
     /**
      * The controller under test.
      *
@@ -70,7 +71,7 @@ class LinkShareControllerTest extends TestCase
     {
         parent::setUp();
 
-        $request                = $this->createMock(originalClassName: IRequest::class);
+        $request = $this->createMock(originalClassName: IRequest::class);
         $this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
         $this->suiteService     = $this->createMock(originalClassName: EncryptionSuiteService::class);
         $urlGenerator           = $this->createMock(originalClassName: IURLGenerator::class);
@@ -91,7 +92,7 @@ class LinkShareControllerTest extends TestCase
             userSession: $userSession,
             urlGenerator: $urlGenerator,
         );
-    }
+    }//end setUp()
 
     /**
      * Build a LinkShare entity for assertions.
@@ -113,7 +114,7 @@ class LinkShareControllerTest extends TestCase
         $share->setCreatedAt(new DateTime());
 
         return $share;
-    }
+    }//end makeShare()
 
     /**
      * Build an active EncryptionSuite for the owner.
@@ -129,7 +130,7 @@ class LinkShareControllerTest extends TestCase
         $suite->setStatus('active');
 
         return $suite;
-    }
+    }//end makeSuite()
 
     /**
      * Test index returns metadata without the blob.
@@ -149,7 +150,7 @@ class LinkShareControllerTest extends TestCase
         $this->assertCount(1, $data);
         $this->assertArrayNotHasKey('encryptedSecretSnapshot', $data[0]);
         $this->assertArrayNotHasKey('argon2idSalt', $data[0]);
-    }
+    }//end testIndexReturnsShares()
 
     /**
      * Test create returns 201 with token and link URL, no blob echoed.
@@ -168,14 +169,14 @@ class LinkShareControllerTest extends TestCase
             usageLimit: 3,
             expiresAt: null
         );
-        $data = $response->getData();
+        $data     = $response->getData();
 
         $this->assertSame(Http::STATUS_CREATED, $response->getStatus());
         $this->assertSame('abcd1234', $data['token']);
         $this->assertArrayHasKey('linkUrl', $data);
         $this->assertStringContainsString('#/share/link/abcd1234', $data['linkUrl']);
         $this->assertArrayNotHasKey('encryptedSecretSnapshot', $data);
-    }
+    }//end testCreateReturnsCreatedWithLinkUrl()
 
     /**
      * Test create returns 400 when the usage limit is invalid.
@@ -197,7 +198,7 @@ class LinkShareControllerTest extends TestCase
         );
 
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+    }//end testCreateRejectsInvalidUsageLimit()
 
     /**
      * Test create returns 400 when the expiry timestamp is malformed.
@@ -217,7 +218,7 @@ class LinkShareControllerTest extends TestCase
         );
 
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+    }//end testCreateRejectsInvalidExpiry()
 
     /**
      * Test destroy returns 200 on a successful revoke.
@@ -233,7 +234,7 @@ class LinkShareControllerTest extends TestCase
         $response = $this->controller->destroy('ls-1');
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
-    }
+    }//end testDestroySucceeds()
 
     /**
      * Test destroy returns 403 when the requester is not the owner.
@@ -248,7 +249,7 @@ class LinkShareControllerTest extends TestCase
         $response = $this->controller->destroy('ls-1');
 
         $this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-    }
+    }//end testDestroyNonOwnerForbidden()
 
     /**
      * Test destroy returns 404 when the link share does not exist.
@@ -263,5 +264,5 @@ class LinkShareControllerTest extends TestCase
         $response = $this->controller->destroy('missing');
 
         $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }
-}
+    }//end testDestroyNotFound()
+}//end class

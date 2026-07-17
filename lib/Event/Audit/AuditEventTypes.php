@@ -87,6 +87,13 @@ final class AuditEventTypes
     public const VAULT_GDPR_EXPORTED   = 'vault.gdpr_exported';
     public const VAULT_ACCOUNT_DELETED = 'vault.account_deleted';
 
+    // Team folder sharing (team-folder-sharing §4.2).
+    public const TEAM_FOLDER_SHARED         = 'team_folder.shared';
+    public const TEAM_FOLDER_UNSHARED       = 'team_folder.unshared';
+    public const TEAM_FOLDER_MEMBER_ADDED   = 'team_folder.member_added';
+    public const TEAM_FOLDER_MEMBER_REMOVED = 'team_folder.member_removed';
+    public const TEAM_FOLDER_OFFBOARDED     = 'team_folder.offboarded';
+
     /**
      * Metadata keys that MUST NEVER appear in any audit entry, in any position.
      * Recording any of these is rejected with an exception — defense in depth so
@@ -153,6 +160,12 @@ final class AuditEventTypes
             self::EMERGENCY_ACCESS_ACCESSED    => ['grantorUserId', 'granteeUserId'],
             self::EMERGENCY_ACCESS_REVOKED     => ['grantorUserId', 'granteeUserId'],
             self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
+            // Team folder sharing — identifiers only, never key material (§4.2).
+            self::TEAM_FOLDER_SHARED           => ['folderId'],
+            self::TEAM_FOLDER_UNSHARED         => ['folderId', 'revokedCount'],
+            self::TEAM_FOLDER_MEMBER_ADDED     => ['memberType', 'memberId'],
+            self::TEAM_FOLDER_MEMBER_REMOVED   => ['memberType', 'memberId', 'revokedCount'],
+            self::TEAM_FOLDER_OFFBOARDED       => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
         ];
     }//end whitelist()
 
@@ -167,6 +180,9 @@ final class AuditEventTypes
         'delegatedTo',
         'grantorUserId',
         'granteeUserId',
+        'memberId',
+        'leavingUserId',
+        'successorUserId',
     ];
 
     /**

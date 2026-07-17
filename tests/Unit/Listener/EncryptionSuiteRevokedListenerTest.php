@@ -40,9 +40,9 @@ class EncryptionSuiteRevokedListenerTest extends TestCase
      */
     public function testHandleSweepsAndPromotesForUserSuite(): void
     {
-        $mapper = $this->createMock(ShareTargetMapper::class);
-        $service = $this->createMock(DelegationService::class);
-        $logger  = $this->createMock(LoggerInterface::class);
+        $mapper   = $this->createMock(ShareTargetMapper::class);
+        $service  = $this->createMock(DelegationService::class);
+        $logger   = $this->createMock(LoggerInterface::class);
         $listener = new EncryptionSuiteRevokedListener(
             shareTargetMapper: $mapper,
             delegationService: $service,
@@ -65,7 +65,7 @@ class EncryptionSuiteRevokedListenerTest extends TestCase
             ->willReturn(2);
 
         $listener->handle($event);
-    }
+    }//end testHandleSweepsAndPromotesForUserSuite()
 
     /**
      * Test the listener skips application suites.
@@ -74,9 +74,9 @@ class EncryptionSuiteRevokedListenerTest extends TestCase
      */
     public function testHandleSkipsApplicationSuites(): void
     {
-        $mapper = $this->createMock(ShareTargetMapper::class);
-        $service = $this->createMock(DelegationService::class);
-        $logger  = $this->createMock(LoggerInterface::class);
+        $mapper   = $this->createMock(ShareTargetMapper::class);
+        $service  = $this->createMock(DelegationService::class);
+        $logger   = $this->createMock(LoggerInterface::class);
         $listener = new EncryptionSuiteRevokedListener(
             shareTargetMapper: $mapper,
             delegationService: $service,
@@ -94,7 +94,7 @@ class EncryptionSuiteRevokedListenerTest extends TestCase
         $service->expects($this->never())->method('makePermanent');
 
         $listener->handle($event);
-    }
+    }//end testHandleSkipsApplicationSuites()
 
     /**
      * Test the listener no-ops on unrelated events.
@@ -103,9 +103,9 @@ class EncryptionSuiteRevokedListenerTest extends TestCase
      */
     public function testHandleIgnoresUnrelatedEvents(): void
     {
-        $mapper = $this->createMock(ShareTargetMapper::class);
-        $service = $this->createMock(DelegationService::class);
-        $logger  = $this->createMock(LoggerInterface::class);
+        $mapper   = $this->createMock(ShareTargetMapper::class);
+        $service  = $this->createMock(DelegationService::class);
+        $logger   = $this->createMock(LoggerInterface::class);
         $listener = new EncryptionSuiteRevokedListener(
             shareTargetMapper: $mapper,
             delegationService: $service,
@@ -115,5 +115,5 @@ class EncryptionSuiteRevokedListenerTest extends TestCase
         $mapper->expects($this->never())->method('deleteByTargetUser');
 
         $listener->handle($this->createMock(Event::class));
-    }
-}
+    }//end testHandleIgnoresUnrelatedEvents()
+}//end class

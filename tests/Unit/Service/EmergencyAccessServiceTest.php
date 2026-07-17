@@ -44,22 +44,35 @@ use Psr\Log\LoggerInterface;
  */
 class EmergencyAccessServiceTest extends TestCase
 {
-    /** @var EmergencyContactMapper */
+
+    /**
+     * @var EmergencyContactMapper
+     */
     private $mapper;
 
-    /** @var EncryptionSuiteMapper */
+    /**
+     * @var EncryptionSuiteMapper
+     */
     private $suiteMapper;
 
-    /** @var NotificationService */
+    /**
+     * @var NotificationService
+     */
     private $notificationService;
 
-    /** @var IEventDispatcher */
+    /**
+     * @var IEventDispatcher
+     */
     private $dispatcher;
 
-    /** @var array<int,AuditEvent> */
+    /**
+     * @var array<int,AuditEvent>
+     */
     private array $dispatched = [];
 
-    /** @var EmergencyAccessService */
+    /**
+     * @var EmergencyAccessService
+     */
     private EmergencyAccessService $service;
 
     /**
@@ -69,8 +82,8 @@ class EmergencyAccessServiceTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->mapper              = $this->createMock(EmergencyContactMapper::class);
-        $this->suiteMapper         = $this->createMock(EncryptionSuiteMapper::class);
+        $this->mapper      = $this->createMock(EmergencyContactMapper::class);
+        $this->suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
         $this->notificationService = $this->createMock(NotificationService::class);
         $this->dispatcher          = $this->createMock(IEventDispatcher::class);
         $this->dispatched          = [];
@@ -99,7 +112,7 @@ class EmergencyAccessServiceTest extends TestCase
      *
      * @return EncryptionSuite
      */
-    private function suite(string $id, string $cert = 'CERT-PEM'): EncryptionSuite
+    private function suite(string $id, string $cert='CERT-PEM'): EncryptionSuite
     {
         // A real entity — getCertificate() is a magic @method that cannot be mocked.
         $suite = new EncryptionSuite();
@@ -269,10 +282,12 @@ class EmergencyAccessServiceTest extends TestCase
 
         $this->assertSame(EmergencyContact::STATE_APPROVED, $result->getState());
         $this->assertSame(1, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_APPROVED));
-        $approved = array_values(array_filter(
+        $approved = array_values(
+                array_filter(
             $this->dispatched,
             static fn (AuditEvent $e): bool => $e->getEventType() === AuditEventTypes::EMERGENCY_ACCESS_APPROVED
-        ))[0];
+        )
+                )[0];
         $this->assertSame(AuditEvent::ACTOR_SYSTEM, $approved->getActorType());
     }//end testPromoteIfElapsedApproves()
 

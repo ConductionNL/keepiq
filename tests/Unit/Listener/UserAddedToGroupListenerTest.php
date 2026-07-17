@@ -21,6 +21,7 @@ namespace OCA\Doriath\Tests\Unit\Listener;
 
 use OCA\Doriath\Listener\UserAddedToGroupListener;
 use OCA\Doriath\Service\GroupShareService;
+use OCA\Doriath\Service\TeamFolderService;
 use OCP\EventDispatcher\Event;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\IGroup;
@@ -41,11 +42,16 @@ class UserAddedToGroupListenerTest extends TestCase
      */
     public function testHandleDispatchesForMatchingEvent(): void
     {
-        $service = $this->createMock(GroupShareService::class);
-        $logger  = $this->createMock(LoggerInterface::class);
-        $listener = new UserAddedToGroupListener(groupShareService: $service, logger: $logger);
+        $service     = $this->createMock(GroupShareService::class);
+        $teamService = $this->createMock(TeamFolderService::class);
+        $logger      = $this->createMock(LoggerInterface::class);
+        $listener    = new UserAddedToGroupListener(
+            groupShareService: $service,
+            teamFolderService: $teamService,
+            logger: $logger
+        );
 
-        $user  = $this->createMock(IUser::class);
+        $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('bob');
         $group = $this->createMock(IGroup::class);
         $group->method('getGID')->willReturn('engineering');
@@ -56,8 +62,14 @@ class UserAddedToGroupListenerTest extends TestCase
             ->with('bob', 'engineering')
             ->willReturn(3);
 
+        // Team-folder branch fires alongside the group-share branch.
+        $teamService->expects($this->once())
+            ->method('handleGroupMemberJoin')
+            ->with(userId: 'bob', groupId: 'engineering')
+            ->willReturn(1);
+
         $listener->handle($event);
-    }
+    }//end testHandleDispatchesForMatchingEvent()
 
     /**
      * Test the listener no-ops on unrelated events.
@@ -66,12 +78,18 @@ class UserAddedToGroupListenerTest extends TestCase
      */
     public function testHandleIgnoresUnrelatedEvents(): void
     {
-        $service = $this->createMock(GroupShareService::class);
-        $logger  = $this->createMock(LoggerInterface::class);
-        $listener = new UserAddedToGroupListener(groupShareService: $service, logger: $logger);
+        $service     = $this->createMock(GroupShareService::class);
+        $teamService = $this->createMock(TeamFolderService::class);
+        $logger      = $this->createMock(LoggerInterface::class);
+        $listener    = new UserAddedToGroupListener(
+            groupShareService: $service,
+            teamFolderService: $teamService,
+            logger: $logger
+        );
 
         $service->expects($this->never())->method('handleNewGroupMember');
+        $teamService->expects($this->never())->method('handleGroupMemberJoin');
 
         $listener->handle($this->createMock(Event::class));
-    }
-}
+    }//end testHandleIgnoresUnrelatedEvents()
+}//end class

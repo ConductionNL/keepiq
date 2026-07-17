@@ -34,13 +34,20 @@ use Psr\Log\LoggerInterface;
  */
 class SecretTypeServiceTest extends TestCase
 {
-    /** @var SecretTypeService */
+
+    /**
+     * @var SecretTypeService
+     */
     private SecretTypeService $service;
 
-    /** @var SecretTypeMapper */
+    /**
+     * @var SecretTypeMapper
+     */
     private $mapper;
 
-    /** @var SecretMapper */
+    /**
+     * @var SecretMapper
+     */
     private $secretMapper;
 
     /**
@@ -52,7 +59,7 @@ class SecretTypeServiceTest extends TestCase
     {
         $this->mapper       = $this->createMock(SecretTypeMapper::class);
         $this->secretMapper = $this->createMock(SecretMapper::class);
-        $logger             = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
 
         $this->service = new SecretTypeService(
             mapper: $this->mapper,
@@ -69,7 +76,7 @@ class SecretTypeServiceTest extends TestCase
      *
      * @return SecretType
      */
-    private function makeType(string $scope = 'user', ?string $ownerId = 'alice'): SecretType
+    private function makeType(string $scope='user', ?string $ownerId='alice'): SecretType
     {
         $type = new SecretType();
         $type->setId('type-1');
