@@ -65,6 +65,17 @@ Eight changes created from the 2026-07-16 competitive deep-dive (results logged 
 7. **Rotation & Expiry Policies** — expiry reminders + rotate-after-breach (NIS2 Art. 21(2)(j) + BIO2 compliance sale)
 8. **Machine Secret Leases** — TTL-bounded scoped grants on the machine API (NHI market ~22% CAGR; unified human+machine store differentiator)
 
+### Phase 3.6 — Market-gap wave 2 (specced 2026-07-17)
+
+Sixteen follow-up changes from the same 2026-07-16 deep-dive: wave-1's deferred seams, tier-2/3 differentiators, and the BIO2/NIS2 compliance surface.
+
+**Extension follow-ups**: `extension-passkey-provider` (WebAuthn provider — makes stored passkeys usable), `extension-totp-autofill` (codes in the extension, auto-copy on fill)
+**Unlock & offline**: `passkey-vault-login` (PRF unlock — only Bitwarden has it), `offline-readonly-cache` (encrypted offline vault)
+**Sharing follow-ups**: `folder-permission-grades` (read/write grades — wave-1's declared v2), `ephemeral-send` (burn-after-read ad-hoc sends)
+**Compliance (BIO2/NIS2)**: `compliance-reporting` (auditor evidence export — no competitor has a BIO2/NIS2-framed report), `siem-audit-export` (syslog/webhook streaming), `org-password-policies` (admin generator/strength policies)
+**Item types & UX**: `card-identity-items` (card + identity types, BSN-aware), `bulk-actions` (multi-select operations), `mobile-pwa` (installable PWA)
+**Machine/dev**: `doriath-cli` (human + CI modes), `cxp-transfer` (HPKE provider-to-provider migration), `certificate-lifecycle` (inventory/renewal on the private CA), `honey-credentials` (decoy tripwires — deception is one of few detection controls a zero-knowledge store can offer)
+
 ### Phase 4 — Future Development
 
 _Noted in Vault-app.docx but explicitly out of scope for now._
