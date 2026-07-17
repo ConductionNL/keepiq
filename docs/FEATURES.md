@@ -477,3 +477,26 @@ Large organizations, multi-instance deployments, and compliance-driven environme
 88. Field-level encryption audit
 89. Data retention policies
 90. Nextcloud Flows automation triggers
+
+## 7. Deep-Research Refresh (2026-07-16)
+
+Full findings are logged in the Spectr register (`sourceRef: deepdive-2026-07-16-app-doriath`): 22 competitors, 62 competitor features, 20 canonical demand-ranked features, 12 insights, 3 ecosystem gaps, 3 stakeholders, 7 customer journeys, 10 user stories, 12 external sources. Highlights that update the analysis above:
+
+### Regulatory tailwind (new since the original analysis)
+- **BIO2** (Baseline Informatiebeveiliging Overheid 2, est. 2025-09-24, v1.3 2026-01) **explicitly names "een wachtwoordmanager aanbieden" (provide a password manager to employees) as a measure** for Dutch government bodies — a named procurement driver.
+- **NIS2 / Cyberbeveiligingswet** enters into force ~2026-08-15 for ~8,000 Dutch organisations including all municipalities; Art. 21(2)(j) is the first EU law mandating MFA by name, with credential-hygiene requirements.
+- **Sovereignty whitespace**: Germany's openDesk and the Dutch Centric/SURF Nextcloud stacks ship **no** password/secrets component; VNG Common Ground has none either. Doriath can position as the missing sovereign-workplace module.
+
+### Market corrections and additions
+- **Vaultwarden** is the de-facto self-hosted default (~60k stars, not 42k); it structurally **cannot** ship SSO/SCIM (Bitwarden licensing) — Doriath inherits Nextcloud identity for free, a structural wedge.
+- **HashiCorp Vault** is BUSL-1.1 (Aug 2023) and IBM-owned (Feb 2025); **OpenBao** (MPL-2.0, Linux Foundation) is the open fork, v2.5.x in 2026.
+- **Infisical** (MIT core, ~27.5k stars) expanded into PKI/PAM/honey tokens — machine-side only, no end-user vault.
+- **Bitwarden** remains the only vendor bridging human vault + machine secrets (Secrets Manager, paid bolt-on) and the only one with shipped **passkey vault-login**; it is also first on **FIDO CXP** portability.
+- **Passbolt v5.7** added secret version history; **AliasVault** (AGPL, 2024) is the notable new OSS entrant (passkeys shipped, team features still roadmap). **Padloc is abandoned** (no updates since 2022-09).
+- **LastPass** trust erosion continued (ICO fine ~GBP 1.2M late 2025); **Dashlane** dropped its free plan (2025-09); **Proton Pass** shipped an audited CLI for CI/CD (2025-11).
+
+### 2026 table stakes vs. the original tiering
+Passkey **storage**, TOTP, attachments, breach reports and reliable autofill are now tier-1 expectations, not Enterprise extras. Verified top user wishes on the Nextcloud platform (NC Passwords open issues by reactions): group sharing (63), folder sharing (60), TOTP (39, built in Doriath), passkeys (#615/#792), attachments (#176), bulk actions (#610).
+
+### Resulting spec wave (all changes created 2026-07-16)
+`team-folder-sharing`, `browser-extension-autofill`, `passkey-item-type`, `cxf-import-export`, `encrypted-attachments`, `secret-version-history`, `rotation-expiry-policies`, `machine-secret-leases` — see `openspec/ROADMAP.md` Phase 3.5 for ordering and evidence.
