@@ -41,22 +41,35 @@ use Psr\Log\LoggerInterface;
  */
 class SecretServiceTest extends TestCase
 {
-    /** @var SecretService */
+
+    /**
+     * @var SecretService
+     */
     private SecretService $service;
 
-    /** @var SecretMapper */
+    /**
+     * @var SecretMapper
+     */
     private $mapper;
 
-    /** @var SecretTypeService */
+    /**
+     * @var SecretTypeService
+     */
     private $typeService;
 
-    /** @var EncryptionSuiteMapper */
+    /**
+     * @var EncryptionSuiteMapper
+     */
     private $suiteMapper;
 
-    /** @var MigrationService */
+    /**
+     * @var MigrationService
+     */
     private $migrationService;
 
-    /** @var LinkShareService */
+    /**
+     * @var LinkShareService
+     */
     private $linkShareService;
 
     /**
@@ -71,7 +84,7 @@ class SecretServiceTest extends TestCase
         $this->suiteMapper      = $this->createMock(EncryptionSuiteMapper::class);
         $this->migrationService = $this->createMock(MigrationService::class);
         $this->linkShareService = $this->createMock(LinkShareService::class);
-        $logger                 = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
 
         $this->service = new SecretService(
             mapper: $this->mapper,
@@ -91,7 +104,7 @@ class SecretServiceTest extends TestCase
      *
      * @return EncryptionSuite
      */
-    private function makeSuite(string $status = 'active', string $id = 'suite-1'): EncryptionSuite
+    private function makeSuite(string $status='active', string $id='suite-1'): EncryptionSuite
     {
         $suite = new EncryptionSuite();
         $suite->setId($id);
@@ -110,7 +123,7 @@ class SecretServiceTest extends TestCase
      *
      * @return Secret
      */
-    private function makeSecret(string $id = 's-1', string $ownerId = 'alice', string $suiteId = 'suite-1'): Secret
+    private function makeSecret(string $id='s-1', string $ownerId='alice', string $suiteId='suite-1'): Secret
     {
         $secret = new Secret();
         $secret->setId($id);

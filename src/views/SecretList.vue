@@ -37,6 +37,19 @@
 					{{ t('doriath', 'Import') }}
 				</NcButton>
 
+				<!-- Team folder sharing (team-folder-sharing §5.1): only for a
+				     concrete selected folder; the dialog owns membership + fan-out. -->
+				<NcButton v-if="selectedFolderId"
+					type="secondary"
+					:disabled="vaultLocked"
+					data-testid="team-folder-open"
+					@click="teamFolderOpen = true">
+					<template #icon>
+						<AccountGroup :size="20" />
+					</template>
+					{{ t('doriath', 'Team sharing') }}
+				</NcButton>
+
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
 				<NcActions :menu-name="t('doriath', 'My data')">
 					<NcActionButton @click="openExport">
@@ -65,6 +78,10 @@
 			<ImportWizardDialog :open="importOpen"
 				@update:open="importOpen = $event"
 				@imported="onImported" />
+			<TeamFolderDialog :open="teamFolderOpen"
+				:folder-id="selectedFolderId"
+				:folder-name="selectedFolderName"
+				@update:open="teamFolderOpen = $event" />
 
 			<CnIndexPage
 				view-mode="list"
@@ -106,11 +123,13 @@ import { CnIndexPage, CnFolderSidebar } from '@conduction/nextcloud-vue'
 import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import ExportDialog from '../dialogs/ExportDialog.vue'
 import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
+import TeamFolderDialog from '../modals/TeamFolderDialog.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useHealthStore } from '../store/modules/health.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -136,11 +155,13 @@ export default {
 		NcButton,
 		FolderPlus,
 		Import,
+		AccountGroup,
 		SecretListItem,
 		ExportDialog,
 		GdprExportDialog,
 		AccountDeletionDialog,
 		ImportWizardDialog,
+		TeamFolderDialog,
 	},
 
 	inject: {
@@ -160,6 +181,7 @@ export default {
 			gdprOpen: false,
 			deletionOpen: false,
 			importOpen: false,
+			teamFolderOpen: false,
 			decryptedSecrets: [],
 		}
 	},
@@ -200,6 +222,11 @@ export default {
 		},
 		selectedFolderId() {
 			return this.$route.params.folderId || null
+		},
+		/** Display name of the selected folder for the team-sharing dialog. */
+		selectedFolderName() {
+			const folder = this.folders.find((f) => f.id === this.selectedFolderId)
+			return folder?.name ?? ''
 		},
 		pagination() {
 			return {

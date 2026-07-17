@@ -32,7 +32,9 @@ use RuntimeException;
  */
 class CACertificateControllerTest extends TestCase
 {
+
     private CACertificateController $controller;
+
     private CertificateAuthorityService&MockObject $caService;
 
     /**
@@ -44,14 +46,14 @@ class CACertificateControllerTest extends TestCase
     {
         parent::setUp();
 
-        $request = $this->createMock(IRequest::class);
+        $request         = $this->createMock(IRequest::class);
         $this->caService = $this->createMock(CertificateAuthorityService::class);
 
         $this->controller = new CACertificateController(
             $request,
             $this->caService,
         );
-    }
+    }//end setUp()
 
     /**
      * Test getStatus returns CA status.
@@ -73,7 +75,7 @@ class CACertificateControllerTest extends TestCase
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $this->assertSame('healthy', $response->getData()['status']);
-    }
+    }//end testGetStatusReturnsCaStatus()
 
     /**
      * Test retryBootstrap delegates and returns status.
@@ -95,7 +97,7 @@ class CACertificateControllerTest extends TestCase
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $this->assertSame('healthy', $response->getData()['status']);
-    }
+    }//end testRetryBootstrapReturnsStatus()
 
     /**
      * Test retryBootstrap returns 500 on failure.
@@ -111,7 +113,7 @@ class CACertificateControllerTest extends TestCase
 
         $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
         $this->assertSame('Bootstrap failed', $response->getData()['message']);
-    }
+    }//end testRetryBootstrapReturns500OnFailure()
 
     /**
      * Test renewIntermediate returns count and status.
@@ -138,7 +140,7 @@ class CACertificateControllerTest extends TestCase
         $this->assertSame(5, $data['resignedCount']);
         $this->assertArrayHasKey('status', $data);
         $this->assertStringContainsString('5', $data['message']);
-    }
+    }//end testRenewIntermediateReturnsCountAndStatus()
 
     /**
      * Test renewIntermediate returns 500 on failure.
@@ -153,7 +155,7 @@ class CACertificateControllerTest extends TestCase
         $response = $this->controller->renewIntermediate();
 
         $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-    }
+    }//end testRenewIntermediateReturns500OnFailure()
 
     /**
      * Test renewRoot returns count and status.
@@ -177,7 +179,7 @@ class CACertificateControllerTest extends TestCase
         $data = $response->getData();
         $this->assertSame(10, $data['resignedCount']);
         $this->assertArrayHasKey('status', $data);
-    }
+    }//end testRenewRootReturnsCountAndStatus()
 
     /**
      * Test renewRoot returns 500 on failure.
@@ -192,5 +194,5 @@ class CACertificateControllerTest extends TestCase
         $response = $this->controller->renewRoot();
 
         $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-    }
-}
+    }//end testRenewRootReturns500OnFailure()
+}//end class

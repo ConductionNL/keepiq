@@ -46,7 +46,7 @@ class CACertificateTest extends TestCase
         $this->assertFalse($entity->getIsActive());
         $this->assertNull($entity->getRevokedAt());
         $this->assertNull($entity->getSuccessorId());
-    }
+    }//end testConstructorSetsTypeMappings()
 
     /**
      * Test getters and setters for all fields.
@@ -86,7 +86,7 @@ class CACertificateTest extends TestCase
 
         $entity->setSuccessorId('successor-uuid-456');
         $this->assertSame('successor-uuid-456', $entity->getSuccessorId());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * Test jsonSerialize returns all fields correctly.
@@ -116,7 +116,7 @@ class CACertificateTest extends TestCase
         $this->assertSame('next-cert-id', $serialized['successorId']);
         // Note: privateKey is intentionally excluded from jsonSerialize.
         $this->assertArrayNotHasKey('privateKey', $serialized);
-    }
+    }//end testJsonSerializeReturnsAllFields()
 
     /**
      * Test DateTime fields format correctly in jsonSerialize.
@@ -143,7 +143,7 @@ class CACertificateTest extends TestCase
         $this->assertSame($created->format('c'), $serialized['createdAt']);
         $this->assertSame($expires->format('c'), $serialized['expiresAt']);
         $this->assertSame($revoked->format('c'), $serialized['revokedAt']);
-    }
+    }//end testJsonSerializeDateTimeFormat()
 
     /**
      * Test jsonSerialize with null DateTime fields.
@@ -160,5 +160,5 @@ class CACertificateTest extends TestCase
         $this->assertNull($serialized['createdAt']);
         $this->assertNull($serialized['expiresAt']);
         $this->assertNull($serialized['revokedAt']);
-    }
-}
+    }//end testJsonSerializeWithNullDateTimes()
+}//end class

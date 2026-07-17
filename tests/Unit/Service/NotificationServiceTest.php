@@ -31,6 +31,7 @@ use Psr\Log\LoggerInterface;
  */
 class NotificationServiceTest extends TestCase
 {
+
     /**
      * Mock notification manager.
      *
@@ -67,7 +68,7 @@ class NotificationServiceTest extends TestCase
             config: $this->config,
             logger: $logger,
         );
-    }
+    }//end setUp()
 
     /**
      * notify(): unknown subject returns false without dispatching.
@@ -81,7 +82,7 @@ class NotificationServiceTest extends TestCase
         $result = $this->service->notify(subject: 'mystery_subject', recipientId: 'alice');
 
         $this->assertFalse(condition: $result);
-    }
+    }//end testNotifyUnknownSubjectReturnsFalse()
 
     /**
      * notify(): empty recipient short-circuits.
@@ -93,7 +94,7 @@ class NotificationServiceTest extends TestCase
         $this->manager->expects($this->never())->method('createNotification');
 
         $this->assertFalse(condition: $this->service->notify(subject: 'secret_shared', recipientId: ''));
-    }
+    }//end testNotifyEmptyRecipientReturnsFalse()
 
     /**
      * notify(): user opt-out suppresses dispatch.
@@ -110,7 +111,7 @@ class NotificationServiceTest extends TestCase
         $this->manager->expects($this->never())->method('createNotification');
 
         $this->assertFalse(condition: $this->service->notify(subject: 'secret_shared', recipientId: 'alice'));
-    }
+    }//end testNotifyOptedOutReturnsFalse()
 
     /**
      * notify(): subjects with a null setting key bypass opt-out.
@@ -138,7 +139,7 @@ class NotificationServiceTest extends TestCase
                 params: ['app_name' => 'Foo', 'registered_by' => 'bar'],
             )
         );
-    }
+    }//end testNotifyAppPendingBypassesOptOut()
 
     /**
      * notify(): default opt-in (no stored value) delivers.
@@ -171,7 +172,7 @@ class NotificationServiceTest extends TestCase
                 objectId: 's-1',
             )
         );
-    }
+    }//end testNotifyDefaultOptInDelivers()
 
     /**
      * §11.6 — request_fulfilled honours the notify_requests user pref.
@@ -200,7 +201,7 @@ class NotificationServiceTest extends TestCase
                 objectId: 'req-1',
             )
         );
-    }
+    }//end testNotifyRequestFulfilledRespectsUserPreference()
 
     /**
      * §11.6 — request_fulfilled delivers when the pref is opted-in
@@ -234,7 +235,7 @@ class NotificationServiceTest extends TestCase
                 objectId: 'req-1',
             )
         );
-    }
+    }//end testNotifyRequestFulfilledDeliversWhenOptedIn()
 
     /**
      * SUBJECT_SETTING_MAP covers every spec'd subject.
@@ -256,5 +257,5 @@ class NotificationServiceTest extends TestCase
         foreach ($expected as $subject) {
             $this->assertArrayHasKey(key: $subject, array: NotificationService::SUBJECT_SETTING_MAP);
         }
-    }
-}
+    }//end testSubjectSettingMapCoverage()
+}//end class

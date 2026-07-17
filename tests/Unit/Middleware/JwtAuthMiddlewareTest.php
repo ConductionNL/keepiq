@@ -36,7 +36,7 @@ use RuntimeException;
  */
 class ConcreteAppController extends ApplicationApiController
 {
-}
+}//end class
 
 /**
  * Tests for JwtAuthMiddleware.
@@ -61,8 +61,7 @@ class JwtAuthMiddlewareTest extends TestCase
 
         $middleware->beforeController($controller, 'foo');
         $this->addToAssertionCount(1);
-    }
-
+    }//end testSessionControllerPassesThrough()
 
     /**
      * Missing Authorization header → exception.
@@ -82,8 +81,7 @@ class JwtAuthMiddlewareTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Missing or malformed');
         $middleware->beforeController($controller, 'index');
-    }
-
+    }//end testMissingAuthHeaderThrows()
 
     /**
      * Malformed (non-Bearer) Authorization header → exception.
@@ -102,8 +100,7 @@ class JwtAuthMiddlewareTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $middleware->beforeController($controller, 'index');
-    }
-
+    }//end testNonBearerHeaderThrows()
 
     /**
      * Invalid Bearer token → exception.
@@ -124,8 +121,7 @@ class JwtAuthMiddlewareTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Invalid or expired');
         $middleware->beforeController($controller, 'index');
-    }
-
+    }//end testInvalidTokenThrows()
 
     /**
      * Valid token → application injected.
@@ -149,8 +145,7 @@ class JwtAuthMiddlewareTest extends TestCase
 
         $middleware->beforeController($controller, 'index');
         $this->assertSame($app, $controller->getApplication());
-    }
-
+    }//end testValidTokenInjectsApplication()
 
     /**
      * Exceptions raised on Bearer routes are translated to 401 JSON.
@@ -171,8 +166,7 @@ class JwtAuthMiddlewareTest extends TestCase
         $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
         $data = $response->getData();
         $this->assertSame('nope', $data['message']);
-    }
-
+    }//end testAfterExceptionReturns401()
 
     /**
      * Exceptions on non-Bearer controllers are re-thrown.
@@ -191,5 +185,5 @@ class JwtAuthMiddlewareTest extends TestCase
 
         $this->expectExceptionObject($exception);
         $middleware->afterException($controller, 'foo', $exception);
-    }
-}
+    }//end testAfterExceptionRethrowsForSessionController()
+}//end class

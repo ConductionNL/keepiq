@@ -48,7 +48,7 @@ class LinkShareTest extends TestCase
         $this->assertSame('', $entity->getCreatedBy());
         $this->assertNull($entity->getCreatedAt());
         $this->assertNull($entity->getExpiresAt());
-    }
+    }//end testConstructorSetsDefaults()
 
     /**
      * Test getters and setters for all fields.
@@ -96,7 +96,7 @@ class LinkShareTest extends TestCase
         $expiresAt = new DateTime('2026-12-31T00:00:00+00:00');
         $entity->setExpiresAt($expiresAt);
         $this->assertSame($expiresAt, $entity->getExpiresAt());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * Test that jsonSerialize OMITS the encrypted blob and salt.
@@ -131,7 +131,7 @@ class LinkShareTest extends TestCase
         $this->assertSame('bob', $serialized['createdBy']);
         $this->assertNotNull($serialized['createdAt']);
         $this->assertNull($serialized['expiresAt']);
-    }
+    }//end testJsonSerializeOmitsBlobAndSalt()
 
     /**
      * Test that the remaining count never goes below zero.
@@ -147,7 +147,7 @@ class LinkShareTest extends TestCase
         $serialized = $entity->jsonSerialize();
 
         $this->assertSame(0, $serialized['remaining']);
-    }
+    }//end testRemainingNeverNegative()
 
     /**
      * Test the public serialization INCLUDES the blob and salt but no owner.
@@ -171,7 +171,7 @@ class LinkShareTest extends TestCase
         $this->assertSame(1, $public['usageCount']);
         $this->assertArrayNotHasKey('createdBy', $public);
         $this->assertArrayNotHasKey('token', $public);
-    }
+    }//end testJsonSerializePublicIncludesBlobAndSalt()
 
     /**
      * Test DateTime fields format correctly in jsonSerialize.
@@ -180,12 +180,12 @@ class LinkShareTest extends TestCase
      */
     public function testJsonSerializeDateTimeFormat(): void
     {
-        $entity   = new LinkShare();
-        $expires  = new DateTime('2026-06-15T14:30:00+02:00');
+        $entity  = new LinkShare();
+        $expires = new DateTime('2026-06-15T14:30:00+02:00');
         $entity->setExpiresAt($expires);
 
         $serialized = $entity->jsonSerialize();
 
         $this->assertSame($expires->format('c'), $serialized['expiresAt']);
-    }
-}
+    }//end testJsonSerializeDateTimeFormat()
+}//end class

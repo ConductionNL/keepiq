@@ -78,14 +78,18 @@ class SeedDevelopmentApplicationsTest extends TestCase
         $mapper = $this->createMock(ApplicationMapper::class);
         $mapper->method('findById')->willThrowException(new DoesNotExistException('none'));
 
-        /** @var list<Application> $inserted */
+        /*
+         * @var list<Application> $inserted
+         */
         $inserted = [];
         $mapper->expects($this->exactly(3))
             ->method('insert')
-            ->willReturnCallback(function (Application $application) use (&$inserted): Application {
-                $inserted[] = $application;
-                return $application;
-            });
+            ->willReturnCallback(
+                    function (Application $application) use (&$inserted): Application {
+                        $inserted[] = $application;
+                        return $application;
+                    }
+                    );
 
         $step = new SeedDevelopmentApplications(
             appMapper: $mapper,

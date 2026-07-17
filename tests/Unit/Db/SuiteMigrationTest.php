@@ -42,7 +42,7 @@ class SuiteMigrationTest extends TestCase
         $this->assertSame('in_progress', $entity->getStatus());
         $this->assertNull($entity->getStartedAt());
         $this->assertNull($entity->getCompletedAt());
-    }
+    }//end testConstructorSetsDefaults()
 
     /**
      * Test getters and setters for all fields.
@@ -72,7 +72,7 @@ class SuiteMigrationTest extends TestCase
         $completedAt = new DateTime('2025-05-01T12:00:00+00:00');
         $entity->setCompletedAt($completedAt);
         $this->assertSame($completedAt, $entity->getCompletedAt());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * Test jsonSerialize returns all fields correctly.
@@ -96,7 +96,7 @@ class SuiteMigrationTest extends TestCase
         $this->assertSame('in_progress', $serialized['status']);
         $this->assertNotNull($serialized['startedAt']);
         $this->assertNull($serialized['completedAt']);
-    }
+    }//end testJsonSerializeReturnsAllFields()
 
     /**
      * Test jsonSerialize with completed migration.
@@ -111,7 +111,7 @@ class SuiteMigrationTest extends TestCase
         $entity->setNewSuiteId('new');
         $entity->setStatus('completed');
 
-        $startedAt = new DateTime('2025-04-01T09:00:00+00:00');
+        $startedAt   = new DateTime('2025-04-01T09:00:00+00:00');
         $completedAt = new DateTime('2025-04-01T11:00:00+00:00');
         $entity->setStartedAt($startedAt);
         $entity->setCompletedAt($completedAt);
@@ -121,7 +121,7 @@ class SuiteMigrationTest extends TestCase
         $this->assertSame($startedAt->format('c'), $serialized['startedAt']);
         $this->assertSame($completedAt->format('c'), $serialized['completedAt']);
         $this->assertSame('completed', $serialized['status']);
-    }
+    }//end testJsonSerializeCompletedMigration()
 
     /**
      * Test jsonSerialize with null DateTime fields.
@@ -137,5 +137,5 @@ class SuiteMigrationTest extends TestCase
 
         $this->assertNull($serialized['startedAt']);
         $this->assertNull($serialized['completedAt']);
-    }
-}
+    }//end testJsonSerializeWithNullDateTimes()
+}//end class

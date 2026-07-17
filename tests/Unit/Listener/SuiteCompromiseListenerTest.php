@@ -45,10 +45,10 @@ class SuiteCompromiseListenerTest extends TestCase
      */
     public function testHandleNotifiesSourceOwnerForSharedCopy(): void
     {
-        $secretMapper      = $this->createMock(SecretMapper::class);
-        $shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+        $secretMapper        = $this->createMock(SecretMapper::class);
+        $shareTargetMapper   = $this->createMock(ShareTargetMapper::class);
         $notificationService = $this->createMock(NotificationService::class);
-        $logger            = $this->createMock(LoggerInterface::class);
+        $logger   = $this->createMock(LoggerInterface::class);
         $listener = new SuiteCompromiseListener(
             secretMapper: $secretMapper,
             shareTargetMapper: $shareTargetMapper,
@@ -92,7 +92,7 @@ class SuiteCompromiseListenerTest extends TestCase
             ->with('secret_compromised', 'alice');
 
         $listener->handle($event);
-    }
+    }//end testHandleNotifiesSourceOwnerForSharedCopy()
 
     /**
      * Test the listener falls back to the secret's own owner when the
@@ -102,10 +102,10 @@ class SuiteCompromiseListenerTest extends TestCase
      */
     public function testHandleFallsBackToOwnOwnerWhenNotShared(): void
     {
-        $secretMapper      = $this->createMock(SecretMapper::class);
-        $shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+        $secretMapper        = $this->createMock(SecretMapper::class);
+        $shareTargetMapper   = $this->createMock(ShareTargetMapper::class);
         $notificationService = $this->createMock(NotificationService::class);
-        $logger            = $this->createMock(LoggerInterface::class);
+        $logger   = $this->createMock(LoggerInterface::class);
         $listener = new SuiteCompromiseListener(
             secretMapper: $secretMapper,
             shareTargetMapper: $shareTargetMapper,
@@ -135,7 +135,7 @@ class SuiteCompromiseListenerTest extends TestCase
             ->with('secret_compromised', 'alice');
 
         $listener->handle($event);
-    }
+    }//end testHandleFallsBackToOwnOwnerWhenNotShared()
 
     /**
      * Test the listener no-ops on unrelated events.
@@ -144,10 +144,10 @@ class SuiteCompromiseListenerTest extends TestCase
      */
     public function testHandleIgnoresUnrelatedEvents(): void
     {
-        $secretMapper      = $this->createMock(SecretMapper::class);
-        $shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+        $secretMapper        = $this->createMock(SecretMapper::class);
+        $shareTargetMapper   = $this->createMock(ShareTargetMapper::class);
         $notificationService = $this->createMock(NotificationService::class);
-        $logger            = $this->createMock(LoggerInterface::class);
+        $logger   = $this->createMock(LoggerInterface::class);
         $listener = new SuiteCompromiseListener(
             secretMapper: $secretMapper,
             shareTargetMapper: $shareTargetMapper,
@@ -158,5 +158,5 @@ class SuiteCompromiseListenerTest extends TestCase
         $secretMapper->expects($this->never())->method('findByEncryptionSuiteId');
 
         $listener->handle($this->createMock(Event::class));
-    }
-}
+    }//end testHandleIgnoresUnrelatedEvents()
+}//end class

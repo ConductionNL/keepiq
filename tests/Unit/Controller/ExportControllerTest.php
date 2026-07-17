@@ -40,7 +40,7 @@ class ExportControllerTest extends TestCase
      *
      * @return array{0:ExportController,1:IRequest,2:IEventDispatcher}
      */
-    private function build(?string $userId = 'alice'): array
+    private function build(?string $userId='alice'): array
     {
         $request    = $this->createMock(IRequest::class);
         $session    = $this->createMock(IUserSession::class);
@@ -55,7 +55,7 @@ class ExportControllerTest extends TestCase
         }
 
         return [new ExportController($request, $session, $dispatcher), $request, $dispatcher];
-    }
+    }//end build()
 
     /**
      * Stub the three request params.
@@ -69,12 +69,14 @@ class ExportControllerTest extends TestCase
      */
     private function params(IRequest $request, string $mode, string $scope, $count): void
     {
-        $request->method('getParam')->willReturnMap([
-            ['mode', '', $mode],
-            ['scope', '', $scope],
-            ['secretCount', 0, $count],
-        ]);
-    }
+        $request->method('getParam')->willReturnMap(
+                [
+                    ['mode', '', $mode],
+                    ['scope', '', $scope],
+                    ['secretCount', 0, $count],
+                ]
+                );
+    }//end params()
 
     /**
      * A valid report dispatches SecretExportedEvent for the session user.
@@ -89,7 +91,12 @@ class ExportControllerTest extends TestCase
         $captured = null;
         $dispatcher->expects($this->once())
             ->method('dispatchTyped')
-            ->willReturnCallback(function ($e) use (&$captured) { $captured = $e; });
+            ->willReturnCallback(
+                    function ($e) use (&$captured) {
+                        $captured = $e;
+
+                    }
+                    );
 
         $response = $controller->events();
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
@@ -97,7 +104,7 @@ class ExportControllerTest extends TestCase
         $this->assertSame('alice', $captured->getUserId());
         $this->assertSame('encrypted-backup', $captured->getMode());
         $this->assertSame(120, $captured->getSecretCount());
-    }
+    }//end testValidReportDispatchesEvent()
 
     /**
      * An invalid mode is rejected with 400 and no event.
@@ -112,7 +119,7 @@ class ExportControllerTest extends TestCase
 
         $response = $controller->events();
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+    }//end testInvalidModeRejected()
 
     /**
      * An invalid scope is rejected with 400.
@@ -127,7 +134,7 @@ class ExportControllerTest extends TestCase
 
         $response = $controller->events();
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+    }//end testInvalidScopeRejected()
 
     /**
      * Unauthenticated requests are rejected.
@@ -137,7 +144,7 @@ class ExportControllerTest extends TestCase
     public function testUnauthorized(): void
     {
         [$controller] = $this->build(null);
-        $response = $controller->events();
+        $response     = $controller->events();
         $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-    }
+    }//end testUnauthorized()
 }//end class

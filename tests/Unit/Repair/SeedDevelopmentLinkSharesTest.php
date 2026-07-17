@@ -85,13 +85,15 @@ class SeedDevelopmentLinkSharesTest extends TestCase
     {
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')
-            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
-                if ($key === 'installed_version') {
-                    return '1.2.3';
-                }
+            ->willReturnCallback(
+                    static function (string $app, string $key, string $default='') {
+                        if ($key === 'installed_version') {
+                            return '1.2.3';
+                        }
 
-                return $default;
-            });
+                        return $default;
+                    }
+                    );
 
         return $appConfig;
     }//end unseededAppConfig()
@@ -198,17 +200,19 @@ class SeedDevelopmentLinkSharesTest extends TestCase
 
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')
-            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
-                if ($key === 'installed_version') {
-                    return '1.2.3';
-                }
+            ->willReturnCallback(
+                    static function (string $app, string $key, string $default='') {
+                        if ($key === 'installed_version') {
+                            return '1.2.3';
+                        }
 
-                if ($key === 'dev_seed_link_shares_version') {
-                    return '1.2.3';
-                }
+                        if ($key === 'dev_seed_link_shares_version') {
+                            return '1.2.3';
+                        }
 
-                return $default;
-            });
+                        return $default;
+                    }
+                    );
 
         $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
         $suiteMapper->expects($this->never())->method('findActiveByOwner');
@@ -279,23 +283,29 @@ class SeedDevelopmentLinkSharesTest extends TestCase
         $suiteMapper->method('findActiveByOwner')->willReturn($this->devSuite('suite-1'));
 
         $secretMapper = $this->createMock(SecretMapper::class);
-        $secretMapper->method('findByOwner')->willReturn([
-            $this->devSecret('secret-1'),
-            $this->devSecret('secret-2'),
-            $this->devSecret('secret-3'),
-        ]);
+        $secretMapper->method('findByOwner')->willReturn(
+                [
+                    $this->devSecret('secret-1'),
+                    $this->devSecret('secret-2'),
+                    $this->devSecret('secret-3'),
+                ]
+                );
 
         $linkShareMapper = $this->createMock(LinkShareMapper::class);
         $linkShareMapper->method('findById')->willThrowException(new DoesNotExistException('not seeded'));
 
-        /** @var list<LinkShare> $inserted */
+        /*
+         * @var list<LinkShare> $inserted
+         */
         $inserted = [];
         $linkShareMapper->expects($this->exactly(3))
             ->method('insert')
-            ->willReturnCallback(function (LinkShare $linkShare) use (&$inserted): LinkShare {
-                $inserted[] = $linkShare;
-                return $linkShare;
-            });
+            ->willReturnCallback(
+                    function (LinkShare $linkShare) use (&$inserted): LinkShare {
+                        $inserted[] = $linkShare;
+                        return $linkShare;
+                    }
+                    );
 
         $step = new SeedDevelopmentLinkShares(
             linkShareMapper: $linkShareMapper,
@@ -338,6 +348,7 @@ class SeedDevelopmentLinkSharesTest extends TestCase
             $this->assertNotSame('', $row->getToken());
             $tokens[] = $row->getToken();
         }
+
         $this->assertCount(3, array_unique($tokens));
     }//end testSeedsThreeLinkSharesOnHappyPath()
 }//end class

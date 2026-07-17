@@ -38,6 +38,7 @@ use Psr\Log\LoggerInterface;
  */
 class ApplicationServiceTest extends TestCase
 {
+
     /**
      * Service under test.
      *
@@ -67,7 +68,7 @@ class ApplicationServiceTest extends TestCase
             groupManager: $groupManager,
             logger: $logger
         );
-    }
+    }//end setUp()
 
     /**
      * Test admin registration auto-approves and stamps approver fields.
@@ -101,7 +102,7 @@ class ApplicationServiceTest extends TestCase
         $this->assertNotNull($result->getApprovedAt());
         $this->assertSame('OpenConnector', $result->getName());
         $this->assertSame(Application::TYPE_INTERNAL, $result->getType());
-    }
+    }//end testRegisterAsAdminAutoApproves()
 
     /**
      * Test non-admin registration creates a pending row.
@@ -134,7 +135,7 @@ class ApplicationServiceTest extends TestCase
         $this->assertNull($result->getApprovedAt());
         $this->assertSame('alice', $result->getRegisteredBy());
         $this->assertSame('-----BEGIN CERTIFICATE REQUEST-----', $result->getCsr());
-    }
+    }//end testRegisterAsUserCreatesPending()
 
     /**
      * Test approve flips a pending app to active and updates timestamps.
@@ -162,7 +163,7 @@ class ApplicationServiceTest extends TestCase
         $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
         $this->assertSame('admin', $result->getApprovedBy());
         $this->assertNotNull($result->getApprovedAt());
-    }
+    }//end testApprovePendingApp()
 
     /**
      * Test reject hard-deletes a pending app and refuses non-admin callers.
@@ -197,7 +198,7 @@ class ApplicationServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Only an administrator');
         $svc->reject(applicationId: 'app-2', adminUserId: 'alice', isAdmin: false);
-    }
+    }//end testRejectRequiresAdminAndHardDeletes()
 
     /**
      * Test get enforces the non-admin visibility rule.
@@ -220,7 +221,7 @@ class ApplicationServiceTest extends TestCase
         $this->expectExceptionMessage('Not authorized');
 
         $this->service->get(applicationId: 'app-9', userId: 'alice', isAdmin: false);
-    }
+    }//end testGetEnforcesNonAdminVisibility()
 
     /**
      * Test get returns the row when not found is translated to a 400-friendly error.
@@ -237,7 +238,7 @@ class ApplicationServiceTest extends TestCase
         $this->expectExceptionMessage('Application not found');
 
         $this->service->get(applicationId: 'missing', userId: 'alice', isAdmin: false);
-    }
+    }//end testGetTranslatesNotFound()
 
     /**
      * Admin registration with a valid >=4096-bit CSR persists the row.
@@ -260,7 +261,7 @@ class ApplicationServiceTest extends TestCase
 
         $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
         $this->assertSame($csr, $result->getCsr());
-    }
+    }//end testRegisterAdminAcceptsValid4096Csr()
 
     /**
      * Admin registration with a sub-4096-bit CSR is rejected.
@@ -282,7 +283,7 @@ class ApplicationServiceTest extends TestCase
             userId: 'admin',
             isAdmin: true
         );
-    }
+    }//end testRegisterAdminRejectsWeakCsr()
 
     /**
      * Admin registration with a malformed CSR is rejected with a clear message.
@@ -303,7 +304,7 @@ class ApplicationServiceTest extends TestCase
             userId: 'admin',
             isAdmin: true
         );
-    }
+    }//end testRegisterAdminRejectsMalformedCsr()
 
     /**
      * Non-admin (pending) registration stores the CSR verbatim — validation
@@ -327,7 +328,7 @@ class ApplicationServiceTest extends TestCase
 
         $this->assertSame(Application::STATUS_PENDING, $result->getStatus());
         $this->assertSame('not-validated-here', $result->getCsr());
-    }
+    }//end testRegisterPendingStoresAnyCsr()
 
     /**
      * Approval re-validates the stored CSR — a malformed pending CSR is
@@ -351,7 +352,7 @@ class ApplicationServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/PKCS#10 format not recognised/');
         $this->service->approve(applicationId: 'app-bad', adminUserId: 'admin', isAdmin: true);
-    }
+    }//end testApproveRejectsMalformedStoredCsr()
 
     /**
      * Approval accepts a stored >=4096-bit CSR.
@@ -372,7 +373,7 @@ class ApplicationServiceTest extends TestCase
 
         $result = $this->service->approve(applicationId: 'app-ok', adminUserId: 'admin', isAdmin: true);
         $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
-    }
+    }//end testApproveAcceptsValidStoredCsr()
 
     /**
      * §7.3 — When a non-admin (or anonymous) caller submits a
@@ -410,10 +411,12 @@ class ApplicationServiceTest extends TestCase
             ->with(
                 'app_pending',
                 'admin1',
-                $this->callback(static function (array $params): bool {
-                    return ($params['applicationName'] ?? null) === 'Bot'
-                        && ($params['registeredBy'] ?? null) === 'alice';
-                }),
+                $this->callback(
+                        static function (array $params): bool {
+                            return ($params['applicationName'] ?? null) === 'Bot'
+                            && ($params['registeredBy'] ?? null) === 'alice';
+                        }
+                        ),
                 'application',
                 $this->anything(),
             );
@@ -426,7 +429,7 @@ class ApplicationServiceTest extends TestCase
             userId: 'alice',
             isAdmin: false,
         );
-    }
+    }//end testRegisterPendingDispatchesAdminNotification()
 
     /**
      * §6.2 — Anonymous registration (controller passes userId=null) is
@@ -456,10 +459,12 @@ class ApplicationServiceTest extends TestCase
         $persisted = null;
         $mapper->expects($this->once())
             ->method('insert')
-            ->willReturnCallback(static function (Application $entity) use (&$persisted): Application {
-                $persisted = $entity;
-                return $entity;
-            });
+            ->willReturnCallback(
+                    static function (Application $entity) use (&$persisted): Application {
+                        $persisted = $entity;
+                        return $entity;
+                    }
+                    );
 
         // An admin must still receive the notification — the audit trail.
         $adminUser = $this->createMock(IUser::class);
@@ -473,9 +478,11 @@ class ApplicationServiceTest extends TestCase
             ->with(
                 'app_pending',
                 'admin1',
-                $this->callback(static function (array $params): bool {
-                    return ($params['registeredBy'] ?? null) === 'anonymous';
-                }),
+                $this->callback(
+                        static function (array $params): bool {
+                            return ($params['registeredBy'] ?? null) === 'anonymous';
+                        }
+                        ),
                 'application',
                 $this->anything(),
             );
@@ -493,7 +500,7 @@ class ApplicationServiceTest extends TestCase
         $this->assertSame(Application::STATUS_PENDING, $persisted->getStatus());
         // The Application Db entity may store null or the literal 'anonymous';
         // the notification path normalises to 'anonymous' (asserted above).
-    }
+    }//end testRegisterAnonymousMarksAuditTrail()
 
     /**
      * §7.3 — Admin-registered (auto-approved) apps do NOT trigger the
@@ -526,7 +533,7 @@ class ApplicationServiceTest extends TestCase
             userId: 'admin',
             isAdmin: true,
         );
-    }
+    }//end testRegisterActiveDoesNotDispatchAdminNotification()
 
     /**
      * Admin auto-approval with a CSR triggers EncryptionSuite provisioning.
@@ -535,11 +542,11 @@ class ApplicationServiceTest extends TestCase
      */
     public function testRegisterAdminWithCsrProvisionsSuite(): void
     {
-        $csr           = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
-        $suiteService  = $this->createMock(EncryptionSuiteService::class);
-        $mapper        = $this->createMock(ApplicationMapper::class);
-        $groupManager  = $this->createMock(IGroupManager::class);
-        $logger        = $this->createMock(LoggerInterface::class);
+        $csr          = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+        $suiteService = $this->createMock(EncryptionSuiteService::class);
+        $mapper       = $this->createMock(ApplicationMapper::class);
+        $groupManager = $this->createMock(IGroupManager::class);
+        $logger       = $this->createMock(LoggerInterface::class);
 
         $mapper->expects($this->once())->method('insert')->willReturnArgument(0);
 
@@ -564,7 +571,7 @@ class ApplicationServiceTest extends TestCase
             userId: 'admin',
             isAdmin: true,
         );
-    }
+    }//end testRegisterAdminWithCsrProvisionsSuite()
 
     /**
      * Approval of a pending row provisions the EncryptionSuite from the
@@ -574,11 +581,11 @@ class ApplicationServiceTest extends TestCase
      */
     public function testApproveWithStoredCsrProvisionsSuite(): void
     {
-        $csr           = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
-        $suiteService  = $this->createMock(EncryptionSuiteService::class);
-        $mapper        = $this->createMock(ApplicationMapper::class);
-        $groupManager  = $this->createMock(IGroupManager::class);
-        $logger        = $this->createMock(LoggerInterface::class);
+        $csr          = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+        $suiteService = $this->createMock(EncryptionSuiteService::class);
+        $mapper       = $this->createMock(ApplicationMapper::class);
+        $groupManager = $this->createMock(IGroupManager::class);
+        $logger       = $this->createMock(LoggerInterface::class);
 
         $entity = new Application();
         $entity->setId('app-1');
@@ -603,7 +610,7 @@ class ApplicationServiceTest extends TestCase
 
         $result = $service->approve(applicationId: 'app-1', adminUserId: 'admin', isAdmin: true);
         $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
-    }
+    }//end testApproveWithStoredCsrProvisionsSuite()
 
     /**
      * Suite-provisioning failures are swallowed and never roll back approval.
@@ -612,11 +619,11 @@ class ApplicationServiceTest extends TestCase
      */
     public function testApproveSwallowsSuiteProvisioningFailure(): void
     {
-        $csr           = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
-        $suiteService  = $this->createMock(EncryptionSuiteService::class);
-        $mapper        = $this->createMock(ApplicationMapper::class);
-        $groupManager  = $this->createMock(IGroupManager::class);
-        $logger        = $this->createMock(LoggerInterface::class);
+        $csr          = (string) file_get_contents(__DIR__.'/../fixtures/csr-4096.pem');
+        $suiteService = $this->createMock(EncryptionSuiteService::class);
+        $mapper       = $this->createMock(ApplicationMapper::class);
+        $groupManager = $this->createMock(IGroupManager::class);
+        $logger       = $this->createMock(LoggerInterface::class);
 
         $entity = new Application();
         $entity->setId('app-1');
@@ -641,7 +648,7 @@ class ApplicationServiceTest extends TestCase
         $result = $service->approve(applicationId: 'app-1', adminUserId: 'admin', isAdmin: true);
         // Approval still succeeds — re-approval can retry suite provisioning.
         $this->assertSame(Application::STATUS_ACTIVE, $result->getStatus());
-    }
+    }//end testApproveSwallowsSuiteProvisioningFailure()
 
     /**
      * getCertificate returns the active suite's certificate on success.
@@ -650,10 +657,10 @@ class ApplicationServiceTest extends TestCase
      */
     public function testGetCertificateReturnsActiveSuiteCertificate(): void
     {
-        $suiteService  = $this->createMock(EncryptionSuiteService::class);
-        $mapper        = $this->createMock(ApplicationMapper::class);
-        $groupManager  = $this->createMock(IGroupManager::class);
-        $logger        = $this->createMock(LoggerInterface::class);
+        $suiteService = $this->createMock(EncryptionSuiteService::class);
+        $mapper       = $this->createMock(ApplicationMapper::class);
+        $groupManager = $this->createMock(IGroupManager::class);
+        $logger       = $this->createMock(LoggerInterface::class);
 
         $entity = new Application();
         $entity->setId('app-1');
@@ -679,7 +686,7 @@ class ApplicationServiceTest extends TestCase
             '-----BEGIN CERTIFICATE-----PEMDATA-----END CERTIFICATE-----',
             $service->getCertificate('app-1'),
         );
-    }
+    }//end testGetCertificateReturnsActiveSuiteCertificate()
 
     /**
      * getCertificate rejects inactive applications.
@@ -688,9 +695,9 @@ class ApplicationServiceTest extends TestCase
      */
     public function testGetCertificateRejectsInactiveApplication(): void
     {
-        $mapper        = $this->createMock(ApplicationMapper::class);
-        $groupManager  = $this->createMock(IGroupManager::class);
-        $logger        = $this->createMock(LoggerInterface::class);
+        $mapper       = $this->createMock(ApplicationMapper::class);
+        $groupManager = $this->createMock(IGroupManager::class);
+        $logger       = $this->createMock(LoggerInterface::class);
 
         $entity = new Application();
         $entity->setId('app-1');
@@ -706,5 +713,5 @@ class ApplicationServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Application is not active');
         $service->getCertificate('app-1');
-    }
-}
+    }//end testGetCertificateRejectsInactiveApplication()
+}//end class

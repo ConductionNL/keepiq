@@ -60,6 +60,10 @@ class NotificationService
         // existing security-notification category (add-emergency-access §4.2).
         'emergency_access_requested' => 'notify_security',
         'emergency_access_accessed'  => 'notify_security',
+        // Team folder sharing (team-folder-sharing §4.2): fan-out share
+        // to a recipient; group-join approval request to the owner.
+        'team_folder_shared'         => 'notify_shares',
+        'team_folder_join_request'   => 'notify_group_shares',
     ];
 
     /**

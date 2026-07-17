@@ -34,6 +34,7 @@ use RuntimeException;
  */
 class LinkShareAccessControllerTest extends TestCase
 {
+
     /**
      * The controller under test.
      *
@@ -57,14 +58,14 @@ class LinkShareAccessControllerTest extends TestCase
     {
         parent::setUp();
 
-        $request                = $this->createMock(originalClassName: IRequest::class);
+        $request = $this->createMock(originalClassName: IRequest::class);
         $this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
 
         $this->controller = new LinkShareAccessController(
             request: $request,
             linkShareService: $this->linkShareService,
         );
-    }
+    }//end setUp()
 
     /**
      * Build a LinkShare entity for assertions.
@@ -85,7 +86,7 @@ class LinkShareAccessControllerTest extends TestCase
         $share->setCreatedAt(new DateTime());
 
         return $share;
-    }
+    }//end makeShare()
 
     /**
      * Test Phase 1 returns the blob and salt for a valid token.
@@ -104,7 +105,7 @@ class LinkShareAccessControllerTest extends TestCase
         $this->assertSame('the-salt', $data['argon2idSalt']);
         // Public payload must never leak owner identity.
         $this->assertArrayNotHasKey('createdBy', $data);
-    }
+    }//end testShowReturnsBlobForValidToken()
 
     /**
      * Test Phase 1 returns a uniform 404 for an invalid token.
@@ -120,7 +121,7 @@ class LinkShareAccessControllerTest extends TestCase
 
         $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
         $this->assertSame('Link not found or expired', $response->getData()['message']);
-    }
+    }//end testShowReturnsNotFoundForInvalidToken()
 
     /**
      * Test Phase 1 records a failed attempt when the browser reports failure.
@@ -137,7 +138,7 @@ class LinkShareAccessControllerTest extends TestCase
         $response = $this->controller->show('tok-1', '1');
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
-    }
+    }//end testShowRecordsFailedAttemptWhenReported()
 
     /**
      * Test Phase 1 does NOT record a failed attempt on the first request.
@@ -150,7 +151,7 @@ class LinkShareAccessControllerTest extends TestCase
         $this->linkShareService->method('getByToken')->willReturn($this->makeShare());
 
         $this->controller->show('tok-1', '0');
-    }
+    }//end testShowDoesNotRecordFailureOnFirstRequest()
 
     /**
      * Test Phase 2 confirm increments usage and returns remaining count.
@@ -170,7 +171,7 @@ class LinkShareAccessControllerTest extends TestCase
         $this->assertSame(2, $data['usageCount']);
         $this->assertSame(3, $data['usageLimit']);
         $this->assertSame(1, $data['remaining']);
-    }
+    }//end testConfirmReturnsUsage()
 
     /**
      * Test Phase 2 confirm returns 404 when the token is invalid or exhausted.
@@ -185,5 +186,5 @@ class LinkShareAccessControllerTest extends TestCase
         $response = $this->controller->confirm('missing');
 
         $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }
-}
+    }//end testConfirmReturnsNotFound()
+}//end class

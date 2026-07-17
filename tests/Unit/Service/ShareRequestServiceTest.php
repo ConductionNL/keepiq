@@ -36,6 +36,7 @@ use Psr\Log\LoggerInterface;
  */
 class ShareRequestServiceTest extends TestCase
 {
+
     /**
      * Service under test.
      *
@@ -68,7 +69,7 @@ class ShareRequestServiceTest extends TestCase
         $this->shareTargetMapper   = $this->createMock(originalClassName: ShareTargetMapper::class);
         $this->secretMapper        = $this->createMock(originalClassName: SecretMapper::class);
         $this->notificationService = $this->createMock(originalClassName: NotificationService::class);
-        $logger                    = $this->createMock(originalClassName: LoggerInterface::class);
+        $logger = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->service = new ShareRequestService(
             shareTargetMapper: $this->shareTargetMapper,
@@ -76,7 +77,7 @@ class ShareRequestServiceTest extends TestCase
             notificationService: $this->notificationService,
             logger: $logger
         );
-    }
+    }//end setUp()
 
     /**
      * Helper: build an owner Secret.
@@ -94,7 +95,7 @@ class ShareRequestServiceTest extends TestCase
         $secret->setOwnerId($ownerId);
         $secret->setName('demo');
         return $secret;
-    }
+    }//end makeOwnerSecret()
 
     /**
      * Test submitShareRequest fires a notification at the owner when the
@@ -118,7 +119,7 @@ class ShareRequestServiceTest extends TestCase
             targetUserId: 'carol',
             requesterId: 'bob'
         );
-    }
+    }//end testSubmitShareRequestFiresOwnerNotification()
 
     /**
      * Test submitShareRequest rejects requester who does not hold a share.
@@ -142,7 +143,7 @@ class ShareRequestServiceTest extends TestCase
             targetUserId: 'carol',
             requesterId: 'mallory'
         );
-    }
+    }//end testSubmitShareRequestRejectsNonRecipient()
 
     /**
      * Test submitShareRequest rejects when the requester IS the owner.
@@ -162,7 +163,7 @@ class ShareRequestServiceTest extends TestCase
             targetUserId: 'carol',
             requesterId: 'alice'
         );
-    }
+    }//end testSubmitShareRequestRejectsOwnerSubmitter()
 
     /**
      * Test submitShareRequest rejects requesting to share with owner.
@@ -184,7 +185,7 @@ class ShareRequestServiceTest extends TestCase
             targetUserId: 'alice',
             requesterId: 'bob'
         );
-    }
+    }//end testSubmitShareRequestRejectsTargetOwner()
 
     /**
      * Test approveShareRequest returns the parameters for the share flow.
@@ -208,7 +209,7 @@ class ShareRequestServiceTest extends TestCase
         $this->assertSame('src-1', $result['sourceSecretId']);
         $this->assertSame('bob', $result['requesterId']);
         $this->assertSame('carol', $result['targetUserId']);
-    }
+    }//end testApproveShareRequestReturnsParameters()
 
     /**
      * Test approveShareRequest rejects non-owner.
@@ -231,7 +232,7 @@ class ShareRequestServiceTest extends TestCase
             ],
             ownerId: 'mallory'
         );
-    }
+    }//end testApproveShareRequestRejectsNonOwner()
 
     /**
      * Test denyShareRequest fires a result notification at the requester.
@@ -255,7 +256,7 @@ class ShareRequestServiceTest extends TestCase
             ],
             ownerId: 'alice'
         );
-    }
+    }//end testDenyShareRequestNotifiesRequester()
 
     /**
      * Test denyShareRequest rejects non-owner.
@@ -280,5 +281,5 @@ class ShareRequestServiceTest extends TestCase
             ],
             ownerId: 'mallory'
         );
-    }
-}
+    }//end testDenyShareRequestRejectsNonOwner()
+}//end class

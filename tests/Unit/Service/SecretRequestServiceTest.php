@@ -39,6 +39,7 @@ use RuntimeException;
  */
 class SecretRequestServiceTest extends TestCase
 {
+
     /**
      * Service under test.
      *
@@ -60,10 +61,10 @@ class SecretRequestServiceTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->mapper = $this->createMock(originalClassName: SecretRequestMapper::class);
-        $logger       = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->mapper  = $this->createMock(originalClassName: SecretRequestMapper::class);
+        $logger        = $this->createMock(originalClassName: LoggerInterface::class);
         $this->service = new SecretRequestService(mapper: $this->mapper, logger: $logger);
-    }
+    }//end setUp()
 
     /**
      * Test create generates a token and inserts a pending request.
@@ -100,7 +101,7 @@ class SecretRequestServiceTest extends TestCase
         $this->assertSame(32, strlen($result->getToken()), '32-char hex token expected');
         $this->assertSame('alice', $result->getCreatedBy());
         $this->assertNotNull($result->getCreatedAt());
-    }
+    }//end testCreateGeneratesTokenAndPersists()
 
     /**
      * Test create rejects empty requestedFields.
@@ -122,7 +123,7 @@ class SecretRequestServiceTest extends TestCase
             expiresAt: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateRejectsEmptyFields()
 
     /**
      * Test approve flips a pending request to fulfilled and sets the timestamp.
@@ -150,7 +151,7 @@ class SecretRequestServiceTest extends TestCase
 
         $this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
         $this->assertNotNull($result->getFulfilledAt());
-    }
+    }//end testApprovePendingMarksFulfilled()
 
     /**
      * Test approve rejects requests created by someone else.
@@ -174,7 +175,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionMessage('Not authorized');
 
         $this->service->approve(requestId: 'req-1', userId: 'mallory');
-    }
+    }//end testApproveRejectsNonOwner()
 
     /**
      * Test approve rejects expired requests.
@@ -199,7 +200,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionMessage('Request has expired');
 
         $this->service->approve(requestId: 'req-1', userId: 'alice');
-    }
+    }//end testApproveRejectsExpired()
 
     /**
      * Test approve rejects requests that are not pending.
@@ -223,7 +224,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionMessage('not pending');
 
         $this->service->approve(requestId: 'req-1', userId: 'alice');
-    }
+    }//end testApproveRejectsAlreadyFulfilled()
 
     /**
      * Test decline flips a pending request to declined.
@@ -248,7 +249,7 @@ class SecretRequestServiceTest extends TestCase
         $result = $this->service->decline(requestId: 'req-1', userId: 'alice');
 
         $this->assertSame(SecretRequest::STATUS_DECLINED, $result->getStatus());
-    }
+    }//end testDeclinePendingMarksDeclined()
 
     /**
      * Test 404 when the request does not exist.
@@ -265,7 +266,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionMessage('Request not found');
 
         $this->service->approve(requestId: 'missing', userId: 'alice');
-    }
+    }//end testApproveThrowsWhenNotFound()
 
     /**
      * getByToken returns the entity for a healthy pending request.
@@ -282,7 +283,7 @@ class SecretRequestServiceTest extends TestCase
             ->willReturn($entity);
 
         $this->assertSame($entity, $this->service->getByToken(token: 'tok-good'));
-    }
+    }//end testGetByTokenReturnsPendingEntity()
 
     /**
      * getByToken throws 404 when no row exists.
@@ -297,7 +298,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionCode(404);
 
         $this->service->getByToken(token: 'tok-bogus');
-    }
+    }//end testGetByTokenThrows404OnUnknown()
 
     /**
      * getByToken throws 423 for locked requests.
@@ -314,7 +315,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionCode(423);
 
         $this->service->getByToken(token: 'tok-locked');
-    }
+    }//end testGetByTokenThrows423OnLocked()
 
     /**
      * getByToken throws 410 for fulfilled requests.
@@ -331,7 +332,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionCode(410);
 
         $this->service->getByToken(token: 'tok-done');
-    }
+    }//end testGetByTokenThrows410OnFulfilled()
 
     /**
      * getByToken throws 408 when the request has expired.
@@ -348,7 +349,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionCode(408);
 
         $this->service->getByToken(token: 'tok-stale');
-    }
+    }//end testGetByTokenThrows408OnExpired()
 
     /**
      * fill flips status to fulfilled + dispatches request_fulfilled.
@@ -394,7 +395,7 @@ class SecretRequestServiceTest extends TestCase
 
         $this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
         $this->assertNotNull($result->getFulfilledAt());
-    }
+    }//end testFillMarksFulfilledAndNotifies()
 
     /**
      * fill rejects payloads that omit a required field.
@@ -411,7 +412,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionMessage('Missing required field: login');
 
         $this->service->fill(token: 'tok-good', encryptedFields: ['key' => 'X']);
-    }
+    }//end testFillRejectsMissingField()
 
     /**
      * fill rejects empty values for required fields.
@@ -428,7 +429,7 @@ class SecretRequestServiceTest extends TestCase
         $this->expectExceptionMessage('Empty value for field: key');
 
         $this->service->fill(token: 'tok-good', encryptedFields: ['key' => '']);
-    }
+    }//end testFillRejectsEmptyValue()
 
     /**
      * lockByEncryptionSuiteId delegates to the mapper.
@@ -443,7 +444,7 @@ class SecretRequestServiceTest extends TestCase
             ->willReturn(4);
 
         $this->assertSame(4, $this->service->lockByEncryptionSuiteId(encryptionSuiteId: 'suite-old'));
-    }
+    }//end testLockByEncryptionSuiteIdDelegates()
 
     /**
      * unlockAndUpdateSuite delegates to the mapper.
@@ -464,7 +465,7 @@ class SecretRequestServiceTest extends TestCase
                 newEncryptionSuiteId: 'suite-new',
             )
         );
-    }
+    }//end testUnlockAndUpdateSuiteDelegates()
 
     /**
      * unlockAndUpdateSuite rejects identical suite IDs.
@@ -479,7 +480,7 @@ class SecretRequestServiceTest extends TestCase
             oldEncryptionSuiteId: 'suite-x',
             newEncryptionSuiteId: 'suite-x',
         );
-    }
+    }//end testUnlockAndUpdateSuiteRejectsSameSuite()
 
     /**
      * listBySecret returns all requests when the caller owns the secret.
@@ -512,7 +513,7 @@ class SecretRequestServiceTest extends TestCase
 
         $result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
         $this->assertSame(expected: $requests, actual: $result);
-    }
+    }//end testListBySecretReturnsRequestsForOwner()
 
     /**
      * listBySecret rejects callers who do not own the secret.
@@ -540,7 +541,7 @@ class SecretRequestServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->listBySecret(secretId: 'sec-1', userId: 'someone-else');
-    }
+    }//end testListBySecretRejectsNonOwner()
 
     /**
      * listBySecret throws when the Secret does not exist.
@@ -564,7 +565,7 @@ class SecretRequestServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->listBySecret(secretId: 'sec-missing', userId: 'owner');
-    }
+    }//end testListBySecretRejectsUnknownSecret()
 
     /**
      * listBySecret fails closed when the SecretMapper bind is missing.
@@ -575,7 +576,7 @@ class SecretRequestServiceTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->service->listBySecret(secretId: 'sec-1', userId: 'owner');
-    }
+    }//end testListBySecretFailsClosedWithoutSecretMapper()
 
     /**
      * Build a baseline pending request for getByToken/fill assertions.
@@ -595,7 +596,7 @@ class SecretRequestServiceTest extends TestCase
         $entity->setCreatedAt(new DateTime());
 
         return $entity;
-    }
+    }//end buildPending()
 
     /**
      * createForApplication resolves the application's active suite and persists the row.
@@ -604,9 +605,9 @@ class SecretRequestServiceTest extends TestCase
      */
     public function testCreateForApplicationResolvesSuite(): void
     {
-        $mapper       = $this->createMock(SecretRequestMapper::class);
-        $suiteMapper  = $this->createMock(EncryptionSuiteMapper::class);
-        $logger       = $this->createMock(LoggerInterface::class);
+        $mapper      = $this->createMock(SecretRequestMapper::class);
+        $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+        $logger      = $this->createMock(LoggerInterface::class);
 
         $suite = new EncryptionSuite();
         $suite->setId('app-suite-1');
@@ -648,7 +649,7 @@ class SecretRequestServiceTest extends TestCase
         $this->assertSame('app-suite-1', $result->getEncryptionSuiteId());
         $this->assertSame('sec-1', $result->getSecretId());
         $this->assertFalse($result->getIsReRequest());
-    }
+    }//end testCreateForApplicationResolvesSuite()
 
     /**
      * createForApplication throws when the application has no active suite.
@@ -657,9 +658,9 @@ class SecretRequestServiceTest extends TestCase
      */
     public function testCreateForApplicationRejectsMissingSuite(): void
     {
-        $mapper       = $this->createMock(SecretRequestMapper::class);
-        $suiteMapper  = $this->createMock(EncryptionSuiteMapper::class);
-        $logger       = $this->createMock(LoggerInterface::class);
+        $mapper      = $this->createMock(SecretRequestMapper::class);
+        $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+        $logger      = $this->createMock(LoggerInterface::class);
 
         $suiteMapper->expects($this->once())
             ->method('findActiveByOwner')
@@ -685,7 +686,7 @@ class SecretRequestServiceTest extends TestCase
             expiresAt: null,
             userId: 'requester',
         );
-    }
+    }//end testCreateForApplicationRejectsMissingSuite()
 
     /**
      * createReRequest reuses the secret's suite + flags isReRequest.
@@ -742,7 +743,7 @@ class SecretRequestServiceTest extends TestCase
         $this->assertSame($captured, $result);
         $this->assertSame('user-suite-1', $result->getEncryptionSuiteId());
         $this->assertTrue($result->getIsReRequest());
-    }
+    }//end testCreateReRequestReusesSecretSuite()
 
     /**
      * createReRequest rejects a non-owner caller.
@@ -781,7 +782,7 @@ class SecretRequestServiceTest extends TestCase
             expiresAt: null,
             userId: 'alice',
         );
-    }
+    }//end testCreateReRequestRejectsNonOwner()
 
     /**
      * createReRequest rejects when a pending request is already open.
@@ -827,5 +828,5 @@ class SecretRequestServiceTest extends TestCase
             expiresAt: null,
             userId: 'alice',
         );
-    }
-}
+    }//end testCreateReRequestRejectsExistingPending()
+}//end class

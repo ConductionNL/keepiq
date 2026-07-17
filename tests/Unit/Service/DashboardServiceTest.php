@@ -37,6 +37,7 @@ use RuntimeException;
  */
 class DashboardServiceTest extends TestCase
 {
+
     /**
      * Service under test.
      *
@@ -61,7 +62,7 @@ class DashboardServiceTest extends TestCase
         $this->mapper  = $this->createMock(originalClassName: DashboardSettingMapper::class);
         $logger        = $this->createMock(originalClassName: LoggerInterface::class);
         $this->service = new DashboardService(mapper: $this->mapper, logger: $logger);
-    }
+    }//end setUp()
 
     /**
      * Test set inserts a fresh row when no existing setting matches.
@@ -93,7 +94,7 @@ class DashboardServiceTest extends TestCase
         $this->assertSame(['grid' => 4], $result->getDecodedValue());
         $this->assertNotNull($result->getCreatedAt());
         $this->assertNotNull($result->getUpdatedAt());
-    }
+    }//end testSetInsertsWhenAbsent()
 
     /**
      * Test set updates an existing row when the user already has the key.
@@ -122,7 +123,7 @@ class DashboardServiceTest extends TestCase
         $this->assertSame('alice', $result->getUserId());
         $this->assertSame('new', $result->getDecodedValue());
         $this->assertNotNull($result->getUpdatedAt());
-    }
+    }//end testSetUpdatesWhenPresent()
 
     /**
      * Test get returns null when no row exists for the user+key combo.
@@ -136,7 +137,7 @@ class DashboardServiceTest extends TestCase
             ->willThrowException(new DoesNotExistException('absent'));
 
         $this->assertNull($this->service->get('alice', 'default_view'));
-    }
+    }//end testGetReturnsNullWhenAbsent()
 
     /**
      * Test set rejects an unknown setting key.
@@ -152,7 +153,7 @@ class DashboardServiceTest extends TestCase
         $this->expectExceptionMessage('Unknown dashboard setting key');
 
         $this->service->set('alice', 'totally_made_up_key', 'x');
-    }
+    }//end testSetRejectsUnknownKey()
 
     /**
      * Test listForUser projects the user's rows into a flat key=>value map.
@@ -181,7 +182,7 @@ class DashboardServiceTest extends TestCase
             ],
             $this->service->listForUser('alice')
         );
-    }
+    }//end testListForUserProjectsRowsToMap()
 
     /**
      * fetchSummary aggregates counts from the wired mappers for an admin.
@@ -232,7 +233,7 @@ class DashboardServiceTest extends TestCase
         $this->assertSame(5, $summary['pending_apps_count']);
         $this->assertTrue($summary['is_admin']);
         $this->assertArrayHasKey('last_updated', $summary);
-    }
+    }//end testFetchSummaryAggregatesForAdmin()
 
     /**
      * fetchSummary omits the pending-apps count for non-admins.
@@ -266,7 +267,7 @@ class DashboardServiceTest extends TestCase
 
         $this->assertNull($summary['pending_apps_count']);
         $this->assertFalse($summary['is_admin']);
-    }
+    }//end testFetchSummaryOmitsPendingAppsForNonAdmin()
 
     /**
      * fetchSummary degrades a failing mapper to zero rather than throwing.
@@ -282,7 +283,7 @@ class DashboardServiceTest extends TestCase
         $shareMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
         $shareMapper->method('findByTargetUser')->willReturn([]);
 
-        $logger  = $this->createMock(originalClassName: LoggerInterface::class);
+        $logger = $this->createMock(originalClassName: LoggerInterface::class);
         $logger->expects($this->atLeastOnce())->method('warning');
         $mapper  = $this->createMock(originalClassName: DashboardSettingMapper::class);
         $service = new DashboardService(
@@ -297,7 +298,7 @@ class DashboardServiceTest extends TestCase
         $summary = $service->fetchSummary(userId: 'alice', isAdmin: false);
 
         $this->assertSame(0, $summary['total_secrets']);
-    }
+    }//end testFetchSummaryDegradesOnMapperFailure()
 
     /**
      * fetchSummary tolerates missing aggregator dependencies (legacy
@@ -313,5 +314,5 @@ class DashboardServiceTest extends TestCase
         $this->assertSame(0, $summary['shared_with_me_count']);
         $this->assertSame(0, $summary['folders_count']);
         $this->assertNull($summary['pending_apps_count']);
-    }
-}
+    }//end testFetchSummaryWithoutAggregatorDepsReturnsZeroes()
+}//end class

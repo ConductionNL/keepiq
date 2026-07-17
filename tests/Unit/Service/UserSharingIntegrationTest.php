@@ -63,7 +63,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Integration tests
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   Integration tests
  *   legitimately couple multiple services to assert their interaction.
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Cross-service
  *   integration coverage in one file mirrors the existing per-service
@@ -90,7 +90,7 @@ class UserSharingIntegrationTest extends TestCase
      *
      * @return Secret
      */
-    private function makeSecret(string $id, string $ownerId, string $key = 'CIPHERTEXT'): Secret
+    private function makeSecret(string $id, string $ownerId, string $key='CIPHERTEXT'): Secret
     {
         $secret = new Secret();
         $secret->setId($id);
@@ -100,7 +100,7 @@ class UserSharingIntegrationTest extends TestCase
         $secret->setName('demo-secret');
         $secret->setEncryptionSuiteId('suite-'.$ownerId);
         return $secret;
-    }
+    }//end makeSecret()
 
     /**
      * Build a ShareTarget row.
@@ -112,7 +112,7 @@ class UserSharingIntegrationTest extends TestCase
      *
      * @return ShareTarget
      */
-    private function makeShareTarget(string $id, string $source, string $target, ?string $groupShareId = null): ShareTarget
+    private function makeShareTarget(string $id, string $source, string $target, ?string $groupShareId=null): ShareTarget
     {
         $row = new ShareTarget();
         $row->setId($id);
@@ -123,7 +123,7 @@ class UserSharingIntegrationTest extends TestCase
         $row->setCreatedBy('alice');
         $row->setCreatedAt(new DateTime());
         return $row;
-    }
+    }//end makeShareTarget()
 
     /**
      * Build a wired ShareService.
@@ -137,8 +137,8 @@ class UserSharingIntegrationTest extends TestCase
         $suiteMapper         = $this->createMock(EncryptionSuiteMapper::class);
         $delegationMapper    = $this->createMock(SecretDelegationMapper::class);
         $notificationService = $this->createMock(NotificationService::class);
-        $db                  = $this->createMock(IDBConnection::class);
-        $logger              = $this->createMock(LoggerInterface::class);
+        $db     = $this->createMock(IDBConnection::class);
+        $logger = $this->createMock(LoggerInterface::class);
 
         $service = new ShareService(
             mapper: $shareTargetMapper,
@@ -151,7 +151,7 @@ class UserSharingIntegrationTest extends TestCase
         );
 
         return [$service, $shareTargetMapper, $secretMapper, $suiteMapper, $delegationMapper, $notificationService, $db];
-    }
+    }//end buildShareService()
 
     /**
      * §15.1 — Share API end-to-end: owner sees the recipient list, the
@@ -190,7 +190,7 @@ class UserSharingIntegrationTest extends TestCase
         // §15.5 — the source secret's encrypted key blob never gets
         // decrypted by any service path.
         $this->assertSame('OWNERCIPHER', $source->getKey());
-    }
+    }//end testShareApiOwnerSeesListRecipientSeesEmpty()
 
     /**
      * §15.6 — non-owner cannot revoke a share.
@@ -212,7 +212,7 @@ class UserSharingIntegrationTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $service->revokeShare('row-1', 'mallory');
-    }
+    }//end testShareApiNonOwnerCannotRevoke()
 
     /**
      * §15.7 — deleting a Secret cascades to its ShareTargets,
@@ -222,11 +222,11 @@ class UserSharingIntegrationTest extends TestCase
      */
     public function testDeleteSecretCascadesToAllSharingRows(): void
     {
-        $secretMapper      = $this->createMock(SecretMapper::class);
-        $shareService      = $this->createMock(ShareService::class);
-        $linkShareService  = $this->createMock(LinkShareService::class);
-        $groupShareMapper  = $this->createMock(\OCA\Doriath\Db\GroupShareMapper::class);
-        $delegationMapper  = $this->createMock(SecretDelegationMapper::class);
+        $secretMapper     = $this->createMock(SecretMapper::class);
+        $shareService     = $this->createMock(ShareService::class);
+        $linkShareService = $this->createMock(LinkShareService::class);
+        $groupShareMapper = $this->createMock(\OCA\Doriath\Db\GroupShareMapper::class);
+        $delegationMapper = $this->createMock(SecretDelegationMapper::class);
 
         $service = new SecretService(
             mapper: $secretMapper,
@@ -251,7 +251,7 @@ class UserSharingIntegrationTest extends TestCase
         $secretMapper->expects($this->once())->method('delete');
 
         $service->delete('s-1', 'alice');
-    }
+    }//end testDeleteSecretCascadesToAllSharingRows()
 
     /**
      * §15.4 + §15.8 — delegation lifecycle:
@@ -298,7 +298,7 @@ class UserSharingIntegrationTest extends TestCase
             ->with('alice')
             ->willReturn(2);
         $this->assertSame(2, $service->makePermanent('alice'));
-    }
+    }//end testDelegationLifecycleReclaimAndMakePermanent()
 
     /**
      * §15.4 — admin handover requires (a) vault_admin membership and
@@ -343,7 +343,7 @@ class UserSharingIntegrationTest extends TestCase
         $this->assertSame('mallory', $row->getDelegatedTo());
         $this->assertSame('mallory', $row->getInitiatedBy());
         $this->assertFalse($row->getIsPermanent());
-    }
+    }//end testDelegationAdminHandoverHardenedPath()
 
     /**
      * §15.9 — direct shares survive group-member removal; group-derived
@@ -371,7 +371,7 @@ class UserSharingIntegrationTest extends TestCase
         );
         $this->assertCount(1, $candidatesForLeave);
         $this->assertSame('row-group', array_values($candidatesForLeave)[0]->getId());
-    }
+    }//end testGroupMemberLeaveOnlyRevokesGroupDerivedShares()
 
     /**
      * §15.5 — recipient's encrypted Secret copy round-trips as an opaque
@@ -382,14 +382,14 @@ class UserSharingIntegrationTest extends TestCase
      */
     public function testShareRowCarriesOpaqueRecipientCopyIdOnly(): void
     {
-        $row = $this->makeShareTarget('row-1', 's-1', 'bob');
+        $row        = $this->makeShareTarget('row-1', 's-1', 'bob');
         $serialized = $row->jsonSerialize();
 
         $this->assertArrayHasKey('secretId', $serialized, 'recipient copy reference is the only payload');
         $this->assertArrayNotHasKey('key', $serialized);
         $this->assertArrayNotHasKey('login', $serialized);
         $this->assertArrayNotHasKey('additionalFields', $serialized);
-    }
+    }//end testShareRowCarriesOpaqueRecipientCopyIdOnly()
 
     /**
      * §15.6 — non-participant cannot read the recipient list (sees
@@ -406,5 +406,5 @@ class UserSharingIntegrationTest extends TestCase
 
         $list = $service->listSharesForSecret('s-missing', 'mallory');
         $this->assertSame([], $list);
-    }
-}
+    }//end testNonParticipantSeesEmptyShareList()
+}//end class

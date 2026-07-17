@@ -40,7 +40,7 @@ class ImportControllerTest extends TestCase
      *
      * @return array{0:ImportController,1:ImportService}
      */
-    private function build(?string $userId = 'alice'): array
+    private function build(?string $userId='alice'): array
     {
         $request = $this->createMock(IRequest::class);
         $session = $this->createMock(IUserSession::class);
@@ -55,7 +55,7 @@ class ImportControllerTest extends TestCase
         }
 
         return [new ImportController($request, $service, $session), $service];
-    }
+    }//end build()
 
     /**
      * An anonymous request is unauthorized.
@@ -65,9 +65,9 @@ class ImportControllerTest extends TestCase
     public function testUnauthenticatedReturns401(): void
     {
         [$controller] = $this->build(userId: null);
-        $response = $controller->batchCreate([['name' => 'X']]);
+        $response     = $controller->batchCreate([['name' => 'X']]);
         $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-    }
+    }//end testUnauthenticatedReturns401()
 
     /**
      * An empty body is a 400.
@@ -79,7 +79,7 @@ class ImportControllerTest extends TestCase
         [$controller] = $this->build();
         $this->assertSame(Http::STATUS_BAD_REQUEST, $controller->batchCreate(null)->getStatus());
         $this->assertSame(Http::STATUS_BAD_REQUEST, $controller->batchCreate([])->getStatus());
-    }
+    }//end testEmptyBodyReturns400()
 
     /**
      * A chunk over the cap is a 413.
@@ -89,10 +89,10 @@ class ImportControllerTest extends TestCase
     public function testOverCapReturns413(): void
     {
         [$controller] = $this->build();
-        $items    = array_fill(0, (ImportService::MAX_ITEMS + 1), ['name' => 'X']);
-        $response = $controller->batchCreate($items);
+        $items        = array_fill(0, (ImportService::MAX_ITEMS + 1), ['name' => 'X']);
+        $response     = $controller->batchCreate($items);
         $this->assertSame(413, $response->getStatus());
-    }
+    }//end testOverCapReturns413()
 
     /**
      * No active suite maps to 412.
@@ -105,7 +105,7 @@ class ImportControllerTest extends TestCase
         $service->method('commitChunk')->willThrowException(new SuiteBlockedException('no suite'));
         $response = $controller->batchCreate([['name' => 'X']]);
         $this->assertSame(412, $response->getStatus());
-    }
+    }//end testNoActiveSuiteReturns412()
 
     /**
      * A successful commit returns the per-index results with HTTP 200, and the
@@ -125,5 +125,5 @@ class ImportControllerTest extends TestCase
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
         $data = $response->getData();
         $this->assertSame('created', $data['results'][0]['status']);
-    }
-}
+    }//end testSuccessReturnsResultsWithSessionOwner()
+}//end class

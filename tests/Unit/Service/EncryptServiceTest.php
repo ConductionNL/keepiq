@@ -10,9 +10,13 @@ use PHPUnit\Framework\TestCase;
 
 class EncryptServiceTest extends TestCase
 {
+
     private EncryptService $encrypt;
+
     private DecryptService $decrypt;
+
     private string $publicKeyPem = '';
+
     private string $privateKeyPem = '';
 
     protected function setUp(): void
@@ -20,18 +24,20 @@ class EncryptServiceTest extends TestCase
         $this->encrypt = new EncryptService();
         $this->decrypt = new DecryptService();
 
-        $keyPair = openssl_pkey_new([
-            'private_key_bits' => 4096,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
+        $keyPair = openssl_pkey_new(
+                [
+                    'private_key_bits' => 4096,
+                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                ]
+                );
         openssl_pkey_export($keyPair, $this->privateKeyPem);
-        $details = openssl_pkey_get_details($keyPair);
+        $details            = openssl_pkey_get_details($keyPair);
         $this->publicKeyPem = $details['key'];
-    }
+    }//end setUp()
 
     public function testRsaEncryptDecryptSingleChunk(): void
     {
-        $plaintext = 'short secret';
+        $plaintext  = 'short secret';
         $ciphertext = $this->encrypt->rsaEncrypt($plaintext, $this->publicKeyPem);
 
         $this->assertNotEmpty($ciphertext);
@@ -39,27 +45,27 @@ class EncryptServiceTest extends TestCase
 
         $decrypted = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
         $this->assertEquals($plaintext, $decrypted);
-    }
+    }//end testRsaEncryptDecryptSingleChunk()
 
     public function testRsaEncryptDecryptMultiChunk(): void
     {
         // 1000 bytes > 446 chunk size → 3 chunks.
-        $plaintext = str_repeat('A', 1000);
+        $plaintext  = str_repeat('A', 1000);
         $ciphertext = $this->encrypt->rsaEncrypt($plaintext, $this->publicKeyPem);
 
         $decrypted = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
         $this->assertEquals($plaintext, $decrypted);
-    }
+    }//end testRsaEncryptDecryptMultiChunk()
 
     public function testRsaEncryptDecryptLargePayload(): void
     {
         // 10000 bytes → 23 chunks.
-        $plaintext = str_repeat('X', 10000);
+        $plaintext  = str_repeat('X', 10000);
         $ciphertext = $this->encrypt->rsaEncrypt($plaintext, $this->publicKeyPem);
 
         $decrypted = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
         $this->assertEquals($plaintext, $decrypted);
-    }
+    }//end testRsaEncryptDecryptLargePayload()
 
     /**
      * Read-after-write: a value encrypted under the X.509 CERTIFICATE the suites
@@ -130,11 +136,11 @@ class EncryptServiceTest extends TestCase
         $recovered = $this->decrypt->rsaDecrypt($ciphertext, $userPrivatePem);
 
         $this->assertEquals($plaintext, $recovered);
-    }
+    }//end testRsaEncryptUnderCertificateDecryptsWithMatchingPrivateKey()
 
     public function testAesGcmEnvelopeRoundTrip(): void
     {
-        $key = random_bytes(32);
+        $key       = random_bytes(32);
         $plaintext = 'secret data';
 
         $envelope = $this->encrypt->aesEncrypt($plaintext, $key);
@@ -142,18 +148,18 @@ class EncryptServiceTest extends TestCase
 
         $decrypted = $this->decrypt->aesDecrypt($envelope, $key);
         $this->assertEquals($plaintext, $decrypted);
-    }
+    }//end testAesGcmEnvelopeRoundTrip()
 
     public function testAesGcmWrongKeyFails(): void
     {
-        $key = random_bytes(32);
+        $key      = random_bytes(32);
         $wrongKey = random_bytes(32);
 
         $envelope = $this->encrypt->aesEncrypt('secret', $key);
 
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->decrypt->aesDecrypt($envelope, $wrongKey);
-    }
+    }//end testAesGcmWrongKeyFails()
 
     public function testEncryptDecryptPrivateKeyWithPassword(): void
     {
@@ -164,24 +170,24 @@ class EncryptServiceTest extends TestCase
 
         $decrypted = $this->decrypt->decryptPrivateKey($encrypted, $password);
         $this->assertEquals($this->privateKeyPem, $decrypted);
-    }
+    }//end testEncryptDecryptPrivateKeyWithPassword()
 
     public function testEncryptPrivateKeyWrongPasswordFails(): void
     {
-        $password = 'correct-password';
+        $password      = 'correct-password';
         $wrongPassword = 'wrong-password';
 
         $encrypted = $this->encrypt->encryptPrivateKey($this->privateKeyPem, $password);
 
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->decrypt->decryptPrivateKey($encrypted, $wrongPassword);
-    }
+    }//end testEncryptPrivateKeyWrongPasswordFails()
 
     public function testRsaEncryptInvalidPublicKey(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->encrypt->rsaEncrypt('data', 'not-a-pem-key');
-    }
+    }//end testRsaEncryptInvalidPublicKey()
 
     /**
      * Regression lock for the SHA-1 -> SHA-256 OAEP/MGF1 fix (Phase-0).
@@ -221,6 +227,7 @@ class EncryptServiceTest extends TestCase
         } finally {
             restore_error_handler();
         }
+
         if ($sha1Ok === true) {
             $this->assertNotSame(
                 $plaintext,
@@ -236,7 +243,7 @@ class EncryptServiceTest extends TestCase
             $plaintext,
             $this->decrypt->rsaDecrypt(base64_encode($raw), $this->privateKeyPem)
         );
-    }
+    }//end testRsaEncryptUsesSha256OaepNotSha1()
 
     /**
      * Regression lock: decrypting RSA ciphertext with the WRONG private key
@@ -250,15 +257,17 @@ class EncryptServiceTest extends TestCase
     {
         $ciphertext = $this->encrypt->rsaEncrypt('top secret', $this->publicKeyPem);
 
-        $wrongPair = openssl_pkey_new([
-            'private_key_bits' => 4096,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
+        $wrongPair = openssl_pkey_new(
+                [
+                    'private_key_bits' => 4096,
+                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                ]
+                );
         openssl_pkey_export($wrongPair, $wrongPrivateKeyPem);
 
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->decrypt->rsaDecrypt($ciphertext, $wrongPrivateKeyPem);
-    }
+    }//end testRsaDecryptWrongKeyFailsCleanly()
 
     public function testDeriveKeyConsistency(): void
     {
@@ -268,7 +277,7 @@ class EncryptServiceTest extends TestCase
 
         $this->assertEquals($key1, $key2);
         $this->assertEquals(32, strlen($key1));
-    }
+    }//end testDeriveKeyConsistency()
 
     public function testDeriveKeyDifferentPasswordsProduceDifferentKeys(): void
     {
@@ -277,32 +286,32 @@ class EncryptServiceTest extends TestCase
         $key2 = $this->encrypt->deriveKey('password2', $salt);
 
         $this->assertNotEquals($key1, $key2);
-    }
+    }//end testDeriveKeyDifferentPasswordsProduceDifferentKeys()
 
     public function testRsaEncryptEmptyString(): void
     {
         $ciphertext = $this->encrypt->rsaEncrypt('', $this->publicKeyPem);
-        $decrypted = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
+        $decrypted  = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
 
         $this->assertSame('', $decrypted);
-    }
+    }//end testRsaEncryptEmptyString()
 
     public function testRsaEncryptExactlyOneChunkBoundary(): void
     {
         // Exactly 446 bytes = exactly 1 chunk.
-        $plaintext = str_repeat('B', 446);
+        $plaintext  = str_repeat('B', 446);
         $ciphertext = $this->encrypt->rsaEncrypt($plaintext, $this->publicKeyPem);
-        $decrypted = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
+        $decrypted  = $this->decrypt->rsaDecrypt($ciphertext, $this->privateKeyPem);
 
         $this->assertSame($plaintext, $decrypted);
-    }
+    }//end testRsaEncryptExactlyOneChunkBoundary()
 
     public function testRsaDecryptInvalidBase64(): void
     {
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Invalid RSA ciphertext format');
         $this->decrypt->rsaDecrypt('!!!not-base64!!!', $this->privateKeyPem);
-    }
+    }//end testRsaDecryptInvalidBase64()
 
     public function testRsaDecryptTooShortPayload(): void
     {
@@ -310,33 +319,33 @@ class EncryptServiceTest extends TestCase
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Invalid RSA ciphertext format');
         $this->decrypt->rsaDecrypt(base64_encode('ab'), $this->privateKeyPem);
-    }
+    }//end testRsaDecryptTooShortPayload()
 
     public function testRsaDecryptLengthMismatch(): void
     {
         // Header says 2 chunks but only provide data for 1.
-        $header = pack('N', 2);
+        $header    = pack('N', 2);
         $fakeBlock = str_repeat("\0", 512);
-        $raw = $header . $fakeBlock;
+        $raw       = $header.$fakeBlock;
 
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('length mismatch');
         $this->decrypt->rsaDecrypt(base64_encode($raw), $this->privateKeyPem);
-    }
+    }//end testRsaDecryptLengthMismatch()
 
     public function testRsaDecryptInvalidPrivateKey(): void
     {
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Invalid private key PEM');
         $this->decrypt->rsaDecrypt(base64_encode(pack('N', 0)), 'not-a-key');
-    }
+    }//end testRsaDecryptInvalidPrivateKey()
 
     public function testAesDecryptInvalidBase64(): void
     {
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Invalid base64 envelope');
         $this->decrypt->aesDecrypt('!!!invalid-base64!!!', random_bytes(32));
-    }
+    }//end testAesDecryptInvalidBase64()
 
     public function testAesDecryptEnvelopeTooShort(): void
     {
@@ -345,21 +354,24 @@ class EncryptServiceTest extends TestCase
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Envelope too short');
         $this->decrypt->aesDecrypt($short, random_bytes(32));
-    }
+    }//end testAesDecryptEnvelopeTooShort()
 
     public function testAesDecryptWrongVersionByte(): void
     {
         // Build an envelope with version 99 instead of 1.
         $envelope = pack('N', 99)
-            . str_repeat("\0", 16)  // salt
-            . random_bytes(12)      // IV
-            . random_bytes(32)      // ciphertext
-            . random_bytes(16);     // tag
-
+            .str_repeat("\0", 16)
+        // salt
+            .random_bytes(12)
+        // IV
+            .random_bytes(32)
+        // ciphertext
+            .random_bytes(16);
+        // tag
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Unsupported envelope version: 99');
         $this->decrypt->aesDecrypt(base64_encode($envelope), random_bytes(32));
-    }
+    }//end testAesDecryptWrongVersionByte()
 
     public function testDecryptPrivateKeyInvalidEnvelope(): void
     {
@@ -367,25 +379,28 @@ class EncryptServiceTest extends TestCase
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Envelope too short');
         $this->decrypt->decryptPrivateKey($short, 'password');
-    }
+    }//end testDecryptPrivateKeyInvalidEnvelope()
 
     public function testDecryptPrivateKeyWrongVersion(): void
     {
         $envelope = pack('N', 42)
-            . random_bytes(16)  // salt
-            . random_bytes(12)  // IV
-            . random_bytes(32)  // ciphertext
-            . random_bytes(16); // tag
-
+            .random_bytes(16)
+        // salt
+            .random_bytes(12)
+        // IV
+            .random_bytes(32)
+        // ciphertext
+            .random_bytes(16);
+        // tag
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Unsupported envelope version: 42');
         $this->decrypt->decryptPrivateKey(base64_encode($envelope), 'password');
-    }
+    }//end testDecryptPrivateKeyWrongVersion()
 
     public function testDecryptPrivateKeyInvalidBase64(): void
     {
         $this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
         $this->expectExceptionMessage('Invalid base64 envelope');
         $this->decrypt->decryptPrivateKey('!!!bad-base64!!!', 'password');
-    }
-}
+    }//end testDecryptPrivateKeyInvalidBase64()
+}//end class

@@ -36,6 +36,7 @@ use PHPUnit\Framework\TestCase;
  */
 class AuditControllerTest extends TestCase
 {
+
     /**
      * The controller under test.
      *
