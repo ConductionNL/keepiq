@@ -108,7 +108,14 @@ class InitializeSettings implements IRepairStep
         }
 
         try {
-            $result = $this->settingsService->loadConfiguration(force: true);
+            // NOT forced. `force: true` bypasses OpenRegister's app-level import fast-skip
+            // (gated on `$force === false`), so this step re-parsed the register descriptor +
+            // register.d fragments and walked every register/schema on EVERY upgrade, even when
+            // nothing changed. Forcing was never needed: the version passed to OR is
+            // content-addressed (`+frag.<md5 of the fragments>`), so a content change already
+            // bumps the version and re-imports; OpenRegister#426 additionally makes the gate
+            // content-aware. A genuinely unchanged config now fast-skips in milliseconds.
+            $result = $this->settingsService->loadConfiguration();
 
             if ($result['success'] === true) {
                 $version = ($result['version'] ?? 'unknown');
