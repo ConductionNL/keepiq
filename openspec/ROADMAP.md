@@ -15,6 +15,14 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [User Sharing](specs/user-sharing/spec.md) | planned | 5 | — |
 | [Link Sharing](specs/link-sharing/spec.md) | planned | 6 | — |
 | [Secret Requests](specs/secret-requests/spec.md) | planned | 7 | — |
+| [Team Folder Sharing](specs/team-folder-sharing/spec.md) | in-progress | 8 — #1 ecosystem wish | [team-folder-sharing](changes/team-folder-sharing/) |
+| [Browser Extension & Autofill](specs/browser-extension-autofill/spec.md) | in-progress | 9 | [browser-extension-autofill](changes/browser-extension-autofill/) |
+| [Passkey Item Type](specs/passkey-item-type/spec.md) | in-progress | 10 — 2026 table stakes | [passkey-item-type](changes/passkey-item-type/) |
+| [CXF Import/Export](specs/cxf-import-export/spec.md) | in-progress | 11 — after passkeys | [cxf-import-export](changes/cxf-import-export/) |
+| [Encrypted Attachments](specs/encrypted-attachments/spec.md) | in-progress | 12 | [encrypted-attachments](changes/encrypted-attachments/) |
+| [Secret Version History](specs/secret-version-history/spec.md) | in-progress | 13 | [secret-version-history](changes/secret-version-history/) |
+| [Rotation & Expiry Policies](specs/rotation-expiry-policies/spec.md) | in-progress | 14 — NIS2/BIO2 driver | [rotation-expiry-policies](changes/rotation-expiry-policies/) |
+| [Machine Secret Leases](specs/machine-secret-leases/spec.md) | in-progress | 15 — NHI segment | [machine-secret-leases](changes/machine-secret-leases/) |
 
 ## Phases
 
@@ -43,6 +51,19 @@ _Not yet specced. To be explored in future `/opsx:app-explore` sessions._
 - API (basic auth + OAuth)
 - Custom CA chain upload
 - Post-quantum cryptography (when available in PHP)
+
+### Phase 3.5 — Market-gap wave (specced 2026-07-16, deep-research driven)
+
+Eight changes created from the 2026-07-16 competitive deep-dive (results logged to the Spectr register, `sourceRef: deepdive-2026-07-16-app-doriath`). Ordered by demand evidence:
+
+1. **Team Folder Sharing** — share folders with users/groups, inheritance + offboarding (NC Passwords #582/#583, 63+60 reactions — the ecosystem's #1 wish)
+2. **Browser Extension & Autofill** — MV3 extension, zero-knowledge unlock, iframe-capable autofill (the #1 experiential complaint ecosystem-wide)
+3. **Passkey Item Type** — passkey storage as a secret type (2026 table stakes; Entra ID defaults to passkeys Sept 2026)
+4. **CXF Import/Export** — FIDO Credential Exchange Format portability (Proposed Standard Aug 2025; kills the lock-in objection)
+5. **Encrypted Attachments** — client-side-encrypted files on secrets (tier-1 table stakes)
+6. **Secret Version History** — view/restore prior values (Passbolt v5.7 parity)
+7. **Rotation & Expiry Policies** — expiry reminders + rotate-after-breach (NIS2 Art. 21(2)(j) + BIO2 compliance sale)
+8. **Machine Secret Leases** — TTL-bounded scoped grants on the machine API (NHI market ~22% CAGR; unified human+machine store differentiator)
 
 ### Phase 4 — Future Development
 
