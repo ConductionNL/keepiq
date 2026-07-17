@@ -34,6 +34,7 @@ use RuntimeException;
  */
 class LinkShareServiceTest extends TestCase
 {
+
     /**
      * The service under test.
      *
@@ -59,7 +60,7 @@ class LinkShareServiceTest extends TestCase
         $logger       = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->service = new LinkShareService(mapper: $this->mapper, logger: $logger);
-    }
+    }//end setUp()
 
     /**
      * Build a LinkShare entity with sensible defaults for tests.
@@ -68,7 +69,7 @@ class LinkShareServiceTest extends TestCase
      *
      * @return LinkShare
      */
-    private function makeShare(array $overrides = []): LinkShare
+    private function makeShare(array $overrides=[]): LinkShare
     {
         $share = new LinkShare();
         $share->setId($overrides['id'] ?? 'ls-1');
@@ -87,7 +88,7 @@ class LinkShareServiceTest extends TestCase
         }
 
         return $share;
-    }
+    }//end makeShare()
 
     /**
      * Test create generates a 32-char hex token and persists the row.
@@ -123,7 +124,7 @@ class LinkShareServiceTest extends TestCase
         // 128 bits of entropy = 32 hex chars.
         $this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $result->getToken());
         $this->assertSame($captured, $result);
-    }
+    }//end testCreateGeneratesTokenAndPersists()
 
     /**
      * Test create rejects a usage limit below the minimum.
@@ -144,7 +145,7 @@ class LinkShareServiceTest extends TestCase
             expiresAt: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateRejectsUsageLimitZero()
 
     /**
      * Test create rejects a usage limit above the maximum.
@@ -165,7 +166,7 @@ class LinkShareServiceTest extends TestCase
             expiresAt: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateRejectsUsageLimitEleven()
 
     /**
      * Test create rejects missing required fields.
@@ -186,7 +187,7 @@ class LinkShareServiceTest extends TestCase
             expiresAt: null,
             userId: 'alice'
         );
-    }
+    }//end testCreateRejectsEmptySnapshot()
 
     /**
      * Test getByToken returns a valid link share.
@@ -201,7 +202,7 @@ class LinkShareServiceTest extends TestCase
         $result = $this->service->getByToken('good');
 
         $this->assertSame('good', $result->getToken());
-    }
+    }//end testGetByTokenReturnsValidShare()
 
     /**
      * Test getByToken throws when the token does not exist.
@@ -214,7 +215,7 @@ class LinkShareServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
 
         $this->service->getByToken('missing');
-    }
+    }//end testGetByTokenThrowsWhenMissing()
 
     /**
      * Test getByToken deletes and throws when usage is exhausted.
@@ -229,7 +230,7 @@ class LinkShareServiceTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->service->getByToken('exhausted');
-    }
+    }//end testGetByTokenThrowsAndDeletesWhenUsageExhausted()
 
     /**
      * Test getByToken deletes and throws when expired.
@@ -244,7 +245,7 @@ class LinkShareServiceTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->service->getByToken('expired');
-    }
+    }//end testGetByTokenThrowsAndDeletesWhenExpired()
 
     /**
      * Test getByToken deletes and throws when brute-force threshold reached.
@@ -259,7 +260,7 @@ class LinkShareServiceTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->service->getByToken('bruteforced');
-    }
+    }//end testGetByTokenThrowsAndDeletesWhenBruteForced()
 
     /**
      * Test confirmAccess increments usage atomically and resets failures.
@@ -280,7 +281,7 @@ class LinkShareServiceTest extends TestCase
         $result = $this->service->confirmAccess('tok');
 
         $this->assertSame(2, $result->getUsageCount());
-    }
+    }//end testConfirmAccessIncrementsUsage()
 
     /**
      * Test confirmAccess deletes the share when the limit is reached.
@@ -297,7 +298,7 @@ class LinkShareServiceTest extends TestCase
         $result = $this->service->confirmAccess('tok');
 
         $this->assertSame(3, $result->getUsageCount());
-    }
+    }//end testConfirmAccessDeletesWhenLimitReached()
 
     /**
      * Test confirmAccess throws when the atomic update affects no rows.
@@ -311,7 +312,7 @@ class LinkShareServiceTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->service->confirmAccess('tok');
-    }
+    }//end testConfirmAccessThrowsWhenNoRowsAffected()
 
     /**
      * Test recordFailedAttempt increments the counter below the threshold.
@@ -333,7 +334,7 @@ class LinkShareServiceTest extends TestCase
         $this->mapper->expects($this->never())->method('delete');
 
         $this->service->recordFailedAttempt('tok');
-    }
+    }//end testRecordFailedAttemptIncrements()
 
     /**
      * Test recordFailedAttempt deletes the share at the 5th failure.
@@ -350,7 +351,7 @@ class LinkShareServiceTest extends TestCase
         $this->service->recordFailedAttempt('tok');
 
         $this->assertSame(5, $share->getFailedAttempts());
-    }
+    }//end testRecordFailedAttemptDeletesAtThreshold()
 
     /**
      * Test recordFailedAttempt is a no-op for a non-existent token.
@@ -364,7 +365,7 @@ class LinkShareServiceTest extends TestCase
         $this->mapper->expects($this->never())->method('delete');
 
         $this->service->recordFailedAttempt('missing');
-    }
+    }//end testRecordFailedAttemptNoopForMissingToken()
 
     /**
      * Test listBySecret filters to the requesting owner only (IDOR-safe).
@@ -373,15 +374,15 @@ class LinkShareServiceTest extends TestCase
      */
     public function testListBySecretFiltersByOwner(): void
     {
-        $mine    = $this->makeShare(['id' => 'a', 'createdBy' => 'alice']);
-        $theirs  = $this->makeShare(['id' => 'b', 'createdBy' => 'bob']);
+        $mine   = $this->makeShare(['id' => 'a', 'createdBy' => 'alice']);
+        $theirs = $this->makeShare(['id' => 'b', 'createdBy' => 'bob']);
         $this->mapper->method('findBySecretId')->with('secret-1')->willReturn([$mine, $theirs]);
 
         $result = $this->service->listBySecret('secret-1', 'alice');
 
         $this->assertCount(1, $result);
         $this->assertSame('a', $result[0]->getId());
-    }
+    }//end testListBySecretFiltersByOwner()
 
     /**
      * Test delete validates ownership and removes the row.
@@ -395,7 +396,7 @@ class LinkShareServiceTest extends TestCase
         $this->mapper->expects($this->once())->method('delete')->with($share);
 
         $this->service->delete('ls-7', 'alice');
-    }
+    }//end testDeleteByOwnerSucceeds()
 
     /**
      * Test delete rejects a non-owner with InvalidArgumentException.
@@ -410,7 +411,7 @@ class LinkShareServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->service->delete('ls-7', 'mallory');
-    }
+    }//end testDeleteByNonOwnerRejected()
 
     /**
      * Test delete throws when the link share does not exist.
@@ -423,7 +424,7 @@ class LinkShareServiceTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->service->delete('missing', 'alice');
-    }
+    }//end testDeleteThrowsWhenMissing()
 
     /**
      * Test deleteBySecretId cascades to the mapper.
@@ -435,7 +436,7 @@ class LinkShareServiceTest extends TestCase
         $this->mapper->expects($this->once())->method('deleteBySecretId')->with('secret-1');
 
         $this->service->deleteBySecretId('secret-1');
-    }
+    }//end testDeleteBySecretIdCascades()
 
     /**
      * Test deleteByUserId cascades to the mapper.
@@ -447,5 +448,5 @@ class LinkShareServiceTest extends TestCase
         $this->mapper->expects($this->once())->method('deleteByUserId')->with('alice');
 
         $this->service->deleteByUserId('alice');
-    }
-}
+    }//end testDeleteByUserIdCascades()
+}//end class

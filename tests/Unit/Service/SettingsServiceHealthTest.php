@@ -39,13 +39,20 @@ use Psr\Log\LoggerInterface;
  */
 class SettingsServiceHealthTest extends TestCase
 {
-    /** @var IAppConfig&MockObject */
+
+    /**
+     * @var IAppConfig&MockObject
+     */
     private IAppConfig&MockObject $appConfig;
 
-    /** @var IConfig&MockObject */
+    /**
+     * @var IConfig&MockObject
+     */
     private IConfig&MockObject $config;
 
-    /** @var SettingsService */
+    /**
+     * @var SettingsService
+     */
     private SettingsService $service;
 
     /**
@@ -81,13 +88,13 @@ class SettingsServiceHealthTest extends TestCase
     {
         // The default passed to getValueBool for breach_check_enabled is false.
         $this->appConfig->method('getValueBool')->willReturnCallback(
-            fn (string $app, string $key, bool $default = false): bool => $default
+            fn (string $app, string $key, bool $default=false): bool => $default
         );
         $this->appConfig->method('getValueInt')->willReturnCallback(
-            fn (string $app, string $key, int $default = 0): int => $default
+            fn (string $app, string $key, int $default=0): int => $default
         );
         $this->appConfig->method('getValueString')->willReturnCallback(
-            fn (string $app, string $key, string $default = ''): string => $default
+            fn (string $app, string $key, string $default=''): string => $default
         );
 
         $settings = $this->service->getAdminSettings();

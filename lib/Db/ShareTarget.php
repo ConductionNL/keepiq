@@ -38,6 +38,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setSecretId(string $secretId)
  * @method string|null getGroupShareId()
  * @method void setGroupShareId(?string $groupShareId)
+ * @method string|null getTeamFolderId()
+ * @method void setTeamFolderId(?string $teamFolderId)
  * @method string getCreatedBy()
  * @method void setCreatedBy(string $createdBy)
  * @method DateTime|null getCreatedAt()
@@ -75,6 +77,13 @@ class ShareTarget extends Entity implements JsonSerializable
      * @var string|null
      */
     protected ?string $groupShareId = null;
+
+    /**
+     * Optional ID of the team folder this row was derived from.
+     *
+     * @var string|null
+     */
+    protected ?string $teamFolderId = null;
 
     /**
      * The user ID that initiated the share.
@@ -131,6 +140,7 @@ class ShareTarget extends Entity implements JsonSerializable
         $this->addType(fieldName: 'targetUserId', type: 'string');
         $this->addType(fieldName: 'secretId', type: 'string');
         $this->addType(fieldName: 'groupShareId', type: 'string');
+        $this->addType(fieldName: 'teamFolderId', type: 'string');
         $this->addType(fieldName: 'createdBy', type: 'string');
         $this->addType(fieldName: 'createdAt', type: 'datetime');
     }//end __construct()
@@ -148,6 +158,7 @@ class ShareTarget extends Entity implements JsonSerializable
             'targetUserId'   => $this->targetUserId,
             'secretId'       => $this->secretId,
             'groupShareId'   => $this->groupShareId,
+            'teamFolderId'   => $this->teamFolderId,
             'createdBy'      => $this->createdBy,
             'createdAt'      => $this->createdAt?->format('c'),
         ];

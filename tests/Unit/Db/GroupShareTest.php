@@ -42,7 +42,7 @@ class GroupShareTest extends TestCase
         $this->assertSame('', $entity->getGroupId());
         $this->assertSame('', $entity->getCreatedBy());
         $this->assertNull($entity->getCreatedAt());
-    }
+    }//end testConstructorSetsDefaults()
 
     /**
      * Getters and setters round-trip.
@@ -65,7 +65,7 @@ class GroupShareTest extends TestCase
         $this->assertSame('admin', $entity->getGroupId());
         $this->assertSame('alice', $entity->getCreatedBy());
         $this->assertSame($now, $entity->getCreatedAt());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * jsonSerialize emits the expected shape.
@@ -88,5 +88,5 @@ class GroupShareTest extends TestCase
         $this->assertSame('admin', $payload['groupId']);
         $this->assertSame('alice', $payload['createdBy']);
         $this->assertStringContainsString('2026-06-11', (string) $payload['createdAt']);
-    }
-}
+    }//end testJsonSerializeShape()
+}//end class

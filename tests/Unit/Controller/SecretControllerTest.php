@@ -38,13 +38,20 @@ use PHPUnit\Framework\TestCase;
  */
 class SecretControllerTest extends TestCase
 {
-    /** @var SecretController */
+
+    /**
+     * @var SecretController
+     */
     private SecretController $controller;
 
-    /** @var SecretService&MockObject */
+    /**
+     * @var SecretService&MockObject
+     */
     private SecretService&MockObject $secretService;
 
-    /** @var IRequest&MockObject */
+    /**
+     * @var IRequest&MockObject
+     */
     private IRequest&MockObject $request;
 
     /**

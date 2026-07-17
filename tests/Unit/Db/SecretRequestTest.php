@@ -46,7 +46,7 @@ class SecretRequestTest extends TestCase
         $this->assertNull($entity->getExpiresAt());
         $this->assertNull($entity->getFulfilledAt());
         $this->assertNull($entity->getCreatedAt());
-    }
+    }//end testConstructorSetsDefaults()
 
     /**
      * Test all getters and setters round-trip.
@@ -92,7 +92,7 @@ class SecretRequestTest extends TestCase
         $fulfilledAt = new DateTime('2026-06-11T11:00:00+00:00');
         $entity->setFulfilledAt($fulfilledAt);
         $this->assertSame($fulfilledAt, $entity->getFulfilledAt());
-    }
+    }//end testGettersAndSetters()
 
     /**
      * Test isExpired returns false when no expiry is set.
@@ -103,7 +103,7 @@ class SecretRequestTest extends TestCase
     {
         $entity = new SecretRequest();
         $this->assertFalse($entity->isExpired());
-    }
+    }//end testIsExpiredFalseWhenNoExpiry()
 
     /**
      * Test isExpired returns true when expiry is in the past.
@@ -115,7 +115,7 @@ class SecretRequestTest extends TestCase
         $entity = new SecretRequest();
         $entity->setExpiresAt(new DateTime('2000-01-01T00:00:00+00:00'));
         $this->assertTrue($entity->isExpired());
-    }
+    }//end testIsExpiredTrueWhenPast()
 
     /**
      * Test isExpired returns false when expiry is in the future.
@@ -127,7 +127,7 @@ class SecretRequestTest extends TestCase
         $entity = new SecretRequest();
         $entity->setExpiresAt(new DateTime('+1 year'));
         $this->assertFalse($entity->isExpired());
-    }
+    }//end testIsExpiredFalseWhenFuture()
 
     /**
      * Test jsonSerialize decodes requestedFields into an array.
@@ -155,7 +155,7 @@ class SecretRequestTest extends TestCase
         $this->assertSame('alice', $serialized['createdBy']);
         $this->assertNotNull($serialized['createdAt']);
         $this->assertNull($serialized['fulfilledAt']);
-    }
+    }//end testJsonSerializeDecodesRequestedFields()
 
     /**
      * Test jsonSerialize falls back to an empty array when requestedFields is invalid JSON.
@@ -170,5 +170,5 @@ class SecretRequestTest extends TestCase
         $serialized = $entity->jsonSerialize();
 
         $this->assertSame([], $serialized['requestedFields']);
-    }
-}
+    }//end testJsonSerializeFallsBackOnInvalidJson()
+}//end class

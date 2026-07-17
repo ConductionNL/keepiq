@@ -34,6 +34,7 @@ use Psr\Log\LoggerInterface;
  */
 class AuditServiceTest extends TestCase
 {
+
     /**
      * The service under test.
      *
@@ -55,8 +56,8 @@ class AuditServiceTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->mapper = $this->createMock(originalClassName: AuditEntryMapper::class);
-        $logger       = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->mapper  = $this->createMock(originalClassName: AuditEntryMapper::class);
+        $logger        = $this->createMock(originalClassName: LoggerInterface::class);
         $this->service = new AuditService(mapper: $this->mapper, logger: $logger);
     }//end setUp()
 

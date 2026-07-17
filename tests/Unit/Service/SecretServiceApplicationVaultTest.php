@@ -48,6 +48,7 @@ use Psr\Log\LoggerInterface;
  */
 class SecretServiceApplicationVaultTest extends TestCase
 {
+
     /**
      * The mocked secret mapper.
      *
@@ -126,14 +127,14 @@ class SecretServiceApplicationVaultTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->mapper                 = $this->createMock(SecretMapper::class);
-        $this->linkShareService       = $this->createMock(LinkShareService::class);
+        $this->mapper           = $this->createMock(SecretMapper::class);
+        $this->linkShareService = $this->createMock(LinkShareService::class);
         $this->secretRequestService   = $this->createMock(SecretRequestService::class);
         $this->shareService           = $this->createMock(ShareService::class);
         $this->groupShareMapper       = $this->createMock(GroupShareMapper::class);
         $this->secretDelegationMapper = $this->createMock(SecretDelegationMapper::class);
-        $this->logger                 = $this->createMock(LoggerInterface::class);
-        $this->dispatcher             = $this->createMock(IEventDispatcher::class);
+        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->dispatcher = $this->createMock(IEventDispatcher::class);
 
         $this->events = [];
         $this->dispatcher->method('dispatchTyped')->willReturnCallback(

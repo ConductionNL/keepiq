@@ -62,7 +62,7 @@ class GdprServiceTest extends TestCase
         );
 
         return [$service, $secretMapper, $suiteMapper, $settingsService];
-    }
+    }//end build()
 
     /**
      * collectMetadata returns every documented section and is versioned.
@@ -84,8 +84,9 @@ class GdprServiceTest extends TestCase
         foreach (['suites', 'sharesGiven', 'sharesReceived', 'delegations', 'linkShares', 'requests', 'settings'] as $section) {
             $this->assertArrayHasKey($section, $doc);
         }
+
         $this->assertSame(['default_view' => 'list'], $doc['settings']);
-    }
+    }//end testCollectMetadataHasAllSections()
 
     /**
      * Suite records exclude the encrypted private-key blob and carry the
@@ -117,7 +118,7 @@ class GdprServiceTest extends TestCase
         $this->assertArrayHasKey('privateKeyExcluded', $doc['notes']);
         // Defensive: the blob value never appears anywhere in the document.
         $this->assertStringNotContainsString('SUPER-SECRET-ENCRYPTED-KEY', json_encode($doc));
-    }
+    }//end testSuitePrivateKeyExcludedWithNote()
 
     /**
      * The collector is strictly self-scoped: the userId drives every lookup.
@@ -141,5 +142,5 @@ class GdprServiceTest extends TestCase
             ->willReturn([]);
 
         $service->collectMetadata('alice');
-    }
+    }//end testStrictlySelfScoped()
 }//end class

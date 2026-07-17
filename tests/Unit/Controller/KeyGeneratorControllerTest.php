@@ -33,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  */
 class KeyGeneratorControllerTest extends TestCase
 {
+
     /**
      * The mocked request.
      *

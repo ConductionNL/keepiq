@@ -37,13 +37,20 @@ use Psr\Log\LoggerInterface;
  */
 class FolderServiceTest extends TestCase
 {
-    /** @var FolderService */
+
+    /**
+     * @var FolderService
+     */
     private FolderService $service;
 
-    /** @var FolderMapper */
+    /**
+     * @var FolderMapper
+     */
     private $mapper;
 
-    /** @var SecretMapper */
+    /**
+     * @var SecretMapper
+     */
     private $secretMapper;
 
     /**
@@ -55,7 +62,7 @@ class FolderServiceTest extends TestCase
     {
         $this->mapper       = $this->createMock(FolderMapper::class);
         $this->secretMapper = $this->createMock(SecretMapper::class);
-        $logger             = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
 
         $this->service = new FolderService(
             mapper: $this->mapper,
@@ -73,7 +80,7 @@ class FolderServiceTest extends TestCase
      *
      * @return Folder
      */
-    private function makeFolder(string $id = 'f-1', ?string $parentId = null, string $ownerId = 'alice'): Folder
+    private function makeFolder(string $id='f-1', ?string $parentId=null, string $ownerId='alice'): Folder
     {
         $folder = new Folder();
         $folder->setId($id);

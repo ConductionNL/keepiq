@@ -45,6 +45,7 @@ use Psr\Log\LoggerInterface;
  */
 class GroupShareServiceTest extends TestCase
 {
+
     /**
      * Service under test.
      *
@@ -94,14 +95,14 @@ class GroupShareServiceTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->mapper              = $this->createMock(originalClassName: GroupShareMapper::class);
-        $this->shareTargetMapper   = $this->createMock(originalClassName: ShareTargetMapper::class);
-        $this->secretMapper        = $this->createMock(originalClassName: SecretMapper::class);
-        $this->suiteMapper         = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
-        $this->delegationMapper    = $this->createMock(originalClassName: SecretDelegationMapper::class);
-        $this->groupManager        = $this->createMock(originalClassName: IGroupManager::class);
+        $this->mapper            = $this->createMock(originalClassName: GroupShareMapper::class);
+        $this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+        $this->secretMapper      = $this->createMock(originalClassName: SecretMapper::class);
+        $this->suiteMapper       = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
+        $this->delegationMapper  = $this->createMock(originalClassName: SecretDelegationMapper::class);
+        $this->groupManager      = $this->createMock(originalClassName: IGroupManager::class);
         $this->notificationService = $this->createMock(originalClassName: NotificationService::class);
-        $logger                    = $this->createMock(originalClassName: LoggerInterface::class);
+        $logger = $this->createMock(originalClassName: LoggerInterface::class);
 
         $this->service = new GroupShareService(
             mapper: $this->mapper,
@@ -113,13 +114,13 @@ class GroupShareServiceTest extends TestCase
             notificationService: $this->notificationService,
             logger: $logger
         );
-    }
+    }//end setUp()
 
     /**
      * Helper: build an owner Secret.
      *
-     * @param string $id       Secret ID
-     * @param string $ownerId  Owner Nextcloud user
+     * @param string $id      Secret ID
+     * @param string $ownerId Owner Nextcloud user
      *
      * @return Secret
      */
@@ -131,7 +132,7 @@ class GroupShareServiceTest extends TestCase
         $secret->setOwnerId($ownerId);
         $secret->setName('demo');
         return $secret;
-    }
+    }//end makeOwnerSecret()
 
     /**
      * Helper: build a mock IUser with a UID.
@@ -145,7 +146,7 @@ class GroupShareServiceTest extends TestCase
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn($uid);
         return $user;
-    }
+    }//end mockUser()
 
     /**
      * Test createGroupShare returns the member fan-out, filtering owner +
@@ -159,11 +160,16 @@ class GroupShareServiceTest extends TestCase
         $this->secretMapper->method('findById')->willReturn($secret);
 
         $group = $this->createMock(IGroup::class);
-        $group->method('getUsers')->willReturn([
-            $this->mockUser('alice'), // owner — excluded
-            $this->mockUser('bob'),   // has suite
-            $this->mockUser('carol'), // no suite
-        ]);
+        $group->method('getUsers')->willReturn(
+                [
+                    $this->mockUser('alice'),
+        // owner — excluded
+                    $this->mockUser('bob'),
+        // has suite
+                    $this->mockUser('carol'),
+        // no suite
+                ]
+                );
         $this->groupManager->method('get')->with('engineering')->willReturn($group);
 
         $this->mapper->method('findBySecretAndGroup')
@@ -178,6 +184,7 @@ class GroupShareServiceTest extends TestCase
                 if ($ownerId === 'bob') {
                     return $bobSuite;
                 }
+
                 throw new DoesNotExistException('no');
             }
         );
@@ -192,7 +199,7 @@ class GroupShareServiceTest extends TestCase
         $this->assertCount(1, $result['members']);
         $this->assertSame('bob', $result['members'][0]['userId']);
         $this->assertSame('PEM-BOB', $result['members'][0]['certificate']);
-    }
+    }//end testCreateGroupShareReturnsEligibleMembers()
 
     /**
      * Test createGroupShare rejects unauthorized callers.
@@ -216,7 +223,7 @@ class GroupShareServiceTest extends TestCase
             groupId: 'engineering',
             userId: 'mallory'
         );
-    }
+    }//end testCreateGroupShareRejectsNonOwner()
 
     /**
      * Test createGroupShare rejects when the group is missing.
@@ -237,7 +244,7 @@ class GroupShareServiceTest extends TestCase
             groupId: 'ghost',
             userId: 'alice'
         );
-    }
+    }//end testCreateGroupShareRejectsMissingGroup()
 
     /**
      * Test createGroupShare is idempotent — reuses the existing GroupShare row.
@@ -265,7 +272,7 @@ class GroupShareServiceTest extends TestCase
         );
 
         $this->assertSame($existing, $result['groupShare']);
-    }
+    }//end testCreateGroupShareIsIdempotent()
 
     /**
      * Test revokeGroupShare cascade-deletes the ShareTargets and the row.
@@ -288,7 +295,7 @@ class GroupShareServiceTest extends TestCase
         $this->mapper->expects($this->once())->method('delete')->with($entity);
 
         $this->service->revokeGroupShare(groupShareId: 'gs-1', userId: 'alice');
-    }
+    }//end testRevokeGroupShareCascades()
 
     /**
      * Test getGroupSharesForSecret returns rows to the owner.
@@ -307,7 +314,7 @@ class GroupShareServiceTest extends TestCase
         $result = $this->service->getGroupSharesForSecret('src-1', 'alice');
 
         $this->assertCount(1, $result);
-    }
+    }//end testGetGroupSharesForSecretOwnerSeesRows()
 
     /**
      * Test getGroupSharesForSecret returns empty array to recipients.
@@ -326,7 +333,7 @@ class GroupShareServiceTest extends TestCase
         $result = $this->service->getGroupSharesForSecret('src-1', 'bob');
 
         $this->assertSame([], $result);
-    }
+    }//end testGetGroupSharesForSecretRecipientSeesEmpty()
 
     /**
      * Test handleNewGroupMember dispatches a notification per group share
@@ -346,10 +353,12 @@ class GroupShareServiceTest extends TestCase
 
         $secret1 = $this->makeOwnerSecret('src-1', 'alice');
         $secret2 = $this->makeOwnerSecret('src-2', 'eve');
-        $this->secretMapper->method('findById')->willReturnMap([
-            ['src-1', $secret1],
-            ['src-2', $secret2],
-        ]);
+        $this->secretMapper->method('findById')->willReturnMap(
+                [
+                    ['src-1', $secret1],
+                    ['src-2', $secret2],
+                ]
+                );
 
         $this->notificationService->expects($this->exactly(2))
             ->method('notify')
@@ -357,7 +366,7 @@ class GroupShareServiceTest extends TestCase
 
         $count = $this->service->handleNewGroupMember(userId: 'bob', groupId: 'engineering');
         $this->assertSame(2, $count);
-    }
+    }//end testHandleNewGroupMemberNotifiesEachOwner()
 
     /**
      * Test approveGroupMemberShare persists a ShareTarget for the new member.
@@ -387,7 +396,7 @@ class GroupShareServiceTest extends TestCase
             recipientSecretId: 'copy-bob',
             userId: 'alice'
         );
-    }
+    }//end testApproveGroupMemberShareCreatesShareTarget()
 
     /**
      * Test handleMemberLeave revokes only group-derived shares for the
@@ -426,7 +435,7 @@ class GroupShareServiceTest extends TestCase
 
         $count = $this->service->handleMemberLeave(userId: 'bob', groupId: 'engineering');
         $this->assertSame(1, $count);
-    }
+    }//end testHandleMemberLeaveRevokesGroupDerivedOnly()
 
     /**
      * Test getGroupMembers returns the UID list.
@@ -436,14 +445,16 @@ class GroupShareServiceTest extends TestCase
     public function testGetGroupMembersReturnsUids(): void
     {
         $group = $this->createMock(IGroup::class);
-        $group->method('getUsers')->willReturn([
-            $this->mockUser('alice'),
-            $this->mockUser('bob'),
-        ]);
+        $group->method('getUsers')->willReturn(
+                [
+                    $this->mockUser('alice'),
+                    $this->mockUser('bob'),
+                ]
+                );
         $this->groupManager->method('get')->willReturn($group);
 
         $this->assertSame(['alice', 'bob'], $this->service->getGroupMembers('eng'));
-    }
+    }//end testGetGroupMembersReturnsUids()
 
     /**
      * Test getGroupMembers returns empty array for unknown groups.
@@ -455,5 +466,5 @@ class GroupShareServiceTest extends TestCase
         $this->groupManager->method('get')->willReturn(null);
 
         $this->assertSame([], $this->service->getGroupMembers('ghost'));
-    }
-}
+    }//end testGetGroupMembersEmptyForUnknownGroup()
+}//end class

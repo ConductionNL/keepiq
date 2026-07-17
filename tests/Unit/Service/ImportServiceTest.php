@@ -53,7 +53,7 @@ class ImportServiceTest extends TestCase
         $secret->setId($id);
         $secret->setName('x');
         return $secret;
-    }
+    }//end secret()
 
     /**
      * Build a Folder stub.
@@ -73,7 +73,7 @@ class ImportServiceTest extends TestCase
         $folder->setOwnerType('user');
         $folder->setOwnerId('alice');
         return $folder;
-    }
+    }//end folder()
 
     /**
      * A valid encrypted item.
@@ -83,14 +83,15 @@ class ImportServiceTest extends TestCase
      *
      * @return array<string,mixed>
      */
-    private function item(string $name, ?string $folder = null): array
+    private function item(string $name, ?string $folder=null): array
     {
         $item = ['name' => $name, 'key' => self::CIPHER, 'login' => self::CIPHER];
         if ($folder !== null) {
             $item['folderPath'] = explode('/', $folder);
         }
+
         return $item;
-    }
+    }//end item()
 
     /**
      * Commit returns per-index results; one bad item never fails its neighbours.
@@ -119,7 +120,7 @@ class ImportServiceTest extends TestCase
         $this->assertSame('failed', $results[1]['status']);
         $this->assertSame(1, $results[1]['index']);
         $this->assertStringContainsStringIgnoringCase('name', $results[1]['error']);
-    }
+    }//end testPartialFailureReturnsPerIndexResults()
 
     /**
      * The owner is the supplied session user; no owner param is honoured.
@@ -140,10 +141,10 @@ class ImportServiceTest extends TestCase
 
         $service = new ImportService($secretService, $folderService, $this->createMock(LoggerInterface::class));
         // An attacker-supplied ownerId in the item must be ignored.
-        $item             = $this->item('Thing');
-        $item['ownerId']  = 'mallory';
+        $item            = $this->item('Thing');
+        $item['ownerId'] = 'mallory';
         $service->commitChunk([$item], 'alice');
-    }
+    }//end testOwnerDerivedFromSessionUser()
 
     /**
      * No active suite blocks the whole chunk (412-equivalent).
@@ -161,7 +162,7 @@ class ImportServiceTest extends TestCase
 
         $this->expectException(SuiteBlockedException::class);
         $service->commitChunk([$this->item('X')], 'alice');
-    }
+    }//end testNoActiveSuiteThrows()
 
     /**
      * A chunk over the item cap is rejected (413-equivalent).
@@ -179,7 +180,7 @@ class ImportServiceTest extends TestCase
         $items = array_fill(0, (ImportService::MAX_ITEMS + 1), $this->item('X'));
         $this->expectException(\InvalidArgumentException::class);
         $service->commitChunk($items, 'alice');
-    }
+    }//end testChunkOverCapThrows()
 
     /**
      * Plaintext-shaped sensitive fields are rejected by the envelope check.
@@ -200,7 +201,7 @@ class ImportServiceTest extends TestCase
         $result = $service->commitChunk([['name' => 'X', 'key' => 'hunter2']], 'alice');
         $this->assertSame('failed', $result['results'][0]['status']);
         $this->assertStringContainsStringIgnoringCase('ciphertext', $result['results'][0]['error']);
-    }
+    }//end testPlaintextSensitiveFieldRejected()
 
     /**
      * Folder paths are ensured idempotently: an existing folder is reused, a
@@ -237,7 +238,7 @@ class ImportServiceTest extends TestCase
 
         $this->assertSame(['CI'], $created, 'CI created once; Work reused');
         $this->assertContains('Work/CI', $result['foldersCreated']);
-    }
+    }//end testIdempotentNestedFolderEnsuring()
 
     /**
      * A root-level item (no folder path) creates no folders.
@@ -256,5 +257,5 @@ class ImportServiceTest extends TestCase
         $service = new ImportService($secretService, $folderService, $this->createMock(LoggerInterface::class));
         $result  = $service->commitChunk([$this->item('Root')], 'alice');
         $this->assertSame([], $result['foldersCreated']);
-    }
-}
+    }//end testRootLevelItemCreatesNoFolders()
+}//end class

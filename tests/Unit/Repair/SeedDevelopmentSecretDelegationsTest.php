@@ -59,7 +59,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
         $secret = new Secret();
         $secret->setId($id);
         return $secret;
-    }
+    }//end devSecret()
 
     /**
      * Build an IAppConfig mock reporting an installed version that has NOT
@@ -71,13 +71,15 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
     {
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')
-            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
-                if ($key === 'installed_version') {
-                    return '1.2.3';
-                }
+            ->willReturnCallback(
+                    static function (string $app, string $key, string $default='') {
+                        if ($key === 'installed_version') {
+                            return '1.2.3';
+                        }
 
-                return $default;
-            });
+                        return $default;
+                    }
+                    );
 
         return $appConfig;
     }//end unseededAppConfig()
@@ -104,7 +106,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testNoOpWhenDebugDisabled()
 
     /**
      * Missing dev EncryptionSuite → no-op.
@@ -131,7 +133,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testNoOpWhenSuiteMissing()
 
     /**
      * Version marker already matches the installed app version → the
@@ -146,17 +148,19 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
 
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')
-            ->willReturnCallback(static function (string $app, string $key, string $default = '') {
-                if ($key === 'installed_version') {
-                    return '1.2.3';
-                }
+            ->willReturnCallback(
+                    static function (string $app, string $key, string $default='') {
+                        if ($key === 'installed_version') {
+                            return '1.2.3';
+                        }
 
-                if ($key === 'dev_seed_secret_delegations_version') {
-                    return '1.2.3';
-                }
+                        if ($key === 'dev_seed_secret_delegations_version') {
+                            return '1.2.3';
+                        }
 
-                return $default;
-            });
+                        return $default;
+                    }
+                    );
 
         $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
         $suiteMapper->expects($this->never())->method('findActiveByOwner');
@@ -173,7 +177,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testNoOpWhenVersionMarkerMatchesInstalledVersion()
 
     /**
      * Idempotency: pre-existing delegation for the deterministic ID → no-op.
@@ -206,7 +210,7 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
         $step->run($this->createMock(IOutput::class));
-    }
+    }//end testIdempotencyWhenFirstSecretAlreadyDelegated()
 
     /**
      * Happy path: debug + suite + 1+ secrets → insert one temporary
@@ -233,10 +237,12 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
         $inserted = null;
         $delegationMapper->expects($this->once())
             ->method('insert')
-            ->willReturnCallback(static function (SecretDelegation $e) use (&$inserted): SecretDelegation {
-                $inserted = $e;
-                return $e;
-            });
+            ->willReturnCallback(
+                    static function (SecretDelegation $e) use (&$inserted): SecretDelegation {
+                        $inserted = $e;
+                        return $e;
+                    }
+                    );
 
         $step = new SeedDevelopmentSecretDelegations(
             secretMapper: $secretMapper,
@@ -254,5 +260,5 @@ class SeedDevelopmentSecretDelegationsTest extends TestCase
         $this->assertSame('dev-user-2', $inserted->getDelegatedTo());
         $this->assertSame('admin', $inserted->getInitiatedBy());
         $this->assertFalse($inserted->getIsPermanent());
-    }
-}
+    }//end testHappyPathInsertsOneTemporaryDelegation()
+}//end class

@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Listener;
 
 use OCA\Doriath\Service\GroupShareService;
+use OCA\Doriath\Service\TeamFolderService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\UserRemovedEvent;
@@ -42,12 +43,14 @@ class UserRemovedFromGroupListener implements IEventListener
      * Constructor.
      *
      * @param GroupShareService $groupShareService The group-share service
+     * @param TeamFolderService $teamFolderService The team-folder service
      * @param LoggerInterface   $logger            The logger
      *
      * @return void
      */
     public function __construct(
         private GroupShareService $groupShareService,
+        private TeamFolderService $teamFolderService,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -80,6 +83,28 @@ class UserRemovedFromGroupListener implements IEventListener
         } catch (Throwable $exception) {
             $this->logger->warning(
                 'Doriath: UserRemovedFromGroupListener failed: '.$exception->getMessage(),
+                ['app' => 'doriath']
+            );
+        }
+
+        // Team-folder branch (team-folder-sharing §3.2): auto-revoke the
+        // departing user's folder-derived shares unless another
+        // membership still covers them. Direct shares stay intact.
+        try {
+            $teamCount = $this->teamFolderService->handleGroupMemberLeave(
+                userId: $event->getUser()->getUID(),
+                groupId: $event->getGroup()->getGID()
+            );
+            if ($teamCount > 0) {
+                $this->logger->info(
+                    'Doriath: revoked '.$teamCount.' team-folder-derived shares for '
+                    .$event->getUser()->getUID().' leaving '.$event->getGroup()->getGID(),
+                    ['app' => 'doriath']
+                );
+            }
+        } catch (Throwable $exception) {
+            $this->logger->warning(
+                'Doriath: team-folder leave handling failed: '.$exception->getMessage(),
                 ['app' => 'doriath']
             );
         }
