@@ -23,6 +23,22 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Secret Version History](specs/secret-version-history/spec.md) | in-progress | 13 | [secret-version-history](changes/secret-version-history/) |
 | [Rotation & Expiry Policies](specs/rotation-expiry-policies/spec.md) | in-progress | 14 — NIS2/BIO2 driver | [rotation-expiry-policies](changes/rotation-expiry-policies/) |
 | [Machine Secret Leases](specs/machine-secret-leases/spec.md) | in-progress | 15 — NHI segment | [machine-secret-leases](changes/machine-secret-leases/) |
+| [Extension Passkey Provider](specs/extension-passkey-provider/spec.md) | in-progress | 16 — makes passkeys usable | [extension-passkey-provider](changes/extension-passkey-provider/) |
+| [Extension TOTP Autofill](specs/extension-totp-autofill/spec.md) | in-progress | 17 | [extension-totp-autofill](changes/extension-totp-autofill/) |
+| [Passkey Vault Login](specs/passkey-vault-login/spec.md) | in-progress | 18 — PRF frontier | [passkey-vault-login](changes/passkey-vault-login/) |
+| [Offline Read-only Cache](specs/offline-readonly-cache/spec.md) | in-progress | 19 | [offline-readonly-cache](changes/offline-readonly-cache/) |
+| [Folder Permission Grades](specs/folder-permission-grades/spec.md) | in-progress | 20 — after team folders | [folder-permission-grades](changes/folder-permission-grades/) |
+| [Ephemeral Send](specs/ephemeral-send/spec.md) | in-progress | 21 | [ephemeral-send](changes/ephemeral-send/) |
+| [Compliance Reporting](specs/compliance-reporting/spec.md) | in-progress | 22 — BIO2/NIS2 evidence | [compliance-reporting](changes/compliance-reporting/) |
+| [SIEM Audit Export](specs/siem-audit-export/spec.md) | in-progress | 23 | [siem-audit-export](changes/siem-audit-export/) |
+| [Org Password Policies](specs/org-password-policies/spec.md) | in-progress | 24 | [org-password-policies](changes/org-password-policies/) |
+| [Card & Identity Items](specs/card-identity-items/spec.md) | in-progress | 25 | [card-identity-items](changes/card-identity-items/) |
+| [Bulk Actions](specs/bulk-actions/spec.md) | in-progress | 26 | [bulk-actions](changes/bulk-actions/) |
+| [Mobile PWA](specs/mobile-pwa/spec.md) | in-progress | 27 | [mobile-pwa](changes/mobile-pwa/) |
+| [Doriath CLI](specs/doriath-cli/spec.md) | in-progress | 28 | [doriath-cli](changes/doriath-cli/) |
+| [CXP Transfer](specs/cxp-transfer/spec.md) | in-progress | 29 — after CXF | [cxp-transfer](changes/cxp-transfer/) |
+| [Certificate Lifecycle](specs/certificate-lifecycle/spec.md) | in-progress | 30 | [certificate-lifecycle](changes/certificate-lifecycle/) |
+| [Honey Credentials](specs/honey-credentials/spec.md) | in-progress | 31 — deception differentiator | [honey-credentials](changes/honey-credentials/) |
 
 ## Phases
 
