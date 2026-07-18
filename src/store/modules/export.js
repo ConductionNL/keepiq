@@ -22,6 +22,7 @@ import { generateUrl } from '@nextcloud/router'
 import { serializeVault } from '../../export/serializer.js'
 import { encryptBackup } from '../../export/backup.js'
 import { generateCsv } from '../../export/csv.js'
+import { buildCxfDocument } from '../../cxf/cxf.js'
 import { assembleGdprPackage } from '../../export/gdprPackage.js'
 
 /**
@@ -122,6 +123,46 @@ export const useExportStore = defineStore('export', {
 				downloadBlob('vault.csv', csv, 'text/csv')
 			} catch (e) {
 				this.error = e.message || 'CSV export failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Export a FIDO CXF document (cxf-import-export §3). A CXF file is
+		 * PLAINTEXT — the dialog enforces the same warning + master-password
+		 * re-auth gates as the CSV path before calling this. The document is
+		 * assembled entirely client-side; the unmapped-item report (values
+		 * with no CXF home) is returned so the dialog can show it BEFORE the
+		 * download when `dryRun` is set. Never sends plaintext to the server.
+		 *
+		 * @param {Array<object>} secrets Decrypted secrets.
+		 * @param {Array<object>} folders Folder rows.
+		 * @param {object} [scope] Scope selector.
+		 * @param {object} [options] Options.
+		 * @param {object} [options.typeNamesById] typeId → type-name map.
+		 * @param {boolean} [options.dryRun] Build + report only, no download.
+		 * @return {Promise<{unmapped: Array<string>, itemCount: number}>}
+		 * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-cxf-export
+		 */
+		async exportCxf(secrets, folders, scope = { mode: 'vault' }, options = {}) {
+			this.loading = true
+			this.error = null
+			try {
+				const payload = serializeVault(secrets, folders, scope)
+				const { document, unmapped, itemCount } = buildCxfDocument(payload.secrets, {
+					typeNamesById: options.typeNamesById,
+				})
+				if (options.dryRun) {
+					return { unmapped, itemCount }
+				}
+				// Report BEFORE offering the download; a failure aborts.
+				await this.reportExport('cxf', scope.mode || 'vault', itemCount)
+				downloadBlob('vault.cxf', JSON.stringify(document, null, 2), 'application/json')
+				return { unmapped, itemCount }
+			} catch (e) {
+				this.error = e.message || 'CXF export failed'
 				throw e
 			} finally {
 				this.loading = false
