@@ -71,6 +71,9 @@ class NotificationService
         // SIEM audit export (siem-audit-export §5.1): an operational
         // admin alert like app_pending — never user-suppressible.
         'siem_dead_letter'           => null,
+        // Certificate lifecycle (certificate-lifecycle §3.2): suite
+        // certificate approaching notAfter.
+        'certificate_expiring'       => 'notify_security',
     ];
 
     /**

@@ -93,6 +93,7 @@ class DashboardService
         private ?ShareTargetMapper $shareTargetMapper=null,
         private ?ApplicationMapper $applicationMapper=null,
         private ?RotationFlagMapper $rotationFlagMapper=null,
+        private ?CertificateAuthorityService $caService=null,
     ) {
     }//end __construct()
 
@@ -163,10 +164,44 @@ class DashboardService
                 fn: fn () => $this->applicationMapper?->countPending() ?? 0,
                 metricId: 'pending_apps_count',
             );
+            $summary['ca_health']          = $this->caHealthCard();
         }
 
         return $summary;
     }//end fetchSummary()
+
+    /**
+     * The admin-only CA-health card (certificate-lifecycle §5.1):
+     * status + root/intermediate expiry + issued-certificate counts.
+     * Fail-soft — a CA error yields null rather than breaking the
+     * whole summary.
+     *
+     * @return array<string,mixed>|null
+     */
+    private function caHealthCard(): ?array
+    {
+        if ($this->caService === null) {
+            return null;
+        }
+
+        try {
+            $status = $this->caService->getStatus();
+
+            return [
+                'status'                => $status['status'],
+                'rootExpiresAt'         => $status['root']['expiresAt'] ?? null,
+                'intermediateExpiresAt' => $status['intermediate']['expiresAt'] ?? null,
+                'issued'                => ($status['issued'] ?? null),
+            ];
+        } catch (Throwable $exception) {
+            $this->logger->warning(
+                'Doriath: CA-health card unavailable: '.$exception->getMessage(),
+                ['app' => 'doriath']
+            );
+
+            return null;
+        }
+    }//end caHealthCard()
 
     /**
      * Run a counter callback, logging+degrading to zero on failure.

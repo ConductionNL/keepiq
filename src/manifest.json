@@ -58,12 +58,20 @@
 			"order": 87
 		},
 		{
+			"id": "CertificatesMenu",
+			"label": "Certificates",
+			"icon": "icon-category-security",
+			"route": "Certificates",
+			"section": "footer",
+			"order": 88
+		},
+		{
 			"id": "EmergencyAccessMenu",
 			"label": "Emergency access",
 			"icon": "icon-user",
 			"route": "EmergencyAccess",
 			"section": "footer",
-			"order": 88
+			"order": 89
 		},
 		{
 			"id": "LockVault",
@@ -337,6 +345,14 @@
 			"title": "Password health",
 			"component": "HealthReportView",
 			"_note": "Client-side vault health report (password-health). type:\"custom\" — the analysis runs in-browser over the unlocked vault; no built-in page type models a memory-only analysis surface."
+		},
+		{
+			"id": "Certificates",
+			"route": "/certificates",
+			"type": "custom",
+			"title": "Certificates",
+			"component": "CertificateInventoryView",
+			"_note": "Certificate inventory (certificate-lifecycle). type:\"custom\" — stored certificate secrets are decrypted and X.509-parsed in-browser (ADR-003); only non-secret display metadata is submitted. Suite/CA rows are server-parsed from cleartext PEM."
 		},
 		{
 			"id": "EmergencyAccess",
