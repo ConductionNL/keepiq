@@ -14,9 +14,14 @@
 					:label="t('doriath', 'Length')"
 					:min="minLength"
 					:max="maxLength" />
+				<p v-if="policyFloorActive" class="key-generator-modal__policy-hint" data-testid="policy-floor-hint">
+					{{ t('doriath', 'Locked by org policy: minimum length {min}', { min: minLength }) }}
+				</p>
 
-				<NcCheckboxRadioSwitch :checked.sync="includeSpecialCharacters" type="switch">
-					{{ t('doriath', 'Include special characters') }}
+				<NcCheckboxRadioSwitch :checked.sync="includeSpecialCharacters"
+					type="switch"
+					:disabled="symbolLocked">
+					{{ symbolLocked ? t('doriath', 'Include special characters (locked by org policy)') : t('doriath', 'Include special characters') }}
 				</NcCheckboxRadioSwitch>
 
 				<NcInputField :value.sync="excludedCharacters"
@@ -75,6 +80,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
+import { fetchPolicy } from '../policy/policy.js'
 
 export default {
 	name: 'KeyGeneratorModal',
@@ -111,6 +117,30 @@ export default {
 			error: null,
 			minLength: 8,
 			maxLength: 128,
+			policyFloorActive: false,
+			symbolLocked: false,
+		}
+	},
+
+	/**
+	 * Clamp the controls to the org policy floor (org-password-policies
+	 * §5.2) — the server clamp stays authoritative regardless.
+	 */
+	async mounted() {
+		const policy = await fetchPolicy()
+		if (policy?.policy_enabled === true) {
+			const floor = Number.parseInt(policy.generator_min_length, 10) || 0
+			if (floor > this.minLength) {
+				this.minLength = floor
+				this.policyFloorActive = true
+				if (Number(this.lengthInput) < floor) {
+					this.lengthInput = floor
+				}
+			}
+			if (policy.generator_require_symbol === true) {
+				this.includeSpecialCharacters = true
+				this.symbolLocked = true
+			}
 		}
 	},
 
@@ -215,5 +245,10 @@ export default {
 
 .key-generator-modal__preview {
 	margin-top: 8px;
+}
+.key-generator-modal__policy-hint {
+	color: var(--color-text-maxcontrast, #777);
+	font-size: 13px;
+	margin: 0;
 }
 </style>

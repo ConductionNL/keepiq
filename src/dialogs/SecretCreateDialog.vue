@@ -91,6 +91,10 @@
 				:reduce="opt => opt.value"
 				:input-label="t('doriath', 'Folder')"
 				:clearable="false" />
+
+			<NcNoteCard v-if="!policyVerdict.compliant" type="warning" data-testid="policy-blocked">
+				{{ policyVerdict.reason }}
+			</NcNoteCard>
 		</div>
 
 		<template #actions>
@@ -126,6 +130,7 @@ import {
 	serializeIdentity,
 	luhnValid,
 } from '../cardIdentity/cardIdentity.js'
+import { fetchPolicy, evaluateScore, evaluateHibp } from '../policy/policy.js'
 
 /**
  * Create a secret. The value (and optional login) are RSA-encrypted by the
@@ -175,6 +180,7 @@ export default {
 			generatorOpen: false,
 			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
 			identity: { firstName: '', lastName: '', address: '', phone: '', email: '', bsn: '' },
+			policy: null,
 		}
 	},
 
@@ -227,6 +233,19 @@ export default {
 			}
 			return this.value
 		},
+		/**
+		 * Org-policy score gate on the manual value (org-password-policies
+		 * §4.2): exempt types skip; the reason renders and submit stays
+		 * disabled until compliant. Never POSTs a non-compliant value.
+		 *
+		 * @return {{compliant: boolean, reason: string|null}}
+		 */
+		policyVerdict() {
+			if (this.isCard || this.isIdentity) {
+				return { compliant: true, reason: null }
+			}
+			return evaluateScore(this.policy, this.selectedTypeName, this.value)
+		},
 		canSubmit() {
 			if (this.saving || this.locked || this.name.trim() === '') {
 				return false
@@ -237,11 +256,12 @@ export default {
 			if (this.isIdentity) {
 				return Object.values(this.identity).some(v => v !== '')
 			}
-			return this.value !== ''
+			return this.value !== '' && this.policyVerdict.compliant
 		},
 	},
 
 	async mounted() {
+		this.policy = await fetchPolicy()
 		const typeStore = useSecretTypeStore()
 		if (typeStore.types.length === 0) {
 			await typeStore.fetchTypes()
@@ -305,6 +325,16 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
+				// HIBP block (org-password-policies §4.2): k-anonymity check
+				// BEFORE encryption; only the 5-char prefix leaves the browser.
+				if (!this.isCard && !this.isIdentity) {
+					const hibpReason = await evaluateHibp(this.policy, this.selectedTypeName, this.value)
+					if (hibpReason !== null) {
+						this.error = hibpReason
+						this.saving = false
+						return
+					}
+				}
 				const created = await useSecretStore().createSecret({
 					name: this.name.trim(),
 					typeId: this.typeId,

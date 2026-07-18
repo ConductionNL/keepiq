@@ -69,6 +69,10 @@
 
 			<NcTextField :value.sync="login"
 				:label="t('doriath', 'Login (optional)')" />
+
+			<NcNoteCard v-if="!policyVerdict.compliant" type="warning" data-testid="policy-blocked">
+				{{ policyVerdict.reason }}
+			</NcNoteCard>
 		</div>
 
 		<template #actions>
@@ -104,6 +108,7 @@ import {
 	serializeIdentity,
 	parsePayload,
 } from '../cardIdentity/cardIdentity.js'
+import { fetchPolicy, evaluateScore, evaluateHibp } from '../policy/policy.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -154,6 +159,7 @@ export default {
 			generatorOpen: false,
 			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
 			identity: { firstName: '', lastName: '', address: '', phone: '', email: '', bsn: '' },
+			policy: null,
 		}
 	},
 
@@ -190,12 +196,25 @@ export default {
 			}
 			return this.value
 		},
+		/**
+		 * Org-policy score gate on a CHANGED manual value (§4.2) — an
+		 * unchanged value is never re-gated.
+		 *
+		 * @return {{compliant: boolean, reason: string|null}}
+		 */
+		policyVerdict() {
+			if (this.isCard || this.isIdentity || this.value === (this.original?.key || '')) {
+				return { compliant: true, reason: null }
+			}
+			return evaluateScore(this.policy, this.selectedTypeName, this.value)
+		},
 		canSubmit() {
-			return !this.loading && !this.saving && this.name.trim() !== ''
+			return !this.loading && !this.saving && this.name.trim() !== '' && this.policyVerdict.compliant
 		},
 	},
 
 	async mounted() {
+		this.policy = await fetchPolicy()
 		const typeStore = useSecretTypeStore()
 		if (typeStore.types.length === 0) {
 			await typeStore.fetchTypes()
@@ -290,6 +309,15 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
+				// HIBP block on a changed manual value (§4.2) — before encryption.
+				if (!this.isCard && !this.isIdentity && this.value !== (this.original?.key || '')) {
+					const hibpReason = await evaluateHibp(this.policy, this.selectedTypeName, this.value)
+					if (hibpReason !== null) {
+						this.error = hibpReason
+						this.saving = false
+						return
+					}
+				}
 				const diff = {}
 				const o = this.original
 				if (this.name.trim() !== (o.name || '')) {
