@@ -17,6 +17,7 @@
 		<BreachCheckSection />
 		<CaHealthSection />
 		<ApplicationQueueSection />
+		<AttachmentLimitsSection />
 		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
@@ -29,6 +30,7 @@ import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
+import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
 
 export default {
 	name: 'Settings',
@@ -37,6 +39,7 @@ export default {
 		BreachCheckSection,
 		CaHealthSection,
 		ApplicationQueueSection,
+		AttachmentLimitsSection,
 		OffboardingSection,
 		AdminAuditSection,
 	},

@@ -77,6 +77,8 @@ class GdprService
         private SecretRequestMapper $requestMapper,
         private EncryptionSuiteMapper $suiteMapper,
         private SettingsService $settingsService,
+        private ?\OCA\Doriath\Db\AttachmentMapper $attachmentMapper=null,
+        private ?\OCA\Doriath\Db\AttachmentGrantMapper $attachmentGrantMapper=null,
     ) {
     }//end __construct()
 
@@ -124,8 +126,47 @@ class GdprService
             'linkShares'     => $this->collectLinkShares(userId: $userId),
             'requests'       => $this->collectRequests(userId: $userId),
             'settings'       => $this->settingsService->getUserPreferences(userId: $userId),
+            'attachments'    => $this->collectAttachments(ownedSecrets: $ownedSecrets, userId: $userId),
         ];
     }//end collectMetadata()
+
+    /**
+     * Collect attachment records for the subject's own secrets: metadata
+     * (encrypted filename blob, ciphertext size) plus the subject's own
+     * wrapped file keys (encrypted-attachments §3.4). Blob bytes are the
+     * client-assembled half — never produced server-side.
+     *
+     * @param array<int,\OCA\Doriath\Db\Secret> $ownedSecrets The subject's secrets
+     * @param string                            $userId       The subject
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function collectAttachments(array $ownedSecrets, string $userId): array
+    {
+        if ($this->attachmentMapper === null || $this->attachmentGrantMapper === null) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($ownedSecrets as $secret) {
+            foreach ($this->attachmentMapper->findBySourceSecret(sourceSecretId: $secret->getId()) as $attachment) {
+                $row = $attachment->jsonSerialize();
+                try {
+                    $grant                 = $this->attachmentGrantMapper->findForRecipient(
+                        attachmentId: $attachment->getId(),
+                        recipientId: $userId
+                    );
+                    $row['wrappedFileKey'] = $grant->getWrappedFileKey();
+                } catch (\OCP\AppFramework\Db\DoesNotExistException) {
+                    // No grant for the subject on this attachment.
+                }
+
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
+    }//end collectAttachments()
 
     /**
      * Collect suite records with the private-key blob omitted.
