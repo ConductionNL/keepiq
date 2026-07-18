@@ -1,6 +1,6 @@
 # Passkey Item Type Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - `passkey-item-type` (2026-07-16) — Adds the `passkey` eighth system secret type: canonical CXF-aligned WebAuthn credential schema stored ciphertext in the existing `key` field (RP id mirrored into plaintext `url`), passkey listing/filtering and site-associated presentation, creation via the secret CRUD API and Bitwarden `fido2Credentials` import, password-health exclusion, and unchanged carry-through via sharing/export/audit. Storage/schema/presentation only — the WebAuthn authenticator/provider (extension interception) is a later change.
