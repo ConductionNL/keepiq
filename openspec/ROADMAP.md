@@ -32,7 +32,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Compliance Reporting](specs/compliance-reporting/spec.md) | in-progress | 22 — BIO2/NIS2 evidence | [compliance-reporting](changes/compliance-reporting/) |
 | [SIEM Audit Export](specs/siem-audit-export/spec.md) | in-progress | 23 | [siem-audit-export](changes/siem-audit-export/) |
 | [Org Password Policies](specs/org-password-policies/spec.md) | in-progress | 24 | [org-password-policies](changes/org-password-policies/) |
-| [Card & Identity Items](specs/card-identity-items/spec.md) | in-progress | 25 | [card-identity-items](changes/card-identity-items/) |
+| [Card & Identity Items](specs/card-identity-items/spec.md) | done — 2026-07-18 | 25 | [archive](changes/archive/2026-07-18-card-identity-items/) |
 | [Bulk Actions](specs/bulk-actions/spec.md) | done — 2026-07-18 | 26 | [archive](changes/archive/2026-07-18-bulk-actions/) |
 | [Mobile PWA](specs/mobile-pwa/spec.md) | in-progress | 27 | [mobile-pwa](changes/mobile-pwa/) |
 | [Doriath CLI](specs/doriath-cli/spec.md) | in-progress | 28 | [doriath-cli](changes/doriath-cli/) |
