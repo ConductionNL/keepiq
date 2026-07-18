@@ -134,6 +134,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'secretRequest#decline', 'url' => '/api/v1/secret-requests/{id}/decline', 'verb' => 'POST'],
     ['name' => 'secretRequest#destroy', 'url' => '/api/v1/secret-requests/{id}',         'verb' => 'DELETE'],
 
+    // Anonymous SPA shell for recipient pages (ephemeral-send §5.3 +
+    // link-share access): serves the same index template as the app page
+    // but as #[PublicPage], so account-less recipients reach the SPA.
+    ['name' => 'publicShell#page', 'url' => '/public', 'verb' => 'GET'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],

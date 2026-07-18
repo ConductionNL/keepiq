@@ -168,8 +168,11 @@ class LinkShareController extends OCSController
             );
         }
 
+        // The /public shell serves the SPA as #[PublicPage] — the
+        // authenticated dashboard.page route bounced account-less
+        // recipients to the Nextcloud login (fixed with ephemeral-send).
         $linkUrl = $this->urlGenerator->getAbsoluteURL(
-            $this->urlGenerator->linkToRoute('doriath.dashboard.page').'#/share/link/'.$linkShare->getToken()
+            $this->urlGenerator->linkToRoute('doriath.publicShell.page').'#/share/link/'.$linkShare->getToken()
         );
 
         $payload            = $linkShare->jsonSerialize();

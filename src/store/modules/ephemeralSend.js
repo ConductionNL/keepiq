@@ -146,8 +146,10 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 			const token = response.data?.token
 			await this.fetchSends()
 
+			// The /public shell serves the SPA as #[PublicPage] so an
+			// account-less recipient reaches the access route.
 			const base = window.location.origin
-				+ generateUrl('/apps/doriath/') + '#/send/' + encodeURIComponent(token)
+				+ generateUrl('/apps/doriath/public') + '#/send/' + encodeURIComponent(token)
 			// Fragment-mode: the content key NEVER reaches the server — it
 			// rides after a second '#k=' marker inside the SPA fragment.
 			return password !== '' ? base : `${base}?k=${toBase64Url(rawKey)}`
