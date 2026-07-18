@@ -1,6 +1,6 @@
 # Bulk Actions Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:** [bulk-actions](../../changes/bulk-actions/)
 
