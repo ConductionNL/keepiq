@@ -511,6 +511,60 @@ class CertificateAuthorityServiceTest extends TestCase
     }//end testRenewIntermediatePreservesSuitePublicKey()
 
     /**
+     * REGRESSION (found in live verification 2026-07-18): signPublicKey with a
+     * PUBLIC-ONLY key must issue a certificate carrying exactly the submitted
+     * key. On OpenSSL builds where openssl_csr_new() silently mints a throwaway
+     * keypair for a public-only key, the first-run suite-creation path
+     * (EncryptionSuiteService::createSuite → signPublicKey without a private
+     * key) issued a certificate whose private half nobody holds — every secret
+     * the user then stored or received was undecryptable (silent vault data
+     * loss). The fix guards the modulus and falls back to phpseclib issuance.
+     *
+     * @return void
+     */
+    public function testSignPublicKeyPreservesSubmittedPublicKey(): void
+    {
+        // Build a real root + intermediate (2048-bit for speed).
+        $rootKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($rootKey, $rootKeyPem);
+        $rootCsr  = openssl_csr_new(['commonName' => 'Root CA'], $rootKey);
+        $rootCert = openssl_csr_sign($rootCsr, null, $rootKey, 365);
+        openssl_x509_export($rootCert, $rootCertPem);
+
+        $intKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        openssl_pkey_export($intKey, $intKeyPem);
+        $intCsr  = openssl_csr_new(['commonName' => 'Int CA'], $intKey);
+        $intCert = openssl_csr_sign($intCsr, $rootCertPem, $rootKey, 365);
+        openssl_x509_export($intCert, $intCertPem);
+
+        $intermediate = new CACertificate();
+        $intermediate->setId('int-1');
+        $intermediate->setIsActive(true);
+        $intermediate->setCertificate($intCertPem);
+        $intermediate->setPrivateKey('enc:'.$intKeyPem);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
+
+        // A browser-style keypair: the private key NEVER reaches the server.
+        $browserKey = openssl_pkey_new(['private_key_bits' => 4096, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        $browserPublicPem = openssl_pkey_get_details($browserKey)['key'];
+        $submittedModulus = openssl_pkey_get_details(
+            openssl_pkey_get_public($browserPublicPem)
+        )['rsa']['n'];
+
+        $certPem = $this->service->signPublicKey(publicKeyPem: $browserPublicPem, commonName: 'user1');
+
+        $issuedModulus = openssl_pkey_get_details(
+            openssl_pkey_get_public($certPem)
+        )['rsa']['n'];
+        $this->assertSame(
+            expected: $submittedModulus,
+            actual: $issuedModulus,
+            message: 'Issued certificate must carry the submitted public key — never a throwaway pair',
+        );
+        $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $certPem);
+    }//end testSignPublicKeyPreservesSubmittedPublicKey()
+
+    /**
      * Test that renewIntermediate re-signs all active suites.
      *
      * @return void
