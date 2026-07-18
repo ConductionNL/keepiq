@@ -1,0 +1,113 @@
+<!--
+  SPDX-License-Identifier: EUPL-1.2
+  SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+
+  Admin section for encrypted-attachment limits (encrypted-attachments
+  §6.4): per-attachment size limit and per-user quota, expressed in MiB
+  for humans, stored and enforced server-side in ciphertext bytes.
+
+  @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-limits-and-quota
+-->
+<template>
+	<CnSettingsSection
+		:name="t('doriath', 'Attachments')"
+		:description="t('doriath', 'Limits for encrypted file attachments. Enforced server-side in stored (ciphertext) bytes.')">
+		<div class="attachment-limits" data-testid="attachment-limits-section">
+			<NcNoteCard v-if="error" type="error">
+				{{ error }}
+			</NcNoteCard>
+			<label class="attachment-limits__field">
+				<span>{{ t('doriath', 'Maximum size per attachment (MiB)') }}</span>
+				<input v-model.number="maxMib"
+					type="number"
+					min="1"
+					data-testid="attachment-max-mib"
+					@change="save">
+			</label>
+			<label class="attachment-limits__field">
+				<span>{{ t('doriath', 'Quota per user (MiB)') }}</span>
+				<input v-model.number="quotaMib"
+					type="number"
+					min="1"
+					data-testid="attachment-quota-mib"
+					@change="save">
+			</label>
+		</div>
+	</CnSettingsSection>
+</template>
+
+<script>
+import { CnSettingsSection } from '@conduction/nextcloud-vue'
+import { NcNoteCard } from '@nextcloud/vue'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+
+const MIB = 1048576
+
+export default {
+	name: 'AttachmentLimitsSection',
+	components: { CnSettingsSection, NcNoteCard },
+
+	data() {
+		return {
+			maxMib: 25,
+			quotaMib: 100,
+			error: null,
+		}
+	},
+
+	/**
+	 * Load the current admin limits.
+	 */
+	async created() {
+		try {
+			const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
+			this.maxMib = Math.round((response.data.attachment_max_bytes ?? 25 * MIB) / MIB)
+			this.quotaMib = Math.round((response.data.attachment_user_quota_bytes ?? 100 * MIB) / MIB)
+		} catch (e) {
+			this.error = e?.response?.data?.message || e?.message
+		}
+	},
+
+	methods: {
+		/**
+		 * Persist the limits (server validates positivity).
+		 *
+		 * @return {Promise<void>}
+		 */
+		async save() {
+			this.error = null
+			try {
+				await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+					attachment_max_bytes: Math.max(1, this.maxMib) * MIB,
+					attachment_user_quota_bytes: Math.max(1, this.quotaMib) * MIB,
+				})
+			} catch (e) {
+				this.error = e?.response?.data?.message || e?.message
+			}
+		},
+	},
+}
+</script>
+
+<style scoped>
+.attachment-limits {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-width: 420px;
+}
+
+.attachment-limits__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.attachment-limits__field input {
+	padding: 8px;
+	border: 1px solid var(--color-border-dark, #999);
+	border-radius: var(--border-radius, 4px);
+	width: 160px;
+}
+</style>

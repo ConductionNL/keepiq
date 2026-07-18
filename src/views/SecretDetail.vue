@@ -48,6 +48,11 @@
 				<PasskeyDisplay :credential-json="secret.key || ''" data-testid="secret-detail-passkey" />
 			</div>
 
+			<div class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{ t('doriath', 'Attachments') }}</span>
+				<AttachmentPanel :secret-id="secretId" :can-manage="isOwner" />
+			</div>
+
 			<div v-if="hasAdditionalFields" class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{ t('doriath', 'Additional fields') }}</span>
 				<dl class="secret-detail__extra">
@@ -179,6 +184,7 @@ import CopyButton from '../components/CopyButton.vue'
 import PasswordField from '../components/PasswordField.vue'
 import TotpDisplay from '../components/TotpDisplay.vue'
 import PasskeyDisplay from '../components/PasskeyDisplay.vue'
+import AttachmentPanel from '../components/AttachmentPanel.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
@@ -209,6 +215,7 @@ export default {
 		PasswordField,
 		TotpDisplay,
 		PasskeyDisplay,
+		AttachmentPanel,
 		DelegationManager,
 		ShareList,
 		ShareRequestForm,

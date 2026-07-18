@@ -269,6 +269,23 @@ class SecretMapper extends QBMapper
     }//end countByOwner()
 
     /**
+     * Find the secrets directly contained in a folder (attachment cascade).
+     *
+     * @param string $folderId The folder ID
+     *
+     * @return Secret[]
+     */
+    public function findByFolderId(string $folderId): array
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
+
+        return $this->findEntities(query: $qb);
+    }//end findByFolderId()
+
+    /**
      * Count the secrets directly contained in a folder.
      *
      * @param string $folderId The folder ID

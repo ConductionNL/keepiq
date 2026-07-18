@@ -134,6 +134,7 @@ class SecretService
      * @param SecretDelegationMapper|null $secretDelegationMapper The secret-delegation mapper
      * @param IEventDispatcher|null       $eventDispatcher        The event dispatcher
      * @param AuditService|null           $auditService           The audit recorder (single write path)
+     * @param AttachmentService|null      $attachmentService      The attachment service (delete cascade)
      *
      * @return void
      */
@@ -150,6 +151,7 @@ class SecretService
         private ?SecretDelegationMapper $secretDelegationMapper=null,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?AuditService $auditService=null,
+        private ?AttachmentService $attachmentService=null,
     ) {
     }//end __construct()
 
@@ -870,6 +872,14 @@ class SecretService
 
         if ($this->secretDelegationMapper !== null) {
             $this->secretDelegationMapper->deleteBySecret($id);
+        }
+
+        // Attachments cascade (encrypted-attachments §3.1): remove the
+        // secret's attachments (grants + reference-counted blobs) and any
+        // grants held BY this row as a recipient copy.
+        if ($this->attachmentService !== null) {
+            $this->attachmentService->deleteForSecret($id);
+            $this->attachmentService->deleteGrantsForSecretCopy($id);
         }
 
         $this->mapper->delete($secret);

@@ -558,8 +558,9 @@ class TeamFolderService
      *
      * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
      */
-    public function registerFanOutShares(string $teamFolderId, array $shares, string $userId): int
+    public function registerFanOutShares(string $teamFolderId, array $shares, string $userId): array
     {
+        $createdRows = [];
         $teamFolder = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
         $subtreeSecretIds = [];
@@ -621,6 +622,11 @@ class TeamFolderService
                 $this->shareTargetMapper->insert($entity);
                 ++$created;
                 $newRecipients[$targetUserId] = true;
+                $createdRows[]                = [
+                    'sourceSecretId'    => $sourceSecretId,
+                    'targetUserId'      => $targetUserId,
+                    'recipientSecretId' => $copy->getId(),
+                ];
             }//end foreach
 
             $this->db->commit();
@@ -643,7 +649,10 @@ class TeamFolderService
             );
         }
 
-        return $created;
+        return [
+            'created' => $created,
+            'rows'    => $createdRows,
+        ];
     }//end registerFanOutShares()
 
     /**

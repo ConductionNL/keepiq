@@ -20,6 +20,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
+import { useAttachmentStore } from './attachment.js'
 
 /** Number of (secret × recipient) rows per registration POST. */
 const FAN_OUT_CHUNK_SIZE = 20
@@ -190,6 +191,37 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		},
 
 		/**
+		 * Re-wrap attachment file keys for freshly fanned-out recipient
+		 * copies (encrypted-attachments §6.3). Best-effort per row: a
+		 * failed re-grant never aborts the fan-out; the reconcile pass in
+		 * the attachment flow surfaces gaps.
+		 *
+		 * @param {Array<object>} rows The created fan-out descriptors.
+		 * @param {object} certByUser userId → PEM certificate map.
+		 * @return {Promise<void>}
+		 */
+		async regrantAttachments(rows, certByUser) {
+			const attachmentStore = useAttachmentStore()
+			for (const row of rows) {
+				const certificate = certByUser[row.targetUserId]
+				if (!certificate) {
+					continue
+				}
+				try {
+					// eslint-disable-next-line no-await-in-loop
+					await attachmentStore.regrantForRecipient(
+						row.sourceSecretId,
+						row.recipientSecretId,
+						row.targetUserId,
+						certificate,
+					)
+				} catch {
+					// Best-effort — surfaced by the attachment list for the recipient.
+				}
+			}
+		},
+
+		/**
 		 * The client fan-out runner (§5.1): reconcile → decrypt each
 		 * missing secret with the in-memory CryptoKey → RSA-encrypt per
 		 * recipient certificate → POST in idempotent chunks.
@@ -266,6 +298,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 							{ shares: chunk },
 						)
 						created += response.data?.created ?? 0
+						// eslint-disable-next-line no-await-in-loop
+						await this.regrantAttachments(response.data?.rows ?? [], certByUser)
 						this.fanOut.done += chunk.length
 						chunk = []
 					}
@@ -277,6 +311,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						{ shares: chunk },
 					)
 					created += response.data?.created ?? 0
+					await this.regrantAttachments(response.data?.rows ?? [], certByUser)
 					this.fanOut.done += chunk.length
 				}
 

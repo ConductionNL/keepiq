@@ -168,6 +168,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'applicationSecrets#show',   'url' => '/api/v1/app/secrets/{id}',            'verb' => 'GET'],
     ['name' => 'applicationSecrets#update', 'url' => '/api/v1/app/secrets/{id}',            'verb' => 'PUT'],
 
+    // Attachments (encrypted-attachments §4.2). Upload/list ride under the
+    // owning secret; download/grants/delete address the attachment id.
+    // Per-object authorization lives in AttachmentService method bodies.
+    ['name' => 'attachment#create',   'url' => '/api/v1/secrets/{secretId}/attachments', 'verb' => 'POST'],
+    ['name' => 'attachment#index',    'url' => '/api/v1/secrets/{secretId}/attachments', 'verb' => 'GET'],
+    ['name' => 'attachment#download', 'url' => '/api/v1/attachments/{id}/blob',          'verb' => 'GET'],
+    ['name' => 'attachment#addGrant', 'url' => '/api/v1/attachments/{id}/grants',        'verb' => 'POST'],
+    ['name' => 'attachment#destroy',  'url' => '/api/v1/attachments/{id}',               'verb' => 'DELETE'],
+
     // Team folder sharing (team-folder-sharing §4.1). Static segments
     // (offboard) precede the {id} routes so they resolve first. Per-object
     // owner/admin guards live in TeamFolderService method bodies.
