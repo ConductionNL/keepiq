@@ -1,6 +1,6 @@
 # Secret Version History Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - `secret-version-history` (2026-07-16) — Retain prior encrypted values on update as immutable versions; list/view (client-side decrypt)/restore; admin-configurable retention (count + age) with a background prune job; bounded re-encrypt window during compromise-recovery migration (head + N recent, older dropped); GDPR deletion cascade; exclusion from link-share snapshots; typed restore audit event
