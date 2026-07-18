@@ -44,7 +44,28 @@
 					@update:model-value="mode = $event">
 					{{ t('doriath', 'Plaintext CSV (unencrypted)') }}
 				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch :model-value="mode"
+					value="cxf"
+					name="export-mode"
+					type="radio"
+					data-testid="export-mode-cxf"
+					@update:model-value="mode = $event">
+					{{ t('doriath', 'FIDO Credential Exchange (CXF, unencrypted)') }}
+				</NcCheckboxRadioSwitch>
 			</fieldset>
+
+			<!-- CXF unmapped-item report: shown BEFORE the download so the
+			     user knows exactly what will not survive the round-trip
+			     (cxf-import-export D4). -->
+			<NcNoteCard v-if="mode === 'cxf' && cxfReport && cxfReport.unmapped.length"
+				type="warning"
+				data-testid="cxf-unmapped-report">
+				<p>{{ t('doriath', 'The following will not survive a CXF export:') }}</p>
+				<ul>
+					<li v-for="(entry, idx) in cxfReport.unmapped" :key="idx">{{ entry }}</li>
+				</ul>
+				<p>{{ t('doriath', 'Export again to proceed anyway.') }}</p>
+			</NcNoteCard>
 
 			<NcSelect v-model="scopeFolder"
 				:input-label="t('doriath', 'Scope')"
@@ -98,6 +119,7 @@ import { NcButton, NcCheckboxRadioSwitch, NcDialog, NcNoteCard, NcPasswordField,
 import zxcvbn from 'zxcvbn'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { verifyMasterPassword } from '../crypto/reauth.js'
 
 /** The zxcvbn score floor for a backup passphrase (D1). */
@@ -152,9 +174,23 @@ export default {
 			warningAcknowledged: false,
 			scopeFolder: 'vault',
 			error: null,
+			/** CXF pre-download unmapped-item report (null = not built yet). */
+			cxfReport: null,
 		}
 	},
+	watch: {
+		mode() {
+			// A mode switch invalidates the CXF pre-download report.
+			this.cxfReport = null
+		},
+	},
 	computed: {
+		/** typeId → type-name map for the CXF export mapping. */
+		typeNamesById() {
+			return Object.fromEntries(
+				useSecretTypeStore().types.map((type) => [type.id, type.name]),
+			)
+		},
 		/**
 		 * Whether an export is in flight (from the store).
 		 *
@@ -250,7 +286,27 @@ export default {
 						this.error = this.t('doriath', 'Incorrect master password')
 						return
 					}
-					await this.exportStore.exportCsv(this.secrets, this.folders, scope)
+					if (this.mode === 'cxf') {
+						// First pass builds and shows the unmapped-item report
+						// BEFORE any download (cxf-import-export D4); the second
+						// pass (or a clean report) proceeds to the download.
+						if (this.cxfReport === null) {
+							const report = await this.exportStore.exportCxf(
+								this.secrets, this.folders, scope,
+								{ typeNamesById: this.typeNamesById, dryRun: true },
+							)
+							if (report.unmapped.length > 0) {
+								this.cxfReport = report
+								return
+							}
+						}
+						await this.exportStore.exportCxf(
+							this.secrets, this.folders, scope,
+							{ typeNamesById: this.typeNamesById },
+						)
+					} else {
+						await this.exportStore.exportCsv(this.secrets, this.folders, scope)
+					}
 				}
 				this.reset()
 				this.$emit('update:open', false)
@@ -272,6 +328,7 @@ export default {
 			this.warningAcknowledged = false
 			this.scopeFolder = 'vault'
 			this.error = null
+			this.cxfReport = null
 		},
 		/**
 		 * Handle open-state changes, clearing transient secrets on close.

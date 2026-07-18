@@ -107,6 +107,34 @@ class ExportControllerTest extends TestCase
     }//end testValidReportDispatchesEvent()
 
     /**
+     * The `cxf` export mode is accepted and dispatched — the CXF export
+     * (cxf-import-export D5) reports through the same endpoint with its
+     * own mode value, carrying no secret material.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-cxf-export
+     */
+    public function testCxfModeAcceptedAndDispatched(): void
+    {
+        [$controller, $request, $dispatcher] = $this->build('alice');
+        $this->params($request, 'cxf', 'vault', 7);
+        $captured = null;
+        $dispatcher->expects($this->once())->method('dispatchTyped')
+            ->willReturnCallback(
+                function ($e) use (&$captured) {
+                    $captured = $e;
+                }
+            );
+
+        $response = $controller->events();
+        $this->assertSame(Http::STATUS_OK, $response->getStatus());
+        $this->assertInstanceOf(SecretExportedEvent::class, $captured);
+        $this->assertSame('cxf', $captured->getMode());
+        $this->assertSame(7, $captured->getSecretCount());
+    }//end testCxfModeAcceptedAndDispatched()
+
+    /**
      * An invalid mode is rejected with 400 and no event.
      *
      * @return void
