@@ -1,6 +1,6 @@
 # Encrypted Attachments Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - `encrypted-attachments` (2026-07-16) — Client-side encrypted file attachments on secrets: AES-256-GCM blob encrypted once under a random file key, RSA-wrapped per recipient (envelope model, no blob duplication); ciphertext blobs at rest in Nextcloud app data, metadata + wrapped keys in own DB tables; admin-configurable per-attachment size limit and per-user quota; inclusion in sharing, GDPR export, and suite-independent encrypted backup; deletion cascade and typed audit events
