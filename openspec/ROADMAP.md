@@ -28,7 +28,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Passkey Vault Login](specs/passkey-vault-login/spec.md) | in-progress | 18 — PRF frontier | [passkey-vault-login](changes/passkey-vault-login/) |
 | [Offline Read-only Cache](specs/offline-readonly-cache/spec.md) | in-progress | 19 | [offline-readonly-cache](changes/offline-readonly-cache/) |
 | [Folder Permission Grades](specs/folder-permission-grades/spec.md) | in-progress | 20 — after team folders | [folder-permission-grades](changes/folder-permission-grades/) |
-| [Ephemeral Send](specs/ephemeral-send/spec.md) | in-progress | 21 | [ephemeral-send](changes/ephemeral-send/) |
+| [Ephemeral Send](specs/ephemeral-send/spec.md) | done — 2026-07-18 | 21 | [archive](changes/archive/2026-07-18-ephemeral-send/) |
 | [Compliance Reporting](specs/compliance-reporting/spec.md) | in-progress | 22 — BIO2/NIS2 evidence | [compliance-reporting](changes/compliance-reporting/) |
 | [SIEM Audit Export](specs/siem-audit-export/spec.md) | in-progress | 23 | [siem-audit-export](changes/siem-audit-export/) |
 | [Org Password Policies](specs/org-password-policies/spec.md) | done — 2026-07-18 | 24 | [archive](changes/archive/2026-07-18-org-password-policies/) |
