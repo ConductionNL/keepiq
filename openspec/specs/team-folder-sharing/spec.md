@@ -1,6 +1,6 @@
 # Team Folder Sharing Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - [team-folder-sharing](../../changes/team-folder-sharing/)

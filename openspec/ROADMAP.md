@@ -15,7 +15,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [User Sharing](specs/user-sharing/spec.md) | planned | 5 | — |
 | [Link Sharing](specs/link-sharing/spec.md) | planned | 6 | — |
 | [Secret Requests](specs/secret-requests/spec.md) | planned | 7 | — |
-| [Team Folder Sharing](specs/team-folder-sharing/spec.md) | in-progress | 8 — #1 ecosystem wish | [team-folder-sharing](changes/team-folder-sharing/) |
+| [Team Folder Sharing](specs/team-folder-sharing/spec.md) | done — live-verified 2026-07-18 | 8 — #1 ecosystem wish | [archive](changes/archive/2026-07-18-team-folder-sharing/) |
 | [Browser Extension & Autofill](specs/browser-extension-autofill/spec.md) | in-progress | 9 | [browser-extension-autofill](changes/browser-extension-autofill/) |
 | [Passkey Item Type](specs/passkey-item-type/spec.md) | in-progress | 10 — 2026 table stakes | [passkey-item-type](changes/passkey-item-type/) |
 | [CXF Import/Export](specs/cxf-import-export/spec.md) | in-progress | 11 — after passkeys | [cxf-import-export](changes/cxf-import-export/) |
