@@ -155,6 +155,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'siemSink#destroy', 'url' => '/api/v1/siem/sinks/{id}',      'verb' => 'DELETE'],
     ['name' => 'siemSink#test',    'url' => '/api/v1/siem/sinks/{id}/test', 'verb' => 'POST'],
 
+    // Certificate lifecycle (certificate-lifecycle §4) — inventory +
+    // client-parsed metadata + guided renewal; owner-scoped in the
+    // service. CA health rides the existing admin-only ca#getStatus.
+    ['name' => 'certificate#inventory',        'url' => '/api/v1/certificates/inventory',                    'verb' => 'GET'],
+    ['name' => 'certificate#submitMetadata',   'url' => '/api/v1/certificates/{secretId}/metadata',          'verb' => 'PUT'],
+    ['name' => 'certificate#renewalChecklist', 'url' => '/api/v1/certificates/{secretId}/renewal-checklist', 'verb' => 'POST'],
+    ['name' => 'certificate#reissueSuite',     'url' => '/api/v1/certificates/suites/{suiteId}/reissue',     'verb' => 'POST'],
+    ['name' => 'cACertificate#health',         'url' => '/api/v1/ca/health',                                 'verb' => 'GET'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],
