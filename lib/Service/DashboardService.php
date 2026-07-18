@@ -31,6 +31,7 @@ use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\DashboardSetting;
 use OCA\Doriath\Db\DashboardSettingMapper;
 use OCA\Doriath\Db\FolderMapper;
+use OCA\Doriath\Db\HoneyAlertMapper;
 use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
@@ -94,6 +95,7 @@ class DashboardService
         private ?ApplicationMapper $applicationMapper=null,
         private ?RotationFlagMapper $rotationFlagMapper=null,
         private ?CertificateAuthorityService $caService=null,
+        private ?HoneyAlertMapper $honeyAlertMapper=null,
     ) {
     }//end __construct()
 
@@ -165,6 +167,10 @@ class DashboardService
                 metricId: 'pending_apps_count',
             );
             $summary['ca_health']          = $this->caHealthCard();
+            $summary['honey_alert_count']  = $this->safeCount(
+                fn: fn () => $this->honeyAlertMapper?->countUnacknowledged() ?? 0,
+                metricId: 'honey_alert_count',
+            );
         }
 
         return $summary;

@@ -74,6 +74,9 @@ class NotificationService
         // Certificate lifecycle (certificate-lifecycle §3.2): suite
         // certificate approaching notAfter.
         'certificate_expiring'       => 'notify_security',
+        // Honey credentials (honey-credentials §D3): a muted tripwire
+        // is worthless — always pages, like app_pending.
+        'honey_access'               => null,
     ];
 
     /**

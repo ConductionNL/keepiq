@@ -80,6 +80,11 @@
 				<RotationPanel :secret-id="secretId" :can-manage="isOwner" />
 			</div>
 
+			<div v-if="isOwner" class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{ t('doriath', 'Honey tripwire') }}</span>
+				<HoneyPanel :secret-id="secretId" />
+			</div>
+
 			<div v-if="hasAdditionalFields" class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{ t('doriath', 'Additional fields') }}</span>
 				<dl class="secret-detail__extra">
@@ -214,6 +219,7 @@ import PasskeyDisplay from '../components/PasskeyDisplay.vue'
 import AttachmentPanel from '../components/AttachmentPanel.vue'
 import VersionHistoryPanel from '../components/VersionHistoryPanel.vue'
 import RotationPanel from '../components/RotationPanel.vue'
+import HoneyPanel from '../components/HoneyPanel.vue'
 import CardDisplay from '../components/CardDisplay.vue'
 import IdentityDisplay from '../components/IdentityDisplay.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
@@ -249,6 +255,7 @@ export default {
 		AttachmentPanel,
 		VersionHistoryPanel,
 		RotationPanel,
+		HoneyPanel,
 		CardDisplay,
 		IdentityDisplay,
 		DelegationManager,
