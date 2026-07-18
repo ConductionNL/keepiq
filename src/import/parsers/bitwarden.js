@@ -17,7 +17,8 @@
  * All parsing is in-browser; plaintext never leaves the page.
  */
 
-import { makeRow, validateRow, joinFolderPath } from '../model.js'
+import { makeRow, validateRow, rejectRow, joinFolderPath } from '../model.js'
+import { serializePasskey } from '../../passkey/passkey.js'
 import { parseCsvImport } from './csv.js'
 
 /** Bitwarden CSV column → target-field mapping (fixed). */
@@ -104,14 +105,17 @@ export function parseBitwardenJson(input) {
 		}
 	}
 
-	return data.items.map((item, index) => {
+	const rows = []
+	let nextSourceRow = data.items.length
+	for (const [index, item] of data.items.entries()) {
 		const sourceRow = index + 1
 		// Bitwarden item types: 1=login, 2=secureNote, 3=card, 4=identity.
 		if (item.type !== 1 && item.type !== undefined) {
 			const row = makeRow({ name: item.name ?? '' }, sourceRow)
 			const kind = { 2: 'secure note', 3: 'card', 4: 'identity' }[item.type] ?? 'non-login'
 			row.errors.push(`Unsupported Bitwarden item type (${kind}); only login items import`)
-			return row
+			rows.push(row)
+			continue
 		}
 		const login = item.login || {}
 		const uris = Array.isArray(login.uris) ? login.uris : []
@@ -125,8 +129,59 @@ export function parseBitwardenJson(input) {
 			type: 'login',
 			additionalFields: buildAdditional(item),
 		}
-		return validateRow(makeRow(fields, sourceRow))
+		rows.push(validateRow(makeRow(fields, sourceRow)))
+
+		// Passkeys: each `login.fido2Credentials[]` entry becomes its own
+		// `passkey`-typed row carrying the canonical CXF-aligned credential
+		// JSON in `password` (which becomes the encrypted `key` at commit).
+		// A partial entry is rejected, never imported partially
+		// (passkey-item-type D5).
+		const fido2 = Array.isArray(login.fido2Credentials) ? login.fido2Credentials : []
+		for (const entry of fido2) {
+			nextSourceRow += 1
+			rows.push(buildPasskeyRow(item, entry, nextSourceRow))
+		}
+	}
+
+	return rows
+}
+
+/**
+ * Build a `passkey` row from one Bitwarden `fido2Credentials[]` entry.
+ *
+ * Maps Bitwarden's field names onto the canonical schema (`keyValue` →
+ * `privateKey`, `creationDate` → `createdAt`); an entry that cannot yield
+ * at least `credentialId` + `rpId` + `privateKey` lands in the rejected
+ * list with a reason (passkey-item-type D5).
+ *
+ * @param {object} item The parent Bitwarden login item.
+ * @param {object} entry The fido2Credentials entry.
+ * @param {number} sourceRow The synthetic source-row number.
+ * @return {object} The normalized row (possibly carrying a rejection).
+ */
+function buildPasskeyRow(item, entry, sourceRow) {
+	const json = serializePasskey({
+		credentialId: entry?.credentialId ?? '',
+		rpId: entry?.rpId ?? '',
+		rpName: entry?.rpName ?? '',
+		userName: entry?.userName ?? '',
+		userDisplayName: entry?.userDisplayName ?? '',
+		userHandle: entry?.userHandle ?? '',
+		privateKey: entry?.keyValue ?? '',
+		counter: Number.parseInt(entry?.counter, 10) || 0,
+		createdAt: entry?.creationDate ?? '',
 	})
+	const row = makeRow({
+		name: `${item.name ?? 'Passkey'} (passkey)`,
+		url: entry?.rpId ?? null,
+		password: json ?? '',
+		folder: '',
+		type: 'passkey',
+	}, sourceRow)
+	if (json === null) {
+		return rejectRow(row, 'Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)')
+	}
+	return validateRow(row)
 }
 
 /**

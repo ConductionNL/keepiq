@@ -43,6 +43,11 @@
 				<TotpDisplay :seed="secret.key || ''" data-testid="secret-detail-totp" />
 			</div>
 
+			<div v-if="isPasskey" class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{ t('doriath', 'Passkey') }}</span>
+				<PasskeyDisplay :credential-json="secret.key || ''" data-testid="secret-detail-passkey" />
+			</div>
+
 			<div v-if="hasAdditionalFields" class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{ t('doriath', 'Additional fields') }}</span>
 				<dl class="secret-detail__extra">
@@ -173,6 +178,7 @@ import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import CopyButton from '../components/CopyButton.vue'
 import PasswordField from '../components/PasswordField.vue'
 import TotpDisplay from '../components/TotpDisplay.vue'
+import PasskeyDisplay from '../components/PasskeyDisplay.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
@@ -202,6 +208,7 @@ export default {
 		CopyButton,
 		PasswordField,
 		TotpDisplay,
+		PasskeyDisplay,
 		DelegationManager,
 		ShareList,
 		ShareRequestForm,
@@ -258,6 +265,22 @@ export default {
 			}
 			const type = useSecretTypeStore().typesById[this.secret.typeId]
 			return Boolean(type) && type.name === 'totp'
+		},
+
+		/**
+		 * Whether this secret is a `passkey` credential: the encrypted `key`
+		 * holds the canonical CXF-aligned credential JSON and the client
+		 * renders the passkey presentation with the private key masked.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-listing-filtering-and-site-associated-presentation
+		 */
+		isPasskey() {
+			if (!this.secret) {
+				return false
+			}
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return Boolean(type) && type.name === 'passkey'
 		},
 
 		/**

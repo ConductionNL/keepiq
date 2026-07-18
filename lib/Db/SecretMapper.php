@@ -112,6 +112,7 @@ class SecretMapper extends QBMapper
      * @param string      $direction Sort direction (asc/desc)
      * @param int         $limit     Maximum rows
      * @param int         $offset    Row offset
+     * @param string|null $typeId    Filter by secret-type ID (null = all types)
      *
      * @return Secret[]
      */
@@ -123,6 +124,7 @@ class SecretMapper extends QBMapper
         string $direction='asc',
         int $limit=1000,
         int $offset=0,
+        ?string $typeId=null,
     ): array {
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
@@ -132,6 +134,10 @@ class SecretMapper extends QBMapper
 
         if ($folderId !== null) {
             $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
+        }
+
+        if ($typeId !== null) {
+            $qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
         }
 
         $dir = 'ASC';
@@ -231,11 +237,16 @@ class SecretMapper extends QBMapper
      * @param string      $ownerType The owner type
      * @param string      $ownerId   The owner ID
      * @param string|null $folderId  Filter by folder ID (null = no folder filter)
+     * @param string|null $typeId    Filter by secret-type ID (null = all types)
      *
      * @return int
      */
-    public function countByOwner(string $ownerType, string $ownerId, ?string $folderId=null): int
-    {
+    public function countByOwner(
+        string $ownerType,
+        string $ownerId,
+        ?string $folderId=null,
+        ?string $typeId=null,
+    ): int {
         $qb = $this->db->getQueryBuilder();
         $qb->select($qb->func()->count('*', 'cnt'))
             ->from($this->getTableName())
@@ -244,6 +255,10 @@ class SecretMapper extends QBMapper
 
         if ($folderId !== null) {
             $qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
+        }
+
+        if ($typeId !== null) {
+            $qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
         }
 
         $result = $qb->executeQuery();
