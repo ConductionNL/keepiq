@@ -1,6 +1,6 @@
 # Payment Card & Identity Items Specification
 
-**Status**: in-progress
+**Status**: done
 
 **Feature tier**: V1
 
