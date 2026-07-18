@@ -63,6 +63,7 @@ class FolderService
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?AttachmentService $attachmentService=null,
+        private ?SecretVersionService $versionService=null,
     ) {
     }//end __construct()
 
@@ -77,13 +78,15 @@ class FolderService
      */
     private function cascadeAttachmentsForFolder(string $folderId): void
     {
-        if ($this->attachmentService === null) {
+        if ($this->attachmentService === null && $this->versionService === null) {
             return;
         }
 
         foreach ($this->secretMapper->findByFolderId(folderId: $folderId) as $secret) {
-            $this->attachmentService->deleteForSecret($secret->getId());
-            $this->attachmentService->deleteGrantsForSecretCopy($secret->getId());
+            $this->attachmentService?->deleteForSecret($secret->getId());
+            $this->attachmentService?->deleteGrantsForSecretCopy($secret->getId());
+            // Version-history cascade (secret-version-history §5.2).
+            $this->versionService?->deleteForSecret($secret->getId());
         }
     }//end cascadeAttachmentsForFolder()
 

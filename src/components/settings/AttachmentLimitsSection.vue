@@ -10,8 +10,8 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Attachments')"
-		:description="t('doriath', 'Limits for encrypted file attachments. Enforced server-side in stored (ciphertext) bytes.')">
+		:name="t('doriath', 'Attachments & version history')"
+		:description="t('doriath', 'Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes) and version-history retention.')">
 		<div class="attachment-limits" data-testid="attachment-limits-section">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
@@ -30,6 +30,22 @@
 					type="number"
 					min="1"
 					data-testid="attachment-quota-mib"
+					@change="save">
+			</label>
+			<label class="attachment-limits__field">
+				<span>{{ t('doriath', 'Versions kept per secret') }}</span>
+				<input v-model.number="retentionCount"
+					type="number"
+					min="1"
+					data-testid="version-retention-count"
+					@change="save">
+			</label>
+			<label class="attachment-limits__field">
+				<span>{{ t('doriath', 'Version age limit (days, 0 = unlimited)') }}</span>
+				<input v-model.number="retentionDays"
+					type="number"
+					min="0"
+					data-testid="version-retention-days"
 					@change="save">
 			</label>
 		</div>
@@ -52,6 +68,8 @@ export default {
 		return {
 			maxMib: 25,
 			quotaMib: 100,
+			retentionCount: 20,
+			retentionDays: 365,
 			error: null,
 		}
 	},
@@ -64,6 +82,8 @@ export default {
 			const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
 			this.maxMib = Math.round((response.data.attachment_max_bytes ?? 25 * MIB) / MIB)
 			this.quotaMib = Math.round((response.data.attachment_user_quota_bytes ?? 100 * MIB) / MIB)
+			this.retentionCount = response.data.version_retention_count ?? 20
+			this.retentionDays = response.data.version_retention_days ?? 365
 		} catch (e) {
 			this.error = e?.response?.data?.message || e?.message
 		}
@@ -81,6 +101,8 @@ export default {
 				await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
 					attachment_max_bytes: Math.max(1, this.maxMib) * MIB,
 					attachment_user_quota_bytes: Math.max(1, this.quotaMib) * MIB,
+					version_retention_count: Math.max(1, this.retentionCount),
+					version_retention_days: Math.max(0, this.retentionDays),
 				})
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message

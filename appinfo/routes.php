@@ -168,6 +168,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'applicationSecrets#show',   'url' => '/api/v1/app/secrets/{id}',            'verb' => 'GET'],
     ['name' => 'applicationSecrets#update', 'url' => '/api/v1/app/secrets/{id}',            'verb' => 'PUT'],
 
+    // Version history (secret-version-history §6.2). List rides under the
+    // secret; show/restore address the version id. Per-object authorization
+    // lives in SecretVersionService method bodies.
+    ['name' => 'secretVersion#index',   'url' => '/api/v1/secrets/{secretId}/versions',  'verb' => 'GET'],
+    ['name' => 'secretVersion#show',    'url' => '/api/v1/versions/{id}',                'verb' => 'GET'],
+    ['name' => 'secretVersion#restore', 'url' => '/api/v1/versions/{id}/restore',        'verb' => 'POST'],
+
     // Attachments (encrypted-attachments §4.2). Upload/list ride under the
     // owning secret; download/grants/delete address the attachment id.
     // Per-object authorization lives in AttachmentService method bodies.
