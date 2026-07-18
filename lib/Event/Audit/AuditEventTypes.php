@@ -128,6 +128,13 @@ final class AuditEventTypes
     // Folder permission grades (folder-permission-grades §3.3).
     public const TEAM_FOLDER_GRADE_CHANGED = 'team_folder.grade_changed';
 
+    // SIEM audit export (siem-audit-export §5.1) — sink config lifecycle
+    // only; endpoints/secrets never appear in metadata.
+    public const SIEM_SINK_CREATED = 'siem.sink_created';
+    public const SIEM_SINK_UPDATED = 'siem.sink_updated';
+    public const SIEM_SINK_DELETED = 'siem.sink_deleted';
+    public const SIEM_SINK_TESTED  = 'siem.sink_tested';
+
     /**
      * Metadata keys that MUST NEVER appear in any audit entry, in any position.
      * Recording any of these is rejected with an exception — defense in depth so
@@ -223,6 +230,11 @@ final class AuditEventTypes
             self::TEAM_FOLDER_OFFBOARDED       => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
             // Grade changes — identifiers + the new grade only (§3.3).
             self::TEAM_FOLDER_GRADE_CHANGED    => ['memberType', 'memberId', 'grade'],
+            // SIEM sinks — sink id/type/outcome only (§5.1).
+            self::SIEM_SINK_CREATED            => ['sinkId', 'type'],
+            self::SIEM_SINK_UPDATED            => ['sinkId'],
+            self::SIEM_SINK_DELETED            => ['sinkId'],
+            self::SIEM_SINK_TESTED             => ['sinkId', 'outcome'],
         ];
     }//end whitelist()
 

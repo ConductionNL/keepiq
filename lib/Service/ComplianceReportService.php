@@ -58,7 +58,15 @@ class ComplianceReportService
         'adoption'        => ['usersWithActiveSuite', 'usersWithSecrets', 'usersWithEmergencyContact'],
         'secretsPerUser'  => ['totalSecrets', 'ownersWithSecrets', 'minPerOwner', 'medianPerOwner', 'maxPerOwner'],
         'shareHygiene'    => ['userShares', 'groupShares', 'linkShares', 'linkSharesPasswordProtected', 'linkSharesExpiring'],
-        'rotationPosture' => ['available', 'expiryPolicies', 'secretsWithExpiry', 'overdueSecrets', 'openFlagsByReason', 'ciphertextAgeBands', 'possiblyCompromised'],
+        'rotationPosture' => [
+            'available',
+            'expiryPolicies',
+            'secretsWithExpiry',
+            'overdueSecrets',
+            'openFlagsByReason',
+            'ciphertextAgeBands',
+            'possiblyCompromised',
+        ],
         'auditIntegrity'  => ['retentionDays', 'totalEntries', 'firstEntryAt', 'appendOnly'],
         'emergencyAccess' => ['grantorsWithActiveContact', 'pendingRequests'],
     ];
@@ -100,32 +108,38 @@ class ComplianceReportService
      */
     public function aggregate(): array
     {
-        $aggregate = [
+        $activeSuiteWhere = "status = 'active' AND owner_type = 'user'";
+        $activeStateWhere = "state IN ('granted','accepted','active')";
+        $aggregate        = [
             'adoption'        => [
-                'usersWithActiveSuite'      => $this->countDistinct('doriath_enc_suites', 'owner_id', "status = 'active' AND owner_type = 'user'"),
-                'usersWithSecrets'          => $this->countDistinct('doriath_secrets', 'owner_id', "owner_type = 'user'"),
-                'usersWithEmergencyContact' => $this->countDistinct('doriath_emergency_contacts', 'grantor_user_id', null),
+                'usersWithActiveSuite'      => $this->countDistinct(table: 'doriath_enc_suites', column: 'owner_id', where: $activeSuiteWhere),
+                'usersWithSecrets'          => $this->countDistinct(table: 'doriath_secrets', column: 'owner_id', where: "owner_type = 'user'"),
+                'usersWithEmergencyContact' => $this->countDistinct(table: 'doriath_emergency_contacts', column: 'grantor_user_id', where: null),
             ],
             'secretsPerUser'  => $this->secretsPerUserSection(),
             'shareHygiene'    => [
-                'userShares'                  => $this->countAll('doriath_share_targets'),
-                'groupShares'                 => $this->countAll('doriath_group_shares'),
-                'linkShares'                  => $this->countAll('doriath_link_shares'),
+                'userShares'                  => $this->countAll(table: 'doriath_share_targets'),
+                'groupShares'                 => $this->countAll(table: 'doriath_group_shares'),
+                'linkShares'                  => $this->countAll(table: 'doriath_link_shares'),
                 // Every link share carries an Argon2id-wrapped snapshot;
                 // "password protected" = the whole population by protocol.
-                'linkSharesPasswordProtected' => $this->countWhere('doriath_link_shares', "argon2id_salt <> ''"),
-                'linkSharesExpiring'          => $this->countWhere('doriath_link_shares', 'expires_at IS NOT NULL'),
+                'linkSharesPasswordProtected' => $this->countWhere(table: 'doriath_link_shares', where: "argon2id_salt <> ''"),
+                'linkSharesExpiring'          => $this->countWhere(table: 'doriath_link_shares', where: 'expires_at IS NOT NULL'),
             ],
             'rotationPosture' => $this->rotationPostureSection(),
             'auditIntegrity'  => [
                 'retentionDays' => $this->appConfig->getValueInt(Application::APP_ID, 'audit_retention_days', 365),
-                'totalEntries'  => $this->countAll('doriath_audit_log'),
-                'firstEntryAt'  => $this->scalar('SELECT MIN(occurred_at) FROM *PREFIX*doriath_audit_log'),
+                'totalEntries'  => $this->countAll(table: 'doriath_audit_log'),
+                'firstEntryAt'  => $this->scalar(sql: 'SELECT MIN(occurred_at) FROM *PREFIX*doriath_audit_log'),
                 'appendOnly'    => true,
             ],
             'emergencyAccess' => [
-                'grantorsWithActiveContact' => $this->countDistinct('doriath_emergency_contacts', 'grantor_user_id', "state IN ('granted','accepted','active')"),
-                'pendingRequests'           => $this->countWhere('doriath_emergency_contacts', "state IN ('requested','pending')"),
+                'grantorsWithActiveContact' => $this->countDistinct(
+                    table: 'doriath_emergency_contacts',
+                    column: 'grantor_user_id',
+                    where: $activeStateWhere
+                ),
+                'pendingRequests'           => $this->countWhere(table: 'doriath_emergency_contacts', where: "state IN ('requested','pending')"),
             ],
         ];
 
@@ -242,10 +256,13 @@ class ComplianceReportService
         }
 
         $metrics = json_decode($cached, true);
+        if (is_array($metrics) === false) {
+            $metrics = [];
+        }
 
         return [
             'computedAt' => $this->appConfig->getValueString($appId, 'compliance_metrics_computed_at', ''),
-            'metrics'    => (is_array($metrics) === true) ? $metrics : [],
+            'metrics'    => $metrics,
         ];
     }//end cachedMetrics()
 
@@ -273,12 +290,19 @@ class ComplianceReportService
             $median = $counts[intdiv($ownerCount, 2)];
         }
 
+        $min = 0;
+        $max = 0;
+        if ($ownerCount > 0) {
+            $min = $counts[0];
+            $max = $counts[($ownerCount - 1)];
+        }
+
         return [
             'totalSecrets'      => array_sum($counts),
             'ownersWithSecrets' => $ownerCount,
-            'minPerOwner'       => ($ownerCount > 0) ? $counts[0] : 0,
+            'minPerOwner'       => $min,
             'medianPerOwner'    => $median,
-            'maxPerOwner'       => ($ownerCount > 0) ? $counts[($ownerCount - 1)] : 0,
+            'maxPerOwner'       => $max,
         ];
     }//end secretsPerUserSection()
 
@@ -307,14 +331,16 @@ class ComplianceReportService
 
             $result->closeCursor();
 
+            $overdueWhere = 'expires_at IS NOT NULL AND expires_at < CURRENT_TIMESTAMP';
+
             return [
                 'available'           => true,
-                'expiryPolicies'      => $this->countAll('doriath_expiry_policies'),
-                'secretsWithExpiry'   => $this->countWhere('doriath_secrets', 'expires_at IS NOT NULL'),
-                'overdueSecrets'      => $this->countWhere('doriath_secrets', 'expires_at IS NOT NULL AND expires_at < CURRENT_TIMESTAMP'),
+                'expiryPolicies'      => $this->countAll(table: 'doriath_expiry_policies'),
+                'secretsWithExpiry'   => $this->countWhere(table: 'doriath_secrets', where: 'expires_at IS NOT NULL'),
+                'overdueSecrets'      => $this->countWhere(table: 'doriath_secrets', where: $overdueWhere),
                 'openFlagsByReason'   => $flagsByReason,
                 'ciphertextAgeBands'  => $this->ciphertextAgeBands(),
-                'possiblyCompromised' => $this->countWhere('doriath_secrets', 'possibly_compromised_at IS NOT NULL'),
+                'possiblyCompromised' => $this->countWhere(table: 'doriath_secrets', where: 'possibly_compromised_at IS NOT NULL'),
             ];
         } catch (Throwable) {
             return ['available' => false];
@@ -388,7 +414,7 @@ class ComplianceReportService
      */
     private function countAll(string $table): int
     {
-        return (int) $this->scalar('SELECT COUNT(*) FROM *PREFIX*'.$table);
+        return (int) $this->scalar(sql: 'SELECT COUNT(*) FROM *PREFIX*'.$table);
     }//end countAll()
 
     /**
@@ -401,7 +427,7 @@ class ComplianceReportService
      */
     private function countWhere(string $table, string $where): int
     {
-        return (int) $this->scalar('SELECT COUNT(*) FROM *PREFIX*'.$table.' WHERE '.$where);
+        return (int) $this->scalar(sql: 'SELECT COUNT(*) FROM *PREFIX*'.$table.' WHERE '.$where);
     }//end countWhere()
 
     /**
@@ -421,7 +447,7 @@ class ComplianceReportService
         }
 
         try {
-            return (int) $this->scalar($sql);
+            return (int) $this->scalar(sql: $sql);
         } catch (Throwable) {
             // A table from an optional capability may not exist.
             return 0;
