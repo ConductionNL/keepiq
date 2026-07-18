@@ -102,6 +102,11 @@ final class AuditEventTypes
     // only, never secret data.
     public const PASSWORD_POLICY_UPDATED = 'password_policy.updated';
 
+    // Compliance reporting (compliance-reporting §5.1) — identifiers +
+    // export format only, never an aggregate body.
+    public const COMPLIANCE_REPORT_GENERATED = 'compliance.report_generated';
+    public const COMPLIANCE_REPORT_EXPORTED  = 'compliance.report_exported';
+
     // Machine leases (machine-secret-leases §5.2) — ids + lifetimes only.
     public const LEASE_GRANTED = 'lease.granted';
     public const LEASE_RENEWED = 'lease.renewed';
@@ -198,6 +203,9 @@ final class AuditEventTypes
             self::POLICY_EXPIRY_CHANGED        => ['scope', 'scopeId'],
             // Org password policy — before/after config values (§3.1).
             self::PASSWORD_POLICY_UPDATED      => ['before', 'after'],
+            // Compliance reporting — identifiers + format only (§5.1).
+            self::COMPLIANCE_REPORT_GENERATED  => ['reportId'],
+            self::COMPLIANCE_REPORT_EXPORTED   => ['reportId', 'format'],
             // Machine leases — ids + lifetimes only (§5.2).
             self::LEASE_GRANTED                => ['leaseId', 'secretId', 'expiresAt', 'ttl'],
             self::LEASE_RENEWED                => ['leaseId', 'secretId', 'expiresAt', 'renewedCount'],
