@@ -58,6 +58,11 @@
 				<VersionHistoryPanel :secret-id="secretId" :can-manage="isOwner" @restored="load" />
 			</div>
 
+			<div v-if="isOwner" class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{ t('doriath', 'Rotation & expiry') }}</span>
+				<RotationPanel :secret-id="secretId" :can-manage="isOwner" />
+			</div>
+
 			<div v-if="hasAdditionalFields" class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{ t('doriath', 'Additional fields') }}</span>
 				<dl class="secret-detail__extra">
@@ -191,6 +196,7 @@ import TotpDisplay from '../components/TotpDisplay.vue'
 import PasskeyDisplay from '../components/PasskeyDisplay.vue'
 import AttachmentPanel from '../components/AttachmentPanel.vue'
 import VersionHistoryPanel from '../components/VersionHistoryPanel.vue'
+import RotationPanel from '../components/RotationPanel.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
@@ -223,6 +229,7 @@ export default {
 		PasskeyDisplay,
 		AttachmentPanel,
 		VersionHistoryPanel,
+		RotationPanel,
 		DelegationManager,
 		ShareList,
 		ShareRequestForm,

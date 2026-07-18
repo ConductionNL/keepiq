@@ -55,6 +55,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setPossiblyCompromisedAt(?DateTime $possiblyCompromisedAt)
  * @method DateTime|null getKeyUpdatedAt()
  * @method void setKeyUpdatedAt(?DateTime $keyUpdatedAt)
+ * @method DateTime|null getExpiresAt()
+ * @method void setExpiresAt(?DateTime $expiresAt)
  * @method string|null getMigrationError()
  * @method void setMigrationError(?string $migrationError)
  * @method DateTime|null getTombstonedAt()
@@ -165,6 +167,13 @@ class Secret extends Entity implements JsonSerializable
     protected ?DateTime $keyUpdatedAt = null;
 
     /**
+     * Optional per-secret expiry instant (rotation-expiry-policies §2.3).
+     *
+     * @var DateTime|null
+     */
+    protected ?DateTime $expiresAt = null;
+
+    /**
      * A migration error message, if re-encryption failed (nullable).
      *
      * @var string|null
@@ -255,6 +264,7 @@ class Secret extends Entity implements JsonSerializable
         $this->addType(fieldName: 'ownerId', type: 'string');
         $this->addType(fieldName: 'possiblyCompromisedAt', type: 'datetime');
         $this->addType(fieldName: 'keyUpdatedAt', type: 'datetime');
+        $this->addType(fieldName: 'expiresAt', type: 'datetime');
         $this->addType(fieldName: 'migrationError', type: 'string');
         $this->addType(fieldName: 'tombstonedAt', type: 'datetime');
         $this->addType(fieldName: 'tombstoneReason', type: 'string');
@@ -285,6 +295,7 @@ class Secret extends Entity implements JsonSerializable
             'createdAt'             => $this->createdAt?->format('c'),
             'updatedAt'             => $this->updatedAt?->format('c'),
             'keyUpdatedAt'          => $this->keyUpdatedAt?->format('c'),
+            'expiresAt'             => $this->expiresAt?->format('c'),
             'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
             'tombstonedAt'          => $this->tombstonedAt?->format('c'),
             'tombstoneReason'       => $this->tombstoneReason,

@@ -103,7 +103,11 @@ class SecretVersionMapper extends QBMapper
         $max    = $result->fetchOne();
         $result->closeCursor();
 
-        return ((int) ($max ?: 0)) + 1;
+        if ($max === false || $max === null) {
+            return 1;
+        }
+
+        return ((int) $max) + 1;
     }//end nextVersionNumber()
 
     /**
@@ -125,7 +129,7 @@ class SecretVersionMapper extends QBMapper
         }
 
         foreach ($victims as $version) {
-            $this->delete($version);
+            $this->delete(entity: $version);
         }
 
         return count($victims);
@@ -150,7 +154,7 @@ class SecretVersionMapper extends QBMapper
 
         $pruned = 0;
         foreach ($this->findEntities(query: $qb) as $version) {
-            $this->delete($version);
+            $this->delete(entity: $version);
             ++$pruned;
         }
 

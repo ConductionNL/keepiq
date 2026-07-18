@@ -74,7 +74,7 @@ class Attachment extends Entity implements JsonSerializable
     /**
      * Ciphertext byte length (quota accounting).
      *
-     * @var int
+     * @var integer
      */
     protected int $sizeBytes = 0;
 

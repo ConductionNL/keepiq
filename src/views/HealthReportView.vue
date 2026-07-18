@@ -80,6 +80,12 @@
 					:findings="store.breachedFindings"
 					testid="category-breached"
 					@open="openSecret" />
+				<NcButton v-if="breachActive && store.breachedFindings.length"
+					type="secondary"
+					data-testid="breach-flag-all"
+					@click="flagBreached">
+					{{ t('doriath', 'Flag all breached secrets for rotation') }}
+				</NcButton>
 				<p v-else-if="store.breachStatus === 'unavailable'" data-testid="breach-unavailable">
 					{{ t('doriath', 'Breach check is currently unavailable. Other findings are unaffected.') }}
 				</p>
@@ -88,6 +94,12 @@
 					:description="t('doriath', 'Flagged during an encryption-suite compromise recovery — rotate these values.')"
 					:findings="store.compromisedFindings"
 					testid="category-compromised"
+					@open="openSecret" />
+				<HealthCategory
+					:title="t('doriath', 'Rotation due')"
+					:description="t('doriath', 'Open rotation flags — expired, breached, or manually flagged credentials awaiting rotation.')"
+					:findings="rotationFindings"
+					testid="category-rotation"
 					@open="openSecret" />
 			</div>
 
@@ -99,22 +111,24 @@
 </template>
 
 <script>
-import { NcSelect } from '@nextcloud/vue'
+import { NcButton, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import { useHealthStore } from '../store/modules/health.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { useRotationStore } from '../store/modules/rotation.js'
 import HealthCategory from '../components/HealthCategory.vue'
 
 export default {
 	name: 'HealthReportView',
-	components: { NcSelect, HealthCategory },
+	components: { NcSelect, NcButton, HealthCategory },
 
 	data() {
 		return {
 			store: useHealthStore(),
 			session: useSessionStore(),
+			rotation: useRotationStore(),
 			breachGateOn: loadState('doriath', 'breachCheckEnabled', false),
 			breachOptIn: false,
 			stalenessOption: { value: '365', label: t('doriath', '365 days') },
@@ -154,6 +168,18 @@ export default {
 				{ value: 'never', label: t('doriath', 'Never') },
 			]
 		},
+		/**
+		 * Open rotation flags as health findings (deep-link to secret).
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+		 */
+		rotationFindings() {
+			return this.rotation.flags.map((flag) => ({
+				id: flag.secretId,
+				name: flag.secretName || flag.secretId,
+			}))
+		},
 	},
 
 	/**
@@ -165,6 +191,11 @@ export default {
 	async created() {
 		this.store.registerLockReset()
 		await this.loadPrefs()
+		try {
+			await this.rotation.fetchFlags()
+		} catch (e) {
+			console.warn('Doriath: failed to load rotation flags', e)
+		}
 		if (!this.locked) {
 			await this.reanalyse()
 		}
@@ -202,6 +233,21 @@ export default {
 				stalenessThreshold: this.stalenessOption?.value ?? '365',
 				breachEnabled: this.breachActive,
 			})
+		},
+
+		/**
+		 * Batch-flag all breached findings for rotation — secret IDs
+		 * ONLY leave the client (no verdicts, counts, or digests).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+		 */
+		async flagBreached() {
+			try {
+				await this.rotation.flagSecrets(this.store.breachedFindings.map((f) => f.id))
+			} catch (e) {
+				console.warn('Doriath: failed to batch-flag breached secrets', e)
+			}
 		},
 
 		/**

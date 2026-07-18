@@ -18,6 +18,7 @@
 		<CaHealthSection />
 		<ApplicationQueueSection />
 		<AttachmentLimitsSection />
+		<RotationPolicySection />
 		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
@@ -31,6 +32,7 @@ import ApplicationQueueSection from '../../components/settings/ApplicationQueueS
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
 import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
+import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 
 export default {
 	name: 'Settings',
@@ -40,6 +42,7 @@ export default {
 		CaHealthSection,
 		ApplicationQueueSection,
 		AttachmentLimitsSection,
+		RotationPolicySection,
 		OffboardingSection,
 		AdminAuditSection,
 	},
