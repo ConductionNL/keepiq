@@ -1,8 +1,8 @@
 # SIEM Audit Export Specification
 
-**Status**: in-progress
+**Status**: done
 
-**OpenSpec changes:** [siem-audit-export](../../changes/siem-audit-export/)
+**OpenSpec changes:** [siem-audit-export](../../changes/archive/2026-07-18-siem-audit-export/)
 
 ## Purpose
 
