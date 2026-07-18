@@ -54,9 +54,14 @@ class TeamFolderMember extends Entity implements JsonSerializable
     /**
      * The member type: `user` or `group`.
      *
+     * Initialized empty on purpose: a non-empty default would make
+     * setMemberType('user') a no-change set, so the Entity would never
+     * mark the field dirty and QBMapper::insert would omit the column
+     * (NOT NULL violation) — found in live verification.
+     *
      * @var string
      */
-    protected string $memberType = 'user';
+    protected string $memberType = '';
 
     /**
      * The Nextcloud user ID or group ID.
