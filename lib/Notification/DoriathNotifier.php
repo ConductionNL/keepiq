@@ -194,6 +194,18 @@ class DoriathNotifier implements INotifier
                 );
                 break;
 
+            case 'honey_access':
+                $honeyChannel  = (string) ($p['channel'] ?? $l->t('unknown channel'));
+                $honeyAccessor = (string) ($p['accessor'] ?? $l->t('an unknown accessor'));
+                $notification->setParsedSubject((string) $l->t('Honey credential accessed'));
+                $notification->setParsedMessage(
+                    (string) $l->t(
+                        'A decoy secret was accessed by %1$s via %2$s. Review the honey alerts now — this may indicate a compromise.',
+                        [$honeyAccessor, $honeyChannel]
+                    )
+                );
+                break;
+
             case 'certificate_expiring':
                 $certDaysLeft = (int) ($p['days_left'] ?? 0);
                 $notification->setParsedSubject((string) $l->t('Vault certificate expiring soon'));
