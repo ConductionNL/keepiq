@@ -18,8 +18,8 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Team Folder Sharing](specs/team-folder-sharing/spec.md) | done — live-verified 2026-07-18 | 8 — #1 ecosystem wish | [archive](changes/archive/2026-07-18-team-folder-sharing/) |
 | [Browser Extension & Autofill](specs/browser-extension-autofill/spec.md) | in-progress | 9 | [browser-extension-autofill](changes/browser-extension-autofill/) |
 | [Passkey Item Type](specs/passkey-item-type/spec.md) | done — live-verified 2026-07-18 | 10 — 2026 table stakes | [archive](changes/archive/2026-07-18-passkey-item-type/) |
-| [CXF Import/Export](specs/cxf-import-export/spec.md) | in-progress | 11 — after passkeys | [cxf-import-export](changes/cxf-import-export/) |
-| [Encrypted Attachments](specs/encrypted-attachments/spec.md) | in-progress | 12 | [encrypted-attachments](changes/encrypted-attachments/) |
+| [CXF Import/Export](specs/cxf-import-export/spec.md) | done — 2026-07-18 | 11 — after passkeys | [archive](changes/archive/2026-07-18-cxf-import-export/) |
+| [Encrypted Attachments](specs/encrypted-attachments/spec.md) | done — live-verified 2026-07-18 | 12 | [archive](changes/archive/2026-07-18-encrypted-attachments/) |
 | [Secret Version History](specs/secret-version-history/spec.md) | in-progress | 13 | [secret-version-history](changes/secret-version-history/) |
 | [Rotation & Expiry Policies](specs/rotation-expiry-policies/spec.md) | in-progress | 14 — NIS2/BIO2 driver | [rotation-expiry-policies](changes/rotation-expiry-policies/) |
 | [Machine Secret Leases](specs/machine-secret-leases/spec.md) | in-progress | 15 — NHI segment | [machine-secret-leases](changes/machine-secret-leases/) |
