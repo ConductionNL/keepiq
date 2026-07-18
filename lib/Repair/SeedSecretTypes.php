@@ -72,6 +72,12 @@ class SeedSecretTypes implements IRepairStep
         // client renders the passkey presentation. No schema column — the
         // credential is ciphertext in `key` (passkey-item-type D1/D2).
         'passkey'     => 'Passkey',
+        // `card` / `identity` are UI hints like `passkey`: the composite
+        // payload is a JSON object riding the encrypted `key` field. Card
+        // brand + last-4 are derived in-browser and never stored; BSN is
+        // ciphertext (card-identity-items D1/D2, no schema change).
+        'card'        => 'Payment Card',
+        'identity'    => 'Identity',
     ];
 
     /**

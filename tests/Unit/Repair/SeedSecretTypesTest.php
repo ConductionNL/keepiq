@@ -56,14 +56,15 @@ class SeedSecretTypesTest extends TestCase
     }//end setUp()
 
     /**
-     * On a fresh install all 8 system types are inserted.
+     * On a fresh install every system type is inserted (one per
+     * SYSTEM_TYPES entry — currently 10).
      *
      * @return void
      */
     public function testCreatesEightTypesOnFirstRun(): void
     {
         $this->mapper->method('findByName')->willThrowException(new DoesNotExistException('none'));
-        $this->mapper->expects($this->exactly(8))->method('insert');
+        $this->mapper->expects($this->exactly(count(SeedSecretTypes::SYSTEM_TYPES)))->method('insert');
 
         $this->step->run($this->createMock(IOutput::class));
     }//end testCreatesEightTypesOnFirstRun()
@@ -103,7 +104,7 @@ class SeedSecretTypesTest extends TestCase
     }//end testDeterministicIds()
 
     /**
-     * The eight canonical system type names are defined, with `passkey` last.
+     * The ten canonical system type names are defined, in seed order.
      *
      * @return void
      */
@@ -111,7 +112,7 @@ class SeedSecretTypesTest extends TestCase
     {
         $names = array_keys(SeedSecretTypes::SYSTEM_TYPES);
         $this->assertSame(
-            ['login', 'api_key', 'ssh_key', 'certificate', 'note', 'database', 'totp', 'passkey'],
+            ['login', 'api_key', 'ssh_key', 'certificate', 'note', 'database', 'totp', 'passkey', 'card', 'identity'],
             $names
         );
     }//end testSystemTypeNames()
@@ -158,4 +159,37 @@ class SeedSecretTypesTest extends TestCase
             $id
         );
     }//end testPasskeyTypeSeededDeterministically()
+
+    /**
+     * The `card` and `identity` system types are seeded with stable
+     * deterministic UUIDs and their labels; no schema/migration change
+     * accompanies them — the composite payloads ride in the existing
+     * encrypted `key` field (card-identity-items D1/D2).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-system-secret-types
+     */
+    public function testCardAndIdentityTypesSeededDeterministically(): void
+    {
+        $this->assertArrayHasKey('card', SeedSecretTypes::SYSTEM_TYPES);
+        $this->assertSame('Payment Card', SeedSecretTypes::SYSTEM_TYPES['card']);
+        $this->assertArrayHasKey('identity', SeedSecretTypes::SYSTEM_TYPES);
+        $this->assertSame('Identity', SeedSecretTypes::SYSTEM_TYPES['identity']);
+
+        foreach (['card', 'identity'] as $name) {
+            $id  = SeedSecretTypes::deterministicId(name: $name);
+            $id2 = SeedSecretTypes::deterministicId(name: $name);
+            $this->assertSame($id, $id2);
+            $this->assertMatchesRegularExpression(
+                '/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/',
+                $id
+            );
+        }
+
+        $this->assertNotSame(
+            SeedSecretTypes::deterministicId(name: 'card'),
+            SeedSecretTypes::deterministicId(name: 'identity')
+        );
+    }//end testCardAndIdentityTypesSeededDeterministically()
 }//end class

@@ -48,6 +48,16 @@
 				<PasskeyDisplay :credential-json="secret.key || ''" data-testid="secret-detail-passkey" />
 			</div>
 
+			<div v-if="isCard" class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{ t('doriath', 'Payment card') }}</span>
+				<CardDisplay :payload-json="secret.key || ''" data-testid="secret-detail-card" />
+			</div>
+
+			<div v-if="isIdentity" class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{ t('doriath', 'Identity') }}</span>
+				<IdentityDisplay :payload-json="secret.key || ''" data-testid="secret-detail-identity" />
+			</div>
+
 			<div class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{ t('doriath', 'Attachments') }}</span>
 				<AttachmentPanel :secret-id="secretId" :can-manage="isOwner" />
@@ -197,6 +207,8 @@ import PasskeyDisplay from '../components/PasskeyDisplay.vue'
 import AttachmentPanel from '../components/AttachmentPanel.vue'
 import VersionHistoryPanel from '../components/VersionHistoryPanel.vue'
 import RotationPanel from '../components/RotationPanel.vue'
+import CardDisplay from '../components/CardDisplay.vue'
+import IdentityDisplay from '../components/IdentityDisplay.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
@@ -230,6 +242,8 @@ export default {
 		AttachmentPanel,
 		VersionHistoryPanel,
 		RotationPanel,
+		CardDisplay,
+		IdentityDisplay,
 		DelegationManager,
 		ShareList,
 		ShareRequestForm,
@@ -302,6 +316,36 @@ export default {
 			}
 			const type = useSecretTypeStore().typesById[this.secret.typeId]
 			return Boolean(type) && type.name === 'passkey'
+		},
+
+		/**
+		 * Whether this secret is a `card` type — the decrypted `key` holds
+		 * a composite payment-card payload rendered with per-field masking
+		 * (card-identity-items §4).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-masked-presentation
+		 */
+		isCard() {
+			if (!this.secret) {
+				return false
+			}
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return Boolean(type) && type.name === 'card'
+		},
+
+		/**
+		 * Whether this secret is an `identity` type (card-identity-items §4).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-masked-presentation
+		 */
+		isIdentity() {
+			if (!this.secret) {
+				return false
+			}
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return Boolean(type) && type.name === 'identity'
 		},
 
 		/**
