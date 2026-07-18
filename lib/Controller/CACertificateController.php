@@ -66,6 +66,21 @@ class CACertificateController extends OCSController
     }//end getStatus()
 
     /**
+     * CA health with issued-certificate counts (certificate-lifecycle
+     * §4.2) — the same status payload, published under the lifecycle
+     * route. Counts only; no identifiers, PEM, or key material.
+     *
+     * @AuthorizedAdminSetting(AdminSettings::class)
+     *
+     * @return JSONResponse
+     */
+    #[AuthorizedAdminSetting(AdminSettings::class)]
+    public function health(): JSONResponse
+    {
+        return new JSONResponse(data: $this->caService->getStatus());
+    }//end health()
+
+    /**
      * Retry CA bootstrap.
      *
      * @AuthorizedAdminSetting(AdminSettings::class)

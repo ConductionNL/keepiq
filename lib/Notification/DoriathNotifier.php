@@ -194,6 +194,17 @@ class DoriathNotifier implements INotifier
                 );
                 break;
 
+            case 'certificate_expiring':
+                $certDaysLeft = (int) ($p['days_left'] ?? 0);
+                $notification->setParsedSubject((string) $l->t('Vault certificate expiring soon'));
+                $notification->setParsedMessage(
+                    (string) $l->t(
+                        'Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory to stay ahead of the expiry.',
+                        [$certDaysLeft]
+                    )
+                );
+                break;
+
             case 'siem_dead_letter':
                 $sinkName = (string) ($p['sink_name'] ?? $l->t('a SIEM sink'));
                 $notification->setParsedSubject((string) $l->t('SIEM delivery failing'));

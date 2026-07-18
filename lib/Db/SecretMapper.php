@@ -291,6 +291,34 @@ class SecretMapper extends QBMapper
     }//end countByOwner()
 
     /**
+     * Count secrets of a type, optionally only those whose expiry falls
+     * before a cutoff (certificate-lifecycle §2.6 issued-cert counts).
+     *
+     * @param string         $typeId        The secret type id
+     * @param \DateTime|null $expiresBefore Only rows with expires_at set and before this instant
+     *
+     * @return int
+     */
+    public function countByTypeId(string $typeId, ?\DateTime $expiresBefore=null): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'cnt'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
+
+        if ($expiresBefore !== null) {
+            $qb->andWhere($qb->expr()->isNotNull('expires_at'))
+                ->andWhere($qb->expr()->lt('expires_at', $qb->createNamedParameter($expiresBefore, 'datetime')));
+        }
+
+        $result = $qb->executeQuery();
+        $row    = $result->fetch();
+        $result->closeCursor();
+
+        return (int) ($row['cnt'] ?? 0);
+    }//end countByTypeId()
+
+    /**
      * Find the secrets directly contained in a folder (attachment cascade).
      *
      * @param string $folderId The folder ID

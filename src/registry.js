@@ -39,6 +39,7 @@ import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
 import ApplicationDetail from './views/ApplicationDetail.vue'
 import PersonalActivityView from './views/PersonalActivityView.vue'
 import HealthReportView from './views/HealthReportView.vue'
+import CertificateInventoryView from './views/CertificateInventoryView.vue'
 import EmergencyAccessView from './views/EmergencyAccessView.vue'
 import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
 import SecretEditDialog from './dialogs/SecretEditDialog.vue'
@@ -65,6 +66,7 @@ export default {
 	PersonalActivityView: { kind: 'page', component: PersonalActivityView },
 	HealthReportView: { kind: 'page', component: HealthReportView },
 	EmergencyAccessView: { kind: 'page', component: EmergencyAccessView },
+	CertificateInventoryView: { kind: 'page', component: CertificateInventoryView },
 	'secret-create': { kind: 'modal', component: SecretCreateDialog, propsSchema: {} },
 	'secret-edit': { kind: 'modal', component: SecretEditDialog, propsSchema: {} },
 	'folder-create': { kind: 'modal', component: FolderCreateDialog, propsSchema: {} },
