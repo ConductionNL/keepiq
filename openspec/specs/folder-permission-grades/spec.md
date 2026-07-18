@@ -1,6 +1,6 @@
 # Folder Permission Grades Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - `folder-permission-grades` (2026-07-17) — Read/write permission grades on team-folder membership: a `write` grade authorizes a non-owner to update a folder secret for all recipients via the existing client-side re-encrypt-for-all sync path, server-authorized on the grant; owner keeps membership management; grade changes and non-owner writes audited. Depends on `team-folder-sharing`.
