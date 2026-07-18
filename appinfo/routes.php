@@ -234,6 +234,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'teamFolder#members',        'url' => '/api/v1/team-folders/{id}/members',               'verb' => 'GET'],
     ['name' => 'teamFolder#addMember',      'url' => '/api/v1/team-folders/{id}/members',               'verb' => 'POST'],
     ['name' => 'teamFolder#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}',    'verb' => 'DELETE'],
+    // Folder permission grades (folder-permission-grades §3.1).
+    ['name' => 'teamFolder#setMemberGrade', 'url' => '/api/v1/team-folders/{id}/members/{memberId}',    'verb' => 'PATCH'],
+    ['name' => 'share#writeContext',        'url' => '/api/v1/secrets/{id}/write-context',              'verb' => 'GET'],
     ['name' => 'teamFolder#reconcile',      'url' => '/api/v1/team-folders/{id}/reconcile',             'verb' => 'GET'],
     ['name' => 'teamFolder#registerShares', 'url' => '/api/v1/team-folders/{id}/shares',                'verb' => 'POST'],
     ['name' => 'teamFolder#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',          'verb' => 'POST'],

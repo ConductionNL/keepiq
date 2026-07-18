@@ -602,4 +602,111 @@ class TeamFolderServiceTest extends TestCase
         $this->assertSame('bob', $insertedDelegations[0]->getDelegatedTo());
         $this->assertSame([['sec-a', 'bob']], $reassigned);
     }//end testOffboardRevokesAndTransfers()
+
+    /**
+     * folder-permission-grades §5.1: setMemberGrade is owner-only,
+     * rejects invalid grades, and touches no secret rows (ciphertext).
+     *
+     * @return void
+     */
+    public function testSetMemberGradeOwnerOnlyNoCiphertext(): void
+    {
+        $teamFolder = new \OCA\Doriath\Db\TeamFolder();
+        $teamFolder->setId('tf-1');
+        $teamFolder->setFolderId('folder-1');
+        $teamFolder->setOwnerId('alice');
+        $this->mapper->method('findById')->willReturn($teamFolder);
+
+        $member = new \OCA\Doriath\Db\TeamFolderMember();
+        $member->setId('mem-1');
+        $member->setTeamFolderId('tf-1');
+        $member->setMemberType('user');
+        $member->setMemberId('bob');
+        $this->memberMapper->method('findById')->willReturn($member);
+        $this->memberMapper->method('update')->willReturnCallback(static fn ($row) => $row);
+        // No ciphertext is touched: the secret mapper is never written.
+        $this->secretMapper->expects($this->never())->method('update');
+
+        // Non-owner rejected.
+        try {
+            $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-1', grade: 'write', ownerId: 'mallory');
+            $this->fail('Non-owner grade change must be rejected');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('Not authorized', $exception->getMessage());
+        }
+
+        // Invalid grade rejected.
+        try {
+            $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-1', grade: 'admin', ownerId: 'alice');
+            $this->fail('Invalid grade must be rejected');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('grade must be', $exception->getMessage());
+        }
+
+        $updated = $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-1', grade: 'write', ownerId: 'alice');
+        $this->assertSame('write', $updated->effectiveGrade());
+    }//end testSetMemberGradeOwnerOnlyNoCiphertext()
+
+    /**
+     * folder-permission-grades §5.1: resolveGrade returns the MAX grade
+     * along the folder ancestor chain and expands group memberships;
+     * the default (legacy) grade reads as `read`.
+     *
+     * @return void
+     */
+    public function testResolveGradeMaxAlongAncestorsAndGroups(): void
+    {
+        $secret = new \OCA\Doriath\Db\Secret();
+        $secret->setId('sec-1');
+        $secret->setOwnerType('user');
+        $secret->setOwnerId('alice');
+        $secret->setFolderId('child');
+
+        // child (team folder tf-child: bob read) -> parent (tf-parent: group g1 write).
+        $childFolder = new \OCA\Doriath\Db\Folder();
+        $childFolder->setId('child');
+        $childFolder->setParentId('parent');
+        $parentFolder = new \OCA\Doriath\Db\Folder();
+        $parentFolder->setId('parent');
+        $parentFolder->setParentId(null);
+        $this->folderMapper->method('findById')->willReturnCallback(
+            static fn (string $id) => $id === 'child' ? $childFolder : $parentFolder
+        );
+
+        $tfChild = new \OCA\Doriath\Db\TeamFolder();
+        $tfChild->setId('tf-child');
+        $tfChild->setFolderId('child');
+        $tfChild->setOwnerId('alice');
+        $tfParent = new \OCA\Doriath\Db\TeamFolder();
+        $tfParent->setId('tf-parent');
+        $tfParent->setFolderId('parent');
+        $tfParent->setOwnerId('alice');
+        $this->mapper->method('findByFolder')->willReturnCallback(
+            static fn (string $folderId) => $folderId === 'child' ? $tfChild : $tfParent
+        );
+
+        $readMember = new \OCA\Doriath\Db\TeamFolderMember();
+        $readMember->setId('m-read');
+        $readMember->setTeamFolderId('tf-child');
+        $readMember->setMemberType('user');
+        $readMember->setMemberId('bob');
+        // Legacy row: grade never set — reads as `read`.
+        $groupWrite = new \OCA\Doriath\Db\TeamFolderMember();
+        $groupWrite->setId('m-write');
+        $groupWrite->setTeamFolderId('tf-parent');
+        $groupWrite->setMemberType('group');
+        $groupWrite->setMemberId('g1');
+        $groupWrite->setGrade('write');
+        $this->memberMapper->method('findByTeamFolder')->willReturnCallback(
+            static fn (string $teamFolderId) => $teamFolderId === 'tf-child' ? [$readMember] : [$groupWrite]
+        );
+        $this->groupManager->method('isInGroup')->willReturnCallback(
+            static fn (string $userId, string $groupId): bool => $userId === 'bob' && $groupId === 'g1'
+        );
+
+        // bob: read on the child, write via g1 on the parent -> MAX = write.
+        $this->assertSame('write', $this->service->resolveGrade(secret: $secret, userId: 'bob'));
+        // carol: no memberships anywhere -> null.
+        $this->assertNull($this->service->resolveGrade(secret: $secret, userId: 'carol'));
+    }//end testResolveGradeMaxAlongAncestorsAndGroups()
 }//end class

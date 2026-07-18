@@ -124,6 +124,86 @@ export const useShareStore = defineStore('share', {
 		},
 
 		/**
+		 * The write context of a secret for the current user
+		 * (folder-permission-grades §4).
+		 *
+		 * @param {string} secretId The secret (source or copy) id.
+		 * @return {Promise<object>} { sourceSecretId, effectiveGrade, ownerCertificate, sourceUpdatedAt }.
+		 */
+		async fetchWriteContext(secretId) {
+			const response = await axios.get(
+				generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/write-context`),
+			)
+			return response.data
+		},
+
+		/**
+		 * Write-grade member fan-out (folder-permission-grades §4.2):
+		 * when the edited row is a recipient copy and the caller holds a
+		 * `write` grade, re-encrypt the plaintext for the SOURCE row
+		 * (owner certificate) and every recipient, then PUT the sync.
+		 * No-op for owners/read grades.
+		 *
+		 * @param {string} editedSecretId The edited (copy) secret id.
+		 * @param {object} plaintext New plaintext field map.
+		 * @return {Promise<{updated: number}>}
+		 */
+		async syncAsTeamWriter(editedSecretId, plaintext) {
+			const context = await this.fetchWriteContext(editedSecretId)
+			if (context.effectiveGrade !== 'write' || context.sourceSecretId === editedSecretId) {
+				return { updated: 0 }
+			}
+
+			// Recipient rows of the SOURCE (write grade grants the list).
+			const response = await axios.get(
+				generateUrl(`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/shares`),
+			)
+			const shares = response.data || []
+
+			const updates = []
+			// The owner's SOURCE row itself, re-encrypted under the
+			// owner's certificate.
+			if (context.ownerCertificate) {
+				const ownerBlob = await this.encryptForRecipient(plaintext, context.ownerCertificate)
+				updates.push({
+					secretId: context.sourceSecretId,
+					key: ownerBlob.key ?? null,
+					login: ownerBlob.login ?? null,
+					additionalFields: ownerBlob.additionalFields ?? null,
+				})
+			}
+			for (const share of shares) {
+				const certificate = share.recipientCertificate || share.certificate
+				if (certificate == null || certificate === '' || share.secretId === editedSecretId) {
+					// The writer's own copy was already updated by the
+					// regular edit; suite-less recipients are skipped.
+					continue
+				}
+				// eslint-disable-next-line no-await-in-loop
+				const blob = await this.encryptForRecipient(plaintext, certificate)
+				updates.push({
+					secretId: share.secretId,
+					key: blob.key ?? null,
+					login: blob.login ?? null,
+					additionalFields: blob.additionalFields ?? null,
+				})
+			}
+
+			if (updates.length === 0) {
+				return { updated: 0 }
+			}
+
+			const syncResponse = await axios.put(
+				generateUrl(`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/sync`),
+				{
+					expectedUpdatedAt: context.sourceUpdatedAt ?? '',
+					updates,
+				},
+			)
+			return syncResponse.data
+		},
+
+		/**
 		 * Revoke a share target (cascade-deletes the recipient's Secret copy
 		 * server-side).
 		 *
