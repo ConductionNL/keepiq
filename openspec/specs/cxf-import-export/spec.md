@@ -1,6 +1,6 @@
 # CXF Import and Export Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - `cxf-import-export` (2026-07-16, depends on `passkey-item-type`) — Bidirectional, client-side, file-based FIDO Credential Exchange Format (CXF) import and export as a new format on the existing import/export pipelines: CXF-entity ↔ Doriath-secret-type mapping (passwords, passkeys, TOTP, notes, API keys, SSH keys, Wi-Fi), unmapped-item reporting, folder/collection mapping and duplicate detection reusing existing machinery, and re-auth-gated CXF export. CXP (HPKE encrypted transfer) is out of scope in v1.
