@@ -140,6 +140,10 @@ final class AuditEventTypes
     public const CERTIFICATE_REISSUED       = 'certificate.reissued';
     public const CERTIFICATE_RENEWAL_MARKED = 'certificate.renewal_marked';
 
+    // Honey credentials (honey-credentials §D6) — the distinguished
+    // high-severity tripwire marker; channel only, never secret data.
+    public const HONEY_ACCESSED = 'honey.accessed';
+
     /**
      * Metadata keys that MUST NEVER appear in any audit entry, in any position.
      * Recording any of these is rejected with an exception — defense in depth so
@@ -243,6 +247,8 @@ final class AuditEventTypes
             // Certificate lifecycle — identifiers only, never PEM/key.
             self::CERTIFICATE_REISSUED         => ['suiteId'],
             self::CERTIFICATE_RENEWAL_MARKED   => [],
+            // Honey tripwire — the access channel only (§D6).
+            self::HONEY_ACCESSED               => ['channel'],
         ];
     }//end whitelist()
 

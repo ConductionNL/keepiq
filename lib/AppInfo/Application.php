@@ -29,6 +29,7 @@ use OCA\Doriath\Listener\AuditListener;
 use OCA\Doriath\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Doriath\Listener\EmergencyAccessSuiteRotationListener;
 use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
+use OCA\Doriath\Listener\HoneyTripwireListener;
 use OCA\Doriath\Listener\SiemForwardListener;
 use OCA\Doriath\Listener\SuiteCompromiseListener;
 use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
@@ -220,6 +221,15 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: AuditEvent::class,
             listener: SiemForwardListener::class
+        );
+
+        // Honey credentials §3.1 — the central tripwire on the same typed
+        // audit stream: every server-observable secret access (UI, machine
+        // API, link, share-copy read) is checked against the honey flags.
+        // Fail-soft: a tripwire failure never blocks the observed access.
+        $context->registerEventListener(
+            event: AuditEvent::class,
+            listener: HoneyTripwireListener::class
         );
 
         // The three secret-export-gdpr events are this change's scoped consumer
