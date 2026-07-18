@@ -22,6 +22,7 @@
 		<RotationPolicySection />
 		<MachineLeaseSection />
 		<ComplianceSection />
+		<SiemSection />
 		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
@@ -39,6 +40,7 @@ import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsS
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
+import SiemSection from '../../components/settings/SiemSection.vue'
 
 export default {
 	name: 'Settings',
@@ -52,6 +54,7 @@ export default {
 		RotationPolicySection,
 		MachineLeaseSection,
 		ComplianceSection,
+		SiemSection,
 		OffboardingSection,
 		AdminAuditSection,
 	},

@@ -194,6 +194,22 @@ class DoriathNotifier implements INotifier
                 );
                 break;
 
+            case 'siem_dead_letter':
+                $sinkName = (string) ($p['sink_name'] ?? $l->t('a SIEM sink'));
+                $notification->setParsedSubject((string) $l->t('SIEM delivery failing'));
+                $notification->setParsedMessage(
+                    (string) $l->t(
+                        'Audit events for SIEM sink "%1$s" could not be delivered and were dead-lettered. Check the sink configuration.',
+                        [$sinkName]
+                    )
+                );
+                $notification->setLink(
+                    $this->url->getAbsoluteURL(
+                        $this->url->linkToRoute('settings.AdminSettings.index', ['section' => Application::APP_ID])
+                    )
+                );
+                break;
+
             case 'emergency_access_requested':
                 $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
                 $waitDays    = (int) ($p['waitPeriodDays'] ?? 7);
