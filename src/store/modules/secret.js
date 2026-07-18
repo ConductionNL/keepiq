@@ -2,7 +2,9 @@ import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { rsaEncrypt, rsaDecrypt, importPublicKey } from '../../crypto/index.js'
+import { passkeyRpId, PASSKEY_TYPE_NAME } from '../../passkey/passkey.js'
 import { useSessionStore } from './session.js'
+import { useSecretTypeStore } from './secretType.js'
 
 /**
  * Pinia store for secrets.
@@ -23,7 +25,7 @@ export const useSecretStore = defineStore('secret', {
 		/** @type {boolean} Whether a request is in flight. */
 		loading: false,
 		/** @type {object} Active list filters. */
-		filters: { folderId: null, search: '' },
+		filters: { folderId: null, search: '', typeId: null },
 		/** @type {object} Active sort. */
 		sort: { field: 'name', direction: 'asc' },
 		/** @type {number} The current 1-based page. */
@@ -55,6 +57,12 @@ export const useSecretStore = defineStore('secret', {
 				const search = options.search ?? this.filters.search
 				if (search) {
 					params.search = search
+				}
+				// Server-side secret-type filter (passkey-item-type §3.3):
+				// lets the vault list show only one type, e.g. passkeys.
+				const typeId = options.typeId ?? this.filters.typeId
+				if (typeId) {
+					params.typeId = typeId
 				}
 
 				const response = await axios.get(
@@ -120,6 +128,20 @@ export const useSecretStore = defineStore('secret', {
 		},
 
 		/**
+		 * Whether a type id resolves to the `passkey` system type.
+		 *
+		 * @param {string|null} typeId The secret type id.
+		 * @return {boolean}
+		 */
+		isPasskeyTypeId(typeId) {
+			if (!typeId) {
+				return false
+			}
+			const type = useSecretTypeStore().typesById[typeId]
+			return Boolean(type) && type.name === PASSKEY_TYPE_NAME
+		},
+
+		/**
 		 * Create a secret, encrypting the sensitive fields in the browser first.
 		 *
 		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, ...).
@@ -132,9 +154,17 @@ export const useSecretStore = defineStore('secret', {
 			}
 			const publicKey = await importPublicKey(session.certificate)
 
+			// Passkey secrets mirror the RP id into the plaintext `url` so
+			// they are matchable/searchable by site (passkey-item-type D3).
+			// Only the public RP domain is mirrored — never credential material.
+			let url = data.url ?? null
+			if (!url && this.isPasskeyTypeId(data.typeId)) {
+				url = passkeyRpId(String(data.key ?? '')) ?? null
+			}
+
 			const payload = {
 				name: data.name,
-				url: data.url ?? null,
+				url,
 				typeId: data.typeId ?? null,
 				folderId: data.folderId ?? null,
 				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
@@ -170,6 +200,15 @@ export const useSecretStore = defineStore('secret', {
 			for (const field of ['name', 'url', 'typeId', 'folderId']) {
 				if (data[field] !== undefined) {
 					payload[field] = data[field]
+				}
+			}
+
+			// Keep the passkey RP-id → url mirror in sync when the credential
+			// changes without an explicit url (passkey-item-type D3).
+			if (data.key !== undefined && data.url === undefined && this.isPasskeyTypeId(data.typeId ?? this.currentSecret?.typeId)) {
+				const rpId = passkeyRpId(String(data.key ?? ''))
+				if (rpId) {
+					payload.url = rpId
 				}
 			}
 

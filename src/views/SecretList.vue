@@ -50,6 +50,17 @@
 					{{ t('doriath', 'Team sharing') }}
 				</NcButton>
 
+				<!-- Secret-type filter (passkey-item-type §3.3): show only one
+				     type, e.g. passkeys. Server-side via the typeId param. -->
+				<NcSelect class="secret-list-view__type-filter"
+					:value="typeFilterOption"
+					:options="typeFilterOptions"
+					:input-label="t('doriath', 'Type')"
+					:clearable="true"
+					:placeholder="t('doriath', 'All types')"
+					data-testid="secret-type-filter"
+					@input="onTypeFilter($event ? $event.value : null)" />
+
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
 				<NcActions :menu-name="t('doriath', 'My data')">
 					<NcActionButton @click="openExport">
@@ -120,7 +131,7 @@
 <script>
 // eslint-disable-next-line import/named
 import { CnIndexPage, CnFolderSidebar } from '@conduction/nextcloud-vue'
-import { NcActionButton, NcActions, NcButton } from '@nextcloud/vue'
+import { NcActionButton, NcActions, NcButton, NcSelect } from '@nextcloud/vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
@@ -153,6 +164,7 @@ export default {
 		NcActionButton,
 		NcActions,
 		NcButton,
+		NcSelect,
 		FolderPlus,
 		Import,
 		AccountGroup,
@@ -182,6 +194,7 @@ export default {
 			deletionOpen: false,
 			importOpen: false,
 			teamFolderOpen: false,
+			typeFilter: null,
 			decryptedSecrets: [],
 		}
 	},
@@ -253,6 +266,17 @@ export default {
 				{ value: 'created_at', label: t('doriath', 'Created') },
 				{ value: 'updated_at', label: t('doriath', 'Updated') },
 			]
+		},
+		/** Options for the secret-type filter (passkey-item-type §3.3). */
+		typeFilterOptions() {
+			return useSecretTypeStore().types.map((type) => ({
+				value: type.id,
+				label: type.label || type.name,
+			}))
+		},
+		/** The currently selected type-filter option object (or null). */
+		typeFilterOption() {
+			return this.typeFilterOptions.find((opt) => opt.value === this.typeFilter) ?? null
 		},
 	},
 
@@ -396,8 +420,20 @@ export default {
 				folderId: this.selectedFolderId,
 				search: this.searchTerm,
 				sort: this.sortField,
+				typeId: this.typeFilter,
 				page: 1,
 			})
+		},
+
+		/**
+		 * Type-filter change handler (passkey-item-type §3.3).
+		 *
+		 * @param {string|null} typeId The selected type id (null = all).
+		 * @return {void}
+		 */
+		onTypeFilter(typeId) {
+			this.typeFilter = typeId
+			this.reload()
 		},
 
 		/**
