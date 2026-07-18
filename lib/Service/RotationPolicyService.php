@@ -291,14 +291,24 @@ class RotationPolicyService
                 return $existing;
             }
 
-            // A resolved flag is re-opened (fresh reason + proof point).
+            // A resolved flag is re-opened (fresh reason + proof point) —
+            // audited exactly like a first raise.
             $existing->setReason($reason);
             $existing->setStatus('open');
             $existing->setFlaggedAt(new DateTime());
             $existing->setFlaggedBy($flaggedBy);
             $existing->setResolvedAt(null);
             $existing->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId));
-            return $this->flagMapper->update($existing);
+            $existing = $this->flagMapper->update($existing);
+
+            $this->dispatchAudit(
+                actorId: ($flaggedBy ?? 'system'),
+                eventType: AuditEventTypes::SECRET_ROTATION_FLAGGED,
+                objectId: $secretId,
+                metadata: ['reason' => $reason],
+            );
+
+            return $existing;
         } catch (DoesNotExistException) {
             // No flag yet — create below.
         }

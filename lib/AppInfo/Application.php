@@ -96,7 +96,28 @@ class Application extends App implements IBootstrap
         // boilerplate — health, metrics, deep links, admin-settings panel and
         // section — is fully owned by the engine. Zero-knowledge (ADR-003) is
         // untouched: no AppHost generic ever sees a plaintext secret.
-        Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Doriath']);
+        //
+        // LOAD-ORDER HAZARD: apps register alphabetically, so doriath registers
+        // BEFORE openregister and the AppHost class is not yet autoloadable via
+        // Nextcloud's app loader. Left unguarded, the resulting \Error aborted
+        // this entire register() — every registerEventListener below silently
+        // never ran (the audit listener recorded ZERO dispatched events). Pull
+        // in OpenRegister's own composer autoloader when needed, and never let
+        // an AppHost failure take down Doriath's own registrations.
+        if (class_exists(Bootstrap::class) === false) {
+            $openRegisterAutoload = __DIR__.'/../../../openregister/vendor/autoload.php';
+            if (file_exists($openRegisterAutoload) === true) {
+                include_once $openRegisterAutoload;
+            }
+        }
+
+        try {
+            Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Doriath']);
+        } catch (\Throwable $bootstrapError) {
+            // AppHost absent/unloadable: skip the generic plumbing; Doriath's
+            // own listeners and services below MUST still register.
+            error_log('Doriath: OpenRegister AppHost bootstrap skipped: '.$bootstrapError->getMessage());
+        }
 
         // Override the generic aliases with Doriath's domain-divergent concretes.
         $context->registerService(
