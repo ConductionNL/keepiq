@@ -206,6 +206,25 @@ class DoriathNotifier implements INotifier
                 );
                 break;
 
+            case 'secret_expiring':
+                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
+                $daysLeft   = (int) ($p['days_left'] ?? 0);
+                $notification->setParsedSubject((string) $l->t('Secret expiring soon'));
+                $notification->setParsedMessage(
+                    (string) $l->t('Your secret "%1$s" expires in %2$d day(s). Rotate it before then.', [$secretName, $daysLeft])
+                );
+                $this->withSecretLink(notification: $notification, params: $p);
+                break;
+
+            case 'secret_rotation_due':
+                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
+                $notification->setParsedSubject((string) $l->t('Secret rotation due'));
+                $notification->setParsedMessage(
+                    (string) $l->t('Your secret "%s" is past its expiry and has been flagged for rotation.', [$secretName])
+                );
+                $this->withSecretLink(notification: $notification, params: $p);
+                break;
+
             case 'emergency_access_accessed':
                 $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
                 $notification->setParsedSubject((string) $l->t('Emergency access used'));

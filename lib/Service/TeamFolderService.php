@@ -561,7 +561,7 @@ class TeamFolderService
     public function registerFanOutShares(string $teamFolderId, array $shares, string $userId): array
     {
         $createdRows = [];
-        $teamFolder = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+        $teamFolder  = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
         $subtreeSecretIds = [];
         foreach ($this->subtreeSecretRefs(teamFolder: $teamFolder) as $secretRef) {
@@ -622,7 +622,7 @@ class TeamFolderService
                 $this->shareTargetMapper->insert($entity);
                 ++$created;
                 $newRecipients[$targetUserId] = true;
-                $createdRows[]                = [
+                $createdRows[] = [
                     'sourceSecretId'    => $sourceSecretId,
                     'targetUserId'      => $targetUserId,
                     'recipientSecretId' => $copy->getId(),

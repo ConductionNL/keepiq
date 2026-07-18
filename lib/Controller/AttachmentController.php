@@ -117,7 +117,7 @@ class AttachmentController extends OCSController
             );
         }
 
-        $row                   = $result['attachment']->jsonSerialize();
+        $row = $result['attachment']->jsonSerialize();
         $row['wrappedFileKey'] = $result['grant']->getWrappedFileKey();
 
         return new JSONResponse(data: $row, statusCode: Http::STATUS_CREATED);

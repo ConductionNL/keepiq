@@ -69,7 +69,7 @@ class SecretVersion extends Entity implements JsonSerializable
     /**
      * The monotonically increasing version number per secret.
      *
-     * @var int
+     * @var integer
      */
     protected int $versionNumber = 0;
 
@@ -217,8 +217,8 @@ class SecretVersion extends Entity implements JsonSerializable
     {
         $data = $this->jsonSerialize();
 
-        $data['key']              = $this->key;
-        $data['login']            = $this->login;
+        $data['key']   = $this->key;
+        $data['login'] = $this->login;
         $data['additionalFields'] = $this->additionalFields;
 
         return $data;

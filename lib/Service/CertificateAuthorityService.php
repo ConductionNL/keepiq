@@ -219,11 +219,11 @@ class CertificateAuthorityService
         string $commonName='Doriath User',
         ?string $privateKeyPem=null,
     ): string {
-        $intermediate       = $this->caCertificateMapper->findActiveIntermediate();
-        $intermediatePriv   = $this->crypto->decrypt($intermediate->getPrivateKey());
-        $intermediateKey    = openssl_pkey_get_private(private_key: $intermediatePriv);
-        $intermediateCert   = $intermediate->getCertificate();
-        $submittedPub       = openssl_pkey_get_public(public_key: $publicKeyPem);
+        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
+        $intermediatePriv = $this->crypto->decrypt($intermediate->getPrivateKey());
+        $intermediateKey  = openssl_pkey_get_private(private_key: $intermediatePriv);
+        $intermediateCert = $intermediate->getCertificate();
+        $submittedPub     = openssl_pkey_get_public(public_key: $publicKeyPem);
 
         if ($submittedPub === false) {
             throw new InvalidArgumentException('Invalid public key PEM');

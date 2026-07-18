@@ -79,6 +79,9 @@ class SettingsService
         // checking; UI is shown only when the admin gate is also on.
         'health_staleness_days' => '365',
         'breach_check_opt_in'   => '0',
+        // Per-user max credential age in days (rotation-expiry-policies
+        // §2.2); '0' = off. Feeds effective-expiry resolution.
+        'expiry_max_age_days'   => '0',
     ];
 
     /**
@@ -146,19 +149,25 @@ class SettingsService
     {
         $appId    = Application::APP_ID;
         $settings = [
-            'min_password_length'     => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
-            'min_password_score'      => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
-            'default_session_timeout' => $this->appConfig->getValueString($appId, 'default_session_timeout', 'session'),
-            'ca_auto_renew_enabled'   => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
-            'audit_retention_days'    => $this->appConfig->getValueInt(
+            'min_password_length'         => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
+            'min_password_score'          => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
+            'default_session_timeout'     => $this->appConfig->getValueString($appId, 'default_session_timeout', 'session'),
+            'ca_auto_renew_enabled'       => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
+            'audit_retention_days'        => $this->appConfig->getValueInt(
                 $appId,
                 'audit_retention_days',
                 self::AUDIT_RETENTION_DEFAULT
             ),
-            'breach_check_enabled'    => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
-            'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
-            'version_retention_days'  => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
-            'attachment_max_bytes'    => $this->appConfig->getValueInt($appId, 'attachment_max_bytes', 26214400),
+            'breach_check_enabled'        => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+            'expiry_default_max_age_days' => $this->appConfig->getValueInt($appId, 'expiry_default_max_age_days', 0),
+            'expiry_reminder_days'        => json_decode(
+                $this->appConfig->getValueString($appId, 'expiry_reminder_days', '[30,7,1]'),
+                true
+            ),
+            'expiry_policy_enforced'      => $this->appConfig->getValueBool($appId, 'expiry_policy_enforced', false),
+            'version_retention_count'     => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
+            'version_retention_days'      => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
+            'attachment_max_bytes'        => $this->appConfig->getValueInt($appId, 'attachment_max_bytes', 26214400),
             'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
                 $appId,
                 'attachment_user_quota_bytes',
@@ -245,6 +254,35 @@ class SettingsService
 
         if (isset($data['breach_check_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
+        }
+
+        // Expiry defaults (rotation-expiry-policies §2.2): admin max age
+        // ships OFF (0); reminder thresholds validated as positive ints.
+        if (isset($data['expiry_default_max_age_days']) === true) {
+            $maxAge = (int) $data['expiry_default_max_age_days'];
+            if ($maxAge < 0) {
+                throw new InvalidArgumentException('expiry_default_max_age_days must be 0 (off) or positive');
+            }
+
+            $this->appConfig->setValueInt($appId, 'expiry_default_max_age_days', $maxAge);
+        }
+
+        if (isset($data['expiry_reminder_days']) === true) {
+            $thresholds = array_values(
+                array_filter(
+                    array_map('intval', (array) $data['expiry_reminder_days']),
+                    static fn (int $d): bool => $d > 0
+                )
+            );
+            if ($thresholds === []) {
+                throw new InvalidArgumentException('expiry_reminder_days needs at least one positive threshold');
+            }
+
+            $this->appConfig->setValueString($appId, 'expiry_reminder_days', (string) json_encode($thresholds));
+        }
+
+        if (isset($data['expiry_policy_enforced']) === true) {
+            $this->appConfig->setValueBool($appId, 'expiry_policy_enforced', (bool) $data['expiry_policy_enforced']);
         }
 
         // Version retention (secret-version-history §4.1): a floor of 1

@@ -153,6 +153,28 @@ class SecretMapper extends QBMapper
     }//end findByOwner()
 
     /**
+     * Page through ALL user-owned secrets (rotation-expiry-policies §4.1
+     * scan job). Ordered by id for stable pagination across runs.
+     *
+     * @param int $limit  Maximum rows
+     * @param int $offset Row offset
+     *
+     * @return Secret[]
+     */
+    public function findAllUserOwnedPaged(int $limit, int $offset): array
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+            ->orderBy('id', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        return $this->findEntities(query: $qb);
+    }//end findAllUserOwnedPaged()
+
+    /**
      * Find an owner's secrets by exact (case-sensitive) plaintext name,
      * optionally constrained to a single folder.
      *

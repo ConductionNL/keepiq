@@ -54,8 +54,8 @@ class PruneSecretVersionsJob extends TimedJob
         private IAppConfig $appConfig,
         private LoggerInterface $logger,
     ) {
-        parent::__construct($time);
-        $this->setInterval(86400);
+        parent::__construct(time: $time);
+        $this->setInterval(seconds: 86400);
     }//end __construct()
 
     /**
@@ -95,6 +95,6 @@ class PruneSecretVersionsJob extends TimedJob
                 'Doriath: version prune failed: '.$exception->getMessage(),
                 ['app' => Application::APP_ID]
             );
-        }
+        }//end try
     }//end run()
 }//end class

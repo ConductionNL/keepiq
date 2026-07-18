@@ -27,6 +27,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -45,10 +46,11 @@ class SuiteCompromiseListener implements IEventListener
     /**
      * Constructor.
      *
-     * @param SecretMapper        $secretMapper        The Secret mapper (lookup recipient copies)
-     * @param ShareTargetMapper   $shareTargetMapper   The share-target mapper (resolve owners)
-     * @param NotificationService $notificationService The notification dispatcher
-     * @param LoggerInterface     $logger              The logger
+     * @param SecretMapper               $secretMapper          The Secret mapper (lookup recipient copies)
+     * @param ShareTargetMapper          $shareTargetMapper     The share-target mapper (resolve owners)
+     * @param NotificationService        $notificationService   The notification dispatcher
+     * @param LoggerInterface            $logger                The logger
+     * @param RotationPolicyService|null $rotationPolicyService The rotation service (auto-flag)
      *
      * @return void
      */
@@ -57,6 +59,7 @@ class SuiteCompromiseListener implements IEventListener
         private ShareTargetMapper $shareTargetMapper,
         private NotificationService $notificationService,
         private LoggerInterface $logger,
+        private ?RotationPolicyService $rotationPolicyService=null,
     ) {
     }//end __construct()
 
@@ -83,6 +86,13 @@ class SuiteCompromiseListener implements IEventListener
                 if ($secret->getPossiblyCompromisedAt() === null) {
                     continue;
                 }
+
+                // Auto-raise a rotation flag per compromised secret
+                // (rotation-expiry-policies §3.2; idempotent).
+                $this->rotationPolicyService?->flag(
+                    secretId: $secret->getId(),
+                    reason: 'suite_compromise'
+                );
 
                 $ownerId = $this->resolveSourceOwner(
                     recipientSecretId: $secret->getId(),
