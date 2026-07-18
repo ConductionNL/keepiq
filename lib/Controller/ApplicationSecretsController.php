@@ -44,6 +44,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\NotFoundException;
+use OCA\Doriath\Service\LeaseService;
 use OCA\Doriath\Service\MachineSecretEnvelopeService;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -86,6 +87,7 @@ class ApplicationSecretsController extends ApplicationApiController
      * @param SecretService                $secretService   The secret write service
      * @param MachineSecretEnvelopeService $envelopeService The envelope serializer
      * @param IEventDispatcher             $eventDispatcher The event dispatcher (audit)
+     * @param LeaseService|null            $leaseService    The lease service (grant on fetch)
      *
      * @return void
      */
@@ -96,6 +98,7 @@ class ApplicationSecretsController extends ApplicationApiController
         private SecretService $secretService,
         private MachineSecretEnvelopeService $envelopeService,
         private IEventDispatcher $eventDispatcher,
+        private ?LeaseService $leaseService=null,
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
@@ -347,11 +350,38 @@ class ApplicationSecretsController extends ApplicationApiController
      */
     private function envelopeResponse(Secret $secret, string $applicationId): JSONResponse
     {
+        // Machine leases (machine-secret-leases §3.1/§3.2): refuse the
+        // fetch when block-on-revoke applies; otherwise grant or reuse a
+        // lease (a reuse never extends) and expose it in headers. The
+        // envelope body stays byte-identical to the pre-lease contract.
+        if ($this->leaseService?->fetchBlocked(applicationId: $applicationId, secretId: $secret->getId()) === true) {
+            return new JSONResponse(
+                data: ['message' => 'Lease revoked — access to this secret is blocked until re-granted'],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
+        }
+
+        $lease = null;
+        if ($this->leaseService !== null) {
+            $requestedTtlRaw = $this->request->getParam('lease_ttl');
+            $requestedTtl    = null;
+            if ($requestedTtlRaw !== null && $requestedTtlRaw !== '') {
+                $requestedTtl = (int) $requestedTtlRaw;
+            }
+
+            $lease = $this->leaseService->grantOrReuse(
+                applicationId: $applicationId,
+                secretId: $secret->getId(),
+                requestedTtl: $requestedTtl,
+            );
+        }
+
         $etag        = $this->envelopeService->etag($secret);
         $ifNoneMatch = $this->request->getHeader('If-None-Match');
         if ($ifNoneMatch !== '' && $this->etagMatches(ifNoneMatch: $ifNoneMatch, etag: $etag) === true) {
             $response = new JSONResponse(data: [], statusCode: Http::STATUS_NOT_MODIFIED);
             $response->addHeader('ETag', $etag);
+            $this->addLeaseHeaders(response: $response, lease: $lease);
             return $response;
         }
 
@@ -367,8 +397,28 @@ class ApplicationSecretsController extends ApplicationApiController
 
         $response = new JSONResponse(data: $this->envelopeService->serialize($secret));
         $response->addHeader('ETag', $etag);
+        $this->addLeaseHeaders(response: $response, lease: $lease);
         return $response;
     }//end envelopeResponse()
+
+    /**
+     * Attach the lease id + expiry headers when a lease was granted or
+     * reused (machine-secret-leases §3.1).
+     *
+     * @param JSONResponse                      $response The response to mutate
+     * @param \OCA\Doriath\Db\MachineLease|null $lease    The lease (null = leases off)
+     *
+     * @return void
+     */
+    private function addLeaseHeaders(JSONResponse $response, ?\OCA\Doriath\Db\MachineLease $lease): void
+    {
+        if ($lease === null) {
+            return;
+        }
+
+        $response->addHeader('Doriath-Lease-Id', (string) $lease->getId());
+        $response->addHeader('Doriath-Lease-Expires', (string) $lease->getExpiresAt()?->format('c'));
+    }//end addLeaseHeaders()
 
     /**
      * Load a secret only when it is owned by the given application, else

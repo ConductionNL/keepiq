@@ -168,6 +168,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'applicationSecrets#show',   'url' => '/api/v1/app/secrets/{id}',            'verb' => 'GET'],
     ['name' => 'applicationSecrets#update', 'url' => '/api/v1/app/secrets/{id}',            'verb' => 'PUT'],
 
+    // Machine leases (machine-secret-leases §4). Bearer-authenticated
+    // application surface; JwtAuthMiddleware runs before each handler.
+    ['name' => 'machineLease#index',  'url' => '/api/v1/app/leases',              'verb' => 'GET'],
+    ['name' => 'machineLease#renew',  'url' => '/api/v1/app/leases/{id}/renew',   'verb' => 'POST'],
+    ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
+    // Session-authenticated admin/owner lease management.
+    ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],
+    ['name' => 'leaseAdmin#setPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'PUT'],
+    ['name' => 'leaseAdmin#revoke',    'url' => '/api/v1/leases/{leaseId}',               'verb' => 'DELETE'],
+
     // Version history (secret-version-history §6.2). List rides under the
     // secret; show/restore address the version id. Per-object authorization
     // lives in SecretVersionService method bodies.

@@ -149,29 +149,38 @@ class SettingsService
     {
         $appId    = Application::APP_ID;
         $settings = [
-            'min_password_length'         => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
-            'min_password_score'          => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
-            'default_session_timeout'     => $this->appConfig->getValueString($appId, 'default_session_timeout', 'session'),
-            'ca_auto_renew_enabled'       => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
-            'audit_retention_days'        => $this->appConfig->getValueInt(
+            'min_password_length'             => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
+            'min_password_score'              => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
+            'default_session_timeout'         => $this->appConfig->getValueString($appId, 'default_session_timeout', 'session'),
+            'ca_auto_renew_enabled'           => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
+            'audit_retention_days'            => $this->appConfig->getValueInt(
                 $appId,
                 'audit_retention_days',
                 self::AUDIT_RETENTION_DEFAULT
             ),
-            'breach_check_enabled'        => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
-            'expiry_default_max_age_days' => $this->appConfig->getValueInt($appId, 'expiry_default_max_age_days', 0),
-            'expiry_reminder_days'        => json_decode(
+            'breach_check_enabled'            => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+            'expiry_default_max_age_days'     => $this->appConfig->getValueInt($appId, 'expiry_default_max_age_days', 0),
+            'expiry_reminder_days'            => json_decode(
                 $this->appConfig->getValueString($appId, 'expiry_reminder_days', '[30,7,1]'),
                 true
             ),
-            'expiry_policy_enforced'      => $this->appConfig->getValueBool($appId, 'expiry_policy_enforced', false),
-            'version_retention_count'     => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
-            'version_retention_days'      => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
-            'attachment_max_bytes'        => $this->appConfig->getValueInt($appId, 'attachment_max_bytes', 26214400),
-            'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
+            'expiry_policy_enforced'          => $this->appConfig->getValueBool($appId, 'expiry_policy_enforced', false),
+            'version_retention_count'         => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
+            'version_retention_days'          => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
+            'attachment_max_bytes'            => $this->appConfig->getValueInt($appId, 'attachment_max_bytes', 26214400),
+            'attachment_user_quota_bytes'     => $this->appConfig->getValueInt(
                 $appId,
                 'attachment_user_quota_bytes',
                 104857600
+            ),
+            // Machine leases (machine-secret-leases §2.4).
+            'lease_default_ttl_seconds'       => $this->appConfig->getValueInt($appId, 'lease_default_ttl_seconds', 900),
+            'lease_max_ttl_seconds'           => $this->appConfig->getValueInt($appId, 'lease_max_ttl_seconds', 86400),
+            'lease_renewable'                 => $this->appConfig->getValueBool($appId, 'lease_renewable', true),
+            'lease_revocation_blocks_refetch' => $this->appConfig->getValueBool(
+                $appId,
+                'lease_revocation_blocks_refetch',
+                false
             ),
         ];
 
@@ -283,6 +292,31 @@ class SettingsService
 
         if (isset($data['expiry_policy_enforced']) === true) {
             $this->appConfig->setValueBool($appId, 'expiry_policy_enforced', (bool) $data['expiry_policy_enforced']);
+        }
+
+        // Machine-lease policy (machine-secret-leases §2.4): a 60-second
+        // floor keeps a lease meaningful; max must not undercut default.
+        foreach (['lease_default_ttl_seconds', 'lease_max_ttl_seconds'] as $leaseKey) {
+            if (isset($data[$leaseKey]) === true) {
+                $ttl = (int) $data[$leaseKey];
+                if ($ttl < 60) {
+                    throw new InvalidArgumentException($leaseKey.' must be at least 60 seconds');
+                }
+
+                $this->appConfig->setValueInt($appId, $leaseKey, $ttl);
+            }
+        }
+
+        if (isset($data['lease_renewable']) === true) {
+            $this->appConfig->setValueBool($appId, 'lease_renewable', (bool) $data['lease_renewable']);
+        }
+
+        if (isset($data['lease_revocation_blocks_refetch']) === true) {
+            $this->appConfig->setValueBool(
+                $appId,
+                'lease_revocation_blocks_refetch',
+                (bool) $data['lease_revocation_blocks_refetch']
+            );
         }
 
         // Version retention (secret-version-history §4.1): a floor of 1

@@ -311,7 +311,7 @@ class RotationPolicyService
             return $existing;
         } catch (DoesNotExistException) {
             // No flag yet — create below.
-        }
+        }//end try
 
         $flagRow = new RotationFlag();
         $flagRow->setId(Uuid::uuid4()->toString());
