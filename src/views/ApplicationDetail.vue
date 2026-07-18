@@ -100,6 +100,8 @@
 				:application-active="application.status === 'active'"
 				@write-secret="openWriteDialog" />
 
+			<ApplicationLeasesPanel :application-id="application.id" />
+
 			<section v-if="canDelete" class="application-detail__actions">
 				<NcButton type="error"
 					data-testid="delete-button"
@@ -127,6 +129,7 @@ import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import { useApplicationStore } from '../store/modules/application.js'
 import ApplicationSecretsPanel from '../components/application/ApplicationSecretsPanel.vue'
+import ApplicationLeasesPanel from '../components/application/ApplicationLeasesPanel.vue'
 import WriteSecretForAppDialog from '../components/application/WriteSecretForAppDialog.vue'
 
 export default {
@@ -140,6 +143,7 @@ export default {
 		ArrowLeft,
 		AlertCircleOutline,
 		ApplicationSecretsPanel,
+		ApplicationLeasesPanel,
 		WriteSecretForAppDialog,
 	},
 
