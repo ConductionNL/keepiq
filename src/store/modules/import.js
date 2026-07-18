@@ -226,7 +226,7 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 */
-		async encryptRow(row, publicKey, asCopy, totpTypeId = null, passkeyTypeId = null) {
+		async encryptRow(row, publicKey, asCopy, totpTypeId = null, passkeyTypeId = null, typedIds = {}) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
 			const item = {
 				sourceRow: row.sourceRow,
@@ -247,6 +247,12 @@ export const useImportStore = defineStore('import', {
 			// so the server files it as a Passkey (passkey-item-type D5).
 			if (row.type === 'passkey' && passkeyTypeId) {
 				item.typeId = passkeyTypeId
+			}
+			// `card` / `identity` rows carry their composite JSON payload in
+			// `password` (now ciphertext in `key`); the type is a UI hint
+			// only (card-identity-items §5.1).
+			if ((row.type === 'card' || row.type === 'identity') && typedIds[row.type]) {
+				item.typeId = typedIds[row.type]
 			}
 			if (row.login != null && row.login !== '') {
 				item.login = await rsaEncrypt(String(row.login), publicKey)
@@ -317,12 +323,32 @@ export const useImportStore = defineStore('import', {
 				passkeyTypeId = passkeyType ? passkeyType.id : null
 			}
 
+			// Resolve `card` / `identity` type ids (card-identity-items §5.1).
+			const typedIds = {}
+			if (rows.some((row) => row.type === 'card' || row.type === 'identity')) {
+				const typeStore = useSecretTypeStore()
+				if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+					try {
+						await typeStore.fetchTypes()
+					} catch {
+						// Non-fatal.
+					}
+				}
+				const types = Array.isArray(typeStore.types) ? typeStore.types : []
+				for (const name of ['card', 'identity']) {
+					const match = types.find((type) => type && type.name === name)
+					if (match) {
+						typedIds[name] = match.id
+					}
+				}
+			}
+
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = []
 			const itemRowByIndex = []
 			for (const row of rows) {
 				const asCopy = dupRows.has(row.sourceRow)
-				items.push(await this.encryptRow(row, publicKey, asCopy, totpTypeId, passkeyTypeId))
+				items.push(await this.encryptRow(row, publicKey, asCopy, totpTypeId, passkeyTypeId, typedIds))
 				itemRowByIndex.push(row)
 			}
 
