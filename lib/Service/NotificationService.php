@@ -68,6 +68,9 @@ class NotificationService
         // expiry reminders and the overdue/rotation-due flag.
         'secret_expiring'            => 'notify_security',
         'secret_rotation_due'        => 'notify_security',
+        // SIEM audit export (siem-audit-export §5.1): an operational
+        // admin alert like app_pending — never user-suppressible.
+        'siem_dead_letter'           => null,
     ];
 
     /**

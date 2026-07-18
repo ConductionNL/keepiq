@@ -147,6 +147,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'complianceReport#metrics',  'url' => '/api/v1/compliance/metrics',               'verb' => 'GET'],
     ['name' => 'complianceReport#exported', 'url' => '/api/v1/compliance/reports/{id}/exported', 'verb' => 'POST'],
 
+    // SIEM audit export (siem-audit-export §6) — admin-only, the gate
+    // runs in the controller body before any sink logic.
+    ['name' => 'siemSink#index',   'url' => '/api/v1/siem/sinks',           'verb' => 'GET'],
+    ['name' => 'siemSink#create',  'url' => '/api/v1/siem/sinks',           'verb' => 'POST'],
+    ['name' => 'siemSink#update',  'url' => '/api/v1/siem/sinks/{id}',      'verb' => 'PUT'],
+    ['name' => 'siemSink#destroy', 'url' => '/api/v1/siem/sinks/{id}',      'verb' => 'DELETE'],
+    ['name' => 'siemSink#test',    'url' => '/api/v1/siem/sinks/{id}/test', 'verb' => 'POST'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],

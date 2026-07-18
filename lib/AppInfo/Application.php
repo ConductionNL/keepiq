@@ -29,6 +29,7 @@ use OCA\Doriath\Listener\AuditListener;
 use OCA\Doriath\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Doriath\Listener\EmergencyAccessSuiteRotationListener;
 use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
+use OCA\Doriath\Listener\SiemForwardListener;
 use OCA\Doriath\Listener\SuiteCompromiseListener;
 use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
 use OCA\Doriath\Listener\SuiteMigrationStartedListener;
@@ -210,6 +211,15 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: AuditEvent::class,
             listener: AuditListener::class
+        );
+
+        // SIEM audit export §2.1 — a second, independent AuditEvent consumer
+        // that enqueues whitelisted payloads for configured SIEM sinks.
+        // Fail-soft like AuditListener: a forward failure never propagates
+        // into the audited business operation.
+        $context->registerEventListener(
+            event: AuditEvent::class,
+            listener: SiemForwardListener::class
         );
 
         // The three secret-export-gdpr events are this change's scoped consumer
