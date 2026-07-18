@@ -144,6 +144,29 @@ class EncryptionSuiteMapper extends QBMapper
     }//end findAllActiveWithLimit()
 
     /**
+     * Count active suites of one owner type (certificate-lifecycle §2.6
+     * issued-cert counts).
+     *
+     * @param string $ownerType 'user' or 'application'
+     *
+     * @return int
+     */
+    public function countActiveByOwnerType(string $ownerType): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'cnt'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('status', $qb->createNamedParameter('active')))
+            ->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)));
+
+        $result = $qb->executeQuery();
+        $row    = $result->fetch();
+        $result->closeCursor();
+
+        return (int) ($row['cnt'] ?? 0);
+    }//end countActiveByOwnerType()
+
+    /**
      * Delete every encryption suite owned by a user (account-deletion cascade).
      *
      * Removes the certificate AND the encrypted private-key blob. Idempotent.

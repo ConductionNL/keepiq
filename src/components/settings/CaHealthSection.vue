@@ -15,6 +15,13 @@
 				<p>{{ t('doriath', 'Intermediate expires') }}: {{ caStatus.intermediate?.expiresAt }}</p>
 			</template>
 
+			<ul v-if="caStatus?.issued" class="ca-health__issued" data-testid="ca-issued-counts">
+				<li>{{ t('doriath', 'Active user vault certificates: {n}', { n: caStatus.issued.activeUserSuites }) }}</li>
+				<li>{{ t('doriath', 'Active application certificates: {n}', { n: caStatus.issued.activeApplicationSuites }) }}</li>
+				<li>{{ t('doriath', 'Stored certificate secrets: {n}', { n: caStatus.issued.storedCertificates }) }}</li>
+				<li>{{ t('doriath', 'Stored certificates expiring within 30 days: {n}', { n: caStatus.issued.storedExpiringSoon }) }}</li>
+			</ul>
+
 			<NcButton
 				v-if="caStatus?.status === 'not_configured'"
 				type="primary"

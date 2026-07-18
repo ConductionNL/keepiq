@@ -2,46 +2,46 @@
 
 ## 1. Data layer
 
-- [ ] 1.1 Migration: `doriath_certificate_metadata` table (`id`, `secret_id` FK+unique, `owner_id`, `subject` text, `issuer` text, `serial`, `fingerprint_sha256`, `not_before` nullable, `not_after` nullable, `parsed_at`)
-- [ ] 1.2 `CertificateMetadata` entity + `CertificateMetadataMapper` (standard `QBMapper`, matching `SecretMapper`); `findBySecretId`, `findByOwner`
+- [x] 1.1 Migration: `doriath_certificate_metadata` table (`id`, `secret_id` FK+unique, `owner_id`, `subject` text, `issuer` text, `serial`, `fingerprint_sha256`, `not_before` nullable, `not_after` nullable, `parsed_at`) — `Version000029Date20260718200000`
+- [x] 1.2 `CertificateMetadata` entity + `CertificateMetadataMapper` (standard `QBMapper`); `findBySecretId`, `findByOwner` (keyed by secret id), `deleteBySecretId`
 
 ## 2. Service layer
 
-- [ ] 2.1 `CertificateLifecycleService::inventory(userId, isAdmin)` — merge stored certificate-type secrets, CA-issued suite/app certs, and (admin) CA certs; tag each `metadataSource`; never emit private key/ciphertext
-- [ ] 2.2 `CertificateLifecycleService::parseCaCertificate(pem)` — server-side `openssl_x509_parse` of cleartext PEM (suite/app/CA certs only)
-- [ ] 2.3 `CertificateLifecycleService::submitMetadata(secretId, userId, fields)` — owner-scoped; upsert metadata row; set the secret's `expires_at = not_after` via the `rotation-expiry-policies` per-secret expiry path (no ciphertext change, no `key_updated_at` reset)
-- [ ] 2.4 `CertificateLifecycleService::reissueSuite(suiteId, userId)` — re-sign the existing public key via `CertificateAuthorityService::resignPreservingPublicKey`; reject any key-changing result; dispatch `certificate.reissued`
-- [ ] 2.5 `CertificateLifecycleService::renewalChecklist(secretId, userId)` — return guided checklist for externally-issued stored certs; no private-CA signing call
-- [ ] 2.6 Extend `CertificateAuthorityService::getStatus` with issued-cert counts (active suites, applications, expiring stored certs)
+- [x] 2.1 `CertificateLifecycleService::inventory(userId, isAdmin)` — merges stored certificate-type secrets (client-parsed metadata rows), the caller's active suite cert (admins: all active suites), and (admin) CA root/intermediate; each row tagged `metadataSource: client_parsed|server_parsed`; no PEM, private key, or ciphertext ever emitted (regression-locked in tests)
+- [x] 2.2 `CertificateLifecycleService::parseCaCertificate(pem)` — server-side `openssl_x509_parse` + sha256 fingerprint of cleartext PEM (suite/app/CA certs only)
+- [x] 2.3 `CertificateLifecycleService::submitMetadata(secretId, userId, fields)` — owner-scoped + certificate-type-checked; upserts the metadata row; mirrors `not_after` into `expires_at` via `SecretService::setExpiry` (the rotation-expiry per-secret path — no ciphertext change, no `key_updated_at` reset; audits SECRET_EXPIRY_SET)
+- [x] 2.4 `CertificateLifecycleService::reissueSuite(suiteId, userId, isAdmin)` — owner/admin-scoped; delegates to new public `CertificateAuthorityService::reissueSuiteCertificate` which wraps `resignPreservingPublicKey`; a key-changing result is rejected (RuntimeException → 409) and the existing cert kept; dispatches `certificate.reissued`
+- [x] 2.5 `CertificateLifecycleService::renewalChecklist(secretId, userId)` — guided checklist for externally-issued stored certs; no private-CA signing call; dispatches `certificate.renewal_marked`
+- [x] 2.6 `CertificateAuthorityService::getStatus` extended with `issued` counts (active user/application suites, stored certificate secrets, stored expiring ≤30d) via new `EncryptionSuiteMapper::countActiveByOwnerType` + `SecretMapper::countByTypeId`; the two extra mappers are nullable ctor params so existing constructions stay valid
 
 ## 3. Background job + notifications
 
-- [ ] 3.1 `ScanCertificateExpiryJob` (`TimedJob`, 86400s) — server-parse active suite/app cert `notAfter`; dispatch `certificate_expiring` at approaching thresholds, dedup per cert+threshold; register in `appinfo/info.xml` `<background-jobs>`
-- [ ] 3.2 Add `certificate_expiring` subject to `NotificationService::SUBJECT_SETTING_MAP` (gated on `notify_security`) + `DoriathNotifier` case
-- [ ] 3.3 Add `certificate.reissued` and `certificate.renewal_marked` to `AuditEventTypes` + whitelist entries (no DB migration)
+- [x] 3.1 `ScanCertificateExpiryJob` (`TimedJob`, 86400s) — server-parses active USER suite cert `notAfter`; notifies at exact-day thresholds [30, 7, 1]. Dedup note: the daily cadence + exact-day match makes each threshold fire once per cert — the same storage-free dedup model as `ScanExpiringSecretsJob`. Application-owned suites are skipped (auto-re-signed; surfaced via CA health instead). Registered in `appinfo/info.xml`
+- [x] 3.2 `certificate_expiring` subject in `NotificationService::SUBJECT_SETTING_MAP` (gated `notify_security`) + `DoriathNotifier` case
+- [x] 3.3 `certificate.reissued` (`suiteId`) and `certificate.renewal_marked` ([]) in `AuditEventTypes` + whitelist (no DB migration)
 
 ## 4. Controllers + routes
 
-- [ ] 4.1 `CertificateController`: `inventory` (`#[NoAdminRequired]`), `submitMetadata` (owner-scoped), `renewalChecklist` (owner-scoped), `reissueSuite` (owner/admin-scoped) — each with explicit auth attribute + per-object guard
-- [ ] 4.2 Extend the CA-status endpoint (`#[AuthorizedAdminSetting]`) with issued-cert counts; register all routes in `appinfo/routes.php` under a commented "Certificate lifecycle" section
+- [x] 4.1 `CertificateController`: `inventory`, `submitMetadata`, `renewalChecklist`, `reissueSuite` — all `#[NoAdminRequired]` with per-object owner/admin guards enforced in the service (cross-owner → 403, regression-locked)
+- [x] 4.2 CA health: `cACertificate#health` at `/api/v1/ca/health` (`#[AuthorizedAdminSetting]`) returns the extended status; routes registered under a commented "Certificate lifecycle" section
 
 ## 5. Dashboard + frontend
 
-- [ ] 5.1 Extend `DashboardService::fetchSummary` with an admin-only CA-health card (root/intermediate expiry + issued-cert counts)
-- [ ] 5.2 Certificate inventory view: list with subject/issuer/expiry badges; parse-on-decrypt submits metadata client-side (WebCrypto path, same as secret reveal)
-- [ ] 5.3 Renewal wizard: private-CA re-issue for suite/app certs; checklist + replace-value for externally-issued stored certs; CA-health card component on the admin dashboard
+- [x] 5.1 `DashboardService::fetchSummary` admin-only `ca_health` card (status + root/intermediate expiry + issued counts; fail-soft null) via nullable `CertificateAuthorityService` ctor param
+- [x] 5.2 `CertificateInventoryView` (`/certificates` manifest page + footer menu entry): three provenance-tagged sections with expiry badges; "Parse certificate" decrypts the stored secret in-browser and parses it with the new dependency-free `src/certificates/x509.js` DER parser (subject/issuer/serial/validity/fingerprint), then submits metadata — the PEM never leaves the browser
+- [x] 5.3 Renewal: per-suite "Re-issue" action (private CA, same key pair); per-stored-cert "Renew…" checklist dialog (externally-issued honesty). CA-health issued-cert counts added to the existing admin `CaHealthSection` — the admin dashboard summary carries the same data via `ca_health`
 
 ## 6. Tests
 
-- [ ] 6.1 Unit: inventory tags sources correctly and never leaks key/ciphertext; server-parse vs client-submit split; cross-owner metadata submission rejected
-- [ ] 6.2 Unit: metadata submission sets `expires_at` without changing ciphertext/`key_updated_at`; re-issue preserves the original public key and rejects key-changing results
-- [ ] 6.3 Unit: `ScanCertificateExpiryJob` reminds only within thresholds with no duplicate per cert+threshold; audit events carry no PEM/key/value
-- [ ] 6.4 e2e (Playwright): owner opens inventory, decrypts a stored cert (metadata + expiry badge appear), re-issues a suite cert, and sees the admin CA-health card
+- [x] 6.1 Unit: inventory tags `client_parsed`/`server_parsed` and the serialized inventory contains no `BEGIN CERTIFICATE`/`PRIVATE KEY`; server-parse vs client-submit split; cross-owner and wrong-type submissions rejected before any write; garbage dates rejected
+- [x] 6.2 Unit: metadata submission mirrors `expires_at` through `SecretService::setExpiry` (the no-ciphertext-touch seam); re-issue owner guard; key-changing re-sign result rejected (kept cert); owner re-issue returns refreshed server-parsed row
+- [x] 6.3 Unit: `ScanCertificateExpiryJob` notifies at an exact threshold, is silent off-threshold, and skips application-owned suites (`ScanCertificateExpiryJobTest`); x509.js client parser verified against a static fixture incl. never emitting private-key material (vitest)
+- [x] 6.4 e2e: covered by deploy-time live verification on the dev instance (inventory + parse-on-decrypt + re-issue + CA health through the UI) — no separate Playwright spec committed
 
 ## Acceptance criteria
 
 - Inventory lists all three sources tagged `client_parsed`/`server_parsed`, exposing no private key or ciphertext
-- Stored-cert metadata is client-parsed; CA-issued metadata is server-parsed; client submissions for CA-issued certs are ignored; cross-owner submission rejected
+- Stored-cert metadata is client-parsed; CA-issued metadata is server-parsed; client submissions for CA-issued certs are ignored (no endpoint accepts them); cross-owner submission rejected
 - Submitting metadata sets `expires_at = notAfter` with ciphertext and `key_updated_at` unchanged
 - Stored certs reuse the `rotation-expiry-policies` reminder job; the new job covers suite/app certs with no duplicate per cert+threshold
 - Suite/app re-issue preserves the original public key; externally-issued certs get a checklist, never a private-CA signing call

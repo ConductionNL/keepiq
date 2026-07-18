@@ -26,7 +26,10 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\CACertificate;
 use OCA\Doriath\Db\CACertificateMapper;
+use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
@@ -59,6 +62,8 @@ class CertificateAuthorityService
      * @param IAppConfig            $appConfig           The app config interface
      * @param ICrypto               $crypto              The crypto service
      * @param LoggerInterface       $logger              The logger interface
+     * @param SecretMapper|null     $secretMapper        The secret mapper (issued-cert counts)
+     * @param SecretTypeMapper|null $secretTypeMapper    The type mapper (issued-cert counts)
      *
      * @return void
      */
@@ -68,6 +73,8 @@ class CertificateAuthorityService
         private IAppConfig $appConfig,
         private ICrypto $crypto,
         private LoggerInterface $logger,
+        private ?SecretMapper $secretMapper=null,
+        private ?SecretTypeMapper $secretTypeMapper=null,
     ) {
     }//end __construct()
 
@@ -595,8 +602,97 @@ class CertificateAuthorityService
             'status'       => $status,
             'root'         => $root->jsonSerialize(),
             'intermediate' => $intermediate->jsonSerialize(),
+            'issued'       => $this->issuedCounts(),
         ];
     }//end getStatus()
+
+    /**
+     * Issued-certificate counts (certificate-lifecycle §2.6): active
+     * user/application suites plus stored certificate-type secrets and
+     * how many of those expire within 30 days. Counts only — no
+     * identifiers, PEM, or key material.
+     *
+     * @return array<string,int>
+     */
+    private function issuedCounts(): array
+    {
+        $counts = [
+            'activeUserSuites'        => $this->suiteMapper->countActiveByOwnerType('user'),
+            'activeApplicationSuites' => $this->suiteMapper->countActiveByOwnerType('application'),
+            'storedCertificates'      => 0,
+            'storedExpiringSoon'      => 0,
+        ];
+
+        if ($this->secretMapper === null || $this->secretTypeMapper === null) {
+            return $counts;
+        }
+
+        try {
+            $certTypeId = $this->secretTypeMapper->findByName('certificate')->getId();
+            $counts['storedCertificates'] = $this->secretMapper->countByTypeId(typeId: $certTypeId);
+            $counts['storedExpiringSoon'] = $this->secretMapper->countByTypeId(
+                typeId: $certTypeId,
+                expiresBefore: new DateTime('+30 days')
+            );
+        } catch (DoesNotExistException) {
+            // Types not seeded yet — counts stay zero.
+        }
+
+        return $counts;
+    }//end issuedCounts()
+
+    /**
+     * Re-issue one suite/application certificate from the private CA,
+     * preserving its existing public key (certificate-lifecycle §2.4 /
+     * D3). Never mints a new key pair — a re-sign that cannot keep the
+     * original public key is rejected and the existing certificate kept.
+     *
+     * @param EncryptionSuite $suite The suite whose certificate to re-issue
+     *
+     * @return bool Whether a new certificate was issued and stored
+     *
+     * @spec openspec/changes/certificate-lifecycle/specs/certificate-lifecycle/spec.md#requirement-guided-renewal
+     */
+    public function reissueSuiteCertificate(EncryptionSuite $suite): bool
+    {
+        $oldCert = $suite->getCertificate();
+        if ($oldCert === null || $oldCert === '') {
+            return false;
+        }
+
+        try {
+            $intermediate = $this->caCertificateMapper->findActiveIntermediate();
+        } catch (DoesNotExistException) {
+            return false;
+        }
+
+        $intermediateKey = openssl_pkey_get_private(
+            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
+        );
+        if ($intermediateKey === false) {
+            return false;
+        }
+
+        $newCertPem = $this->resignPreservingPublicKey(
+            oldCert: $oldCert,
+            fallbackCn: $suite->getOwnerId(),
+            intermediateCert: $intermediate->getCertificate(),
+            intermediateKey: $intermediateKey,
+        );
+        if ($newCertPem === null) {
+            $this->logger->warning(
+                "Doriath: re-issue kept existing certificate for suite {$suite->getId()} — "
+                .'could not re-sign while preserving its public key'
+            );
+
+            return false;
+        }
+
+        $suite->setCertificate($newCertPem);
+        $this->suiteMapper->update($suite);
+
+        return true;
+    }//end reissueSuiteCertificate()
 
     /**
      * Issue the intermediate certificate against an existing persisted root.

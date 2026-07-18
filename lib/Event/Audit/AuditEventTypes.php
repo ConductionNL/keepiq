@@ -135,6 +135,11 @@ final class AuditEventTypes
     public const SIEM_SINK_DELETED = 'siem.sink_deleted';
     public const SIEM_SINK_TESTED  = 'siem.sink_tested';
 
+    // Certificate lifecycle (certificate-lifecycle §5) — identifiers
+    // only; no PEM, key, or secret value is ever recorded.
+    public const CERTIFICATE_REISSUED       = 'certificate.reissued';
+    public const CERTIFICATE_RENEWAL_MARKED = 'certificate.renewal_marked';
+
     /**
      * Metadata keys that MUST NEVER appear in any audit entry, in any position.
      * Recording any of these is rejected with an exception — defense in depth so
@@ -235,6 +240,9 @@ final class AuditEventTypes
             self::SIEM_SINK_UPDATED            => ['sinkId'],
             self::SIEM_SINK_DELETED            => ['sinkId'],
             self::SIEM_SINK_TESTED             => ['sinkId', 'outcome'],
+            // Certificate lifecycle — identifiers only, never PEM/key.
+            self::CERTIFICATE_REISSUED         => ['suiteId'],
+            self::CERTIFICATE_RENEWAL_MARKED   => [],
         ];
     }//end whitelist()
 
