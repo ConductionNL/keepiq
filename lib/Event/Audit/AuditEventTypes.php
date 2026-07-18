@@ -98,6 +98,12 @@ final class AuditEventTypes
     public const SECRET_ROTATION_DISMISSED = 'secret.rotation_dismissed';
     public const POLICY_EXPIRY_CHANGED     = 'policy.expiry_changed';
 
+    // Machine leases (machine-secret-leases §5.2) — ids + lifetimes only.
+    public const LEASE_GRANTED = 'lease.granted';
+    public const LEASE_RENEWED = 'lease.renewed';
+    public const LEASE_REVOKED = 'lease.revoked';
+    public const LEASE_EXPIRED = 'lease.expired';
+
     // Encrypted attachments (encrypted-attachments §5.1) — id/size only,
     // never filename, file key, or content.
     public const ATTACHMENT_UPLOADED   = 'attachment.uploaded';
@@ -184,6 +190,11 @@ final class AuditEventTypes
             self::SECRET_ROTATED               => ['reason'],
             self::SECRET_ROTATION_DISMISSED    => ['reason'],
             self::POLICY_EXPIRY_CHANGED        => ['scope', 'scopeId'],
+            // Machine leases — ids + lifetimes only (§5.2).
+            self::LEASE_GRANTED                => ['leaseId', 'secretId', 'expiresAt', 'ttl'],
+            self::LEASE_RENEWED                => ['leaseId', 'secretId', 'expiresAt', 'renewedCount'],
+            self::LEASE_REVOKED                => ['leaseId', 'secretId', 'expiresAt'],
+            self::LEASE_EXPIRED                => ['leaseId', 'secretId', 'expiresAt'],
             // Encrypted attachments — id/size only (§5.1).
             self::ATTACHMENT_UPLOADED          => ['secretId', 'sizeBytes'],
             self::ATTACHMENT_DOWNLOADED        => ['secretId', 'sizeBytes'],

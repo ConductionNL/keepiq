@@ -73,6 +73,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Doriath\BackgroundJob\ApproveElapsedEmergencyRequests</job>
         <job>OCA\Doriath\BackgroundJob\PruneSecretVersionsJob</job>
         <job>OCA\Doriath\BackgroundJob\ScanExpiringSecretsJob</job>
+        <job>OCA\Doriath\BackgroundJob\ExpireMachineLeasesJob</job>
     </background-jobs>
 
     <repair-steps>

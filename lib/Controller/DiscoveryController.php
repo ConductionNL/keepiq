@@ -33,6 +33,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 
@@ -54,14 +55,16 @@ class DiscoveryController extends Controller
     /**
      * Constructor for DiscoveryController.
      *
-     * @param IRequest      $request      The HTTP request
-     * @param IURLGenerator $urlGenerator The URL generator
+     * @param IRequest        $request      The HTTP request
+     * @param IURLGenerator   $urlGenerator The URL generator
+     * @param IAppConfig|null $appConfig    The app config (lease policy advert)
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private IURLGenerator $urlGenerator,
+        private ?IAppConfig $appConfig=null,
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
@@ -106,6 +109,15 @@ class DiscoveryController extends Controller
                     'update' => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index').'/{id}',
                 ],
                 'envelopeFormats' => [MachineSecretEnvelopeService::FORMAT],
+                // Machine leases (machine-secret-leases §3.3): additive
+                // advert of the instance lease policy — no envelope or
+                // addressing change.
+                'lease'           => [
+                    'supported'  => true,
+                    'defaultTtl' => $this->appConfig?->getValueInt(DoriathApp::APP_ID, 'lease_default_ttl_seconds', 900) ?? 900,
+                    'maxTtl'     => $this->appConfig?->getValueInt(DoriathApp::APP_ID, 'lease_max_ttl_seconds', 86400) ?? 86400,
+                    'renewable'  => $this->appConfig?->getValueBool(DoriathApp::APP_ID, 'lease_renewable', true) ?? true,
+                ],
             ]
         );
     }//end document()
