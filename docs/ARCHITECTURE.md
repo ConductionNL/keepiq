@@ -576,6 +576,10 @@ documented intent rather than silently drop a limit during refactoring.
 | `MachineLeaseController::index` | 30 / 60s | Bearer-authenticated lease list (machine-secret-leases §4.1); `#[PublicPage]` pre-auth surface, same polling profile as the secrets endpoints. |
 | `MachineLeaseController::renew` | 30 / 60s | Lease renewal — legitimate connectors renew at most once per default-TTL window. |
 | `MachineLeaseController::revoke` | 30 / 60s | Lease self-revocation — rare in legitimate use; the limit caps abuse of the rotation-flag side effect. |
+| `EphemeralSendAccessController::peek` | 15 / 60s | Anonymous ephemeral-send metadata (ephemeral-send §4.2); the ≥256-bit token is the real access control, the limit caps enumeration attempts. |
+| `EphemeralSendAccessController::access` | 15 / 60s | Ciphertext fetch phase of the two-phase protocol; a view is only consumed on confirm. |
+| `EphemeralSendAccessController::confirm` | 15 / 60s | Decrypt confirmation (consumes a view, burns at cap). |
+| `EphemeralSendAccessController::failure` | 15 / 60s | Failed-password reporting (burns the send at 5); the limit caps deliberate burn-griefing bursts. |
 
 All limits are keyed anonymously (per-IP) by Nextcloud's rate-limiter
 middleware, which is available since NC 24; Doriath's `info.xml` floor
