@@ -49,11 +49,12 @@ class FolderService
     /**
      * Constructor for FolderService.
      *
-     * @param FolderMapper           $mapper            The folder mapper
-     * @param SecretMapper           $secretMapper      The secret mapper (for cascade operations)
-     * @param LoggerInterface        $logger            The logger interface
-     * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
-     * @param AttachmentService|null $attachmentService The attachment service (delete cascade)
+     * @param FolderMapper              $mapper            The folder mapper
+     * @param SecretMapper              $secretMapper      The secret mapper (for cascade operations)
+     * @param LoggerInterface           $logger            The logger interface
+     * @param IEventDispatcher|null     $eventDispatcher   The event dispatcher
+     * @param AttachmentService|null    $attachmentService The attachment service (delete cascade)
+     * @param SecretVersionService|null $versionService    The version-history service (delete cascade)
      *
      * @return void
      */

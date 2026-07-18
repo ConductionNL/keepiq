@@ -55,7 +55,9 @@ use Ramsey\Uuid\Uuid;
  */
 class AttachmentService
 {
-    /** The IAppData folder holding attachment ciphertext blobs. */
+    /**
+     * The IAppData folder holding attachment ciphertext blobs.
+     */
     private const BLOB_FOLDER = 'attachments';
 
     /**
@@ -119,11 +121,11 @@ class AttachmentService
      * owner's RSA-wrapped file key. Size limit and per-user quota are
      * enforced server-side in ciphertext bytes BEFORE persisting.
      *
-     * @param string $secretId       The owning secret UUID
-     * @param string $userId         The caller (must own the secret)
-     * @param string $blob           The ciphertext bytes
+     * @param string $secretId          The owning secret UUID
+     * @param string $userId            The caller (must own the secret)
+     * @param string $blob              The ciphertext bytes
      * @param string $encryptedMetadata The AES-GCM metadata ciphertext
-     * @param string $wrappedFileKey The owner's RSA-wrapped file key
+     * @param string $wrappedFileKey    The owner's RSA-wrapped file key
      *
      * @return array{attachment: Attachment, grant: AttachmentGrant}
      *
@@ -234,9 +236,9 @@ class AttachmentService
                 continue;
             }
 
-            $row                   = $attachment->jsonSerialize();
+            $row = $attachment->jsonSerialize();
             $row['wrappedFileKey'] = $grant->getWrappedFileKey();
-            $out[]                 = $row;
+            $out[] = $row;
         }
 
         return $out;

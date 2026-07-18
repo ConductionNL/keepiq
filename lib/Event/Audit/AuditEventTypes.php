@@ -91,6 +91,13 @@ final class AuditEventTypes
     // number only, never ciphertext or values.
     public const SECRET_VERSION_RESTORED = 'secret.version_restored';
 
+    // Rotation & expiry (rotation-expiry-policies §5.2) — ids/reasons only.
+    public const SECRET_EXPIRY_SET         = 'secret.expiry_set';
+    public const SECRET_ROTATION_FLAGGED   = 'secret.rotation_flagged';
+    public const SECRET_ROTATED            = 'secret.rotated';
+    public const SECRET_ROTATION_DISMISSED = 'secret.rotation_dismissed';
+    public const POLICY_EXPIRY_CHANGED     = 'policy.expiry_changed';
+
     // Encrypted attachments (encrypted-attachments §5.1) — id/size only,
     // never filename, file key, or content.
     public const ATTACHMENT_UPLOADED   = 'attachment.uploaded';
@@ -171,6 +178,12 @@ final class AuditEventTypes
             self::EMERGENCY_ACCESS_REVOKED     => ['grantorUserId', 'granteeUserId'],
             self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
             self::SECRET_VERSION_RESTORED      => ['versionNumber'],
+            // Rotation & expiry — ids/reasons only (§5.2).
+            self::SECRET_EXPIRY_SET            => ['expiresAt'],
+            self::SECRET_ROTATION_FLAGGED      => ['reason'],
+            self::SECRET_ROTATED               => ['reason'],
+            self::SECRET_ROTATION_DISMISSED    => ['reason'],
+            self::POLICY_EXPIRY_CHANGED        => ['scope', 'scopeId'],
             // Encrypted attachments — id/size only (§5.1).
             self::ATTACHMENT_UPLOADED          => ['secretId', 'sizeBytes'],
             self::ATTACHMENT_DOWNLOADED        => ['secretId', 'sizeBytes'],

@@ -101,6 +101,10 @@ class AttachmentMapper extends QBMapper
         $sum    = $result->fetchOne();
         $result->closeCursor();
 
-        return (int) ($sum ?: 0);
+        if ($sum === false || $sum === null) {
+            return 0;
+        }
+
+        return (int) $sum;
     }//end sumBytesForOwner()
 }//end class

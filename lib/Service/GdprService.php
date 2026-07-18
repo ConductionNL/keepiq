@@ -59,13 +59,15 @@ class GdprService
     /**
      * Constructor for GdprService.
      *
-     * @param SecretMapper           $secretMapper     The secret mapper
-     * @param ShareTargetMapper      $shareMapper      The share-target mapper
-     * @param SecretDelegationMapper $delegationMapper The delegation mapper
-     * @param LinkShareMapper        $linkShareMapper  The link-share mapper
-     * @param SecretRequestMapper    $requestMapper    The secret-request mapper
-     * @param EncryptionSuiteMapper  $suiteMapper      The encryption-suite mapper
-     * @param SettingsService        $settingsService  The settings service
+     * @param SecretMapper                               $secretMapper          The secret mapper
+     * @param ShareTargetMapper                          $shareMapper           The share-target mapper
+     * @param SecretDelegationMapper                     $delegationMapper      The delegation mapper
+     * @param LinkShareMapper                            $linkShareMapper       The link-share mapper
+     * @param SecretRequestMapper                        $requestMapper         The secret-request mapper
+     * @param EncryptionSuiteMapper                      $suiteMapper           The encryption-suite mapper
+     * @param SettingsService                            $settingsService       The settings service
+     * @param \OCA\Doriath\Db\AttachmentMapper|null      $attachmentMapper      The attachment mapper (export metadata)
+     * @param \OCA\Doriath\Db\AttachmentGrantMapper|null $attachmentGrantMapper The attachment-grant mapper (export metadata)
      *
      * @return void
      */
@@ -152,7 +154,7 @@ class GdprService
             foreach ($this->attachmentMapper->findBySourceSecret(sourceSecretId: $secret->getId()) as $attachment) {
                 $row = $attachment->jsonSerialize();
                 try {
-                    $grant                 = $this->attachmentGrantMapper->findForRecipient(
+                    $grant = $this->attachmentGrantMapper->findForRecipient(
                         attachmentId: $attachment->getId(),
                         recipientId: $userId
                     );

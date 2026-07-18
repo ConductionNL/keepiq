@@ -160,7 +160,7 @@
 					"slot": "body",
 					"gridX": 0,
 					"gridY": 3,
-					"gridWidth": 4,
+					"gridWidth": 3,
 					"gridHeight": 2,
 					"_note": "ADR-049 dissolution of the doriath-kpi-card custom widget — endpoint-bound KPI tiles against GET /api/dashboard/summary. Bound to the payload keys DashboardService::fetchSummary actually emits (total_secrets / shared_with_me_count / folders_count); the legacy view read shared_secrets / folder_count / compromised_count, which the backend never sends. The 'Possibly compromised' card is dropped: compromised_count does not exist in the summary payload, so it was a permanently-zero dead binding.",
 					"props": {
@@ -179,9 +179,9 @@
 					"id": "kpi-shared-with-me",
 					"widgetKey": "stat",
 					"slot": "body",
-					"gridX": 4,
+					"gridX": 3,
 					"gridY": 3,
-					"gridWidth": 4,
+					"gridWidth": 3,
 					"gridHeight": 2,
 					"props": {
 						"content": {
@@ -198,9 +198,9 @@
 					"id": "kpi-folders",
 					"widgetKey": "stat",
 					"slot": "body",
-					"gridX": 8,
+					"gridX": 6,
 					"gridY": 3,
-					"gridWidth": 4,
+					"gridWidth": 3,
 					"gridHeight": 2,
 					"props": {
 						"content": {
@@ -210,6 +210,27 @@
 								"url": "/apps/doriath/api/dashboard/summary"
 							},
 							"valueField": "folders_count"
+						}
+					}
+				},
+				{
+					"id": "kpi-rotation-due",
+					"widgetKey": "stat",
+					"slot": "body",
+					"gridX": 9,
+					"gridY": 3,
+					"gridWidth": 3,
+					"gridHeight": 2,
+					"_note": "Rotation-due count (rotation-expiry-policies §7.2) — open rotation flags for the caller's secrets, from DashboardService::fetchSummary rotation_due_count. Deep-dive detail lives in the password-health report's rotation category.",
+					"props": {
+						"content": {
+							"label": "Rotation due",
+							"icon": "Autorenew",
+							"valueColor": "var(--color-error)",
+							"endpointSource": {
+								"url": "/apps/doriath/api/dashboard/summary"
+							},
+							"valueField": "rotation_due_count"
 						}
 					}
 				},

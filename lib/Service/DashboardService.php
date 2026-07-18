@@ -31,6 +31,7 @@ use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\DashboardSetting;
 use OCA\Doriath\Db\DashboardSettingMapper;
 use OCA\Doriath\Db\FolderMapper;
+use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -74,12 +75,13 @@ class DashboardService
      * preference path keep their original two-argument signature. The
      * Nextcloud DI container injects them in production.
      *
-     * @param DashboardSettingMapper $mapper            The dashboard-setting mapper
-     * @param LoggerInterface        $logger            The logger
-     * @param SecretMapper|null      $secretMapper      Secret counter (summary aggregator)
-     * @param FolderMapper|null      $folderMapper      Folder counter (summary aggregator)
-     * @param ShareTargetMapper|null $shareTargetMapper Shared-with-me counter (summary aggregator)
-     * @param ApplicationMapper|null $applicationMapper Pending-application counter (summary aggregator)
+     * @param DashboardSettingMapper  $mapper             The dashboard-setting mapper
+     * @param LoggerInterface         $logger             The logger
+     * @param SecretMapper|null       $secretMapper       Secret counter (summary aggregator)
+     * @param FolderMapper|null       $folderMapper       Folder counter (summary aggregator)
+     * @param ShareTargetMapper|null  $shareTargetMapper  Shared-with-me counter (summary aggregator)
+     * @param ApplicationMapper|null  $applicationMapper  Pending-application counter (summary aggregator)
+     * @param RotationFlagMapper|null $rotationFlagMapper Rotation-due counter (rotation-expiry-policies §7.2)
      *
      * @return void
      */
@@ -90,6 +92,7 @@ class DashboardService
         private ?FolderMapper $folderMapper=null,
         private ?ShareTargetMapper $shareTargetMapper=null,
         private ?ApplicationMapper $applicationMapper=null,
+        private ?RotationFlagMapper $rotationFlagMapper=null,
     ) {
     }//end __construct()
 
@@ -145,6 +148,10 @@ class DashboardService
             'folders_count'        => $this->safeCount(
                 fn: $foldersCount,
                 metricId: 'folders_count',
+            ),
+            'rotation_due_count'   => $this->safeCount(
+                fn: fn () => count($this->rotationFlagMapper?->findOpenForOwner($userId) ?? []),
+                metricId: 'rotation_due_count',
             ),
             'pending_apps_count'   => null,
             'is_admin'             => $isAdmin,

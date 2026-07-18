@@ -175,6 +175,17 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'secretVersion#show',    'url' => '/api/v1/versions/{id}',                'verb' => 'GET'],
     ['name' => 'secretVersion#restore', 'url' => '/api/v1/versions/{id}/restore',        'verb' => 'POST'],
 
+    // Rotation & expiry (rotation-expiry-policies §5.1).
+    ['name' => 'rotation#getExpiry',     'url' => '/api/v1/secrets/{id}/expiry',        'verb' => 'GET'],
+    ['name' => 'rotation#setExpiry',     'url' => '/api/v1/secrets/{id}/expiry',        'verb' => 'PUT'],
+    ['name' => 'rotation#policies',      'url' => '/api/v1/expiry-policies',            'verb' => 'GET'],
+    ['name' => 'rotation#upsertPolicy',  'url' => '/api/v1/expiry-policies',            'verb' => 'POST'],
+    ['name' => 'rotation#destroyPolicy', 'url' => '/api/v1/expiry-policies/{id}',       'verb' => 'DELETE'],
+    ['name' => 'rotation#flags',         'url' => '/api/v1/rotation-flags',             'verb' => 'GET'],
+    ['name' => 'rotation#flagBatch',     'url' => '/api/v1/rotation-flags',             'verb' => 'POST'],
+    ['name' => 'rotation#markRotated',   'url' => '/api/v1/rotation-flags/{id}/rotated', 'verb' => 'POST'],
+    ['name' => 'rotation#dismissFlag',   'url' => '/api/v1/rotation-flags/{id}/dismiss', 'verb' => 'POST'],
+
     // Attachments (encrypted-attachments §4.2). Upload/list ride under the
     // owning secret; download/grants/delete address the attachment id.
     // Per-object authorization lives in AttachmentService method bodies.

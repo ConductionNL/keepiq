@@ -116,9 +116,11 @@ class SecretVersionController extends OCSController
         try {
             $version = $this->versionService->getVersion(versionId: $id, userId: $userId);
         } catch (InvalidArgumentException $exception) {
-            $status = str_contains($exception->getMessage(), 'locked') === true
-                ? Http::STATUS_FORBIDDEN
-                : Http::STATUS_NOT_FOUND;
+            $status = Http::STATUS_NOT_FOUND;
+            if (str_contains($exception->getMessage(), 'locked') === true) {
+                $status = Http::STATUS_FORBIDDEN;
+            }
+
             return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
         }
 
