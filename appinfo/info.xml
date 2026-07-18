@@ -71,6 +71,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Doriath\BackgroundJob\CheckRootCertificateExpiry</job>
         <job>OCA\Doriath\BackgroundJob\PurgeAuditLogJob</job>
         <job>OCA\Doriath\BackgroundJob\ApproveElapsedEmergencyRequests</job>
+        <job>OCA\Doriath\BackgroundJob\PruneSecretVersionsJob</job>
     </background-jobs>
 
     <repair-steps>
