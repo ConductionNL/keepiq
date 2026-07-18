@@ -73,6 +73,7 @@ class ShareService
      * @param LoggerInterface        $logger              The logger interface
      * @param IEventDispatcher|null  $eventDispatcher     The event dispatcher
      * @param AttachmentService|null $attachmentService   The attachment service (revoke cascade)
+     * @param SecretTypeService|null $typeService         The type service (recipient-copy type resolution)
      *
      * @return void
      */
@@ -86,8 +87,237 @@ class ShareService
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?AttachmentService $attachmentService=null,
+        private ?SecretTypeService $typeService=null,
     ) {
     }//end __construct()
+
+    /**
+     * Register a batch of DIRECT user-to-user shares from client-encrypted
+     * blobs (bulk-actions §6.1/§7.1): for each row the server creates the
+     * recipient's Secret copy from the pre-encrypted fields and links the
+     * ShareTarget — idempotent (an existing share reports `exists`), owner
+     * -scoped per item, and skip-not-fail for ineligible rows so a mixed
+     * selection never aborts the run. Mirrors the team-folder fan-out
+     * registration; the server never sees plaintext (ADR-003).
+     *
+     * @param string                         $userId The sharing owner
+     * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?}
+     *
+     * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
+     *
+     * @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-share
+     */
+    public function registerDirectShares(string $userId, array $shares): array
+    {
+        $report        = [];
+        $newRecipients = [];
+        foreach ($shares as $row) {
+            $sourceSecretId = (string) ($row['sourceSecretId'] ?? '');
+            $targetUserId   = (string) ($row['targetUserId'] ?? '');
+            $encryptedKey   = (string) ($row['encryptedKey'] ?? '');
+            if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
+                $report[] = [
+                    'sourceSecretId' => $sourceSecretId,
+                    'targetUserId'   => $targetUserId,
+                    'status'         => 'invalid',
+                ];
+                continue;
+            }
+
+            if ($targetUserId === $userId) {
+                $report[] = [
+                    'sourceSecretId' => $sourceSecretId,
+                    'targetUserId'   => $targetUserId,
+                    'status'         => 'self',
+                ];
+                continue;
+            }
+
+            // Per-item owner guard — a foreign secret is skipped, never a
+            // whole-batch failure and never an oracle.
+            try {
+                $source = $this->secretMapper->findById($sourceSecretId);
+            } catch (DoesNotExistException) {
+                $source = null;
+            }
+
+            if ($source === null || $source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+                $report[] = [
+                    'sourceSecretId' => $sourceSecretId,
+                    'targetUserId'   => $targetUserId,
+                    'status'         => 'not_owned',
+                ];
+                continue;
+            }
+
+            // Idempotency: an existing share (any provenance) is `exists`.
+            try {
+                $this->mapper->findBySourceSecretAndTargetUser(
+                    sourceSecretId: $sourceSecretId,
+                    targetUserId: $targetUserId
+                );
+                $report[] = [
+                    'sourceSecretId' => $sourceSecretId,
+                    'targetUserId'   => $targetUserId,
+                    'status'         => 'exists',
+                ];
+                continue;
+            } catch (DoesNotExistException) {
+                // No existing share — create below.
+            }
+
+            $copy = $this->createDirectRecipientCopy(
+                source: $source,
+                targetUserId: $targetUserId,
+                encryptedKey: $encryptedKey,
+                encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
+                encryptedAdditionalFields: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
+            );
+            if ($copy === null) {
+                $report[] = [
+                    'sourceSecretId' => $sourceSecretId,
+                    'targetUserId'   => $targetUserId,
+                    'status'         => 'no_suite',
+                ];
+                continue;
+            }
+
+            $entity = new ShareTarget();
+            $entity->setId(Uuid::uuid4()->toString());
+            $entity->setSourceSecretId($sourceSecretId);
+            $entity->setTargetUserId($targetUserId);
+            $entity->setSecretId($copy->getId());
+            $entity->setCreatedBy($userId);
+            $entity->setCreatedAt(new DateTime());
+            $this->mapper->insert($entity);
+
+            $this->dispatchAudit(
+                event: AuditEvent::forUser(
+                    actorId: $userId,
+                    eventType: AuditEventTypes::SHARE_GRANTED,
+                    objectType: 'secret',
+                    objectId: $sourceSecretId,
+                    objectName: $source->getName(),
+                    metadata: [
+                        'recipientType' => 'user',
+                        'recipientId'   => $targetUserId,
+                    ],
+                )
+            );
+
+            $newRecipients[$targetUserId] = true;
+            $report[] = [
+                'sourceSecretId'    => $sourceSecretId,
+                'targetUserId'      => $targetUserId,
+                'status'            => 'created',
+                'recipientSecretId' => $copy->getId(),
+            ];
+        }//end foreach
+
+        // One notification per recipient per run — not per secret.
+        foreach (array_keys($newRecipients) as $recipientId) {
+            $this->notificationService->notify(
+                subject: 'secret_shared',
+                recipientId: (string) $recipientId,
+                params: ['shared_by' => $userId],
+            );
+        }
+
+        return $report;
+    }//end registerDirectShares()
+
+    /**
+     * The active-suite PEM certificate of a share recipient — public key
+     * material only (needed client-side to encrypt the copy; ADR-003).
+     *
+     * @param string $targetUserId The prospective recipient
+     *
+     * @return string|null The PEM certificate (null = no active suite)
+     */
+    public function recipientCertificate(string $targetUserId): ?string
+    {
+        try {
+            return $this->suiteMapper
+                ->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId)
+                ->getCertificate();
+        } catch (DoesNotExistException) {
+            return null;
+        }
+    }//end recipientCertificate()
+
+    /**
+     * Create a recipient's Secret copy from client-encrypted blobs, or
+     * null when the recipient has no active suite (skip, not fail).
+     *
+     * @param Secret      $source                    The owner's source secret
+     * @param string      $targetUserId              The recipient
+     * @param string      $encryptedKey              Recipient-encrypted key blob
+     * @param string|null $encryptedLogin            Recipient-encrypted login blob
+     * @param string|null $encryptedAdditionalFields Recipient-encrypted extra blob
+     *
+     * @return Secret|null
+     */
+    private function createDirectRecipientCopy(
+        Secret $source,
+        string $targetUserId,
+        string $encryptedKey,
+        ?string $encryptedLogin,
+        ?string $encryptedAdditionalFields,
+    ): ?Secret {
+        try {
+            $suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
+        } catch (DoesNotExistException) {
+            return null;
+        }
+
+        $typeId = null;
+        if ($this->typeService !== null) {
+            try {
+                $typeId = $this->typeService->resolveTypeForSecret($source->getTypeId(), $targetUserId);
+            } catch (InvalidArgumentException) {
+                $typeId = $this->typeService->resolveTypeForSecret(null, $targetUserId);
+            }
+        }
+
+        $now  = new DateTime();
+        $copy = new Secret();
+        $copy->setId(Uuid::uuid4()->toString());
+        $copy->setName($source->getName());
+        $copy->setUrl($source->getUrl());
+        if ($typeId !== null) {
+            $copy->setTypeId($typeId);
+        }
+
+        $copy->setFolderId(null);
+        $copy->setKey($encryptedKey);
+        $copy->setLogin($encryptedLogin);
+        $copy->setAdditionalFields($encryptedAdditionalFields);
+        $copy->setEncryptionSuiteId($suite->getId());
+        $copy->setOwnerType('user');
+        $copy->setOwnerId($targetUserId);
+        $copy->setCreatedAt($now);
+        $copy->setUpdatedAt($now);
+        $copy->setKeyUpdatedAt($now);
+        $this->secretMapper->insert($copy);
+
+        return $copy;
+    }//end createDirectRecipientCopy()
+
+    /**
+     * Normalise an optional blob value to a non-empty string or null.
+     *
+     * @param mixed $value The raw value
+     *
+     * @return string|null
+     */
+    private function optionalString(mixed $value): ?string
+    {
+        if (is_string($value) === true && $value !== '') {
+            return $value;
+        }
+
+        return null;
+    }//end optionalString()
 
     /**
      * Dispatch a typed audit event, fail-soft.

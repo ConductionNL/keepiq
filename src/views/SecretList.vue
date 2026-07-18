@@ -94,6 +94,47 @@
 				:folder-name="selectedFolderName"
 				@update:open="teamFolderOpen = $event" />
 
+			<!-- Bulk action dialogs (bulk-actions §3). -->
+			<BulkMoveDialog v-if="bulkDialog === 'move'"
+				:open="true"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
+			<BulkDeleteDialog v-if="bulkDialog === 'delete'"
+				:open="true"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
+			<BulkShareDialog v-if="bulkDialog === 'share'"
+				:open="true"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
+			<BulkTeamFolderDialog v-if="bulkDialog === 'teamFolder'"
+				:open="true"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
+
+			<!-- Bulk action bar (bulk-actions §3.1): visible only while a
+			     selection is active; selection is client-only (§1.2). -->
+			<div v-if="bulkStore.selectionCount > 0" class="secret-list-view__bulk-bar" data-testid="bulk-action-bar">
+				<span data-testid="bulk-selection-count">
+					{{ t('doriath', '{count} selected', { count: bulkStore.selectionCount }) }}
+				</span>
+				<NcButton type="secondary" data-testid="bulk-open-move" @click="bulkDialog = 'move'">
+					{{ t('doriath', 'Move') }}
+				</NcButton>
+				<NcButton type="secondary" data-testid="bulk-open-share" @click="bulkDialog = 'share'">
+					{{ t('doriath', 'Share') }}
+				</NcButton>
+				<NcButton type="secondary" data-testid="bulk-open-team-folder" @click="bulkDialog = 'teamFolder'">
+					{{ t('doriath', 'Add to team folder') }}
+				</NcButton>
+				<NcButton type="error" data-testid="bulk-open-delete" @click="bulkDialog = 'delete'">
+					{{ t('doriath', 'Delete') }}
+				</NcButton>
+				<NcButton type="tertiary" data-testid="bulk-clear-selection" @click="bulkStore.clearSelection()">
+					{{ t('doriath', 'Clear selection') }}
+				</NcButton>
+			</div>
+
 			<CnIndexPage
 				view-mode="list"
 				:available-view-modes="['list', 'cards', 'table']"
@@ -118,10 +159,31 @@
 				@sort-change="onSort"
 				@page-changed="goToPage">
 				<template #list-item="{ object }">
-					<SecretListItem
-						:secret="object"
-						@open="openSecret"
-						@copied="onCopied" />
+					<div class="secret-list-view__row">
+						<!-- Per-row selection (bulk-actions §1.1): click
+						     toggles, shift-click selects the range from the
+						     last-clicked row in the current view. -->
+						<input type="checkbox"
+							class="secret-list-view__check"
+							:checked="bulkStore.selectedIds.includes(object.id)"
+							:data-testid="`bulk-check-${object.id}`"
+							@click="onRowCheck(object, $event)">
+						<SecretListItem
+							class="secret-list-view__row-item"
+							:secret="object"
+							@open="openSecret"
+							@copied="onCopied" />
+					</div>
+				</template>
+				<template #actions>
+					<!-- Select-all for the current filtered/paginated view. -->
+					<label class="secret-list-view__select-all">
+						<input type="checkbox"
+							:checked="allCurrentSelected"
+							data-testid="bulk-select-all"
+							@change="onSelectAll">
+						<span>{{ t('doriath', 'Select all') }}</span>
+					</label>
 				</template>
 			</CnIndexPage>
 		</div>
@@ -141,6 +203,11 @@ import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
 import TeamFolderDialog from '../modals/TeamFolderDialog.vue'
+import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
+import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
+import BulkShareDialog from '../dialogs/BulkShareDialog.vue'
+import BulkTeamFolderDialog from '../dialogs/BulkTeamFolderDialog.vue'
+import { useBulkStore } from '../store/modules/bulk.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useHealthStore } from '../store/modules/health.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -174,6 +241,10 @@ export default {
 		AccountDeletionDialog,
 		ImportWizardDialog,
 		TeamFolderDialog,
+		BulkMoveDialog,
+		BulkDeleteDialog,
+		BulkShareDialog,
+		BulkTeamFolderDialog,
 	},
 
 	inject: {
@@ -196,6 +267,8 @@ export default {
 			teamFolderOpen: false,
 			typeFilter: null,
 			decryptedSecrets: [],
+			bulkDialog: null,
+			lastCheckedId: null,
 		}
 	},
 
@@ -278,6 +351,15 @@ export default {
 		typeFilterOption() {
 			return this.typeFilterOptions.find((opt) => opt.value === this.typeFilter) ?? null
 		},
+		/** Bulk selection store (bulk-actions §1). */
+		bulkStore() {
+			return useBulkStore()
+		},
+		/** Whether every secret in the current view is selected. */
+		allCurrentSelected() {
+			return this.secrets.length > 0
+				&& this.secrets.every((s) => this.bulkStore.selectedIds.includes(s.id))
+		},
 	},
 
 	watch: {
@@ -294,6 +376,8 @@ export default {
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
 	 */
 	async mounted() {
+		// The bulk selection is client-only and dies with the lock (§1.2).
+		this.bulkStore.registerLockReset()
 		await Promise.all([
 			useSecretTypeStore().fetchTypes(),
 			this.folderStore.fetchFolders(),
@@ -307,6 +391,73 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Per-row selection toggle with shift-click range support
+		 * (bulk-actions §1.1): shift extends from the last-clicked row
+		 * to this one within the current view's order.
+		 *
+		 * @param {object} object The clicked row's secret.
+		 * @param {MouseEvent} event The click event (shiftKey).
+		 * @return {void}
+		 */
+		onRowCheck(object, event) {
+			const ids = new Set(this.bulkStore.selectedIds)
+			if (event.shiftKey && this.lastCheckedId) {
+				const order = this.secrets.map((s) => s.id)
+				const from = order.indexOf(this.lastCheckedId)
+				const to = order.indexOf(object.id)
+				if (from !== -1 && to !== -1) {
+					for (const id of order.slice(Math.min(from, to), Math.max(from, to) + 1)) {
+						ids.add(id)
+					}
+					this.bulkStore.setSelection([...ids])
+					this.lastCheckedId = object.id
+					return
+				}
+			}
+
+			if (ids.has(object.id)) {
+				ids.delete(object.id)
+			} else {
+				ids.add(object.id)
+			}
+			this.bulkStore.setSelection([...ids])
+			this.lastCheckedId = object.id
+		},
+
+		/**
+		 * Select-all / clear-all for the current filtered view (§1.1).
+		 *
+		 * @param {Event} event The checkbox change event.
+		 * @return {void}
+		 */
+		onSelectAll(event) {
+			const ids = new Set(this.bulkStore.selectedIds)
+			for (const secret of this.secrets) {
+				if (event.target.checked) {
+					ids.add(secret.id)
+				} else {
+					ids.delete(secret.id)
+				}
+			}
+			this.bulkStore.setSelection([...ids])
+		},
+
+		/** Close whichever bulk dialog is open. */
+		closeBulkDialog() {
+			this.bulkDialog = null
+		},
+
+		/**
+		 * A bulk run finished: refresh the list so moved/deleted rows
+		 * reflect reality; keep the dialog open to show the report.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async onBulkDone() {
+			await this.reload()
+		},
 
 		/**
 		 * Decrypt every secret the user can read, in the browser, so the export
@@ -557,5 +708,42 @@ export default {
 .secret-list-view__main {
 	flex: 1 1 auto;
 	min-width: 0;
+}
+
+.secret-list-view__bulk-bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	padding: 8px 12px;
+	margin-bottom: 8px;
+	border: 1px solid var(--color-border, #ddd);
+	border-radius: var(--border-radius-large, 12px);
+	background-color: var(--color-background-hover, #f5f5f5);
+}
+
+.secret-list-view__row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.secret-list-view__check {
+	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+}
+
+.secret-list-view__row-item {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.secret-list-view__select-all {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
 }
 </style>
