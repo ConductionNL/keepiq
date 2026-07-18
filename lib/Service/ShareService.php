@@ -72,6 +72,7 @@ class ShareService
      * @param IDBConnection          $db                  The DB connection (for syncUpdate transaction)
      * @param LoggerInterface        $logger              The logger interface
      * @param IEventDispatcher|null  $eventDispatcher     The event dispatcher
+     * @param AttachmentService|null $attachmentService   The attachment service (revoke cascade)
      *
      * @return void
      */
@@ -342,7 +343,7 @@ class ShareService
         } catch (Throwable $exception) {
             $this->db->rollBack();
             throw $exception;
-        }
+        }//end try
 
         $this->logger->info(
             'Revoked share '.$shareId.' for source '.$entity->getSourceSecretId(),

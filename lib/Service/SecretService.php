@@ -136,6 +136,7 @@ class SecretService
      * @param AuditService|null           $auditService           The audit recorder (single write path)
      * @param AttachmentService|null      $attachmentService      The attachment service (delete cascade)
      * @param SecretVersionService|null   $versionService         The version-history service (pre-update snapshots)
+     * @param RotationPolicyService|null  $rotationPolicyService  The rotation service (flag cascade)
      *
      * @return void
      */
@@ -154,6 +155,7 @@ class SecretService
         private ?AuditService $auditService=null,
         private ?AttachmentService $attachmentService=null,
         private ?SecretVersionService $versionService=null,
+        private ?RotationPolicyService $rotationPolicyService=null,
     ) {
     }//end __construct()
 
@@ -903,6 +905,9 @@ class SecretService
         // Version-history cascade (secret-version-history §5.2).
         $this->versionService?->deleteForSecret($id);
 
+        // Rotation-flag cascade (rotation-expiry-policies).
+        $this->rotationPolicyService?->deleteForSecret($id);
+
         $this->mapper->delete($secret);
         $this->logger->info("Doriath: secret {$id} deleted by {$userId}");
 
@@ -1253,6 +1258,61 @@ class SecretService
 
         return min($limit, self::MAX_LIMIT);
     }//end clampLimit()
+
+    /**
+     * Load an owned secret WITHOUT dispatching a secret.read audit event
+     * (rotation-expiry-policies §5.1) — for metadata-only lookups such as
+     * effective-expiry resolution; no encrypted blob leaves this path.
+     *
+     * @param string $id     The secret UUID
+     * @param string $userId The caller (must own the secret)
+     *
+     * @return Secret
+     *
+     * @throws NotFoundException When the secret does not exist
+     * @throws ForbiddenException When the secret belongs to another user
+     */
+    public function findOwned(string $id, string $userId): Secret
+    {
+        return $this->loadOwned(id: $id, userId: $userId);
+    }//end findOwned()
+
+    /**
+     * Set or clear a secret's per-secret expiry (rotation-expiry-policies
+     * §2.3) — owner-only; NEVER touches ciphertext or `key_updated_at`.
+     *
+     * @param string        $id        The secret UUID
+     * @param DateTime|null $expiresAt The expiry instant (null = clear)
+     * @param string        $userId    The caller (must own the secret)
+     *
+     * @return Secret
+     *
+     * @throws NotFoundException When the secret does not exist
+     * @throws ForbiddenException When the secret belongs to another user
+     *
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry
+     */
+    public function setExpiry(string $id, ?DateTime $expiresAt, string $userId): Secret
+    {
+        $secret = $this->loadOwned(id: $id, userId: $userId);
+
+        $secret->setExpiresAt($expiresAt);
+        $secret->setUpdatedAt(new DateTime());
+        $this->mapper->update($secret);
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_EXPIRY_SET,
+                objectType: 'secret',
+                objectId: $id,
+                objectName: $secret->getName(),
+                metadata: ['expiresAt' => $expiresAt?->format('c')],
+            )
+        );
+
+        return $secret;
+    }//end setExpiry()
 
     /**
      * Whether any versionable field differs between two states of a

@@ -70,17 +70,19 @@ class AccountDeletionService
     /**
      * Constructor for AccountDeletionService.
      *
-     * @param SecretMapper           $secretMapper     The secret mapper
-     * @param FolderMapper           $folderMapper     The folder mapper
-     * @param ShareTargetMapper      $shareMapper      The share-target mapper
-     * @param GroupShareMapper       $groupShareMapper The group-share mapper
-     * @param SecretDelegationMapper $delegationMapper The delegation mapper
-     * @param LinkShareMapper        $linkShareMapper  The link-share mapper
-     * @param SecretRequestMapper    $requestMapper    The secret-request mapper
-     * @param EncryptionSuiteMapper  $suiteMapper      The encryption-suite mapper
-     * @param SuiteMigrationMapper   $migrationMapper  The suite-migration mapper
-     * @param DashboardSettingMapper $settingMapper    The settings mapper
-     * @param IEventDispatcher       $dispatcher       The event dispatcher
+     * @param SecretMapper              $secretMapper      The secret mapper
+     * @param FolderMapper              $folderMapper      The folder mapper
+     * @param ShareTargetMapper         $shareMapper       The share-target mapper
+     * @param GroupShareMapper          $groupShareMapper  The group-share mapper
+     * @param SecretDelegationMapper    $delegationMapper  The delegation mapper
+     * @param LinkShareMapper           $linkShareMapper   The link-share mapper
+     * @param SecretRequestMapper       $requestMapper     The secret-request mapper
+     * @param EncryptionSuiteMapper     $suiteMapper       The encryption-suite mapper
+     * @param SuiteMigrationMapper      $migrationMapper   The suite-migration mapper
+     * @param DashboardSettingMapper    $settingMapper     The settings mapper
+     * @param IEventDispatcher          $dispatcher        The event dispatcher
+     * @param AttachmentService|null    $attachmentService The attachment service (delete cascade)
+     * @param SecretVersionService|null $versionService    The version-history service (delete cascade)
      *
      * @return void
      */
