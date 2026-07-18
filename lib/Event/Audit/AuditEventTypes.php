@@ -120,6 +120,8 @@ final class AuditEventTypes
     public const TEAM_FOLDER_MEMBER_ADDED   = 'team_folder.member_added';
     public const TEAM_FOLDER_MEMBER_REMOVED = 'team_folder.member_removed';
     public const TEAM_FOLDER_OFFBOARDED     = 'team_folder.offboarded';
+    // Folder permission grades (folder-permission-grades §3.3).
+    public const TEAM_FOLDER_GRADE_CHANGED = 'team_folder.grade_changed';
 
     /**
      * Metadata keys that MUST NEVER appear in any audit entry, in any position.
@@ -211,6 +213,8 @@ final class AuditEventTypes
             self::TEAM_FOLDER_MEMBER_ADDED     => ['memberType', 'memberId'],
             self::TEAM_FOLDER_MEMBER_REMOVED   => ['memberType', 'memberId', 'revokedCount'],
             self::TEAM_FOLDER_OFFBOARDED       => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
+            // Grade changes — identifiers + the new grade only (§3.3).
+            self::TEAM_FOLDER_GRADE_CHANGED    => ['memberType', 'memberId', 'grade'],
         ];
     }//end whitelist()
 

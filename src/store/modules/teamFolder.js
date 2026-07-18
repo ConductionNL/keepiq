@@ -122,6 +122,24 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		},
 
 		/**
+		 * Set a membership's permission grade (owner-only;
+		 * folder-permission-grades §4.1).
+		 *
+		 * @param {string} teamFolderId The team folder id.
+		 * @param {string} membershipId The membership row id.
+		 * @param {string} grade 'read' | 'write'.
+		 * @return {Promise<object>} The updated membership.
+		 */
+		async setMemberGrade(teamFolderId, membershipId, grade) {
+			const response = await axios.patch(
+				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`),
+				{ grade },
+			)
+			await this.fetchTeamFolders()
+			return response.data
+		},
+
+		/**
 		 * Unshare a folder entirely (cascade-revokes all derived shares).
 		 *
 		 * @param {string} teamFolderId The team folder.

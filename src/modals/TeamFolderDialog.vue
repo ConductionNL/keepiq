@@ -40,6 +40,17 @@
 					<li v-for="member in members" :key="member.id" class="team-folder-dialog__member">
 						<component :is="member.memberType === 'group' ? 'AccountGroup' : 'Account'" :size="18" />
 						<span class="team-folder-dialog__member-name">{{ member.memberId }}</span>
+						<!-- Permission grade (folder-permission-grades §4.1):
+						     owner-only; a write member may edit folder secrets
+						     and fan the change out to the whole team. -->
+						<select class="team-folder-dialog__grade"
+							:value="member.grade || 'read'"
+							:disabled="busy"
+							:data-testid="`team-folder-grade-${member.memberId}`"
+							@change="onGradeChange(member, $event.target.value)">
+							<option value="read">{{ t('doriath', 'Read') }}</option>
+							<option value="write">{{ t('doriath', 'Write') }}</option>
+						</select>
 						<NcButton type="tertiary"
 							:aria-label="t('doriath', 'Remove member')"
 							:disabled="busy"
@@ -248,6 +259,27 @@ export default {
 			this.error = null
 			try {
 				await this.store.removeMember(this.teamFolder.id, member.id)
+				await this.refresh()
+			} catch (e) {
+				this.error = e?.response?.data?.message || e?.message
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Change a membership's permission grade (owner-only; no
+		 * ciphertext is touched — folder-permission-grades §4.1).
+		 *
+		 * @param {object} member The membership row.
+		 * @param {string} grade The new grade ('read'|'write').
+		 * @return {Promise<void>}
+		 */
+		async onGradeChange(member, grade) {
+			this.busy = true
+			this.error = null
+			try {
+				await this.store.setMemberGrade(this.teamFolder.id, member.id, grade)
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message

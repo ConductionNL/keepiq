@@ -32,6 +32,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
+use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretDelegation;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
@@ -1280,4 +1281,127 @@ class TeamFolderService
             message: 'Offboarding requires instance admin or vault_admin membership'
         );
     }//end assertOffboardingAdmin()
+
+    /**
+     * Set a membership's permission grade — owner-only; grade changes
+     * touch no ciphertext (folder-permission-grades §2.1).
+     *
+     * @param string $teamFolderId The team folder UUID
+     * @param string $memberId     The membership row UUID
+     * @param string $grade        The grade (`read`|`write`)
+     * @param string $ownerId      The calling user (must own the folder)
+     *
+     * @return TeamFolderMember
+     *
+     * @throws InvalidArgumentException On non-owner, unknown member, or invalid grade
+     *
+     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-grades-per-membership
+     */
+    public function setMemberGrade(string $teamFolderId, string $memberId, string $grade, string $ownerId): TeamFolderMember
+    {
+        if (in_array($grade, ['read', 'write'], true) === false) {
+            throw new InvalidArgumentException(message: 'grade must be read or write');
+        }
+
+        $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $ownerId);
+
+        try {
+            $member = $this->memberMapper->findById($memberId);
+        } catch (DoesNotExistException) {
+            throw new InvalidArgumentException(message: 'Membership not found');
+        }
+
+        if ($member->getTeamFolderId() !== $teamFolderId) {
+            throw new InvalidArgumentException(message: 'Membership not found');
+        }
+
+        $member->setGrade($grade);
+        $member = $this->memberMapper->update($member);
+
+        $this->dispatchAudit(
+            event: AuditEvent::forUser(
+                actorId: $ownerId,
+                eventType: AuditEventTypes::TEAM_FOLDER_GRADE_CHANGED,
+                objectType: 'team_folder',
+                objectId: $teamFolderId,
+                objectName: '',
+                metadata: [
+                    'memberType' => $member->getMemberType(),
+                    'memberId'   => $member->getMemberId(),
+                    'grade'      => $grade,
+                ],
+            )
+        );
+
+        return $member;
+    }//end setMemberGrade()
+
+    /**
+     * The MAX grade any team-folder membership along a secret's folder
+     * ancestor chain grants a user (`write` outranks `read`), or null
+     * when nothing applies. Group memberships expand via the Nextcloud
+     * group manager (folder-permission-grades §2.2). Server-visible
+     * metadata only — never any ciphertext.
+     *
+     * @param Secret $secret The SOURCE secret
+     * @param string $userId The candidate user
+     *
+     * @return string|null `write`, `read`, or null
+     *
+     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-effective-grade-resolution
+     */
+    public function resolveGrade(Secret $secret, string $userId): ?string
+    {
+        $best     = null;
+        $folderId = $secret->getFolderId();
+        $hops     = 0;
+        while ($folderId !== null && $folderId !== '' && $hops < 50) {
+            ++$hops;
+            try {
+                $teamFolder = $this->mapper->findByFolder($folderId);
+                foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $teamFolder->getId()) as $membership) {
+                    if ($this->membershipCovers(membership: $membership, userId: $userId) === false) {
+                        continue;
+                    }
+
+                    if ($membership->effectiveGrade() === 'write') {
+                        return 'write';
+                    }
+
+                    $best = 'read';
+                }
+            } catch (DoesNotExistException) {
+                // Not a team folder — keep climbing.
+            }
+
+            try {
+                $folderId = $this->folderMapper->findById($folderId)->getParentId();
+            } catch (DoesNotExistException) {
+                break;
+            }
+        }//end while
+
+        return $best;
+    }//end resolveGrade()
+
+    /**
+     * Whether a membership row covers a user (direct or via group).
+     *
+     * @param TeamFolderMember $membership The membership row
+     * @param string           $userId     The candidate user
+     *
+     * @return bool
+     */
+    private function membershipCovers(TeamFolderMember $membership, string $userId): bool
+    {
+        if ($membership->getMemberType() === 'user') {
+            return $membership->getMemberId() === $userId;
+        }
+
+        if ($membership->getMemberType() === 'group') {
+            return $this->groupManager->isInGroup($userId, $membership->getMemberId());
+        }
+
+        return false;
+    }//end membershipCovers()
 }//end class

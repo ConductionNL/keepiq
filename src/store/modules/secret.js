@@ -275,6 +275,26 @@ export const useSecretStore = defineStore('secret', {
 					// field so the sharing sidebar can render a banner.
 					// The session encryption flow itself is unaffected.
 				}
+
+				// Write-grade team member path (folder-permission-grades
+				// §4.2): when the edited row is a recipient COPY and the
+				// user holds a write grade on an ancestor team folder,
+				// fan the plaintext out to the SOURCE + every recipient.
+				try {
+					const { useShareStore } = await import('./share.js')
+					await useShareStore().syncAsTeamWriter(id, {
+						key: data.key,
+						login: data.login,
+						additionalFields:
+							data.additionalFields !== undefined
+								? (typeof data.additionalFields === 'string'
+									? data.additionalFields
+									: JSON.stringify(data.additionalFields))
+								: undefined,
+					})
+				} catch (e) {
+					// Same fail-soft contract as the owner sync above.
+				}
 			}
 
 			return response.data
