@@ -16,6 +16,7 @@ import { csvParser } from './csv.js'
 import { bitwardenParser } from './bitwarden.js'
 import { keepassXmlParser } from './keepassXml.js'
 import { ncPasswordsParser } from './ncPasswords.js'
+import { cxfParser } from './cxf.js'
 // Importing the backup parser registers the `.doriath-backup` restore path.
 import { backupParser } from '../backupParser.js'
 
@@ -23,5 +24,6 @@ registerParser(csvParser)
 registerParser(bitwardenParser)
 registerParser(keepassXmlParser)
 registerParser(ncPasswordsParser)
+registerParser(cxfParser)
 
-export { csvParser, bitwardenParser, keepassXmlParser, ncPasswordsParser, backupParser }
+export { csvParser, bitwardenParser, keepassXmlParser, ncPasswordsParser, cxfParser, backupParser }
