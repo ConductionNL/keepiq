@@ -21,6 +21,7 @@
 		<AttachmentLimitsSection />
 		<RotationPolicySection />
 		<MachineLeaseSection />
+		<ComplianceSection />
 		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
@@ -37,6 +38,7 @@ import OffboardingSection from '../../components/settings/OffboardingSection.vue
 import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
+import ComplianceSection from '../../components/settings/ComplianceSection.vue'
 
 export default {
 	name: 'Settings',
@@ -49,6 +51,7 @@ export default {
 		AttachmentLimitsSection,
 		RotationPolicySection,
 		MachineLeaseSection,
+		ComplianceSection,
 		OffboardingSection,
 		AdminAuditSection,
 	},
