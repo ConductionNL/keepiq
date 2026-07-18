@@ -22,7 +22,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Encrypted Attachments](specs/encrypted-attachments/spec.md) | done — live-verified 2026-07-18 | 12 | [archive](changes/archive/2026-07-18-encrypted-attachments/) |
 | [Secret Version History](specs/secret-version-history/spec.md) | done — 2026-07-18 | 13 | [archive](changes/archive/2026-07-18-secret-version-history/) |
 | [Rotation & Expiry Policies](specs/rotation-expiry-policies/spec.md) | done — 2026-07-18 | 14 — NIS2/BIO2 driver | [archive](changes/archive/2026-07-18-rotation-expiry-policies/) |
-| [Machine Secret Leases](specs/machine-secret-leases/spec.md) | in-progress | 15 — NHI segment | [machine-secret-leases](changes/machine-secret-leases/) |
+| [Machine Secret Leases](specs/machine-secret-leases/spec.md) | done — 2026-07-18 | 15 — NHI segment | [archive](changes/archive/2026-07-18-machine-secret-leases/) |
 | [Extension Passkey Provider](specs/extension-passkey-provider/spec.md) | in-progress | 16 — makes passkeys usable | [extension-passkey-provider](changes/extension-passkey-provider/) |
 | [Extension TOTP Autofill](specs/extension-totp-autofill/spec.md) | in-progress | 17 | [extension-totp-autofill](changes/extension-totp-autofill/) |
 | [Passkey Vault Login](specs/passkey-vault-login/spec.md) | in-progress | 18 — PRF frontier | [passkey-vault-login](changes/passkey-vault-login/) |
