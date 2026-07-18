@@ -432,7 +432,7 @@ class TeamFolderController extends OCSController
         }
 
         try {
-            $member = $this->service->setMemberGrade(
+            $member = $this->teamFolderService->setMemberGrade(
                 teamFolderId: $id,
                 memberId: $memberId,
                 grade: $grade,
