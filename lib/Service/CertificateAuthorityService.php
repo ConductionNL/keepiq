@@ -219,17 +219,20 @@ class CertificateAuthorityService
         string $commonName='Doriath User',
         ?string $privateKeyPem=null,
     ): string {
-        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
-        $intermediateKey  = openssl_pkey_get_private(
-            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
-        );
-        $intermediateCert = $intermediate->getCertificate();
+        $intermediate       = $this->caCertificateMapper->findActiveIntermediate();
+        $intermediatePriv   = $this->crypto->decrypt($intermediate->getPrivateKey());
+        $intermediateKey    = openssl_pkey_get_private(private_key: $intermediatePriv);
+        $intermediateCert   = $intermediate->getCertificate();
+        $submittedPub       = openssl_pkey_get_public(public_key: $publicKeyPem);
+
+        if ($submittedPub === false) {
+            throw new InvalidArgumentException('Invalid public key PEM');
+        }
 
         // Build the CSR. openssl_csr_new() needs a PRIVATE key: when the caller
         // owns the keypair (server-side generation) we use it directly so the
-        // signed certificate carries the caller's real public key. A public-only
-        // key cannot sign a CSR.
-        $csrKey = openssl_pkey_get_public(public_key: $publicKeyPem);
+        // signed certificate carries the caller's real public key.
+        $csrKey = $submittedPub;
         if ($privateKeyPem !== null) {
             $csrKey = openssl_pkey_get_private(private_key: $privateKeyPem);
             if ($csrKey === false) {
@@ -237,36 +240,137 @@ class CertificateAuthorityService
             }
         }
 
-        if ($csrKey === false) {
-            throw new InvalidArgumentException('Invalid public key PEM');
-        }
-
-        $csr = openssl_csr_new(
+        // On some OpenSSL builds a public-only key works here; on others
+        // openssl_csr_new() SILENTLY generates a throwaway keypair. The
+        // modulus guard below catches that case and reroutes to phpseclib.
+        $csr = @openssl_csr_new(
             distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $commonName]),
             private_key: $csrKey,
             options: ['digest_alg' => 'sha256']
         );
 
-        // For external-public-key registration without the private key, the caller
-        // should instead provide a proper PKCS#10 CSR (see signCsr()).
-        $cert = openssl_csr_sign(
-            csr: $csr,
-            ca_certificate: $intermediateCert,
-            private_key: $intermediateKey,
-            days: 365,
-            options: ['digest_alg' => 'sha256'],
-            serial: random_int(1, PHP_INT_MAX)
-        );
-
-        // @codeCoverageIgnoreStart
-        if ($cert === false) {
-            throw new RuntimeException('Failed to sign certificate: '.openssl_error_string());
+        $certPem = null;
+        if ($csr !== false) {
+            $cert = openssl_csr_sign(
+                csr: $csr,
+                ca_certificate: $intermediateCert,
+                private_key: $intermediateKey,
+                days: 365,
+                options: ['digest_alg' => 'sha256'],
+                serial: random_int(1, PHP_INT_MAX)
+            );
+            if ($cert !== false) {
+                openssl_x509_export(certificate: $cert, output: $certPem);
+            }
         }
 
-        // @codeCoverageIgnoreEnd
-        openssl_x509_export(certificate: $cert, output: $certPem);
+        // Zero-knowledge invariant: the issued certificate MUST carry the
+        // SUBMITTED public key. If openssl invented a throwaway keypair
+        // (the public-only-key footgun documented above), every value later
+        // encrypted under this certificate would be undecryptable with the
+        // user's real private key — silent vault data loss. Verified live
+        // 2026-07-18: PHP 8.4/OpenSSL minted an RSA-2048 throwaway for an
+        // RSA-4096 browser key on the first-run suite-creation path.
+        if ($certPem === null || $this->certCarriesPublicKey(certPem: $certPem, publicKeyPem: $publicKeyPem) === false) {
+            $certPem = $this->issueCertificateForPublicKey(
+                publicKeyPem: $publicKeyPem,
+                commonName: $commonName,
+                intermediateCertPem: $intermediateCert,
+                intermediatePrivPem: $intermediatePriv,
+            );
+        }
+
+        if ($this->certCarriesPublicKey(certPem: $certPem, publicKeyPem: $publicKeyPem) === false) {
+            // Never hand out a certificate for a key nobody holds.
+            throw new RuntimeException(
+                'Refusing to issue a certificate that does not carry the submitted public key'
+            );
+        }
+
         return $certPem;
     }//end signPublicKey()
+
+    /**
+     * Whether an X.509 certificate carries exactly the given RSA public key.
+     *
+     * @param string $certPem      The PEM certificate
+     * @param string $publicKeyPem The PEM public key to compare against
+     *
+     * @return bool
+     */
+    private function certCarriesPublicKey(string $certPem, string $publicKeyPem): bool
+    {
+        $certPub = openssl_pkey_get_public(public_key: $certPem);
+        $subPub  = openssl_pkey_get_public(public_key: $publicKeyPem);
+        if ($certPub === false || $subPub === false) {
+            return false;
+        }
+
+        $certDetails = openssl_pkey_get_details(key: $certPub);
+        $subDetails  = openssl_pkey_get_details(key: $subPub);
+        if ($certDetails === false || $subDetails === false
+            || isset($certDetails['rsa']['n']) === false || isset($subDetails['rsa']['n']) === false
+        ) {
+            return false;
+        }
+
+        return hash_equals($subDetails['rsa']['n'], $certDetails['rsa']['n']);
+    }//end certCarriesPublicKey()
+
+    /**
+     * Issue an X.509 certificate carrying an arbitrary submitted public key,
+     * signed by the intermediate — via phpseclib, which (unlike ext-openssl's
+     * CSR path) can bind a public-only key deterministically on every build.
+     *
+     * @param string $publicKeyPem        The subject public key (PEM)
+     * @param string $commonName          The subject common name
+     * @param string $intermediateCertPem The signing intermediate certificate (PEM)
+     * @param string $intermediatePrivPem The intermediate private key (PEM, decrypted)
+     *
+     * @return string The issued certificate PEM
+     *
+     * @throws RuntimeException When issuance fails
+     */
+    private function issueCertificateForPublicKey(
+        string $publicKeyPem,
+        string $commonName,
+        string $intermediateCertPem,
+        string $intermediatePrivPem,
+    ): string {
+        $subjectPublic = \phpseclib3\Crypt\PublicKeyLoader::load($publicKeyPem);
+        $issuerPrivate = \phpseclib3\Crypt\PublicKeyLoader::load($intermediatePrivPem);
+        if ($issuerPrivate instanceof \phpseclib3\Crypt\Common\PrivateKey === false) {
+            throw new RuntimeException('Intermediate private key could not be loaded for issuance');
+        }
+
+        $issuer = new \phpseclib3\File\X509();
+        $issuer->loadX509($intermediateCertPem);
+        $issuer->setPrivateKey($issuerPrivate->withPadding(\phpseclib3\Crypt\RSA::SIGNATURE_PKCS1));
+
+        $subject = new \phpseclib3\File\X509();
+        // PKCS1 padding on the subject key so the SPKI carries the plain
+        // rsaEncryption OID — phpseclib's PSS default would emit an
+        // id-RSASSA-PSS SPKI that WebCrypto/openssl consumers reject.
+        $subject->setPublicKey($subjectPublic->withPadding(\phpseclib3\Crypt\RSA::SIGNATURE_PKCS1));
+        $subject->setDNProp('id-at-countryName', self::DEFAULT_DN['countryName']);
+        $subject->setDNProp('id-at-organizationName', self::DEFAULT_DN['organizationName']);
+        $subject->setDNProp('id-at-commonName', $commonName);
+
+        $signer = new \phpseclib3\File\X509();
+        $signer->setSerialNumber((string) random_int(1, PHP_INT_MAX), 10);
+        $signer->setEndDate('+365 days');
+        $issued = $signer->sign($issuer, $subject);
+        if ($issued === false) {
+            throw new RuntimeException('phpseclib certificate issuance failed');
+        }
+
+        $pem = $signer->saveX509($issued);
+        if (is_string($pem) === false || $pem === '') {
+            throw new RuntimeException('phpseclib certificate export failed');
+        }
+
+        return $pem;
+    }//end issueCertificateForPublicKey()
 
     /**
      * Sign a PKCS#10 CSR with the active intermediate certificate.
