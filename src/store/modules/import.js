@@ -226,7 +226,7 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 */
-		async encryptRow(row, publicKey, asCopy, totpTypeId = null) {
+		async encryptRow(row, publicKey, asCopy, totpTypeId = null, passkeyTypeId = null) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
 			const item = {
 				sourceRow: row.sourceRow,
@@ -241,6 +241,12 @@ export const useImportStore = defineStore('import', {
 			// ciphertext — the type is a UI hint only.
 			if (row.type === 'totp' && totpTypeId) {
 				item.typeId = totpTypeId
+			}
+			// A `passkey` row carries its canonical credential JSON in
+			// `password` (now ciphertext in `key`); stamp the resolved type id
+			// so the server files it as a Passkey (passkey-item-type D5).
+			if (row.type === 'passkey' && passkeyTypeId) {
+				item.typeId = passkeyTypeId
 			}
 			if (row.login != null && row.login !== '') {
 				item.login = await rsaEncrypt(String(row.login), publicKey)
@@ -295,12 +301,28 @@ export const useImportStore = defineStore('import', {
 				totpTypeId = totpType ? totpType.id : null
 			}
 
+			// Resolve the `passkey` type id the same way (passkey-item-type D5).
+			let passkeyTypeId = null
+			if (rows.some((row) => row.type === 'passkey')) {
+				const typeStore = useSecretTypeStore()
+				if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+					try {
+						await typeStore.fetchTypes()
+					} catch {
+						// Non-fatal.
+					}
+				}
+				const types = Array.isArray(typeStore.types) ? typeStore.types : []
+				const passkeyType = types.find((type) => type && type.name === 'passkey')
+				passkeyTypeId = passkeyType ? passkeyType.id : null
+			}
+
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = []
 			const itemRowByIndex = []
 			for (const row of rows) {
 				const asCopy = dupRows.has(row.sourceRow)
-				items.push(await this.encryptRow(row, publicKey, asCopy, totpTypeId))
+				items.push(await this.encryptRow(row, publicKey, asCopy, totpTypeId, passkeyTypeId))
 				itemRowByIndex.push(row)
 			}
 

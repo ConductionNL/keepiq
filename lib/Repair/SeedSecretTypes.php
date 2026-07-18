@@ -67,6 +67,11 @@ class SeedSecretTypes implements IRepairStep
         'note'        => 'Secure Note',
         'database'    => 'Database',
         'totp'        => 'Authenticator (TOTP)',
+        // The `passkey` type is a UI hint like `totp`: its encrypted `key`
+        // field holds the canonical CXF-aligned credential JSON and the
+        // client renders the passkey presentation. No schema column — the
+        // credential is ciphertext in `key` (passkey-item-type D1/D2).
+        'passkey'     => 'Passkey',
     ];
 
     /**

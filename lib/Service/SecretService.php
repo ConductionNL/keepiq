@@ -875,6 +875,7 @@ class SecretService
      * @param string      $direction The sort direction
      * @param int         $page      The 1-based page number
      * @param int         $limit     The page size
+     * @param string|null $typeId    The secret-type filter (null = all types)
      *
      * @return array{items: array<int,array<string,mixed>>, total: int, page: int, limit: int}
      */
@@ -885,13 +886,14 @@ class SecretService
         string $direction,
         int $page,
         int $limit,
+        ?string $typeId=null,
     ): array {
         $limit  = $this->clampLimit(limit: $limit);
         $page   = max(1, $page);
         $offset = (($page - 1) * $limit);
 
-        $secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset);
-        $total   = $this->mapper->countByOwner('user', $userId, $folderId);
+        $secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset, $typeId);
+        $total   = $this->mapper->countByOwner('user', $userId, $folderId, $typeId);
 
         return [
             'items' => array_map([$this, 'serialiseWithBlocking'], $secrets),

@@ -56,17 +56,17 @@ class SeedSecretTypesTest extends TestCase
     }//end setUp()
 
     /**
-     * On a fresh install all 7 system types are inserted.
+     * On a fresh install all 8 system types are inserted.
      *
      * @return void
      */
-    public function testCreatesSevenTypesOnFirstRun(): void
+    public function testCreatesEightTypesOnFirstRun(): void
     {
         $this->mapper->method('findByName')->willThrowException(new DoesNotExistException('none'));
-        $this->mapper->expects($this->exactly(7))->method('insert');
+        $this->mapper->expects($this->exactly(8))->method('insert');
 
         $this->step->run($this->createMock(IOutput::class));
-    }//end testCreatesSevenTypesOnFirstRun()
+    }//end testCreatesEightTypesOnFirstRun()
 
     /**
      * A re-run with all types present inserts nothing (idempotent).
@@ -103,7 +103,7 @@ class SeedSecretTypesTest extends TestCase
     }//end testDeterministicIds()
 
     /**
-     * The seven canonical system type names are defined, with `totp` last.
+     * The eight canonical system type names are defined, with `passkey` last.
      *
      * @return void
      */
@@ -111,7 +111,7 @@ class SeedSecretTypesTest extends TestCase
     {
         $names = array_keys(SeedSecretTypes::SYSTEM_TYPES);
         $this->assertSame(
-            ['login', 'api_key', 'ssh_key', 'certificate', 'note', 'database', 'totp'],
+            ['login', 'api_key', 'ssh_key', 'certificate', 'note', 'database', 'totp', 'passkey'],
             $names
         );
     }//end testSystemTypeNames()
@@ -135,4 +135,27 @@ class SeedSecretTypesTest extends TestCase
             $id
         );
     }//end testTotpTypeSeededDeterministically()
+
+    /**
+     * The `passkey` system type is seeded with a stable deterministic UUID and
+     * the "Passkey" label; no schema/migration change accompanies it — the
+     * credential rides in the existing encrypted `key` field.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-system-secret-type
+     */
+    public function testPasskeyTypeSeededDeterministically(): void
+    {
+        $this->assertArrayHasKey('passkey', SeedSecretTypes::SYSTEM_TYPES);
+        $this->assertSame('Passkey', SeedSecretTypes::SYSTEM_TYPES['passkey']);
+
+        $id  = SeedSecretTypes::deterministicId(name: 'passkey');
+        $id2 = SeedSecretTypes::deterministicId(name: 'passkey');
+        $this->assertSame($id, $id2);
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/',
+            $id
+        );
+    }//end testPasskeyTypeSeededDeterministically()
 }//end class
