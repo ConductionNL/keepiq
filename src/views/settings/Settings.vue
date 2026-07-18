@@ -14,6 +14,7 @@
 <template>
 	<div class="doriath-settings">
 		<PasswordPolicySection />
+		<OrgPasswordPolicySection />
 		<BreachCheckSection />
 		<CaHealthSection />
 		<ApplicationQueueSection />
@@ -27,6 +28,7 @@
 
 <script>
 import PasswordPolicySection from '../../components/settings/PasswordPolicySection.vue'
+import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolicySection.vue'
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
@@ -40,6 +42,7 @@ export default {
 	name: 'Settings',
 	components: {
 		PasswordPolicySection,
+		OrgPasswordPolicySection,
 		BreachCheckSection,
 		CaHealthSection,
 		ApplicationQueueSection,

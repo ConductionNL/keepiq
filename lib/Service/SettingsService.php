@@ -117,13 +117,14 @@ class SettingsService
     /**
      * Constructor for the SettingsService.
      *
-     * @param IAppConfig         $appConfig    The app config interface
-     * @param IConfig            $config       The per-user config interface
-     * @param IAppManager        $appManager   The app manager
-     * @param ContainerInterface $container    The container
-     * @param IGroupManager      $groupManager The group manager
-     * @param IUserSession       $userSession  The user session
-     * @param LoggerInterface    $logger       The logger
+     * @param IAppConfig                                 $appConfig       The app config interface
+     * @param IConfig                                    $config          The per-user config interface
+     * @param IAppManager                                $appManager      The app manager
+     * @param ContainerInterface                         $container       The container
+     * @param IGroupManager                              $groupManager    The group manager
+     * @param IUserSession                               $userSession     The user session
+     * @param LoggerInterface                            $logger          The logger
+     * @param \OCP\EventDispatcher\IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
      *
      * @return void
      */
@@ -135,6 +136,7 @@ class SettingsService
         private IGroupManager $groupManager,
         private IUserSession $userSession,
         private LoggerInterface $logger,
+        private ?\OCP\EventDispatcher\IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
 
@@ -172,6 +174,19 @@ class SettingsService
                 $appId,
                 'attachment_user_quota_bytes',
                 104857600
+            ),
+            // Org password policy (org-password-policies §1.1).
+            'policy_enabled'                  => $this->appConfig->getValueBool($appId, 'policy_enabled', false),
+            'generator_min_length'            => $this->appConfig->getValueInt($appId, 'generator_min_length', 12),
+            'generator_require_upper'         => $this->appConfig->getValueBool($appId, 'generator_require_upper', false),
+            'generator_require_lower'         => $this->appConfig->getValueBool($appId, 'generator_require_lower', false),
+            'generator_require_digit'         => $this->appConfig->getValueBool($appId, 'generator_require_digit', false),
+            'generator_require_symbol'        => $this->appConfig->getValueBool($appId, 'generator_require_symbol', false),
+            'min_zxcvbn_score'                => $this->appConfig->getValueInt($appId, 'min_zxcvbn_score', 0),
+            'block_on_hibp_hit'               => $this->appConfig->getValueBool($appId, 'block_on_hibp_hit', false),
+            'policy_exempt_types'             => json_decode(
+                $this->appConfig->getValueString($appId, 'policy_exempt_types', '["note","ssh_key","certificate","passkey","card","identity"]'),
+                true
             ),
             // Machine leases (machine-secret-leases §2.4).
             'lease_default_ttl_seconds'       => $this->appConfig->getValueInt($appId, 'lease_default_ttl_seconds', 900),
@@ -264,6 +279,8 @@ class SettingsService
         if (isset($data['breach_check_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
         }
+
+        $this->updatePolicySettings(data: $data);
 
         // Expiry defaults (rotation-expiry-policies §2.2): admin max age
         // ships OFF (0); reminder thresholds validated as positive ints.
@@ -361,6 +378,138 @@ class SettingsService
 
         return $this->getAdminSettings();
     }//end updateAdminSettings()
+
+    /**
+     * Validate + persist the org password-policy keys and dispatch the
+     * `password_policy.updated` audit event with before/after values —
+     * never any secret data (org-password-policies §1.1/§3.1).
+     *
+     * @param array<string,mixed> $data The admin-settings input
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On invalid policy values
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity) One flat guard per key.
+     * @SuppressWarnings(PHPMD.NPathComplexity)      Same: independent guards.
+     *
+     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-policy-storage-and-validation
+     */
+    private function updatePolicySettings(array $data): void
+    {
+        $appId      = Application::APP_ID;
+        $policyKeys = [
+            'policy_enabled',
+            'generator_min_length',
+            'generator_require_upper',
+            'generator_require_lower',
+            'generator_require_digit',
+            'generator_require_symbol',
+            'min_zxcvbn_score',
+            'block_on_hibp_hit',
+            'policy_exempt_types',
+        ];
+        $touched    = array_values(array_intersect($policyKeys, array_keys($data)));
+        if ($touched === []) {
+            return;
+        }
+
+        $before = array_intersect_key($this->getAdminSettings(), array_flip($touched));
+
+        if (isset($data['generator_min_length']) === true) {
+            $minLength = (int) $data['generator_min_length'];
+            if ($minLength < 8) {
+                throw new InvalidArgumentException('generator_min_length must be at least 8');
+            }
+
+            $this->appConfig->setValueInt($appId, 'generator_min_length', $minLength);
+        }
+
+        if (isset($data['min_zxcvbn_score']) === true) {
+            $score = (int) $data['min_zxcvbn_score'];
+            if ($score < 0 || $score > 4) {
+                throw new InvalidArgumentException('min_zxcvbn_score must be between 0 and 4');
+            }
+
+            $this->appConfig->setValueInt($appId, 'min_zxcvbn_score', $score);
+        }
+
+        if (isset($data['block_on_hibp_hit']) === true) {
+            $block = (bool) $data['block_on_hibp_hit'];
+            $gate  = $this->appConfig->getValueBool($appId, 'breach_check_enabled', false);
+            if ($block === true && $gate === false) {
+                throw new InvalidArgumentException(
+                    'block_on_hibp_hit requires breach_check_enabled — enable the breach check gate first'
+                );
+            }
+
+            $this->appConfig->setValueBool($appId, 'block_on_hibp_hit', $block);
+        }
+
+        if (isset($data['policy_exempt_types']) === true) {
+            $types = array_values(array_filter(array_map('strval', (array) $data['policy_exempt_types'])));
+            $this->appConfig->setValueString($appId, 'policy_exempt_types', (string) json_encode($types));
+        }
+
+        $boolKeys = [
+            'policy_enabled',
+            'generator_require_upper',
+            'generator_require_lower',
+            'generator_require_digit',
+            'generator_require_symbol',
+        ];
+        foreach ($boolKeys as $boolKey) {
+            if (isset($data[$boolKey]) === true) {
+                $this->appConfig->setValueBool($appId, $boolKey, (bool) $data[$boolKey]);
+            }
+        }
+
+        $after = array_intersect_key($this->getAdminSettings(), array_flip($touched));
+
+        $actorId = $this->userSession->getUser()?->getUID() ?? 'system';
+        $this->eventDispatcher?->dispatchTyped(
+            \OCA\Doriath\Event\Audit\AuditEvent::forUser(
+                actorId: $actorId,
+                eventType: \OCA\Doriath\Event\Audit\AuditEventTypes::PASSWORD_POLICY_UPDATED,
+                objectType: 'settings',
+                objectId: 'password_policy',
+                objectName: '',
+                metadata: [
+                    'before' => $before,
+                    'after'  => $after,
+                ],
+            )
+        );
+    }//end updatePolicySettings()
+
+    /**
+     * The user-visible policy floor for the write dialogs — policy gate,
+     * generator floor, score floor, HIBP block, and exempt types only
+     * (org-password-policies §1.3).
+     *
+     * @return array<string,mixed>
+     *
+     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-policy-storage-and-validation
+     */
+    public function getPolicy(): array
+    {
+        $appId = Application::APP_ID;
+
+        return [
+            'policy_enabled'           => $this->appConfig->getValueBool($appId, 'policy_enabled', false),
+            'generator_min_length'     => $this->appConfig->getValueInt($appId, 'generator_min_length', 12),
+            'generator_require_upper'  => $this->appConfig->getValueBool($appId, 'generator_require_upper', false),
+            'generator_require_lower'  => $this->appConfig->getValueBool($appId, 'generator_require_lower', false),
+            'generator_require_digit'  => $this->appConfig->getValueBool($appId, 'generator_require_digit', false),
+            'generator_require_symbol' => $this->appConfig->getValueBool($appId, 'generator_require_symbol', false),
+            'min_zxcvbn_score'         => $this->appConfig->getValueInt($appId, 'min_zxcvbn_score', 0),
+            'block_on_hibp_hit'        => $this->appConfig->getValueBool($appId, 'block_on_hibp_hit', false),
+            'policy_exempt_types'      => json_decode(
+                $this->appConfig->getValueString($appId, 'policy_exempt_types', '["note","ssh_key","certificate","passkey","card","identity"]'),
+                true
+            ),
+        ];
+    }//end getPolicy()
 
     /**
      * Get the per-user preferences (implement-dashboard-settings §1.5).

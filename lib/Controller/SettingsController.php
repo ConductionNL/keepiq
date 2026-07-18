@@ -202,4 +202,20 @@ class SettingsController extends Controller
 
         return new JSONResponse(data: $result);
     }//end updateUserSettings()
+
+    /**
+     * Read-only org password policy for the write dialogs — every
+     * authenticated user may read the floor (org-password-policies §1.3).
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-policy-storage-and-validation
+     */
+    #[NoAdminRequired]
+    public function getPolicy(): JSONResponse
+    {
+        return new JSONResponse(data: $this->settingsService->getPolicy());
+    }//end getPolicy()
 }//end class
