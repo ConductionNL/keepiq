@@ -49,10 +49,11 @@ class FolderService
     /**
      * Constructor for FolderService.
      *
-     * @param FolderMapper          $mapper          The folder mapper
-     * @param SecretMapper          $secretMapper    The secret mapper (for cascade operations)
-     * @param LoggerInterface       $logger          The logger interface
-     * @param IEventDispatcher|null $eventDispatcher The event dispatcher
+     * @param FolderMapper           $mapper            The folder mapper
+     * @param SecretMapper           $secretMapper      The secret mapper (for cascade operations)
+     * @param LoggerInterface        $logger            The logger interface
+     * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
+     * @param AttachmentService|null $attachmentService The attachment service (delete cascade)
      *
      * @return void
      */
@@ -61,8 +62,30 @@ class FolderService
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private ?AttachmentService $attachmentService=null,
     ) {
     }//end __construct()
+
+    /**
+     * Attachments cascade for a folder's direct secrets
+     * (encrypted-attachments §3.1): before a bulk secret delete, remove
+     * each secret's attachments and any grants it holds as a copy.
+     *
+     * @param string $folderId The folder whose direct secrets are deleted
+     *
+     * @return void
+     */
+    private function cascadeAttachmentsForFolder(string $folderId): void
+    {
+        if ($this->attachmentService === null) {
+            return;
+        }
+
+        foreach ($this->secretMapper->findByFolderId(folderId: $folderId) as $secret) {
+            $this->attachmentService->deleteForSecret($secret->getId());
+            $this->attachmentService->deleteGrantsForSecretCopy($secret->getId());
+        }
+    }//end cascadeAttachmentsForFolder()
 
     /**
      * Dispatch a typed audit event, fail-soft.
@@ -384,6 +407,7 @@ class FolderService
         }
 
         if ($cascade === 'delete') {
+            $this->cascadeAttachmentsForFolder(folderId: $folder->getId());
             $this->secretMapper->deleteByFolderId($folder->getId());
         }
 
@@ -431,6 +455,7 @@ class FolderService
         // Direct secrets of the deleted folder follow the directSecrets action.
         $directAction = $resolution['directSecrets'] ?? 'move';
         if ($directAction === 'delete') {
+            $this->cascadeAttachmentsForFolder(folderId: $folder->getId());
             $this->secretMapper->deleteByFolderId($folder->getId());
         }
 
@@ -465,6 +490,7 @@ class FolderService
             case 'delete':
                 $subtreeIds = $this->mapper->getSubtreeIds($subfolder->getId());
                 foreach ($subtreeIds as $folderId) {
+                    $this->cascadeAttachmentsForFolder(folderId: (string) $folderId);
                     $this->secretMapper->deleteByFolderId($folderId);
                 }
 

@@ -96,6 +96,7 @@ class AccountDeletionService
         private SuiteMigrationMapper $migrationMapper,
         private DashboardSettingMapper $settingMapper,
         private IEventDispatcher $dispatcher,
+        private ?AttachmentService $attachmentService=null,
     ) {
     }//end __construct()
 
@@ -130,6 +131,17 @@ class AccountDeletionService
         $report->linkSharesDeleted = count($this->linkShareMapper->findByCreatedBy(userId: $userId));
         $this->linkShareMapper->deleteByUserId(userId: $userId);
         $report->requestsDeleted = $this->requestMapper->deleteByCreatedBy(userId: $userId);
+
+        // Attachments cascade (encrypted-attachments §3.2): remove every
+        // attachment of the user's remaining own secrets and every grant
+        // any of their rows hold as a copy — idempotent, before the rows
+        // themselves go.
+        if ($this->attachmentService !== null) {
+            foreach ($this->secretMapper->findByOwner('user', $userId, null, null, 'asc', 100000, 0) as $ownSecret) {
+                $this->attachmentService->deleteForSecret($ownSecret->getId());
+                $this->attachmentService->deleteGrantsForSecretCopy($ownSecret->getId());
+            }
+        }
 
         // Own secrets + folders.
         $report->secretsDeleted = $this->secretMapper->deleteByOwnerUser(ownerId: $userId);

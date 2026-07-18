@@ -319,7 +319,7 @@ class TeamFolderController extends OCSController
         }
 
         try {
-            $created = $this->teamFolderService->registerFanOutShares(
+            $result = $this->teamFolderService->registerFanOutShares(
                 teamFolderId: $id,
                 shares: $shares,
                 userId: $userId
@@ -331,7 +331,7 @@ class TeamFolderController extends OCSController
             );
         }
 
-        return new JSONResponse(data: ['created' => $created], statusCode: Http::STATUS_CREATED);
+        return new JSONResponse(data: $result, statusCode: Http::STATUS_CREATED);
     }//end registerShares()
 
     /**
