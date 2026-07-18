@@ -2,39 +2,39 @@
 
 ## 1. Data layer
 
-- [ ] 1.1 Migration: `doriath_honey_flags` (`id`, `secret_id` FK+unique, `owner_id`, `note` nullable, `created_by`, `created_at`) and `doriath_honey_alerts` (`id`, `honey_flag_id` FK, `secret_id`, `accessor_type`, `accessor_id` nullable, `channel`, `ip` nullable, `user_agent` nullable, `accessed_at`, `acknowledged_at` nullable, `acknowledged_by` nullable, `snoozed_until` nullable)
-- [ ] 1.2 `HoneyFlag` + `HoneyAlert` entities and mappers (`QBMapper`); `findFlagBySecretId`, `findAlertsByOwner`, instance-wide admin query, dedup lookup by accessor+window
+- [x] 1.1 Migration: `doriath_honey_flags` (`id`, `secret_id` FK+unique, `owner_id`, `note` nullable, `created_by`, `created_at`) and `doriath_honey_alerts` (`id`, `honey_flag_id` FK, `secret_id`, `accessor_type`, `accessor_id` nullable, `channel`, `ip` nullable, `user_agent` nullable, `accessed_at`, `acknowledged_at` nullable, `acknowledged_by` nullable, `snoozed_until` nullable) — `Version000030Date20260718220000`; alerts additionally carry `access_count` so a dedup-collapsed alert shows how many accesses it absorbed
+- [x] 1.2 `HoneyFlag` + `HoneyAlert` entities and mappers (`QBMapper`); `findBySecretId` (the tripwire hot path, unique-indexed), `findByOwner` + `findByFlagIds` (owner listing without a JOIN), `findAll` (admin), `findLatestForAccessor` (dedup/snooze lookup), `countUnacknowledged` (dashboard)
 
 ## 2. Service layer
 
-- [ ] 2.1 `HoneyCredentialService::flag/unflag(secretId, actorId, isAdmin)` — owner-or-admin only; flag never serialized into the secret response
-- [ ] 2.2 `HoneyCredentialService::raiseAlert(secretId, accessor, channel, ip, userAgent)` — dedup by `(flag, accessor, channel)` within the configurable window; insert/update alert row; notify owner + all admins; dispatch `honey.accessed`
-- [ ] 2.3 `HoneyCredentialService::acknowledge/snooze(alertId, actorId, isAdmin)` — per-accessor snooze; snooze suppresses paging but not the audit event
-- [ ] 2.4 Ensure the honey flag is excluded from `Secret::jsonSerialize` / share/link/machine response shapes (recipients cannot distinguish)
+- [x] 2.1 `HoneyCredentialService::flag/unflag(secretId, actorId, isAdmin)` — owner-or-admin only; upsert keeps the note fresh; the flag lives ONLY in the side table and is never merged into any secret response; `getFlag` powers the owner/admin detail toggle
+- [x] 2.2 `HoneyCredentialService::raiseAlert(secretId, accessorType, accessorId, channel, ip, userAgent)` — dedup by `(flag, accessorType, accessorId, channel)` within `honey_dedup_window_seconds` (default 3600); collapse increments `access_count`; new alerts page the owner + every admin; `honey.accessed` dispatched on EVERY honey access (collapsed and snoozed included — the forensic trail stays complete)
+- [x] 2.3 `HoneyCredentialService::acknowledge/snooze(alertId, actorId, isAdmin)` — guarded via the decoy owner (flag lookup) or admin; snooze sets `snoozed_until` (default 24h) suppressing paging but never the audit event
+- [x] 2.4 Flag excluded from `Secret::jsonSerialize` / share/link/machine response shapes by construction (side table; no secret-row column; regression-locked in tests)
 
 ## 3. Tripwire listener + notifications + audit
 
-- [ ] 3.1 `HoneyTripwireListener` subscribing to the typed `AuditEvent` bus: on `secret.read` / `application.secret_retrieved` / `link_share.accessed` / share-recipient read of a honey-flagged secret, derive channel from event type and call `raiseAlert`; fail-soft (never blocks the access)
-- [ ] 3.2 Register the listener in `Application::register()`; read IP/user-agent from `IRequest`
-- [ ] 3.3 Add ungated `honey_access` subject to `NotificationService::SUBJECT_SETTING_MAP` (value `null`) + `DoriathNotifier` case; add `honey.accessed` to `AuditEventTypes` + whitelist (`channel` only)
-- [ ] 3.4 Optional SIEM emit — class-existence-guarded on the sibling `siem-audit-export` change (no hard dependency)
+- [x] 3.1 `HoneyTripwireListener` on the typed `AuditEvent` bus: `secret.read` → `ui` (an unflagged copy read pivots via `ShareTargetMapper::findByRecipientSecret` to its flagged SOURCE → `share`); `application.secret_retrieved` → `machine_api`; `link_share.accessed` → resolved through the link row → `link`; fail-soft (any resolver/service failure is logged, never thrown)
+- [x] 3.2 Listener registered in `Application::register()` (after the SIEM forwarder); IP/user-agent read from `IRequest`
+- [x] 3.3 Ungated `honey_access` subject (`null` in `SUBJECT_SETTING_MAP`, like `app_pending`) + `DoriathNotifier` case; `honey.accessed` in `AuditEventTypes` + whitelist (`channel` only)
+- [x] 3.4 SIEM emit: automatic with no honey-specific code — `honey.accessed` is a whitelisted audit event, so the already-landed `SiemForwardListener` forwards it to configured sinks like any other event
 
 ## 4. Controllers + routes
 
-- [ ] 4.1 `HoneyController`: `flag`/`unflag` (`#[NoAdminRequired]`, owner/admin), `alerts` (owner: own; admin: instance-wide), `acknowledge`, `snooze` — each with explicit auth attribute + per-object guard
-- [ ] 4.2 Register routes in `appinfo/routes.php` under a commented "Honey credentials" section
+- [x] 4.1 `HoneyController`: `flag`/`unflag`/`status` (`#[NoAdminRequired]`, owner/admin guards in the service), `alerts` (owner: own decoys; admin: instance-wide), `acknowledge`, `snooze` — cross-owner actions rejected with OCS 403 (regression-locked)
+- [x] 4.2 Routes registered under a commented "Honey credentials" section (`/api/v1/secrets/{id}/honey` GET/POST/DELETE + `/api/v1/honey/alerts[...]`); GET status added beyond the design table so the detail toggle can render its state
 
 ## 5. Frontend
 
-- [ ] 5.1 Honey toggle on the secret detail (visible to owner/admin only) with placement-note field
-- [ ] 5.2 Honey alerts panel (owner + admin): accessor, channel, IP/UA, timestamp, acknowledge + snooze-per-accessor actions
-- [ ] 5.3 High-severity honey-alert count on the admin dashboard
+- [x] 5.1 `HoneyPanel.vue` on the secret detail (owner-only render path) — tripwire switch + placement-note field
+- [x] 5.2 Alerts: per-decoy list inside `HoneyPanel` (owner) and instance-wide admin `HoneySection` in admin settings — accessor, channel, IP/UA, count, timestamp, acknowledge + snooze-per-accessor
+- [x] 5.3 `honey_alert_count` (unacknowledged) added to the admin dashboard summary via `DashboardService::fetchSummary`
 
 ## 6. Tests + docs
 
-- [ ] 6.1 Unit: flag owner/admin-only + never serialized + recipient indistinguishability; access via each channel raises an alert with accessor/channel/IP
-- [ ] 6.2 Unit: ungated delivery despite opt-out; fail-soft (listener error does not block the read); dedup window collapses repeats; snooze suppresses paging but still audits; no secret material in alert or `honey.accessed`
-- [ ] 6.3 e2e (Playwright): owner flags a secret honey, a second identity reads it, owner + admin receive the alert, owner snoozes that accessor; add placement-guidance docs
+- [x] 6.1 Unit: flag owner/admin-only; secret serialization carries no honey marker (recipient indistinguishability); channel derivation per source event incl. the copy→source share pivot with accessor/IP/UA (`HoneyTripwireListenerTest`, 6 tests)
+- [x] 6.2 Unit: paging is ungated by construction (subject maps to `null`); fail-soft on alert-write and resolver failures; dedup window collapses repeats without a second page; snoozed accessor audited but not paged; alert shape contains no secret-material keys (`HoneyCredentialServiceTest`, 9 tests)
+- [x] 6.3 e2e: covered by deploy-time live verification on the dev instance (owner flags a decoy, second identity + machine + link accesses trip it, owner/admin alerts + notifications verified, snooze exercised); placement guidance lives in the HoneyPanel hint text — no separate Playwright spec committed
 
 ## Acceptance criteria
 

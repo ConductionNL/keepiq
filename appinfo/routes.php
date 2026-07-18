@@ -164,6 +164,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'certificate#reissueSuite',     'url' => '/api/v1/certificates/suites/{suiteId}/reissue',     'verb' => 'POST'],
     ['name' => 'cACertificate#health',         'url' => '/api/v1/ca/health',                                 'verb' => 'GET'],
 
+    // Honey credentials (honey-credentials §4) — decoy tripwires;
+    // owner/admin guards run in the service.
+    ['name' => 'honey#flag',        'url' => '/api/v1/secrets/{id}/honey',           'verb' => 'POST'],
+    ['name' => 'honey#unflag',      'url' => '/api/v1/secrets/{id}/honey',           'verb' => 'DELETE'],
+    ['name' => 'honey#status',      'url' => '/api/v1/secrets/{id}/honey',           'verb' => 'GET'],
+    ['name' => 'honey#alerts',      'url' => '/api/v1/honey/alerts',                 'verb' => 'GET'],
+    ['name' => 'honey#acknowledge', 'url' => '/api/v1/honey/alerts/{id}/acknowledge', 'verb' => 'POST'],
+    ['name' => 'honey#snooze',      'url' => '/api/v1/honey/alerts/{id}/snooze',     'verb' => 'POST'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],

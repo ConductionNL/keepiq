@@ -23,6 +23,7 @@
 		<MachineLeaseSection />
 		<ComplianceSection />
 		<SiemSection />
+		<HoneySection />
 		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
@@ -41,6 +42,7 @@ import RotationPolicySection from '../../components/settings/RotationPolicySecti
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
+import HoneySection from '../../components/settings/HoneySection.vue'
 
 export default {
 	name: 'Settings',
@@ -55,6 +57,7 @@ export default {
 		MachineLeaseSection,
 		ComplianceSection,
 		SiemSection,
+		HoneySection,
 		OffboardingSection,
 		AdminAuditSection,
 	},
