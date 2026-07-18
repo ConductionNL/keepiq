@@ -29,7 +29,39 @@
 				:input-label="t('doriath', 'Type')"
 				:clearable="false" />
 
-			<div class="secret-form__value-row">
+			<!-- Card / identity composite payloads (card-identity-items §3.1):
+			     per-type field sets serialized to the encrypted key on save. -->
+			<template v-if="isCard">
+				<NcPasswordField :value.sync="card.number"
+					:label="t('doriath', 'Card number')"
+					data-testid="card-number" />
+				<NcNoteCard v-if="card.number !== '' && !luhnOk" type="warning" data-testid="card-luhn-hint">
+					{{ t('doriath', 'This number does not pass the card checksum — double-check it (saving is not blocked).') }}
+				</NcNoteCard>
+				<NcTextField :value.sync="card.expiry"
+					:label="t('doriath', 'Expiry (MM/YY)')"
+					data-testid="card-expiry" />
+				<NcPasswordField :value.sync="card.cvv"
+					:label="t('doriath', 'CVV')"
+					data-testid="card-cvv" />
+				<NcPasswordField :value.sync="card.pin"
+					:label="t('doriath', 'PIN (optional)')"
+					data-testid="card-pin" />
+				<NcTextField :value.sync="card.cardholder"
+					:label="t('doriath', 'Cardholder name')"
+					data-testid="card-cardholder" />
+			</template>
+			<template v-else-if="isIdentity">
+				<NcTextField :value.sync="identity.firstName" :label="t('doriath', 'First name')" data-testid="identity-first-name" />
+				<NcTextField :value.sync="identity.lastName" :label="t('doriath', 'Last name')" data-testid="identity-last-name" />
+				<NcTextField :value.sync="identity.address" :label="t('doriath', 'Address')" data-testid="identity-address" />
+				<NcTextField :value.sync="identity.phone" :label="t('doriath', 'Phone')" data-testid="identity-phone" />
+				<NcTextField :value.sync="identity.email" :label="t('doriath', 'Email')" data-testid="identity-email" />
+				<NcPasswordField :value.sync="identity.bsn"
+					:label="t('doriath', 'BSN')"
+					data-testid="identity-bsn" />
+			</template>
+			<div v-else class="secret-form__value-row">
 				<NcPasswordField :value.sync="value"
 					class="secret-form__value-field"
 					:label="valueLabel" />
@@ -87,6 +119,13 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSessionStore } from '../store/modules/session.js'
+import {
+	CARD_TYPE_NAME,
+	IDENTITY_TYPE_NAME,
+	serializeCard,
+	serializeIdentity,
+	luhnValid,
+} from '../cardIdentity/cardIdentity.js'
 
 /**
  * Create a secret. The value (and optional login) are RSA-encrypted by the
@@ -134,6 +173,8 @@ export default {
 			saving: false,
 			error: '',
 			generatorOpen: false,
+			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
+			identity: { firstName: '', lastName: '', address: '', phone: '', email: '', bsn: '' },
 		}
 	},
 
@@ -162,8 +203,41 @@ export default {
 				? t('doriath', 'Note')
 				: t('doriath', 'Secret value')
 		},
+		/** The selected type's system name (card-identity-items §3.1). */
+		selectedTypeName() {
+			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
+		},
+		isCard() {
+			return this.selectedTypeName === CARD_TYPE_NAME
+		},
+		isIdentity() {
+			return this.selectedTypeName === IDENTITY_TYPE_NAME
+		},
+		/** Best-effort Luhn hint — never blocks saving (§3.2). */
+		luhnOk() {
+			return luhnValid(this.card.number)
+		},
+		/** The value serialized for the encrypted key field. */
+		effectiveValue() {
+			if (this.isCard) {
+				return serializeCard(this.card)
+			}
+			if (this.isIdentity) {
+				return serializeIdentity(this.identity)
+			}
+			return this.value
+		},
 		canSubmit() {
-			return !this.saving && !this.locked && this.name.trim() !== '' && this.value !== ''
+			if (this.saving || this.locked || this.name.trim() === '') {
+				return false
+			}
+			if (this.isCard) {
+				return this.card.number !== ''
+			}
+			if (this.isIdentity) {
+				return Object.values(this.identity).some(v => v !== '')
+			}
+			return this.value !== ''
 		},
 	},
 
@@ -237,7 +311,7 @@ export default {
 					folderId: this.selectedFolderId,
 					url: this.url || null,
 					login: this.login || '',
-					key: this.value,
+					key: this.effectiveValue,
 				})
 				this.$emit('saved', created)
 				if (this.onSaved) {
