@@ -139,6 +139,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // but as #[PublicPage], so account-less recipients reach the SPA.
     ['name' => 'publicShell#page', 'url' => '/public', 'verb' => 'GET'],
 
+    // Compliance reporting (compliance-reporting §4) — admin-only, the
+    // gate runs in the controller body before any report logic.
+    ['name' => 'complianceReport#generate', 'url' => '/api/v1/compliance/reports',               'verb' => 'POST'],
+    ['name' => 'complianceReport#index',    'url' => '/api/v1/compliance/reports',               'verb' => 'GET'],
+    ['name' => 'complianceReport#show',     'url' => '/api/v1/compliance/reports/{id}',          'verb' => 'GET'],
+    ['name' => 'complianceReport#metrics',  'url' => '/api/v1/compliance/metrics',               'verb' => 'GET'],
+    ['name' => 'complianceReport#exported', 'url' => '/api/v1/compliance/reports/{id}/exported', 'verb' => 'POST'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],
