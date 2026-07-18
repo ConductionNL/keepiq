@@ -36,7 +36,7 @@
 
 ## 3. Spec sync
 
-- [ ] 3.1 Apply the `specs/secrets/spec.md` delta onto
+- [x] 3.1 Apply the `specs/secrets/spec.md` delta onto
       `openspec/specs/secrets/spec.md` once merged (`/opsx-sync` or manual) —
       DEFERRED: spec-sync/archive is a post-merge Hydra step, out of scope for
       the apply pass
