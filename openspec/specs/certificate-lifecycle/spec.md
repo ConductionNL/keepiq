@@ -1,9 +1,9 @@
 # Certificate Lifecycle Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
-- [certificate-lifecycle](../../changes/certificate-lifecycle/) — inventory, notAfter-driven expiry monitoring (reusing rotation-expiry-policies), guided renewal, CA-health surfacing
+- [certificate-lifecycle](../../changes/archive/2026-07-18-certificate-lifecycle/) — inventory, notAfter-driven expiry monitoring (reusing rotation-expiry-policies), guided renewal, CA-health surfacing
 
 ## Purpose
 
