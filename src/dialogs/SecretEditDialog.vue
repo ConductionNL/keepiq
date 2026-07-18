@@ -29,7 +29,23 @@
 				:input-label="t('doriath', 'Type')"
 				:clearable="false" />
 
-			<div class="secret-form__value-row">
+			<!-- Card / identity composite payloads (card-identity-items §3.1). -->
+			<template v-if="isCard">
+				<NcPasswordField :value.sync="card.number" :label="t('doriath', 'Card number')" data-testid="card-number" />
+				<NcTextField :value.sync="card.expiry" :label="t('doriath', 'Expiry (MM/YY)')" data-testid="card-expiry" />
+				<NcPasswordField :value.sync="card.cvv" :label="t('doriath', 'CVV')" data-testid="card-cvv" />
+				<NcPasswordField :value.sync="card.pin" :label="t('doriath', 'PIN (optional)')" data-testid="card-pin" />
+				<NcTextField :value.sync="card.cardholder" :label="t('doriath', 'Cardholder name')" data-testid="card-cardholder" />
+			</template>
+			<template v-else-if="isIdentity">
+				<NcTextField :value.sync="identity.firstName" :label="t('doriath', 'First name')" data-testid="identity-first-name" />
+				<NcTextField :value.sync="identity.lastName" :label="t('doriath', 'Last name')" data-testid="identity-last-name" />
+				<NcTextField :value.sync="identity.address" :label="t('doriath', 'Address')" data-testid="identity-address" />
+				<NcTextField :value.sync="identity.phone" :label="t('doriath', 'Phone')" data-testid="identity-phone" />
+				<NcTextField :value.sync="identity.email" :label="t('doriath', 'Email')" data-testid="identity-email" />
+				<NcPasswordField :value.sync="identity.bsn" :label="t('doriath', 'BSN')" data-testid="identity-bsn" />
+			</template>
+			<div v-else class="secret-form__value-row">
 				<NcPasswordField :value.sync="value"
 					class="secret-form__value-field"
 					:label="valueLabel" />
@@ -79,6 +95,15 @@ import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import {
+	CARD_TYPE_NAME,
+	IDENTITY_TYPE_NAME,
+	CARD_FIELDS,
+	IDENTITY_FIELDS,
+	serializeCard,
+	serializeIdentity,
+	parsePayload,
+} from '../cardIdentity/cardIdentity.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -127,6 +152,8 @@ export default {
 			url: '',
 			login: '',
 			generatorOpen: false,
+			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
+			identity: { firstName: '', lastName: '', address: '', phone: '', email: '', bsn: '' },
 		}
 	},
 
@@ -142,6 +169,26 @@ export default {
 			return type && type.name === 'note'
 				? t('doriath', 'Note')
 				: t('doriath', 'Secret value')
+		},
+		/** The selected type's system name (card-identity-items §3.1). */
+		selectedTypeName() {
+			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
+		},
+		isCard() {
+			return this.selectedTypeName === CARD_TYPE_NAME
+		},
+		isIdentity() {
+			return this.selectedTypeName === IDENTITY_TYPE_NAME
+		},
+		/** The value serialized for the encrypted key field. */
+		effectiveValue() {
+			if (this.isCard) {
+				return serializeCard(this.card)
+			}
+			if (this.isIdentity) {
+				return serializeIdentity(this.identity)
+			}
+			return this.value
 		},
 		canSubmit() {
 			return !this.loading && !this.saving && this.name.trim() !== ''
@@ -175,6 +222,21 @@ export default {
 				this.value = secret.key || ''
 				this.url = secret.url || ''
 				this.login = secret.login || ''
+
+				// Seed the per-type composite fields from the decrypted
+				// payload (card-identity-items §3.1); a legacy plain value
+				// falls back to the generic field untouched.
+				const payload = parsePayload(secret.key || '')
+				if (payload !== null && this.isCard) {
+					for (const field of CARD_FIELDS) {
+						this.card[field] = payload[field] != null ? String(payload[field]) : ''
+					}
+				}
+				if (payload !== null && this.isIdentity) {
+					for (const field of IDENTITY_FIELDS) {
+						this.identity[field] = payload[field] != null ? String(payload[field]) : ''
+					}
+				}
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to load secret')
 			} finally {
@@ -239,8 +301,8 @@ export default {
 				if ((this.url || '') !== (o.url || '')) {
 					diff.url = this.url || null
 				}
-				if ((this.value || '') !== (o.key || '')) {
-					diff.key = this.value
+				if ((this.effectiveValue || '') !== (o.key || '')) {
+					diff.key = this.effectiveValue
 				}
 				if ((this.login || '') !== (o.login || '')) {
 					diff.login = this.login

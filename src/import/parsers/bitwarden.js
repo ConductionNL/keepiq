@@ -19,6 +19,7 @@
 
 import { makeRow, validateRow, rejectRow, joinFolderPath } from '../model.js'
 import { serializePasskey } from '../../passkey/passkey.js'
+import { serializeCard, serializeIdentity } from '../../cardIdentity/cardIdentity.js'
 import { parseCsvImport } from './csv.js'
 
 /** Bitwarden CSV column → target-field mapping (fixed). */
@@ -110,9 +111,20 @@ export function parseBitwardenJson(input) {
 	for (const [index, item] of data.items.entries()) {
 		const sourceRow = index + 1
 		// Bitwarden item types: 1=login, 2=secureNote, 3=card, 4=identity.
+		// Card + identity route into their composite payload types with
+		// the JSON in `password` — encrypted in the browser at commit,
+		// exactly like passkeys (card-identity-items §5.1).
+		if (item.type === 3) {
+			rows.push(buildCardRow(item, sourceRow))
+			continue
+		}
+		if (item.type === 4) {
+			rows.push(buildIdentityRow(item, sourceRow))
+			continue
+		}
 		if (item.type !== 1 && item.type !== undefined) {
 			const row = makeRow({ name: item.name ?? '' }, sourceRow)
-			const kind = { 2: 'secure note', 3: 'card', 4: 'identity' }[item.type] ?? 'non-login'
+			const kind = { 2: 'secure note' }[item.type] ?? 'non-login'
 			row.errors.push(`Unsupported Bitwarden item type (${kind}); only login items import`)
 			rows.push(row)
 			continue
@@ -180,6 +192,76 @@ function buildPasskeyRow(item, entry, sourceRow) {
 	}, sourceRow)
 	if (json === null) {
 		return rejectRow(row, 'Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)')
+	}
+	return validateRow(row)
+}
+
+/**
+ * Build a `card` row from a Bitwarden card item: the composite payload
+ * serializes into `password` (encrypted client-side at commit); brand is
+ * deliberately NOT carried — it is derived from the number on render
+ * (card-identity-items §5.1).
+ *
+ * @param {object} item The Bitwarden card item.
+ * @param {number} sourceRow The source-row number.
+ * @return {object} The normalized row.
+ */
+function buildCardRow(item, sourceRow) {
+	const card = item.card || {}
+	const expMonth = String(card.expMonth ?? '').padStart(2, '0')
+	const expYear = String(card.expYear ?? '')
+	const expiry = card.expMonth != null && card.expYear != null
+		? `${expMonth}/${expYear.slice(-2)}`
+		: ''
+	const row = makeRow({
+		name: item.name ?? 'Payment card',
+		password: serializeCard({
+			number: card.number ?? '',
+			expiry,
+			cvv: card.code ?? '',
+			pin: '',
+			cardholder: card.cardholderName ?? '',
+		}),
+		folder: '',
+		type: 'card',
+	}, sourceRow)
+	if ((card.number ?? '') === '') {
+		return rejectRow(row, 'Bitwarden card item without a card number')
+	}
+	return validateRow(row)
+}
+
+/**
+ * Build an `identity` row from a Bitwarden identity item. The Bitwarden
+ * `ssn` field maps onto `bsn` (the Dutch national number slot); the
+ * whole payload is ciphertext at commit (card-identity-items §5.1).
+ *
+ * @param {object} item The Bitwarden identity item.
+ * @param {number} sourceRow The source-row number.
+ * @return {object} The normalized row.
+ */
+function buildIdentityRow(item, sourceRow) {
+	const identity = item.identity || {}
+	const address = [identity.address1, identity.address2, identity.city, identity.postalCode, identity.country]
+		.filter(Boolean)
+		.join(', ')
+	const row = makeRow({
+		name: item.name ?? 'Identity',
+		password: serializeIdentity({
+			firstName: identity.firstName ?? '',
+			lastName: identity.lastName ?? '',
+			address,
+			phone: identity.phone ?? '',
+			email: identity.email ?? '',
+			bsn: identity.ssn ?? '',
+		}),
+		folder: '',
+		type: 'identity',
+	}, sourceRow)
+	const hasAnything = [identity.firstName, identity.lastName, identity.email, identity.phone, identity.ssn]
+		.some(v => v != null && v !== '')
+	if (!hasAnything) {
+		return rejectRow(row, 'Bitwarden identity item with no usable fields')
 	}
 	return validateRow(row)
 }
