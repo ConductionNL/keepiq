@@ -134,6 +134,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'secretRequest#decline', 'url' => '/api/v1/secret-requests/{id}/decline', 'verb' => 'POST'],
     ['name' => 'secretRequest#destroy', 'url' => '/api/v1/secret-requests/{id}',         'verb' => 'DELETE'],
 
+    // Ephemeral send (ephemeral-send §4): authenticated owner surface +
+    // anonymous two-phase access (peek/access/confirm/failure).
+    ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],
+    ['name' => 'ephemeralSend#index',   'url' => '/api/v1/sends',      'verb' => 'GET'],
+    ['name' => 'ephemeralSend#destroy', 'url' => '/api/v1/sends/{id}', 'verb' => 'DELETE'],
+    ['name' => 'ephemeralSendAccess#peek',    'url' => '/api/v1/public/sends/{token}',         'verb' => 'GET'],
+    ['name' => 'ephemeralSendAccess#access',  'url' => '/api/v1/public/sends/{token}/access',  'verb' => 'POST'],
+    ['name' => 'ephemeralSendAccess#confirm', 'url' => '/api/v1/public/sends/{token}/confirm', 'verb' => 'POST'],
+    ['name' => 'ephemeralSendAccess#failure', 'url' => '/api/v1/public/sends/{token}/failure', 'verb' => 'POST'],
+
     // Secret requests — public fill-in flow (implement-secret-requests §4.2).
     // Token-based recipient endpoints; no Nextcloud auth.
     ['name' => 'secretRequestFill#show', 'url' => '/api/v1/public/secret-requests/{token}',      'verb' => 'GET'],

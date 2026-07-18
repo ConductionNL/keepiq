@@ -63,6 +63,12 @@
 
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
 				<NcActions :menu-name="t('doriath', 'My data')">
+					<NcActionButton data-testid="open-new-send" @click="newSendOpen = true">
+						{{ t('doriath', 'New ephemeral send') }}
+					</NcActionButton>
+					<NcActionButton data-testid="open-my-sends" @click="mySendsOpen = true">
+						{{ t('doriath', 'My ephemeral sends') }}
+					</NcActionButton>
 					<NcActionButton @click="openExport">
 						{{ t('doriath', 'Export data') }}
 					</NcActionButton>
@@ -93,6 +99,10 @@
 				:folder-id="selectedFolderId"
 				:folder-name="selectedFolderName"
 				@update:open="teamFolderOpen = $event" />
+
+			<!-- Ephemeral send (ephemeral-send §5). -->
+			<NewSendDialog v-if="newSendOpen" :open="true" @close="newSendOpen = false" />
+			<MySendsDialog v-if="mySendsOpen" :open="true" @close="mySendsOpen = false" />
 
 			<!-- Bulk action dialogs (bulk-actions §3). -->
 			<BulkMoveDialog v-if="bulkDialog === 'move'"
@@ -207,6 +217,8 @@ import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
 import BulkShareDialog from '../dialogs/BulkShareDialog.vue'
 import BulkTeamFolderDialog from '../dialogs/BulkTeamFolderDialog.vue'
+import NewSendDialog from '../modals/NewSendDialog.vue'
+import MySendsDialog from '../modals/MySendsDialog.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useHealthStore } from '../store/modules/health.js'
@@ -245,6 +257,8 @@ export default {
 		BulkDeleteDialog,
 		BulkShareDialog,
 		BulkTeamFolderDialog,
+		NewSendDialog,
+		MySendsDialog,
 	},
 
 	inject: {
@@ -269,6 +283,8 @@ export default {
 			decryptedSecrets: [],
 			bulkDialog: null,
 			lastCheckedId: null,
+			newSendOpen: false,
+			mySendsOpen: false,
 		}
 	},
 

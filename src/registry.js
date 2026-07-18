@@ -34,6 +34,7 @@ import SecretList from './views/SecretList.vue'
 import SecretDetail from './views/SecretDetail.vue'
 import SecretRequestFill from './views/SecretRequestFill.vue'
 import LinkShareAccess from './views/LinkShareAccess.vue'
+import EphemeralSendAccess from './views/EphemeralSendAccess.vue'
 import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
 import ApplicationDetail from './views/ApplicationDetail.vue'
 import PersonalActivityView from './views/PersonalActivityView.vue'
@@ -58,6 +59,7 @@ export default {
 	SecretDetail: { kind: 'page', component: SecretDetail },
 	SecretRequestFill: { kind: 'page', component: SecretRequestFill },
 	LinkShareAccess: { kind: 'page', component: LinkShareAccess },
+	EphemeralSendAccess: { kind: 'page', component: EphemeralSendAccess },
 	ApplicationRegisterView: { kind: 'page', component: ApplicationRegisterView },
 	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
 	PersonalActivityView: { kind: 'page', component: PersonalActivityView },
