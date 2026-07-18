@@ -408,4 +408,43 @@ class TeamFolderController extends OCSController
 
         return new JSONResponse(data: $summary);
     }//end offboard()
+
+    /**
+     * Set a membership's permission grade (owner-only; grade changes
+     * touch no ciphertext).
+     *
+     * @param string $id       The team folder UUID
+     * @param string $memberId The membership row UUID
+     * @param string $grade    The grade (`read`|`write`)
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-grades-per-membership
+     */
+    #[NoAdminRequired]
+    public function setMemberGrade(string $id, string $memberId, string $grade=''): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            $member = $this->service->setMemberGrade(
+                teamFolderId: $id,
+                memberId: $memberId,
+                grade: $grade,
+                ownerId: $user->getUID(),
+            );
+        } catch (InvalidArgumentException $exception) {
+            return new JSONResponse(
+                data: ['message' => $exception->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        return new JSONResponse(data: $member->jsonSerialize());
+    }//end setMemberGrade()
 }//end class

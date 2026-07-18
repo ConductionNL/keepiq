@@ -40,6 +40,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setAddedBy(string $addedBy)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
+ * @method string getGrade()
+ * @method void setGrade(string $grade)
  */
 class TeamFolderMember extends Entity implements JsonSerializable
 {
@@ -85,6 +87,15 @@ class TeamFolderMember extends Entity implements JsonSerializable
     protected ?DateTime $createdAt = null;
 
     /**
+     * The permission grade: `read` (default) or `write`
+     * (folder-permission-grades §1.2). Empty default (NC Entity
+     * dirty-tracking); readers treat '' as `read`.
+     *
+     * @var string
+     */
+    protected string $grade = '';
+
+    /**
      * The UUID primary key.
      *
      * @var string
@@ -126,7 +137,22 @@ class TeamFolderMember extends Entity implements JsonSerializable
         $this->addType(fieldName: 'memberId', type: 'string');
         $this->addType(fieldName: 'addedBy', type: 'string');
         $this->addType(fieldName: 'createdAt', type: 'datetime');
+        $this->addType(fieldName: 'grade', type: 'string');
     }//end __construct()
+
+    /**
+     * The effective grade — an unset/legacy row reads as `read`.
+     *
+     * @return string
+     */
+    public function effectiveGrade(): string
+    {
+        if ($this->grade === 'write') {
+            return 'write';
+        }
+
+        return 'read';
+    }//end effectiveGrade()
 
     /**
      * Serialize the entity to an array for the API.
@@ -142,6 +168,7 @@ class TeamFolderMember extends Entity implements JsonSerializable
             'memberId'     => $this->memberId,
             'addedBy'      => $this->addedBy,
             'createdAt'    => $this->createdAt?->format('c'),
+            'grade'        => $this->effectiveGrade(),
         ];
     }//end jsonSerialize()
 }//end class

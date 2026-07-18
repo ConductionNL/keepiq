@@ -20,6 +20,13 @@
 		<div v-else-if="secret" class="secret-detail__card">
 			<h2 class="secret-detail__title">
 				{{ secret.name }}
+				<!-- Write-grade badge (folder-permission-grades §4.3): the
+				     member knows an edit propagates to the whole team. -->
+				<span v-if="teamWritable"
+					class="secret-detail__team-badge"
+					data-testid="team-writable-badge">
+					{{ t('doriath', 'Editable — changes sync to the whole team') }}
+				</span>
 			</h2>
 
 			<div v-if="secret.url" class="secret-detail__field">
@@ -266,6 +273,7 @@ export default {
 			loading: true,
 			error: '',
 			requestDialogOpen: false,
+			teamWritable: false,
 		}
 	},
 
@@ -413,6 +421,16 @@ export default {
 			this.error = ''
 			try {
 				this.secret = await useSecretStore().fetchSecret(this.secretId)
+				// Write-grade badge (folder-permission-grades §4.3) — a
+				// copy the user may team-write shows the sync warning.
+				try {
+					const { useShareStore } = await import('../store/modules/share.js')
+					const context = await useShareStore().fetchWriteContext(this.secretId)
+					this.teamWritable = context.effectiveGrade === 'write'
+						&& context.sourceSecretId !== this.secretId
+				} catch {
+					this.teamWritable = false
+				}
 			} catch (e) {
 				if (e?.response?.status === 403) {
 					this.error = t('doriath', 'This secret is locked because its encryption suite was revoked.')
@@ -583,5 +601,16 @@ export default {
 
 .secret-detail__requests-actions {
 	margin-bottom: 12px;
+}
+
+.secret-detail__team-badge {
+	margin-inline-start: 8px;
+	padding: 2px 10px;
+	border-radius: var(--border-radius-pill, 12px);
+	font-size: 12px;
+	font-weight: 600;
+	background-color: var(--color-primary-element-light, #dbe9f5);
+	color: var(--color-main-text, #222);
+	vertical-align: middle;
 }
 </style>

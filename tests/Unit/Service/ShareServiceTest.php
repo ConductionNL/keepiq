@@ -524,6 +524,16 @@ class ShareServiceTest extends TestCase
                 ]
                 );
 
+        // The membership guard (folder-permission-grades §2.3) only
+        // writes ACTUAL recipient copies of the source.
+        $row1 = new ShareTarget();
+        $row1->setSourceSecretId('src-1');
+        $row1->setSecretId('copy-1');
+        $row2 = new ShareTarget();
+        $row2->setSourceSecretId('src-1');
+        $row2->setSecretId('copy-2');
+        $this->mapper->method('findBySourceSecret')->willReturn([$row1, $row2]);
+
         $this->secretMapper->expects($this->exactly(2))->method('update');
 
         $written = $this->service->syncUpdate(
@@ -702,4 +712,108 @@ class ShareServiceTest extends TestCase
         $this->assertSame('exists', $report[0]['status']);
         $this->assertSame('no_suite', $report[1]['status']);
     }//end testRegisterDirectSharesExistsAndNoSuite()
+
+    /**
+     * Build a ShareService wired to a TeamFolderService mock that
+     * resolves the given grade (folder-permission-grades §5.2).
+     *
+     * @param string|null $grade The resolved grade
+     *
+     * @return ShareService
+     */
+    private function gradedService(?string $grade): ShareService
+    {
+        $teamFolderService = $this->createMock(originalClassName: \OCA\Doriath\Service\TeamFolderService::class);
+        $teamFolderService->method('resolveGrade')->willReturn($grade);
+
+        return new ShareService(
+            mapper: $this->mapper,
+            secretMapper: $this->secretMapper,
+            suiteMapper: $this->suiteMapper,
+            delegationMapper: $this->delegationMapper,
+            notificationService: $this->notificationService,
+            db: $this->db,
+            logger: $this->createMock(originalClassName: LoggerInterface::class),
+            eventDispatcher: null,
+            teamFolderService: $teamFolderService,
+        );
+    }//end gradedService()
+
+    /**
+     * folder-permission-grades §5.2: a write-grade non-owner syncs, and
+     * the membership guard confines writes to the source + its ACTUAL
+     * recipient copies — a foreign id in the batch is skipped.
+     *
+     * @return void
+     */
+    public function testSyncUpdateAcceptsWriteGradeAndGuardsCopies(): void
+    {
+        $source = $this->makeOwnerSecret('src-1', 'alice');
+        $copy   = $this->makeOwnerSecret('copy-1', 'carol');
+        $victim = $this->makeOwnerSecret('victim-1', 'mallory-target');
+        $this->secretMapper->method('findById')->willReturnCallback(
+            static fn (string $id) => match ($id) {
+                'src-1'    => $source,
+                'copy-1'   => $copy,
+                'victim-1' => $victim,
+                default    => throw new DoesNotExistException('missing'),
+            }
+        );
+        $this->delegationMapper->method('findActiveBySecretAndUser')
+            ->willThrowException(new DoesNotExistException('none'));
+
+        $shareRow = new ShareTarget();
+        $shareRow->setSourceSecretId('src-1');
+        $shareRow->setTargetUserId('carol');
+        $shareRow->setSecretId('copy-1');
+        $this->mapper->method('findBySourceSecret')->willReturn([$shareRow]);
+
+        $written = [];
+        $this->secretMapper->method('update')->willReturnCallback(
+            static function (Secret $row) use (&$written) {
+                $written[] = $row->getId();
+                return $row;
+            }
+        );
+
+        $service = $this->gradedService(grade: 'write');
+        $updated = $service->syncUpdate(
+            secretId: 'src-1',
+            updates: [
+                ['secretId' => 'copy-1', 'key' => 'NEWBLOB_CAROL'],
+                ['secretId' => 'src-1', 'key' => 'NEWBLOB_OWNER'],
+                ['secretId' => 'victim-1', 'key' => 'EVIL'],
+            ],
+            expectedUpdatedAt: '',
+            userId: 'bob',
+        );
+
+        $this->assertSame(2, $updated);
+        $this->assertEqualsCanonicalizing(['copy-1', 'src-1'], $written);
+        $this->assertStringNotContainsString('victim-1', implode(',', $written));
+    }//end testSyncUpdateAcceptsWriteGradeAndGuardsCopies()
+
+    /**
+     * folder-permission-grades §5.2: a read-grade member and an
+     * ungraded caller are rejected with the existing exception.
+     *
+     * @return void
+     */
+    public function testSyncUpdateRejectsReadAndUngraded(): void
+    {
+        $source = $this->makeOwnerSecret('src-1', 'alice');
+        $this->secretMapper->method('findById')->willReturn($source);
+        $this->delegationMapper->method('findActiveBySecretAndUser')
+            ->willThrowException(new DoesNotExistException('none'));
+
+        foreach (['read', null] as $grade) {
+            $service = $this->gradedService(grade: $grade);
+            try {
+                $service->syncUpdate(secretId: 'src-1', updates: [], expectedUpdatedAt: '', userId: 'bob');
+                $this->fail('Grade "'.var_export($grade, true).'" must be rejected');
+            } catch (InvalidArgumentException $exception) {
+                $this->assertStringContainsString('Not authorized', $exception->getMessage());
+            }
+        }
+    }//end testSyncUpdateRejectsReadAndUngraded()
 }//end class
