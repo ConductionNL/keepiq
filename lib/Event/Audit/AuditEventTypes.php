@@ -87,6 +87,12 @@ final class AuditEventTypes
     public const VAULT_GDPR_EXPORTED   = 'vault.gdpr_exported';
     public const VAULT_ACCOUNT_DELETED = 'vault.account_deleted';
 
+    // Encrypted attachments (encrypted-attachments §5.1) — id/size only,
+    // never filename, file key, or content.
+    public const ATTACHMENT_UPLOADED   = 'attachment.uploaded';
+    public const ATTACHMENT_DOWNLOADED = 'attachment.downloaded';
+    public const ATTACHMENT_DELETED    = 'attachment.deleted';
+
     // Team folder sharing (team-folder-sharing §4.2).
     public const TEAM_FOLDER_SHARED         = 'team_folder.shared';
     public const TEAM_FOLDER_UNSHARED       = 'team_folder.unshared';
@@ -160,6 +166,10 @@ final class AuditEventTypes
             self::EMERGENCY_ACCESS_ACCESSED    => ['grantorUserId', 'granteeUserId'],
             self::EMERGENCY_ACCESS_REVOKED     => ['grantorUserId', 'granteeUserId'],
             self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
+            // Encrypted attachments — id/size only (§5.1).
+            self::ATTACHMENT_UPLOADED          => ['secretId', 'sizeBytes'],
+            self::ATTACHMENT_DOWNLOADED        => ['secretId', 'sizeBytes'],
+            self::ATTACHMENT_DELETED           => ['secretId', 'sizeBytes'],
             // Team folder sharing — identifiers only, never key material (§4.2).
             self::TEAM_FOLDER_SHARED           => ['folderId'],
             self::TEAM_FOLDER_UNSHARED         => ['folderId', 'revokedCount'],

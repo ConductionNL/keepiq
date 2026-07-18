@@ -84,6 +84,7 @@ class ShareService
         private IDBConnection $db,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private ?AttachmentService $attachmentService=null,
     ) {
     }//end __construct()
 
@@ -330,6 +331,11 @@ class ShareService
             } catch (DoesNotExistException) {
                 // Already gone — continue.
             }
+
+            // Attachment grants of the revoked copy go with it; the
+            // owner's blob and grants are untouched (encrypted-attachments
+            // §3.3).
+            $this->attachmentService?->deleteGrantsForSecretCopy($entity->getSecretId());
 
             $this->mapper->delete($entity);
             $this->db->commit();

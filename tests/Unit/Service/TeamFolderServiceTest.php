@@ -380,16 +380,22 @@ class TeamFolderServiceTest extends TestCase
             'encryptedKey'   => 'CIPHERTEXT_PLACEHOLDER',
         ];
 
-        $created = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
-        $this->assertSame(1, $created);
+        $result = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
+        $this->assertSame(1, $result['created']);
+        // The created descriptors carry the copy id so the client can
+        // re-wrap attachment file keys for the new recipient.
+        $this->assertCount(1, $result['rows']);
+        $this->assertSame('bob', $result['rows'][0]['targetUserId']);
+        $this->assertSame($insertedCopies[0]->getId(), $result['rows'][0]['recipientSecretId']);
         $this->assertCount(1, $insertedTargets);
         $this->assertSame('tf-1', $insertedTargets[0]->getTeamFolderId());
         $this->assertCount(1, $insertedCopies);
         $this->assertSame('bob', $insertedCopies[0]->getOwnerId());
 
         // Retry: the pair now exists → no new rows, count 0.
-        $createdRetry = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
-        $this->assertSame(0, $createdRetry);
+        $resultRetry = $this->service->registerFanOutShares(teamFolderId: 'tf-1', shares: [$row], userId: 'alice');
+        $this->assertSame(0, $resultRetry['created']);
+        $this->assertSame([], $resultRetry['rows']);
         $this->assertCount(1, $insertedTargets);
     }//end testRegisterFanOutSharesIdempotent()
 

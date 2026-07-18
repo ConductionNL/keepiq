@@ -156,6 +156,12 @@ class SettingsService
                 self::AUDIT_RETENTION_DEFAULT
             ),
             'breach_check_enabled'    => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+            'attachment_max_bytes'    => $this->appConfig->getValueInt($appId, 'attachment_max_bytes', 26214400),
+            'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
+                $appId,
+                'attachment_user_quota_bytes',
+                104857600
+            ),
         ];
 
         // Best-effort CA status; never blocks if the service is unavailable.
@@ -237,6 +243,26 @@ class SettingsService
 
         if (isset($data['breach_check_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
+        }
+
+        // Attachment limits (encrypted-attachments §2.5): expressed and
+        // enforced in stored CIPHERTEXT bytes — what actually consumes disk.
+        if (isset($data['attachment_max_bytes']) === true) {
+            $maxBytes = (int) $data['attachment_max_bytes'];
+            if ($maxBytes < 1) {
+                throw new InvalidArgumentException('attachment_max_bytes must be a positive byte count');
+            }
+
+            $this->appConfig->setValueInt($appId, 'attachment_max_bytes', $maxBytes);
+        }
+
+        if (isset($data['attachment_user_quota_bytes']) === true) {
+            $quota = (int) $data['attachment_user_quota_bytes'];
+            if ($quota < 1) {
+                throw new InvalidArgumentException('attachment_user_quota_bytes must be a positive byte count');
+            }
+
+            $this->appConfig->setValueInt($appId, 'attachment_user_quota_bytes', $quota);
         }
 
         return $this->getAdminSettings();
