@@ -233,10 +233,10 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					}
 
 					if (!plaintextCache[pair.secretId]) {
+						// fetchSecret decrypts with the session CryptoKey and
+						// returns the PLAINTEXT secret — do not decrypt twice.
 						// eslint-disable-next-line no-await-in-loop
-						const ciphertext = await secretStore.fetchSecret(pair.secretId)
-						// eslint-disable-next-line no-await-in-loop
-						const plain = await secretStore.decryptSecret(ciphertext)
+						const plain = await secretStore.fetchSecret(pair.secretId)
 						plaintextCache[pair.secretId] = {
 							key: plain.key ?? '',
 							login: plain.login ?? '',
