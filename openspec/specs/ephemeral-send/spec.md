@@ -1,6 +1,6 @@
 # Ephemeral Send Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - `ephemeral-send` (2026-07-17) — Standalone Bitwarden-Send-style ephemeral sharing: send an ad-hoc typed text/credential via link with burn-after-read (max-view count), optional TTL, and optional password, without creating a vault secret and without the recipient needing an account; includes a "My Sends" management list with revocation and anonymous-endpoint hardening. The standalone delta beyond `link-sharing` (which shares only stored secrets).
