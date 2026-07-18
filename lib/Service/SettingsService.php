@@ -156,6 +156,8 @@ class SettingsService
                 self::AUDIT_RETENTION_DEFAULT
             ),
             'breach_check_enabled'    => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+            'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
+            'version_retention_days'  => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
             'attachment_max_bytes'    => $this->appConfig->getValueInt($appId, 'attachment_max_bytes', 26214400),
             'attachment_user_quota_bytes' => $this->appConfig->getValueInt(
                 $appId,
@@ -243,6 +245,26 @@ class SettingsService
 
         if (isset($data['breach_check_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
+        }
+
+        // Version retention (secret-version-history §4.1): a floor of 1
+        // kept version preserves restorability; days 0 = unlimited age.
+        if (isset($data['version_retention_count']) === true) {
+            $count = (int) $data['version_retention_count'];
+            if ($count < 1) {
+                throw new InvalidArgumentException('version_retention_count must be at least 1');
+            }
+
+            $this->appConfig->setValueInt($appId, 'version_retention_count', $count);
+        }
+
+        if (isset($data['version_retention_days']) === true) {
+            $days = (int) $data['version_retention_days'];
+            if ($days < 0) {
+                throw new InvalidArgumentException('version_retention_days must be 0 (unlimited) or positive');
+            }
+
+            $this->appConfig->setValueInt($appId, 'version_retention_days', $days);
         }
 
         // Attachment limits (encrypted-attachments §2.5): expressed and

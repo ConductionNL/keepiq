@@ -97,6 +97,7 @@ class AccountDeletionService
         private DashboardSettingMapper $settingMapper,
         private IEventDispatcher $dispatcher,
         private ?AttachmentService $attachmentService=null,
+        private ?SecretVersionService $versionService=null,
     ) {
     }//end __construct()
 
@@ -136,10 +137,12 @@ class AccountDeletionService
         // attachment of the user's remaining own secrets and every grant
         // any of their rows hold as a copy — idempotent, before the rows
         // themselves go.
-        if ($this->attachmentService !== null) {
+        if ($this->attachmentService !== null || $this->versionService !== null) {
             foreach ($this->secretMapper->findByOwner('user', $userId, null, null, 'asc', 100000, 0) as $ownSecret) {
-                $this->attachmentService->deleteForSecret($ownSecret->getId());
-                $this->attachmentService->deleteGrantsForSecretCopy($ownSecret->getId());
+                $this->attachmentService?->deleteForSecret($ownSecret->getId());
+                $this->attachmentService?->deleteGrantsForSecretCopy($ownSecret->getId());
+                // Version-history cascade (secret-version-history §5.2).
+                $this->versionService?->deleteForSecret($ownSecret->getId());
             }
         }
 

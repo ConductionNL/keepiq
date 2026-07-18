@@ -135,6 +135,7 @@ class SecretService
      * @param IEventDispatcher|null       $eventDispatcher        The event dispatcher
      * @param AuditService|null           $auditService           The audit recorder (single write path)
      * @param AttachmentService|null      $attachmentService      The attachment service (delete cascade)
+     * @param SecretVersionService|null   $versionService         The version-history service (pre-update snapshots)
      *
      * @return void
      */
@@ -152,6 +153,7 @@ class SecretService
         private ?IEventDispatcher $eventDispatcher=null,
         private ?AuditService $auditService=null,
         private ?AttachmentService $attachmentService=null,
+        private ?SecretVersionService $versionService=null,
     ) {
     }//end __construct()
 
@@ -472,6 +474,9 @@ class SecretService
         $now        = new DateTime();
         $keyChanged = false;
 
+        // Pre-update snapshot source (secret-version-history §2.2).
+        $preUpdate = clone $secret;
+
         if (array_key_exists('name', $data) === true) {
             $name = trim((string) $data['name']);
             if ($name === '') {
@@ -508,6 +513,10 @@ class SecretService
                 $secret->setKeyUpdatedAt($now);
                 $keyChanged = true;
             }
+        }
+
+        if ($this->versionService !== null && $this->fieldsChanged(before: $preUpdate, after: $secret) === true) {
+            $this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'application', actorId: $applicationId);
         }
 
         $secret->setUpdatedAt($now);
@@ -767,6 +776,11 @@ class SecretService
 
         $secret = $this->loadOwned(id: $id, userId: $userId);
 
+        // Pre-update snapshot source (secret-version-history §2.2): captured
+        // BEFORE any mutation; persisted below only when a field actually
+        // changes (a no-op resubmit creates no version).
+        $preUpdate = clone $secret;
+
         if (array_key_exists('name', $data) === true) {
             $name = trim((string) $data['name']);
             if ($name === '') {
@@ -810,6 +824,10 @@ class SecretService
 
         if (array_key_exists('additionalFields', $data) === true) {
             $secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
+        }
+
+        if ($this->versionService !== null && $this->fieldsChanged(before: $preUpdate, after: $secret) === true) {
+            $this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $userId);
         }
 
         $secret->setUpdatedAt(new DateTime());
@@ -881,6 +899,9 @@ class SecretService
             $this->attachmentService->deleteForSecret($id);
             $this->attachmentService->deleteGrantsForSecretCopy($id);
         }
+
+        // Version-history cascade (secret-version-history §5.2).
+        $this->versionService?->deleteForSecret($id);
 
         $this->mapper->delete($secret);
         $this->logger->info("Doriath: secret {$id} deleted by {$userId}");
@@ -1232,6 +1253,27 @@ class SecretService
 
         return min($limit, self::MAX_LIMIT);
     }//end clampLimit()
+
+    /**
+     * Whether any versionable field differs between two states of a
+     * secret row (secret-version-history §2.2). Pure string comparison —
+     * ciphertext blobs are opaque; no decryption anywhere.
+     *
+     * @param Secret $before The pre-mutation clone
+     * @param Secret $after  The mutated row
+     *
+     * @return bool
+     */
+    private function fieldsChanged(Secret $before, Secret $after): bool
+    {
+        return $before->getName() !== $after->getName()
+            || $before->getUrl() !== $after->getUrl()
+            || $before->getFolderId() !== $after->getFolderId()
+            || $before->getTypeId() !== $after->getTypeId()
+            || $before->getKey() !== $after->getKey()
+            || $before->getLogin() !== $after->getLogin()
+            || $before->getAdditionalFields() !== $after->getAdditionalFields();
+    }//end fieldsChanged()
 
     /**
      * Normalise a value to a non-empty string or null.

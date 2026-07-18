@@ -87,6 +87,10 @@ final class AuditEventTypes
     public const VAULT_GDPR_EXPORTED   = 'vault.gdpr_exported';
     public const VAULT_ACCOUNT_DELETED = 'vault.account_deleted';
 
+    // Secret version history (secret-version-history §6.3) — id + version
+    // number only, never ciphertext or values.
+    public const SECRET_VERSION_RESTORED = 'secret.version_restored';
+
     // Encrypted attachments (encrypted-attachments §5.1) — id/size only,
     // never filename, file key, or content.
     public const ATTACHMENT_UPLOADED   = 'attachment.uploaded';
@@ -166,6 +170,7 @@ final class AuditEventTypes
             self::EMERGENCY_ACCESS_ACCESSED    => ['grantorUserId', 'granteeUserId'],
             self::EMERGENCY_ACCESS_REVOKED     => ['grantorUserId', 'granteeUserId'],
             self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
+            self::SECRET_VERSION_RESTORED      => ['versionNumber'],
             // Encrypted attachments — id/size only (§5.1).
             self::ATTACHMENT_UPLOADED          => ['secretId', 'sizeBytes'],
             self::ATTACHMENT_DOWNLOADED        => ['secretId', 'sizeBytes'],
