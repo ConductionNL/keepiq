@@ -74,6 +74,7 @@ class ShareService
      * @param IEventDispatcher|null  $eventDispatcher     The event dispatcher
      * @param AttachmentService|null $attachmentService   The attachment service (revoke cascade)
      * @param SecretTypeService|null $typeService         The type service (recipient-copy type resolution)
+     * @param TeamFolderService|null $teamFolderService   The team-folder service (write-grade resolution)
      *
      * @return void
      */
@@ -88,6 +89,7 @@ class ShareService
         private ?IEventDispatcher $eventDispatcher=null,
         private ?AttachmentService $attachmentService=null,
         private ?SecretTypeService $typeService=null,
+        private ?TeamFolderService $teamFolderService=null,
     ) {
     }//end __construct()
 
@@ -519,7 +521,13 @@ class ShareService
         }
 
         if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === false) {
-            return [];
+            // A write-grade team member needs the recipient list (+
+            // certificates) to run the re-encrypt fan-out
+            // (folder-permission-grades §2.3); read grades see nothing.
+            $grade = $this->teamFolderService?->resolveGrade(secret: $source, userId: $userId);
+            if ($grade !== 'write') {
+                return [];
+            }
         }
 
         return $this->mapper->findBySourceSecret($sourceSecretId);
@@ -625,7 +633,20 @@ class ShareService
         string $userId,
     ): int {
         $source = $this->loadSecret(secretId: $secretId);
-        $this->assertOwnerOrDelegate(secret: $source, userId: $userId);
+
+        // Authorization seam (folder-permission-grades §2.3): the owner
+        // and active delegates as before, OR a member holding a `write`
+        // grade on an ancestor team folder. Everyone else keeps the
+        // existing rejection.
+        $isWriter = false;
+        if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === false) {
+            $grade = $this->teamFolderService?->resolveGrade(secret: $source, userId: $userId);
+            if ($grade !== 'write') {
+                $this->assertOwnerOrDelegate(secret: $source, userId: $userId);
+            }
+
+            $isWriter = true;
+        }
 
         // Optimistic lock — if the source has moved since the browser
         // last fetched it, refuse the sync so the caller can re-encrypt
@@ -639,12 +660,22 @@ class ShareService
             }
         }
 
+        // Membership guard: a sync may only touch the source row itself
+        // and its ACTUAL recipient copies. Without this, any authorized
+        // caller could pass arbitrary secret ids and corrupt foreign
+        // ciphertext (pre-existing defect fixed with
+        // folder-permission-grades §2.3).
+        $allowedIds = [$source->getId() => true];
+        foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+            $allowedIds[$shareRow->getSecretId()] = true;
+        }
+
         $updated = 0;
         $this->db->beginTransaction();
         try {
             foreach ($updates as $update) {
                 $recipientSecretId = (string) ($update['secretId'] ?? '');
-                if ($recipientSecretId === '') {
+                if ($recipientSecretId === '' || isset($allowedIds[$recipientSecretId]) === false) {
                     continue;
                 }
 
@@ -678,6 +709,13 @@ class ShareService
 
                 $copy->setUpdatedAt(new DateTime());
 
+                // A key rewrite of the SOURCE row is a real rotation —
+                // advance keyUpdatedAt so rotation proofs stay honest
+                // (folder-permission-grades §2.3).
+                if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
+                    $copy->setKeyUpdatedAt(new DateTime());
+                }
+
                 // If the copy was previously flagged as possibly compromised
                 // (e.g. EncryptionSuite migration mid-air), the freshly
                 // re-encrypted blob clears that warning for the recipient.
@@ -695,8 +733,82 @@ class ShareService
             throw $exception;
         }//end try
 
+        // A non-owner write is attributed to the writer (§3.3) —
+        // identifiers only, never key material.
+        if ($isWriter === true && $updated > 0) {
+            $this->dispatchAudit(
+                event: AuditEvent::forUser(
+                    actorId: $userId,
+                    eventType: AuditEventTypes::SECRET_UPDATED,
+                    objectType: 'secret',
+                    objectId: $source->getId(),
+                    objectName: $source->getName(),
+                    metadata: ['changedFields' => 'team-write sync'],
+                )
+            );
+        }
+
         return $updated;
     }//end syncUpdate()
+
+    /**
+     * The write context of a secret for the current user
+     * (folder-permission-grades §4): resolves a recipient copy back to
+     * its source and reports the caller's effective grade plus the
+     * owner-row material a write-grade member needs to run the
+     * re-encrypt fan-out (the owner's certificate is public key
+     * material).
+     *
+     * @param string $secretId The secret (source or recipient copy) UUID
+     * @param string $userId   The requesting user
+     *
+     * @return array{sourceSecretId:string, effectiveGrade:string, ownerCertificate:string|null, sourceUpdatedAt:string|null}
+     *
+     * @throws InvalidArgumentException When the secret does not exist
+     *
+     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-write-grade-editing
+     */
+    public function writeContext(string $secretId, string $userId): array
+    {
+        $secret = $this->loadSecret(secretId: $secretId);
+
+        // Pivot a recipient copy back to its source.
+        $source = $secret;
+        try {
+            $shareRow = $this->mapper->findByRecipientSecret(recipientSecretId: $secretId);
+            $source   = $this->loadSecret(secretId: $shareRow->getSourceSecretId());
+        } catch (DoesNotExistException) {
+            // Not a copy — the secret is its own source.
+        }
+
+        $grade = 'none';
+        if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
+            $grade = 'owner';
+        } else {
+            $resolved = $this->teamFolderService?->resolveGrade(secret: $source, userId: $userId);
+            if ($resolved !== null) {
+                $grade = $resolved;
+            }
+        }
+
+        $ownerCertificate = null;
+        if ($grade === 'write' || $grade === 'owner') {
+            try {
+                $ownerCertificate = $this->suiteMapper
+                    ->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
+                    ->getCertificate();
+            } catch (DoesNotExistException) {
+                // Owner without an active suite — fan-out skips the source row.
+            }
+        }
+
+        return [
+            'sourceSecretId'   => $source->getId(),
+            'effectiveGrade'   => $grade,
+            'ownerCertificate' => $ownerCertificate,
+            'sourceUpdatedAt'  => $source->getUpdatedAt()?->format(DateTime::ATOM),
+        ];
+    }//end writeContext()
 
     /**
      * Cascade-delete all share targets for a secret (called on secret delete).

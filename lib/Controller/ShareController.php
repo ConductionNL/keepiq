@@ -305,4 +305,34 @@ class ShareController extends OCSController
 
         return new JSONResponse(data: ['userId' => $userId, 'certificate' => $certificate]);
     }//end recipientCertificate()
+
+    /**
+     * The write context of a secret for the current user
+     * (folder-permission-grades §4): source resolution + effective grade
+     * + the owner-row material a write-grade fan-out needs.
+     *
+     * @param string $id The secret (source or recipient copy) UUID
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-write-grade-editing
+     */
+    #[NoAdminRequired]
+    public function writeContext(string $id): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        try {
+            return new JSONResponse(
+                data: $this->shareService->writeContext(secretId: $id, userId: $user->getUID())
+            );
+        } catch (InvalidArgumentException) {
+            return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
+        }
+    }//end writeContext()
 }//end class
