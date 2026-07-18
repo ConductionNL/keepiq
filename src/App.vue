@@ -156,7 +156,7 @@ import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
  *
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-9.2
  */
-const PUBLIC_ROUTE_NAMES = ['SecretRequestFill', 'LinkShareAccess']
+const PUBLIC_ROUTE_NAMES = ['SecretRequestFill', 'LinkShareAccess', 'EphemeralSendAccess']
 
 /**
  * Whether a vue-router route lives outside the locked-vault guard.

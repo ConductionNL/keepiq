@@ -403,6 +403,14 @@
 			"_note": "Public fill-in page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the flow without a Nextcloud account; the controller runs as #[PublicPage]."
 		},
 		{
+			"id": "EphemeralSendAccess",
+			"route": "/send/:token",
+			"type": "custom",
+			"title": "Secure message",
+			"component": "EphemeralSendAccess",
+			"_note": "Public ephemeral-send access page (no auth; ephemeral-send §5.3). Exempt from the lock guard via PUBLIC_ROUTE_NAMES; the EphemeralSendAccessController endpoints run as #[PublicPage]. Fragment-mode content keys ride the SPA hash query (?k=) and never reach the server."
+		},
+		{
 			"id": "LinkShareAccess",
 			"route": "/share/link/:token",
 			"type": "custom",
