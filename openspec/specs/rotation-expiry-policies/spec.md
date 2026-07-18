@@ -1,6 +1,6 @@
 # Credential Rotation Policies and Expiry Reminders Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - [rotation-expiry-policies](../../changes/rotation-expiry-policies/)
