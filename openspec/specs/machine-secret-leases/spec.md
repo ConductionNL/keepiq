@@ -1,6 +1,6 @@
 # Short-lived Credential Leases Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - [machine-secret-leases](../../changes/machine-secret-leases/)
