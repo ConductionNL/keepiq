@@ -83,6 +83,29 @@ class SecretService
     public const DEFAULT_LIMIT = 50;
 
     /**
+     * Rows fetched per page during the Stage-2 fuzzy Levenshtein scan
+     * (bound-fuzzy-secret-search §1.2). A fixed page keeps memory flat and
+     * lets the scan stop early once the result window is filled — the old
+     * implementation loaded the ENTIRE vault (`findByOwner($total)`) for
+     * every fuzzy search, which does not survive large vaults.
+     *
+     * @var int
+     */
+    public const FUZZY_SCAN_PAGE_SIZE = 200;
+
+    /**
+     * Hard ceiling on rows the fuzzy scan will Levenshtein-inspect in one
+     * search (bound-fuzzy-secret-search §1.2). Trade-off documented in the
+     * change proposal: a match beyond the ceiling in a very large vault is
+     * not found by fuzzy matching (the Stage-1 SQL substring pre-filter,
+     * itself bounded to this ceiling, still applies) — bounded latency is
+     * preferred over exhaustive typo-tolerance at vault scale.
+     *
+     * @var int
+     */
+    public const FUZZY_SCAN_MAX_CANDIDATES = 2000;
+
+    /**
      * The maximum page size.
      *
      * @var int
@@ -923,7 +946,9 @@ class SecretService
             return ['items' => [], 'total' => 0, 'page' => $page, 'limit' => $limit];
         }
 
-        $matched = $this->fuzzyMatch(userId: $userId, term: $term);
+        // Pass the requested window so the paged scan can stop early once it
+        // is filled with margin (bound-fuzzy-secret-search §1.2/§1.4).
+        $matched = $this->fuzzyMatch(userId: $userId, term: $term, targetCount: ($page * $limit));
 
         $total  = count($matched);
         $offset = (($page - 1) * $limit);
@@ -938,16 +963,23 @@ class SecretService
     }//end search()
 
     /**
-     * Resolve the matching secrets for a fuzzy search term: SQL substring
-     * pre-filter merged with a PHP Levenshtein pass over all the user's
-     * secrets, deduplicated by ID.
+     * Resolve the matching secrets for a fuzzy search term: a bounded SQL
+     * substring pre-filter merged with a PAGED PHP Levenshtein scan,
+     * deduplicated by ID (bound-fuzzy-secret-search §1.2).
      *
-     * @param string $userId The Nextcloud user ID
-     * @param string $term   The search term
+     * The scan reads fixed-size pages (FUZZY_SCAN_PAGE_SIZE) and stops when
+     * (a) the requested result window is filled with margin, (b) the hard
+     * candidate ceiling (FUZZY_SCAN_MAX_CANDIDATES) is reached, or (c) the
+     * vault is exhausted. It never derives a load size from countByOwner.
+     *
+     * @param string $userId      The Nextcloud user ID
+     * @param string $term        The search term
+     * @param int    $targetCount The requested result-window size (0 = no
+     *                            early stop; scan to the ceiling)
      *
      * @return Secret[]
      */
-    public function fuzzyMatch(string $userId, string $term): array
+    public function fuzzyMatch(string $userId, string $term, int $targetCount=0): array
     {
         $tolerance = 2;
         if (mb_strlen($term) <= 5) {
@@ -958,24 +990,53 @@ class SecretService
 
         $matched = [];
 
-        // Stage 1: SQL substring pre-filter.
-        foreach ($this->mapper->searchByNameOrUrl('user', $userId, $term) as $secret) {
+        // Stage 1: SQL substring pre-filter, bounded to the same ceiling.
+        foreach ($this->mapper->searchByNameOrUrl('user', $userId, $term, self::FUZZY_SCAN_MAX_CANDIDATES) as $secret) {
             $matched[$secret->getId()] = $secret;
         }
 
-        // Stage 2: Levenshtein post-filter over the full set.
-        $total = $this->mapper->countByOwner('user', $userId, null);
-        $all   = $this->mapper->findByOwner('user', $userId, null, 'name', 'asc', max(1, $total), 0);
-
-        foreach ($all as $secret) {
-            if (isset($matched[$secret->getId()]) === true) {
-                continue;
+        // Stage 2: paged Levenshtein scan, bounded by the candidate ceiling.
+        $scanned = 0;
+        $offset  = 0;
+        while ($scanned < self::FUZZY_SCAN_MAX_CANDIDATES) {
+            $pageRows = $this->mapper->findByOwner(
+                'user',
+                $userId,
+                null,
+                'name',
+                'asc',
+                self::FUZZY_SCAN_PAGE_SIZE,
+                $offset
+            );
+            if ($pageRows === []) {
+                break;
             }
 
-            if ($this->isFuzzyHit(secret: $secret, termLower: $termLower, tolerance: $tolerance) === true) {
-                $matched[$secret->getId()] = $secret;
+            foreach ($pageRows as $secret) {
+                if (isset($matched[$secret->getId()]) === true) {
+                    continue;
+                }
+
+                if ($this->isFuzzyHit(secret: $secret, termLower: $termLower, tolerance: $tolerance) === true) {
+                    $matched[$secret->getId()] = $secret;
+                }
             }
-        }
+
+            $scanned += count($pageRows);
+            $offset  += self::FUZZY_SCAN_PAGE_SIZE;
+
+            // Result window filled with margin — stop early (§1.2a). The
+            // factor-2 margin keeps ranking stable for the requested page
+            // without scanning the remainder of the vault.
+            if ($targetCount > 0 && count($matched) >= ($targetCount * 2)) {
+                break;
+            }
+
+            // Short page — the vault is exhausted.
+            if (count($pageRows) < self::FUZZY_SCAN_PAGE_SIZE) {
+                break;
+            }
+        }//end while
 
         return array_values($matched);
     }//end fuzzyMatch()
