@@ -250,4 +250,59 @@ class ShareController extends OCSController
 
         return new JSONResponse(data: ['updated' => $written]);
     }//end sync()
+
+    /**
+     * Register a batch of DIRECT user shares from client-encrypted blobs
+     * (bulk-actions §6.1/§7.1). Idempotent per (secret × recipient); the
+     * per-item report never aborts on a skipped row.
+     *
+     * @param array $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?}
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     *
+     * @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-share
+     */
+    #[NoAdminRequired]
+    public function registerBatch(array $shares=[]): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $report = $this->shareService->registerDirectShares(userId: $user->getUID(), shares: $shares);
+
+        return new JSONResponse(data: ['items' => $report]);
+    }//end registerBatch()
+
+    /**
+     * The active-suite certificate of a prospective recipient — public
+     * key material only, needed client-side to encrypt the copy.
+     *
+     * @param string $userId The prospective recipient
+     *
+     * @NoAdminRequired
+     *
+     * @return JSONResponse
+     */
+    #[NoAdminRequired]
+    public function recipientCertificate(string $userId): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $certificate = $this->shareService->recipientCertificate(targetUserId: $userId);
+        if ($certificate === null) {
+            return new JSONResponse(
+                data: ['message' => 'Recipient has no active encryption suite'],
+                statusCode: Http::STATUS_NOT_FOUND
+            );
+        }
+
+        return new JSONResponse(data: ['userId' => $userId, 'certificate' => $certificate]);
+    }//end recipientCertificate()
 }//end class

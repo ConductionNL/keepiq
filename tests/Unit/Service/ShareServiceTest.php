@@ -591,4 +591,115 @@ class ShareServiceTest extends TestCase
         $this->assertCount(2, $created);
         $this->assertSame('gs-1', $created[0]->getGroupShareId());
     }//end testCreateBatchSharesAllRecipients()
+
+    /**
+     * bulk-actions §8.3: registerDirectShares is idempotent (an existing
+     * share reports `exists` and inserts nothing), per-item owner-scoped
+     * (a foreign secret is `not_owned`, never a batch failure), skips a
+     * suite-less recipient, and reports every row exactly once.
+     *
+     * @return void
+     */
+    public function testRegisterDirectSharesIdempotentOwnerScopedReport(): void
+    {
+        $mine = $this->makeOwnerSecret('sec-mine', 'alice');
+        $bobs = $this->makeOwnerSecret('sec-bobs', 'bob');
+        $this->secretMapper->method('findById')->willReturnCallback(
+            static function (string $id) use ($mine, $bobs): Secret {
+                return match ($id) {
+                    'sec-mine' => $mine,
+                    'sec-bobs' => $bobs,
+                    default    => throw new DoesNotExistException('missing'),
+                };
+            }
+        );
+        $this->stubRecipientHasSuite();
+        // No existing shares.
+        $this->mapper->method('findBySourceSecretAndTargetUser')
+            ->willThrowException(new DoesNotExistException('no row'));
+
+        $inserted = [];
+        $this->mapper->method('insert')->willReturnCallback(
+            static function ($row) use (&$inserted) {
+                $inserted[] = $row;
+                return $row;
+            }
+        );
+
+        $report = $this->service->registerDirectShares(
+            userId: 'alice',
+            shares: [
+                [
+                    'sourceSecretId' => 'sec-mine',
+                    'targetUserId'   => 'carol',
+                    'encryptedKey'   => 'BLOB',
+                ],
+                [
+                    'sourceSecretId' => 'sec-bobs',
+                    'targetUserId'   => 'carol',
+                    'encryptedKey'   => 'BLOB',
+                ],
+                [
+                    'sourceSecretId' => 'sec-gone',
+                    'targetUserId'   => 'carol',
+                    'encryptedKey'   => 'BLOB',
+                ],
+                [
+                    'sourceSecretId' => 'sec-mine',
+                    'targetUserId'   => 'alice',
+                    'encryptedKey'   => 'BLOB',
+                ],
+            ]
+        );
+
+        $this->assertCount(4, $report);
+        $this->assertSame('created', $report[0]['status']);
+        $this->assertSame('not_owned', $report[1]['status']);
+        $this->assertSame('not_owned', $report[2]['status']);
+        $this->assertSame('self', $report[3]['status']);
+        $this->assertCount(1, $inserted);
+    }//end testRegisterDirectSharesIdempotentOwnerScopedReport()
+
+    /**
+     * bulk-actions §8.3: an already-shared pair is `exists` (idempotent
+     * resume) and a recipient without a suite is `no_suite` — neither
+     * inserts a row nor aborts the batch.
+     *
+     * @return void
+     */
+    public function testRegisterDirectSharesExistsAndNoSuite(): void
+    {
+        $mine = $this->makeOwnerSecret('sec-mine', 'alice');
+        $this->secretMapper->method('findById')->willReturn($mine);
+        $this->stubRecipientNoSuite();
+        $this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+            static function (string $sourceSecretId, string $targetUserId) {
+                if ($targetUserId === 'dave') {
+                    return new ShareTarget();
+                }
+
+                throw new DoesNotExistException('no row');
+            }
+        );
+        $this->mapper->expects($this->never())->method('insert');
+
+        $report = $this->service->registerDirectShares(
+            userId: 'alice',
+            shares: [
+                [
+                    'sourceSecretId' => 'sec-mine',
+                    'targetUserId'   => 'dave',
+                    'encryptedKey'   => 'BLOB',
+                ],
+                [
+                    'sourceSecretId' => 'sec-mine',
+                    'targetUserId'   => 'suite-less',
+                    'encryptedKey'   => 'BLOB',
+                ],
+            ]
+        );
+
+        $this->assertSame('exists', $report[0]['status']);
+        $this->assertSame('no_suite', $report[1]['status']);
+    }//end testRegisterDirectSharesExistsAndNoSuite()
 }//end class
