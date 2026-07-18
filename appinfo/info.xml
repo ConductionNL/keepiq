@@ -76,6 +76,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Doriath\BackgroundJob\ExpireMachineLeasesJob</job>
         <job>OCA\Doriath\BackgroundJob\EphemeralSendPurgeJob</job>
         <job>OCA\Doriath\BackgroundJob\RefreshComplianceMetricsJob</job>
+        <job>OCA\Doriath\BackgroundJob\DeliverSiemEventsJob</job>
     </background-jobs>
 
     <repair-steps>
