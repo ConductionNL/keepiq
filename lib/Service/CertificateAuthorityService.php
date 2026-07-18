@@ -338,8 +338,12 @@ class CertificateAuthorityService
         string $intermediatePrivPem,
     ): string {
         $subjectPublic = \phpseclib3\Crypt\PublicKeyLoader::load($publicKeyPem);
+        if ($subjectPublic instanceof \phpseclib3\Crypt\RSA\PublicKey === false) {
+            throw new RuntimeException('Submitted public key is not an RSA public key');
+        }
+
         $issuerPrivate = \phpseclib3\Crypt\PublicKeyLoader::load($intermediatePrivPem);
-        if ($issuerPrivate instanceof \phpseclib3\Crypt\Common\PrivateKey === false) {
+        if ($issuerPrivate instanceof \phpseclib3\Crypt\RSA\PrivateKey === false) {
             throw new RuntimeException('Intermediate private key could not be loaded for issuance');
         }
 

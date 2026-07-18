@@ -6,43 +6,43 @@ Add a `passkey` eighth system secret type and store the WebAuthn credential as c
 
 ## 1. Backend — system type seed
 
-- [ ] 1.1 Add `'passkey' => 'Passkey'` to `SeedSecretTypes::SYSTEM_TYPES` (deterministic UUIDv5 under the existing `TYPE_NAMESPACE`, like the other seven); confirm the repair step remains idempotent.
-- [ ] 1.2 Confirm no schema/migration change is needed — the credential rides in the existing `key` ciphertext blob; `passkey` is a UI hint per the `secrets` spec.
+- [x] 1.1 Add `'passkey' => 'Passkey'` to `SeedSecretTypes::SYSTEM_TYPES` (deterministic UUIDv5 under the existing `TYPE_NAMESPACE`, like the other seven); confirm the repair step remains idempotent.
+- [x] 1.2 Confirm no schema/migration change is needed — the credential rides in the existing `key` ciphertext blob; `passkey` is a UI hint per the `secrets` spec.
 
 ## 2. Frontend — canonical schema + parser
 
-- [ ] 2.1 Add a passkey credential module: define the canonical JSON schema (`credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`, `userHandle`, `privateKey`, `algorithm`, `counter`, `transports`, `createdAt`) and a serialize/parse helper.
-- [ ] 2.2 On create/update of a `passkey` secret, mirror `rpId` into the plaintext `url` field; keep all credential material in the encrypted `key` JSON only.
-- [ ] 2.3 Invalid/unparseable credential → explicit "not a valid passkey credential" state; never fabricate fields (design D7).
+- [x] 2.1 Add a passkey credential module: define the canonical JSON schema (`credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`, `userHandle`, `privateKey`, `algorithm`, `counter`, `transports`, `createdAt`) and a serialize/parse helper.
+- [x] 2.2 On create/update of a `passkey` secret, mirror `rpId` into the plaintext `url` field; keep all credential material in the encrypted `key` JSON only.
+- [x] 2.3 Invalid/unparseable credential → explicit "not a valid passkey credential" state; never fabricate fields (design D7).
 
 ## 3. Frontend — presentation, listing, filtering
 
-- [ ] 3.1 Add a passkey presentation component (secret detail, and list row hint) showing associated site (RP id / name), user name / display name, truncated credential id, transports, and creation date; favicon by `url`.
-- [ ] 3.2 Mask the private key material (reveal/copy gated as a password value); never render the raw private key inline.
-- [ ] 3.3 Add `passkey` to the vault list type filter so users can list only passkeys.
+- [x] 3.1 Add a passkey presentation component (secret detail, and list row hint) showing associated site (RP id / name), user name / display name, truncated credential id, transports, and creation date; favicon by `url`.
+- [x] 3.2 Mask the private key material (reveal/copy gated as a password value); never render the raw private key inline.
+- [x] 3.3 Add `passkey` to the vault list type filter so users can list only passkeys.
 
 ## 4. Import mapping (extends secret-import, additive)
 
-- [ ] 4.1 Extend the Bitwarden JSON parser (`src/import/parsers/bitwarden.js`) to route each `login.fido2Credentials[]` entry into a `passkey`-typed row, encrypted in the browser like every imported field; mirror `rpId` into `url`.
-- [ ] 4.2 Reject a Bitwarden entry that cannot yield at least `credentialId` + `rpId` + `privateKey` to the import rejected-rows list (with reason); never create a partial passkey.
+- [x] 4.1 Extend the Bitwarden JSON parser (`src/import/parsers/bitwarden.js`) to route each `login.fido2Credentials[]` entry into a `passkey`-typed row, encrypted in the browser like every imported field; mirror `rpId` into `url`.
+- [x] 4.2 Reject a Bitwarden entry that cannot yield at least `credentialId` + `rpId` + `privateKey` to the import rejected-rows list (with reason); never create a partial passkey.
 
 ## 5. Password-health guard
 
-- [ ] 5.1 Exclude `passkey`-typed secrets from the health engine's strength, reuse, and breach analysis (`src/store/modules/health.js`), alongside the existing `totp` exclusion (design D6).
+- [x] 5.1 Exclude `passkey`-typed secrets from the health engine's strength, reuse, and breach analysis (`src/store/modules/health.js`), alongside the existing `totp` exclusion (design D6).
 
 ## 6. Tests
 
-- [ ] 6.1 PHPUnit: `SeedSecretTypes` seeds `passkey` with a stable deterministic UUID and is idempotent; no schema/migration change.
-- [ ] 6.2 vitest: canonical passkey JSON serialize/parse round-trips; malformed JSON yields the invalid-credential state, never fabricated fields.
-- [ ] 6.3 vitest: creating a `passkey` secret puts the full credential JSON (incl. `privateKey`, `userHandle`, `credentialId`) in the encrypted `key`, mirrors only `rpId` into `url`, and no plaintext credential appears in any request body.
-- [ ] 6.4 vitest: Bitwarden `fido2Credentials` entries map to `passkey` rows; an entry missing its private key lands in the rejected list.
-- [ ] 6.5 vitest/PHPUnit: a `passkey` secret round-trips create → read → share → export with the credential staying ciphertext server-side; the health engine skips `passkey` secrets.
+- [x] 6.1 PHPUnit: `SeedSecretTypes` seeds `passkey` with a stable deterministic UUID and is idempotent; no schema/migration change.
+- [x] 6.2 vitest: canonical passkey JSON serialize/parse round-trips; malformed JSON yields the invalid-credential state, never fabricated fields.
+- [x] 6.3 vitest: creating a `passkey` secret puts the full credential JSON (incl. `privateKey`, `userHandle`, `credentialId`) in the encrypted `key`, mirrors only `rpId` into `url`, and no plaintext credential appears in any request body.
+- [x] 6.4 vitest: Bitwarden `fido2Credentials` entries map to `passkey` rows; an entry missing its private key lands in the rejected list.
+- [x] 6.5 vitest/PHPUnit: a `passkey` secret round-trips create → read → share → export with the credential staying ciphertext server-side; the health engine skips `passkey` secrets.
 
 ## 7. Quality Gates
 
-- [ ] 7.1 `composer check:strict` (PHPCS, PHPMD, Psalm, PHPStan) passes; fix any pre-existing issues in touched files in the same batch.
-- [ ] 7.2 Frontend lint + vitest pass; run hydra gates (spec-coverage) on the diff — `@spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md` on changed methods.
-- [ ] 7.3 Confirm no route and no `AuditEventTypes` change; a `passkey` secret uses the existing secret CRUD + audit events unchanged.
+- [x] 7.1 `composer check:strict` (PHPCS, PHPMD, Psalm, PHPStan) passes; fix any pre-existing issues in touched files in the same batch.
+- [x] 7.2 Frontend lint + vitest pass; run hydra gates (spec-coverage) on the diff — `@spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md` on changed methods.
+- [x] 7.3 Confirm no route and no `AuditEventTypes` change; a `passkey` secret uses the existing secret CRUD + audit events unchanged.
 
 ## Acceptance Criteria
 

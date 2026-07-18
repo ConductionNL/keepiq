@@ -90,12 +90,14 @@ class SecretController extends OCSController
      * @param string      $direction Sort direction (asc/desc)
      * @param int         $page      Page number (1-based)
      * @param int         $limit     Items per page
+     * @param string|null $typeId    Filter by secret-type ID (omit = all types)
      *
      * @NoAdminRequired
      *
      * @return JSONResponse
      *
      * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
+     * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-listing-filtering-and-site-associated-presentation
      */
     #[NoAdminRequired]
     public function index(
@@ -105,13 +107,14 @@ class SecretController extends OCSController
         string $direction='asc',
         int $page=1,
         int $limit=SecretService::DEFAULT_LIMIT,
+        ?string $typeId=null,
     ): JSONResponse {
         $userId = $this->uid();
         if ($userId === null) {
             return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        $result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit);
+        $result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit, $typeId);
         if ($search !== null && trim($search) !== '') {
             $result = $this->secretService->search($userId, $search, $page, $limit);
         }

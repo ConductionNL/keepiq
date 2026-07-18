@@ -148,8 +148,12 @@ export const useHealthStore = defineStore('health', {
 				}
 			}
 			const types = Array.isArray(typeStore.types) ? typeStore.types : []
-			const totpTypeIds = new Set(
-				types.filter((type) => type && type.name === 'totp').map((type) => type.id),
+			// `totp` seeds and `passkey` private keys are high-entropy machine
+			// material — scoring, reuse-matching, or breach-checking them is
+			// meaningless noise (add-totp-secrets D7, passkey-item-type D6).
+			const excludedTypeIds = new Set(
+				types.filter((type) => type && (type.name === 'totp' || type.name === 'passkey'))
+					.map((type) => type.id),
 			)
 
 			const response = await axios.get(
@@ -162,9 +166,10 @@ export const useHealthStore = defineStore('health', {
 				if (secret.blocked || !secret.key) {
 					continue
 				}
-				// Skip TOTP secrets: their seed must never be scored, reuse-matched,
-				// or breach-checked (add-totp-secrets D7).
-				if (totpTypeIds.has(secret.typeId)) {
+				// Skip TOTP and passkey secrets: their material must never be
+				// scored, reuse-matched, or breach-checked (add-totp-secrets
+				// D7, passkey-item-type D6).
+				if (excludedTypeIds.has(secret.typeId)) {
 					continue
 				}
 				let value = ''
