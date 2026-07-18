@@ -1,6 +1,6 @@
 # Org Password Policies Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:** [org-password-policies](../../changes/org-password-policies/)
 
