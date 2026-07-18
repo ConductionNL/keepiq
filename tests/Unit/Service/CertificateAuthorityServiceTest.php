@@ -636,14 +636,14 @@ class CertificateAuthorityServiceTest extends TestCase
         $modulus1 = openssl_pkey_get_details(openssl_pkey_get_public($userCertPem1))['rsa']['n'];
         $modulus2 = openssl_pkey_get_details(openssl_pkey_get_public($userCertPem2))['rsa']['n'];
 
-        // The server cannot re-sign a public-only key without minting a throwaway
-        // key pair, so it keeps each suite's existing (correct) certificate rather
-        // than corrupt the key pairing — no suite is updated.
-        $this->suiteMapper->expects($this->never())->method('update');
+        // The phpseclib re-sign carries each suite's ORIGINAL public key into a
+        // freshly-signed certificate, so both suites are updated. (The old
+        // CSR-based path could never do this and silently kept old certs.)
+        $this->suiteMapper->expects($this->exactly(2))->method('update');
 
         $count = $this->service->renewIntermediate(forced: false);
 
-        $this->assertEquals(expected: 0, actual: $count);
+        $this->assertEquals(expected: 2, actual: $count);
 
         // Each suite keeps a valid certificate carrying its ORIGINAL public key.
         $this->assertNotNull(actual: $suite1->getCertificate());
@@ -887,4 +887,57 @@ class CertificateAuthorityServiceTest extends TestCase
         $this->expectExceptionMessage(message: 'Invalid public key PEM');
         $this->service->signPublicKey('not-a-valid-pem');
     }//end testSignPublicKeyWithInvalidPem()
+
+    /**
+     * Regression lock (certificate-lifecycle §2.4 live-verify catch):
+     * reissueSuiteCertificate MUST actually mint a NEW certificate that
+     * carries the suite's ORIGINAL public key. The old CSR-based
+     * implementation could never do this — openssl_csr_new silently
+     * generates a throwaway key pair for public-only keys, so its
+     * modulus guard rejected every result and the re-sign was a
+     * permanent no-op. Real crypto end to end, no mocks on the seam.
+     *
+     * @return void
+     */
+    public function testReissueSuiteCertificatePreservesPublicKey(): void
+    {
+        // Real intermediate: self-signed CA cert with its private key.
+        $intKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        $intCsr = openssl_csr_new(['commonName' => 'Test Intermediate CA'], $intKey, ['digest_alg' => 'sha256']);
+        $intX509 = openssl_csr_sign($intCsr, null, $intKey, 365, ['digest_alg' => 'sha256']);
+        openssl_x509_export(certificate: $intX509, output: $intCertPem);
+        openssl_pkey_export(key: $intKey, output: $intKeyPem);
+
+        // Real suite: its own key pair and certificate.
+        $suiteKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        $suiteCsr = openssl_csr_new(['commonName' => 'alice@test'], $suiteKey, ['digest_alg' => 'sha256']);
+        $suiteX509 = openssl_csr_sign($suiteCsr, $intX509, $intKey, 365, ['digest_alg' => 'sha256']);
+        openssl_x509_export(certificate: $suiteX509, output: $oldSuiteCertPem);
+
+        $intermediate = new CACertificate();
+        $intermediate->setCertificate($intCertPem);
+        $intermediate->setPrivateKey('enc:'.$intKeyPem);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
+
+        $suite = new EncryptionSuite();
+        $suite->setId('suite-1');
+        $suite->setOwnerType('user');
+        $suite->setOwnerId('alice');
+        $suite->setCertificate($oldSuiteCertPem);
+        $this->suiteMapper->expects($this->once())->method('update');
+
+        $result = $this->service->reissueSuiteCertificate(suite: $suite);
+
+        $this->assertTrue($result, 're-issue must succeed with a real intermediate');
+        $newCertPem = $suite->getCertificate();
+        $this->assertNotSame($oldSuiteCertPem, $newCertPem, 'a NEW certificate must be minted');
+
+        $oldModulus = openssl_pkey_get_details(openssl_pkey_get_public($oldSuiteCertPem))['rsa']['n'];
+        $newModulus = openssl_pkey_get_details(openssl_pkey_get_public($newCertPem))['rsa']['n'];
+        $this->assertTrue(hash_equals($oldModulus, $newModulus), 'the ORIGINAL public key must be preserved');
+
+        $parsed = openssl_x509_parse($newCertPem);
+        $this->assertSame('alice@test', $parsed['subject']['CN'], 'the subject CN must be preserved');
+        $this->assertSame(1, openssl_x509_verify($newCertPem, $intCertPem), 'the new cert must chain to the intermediate');
+    }//end testReissueSuiteCertificatePreservesPublicKey()
 }//end class
