@@ -98,6 +98,10 @@ final class AuditEventTypes
     public const SECRET_ROTATION_DISMISSED = 'secret.rotation_dismissed';
     public const POLICY_EXPIRY_CHANGED     = 'policy.expiry_changed';
 
+    // Org password policy (org-password-policies §3.1) — config values
+    // only, never secret data.
+    public const PASSWORD_POLICY_UPDATED = 'password_policy.updated';
+
     // Machine leases (machine-secret-leases §5.2) — ids + lifetimes only.
     public const LEASE_GRANTED = 'lease.granted';
     public const LEASE_RENEWED = 'lease.renewed';
@@ -190,6 +194,8 @@ final class AuditEventTypes
             self::SECRET_ROTATED               => ['reason'],
             self::SECRET_ROTATION_DISMISSED    => ['reason'],
             self::POLICY_EXPIRY_CHANGED        => ['scope', 'scopeId'],
+            // Org password policy — before/after config values (§3.1).
+            self::PASSWORD_POLICY_UPDATED      => ['before', 'after'],
             // Machine leases — ids + lifetimes only (§5.2).
             self::LEASE_GRANTED                => ['leaseId', 'secretId', 'expiresAt', 'ttl'],
             self::LEASE_RENEWED                => ['leaseId', 'secretId', 'expiresAt', 'renewedCount'],

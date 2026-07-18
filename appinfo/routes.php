@@ -27,6 +27,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
     ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
     ['name' => 'settings#getUserSettings',     'url' => '/api/settings/user',  'verb' => 'GET'],
+    // Read-only org password policy for write dialogs (org-password-policies §1.3).
+    ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],
     ['name' => 'settings#updateUserSettings',  'url' => '/api/settings/user',  'verb' => 'PUT'],
 
     // EncryptionSuite CRUD.

@@ -323,4 +323,115 @@ class KeyGeneratorServiceTest extends TestCase
         $this->assertSame(0, preg_match('/\brand\s*\(/', $source));
         $this->assertSame(0, preg_match('/\barray_rand\s*\(/', $source));
     }//end testSourceUsesNoWeakRandomness()
+
+    /**
+     * Build a service wired to an org policy (org-password-policies §2.1).
+     *
+     * @param array<string,int|bool> $policyValues Policy config values
+     *
+     * @return KeyGeneratorService
+     */
+    private function policyService(array $policyValues): KeyGeneratorService
+    {
+        $appConfig = $this->createMock(originalClassName: \OCP\IAppConfig::class);
+        $appConfig->method('getValueBool')->willReturnCallback(
+            static fn (string $app, string $key, bool $default=false): bool => (bool) ($policyValues[$key] ?? $default)
+        );
+        $appConfig->method('getValueInt')->willReturnCallback(
+            static fn (string $app, string $key, int $default=0): int => (int) ($policyValues[$key] ?? $default)
+        );
+
+        return new KeyGeneratorService(appConfig: $appConfig);
+    }//end policyService()
+
+    /**
+     * §2.1: the generator clamps a below-floor request up to the policy
+     * minimum length and forces required classes into the output.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-server-authoritative-generator-clamp
+     */
+    public function testPolicyClampRaisesLengthAndForcesClasses(): void
+    {
+        $service = $this->policyService(
+            [
+                'policy_enabled'           => true,
+                'generator_min_length'     => 20,
+                'generator_require_digit'  => true,
+                'generator_require_symbol' => true,
+            ]
+        );
+
+        for ($i = 0; $i < 20; $i++) {
+            $generated = $service->generate(length: 8, includeSpecialCharacters: false);
+            $this->assertSame(20, strlen($generated));
+            $this->assertMatchesRegularExpression('/[0-9]/', $generated);
+            $this->assertMatchesRegularExpression('/[!@#$%^&*()\-_=+\[\]{}|;:,.<>?\/]/', $generated);
+        }
+    }//end testPolicyClampRaisesLengthAndForcesClasses()
+
+    /**
+     * §2.1: exclusions cannot hollow out a required class — the class is
+     * restored into the charset.
+     *
+     * @return void
+     */
+    public function testPolicyRestoresExcludedRequiredClass(): void
+    {
+        $service = $this->policyService(
+            [
+                'policy_enabled'          => true,
+                'generator_min_length'    => 12,
+                'generator_require_digit' => true,
+            ]
+        );
+
+        $generated = $service->generate(length: 12, excludedCharacters: '0123456789');
+        $this->assertMatchesRegularExpression('/[0-9]/', $generated);
+    }//end testPolicyRestoresExcludedRequiredClass()
+
+    /**
+     * §2.2: a regex whose provable maximum is below the floor, or that
+     * excludes a required class, is rejected — never silently weakened.
+     *
+     * @return void
+     */
+    public function testPolicyRejectsNonCompliantRegex(): void
+    {
+        $service = $this->policyService(
+            [
+                'policy_enabled'          => true,
+                'generator_min_length'    => 16,
+                'generator_require_digit' => true,
+            ]
+        );
+
+        try {
+            $service->generate(regex: '[a-z]{8,10}');
+            $this->fail('Below-floor regex must be rejected');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('policy minimum length', $exception->getMessage());
+        }
+
+        try {
+            $service->generate(regex: '[a-z]{16,32}');
+            $this->fail('Digit-less regex must be rejected under require_digit');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('digit', $exception->getMessage());
+        }
+    }//end testPolicyRejectsNonCompliantRegex()
+
+    /**
+     * With the policy gate OFF the generator behaves exactly as before.
+     *
+     * @return void
+     */
+    public function testPolicyOffLeavesGeneratorUnchanged(): void
+    {
+        $service = $this->policyService(['policy_enabled' => false, 'generator_min_length' => 64]);
+
+        $generated = $service->generate(length: 8);
+        $this->assertSame(8, strlen($generated));
+    }//end testPolicyOffLeavesGeneratorUnchanged()
 }//end class

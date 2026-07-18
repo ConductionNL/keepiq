@@ -131,6 +131,7 @@ class Application extends App implements IBootstrap
                 groupManager: $c->get(\OCP\IGroupManager::class),
                 userSession: $c->get(\OCP\IUserSession::class),
                 logger: $c->get(\Psr\Log\LoggerInterface::class),
+                eventDispatcher: $c->get(\OCP\EventDispatcher\IEventDispatcher::class),
             )
         );
         $context->registerService(
