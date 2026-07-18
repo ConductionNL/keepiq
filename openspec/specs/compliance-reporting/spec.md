@@ -1,6 +1,6 @@
 # Compliance Reporting Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:** [compliance-reporting](../../changes/compliance-reporting/)
 
