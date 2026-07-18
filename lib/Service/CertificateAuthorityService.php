@@ -33,9 +33,12 @@ use OCA\Doriath\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
+use phpseclib3\Crypt\PublicKeyLoader;
+use phpseclib3\File\X509;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
+use Throwable;
 
 /**
  * Manages the private Certificate Authority (root + intermediate) and certificate signing.
@@ -666,18 +669,11 @@ class CertificateAuthorityService
             return false;
         }
 
-        $intermediateKey = openssl_pkey_get_private(
-            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
-        );
-        if ($intermediateKey === false) {
-            return false;
-        }
-
         $newCertPem = $this->resignPreservingPublicKey(
             oldCert: $oldCert,
             fallbackCn: $suite->getOwnerId(),
             intermediateCert: $intermediate->getCertificate(),
-            intermediateKey: $intermediateKey,
+            intermediateKeyPem: $this->crypto->decrypt($intermediate->getPrivateKey()),
         );
         if ($newCertPem === null) {
             $this->logger->warning(
@@ -788,21 +784,12 @@ class CertificateAuthorityService
      * Re-sign all active EncryptionSuites with the current active intermediate.
      *
      * @return int Number of suites re-signed.
-     *
-     * @SuppressWarnings(PHPMD.UndefinedVariable)    openssl_x509_export populates $newCertPem via
-     *   by-reference output param — PHPMD cannot trace by-ref semantics.
-     * @SuppressWarnings(PHPMD.ErrorControlOperator) The @ on openssl_csr_new is intentional:
-     *   PHP emits a "Supplied key param is a public key" warning when passing a public-only
-     *   key during re-signing; we own the intent and silence the noise rather than suppressing
-     *   all PHP errors globally.
      */
     private function resignAllActiveSuites(): int
     {
-        $intermediate     = $this->caCertificateMapper->findActiveIntermediate();
-        $intermediateKey  = openssl_pkey_get_private(
-            private_key: $this->crypto->decrypt($intermediate->getPrivateKey())
-        );
-        $intermediateCert = $intermediate->getCertificate();
+        $intermediate       = $this->caCertificateMapper->findActiveIntermediate();
+        $intermediateKeyPem = $this->crypto->decrypt($intermediate->getPrivateKey());
+        $intermediateCert   = $intermediate->getCertificate();
 
         $offset = 0;
         $total  = 0;
@@ -828,7 +815,7 @@ class CertificateAuthorityService
                     oldCert: $oldCert,
                     fallbackCn: $suite->getOwnerId(),
                     intermediateCert: $intermediateCert,
-                    intermediateKey: $intermediateKey,
+                    intermediateKeyPem: $intermediateKeyPem,
                 );
 
                 // A null result means it could not mint a certificate that
@@ -868,35 +855,35 @@ class CertificateAuthorityService
      * private key is AES-wrapped and only the user's browser can decrypt it, so
      * the server cannot mint a new key pair for the suite.
      *
-     * PHP's openssl_csr_new() cannot build a CSR from a public-only key — given
+     * PHP's openssl_csr_new() CANNOT build a CSR from a public-only key — given
      * one it SILENTLY generates a throwaway key pair, and the issued certificate
      * then carries a public key nobody holds the private half of. Any value the
      * browser later encrypts under that certificate is undecryptable with the
-     * user's wrapped private key (the read-after-write decrypt failure). This
-     * helper performs the re-sign and then verifies the issued certificate still
-     * carries the ORIGINAL public key, returning null when it does not so the
-     * caller keeps the existing (correct) certificate.
+     * user's wrapped private key (the read-after-write decrypt failure). The
+     * old CSR-based implementation therefore NEVER produced a valid re-sign —
+     * its modulus guard rejected every result and callers silently kept the old
+     * certificate (caught live by certificate-lifecycle §2.4 verification).
+     * This implementation assembles the certificate directly with phpseclib,
+     * carrying the suite's original SubjectPublicKeyInfo and subject DN, signed
+     * by the intermediate. The openssl modulus guard remains as belt-and-braces:
+     * a result whose public key differs is still rejected.
      *
-     * @param string                $oldCert          The current PEM certificate to re-sign
-     * @param string                $fallbackCn       CN to use when the old cert has none
-     * @param string                $intermediateCert The signing intermediate certificate (PEM)
-     * @param \OpenSSLAsymmetricKey $intermediateKey  The intermediate private key
+     * @param string $oldCert            The current PEM certificate to re-sign
+     * @param string $fallbackCn         CN to use when the old cert has none
+     * @param string $intermediateCert   The signing intermediate certificate (PEM)
+     * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
      *
      * @return string|null The new PEM certificate, or null when the public key
      *   could not be preserved.
      *
-     * @SuppressWarnings(PHPMD.UndefinedVariable)    openssl_x509_export populates $newCertPem via
-     *   by-reference output param — PHPMD cannot trace by-ref semantics.
-     * @SuppressWarnings(PHPMD.ErrorControlOperator) The @ on openssl_csr_new is intentional:
-     *   PHP emits a "Supplied key param is a public key" warning when passing a public-only
-     *   key during re-signing; we own the intent and silence the noise rather than suppressing
-     *   all PHP errors globally.
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $fallbackCn is kept for
+     *   signature stability; phpseclib preserves the full original subject DN.
      */
     private function resignPreservingPublicKey(
         string $oldCert,
         string $fallbackCn,
         string $intermediateCert,
-        \OpenSSLAsymmetricKey $intermediateKey,
+        string $intermediateKeyPem,
     ): ?string {
         $oldPub = openssl_pkey_get_public(public_key: $oldCert);
         if ($oldPub === false) {
@@ -908,36 +895,47 @@ class CertificateAuthorityService
             return null;
         }
 
-        // Preserve the original CN from the existing certificate.
-        $certData   = openssl_x509_parse(certificate: $oldCert);
-        $originalCn = $certData['subject']['CN'] ?? $fallbackCn;
+        try {
+            $old = new X509();
+            if ($old->loadX509($oldCert) === false) {
+                return null;
+            }
 
-        $csr = @openssl_csr_new(
-            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $originalCn]),
-            private_key: $oldPub,
-            options: ['digest_alg' => 'sha256']
-        );
-        if ($csr === false) {
+            $issuer = new X509();
+            $issuer->loadX509($intermediateCert);
+            $issuer->setPrivateKey(PublicKeyLoader::loadPrivateKey($intermediateKeyPem));
+
+            $subject = new X509();
+            $subject->setPublicKey($old->getPublicKey());
+            $subject->setDN($old->getDN());
+
+            $signer = new X509();
+            $signer->setStartDate('-1 day');
+            $signer->setEndDate('+365 days');
+            $signer->setSerialNumber((string) random_int(1, PHP_INT_MAX), 10);
+            $signed = $signer->sign($issuer, $subject);
+            if ($signed === false) {
+                return null;
+            }
+
+            $newCertPem = $signer->saveX509($signed);
+        } catch (Throwable $exception) {
+            $this->logger->warning(
+                'Doriath: phpseclib re-sign failed: '.$exception->getMessage(),
+                ['app' => Application::APP_ID]
+            );
+
             return null;
-        }
+        }//end try
 
-        $newCert = openssl_csr_sign(
-            csr: $csr,
-            ca_certificate: $intermediateCert,
-            private_key: $intermediateKey,
-            days: 365,
-            options: ['digest_alg' => 'sha256'],
-            serial: random_int(1, PHP_INT_MAX)
-        );
-        if ($newCert === false) {
+        if (is_string($newCertPem) === false || $newCertPem === '') {
             return null;
         }
 
         // Guard the zero-knowledge invariant: the issued certificate MUST carry
-        // the suite's original public key. If openssl_csr_new() invented a new
-        // key pair (the public-only-key footgun), the modulus differs — reject
-        // the certificate so the caller keeps the correct existing one.
-        $newPub = openssl_pkey_get_public(public_key: $newCert);
+        // the suite's original public key — reject the certificate otherwise so
+        // the caller keeps the correct existing one.
+        $newPub = openssl_pkey_get_public(public_key: $newCertPem);
         if ($newPub === false) {
             return null;
         }
@@ -951,7 +949,6 @@ class CertificateAuthorityService
             return null;
         }
 
-        openssl_x509_export(certificate: $newCert, output: $newCertPem);
         return $newCertPem;
     }//end resignPreservingPublicKey()
 
