@@ -19,6 +19,7 @@
 		<ApplicationQueueSection />
 		<AttachmentLimitsSection />
 		<RotationPolicySection />
+		<MachineLeaseSection />
 		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
@@ -33,6 +34,7 @@ import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
 import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
+import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
 
 export default {
 	name: 'Settings',
@@ -43,6 +45,7 @@ export default {
 		ApplicationQueueSection,
 		AttachmentLimitsSection,
 		RotationPolicySection,
+		MachineLeaseSection,
 		OffboardingSection,
 		AdminAuditSection,
 	},

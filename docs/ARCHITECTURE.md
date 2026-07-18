@@ -573,6 +573,9 @@ documented intent rather than silently drop a limit during refactoring.
 | `ApplicationSecretsController::index` | 30 / 60s | Bearer-authenticated but the route is `#[PublicPage]` so anonymous traffic reaches the controller before `JwtAuthMiddleware` validates the header. Limit protects the pre-auth surface; generous enough for a legitimate polling machine client. |
 | `ApplicationSecretsController::show` | 30 / 60s | Same rationale as `index`. |
 | `ApplicationController::create` | 10 / 60s | Anonymous application self-registration — only reachable when an admin opts in via `anonymous_application_registration_enabled`. Admins enabling anonymous registration inherit this rate limit. |
+| `MachineLeaseController::index` | 30 / 60s | Bearer-authenticated lease list (machine-secret-leases §4.1); `#[PublicPage]` pre-auth surface, same polling profile as the secrets endpoints. |
+| `MachineLeaseController::renew` | 30 / 60s | Lease renewal — legitimate connectors renew at most once per default-TTL window. |
+| `MachineLeaseController::revoke` | 30 / 60s | Lease self-revocation — rare in legitimate use; the limit caps abuse of the rotation-flag side effect. |
 
 All limits are keyed anonymously (per-IP) by Nextcloud's rate-limiter
 middleware, which is available since NC 24; Doriath's `info.xml` floor

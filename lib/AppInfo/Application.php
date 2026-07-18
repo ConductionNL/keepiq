@@ -113,10 +113,11 @@ class Application extends App implements IBootstrap
 
         try {
             Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Doriath']);
-        } catch (\Throwable $bootstrapError) {
+        } catch (\Throwable) {
             // AppHost absent/unloadable: skip the generic plumbing; Doriath's
-            // own listeners and services below MUST still register.
-            error_log('Doriath: OpenRegister AppHost bootstrap skipped: '.$bootstrapError->getMessage());
+            // own listeners and services below MUST still register. No
+            // logger is resolvable this early, so the skip is silent —
+            // /api/health surfaces the degraded AppHost state instead.
         }
 
         // Override the generic aliases with Doriath's domain-divergent concretes.

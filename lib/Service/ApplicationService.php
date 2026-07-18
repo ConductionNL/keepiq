@@ -51,12 +51,14 @@ class ApplicationService
     /**
      * Constructor for ApplicationService.
      *
-     * @param ApplicationMapper      $mapper                 The application mapper
-     * @param IGroupManager          $groupManager           The group manager (admin lookups)
-     * @param LoggerInterface        $logger                 The logger
-     * @param NotificationService    $notificationService    The notification service
-     * @param EncryptionSuiteService $encryptionSuiteService The encryption suite service
-     * @param IEventDispatcher       $eventDispatcher        The event dispatcher
+     * @param ApplicationMapper                                 $mapper                 The application mapper
+     * @param IGroupManager                                     $groupManager           The group manager (admin lookups)
+     * @param LoggerInterface                                   $logger                 The logger
+     * @param NotificationService                               $notificationService    The notification service
+     * @param EncryptionSuiteService                            $encryptionSuiteService The encryption suite service
+     * @param IEventDispatcher                                  $eventDispatcher        The event dispatcher
+     * @param \OCA\Doriath\Db\MachineLeaseMapper|null           $leaseMapper            The lease mapper (delete cascade)
+     * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper      The lease-policy mapper (delete cascade)
      *
      * @return void
      */
@@ -67,6 +69,8 @@ class ApplicationService
         private ?NotificationService $notificationService=null,
         private ?EncryptionSuiteService $encryptionSuiteService=null,
         private ?IEventDispatcher $eventDispatcher=null,
+        private ?\OCA\Doriath\Db\MachineLeaseMapper $leaseMapper=null,
+        private ?\OCA\Doriath\Db\ApplicationLeasePolicyMapper $leasePolicyMapper=null,
     ) {
     }//end __construct()
 
@@ -419,6 +423,11 @@ class ApplicationService
         $applicationName = $entity->getName();
 
         $this->mapper->delete($entity);
+
+        // Machine-lease cascade (machine-secret-leases §1.1): lease rows
+        // and the policy override die with the application.
+        $this->leaseMapper?->deleteByApplication($applicationId);
+        $this->leasePolicyMapper?->deleteByApplication($applicationId);
 
         $this->logger->info('Deleted application '.$applicationId, ['app' => 'doriath']);
 
