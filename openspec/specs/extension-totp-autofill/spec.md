@@ -1,6 +1,6 @@
 # Extension TOTP Surfacing + Auto-Copy Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - [extension-totp-autofill](../../changes/extension-totp-autofill/)
