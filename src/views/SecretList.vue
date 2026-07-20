@@ -21,14 +21,14 @@
 			     deletion (secret-export-gdpr §6.5, secret-import). "New secret"
 			     itself is CnIndexPage's own add button below. -->
 			<div class="secret-list-view__actions">
-				<NcButton type="secondary" @click="openCreateFolder">
+				<NcButton type="secondary" :disabled="offlineReadOnly" @click="openCreateFolder">
 					<template #icon>
 						<FolderPlus :size="20" />
 					</template>
 					{{ t('doriath', 'New folder') }}
 				</NcButton>
 				<NcButton type="secondary"
-					:disabled="vaultLocked"
+					:disabled="vaultLocked || offlineReadOnly"
 					data-testid="import-secrets"
 					@click="openImport">
 					<template #icon>
@@ -154,7 +154,7 @@
 				:schema="listSchema"
 				:loading="loading"
 				:pagination="pagination"
-				:add-label="t('doriath', 'New secret')"
+				:add-label="offlineReadOnly ? '' : t('doriath', 'New secret')"
 				add-icon="Plus"
 				inline-search
 				:search-value="searchTerm"
@@ -225,6 +225,7 @@ import { useHealthStore } from '../store/modules/health.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 
 const PAGE_SIZE = 50
 
@@ -321,6 +322,16 @@ export default {
 		 */
 		vaultLocked() {
 			return useSessionStore().isLocked
+		},
+		/**
+		 * Whether the vault is being served from the offline cache and is
+		 * therefore read-only (offline-readonly-cache §4.2). All write controls
+		 * are disabled while true.
+		 *
+		 * @return {boolean}
+		 */
+		offlineReadOnly() {
+			return useOfflineStore().readOnly
 		},
 		selectedFolderId() {
 			return this.$route.params.folderId || null

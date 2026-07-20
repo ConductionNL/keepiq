@@ -27,116 +27,127 @@
     / Encryption sections the previous MainMenu footer item did.
 -->
 <template>
-	<CnAppRoot
-		:ai-companion="true"
-		:manifest="manifest"
-		:custom-components="customComponents"
-		:page-types="pageTypes"
-		:registry="registry"
-		app-id="doriath"
-		:translate="translateForApp"
-		:permissions="permissions">
-		<!-- User-settings dialog body (opened from the manifest's
+	<div class="doriath-shell">
+		<!-- Stale-data banner (offline-readonly-cache §4.3): shown whenever the
+		     vault is being served from the offline cache. -->
+		<div v-if="offlineStore.servedFromCache"
+			class="doriath-offline-banner"
+			data-testid="offline-stale-banner">
+			{{ t('doriath', 'Offline — read-only. Last synced {when}.', { when: syncedLabel }) }}
+		</div>
+
+		<CnAppRoot
+			:ai-companion="true"
+			:manifest="manifest"
+			:custom-components="customComponents"
+			:page-types="pageTypes"
+			:registry="registry"
+			app-id="doriath"
+			:translate="translateForApp"
+			:permissions="permissions">
+			<!-- User-settings dialog body (opened from the manifest's
 		     `action: "user-settings"` menu entry via CnAppRoot's
 		     cnOpenUserSettings inject). Sections preserve the legacy
 		     UserSettings.vue surface unchanged. -->
-		<template #user-settings>
-			<NcAppSettingsSection
-				id="session"
-				:name="t('doriath', 'Session')">
-				<template #icon>
-					<TimerIcon :size="20" />
-				</template>
-				<div class="user-settings__field">
-					<NcSelect
-						v-model="sessionTimeout"
-						:options="timeoutOptions"
-						:input-label="t('doriath', 'Session timeout')"
-						label="label"
-						:reduce="opt => opt.value"
-						@input="saveTimeout" />
-				</div>
-			</NcAppSettingsSection>
-
-			<NcAppSettingsSection
-				id="security"
-				:name="t('doriath', 'Security')">
-				<template #icon>
-					<ShieldIcon :size="20" />
-				</template>
-				<div class="user-settings__field">
-					<MasterPasswordForm />
-				</div>
-				<div class="user-settings__field">
-					<NcButton type="error" @click="showRecovery = !showRecovery">
-						{{ t('doriath', 'My master password was compromised') }}
-					</NcButton>
-					<CompromiseRecoveryForm v-if="showRecovery" />
-				</div>
-			</NcAppSettingsSection>
-
-			<NcAppSettingsSection
-				id="encryption"
-				:name="t('doriath', 'Encryption')">
-				<template #icon>
-					<KeyIcon :size="20" />
-				</template>
-				<div v-if="suiteStore.currentSuite" class="user-settings__suite-info">
-					<p><strong>{{ t('doriath', 'Status') }}:</strong> {{ suiteStore.currentSuite.status }}</p>
-					<p><strong>{{ t('doriath', 'Created') }}:</strong> {{ suiteStore.currentSuite.createdAt }}</p>
-					<p><strong>{{ t('doriath', 'Suite ID') }}:</strong> {{ suiteStore.currentSuite.id }}</p>
-
-					<template v-if="suiteStore.currentSuite.status === 'active'">
-						<NcNoteCard v-if="revokeConfirm" type="warning">
-							{{ t('doriath', 'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.') }}
-							<div style="margin-top: 0.5rem;">
-								<NcTextField
-									v-model="revokeReason"
-									:label="t('doriath', 'Reason for revocation')"
-									:placeholder="t('doriath', 'e.g. Device lost, key compromised')" />
-							</div>
-							<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-								<NcButton
-									type="error"
-									:disabled="!revokeReason || revoking"
-									@click="handleRevoke">
-									{{ revoking ? t('doriath', 'Revoking...') : t('doriath', 'Confirm revocation') }}
-								</NcButton>
-								<NcButton type="secondary" @click="revokeConfirm = false">
-									{{ t('doriath', 'Cancel') }}
-								</NcButton>
-							</div>
-						</NcNoteCard>
-						<NcButton
-							v-else
-							type="warning"
-							@click="revokeConfirm = true">
-							{{ t('doriath', 'Revoke encryption suite') }}
-						</NcButton>
-					</template>
-
-					<NcNoteCard v-if="revokeSuccess" type="success">
-						{{ t('doriath', 'Encryption suite revoked. Contact an administrator to reinstate it.') }}
-					</NcNoteCard>
-					<NcNoteCard v-if="revokeError" type="error">
-						{{ revokeError }}
-					</NcNoteCard>
-				</div>
-				<NcEmptyContent
-					v-else
-					:name="t('doriath', 'No encryption suite')"
-					:description="t('doriath', 'Unlock the vault to set up encryption')">
+			<template #user-settings>
+				<NcAppSettingsSection
+					id="session"
+					:name="t('doriath', 'Session')">
 					<template #icon>
-						<KeyIcon :size="64" />
+						<TimerIcon :size="20" />
 					</template>
-				</NcEmptyContent>
-			</NcAppSettingsSection>
-		</template>
-	</CnAppRoot>
+					<div class="user-settings__field">
+						<NcSelect
+							v-model="sessionTimeout"
+							:options="timeoutOptions"
+							:input-label="t('doriath', 'Session timeout')"
+							label="label"
+							:reduce="opt => opt.value"
+							@input="saveTimeout" />
+					</div>
+				</NcAppSettingsSection>
+
+				<NcAppSettingsSection
+					id="security"
+					:name="t('doriath', 'Security')">
+					<template #icon>
+						<ShieldIcon :size="20" />
+					</template>
+					<div class="user-settings__field">
+						<MasterPasswordForm />
+					</div>
+					<div class="user-settings__field">
+						<NcButton type="error" @click="showRecovery = !showRecovery">
+							{{ t('doriath', 'My master password was compromised') }}
+						</NcButton>
+						<CompromiseRecoveryForm v-if="showRecovery" />
+					</div>
+				</NcAppSettingsSection>
+
+				<NcAppSettingsSection
+					id="encryption"
+					:name="t('doriath', 'Encryption')">
+					<template #icon>
+						<KeyIcon :size="20" />
+					</template>
+					<div v-if="suiteStore.currentSuite" class="user-settings__suite-info">
+						<p><strong>{{ t('doriath', 'Status') }}:</strong> {{ suiteStore.currentSuite.status }}</p>
+						<p><strong>{{ t('doriath', 'Created') }}:</strong> {{ suiteStore.currentSuite.createdAt }}</p>
+						<p><strong>{{ t('doriath', 'Suite ID') }}:</strong> {{ suiteStore.currentSuite.id }}</p>
+
+						<template v-if="suiteStore.currentSuite.status === 'active'">
+							<NcNoteCard v-if="revokeConfirm" type="warning">
+								{{ t('doriath', 'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.') }}
+								<div style="margin-top: 0.5rem;">
+									<NcTextField
+										v-model="revokeReason"
+										:label="t('doriath', 'Reason for revocation')"
+										:placeholder="t('doriath', 'e.g. Device lost, key compromised')" />
+								</div>
+								<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+									<NcButton
+										type="error"
+										:disabled="!revokeReason || revoking"
+										@click="handleRevoke">
+										{{ revoking ? t('doriath', 'Revoking...') : t('doriath', 'Confirm revocation') }}
+									</NcButton>
+									<NcButton type="secondary" @click="revokeConfirm = false">
+										{{ t('doriath', 'Cancel') }}
+									</NcButton>
+								</div>
+							</NcNoteCard>
+							<NcButton
+								v-else
+								type="warning"
+								@click="revokeConfirm = true">
+								{{ t('doriath', 'Revoke encryption suite') }}
+							</NcButton>
+						</template>
+
+						<NcNoteCard v-if="revokeSuccess" type="success">
+							{{ t('doriath', 'Encryption suite revoked. Contact an administrator to reinstate it.') }}
+						</NcNoteCard>
+						<NcNoteCard v-if="revokeError" type="error">
+							{{ revokeError }}
+						</NcNoteCard>
+					</div>
+					<NcEmptyContent
+						v-else
+						:name="t('doriath', 'No encryption suite')"
+						:description="t('doriath', 'Unlock the vault to set up encryption')">
+						<template #icon>
+							<KeyIcon :size="64" />
+						</template>
+					</NcEmptyContent>
+				</NcAppSettingsSection>
+			</template>
+		</CnAppRoot>
+	</div>
 </template>
 
 <script>
 import { translate as ncT } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 // eslint-disable-next-line import/named
 import { CnAppRoot } from '@conduction/nextcloud-vue'
 import { NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
@@ -148,6 +159,7 @@ import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
+import { useOfflineStore } from './store/modules/offline.js'
 
 /**
  * Route names that are publicly accessible without an unlocked vault
@@ -275,6 +287,20 @@ export default {
 			return useEncryptionSuiteStore()
 		},
 		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia offline store with no domain logic.
+		 */
+		offlineStore() {
+			return useOfflineStore()
+		},
+		/**
+		 * Human last-sync label for the stale banner.
+		 *
+		 * @return {string}
+		 */
+		syncedLabel() {
+			return this.offlineStore.syncedAt ? new Date(this.offlineStore.syncedAt).toLocaleString() : ncT('doriath', 'unknown')
+		},
+		/**
 		 * Whether the vault is locked (no in-memory CryptoKey).
 		 *
 		 * @return {boolean} True when locked.
@@ -299,6 +325,11 @@ export default {
 					name: 'Lock',
 					query: { returnUrl: this.$route?.fullPath },
 				})
+			}
+			// Write-through the encrypted offline snapshot on each ONLINE unlock
+			// (offline-readonly-cache §2.3). Fail-soft — never blocks the session.
+			if (!locked && this.offlineStore.online && !this.offlineStore.servedFromCache) {
+				this.offlineStore.syncNow().catch(() => {})
 			}
 		},
 		/**
@@ -333,6 +364,18 @@ export default {
 	async created() {
 		await initializeStores()
 		this.storesReady = true
+
+		// Offline cache bootstrap (offline-readonly-cache §2.4/§3.2): track
+		// connectivity, arm the lock-time purge hook, and register the app-shell
+		// service worker (feature-detected; a failed registration is a no-op
+		// online-only fallback, never a hard error).
+		this.offlineStore.bindConnectivity()
+		this.offlineStore.ensureLockHook()
+		this.registerServiceWorker()
+		// If we booted already unlocked and online, warm the snapshot.
+		if (!this.sessionStore.isLocked && this.offlineStore.online) {
+			this.offlineStore.syncNow().catch(() => {})
+		}
 
 		// Mirror the legacy App.vue boot: on first paint, if the
 		// session is already locked, push to /lock with the current
@@ -439,6 +482,25 @@ export default {
 				this.revoking = false
 			}
 		},
+
+		/**
+		 * Register the offline app-shell service worker, feature-detected.
+		 * A registration failure (unsupported context, scope rejected) is a
+		 * no-op online-only fallback — never a hard error.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-service-worker-shell
+		 */
+		registerServiceWorker() {
+			if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+				return
+			}
+			const swUrl = generateUrl('/apps/doriath/js/doriath-service-worker.js')
+			navigator.serviceWorker.register(swUrl, { scope: generateUrl('/apps/doriath/') })
+				.catch(() => {
+					// Online-only fallback; the offline cache is simply absent.
+				})
+		},
 	},
 }
 </script>
@@ -450,5 +512,16 @@ export default {
 
 .user-settings__suite-info p {
 	margin: 0.25rem 0;
+}
+
+.doriath-offline-banner {
+	position: sticky;
+	top: 0;
+	z-index: 2000;
+	padding: 6px 16px;
+	text-align: center;
+	font-weight: bold;
+	color: var(--color-primary-element-text, #fff);
+	background-color: var(--color-warning, #b07100);
 }
 </style>
