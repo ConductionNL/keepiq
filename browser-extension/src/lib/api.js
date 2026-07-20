@@ -126,3 +126,14 @@ export function createSecret(config, body) {
 export function updateSecret(config, id, body) {
 	return request(config, 'PUT', '/api/v1/secrets/' + encodeURIComponent(id), body)
 }
+
+/**
+ * Fetch the secret-type catalogue and return the passkey type id (or null).
+ * @param config
+ */
+export async function passkeyTypeId(config) {
+	const types = await request(config, 'GET', '/api/v1/secret-types')
+	const list = Array.isArray(types) ? types : (types.items || [])
+	const passkey = list.find((t) => t.name === 'passkey' || t.slug === 'passkey')
+	return passkey ? passkey.id : null
+}
