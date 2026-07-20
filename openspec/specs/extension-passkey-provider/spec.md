@@ -1,6 +1,6 @@
 # Extension WebAuthn Passkey Provider Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - [extension-passkey-provider](../../changes/extension-passkey-provider/)
