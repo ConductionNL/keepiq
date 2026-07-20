@@ -318,4 +318,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // completed export before offering the local download; this dispatches
     // SecretExportedEvent for the session user. No secret material is sent.
     ['name' => 'export#events', 'url' => '/api/v1/export/events', 'verb' => 'POST'],
+
+    // CXP (FIDO Credential Exchange Protocol) opaque handshake relay
+    // (cxp-transfer §2.2). Carries only public keys + HPKE ciphertext between
+    // two cooperating browser sessions — never plaintext or server-openable keys.
+    ['name' => 'cxpRelay#put', 'url' => '/api/v1/cxp/relay', 'verb' => 'POST'],
+    ['name' => 'cxpRelay#get', 'url' => '/api/v1/cxp/relay/{pairingId}/{slot}', 'verb' => 'GET'],
 ]);
