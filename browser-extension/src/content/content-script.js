@@ -173,3 +173,37 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 attachSubmitCapture()
+
+// --- WebAuthn relay (extension-passkey-provider, page-context shim path) ---
+
+// Inject the page-context shim so it can override navigator.credentials in the
+// page's own JS world (a content script's overrides are not visible to the page).
+function injectShim() {
+	try {
+		const s = document.createElement('script')
+		s.src = chrome.runtime.getURL('inpage-shim.js')
+		s.onload = () => s.remove()
+		;(document.head || document.documentElement).appendChild(s)
+	} catch {
+		// CSP may block injection; the native proxy path covers Chrome/Edge.
+	}
+}
+
+// Relay page shim → service worker → page.
+window.addEventListener('message', async (event) => {
+	if (event.source !== window) return
+	const data = event.data
+	if (!data || data.__doriath !== 'request') return
+	const type = data.op === 'create' ? 'webauthn-create' : 'webauthn-get'
+	try {
+		const res = await chrome.runtime.sendMessage({ type, payload: { options: data.options, origin: data.origin } })
+		window.postMessage({ __doriath: 'response', id: data.id, ...(res || { error: 'no-response' }) }, event.origin)
+	} catch (e) {
+		window.postMessage({ __doriath: 'response', id: data.id, error: e.message || String(e) }, event.origin)
+	}
+})
+
+// Only the top frame injects the shim (avoids duplicate overrides in iframes).
+if (window.top === window) {
+	injectShim()
+}
