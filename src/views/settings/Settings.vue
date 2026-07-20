@@ -24,6 +24,7 @@
 		<ComplianceSection />
 		<SiemSection />
 		<HoneySection />
+		<OfflineCacheSection />
 		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
@@ -43,6 +44,7 @@ import MachineLeaseSection from '../../components/settings/MachineLeaseSection.v
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
+import OfflineCacheSection from '../../components/settings/OfflineCacheSection.vue'
 
 export default {
 	name: 'Settings',
@@ -58,6 +60,7 @@ export default {
 		ComplianceSection,
 		SiemSection,
 		HoneySection,
+		OfflineCacheSection,
 		OffboardingSection,
 		AdminAuditSection,
 	},
