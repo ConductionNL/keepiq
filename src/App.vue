@@ -77,6 +77,9 @@
 						<MasterPasswordForm />
 					</div>
 					<div class="user-settings__field">
+						<PasskeyManager />
+					</div>
+					<div class="user-settings__field">
 						<NcButton type="error" @click="showRecovery = !showRecovery">
 							{{ t('doriath', 'My master password was compromised') }}
 						</NcButton>
@@ -155,6 +158,7 @@ import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
+import PasskeyManager from './components/PasskeyManager.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
@@ -204,6 +208,7 @@ export default {
 		ShieldIcon,
 		KeyIcon,
 		MasterPasswordForm,
+		PasskeyManager,
 		CompromiseRecoveryForm,
 	},
 

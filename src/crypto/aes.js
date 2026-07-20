@@ -82,3 +82,50 @@ export async function decryptPrivateKey(envelope, password) {
 
 	return new TextDecoder().decode(plaintext)
 }
+
+/**
+ * Derive the raw bytes of the vault unlock key (the AES-256 key that
+ * decrypts the private-key envelope) from the master password + the
+ * envelope's own salt. Extractable so it can be re-wrapped under a
+ * passkey PRF KEK at enrollment (passkey-vault-login §D1). The raw key
+ * only exists transiently in memory, exactly like the master-password
+ * path's derived key.
+ *
+ * @param {string} password The master password
+ * @param {Uint8Array} salt The 16-byte salt from the private-key envelope
+ * @return {Promise<Uint8Array>} The raw 32-byte unlock key
+ */
+export async function deriveUnlockKeyRaw(password, salt) {
+	const encoder = new TextEncoder()
+	const keyMaterial = await crypto.subtle.importKey(
+		'raw',
+		encoder.encode(password),
+		'PBKDF2',
+		false,
+		['deriveBits'],
+	)
+	const bits = await crypto.subtle.deriveBits(
+		{ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+		keyMaterial,
+		256,
+	)
+	return new Uint8Array(bits)
+}
+
+/**
+ * Decrypt a private-key envelope with the RAW unlock-key bytes recovered
+ * from a passkey PRF envelope (passkey-vault-login §unlock step 7).
+ * Cryptographically identical to {@link decryptPrivateKey} — same
+ * AES-GCM over the same envelope — but keyed by the recovered raw key
+ * instead of re-deriving from the master password.
+ *
+ * @param {string} envelope Base64-encoded private-key envelope
+ * @param {Uint8Array} rawKey The raw 32-byte unlock key
+ * @return {Promise<string>} PEM-encoded private key
+ */
+export async function decryptPrivateKeyWithRawKey(envelope, rawKey) {
+	const { iv, ciphertextWithTag } = decodeEnvelope(envelope)
+	const key = await crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, ['decrypt'])
+	const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertextWithTag)
+	return new TextDecoder().decode(plaintext)
+}

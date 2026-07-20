@@ -59,6 +59,7 @@ class EncryptionSuiteController extends OCSController
         private MigrationService $migrationService,
         private LinkShareService $linkShareService,
         private IUserSession $userSession,
+        private ?\OCA\Doriath\Service\PasskeyService $passkeyService=null,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -206,7 +207,14 @@ class EncryptionSuiteController extends OCSController
             $this->validateOwnership(suite: $suite);
 
             $suite->setPrivateKey($encryptedPrivateKey);
+            // A routine master-password change re-wraps the private key under a
+            // new AES key, so every stored passkey unlock envelope now wraps a
+            // dead key. Advance the epoch and mark those envelopes stale
+            // (passkey-vault-login §D4).
+            $suite->setUnlockKeyEpoch($suite->getUnlockKeyEpoch() + 1);
             $this->suiteService->updateSuite($suite);
+            $this->passkeyService?->markStaleOnPasswordChange($suite->getOwnerId());
+
             return new JSONResponse(data: $suite->jsonSerialize());
         } catch (Exception $e) {
             return new JSONResponse(
@@ -326,6 +334,11 @@ class EncryptionSuiteController extends OCSController
                 oldSuiteId: $oldSuite->getId(),
                 newSuiteId: $newSuite->getId()
             );
+
+            // A new key pair invalidates every passkey unlock envelope (the
+            // wrapped unlock key can never open the new suite) — delete them
+            // all (passkey-vault-login §D4).
+            $this->passkeyService?->deleteAllOnRotation($userId);
 
             return new JSONResponse(
                 data: [

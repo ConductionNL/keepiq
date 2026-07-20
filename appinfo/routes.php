@@ -181,6 +181,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // app root with the correct JS MIME + app-root default scope.
     ['name' => 'serviceWorker#script', 'url' => '/serviceworker.js', 'verb' => 'GET'],
 
+    // Passkey vault login (passkey-vault-login §2.4) — owner-scoped,
+    // authenticated (the NC session is valid; only the vault is locked).
+    ['name' => 'passkey#index',        'url' => '/api/v1/passkeys',               'verb' => 'GET'],
+    ['name' => 'passkey#challenge',    'url' => '/api/v1/passkeys/challenge',     'verb' => 'GET'],
+    ['name' => 'passkey#create',       'url' => '/api/v1/passkeys',               'verb' => 'POST'],
+    ['name' => 'passkey#loginOptions', 'url' => '/api/v1/passkeys/login-options', 'verb' => 'GET'],
+    ['name' => 'passkey#used',         'url' => '/api/v1/passkeys/{id}/used',     'verb' => 'POST'],
+    ['name' => 'passkey#destroy',      'url' => '/api/v1/passkeys/{id}',          'verb' => 'DELETE'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],

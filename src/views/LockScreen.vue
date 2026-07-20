@@ -48,13 +48,26 @@
 
 				<!-- Normal unlock mode -->
 				<template v-else>
+					<NcButton
+						v-if="passkeyOffered"
+						type="primary"
+						:disabled="loading"
+						:wide="true"
+						data-testid="unlock-with-passkey"
+						@click="handlePasskeyUnlock">
+						<template #icon>
+							<KeyIcon :size="20" />
+						</template>
+						{{ loading ? t('doriath', 'Unlocking...') : t('doriath', 'Unlock with passkey') }}
+					</NcButton>
+
 					<NcPasswordField
 						v-model="masterPassword"
 						:label="t('doriath', 'Master password')"
 						:disabled="loading"
 						@keyup.enter="handleUnlock" />
 					<NcButton
-						type="primary"
+						:type="passkeyOffered ? 'secondary' : 'primary'"
 						:disabled="!masterPassword || loading"
 						:wide="true"
 						@click="handleUnlock">
@@ -73,10 +86,12 @@
 <script>
 import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
+import KeyIcon from 'vue-material-design-icons/Key.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
 import { useSessionStore } from '../store/modules/session.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
+import { usePasskeyStore } from '../store/modules/passkey.js'
 
 export default {
 	name: 'LockScreen',
@@ -85,6 +100,7 @@ export default {
 		NcNoteCard,
 		NcPasswordField,
 		LockIcon,
+		KeyIcon,
 		PasswordStrengthMeter,
 	},
 
@@ -95,6 +111,7 @@ export default {
 			loading: false,
 			error: null,
 			strengthValid: false,
+			passkeyOffered: false,
 		}
 	},
 
@@ -149,9 +166,34 @@ export default {
 	async created() {
 		await this.suiteStore.fetchSuite()
 		await this.suiteStore.fetchMigrationStatus()
+		// Offer passkey unlock only when WebAuthn is present AND the caller has
+		// an active enrolled passkey (feature-detected, never assumed).
+		if (this.offlineStore.online) {
+			this.passkeyOffered = await usePasskeyStore().isUnlockOffered()
+		}
 	},
 
 	methods: {
+		/**
+		 * Unlock the vault with a passkey (passkey-vault-login §4.1). On any
+		 * failure, fall back to the master-password field without leaving the
+		 * lock screen — the master password always works.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async handlePasskeyUnlock() {
+			this.loading = true
+			this.error = null
+			try {
+				await usePasskeyStore().unlockWithPasskey()
+				this.$router.push(this.$route.query.returnUrl || '/')
+			} catch (e) {
+				this.error = e?.message || t('doriath', 'Passkey unlock failed — use your master password')
+			} finally {
+				this.loading = false
+			}
+		},
+
 		/**
 		 * Derive the AES key from the master password, unlock the vault,
 		 * and redirect to the return URL (or root).
