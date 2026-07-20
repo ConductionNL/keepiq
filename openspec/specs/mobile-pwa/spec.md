@@ -1,10 +1,10 @@
 # Mobile PWA Specification
 
-**Status**: in-progress
+**Status**: done
 
 **Feature tier**: V1
 
-**OpenSpec changes:** [mobile-pwa](../../changes/mobile-pwa/)
+**OpenSpec changes:** [mobile-pwa](../../changes/archive/2026-07-20-mobile-pwa/)
 
 ## Purpose
 
