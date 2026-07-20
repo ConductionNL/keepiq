@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Db;
 
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -81,7 +82,7 @@ class HoneyAlertMapper extends QBMapper
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')
             ->from($this->getTableName())
-            ->where($qb->expr()->in('honey_flag_id', $qb->createNamedParameter($flagIds, IDBConnection::PARAM_STR_ARRAY)))
+            ->where($qb->expr()->in('honey_flag_id', $qb->createNamedParameter($flagIds, IQueryBuilder::PARAM_STR_ARRAY)))
             ->orderBy('accessed_at', 'DESC')
             ->setMaxResults($limit);
 
