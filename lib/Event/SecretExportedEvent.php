@@ -3,8 +3,9 @@
 /**
  * Doriath SecretExportedEvent
  *
- * Dispatched when a user completes a vault export (encrypted backup or
- * plaintext CSV). Because export runs client-side under the always-E2E model
+ * Dispatched when a user completes a vault export (encrypted backup, plaintext
+ * CSV, plaintext-file CXF, or HPKE-sealed CXP transfer). Because export runs
+ * client-side under the always-E2E model
  * (ADR-003), the browser reports the completed export to the server, which
  * emits this event for the session user only (secret-export-gdpr D5).
  *
@@ -39,7 +40,7 @@ class SecretExportedEvent extends Event
      * Constructor for SecretExportedEvent.
      *
      * @param string $userId      The session user that performed the export
-     * @param string $mode        The export mode (encrypted-backup|plaintext-csv|cxf)
+     * @param string $mode        The export mode (encrypted-backup|plaintext-csv|cxf|cxp)
      * @param string $scope       The export scope (vault|folders)
      * @param int    $secretCount The number of secrets exported
      *

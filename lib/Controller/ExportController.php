@@ -50,7 +50,7 @@ class ExportController extends Controller
      *
      * @var string[]
      */
-    private const MODES = ['encrypted-backup', 'plaintext-csv', 'cxf'];
+    private const MODES = ['encrypted-backup', 'plaintext-csv', 'cxf', 'cxp'];
 
     /**
      * The accepted export scopes.
