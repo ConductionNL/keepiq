@@ -114,6 +114,46 @@ export const useSecretStore = defineStore('secret', {
 		},
 
 		/**
+		 * Fetch the ENTIRE vault by paging within the server's per-request cap,
+		 * accumulating into `this.secrets`. The bulk export/transfer flows need
+		 * every secret; a single huge `limit` is rejected by the server (NC caps
+		 * a page at a few hundred rows), so we page in chunks of PAGE_SIZE until
+		 * the accumulated count reaches the reported total.
+		 *
+		 * @param {object} options Optional filters ({ folderId, typeId, search }).
+		 * @return {Promise<Array<object>>} the full secret list.
+		 */
+		async fetchAllSecrets(options = {}) {
+			// Offline: fetchSecrets already returns the whole cached snapshot.
+			const offline = useOfflineStore()
+			if (offline.servedFromCache && offline.vault) {
+				await this.fetchSecrets({ ...options, page: 1 })
+				return this.secrets
+			}
+
+			// Page THROUGH fetchSecrets so it stays the single API/offline seam:
+			// each call replaces `this.secrets` with one page and sets totalCount
+			// to the full total; we accumulate until we have them all.
+			const PAGE_SIZE = 100
+			const all = []
+			let page = 1
+			// Defensive bound; PAGE_SIZE * 100000 covers any realistic vault.
+			while (page <= 100000) {
+				await this.fetchSecrets({ ...options, page, limit: PAGE_SIZE })
+				const batch = this.secrets || []
+				all.push(...batch)
+				if (batch.length < PAGE_SIZE || all.length >= this.totalCount) {
+					break
+				}
+				page += 1
+			}
+			this.secrets = all
+			this.totalCount = all.length
+			this.page = 1
+			return all
+		},
+
+		/**
 		 * Whether an error is a browser network failure (offline).
 		 *
 		 * @param {Error} e The caught error.
