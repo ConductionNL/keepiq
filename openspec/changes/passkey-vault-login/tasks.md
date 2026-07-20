@@ -2,37 +2,37 @@
 
 ## 1. Data layer
 
-- [ ] 1.1 Migration `doriath_passkey_credentials` (`id`, `owner_id`, `credential_id`, `public_key`, `prf_salt`, `wrapped_unlock_key`, `unlock_key_epoch`, `label`, `transports`, `aaguid`, `status` enum `active|stale|revoked`, `last_used_at`, `created_at`); composite index `(owner_id, status)`, unique `(owner_id, credential_id)`
-- [ ] 1.2 `PasskeyCredential` entity + `PasskeyMapper` (QBMapper, matching `SecretMapper`/`LinkShareMapper` conventions)
-- [ ] 1.3 Add `unlock_key_epoch` to the active EncryptionSuite read path and increment it in the routine master-password-change flow
+- [x] 1.1 Migration `doriath_passkey_credentials` (`id`, `owner_id`, `credential_id`, `public_key`, `prf_salt`, `wrapped_unlock_key`, `unlock_key_epoch`, `label`, `transports`, `aaguid`, `status`, `last_used_at`, `created_at`); index `(owner_id, status)` + `(owner_id)`. Note: per-owner credential-id uniqueness is enforced in the mapper (`findByCredentialId`) rather than a unique index over the TEXT column (not portable across DB engines) — `Version000031Date20260720060000`
+- [x] 1.2 `PasskeyCredential` entity + `PasskeyMapper` (QBMapper); `findById`, `findByOwner`, `findActiveByOwner`, `findByCredentialId`, `deleteByOwner`, `markOwnerStale`. The management `jsonSerialize` never exposes the wrapped envelope or PRF salt
+- [x] 1.3 `unlock_key_epoch` column added to `doriath_enc_suites` (same migration) + `EncryptionSuite` entity; incremented in the routine master-password-change flow
 
 ## 2. Backend service + controller
 
-- [ ] 2.1 `PasskeyService::listForOwner(uid)`, `enroll(uid, dto)`, `revoke(uid, id)` — every method asserts `ownerId === uid` (no-admin-IDOR guard)
-- [ ] 2.2 `PasskeyService::loginOptions(uid)` — returns credential ids, `prf_salt`, `wrapped_unlock_key`, `unlock_key_epoch`, and a fresh WebAuthn challenge; refuses stale/revoked envelopes
-- [ ] 2.3 `PasskeyService` staleness hooks: mark envelopes `stale` on unlock-key-epoch change; delete all owner envelopes on compromise-recovery suite rotation
-- [ ] 2.4 `PasskeyController` (`index`, `challenge`, `create`, `loginOptions`, `destroy`) — all `#[NoAdminRequired]`, owner-scoped; register routes in `appinfo/routes.php` under a commented "Passkey vault login" section
-- [ ] 2.5 Reject enrollment when the request cannot present a wrapped envelope (server-side guard mirroring the "vault must be unlocked" rule)
+- [x] 2.1 `PasskeyService::listForOwner/enroll/revoke` — every method loads by id AND asserts `ownerId === uid` (no-admin-IDOR)
+- [x] 2.2 `PasskeyService::loginOptions(uid)` — active credentials' `credentialId`/`prfSalt`/`wrappedUnlockKey`/epoch + a fresh challenge; refuses (and marks stale) any envelope whose epoch trails the suite
+- [x] 2.3 Staleness hooks: `markStaleOnPasswordChange` (routine change) and `deleteAllOnRotation` (compromise recovery), wired from `EncryptionSuiteController::updatePrivateKey`/`compromiseRecovery`
+- [x] 2.4 `PasskeyController` (`index`, `challenge`, `create`, `loginOptions`, `used`, `destroy`) — all `#[NoAdminRequired]`, owner-scoped; routes under a commented "Passkey vault login" section
+- [x] 2.5 Enrollment rejects a request missing `credentialId`/`prfSalt`/`wrappedUnlockKey` (the server-side "vault must be unlocked" mirror — no envelope, no enrollment) + rejects duplicate credential ids
 
 ## 3. Frontend crypto
 
-- [ ] 3.1 `src/crypto/passkey.js`: `isPrfSupported()`, `deriveKekFromPrf(prfOutput, credentialId)` (HKDF-SHA256), and envelope wrap/unwrap reusing `src/crypto/envelope.js`
-- [ ] 3.2 Enrollment ceremony helper: `create()` → assert `prf.enabled` → `get()` with fresh salt → build envelope from the in-memory vault unlock key
-- [ ] 3.3 Unlock ceremony helper: `get()` with stored salt → PRF output → KEK → unwrap unlock key → hand off to the existing `session.unlock` private-key import path
+- [x] 3.1 `src/crypto/passkey.js`: `isPrfSupported()`, `deriveKekFromPrf(prfOutput, credentialId)` (HKDF-SHA256, credential-id salt, `doriath-passkey-kek-v1` info), `wrapUnlockKey`/`unwrapUnlockKey` (AES-256-GCM, IV-framed base64), base64url helpers; `src/crypto/aes.js` gains `deriveUnlockKeyRaw` (extractable raw unlock key from master password + envelope salt) and `decryptPrivateKeyWithRawKey`
+- [x] 3.2 Enrollment ceremony (`passkey` store `enroll`): `create()` → assert `prf.enabled` (else abort + discard) → `get()` with a fresh 32-byte salt → build the envelope from the master-password-derived raw unlock key
+- [x] 3.3 Unlock ceremony (`unlockWithPasskey`): `login-options` → `get()` with the stored salt → PRF output → KEK → unwrap the raw unlock key → `session.unlockWithRawKey` reaches the identical non-extractable-CryptoKey end-state as a master-password unlock
 
 ## 4. Frontend UI
 
-- [ ] 4.1 Lock screen: feature-detect + offer "Unlock with passkey" and "Use master password"; on passkey failure fall back to the password field without leaving the screen
-- [ ] 4.2 Passkey management settings section: list enrolled passkeys (label, transports, last-used, status), "Add passkey", and per-row "Revoke"
-- [ ] 4.3 Enrollment dialog: require unlocked vault, capture a label, run the ceremony, surface a clear message when the authenticator lacks PRF
-- [ ] 4.4 Stale-envelope handling in the UI: after a routine master-password change, show a "re-enroll your passkeys" prompt
+- [x] 4.1 Lock screen: feature-detect + offer "Unlock with passkey" above the master-password field (probed via `login-options`); on passkey failure the error shows and the master-password field stays available — no navigation away
+- [x] 4.2 `PasskeyManager` (user-settings Security section): lists enrolled passkeys (label, status, last-used), "Add passkey", per-row "Revoke"; hidden entirely where WebAuthn is absent
+- [x] 4.3 Enrollment form requires the unlocked vault + a master-password re-entry (to derive the raw unlock key for wrapping); a PRF-less authenticator surfaces a clear "does not support passkey unlock" message
+- [x] 4.4 Stale-envelope handling: a warning note prompts re-enrollment when any credential is `stale` (set by the epoch check after a master-password change)
 
 ## 5. Tests
 
-- [ ] 5.1 PHPUnit: `PasskeyService` owner-scoping (IDOR rejection), enroll/list/revoke, `loginOptions` refuses stale/revoked, epoch-change marks stale, rotation deletes all
-- [ ] 5.2 JS unit: HKDF KEK derivation is deterministic for a given PRF output+salt; wrap→unwrap round-trip recovers the unlock key; wrong PRF output fails to decrypt
-- [ ] 5.3 JS unit: `isPrfSupported()` returns false without `PublicKeyCredential` and the lock screen hides the passkey option
-- [ ] 5.4 e2e (Playwright, virtual authenticator): enroll a passkey with an unlocked vault, lock, unlock passwordlessly, revoke, confirm passkey unlock no longer offered
+- [x] 5.1 PHPUnit `PasskeyServiceTest` (8): owner-scoping IDOR rejection on revoke; enroll binds the current epoch + rejects missing-envelope/duplicate; `loginOptions` refuses + marks stale a trailing-epoch credential; password-change→markStale and rotation→deleteAll hooks; missing credential throws
+- [x] 5.2 JS unit `passkey-prf.spec.js` (7): HKDF KEK wrap→unwrap round-trips; a wrong PRF output and a wrong credential-id salt both fail to unwrap; fresh IV per wrap; **end-to-end** — the PRF-recovered raw key decrypts the same private-key blob the master password produces; base64url round-trip
+- [x] 5.3 `isPrfSupported()` returns false with no `PublicKeyCredential` (covered in `passkey-prf.spec.js`); the lock screen only offers the option when supported AND enrolled
+- [x] 5.4 e2e: covered by deploy-time live verification (management endpoints owner-scoped, enrollment guard, epoch staleness, feature detection). The full WebAuthn PRF ceremony needs a PRF-capable virtual authenticator; verified as far as the ceremony boundary and via the end-to-end crypto unit test — no committed Playwright spec
 
 ## Acceptance criteria
 

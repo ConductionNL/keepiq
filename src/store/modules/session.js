@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
-import { deriveAesKey } from '../../crypto/aes.js'
+import { deriveAesKey, decryptPrivateKeyWithRawKey } from '../../crypto/aes.js'
 import { decodeEnvelope } from '../../crypto/envelope.js'
 
 const DEFAULT_TIMEOUT = 600000 // 10 minutes
@@ -110,6 +110,33 @@ export const useSessionStore = defineStore('session', {
 			this.encryptedPrivateKey = privateKeyEnvelope
 			this.certificate = certificate
 			this.suiteId = suiteId
+			this.lastActivity = Date.now()
+		},
+
+		/**
+		 * Unlock the vault from a raw unlock-key recovered via a passkey PRF
+		 * envelope (passkey-vault-login §unlock steps 7-8). Reaches the exact
+		 * same end-state as a master-password unlock — a non-extractable RSA
+		 * CryptoKey in memory — with no master password involved.
+		 *
+		 * @param {Uint8Array} rawUnlockKey The recovered raw vault unlock key.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/passkey-vault-login/specs/passkey-vault-login/spec.md#requirement-passkey-unlock
+		 */
+		async unlockWithRawKey(rawUnlockKey) {
+			const response = await axios.get(generateUrl('/apps/doriath/api/v1/suites'))
+			const activeSuite = response.data.find(s => s.status === 'active')
+			if (!activeSuite) {
+				throw new Error('No active EncryptionSuite found')
+			}
+
+			const privateKeyPem = await decryptPrivateKeyWithRawKey(activeSuite.privateKey, rawUnlockKey)
+			this.cryptoKey = await importPrivateKey(privateKeyPem)
+			// The raw unlock key IS the AES metadata key (offline cache §D1).
+			this.aesKey = await crypto.subtle.importKey('raw', rawUnlockKey, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+			this.encryptedPrivateKey = activeSuite.privateKey
+			this.certificate = activeSuite.certificate
+			this.suiteId = activeSuite.id
 			this.lastActivity = Date.now()
 		},
 
