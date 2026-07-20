@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
+import { deriveAesKey } from '../../crypto/aes.js'
+import { decodeEnvelope } from '../../crypto/envelope.js'
 
 const DEFAULT_TIMEOUT = 600000 // 10 minutes
 
@@ -68,19 +70,46 @@ export const useSessionStore = defineStore('session', {
 				throw new Error('No active EncryptionSuite found')
 			}
 
-			// Decrypt the private key using the master password (all in browser).
-			const privateKeyPem = await decryptPrivateKey(
-				activeSuite.privateKey,
+			await this.unlockFromBlob({
+				privateKeyEnvelope: activeSuite.privateKey,
+				certificate: activeSuite.certificate,
+				suiteId: activeSuite.id,
 				masterPassword,
-			)
+			})
+		},
+
+		/**
+		 * Shared unlock from a private-key envelope — used by both the online
+		 * path (suite fetched from the API) and the offline path (suite blob
+		 * read from the IndexedDB snapshot). Cryptographically identical: same
+		 * master-password KDF, same non-extractable CryptoKey. Also derives the
+		 * vault unlock AES key (offline-readonly-cache §2.2 / D1) used to
+		 * encrypt/decrypt cached plaintext metadata at rest.
+		 *
+		 * @param {object} params The unlock inputs.
+		 * @param {string} params.privateKeyEnvelope The AES-wrapped private-key envelope.
+		 * @param {string} params.certificate The suite certificate PEM.
+		 * @param {string} params.suiteId The suite id.
+		 * @param {string} params.masterPassword The master password (never leaves the browser).
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-offline-unlock
+		 */
+		async unlockFromBlob({ privateKeyEnvelope, certificate, suiteId, masterPassword }) {
+			// Decrypt the private key using the master password (all in browser).
+			const privateKeyPem = await decryptPrivateKey(privateKeyEnvelope, masterPassword)
 
 			// Import as non-extractable CryptoKey.
 			const cryptoKey = await importPrivateKey(privateKeyPem)
 
+			// Derive the vault unlock AES key from the SAME salt the private-key
+			// envelope carries — this key encrypts cached metadata at rest.
+			const { salt } = decodeEnvelope(privateKeyEnvelope)
+			this.aesKey = await deriveAesKey(masterPassword, salt)
+
 			this.cryptoKey = cryptoKey
-			this.encryptedPrivateKey = activeSuite.privateKey
-			this.certificate = activeSuite.certificate
-			this.suiteId = activeSuite.id
+			this.encryptedPrivateKey = privateKeyEnvelope
+			this.certificate = certificate
+			this.suiteId = suiteId
 			this.lastActivity = Date.now()
 		},
 
