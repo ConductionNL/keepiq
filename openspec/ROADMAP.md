@@ -25,7 +25,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Machine Secret Leases](specs/machine-secret-leases/spec.md) | done — 2026-07-18 | 15 — NHI segment | [archive](changes/archive/2026-07-18-machine-secret-leases/) |
 | [Extension Passkey Provider](specs/extension-passkey-provider/spec.md) | in-progress | 16 — makes passkeys usable | [extension-passkey-provider](changes/extension-passkey-provider/) |
 | [Extension TOTP Autofill](specs/extension-totp-autofill/spec.md) | in-progress | 17 | [extension-totp-autofill](changes/extension-totp-autofill/) |
-| [Passkey Vault Login](specs/passkey-vault-login/spec.md) | in-progress | 18 — PRF frontier | [passkey-vault-login](changes/passkey-vault-login/) |
+| [Passkey Vault Login](specs/passkey-vault-login/spec.md) | done | 18 — PRF frontier | [passkey-vault-login](changes/archive/2026-07-20-passkey-vault-login/) |
 | [Offline Read-only Cache](specs/offline-readonly-cache/spec.md) | done | 19 | [offline-readonly-cache](changes/archive/2026-07-20-offline-readonly-cache/) |
 | [Folder Permission Grades](specs/folder-permission-grades/spec.md) | done — 2026-07-18 | 20 — after team folders | [archive](changes/archive/2026-07-18-folder-permission-grades/) |
 | [Ephemeral Send](specs/ephemeral-send/spec.md) | done — 2026-07-18 | 21 | [archive](changes/archive/2026-07-18-ephemeral-send/) |
