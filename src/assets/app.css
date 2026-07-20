@@ -4,3 +4,58 @@
 #content {
 	height: 100%;
 }
+
+/*
+ * Mobile-first PWA touch + responsive audit (mobile-pwa §4).
+ * A single narrow-viewport breakpoint drives single-column layout and a
+ * 44×44 CSS-px minimum touch target on the vault-critical controls
+ * (WCAG 2.5.5 / Apple HIG). NL Design System tokens only — no hardcoded
+ * colours, no fixed pixel widths that overflow a small screen.
+ */
+
+/* Never let app content force horizontal scroll on a phone. */
+#content,
+#content [data-testid="cn-page"],
+#content [data-testid="cn-index-page"] {
+	max-width: 100%;
+	overflow-x: hidden;
+}
+
+/* Wide content that genuinely needs it scrolls inside its own container. */
+#content .secret-detail__extra,
+#content table {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+@media (max-width: 500px) {
+	/* Stack the vault-detail actions and field rows in one column. */
+	#content .secret-detail__actions,
+	#content .secret-list-view__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	#content .secret-detail__actions .button-vue,
+	#content .secret-list-view__actions .button-vue {
+		width: 100%;
+	}
+
+	/* Full-width, one-handed lock/unlock + search on a phone. */
+	#content .lock-screen__form,
+	#content .lock-screen input,
+	#content .secret-list-view__search input {
+		width: 100%;
+	}
+
+	/* 44px minimum touch target on the reveal (eye), copy, and TOTP
+	   controls — the most-tapped one-handed actions. */
+	#content .button-vue,
+	#content .copy-button button,
+	#content .password-field button,
+	#content .totp-display button,
+	#content [role="button"] {
+		min-height: 44px;
+		min-width: 44px;
+	}
+}
