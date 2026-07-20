@@ -1,11 +1,11 @@
 # Passkey Vault Login Specification
 
-**Status**: in-progress
+**Status**: done
 
 **Standards**: WebAuthn Level 2 (`prf` extension / CTAP2 `hmac-secret`), WebCrypto (HKDF-SHA256, AES-256-GCM)
 **Feature tier**: V1
 
-**OpenSpec changes:** [passkey-vault-login](../../changes/passkey-vault-login/)
+**OpenSpec changes:** [passkey-vault-login](../../changes/archive/2026-07-20-passkey-vault-login/)
 
 ## Purpose
 
