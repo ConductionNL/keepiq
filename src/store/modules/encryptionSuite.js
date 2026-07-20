@@ -132,6 +132,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			this.migrationStatus = response.data.migration
 			this.currentSuite = response.data.newSuite
 
+			// Suite rotation invalidates every cached ciphertext (encrypted to
+			// the now-dead key) — evict the offline snapshot (offline-readonly-
+			// cache §D4). Lazy import avoids a static store cycle.
+			try {
+				const { useOfflineStore } = await import('./offline.js')
+				await useOfflineStore().evict()
+			} catch (e) {
+				// Offline cache absent — nothing to evict.
+			}
+
 			// If there are no secrets to migrate, complete the migration immediately.
 			// When secrets exist, the browser will decrypt/re-encrypt each one
 			// and then call completeMigration.
@@ -167,6 +177,14 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			)
 
 			this.currentSuite = response.data
+
+			// A revoked suite must not leave a readable offline copy behind.
+			try {
+				const { useOfflineStore } = await import('./offline.js')
+				await useOfflineStore().evict()
+			} catch (e) {
+				// Offline cache absent — nothing to evict.
+			}
 		},
 
 		/**

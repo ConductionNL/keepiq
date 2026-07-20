@@ -56,6 +56,9 @@ export async function encryptSnapshot(aesKey, manifest) {
 		},
 		secrets,
 		folders,
+		// Secret type definitions are shared, non-secret metadata (labels the
+		// list schema needs) — stored as-is, not encrypted.
+		types: manifest.types || [],
 		syncedAt: manifest.syncedAt,
 	}
 }
@@ -91,5 +94,5 @@ export async function decryptSnapshot(aesKey, snapshot) {
 		return { id: f.id, parentId: f.parentId, name: meta.name }
 	}))
 
-	return { suite: snapshot.suite, secrets, folders, syncedAt: snapshot.syncedAt }
+	return { suite: snapshot.suite, secrets, folders, types: snapshot.types || [], syncedAt: snapshot.syncedAt }
 }
