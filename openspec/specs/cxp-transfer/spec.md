@@ -1,8 +1,10 @@
 # CXP Transfer Specification
 
-**Status**: in-progress
+**Status**: done
 
-**OpenSpec changes:** [openspec/changes/cxp-transfer](../../changes/cxp-transfer/)
+**OpenSpec changes:** [archive/2026-07-20-cxp-transfer](../../changes/archive/2026-07-20-cxp-transfer/)
+
+> Implemented in `src/crypto/{hpke,cxp}.js`, `src/dialogs/CxpTransferDialog.vue`, `lib/Controller/CxpRelayController.php` (GitHub PR #112; v0.2.26). RFC 9180 A.1 KAT-anchored; live-verified end to end between two browser sessions through the real relay.
 
 ## Purpose
 
