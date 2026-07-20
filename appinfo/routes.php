@@ -173,6 +173,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'honey#acknowledge', 'url' => '/api/v1/honey/alerts/{id}/acknowledge', 'verb' => 'POST'],
     ['name' => 'honey#snooze',      'url' => '/api/v1/honey/alerts/{id}/snooze',     'verb' => 'POST'],
 
+    // Offline cache (offline-readonly-cache §1.4) — owner-scoped
+    // consolidated snapshot; 403 when the admin off switch is set.
+    ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],

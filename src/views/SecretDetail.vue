@@ -99,7 +99,10 @@
 				</dl>
 			</div>
 
-			<div class="secret-detail__actions">
+			<div v-if="offlineReadOnly" class="secret-detail__offline-note" data-testid="secret-detail-offline-note">
+				{{ t('doriath', 'Read-only while offline — reconnect to edit, move, share, or delete.') }}
+			</div>
+			<div v-else class="secret-detail__actions">
 				<NcButton type="primary" @click="openEdit">
 					<template #icon>
 						<Pencil :size="20" />
@@ -230,6 +233,7 @@ import SecretRequestList from '../components/secretRequest/SecretRequestList.vue
 import SecretActivityTab from '../components/SecretActivityTab.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 
 /**
  * The secret detail view. Encrypted fields are decrypted client-side on load
@@ -386,6 +390,16 @@ export default {
 			// fallback to userId for legacy responses.
 			const owner = this.secret.ownerId ?? this.secret.owner_id ?? this.secret.userId
 			return owner === this.currentUserId
+		},
+
+		/**
+		 * Whether the vault is served from the offline cache (read-only) —
+		 * all write actions on the detail are hidden (offline-readonly-cache §4.2).
+		 *
+		 * @return {boolean}
+		 */
+		offlineReadOnly() {
+			return useOfflineStore().readOnly
 		},
 
 		/**

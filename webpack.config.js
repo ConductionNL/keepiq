@@ -35,6 +35,13 @@ webpackConfig.entry = {
 		import: path.join(__dirname, 'src', 'settings.js'),
 		filename: appId + '-settings.js',
 	},
+	// Offline app-shell service worker (offline-readonly-cache §3). Emitted
+	// as a standalone script (no runtime chunk imports) so it can be
+	// registered at a stable URL and precache the shell.
+	serviceWorker: {
+		import: path.join(__dirname, 'src', 'offline', 'service-worker.js'),
+		filename: appId + '-service-worker.js',
+	},
 }
 
 // Use local source when available (monorepo dev), otherwise fall back to npm package
@@ -130,7 +137,10 @@ webpackConfig.optimization = {
 	...(webpackConfig.optimization || {}),
 	splitChunks: {
 		...(webpackConfig.optimization?.splitChunks || {}),
-		chunks: 'all',
+		// The service worker must stay a self-contained script — exclude it
+		// from shared-chunk extraction so it never references a chunk it
+		// cannot import at the SW scope (offline-readonly-cache §3).
+		chunks: (chunk) => chunk.name !== 'serviceWorker',
 		cacheGroups: {
 			default: false,
 			defaultVendors: false,

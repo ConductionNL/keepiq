@@ -59,6 +59,8 @@ class SettingsService
         'ca_auto_renew_enabled'   => 'bool',
         'audit_retention_days'    => 'int',
         'breach_check_enabled'    => 'bool',
+        // Offline read-only cache org-wide off switch (offline-readonly-cache §1.1).
+        'offline_cache_enabled'   => 'bool',
     ];
 
     /**
@@ -82,6 +84,9 @@ class SettingsService
         // Per-user max credential age in days (rotation-expiry-policies
         // §2.2); '0' = off. Feeds effective-expiry resolution.
         'expiry_max_age_days'   => '0',
+        // Offline read-only cache per-device opt-out (offline-readonly-cache
+        // §1.2); default on, gated behind the admin org-wide switch.
+        'offline_cache_optin'   => '1',
     ];
 
     /**
@@ -197,6 +202,8 @@ class SettingsService
                 'lease_revocation_blocks_refetch',
                 false
             ),
+            // Offline read-only cache (offline-readonly-cache §1.1) — default on.
+            'offline_cache_enabled'           => $this->appConfig->getValueBool($appId, 'offline_cache_enabled', true),
         ];
 
         // Best-effort CA status; never blocks if the service is unavailable.
@@ -278,6 +285,11 @@ class SettingsService
 
         if (isset($data['breach_check_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
+        }
+
+        // Offline read-only cache org-wide switch (offline-readonly-cache §1.1).
+        if (isset($data['offline_cache_enabled']) === true) {
+            $this->appConfig->setValueBool($appId, 'offline_cache_enabled', (bool) $data['offline_cache_enabled']);
         }
 
         $this->updatePolicySettings(data: $data);

@@ -75,6 +75,7 @@ import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
 import { useSessionStore } from '../store/modules/session.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 
 export default {
@@ -98,6 +99,12 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia offline store with no domain logic.
+		 */
+		offlineStore() {
+			return useOfflineStore()
+		},
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia session store with no domain logic.
 		 */
@@ -156,15 +163,43 @@ export default {
 			this.error = null
 
 			try {
-				await this.sessionStore.unlock(this.masterPassword)
+				if (this.offlineStore.online) {
+					await this.sessionStore.unlock(this.masterPassword)
+				} else {
+					// Offline unlock from the cached snapshot — no server request;
+					// the master password never leaves the browser (offline §4.1).
+					await this.offlineStore.unlockOffline(this.masterPassword)
+				}
 				const returnUrl = this.$route.query.returnUrl || '/'
 				this.$router.push(returnUrl)
 			} catch (e) {
+				// When an online unlock fails on a network error, fall back to the
+				// offline snapshot (covers "online but server unreachable").
+				if (this.offlineStore.online && this.isNetworkError(e)) {
+					try {
+						await this.offlineStore.unlockOffline(this.masterPassword)
+						this.$router.push(this.$route.query.returnUrl || '/')
+						return
+					} catch (offlineError) {
+						// fall through to the generic error below
+					}
+				}
 				this.error = t('doriath', 'Wrong master password or decryption failed')
 			} finally {
 				this.loading = false
 				this.masterPassword = ''
 			}
+		},
+
+		/**
+		 * Whether an unlock error is a network failure (server unreachable)
+		 * rather than a wrong password — used to trigger the offline fallback.
+		 *
+		 * @param {Error} e The unlock error.
+		 * @return {boolean}
+		 */
+		isNetworkError(e) {
+			return !!e && (e.message === 'Network Error' || e.code === 'ERR_NETWORK' || (e.request && !e.response))
 		},
 
 		/**
