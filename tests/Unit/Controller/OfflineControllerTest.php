@@ -26,6 +26,7 @@ use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Db\SecretTypeMapper;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -47,6 +48,8 @@ class OfflineControllerTest extends TestCase
 
     private FolderMapper&MockObject $folderMapper;
 
+    private SecretTypeMapper&MockObject $typeMapper;
+
     private IAppConfig&MockObject $appConfig;
 
     private IUserSession&MockObject $userSession;
@@ -62,6 +65,7 @@ class OfflineControllerTest extends TestCase
         $this->suiteMapper  = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
         $this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
         $this->folderMapper = $this->createMock(originalClassName: FolderMapper::class);
+        $this->typeMapper   = $this->createMock(originalClassName: SecretTypeMapper::class);
         $this->appConfig    = $this->createMock(originalClassName: IAppConfig::class);
         $this->userSession  = $this->createMock(originalClassName: IUserSession::class);
 
@@ -74,6 +78,7 @@ class OfflineControllerTest extends TestCase
             suiteMapper: $this->suiteMapper,
             secretMapper: $this->secretMapper,
             folderMapper: $this->folderMapper,
+            typeMapper: $this->typeMapper,
             appConfig: $this->appConfig,
             userSession: $this->userSession,
         );
@@ -129,6 +134,9 @@ class OfflineControllerTest extends TestCase
         $folder->setName('Servers');
         $this->folderMapper->expects($this->once())->method('findByOwner')
             ->with('user', 'alice')->willReturn([$folder]);
+
+        $this->typeMapper->expects($this->once())->method('findAvailableForUser')
+            ->with('alice')->willReturn([]);
 
         $data = $this->controller->manifest()->getData();
 

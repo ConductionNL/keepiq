@@ -177,6 +177,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
 
+    // Offline service worker (offline-readonly-cache §3) — served from the
+    // app root with the correct JS MIME + app-root default scope.
+    ['name' => 'serviceWorker#script', 'url' => '/serviceworker.js', 'verb' => 'GET'],
+
     // Ephemeral send (ephemeral-send §4): authenticated owner surface +
     // anonymous two-phase access (peek/access/confirm/failure).
     ['name' => 'ephemeralSend#create',  'url' => '/api/v1/sends',      'verb' => 'POST'],

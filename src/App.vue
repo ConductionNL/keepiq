@@ -495,8 +495,11 @@ export default {
 			if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
 				return
 			}
-			const swUrl = generateUrl('/apps/doriath/js/doriath-service-worker.js')
-			navigator.serviceWorker.register(swUrl, { scope: generateUrl('/apps/doriath/') })
+			// Served by ServiceWorkerController at the app root so the browser
+			// gets the correct JS MIME and the worker's default scope is the
+			// whole SPA (offline-readonly-cache §3.2).
+			const swUrl = generateUrl('/apps/doriath/serviceworker.js')
+			navigator.serviceWorker.register(swUrl)
 				.catch(() => {
 					// Online-only fallback; the offline cache is simply absent.
 				})
