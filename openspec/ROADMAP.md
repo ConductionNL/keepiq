@@ -34,7 +34,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Org Password Policies](specs/org-password-policies/spec.md) | done — 2026-07-18 | 24 | [archive](changes/archive/2026-07-18-org-password-policies/) |
 | [Card & Identity Items](specs/card-identity-items/spec.md) | done — 2026-07-18 | 25 | [archive](changes/archive/2026-07-18-card-identity-items/) |
 | [Bulk Actions](specs/bulk-actions/spec.md) | done — 2026-07-18 | 26 | [archive](changes/archive/2026-07-18-bulk-actions/) |
-| [Mobile PWA](specs/mobile-pwa/spec.md) | in-progress | 27 | [mobile-pwa](changes/mobile-pwa/) |
+| [Mobile PWA](specs/mobile-pwa/spec.md) | done | 27 | [mobile-pwa](changes/archive/2026-07-20-mobile-pwa/) |
 | [Doriath CLI](specs/doriath-cli/spec.md) | in-progress | 28 | [doriath-cli](changes/doriath-cli/) |
 | [CXP Transfer](specs/cxp-transfer/spec.md) | in-progress | 29 — after CXF | [cxp-transfer](changes/cxp-transfer/) |
 | [Certificate Lifecycle](specs/certificate-lifecycle/spec.md) | done | 30 | [certificate-lifecycle](changes/archive/2026-07-18-certificate-lifecycle/) |
