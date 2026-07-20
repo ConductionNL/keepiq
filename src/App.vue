@@ -143,6 +143,30 @@
 						</template>
 					</NcEmptyContent>
 				</NcAppSettingsSection>
+
+				<NcAppSettingsSection
+					id="browser-extension"
+					:name="t('doriath', 'Browser extension')">
+					<template #icon>
+						<PuzzleIcon :size="20" />
+					</template>
+					<p>
+						{{ t('doriath', 'The Doriath browser extension autofills your logins, provides passkeys, and shows TOTP codes — decrypting everything inside the extension. The server only ever ships encrypted blobs, so your master password and secrets never leave your device.') }}
+					</p>
+					<ol class="user-settings__steps">
+						<li>{{ t('doriath', 'Install the Doriath extension for your browser.') }}</li>
+						<li>{{ t('doriath', 'Create a dedicated app password in Nextcloud security settings (never use your login password).') }}</li>
+						<li>{{ t('doriath', 'In the extension, enter this server URL, your username, and the app password, then unlock with your master password.') }}</li>
+					</ol>
+					<div class="user-settings__field">
+						<NcButton :href="securitySettingsUrl" type="secondary">
+							{{ t('doriath', 'Open Nextcloud security settings') }}
+						</NcButton>
+					</div>
+					<p class="user-settings__hint">
+						{{ t('doriath', 'Revoke the app password in Nextcloud security settings at any time to disconnect the extension.') }}
+					</p>
+				</NcAppSettingsSection>
 			</template>
 		</CnAppRoot>
 	</div>
@@ -157,6 +181,7 @@ import { NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcSelect, N
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
+import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
@@ -207,6 +232,7 @@ export default {
 		TimerIcon,
 		ShieldIcon,
 		KeyIcon,
+		PuzzleIcon,
 		MasterPasswordForm,
 		PasskeyManager,
 		CompromiseRecoveryForm,
@@ -278,6 +304,16 @@ export default {
 		 */
 		permissions() {
 			return window.OC?.currentUser?.permissions ?? []
+		},
+
+		/**
+		 * Link to Nextcloud personal security settings, where the extension's
+		 * app password is created and revoked (browser-extension-autofill §5.1).
+		 *
+		 * @return {string}
+		 */
+		securitySettingsUrl() {
+			return generateUrl('/settings/user/security')
 		},
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia session store with no domain logic.
