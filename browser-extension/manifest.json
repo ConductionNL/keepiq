@@ -9,9 +9,12 @@
     "tabs",
     "scripting",
     "clipboardWrite",
-    "idle"
+    "idle",
+    "windows"
   ],
-  "optional_permissions": [],
+  "optional_permissions": [
+    "webAuthenticationProxy"
+  ],
   "host_permissions": [
     "http://*/*",
     "https://*/*"
@@ -30,6 +33,12 @@
       "all_frames": true,
       "run_at": "document_idle",
       "js": ["content-script.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inpage-shim.js"],
+      "matches": ["http://*/*", "https://*/*"]
     }
   ],
   "content_security_policy": {
