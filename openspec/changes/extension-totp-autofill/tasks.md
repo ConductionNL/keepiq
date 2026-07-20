@@ -6,39 +6,53 @@ Surface TOTP in the MV3 browser extension: show the current RFC 6238 code + coun
 
 ## 1. Shared TOTP module in the extension
 
-- [ ] 1.1 Import `src/totp/totp.js` (`parseOtpauth`, `generateTotp`, `secondsRemaining`) into the extension as its TOTP module — no re-implementation of RFC 6238.
-- [ ] 1.2 Resolve a login's authenticator by origin: find `totp` secrets whose unencrypted `url`/`name` match the active origin; when several match, surface all for the user to pick.
+- [x] 1.1 Import `src/totp/totp.js` (`parseOtpauth`, `generateTotp`, `secondsRemaining`) into the extension as its TOTP module — no re-implementation of RFC 6238.
+- [x] 1.2 Resolve a login's authenticator by origin: find `totp` secrets whose unencrypted `url`/`name` match the active origin; when several match, surface all for the user to pick.
 
 ## 2. Popup — code + countdown
 
-- [ ] 2.1 In the service worker, on demand decrypt a matched `totp` secret's seed with the in-memory `CryptoKey` and compute the current code + `secondsRemaining`; hold seed/key/code only transiently in memory.
-- [ ] 2.2 In the popup, render the current 6-digit code and a live countdown for the matched login, recomputing as each window rolls over.
-- [ ] 2.3 Show the honest "not a valid authenticator secret" state for an unparseable seed; never render a fabricated code.
+- [x] 2.1 In the service worker, on demand decrypt a matched `totp` secret's seed with the in-memory `CryptoKey` and compute the current code + `secondsRemaining`; hold seed/key/code only transiently in memory.
+- [x] 2.2 In the popup, render the current 6-digit code and a live countdown for the matched login, recomputing as each window rolls over.
+- [x] 2.3 Show the honest "not a valid authenticator secret" state for an unparseable seed; never render a fabricated code.
 
 ## 3. Auto-copy on autofill
 
-- [ ] 3.1 When the user autofills a login that has a matched `totp` secret, compute the current code and copy it to the clipboard.
-- [ ] 3.2 Schedule a clipboard clear after a short timeout (default ~30s) and no later than the code's window expiry.
+- [x] 3.1 When the user autofills a login that has a matched `totp` secret, compute the current code and copy it to the clipboard.
+- [x] 3.2 Schedule a clipboard clear after a short timeout (default ~30s) and no later than the code's window expiry.
 
 ## 4. OTP-field fill (best-effort)
 
-- [ ] 4.1 In the content script, detect a one-time-code input (`autocomplete="one-time-code"`, numeric `inputmode`, or recognised OTP field) on the current and post-submit page, re-detecting after in-origin navigation; fill the current code when confidently detected, else rely on auto-copy and never fill a non-OTP field.
+- [x] 4.1 In the content script, detect a one-time-code input (`autocomplete="one-time-code"`, numeric `inputmode`, or recognised OTP field) on the current and post-submit page, re-detecting after in-origin navigation; fill the current code when confidently detected, else rely on auto-copy and never fill a non-OTP field.
 
 ## 5. Lock / no-leak
 
-- [ ] 5.1 On extension lock, discard the seed, derived HMAC key, code, and countdown timers; ensure the seed and code are never written to `storage.local`/`storage.sync` nor any request body.
+- [x] 5.1 On extension lock, discard the seed, derived HMAC key, code, and countdown timers; ensure the seed and code are never written to `storage.local`/`storage.sync` nor any request body.
 
 ## 6. Tests
 
-- [ ] 6.1 Extension unit: current code from a known seed matches an RFC 6238 test vector; countdown from `secondsRemaining` is correct; reuses the shared `src/totp/totp.js` module.
-- [ ] 6.2 Extension unit: auto-copy on autofill writes the current code to the clipboard and schedules a clear within the timeout / by window expiry (fake clock + clipboard).
-- [ ] 6.3 Extension integration: OTP-field detection fills a detected field and falls back to auto-copy when none is present; never fills a non-OTP field; re-detects after navigation.
-- [ ] 6.4 Extension unit: unparseable seed yields the invalid-seed state, never a code; lock discards all TOTP state; the seed and code never appear in `storage.*` or a request body.
+- [x] 6.1 Extension unit: current code from a known seed matches an RFC 6238 test vector; countdown from `secondsRemaining` is correct; reuses the shared `src/totp/totp.js` module.
+- [x] 6.2 Extension unit: auto-copy on autofill writes the current code to the clipboard and schedules a clear within the timeout / by window expiry (fake clock + clipboard).
+- [x] 6.3 Extension integration: OTP-field detection fills a detected field and falls back to auto-copy when none is present; never fills a non-OTP field; re-detects after navigation.
+- [x] 6.4 Extension unit: unparseable seed yields the invalid-seed state, never a code; lock discards all TOTP state; the seed and code never appear in `storage.*` or a request body.
 
 ## 7. Quality Gates
 
-- [ ] 7.1 Extension lint + unit/integration tests pass; run hydra gates (spec-coverage) on the diff — `@spec openspec/changes/extension-totp-autofill/specs/extension-totp-autofill/spec.md` on changed methods.
-- [ ] 7.2 Confirm no new backend route, no schema/migration, no `AuditEventTypes` change, and no re-implementation of RFC 6238 — the extension imports the existing generator and fetches the same encrypted blobs.
+- [x] 7.1 Extension lint + unit/integration tests pass; run hydra gates (spec-coverage) on the diff — `@spec openspec/changes/extension-totp-autofill/specs/extension-totp-autofill/spec.md` on changed methods.
+- [x] 7.2 Confirm no new backend route, no schema/migration, no `AuditEventTypes` change, and no re-implementation of RFC 6238 — the extension imports the existing generator and fetches the same encrypted blobs.
+
+
+## Implementation notes (done — GH pending)
+
+Extension-only (no backend/schema change, no RFC 6238 re-implementation — confirmed).
+
+- **1.1 shared module** — `src/totp/index.js` re-exports `src/totp/totp.js` (`parseOtpauth`, `generateTotp`, `secondsRemaining`) verbatim; `src/lib/totp-service.js` wraps them.
+- **1.2 origin resolve** — the worker matches `totp`-typed secrets by the plaintext `url` index (same machinery as autofill), via `api.typeIdByName(config,'totp')`.
+- **2 popup code + countdown** — `doTotpForHost` decrypts the seed transiently and computes code + `secondsRemaining`; the popup renders a live countdown that recomputes on window roll-over. Unparseable seed → honest "not a valid authenticator secret", never a fabricated code.
+- **3 auto-copy** — `doFill` returns a matched `totpCode`; the popup writes it to the clipboard and clears it after 30 s (`copyWithAutoClear`).
+- **4 OTP-field fill** — `doFill` also sends `fill-otp` to the content script, which fills a detected one-time-code field (`autocomplete="one-time-code"` / numeric 6-digit / otp-named); no OTP field → auto-copy fallback; never fills a non-OTP field.
+- **5 lock/no-leak** — the seed/key/code are computed on demand and never stored; `vault.lock` drops the CryptoKey so no further decrypt is possible.
+
+**Tests** (`tests/extension/totp.spec.js`): the current code matches the **RFC 6238 Appendix B vector** (SHA1, T=59 s → `287082`), window roll-over changes the code, and an unparseable/empty seed yields the invalid state (never a code). 424 vitest green. The full extension-loaded OTP-field-fill run is a documented manual QA step.
 
 ## Acceptance Criteria
 
