@@ -324,4 +324,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // two cooperating browser sessions — never plaintext or server-openable keys.
     ['name' => 'cxpRelay#put', 'url' => '/api/v1/cxp/relay', 'verb' => 'POST'],
     ['name' => 'cxpRelay#get', 'url' => '/api/v1/cxp/relay/{pairingId}/{slot}', 'verb' => 'GET'],
+
+    // Browser-extension pairing + URL match (browser-extension-autofill §1).
+    // App-password authenticated; returns encrypted blobs only, never plaintext.
+    ['name' => 'extension#pair', 'url' => '/api/v1/extension/pair', 'verb' => 'POST'],
+    ['name' => 'extension#unpair', 'url' => '/api/v1/extension/unpair', 'verb' => 'POST'],
+    ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
 ]);
