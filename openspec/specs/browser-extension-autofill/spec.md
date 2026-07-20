@@ -1,6 +1,6 @@
 # Browser Extension + Autofill Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
 - [browser-extension-autofill](../../changes/browser-extension-autofill/)
