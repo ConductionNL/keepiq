@@ -92,7 +92,8 @@ describe('WebAuthn provider — create()', () => {
 
 	it('rejects an RP that demands an unsupported algorithm (fall-through)', async () => {
 		const options = {
-			rp: { id: 'r' }, user: { id: new Uint8Array([1]), name: 'a', displayName: 'A' },
+			rp: { id: 'r' },
+			user: { id: new Uint8Array([1]), name: 'a', displayName: 'A' },
 			challenge: new Uint8Array([1]),
 			pubKeyCredParams: [{ type: 'public-key', alg: -257 }], // RS256 only
 		}
@@ -101,7 +102,8 @@ describe('WebAuthn provider — create()', () => {
 
 	it('the created credential can then assert (round-trip via the vault record)', async () => {
 		const options = {
-			rp: { id: 'rp.example' }, user: { id: new Uint8Array([9]), name: 'u', displayName: 'U' },
+			rp: { id: 'rp.example' },
+			user: { id: new Uint8Array([9]), name: 'u', displayName: 'U' },
 			challenge: new Uint8Array([2, 2]),
 			pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
 		}

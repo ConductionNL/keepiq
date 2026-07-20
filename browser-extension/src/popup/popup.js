@@ -57,13 +57,23 @@ async function renderUnlocked() {
 			btn.textContent = c.name + (c.url ? ' — ' + c.url : '')
 			btn.addEventListener('click', async () => {
 				const res = await send('fill', { id: c.id })
-				if (res.error) showError('unlock-error', res.error)
-				else window.close()
+				if (res.error) {
+					showError('unlock-error', res.error)
+					return
+				}
+				// Auto-copy a matched TOTP code so it is one paste away, then
+				// clear it after a short delay (extension-totp-autofill §3).
+				if (res.totpCode) {
+					await copyWithAutoClear(res.totpCode)
+				}
+				window.close()
 			})
 			li.appendChild(btn)
 			list.appendChild(li)
 		}
 	}
+
+	await renderTotp(host)
 
 	// Surface any pending submit-capture as a save prompt.
 	const { capture } = await send('pending-capture')
@@ -76,6 +86,65 @@ async function renderUnlocked() {
 			$('save-prompt').hidden = true
 		}
 		$('save-no').onclick = () => { $('save-prompt').hidden = true }
+	}
+}
+
+// Clipboard TTL for a copied TOTP code (ms).
+const TOTP_CLIPBOARD_TTL = 30000
+let totpTimer = null
+
+/**
+ * Render the current TOTP code + live countdown for a matched login, or the
+ * honest invalid-seed state — never a fabricated code (extension-totp-autofill
+ * §2.2/§2.3).
+ *
+ * @param {string} host
+ * @return {Promise<void>}
+ */
+async function renderTotp(host) {
+	if (totpTimer) { clearInterval(totpTimer); totpTimer = null }
+	const block = $('totp-block')
+	const res = await send('totp-for-host', { host })
+	if (res.none || (!res.valid && res.code === undefined && !res.error)) {
+		block.hidden = true
+		return
+	}
+	block.hidden = false
+	if (!res.valid) {
+		$('totp-code').textContent = '—'
+		$('totp-count').textContent = 'not a valid authenticator secret'
+		return
+	}
+	let remaining = res.secondsRemaining
+	$('totp-code').textContent = res.code
+	$('totp-count').textContent = remaining + 's'
+	totpTimer = setInterval(async () => {
+		remaining -= 1
+		if (remaining <= 0) {
+			// Window rolled over — recompute the code.
+			const next = await send('totp-for-host', { host })
+			if (next.valid) {
+				$('totp-code').textContent = next.code
+				remaining = next.secondsRemaining
+			}
+		}
+		$('totp-count').textContent = Math.max(remaining, 0) + 's'
+	}, 1000)
+}
+
+/**
+ * Copy a code to the clipboard and clear it after the TTL (no later than the
+ * code window would expire).
+ *
+ * @param {string} code
+ * @return {Promise<void>}
+ */
+async function copyWithAutoClear(code) {
+	try {
+		await navigator.clipboard.writeText(code)
+		setTimeout(() => { navigator.clipboard.writeText('').catch(() => {}) }, TOTP_CLIPBOARD_TTL)
+	} catch {
+		// Clipboard may be unavailable (no focus); the code is still shown.
 	}
 }
 

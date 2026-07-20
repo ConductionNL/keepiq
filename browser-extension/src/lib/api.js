@@ -128,12 +128,21 @@ export function updateSecret(config, id, body) {
 }
 
 /**
- * Fetch the secret-type catalogue and return the passkey type id (or null).
+ * Fetch the secret-type catalogue and return the id of a type by name/slug.
  * @param config
+ * @param name
  */
-export async function passkeyTypeId(config) {
+export async function typeIdByName(config, name) {
 	const types = await request(config, 'GET', '/api/v1/secret-types')
 	const list = Array.isArray(types) ? types : (types.items || [])
-	const passkey = list.find((t) => t.name === 'passkey' || t.slug === 'passkey')
-	return passkey ? passkey.id : null
+	const match = list.find((t) => t.name === name || t.slug === name)
+	return match ? match.id : null
+}
+
+/**
+ * The passkey type id (or null).
+ * @param config
+ */
+export function passkeyTypeId(config) {
+	return typeIdByName(config, 'passkey')
 }
