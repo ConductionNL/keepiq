@@ -173,8 +173,9 @@ export const useImportStore = defineStore('import', {
 		 */
 		async detectDuplicates() {
 			const secretStore = useSecretStore()
-			// Pull the full vault metadata page (names/urls are plaintext).
-			await secretStore.fetchSecrets({ page: 1, limit: 100000 })
+			// Pull the full vault metadata (names/urls are plaintext), paged
+			// within the server's per-request cap.
+			await secretStore.fetchAllSecrets()
 			const existing = new Set(secretStore.secrets.map(s => dedupeKey(s)))
 
 			this.duplicates = this.rows.filter(row => existing.has(dedupeKey(row)))

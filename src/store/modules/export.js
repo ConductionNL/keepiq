@@ -23,6 +23,7 @@ import { serializeVault } from '../../export/serializer.js'
 import { encryptBackup } from '../../export/backup.js'
 import { generateCsv } from '../../export/csv.js'
 import { buildCxfDocument } from '../../cxf/cxf.js'
+import { sealForRequest } from '../../crypto/cxp.js'
 import { assembleGdprPackage } from '../../export/gdprPackage.js'
 
 /**
@@ -163,6 +164,47 @@ export const useExportStore = defineStore('export', {
 				return { unmapped, itemCount }
 			} catch (e) {
 				this.error = e.message || 'CXF export failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * CXP (FIDO Credential Exchange Protocol) export: assemble the CXF payload
+		 * via the EXISTING export path, then HPKE-seal it for a CXP request's
+		 * public key. Returns ONLY the sealed envelope — no plaintext file is ever
+		 * written (cxp-transfer §4.1). Reports the transfer with mode `cxp`.
+		 *
+		 * The caller MUST have already gated on the fresh master-password re-auth
+		 * (cxf-import-export D5), exactly as the file-based CXF export does.
+		 *
+		 * @param {object} request The peer's CXP request { v, requesterPublicKey, nonce, requestedFormat }
+		 * @param {Array} secrets The vault secrets
+		 * @param {Array} folders The folders
+		 * @param {object} scope The export scope
+		 * @param {object} options Options ({ dryRun, typeNamesById })
+		 * @return {Promise<{ envelope: object|null, unmapped: Array, itemCount: number }>}
+		 */
+		async exportCxpSealed(request, secrets, folders, scope = { mode: 'vault' }, options = {}) {
+			this.loading = true
+			this.error = null
+			try {
+				const payload = serializeVault(secrets, folders, scope)
+				const { document, unmapped, itemCount } = buildCxfDocument(payload.secrets, {
+					typeNamesById: options.typeNamesById,
+				})
+				if (options.dryRun) {
+					return { envelope: null, unmapped, itemCount }
+				}
+				// Seal the assembled CXF payload for the requester — in-memory only.
+				const cxfBytes = new TextEncoder().encode(JSON.stringify(document))
+				const envelope = await sealForRequest(request, cxfBytes)
+				// Report BEFORE handing back the envelope; a failure aborts.
+				await this.reportExport('cxp', scope.mode || 'vault', itemCount)
+				return { envelope, unmapped, itemCount }
+			} catch (e) {
+				this.error = e.message || 'CXP transfer failed'
 				throw e
 			} finally {
 				this.loading = false

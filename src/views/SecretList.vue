@@ -72,6 +72,9 @@
 					<NcActionButton @click="openExport">
 						{{ t('doriath', 'Export data') }}
 					</NcActionButton>
+					<NcActionButton :disabled="vaultLocked" data-testid="cxp-transfer" @click="openCxp">
+						{{ t('doriath', 'Encrypted transfer (CXP)') }}
+					</NcActionButton>
 					<NcActionButton @click="openGdpr">
 						{{ t('doriath', 'GDPR export') }}
 					</NcActionButton>
@@ -85,6 +88,11 @@
 				:secrets="decryptedSecrets"
 				:folders="folders"
 				@update:open="exportOpen = $event" />
+			<CxpTransferDialog :open="cxpOpen"
+				:secrets="decryptedSecrets"
+				:folders="folders"
+				@update:open="cxpOpen = $event"
+				@open-import="importOpen = true" />
 			<GdprExportDialog :open="gdprOpen"
 				:secrets="decryptedSecrets"
 				:folders="folders"
@@ -209,6 +217,7 @@ import Import from 'vue-material-design-icons/Import.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import ExportDialog from '../dialogs/ExportDialog.vue'
+import CxpTransferDialog from '../dialogs/CxpTransferDialog.vue'
 import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
@@ -250,6 +259,7 @@ export default {
 		AccountGroup,
 		SecretListItem,
 		ExportDialog,
+		CxpTransferDialog,
 		GdprExportDialog,
 		AccountDeletionDialog,
 		ImportWizardDialog,
@@ -276,6 +286,7 @@ export default {
 			sortField: 'name',
 			searchTimer: null,
 			exportOpen: false,
+			cxpOpen: false,
 			gdprOpen: false,
 			deletionOpen: false,
 			importOpen: false,
@@ -499,9 +510,9 @@ export default {
 		 */
 		async decryptAllSecrets() {
 			const store = this.secretStore
-			// Pull a full page set (the export covers the whole vault, not the
-			// paginated view). The list already lives in the store.
-			await store.fetchSecrets({ page: 1, limit: 100000 })
+			// Pull the WHOLE vault (the export covers everything, not just the
+			// paginated view); paged within the server's per-request cap.
+			await store.fetchAllSecrets()
 			const out = []
 			for (const secret of store.secrets) {
 				try {
@@ -523,6 +534,18 @@ export default {
 		async openExport() {
 			this.decryptedSecrets = await this.decryptAllSecrets()
 			this.exportOpen = true
+		},
+
+		/**
+		 * Open the CXP encrypted-transfer dialog; decrypt the vault so the send
+		 * direction can assemble + seal the CXF payload client-side.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/cxp-transfer/specs/cxp-transfer/spec.md
+		 */
+		async openCxp() {
+			this.decryptedSecrets = await this.decryptAllSecrets()
+			this.cxpOpen = true
 		},
 
 		/**
