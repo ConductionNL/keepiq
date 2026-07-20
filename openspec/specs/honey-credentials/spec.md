@@ -1,9 +1,9 @@
 # Honey Credentials Specification
 
-**Status**: in-progress
+**Status**: done
 
 **OpenSpec changes:**
-- [honey-credentials](../../changes/honey-credentials/) — decoy secrets as tripwires with owner/admin flag, central fail-soft access listener, high-severity alerts, per-accessor snooze, rate-limited storms
+- [honey-credentials](../../changes/archive/2026-07-20-honey-credentials/) — decoy secrets as tripwires with owner/admin flag, central fail-soft access listener, high-severity alerts, per-accessor snooze, rate-limited storms
 
 ## Purpose
 
