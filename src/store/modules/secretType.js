@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { useOfflineStore } from './offline.js'
 
 /**
  * Pinia store for secret types (system + global + the user's own).
@@ -31,11 +32,27 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 */
 		async fetchTypes() {
 			this.loading = true
+			const offline = useOfflineStore()
+			if (offline.servedFromCache && offline.vault?.types) {
+				this.types = offline.vault.types
+				this.loading = false
+				return
+			}
 			try {
 				const response = await axios.get(
 					generateUrl('/apps/doriath/api/v1/secret-types'),
 				)
 				this.types = response.data || []
+			} catch (e) {
+				// Offline fallback: serve cached type definitions so the list
+				// schema can render (offline-readonly-cache §4.2).
+				const netErr = e?.message === 'Network Error' || e?.code === 'ERR_NETWORK' || (e?.request && !e?.response)
+				if (netErr && offline.vault?.types) {
+					offline.servedFromCache = true
+					this.types = offline.vault.types
+				} else {
+					throw e
+				}
 			} finally {
 				this.loading = false
 			}

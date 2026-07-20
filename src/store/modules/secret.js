@@ -5,6 +5,7 @@ import { rsaEncrypt, rsaDecrypt, importPublicKey } from '../../crypto/index.js'
 import { passkeyRpId, PASSKEY_TYPE_NAME } from '../../passkey/passkey.js'
 import { useSessionStore } from './session.js'
 import { useSecretTypeStore } from './secretType.js'
+import { useOfflineStore } from './offline.js'
 
 /**
  * Pinia store for secrets.
@@ -44,6 +45,26 @@ export const useSecretStore = defineStore('secret', {
 		async fetchSecrets(options = {}) {
 			this.loading = true
 			try {
+				// Offline (served from cache): list from the decrypted snapshot
+				// instead of the live API (offline-readonly-cache §4.2).
+				const offline = useOfflineStore()
+				if (offline.servedFromCache && offline.vault) {
+					const folderId = options.folderId ?? this.filters.folderId
+					const search = (options.search ?? this.filters.search ?? '').toLowerCase()
+					let items = offline.vault.secrets
+					if (folderId) {
+						items = items.filter((s) => s.folderId === folderId)
+					}
+					if (search) {
+						items = items.filter((s) => (s.name || '').toLowerCase().includes(search)
+							|| (s.url || '').toLowerCase().includes(search))
+					}
+					this.secrets = items
+					this.totalCount = items.length
+					this.page = 1
+					return
+				}
+
 				const params = {
 					page: options.page ?? this.page,
 					limit: options.limit ?? this.limit,
@@ -65,16 +86,41 @@ export const useSecretStore = defineStore('secret', {
 					params.typeId = typeId
 				}
 
-				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/secrets'),
-					{ params },
-				)
-				this.secrets = response.data.items || []
-				this.totalCount = response.data.total || 0
-				this.page = response.data.page || 1
+				try {
+					const response = await axios.get(
+						generateUrl('/apps/doriath/api/v1/secrets'),
+						{ params },
+					)
+					this.secrets = response.data.items || []
+					this.totalCount = response.data.total || 0
+					this.page = response.data.page || 1
+				} catch (e) {
+					// Resilient offline fallback: if the network is unreachable and
+					// a cached snapshot exists, serve the list from it rather than
+					// failing (offline-readonly-cache §4.2). Covers the case where
+					// the offline flag lagged the actual connectivity loss.
+					if (this.isNetworkError(e) && offline.vault) {
+						offline.servedFromCache = true
+						this.secrets = offline.vault.secrets
+						this.totalCount = offline.vault.secrets.length
+						this.page = 1
+						return
+					}
+					throw e
+				}
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Whether an error is a browser network failure (offline).
+		 *
+		 * @param {Error} e The caught error.
+		 * @return {boolean}
+		 */
+		isNetworkError(e) {
+			return !!e && (e.message === 'Network Error' || e.code === 'ERR_NETWORK' || (e.request && !e.response))
 		},
 
 		/**
@@ -86,12 +132,35 @@ export const useSecretStore = defineStore('secret', {
 		async fetchSecret(id) {
 			this.loading = true
 			try {
-				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
-				)
-				const secret = response.data
-				this.currentSecret = await this.decryptSecret(secret)
-				return this.currentSecret
+				// Offline: open from the cached snapshot's ciphertext (decrypted
+				// with the offline-unlocked private key), no server request.
+				const offline = useOfflineStore()
+				if (offline.servedFromCache && offline.vault) {
+					const cached = offline.vault.secrets.find((s) => s.id === id)
+					if (cached) {
+						this.currentSecret = await this.decryptSecret(cached)
+						return this.currentSecret
+					}
+				}
+
+				try {
+					const response = await axios.get(
+						generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
+					)
+					const secret = response.data
+					this.currentSecret = await this.decryptSecret(secret)
+					return this.currentSecret
+				} catch (e) {
+					if (this.isNetworkError(e) && offline.vault) {
+						const cached = offline.vault.secrets.find((s) => s.id === id)
+						if (cached) {
+							offline.servedFromCache = true
+							this.currentSecret = await this.decryptSecret(cached)
+							return this.currentSecret
+						}
+					}
+					throw e
+				}
 			} finally {
 				this.loading = false
 			}

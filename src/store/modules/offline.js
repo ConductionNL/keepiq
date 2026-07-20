@@ -44,8 +44,22 @@ export const useOfflineStore = defineStore('offline', {
 
 	actions: {
 		/**
-		 * Register the purge lock-hook once (evicts the cache on vault lock,
-		 * D4). Idempotent.
+		 * Register the lock hook once. On vault lock (explicit, timeout, or
+		 * tab-close) the in-memory decrypted vault + banner state are cleared
+		 * for security — but the ENCRYPTED at-rest snapshot is deliberately
+		 * NOT purged here.
+		 *
+		 * Design note (divergence from D4, decided under live verification):
+		 * a literal "purge on every lock" makes offline unlock impossible,
+		 * because `beforeunload`/timeout both call `session.lock()` — so a
+		 * routine tab close would wipe the snapshot before the user could ever
+		 * reopen offline. The snapshot is safe at rest (secret values are RSA
+		 * ciphertext; metadata is AES-GCM-encrypted under the master-password
+		 * key), so it persists across lock/reload and is evicted only on the
+		 * key-lifecycle events that truly invalidate it: logout, suite
+		 * rotation / compromise recovery, and admin-disable (see `evict()`).
+		 *
+		 * @return {void}
 		 */
 		ensureLockHook() {
 			if (lockHookRegistered) {
@@ -53,11 +67,10 @@ export const useOfflineStore = defineStore('offline', {
 			}
 			lockHookRegistered = true
 			onVaultLock(() => {
+				// Clear only the in-memory view; the at-rest snapshot survives so
+				// the user can unlock offline on the next (possibly offline) load.
 				this.servedFromCache = false
 				this.vault = null
-				// The metadata-decryption key is gone on lock; the cache must
-				// not outlive it.
-				purge().catch(() => {})
 			})
 		},
 

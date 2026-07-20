@@ -34,6 +34,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -55,6 +56,7 @@ class OfflineController extends OCSController
      * @param EncryptionSuiteMapper $suiteMapper  The suite mapper
      * @param SecretMapper          $secretMapper The secret mapper
      * @param FolderMapper          $folderMapper The folder mapper
+     * @param SecretTypeMapper      $typeMapper   The secret type mapper
      * @param IAppConfig            $appConfig    The app config (off switch)
      * @param IUserSession          $userSession  The user session
      *
@@ -65,6 +67,7 @@ class OfflineController extends OCSController
         private EncryptionSuiteMapper $suiteMapper,
         private SecretMapper $secretMapper,
         private FolderMapper $folderMapper,
+        private SecretTypeMapper $typeMapper,
         private IAppConfig $appConfig,
         private IUserSession $userSession,
     ) {
@@ -113,11 +116,18 @@ class OfflineController extends OCSController
             $this->folderMapper->findByOwner('user', $userId)
         );
 
+        // Secret types the list schema needs to render type badges offline.
+        $types = array_map(
+            static fn ($type) => $type->jsonSerialize(),
+            $this->typeMapper->findAvailableForUser($userId)
+        );
+
         return new JSONResponse(
             data: [
                 'suite'    => $suite,
                 'secrets'  => $secrets,
                 'folders'  => $folders,
+                'types'    => $types,
                 'syncedAt' => (new \DateTime())->format('c'),
             ]
         );
