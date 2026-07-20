@@ -1,8 +1,10 @@
 # Doriath CLI Specification
 
-**Status**: in-progress
+**Status**: done
 
-**OpenSpec changes:** [openspec/changes/doriath-cli](../../changes/doriath-cli/)
+**OpenSpec changes:** [archive/2026-07-20-doriath-cli](../../changes/archive/2026-07-20-doriath-cli/)
+
+> Implemented in `cli/` (GitHub PR #111). Session-cache/keyring (3.3) and the full CI integration harness (6.2) are documented follow-ups; the security-critical crypto path is live-verified (WebCrypto cross-impl + live token-exchange assertion path).
 
 ## Purpose
 
