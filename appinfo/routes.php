@@ -181,6 +181,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // app root with the correct JS MIME + app-root default scope.
     ['name' => 'serviceWorker#script', 'url' => '/serviceworker.js', 'verb' => 'GET'],
 
+    // PWA web app manifest (mobile-pwa §1.2) — served with the correct
+    // application/manifest+json MIME; distinct from src/manifest.json.
+    ['name' => 'webManifest#manifest', 'url' => '/manifest.webmanifest', 'verb' => 'GET'],
+
     // Passkey vault login (passkey-vault-login §2.4) — owner-scoped,
     // authenticated (the NC session is valid; only the vault is locked).
     ['name' => 'passkey#index',        'url' => '/api/v1/passkeys',               'verb' => 'GET'],
