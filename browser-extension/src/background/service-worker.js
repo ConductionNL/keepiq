@@ -15,6 +15,7 @@ import * as vault from '../lib/vault.js'
 import { matchSecrets, hostOf } from '../lib/match.js'
 import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { registerWebAuthnProxy } from '../passkey/registration.js'
+import { computeTotp } from '../lib/totp-service.js'
 
 // Passkey provider (extension-passkey-provider): bind the ceremony orchestrator
 // to this worker's api + vault. Used by both the native WebAuthn proxy (Chrome/
@@ -111,7 +112,52 @@ async function doFill(payload) {
 		type: 'fill-credential',
 		payload: { login, secret },
 	}).catch(() => ({ filled: false }))
-	return { filled: !!results?.filled }
+	// Auto-copy a matched TOTP code so it is one paste away on the 2FA prompt
+	// (extension-totp-autofill §3). The popup performs the clipboard write +
+	// scheduled clear (a service worker has no clipboard access).
+	let host = ''
+	try { host = tab.url ? new URL(tab.url).hostname : '' } catch { host = '' }
+	const totpCode = host ? await totpCodeForHost(host) : null
+	if (totpCode) {
+		// Best-effort: fill a detected OTP field on the page; the popup also
+		// copies the code as the fallback (extension-totp-autofill §4.1).
+		chrome.tabs.sendMessage(tab.id, { type: 'fill-otp', payload: { code: totpCode } }).catch(() => {})
+	}
+	return { filled: !!results?.filled, totpCode }
+}
+
+/**
+ * Find a `totp`-typed secret matching the host and compute its current code
+ * (extension-totp-autofill §2.1). The seed is decrypted only transiently.
+ *
+ * @param {object} payload { host }
+ * @return {Promise<{ valid: boolean, code?: string, secondsRemaining?: number }>}
+ */
+async function doTotpForHost(payload) {
+	if (!vault.isUnlocked()) throw new Error('vault is locked')
+	const config = await api.loadConfig()
+	const totpTypeId = await api.typeIdByName(config, 'totp')
+	if (!totpTypeId) return { valid: false, none: true }
+	const rows = matchSecrets(await api.match(config, payload.host), payload.host)
+	const totp = rows.find((r) => r.typeId === totpTypeId)
+	if (!totp) return { valid: false, none: true }
+	const seed = await vault.decryptField(totp.key)
+	await touchActivity()
+	return computeTotp(seed)
+}
+
+/**
+ * Compute the TOTP code for a matched host, if any (auto-copy on fill).
+ * @param {string} host
+ * @return {Promise<string|null>}
+ */
+async function totpCodeForHost(host) {
+	try {
+		const result = await doTotpForHost({ host })
+		return result.valid ? result.code : null
+	} catch {
+		return null
+	}
 }
 
 /**
@@ -155,6 +201,7 @@ const handlers = {
 	match: doMatch,
 	fill: doFill,
 	'save-capture': doSaveCapture,
+	'totp-for-host': doTotpForHost,
 	'pending-capture': async () => ({ capture: takePendingCapture() }),
 	// WebAuthn ceremonies relayed from the page-context shim (Firefox path).
 	'webauthn-create': async (p) => ({ credential: await passkey.handleCreate(p.options, p.origin) }),
