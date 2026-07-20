@@ -50,6 +50,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setReinstatedBy(?string $reinstatedBy)
  * @method DateTime getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
+ * @method int getUnlockKeyEpoch()
+ * @method void setUnlockKeyEpoch(int $unlockKeyEpoch)
  */
 class EncryptionSuite extends Entity implements JsonSerializable
 {
@@ -132,6 +134,15 @@ class EncryptionSuite extends Entity implements JsonSerializable
     protected ?DateTime $createdAt = null;
 
     /**
+     * The epoch of the current private-key wrap (passkey-vault-login
+     * §D4). Incremented on a routine master-password change so stored
+     * passkey unlock envelopes can detect they now wrap a dead key.
+     *
+     * @var integer
+     */
+    protected int $unlockKeyEpoch = 1;
+
+    /**
      * The UUID primary key.
      *
      * @var string
@@ -179,6 +190,7 @@ class EncryptionSuite extends Entity implements JsonSerializable
         $this->addType(fieldName: 'reinstatedAt', type: 'datetime');
         $this->addType(fieldName: 'reinstatedBy', type: 'string');
         $this->addType(fieldName: 'createdAt', type: 'datetime');
+        $this->addType(fieldName: 'unlockKeyEpoch', type: 'integer');
     }//end __construct()
 
     /**
@@ -189,18 +201,19 @@ class EncryptionSuite extends Entity implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'id'            => $this->getId(),
-            'ownerType'     => $this->ownerType,
-            'ownerId'       => $this->ownerId,
-            'certificate'   => $this->certificate,
-            'privateKey'    => $this->privateKey,
-            'status'        => $this->status,
-            'revokedAt'     => $this->revokedAt?->format('c'),
-            'revokedReason' => $this->revokedReason,
-            'revokedBy'     => $this->revokedBy,
-            'reinstatedAt'  => $this->reinstatedAt?->format('c'),
-            'reinstatedBy'  => $this->reinstatedBy,
-            'createdAt'     => $this->createdAt?->format('c'),
+            'id'             => $this->getId(),
+            'ownerType'      => $this->ownerType,
+            'ownerId'        => $this->ownerId,
+            'certificate'    => $this->certificate,
+            'privateKey'     => $this->privateKey,
+            'status'         => $this->status,
+            'revokedAt'      => $this->revokedAt?->format('c'),
+            'revokedReason'  => $this->revokedReason,
+            'revokedBy'      => $this->revokedBy,
+            'reinstatedAt'   => $this->reinstatedAt?->format('c'),
+            'reinstatedBy'   => $this->reinstatedBy,
+            'createdAt'      => $this->createdAt?->format('c'),
+            'unlockKeyEpoch' => $this->unlockKeyEpoch,
         ];
     }//end jsonSerialize()
 }//end class
