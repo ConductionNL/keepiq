@@ -68,6 +68,7 @@ module.exports = {
 			['tests/dialogs/**', 'jsdom'],
 			['tests/modals/**', 'jsdom'],
 			['tests/store/**', 'jsdom'],
+			['tests/extension/**', 'jsdom'],
 		],
 		globals: false,
 		include: [
@@ -77,6 +78,7 @@ module.exports = {
 			'tests/dialogs/**/*.spec.{js,ts}',
 			'tests/modals/**/*.spec.{js,ts}',
 			'tests/store/**/*.spec.{js,ts}',
+			'tests/extension/**/*.spec.{js,ts}',
 		],
 		exclude: ['tests/e2e/**', 'tests/integration/**', 'tests/Unit/**', 'tests/unit/**', 'node_modules/**'],
 		setupFiles: [path.resolve(__dirname, 'tests/vitest/setup.js')],
