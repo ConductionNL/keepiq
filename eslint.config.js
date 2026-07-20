@@ -42,4 +42,14 @@ module.exports = defineConfig([{
 		'import/no-named-as-default': 'off', // disable named-as-default checking to avoid parser requirement
 		'import/no-named-as-default-member': 'off', // disable named-as-default-member checking to avoid parser requirement
 	},
+}, {
+	// The MV3 browser extension runs in a WebExtension runtime (chrome.* / browser.*)
+	// and in page/service-worker contexts, not the Nextcloud web app.
+	files: ['browser-extension/**/*.js'],
+	languageOptions: {
+		globals: {
+			chrome: 'readonly',
+			browser: 'readonly',
+		},
+	},
 }])
