@@ -38,7 +38,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Doriath CLI](specs/doriath-cli/spec.md) | in-progress | 28 | [doriath-cli](changes/doriath-cli/) |
 | [CXP Transfer](specs/cxp-transfer/spec.md) | in-progress | 29 — after CXF | [cxp-transfer](changes/cxp-transfer/) |
 | [Certificate Lifecycle](specs/certificate-lifecycle/spec.md) | done | 30 | [certificate-lifecycle](changes/archive/2026-07-18-certificate-lifecycle/) |
-| [Honey Credentials](specs/honey-credentials/spec.md) | in-progress | 31 — deception differentiator | [honey-credentials](changes/honey-credentials/) |
+| [Honey Credentials](specs/honey-credentials/spec.md) | done | 31 — deception differentiator | [honey-credentials](changes/archive/2026-07-20-honey-credentials/) |
 
 ## Phases
 
