@@ -13,6 +13,14 @@
 import * as api from '../lib/api.js'
 import * as vault from '../lib/vault.js'
 import { matchSecrets, hostOf } from '../lib/match.js'
+import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
+import { registerWebAuthnProxy } from '../passkey/registration.js'
+
+// Passkey provider (extension-passkey-provider): bind the ceremony orchestrator
+// to this worker's api + vault. Used by both the native WebAuthn proxy (Chrome/
+// Edge) and the page-context shim relay (Firefox/others).
+const passkey = buildPasskeyOrchestrator({ api, vault, loadConfig: api.loadConfig })
+registerWebAuthnProxy(passkey)
 
 const DEFAULT_IDLE_MINUTES = 15
 
@@ -148,6 +156,9 @@ const handlers = {
 	fill: doFill,
 	'save-capture': doSaveCapture,
 	'pending-capture': async () => ({ capture: takePendingCapture() }),
+	// WebAuthn ceremonies relayed from the page-context shim (Firefox path).
+	'webauthn-create': async (p) => ({ credential: await passkey.handleCreate(p.options, p.origin) }),
+	'webauthn-get': async (p) => ({ assertion: await passkey.handleGet(p.options, p.origin) }),
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

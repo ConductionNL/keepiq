@@ -30,6 +30,8 @@ const entries = [
 	{ in: resolve(root, 'src/background/service-worker.js'), out: 'service-worker', format: 'esm' },
 	{ in: resolve(root, 'src/popup/popup.js'), out: 'popup', format: 'esm' },
 	{ in: resolve(root, 'src/content/content-script.js'), out: 'content-script', format: 'iife' },
+	{ in: resolve(root, 'src/content/inpage-shim.js'), out: 'inpage-shim', format: 'iife' },
+	{ in: resolve(root, 'src/passkey/consent.js'), out: 'consent', format: 'esm' },
 ]
 
 async function run() {
@@ -50,6 +52,7 @@ async function run() {
 	await cp(resolve(root, 'manifest.json'), resolve(outdir, 'manifest.json'))
 	await cp(resolve(root, 'src/popup/popup.html'), resolve(outdir, 'popup.html'))
 	await cp(resolve(root, 'src/popup/popup.css'), resolve(outdir, 'popup.css'))
+	await cp(resolve(root, 'src/passkey/consent.html'), resolve(outdir, 'consent.html'))
 }
 
 run().catch((e) => { console.error(e); process.exit(1) })
