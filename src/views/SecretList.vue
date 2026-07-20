@@ -405,7 +405,10 @@ export default {
 	async mounted() {
 		// The bulk selection is client-only and dies with the lock (§1.2).
 		this.bulkStore.registerLockReset()
-		await Promise.all([
+		// allSettled (not all): offline, the type/folder fetches fall back to
+		// the cache but must never block the secret-list load if one rejects
+		// (offline-readonly-cache §4.2).
+		await Promise.allSettled([
 			useSecretTypeStore().fetchTypes(),
 			this.folderStore.fetchFolders(),
 		])
