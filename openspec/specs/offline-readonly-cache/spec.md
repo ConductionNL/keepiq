@@ -1,11 +1,11 @@
 # Offline Read-only Cache Specification
 
-**Status**: in-progress
+**Status**: done
 
 **Standards**: Service Worker API, IndexedDB, WebCrypto (PBKDF2, AES-256-GCM, RSA-OAEP)
 **Feature tier**: V1
 
-**OpenSpec changes:** [offline-readonly-cache](../../changes/offline-readonly-cache/)
+**OpenSpec changes:** [offline-readonly-cache](../../changes/archive/2026-07-20-offline-readonly-cache/)
 
 ## Purpose
 
