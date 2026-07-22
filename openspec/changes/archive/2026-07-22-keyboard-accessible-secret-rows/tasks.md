@@ -37,6 +37,6 @@
 - [x] 3.2 Tagged the new scenario with
       `@e2e openspec/specs/secrets-write-ui/spec.md#secret-list-rows-must-be-keyboard-operable`
       in `secret-row-keyboard.spec.ts` so gate-19 (e2e traceability) is satisfied
-- [ ] 3.1 Apply the `specs/secrets-write-ui/spec.md` delta onto
+- [x] 3.1 Apply the `specs/secrets-write-ui/spec.md` delta onto
       `openspec/specs/secrets-write-ui/spec.md` once merged — DEFERRED:
       spec-sync/archive is a post-merge Hydra step, out of scope for the apply pass
