@@ -32,7 +32,7 @@ namespace OCA\Doriath\BackgroundJob;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\AuditService;
 use OCA\Doriath\Service\SettingsService;
-use OCP\AppConfig\IAppConfig;
+use OCP\IAppConfig;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
