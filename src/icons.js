@@ -23,6 +23,7 @@ import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.v
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 import Pulse from 'vue-material-design-icons/Pulse.vue'
 import ShieldKeyOutline from 'vue-material-design-icons/ShieldKeyOutline.vue'
 import ViewDashboardOutline from 'vue-material-design-icons/ViewDashboardOutline.vue'
@@ -39,6 +40,7 @@ export default {
 	FolderOutline,
 	LockOutline,
 	MapMarkerPath,
+	Plus,
 	Pulse,
 	ShieldKeyOutline,
 	ViewDashboardOutline,
