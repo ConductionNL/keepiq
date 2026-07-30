@@ -270,7 +270,7 @@
 					"props": {
 						"content": {
 							"title": "New secret",
-							"icon": "icon-add",
+							"icon": "Plus",
 							"iconType": "class",
 							"backgroundColor": "#21468B",
 							"textColor": "#ffffff",
@@ -290,7 +290,7 @@
 					"props": {
 						"content": {
 							"title": "Register application",
-							"icon": "icon-category-integration",
+							"icon": "Plus",
 							"iconType": "class",
 							"backgroundColor": "#3b82f6",
 							"textColor": "#ffffff",
@@ -310,7 +310,7 @@
 					"props": {
 						"content": {
 							"title": "Documentation",
-							"icon": "icon-info",
+							"icon": "BookOpenVariantOutline",
 							"iconType": "class",
 							"backgroundColor": "#6b7280",
 							"textColor": "#ffffff",
