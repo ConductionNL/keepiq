@@ -6,21 +6,21 @@
 		{
 			"id": "Dashboard",
 			"label": "Dashboard",
-			"icon": "icon-category-dashboard",
+			"icon": "ViewDashboardOutline",
 			"route": "Dashboard",
 			"order": 10
 		},
 		{
 			"id": "Vault",
 			"label": "Vault",
-			"icon": "icon-password",
+			"icon": "LockOutline",
 			"route": "SecretList",
 			"order": 20
 		},
 		{
 			"id": "ApplicationsMenu",
 			"label": "Applications",
-			"icon": "icon-category-integration",
+			"icon": "ApplicationOutline",
 			"route": "ApplicationRegister",
 			"section": "settings",
 			"order": 70
@@ -28,7 +28,7 @@
 		{
 			"id": "Documentation",
 			"label": "Documentation",
-			"icon": "icon-info",
+			"icon": "BookOpenVariantOutline",
 			"href": "https://doriath.conduction.nl",
 			"section": "footer",
 			"order": 80
@@ -36,7 +36,7 @@
 		{
 			"id": "FeaturesRoadmapMenu",
 			"label": "Features & roadmap",
-			"icon": "icon-toggle",
+			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 85
@@ -44,7 +44,7 @@
 		{
 			"id": "MyActivityMenu",
 			"label": "My activity",
-			"icon": "icon-history",
+			"icon": "Pulse",
 			"route": "PersonalActivity",
 			"section": "footer",
 			"order": 86
@@ -52,7 +52,7 @@
 		{
 			"id": "PasswordHealthMenu",
 			"label": "Password health",
-			"icon": "icon-checkmark",
+			"icon": "LockOutline",
 			"route": "PasswordHealth",
 			"section": "footer",
 			"order": 87
@@ -60,7 +60,7 @@
 		{
 			"id": "CertificatesMenu",
 			"label": "Certificates",
-			"icon": "icon-category-security",
+			"icon": "CertificateOutline",
 			"route": "Certificates",
 			"section": "footer",
 			"order": 88
@@ -68,7 +68,7 @@
 		{
 			"id": "EmergencyAccessMenu",
 			"label": "Emergency access",
-			"icon": "icon-user",
+			"icon": "ShieldKeyOutline",
 			"route": "EmergencyAccess",
 			"section": "footer",
 			"order": 89
@@ -76,7 +76,7 @@
 		{
 			"id": "LockVault",
 			"label": "Lock vault",
-			"icon": "icon-password",
+			"icon": "LockOutline",
 			"route": "Lock",
 			"section": "settings",
 			"order": 90
@@ -84,7 +84,7 @@
 		{
 			"id": "UserSettings",
 			"label": "Settings",
-			"icon": "icon-settings",
+			"icon": "CogOutline",
 			"action": "user-settings",
 			"section": "settings",
 			"order": 99
