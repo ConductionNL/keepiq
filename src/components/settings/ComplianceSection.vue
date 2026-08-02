@@ -30,7 +30,7 @@
 				</ul>
 			</div>
 
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="busy"
 				data-testid="compliance-generate"
 				@click="onGenerate">
@@ -52,7 +52,7 @@
 						<td>{{ report.generatedBy }}</td>
 						<td>{{ report.appVersion }}</td>
 						<td>
-							<NcButton type="tertiary" :data-testid="`compliance-open-${report.id}`" @click="openReport(report.id)">
+							<NcButton variant="tertiary" :data-testid="`compliance-open-${report.id}`" @click="openReport(report.id)">
 								{{ t('doriath', 'View') }}
 							</NcButton>
 						</td>
@@ -78,11 +78,13 @@
 					<div v-for="(values, section) in detail.aggregate" :key="section" class="compliance__section">
 						<h4>{{ sectionTitle(section) }}</h4>
 						<dl>
-							<template v-for="(value, key) in values">
-								<dt :key="`k-${section}-${key}`">
+							<!-- Vue 3 requires the key on the <template> itself; a key on
+							     a child of <template v-for> is a COMPILE error. -->
+							<template v-for="(value, key) in values" :key="`${section}-${key}`">
+								<dt>
 									{{ key }}
 								</dt>
-								<dd :key="`v-${section}-${key}`">
+								<dd>
 									{{ typeof value === 'object' ? JSON.stringify(value) : value }}
 								</dd>
 							</template>
@@ -90,24 +92,24 @@
 					</div>
 					<h4>{{ t('doriath', 'Configuration snapshot') }}</h4>
 					<dl>
-						<template v-for="(value, key) in detail.configSnapshot">
-							<dt :key="`c-${key}`">
+						<template v-for="(value, key) in detail.configSnapshot" :key="`c-${key}`">
+							<dt>
 								{{ key }}
 							</dt>
-							<dd :key="`cv-${key}`">
+							<dd>
 								{{ value }}
 							</dd>
 						</template>
 					</dl>
 				</div>
 				<template #actions>
-					<NcButton type="secondary" data-testid="compliance-export-csv" @click="exportCsv">
+					<NcButton variant="secondary" data-testid="compliance-export-csv" @click="exportCsv">
 						{{ t('doriath', 'Export CSV') }}
 					</NcButton>
-					<NcButton type="secondary" data-testid="compliance-export-pdf" @click="exportPdf">
+					<NcButton variant="secondary" data-testid="compliance-export-pdf" @click="exportPdf">
 						{{ t('doriath', 'Export PDF (print)') }}
 					</NcButton>
-					<NcButton type="tertiary" @click="detail = null">
+					<NcButton variant="tertiary" @click="detail = null">
 						{{ t('doriath', 'Close') }}
 					</NcButton>
 				</template>

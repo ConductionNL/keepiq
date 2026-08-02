@@ -26,4 +26,4 @@ Util::addHeader('meta', ['name' => 'apple-mobile-web-app-status-bar-style', 'con
 Util::addHeader('meta', ['name' => 'apple-mobile-web-app-title', 'content' => 'Doriath']);
 Util::addHeader('link', ['rel' => 'apple-touch-icon', 'href' => $touchIcon]);
 ?>
-<div id="content"></div>
+<div id="doriath-app"></div>

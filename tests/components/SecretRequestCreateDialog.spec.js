@@ -52,7 +52,7 @@ describe('SecretRequestCreateDialog', () => {
 					additional_fields_keys: ['totp', 'pin'],
 				},
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		const fields = wrapper.vm.availableFields.map(f => f.key)
@@ -71,7 +71,7 @@ describe('SecretRequestCreateDialog', () => {
 				open: true,
 				secret: { id: 'secret-1' },
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.requestedFields = ['key', 'login']
@@ -117,7 +117,7 @@ describe('SecretRequestCreateDialog', () => {
 					encryption_suite_id: 'suite-9',
 				},
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.requestedFields = ['key']
@@ -140,7 +140,7 @@ describe('SecretRequestCreateDialog', () => {
 				open: true,
 				secret: { id: 'secret-1' },
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.fillUrl = 'http://nc.test/apps/doriath/share/request/tok-1'
@@ -163,7 +163,7 @@ describe('SecretRequestCreateDialog', () => {
 				open: true,
 				secret: { id: 'secret-1' },
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.submit()

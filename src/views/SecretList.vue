@@ -21,13 +21,13 @@
 			     deletion (secret-export-gdpr §6.5, secret-import). "New secret"
 			     itself is CnIndexPage's own add button below. -->
 			<div class="secret-list-view__actions">
-				<NcButton type="secondary" :disabled="offlineReadOnly" @click="openCreateFolder">
+				<NcButton variant="secondary" :disabled="offlineReadOnly" @click="openCreateFolder">
 					<template #icon>
 						<FolderPlus :size="20" />
 					</template>
 					{{ t('doriath', 'New folder') }}
 				</NcButton>
-				<NcButton type="secondary"
+				<NcButton variant="secondary"
 					:disabled="vaultLocked || offlineReadOnly"
 					data-testid="import-secrets"
 					@click="openImport">
@@ -40,7 +40,7 @@
 				<!-- Team folder sharing (team-folder-sharing §5.1): only for a
 				     concrete selected folder; the dialog owns membership + fan-out. -->
 				<NcButton v-if="selectedFolderId"
-					type="secondary"
+					variant="secondary"
 					:disabled="vaultLocked"
 					data-testid="team-folder-open"
 					@click="teamFolderOpen = true">
@@ -136,19 +136,19 @@
 				<span data-testid="bulk-selection-count">
 					{{ t('doriath', '{count} selected', { count: bulkStore.selectionCount }) }}
 				</span>
-				<NcButton type="secondary" data-testid="bulk-open-move" @click="bulkDialog = 'move'">
+				<NcButton variant="secondary" data-testid="bulk-open-move" @click="bulkDialog = 'move'">
 					{{ t('doriath', 'Move') }}
 				</NcButton>
-				<NcButton type="secondary" data-testid="bulk-open-share" @click="bulkDialog = 'share'">
+				<NcButton variant="secondary" data-testid="bulk-open-share" @click="bulkDialog = 'share'">
 					{{ t('doriath', 'Share') }}
 				</NcButton>
-				<NcButton type="secondary" data-testid="bulk-open-team-folder" @click="bulkDialog = 'teamFolder'">
+				<NcButton variant="secondary" data-testid="bulk-open-team-folder" @click="bulkDialog = 'teamFolder'">
 					{{ t('doriath', 'Add to team folder') }}
 				</NcButton>
-				<NcButton type="error" data-testid="bulk-open-delete" @click="bulkDialog = 'delete'">
+				<NcButton variant="error" data-testid="bulk-open-delete" @click="bulkDialog = 'delete'">
 					{{ t('doriath', 'Delete') }}
 				</NcButton>
-				<NcButton type="tertiary" data-testid="bulk-clear-selection" @click="bulkStore.clearSelection()">
+				<NcButton variant="tertiary" data-testid="bulk-clear-selection" @click="bulkStore.clearSelection()">
 					{{ t('doriath', 'Clear selection') }}
 				</NcButton>
 			</div>

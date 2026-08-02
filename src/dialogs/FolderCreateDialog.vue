@@ -15,7 +15,7 @@
 				{{ error }}
 			</NcNoteCard>
 
-			<NcTextField :value.sync="name"
+			<NcTextField v-model="name"
 				:label="t('doriath', 'Folder name')"
 				:required="true" />
 
@@ -27,10 +27,10 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="!canSubmit"
 				@click="submit">
 				<template #icon>

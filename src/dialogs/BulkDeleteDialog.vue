@@ -26,10 +26,10 @@
 			<BulkRunPanel @retry="onRetry" />
 		</div>
 		<template #actions>
-			<NcButton type="tertiary" @click="$emit('close')">
+			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton type="error"
+			<NcButton variant="error"
 				:disabled="!confirmed || bulk.progress.running"
 				data-testid="bulk-delete-run"
 				@click="onRun">

@@ -19,7 +19,7 @@
 -->
 <template>
 	<div class="application-detail" data-testid="application-detail">
-		<NcButton type="tertiary" class="application-detail__back" @click="goBack">
+		<NcButton variant="tertiary" class="application-detail__back" @click="goBack">
 			<template #icon>
 				<ArrowLeft :size="20" />
 			</template>
@@ -103,7 +103,7 @@
 			<ApplicationLeasesPanel :application-id="application.id" />
 
 			<section v-if="canDelete" class="application-detail__actions">
-				<NcButton type="error"
+				<NcButton variant="error"
 					data-testid="delete-button"
 					@click="confirmDelete">
 					{{ t('doriath', 'Delete application') }}
@@ -121,10 +121,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import { useApplicationStore } from '../store/modules/application.js'

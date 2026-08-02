@@ -192,7 +192,7 @@ export default {
 	 * @return {void}
 	 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
 	 */
-	beforeDestroy() {
+	beforeUnmount() {
 		this.discard()
 	},
 

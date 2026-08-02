@@ -68,7 +68,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		const submit = wrapper.find('[data-testid="write-secret-submit"]')
@@ -94,7 +94,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({
@@ -141,7 +141,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({ name: 'GitHub PAT', value: 'ghp_AAA' })
@@ -162,7 +162,7 @@ describe('WriteSecretForAppDialog', () => {
 				open: true,
 				applicationId: 'app-1',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({
@@ -184,7 +184,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({

@@ -11,7 +11,12 @@
  * (lock-screen / gated-routes / navigation / admin-settings). This file holds
  * the two scenarios that don't fit those flat surface tests.
  *
- * Base URL : http://localhost:8080
+ * Base URL : PLAYWRIGHT_BASE_URL / BASE_URL, resolved centrally — see
+ *            tests/e2e/base-url.ts. This file used to carry absolute
+ *            `http://localhost:8080` literals in its WRITE paths (OCS user
+ *            create/delete and a real login form), which pointed account
+ *            provisioning and failed logins at the SHARED dev container
+ *            regardless of what the rest of the run targeted.
  * Auth      : admin/admin (stored in .auth/admin.json via globalSetup)
  *
  * @e2e openspec/specs/encryption-suites/spec.md#weak-password-rejected
@@ -19,6 +24,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { BASE_URL } from '../base-url'
 
 // ---------------------------------------------------------------------------
 // Encryption Suites — weak-password rejection in first-time setup
@@ -56,12 +62,12 @@ test.describe('Encryption Suites — spec: encryption-suites/spec.md', () => {
 		// and skip gracefully (rather than false-fail) if provisioning is
 		// genuinely unavailable.
 		await page.request.post(
-			'http://localhost:8080/ocs/v2.php/cloud/users?format=json',
+			`${BASE_URL}/ocs/v2.php/cloud/users?format=json`,
 			{ headers: ocsHeaders, form: { userid: testUser, password: testPassword } },
 		).catch(() => undefined)
 
 		const existsRes = await page.request.get(
-			`http://localhost:8080/ocs/v2.php/cloud/users/${testUser}?format=json`,
+			`${BASE_URL}/ocs/v2.php/cloud/users/${testUser}?format=json`,
 			{ headers: ocsHeaders },
 		).catch(() => undefined)
 		const userExists = !!existsRes && existsRes.ok()
@@ -74,7 +80,7 @@ test.describe('Encryption Suites — spec: encryption-suites/spec.md', () => {
 		testPage.setDefaultTimeout(20_000)
 
 		try {
-			await testPage.goto('http://localhost:8080/index.php/login', { waitUntil: 'domcontentloaded' })
+			await testPage.goto(`${BASE_URL}/index.php/login`, { waitUntil: 'domcontentloaded' })
 			// The NC login form hydrates client-side. On this shared dev instance it
 			// can fail to hydrate (asset 500s / brute-force throttling). If the form
 			// never appears, the environment can't support this flow — skip cleanly.
@@ -86,7 +92,7 @@ test.describe('Encryption Suites — spec: encryption-suites/spec.md', () => {
 			await testPage.locator('input[name="password"]').fill(testPassword)
 			await testPage.locator('button[type="submit"]').first().click()
 			await testPage.waitForSelector('#header, header.header', { timeout: 30_000 })
-			await testPage.goto('http://localhost:8080/index.php/apps/doriath/lock', { waitUntil: 'domcontentloaded' })
+			await testPage.goto(`${BASE_URL}/index.php/apps/doriath/lock`, { waitUntil: 'domcontentloaded' })
 
 			// The lock screen renders. Because LockScreen.vue fetches the suite in
 			// created(), the heading may briefly show "Set up" before settling.
@@ -122,7 +128,7 @@ test.describe('Encryption Suites — spec: encryption-suites/spec.md', () => {
 			await testContext.close().catch(() => {})
 			// Clean up the throwaway user.
 			await page.request.delete(
-				`http://localhost:8080/ocs/v2.php/cloud/users/${testUser}?format=json`,
+				`${BASE_URL}/ocs/v2.php/cloud/users/${testUser}?format=json`,
 				{ headers: ocsHeaders },
 			).catch(() => {})
 		}

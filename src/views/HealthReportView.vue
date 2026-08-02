@@ -81,7 +81,7 @@
 					testid="category-breached"
 					@open="openSecret" />
 				<NcButton v-if="breachActive && store.breachedFindings.length"
-					type="secondary"
+					variant="secondary"
 					data-testid="breach-flag-all"
 					@click="flagBreached">
 					{{ t('doriath', 'Flag all breached secrets for rotation') }}

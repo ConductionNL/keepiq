@@ -36,7 +36,7 @@
 
 		<NcButton
 			v-if="!success"
-			type="error"
+			variant="error"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
 			{{ loading ? t('doriath', 'Rotating keys...') : t('doriath', 'Start key rotation') }}

@@ -65,7 +65,7 @@ describe('TotpDisplay', () => {
 		expect(wrapper.find('[data-testid="totp-countdown"]').exists()).toBe(true)
 		expect(wrapper.find('[data-testid="totp-invalid"]').exists()).toBe(false)
 
-		wrapper.destroy()
+		wrapper.unmount()
 	})
 
 	it('shows the invalid state and never a code for an unparseable seed', async () => {
@@ -79,7 +79,7 @@ describe('TotpDisplay', () => {
 		expect(wrapper.find('[data-testid="totp-invalid"]').exists()).toBe(true)
 		expect(wrapper.find('[data-testid="totp-code"]').exists()).toBe(false)
 
-		wrapper.destroy()
+		wrapper.unmount()
 	})
 
 	it('renders nothing (no code) when the vault is locked', async () => {
@@ -92,7 +92,7 @@ describe('TotpDisplay', () => {
 
 		expect(wrapper.find('[data-testid="totp-code"]').exists()).toBe(false)
 
-		wrapper.destroy()
+		wrapper.unmount()
 	})
 
 	it('discards all TOTP state when the vault locks', async () => {
@@ -110,7 +110,7 @@ describe('TotpDisplay', () => {
 		expect(wrapper.vm.params).toBeNull()
 		expect(wrapper.vm.timer).toBeNull()
 
-		wrapper.destroy()
+		wrapper.unmount()
 	})
 
 	it('does not write the seed or code to browser storage', async () => {
@@ -124,7 +124,7 @@ describe('TotpDisplay', () => {
 
 		expect(setItem).not.toHaveBeenCalled()
 
-		wrapper.destroy()
+		wrapper.unmount()
 	})
 
 	it('clears the recompute timer on destroy', async () => {
@@ -135,7 +135,7 @@ describe('TotpDisplay', () => {
 		await waitForCode(wrapper.vm)
 		expect(wrapper.vm.timer).not.toBeNull()
 
-		wrapper.destroy()
+		wrapper.unmount()
 		expect(wrapper.vm.timer).toBeNull()
 	})
 })

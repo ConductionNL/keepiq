@@ -4,7 +4,7 @@
 			:label="label"
 			:type="revealed ? 'text' : 'password'"
 			:read-only="true" />
-		<NcButton type="tertiary"
+		<NcButton variant="tertiary"
 			:aria-label="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
 			:title="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
 			@click="toggle">

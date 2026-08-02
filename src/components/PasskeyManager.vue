@@ -29,14 +29,14 @@
 				<span class="passkey-manager__label">{{ cred.label || t('doriath', 'Passkey') }}</span>
 				<span :class="`passkey-manager__status passkey-manager__status--${cred.status}`">{{ cred.status }}</span>
 				<span class="passkey-manager__muted">{{ cred.lastUsedAt ? t('doriath', 'last used {when}', { when: formatDate(cred.lastUsedAt) }) : t('doriath', 'never used') }}</span>
-				<NcButton type="tertiary" :data-testid="`passkey-revoke-${cred.id}`" @click="store.revoke(cred.id)">
+				<NcButton variant="tertiary" :data-testid="`passkey-revoke-${cred.id}`" @click="store.revoke(cred.id)">
 					{{ t('doriath', 'Revoke') }}
 				</NcButton>
 			</li>
 		</ul>
 
 		<div v-if="!enrollOpen" class="passkey-manager__add">
-			<NcButton type="secondary"
+			<NcButton variant="secondary"
 				:disabled="vaultLocked"
 				data-testid="passkey-add"
 				@click="enrollOpen = true">
@@ -49,16 +49,16 @@
 		</div>
 
 		<div v-else class="passkey-manager__form" data-testid="passkey-enroll-form">
-			<NcTextField :value.sync="label" :label="t('doriath', 'Passkey name (e.g. MacBook Touch ID)')" data-testid="passkey-label" />
-			<NcPasswordField :value.sync="masterPassword" :label="t('doriath', 'Confirm your master password')" data-testid="passkey-master" />
+			<NcTextField v-model="label" :label="t('doriath', 'Passkey name (e.g. MacBook Touch ID)')" data-testid="passkey-label" />
+			<NcPasswordField v-model="masterPassword" :label="t('doriath', 'Confirm your master password')" data-testid="passkey-master" />
 			<div class="passkey-manager__form-actions">
-				<NcButton type="primary"
+				<NcButton variant="primary"
 					:disabled="busy || !masterPassword"
 					data-testid="passkey-enroll"
 					@click="onEnroll">
 					{{ busy ? t('doriath', 'Enrolling…') : t('doriath', 'Enroll passkey') }}
 				</NcButton>
-				<NcButton type="tertiary" :disabled="busy" @click="cancel">
+				<NcButton variant="tertiary" :disabled="busy" @click="cancel">
 					{{ t('doriath', 'Cancel') }}
 				</NcButton>
 			</div>

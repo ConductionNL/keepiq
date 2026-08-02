@@ -71,7 +71,7 @@
 						@change="onFilterChange">
 				</div>
 
-				<NcButton type="secondary"
+				<NcButton variant="secondary"
 					data-testid="audit-export-csv"
 					@click="exportCsv">
 					{{ t('doriath', 'Export CSV') }}

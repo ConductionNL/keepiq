@@ -8,20 +8,24 @@
  * renders that call them resolve to the bare key string. Loaded
  * automatically via `test.setupFiles` in `vitest.config.js`.
  *
- * Two registration sites are required because Vue 2's template compiler
- * emits `_vm.t(...)` (instance lookup) while plain `<script>` code calls
- * `t(...)` (global lookup):
+ * Two registration sites are required:
  *
  *   - `globalThis.t` / `globalThis.n` — for direct calls in store / util
- *     modules and inline template expressions that bypass the instance.
- *   - `Vue.mixin({ methods: { t, n } })` — for `_vm.t(...)` emitted by
- *     the template compiler. Registered as a global mixin so every
- *     mounted component has them on `this`.
+ *     modules that use the helpers as free functions.
+ *   - `config.global.mixins` — for `this.t(...)` in component options and
+ *     `_ctx.t(...)` emitted by the template compiler. Under Vue 2 this was
+ *     `Vue.mixin(...)` on the global constructor; Vue 3 has no global Vue,
+ *     so the equivalent is Vue Test Utils' `config.global`, which VTU
+ *     merges into every `mount()` in the run.
+ *
+ * ⚠️ The Vue 2 form (`import Vue from 'vue'; Vue.mixin(...)`) does not
+ * survive the migration: `vue@3`'s default export has no `.mixin`, so it
+ * throws at setup time — loud, not silent, which is the good case.
  *
  * @spec openspec/changes/implement-link-sharing/tasks.md#13
  */
 
-import Vue from 'vue'
+import { config } from '@vue/test-utils'
 
 const tStub = (_app, key, _vars) => key
 const nStub = (_app, singular, plural, count) => (count === 1 ? singular : plural)
@@ -29,9 +33,12 @@ const nStub = (_app, singular, plural, count) => (count === 1 ? singular : plura
 globalThis.t = tStub
 globalThis.n = nStub
 
-Vue.mixin({
-	methods: {
-		t: tStub,
-		n: nStub,
+config.global.mixins = [
+	...(config.global.mixins || []),
+	{
+		methods: {
+			t: tStub,
+			n: nStub,
+		},
 	},
-})
+]

@@ -9,7 +9,7 @@
 			</NcNoteCard>
 
 			<fieldset :disabled="regex.length > 0" class="key-generator-modal__basic">
-				<NcInputField :value.sync="lengthInput"
+				<NcInputField v-model="lengthInput"
 					type="number"
 					:label="t('doriath', 'Length')"
 					:min="minLength"
@@ -18,19 +18,19 @@
 					{{ t('doriath', 'Locked by org policy: minimum length {min}', { min: minLength }) }}
 				</p>
 
-				<NcCheckboxRadioSwitch :checked.sync="includeSpecialCharacters"
+				<NcCheckboxRadioSwitch v-model="includeSpecialCharacters"
 					type="switch"
 					:disabled="symbolLocked">
 					{{ symbolLocked ? t('doriath', 'Include special characters (locked by org policy)') : t('doriath', 'Include special characters') }}
 				</NcCheckboxRadioSwitch>
 
-				<NcInputField :value.sync="excludedCharacters"
+				<NcInputField v-model="excludedCharacters"
 					:label="t('doriath', 'Exclude characters')" />
 			</fieldset>
 
 			<details class="key-generator-modal__advanced">
 				<summary>{{ t('doriath', 'Advanced') }}</summary>
-				<NcInputField :value.sync="regex"
+				<NcInputField v-model="regex"
 					:label="t('doriath', 'Regex pattern')"
 					:helper-text="t('doriath', 'When set, overrides length, special characters and exclusions.')" />
 			</details>
@@ -50,17 +50,17 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="secondary" :disabled="loading" @click="generate">
+			<NcButton variant="secondary" :disabled="loading" @click="generate">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Dice5 v-else :size="20" />
 				</template>
 				{{ t('doriath', 'Generate') }}
 			</NcButton>
-			<NcButton type="primary" :disabled="!generatedKey" @click="use">
+			<NcButton variant="primary" :disabled="!generatedKey" @click="use">
 				{{ t('doriath', 'Use') }}
 			</NcButton>
 		</template>

@@ -38,7 +38,7 @@
 						:disabled="loading"
 						@keyup.enter="handleSetup" />
 					<NcButton
-						type="primary"
+						variant="primary"
 						:disabled="!canSubmitSetup || loading"
 						:wide="true"
 						@click="handleSetup">
@@ -50,7 +50,7 @@
 				<template v-else>
 					<NcButton
 						v-if="passkeyOffered"
-						type="primary"
+						variant="primary"
 						:disabled="loading"
 						:wide="true"
 						data-testid="unlock-with-passkey"
@@ -67,7 +67,7 @@
 						:disabled="loading"
 						@keyup.enter="handleUnlock" />
 					<NcButton
-						:type="passkeyOffered ? 'secondary' : 'primary'"
+						:variant="passkeyOffered ? 'secondary' : 'primary'"
 						:disabled="!masterPassword || loading"
 						:wide="true"
 						@click="handleUnlock">

@@ -66,7 +66,7 @@ describe('KeyGeneratorModal', () => {
 
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.generate()
@@ -90,7 +90,7 @@ describe('KeyGeneratorModal', () => {
 
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.regex = '[A-Z]{3}-\\d{3}'
@@ -110,7 +110,7 @@ describe('KeyGeneratorModal', () => {
 
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.generate()
@@ -123,7 +123,7 @@ describe('KeyGeneratorModal', () => {
 	it('use(): emits the generated key and closes the dialog', async () => {
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.generatedKey = 'preview-key'
@@ -141,7 +141,7 @@ describe('KeyGeneratorModal', () => {
 	it('use(): no-op when no key has been generated yet', () => {
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.use()
@@ -152,7 +152,7 @@ describe('KeyGeneratorModal', () => {
 	it('reset() clears the preview and error when the dialog closes', () => {
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.generatedKey = 'old-key'

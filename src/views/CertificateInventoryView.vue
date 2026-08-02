@@ -53,13 +53,13 @@
 								<span v-else class="cert-inventory__muted">{{ t('doriath', 'not parsed yet') }}</span>
 							</td>
 							<td class="cert-inventory__actions">
-								<NcButton type="tertiary"
+								<NcButton variant="tertiary"
 									:disabled="busy || locked"
 									:data-testid="`cert-parse-${row.id}`"
 									@click="onParse(row)">
 									{{ row.metadata ? t('doriath', 'Re-parse') : t('doriath', 'Parse certificate') }}
 								</NcButton>
-								<NcButton type="tertiary"
+								<NcButton variant="tertiary"
 									:disabled="busy"
 									:data-testid="`cert-renew-${row.id}`"
 									@click="onChecklist(row)">
@@ -100,7 +100,7 @@
 								<span v-else>—</span>
 							</td>
 							<td>
-								<NcButton type="tertiary"
+								<NcButton variant="tertiary"
 									:disabled="busy"
 									:data-testid="`cert-reissue-${row.id}`"
 									@click="onReissue(row)">
@@ -153,7 +153,7 @@
 				</ol>
 			</div>
 			<template #actions>
-				<NcButton type="primary" @click="checklist = null">
+				<NcButton variant="primary" @click="checklist = null">
 					{{ t('doriath', 'Close') }}
 				</NcButton>
 			</template>

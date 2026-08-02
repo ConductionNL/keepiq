@@ -59,7 +59,7 @@
 					{{ t('doriath', 'Start a request; share the pairing code with the sending provider, then wait for the sealed transfer.') }}
 				</p>
 				<NcButton v-if="!pairingId"
-					type="primary"
+					variant="primary"
 					:disabled="busy"
 					data-testid="cxp-start-receive"
 					@click="startReceive">
@@ -76,19 +76,19 @@
 
 			<!-- Send / export -->
 			<div v-else class="cxp-dialog__panel">
-				<NcTextField :value.sync="sendPairingId"
+				<NcTextField v-model="sendPairingId"
 					:label="t('doriath', 'Pairing code from the receiving provider')"
 					data-testid="cxp-send-pairing" />
 				<NcNoteCard type="warning">
 					{{ t('doriath', 'Sending requires re-entering your master password, even while unlocked.') }}
 				</NcNoteCard>
-				<NcPasswordField :value.sync="masterPassword"
+				<NcPasswordField v-model="masterPassword"
 					:label="t('doriath', 'Re-enter your master password')"
 					data-testid="cxp-master-password" />
 				<NcNoteCard v-if="cxpReport && cxpReport.unmapped.length > 0" type="warning" data-testid="cxp-unmapped-report">
 					{{ n('doriath', '%n item cannot be represented in CXF and will be skipped.', '%n items cannot be represented in CXF and will be skipped.', cxpReport.unmapped.length) }}
 				</NcNoteCard>
-				<NcButton type="primary"
+				<NcButton variant="primary"
 					:disabled="busy || !sendPairingId || !masterPassword"
 					data-testid="cxp-do-send"
 					@click="doSend">

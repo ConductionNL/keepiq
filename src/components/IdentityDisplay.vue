@@ -32,7 +32,7 @@
 				<dt>{{ t('doriath', 'BSN') }}</dt>
 				<dd class="identity-display__masked">
 					<span data-testid="identity-bsn-value">{{ revealed ? payload.bsn : '•••••••••' }}</span>
-					<NcButton type="tertiary" data-testid="identity-reveal-bsn" @click="revealed = !revealed">
+					<NcButton variant="tertiary" data-testid="identity-reveal-bsn" @click="revealed = !revealed">
 						{{ revealed ? t('doriath', 'Hide') : t('doriath', 'Show') }}
 					</NcButton>
 					<CopyButton :value="payload.bsn" :label="t('doriath', 'Copy BSN')" />

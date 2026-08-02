@@ -38,10 +38,10 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="error" :disabled="loading" @click="submit">
+			<NcButton variant="error" :disabled="loading" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Delete v-else :size="20" />

@@ -25,7 +25,7 @@
 				<p>
 					{{ t('doriath', 'Share the folder "{name}" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.', { name: folderName }) }}
 				</p>
-				<NcButton type="primary"
+				<NcButton variant="primary"
 					:disabled="busy"
 					data-testid="team-folder-share"
 					@click="onShareFolder">
@@ -51,7 +51,7 @@
 							<option value="read">{{ t('doriath', 'Read') }}</option>
 							<option value="write">{{ t('doriath', 'Write') }}</option>
 						</select>
-						<NcButton type="tertiary"
+						<NcButton variant="tertiary"
 							:aria-label="t('doriath', 'Remove member')"
 							:disabled="busy"
 							:data-testid="`team-folder-remove-${member.memberId}`"
@@ -79,7 +79,7 @@
 							autocomplete="off"
 							data-testid="team-folder-member-id">
 					</label>
-					<NcButton type="secondary"
+					<NcButton variant="secondary"
 						:disabled="busy || newMemberId === ''"
 						data-testid="team-folder-add-member"
 						@click="onAddMember">
@@ -101,13 +101,13 @@
 						data-testid="team-folder-progress" />
 					<div class="team-folder-dialog__fanout-actions">
 						<NcButton v-if="fanOut.running"
-							type="tertiary"
+							variant="tertiary"
 							data-testid="team-folder-cancel-fanout"
 							@click="store.cancelFanOut()">
 							{{ t('doriath', 'Cancel') }}
 						</NcButton>
 						<NcButton v-else
-							type="primary"
+							variant="primary"
 							:disabled="busy"
 							data-testid="team-folder-run-fanout"
 							@click="onRunFanOut">
@@ -117,7 +117,7 @@
 				</div>
 
 				<div class="team-folder-dialog__danger">
-					<NcButton type="error"
+					<NcButton variant="error"
 						:disabled="busy"
 						data-testid="team-folder-unshare"
 						@click="onUnshare">
