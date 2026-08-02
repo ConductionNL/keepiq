@@ -36,7 +36,8 @@
 			</details>
 
 			<div v-if="generatedKey" class="key-generator-modal__preview">
-				<NcInputField :value="generatedKey"
+				<!-- v9 models through `modelValue`; `:value` is a dead binding. -->
+				<NcInputField :model-value="generatedKey"
 					:label="t('doriath', 'Generated key')"
 					:read-only="true"
 					:show-trailing-button="true"

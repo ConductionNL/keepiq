@@ -29,7 +29,7 @@
 					:clearable="false"
 					label="label"
 					data-testid="staleness-select"
-					@input="reanalyse" />
+					@update:model-value="reanalyse" />
 
 				<label v-if="breachGateOn" class="health-report__optin" data-testid="breach-optin">
 					<input v-model="breachOptIn" type="checkbox" @change="onBreachToggle">

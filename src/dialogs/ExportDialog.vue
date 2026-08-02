@@ -77,7 +77,7 @@
 			<div v-if="mode === 'encrypted-backup'" class="export-dialog__backup">
 				<NcPasswordField v-model="passphrase"
 					:label="t('doriath', 'Backup passphrase')"
-					@update:value="onPassphraseInput" />
+					@update:model-value="onPassphraseInput" />
 				<p class="export-dialog__hint">
 					{{ t('doriath', 'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.') }}
 				</p>

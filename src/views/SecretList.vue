@@ -52,14 +52,18 @@
 
 				<!-- Secret-type filter (passkey-item-type §3.3): show only one
 				     type, e.g. passkeys. Server-side via the typeId param. -->
+				<!-- v9 NcSelect models through `modelValue` and emits ONLY
+				     `update:modelValue`. The Vue-2 pair (`:value` + `@input`)
+				     is dead on BOTH sides: the filter never showed a selection
+				     and selecting a type never filtered. -->
 				<NcSelect class="secret-list-view__type-filter"
-					:value="typeFilterOption"
+					:model-value="typeFilterOption"
 					:options="typeFilterOptions"
 					:input-label="t('doriath', 'Type')"
 					:clearable="true"
 					:placeholder="t('doriath', 'All types')"
 					data-testid="secret-type-filter"
-					@input="onTypeFilter($event ? $event.value : null)" />
+					@update:model-value="onTypeFilter($event ? $event.value : null)" />
 
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
 				<NcActions :menu-name="t('doriath', 'My data')">
