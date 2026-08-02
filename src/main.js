@@ -6,12 +6,18 @@
  *
  * Builds the vue-router from the bundled manifest, registers lib
  * icons + translations, and mounts the CnAppRoot-driven shell at
- * `#content`.
+ * `#doriath-app`.
+ *
+ * ⚠️ The host element is `#doriath-app`, NOT `#content`. Under Vue 2,
+ * `$mount('#content')` REPLACED the matched element, so the template's
+ * `<div id="content">` (a duplicate of core's `layout.user.php` wrapper)
+ * was swallowed. Vue 3's `mount()` renders INSIDE the match instead, so
+ * mounting on `#content` would nest the app in core's own wrapper. The
+ * host element is renamed rather than reasoning about which div wins.
  */
 
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import { PiniaVuePlugin } from 'pinia'
+import { createApp, h } from 'vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -23,6 +29,8 @@ import {
 	defaultPageTypes,
 	// eslint-disable-next-line import/named
 	registerIcons,
+	// eslint-disable-next-line import/named
+	registerBuiltinDashboardWidgets,
 	// eslint-disable-next-line import/named
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
@@ -39,12 +47,16 @@ import '@conduction/nextcloud-vue/css/index.css'
 // Global (unscoped) app styles
 import './assets/app.css'
 
-Vue.mixin({ methods: { t, n } })
-Vue.use(PiniaVuePlugin)
-Vue.use(VueRouter)
-
 // Register library-side icon set + lib translations once at bootstrap.
 registerIcons(appIcons)
+
+// nc-vue declares `sideEffects: ["**/*.css"]`, which lets webpack drop the
+// bare imports that register the built-in `stat` / `object-table` dashboard
+// widgets. Without this explicit call those widgets render "Widget not
+// available" while `chart` (registered inline) keeps working — the asymmetry
+// that identified the bug on larpingapp.
+registerBuiltinDashboardWidgets()
+
 try {
 	registerTranslations()
 } catch (e) {
@@ -69,11 +81,10 @@ function tryLoadTranslations() {
 }
 
 // Shallow-clone CnPageRenderer because the lib's barrel exports are
-// non-extensible (webpack ESM module records). Vue 2's `Vue.extend()`
-// adds an internal `_Ctor` cache to the component definition; mutating
-// a non-extensible export throws "Cannot add property _Ctor, object is
-// not extensible". Cloning gives Vue Router an extensible
-// component-options object without altering the lib's internals.
+// frozen / non-extensible (webpack ESM module records) and vue-router
+// attaches bookkeeping to the component options it is handed. Cloning
+// gives the router an extensible options object without altering the
+// lib's internals.
 const RoutePageRenderer = { ...CnPageRenderer }
 
 const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
@@ -87,7 +98,7 @@ const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
  * `props: true` so the renderer receives params as props.
  *
  * @param {object} manifest The bundled manifest (with `pages[]`).
- * @return {Array<object>} vue-router 3 routes config.
+ * @return {Array<object>} vue-router 4 routes config.
  */
 function routesFromManifest(manifest) {
 	const routes = manifest.pages.map((page) => ({
@@ -96,25 +107,24 @@ function routesFromManifest(manifest) {
 		component: RoutePageRenderer,
 		props: page.route.includes(':'),
 	}))
-	// Catch-all redirect to dashboard.
-	routes.push({ path: '*', redirect: '/' })
+	// Catch-all redirect to dashboard. vue-router 4 REMOVED the bare `*`
+	// path — it matches nothing and silently leaves `<router-view>` empty
+	// with no error, so the named-param form is mandatory.
+	routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })
 	return routes
 }
 
-const router = new VueRouter({
-	mode: 'hash',
-	base: generateUrl('/apps/doriath'),
+const router = createRouter({
+	history: createWebHashHistory(generateUrl('/apps/doriath')),
 	routes: routesFromManifest(mergedManifest),
 })
 
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib
-// exports `defaultPageTypes` (and the app's component maps) as frozen
-// module objects in some bundle shapes — Vue 2's `Vue.extend()` mutates
-// component definitions to attach an internal `_Ctor` cache, which
-// throws against a frozen source map. Cloning here yields extensible
-// objects.
+// exports `defaultPageTypes` (and the app's component maps) FROZEN, so
+// any consumer that writes to them throws. Cloning here yields
+// extensible objects.
 //
 // `customComponents` is derived from the v2 registry's `kind:"page"`
 // entries because CnPageRenderer's `type:"custom"` dispatch path still
@@ -129,16 +139,20 @@ const customComponentsProp = Object.fromEntries(
 		.map(([key, entry]) => [key, entry.component]),
 )
 
-// Create and mount Vue instance immediately so the App renders.
-new Vue({
-	pinia,
-	router,
-	render: (h) => h(App, {
-		props: {
-			manifest: mergedManifest,
-			customComponents: customComponentsProp,
-			pageTypes: pageTypesProp,
-			registry: registryProp,
-		},
+// Create and mount the app immediately so the shell renders.
+const app = createApp({
+	render: () => h(App, {
+		manifest: mergedManifest,
+		customComponents: customComponentsProp,
+		pageTypes: pageTypesProp,
+		registry: registryProp,
 	}),
-}).$mount('#content')
+})
+
+// `t` / `n` were provided by a global `Vue.mixin` under Vue 2. An app-level
+// mixin is the direct Vue 3 equivalent and keeps `t(...)` available to every
+// template without touching 86 components.
+app.mixin({ methods: { t, n } })
+app.use(pinia)
+app.use(router)
+app.mount('#doriath-app')

@@ -63,7 +63,7 @@
 				:input-label="t('doriath', 'Exempt secret types')"
 				multiple
 				data-testid="policy-exempt-types"
-				@input="save" />
+				@update:model-value="save" />
 		</div>
 	</CnSettingsSection>
 </template>

@@ -39,7 +39,7 @@
 			<NcButton @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="loading"
 				@click="onDownload">
 				{{ locked ? t('doriath', 'Download metadata only') : t('doriath', 'Download full package') }}

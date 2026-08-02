@@ -30,32 +30,32 @@
 				{{ t('doriath', 'These fields are encrypted in your browser with the application\'s public key. You will not be able to read the secret back.') }}
 			</p>
 
-			<NcTextField :value.sync="name"
+			<NcTextField v-model="name"
 				:label="t('doriath', 'Name')"
 				:required="true"
 				data-testid="write-secret-name" />
 
-			<NcTextField :value.sync="url"
+			<NcTextField v-model="url"
 				:label="t('doriath', 'URL (optional)')" />
 
-			<NcTextField :value.sync="login"
+			<NcTextField v-model="login"
 				:label="t('doriath', 'Login (optional)')" />
 
-			<NcPasswordField :value.sync="value"
+			<NcPasswordField v-model="value"
 				:label="t('doriath', 'Secret value')"
 				:required="true"
 				data-testid="write-secret-value" />
 
-			<NcTextArea :value.sync="additionalFields"
+			<NcTextArea v-model="additionalFields"
 				:label="t('doriath', 'Additional fields (optional JSON)')"
 				rows="3" />
 		</div>
 
 		<template #actions>
-			<NcButton type="secondary" @click="onUpdateOpen(false)">
+			<NcButton variant="secondary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="busy || !canSubmit"
 				data-testid="write-secret-submit"
 				@click="submit">
@@ -66,12 +66,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
-import NcPasswordField from '@nextcloud/vue/dist/Components/NcPasswordField.js'
-import NcTextArea from '@nextcloud/vue/dist/Components/NcTextArea.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
+import { NcButton, NcDialog, NcNoteCard, NcPasswordField, NcTextArea, NcTextField } from '@nextcloud/vue'
 import { useApplicationStore } from '../../store/modules/application.js'
 
 export default {

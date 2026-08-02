@@ -63,7 +63,7 @@
 					<span class="share-dialog__value">
 						{{ t('doriath', 'Used {used} of {limit}', { used: share.usageCount || 0, limit: share.usageLimit }) }}
 					</span>
-					<NcButton type="tertiary"
+					<NcButton variant="tertiary"
 						:aria-label="t('doriath', 'Revoke')"
 						@click="revoke(share.id)">
 						<template #icon>
@@ -75,7 +75,7 @@
 
 			<!-- Deferred: user-to-user share. -->
 			<div class="share-dialog__user">
-				<NcButton type="secondary" :disabled="true">
+				<NcButton variant="secondary" :disabled="true">
 					<template #icon>
 						<AccountPlus :size="20" />
 					</template>
@@ -85,11 +85,11 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ createdUrl ? t('doriath', 'Done') : t('doriath', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="!createdUrl"
-				type="primary"
+				variant="primary"
 				:disabled="creating"
 				@click="createLink">
 				<template #icon>
@@ -167,7 +167,7 @@ export default {
 		await this.loadShares()
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		useLinkShareStore().clearCreatedPassword()
 	},
 

@@ -1,6 +1,6 @@
 <template>
 	<div class="secret-detail">
-		<NcButton type="tertiary" class="secret-detail__back" @click="goBack">
+		<NcButton variant="tertiary" class="secret-detail__back" @click="goBack">
 			<template #icon>
 				<ArrowLeft :size="20" />
 			</template>
@@ -88,11 +88,11 @@
 			<div v-if="hasAdditionalFields" class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{ t('doriath', 'Additional fields') }}</span>
 				<dl class="secret-detail__extra">
-					<template v-for="(value, key) in secret.additionalFields">
-						<dt :key="`k-${key}`">
+					<template v-for="(value, key) in secret.additionalFields" :key="key">
+						<dt>
 							{{ key }}
 						</dt>
-						<dd :key="`v-${key}`">
+						<dd>
 							{{ value }}
 						</dd>
 					</template>
@@ -103,25 +103,25 @@
 				{{ t('doriath', 'Read-only while offline — reconnect to edit, move, share, or delete.') }}
 			</div>
 			<div v-else class="secret-detail__actions">
-				<NcButton type="primary" @click="openEdit">
+				<NcButton variant="primary" @click="openEdit">
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
 					{{ t('doriath', 'Edit') }}
 				</NcButton>
-				<NcButton type="secondary" @click="openMove">
+				<NcButton variant="secondary" @click="openMove">
 					<template #icon>
 						<FolderMove :size="20" />
 					</template>
 					{{ t('doriath', 'Move') }}
 				</NcButton>
-				<NcButton type="secondary" @click="openShare">
+				<NcButton variant="secondary" @click="openShare">
 					<template #icon>
 						<ShareVariant :size="20" />
 					</template>
 					{{ t('doriath', 'Share') }}
 				</NcButton>
-				<NcButton type="error" @click="remove">
+				<NcButton variant="error" @click="remove">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
@@ -177,7 +177,7 @@
 				</h3>
 
 				<div class="secret-detail__requests-actions">
-					<NcButton type="secondary" @click="openRequestCreate">
+					<NcButton variant="secondary" @click="openRequestCreate">
 						{{ t('doriath', 'Request fill-in') }}
 					</NcButton>
 				</div>

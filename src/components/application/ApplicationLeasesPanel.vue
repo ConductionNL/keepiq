@@ -46,7 +46,7 @@
 					</td>
 					<td>
 						<NcButton v-if="lease.status === 'active'"
-							type="tertiary"
+							variant="tertiary"
 							:data-testid="`lease-revoke-${lease.id}`"
 							@click="onRevoke(lease)">
 							{{ t('doriath', 'Revoke') }}
@@ -59,8 +59,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import { useLeaseStore } from '../../store/modules/lease.js'
 
 export default {

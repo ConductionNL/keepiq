@@ -9,15 +9,26 @@
  * vitest's jsdom env. Views under test import only a handful of primitives
  * (CnIndexPage, CnFolderSidebar, CnStatusBadge) and assert on emitted events +
  * the slots they pass down — not on the library's real markup. So we swap the
- * whole package for minimal Vue 2 render-function stubs.
+ * whole package for minimal Vue 3 render-function stubs.
  *
  * Rules (same as the @nextcloud/vue stub):
- *  - No template strings (vite ships the runtime-only Vue 2 build).
+ *  - No template strings (vite ships the runtime-only build).
  *  - Forward the events the views listen to via `this.$emit`.
- *  - Render the scoped slots the views provide so tests can probe the rows.
+ *  - Render the slots the views provide so tests can probe the rows.
+ *
+ * ⚠️ Vue 3 conversion notes:
+ *  - `render(h)` gets NO `h`; import it from `vue`.
+ *  - vnode data is FLAT — `{ attrs: {...}, on: { click } }` becomes
+ *    `{ 'data-testid': ..., onClick }`.
+ *  - `this.$scopedSlots` was REMOVED; all slots (scoped or not) live on
+ *    `this.$slots` and are functions. Reading `$scopedSlots` yields
+ *    `undefined`, so a row would silently render with no badges and the
+ *    assertion would quietly stop covering anything.
  *
  * @spec openspec/changes/implement-application-mgmt/tasks.md#15.2
  */
+
+import { h } from 'vue'
 
 /**
  * CnIndexPage stub — renders a primary add button (emits `add`), a per-object
@@ -27,12 +38,14 @@
 const CnIndexPage = {
 	name: 'CnIndexPage',
 	props: ['objects', 'schema', 'listConfig', 'loading', 'pagination', 'viewMode', 'availableViewModes', 'selectable', 'addLabel', 'addIcon', 'inlineSearch', 'searchValue', 'searchPlaceholder', 'showSortSelect', 'sortSelectOptions', 'sortSelectValue', 'listLabel', 'rowKey', 'emptyText'],
-	render(h) {
+	emits: ['add', 'row-click'],
+	render() {
 		const objects = this.objects || []
 		const children = [
 			h('button', {
-				attrs: { 'data-testid': 'cn-cta-primary', type: 'button' },
-				on: { click: () => this.$emit('add') },
+				'data-testid': 'cn-cta-primary',
+				type: 'button',
+				onClick: () => this.$emit('add'),
 			}, this.addLabel),
 		]
 
@@ -40,20 +53,20 @@ const CnIndexPage = {
 			children.push(h('div', { class: 'cn-index-page__empty' }, this.emptyText))
 		} else {
 			const rows = objects.map((object) => {
-				const listItem = this.$scopedSlots['list-item']
+				const listItem = this.$slots['list-item']
 				if (listItem) {
 					return h('div', { class: 'cn-index-page__item' }, [listItem({ object })])
 				}
-				const badges = this.$scopedSlots['row-badges']
+				const badges = this.$slots['row-badges']
 				return h('div', {
 					class: 'cn-object-row',
-					on: { click: () => this.$emit('row-click', object) },
+					onClick: () => this.$emit('row-click', object),
 				}, badges ? [badges({ object })] : [])
 			})
 			children.push(h('div', { class: 'cn-index-page__rows' }, rows))
 		}
 
-		return h('div', { class: 'cn-index-page', attrs: { 'data-testid': 'cn-index-page' } }, children)
+		return h('div', { class: 'cn-index-page', 'data-testid': 'cn-index-page' }, children)
 	},
 }
 
@@ -64,17 +77,18 @@ const CnIndexPage = {
 const CnFolderSidebar = {
 	name: 'CnFolderSidebar',
 	props: ['folders', 'selectedId', 'allLabel', 'allowCreate', 'createLabel', 'source', 'objects', 'groupBy'],
-	render(h) {
+	emits: ['select', 'create'],
+	render() {
 		const children = [
 			h('button', {
 				class: 'cn-folder-sidebar__all',
-				on: { click: () => this.$emit('select', null) },
+				onClick: () => this.$emit('select', null),
 			}, this.allLabel),
 		]
 		if (this.allowCreate) {
 			children.push(h('button', {
 				class: 'cn-folder-sidebar__new',
-				on: { click: () => this.$emit('create', { parentId: this.selectedId }) },
+				onClick: () => this.$emit('create', { parentId: this.selectedId }),
 			}, this.createLabel))
 		}
 		return h('div', { class: 'cn-folder-sidebar' }, children)
@@ -85,8 +99,8 @@ const CnFolderSidebar = {
 const CnStatusBadge = {
 	name: 'CnStatusBadge',
 	props: ['label', 'variant', 'size', 'solid', 'colorMap'],
-	render(h) {
-		return h('span', { class: 'cn-status-badge', attrs: { 'data-variant': this.variant } }, this.label)
+	render() {
+		return h('span', { class: 'cn-status-badge', 'data-variant': this.variant }, this.label)
 	},
 }
 

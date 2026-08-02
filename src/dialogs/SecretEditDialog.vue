@@ -19,7 +19,7 @@
 				{{ error }}
 			</NcNoteCard>
 
-			<NcTextField :value.sync="name"
+			<NcTextField v-model="name"
 				:label="t('doriath', 'Name')"
 				:required="true" />
 
@@ -31,25 +31,25 @@
 
 			<!-- Card / identity composite payloads (card-identity-items §3.1). -->
 			<template v-if="isCard">
-				<NcPasswordField :value.sync="card.number" :label="t('doriath', 'Card number')" data-testid="card-number" />
-				<NcTextField :value.sync="card.expiry" :label="t('doriath', 'Expiry (MM/YY)')" data-testid="card-expiry" />
-				<NcPasswordField :value.sync="card.cvv" :label="t('doriath', 'CVV')" data-testid="card-cvv" />
-				<NcPasswordField :value.sync="card.pin" :label="t('doriath', 'PIN (optional)')" data-testid="card-pin" />
-				<NcTextField :value.sync="card.cardholder" :label="t('doriath', 'Cardholder name')" data-testid="card-cardholder" />
+				<NcPasswordField v-model="card.number" :label="t('doriath', 'Card number')" data-testid="card-number" />
+				<NcTextField v-model="card.expiry" :label="t('doriath', 'Expiry (MM/YY)')" data-testid="card-expiry" />
+				<NcPasswordField v-model="card.cvv" :label="t('doriath', 'CVV')" data-testid="card-cvv" />
+				<NcPasswordField v-model="card.pin" :label="t('doriath', 'PIN (optional)')" data-testid="card-pin" />
+				<NcTextField v-model="card.cardholder" :label="t('doriath', 'Cardholder name')" data-testid="card-cardholder" />
 			</template>
 			<template v-else-if="isIdentity">
-				<NcTextField :value.sync="identity.firstName" :label="t('doriath', 'First name')" data-testid="identity-first-name" />
-				<NcTextField :value.sync="identity.lastName" :label="t('doriath', 'Last name')" data-testid="identity-last-name" />
-				<NcTextField :value.sync="identity.address" :label="t('doriath', 'Address')" data-testid="identity-address" />
-				<NcTextField :value.sync="identity.phone" :label="t('doriath', 'Phone')" data-testid="identity-phone" />
-				<NcTextField :value.sync="identity.email" :label="t('doriath', 'Email')" data-testid="identity-email" />
-				<NcPasswordField :value.sync="identity.bsn" :label="t('doriath', 'BSN')" data-testid="identity-bsn" />
+				<NcTextField v-model="identity.firstName" :label="t('doriath', 'First name')" data-testid="identity-first-name" />
+				<NcTextField v-model="identity.lastName" :label="t('doriath', 'Last name')" data-testid="identity-last-name" />
+				<NcTextField v-model="identity.address" :label="t('doriath', 'Address')" data-testid="identity-address" />
+				<NcTextField v-model="identity.phone" :label="t('doriath', 'Phone')" data-testid="identity-phone" />
+				<NcTextField v-model="identity.email" :label="t('doriath', 'Email')" data-testid="identity-email" />
+				<NcPasswordField v-model="identity.bsn" :label="t('doriath', 'BSN')" data-testid="identity-bsn" />
 			</template>
 			<div v-else class="secret-form__value-row">
-				<NcPasswordField :value.sync="value"
+				<NcPasswordField v-model="value"
 					class="secret-form__value-field"
 					:label="valueLabel" />
-				<NcButton type="tertiary-no-background"
+				<NcButton variant="tertiary-no-background"
 					:title="t('doriath', 'Generate a strong key')"
 					:aria-label="t('doriath', 'Generate a strong key')"
 					@click="openGenerator">
@@ -64,10 +64,10 @@
 				@update:open="generatorOpen = $event"
 				@generated="onGenerated" />
 
-			<NcTextField :value.sync="url"
+			<NcTextField v-model="url"
 				:label="t('doriath', 'URL (optional)')" />
 
-			<NcTextField :value.sync="login"
+			<NcTextField v-model="login"
 				:label="t('doriath', 'Login (optional)')" />
 
 			<NcNoteCard v-if="!policyVerdict.compliant" type="warning" data-testid="policy-blocked">
@@ -76,10 +76,10 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="!canSubmit"
 				@click="submit">
 				<template #icon>

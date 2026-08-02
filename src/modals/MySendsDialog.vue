@@ -35,7 +35,7 @@
 						<td>{{ send.expiresAt ? formatDate(send.expiresAt) : t('doriath', 'never') }}</td>
 						<td>{{ send.hasPassword ? t('doriath', 'yes') : t('doriath', 'no') }}</td>
 						<td>
-							<NcButton type="tertiary"
+							<NcButton variant="tertiary"
 								:data-testid="`send-revoke-${send.id}`"
 								@click="onRevoke(send.id)">
 								{{ t('doriath', 'Revoke') }}
@@ -46,7 +46,7 @@
 			</table>
 		</div>
 		<template #actions>
-			<NcButton type="tertiary" @click="$emit('close')">
+			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
 		</template>

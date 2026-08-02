@@ -1,5 +1,5 @@
 <template>
-	<NcButton :type="buttonType"
+	<NcButton :variant="buttonType"
 		:aria-label="label"
 		:title="label"
 		@pointerdown="prewarm"

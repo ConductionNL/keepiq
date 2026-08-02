@@ -41,6 +41,28 @@ describe('ApplicationRegisterView', () => {
 		expect(wrapper.findAll('.cn-object-row')).toHaveLength(2)
 	})
 
+	it('renders the #row-badges slot content into each row', async () => {
+		// The row COUNT above passes whether or not the scoped slot renders,
+		// so it never covered the slot. Vue 3 removed `$scopedSlots` (all
+		// slots moved to `$slots`), and a stub still reading the old property
+		// silently produced empty rows while the count assertion stayed green.
+		// This asserts on the slot's actual output.
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: [
+				{ id: 'a1', name: 'CI', status: 'pending', type: 'external' },
+				{ id: 'a2', name: 'OC', status: 'active', type: 'internal' },
+			],
+		})
+		const wrapper = mount(ApplicationRegisterView)
+		await flush()
+
+		const badges = wrapper.findAll('.cn-object-row .cn-status-badge')
+		// One status badge + one type badge per row.
+		expect(badges).toHaveLength(4)
+		expect(wrapper.findAll('.cn-object-row').at(0).text()).toContain('external')
+		expect(wrapper.findAll('.cn-object-row').at(1).text()).toContain('internal')
+	})
+
 	it('opens the dialog when the register (add) button is clicked', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		const wrapper = mount(ApplicationRegisterView)

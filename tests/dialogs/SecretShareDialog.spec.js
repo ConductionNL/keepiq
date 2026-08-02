@@ -77,7 +77,7 @@ describe('SecretShareDialog', () => {
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
@@ -115,7 +115,7 @@ describe('SecretShareDialog', () => {
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
@@ -140,7 +140,7 @@ describe('SecretShareDialog', () => {
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
@@ -156,7 +156,7 @@ describe('SecretShareDialog', () => {
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		const linkStore = useLinkShareStore()

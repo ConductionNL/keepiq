@@ -16,15 +16,18 @@
 			{{ store.error }}
 		</NcNoteCard>
 
-		<NcCheckboxRadioSwitch :checked="flagged"
+		<!-- v9 renamed `checked` -> `modelValue`. Deliberately NOT v-model: the
+		     handler is async and persists server-side, so the prop stays
+		     one-way and the store remains the source of truth. -->
+		<NcCheckboxRadioSwitch :model-value="flagged"
 			type="switch"
 			data-testid="honey-toggle"
-			@update:checked="onToggle">
+			@update:model-value="onToggle">
 			{{ t('doriath', 'Honey tripwire — page me when anyone accesses this secret') }}
 		</NcCheckboxRadioSwitch>
 
 		<template v-if="flagged">
-			<NcTextField :value.sync="note"
+			<NcTextField v-model="note"
 				:label="t('doriath', 'Placement note (only you and admins see this)')"
 				data-testid="honey-note"
 				@blur="saveNote" />
@@ -56,14 +59,14 @@
 						<td>{{ formatDate(alert.accessedAt) }}</td>
 						<td class="honey-panel__actions">
 							<NcButton v-if="!alert.acknowledgedAt"
-								type="tertiary"
+								variant="tertiary"
 								:data-testid="`honey-ack-${alert.id}`"
 								@click="store.acknowledge(alert.id)">
 								{{ t('doriath', 'Acknowledge') }}
 							</NcButton>
 							<span v-else class="honey-panel__muted">{{ t('doriath', 'handled') }}</span>
 							<NcButton v-if="!isSnoozed(alert)"
-								type="tertiary"
+								variant="tertiary"
 								:data-testid="`honey-snooze-${alert.id}`"
 								@click="store.snooze(alert.id)">
 								{{ t('doriath', 'Snooze 24h') }}

@@ -75,9 +75,9 @@
 
 			<!-- Encrypted backup path -->
 			<div v-if="mode === 'encrypted-backup'" class="export-dialog__backup">
-				<NcPasswordField :value.sync="passphrase"
+				<NcPasswordField v-model="passphrase"
 					:label="t('doriath', 'Backup passphrase')"
-					@update:value="onPassphraseInput" />
+					@update:model-value="onPassphraseInput" />
 				<p class="export-dialog__hint">
 					{{ t('doriath', 'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.') }}
 				</p>
@@ -96,7 +96,7 @@
 					{{ t('doriath', 'I understand the file is unencrypted and will delete it after use') }}
 				</NcCheckboxRadioSwitch>
 				<NcPasswordField v-if="warningAcknowledged"
-					:value.sync="masterPassword"
+					v-model="masterPassword"
 					:label="t('doriath', 'Re-enter your master password')" />
 			</div>
 		</div>
@@ -105,7 +105,7 @@
 			<NcButton @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="!canSubmit || loading"
 				@click="onExport">
 				{{ t('doriath', 'Export') }}
@@ -178,12 +178,6 @@ export default {
 			cxfReport: null,
 		}
 	},
-	watch: {
-		mode() {
-			// A mode switch invalidates the CXF pre-download report.
-			this.cxfReport = null
-		},
-	},
 	computed: {
 		/** typeId → type-name map for the CXF export mapping. */
 		typeNamesById() {
@@ -239,6 +233,12 @@ export default {
 			}
 			// Plaintext CSV: warning acknowledged + a master password entered.
 			return this.warningAcknowledged && this.masterPassword.length > 0
+		},
+	},
+	watch: {
+		mode() {
+			// A mode switch invalidates the CXF pre-download report.
+			this.cxfReport = null
 		},
 	},
 	methods: {

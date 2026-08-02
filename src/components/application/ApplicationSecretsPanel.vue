@@ -18,7 +18,7 @@
 		<header class="application-secrets-panel__header">
 			<h3>{{ t('doriath', 'Application secrets') }}</h3>
 			<NcButton v-if="applicationActive"
-				type="primary"
+				variant="primary"
 				data-testid="write-secret-button"
 				@click="$emit('write-secret')">
 				{{ t('doriath', 'Write secret') }}
@@ -59,8 +59,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import { useApplicationStore } from '../../store/modules/application.js'
 
 export default {

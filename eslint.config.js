@@ -8,6 +8,18 @@ const {
 	FlatCompat,
 } = require('@eslint/eslintrc')
 
+// Shared Vue 3 rule layer, published inside @conduction/nextcloud-vue.
+//
+// It is an ARRAY OF THREE configs, not one object, and it registers no
+// plugins — which is why it layers cleanly on top of the @nextcloud v8 base
+// and must be spread LAST. Do NOT adopt `@nextcloud/eslint-config/vue3`
+// directly: it sets `parserOptions.parser` to a bare string, which routes
+// template expressions through @typescript-eslint/parser, drops `v-for`
+// scope, and manufactures hundreds of bogus `vue/valid-v-for` errors.
+const {
+	conductionVue3Fixes,
+} = require('@conduction/nextcloud-vue/eslint')
+
 const compat = new FlatCompat({
 	baseDirectory: __dirname,
 	recommendedConfig: js.configs.recommended,
@@ -34,6 +46,12 @@ module.exports = defineConfig([{
 		// Allow unused i18n functions (t, n) — imported for future translation wiring
 		'no-unused-vars': ['error', { varsIgnorePattern: '^(t|n)$', argsIgnorePattern: '^_' }],
 		'jsdoc/require-jsdoc': 'off',
+		// `@spec` / `@e2e` are the fleet's traceability tags (ADR-020, hydra
+		// gate-16 / gate-19), used deliberately throughout this codebase.
+		// jsdoc/check-tag-names does not know them and reported all 272 of
+		// them as "Invalid JSDoc tag name", which buried every other warning.
+		// Declaring them is the correct fix — not a suppression.
+		'jsdoc/check-tag-names': ['warn', { definedTags: ['spec', 'e2e'] }],
 		'vue/first-attribute-linebreak': 'off',
 		'@typescript-eslint/no-explicit-any': 'off',
 		'n/no-missing-import': 'off',
@@ -52,4 +70,10 @@ module.exports = defineConfig([{
 			browser: 'readonly',
 		},
 	},
-}])
+},
+// Spread LAST so the Vue 3 rules win over the Vue-2-era @nextcloud base.
+// Without this layer ZERO `vue/no-deprecated-*` rules are active, so Vue-2
+// survivals (beforeDestroy, .sync, filters) lint clean while being silently
+// ignored at runtime.
+...conductionVue3Fixes,
+])

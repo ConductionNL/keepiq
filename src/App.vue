@@ -80,7 +80,7 @@
 						<PasskeyManager />
 					</div>
 					<div class="user-settings__field">
-						<NcButton type="error" @click="showRecovery = !showRecovery">
+						<NcButton variant="error" @click="showRecovery = !showRecovery">
 							{{ t('doriath', 'My master password was compromised') }}
 						</NcButton>
 						<CompromiseRecoveryForm v-if="showRecovery" />
@@ -109,19 +109,19 @@
 								</div>
 								<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
 									<NcButton
-										type="error"
+										variant="error"
 										:disabled="!revokeReason || revoking"
 										@click="handleRevoke">
 										{{ revoking ? t('doriath', 'Revoking...') : t('doriath', 'Confirm revocation') }}
 									</NcButton>
-									<NcButton type="secondary" @click="revokeConfirm = false">
+									<NcButton variant="secondary" @click="revokeConfirm = false">
 										{{ t('doriath', 'Cancel') }}
 									</NcButton>
 								</div>
 							</NcNoteCard>
 							<NcButton
 								v-else
-								type="warning"
+								variant="warning"
 								@click="revokeConfirm = true">
 								{{ t('doriath', 'Revoke encryption suite') }}
 							</NcButton>
@@ -159,7 +159,7 @@
 						<li>{{ t('doriath', 'In the extension, enter this server URL, your username, and the app password, then unlock with your master password.') }}</li>
 					</ol>
 					<div class="user-settings__field">
-						<NcButton :href="securitySettingsUrl" type="secondary">
+						<NcButton :href="securitySettingsUrl" variant="secondary">
 							{{ t('doriath', 'Open Nextcloud security settings') }}
 						</NcButton>
 					</div>
@@ -447,7 +447,7 @@ export default {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 	 */
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.timeoutInterval) {
 			clearInterval(this.timeoutInterval)
 		}

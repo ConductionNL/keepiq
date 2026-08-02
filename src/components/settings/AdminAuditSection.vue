@@ -39,7 +39,7 @@
 					:input-label="t('doriath', 'Event type')"
 					:placeholder="t('doriath', 'All event types')"
 					data-testid="audit-filter-eventtype"
-					@input="onFilterChange" />
+					@update:model-value="onFilterChange" />
 
 				<div class="audit-admin__filter">
 					<label for="audit-filter-actor">{{ t('doriath', 'Actor') }}</label>
@@ -71,7 +71,7 @@
 						@change="onFilterChange">
 				</div>
 
-				<NcButton type="secondary"
+				<NcButton variant="secondary"
 					data-testid="audit-export-csv"
 					@click="exportCsv">
 					{{ t('doriath', 'Export CSV') }}

@@ -23,10 +23,10 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="saving"
 				@click="submit">
 				<template #icon>

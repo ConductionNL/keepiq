@@ -23,7 +23,7 @@
 					{{ attachment.filename || t('doriath', '(undecryptable attachment)') }}
 				</span>
 				<span class="attachment-panel__size">{{ humanSize(attachment.sizeBytes) }}</span>
-				<NcButton type="tertiary"
+				<NcButton variant="tertiary"
 					:aria-label="t('doriath', 'Download attachment')"
 					:data-testid="`attachment-download-${attachment.id}`"
 					@click="store.download(attachment)">
@@ -32,7 +32,7 @@
 					</template>
 				</NcButton>
 				<NcButton v-if="canManage"
-					type="tertiary"
+					variant="tertiary"
 					:aria-label="t('doriath', 'Delete attachment')"
 					:data-testid="`attachment-delete-${attachment.id}`"
 					@click="store.remove(secretId, attachment.id)">
@@ -52,7 +52,7 @@
 				class="attachment-panel__file-input"
 				data-testid="attachment-file-input"
 				@change="onFilePicked">
-			<NcButton type="secondary"
+			<NcButton variant="secondary"
 				:disabled="store.loading"
 				data-testid="attachment-upload"
 				@click="$refs.fileInput.click()">
@@ -104,7 +104,7 @@ export default {
 			// Error surfaced via store state.
 		}
 	},
-	destroyed() {
+	unmounted() {
 		this.store.reset()
 	},
 	methods: {

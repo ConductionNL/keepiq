@@ -16,9 +16,8 @@
  *   2. COMPONENT / DOM SPECS -> `jsdom` env
  *      - `tests/components/**`, `tests/views/**`, `tests/dialogs/**`,
  *        `tests/store/**`. These mount `.vue` SFCs through
- *        `@vitejs/plugin-vue2` + `@vue/test-utils` (Vue 2.7) and assert on
- *        the rendered DOM. Reference pattern adapted from
- *        `apps-extra/openbuild/vitest.config.js`.
+ *        `@vitejs/plugin-vue` + `@vue/test-utils` v2 (Vue 3) and assert on
+ *        the rendered DOM.
  *
  * Stubs:
  *   - `cssNoop` swallows `*.css` side-effect imports shipped by published
@@ -26,16 +25,16 @@
  *     files do not exist on disk in unit-test mode — they come from a
  *     parallel Vite build the publishing pipeline runs).
  *   - `@conduction/nextcloud-vue` is aliased to a lightweight stub because
- *     its CJS bundle uses `require('*.vue')` which Vite's transform cannot
- *     consume. The doriath stub re-exports the dialog/modal primitives the
- *     tests need as plain Vue 2 components.
+ *     its bundle drags in apexcharts / leaflet / codemirror, none of which
+ *     render under jsdom. The doriath stub re-exports the dialog/modal
+ *     primitives the tests need as plain Vue 3 components.
  *
  * @spec openspec/changes/implement-link-sharing/tasks.md#13.1
  * @spec openspec/changes/implement-secrets/tasks.md#13
  */
 
 const path = require('path')
-const vue2 = require('@vitejs/plugin-vue2')
+const vue = require('@vitejs/plugin-vue')
 
 const cssNoop = {
 	name: 'doriath-css-noop',
@@ -57,7 +56,7 @@ const cssNoop = {
 module.exports = {
 	plugins: [
 		cssNoop,
-		vue2.default ? vue2.default() : vue2(),
+		vue.default ? vue.default() : vue(),
 	],
 	test: {
 		// Default to node so the existing pure-crypto specs keep running fast.
