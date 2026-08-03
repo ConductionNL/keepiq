@@ -247,6 +247,7 @@ export default {
 .key-generator-modal__preview {
 	margin-top: 8px;
 }
+
 .key-generator-modal__policy-hint {
 	color: var(--color-text-maxcontrast, #777);
 	font-size: 13px;

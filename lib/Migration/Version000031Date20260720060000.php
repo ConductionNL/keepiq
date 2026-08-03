@@ -68,7 +68,7 @@ class Version000031Date20260720060000 extends SimpleMigrationStep
             $table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
             $table->setPrimaryKey(['id']);
             $table->addIndex(['owner_id', 'status'], 'doriath_pk_owner_status');
-            // credential_id is TEXT (base64url, variable length) — a plain
+            // The credential_id column is TEXT (base64url, variable length) — a plain
             // index prefix suffices for the per-owner uniqueness check done
             // in the mapper; a unique index over TEXT is not portable.
             $table->addIndex(['owner_id'], 'doriath_pk_owner');

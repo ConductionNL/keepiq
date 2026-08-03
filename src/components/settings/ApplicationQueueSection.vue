@@ -116,23 +116,28 @@ export default {
 	padding: 0.5rem 0;
 	border-bottom: 1px solid var(--color-border);
 }
+
 .application-queue__meta {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 }
+
 .application-queue__description {
 	color: var(--color-text-lighter);
 	font-size: 0.85rem;
 }
+
 .application-queue__date {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.75rem;
 }
+
 .application-queue__actions {
 	display: flex;
 	gap: 8px;
 }
+
 .application-queue--empty {
 	padding: 1rem 0;
 	color: var(--color-text-lighter);

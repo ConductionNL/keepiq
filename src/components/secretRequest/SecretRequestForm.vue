@@ -147,27 +147,32 @@ export default {
 	border-radius: var(--border-radius, 4px);
 	margin-bottom: 12px;
 }
+
 .doriath-secret-request-form__field,
 .doriath-secret-request-form__rerequest {
 	display: flex;
 	gap: 8px;
 	align-items: center;
 }
+
 .doriath-secret-request-form__expires {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
+
 .doriath-secret-request-form__expires input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-secret-request-form__error {
 	color: var(--color-error, #e9322d);
 	font-size: 13px;
 }
+
 .doriath-secret-request-form__link {
 	background-color: var(--color-success-rest, #e6f4ea);
 	border: 1px solid var(--color-success, #46ba61);
@@ -175,11 +180,13 @@ export default {
 	border-radius: var(--border-radius, 4px);
 	font-size: 13px;
 }
+
 .doriath-secret-request-form__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
+
 .doriath-secret-request-form__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);

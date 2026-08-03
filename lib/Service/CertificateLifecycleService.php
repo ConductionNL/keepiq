@@ -42,7 +42,6 @@ use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
-use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -63,7 +62,6 @@ class CertificateLifecycleService
      * @param CACertificateMapper         $caMapper        The CA certificate mapper
      * @param SecretService               $secretService   The secret service (expiry path)
      * @param CertificateAuthorityService $caService       The CA service (re-issue)
-     * @param LoggerInterface             $logger          The logger
      * @param IEventDispatcher|null       $eventDispatcher The audit dispatcher
      *
      * @return void
@@ -76,7 +74,6 @@ class CertificateLifecycleService
         private CACertificateMapper $caMapper,
         private SecretService $secretService,
         private CertificateAuthorityService $caService,
-        private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()
@@ -178,8 +175,8 @@ class CertificateLifecycleService
         }
 
         return [
-            'subject'           => $this->dnToString((array) ($parsed['subject'] ?? [])),
-            'issuer'            => $this->dnToString((array) ($parsed['issuer'] ?? [])),
+            'subject'           => $this->dnToString(dn: (array) ($parsed['subject'] ?? [])),
+            'issuer'            => $this->dnToString(dn: (array) ($parsed['issuer'] ?? [])),
             'serial'            => $serial,
             'fingerprintSha256' => $fingerprintValue,
             'notBefore'         => $notBefore?->format('c'),
@@ -215,8 +212,8 @@ class CertificateLifecycleService
             throw new InvalidArgumentException('Secret is not a certificate-type secret');
         }
 
-        $notBefore = $this->parseClientDate($fields['notBefore'] ?? null);
-        $notAfter  = $this->parseClientDate($fields['notAfter'] ?? null);
+        $notBefore = $this->parseClientDate(value: $fields['notBefore'] ?? null);
+        $notAfter  = $this->parseClientDate(value: $fields['notAfter'] ?? null);
 
         $isNew = false;
         try {
@@ -229,10 +226,10 @@ class CertificateLifecycleService
         }
 
         $row->setOwnerId($userId);
-        $row->setSubject($this->optionalString($fields['subject'] ?? null));
-        $row->setIssuer($this->optionalString($fields['issuer'] ?? null));
-        $row->setSerial($this->optionalString($fields['serial'] ?? null));
-        $row->setFingerprintSha256($this->optionalString($fields['fingerprintSha256'] ?? null));
+        $row->setSubject($this->optionalString(value: $fields['subject'] ?? null));
+        $row->setIssuer($this->optionalString(value: $fields['issuer'] ?? null));
+        $row->setSerial($this->optionalString(value: $fields['serial'] ?? null));
+        $row->setFingerprintSha256($this->optionalString(value: $fields['fingerprintSha256'] ?? null));
         $row->setNotBefore($notBefore);
         $row->setNotAfter($notAfter);
         $row->setParsedAt(new DateTime());

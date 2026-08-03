@@ -48,22 +48,6 @@ class SettingsService
     ];
 
     /**
-     * Admin-scoped app-config keys (implement-dashboard-settings §1.2).
-     *
-     * @var array<string,string> key => type (int|string|bool)
-     */
-    private const ADMIN_CONFIG_KEYS = [
-        'min_password_length'     => 'int',
-        'min_password_score'      => 'int',
-        'default_session_timeout' => 'string',
-        'ca_auto_renew_enabled'   => 'bool',
-        'audit_retention_days'    => 'int',
-        'breach_check_enabled'    => 'bool',
-        // Offline read-only cache org-wide off switch (offline-readonly-cache §1.1).
-        'offline_cache_enabled'   => 'bool',
-    ];
-
-    /**
      * User-scoped preference keys (implement-dashboard-settings §1.2).
      *
      * @var array<string,string> key => default-value

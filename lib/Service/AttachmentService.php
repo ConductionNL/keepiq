@@ -43,7 +43,6 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\NotFoundException;
 use OCP\IAppConfig;
-use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -69,7 +68,6 @@ class AttachmentService
      * @param EncryptionSuiteMapper $suiteMapper     The suite mapper (grant provenance)
      * @param IAppDataFactory       $appDataFactory  The app-data factory (blob storage)
      * @param IAppConfig            $appConfig       The app config (limits)
-     * @param LoggerInterface       $logger          The logger
      * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
      *
      * @return void
@@ -81,7 +79,6 @@ class AttachmentService
         private EncryptionSuiteMapper $suiteMapper,
         private IAppDataFactory $appDataFactory,
         private IAppConfig $appConfig,
-        private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
     ) {
     }//end __construct()

@@ -48,8 +48,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setReinstatedAt(?DateTime $reinstatedAt)
  * @method string|null getReinstatedBy()
  * @method void setReinstatedBy(?string $reinstatedBy)
- * @method DateTime getCreatedAt()
- * @method void setCreatedAt(DateTime $createdAt)
+ * @method DateTime|null getCreatedAt()
+ * @method void setCreatedAt(?DateTime $createdAt)
  * @method int getUnlockKeyEpoch()
  * @method void setUnlockKeyEpoch(int $unlockKeyEpoch)
  */

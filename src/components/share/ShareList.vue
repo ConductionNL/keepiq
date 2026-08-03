@@ -100,6 +100,7 @@ export default {
 	align-items: center;
 	gap: 8px;
 }
+
 .doriath-share-list__count {
 	background-color: var(--color-primary-element-light, #e2f1fb);
 	color: var(--color-primary-element, #0082c9);
@@ -107,11 +108,13 @@ export default {
 	font-size: 12px;
 	padding: 2px 8px;
 }
+
 .doriath-share-list__rows {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
+
 .doriath-share-list__row {
 	display: flex;
 	align-items: center;
@@ -119,16 +122,19 @@ export default {
 	padding: 8px 0;
 	border-bottom: 1px solid var(--color-border, #eee);
 }
+
 .doriath-share-list__user {
 	flex: 1;
 	font-weight: 500;
 }
+
 .doriath-share-list__group-badge {
 	background-color: var(--color-background-darker, #ddd);
 	border-radius: 999px;
 	font-size: 11px;
 	padding: 1px 8px;
 }
+
 .doriath-share-list__revoke {
 	background: transparent;
 	border: 1px solid var(--color-border-dark, #999);
@@ -137,10 +143,12 @@ export default {
 	border-radius: var(--border-radius, 4px);
 	cursor: pointer;
 }
+
 .doriath-share-list__error {
 	color: var(--color-error, #e9322d);
 	font-size: 13px;
 }
+
 .doriath-share-list__empty {
 	color: var(--color-text-maxcontrast, #777);
 	font-size: 13px;

@@ -30,7 +30,6 @@ use OCA\Doriath\Service\DelegationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 /**
  * Tests for DelegationService.
@@ -46,11 +45,9 @@ class DelegationServiceTest extends TestCase
     {
         $mapper       = $this->createMock(originalClassName: SecretDelegationMapper::class);
         $secretMapper = $this->createMock(originalClassName: SecretMapper::class);
-        $logger       = $this->createMock(originalClassName: LoggerInterface::class);
         $service      = new DelegationService(
             mapper: $mapper,
             secretMapper: $secretMapper,
-            logger: $logger,
         );
 
         return [$service, $mapper, $secretMapper];
@@ -247,12 +244,10 @@ class DelegationServiceTest extends TestCase
         $secretMapper      = $this->createMock(originalClassName: SecretMapper::class);
         $shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
         $groupManager      = $this->createMock(originalClassName: IGroupManager::class);
-        $logger            = $this->createMock(originalClassName: LoggerInterface::class);
 
         $service = new DelegationService(
             mapper: $mapper,
             secretMapper: $secretMapper,
-            logger: $logger,
             shareTargetMapper: $shareTargetMapper,
             groupManager: $groupManager,
         );

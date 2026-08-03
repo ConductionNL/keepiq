@@ -378,8 +378,10 @@ class CertificateAuthorityService
             throw new RuntimeException('phpseclib certificate issuance failed');
         }
 
+        // The saveX509() helper is declared `: string`, so the only failure
+        // shape left to guard is an empty export.
         $pem = $signer->saveX509($issued);
-        if (is_string($pem) === false || $pem === '') {
+        if ($pem === '') {
             throw new RuntimeException('phpseclib certificate export failed');
         }
 
@@ -557,7 +559,10 @@ class CertificateAuthorityService
     /**
      * Get the current CA status.
      *
-     * @return array{status: string, root: ?array, intermediate: ?array}
+     * The `issued` key is present only on the configured path — the
+     * `not_configured` early returns have no CA to count against.
+     *
+     * @return array{status: string, root: ?array, intermediate: ?array, issued?: array<string,int>}
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
@@ -928,7 +933,9 @@ class CertificateAuthorityService
             return null;
         }//end try
 
-        if (is_string($newCertPem) === false || $newCertPem === '') {
+        // The saveX509() helper is declared `: string`, so the only failure
+        // shape left to guard is an empty export.
+        if ($newCertPem === '') {
             return null;
         }
 

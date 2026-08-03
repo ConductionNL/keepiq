@@ -553,7 +553,9 @@ class TeamFolderService
      *                                                     encryptedAdditionalFields
      * @param string                         $userId       The caller (must be the owner)
      *
-     * @return int Number of fan-out shares created (skips excluded)
+     * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}
+     *         `created` is the number of fan-out shares created (skips
+     *         excluded); `rows` describes each one.
      *
      * @throws InvalidArgumentException On not found / not authorized
      *

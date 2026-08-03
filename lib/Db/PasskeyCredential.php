@@ -69,7 +69,7 @@ class PasskeyCredential extends Entity implements JsonSerializable
     protected string $ownerId = '';
 
     /**
-     * base64url WebAuthn credential id.
+     * The base64url WebAuthn credential id.
      *
      * @var string
      */
@@ -83,7 +83,7 @@ class PasskeyCredential extends Entity implements JsonSerializable
     protected ?string $publicKey = null;
 
     /**
-     * base64 32-byte per-credential PRF input salt.
+     * The base64 32-byte per-credential PRF input salt.
      *
      * @var string
      */
@@ -125,7 +125,7 @@ class PasskeyCredential extends Entity implements JsonSerializable
     protected ?string $aaguid = null;
 
     /**
-     * active | stale | revoked.
+     * One of: active | stale | revoked.
      *
      * @var string
      */

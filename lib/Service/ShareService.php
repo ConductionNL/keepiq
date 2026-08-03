@@ -444,15 +444,20 @@ class ShareService
     /**
      * Create a batch of recipient share targets for a group expansion.
      *
-     * Each member-row blob is `{targetUserId, recipientSecretId}` — the
-     * caller (controller) has already created the recipient Secret rows
-     * in the browser and POSTed them. The entire batch shares one
-     * `$groupShareId` so revocation/leave handling can cascade.
+     * Each member-row blob is expected to carry `{targetUserId,
+     * recipientSecretId}` — the caller (controller) has already created the
+     * recipient Secret rows in the browser and POSTed them. The entire batch
+     * shares one `$groupShareId` so revocation/leave handling can cascade.
      *
-     * @param string                                                         $sourceSecretId The owner's source secret ID
-     * @param array<int,array{targetUserId:string,recipientSecretId:string}> $shares         The per-recipient batch
-     * @param string                                                         $groupShareId   The GroupShare ID for cascade
-     * @param string                                                         $userId         The initiator
+     * The rows arrive verbatim from an untrusted `#[NoAdminRequired]` request
+     * body, so the shape is deliberately typed as loose `mixed` here — the
+     * per-row guard below is the real validation and must not be removed on
+     * the strength of a docblock promise.
+     *
+     * @param string                         $sourceSecretId The owner's source secret ID
+     * @param array<int,array<string,mixed>> $shares         The per-recipient batch
+     * @param string                         $groupShareId   The GroupShare ID for cascade
+     * @param string                         $userId         The initiator
      *
      * @return ShareTarget[]
      *

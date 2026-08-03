@@ -111,7 +111,7 @@ class HoneyController extends OCSController
                 $noteValue = $note;
             }
 
-            $flagRow = $this->service->flag(secretId: $id, actorId: $uid, isAdmin: $this->isAdmin($uid), note: $noteValue);
+            $flagRow = $this->service->flag(secretId: $id, actorId: $uid, isAdmin: $this->isAdmin(uid: $uid), note: $noteValue);
         } catch (DoesNotExistException) {
             return new JSONResponse(data: ['message' => 'Secret not found'], statusCode: Http::STATUS_NOT_FOUND);
         } catch (InvalidArgumentException $exception) {
@@ -139,7 +139,7 @@ class HoneyController extends OCSController
         }
 
         try {
-            $this->service->unflag(secretId: $id, actorId: $uid, isAdmin: $this->isAdmin($uid));
+            $this->service->unflag(secretId: $id, actorId: $uid, isAdmin: $this->isAdmin(uid: $uid));
         } catch (DoesNotExistException) {
             return new JSONResponse(data: ['message' => 'Secret is not flagged'], statusCode: Http::STATUS_NOT_FOUND);
         } catch (InvalidArgumentException $exception) {
@@ -167,7 +167,7 @@ class HoneyController extends OCSController
         }
 
         try {
-            $flagRow = $this->service->getFlag(secretId: $id, actorId: $uid, isAdmin: $this->isAdmin($uid));
+            $flagRow = $this->service->getFlag(secretId: $id, actorId: $uid, isAdmin: $this->isAdmin(uid: $uid));
         } catch (InvalidArgumentException $exception) {
             return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
         }
@@ -198,7 +198,7 @@ class HoneyController extends OCSController
         return new JSONResponse(
             data: array_map(
                 static fn (HoneyAlert $alert) => $alert->jsonSerialize(),
-                $this->service->listAlerts(actorId: $uid, isAdmin: $this->isAdmin($uid))
+                $this->service->listAlerts(actorId: $uid, isAdmin: $this->isAdmin(uid: $uid))
             )
         );
     }//end alerts()
@@ -221,7 +221,7 @@ class HoneyController extends OCSController
         }
 
         try {
-            $alert = $this->service->acknowledge(alertId: $id, actorId: $uid, isAdmin: $this->isAdmin($uid));
+            $alert = $this->service->acknowledge(alertId: $id, actorId: $uid, isAdmin: $this->isAdmin(uid: $uid));
         } catch (DoesNotExistException) {
             return new JSONResponse(data: ['message' => 'Alert not found'], statusCode: Http::STATUS_NOT_FOUND);
         } catch (InvalidArgumentException $exception) {
@@ -251,7 +251,7 @@ class HoneyController extends OCSController
         }
 
         try {
-            $alert = $this->service->snooze(alertId: $id, actorId: $uid, isAdmin: $this->isAdmin($uid), hours: $hours);
+            $alert = $this->service->snooze(alertId: $id, actorId: $uid, isAdmin: $this->isAdmin(uid: $uid), hours: $hours);
         } catch (DoesNotExistException) {
             return new JSONResponse(data: ['message' => 'Alert not found'], statusCode: Http::STATUS_NOT_FOUND);
         } catch (InvalidArgumentException $exception) {

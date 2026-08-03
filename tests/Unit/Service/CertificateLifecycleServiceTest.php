@@ -36,7 +36,6 @@ use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 
 /**
  * Tests for CertificateLifecycleService.
@@ -88,7 +87,6 @@ class CertificateLifecycleServiceTest extends TestCase
             caMapper: $this->createMock(originalClassName: CACertificateMapper::class),
             secretService: $this->secretService,
             caService: $this->caService,
-            logger: new NullLogger(),
             eventDispatcher: null,
         );
 

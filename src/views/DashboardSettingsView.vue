@@ -199,28 +199,34 @@ export default {
 	max-width: 720px;
 	padding: 1rem;
 }
+
 .doriath-dashboard-settings__group {
 	border: 1px solid var(--color-border, #ddd);
 	padding: 1rem;
 	margin-bottom: 1rem;
 }
+
 .doriath-dashboard-settings__group legend {
 	font-weight: 600;
 }
+
 .doriath-dashboard-settings__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 0.75rem;
 }
+
 .doriath-dashboard-settings__actions {
 	display: flex;
 	gap: 0.5rem;
 	margin-top: 1rem;
 }
+
 .doriath-dashboard-settings__error {
 	color: var(--color-error, #c00);
 }
+
 .doriath-dashboard-settings__intro {
 	color: var(--color-text-lighter);
 }

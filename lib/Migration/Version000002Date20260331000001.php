@@ -106,8 +106,8 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
         // Nextcloud 31 `MigrationService::ensureOracleConstraints()` enforces
         // it for EVERY platform with a hard throw:
         //
-        //   Column "oc_doriath_ca_certs"."is_active" is type Bool and also
-        //   NotNull, so it can not store "false".
+        // Column "oc_doriath_ca_certs"."is_active" is type Bool and also
+        // NotNull, so it can not store "false".
         //
         // With `notnull => true` that exception aborted `occ app:enable
         // doriath` on a fresh NC 31 install — i.e. Doriath could not be

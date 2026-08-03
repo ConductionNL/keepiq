@@ -36,7 +36,6 @@ use OCP\Files\SimpleFS\ISimpleFolder;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 /**
  * Tests for AttachmentService.
@@ -85,7 +84,6 @@ class AttachmentServiceTest extends TestCase
             suiteMapper: $suiteMapper,
             appDataFactory: $appDataFactory,
             appConfig: $this->appConfig,
-            logger: $this->createMock(originalClassName: LoggerInterface::class),
             eventDispatcher: null,
         );
     }//end setUp()

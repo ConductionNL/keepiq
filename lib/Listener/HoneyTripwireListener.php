@@ -86,8 +86,16 @@ class HoneyTripwireListener implements IEventListener
         }
 
         try {
-            $ip        = ($this->request->getRemoteAddress() !== '') ? $this->request->getRemoteAddress() : null;
-            $userAgent = ($this->request->getHeader('User-Agent') !== '') ? substr($this->request->getHeader('User-Agent'), 0, 512) : null;
+            $ip = null;
+            if ($this->request->getRemoteAddress() !== '') {
+                $ip = $this->request->getRemoteAddress();
+            }
+
+            $userAgent = null;
+            if ($this->request->getHeader('User-Agent') !== '') {
+                $userAgent = substr($this->request->getHeader('User-Agent'), 0, 512);
+            }
+
             $eventType = $event->getEventType();
 
             if ($eventType === AuditEventTypes::SECRET_READ && $event->getObjectType() === 'secret') {

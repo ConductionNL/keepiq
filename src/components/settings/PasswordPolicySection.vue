@@ -79,11 +79,13 @@ export default {
 .password-policy__field {
 	margin-bottom: 1rem;
 }
+
 .password-policy__field label {
 	display: block;
 	font-weight: 600;
 	margin-bottom: 4px;
 }
+
 .password-policy__hint {
 	color: var(--color-text-lighter);
 	font-size: 0.85rem;

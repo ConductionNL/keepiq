@@ -34,7 +34,6 @@ use OCA\Doriath\Db\AuditEntryMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\AuditForbiddenMetadataException;
-use Psr\Log\LoggerInterface;
 
 /**
  * Single write path + query API for the append-only audit log.
@@ -45,13 +44,11 @@ class AuditService
      * Constructor for AuditService.
      *
      * @param AuditEntryMapper $mapper The audit entry mapper
-     * @param LoggerInterface  $logger The logger
      *
      * @return void
      */
     public function __construct(
         private AuditEntryMapper $mapper,
-        private LoggerInterface $logger,
     ) {
     }//end __construct()
 

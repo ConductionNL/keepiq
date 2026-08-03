@@ -127,6 +127,7 @@ export default {
 	align-items: center;
 	gap: 8px;
 }
+
 .doriath-secret-request-list__count {
 	background-color: var(--color-warning-rest, #fdf6e3);
 	color: var(--color-warning, #c08410);
@@ -134,11 +135,13 @@ export default {
 	font-size: 12px;
 	padding: 2px 8px;
 }
+
 .doriath-secret-request-list__rows {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
+
 .doriath-secret-request-list__row {
 	display: flex;
 	justify-content: space-between;
@@ -147,19 +150,23 @@ export default {
 	border-bottom: 1px solid var(--color-border, #eee);
 	gap: 8px;
 }
+
 .doriath-secret-request-list__meta {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 }
+
 .doriath-secret-request-list__token {
 	font-family: monospace;
 	font-size: 12px;
 	color: var(--color-text-maxcontrast, #777);
 }
+
 .doriath-secret-request-list__fields {
 	font-size: 12px;
 }
+
 .doriath-secret-request-list__revoke {
 	background: transparent;
 	border: 1px solid var(--color-border-dark, #999);
@@ -168,10 +175,12 @@ export default {
 	border-radius: var(--border-radius, 4px);
 	cursor: pointer;
 }
+
 .doriath-secret-request-list__empty {
 	color: var(--color-text-maxcontrast, #777);
 	font-size: 13px;
 }
+
 .doriath-secret-request-list__error {
 	color: var(--color-error, #e9322d);
 	font-size: 13px;

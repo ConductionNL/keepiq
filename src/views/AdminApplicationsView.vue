@@ -155,6 +155,7 @@ export default {
 	max-width: 800px;
 	padding: 1rem;
 }
+
 .doriath-applications-view__badge {
 	display: inline-block;
 	min-width: 1.5rem;
@@ -165,11 +166,13 @@ export default {
 	font-size: 0.8rem;
 	text-align: center;
 }
+
 .doriath-applications-view__list {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
+
 .doriath-applications-view__item {
 	display: flex;
 	gap: 1rem;
@@ -178,28 +181,34 @@ export default {
 	padding: 0.75rem 0;
 	border-bottom: 1px solid var(--color-border, #ddd);
 }
+
 .doriath-applications-view__description {
 	display: block;
 	color: var(--color-text-lighter);
 }
+
 .doriath-applications-view__actions {
 	display: flex;
 	gap: 0.5rem;
 	align-items: center;
 }
+
 .doriath-applications-view__empty {
 	color: var(--color-text-lighter);
 }
+
 .doriath-applications-view__keydialog {
 	margin-top: 2rem;
 	padding: 1rem;
 	border: 1px solid var(--color-warning, #f00);
 	background: var(--color-warning-rest, #ffe);
 }
+
 .doriath-applications-view__warning {
 	font-weight: 600;
 	color: var(--color-error, #c00);
 }
+
 .doriath-applications-view__keytext {
 	width: 100%;
 	min-height: 12rem;

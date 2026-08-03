@@ -179,27 +179,33 @@ export default {
 	flex-direction: column;
 	gap: 12px;
 }
+
 .secret-request-create-dialog__note {
 	background: var(--color-background-hover);
 	border-radius: 8px;
 	padding: 8px 12px;
 }
+
 .secret-request-create-dialog__fields {
 	border: 1px solid var(--color-border);
 	border-radius: 8px;
 	padding: 8px;
 }
+
 .secret-request-create-dialog__field {
 	display: block;
 	margin: 4px 0;
 }
+
 .secret-request-create-dialog__url-row {
 	display: flex;
 	gap: 8px;
 }
+
 .secret-request-create-dialog__url-row input {
 	flex: 1;
 }
+
 .secret-request-create-dialog__error {
 	color: var(--color-error);
 }
