@@ -165,92 +165,94 @@ final class AuditEventTypes
      * Per-event-type whitelist of permitted metadata keys. Unknown keys are
      * dropped by AuditService::record; only the listed keys survive.
      *
-     * @return array<string,string[]>
+     * A constant rather than a static accessor: the table is a compile-time
+     * literal, and constant access is a value read at the call site instead
+     * of a static method call the caller cannot substitute
+     * (rulesets/cleancode.xml/StaticAccess).
+     *
+     * @var array<string,string[]>
      */
-    public static function whitelist(): array
-    {
-        return [
-            self::SECRET_CREATED               => ['typeId', 'folderId'],
-            self::SECRET_UPDATED               => ['changedFields'],
-            self::SECRET_READ                  => [],
-            self::SECRET_DELETED               => [],
-            self::FOLDER_DELETED_CASCADE       => ['secretCount', 'subfolderCount'],
-            self::SHARE_GRANTED                => ['recipientType', 'recipientId'],
-            self::SHARE_REVOKED                => ['recipientType', 'recipientId'],
-            self::SHARE_DELEGATED              => ['delegatedTo', 'isPermanent'],
-            self::SHARE_DELEGATION_RECLAIMED   => ['delegatedTo'],
-            self::LINK_SHARE_CREATED           => ['hasPassword', 'expiresAt'],
-            self::LINK_SHARE_ACCESSED          => [],
-            self::LINK_SHARE_ACCESS_FAILED     => ['reason'],
-            self::LINK_SHARE_REVOKED           => [],
-            self::LINK_SHARE_AUTO_DELETED      => ['reason'],
-            self::REQUEST_CREATED              => ['recipientType', 'recipientId'],
-            self::REQUEST_FULFILLED            => [],
-            self::REQUEST_RE_REQUESTED         => [],
-            self::REQUEST_REVOKED              => [],
-            self::SUITE_REVOKED                => ['reason'],
-            self::SUITE_REINSTATED             => [],
-            self::SUITE_RECOVERY_STARTED       => [],
-            self::SUITE_RECOVERY_COMPLETED     => ['reSuitedCount'],
-            self::APPLICATION_REGISTERED       => [],
-            self::APPLICATION_APPROVED         => [],
-            self::APPLICATION_REJECTED         => ['reason'],
-            self::APPLICATION_DELETED          => [],
-            self::APPLICATION_TOKEN_ISSUED     => [],
-            self::APPLICATION_SECRET_RETRIEVED => [],
-            self::VAULT_EXPORTED               => ['mode', 'scope', 'secretCount'],
-            self::VAULT_GDPR_EXPORTED          => ['mode', 'scope', 'secretCount'],
-            self::VAULT_ACCOUNT_DELETED        => ['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'],
-            // Emergency access — only non-sensitive relationship references; the
-            // recovery envelope and any key material are NEVER recorded (design D8).
-            self::EMERGENCY_ACCESS_GRANTED     => ['grantorUserId', 'granteeUserId', 'accessLevel', 'waitPeriodDays'],
-            self::EMERGENCY_ACCESS_REQUESTED   => ['grantorUserId', 'granteeUserId', 'waitPeriodDays'],
-            self::EMERGENCY_ACCESS_DECLINED    => ['grantorUserId', 'granteeUserId'],
-            self::EMERGENCY_ACCESS_APPROVED    => ['grantorUserId', 'granteeUserId'],
-            self::EMERGENCY_ACCESS_ACCESSED    => ['grantorUserId', 'granteeUserId'],
-            self::EMERGENCY_ACCESS_REVOKED     => ['grantorUserId', 'granteeUserId'],
-            self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
-            self::SECRET_VERSION_RESTORED      => ['versionNumber'],
-            // Rotation & expiry — ids/reasons only (§5.2).
-            self::SECRET_EXPIRY_SET            => ['expiresAt'],
-            self::SECRET_ROTATION_FLAGGED      => ['reason'],
-            self::SECRET_ROTATED               => ['reason'],
-            self::SECRET_ROTATION_DISMISSED    => ['reason'],
-            self::POLICY_EXPIRY_CHANGED        => ['scope', 'scopeId'],
-            // Org password policy — before/after config values (§3.1).
-            self::PASSWORD_POLICY_UPDATED      => ['before', 'after'],
-            // Compliance reporting — identifiers + format only (§5.1).
-            self::COMPLIANCE_REPORT_GENERATED  => ['reportId'],
-            self::COMPLIANCE_REPORT_EXPORTED   => ['reportId', 'format'],
-            // Machine leases — ids + lifetimes only (§5.2).
-            self::LEASE_GRANTED                => ['leaseId', 'secretId', 'expiresAt', 'ttl'],
-            self::LEASE_RENEWED                => ['leaseId', 'secretId', 'expiresAt', 'renewedCount'],
-            self::LEASE_REVOKED                => ['leaseId', 'secretId', 'expiresAt'],
-            self::LEASE_EXPIRED                => ['leaseId', 'secretId', 'expiresAt'],
-            // Encrypted attachments — id/size only (§5.1).
-            self::ATTACHMENT_UPLOADED          => ['secretId', 'sizeBytes'],
-            self::ATTACHMENT_DOWNLOADED        => ['secretId', 'sizeBytes'],
-            self::ATTACHMENT_DELETED           => ['secretId', 'sizeBytes'],
-            // Team folder sharing — identifiers only, never key material (§4.2).
-            self::TEAM_FOLDER_SHARED           => ['folderId'],
-            self::TEAM_FOLDER_UNSHARED         => ['folderId', 'revokedCount'],
-            self::TEAM_FOLDER_MEMBER_ADDED     => ['memberType', 'memberId'],
-            self::TEAM_FOLDER_MEMBER_REMOVED   => ['memberType', 'memberId', 'revokedCount'],
-            self::TEAM_FOLDER_OFFBOARDED       => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
-            // Grade changes — identifiers + the new grade only (§3.3).
-            self::TEAM_FOLDER_GRADE_CHANGED    => ['memberType', 'memberId', 'grade'],
-            // SIEM sinks — sink id/type/outcome only (§5.1).
-            self::SIEM_SINK_CREATED            => ['sinkId', 'type'],
-            self::SIEM_SINK_UPDATED            => ['sinkId'],
-            self::SIEM_SINK_DELETED            => ['sinkId'],
-            self::SIEM_SINK_TESTED             => ['sinkId', 'outcome'],
-            // Certificate lifecycle — identifiers only, never PEM/key.
-            self::CERTIFICATE_REISSUED         => ['suiteId'],
-            self::CERTIFICATE_RENEWAL_MARKED   => [],
-            // Honey tripwire — the access channel only (§D6).
-            self::HONEY_ACCESSED               => ['channel'],
-        ];
-    }//end whitelist()
+    public const WHITELIST = [
+        self::SECRET_CREATED               => ['typeId', 'folderId'],
+        self::SECRET_UPDATED               => ['changedFields'],
+        self::SECRET_READ                  => [],
+        self::SECRET_DELETED               => [],
+        self::FOLDER_DELETED_CASCADE       => ['secretCount', 'subfolderCount'],
+        self::SHARE_GRANTED                => ['recipientType', 'recipientId'],
+        self::SHARE_REVOKED                => ['recipientType', 'recipientId'],
+        self::SHARE_DELEGATED              => ['delegatedTo', 'isPermanent'],
+        self::SHARE_DELEGATION_RECLAIMED   => ['delegatedTo'],
+        self::LINK_SHARE_CREATED           => ['hasPassword', 'expiresAt'],
+        self::LINK_SHARE_ACCESSED          => [],
+        self::LINK_SHARE_ACCESS_FAILED     => ['reason'],
+        self::LINK_SHARE_REVOKED           => [],
+        self::LINK_SHARE_AUTO_DELETED      => ['reason'],
+        self::REQUEST_CREATED              => ['recipientType', 'recipientId'],
+        self::REQUEST_FULFILLED            => [],
+        self::REQUEST_RE_REQUESTED         => [],
+        self::REQUEST_REVOKED              => [],
+        self::SUITE_REVOKED                => ['reason'],
+        self::SUITE_REINSTATED             => [],
+        self::SUITE_RECOVERY_STARTED       => [],
+        self::SUITE_RECOVERY_COMPLETED     => ['reSuitedCount'],
+        self::APPLICATION_REGISTERED       => [],
+        self::APPLICATION_APPROVED         => [],
+        self::APPLICATION_REJECTED         => ['reason'],
+        self::APPLICATION_DELETED          => [],
+        self::APPLICATION_TOKEN_ISSUED     => [],
+        self::APPLICATION_SECRET_RETRIEVED => [],
+        self::VAULT_EXPORTED               => ['mode', 'scope', 'secretCount'],
+        self::VAULT_GDPR_EXPORTED          => ['mode', 'scope', 'secretCount'],
+        self::VAULT_ACCOUNT_DELETED        => ['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'],
+        // Emergency access — only non-sensitive relationship references; the
+        // recovery envelope and any key material are NEVER recorded (design D8).
+        self::EMERGENCY_ACCESS_GRANTED     => ['grantorUserId', 'granteeUserId', 'accessLevel', 'waitPeriodDays'],
+        self::EMERGENCY_ACCESS_REQUESTED   => ['grantorUserId', 'granteeUserId', 'waitPeriodDays'],
+        self::EMERGENCY_ACCESS_DECLINED    => ['grantorUserId', 'granteeUserId'],
+        self::EMERGENCY_ACCESS_APPROVED    => ['grantorUserId', 'granteeUserId'],
+        self::EMERGENCY_ACCESS_ACCESSED    => ['grantorUserId', 'granteeUserId'],
+        self::EMERGENCY_ACCESS_REVOKED     => ['grantorUserId', 'granteeUserId'],
+        self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
+        self::SECRET_VERSION_RESTORED      => ['versionNumber'],
+        // Rotation & expiry — ids/reasons only (§5.2).
+        self::SECRET_EXPIRY_SET            => ['expiresAt'],
+        self::SECRET_ROTATION_FLAGGED      => ['reason'],
+        self::SECRET_ROTATED               => ['reason'],
+        self::SECRET_ROTATION_DISMISSED    => ['reason'],
+        self::POLICY_EXPIRY_CHANGED        => ['scope', 'scopeId'],
+        // Org password policy — before/after config values (§3.1).
+        self::PASSWORD_POLICY_UPDATED      => ['before', 'after'],
+        // Compliance reporting — identifiers + format only (§5.1).
+        self::COMPLIANCE_REPORT_GENERATED  => ['reportId'],
+        self::COMPLIANCE_REPORT_EXPORTED   => ['reportId', 'format'],
+        // Machine leases — ids + lifetimes only (§5.2).
+        self::LEASE_GRANTED                => ['leaseId', 'secretId', 'expiresAt', 'ttl'],
+        self::LEASE_RENEWED                => ['leaseId', 'secretId', 'expiresAt', 'renewedCount'],
+        self::LEASE_REVOKED                => ['leaseId', 'secretId', 'expiresAt'],
+        self::LEASE_EXPIRED                => ['leaseId', 'secretId', 'expiresAt'],
+        // Encrypted attachments — id/size only (§5.1).
+        self::ATTACHMENT_UPLOADED          => ['secretId', 'sizeBytes'],
+        self::ATTACHMENT_DOWNLOADED        => ['secretId', 'sizeBytes'],
+        self::ATTACHMENT_DELETED           => ['secretId', 'sizeBytes'],
+        // Team folder sharing — identifiers only, never key material (§4.2).
+        self::TEAM_FOLDER_SHARED           => ['folderId'],
+        self::TEAM_FOLDER_UNSHARED         => ['folderId', 'revokedCount'],
+        self::TEAM_FOLDER_MEMBER_ADDED     => ['memberType', 'memberId'],
+        self::TEAM_FOLDER_MEMBER_REMOVED   => ['memberType', 'memberId', 'revokedCount'],
+        self::TEAM_FOLDER_OFFBOARDED       => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
+        // Grade changes — identifiers + the new grade only (§3.3).
+        self::TEAM_FOLDER_GRADE_CHANGED    => ['memberType', 'memberId', 'grade'],
+        // SIEM sinks — sink id/type/outcome only (§5.1).
+        self::SIEM_SINK_CREATED            => ['sinkId', 'type'],
+        self::SIEM_SINK_UPDATED            => ['sinkId'],
+        self::SIEM_SINK_DELETED            => ['sinkId'],
+        self::SIEM_SINK_TESTED             => ['sinkId', 'outcome'],
+        // Certificate lifecycle — identifiers only, never PEM/key.
+        self::CERTIFICATE_REISSUED         => ['suiteId'],
+        self::CERTIFICATE_RENEWAL_MARKED   => [],
+        // Honey tripwire — the access channel only (§D6).
+        self::HONEY_ACCESSED               => ['channel'],
+    ];
 
     /**
      * The whitelisted metadata keys whose VALUES reference a user id and must
@@ -277,6 +279,6 @@ final class AuditEventTypes
      */
     public static function isKnown(string $eventType): bool
     {
-        return array_key_exists($eventType, self::whitelist());
+        return array_key_exists($eventType, self::WHITELIST);
     }//end isKnown()
 }//end class

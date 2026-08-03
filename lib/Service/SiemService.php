@@ -118,16 +118,22 @@ class SiemService
     public function buildPayload(AuditEvent $event): ?array
     {
         $eventType = $event->getEventType();
-        $whitelist = AuditEventTypes::whitelist()[$eventType] ?? null;
+        $whitelist = AuditEventTypes::WHITELIST[$eventType] ?? null;
         if ($whitelist === null) {
             return null;
         }
 
         $metadata = [];
         foreach ($event->getMetadata() as $metaKey => $metaValue) {
-            if (in_array($metaKey, $whitelist, true) === true
-                && in_array($metaKey, AuditEventTypes::FORBIDDEN_KEYS, true) === false
-            ) {
+            // Both predicates are evaluated up front rather than short-circuited.
+            // The forbidden-key check is defence in depth: today no whitelist row
+            // lists a forbidden key, so a && chain lets a static analyser narrow
+            // $metaKey to the whitelist literals and declare the second check
+            // dead. It is NOT dead — it is what stops secret material reaching a
+            // SIEM sink the day someone widens a whitelist row.
+            $isWhitelisted = in_array($metaKey, $whitelist, true);
+            $isForbidden   = in_array($metaKey, AuditEventTypes::FORBIDDEN_KEYS, true);
+            if ($isWhitelisted === true && $isForbidden === false) {
                 $metadata[$metaKey] = $metaValue;
             }
         }

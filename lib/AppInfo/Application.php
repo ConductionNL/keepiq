@@ -77,6 +77,15 @@ class Application extends App implements IBootstrap
      * @return void
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess) OCA\OpenRegister\AppHost\Bootstrap
+     * is a cross-app static bootstrap entry point in a SIBLING Nextcloud app
+     * that may be absent or unloadable at this point — the call is guarded by
+     * class_exists() and wrapped in a catch(\Throwable) for exactly that
+     * reason. It cannot be injected: this method IS the composition root, so
+     * there is no container to resolve an adapter from yet, and declaring a
+     * typed dependency on a possibly-absent foreign class would 500 every
+     * route (a param type is a class reference the router reflects over).
      */
     public function register(IRegistrationContext $context): void
     {

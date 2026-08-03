@@ -525,6 +525,12 @@ class ApplicationSecretsController extends ApplicationApiController
      * @param string $value The raw timestamp
      *
      * @return DateTime|null
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess) DateTime::createFromFormat() is a
+     * named constructor on a PHP built-in: there is no instance API for
+     * format-strict parsing (an instance would already have to exist), and no
+     * Nextcloud/OCP abstraction offers one — ITimeFactory only produces "now".
+     * Wrapping one call in a bespoke adapter would be disproportionate.
      */
     private function parseIso8601(string $value): ?DateTime
     {

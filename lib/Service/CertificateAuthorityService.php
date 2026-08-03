@@ -30,11 +30,11 @@ use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Doriath\Support\PublicKeyLoaderAdapter;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
-use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\File\X509;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -63,13 +63,14 @@ class CertificateAuthorityService
     /**
      * Constructor for CertificateAuthorityService.
      *
-     * @param CACertificateMapper   $caCertificateMapper The CA certificate mapper
-     * @param EncryptionSuiteMapper $suiteMapper         The encryption suite mapper
-     * @param IAppConfig            $appConfig           The app config interface
-     * @param ICrypto               $crypto              The crypto service
-     * @param LoggerInterface       $logger              The logger interface
-     * @param SecretMapper|null     $secretMapper        The secret mapper (issued-cert counts)
-     * @param SecretTypeMapper|null $secretTypeMapper    The type mapper (issued-cert counts)
+     * @param CACertificateMapper    $caCertificateMapper The CA certificate mapper
+     * @param EncryptionSuiteMapper  $suiteMapper         The encryption suite mapper
+     * @param IAppConfig             $appConfig           The app config interface
+     * @param ICrypto                $crypto              The crypto service
+     * @param LoggerInterface        $logger              The logger interface
+     * @param SecretMapper|null      $secretMapper        The secret mapper (issued-cert counts)
+     * @param SecretTypeMapper|null  $secretTypeMapper    The type mapper (issued-cert counts)
+     * @param PublicKeyLoaderAdapter $keyLoader           The phpseclib key loader
      *
      * @return void
      */
@@ -81,6 +82,7 @@ class CertificateAuthorityService
         private LoggerInterface $logger,
         private ?SecretMapper $secretMapper=null,
         private ?SecretTypeMapper $secretTypeMapper=null,
+        private PublicKeyLoaderAdapter $keyLoader=new PublicKeyLoaderAdapter(),
     ) {
     }//end __construct()
 
@@ -355,12 +357,12 @@ class CertificateAuthorityService
         string $intermediateCertPem,
         string $intermediatePrivPem,
     ): string {
-        $subjectPublic = \phpseclib3\Crypt\PublicKeyLoader::load($publicKeyPem);
+        $subjectPublic = $this->keyLoader->load($publicKeyPem);
         if ($subjectPublic instanceof \phpseclib3\Crypt\RSA\PublicKey === false) {
             throw new RuntimeException('Submitted public key is not an RSA public key');
         }
 
-        $issuerPrivate = \phpseclib3\Crypt\PublicKeyLoader::load($intermediatePrivPem);
+        $issuerPrivate = $this->keyLoader->load($intermediatePrivPem);
         if ($issuerPrivate instanceof \phpseclib3\Crypt\RSA\PrivateKey === false) {
             throw new RuntimeException('Intermediate private key could not be loaded for issuance');
         }
@@ -916,7 +918,7 @@ class CertificateAuthorityService
 
             $issuer = new X509();
             $issuer->loadX509($intermediateCert);
-            $issuer->setPrivateKey(PublicKeyLoader::loadPrivateKey($intermediateKeyPem));
+            $issuer->setPrivateKey($this->keyLoader->loadPrivateKey($intermediateKeyPem));
 
             $subject = new X509();
             $subject->setPublicKey($old->getPublicKey());
