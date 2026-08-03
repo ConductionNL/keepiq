@@ -30,6 +30,7 @@ use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Exception\DuplicateFolderNameException;
@@ -55,6 +56,7 @@ class FolderService
      * @param IEventDispatcher|null     $eventDispatcher   The event dispatcher
      * @param AttachmentService|null    $attachmentService The attachment service (delete cascade)
      * @param SecretVersionService|null $versionService    The version-history service (delete cascade)
+     * @param AuditEventFactory         $auditEvents       The audit-event factory
      *
      * @return void
      */
@@ -65,6 +67,7 @@ class FolderService
         private ?IEventDispatcher $eventDispatcher=null,
         private ?AttachmentService $attachmentService=null,
         private ?SecretVersionService $versionService=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -361,7 +364,7 @@ class FolderService
             $this->deleteWithSubfolders(folder: $folder, children: $children, resolution: $resolution, userId: $userId);
 
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
                     objectType: 'folder',
@@ -380,7 +383,7 @@ class FolderService
         $this->deleteLeafWithSecrets(folder: $folder, cascade: $cascade);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
                 objectType: 'folder',

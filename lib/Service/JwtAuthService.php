@@ -37,6 +37,7 @@ use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -101,6 +102,7 @@ class JwtAuthService
      * @param ICacheFactory         $cacheFactory      The cache factory
      * @param LoggerInterface       $logger            The logger
      * @param IEventDispatcher|null $eventDispatcher   The event dispatcher
+     * @param AuditEventFactory     $auditEvents       The audit-event factory
      *
      * @return void
      */
@@ -110,6 +112,7 @@ class JwtAuthService
         private ICacheFactory $cacheFactory,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -255,7 +258,7 @@ class JwtAuthService
         $tokenCache->set($accessToken, $application->getId(), self::ACCESS_TOKEN_TTL);
 
         $this->dispatchAudit(
-            event: AuditEvent::forApplication(
+            event: $this->auditEvents->forApplication(
                 actorId: $application->getId(),
                 eventType: AuditEventTypes::APPLICATION_TOKEN_ISSUED,
                 objectType: 'application',

@@ -36,6 +36,7 @@ use OCA\Doriath\Db\EmergencyContact;
 use OCA\Doriath\Db\EmergencyContactMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
@@ -71,6 +72,7 @@ class EmergencyAccessService
      * @param NotificationService    $notificationService The notification dispatcher
      * @param IEventDispatcher       $eventDispatcher     The typed-event dispatcher (audit)
      * @param LoggerInterface        $logger              The logger
+     * @param AuditEventFactory      $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -80,6 +82,7 @@ class EmergencyAccessService
         private NotificationService $notificationService,
         private IEventDispatcher $eventDispatcher,
         private LoggerInterface $logger,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -228,7 +231,7 @@ class EmergencyAccessService
         $this->logger->debug('Doriath: emergency contact designated for grantee '.$granteeUserId);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $grantorUserId,
                 eventType: AuditEventTypes::EMERGENCY_ACCESS_GRANTED,
                 objectType: self::OBJECT_TYPE,
@@ -268,7 +271,7 @@ class EmergencyAccessService
         $this->mapper->delete($contact);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $grantorUserId,
                 eventType: AuditEventTypes::EMERGENCY_ACCESS_REVOKED,
                 objectType: self::OBJECT_TYPE,
@@ -322,7 +325,7 @@ class EmergencyAccessService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $granteeUserId,
                 eventType: AuditEventTypes::EMERGENCY_ACCESS_REQUESTED,
                 objectType: self::OBJECT_TYPE,
@@ -370,7 +373,7 @@ class EmergencyAccessService
         $contact = $this->mapper->update($contact);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $grantorUserId,
                 eventType: AuditEventTypes::EMERGENCY_ACCESS_DECLINED,
                 objectType: self::OBJECT_TYPE,
@@ -432,7 +435,7 @@ class EmergencyAccessService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $granteeUserId,
                 eventType: AuditEventTypes::EMERGENCY_ACCESS_ACCESSED,
                 objectType: self::OBJECT_TYPE,
@@ -477,7 +480,7 @@ class EmergencyAccessService
         $contact = $this->mapper->update($contact);
 
         $this->dispatchAudit(
-            event: AuditEvent::forSystem(
+            event: $this->auditEvents->forSystem(
                 eventType: AuditEventTypes::EMERGENCY_ACCESS_APPROVED,
                 objectType: self::OBJECT_TYPE,
                 objectId: $contact->getId(),
@@ -555,7 +558,7 @@ class EmergencyAccessService
         $count = 0;
         foreach ($this->mapper->findByGrantorSuite(grantorSuiteId: $grantorSuiteId) as $contact) {
             $this->dispatchAudit(
-                event: AuditEvent::forSystem(
+                event: $this->auditEvents->forSystem(
                     eventType: AuditEventTypes::EMERGENCY_ACCESS_INVALIDATED,
                     objectType: self::OBJECT_TYPE,
                     objectId: $contact->getId(),
@@ -618,7 +621,7 @@ class EmergencyAccessService
         $this->mapper->update($contact);
 
         $this->dispatchAudit(
-            event: AuditEvent::forSystem(
+            event: $this->auditEvents->forSystem(
                 eventType: AuditEventTypes::EMERGENCY_ACCESS_INVALIDATED,
                 objectType: self::OBJECT_TYPE,
                 objectId: $contact->getId(),

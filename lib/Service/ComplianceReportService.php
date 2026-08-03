@@ -30,6 +30,7 @@ use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\ComplianceReport;
 use OCA\Doriath\Db\ComplianceReportMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -79,6 +80,7 @@ class ComplianceReportService
      * @param IAppConfig             $appConfig       The app config
      * @param IAppManager            $appManager      The app manager (version)
      * @param IEventDispatcher|null  $eventDispatcher The audit dispatcher
+     * @param AuditEventFactory      $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -88,6 +90,7 @@ class ComplianceReportService
         private IAppConfig $appConfig,
         private IAppManager $appManager,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -501,7 +504,7 @@ class ComplianceReportService
         }
 
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $actorId,
                 eventType: $eventType,
                 objectType: 'compliance_report',

@@ -27,6 +27,7 @@ use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCA\Doriath\Support\SuppressesDiagnostics;
@@ -53,6 +54,7 @@ class EncryptionSuiteService
      * @param IUserManager                $userManager     The user manager
      * @param LoggerInterface             $logger          The logger interface
      * @param IEventDispatcher|null       $eventDispatcher The event dispatcher
+     * @param AuditEventFactory           $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -63,6 +65,7 @@ class EncryptionSuiteService
         private IUserManager $userManager,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -222,7 +225,7 @@ class EncryptionSuiteService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $revokedBy,
                 eventType: AuditEventTypes::SUITE_REVOKED,
                 objectType: 'suite',
@@ -283,7 +286,7 @@ class EncryptionSuiteService
         $this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $reinstatedBy,
                 eventType: AuditEventTypes::SUITE_REINSTATED,
                 objectType: 'suite',
@@ -321,7 +324,7 @@ class EncryptionSuiteService
         $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $compromisedBy,
                 eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
                 objectType: 'suite',

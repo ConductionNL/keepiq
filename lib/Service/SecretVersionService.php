@@ -33,6 +33,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretVersion;
 use OCA\Doriath\Db\SecretVersionMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -52,6 +53,7 @@ class SecretVersionService
      * @param EncryptionSuiteMapper $suiteMapper     The suite mapper (read gating)
      * @param LoggerInterface       $logger          The logger
      * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
+     * @param AuditEventFactory     $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -61,6 +63,7 @@ class SecretVersionService
         private EncryptionSuiteMapper $suiteMapper,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -175,7 +178,7 @@ class SecretVersionService
         $this->secretMapper->update($secret);
 
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SECRET_VERSION_RESTORED,
                 objectType: 'secret',

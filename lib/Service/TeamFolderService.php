@@ -43,6 +43,7 @@ use OCA\Doriath\Db\TeamFolderMapper;
 use OCA\Doriath\Db\TeamFolderMember;
 use OCA\Doriath\Db\TeamFolderMemberMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -93,6 +94,7 @@ class TeamFolderService
      * @param IDBConnection          $db                  The database connection
      * @param LoggerInterface        $logger              The logger
      * @param IEventDispatcher|null  $eventDispatcher     The audit event dispatcher
+     * @param AuditEventFactory      $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -111,6 +113,7 @@ class TeamFolderService
         private IDBConnection $db,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -160,7 +163,7 @@ class TeamFolderService
         $persisted = $this->mapper->insert($entity);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::TEAM_FOLDER_SHARED,
                 objectType: 'team_folder',
@@ -209,7 +212,7 @@ class TeamFolderService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::TEAM_FOLDER_UNSHARED,
                 objectType: 'team_folder',
@@ -356,7 +359,7 @@ class TeamFolderService
             $membership = $this->memberMapper->insert($membership);
 
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_ADDED,
                     objectType: 'team_folder',
@@ -430,7 +433,7 @@ class TeamFolderService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_REMOVED,
                 objectType: 'team_folder',
@@ -843,7 +846,7 @@ class TeamFolderService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $adminId,
                 eventType: AuditEventTypes::TEAM_FOLDER_OFFBOARDED,
                 objectType: 'team_folder',
@@ -1321,7 +1324,7 @@ class TeamFolderService
         $member = $this->memberMapper->update($member);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $ownerId,
                 eventType: AuditEventTypes::TEAM_FOLDER_GRADE_CHANGED,
                 objectType: 'team_folder',

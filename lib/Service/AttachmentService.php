@@ -37,6 +37,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -69,6 +70,7 @@ class AttachmentService
      * @param IAppDataFactory       $appDataFactory  The app-data factory (blob storage)
      * @param IAppConfig            $appConfig       The app config (limits)
      * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
+     * @param AuditEventFactory     $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -80,6 +82,7 @@ class AttachmentService
         private IAppDataFactory $appDataFactory,
         private IAppConfig $appConfig,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -189,7 +192,7 @@ class AttachmentService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::ATTACHMENT_UPLOADED,
                 objectType: 'attachment',
@@ -271,7 +274,7 @@ class AttachmentService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::ATTACHMENT_DOWNLOADED,
                 objectType: 'attachment',
@@ -374,7 +377,7 @@ class AttachmentService
         $this->mapper->delete($attachment);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::ATTACHMENT_DELETED,
                 objectType: 'attachment',

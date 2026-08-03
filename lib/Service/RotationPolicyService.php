@@ -36,6 +36,7 @@ use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -61,6 +62,7 @@ class RotationPolicyService
      * @param IAppConfig            $appConfig       The app config (admin defaults)
      * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
      * @param IConfig|null          $config          The NC config (user max-age override)
+     * @param AuditEventFactory     $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -71,6 +73,7 @@ class RotationPolicyService
         private IAppConfig $appConfig,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?IConfig $config=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -546,7 +549,7 @@ class RotationPolicyService
     private function dispatchAudit(string $actorId, string $eventType, string $objectId, array $metadata): void
     {
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $actorId,
                 eventType: $eventType,
                 objectType: 'secret',

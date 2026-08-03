@@ -33,6 +33,7 @@ use OCA\Doriath\Db\ApplicationLeasePolicyMapper;
 use OCA\Doriath\Db\MachineLease;
 use OCA\Doriath\Db\MachineLeaseMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -52,6 +53,7 @@ class LeaseService
      * @param IAppConfig                   $appConfig       The app config (instance defaults)
      * @param IEventDispatcher|null        $eventDispatcher The audit dispatcher
      * @param RotationPolicyService|null   $rotationService The rotation service (revoke/expire trigger)
+     * @param AuditEventFactory            $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -61,6 +63,7 @@ class LeaseService
         private IAppConfig $appConfig,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?RotationPolicyService $rotationService=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -365,7 +368,7 @@ class LeaseService
     private function dispatchAudit(string $actorId, string $eventType, MachineLease $lease, array $extra=[]): void
     {
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forApplication(
+            $this->auditEvents->forApplication(
                 actorId: $actorId,
                 eventType: $eventType,
                 objectType: 'lease',

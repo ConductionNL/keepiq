@@ -42,6 +42,7 @@ use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\NotFoundException;
 use OCA\Doriath\Service\LeaseService;
@@ -88,6 +89,7 @@ class ApplicationSecretsController extends ApplicationApiController
      * @param MachineSecretEnvelopeService $envelopeService The envelope serializer
      * @param IEventDispatcher             $eventDispatcher The event dispatcher (audit)
      * @param LeaseService|null            $leaseService    The lease service (grant on fetch)
+     * @param AuditEventFactory            $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -99,6 +101,7 @@ class ApplicationSecretsController extends ApplicationApiController
         private MachineSecretEnvelopeService $envelopeService,
         private IEventDispatcher $eventDispatcher,
         private ?LeaseService $leaseService=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
@@ -403,7 +406,7 @@ class ApplicationSecretsController extends ApplicationApiController
         }
 
         $this->eventDispatcher->dispatchTyped(
-            AuditEvent::forApplication(
+            $this->auditEvents->forApplication(
                 actorId: $applicationId,
                 eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED,
                 objectType: 'secret',

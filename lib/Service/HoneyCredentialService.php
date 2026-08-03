@@ -36,6 +36,7 @@ use OCA\Doriath\Db\HoneyFlag;
 use OCA\Doriath\Db\HoneyFlagMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -68,6 +69,7 @@ class HoneyCredentialService
      * @param NotificationService|null $notificationService The notification dispatcher
      * @param LoggerInterface          $logger              The logger
      * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
+     * @param AuditEventFactory        $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -80,6 +82,7 @@ class HoneyCredentialService
         private ?NotificationService $notificationService,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -249,7 +252,7 @@ class HoneyCredentialService
             // The distinguished audit marker fires on EVERY honey access —
             // snoozed and collapsed accesses stay in the forensic trail (D5/D6).
             $this->eventDispatcher?->dispatchTyped(
-                AuditEvent::forSystem(
+                $this->auditEvents->forSystem(
                     eventType: AuditEventTypes::HONEY_ACCESSED,
                     objectType: 'secret',
                     objectId: $secretId,

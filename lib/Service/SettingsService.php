@@ -23,6 +23,7 @@ namespace OCA\Doriath\Service;
 
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -114,6 +115,7 @@ class SettingsService
      * @param IUserSession                               $userSession     The user session
      * @param LoggerInterface                            $logger          The logger
      * @param \OCP\EventDispatcher\IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
+     * @param AuditEventFactory                          $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -126,6 +128,7 @@ class SettingsService
         private IUserSession $userSession,
         private LoggerInterface $logger,
         private ?\OCP\EventDispatcher\IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -464,7 +467,7 @@ class SettingsService
 
         $actorId = $this->userSession->getUser()?->getUID() ?? 'system';
         $this->eventDispatcher?->dispatchTyped(
-            \OCA\Doriath\Event\Audit\AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $actorId,
                 eventType: \OCA\Doriath\Event\Audit\AuditEventTypes::PASSWORD_POLICY_UPDATED,
                 objectType: 'settings',

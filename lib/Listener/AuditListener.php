@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Listener;
 
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Service\AuditService;
 use OCP\EventDispatcher\Event;
@@ -50,14 +51,16 @@ class AuditListener implements IEventListener
     /**
      * Constructor for AuditListener.
      *
-     * @param AuditService    $auditService The audit service
-     * @param LoggerInterface $logger       The logger
+     * @param AuditService      $auditService The audit service
+     * @param LoggerInterface   $logger       The logger
+     * @param AuditEventFactory $auditEvents  The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private AuditService $auditService,
         private LoggerInterface $logger,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -139,7 +142,7 @@ class AuditListener implements IEventListener
         $actorId  = $this->readActorId(event: $event);
         $metadata = $this->readPayload(event: $event);
 
-        $auditEvent = AuditEvent::forUser(
+        $auditEvent = $this->auditEvents->forUser(
             actorId: ($actorId ?? AuditEventTypes::VAULT_ACCOUNT_DELETED),
             eventType: $eventType,
             objectType: 'vault',

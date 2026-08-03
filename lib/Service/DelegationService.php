@@ -36,6 +36,7 @@ use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -66,6 +67,7 @@ class DelegationService
      * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
      * @param IGroupManager|null     $groupManager      Group membership check (admin path)
      * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
+     * @param AuditEventFactory      $auditEvents       The audit-event factory
      *
      * @return void
      */
@@ -75,6 +77,7 @@ class DelegationService
         private ?ShareTargetMapper $shareTargetMapper=null,
         private ?IGroupManager $groupManager=null,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -258,7 +261,7 @@ class DelegationService
         $persisted = $this->mapper->insert($entity);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $initiatedBy,
                 eventType: AuditEventTypes::SHARE_DELEGATED,
                 objectType: 'share',
@@ -371,7 +374,7 @@ class DelegationService
 
         if ($removed > 0) {
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $ownerId,
                     eventType: AuditEventTypes::SHARE_DELEGATION_RECLAIMED,
                     objectType: 'share',

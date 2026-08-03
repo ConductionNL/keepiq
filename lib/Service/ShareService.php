@@ -35,6 +35,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -75,6 +76,7 @@ class ShareService
      * @param AttachmentService|null $attachmentService   The attachment service (revoke cascade)
      * @param SecretTypeService|null $typeService         The type service (recipient-copy type resolution)
      * @param TeamFolderService|null $teamFolderService   The team-folder service (write-grade resolution)
+     * @param AuditEventFactory      $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -90,6 +92,7 @@ class ShareService
         private ?AttachmentService $attachmentService=null,
         private ?SecretTypeService $typeService=null,
         private ?TeamFolderService $teamFolderService=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -194,7 +197,7 @@ class ShareService
             $this->mapper->insert($entity);
 
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::SHARE_GRANTED,
                     objectType: 'secret',
@@ -425,7 +428,7 @@ class ShareService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SHARE_GRANTED,
                 objectType: 'share',
@@ -594,7 +597,7 @@ class ShareService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SHARE_REVOKED,
                 objectType: 'share',
@@ -742,7 +745,7 @@ class ShareService
         // identifiers only, never key material.
         if ($isWriter === true && $updated > 0) {
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::SECRET_UPDATED,
                     objectType: 'secret',

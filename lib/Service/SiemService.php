@@ -33,6 +33,7 @@ use OCA\Doriath\Db\SiemQueueItemMapper;
 use OCA\Doriath\Db\SiemSink;
 use OCA\Doriath\Db\SiemSinkMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -88,6 +89,7 @@ class SiemService
      * @param NotificationService|null $notificationService The notification dispatcher
      * @param LoggerInterface          $logger              The logger
      * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
+     * @param AuditEventFactory        $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -100,6 +102,7 @@ class SiemService
         private ?NotificationService $notificationService,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -616,7 +619,7 @@ class SiemService
     private function dispatchAudit(string $actorId, string $eventType, string $sinkId, array $extra=[]): void
     {
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $actorId,
                 eventType: $eventType,
                 objectType: 'siem_sink',

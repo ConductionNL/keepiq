@@ -39,6 +39,7 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -67,6 +68,7 @@ class CertificateLifecycleService
      * @param SecretService               $secretService   The secret service (expiry path)
      * @param CertificateAuthorityService $caService       The CA service (re-issue)
      * @param IEventDispatcher|null       $eventDispatcher The audit dispatcher
+     * @param AuditEventFactory           $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -79,6 +81,7 @@ class CertificateLifecycleService
         private SecretService $secretService,
         private CertificateAuthorityService $caService,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -287,7 +290,7 @@ class CertificateLifecycleService
         }
 
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::CERTIFICATE_RENEWAL_MARKED,
                 objectType: 'secret',
@@ -340,7 +343,7 @@ class CertificateLifecycleService
         }
 
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::CERTIFICATE_REISSUED,
                 objectType: 'encryption_suite',

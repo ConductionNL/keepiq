@@ -30,6 +30,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -62,6 +63,7 @@ class ApplicationService
      * @param IEventDispatcher                                  $eventDispatcher     The event dispatcher
      * @param \OCA\Doriath\Db\MachineLeaseMapper|null           $leaseMapper         The lease mapper (delete cascade)
      * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper   The lease-policy mapper (delete cascade)
+     * @param AuditEventFactory                                 $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -74,6 +76,7 @@ class ApplicationService
         private ?IEventDispatcher $eventDispatcher=null,
         private ?\OCA\Doriath\Db\MachineLeaseMapper $leaseMapper=null,
         private ?\OCA\Doriath\Db\ApplicationLeasePolicyMapper $leasePolicyMapper=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -206,7 +209,7 @@ class ApplicationService
     private function registrationAuditEvent(?string $userId, Application $persisted): AuditEvent
     {
         if ($userId !== null && $userId !== '') {
-            return AuditEvent::forUser(
+            return $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::APPLICATION_REGISTERED,
                 objectType: 'application',
@@ -215,7 +218,7 @@ class ApplicationService
             );
         }
 
-        return AuditEvent::forSystem(
+        return $this->auditEvents->forSystem(
             eventType: AuditEventTypes::APPLICATION_REGISTERED,
             objectType: 'application',
             objectId: $persisted->getId(),
@@ -322,7 +325,7 @@ class ApplicationService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $adminUserId,
                 eventType: AuditEventTypes::APPLICATION_APPROVED,
                 objectType: 'application',
@@ -401,7 +404,7 @@ class ApplicationService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $adminUserId,
                 eventType: AuditEventTypes::APPLICATION_REJECTED,
                 objectType: 'application',
@@ -445,7 +448,7 @@ class ApplicationService
         $this->logger->info('Deleted application '.$applicationId, ['app' => 'doriath']);
 
         $this->dispatchAudit(
-            event: AuditEvent::forSystem(
+            event: $this->auditEvents->forSystem(
                 eventType: AuditEventTypes::APPLICATION_DELETED,
                 objectType: 'application',
                 objectId: $applicationId,
