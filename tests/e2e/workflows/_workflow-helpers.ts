@@ -27,6 +27,19 @@ export const APP_BASE = '/index.php/apps/doriath'
 /**
  * The known development master password. Seeded by
  * lib/Repair/SeedDevelopmentData.php (DEV_MASTER_PASSWORD = 'Oj').
+ *
+ * ⚠️ THE TARGET INSTANCE MUST HAVE `debug` ENABLED:
+ *
+ *     occ config:system:set debug --value=true --type=boolean
+ *     occ app:disable doriath && occ app:enable doriath   # re-run repair steps
+ *
+ * `SeedDevelopmentData::run()` returns immediately when `debug` is false, so on
+ * an instance without it NO dev vault is ever created. The app then sits in
+ * first-time-setup mode ("Set up vault", disabled) and `unlockVault()` below
+ * finds no "Unlock" button — every workflow spec fails on
+ * `expect('.lock-screen').toHaveCount(0)`. That reads exactly like a broken
+ * unlock flow and is really an unprovisioned instance: 35 of 56 specs failed
+ * this way on a fresh isolated instance before the flag was set.
  */
 export const DEV_MASTER_PASSWORD = 'Oj'
 

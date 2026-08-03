@@ -222,7 +222,7 @@ export function cxfToRows(doc) {
 				sourceRow += 1
 				rows.push(rejectRow(
 					makeRow({ name: item.title ?? '', folder }, sourceRow),
-					'CXF item carries no credentials'
+					'CXF item carries no credentials',
 				))
 				continue
 			}

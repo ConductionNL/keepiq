@@ -25,7 +25,7 @@
 					data-testid="send-access-password"
 					@keyup.enter="onOpen">
 			</label>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="busy || (needsPassword && password === '')"
 				data-testid="send-access-open"
 				@click="onOpen">
@@ -43,7 +43,7 @@
 					: t('doriath', 'Save this content now — it will not be retrievable once its views run out.') }}
 			</NcNoteCard>
 			<pre class="send-access__payload" data-testid="send-access-payload">{{ payload }}</pre>
-			<NcButton type="secondary" data-testid="send-access-copy" @click="copyPayload">
+			<NcButton variant="secondary" data-testid="send-access-copy" @click="copyPayload">
 				{{ t('doriath', 'Copy content') }}
 			</NcButton>
 		</template>

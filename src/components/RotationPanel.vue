@@ -23,13 +23,13 @@
 				{{ flagLabel }}
 			</span>
 			<NcButton v-if="canManage"
-				type="secondary"
+				variant="secondary"
 				data-testid="rotation-mark-rotated"
 				@click="onMarkRotated">
 				{{ t('doriath', 'Mark rotated') }}
 			</NcButton>
 			<NcButton v-if="canManage"
-				type="tertiary"
+				variant="tertiary"
 				data-testid="rotation-dismiss"
 				@click="onDismiss">
 				{{ t('doriath', 'Dismiss') }}
@@ -54,17 +54,17 @@
 					type="date"
 					class="rotation-panel__date"
 					data-testid="expiry-input">
-				<NcButton type="secondary" data-testid="expiry-save" @click="onSave">
+				<NcButton variant="secondary" data-testid="expiry-save" @click="onSave">
 					{{ t('doriath', 'Set expiry') }}
 				</NcButton>
 				<NcButton v-if="expiresAt"
-					type="tertiary"
+					variant="tertiary"
 					data-testid="expiry-clear"
 					@click="onClear">
 					{{ t('doriath', 'Clear') }}
 				</NcButton>
 				<NcButton v-if="!openFlag"
-					type="tertiary"
+					variant="tertiary"
 					data-testid="rotation-flag-now"
 					@click="onFlag">
 					{{ t('doriath', 'Flag for rotation') }}

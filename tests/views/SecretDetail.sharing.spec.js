@@ -52,12 +52,17 @@ const mountDetail = async ({ secret, currentUser }) => {
 	const typeStore = useSecretTypeStore()
 	typeStore.fetchTypes = vi.fn().mockResolvedValue([])
 
+	// VTU v2 moved `stubs` and `mocks` under `global`. At the top level they
+	// are SILENTLY IGNORED — the component would render its real children and
+	// `$route` would be undefined, so this must stay nested.
 	const wrapper = mount(SecretDetail, {
 		propsData: {},
-		stubs: stubAll,
-		mocks: {
-			$route: { params: { id: secret?.id ?? 's-1' } },
-			$router: { push: vi.fn() },
+		global: {
+			stubs: stubAll,
+			mocks: {
+				$route: { params: { id: secret?.id ?? 's-1' } },
+				$router: { push: vi.fn() },
+			},
 		},
 	})
 	await flush()

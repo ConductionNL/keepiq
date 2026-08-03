@@ -52,19 +52,19 @@
 						<td>{{ sink.consecutiveFailures }}</td>
 						<td>{{ sink.droppedCount }}</td>
 						<td class="siem__actions">
-							<NcButton type="tertiary"
+							<NcButton variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-test-${sink.id}`"
 								@click="onTest(sink)">
 								{{ t('doriath', 'Test') }}
 							</NcButton>
-							<NcButton type="tertiary"
+							<NcButton variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-edit-${sink.id}`"
 								@click="startEdit(sink)">
 								{{ t('doriath', 'Edit') }}
 							</NcButton>
-							<NcButton type="tertiary"
+							<NcButton variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-delete-${sink.id}`"
 								@click="onDelete(sink)">
@@ -79,7 +79,7 @@
 			</p>
 
 			<NcButton v-if="!formOpen"
-				type="primary"
+				variant="primary"
 				data-testid="siem-add"
 				@click="startCreate">
 				{{ t('doriath', 'Add sink') }}
@@ -88,7 +88,7 @@
 			<!-- Add / edit form. -->
 			<div v-if="formOpen" class="siem__form" data-testid="siem-form">
 				<h4>{{ editingId ? t('doriath', 'Edit sink') : t('doriath', 'New sink') }}</h4>
-				<NcTextField :value.sync="form.name"
+				<NcTextField v-model="form.name"
 					:label="t('doriath', 'Name')"
 					data-testid="siem-form-name" />
 				<NcSelect v-if="!editingId"
@@ -97,18 +97,18 @@
 					:clearable="false"
 					:input-label="t('doriath', 'Type')"
 					data-testid="siem-form-type" />
-				<NcTextField :value.sync="form.endpoint"
+				<NcTextField v-model="form.endpoint"
 					:label="form.type === 'syslog' ? t('doriath', 'Endpoint (host:port)') : t('doriath', 'Endpoint (https URL)')"
 					:placeholder="form.type === 'syslog' ? 'siem.example.org:6514' : 'https://siem.example.org/ingest'"
 					data-testid="siem-form-endpoint" />
 				<NcCheckboxRadioSwitch v-if="form.type === 'syslog'"
-					:checked.sync="form.tls"
+					v-model="form.tls"
 					type="switch"
 					data-testid="siem-form-tls">
 					{{ t('doriath', 'Use TLS transport') }}
 				</NcCheckboxRadioSwitch>
 				<NcTextField v-if="form.type === 'webhook'"
-					:value.sync="form.hmacSecret"
+					v-model="form.hmacSecret"
 					type="password"
 					:label="t('doriath', 'HMAC signing secret (write-only)')"
 					:placeholder="editingHasSecret ? t('doriath', 'Leave blank to keep the current secret') : ''"
@@ -118,23 +118,23 @@
 					multiple
 					:input-label="t('doriath', 'Category filter (empty = all events)')"
 					data-testid="siem-form-categories" />
-				<NcTextField :value.sync="form.queueCap"
+				<NcTextField v-model="form.queueCap"
 					type="number"
 					:label="t('doriath', 'Queue cap (oldest events drop beyond this)')"
 					data-testid="siem-form-queuecap" />
-				<NcCheckboxRadioSwitch :checked.sync="form.enabled"
+				<NcCheckboxRadioSwitch v-model="form.enabled"
 					type="switch"
 					data-testid="siem-form-enabled">
 					{{ t('doriath', 'Enabled') }}
 				</NcCheckboxRadioSwitch>
 				<div class="siem__form-actions">
-					<NcButton type="primary"
+					<NcButton variant="primary"
 						:disabled="busy || !formValid"
 						data-testid="siem-form-save"
 						@click="onSave">
 						{{ editingId ? t('doriath', 'Save') : t('doriath', 'Create') }}
 					</NcButton>
-					<NcButton type="tertiary"
+					<NcButton variant="tertiary"
 						:disabled="busy"
 						data-testid="siem-form-cancel"
 						@click="formOpen = false">

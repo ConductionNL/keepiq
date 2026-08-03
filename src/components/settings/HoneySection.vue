@@ -51,13 +51,13 @@
 						</td>
 						<td class="honey-admin__actions">
 							<NcButton v-if="!alert.acknowledgedAt"
-								type="tertiary"
+								variant="tertiary"
 								:data-testid="`honey-admin-ack-${alert.id}`"
 								@click="store.acknowledge(alert.id)">
 								{{ t('doriath', 'Acknowledge') }}
 							</NcButton>
 							<NcButton v-if="!isSnoozed(alert)"
-								type="tertiary"
+								variant="tertiary"
 								:data-testid="`honey-admin-snooze-${alert.id}`"
 								@click="store.snooze(alert.id)">
 								{{ t('doriath', 'Snooze 24h') }}

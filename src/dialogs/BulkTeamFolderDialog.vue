@@ -27,10 +27,10 @@
 			<BulkRunPanel @retry="onRetry" />
 		</div>
 		<template #actions>
-			<NcButton type="tertiary" @click="$emit('close')">
+			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="!target || bulk.progress.running || fanOut.running"
 				data-testid="bulk-team-folder-run"
 				@click="onRun">

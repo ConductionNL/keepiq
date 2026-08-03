@@ -15,7 +15,7 @@
 			<span data-testid="bulk-progress-label">
 				{{ progress.label }} — {{ progress.done }} / {{ progress.total }}
 			</span>
-			<NcButton type="tertiary" data-testid="bulk-cancel" @click="store.cancel()">
+			<NcButton variant="tertiary" data-testid="bulk-cancel" @click="store.cancel()">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
 		</div>
@@ -44,7 +44,7 @@
 				</tbody>
 			</table>
 			<NcButton v-if="failedCount > 0"
-				type="secondary"
+				variant="secondary"
 				data-testid="bulk-retry-failed"
 				@click="$emit('retry')">
 				{{ t('doriath', 'Retry {count} failed', { count: failedCount }) }}

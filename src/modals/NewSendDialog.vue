@@ -64,18 +64,18 @@
 						readonly
 						data-testid="send-link"
 						@focus="$event.target.select()">
-					<NcButton type="secondary" data-testid="send-copy-link" @click="copyLink">
+					<NcButton variant="secondary" data-testid="send-copy-link" @click="copyLink">
 						{{ t('doriath', 'Copy link') }}
 					</NcButton>
 				</div>
 			</template>
 		</div>
 		<template #actions>
-			<NcButton type="tertiary" @click="$emit('close')">
+			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
 			<NcButton v-if="link === ''"
-				type="primary"
+				variant="primary"
 				:disabled="payload === '' || busy"
 				data-testid="send-create"
 				@click="onCreate">

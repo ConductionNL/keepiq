@@ -24,7 +24,7 @@
 
 			<NcButton
 				v-if="caStatus?.status === 'not_configured'"
-				type="primary"
+				variant="primary"
 				:disabled="loading"
 				@click="retryBootstrap">
 				{{ t('doriath', 'Retry bootstrap') }}
@@ -32,7 +32,7 @@
 
 			<NcButton
 				v-if="caStatus?.status === 'healthy' || caStatus?.status === 'expiring_soon'"
-				type="secondary"
+				variant="secondary"
 				:disabled="loading"
 				@click="forceRenewIntermediate">
 				{{ t('doriath', 'Force renew intermediate') }}

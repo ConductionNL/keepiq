@@ -78,7 +78,7 @@ describe('SecretCreateDialog — KeyGeneratorModal wiring', () => {
 	it('openGenerator() opens the embedded KeyGeneratorModal', async () => {
 		const wrapper = mount(SecretCreateDialog, {
 			propsData: {},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
@@ -95,7 +95,7 @@ describe('SecretCreateDialog — KeyGeneratorModal wiring', () => {
 	it('onGenerated(): writes the emitted key into the value field', async () => {
 		const wrapper = mount(SecretCreateDialog, {
 			propsData: {},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
@@ -110,7 +110,7 @@ describe('SecretCreateDialog — KeyGeneratorModal wiring', () => {
 	it('onGenerated() ignores empty / non-string payloads', async () => {
 		const wrapper = mount(SecretCreateDialog, {
 			propsData: {},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()

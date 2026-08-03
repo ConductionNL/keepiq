@@ -9,12 +9,13 @@
  *   - `chromium` — spec-coverage UI tests (Gate-19). Logs in as admin once
  *     via globalSetup and reuses the session via storageState.
  *
- * Point at a running Nextcloud with NEXTCLOUD_URL (default
- * http://localhost:8080). Auth: NC_ADMIN_USER / NC_ADMIN_PASS (default
- * admin/admin).
+ * Point at a running Nextcloud with PLAYWRIGHT_BASE_URL (or CI's BASE_URL).
+ * There is deliberately NO default — see tests/e2e/base-url.ts. Auth:
+ * NC_ADMIN_USER / NC_ADMIN_PASS (default admin/admin).
  */
 import { defineConfig, devices } from '@playwright/test'
 import * as path from 'path'
+import { BASE_URL } from './tests/e2e/base-url'
 
 export default defineConfig({
 	testDir: './tests/e2e',
@@ -31,7 +32,7 @@ export default defineConfig({
 	outputDir: 'tests/e2e/test-results',
 
 	use: {
-		baseURL: process.env.NEXTCLOUD_URL || 'http://localhost:8080',
+		baseURL: BASE_URL,
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure',
 	},

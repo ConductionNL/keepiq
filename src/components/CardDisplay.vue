@@ -22,7 +22,7 @@
 				<dt>{{ t('doriath', 'Number') }}</dt>
 				<dd class="card-display__masked">
 					<span data-testid="card-number-value">{{ revealed.number ? payload.number : '•••• •••• •••• ••••' }}</span>
-					<NcButton type="tertiary" :data-testid="'card-reveal-number'" @click="toggle('number')">
+					<NcButton variant="tertiary" :data-testid="'card-reveal-number'" @click="toggle('number')">
 						{{ revealed.number ? t('doriath', 'Hide') : t('doriath', 'Show') }}
 					</NcButton>
 					<CopyButton :value="payload.number" :label="t('doriath', 'Copy number')" />
@@ -36,7 +36,7 @@
 				<dt>{{ t('doriath', 'CVV') }}</dt>
 				<dd class="card-display__masked">
 					<span data-testid="card-cvv-value">{{ revealed.cvv ? payload.cvv : '•••' }}</span>
-					<NcButton type="tertiary" :data-testid="'card-reveal-cvv'" @click="toggle('cvv')">
+					<NcButton variant="tertiary" :data-testid="'card-reveal-cvv'" @click="toggle('cvv')">
 						{{ revealed.cvv ? t('doriath', 'Hide') : t('doriath', 'Show') }}
 					</NcButton>
 					<CopyButton :value="payload.cvv" :label="t('doriath', 'Copy CVV')" />
@@ -46,7 +46,7 @@
 				<dt>{{ t('doriath', 'PIN') }}</dt>
 				<dd class="card-display__masked">
 					<span data-testid="card-pin-value">{{ revealed.pin ? payload.pin : '••••' }}</span>
-					<NcButton type="tertiary" :data-testid="'card-reveal-pin'" @click="toggle('pin')">
+					<NcButton variant="tertiary" :data-testid="'card-reveal-pin'" @click="toggle('pin')">
 						{{ revealed.pin ? t('doriath', 'Hide') : t('doriath', 'Show') }}
 					</NcButton>
 					<CopyButton :value="payload.pin" :label="t('doriath', 'Copy PIN')" />

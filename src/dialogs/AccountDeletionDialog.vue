@@ -49,10 +49,10 @@
 					</a>
 				</p>
 
-				<NcPasswordField :value.sync="masterPassword"
+				<NcPasswordField v-model="masterPassword"
 					:label="t('doriath', 'Re-enter your master password')" />
 
-				<NcTextField :value.sync="confirmation"
+				<NcTextField v-model="confirmation"
 					:label="confirmationLabel" />
 			</div>
 		</div>
@@ -62,7 +62,7 @@
 				{{ report ? t('doriath', 'Close') : t('doriath', 'Cancel') }}
 			</NcButton>
 			<NcButton v-if="!report"
-				type="error"
+				variant="error"
 				:disabled="!canSubmit || loading"
 				@click="onDelete">
 				{{ t('doriath', 'Delete everything') }}

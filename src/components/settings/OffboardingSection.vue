@@ -41,7 +41,7 @@
 			</div>
 
 			<div class="offboarding__actions">
-				<NcButton type="error"
+				<NcButton variant="error"
 					:disabled="busy || leavingUserId === '' || successorUserId === '' || leavingUserId === successorUserId"
 					data-testid="offboarding-run"
 					@click="confirmOpen = true">
@@ -57,10 +57,10 @@
 					{{ t('doriath', 'Revoke all team-folder access of "{leaving}" and transfer their owned team secrets to "{successor}"? This cannot be undone.', { leaving: leavingUserId, successor: successorUserId }) }}
 				</p>
 				<template #actions>
-					<NcButton type="tertiary" @click="confirmOpen = false">
+					<NcButton variant="tertiary" @click="confirmOpen = false">
 						{{ t('doriath', 'Cancel') }}
 					</NcButton>
-					<NcButton type="error" data-testid="offboarding-confirm" @click="run">
+					<NcButton variant="error" data-testid="offboarding-confirm" @click="run">
 						{{ t('doriath', 'Offboard') }}
 					</NcButton>
 				</template>

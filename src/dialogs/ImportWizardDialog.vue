@@ -38,7 +38,7 @@
 					:clearable="false" />
 
 				<NcPasswordField v-if="requiresPassphrase"
-					:value.sync="passphrase"
+					v-model="passphrase"
 					:label="t('doriath', 'Backup passphrase')" />
 
 				<label class="import-wizard__file">
@@ -183,7 +183,7 @@
 				{{ t('doriath', 'Back') }}
 			</NcButton>
 			<NcButton v-if="store.step !== 'commit' && store.step !== 'summary'"
-				type="primary"
+				variant="primary"
 				:disabled="!canProceed || store.loading"
 				@click="next">
 				{{ nextLabel }}

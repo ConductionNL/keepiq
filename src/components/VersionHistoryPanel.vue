@@ -25,13 +25,13 @@
 						{{ version.actorId }} · {{ formatDate(version.createdAt) }}
 					</span>
 				</span>
-				<NcButton type="tertiary"
+				<NcButton variant="tertiary"
 					:data-testid="`version-view-${version.versionNumber}`"
 					@click="onView(version)">
 					{{ t('doriath', 'View') }}
 				</NcButton>
 				<NcButton v-if="canManage"
-					type="tertiary"
+					variant="tertiary"
 					:data-testid="`version-restore-${version.versionNumber}`"
 					@click="confirmVersion = version">
 					{{ t('doriath', 'Restore') }}
@@ -54,7 +54,7 @@
 					<dt>{{ t('doriath', 'Value') }}</dt>
 					<dd class="version-history__value">
 						<span data-testid="version-value">{{ revealed ? viewed.key : '••••••••••' }}</span>
-						<NcButton type="tertiary" @click="revealed = !revealed">
+						<NcButton variant="tertiary" @click="revealed = !revealed">
 							{{ revealed ? t('doriath', 'Hide') : t('doriath', 'Show') }}
 						</NcButton>
 					</dd>
@@ -72,10 +72,10 @@
 				{{ t('doriath', 'Restore version {number}? The current value is kept as a new version, and shared recipients receive the restored value.', { number: confirmVersion ? confirmVersion.versionNumber : 0 }) }}
 			</p>
 			<template #actions>
-				<NcButton type="tertiary" @click="confirmVersion = null">
+				<NcButton variant="tertiary" @click="confirmVersion = null">
 					{{ t('doriath', 'Cancel') }}
 				</NcButton>
-				<NcButton type="primary" data-testid="version-restore-confirm" @click="onRestore">
+				<NcButton variant="primary" data-testid="version-restore-confirm" @click="onRestore">
 					{{ t('doriath', 'Restore') }}
 				</NcButton>
 			</template>
@@ -126,7 +126,7 @@ export default {
 			// Surfaced via store state.
 		}
 	},
-	destroyed() {
+	unmounted() {
 		this.store.reset()
 	},
 	methods: {

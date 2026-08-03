@@ -12,7 +12,7 @@
 		<section class="emergency-access__panel" data-testid="emergency-access-designate">
 			<h3>{{ t('doriath', 'Designate an emergency contact') }}</h3>
 			<div class="emergency-access__form">
-				<NcTextField :value.sync="granteeUserId"
+				<NcTextField v-model="granteeUserId"
 					:label="t('doriath', 'Contact Nextcloud user ID')"
 					data-testid="emergency-grantee-input" />
 				<NcSelect v-model="waitPeriod"
@@ -21,10 +21,10 @@
 					:reduce="opt => opt.value"
 					label="label"
 					data-testid="emergency-wait-select" />
-				<NcPasswordField :value.sync="masterPassword"
+				<NcPasswordField v-model="masterPassword"
 					:label="t('doriath', 'Your master password')"
 					data-testid="emergency-master-input" />
-				<NcButton type="primary"
+				<NcButton variant="primary"
 					:disabled="!canDesignate || busy"
 					data-testid="emergency-designate-submit"
 					@click="designate">
@@ -50,18 +50,18 @@
 					<span class="emergency-access__state" :data-state="c.state">{{ stateLabel(c.state) }}</span>
 					<span class="emergency-access__wait">{{ t('doriath', '{days}d wait', { days: c.waitPeriodDays }) }}</span>
 					<NcButton v-if="c.state === 'requested'"
-						type="warning"
+						variant="warning"
 						data-testid="emergency-decline"
 						@click="decline(c.id)">
 						{{ t('doriath', 'Decline request') }}
 					</NcButton>
 					<NcButton v-if="c.state === 'invalidated'"
-						type="secondary"
+						variant="secondary"
 						data-testid="emergency-reestablish"
 						@click="scrollToDesignate(c.granteeUserId)">
 						{{ t('doriath', 'Re-establish') }}
 					</NcButton>
-					<NcButton type="error"
+					<NcButton variant="error"
 						data-testid="emergency-revoke"
 						@click="revoke(c.id)">
 						{{ t('doriath', 'Revoke') }}
@@ -83,13 +83,13 @@
 					<span class="emergency-access__grantee">{{ c.grantorUserId }}</span>
 					<span class="emergency-access__state" :data-state="c.state">{{ stateLabel(c.state) }}</span>
 					<NcButton v-if="c.state === 'granted'"
-						type="primary"
+						variant="primary"
 						data-testid="emergency-request"
 						@click="request(c.id)">
 						{{ t('doriath', 'Request access') }}
 					</NcButton>
 					<NcButton v-if="c.state === 'approved'"
-						type="primary"
+						variant="primary"
 						data-testid="emergency-recover"
 						@click="recover(c.id)">
 						{{ t('doriath', 'Recover vault') }}

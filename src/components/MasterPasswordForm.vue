@@ -35,7 +35,7 @@
 		</NcNoteCard>
 
 		<NcButton
-			type="primary"
+			variant="primary"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
 			{{ loading ? t('doriath', 'Changing...') : t('doriath', 'Change password') }}

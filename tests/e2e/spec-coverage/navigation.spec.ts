@@ -48,13 +48,18 @@ test.describe('App navigation — manifest menu', () => {
 		await expect(nav).toBeVisible({ timeout: 15_000 })
 
 		// The Dashboard entry points at the doriath app root (not /apps/dashboard).
-		await expect(nav.locator('a[href="/apps/doriath/#/"]').first()).toBeVisible()
+		// Matched on the hash SUFFIX, not the whole href: under vue-router 4 the
+		// hash-history links render relative (`#/`) rather than carrying the
+		// absolute app base (`/apps/doriath/#/`). Both resolve to the same route
+		// from any doriath page; asserting the literal absolute form would pin a
+		// router implementation detail rather than the requirement.
+		await expect(nav.locator('a[href$="#/"]').first()).toBeVisible()
 		// Footer entry: Documentation (pinned, always visible).
 		await expect(nav.getByText(/Documentation/i).first()).toBeVisible()
 		// Lock vault lives in the settings foldout (section: "settings"); expand
 		// it so the doriath-owned lock route becomes visible.
 		await expandSettingsFoldout(page)
-		await expect(nav.locator('a[href="/apps/doriath/#/lock"]').first()).toBeVisible()
+		await expect(nav.locator('a[href$="#/lock"]').first()).toBeVisible()
 
 		assertNoDoriathErrors(errors)
 	})
@@ -67,7 +72,7 @@ test.describe('App navigation — manifest menu', () => {
 		// settings foldout — expand it, then clicking the entry is a safe in-app
 		// navigation that stays on the lock gate.
 		await expandSettingsFoldout(page)
-		const lockEntry = appNav(page).locator('a[href="/apps/doriath/#/lock"]').first()
+		const lockEntry = appNav(page).locator('a[href$="#/lock"]').first()
 		await expect(lockEntry).toBeVisible()
 		await lockEntry.evaluate((el: HTMLElement) => el.click())
 

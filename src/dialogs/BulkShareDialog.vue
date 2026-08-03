@@ -28,10 +28,10 @@
 			<BulkRunPanel @retry="onRetry" />
 		</div>
 		<template #actions>
-			<NcButton type="tertiary" @click="$emit('close')">
+			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton type="primary"
+			<NcButton variant="primary"
 				:disabled="targetUserId === '' || bulk.progress.running"
 				data-testid="bulk-share-run"
 				@click="onRun">

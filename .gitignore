@@ -98,6 +98,13 @@ openspec/test-site-results/**/*.webp
 /tests/e2e/.auth/
 /tests/e2e/playwright-report/
 /tests/e2e/test-results/
+# The CI config (tests/e2e/playwright.config.ts) deliberately writes to the APP
+# ROOT instead of tests/e2e/, because that is where the shared quality
+# workflow's upload-artifact steps look: server/apps/<app>/playwright-report/
+# and server/apps/<app>/test-results/. Hence these two extra, differently-rooted
+# entries alongside the tests/e2e/ ones above.
+/playwright-report/
+/test-results/
 /coverage-vitest/
 /coverage/
 
