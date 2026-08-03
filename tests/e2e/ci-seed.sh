@@ -258,15 +258,26 @@ elif kind == 'secrets':
         sys.exit(1)
     print('[ci-seed] secrets OK.')
 
-elif kind in ('registers', 'schemas'):
-    required = {'registers': ['doriath'], 'schemas': ['example']}[kind]
+elif kind == 'registers':
+    # REPORTED, NOT ASSERTED — deliberately. OpenRegister's ImportHandler
+    # creates registers only from `components.registers`, and
+    # lib/Settings/doriath_register.json declares none: it is still the
+    # scaffold descriptor, carrying a single `example` schema and the comment
+    # "replace with your app's actual schemas". Asserting a `doriath` register
+    # here would assert something the shipped config does not describe.
     slugs = {field(i, 'slug') for i in items}
-    print(f'[ci-seed] openregister {kind} present: {sorted(s for s in slugs if s)}')
+    print(f'[ci-seed] openregister registers present: {sorted(s for s in slugs if s)}')
+
+elif kind == 'schemas':
+    required = ['example']
+    slugs = {field(i, 'slug') for i in items}
+    print(f'[ci-seed] openregister schemas present: {sorted(s for s in slugs if s)}')
     missing = [s for s in required if s not in slugs]
     if missing:
-        print(f'::error::Doriath {kind} missing from OpenRegister after import: {missing}')
+        print(f'::error::Doriath schemas missing from OpenRegister after import: {missing}. '
+              'The register descriptor did not apply — check the import response above.')
         sys.exit(1)
-    print(f'[ci-seed] {kind} OK.')
+    print('[ci-seed] schemas OK.')
 PY
 }
 
