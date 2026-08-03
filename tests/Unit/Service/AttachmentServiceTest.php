@@ -84,7 +84,7 @@ class AttachmentServiceTest extends TestCase
             suiteMapper: $suiteMapper,
             appDataFactory: $appDataFactory,
             appConfig: $this->appConfig,
-            eventDispatcher: null,
+            auditTrail: null,
         );
     }//end setUp()
 

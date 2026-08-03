@@ -734,7 +734,7 @@ class ShareServiceTest extends TestCase
             notificationService: $this->notificationService,
             db: $this->db,
             logger: $this->createMock(originalClassName: LoggerInterface::class),
-            eventDispatcher: null,
+            auditTrail: null,
             teamFolderService: $teamFolderService,
         );
     }//end gradedService()

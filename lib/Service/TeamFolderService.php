@@ -42,10 +42,8 @@ use OCA\Doriath\Db\TeamFolder;
 use OCA\Doriath\Db\TeamFolderMapper;
 use OCA\Doriath\Db\TeamFolderMember;
 use OCA\Doriath\Db\TeamFolderMemberMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCP\IUserManager;
@@ -92,7 +90,7 @@ class TeamFolderService
      * @param NotificationService    $notificationService The notification dispatcher
      * @param IDBConnection          $db                  The database connection
      * @param LoggerInterface        $logger              The logger
-     * @param IEventDispatcher|null  $eventDispatcher     The audit event dispatcher
+     * @param AuditTrail|null        $auditTrail          The audit trail
      *
      * @return void
      */
@@ -110,21 +108,9 @@ class TeamFolderService
         private NotificationService $notificationService,
         private IDBConnection $db,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch an audit event when a dispatcher is wired.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * Share an owned folder — creates the TeamFolder attachment.
@@ -159,15 +145,13 @@ class TeamFolderService
         $entity->setUpdatedAt(new DateTime());
         $persisted = $this->mapper->insert($entity);
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::TEAM_FOLDER_SHARED,
-                objectType: 'team_folder',
-                objectId: $persisted->getId(),
-                objectName: $folder->getName(),
-                metadata: ['folderId' => $folder->getId()],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::TEAM_FOLDER_SHARED,
+            objectType: 'team_folder',
+            objectId: $persisted->getId(),
+            objectName: $folder->getName(),
+            metadata: ['folderId' => $folder->getId()],
         );
 
         return $persisted;
@@ -208,18 +192,16 @@ class TeamFolderService
             throw $exception;
         }
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::TEAM_FOLDER_UNSHARED,
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-                objectName: '',
-                metadata: [
-                    'folderId'     => $teamFolder->getFolderId(),
-                    'revokedCount' => $revoked,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::TEAM_FOLDER_UNSHARED,
+            objectType: 'team_folder',
+            objectId: $teamFolderId,
+            objectName: '',
+            metadata: [
+                'folderId'     => $teamFolder->getFolderId(),
+                'revokedCount' => $revoked,
+            ],
         );
 
         return $revoked;
@@ -355,18 +337,16 @@ class TeamFolderService
             $membership->setCreatedAt(new DateTime());
             $membership = $this->memberMapper->insert($membership);
 
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_ADDED,
-                    objectType: 'team_folder',
-                    objectId: $teamFolderId,
-                    objectName: '',
-                    metadata: [
-                        'memberType' => $memberType,
-                        'memberId'   => $memberId,
-                    ],
-                )
+            $this->auditTrail?->forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_ADDED,
+                objectType: 'team_folder',
+                objectId: $teamFolderId,
+                objectName: '',
+                metadata: [
+                    'memberType' => $memberType,
+                    'memberId'   => $memberId,
+                ],
             );
         }//end try
 
@@ -429,19 +409,17 @@ class TeamFolderService
             $revoked += $this->revokeDerivedShares(teamFolderId: $teamFolderId, targetUserId: $droppedUserId);
         }
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_REMOVED,
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-                objectName: '',
-                metadata: [
-                    'memberType'   => $membership->getMemberType(),
-                    'memberId'     => $membership->getMemberId(),
-                    'revokedCount' => $revoked,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_REMOVED,
+            objectType: 'team_folder',
+            objectId: $teamFolderId,
+            objectName: '',
+            metadata: [
+                'memberType'   => $membership->getMemberType(),
+                'memberId'     => $membership->getMemberId(),
+                'revokedCount' => $revoked,
+            ],
         );
 
         return $revoked;
@@ -842,20 +820,18 @@ class TeamFolderService
             ['app' => 'doriath']
         );
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $adminId,
-                eventType: AuditEventTypes::TEAM_FOLDER_OFFBOARDED,
-                objectType: 'team_folder',
-                objectId: $leavingUserId,
-                objectName: '',
-                metadata: [
-                    'leavingUserId'    => $leavingUserId,
-                    'successorUserId'  => $successorUserId,
-                    'revokedCount'     => $revoked,
-                    'transferredCount' => $transferred,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $adminId,
+            eventType: AuditEventTypes::TEAM_FOLDER_OFFBOARDED,
+            objectType: 'team_folder',
+            objectId: $leavingUserId,
+            objectName: '',
+            metadata: [
+                'leavingUserId'    => $leavingUserId,
+                'successorUserId'  => $successorUserId,
+                'revokedCount'     => $revoked,
+                'transferredCount' => $transferred,
+            ],
         );
 
         return [
@@ -1320,19 +1296,17 @@ class TeamFolderService
         $member->setGrade($grade);
         $member = $this->memberMapper->update($member);
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $ownerId,
-                eventType: AuditEventTypes::TEAM_FOLDER_GRADE_CHANGED,
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-                objectName: '',
-                metadata: [
-                    'memberType' => $member->getMemberType(),
-                    'memberId'   => $member->getMemberId(),
-                    'grade'      => $grade,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $ownerId,
+            eventType: AuditEventTypes::TEAM_FOLDER_GRADE_CHANGED,
+            objectType: 'team_folder',
+            objectId: $teamFolderId,
+            objectName: '',
+            metadata: [
+                'memberType' => $member->getMemberType(),
+                'memberId'   => $member->getMemberId(),
+                'grade'      => $grade,
+            ],
         );
 
         return $member;

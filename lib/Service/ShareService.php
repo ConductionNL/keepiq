@@ -34,10 +34,8 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -71,7 +69,7 @@ class ShareService
      * @param NotificationService    $notificationService The notification dispatcher
      * @param IDBConnection          $db                  The DB connection (for syncUpdate transaction)
      * @param LoggerInterface        $logger              The logger interface
-     * @param IEventDispatcher|null  $eventDispatcher     The event dispatcher
+     * @param AuditTrail|null        $auditTrail          The audit trail
      * @param AttachmentService|null $attachmentService   The attachment service (revoke cascade)
      * @param SecretTypeService|null $typeService         The type service (recipient-copy type resolution)
      * @param TeamFolderService|null $teamFolderService   The team-folder service (write-grade resolution)
@@ -86,7 +84,7 @@ class ShareService
         private NotificationService $notificationService,
         private IDBConnection $db,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
         private ?AttachmentService $attachmentService=null,
         private ?SecretTypeService $typeService=null,
         private ?TeamFolderService $teamFolderService=null,
@@ -193,18 +191,16 @@ class ShareService
             $entity->setCreatedAt(new DateTime());
             $this->mapper->insert($entity);
 
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::SHARE_GRANTED,
-                    objectType: 'secret',
-                    objectId: $sourceSecretId,
-                    objectName: $source->getName(),
-                    metadata: [
-                        'recipientType' => 'user',
-                        'recipientId'   => $targetUserId,
-                    ],
-                )
+            $this->auditTrail?->forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SHARE_GRANTED,
+                objectType: 'secret',
+                objectId: $sourceSecretId,
+                objectName: $source->getName(),
+                metadata: [
+                    'recipientType' => 'user',
+                    'recipientId'   => $targetUserId,
+                ],
             );
 
             $newRecipients[$targetUserId] = true;
@@ -322,20 +318,6 @@ class ShareService
     }//end optionalString()
 
     /**
-     * Dispatch a typed audit event, fail-soft.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
-
-    /**
      * Create a single share target record.
      *
      * Authorization: $userId must be the Secret owner OR an active
@@ -424,18 +406,16 @@ class ShareService
             objectId: $sourceSecretId,
         );
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::SHARE_GRANTED,
-                objectType: 'share',
-                objectId: $persisted->getId(),
-                objectName: $source->getName(),
-                metadata: [
-                    'recipientType' => 'user',
-                    'recipientId'   => $targetUserId,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::SHARE_GRANTED,
+            objectType: 'share',
+            objectId: $persisted->getId(),
+            objectName: $source->getName(),
+            metadata: [
+                'recipientType' => 'user',
+                'recipientId'   => $targetUserId,
+            ],
         );
 
         return $persisted;
@@ -593,18 +573,16 @@ class ShareService
             ['app' => 'doriath']
         );
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::SHARE_REVOKED,
-                objectType: 'share',
-                objectId: $shareId,
-                objectName: $source->getName(),
-                metadata: [
-                    'recipientType' => 'user',
-                    'recipientId'   => $entity->getTargetUserId(),
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::SHARE_REVOKED,
+            objectType: 'share',
+            objectId: $shareId,
+            objectName: $source->getName(),
+            metadata: [
+                'recipientType' => 'user',
+                'recipientId'   => $entity->getTargetUserId(),
+            ],
         );
     }//end revokeShare()
 
@@ -741,15 +719,13 @@ class ShareService
         // A non-owner write is attributed to the writer (§3.3) —
         // identifiers only, never key material.
         if ($isWriter === true && $updated > 0) {
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::SECRET_UPDATED,
-                    objectType: 'secret',
-                    objectId: $source->getId(),
-                    objectName: $source->getName(),
-                    metadata: ['changedFields' => 'team-write sync'],
-                )
+            $this->auditTrail?->forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SECRET_UPDATED,
+                objectType: 'secret',
+                objectId: $source->getId(),
+                objectName: $source->getName(),
+                metadata: ['changedFields' => 'team-write sync'],
             );
         }
 

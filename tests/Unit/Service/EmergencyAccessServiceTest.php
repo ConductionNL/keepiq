@@ -32,6 +32,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ForbiddenException;
+use OCA\Doriath\Service\AuditTrail;
 use OCA\Doriath\Service\EmergencyAccessService;
 use OCA\Doriath\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -99,7 +100,7 @@ class EmergencyAccessServiceTest extends TestCase
             mapper: $this->mapper,
             suiteMapper: $this->suiteMapper,
             notificationService: $this->notificationService,
-            eventDispatcher: $this->dispatcher,
+            auditTrail: new AuditTrail(eventDispatcher: $this->dispatcher),
             logger: $this->createMock(LoggerInterface::class),
         );
     }//end setUp()

@@ -36,10 +36,8 @@ use OCA\Doriath\Db\AttachmentMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\NotFoundException;
 use OCP\IAppConfig;
@@ -62,13 +60,13 @@ class AttachmentService
     /**
      * Constructor for AttachmentService.
      *
-     * @param AttachmentMapper      $mapper          The attachment mapper
-     * @param AttachmentGrantMapper $grantMapper     The grant mapper
-     * @param SecretMapper          $secretMapper    The secret mapper (authorization)
-     * @param EncryptionSuiteMapper $suiteMapper     The suite mapper (grant provenance)
-     * @param IAppDataFactory       $appDataFactory  The app-data factory (blob storage)
-     * @param IAppConfig            $appConfig       The app config (limits)
-     * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
+     * @param AttachmentMapper      $mapper         The attachment mapper
+     * @param AttachmentGrantMapper $grantMapper    The grant mapper
+     * @param SecretMapper          $secretMapper   The secret mapper (authorization)
+     * @param EncryptionSuiteMapper $suiteMapper    The suite mapper (grant provenance)
+     * @param IAppDataFactory       $appDataFactory The app-data factory (blob storage)
+     * @param IAppConfig            $appConfig      The app config (limits)
+     * @param AuditTrail|null       $auditTrail     The audit trail
      *
      * @return void
      */
@@ -79,21 +77,9 @@ class AttachmentService
         private EncryptionSuiteMapper $suiteMapper,
         private IAppDataFactory $appDataFactory,
         private IAppConfig $appConfig,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch an audit event when a dispatcher is wired.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * The blob folder inside Doriath's app data (created on demand).
@@ -188,18 +174,16 @@ class AttachmentService
             suiteId: $suiteId,
         );
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::ATTACHMENT_UPLOADED,
-                objectType: 'attachment',
-                objectId: $attachment->getId(),
-                objectName: $secret->getName(),
-                metadata: [
-                    'secretId'  => $secretId,
-                    'sizeBytes' => $size,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::ATTACHMENT_UPLOADED,
+            objectType: 'attachment',
+            objectId: $attachment->getId(),
+            objectName: $secret->getName(),
+            metadata: [
+                'secretId'  => $secretId,
+                'sizeBytes' => $size,
+            ],
         );
 
         return [
@@ -270,18 +254,16 @@ class AttachmentService
             throw new InvalidArgumentException('Attachment blob is missing');
         }
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::ATTACHMENT_DOWNLOADED,
-                objectType: 'attachment',
-                objectId: $attachmentId,
-                objectName: '',
-                metadata: [
-                    'secretId'  => $attachment->getSourceSecretId(),
-                    'sizeBytes' => $attachment->getSizeBytes(),
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::ATTACHMENT_DOWNLOADED,
+            objectType: 'attachment',
+            objectId: $attachmentId,
+            objectName: '',
+            metadata: [
+                'secretId'  => $attachment->getSourceSecretId(),
+                'sizeBytes' => $attachment->getSizeBytes(),
+            ],
         );
 
         return $bytes;
@@ -373,18 +355,16 @@ class AttachmentService
         $this->unlinkBlobIfOrphaned(attachment: $attachment);
         $this->mapper->delete($attachment);
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::ATTACHMENT_DELETED,
-                objectType: 'attachment',
-                objectId: $attachmentId,
-                objectName: $secret->getName(),
-                metadata: [
-                    'secretId'  => $attachment->getSourceSecretId(),
-                    'sizeBytes' => $attachment->getSizeBytes(),
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::ATTACHMENT_DELETED,
+            objectType: 'attachment',
+            objectId: $attachmentId,
+            objectName: $secret->getName(),
+            metadata: [
+                'secretId'  => $attachment->getSourceSecretId(),
+                'sizeBytes' => $attachment->getSizeBytes(),
+            ],
         );
     }//end delete()
 

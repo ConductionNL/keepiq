@@ -29,10 +29,8 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -56,7 +54,7 @@ class ApplicationService
      * @param LoggerInterface                                   $logger              The logger
      * @param NotificationService                               $notificationService The notification service
      * @param EncryptionSuiteService                            $suiteService        The encryption suite service
-     * @param IEventDispatcher                                  $eventDispatcher     The event dispatcher
+     * @param AuditTrail|null                                   $auditTrail          The audit trail
      * @param \OCA\Doriath\Db\MachineLeaseMapper|null           $leaseMapper         The lease mapper (delete cascade)
      * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper   The lease-policy mapper (delete cascade)
      *
@@ -68,25 +66,11 @@ class ApplicationService
         private LoggerInterface $logger,
         private ?NotificationService $notificationService=null,
         private ?EncryptionSuiteService $suiteService=null,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
         private ?\OCA\Doriath\Db\MachineLeaseMapper $leaseMapper=null,
         private ?\OCA\Doriath\Db\ApplicationLeasePolicyMapper $leasePolicyMapper=null,
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch a typed audit event, fail-soft.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * Register a new application.
@@ -187,23 +171,19 @@ class ApplicationService
         // Anonymous (null) registrants have no NC actor — record as a
         // system-actored event so the audit trail still captures the row.
         if ($userId !== null && $userId !== '') {
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
-                    objectType: 'application',
-                    objectId: $persisted->getId(),
-                    objectName: $persisted->getName(),
-                )
+            $this->auditTrail?->forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                objectType: 'application',
+                objectId: $persisted->getId(),
+                objectName: $persisted->getName(),
             );
         } else {
-            $this->dispatchAudit(
-                event: AuditEvent::forSystem(
-                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
-                    objectType: 'application',
-                    objectId: $persisted->getId(),
-                    objectName: $persisted->getName(),
-                )
+            $this->auditTrail?->forSystem(
+                eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                objectType: 'application',
+                objectId: $persisted->getId(),
+                objectName: $persisted->getName(),
             );
         }
 
@@ -308,14 +288,12 @@ class ApplicationService
             $this->tryProvisionSuite(application: $updated, csr: $storedCsr);
         }
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $adminUserId,
-                eventType: AuditEventTypes::APPLICATION_APPROVED,
-                objectType: 'application',
-                objectId: $applicationId,
-                objectName: $updated->getName(),
-            )
+        $this->auditTrail?->forUser(
+            actorId: $adminUserId,
+            eventType: AuditEventTypes::APPLICATION_APPROVED,
+            objectType: 'application',
+            objectId: $applicationId,
+            objectName: $updated->getName(),
         );
 
         return $updated;
@@ -387,14 +365,12 @@ class ApplicationService
             ['app' => 'doriath']
         );
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $adminUserId,
-                eventType: AuditEventTypes::APPLICATION_REJECTED,
-                objectType: 'application',
-                objectId: $applicationId,
-                objectName: $applicationName,
-            )
+        $this->auditTrail?->forUser(
+            actorId: $adminUserId,
+            eventType: AuditEventTypes::APPLICATION_REJECTED,
+            objectType: 'application',
+            objectId: $applicationId,
+            objectName: $applicationName,
         );
     }//end reject()
 
@@ -431,13 +407,11 @@ class ApplicationService
 
         $this->logger->info('Deleted application '.$applicationId, ['app' => 'doriath']);
 
-        $this->dispatchAudit(
-            event: AuditEvent::forSystem(
-                eventType: AuditEventTypes::APPLICATION_DELETED,
-                objectType: 'application',
-                objectId: $applicationId,
-                objectName: $applicationName,
-            )
+        $this->auditTrail?->forSystem(
+            eventType: AuditEventTypes::APPLICATION_DELETED,
+            objectType: 'application',
+            objectId: $applicationId,
+            objectName: $applicationName,
         );
     }//end delete()
 

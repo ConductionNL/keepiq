@@ -116,7 +116,7 @@ class TeamFolderServiceTest extends TestCase
             notificationService: $this->notificationService,
             db: $this->createMock(originalClassName: IDBConnection::class),
             logger: $this->createMock(originalClassName: LoggerInterface::class),
-            eventDispatcher: null,
+            auditTrail: null,
         );
     }//end setUp()
 

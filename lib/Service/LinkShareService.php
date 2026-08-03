@@ -27,11 +27,9 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\LinkShare;
 use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
@@ -66,32 +64,18 @@ class LinkShareService
     /**
      * Constructor for LinkShareService.
      *
-     * @param LinkShareMapper       $mapper          The link share mapper
-     * @param LoggerInterface       $logger          The logger interface
-     * @param IEventDispatcher|null $eventDispatcher The event dispatcher
+     * @param LinkShareMapper $mapper     The link share mapper
+     * @param LoggerInterface $logger     The logger interface
+     * @param AuditTrail|null $auditTrail The audit trail
      *
      * @return void
      */
     public function __construct(
         private LinkShareMapper $mapper,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch a typed audit event, fail-soft.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * Create a link share for a secret owned by the given user.
@@ -158,17 +142,15 @@ class LinkShareService
             $expiresAtIso = $expiresAt->format(DateTime::ATOM);
         }
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::LINK_SHARE_CREATED,
-                objectType: 'link_share',
-                objectId: $linkShare->getId(),
-                metadata: [
-                    'hasPassword' => ($salt !== ''),
-                    'expiresAt'   => $expiresAtIso,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::LINK_SHARE_CREATED,
+            objectType: 'link_share',
+            objectId: $linkShare->getId(),
+            metadata: [
+                'hasPassword' => ($salt !== ''),
+                'expiresAt'   => $expiresAtIso,
+            ],
         );
 
         return $linkShare;
@@ -242,12 +224,10 @@ class LinkShareService
 
         $linkShare = $this->mapper->findByToken($token);
 
-        $this->dispatchAudit(
-            event: AuditEvent::forLinkVisitor(
-                eventType: AuditEventTypes::LINK_SHARE_ACCESSED,
-                objectType: 'link_share',
-                objectId: $linkShare->getId(),
-            )
+        $this->auditTrail?->forLinkVisitor(
+            eventType: AuditEventTypes::LINK_SHARE_ACCESSED,
+            objectType: 'link_share',
+            objectId: $linkShare->getId(),
         );
 
         if ($linkShare->getUsageCount() >= $linkShare->getUsageLimit()) {
@@ -288,35 +268,29 @@ class LinkShareService
                 .self::MAX_FAILED_ATTEMPTS.' failed attempts'
             );
 
-            $this->dispatchAudit(
-                event: AuditEvent::forLinkVisitor(
-                    eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
-                    objectType: 'link_share',
-                    objectId: $linkShare->getId(),
-                    metadata: ['reason' => 'invalid_password'],
-                )
+            $this->auditTrail?->forLinkVisitor(
+                eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
+                objectType: 'link_share',
+                objectId: $linkShare->getId(),
+                metadata: ['reason' => 'invalid_password'],
             );
 
-            $this->dispatchAudit(
-                event: AuditEvent::forLinkVisitor(
-                    eventType: AuditEventTypes::LINK_SHARE_AUTO_DELETED,
-                    objectType: 'link_share',
-                    objectId: $linkShare->getId(),
-                    metadata: ['reason' => 'too_many_failed_attempts'],
-                )
+            $this->auditTrail?->forLinkVisitor(
+                eventType: AuditEventTypes::LINK_SHARE_AUTO_DELETED,
+                objectType: 'link_share',
+                objectId: $linkShare->getId(),
+                metadata: ['reason' => 'too_many_failed_attempts'],
             );
             return;
         }//end if
 
         $this->mapper->update($linkShare);
 
-        $this->dispatchAudit(
-            event: AuditEvent::forLinkVisitor(
-                eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
-                objectType: 'link_share',
-                objectId: $linkShare->getId(),
-                metadata: ['reason' => 'invalid_password'],
-            )
+        $this->auditTrail?->forLinkVisitor(
+            eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
+            objectType: 'link_share',
+            objectId: $linkShare->getId(),
+            metadata: ['reason' => 'invalid_password'],
         );
     }//end recordFailedAttempt()
 
@@ -370,13 +344,11 @@ class LinkShareService
         $this->mapper->delete($linkShare);
         $this->logger->info("Doriath: link share {$id} revoked by {$userId}");
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::LINK_SHARE_REVOKED,
-                objectType: 'link_share',
-                objectId: $id,
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::LINK_SHARE_REVOKED,
+            objectType: 'link_share',
+            objectId: $id,
         );
     }//end delete()
 

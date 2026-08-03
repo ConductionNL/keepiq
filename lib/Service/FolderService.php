@@ -29,7 +29,6 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Exception\DuplicateFolderNameException;
@@ -37,7 +36,6 @@ use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -52,7 +50,7 @@ class FolderService
      * @param FolderMapper              $mapper            The folder mapper
      * @param SecretMapper              $secretMapper      The secret mapper (for cascade operations)
      * @param LoggerInterface           $logger            The logger interface
-     * @param IEventDispatcher|null     $eventDispatcher   The event dispatcher
+     * @param AuditTrail|null           $auditTrail        The audit trail
      * @param AttachmentService|null    $attachmentService The attachment service (delete cascade)
      * @param SecretVersionService|null $versionService    The version-history service (delete cascade)
      *
@@ -62,7 +60,7 @@ class FolderService
         private FolderMapper $mapper,
         private SecretMapper $secretMapper,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
         private ?AttachmentService $attachmentService=null,
         private ?SecretVersionService $versionService=null,
     ) {
@@ -90,20 +88,6 @@ class FolderService
             $this->versionService?->deleteForSecret($secret->getId());
         }
     }//end cascadeAttachmentsForFolder()
-
-    /**
-     * Dispatch a typed audit event, fail-soft.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * List the folders owned by a user.
@@ -360,27 +344,7 @@ class FolderService
         if ($children !== []) {
             $this->deleteWithSubfolders(folder: $folder, children: $children, resolution: $resolution, userId: $userId);
 
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
-                    objectType: 'folder',
-                    objectId: $id,
-                    objectName: $folderName,
-                    metadata: [
-                        'secretCount'    => $secretCount,
-                        'subfolderCount' => $subfolderCount,
-                    ],
-                )
-            );
-            return;
-        }
-
-        // Non-empty leaf folder (secrets, no subfolders) — requires cascade.
-        $this->deleteLeafWithSecrets(folder: $folder, cascade: $cascade);
-
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            $this->auditTrail?->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
                 objectType: 'folder',
@@ -388,9 +352,25 @@ class FolderService
                 objectName: $folderName,
                 metadata: [
                     'secretCount'    => $secretCount,
-                    'subfolderCount' => 0,
+                    'subfolderCount' => $subfolderCount,
                 ],
-            )
+            );
+            return;
+        }
+
+        // Non-empty leaf folder (secrets, no subfolders) — requires cascade.
+        $this->deleteLeafWithSecrets(folder: $folder, cascade: $cascade);
+
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
+            objectType: 'folder',
+            objectId: $id,
+            objectName: $folderName,
+            metadata: [
+                'secretCount'    => $secretCount,
+                'subfolderCount' => 0,
+            ],
         );
     }//end delete()
 
