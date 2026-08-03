@@ -59,6 +59,7 @@
     "sass-loader": "^16.0.8",
     "style-loader": "~4.0.0",
     "stylelint": "^15.11.0",
+    "terser-webpack-plugin": "^5.3.17",
     "vue-eslint-parser": "^9.4.3",
     "vue-loader": "^15.11.1 <16.0.0",
     "vue-template-compiler": "^2.7.16",
