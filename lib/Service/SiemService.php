@@ -34,6 +34,7 @@ use OCA\Doriath\Db\SiemSink;
 use OCA\Doriath\Db\SiemSinkMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Http\Client\IClientService;
@@ -53,6 +54,8 @@ use Throwable;
  */
 class SiemService
 {
+    use SuppressesDiagnostics;
+
     /**
      * Retry ceiling before a row dead-letters.
      *
@@ -279,13 +282,20 @@ class SiemService
             $scheme = 'tls://';
         }
 
+        // The stream_socket_client() call warns on an unreachable endpoint and
+        // returns false; the detail is already captured in $errstr/$errno,
+        // which the exception below re-reports.
         $errno  = 0;
         $errstr = '';
-        $socket = @stream_socket_client(
-            $scheme.$endpoint,
-            $errno,
-            $errstr,
-            self::DELIVERY_TIMEOUT
+        $socket = $this->withoutDiagnostics(
+            call: static function () use ($scheme, $endpoint, &$errno, &$errstr) {
+                return stream_socket_client(
+                    $scheme.$endpoint,
+                    $errno,
+                    $errstr,
+                    self::DELIVERY_TIMEOUT
+                );
+            }
         );
         if ($socket === false) {
             throw new RuntimeException('syslog connect failed: '.$errstr.' ('.$errno.')');

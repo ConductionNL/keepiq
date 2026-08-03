@@ -31,6 +31,7 @@ use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
@@ -48,6 +49,8 @@ use Throwable;
  */
 class ApplicationService
 {
+    use SuppressesDiagnostics;
+
     /**
      * Constructor for ApplicationService.
      *
@@ -620,9 +623,9 @@ class ApplicationService
      */
     private function validateCsr(string $csr): void
     {
-        // The openssl_csr_get_public_key() call emits a warning on malformed input
-        // and returns false; we suppress the warning + check the return.
-        $publicKey = @openssl_csr_get_public_key($csr);
+        // The openssl_csr_get_public_key() call emits a warning on malformed
+        // input and returns false; the return value is the contract we check.
+        $publicKey = $this->withoutDiagnostics(call: static fn () => openssl_csr_get_public_key($csr));
         if ($publicKey === false) {
             throw new InvalidArgumentException(message: 'Invalid CSR: PKCS#10 format not recognised');
         }

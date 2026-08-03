@@ -96,7 +96,8 @@ class ScanCertificateExpiryJob extends TimedJob
         $now    = $this->time->getDateTime();
         $offset = 0;
         do {
-            $page = $this->suiteMapper->findAllActiveWithLimit(self::PAGE_SIZE, $offset);
+            $page      = $this->suiteMapper->findAllActiveWithLimit(self::PAGE_SIZE, $offset);
+            $pageCount = count($page);
             foreach ($page as $suite) {
                 try {
                     $this->scanOne(suite: $suite, now: $now);
@@ -109,7 +110,7 @@ class ScanCertificateExpiryJob extends TimedJob
             }
 
             $offset += self::PAGE_SIZE;
-        } while (count($page) === self::PAGE_SIZE);
+        } while ($pageCount === self::PAGE_SIZE);
     }//end run()
 
     /**

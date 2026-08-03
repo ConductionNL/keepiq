@@ -30,6 +30,7 @@ use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
@@ -45,6 +46,8 @@ use Throwable;
  */
 class CertificateAuthorityService
 {
+    use SuppressesDiagnostics;
+
     private const ROOT_LIFETIME_DAYS         = 7300;
     private const INTERMEDIATE_LIFETIME_DAYS = 1095;
     private const RESIGN_BATCH_SIZE          = 100;
@@ -253,10 +256,15 @@ class CertificateAuthorityService
         // On some OpenSSL builds a public-only key works here; on others
         // openssl_csr_new() SILENTLY generates a throwaway keypair. The
         // modulus guard below catches that case and reroutes to phpseclib.
-        $csr = @openssl_csr_new(
-            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $commonName]),
-            private_key: $csrKey,
-            options: ['digest_alg' => 'sha256']
+        // The openssl_csr_new() call warns when the key it is handed is
+        // unusable for a CSR; the false return below is the branch we act on.
+        $csrDn = array_merge(self::DEFAULT_DN, ['commonName' => $commonName]);
+        $csr   = $this->withoutDiagnostics(
+            call: static fn () => openssl_csr_new(
+                distinguished_names: $csrDn,
+                private_key: $csrKey,
+                options: ['digest_alg' => 'sha256']
+            )
         );
 
         $certPem = null;

@@ -40,6 +40,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
@@ -53,6 +54,8 @@ use RuntimeException;
  */
 class CertificateLifecycleService
 {
+    use SuppressesDiagnostics;
+
     /**
      * Constructor for CertificateLifecycleService.
      *
@@ -148,7 +151,9 @@ class CertificateLifecycleService
      */
     public function parseCaCertificate(string $pem): ?array
     {
-        $parsed = @openssl_x509_parse(certificate: $pem);
+        // The openssl_x509_parse() call warns when handed something that is not
+        // a certificate; the non-array return below is the branch we act on.
+        $parsed = $this->withoutDiagnostics(call: static fn () => openssl_x509_parse(certificate: $pem));
         if (is_array($parsed) === false) {
             return null;
         }

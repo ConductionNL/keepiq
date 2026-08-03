@@ -29,6 +29,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -41,6 +42,8 @@ use RuntimeException;
  */
 class EncryptionSuiteService
 {
+    use SuppressesDiagnostics;
+
     /**
      * Constructor for EncryptionSuiteService.
      *
@@ -151,7 +154,9 @@ class EncryptionSuiteService
             throw new InvalidArgumentException('csrPem is required');
         }
 
-        $publicKeyResource = @openssl_csr_get_public_key($csrPem);
+        // The openssl_csr_get_public_key() call warns on a malformed CSR and
+        // returns false; the false return is the condition we act on.
+        $publicKeyResource = $this->withoutDiagnostics(call: static fn () => openssl_csr_get_public_key($csrPem));
         if ($publicKeyResource === false) {
             throw new RuntimeException('Could not extract public key from CSR');
         }
