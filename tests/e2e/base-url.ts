@@ -19,29 +19,42 @@
  *   - NO `?? 'http://localhost:8080'` fallback. An unset target is a hard
  *     error, not a silent redirect onto somebody else's instance.
  *   - CI's name is accepted. The shared quality workflow exports the target as
- *     `BASE_URL` — not `PLAYWRIGHT_BASE_URL`. A resolver that accepts only the
- *     latter hard-fails every CI run (this is what happened to openconnector).
+ *     `BASE_URL`, `NEXTCLOUD_URL` and `NC_BASE_URL` — not `PLAYWRIGHT_BASE_URL`.
+ *     A resolver that accepts only the latter hard-fails every CI run (this is
+ *     what happened to openconnector). All four names are therefore accepted;
+ *     `NC_BASE_URL` was the one missing here.
  *   - One module, so absolute and relative navigation inside one spec cannot
  *     disagree about which instance they mean.
  */
 
+/** Environment variable names accepted as the target, in priority order. */
+const CANDIDATES = [
+	'PLAYWRIGHT_BASE_URL',
+	'BASE_URL',
+	'NEXTCLOUD_URL',
+	'NC_BASE_URL',
+] as const
+
 /**
  * Resolve the base URL of the Nextcloud under test.
  *
- * @throws When neither PLAYWRIGHT_BASE_URL nor BASE_URL is set.
+ * @throws When none of the accepted environment variables is set.
  * @return The base URL, without a trailing slash.
  */
 export function resolveBaseUrl(): string {
-	const url = process.env.PLAYWRIGHT_BASE_URL
-		?? process.env.BASE_URL
-		?? process.env.NEXTCLOUD_URL
-	if (!url) {
-		throw new Error(
-			'PLAYWRIGHT_BASE_URL or BASE_URL must be set. Refusing to default to '
-			+ 'http://localhost:8080 — that is the SHARED dev container.',
-		)
+	for (const name of CANDIDATES) {
+		const value = process.env[name]
+		if (value && value.trim() !== '') {
+			return value.trim().replace(/\/+$/, '')
+		}
 	}
-	return url.replace(/\/+$/, '')
+
+	throw new Error(
+		'No Nextcloud base URL configured for the e2e suite. Set one of '
+		+ CANDIDATES.join(', ')
+		+ '. Refusing to default to http://localhost:8080 — that is the SHARED '
+		+ 'dev container.',
+	)
 }
 
 /** The resolved base URL, evaluated once per process. */
