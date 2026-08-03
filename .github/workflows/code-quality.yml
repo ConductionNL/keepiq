@@ -23,5 +23,14 @@ jobs:
       enable-phpunit: true
       enable-newman: true
       # additional-apps: '[]'  # Add app dependencies here if needed, e.g.:
-      # additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"main"}]'
+      # additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
+      #
+      # NOTE the org is ConductionNL, not Conduction. `Conduction` does not
+      # exist, and the shared workflow clones additional-apps UNAUTHENTICATED —
+      # so a bad ref does not report a clean 404. git falls through to
+      # credential prompting and the step dies with
+      #   fatal: could not read Username for 'https://github.com'  (exit 128)
+      # which reads as an auth problem rather than a typo. Six fleet repos hit
+      # this; in pipelinq it killed all four PHPUnit legs and the E2E job at the
+      # clone step, so those gates had never executed a single test.
       enable-sbom: true
