@@ -137,6 +137,7 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	padding: 16px;
 }
+
 .doriath-private-key-dialog__warning {
 	background-color: var(--color-error-rest, #f8d7d4);
 	border: 1px solid var(--color-error, #e9322d);
@@ -145,6 +146,7 @@ export default {
 	margin-bottom: 8px;
 	font-weight: 600;
 }
+
 .doriath-private-key-dialog__key {
 	width: 100%;
 	font-family: monospace;
@@ -153,28 +155,33 @@ export default {
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-private-key-dialog__actions {
 	display: flex;
 	gap: 8px;
 	margin-top: 8px;
 }
+
 .doriath-private-key-dialog__actions button {
 	border: 1px solid var(--color-border-dark, #999);
 	background-color: transparent;
 	padding: 6px 12px;
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-private-key-dialog__ack {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin-top: 12px;
 }
+
 .doriath-private-key-dialog__close {
 	display: flex;
 	justify-content: flex-end;
 	margin-top: 12px;
 }
+
 .doriath-private-key-dialog__close .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
@@ -182,6 +189,7 @@ export default {
 	padding: 8px 16px;
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-private-key-dialog__close .primary:disabled {
 	background-color: var(--color-background-darker, #ccc);
 	cursor: not-allowed;

@@ -89,7 +89,7 @@ class CertificateMetadata extends Entity implements JsonSerializable
     protected ?string $serial = null;
 
     /**
-     * sha256:-prefixed fingerprint.
+     * The `sha256:`-prefixed fingerprint.
      *
      * @var string|null
      */

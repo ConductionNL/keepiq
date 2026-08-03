@@ -73,7 +73,7 @@ class HoneyAlert extends Entity implements JsonSerializable
     protected string $secretId = '';
 
     /**
-     * user | application | link_visitor | system.
+     * One of: user | application | link_visitor | system.
      *
      * @var string
      */
@@ -87,7 +87,7 @@ class HoneyAlert extends Entity implements JsonSerializable
     protected ?string $accessorId = null;
 
     /**
-     * ui | machine_api | link | share.
+     * One of: ui | machine_api | link | share.
      *
      * @var string
      */

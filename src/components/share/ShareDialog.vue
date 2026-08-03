@@ -135,38 +135,45 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	max-width: 480px;
 }
+
 .doriath-share-dialog__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 12px;
 }
+
 .doriath-share-dialog__close {
 	background: transparent;
 	border: 0;
 	font-size: 24px;
 	cursor: pointer;
 }
+
 .doriath-share-dialog__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
+
 .doriath-share-dialog__field input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-share-dialog__error {
 	color: var(--color-error, #e9322d);
 	font-size: 13px;
 }
+
 .doriath-share-dialog__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
+
 .doriath-share-dialog__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
@@ -174,6 +181,7 @@ export default {
 	padding: 8px 16px;
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-share-dialog__actions button:not(.primary) {
 	background-color: transparent;
 	border: 1px solid var(--color-border-dark, #999);

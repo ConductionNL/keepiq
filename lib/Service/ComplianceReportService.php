@@ -72,14 +72,6 @@ class ComplianceReportService
     ];
 
     /**
-     * Forbidden substrings in aggregate keys — defense in depth so no
-     * secret material key can ever enter a snapshot (§2.4).
-     *
-     * @var string[]
-     */
-    private const FORBIDDEN_KEY_PARTS = ['name', 'value', 'login', 'password', 'ciphertext', 'key', 'strength', 'reuse', 'breach'];
-
-    /**
      * Constructor for ComplianceReportService.
      *
      * @param ComplianceReportMapper $mapper          The report mapper
@@ -381,8 +373,14 @@ class ComplianceReportService
     }//end ciphertextAgeBands()
 
     /**
-     * Assert every aggregate key is allowlisted and free of forbidden
-     * substrings (§2.4).
+     * Assert every aggregate section and key is allowlisted (§2.4).
+     *
+     * SECTION_ALLOWLIST is a CLOSED set: a section or key that is not
+     * named there is rejected outright, which is strictly stronger than
+     * any substring denylist could be. (An earlier FORBIDDEN_KEY_PARTS
+     * denylist constant sat here unused and could never have been
+     * enabled — it would have rejected the legitimately allowlisted
+     * `ciphertextAgeBands` and `linkSharesPasswordProtected` keys.)
      *
      * @param array<string,mixed> $aggregate The composed aggregate
      *

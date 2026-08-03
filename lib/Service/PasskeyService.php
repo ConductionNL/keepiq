@@ -112,13 +112,13 @@ class PasskeyService
         $credential->setId(Uuid::uuid4()->toString());
         $credential->setOwnerId($uid);
         $credential->setCredentialId($credentialId);
-        $credential->setPublicKey($this->optionalString($dto['publicKey'] ?? null));
+        $credential->setPublicKey($this->optionalString(value: $dto['publicKey'] ?? null));
         $credential->setPrfSalt($prfSalt);
         $credential->setWrappedUnlockKey($wrappedUnlockKey);
-        $credential->setUnlockKeyEpoch($this->currentEpoch($uid));
-        $credential->setLabel($this->optionalString($dto['label'] ?? null));
-        $credential->setTransports($this->optionalString($dto['transports'] ?? null));
-        $credential->setAaguid($this->optionalString($dto['aaguid'] ?? null));
+        $credential->setUnlockKeyEpoch($this->currentEpoch(uid: $uid));
+        $credential->setLabel($this->optionalString(value: $dto['label'] ?? null));
+        $credential->setTransports($this->optionalString(value: $dto['transports'] ?? null));
+        $credential->setAaguid($this->optionalString(value: $dto['aaguid'] ?? null));
         $credential->setStatus('active');
         $credential->setCreatedAt(new DateTime());
 
@@ -137,7 +137,7 @@ class PasskeyService
      */
     public function loginOptions(string $uid): array
     {
-        $epoch       = $this->currentEpoch($uid);
+        $epoch       = $this->currentEpoch(uid: $uid);
         $credentials = [];
         foreach ($this->mapper->findActiveByOwner($uid) as $credential) {
             // A credential whose epoch trails the suite wraps a dead key —
@@ -175,7 +175,7 @@ class PasskeyService
     public function recordUse(string $uid, string $id): void
     {
         try {
-            $credential = $this->ownedCredential($uid, $id);
+            $credential = $this->ownedCredential(uid: $uid, id: $id);
         } catch (DoesNotExistException | InvalidArgumentException) {
             return;
         }
@@ -197,7 +197,7 @@ class PasskeyService
      */
     public function revoke(string $uid, string $id): void
     {
-        $credential = $this->ownedCredential($uid, $id);
+        $credential = $this->ownedCredential(uid: $uid, id: $id);
         $this->mapper->delete($credential);
     }//end revoke()
 

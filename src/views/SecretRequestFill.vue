@@ -150,25 +150,30 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	background-color: var(--color-main-background, #fff);
 }
+
 .doriath-secret-request-fill__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
+
 .doriath-secret-request-fill__field input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-secret-request-fill__submit-error {
 	color: var(--color-error, #e9322d);
 	font-size: 13px;
 }
+
 .doriath-secret-request-fill__success {
 	color: var(--color-success, #46ba61);
 	font-weight: 600;
 }
+
 .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);

@@ -55,8 +55,19 @@ class ExtensionController extends Controller
      * @var string[]
      */
     private const MULTI_LABEL_SUFFIXES = [
-        'co.uk', 'org.uk', 'gov.uk', 'ac.uk', 'co.jp', 'com.au', 'net.au',
-        'com.br', 'co.nz', 'co.za', 'com.mx', 'co.in', 'gov.nl',
+        'co.uk',
+        'org.uk',
+        'gov.uk',
+        'ac.uk',
+        'co.jp',
+        'com.au',
+        'net.au',
+        'com.br',
+        'co.nz',
+        'co.za',
+        'com.mx',
+        'co.in',
+        'gov.nl',
     ];
 
     /**
@@ -150,7 +161,7 @@ class ExtensionController extends Controller
             return $host;
         }
 
-        $parts = explode('.', $host);
+        $parts   = explode('.', $host);
         $lastTwo = implode('.', array_slice($parts, -2));
         if (count($parts) >= 3 && in_array($lastTwo, self::MULTI_LABEL_SUFFIXES, true) === true) {
             return implode('.', array_slice($parts, -3));
@@ -186,7 +197,7 @@ class ExtensionController extends Controller
             return new JSONResponse(data: ['error' => 'host is required'], statusCode: Http::STATUS_BAD_REQUEST);
         }
 
-        $term    = $this->registrableDomain($host);
+        $term    = $this->registrableDomain(host: $host);
         $secrets = $this->secretMapper->searchByNameOrUrl(ownerType: 'user', ownerId: $uid, term: $term, limit: self::MATCH_LIMIT);
 
         $items = array_map(static fn ($secret) => $secret->jsonSerialize(), $secrets);

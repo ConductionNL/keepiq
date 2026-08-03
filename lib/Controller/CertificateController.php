@@ -102,7 +102,7 @@ class CertificateController extends OCSController
             return new JSONResponse(data: ['message' => 'Unauthenticated'], statusCode: Http::STATUS_FORBIDDEN);
         }
 
-        return new JSONResponse(data: $this->service->inventory(userId: $uid, isAdmin: $this->isAdmin($uid)));
+        return new JSONResponse(data: $this->service->inventory(userId: $uid, isAdmin: $this->isAdmin(uid: $uid)));
     }//end inventory()
 
     /**
@@ -204,7 +204,7 @@ class CertificateController extends OCSController
         }
 
         try {
-            $row = $this->service->reissueSuite(suiteId: $suiteId, userId: $uid, isAdmin: $this->isAdmin($uid));
+            $row = $this->service->reissueSuite(suiteId: $suiteId, userId: $uid, isAdmin: $this->isAdmin(uid: $uid));
         } catch (DoesNotExistException) {
             return new JSONResponse(data: ['message' => 'Suite not found'], statusCode: Http::STATUS_NOT_FOUND);
         } catch (InvalidArgumentException $exception) {

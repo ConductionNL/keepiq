@@ -181,29 +181,36 @@ export default {
 	background: var(--color-main-background, #fff);
 	border-radius: var(--border-radius-large, 12px);
 }
+
 .doriath-link-share-access__header h1 {
 	margin: 0 0 16px 0;
 }
+
 .doriath-link-share-access__form label {
 	display: block;
 	margin: 12px 0;
 }
+
 .doriath-link-share-access__form input {
 	display: block;
 	width: 100%;
 	padding: 8px;
 	margin-top: 4px;
 }
+
 .doriath-link-share-access__error {
 	color: var(--color-error, #c00);
 }
+
 .doriath-link-share-access__snapshot dt {
 	font-weight: 600;
 	margin-top: 8px;
 }
+
 .doriath-link-share-access__snapshot dd {
 	margin: 0 0 4px 0;
 }
+
 .doriath-link-share-access__warning {
 	margin-top: 16px;
 	font-size: 0.9em;

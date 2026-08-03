@@ -266,12 +266,10 @@ class UserSharingIntegrationTest extends TestCase
     {
         $mapper       = $this->createMock(SecretDelegationMapper::class);
         $secretMapper = $this->createMock(SecretMapper::class);
-        $logger       = $this->createMock(LoggerInterface::class);
 
         $service = new DelegationService(
             mapper: $mapper,
             secretMapper: $secretMapper,
-            logger: $logger,
         );
 
         $secret = $this->makeSecret('s-1', 'alice');
@@ -316,7 +314,6 @@ class UserSharingIntegrationTest extends TestCase
         $service = new DelegationService(
             mapper: $mapper,
             secretMapper: $secretMapper,
-            logger: $this->createMock(LoggerInterface::class),
             shareTargetMapper: $shareTargetMapper,
             groupManager: $groupManager,
         );

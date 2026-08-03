@@ -40,7 +40,6 @@ use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
-use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -64,7 +63,6 @@ class DelegationService
      *
      * @param SecretDelegationMapper $mapper            The delegation mapper
      * @param SecretMapper           $secretMapper      The Secret mapper (owner lookup)
-     * @param LoggerInterface        $logger            The logger
      * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
      * @param IGroupManager|null     $groupManager      Group membership check (admin path)
      * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
@@ -74,7 +72,6 @@ class DelegationService
     public function __construct(
         private SecretDelegationMapper $mapper,
         private SecretMapper $secretMapper,
-        private LoggerInterface $logger,
         private ?ShareTargetMapper $shareTargetMapper=null,
         private ?IGroupManager $groupManager=null,
         private ?IEventDispatcher $eventDispatcher=null,

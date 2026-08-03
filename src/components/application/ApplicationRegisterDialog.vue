@@ -166,18 +166,21 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	padding: 16px;
 }
+
 .doriath-app-register-dialog__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 12px;
 }
+
 .doriath-app-register-dialog__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
+
 .doriath-app-register-dialog__field input,
 .doriath-app-register-dialog__field textarea,
 .doriath-app-register-dialog__field select {
@@ -186,15 +189,18 @@ export default {
 	border-radius: var(--border-radius, 4px);
 	font-family: inherit;
 }
+
 .doriath-app-register-dialog__error {
 	color: var(--color-error, #e9322d);
 	font-size: 13px;
 }
+
 .doriath-app-register-dialog__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
+
 .doriath-app-register-dialog__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);

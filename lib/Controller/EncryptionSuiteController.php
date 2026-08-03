@@ -45,11 +45,12 @@ class EncryptionSuiteController extends OCSController
     /**
      * Constructor for EncryptionSuiteController.
      *
-     * @param IRequest               $request          The request object
-     * @param EncryptionSuiteService $suiteService     The suite service
-     * @param MigrationService       $migrationService The migration service
-     * @param LinkShareService       $linkShareService The link share service (cascade on compromise recovery)
-     * @param IUserSession           $userSession      The user session
+     * @param IRequest                                 $request          The request object
+     * @param EncryptionSuiteService                   $suiteService     The suite service
+     * @param MigrationService                         $migrationService The migration service
+     * @param LinkShareService                         $linkShareService The link share service (cascade on compromise recovery)
+     * @param IUserSession                             $userSession      The user session
+     * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService   The passkey service (passkey vault login; null when unwired)
      *
      * @return void
      */

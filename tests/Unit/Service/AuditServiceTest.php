@@ -27,7 +27,6 @@ use OCA\Doriath\Exception\AuditForbiddenMetadataException;
 use OCA\Doriath\Service\AuditService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 /**
  * Tests for AuditService — the single write path + query API.
@@ -57,8 +56,7 @@ class AuditServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->mapper  = $this->createMock(originalClassName: AuditEntryMapper::class);
-        $logger        = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->service = new AuditService(mapper: $this->mapper, logger: $logger);
+        $this->service = new AuditService(mapper: $this->mapper);
     }//end setUp()
 
     /**

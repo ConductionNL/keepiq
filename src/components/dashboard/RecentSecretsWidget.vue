@@ -80,15 +80,18 @@ export default {
 	border-radius: var(--border-radius-large);
 	padding: 1rem;
 }
+
 .recent-secrets-widget h3 {
 	margin: 0 0 0.5rem 0;
 	font-size: 1rem;
 }
+
 .recent-secrets-widget__list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
+
 .recent-secrets-widget__item {
 	display: flex;
 	align-items: center;
@@ -96,15 +99,18 @@ export default {
 	padding: 6px 0;
 	cursor: pointer;
 }
+
 .recent-secrets-widget__item:hover {
 	background: var(--color-background-hover);
 }
+
 .recent-secrets-widget__icon {
 	width: 12px;
 	height: 12px;
 	background: var(--color-primary-element);
 	border-radius: 50%;
 }
+
 .recent-secrets-widget__row--empty {
 	color: var(--color-text-lighter);
 }

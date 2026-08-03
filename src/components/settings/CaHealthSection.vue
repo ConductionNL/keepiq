@@ -138,14 +138,19 @@ export default {
 	gap: 0.5rem;
 	margin-bottom: 0.5rem;
 }
+
 .ca-health__indicator {
 	width: 12px;
 	height: 12px;
 	border-radius: 50%;
 	display: inline-block;
 }
+
 .ca-health__indicator--green { background: var(--color-success); }
+
 .ca-health__indicator--yellow { background: var(--color-warning); }
+
 .ca-health__indicator--red { background: var(--color-error); }
+
 .ca-health__indicator--grey { background: var(--color-text-lighter); }
 </style>

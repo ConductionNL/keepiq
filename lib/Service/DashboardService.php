@@ -76,13 +76,17 @@ class DashboardService
      * preference path keep their original two-argument signature. The
      * Nextcloud DI container injects them in production.
      *
-     * @param DashboardSettingMapper  $mapper             The dashboard-setting mapper
-     * @param LoggerInterface         $logger             The logger
-     * @param SecretMapper|null       $secretMapper       Secret counter (summary aggregator)
-     * @param FolderMapper|null       $folderMapper       Folder counter (summary aggregator)
-     * @param ShareTargetMapper|null  $shareTargetMapper  Shared-with-me counter (summary aggregator)
-     * @param ApplicationMapper|null  $applicationMapper  Pending-application counter (summary aggregator)
-     * @param RotationFlagMapper|null $rotationFlagMapper Rotation-due counter (rotation-expiry-policies §7.2)
+     * @param DashboardSettingMapper           $mapper             The dashboard-setting mapper
+     * @param LoggerInterface                  $logger             The logger
+     * @param SecretMapper|null                $secretMapper       Secret counter (summary aggregator)
+     * @param FolderMapper|null                $folderMapper       Folder counter (summary aggregator)
+     * @param ShareTargetMapper|null           $shareTargetMapper  Shared-with-me counter (summary aggregator)
+     * @param ApplicationMapper|null           $applicationMapper  Pending-application counter (summary aggregator)
+     * @param RotationFlagMapper|null          $rotationFlagMapper Rotation-due counter (rotation-expiry-policies
+     *                                                             §7.2)
+     * @param CertificateAuthorityService|null $caService          The CA service (admin CA-health card, certificate-lifecycle
+     *                                                             §5.1)
+     * @param HoneyAlertMapper|null            $honeyAlertMapper   Open honey-alert counter (honey-credentials)
      *
      * @return void
      */

@@ -138,7 +138,6 @@ class SecretServiceCrossAppAuditTest extends TestCase
 
         $this->auditService = new AuditService(
             mapper: $this->auditMapper,
-            logger: $this->createMock(LoggerInterface::class),
         );
 
         $this->service = new SecretService(

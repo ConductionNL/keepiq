@@ -211,7 +211,7 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedSubject((string) $l->t('Vault certificate expiring soon'));
                 $notification->setParsedMessage(
                     (string) $l->t(
-                        'Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory to stay ahead of the expiry.',
+                        'Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory before it expires.',
                         [$certDaysLeft]
                     )
                 );
