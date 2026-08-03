@@ -124,6 +124,11 @@ class JwtAuthMiddleware extends Middleware
             throw $exception;
         }
 
+        $this->logger->debug(
+            'JwtAuthMiddleware: application API authentication rejected',
+            ['app' => 'doriath', 'method' => $methodName, 'reason' => $exception->getMessage()]
+        );
+
         return new JSONResponse(
             data: ['message' => $exception->getMessage()],
             statusCode: Http::STATUS_UNAUTHORIZED

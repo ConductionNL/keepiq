@@ -101,7 +101,8 @@ class ScanExpiringSecretsJob extends TimedJob
         $now    = $this->time->getDateTime();
         $offset = 0;
         do {
-            $page = $this->secretMapper->findAllUserOwnedPaged(limit: self::PAGE_SIZE, offset: $offset);
+            $page      = $this->secretMapper->findAllUserOwnedPaged(limit: self::PAGE_SIZE, offset: $offset);
+            $pageCount = count($page);
             foreach ($page as $secret) {
                 try {
                     $this->scanOne(secret: $secret, thresholds: $thresholds, now: $now);
@@ -114,7 +115,7 @@ class ScanExpiringSecretsJob extends TimedJob
             }
 
             $offset += self::PAGE_SIZE;
-        } while (count($page) === self::PAGE_SIZE);
+        } while ($pageCount === self::PAGE_SIZE);
     }//end run()
 
     /**

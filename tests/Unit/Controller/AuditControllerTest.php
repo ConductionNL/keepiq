@@ -149,7 +149,7 @@ class AuditControllerTest extends TestCase
             ->with('alice')
             ->willReturn([]);
 
-        $response = $this->controller->me();
+        $response = $this->controller->mine();
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
     }//end testPersonalActivityScopedToSessionUser()

@@ -560,7 +560,7 @@ class ApplicationServiceTest extends TestCase
             groupManager: $groupManager,
             logger: $logger,
             notificationService: null,
-            encryptionSuiteService: $suiteService,
+            suiteService: $suiteService,
         );
 
         $service->register(
@@ -605,7 +605,7 @@ class ApplicationServiceTest extends TestCase
             groupManager: $groupManager,
             logger: $logger,
             notificationService: null,
-            encryptionSuiteService: $suiteService,
+            suiteService: $suiteService,
         );
 
         $result = $service->approve(applicationId: 'app-1', adminUserId: 'admin', isAdmin: true);
@@ -642,7 +642,7 @@ class ApplicationServiceTest extends TestCase
             groupManager: $groupManager,
             logger: $logger,
             notificationService: null,
-            encryptionSuiteService: $suiteService,
+            suiteService: $suiteService,
         );
 
         $result = $service->approve(applicationId: 'app-1', adminUserId: 'admin', isAdmin: true);
@@ -679,7 +679,7 @@ class ApplicationServiceTest extends TestCase
             groupManager: $groupManager,
             logger: $logger,
             notificationService: null,
-            encryptionSuiteService: $suiteService,
+            suiteService: $suiteService,
         );
 
         $this->assertSame(

@@ -140,7 +140,7 @@ class AuditController extends Controller
      * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-4.1
      */
     #[NoAdminRequired]
-    public function me(int $page=1, int $limit=50): JSONResponse
+    public function mine(int $page=1, int $limit=50): JSONResponse
     {
         $userId = $this->uid();
         if ($userId === null) {
@@ -157,7 +157,7 @@ class AuditController extends Controller
                 'limit'   => $limit,
             ]
         );
-    }//end me()
+    }//end mine()
 
     /**
      * Admin instance-wide audit view: filterable, paginated, with total count.

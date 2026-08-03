@@ -74,7 +74,11 @@ class ServiceWorkerController extends Controller
     public function script(): DataDisplayResponse
     {
         $path   = $this->appManager->getAppPath(Application::APP_ID).'/js/'.Application::APP_ID.'-service-worker.js';
-        $script = @file_get_contents($path);
+        $script = false;
+        if (is_file($path) === true && is_readable($path) === true) {
+            $script = file_get_contents($path);
+        }
+
         if ($script === false) {
             return new DataDisplayResponse(
                 data: '/* service worker unavailable */',

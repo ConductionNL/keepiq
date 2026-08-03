@@ -47,11 +47,11 @@ class LeaseService
     /**
      * Constructor for LeaseService.
      *
-     * @param MachineLeaseMapper           $leaseMapper           The lease mapper
-     * @param ApplicationLeasePolicyMapper $policyMapper          The per-app policy mapper
-     * @param IAppConfig                   $appConfig             The app config (instance defaults)
-     * @param IEventDispatcher|null        $eventDispatcher       The audit dispatcher
-     * @param RotationPolicyService|null   $rotationPolicyService The rotation service (revoke/expire trigger)
+     * @param MachineLeaseMapper           $leaseMapper     The lease mapper
+     * @param ApplicationLeasePolicyMapper $policyMapper    The per-app policy mapper
+     * @param IAppConfig                   $appConfig       The app config (instance defaults)
+     * @param IEventDispatcher|null        $eventDispatcher The audit dispatcher
+     * @param RotationPolicyService|null   $rotationService The rotation service (revoke/expire trigger)
      *
      * @return void
      */
@@ -60,7 +60,7 @@ class LeaseService
         private ApplicationLeasePolicyMapper $policyMapper,
         private IAppConfig $appConfig,
         private ?IEventDispatcher $eventDispatcher=null,
-        private ?RotationPolicyService $rotationPolicyService=null,
+        private ?RotationPolicyService $rotationService=null,
     ) {
     }//end __construct()
 
@@ -237,7 +237,7 @@ class LeaseService
         );
 
         // Rotation trigger (idempotent one-open-flag-per-secret).
-        $this->rotationPolicyService?->flag(secretId: $lease->getSecretId(), reason: 'lease_revoked');
+        $this->rotationService?->flag(secretId: $lease->getSecretId(), reason: 'lease_revoked');
 
         return $lease;
     }//end revoke()
@@ -306,7 +306,7 @@ class LeaseService
                 eventType: AuditEventTypes::LEASE_EXPIRED,
                 lease: $lease,
             );
-            $this->rotationPolicyService?->flag(secretId: $lease->getSecretId(), reason: 'lease_expired');
+            $this->rotationService?->flag(secretId: $lease->getSecretId(), reason: 'lease_expired');
             ++$count;
         }
 

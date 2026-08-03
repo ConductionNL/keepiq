@@ -229,7 +229,15 @@ class GroupShareController extends OCSController
         }
 
         // No server-side state to mutate — the controller exists so the
-        // browser can dismiss the notification consistently.
-        return new JSONResponse(data: ['status' => 'denied']);
+        // browser can dismiss the notification consistently. The identifiers
+        // are echoed back so the client can correlate the acknowledgement
+        // with the notification it dismissed.
+        return new JSONResponse(
+            data: [
+                'status'      => 'denied',
+                'id'          => $id,
+                'newMemberId' => $newMemberId,
+            ]
+        );
     }//end denyNewMember()
 }//end class
