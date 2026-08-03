@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   quality:
-    uses: ConductionNL/.github/.github/workflows/quality.yml@main
+    uses: ConductionNL/.github/.github/workflows/quality.yml@ci/frontend-build-gate
     with:
       app-name: doriath
       php-version: "8.3"
