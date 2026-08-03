@@ -41,6 +41,7 @@ use OCP\IGroupManager;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -287,7 +288,7 @@ class SiemService
             self::DELIVERY_TIMEOUT
         );
         if ($socket === false) {
-            throw new \RuntimeException('syslog connect failed: '.$errstr.' ('.$errno.')');
+            throw new RuntimeException('syslog connect failed: '.$errstr.' ('.$errno.')');
         }
 
         try {
@@ -298,7 +299,7 @@ class SiemService
             $frame   = strlen($message).' '.$message;
             $written = fwrite($socket, $frame);
             if ($written === false || $written < strlen($frame)) {
-                throw new \RuntimeException('syslog write failed');
+                throw new RuntimeException('syslog write failed');
             }
         } finally {
             fclose($socket);
@@ -336,7 +337,7 @@ class SiemService
         );
         $status   = $response->getStatusCode();
         if ($status < 200 || $status > 299) {
-            throw new \RuntimeException('webhook responded '.$status);
+            throw new RuntimeException('webhook responded '.$status);
         }
     }//end deliverWebhook()
 

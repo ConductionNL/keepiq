@@ -43,6 +43,7 @@ use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 
 /**
  * Business logic for the certificate lifecycle capability.
@@ -326,7 +327,7 @@ class CertificateLifecycleService
         }
 
         if ($this->caService->reissueSuiteCertificate(suite: $suite) === false) {
-            throw new \RuntimeException('Re-issue could not preserve the existing public key; certificate unchanged');
+            throw new RuntimeException('Re-issue could not preserve the existing public key; certificate unchanged');
         }
 
         $this->eventDispatcher?->dispatchTyped(

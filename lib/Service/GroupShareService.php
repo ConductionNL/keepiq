@@ -35,6 +35,7 @@ use OCA\Doriath\Db\GroupShareMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
@@ -321,7 +322,7 @@ class GroupShareService
             // Continue.
         }
 
-        $shareTarget = new \OCA\Doriath\Db\ShareTarget();
+        $shareTarget = new ShareTarget();
         $shareTarget->setId(Uuid::uuid4()->toString());
         $shareTarget->setSourceSecretId($entity->getSecretId());
         $shareTarget->setTargetUserId($newMemberId);

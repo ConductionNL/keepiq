@@ -357,11 +357,11 @@ class CertificateAuthorityService
             throw new RuntimeException('Intermediate private key could not be loaded for issuance');
         }
 
-        $issuer = new \phpseclib3\File\X509();
+        $issuer = new X509();
         $issuer->loadX509($intermediateCertPem);
         $issuer->setPrivateKey($issuerPrivate->withPadding(\phpseclib3\Crypt\RSA::SIGNATURE_PKCS1));
 
-        $subject = new \phpseclib3\File\X509();
+        $subject = new X509();
         // PKCS1 padding on the subject key so the SPKI carries the plain
         // rsaEncryption OID — phpseclib's PSS default would emit an
         // id-RSASSA-PSS SPKI that WebCrypto/openssl consumers reject.
@@ -370,7 +370,7 @@ class CertificateAuthorityService
         $subject->setDNProp('id-at-organizationName', self::DEFAULT_DN['organizationName']);
         $subject->setDNProp('id-at-commonName', $commonName);
 
-        $signer = new \phpseclib3\File\X509();
+        $signer = new X509();
         $signer->setSerialNumber((string) random_int(1, PHP_INT_MAX), 10);
         $signer->setEndDate('+365 days');
         $issued = $signer->sign($issuer, $subject);

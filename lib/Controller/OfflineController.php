@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
 
+use DateTime;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\FolderMapper;
@@ -128,7 +129,7 @@ class OfflineController extends OCSController
                 'secrets'  => $secrets,
                 'folders'  => $folders,
                 'types'    => $types,
-                'syncedAt' => (new \DateTime())->format('c'),
+                'syncedAt' => (new DateTime())->format('c'),
             ]
         );
     }//end manifest()

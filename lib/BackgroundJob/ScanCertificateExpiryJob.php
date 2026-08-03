@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\BackgroundJob;
 
+use DateTime;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
@@ -137,7 +138,7 @@ class ScanCertificateExpiryJob extends TimedJob
             return;
         }
 
-        $notAfter = new \DateTime((string) $parsed['notAfter']);
+        $notAfter = new DateTime((string) $parsed['notAfter']);
         $daysLeft = (int) $now->diff($notAfter)->format('%r%a');
         if (in_array($daysLeft, self::THRESHOLDS, true) === false) {
             return;

@@ -1074,7 +1074,7 @@ class TeamFolderService
         }
 
         $now  = new DateTime();
-        $copy = new \OCA\Doriath\Db\Secret();
+        $copy = new Secret();
         $copy->setId(Uuid::uuid4()->toString());
         $copy->setName($source->getName());
         $copy->setUrl($source->getUrl());

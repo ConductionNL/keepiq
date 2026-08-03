@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use DateTime;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\LinkShareMapper;
 use OCA\Doriath\Db\SecretDelegationMapper;
@@ -111,7 +112,7 @@ class GdprService
             'format'         => self::FORMAT,
             'version'        => self::VERSION,
             'subject'        => $userId,
-            'generated'      => (new \DateTime())->format('c'),
+            'generated'      => (new DateTime())->format('c'),
             'notes'          => [
                 'privateKeyExcluded' => 'Encryption-suite private-key blobs are '
                     .'excluded: they are end-to-end encrypted and unreadable to '

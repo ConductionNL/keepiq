@@ -37,6 +37,7 @@ use OCA\Doriath\Service\AuditService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
+use ReflectionClass;
 use Throwable;
 
 /**
@@ -103,7 +104,7 @@ class AuditListener implements IEventListener
      */
     private function handleExportGdprEvent(Event $event): void
     {
-        $shortName = (new \ReflectionClass($event))->getShortName();
+        $shortName = (new ReflectionClass($event))->getShortName();
 
         switch ($shortName) {
             case 'SecretExportedEvent':
