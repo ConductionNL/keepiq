@@ -158,6 +158,28 @@ class AuditServiceTest extends TestCase
     }//end testRecordRejectsEveryForbiddenKey()
 
     /**
+     * No per-event-type whitelist entry may name a forbidden secret-material
+     * key. SiemService::buildPayload() filters on the deny-list first, but the
+     * structural invariant belongs here: a whitelist that ever grew a
+     * forbidden key would be a silent secret-material leak into the audit log
+     * and every SIEM sink downstream of it.
+     *
+     * @return void
+     */
+    public function testNoWhitelistEntryNamesAForbiddenKey(): void
+    {
+        foreach (AuditEventTypes::METADATA_WHITELIST as $eventType => $allowedKeys) {
+            foreach ($allowedKeys as $allowedKey) {
+                $this->assertNotContains(
+                    $allowedKey,
+                    AuditEventTypes::FORBIDDEN_KEYS,
+                    "Whitelist for '{$eventType}' names forbidden key '{$allowedKey}'"
+                );
+            }
+        }
+    }//end testNoWhitelistEntryNamesAForbiddenKey()
+
+    /**
      * record() rejects a forbidden key nested inside a metadata array.
      *
      * @return void

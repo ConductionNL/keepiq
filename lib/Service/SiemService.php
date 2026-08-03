@@ -118,8 +118,11 @@ class SiemService
 
         $metadata = [];
         foreach ($event->getMetadata() as $metaKey => $metaValue) {
-            if (in_array($metaKey, $whitelist, true) === true
-                && in_array($metaKey, AuditEventTypes::FORBIDDEN_KEYS, true) === false
+            // Deny-list first, against the raw caller-supplied key: the
+            // forbidden-key guard must hold even if a whitelist entry ever
+            // grows a secret-material key by mistake.
+            if (in_array($metaKey, AuditEventTypes::FORBIDDEN_KEYS, true) === false
+                && in_array($metaKey, $whitelist, true) === true
             ) {
                 $metadata[$metaKey] = $metaValue;
             }
