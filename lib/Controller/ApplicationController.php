@@ -228,13 +228,15 @@ class ApplicationController extends OCSController
                     statusCode: Http::STATUS_UNAUTHORIZED
                 );
             }
+        }
 
-            $uid     = null;
-            $isAdmin = false;
-        } else {
+        // Anonymous registrations carry no uid and are never admin.
+        $uid     = null;
+        $isAdmin = false;
+        if ($user !== null) {
             $uid     = $user->getUID();
             $isAdmin = $this->groupManager->isAdmin($uid);
-        }//end if
+        }
 
         try {
             $entity = $this->service->register(
@@ -280,10 +282,9 @@ class ApplicationController extends OCSController
         try {
             $entity = $this->service->approve(applicationId: $id, adminUserId: $uid, isAdmin: $isAdmin);
         } catch (InvalidArgumentException $e) {
+            $status = Http::STATUS_BAD_REQUEST;
             if ($isAdmin === false) {
                 $status = Http::STATUS_FORBIDDEN;
-            } else {
-                $status = Http::STATUS_BAD_REQUEST;
             }
 
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: $status);
@@ -317,10 +318,9 @@ class ApplicationController extends OCSController
         try {
             $this->service->reject(applicationId: $id, adminUserId: $uid, isAdmin: $isAdmin);
         } catch (InvalidArgumentException $e) {
+            $status = Http::STATUS_BAD_REQUEST;
             if ($isAdmin === false) {
                 $status = Http::STATUS_FORBIDDEN;
-            } else {
-                $status = Http::STATUS_BAD_REQUEST;
             }
 
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: $status);
@@ -353,10 +353,9 @@ class ApplicationController extends OCSController
         try {
             $this->service->delete(applicationId: $id, isAdmin: $isAdmin);
         } catch (InvalidArgumentException $e) {
+            $status = Http::STATUS_BAD_REQUEST;
             if ($isAdmin === false) {
                 $status = Http::STATUS_FORBIDDEN;
-            } else {
-                $status = Http::STATUS_BAD_REQUEST;
             }
 
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: $status);

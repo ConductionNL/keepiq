@@ -113,7 +113,9 @@ class CertificateLifecycleService
             foreach ($this->suiteMapper->findAllActive() as $suite) {
                 $suites[] = $this->suiteRow(suite: $suite);
             }
-        } else {
+        }
+
+        if ($isAdmin === false) {
             try {
                 $suites[] = $this->suiteRow(suite: $this->suiteMapper->findActiveByOwner('user', $userId));
             } catch (DoesNotExistException) {
@@ -242,7 +244,9 @@ class CertificateLifecycleService
 
         if ($isNew === true) {
             $row = $this->metadataMapper->insert($row);
-        } else {
+        }
+
+        if ($isNew === false) {
             $row = $this->metadataMapper->update($row);
         }
 

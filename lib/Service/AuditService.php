@@ -80,10 +80,9 @@ class AuditService
         $entry->setObjectId($event->getObjectId());
         $entry->setObjectName($this->truncate(value: $event->getObjectName(), maxLength: 255));
 
+        $entry->setMetadata(null);
         if (count($metadata) > 0) {
             $entry->setMetadata((string) json_encode($metadata));
-        } else {
-            $entry->setMetadata(null);
         }
 
         return $this->mapper->insert($entry);

@@ -147,12 +147,11 @@ class ApplicationService
         $entity->setRegisteredBy($userId);
         $entity->setCreatedAt(new DateTime());
 
+        $entity->setStatus(Application::STATUS_PENDING);
         if ($isAdmin === true) {
             $entity->setStatus(Application::STATUS_ACTIVE);
             $entity->setApprovedBy($userId);
             $entity->setApprovedAt(new DateTime());
-        } else {
-            $entity->setStatus(Application::STATUS_PENDING);
         }
 
         $persisted = $this->mapper->insert($entity);
@@ -187,31 +186,42 @@ class ApplicationService
             $this->dispatchAdminPendingNotification(application: $persisted, registeredBy: $userId);
         }
 
-        // Anonymous (null) registrants have no NC actor — record as a
-        // system-actored event so the audit trail still captures the row.
-        if ($userId !== null && $userId !== '') {
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
-                    objectType: 'application',
-                    objectId: $persisted->getId(),
-                    objectName: $persisted->getName(),
-                )
-            );
-        } else {
-            $this->dispatchAudit(
-                event: AuditEvent::forSystem(
-                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
-                    objectType: 'application',
-                    objectId: $persisted->getId(),
-                    objectName: $persisted->getName(),
-                )
-            );
-        }
+        $this->dispatchAudit(
+            event: $this->registrationAuditEvent(userId: $userId, persisted: $persisted)
+        );
 
         return $persisted;
     }//end register()
+
+    /**
+     * The APPLICATION_REGISTERED audit event for a registration. Anonymous
+     * (null/blank) registrants have no Nextcloud actor, so the event is
+     * recorded as system-actored and the trail still captures the row.
+     *
+     * @param string|null $userId    The registering user, or null/'' when anonymous
+     * @param Application $persisted The persisted application row
+     *
+     * @return AuditEvent
+     */
+    private function registrationAuditEvent(?string $userId, Application $persisted): AuditEvent
+    {
+        if ($userId !== null && $userId !== '') {
+            return AuditEvent::forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                objectType: 'application',
+                objectId: $persisted->getId(),
+                objectName: $persisted->getName(),
+            );
+        }
+
+        return AuditEvent::forSystem(
+            eventType: AuditEventTypes::APPLICATION_REGISTERED,
+            objectType: 'application',
+            objectId: $persisted->getId(),
+            objectName: $persisted->getName(),
+        );
+    }//end registrationAuditEvent()
 
     /**
      * Notify every admin that a pending application is waiting for

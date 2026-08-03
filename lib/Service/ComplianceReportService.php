@@ -357,14 +357,15 @@ class ComplianceReportService
         );
         $now    = time();
         while (($row = $result->fetch()) !== false) {
-            $age = $now - strtotime((string) $row['key_updated_at']);
+            $age  = $now - strtotime((string) $row['key_updated_at']);
+            $band = 'over1Year';
             if ($age < 7776000) {
-                ++$bands['under90Days'];
+                $band = 'under90Days';
             } else if ($age < 31536000) {
-                ++$bands['under1Year'];
-            } else {
-                ++$bands['over1Year'];
+                $band = 'under1Year';
             }
+
+            ++$bands[$band];
         }
 
         $result->closeCursor();

@@ -132,17 +132,7 @@ class DashboardSettingsController extends OCSController
         $userId = $user->getUID();
 
         try {
-            if (isset($params['settings']) === true && is_array($params['settings']) === true) {
-                $result = $this->service->setMany($userId, $params['settings']);
-            } else {
-                if (isset($params['key']) === false || is_string($params['key']) === false || $params['key'] === '') {
-                    throw new InvalidArgumentException(message: 'key is required');
-                }
-
-                $value = ($params['value'] ?? null);
-                $this->service->set($userId, $params['key'], $value);
-                $result = $this->service->listForUser($userId);
-            }
+            $result = $this->applyUpdate(userId: $userId, params: $params);
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
@@ -152,6 +142,33 @@ class DashboardSettingsController extends OCSController
 
         return new JSONResponse(data: $result);
     }//end update()
+
+    /**
+     * Apply one update request: a bulk `settings` map when present, else a
+     * single `key`/`value` pair. Returns the resulting settings list.
+     *
+     * @param string              $userId The session user
+     * @param array<string,mixed> $params The request parameters
+     *
+     * @return array<string,mixed>
+     *
+     * @throws InvalidArgumentException When neither shape is satisfied.
+     */
+    private function applyUpdate(string $userId, array $params): array
+    {
+        if (isset($params['settings']) === true && is_array($params['settings']) === true) {
+            return $this->service->setMany($userId, $params['settings']);
+        }
+
+        if (isset($params['key']) === false || is_string($params['key']) === false || $params['key'] === '') {
+            throw new InvalidArgumentException(message: 'key is required');
+        }
+
+        $value = ($params['value'] ?? null);
+        $this->service->set($userId, $params['key'], $value);
+
+        return $this->service->listForUser($userId);
+    }//end applyUpdate()
 
     /**
      * Reset (cascade-delete) all dashboard settings for the current user.

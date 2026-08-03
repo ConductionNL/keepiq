@@ -124,6 +124,7 @@ class ApplicationSecretsController extends ApplicationApiController
             return $this->unauthorized();
         }
 
+        $since           = null;
         $updatedSinceRaw = $this->request->getParam('updated_since');
         if ($updatedSinceRaw !== null && $updatedSinceRaw !== '') {
             $since = $this->parseIso8601(value: (string) $updatedSinceRaw);
@@ -133,18 +134,9 @@ class ApplicationSecretsController extends ApplicationApiController
                     statusCode: Http::STATUS_BAD_REQUEST
                 );
             }
-
-            $secrets = $this->secretMapper->findByOwnerUpdatedSince(
-                ownerType: 'application',
-                ownerId: $application->getId(),
-                since: $since
-            );
-        } else {
-            $secrets = $this->secretMapper->findByOwner(
-                ownerType: 'application',
-                ownerId: $application->getId()
-            );
         }
+
+        $secrets = $this->fetchOwnedSecrets(applicationId: $application->getId(), since: $since);
 
         return new JSONResponse(
             data: [
@@ -157,6 +149,31 @@ class ApplicationSecretsController extends ApplicationApiController
             ]
         );
     }//end index()
+
+    /**
+     * The application's secrets, optionally narrowed to those updated
+     * strictly after $since. Exactly one query runs either way.
+     *
+     * @param string        $applicationId The owning application's ID
+     * @param DateTime|null $since         Lower bound, or null for all rows
+     *
+     * @return Secret[]
+     */
+    private function fetchOwnedSecrets(string $applicationId, ?DateTime $since): array
+    {
+        if ($since !== null) {
+            return $this->secretMapper->findByOwnerUpdatedSince(
+                ownerType: 'application',
+                ownerId: $applicationId,
+                since: $since
+            );
+        }
+
+        return $this->secretMapper->findByOwner(
+            ownerType: 'application',
+            ownerId: $applicationId
+        );
+    }//end fetchOwnedSecrets()
 
     /**
      * Fetch one of the calling application's secrets by id.

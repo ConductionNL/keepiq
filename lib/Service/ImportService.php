@@ -276,11 +276,12 @@ class ImportService
         $parentId    = null;
         $accumulated = '';
         foreach ($segments as $segment) {
+            $separator = '/';
             if ($accumulated === '') {
-                $accumulated = $segment;
-            } else {
-                $accumulated = $accumulated.'/'.$segment;
+                $separator = '';
             }
+
+            $accumulated = $accumulated.$separator.$segment;
 
             if (array_key_exists($accumulated, $cache) === true) {
                 $parentId = $cache[$accumulated];

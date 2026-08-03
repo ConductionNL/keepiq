@@ -125,10 +125,9 @@ class DoriathNotifier implements INotifier
                 $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $result     = (string) ($params['result'] ?? 'denied');
                 $notification->setParsedSubject((string) $l->t('Share request result'));
+                $resultMessage = (string) $l->t('Your share request for "%s" was denied.', [$secretName]);
                 if ($result === 'approved') {
                     $resultMessage = (string) $l->t('Your share request for "%s" was approved.', [$secretName]);
-                } else {
-                    $resultMessage = (string) $l->t('Your share request for "%s" was denied.', [$secretName]);
                 }
 
                 $notification->setParsedMessage($resultMessage);

@@ -786,10 +786,13 @@ class ShareService
             // Not a copy — the secret is its own source.
         }
 
-        $grade = 'none';
-        if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
+        $grade   = 'none';
+        $isOwner = ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === true);
+        if ($isOwner === true) {
             $grade = 'owner';
-        } else {
+        }
+
+        if ($isOwner === false) {
             $resolved = $this->teamFolderService?->resolveGrade(secret: $source, userId: $userId);
             if ($resolved !== null) {
                 $grade = $resolved;

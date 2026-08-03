@@ -222,11 +222,7 @@ class SiemService
     {
         $sink->setLastAttemptAt(new DateTime());
         try {
-            if ($sink->getType() === 'syslog') {
-                $this->deliverSyslog(sink: $sink, payloadJson: $item->getPayload());
-            } else {
-                $this->deliverWebhook(sink: $sink, payloadJson: $item->getPayload());
-            }
+            $this->deliverTo(sink: $sink, payloadJson: $item->getPayload());
 
             $item->setStatus('delivered');
             $this->queueMapper->update($item);
@@ -243,17 +239,18 @@ class SiemService
             $item->setLastError(substr($exception->getMessage(), 0, 500));
             if ($item->getAttempts() >= self::MAX_ATTEMPTS) {
                 $item->setStatus('dead');
-            } else {
+            }
+
+            if ($item->getAttempts() < self::MAX_ATTEMPTS) {
                 $backoff = self::BACKOFF_BASE_SECONDS * (2 ** ($item->getAttempts() - 1));
                 $item->setNextAttemptAt((new DateTime())->add(new DateInterval('PT'.$backoff.'S')));
             }
 
             $this->queueMapper->update($item);
 
+            $sink->setLastDeliveryStatus('failing');
             if ($item->getStatus() === 'dead') {
                 $sink->setLastDeliveryStatus('dead');
-            } else {
-                $sink->setLastDeliveryStatus('failing');
             }
 
             $sink->setLastError(substr($exception->getMessage(), 0, 500));
@@ -263,6 +260,28 @@ class SiemService
             return false;
         }//end try
     }//end deliverOne()
+
+    /**
+     * Send one payload over the sink's configured transport. The single
+     * place the syslog/webhook choice is made, shared by deliverOne() and
+     * testSink().
+     *
+     * @param SiemSink $sink        The target sink
+     * @param string   $payloadJson The JSON payload
+     *
+     * @return void
+     *
+     * @throws \RuntimeException On transport failure
+     */
+    private function deliverTo(SiemSink $sink, string $payloadJson): void
+    {
+        if ($sink->getType() === 'syslog') {
+            $this->deliverSyslog(sink: $sink, payloadJson: $payloadJson);
+            return;
+        }
+
+        $this->deliverWebhook(sink: $sink, payloadJson: $payloadJson);
+    }//end deliverTo()
 
     /**
      * RFC 5424 syslog delivery over TCP (TLS when configured, §3.1).
@@ -491,11 +510,7 @@ class SiemService
         $outcome = 'ok';
         $error   = null;
         try {
-            if ($sink->getType() === 'syslog') {
-                $this->deliverSyslog(sink: $sink, payloadJson: $payload);
-            } else {
-                $this->deliverWebhook(sink: $sink, payloadJson: $payload);
-            }
+            $this->deliverTo(sink: $sink, payloadJson: $payload);
         } catch (Throwable $exception) {
             $outcome = 'failed';
             $error   = $exception->getMessage();
@@ -541,12 +556,13 @@ class SiemService
         }
 
         if (array_key_exists('categoryFilter', $params) === true) {
-            $filter = $params['categoryFilter'];
+            $filter  = $params['categoryFilter'];
+            $encoded = null;
             if (is_array($filter) === true && $filter !== []) {
-                $sink->setCategoryFilter((string) json_encode(array_map('strval', $filter)));
-            } else {
-                $sink->setCategoryFilter(null);
+                $encoded = (string) json_encode(array_map('strval', $filter));
             }
+
+            $sink->setCategoryFilter($encoded);
         }
     }//end applySecretAndFilter()
 

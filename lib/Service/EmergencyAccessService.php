@@ -220,11 +220,10 @@ class EmergencyAccessService
         $contact->setInvalidatedReason(null);
         $contact->setUpdatedAt($now);
 
-        if ($isNew === true) {
-            $contact = $this->mapper->insert($contact);
-        } else {
-            $contact = $this->mapper->update($contact);
-        }
+        $contact = match ($isNew) {
+            true => $this->mapper->insert($contact),
+            false => $this->mapper->update($contact),
+        };
 
         $this->logger->debug('Doriath: emergency contact designated for grantee '.$granteeUserId);
 

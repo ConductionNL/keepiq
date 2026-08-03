@@ -554,11 +554,12 @@ class SettingsService
             }
 
             if (is_bool($value) === true) {
+                $encoded = '0';
                 if ($value === true) {
-                    $value = '1';
-                } else {
-                    $value = '0';
+                    $encoded = '1';
                 }
+
+                $value = $encoded;
             }
 
             // Reject an out-of-set staleness threshold so the client cannot store

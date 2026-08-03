@@ -221,12 +221,15 @@ class HoneyCredentialService
             $snoozed     = ($existing !== null && $existing->getSnoozedUntil() !== null && $existing->getSnoozedUntil() > $now);
             $inWindow    = ($existing !== null && $existing->getAccessedAt() !== null && $existing->getAccessedAt() > $windowStart);
 
-            if ($existing !== null && ($snoozed === true || $inWindow === true)) {
+            $collapse = ($existing !== null && ($snoozed === true || $inWindow === true));
+            if ($collapse === true && $existing !== null) {
                 // Collapse: update the existing alert, no new page.
                 $existing->setAccessCount($existing->getAccessCount() + 1);
                 $existing->setAccessedAt($now);
                 $this->alertMapper->update($existing);
-            } else {
+            }
+
+            if ($collapse === false) {
                 $alert = new HoneyAlert();
                 $alert->setId(Uuid::uuid4()->toString());
                 $alert->setHoneyFlagId($flag->getId());

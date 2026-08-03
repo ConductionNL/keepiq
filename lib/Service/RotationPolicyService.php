@@ -214,7 +214,8 @@ class RotationPolicyService
             }
         }
 
-        if ($policy === null) {
+        $isNew = ($policy === null);
+        if ($isNew === true) {
             $policy = new ExpiryPolicy();
             $policy->setId(Uuid::uuid4()->toString());
             $policy->setOwnerId($userId);
@@ -222,16 +223,16 @@ class RotationPolicyService
             $policy->setScopeId($scopeId);
             $policy->setCreatedBy($userId);
             $policy->setCreatedAt(new DateTime());
-            $policy->setMaxAgeDays($maxAgeDays);
-            $policy->setReminderDays($encodedReminders);
-            $policy->setUpdatedAt(new DateTime());
-            $policy = $this->policyMapper->insert($policy);
-        } else {
-            $policy->setMaxAgeDays($maxAgeDays);
-            $policy->setReminderDays($encodedReminders);
-            $policy->setUpdatedAt(new DateTime());
-            $policy = $this->policyMapper->update($policy);
         }
+
+        $policy->setMaxAgeDays($maxAgeDays);
+        $policy->setReminderDays($encodedReminders);
+        $policy->setUpdatedAt(new DateTime());
+
+        $policy = match ($isNew) {
+            true => $this->policyMapper->insert($policy),
+            false => $this->policyMapper->update($policy),
+        };
 
         $this->dispatchAudit(
             actorId: $userId,
