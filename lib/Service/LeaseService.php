@@ -32,10 +32,8 @@ use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\ApplicationLeasePolicyMapper;
 use OCA\Doriath\Db\MachineLease;
 use OCA\Doriath\Db\MachineLeaseMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use Ramsey\Uuid\Uuid;
 
@@ -50,7 +48,7 @@ class LeaseService
      * @param MachineLeaseMapper           $leaseMapper     The lease mapper
      * @param ApplicationLeasePolicyMapper $policyMapper    The per-app policy mapper
      * @param IAppConfig                   $appConfig       The app config (instance defaults)
-     * @param IEventDispatcher|null        $eventDispatcher The audit dispatcher
+     * @param AuditTrail|null              $auditTrail      The audit trail
      * @param RotationPolicyService|null   $rotationService The rotation service (revoke/expire trigger)
      *
      * @return void
@@ -59,7 +57,7 @@ class LeaseService
         private MachineLeaseMapper $leaseMapper,
         private ApplicationLeasePolicyMapper $policyMapper,
         private IAppConfig $appConfig,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
         private ?RotationPolicyService $rotationService=null,
     ) {
     }//end __construct()
@@ -364,22 +362,20 @@ class LeaseService
      */
     private function dispatchAudit(string $actorId, string $eventType, MachineLease $lease, array $extra=[]): void
     {
-        $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forApplication(
-                actorId: $actorId,
-                eventType: $eventType,
-                objectType: 'lease',
-                objectId: $lease->getId(),
-                objectName: '',
-                metadata: array_merge(
-                    [
-                        'leaseId'   => $lease->getId(),
-                        'secretId'  => $lease->getSecretId(),
-                        'expiresAt' => $lease->getExpiresAt()?->format('c'),
-                    ],
-                    $extra
-                ),
-            )
+        $this->auditTrail?->forApplication(
+            actorId: $actorId,
+            eventType: $eventType,
+            objectType: 'lease',
+            objectId: $lease->getId(),
+            objectName: '',
+            metadata: array_merge(
+                [
+                    'leaseId'   => $lease->getId(),
+                    'secretId'  => $lease->getSecretId(),
+                    'expiresAt' => $lease->getExpiresAt()?->format('c'),
+                ],
+                $extra
+            ),
         );
     }//end dispatchAudit()
 }//end class

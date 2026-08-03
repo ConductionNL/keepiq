@@ -41,9 +41,9 @@ use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\NotFoundException;
+use OCA\Doriath\Service\AuditTrail;
 use OCA\Doriath\Service\LeaseService;
 use OCA\Doriath\Service\MachineSecretEnvelopeService;
 use OCA\Doriath\Service\SecretService;
@@ -53,7 +53,6 @@ use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;
 use InvalidArgumentException;
 
@@ -86,7 +85,7 @@ class ApplicationSecretsController extends ApplicationApiController
      * @param FolderMapper                 $folderMapper    The folder mapper
      * @param SecretService                $secretService   The secret write service
      * @param MachineSecretEnvelopeService $envelopeService The envelope serializer
-     * @param IEventDispatcher             $eventDispatcher The event dispatcher (audit)
+     * @param AuditTrail                   $auditTrail      The audit trail
      * @param LeaseService|null            $leaseService    The lease service (grant on fetch)
      *
      * @return void
@@ -97,7 +96,7 @@ class ApplicationSecretsController extends ApplicationApiController
         private FolderMapper $folderMapper,
         private SecretService $secretService,
         private MachineSecretEnvelopeService $envelopeService,
-        private IEventDispatcher $eventDispatcher,
+        private AuditTrail $auditTrail,
         private ?LeaseService $leaseService=null,
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
@@ -385,14 +384,12 @@ class ApplicationSecretsController extends ApplicationApiController
             return $response;
         }
 
-        $this->eventDispatcher->dispatchTyped(
-            AuditEvent::forApplication(
-                actorId: $applicationId,
-                eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED,
-                objectType: 'secret',
-                objectId: $secret->getId(),
-                objectName: $secret->getName(),
-            )
+        $this->auditTrail->forApplication(
+            actorId: $applicationId,
+            eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED,
+            objectType: 'secret',
+            objectId: $secret->getId(),
+            objectName: $secret->getName(),
         );
 
         $response = new JSONResponse(data: $this->envelopeService->serialize($secret));

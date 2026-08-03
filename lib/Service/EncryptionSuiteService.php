@@ -26,7 +26,6 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -49,7 +48,8 @@ class EncryptionSuiteService
      * @param IAppConfig                  $appConfig       The app config interface
      * @param IUserManager                $userManager     The user manager
      * @param LoggerInterface             $logger          The logger interface
-     * @param IEventDispatcher|null       $eventDispatcher The event dispatcher
+     * @param IEventDispatcher|null       $eventDispatcher The event dispatcher (suite-revocation cascade)
+     * @param AuditTrail|null             $auditTrail      The audit trail
      *
      * @return void
      */
@@ -60,22 +60,9 @@ class EncryptionSuiteService
         private IUserManager $userManager,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch a typed audit event, fail-soft.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * Create an EncryptionSuite for a user or application.
@@ -216,14 +203,12 @@ class EncryptionSuiteService
             );
         }
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $revokedBy,
-                eventType: AuditEventTypes::SUITE_REVOKED,
-                objectType: 'suite',
-                objectId: $id,
-                metadata: ['reason' => $reason],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $revokedBy,
+            eventType: AuditEventTypes::SUITE_REVOKED,
+            objectType: 'suite',
+            objectId: $id,
+            metadata: ['reason' => $reason],
         );
 
         return $suite;
@@ -277,13 +262,11 @@ class EncryptionSuiteService
 
         $this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $reinstatedBy,
-                eventType: AuditEventTypes::SUITE_REINSTATED,
-                objectType: 'suite',
-                objectId: $id,
-            )
+        $this->auditTrail?->forUser(
+            actorId: $reinstatedBy,
+            eventType: AuditEventTypes::SUITE_REINSTATED,
+            objectType: 'suite',
+            objectId: $id,
         );
 
         return $suite;
@@ -315,13 +298,11 @@ class EncryptionSuiteService
 
         $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $compromisedBy,
-                eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
-                objectType: 'suite',
-                objectId: $id,
-            )
+        $this->auditTrail?->forUser(
+            actorId: $compromisedBy,
+            eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
+            objectType: 'suite',
+            objectId: $id,
         );
 
         return $suite;

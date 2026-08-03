@@ -35,7 +35,6 @@ use OCA\Doriath\Db\SiemSinkMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Http\Client\IClientService;
 use OCP\IGroupManager;
 use OCP\Security\ICrypto;
@@ -84,7 +83,7 @@ class SiemService
      * @param IGroupManager            $groupManager        The group manager (admin notifications)
      * @param NotificationService|null $notificationService The notification dispatcher
      * @param LoggerInterface          $logger              The logger
-     * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
+     * @param AuditTrail|null          $auditTrail          The audit trail
      *
      * @return void
      */
@@ -96,7 +95,7 @@ class SiemService
         private IGroupManager $groupManager,
         private ?NotificationService $notificationService,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
 
@@ -112,7 +111,7 @@ class SiemService
     public function buildPayload(AuditEvent $event): ?array
     {
         $eventType = $event->getEventType();
-        $whitelist = AuditEventTypes::whitelist()[$eventType] ?? null;
+        $whitelist = AuditEventTypes::METADATA_WHITELIST[$eventType] ?? null;
         if ($whitelist === null) {
             return null;
         }
@@ -589,15 +588,13 @@ class SiemService
      */
     private function dispatchAudit(string $actorId, string $eventType, string $sinkId, array $extra=[]): void
     {
-        $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
-                actorId: $actorId,
-                eventType: $eventType,
-                objectType: 'siem_sink',
-                objectId: $sinkId,
-                objectName: '',
-                metadata: array_merge(['sinkId' => $sinkId], $extra),
-            )
+        $this->auditTrail?->forUser(
+            actorId: $actorId,
+            eventType: $eventType,
+            objectType: 'siem_sink',
+            objectId: $sinkId,
+            objectName: '',
+            metadata: array_merge(['sinkId' => $sinkId], $extra),
         );
     }//end dispatchAudit()
 }//end class

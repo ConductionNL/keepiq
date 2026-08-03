@@ -22,6 +22,7 @@ namespace OCA\Doriath\Tests\Unit\Service;
 use InvalidArgumentException;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Service\AuditTrail;
 use OCA\Doriath\Service\SettingsService;
 use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -100,7 +101,7 @@ class SettingsServicePolicyTest extends TestCase
             groupManager: $this->createMock(originalClassName: IGroupManager::class),
             userSession: $this->createMock(originalClassName: IUserSession::class),
             logger: $this->createMock(originalClassName: LoggerInterface::class),
-            eventDispatcher: $this->dispatcher,
+            auditTrail: new AuditTrail(eventDispatcher: $this->dispatcher),
         );
     }//end setUp()
 

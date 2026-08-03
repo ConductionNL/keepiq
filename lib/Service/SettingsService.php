@@ -106,14 +106,14 @@ class SettingsService
     /**
      * Constructor for the SettingsService.
      *
-     * @param IAppConfig                                 $appConfig       The app config interface
-     * @param IConfig                                    $config          The per-user config interface
-     * @param IAppManager                                $appManager      The app manager
-     * @param ContainerInterface                         $container       The container
-     * @param IGroupManager                              $groupManager    The group manager
-     * @param IUserSession                               $userSession     The user session
-     * @param LoggerInterface                            $logger          The logger
-     * @param \OCP\EventDispatcher\IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
+     * @param IAppConfig         $appConfig    The app config interface
+     * @param IConfig            $config       The per-user config interface
+     * @param IAppManager        $appManager   The app manager
+     * @param ContainerInterface $container    The container
+     * @param IGroupManager      $groupManager The group manager
+     * @param IUserSession       $userSession  The user session
+     * @param LoggerInterface    $logger       The logger
+     * @param AuditTrail|null    $auditTrail   The audit trail (policy changes)
      *
      * @return void
      */
@@ -125,7 +125,7 @@ class SettingsService
         private IGroupManager $groupManager,
         private IUserSession $userSession,
         private LoggerInterface $logger,
-        private ?\OCP\EventDispatcher\IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
 
@@ -463,18 +463,16 @@ class SettingsService
         $after = array_intersect_key($this->getAdminSettings(), array_flip($touched));
 
         $actorId = $this->userSession->getUser()?->getUID() ?? 'system';
-        $this->eventDispatcher?->dispatchTyped(
-            \OCA\Doriath\Event\Audit\AuditEvent::forUser(
-                actorId: $actorId,
-                eventType: \OCA\Doriath\Event\Audit\AuditEventTypes::PASSWORD_POLICY_UPDATED,
-                objectType: 'settings',
-                objectId: 'password_policy',
-                objectName: '',
-                metadata: [
-                    'before' => $before,
-                    'after'  => $after,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $actorId,
+            eventType: \OCA\Doriath\Event\Audit\AuditEventTypes::PASSWORD_POLICY_UPDATED,
+            objectType: 'settings',
+            objectId: 'password_policy',
+            objectName: '',
+            metadata: [
+                'before' => $before,
+                'after'  => $after,
+            ],
         );
     }//end updatePolicySettings()
 

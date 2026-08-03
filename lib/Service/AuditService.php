@@ -103,7 +103,7 @@ class AuditService
     {
         $this->assertNoForbiddenKeys(data: $metadata);
 
-        $allowed = AuditEventTypes::whitelist()[$eventType] ?? [];
+        $allowed = AuditEventTypes::METADATA_WHITELIST[$eventType] ?? [];
 
         $clean = [];
         foreach ($metadata as $key => $value) {

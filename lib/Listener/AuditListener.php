@@ -139,7 +139,8 @@ class AuditListener implements IEventListener
         $actorId  = $this->readActorId(event: $event);
         $metadata = $this->readPayload(event: $event);
 
-        $auditEvent = AuditEvent::forUser(
+        $auditEvent = new AuditEvent(
+            actorType: AuditEvent::ACTOR_USER,
             actorId: ($actorId ?? AuditEventTypes::VAULT_ACCOUNT_DELETED),
             eventType: $eventType,
             objectType: 'vault',

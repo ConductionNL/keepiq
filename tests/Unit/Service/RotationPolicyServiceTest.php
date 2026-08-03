@@ -68,7 +68,7 @@ class RotationPolicyServiceTest extends TestCase
             flagMapper: $this->flagMapper,
             secretMapper: $this->secretMapper,
             appConfig: $this->appConfig,
-            eventDispatcher: null,
+            auditTrail: null,
             config: null,
         );
     }//end setUp()

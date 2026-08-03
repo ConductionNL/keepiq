@@ -35,10 +35,8 @@ use OCA\Doriath\Db\HoneyAlertMapper;
 use OCA\Doriath\Db\HoneyFlag;
 use OCA\Doriath\Db\HoneyFlagMapper;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -67,7 +65,7 @@ class HoneyCredentialService
      * @param IAppConfig               $appConfig           The app config (dedup window)
      * @param NotificationService|null $notificationService The notification dispatcher
      * @param LoggerInterface          $logger              The logger
-     * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
+     * @param AuditTrail|null          $auditTrail          The audit trail
      *
      * @return void
      */
@@ -79,7 +77,7 @@ class HoneyCredentialService
         private IAppConfig $appConfig,
         private ?NotificationService $notificationService,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
 
@@ -245,14 +243,12 @@ class HoneyCredentialService
 
             // The distinguished audit marker fires on EVERY honey access —
             // snoozed and collapsed accesses stay in the forensic trail (D5/D6).
-            $this->eventDispatcher?->dispatchTyped(
-                AuditEvent::forSystem(
-                    eventType: AuditEventTypes::HONEY_ACCESSED,
-                    objectType: 'secret',
-                    objectId: $secretId,
-                    objectName: '',
-                    metadata: ['channel' => $channel],
-                )
+            $this->auditTrail?->forSystem(
+                eventType: AuditEventTypes::HONEY_ACCESSED,
+                objectType: 'secret',
+                objectId: $secretId,
+                objectName: '',
+                metadata: ['channel' => $channel],
             );
         } catch (Throwable $exception) {
             // Fail-soft: the tripwire must never break the audited access.

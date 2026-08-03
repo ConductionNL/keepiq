@@ -29,6 +29,7 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Service\AuditTrail;
 use OCA\Doriath\Service\HoneyCredentialService;
 use OCA\Doriath\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -86,7 +87,7 @@ class HoneyCredentialServiceTest extends TestCase
             appConfig: $appConfig,
             notificationService: $this->notificationService,
             logger: new NullLogger(),
-            eventDispatcher: $this->eventDispatcher,
+            auditTrail: new AuditTrail(eventDispatcher: $this->eventDispatcher),
         );
     }//end setUp()
 

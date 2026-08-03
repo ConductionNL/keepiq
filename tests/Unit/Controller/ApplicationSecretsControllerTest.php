@@ -26,6 +26,7 @@ use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Exception\NotFoundException;
+use OCA\Doriath\Service\AuditTrail;
 use OCA\Doriath\Service\MachineSecretEnvelopeService;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -97,7 +98,7 @@ class ApplicationSecretsControllerTest extends TestCase
             folderMapper: $this->folderMapper,
             secretService: $this->secretService,
             envelopeService: $this->envelopeService,
-            eventDispatcher: $this->dispatcher,
+            auditTrail: new AuditTrail(eventDispatcher: $this->dispatcher),
         );
 
         $app = new Application();

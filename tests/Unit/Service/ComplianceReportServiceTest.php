@@ -73,7 +73,7 @@ class ComplianceReportServiceTest extends TestCase
             db: $db,
             appConfig: $appConfig,
             appManager: $appManager,
-            eventDispatcher: null,
+            auditTrail: null,
         );
     }//end setUp()
 
@@ -165,7 +165,7 @@ class ComplianceReportServiceTest extends TestCase
             db: $db,
             appConfig: $appConfig,
             appManager: $appManager,
-            eventDispatcher: null,
+            auditTrail: null,
         );
 
         $aggregate = $service->aggregate();

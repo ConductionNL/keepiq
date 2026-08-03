@@ -71,7 +71,7 @@ class SiemServiceTest extends TestCase
             groupManager: $this->createMock(originalClassName: IGroupManager::class),
             notificationService: null,
             logger: new NullLogger(),
-            eventDispatcher: null,
+            auditTrail: null,
         );
     }//end setUp()
 

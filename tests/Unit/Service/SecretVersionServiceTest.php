@@ -62,7 +62,7 @@ class SecretVersionServiceTest extends TestCase
             secretMapper: $this->secretMapper,
             suiteMapper: $this->suiteMapper,
             logger: $this->createMock(originalClassName: LoggerInterface::class),
-            eventDispatcher: null,
+            auditTrail: null,
         );
     }//end setUp()
 

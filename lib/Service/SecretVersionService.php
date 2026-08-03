@@ -32,10 +32,8 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretVersion;
 use OCA\Doriath\Db\SecretVersionMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -47,11 +45,11 @@ class SecretVersionService
     /**
      * Constructor for SecretVersionService.
      *
-     * @param SecretVersionMapper   $mapper          The version mapper
-     * @param SecretMapper          $secretMapper    The secret mapper
-     * @param EncryptionSuiteMapper $suiteMapper     The suite mapper (read gating)
-     * @param LoggerInterface       $logger          The logger
-     * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
+     * @param SecretVersionMapper   $mapper       The version mapper
+     * @param SecretMapper          $secretMapper The secret mapper
+     * @param EncryptionSuiteMapper $suiteMapper  The suite mapper (read gating)
+     * @param LoggerInterface       $logger       The logger
+     * @param AuditTrail|null       $auditTrail   The audit trail
      *
      * @return void
      */
@@ -60,7 +58,7 @@ class SecretVersionService
         private SecretMapper $secretMapper,
         private EncryptionSuiteMapper $suiteMapper,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
 
@@ -174,15 +172,13 @@ class SecretVersionService
         $secret->setUpdatedAt(new DateTime());
         $this->secretMapper->update($secret);
 
-        $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::SECRET_VERSION_RESTORED,
-                objectType: 'secret',
-                objectId: $secret->getId(),
-                objectName: $secret->getName(),
-                metadata: ['versionNumber' => $version->getVersionNumber()],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::SECRET_VERSION_RESTORED,
+            objectType: 'secret',
+            objectId: $secret->getId(),
+            objectName: $secret->getName(),
+            metadata: ['versionNumber' => $version->getVersionNumber()],
         );
 
         $this->logger->info(

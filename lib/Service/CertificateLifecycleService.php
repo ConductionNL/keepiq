@@ -38,10 +38,8 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
 
@@ -56,14 +54,14 @@ class CertificateLifecycleService
     /**
      * Constructor for CertificateLifecycleService.
      *
-     * @param CertificateMetadataMapper   $metadataMapper  The metadata mapper
-     * @param SecretMapper                $secretMapper    The secret mapper
-     * @param SecretTypeMapper            $typeMapper      The secret type mapper
-     * @param EncryptionSuiteMapper       $suiteMapper     The suite mapper
-     * @param CACertificateMapper         $caMapper        The CA certificate mapper
-     * @param SecretService               $secretService   The secret service (expiry path)
-     * @param CertificateAuthorityService $caService       The CA service (re-issue)
-     * @param IEventDispatcher|null       $eventDispatcher The audit dispatcher
+     * @param CertificateMetadataMapper   $metadataMapper The metadata mapper
+     * @param SecretMapper                $secretMapper   The secret mapper
+     * @param SecretTypeMapper            $typeMapper     The secret type mapper
+     * @param EncryptionSuiteMapper       $suiteMapper    The suite mapper
+     * @param CACertificateMapper         $caMapper       The CA certificate mapper
+     * @param SecretService               $secretService  The secret service (expiry path)
+     * @param CertificateAuthorityService $caService      The CA service (re-issue)
+     * @param AuditTrail|null             $auditTrail     The audit trail
      *
      * @return void
      */
@@ -75,7 +73,7 @@ class CertificateLifecycleService
         private CACertificateMapper $caMapper,
         private SecretService $secretService,
         private CertificateAuthorityService $caService,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
 
@@ -277,15 +275,13 @@ class CertificateLifecycleService
             throw new InvalidArgumentException('Secret is not a certificate-type secret');
         }
 
-        $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::CERTIFICATE_RENEWAL_MARKED,
-                objectType: 'secret',
-                objectId: $secretId,
-                objectName: $secret->getName(),
-                metadata: [],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::CERTIFICATE_RENEWAL_MARKED,
+            objectType: 'secret',
+            objectId: $secretId,
+            objectName: $secret->getName(),
+            metadata: [],
         );
 
         return [
@@ -330,15 +326,13 @@ class CertificateLifecycleService
             throw new RuntimeException('Re-issue could not preserve the existing public key; certificate unchanged');
         }
 
-        $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::CERTIFICATE_REISSUED,
-                objectType: 'encryption_suite',
-                objectId: $suiteId,
-                objectName: '',
-                metadata: ['suiteId' => $suiteId],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $userId,
+            eventType: AuditEventTypes::CERTIFICATE_REISSUED,
+            objectType: 'encryption_suite',
+            objectId: $suiteId,
+            objectName: '',
+            metadata: ['suiteId' => $suiteId],
         );
 
         return $this->suiteRow(suite: $suite);

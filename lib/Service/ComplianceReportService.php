@@ -29,11 +29,9 @@ use DateTime;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\ComplianceReport;
 use OCA\Doriath\Db\ComplianceReportMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -74,11 +72,11 @@ class ComplianceReportService
     /**
      * Constructor for ComplianceReportService.
      *
-     * @param ComplianceReportMapper $mapper          The report mapper
-     * @param IDBConnection          $db              The DB connection (COUNT queries)
-     * @param IAppConfig             $appConfig       The app config
-     * @param IAppManager            $appManager      The app manager (version)
-     * @param IEventDispatcher|null  $eventDispatcher The audit dispatcher
+     * @param ComplianceReportMapper $mapper     The report mapper
+     * @param IDBConnection          $db         The DB connection (COUNT queries)
+     * @param IAppConfig             $appConfig  The app config
+     * @param IAppManager            $appManager The app manager (version)
+     * @param AuditTrail|null        $auditTrail The audit trail
      *
      * @return void
      */
@@ -87,7 +85,7 @@ class ComplianceReportService
         private IDBConnection $db,
         private IAppConfig $appConfig,
         private IAppManager $appManager,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
 
@@ -499,15 +497,13 @@ class ComplianceReportService
             $metadata['format'] = $format;
         }
 
-        $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
-                actorId: $actorId,
-                eventType: $eventType,
-                objectType: 'compliance_report',
-                objectId: $reportId,
-                objectName: '',
-                metadata: $metadata,
-            )
+        $this->auditTrail?->forUser(
+            actorId: $actorId,
+            eventType: $eventType,
+            objectType: 'compliance_report',
+            objectId: $reportId,
+            objectName: '',
+            metadata: $metadata,
         );
     }//end dispatchAudit()
 }//end class

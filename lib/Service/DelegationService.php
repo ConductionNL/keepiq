@@ -35,10 +35,8 @@ use OCA\Doriath\Db\SecretDelegation;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
 use Ramsey\Uuid\Uuid;
 
@@ -65,7 +63,7 @@ class DelegationService
      * @param SecretMapper           $secretMapper      The Secret mapper (owner lookup)
      * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
      * @param IGroupManager|null     $groupManager      Group membership check (admin path)
-     * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
+     * @param AuditTrail|null        $auditTrail        The audit trail
      *
      * @return void
      */
@@ -74,23 +72,9 @@ class DelegationService
         private SecretMapper $secretMapper,
         private ?ShareTargetMapper $shareTargetMapper=null,
         private ?IGroupManager $groupManager=null,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch a typed audit event, fail-soft.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * Create a temporary delegation.
@@ -186,18 +170,16 @@ class DelegationService
 
         $persisted = $this->mapper->insert($entity);
 
-        $this->dispatchAudit(
-            event: AuditEvent::forUser(
-                actorId: $initiatedBy,
-                eventType: AuditEventTypes::SHARE_DELEGATED,
-                objectType: 'share',
-                objectId: $secretId,
-                objectName: $secret->getName(),
-                metadata: [
-                    'delegatedTo' => $delegatedTo,
-                    'isPermanent' => false,
-                ],
-            )
+        $this->auditTrail?->forUser(
+            actorId: $initiatedBy,
+            eventType: AuditEventTypes::SHARE_DELEGATED,
+            objectType: 'share',
+            objectId: $secretId,
+            objectName: $secret->getName(),
+            metadata: [
+                'delegatedTo' => $delegatedTo,
+                'isPermanent' => false,
+            ],
         );
 
         return $persisted;
@@ -299,14 +281,12 @@ class DelegationService
         }
 
         if ($removed > 0) {
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $ownerId,
-                    eventType: AuditEventTypes::SHARE_DELEGATION_RECLAIMED,
-                    objectType: 'share',
-                    objectId: $secretId,
-                    objectName: $secret->getName(),
-                )
+            $this->auditTrail?->forUser(
+                actorId: $ownerId,
+                eventType: AuditEventTypes::SHARE_DELEGATION_RECLAIMED,
+                objectType: 'share',
+                objectId: $secretId,
+                objectName: $secret->getName(),
             );
         }
 

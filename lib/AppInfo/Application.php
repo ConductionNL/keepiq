@@ -45,6 +45,7 @@ use OCA\Doriath\Middleware\JwtAuthMiddleware;
 use OCA\Doriath\Notification\DoriathNotifier;
 use OCA\Doriath\Repair\InitializeSettings;
 use OCA\Doriath\Search\SecretSearchProvider;
+use OCA\Doriath\Service\AuditTrail;
 use OCA\Doriath\Service\SettingsService;
 use OCA\OpenRegister\AppHost\Bootstrap;
 use OCP\AppFramework\App;
@@ -136,7 +137,7 @@ class Application extends App implements IBootstrap
                 groupManager: $c->get(\OCP\IGroupManager::class),
                 userSession: $c->get(\OCP\IUserSession::class),
                 logger: $c->get(\Psr\Log\LoggerInterface::class),
-                eventDispatcher: $c->get(\OCP\EventDispatcher\IEventDispatcher::class),
+                auditTrail: $c->get(AuditTrail::class),
             )
         );
         $context->registerService(

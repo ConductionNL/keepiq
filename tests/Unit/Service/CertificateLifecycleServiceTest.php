@@ -87,7 +87,7 @@ class CertificateLifecycleServiceTest extends TestCase
             caMapper: $this->createMock(originalClassName: CACertificateMapper::class),
             secretService: $this->secretService,
             caService: $this->caService,
-            eventDispatcher: null,
+            auditTrail: null,
         );
 
         $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);

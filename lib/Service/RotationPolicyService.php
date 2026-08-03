@@ -35,10 +35,8 @@ use OCA\Doriath\Db\RotationFlag;
 use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use Ramsey\Uuid\Uuid;
@@ -55,12 +53,12 @@ class RotationPolicyService
     /**
      * Constructor for RotationPolicyService.
      *
-     * @param ExpiryPolicyMapper    $policyMapper    The policy mapper
-     * @param RotationFlagMapper    $flagMapper      The flag mapper
-     * @param SecretMapper          $secretMapper    The secret mapper
-     * @param IAppConfig            $appConfig       The app config (admin defaults)
-     * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
-     * @param IConfig|null          $config          The NC config (user max-age override)
+     * @param ExpiryPolicyMapper $policyMapper The policy mapper
+     * @param RotationFlagMapper $flagMapper   The flag mapper
+     * @param SecretMapper       $secretMapper The secret mapper
+     * @param IAppConfig         $appConfig    The app config (admin defaults)
+     * @param AuditTrail|null    $auditTrail   The audit trail
+     * @param IConfig|null       $config       The NC config (user max-age override)
      *
      * @return void
      */
@@ -69,7 +67,7 @@ class RotationPolicyService
         private RotationFlagMapper $flagMapper,
         private SecretMapper $secretMapper,
         private IAppConfig $appConfig,
-        private ?IEventDispatcher $eventDispatcher=null,
+        private ?AuditTrail $auditTrail=null,
         private ?IConfig $config=null,
     ) {
     }//end __construct()
@@ -544,15 +542,13 @@ class RotationPolicyService
      */
     private function dispatchAudit(string $actorId, string $eventType, string $objectId, array $metadata): void
     {
-        $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
-                actorId: $actorId,
-                eventType: $eventType,
-                objectType: 'secret',
-                objectId: $objectId,
-                objectName: '',
-                metadata: $metadata,
-            )
+        $this->auditTrail?->forUser(
+            actorId: $actorId,
+            eventType: $eventType,
+            objectType: 'secret',
+            objectId: $objectId,
+            objectName: '',
+            metadata: $metadata,
         );
     }//end dispatchAudit()
 }//end class

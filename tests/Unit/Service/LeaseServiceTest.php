@@ -66,7 +66,7 @@ class LeaseServiceTest extends TestCase
             leaseMapper: $this->leaseMapper,
             policyMapper: $this->policyMapper,
             appConfig: $appConfig,
-            eventDispatcher: null,
+            auditTrail: null,
             rotationService: null,
         );
     }//end setUp()
