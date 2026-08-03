@@ -327,11 +327,10 @@ class UserSharingIntegrationTest extends TestCase
             ->willReturn(new ShareTarget());
 
         $mapper->expects($this->once())->method('insert')->willReturnArgument(0);
-        $row = $service->createDelegation(
+        $row = $service->createAdminHandover(
             secretId: 's-1',
             delegatedTo: 'mallory',
             initiatedBy: 'mallory',
-            isAdminPath: true,
         );
 
         // Original owner stays alice; the admin's copy is promoted in

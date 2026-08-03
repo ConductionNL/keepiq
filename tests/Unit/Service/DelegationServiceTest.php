@@ -319,11 +319,10 @@ class DelegationServiceTest extends TestCase
             ->method('insert')
             ->willReturnCallback(static fn (SecretDelegation $e): SecretDelegation => $e);
 
-        $entity = $service->createDelegation(
+        $entity = $service->createAdminHandover(
             secretId: 'sec-1',
             delegatedTo: 'mallory',
             initiatedBy: 'mallory',
-            isAdminPath: true,
         );
 
         $this->assertSame('alice', $entity->getOriginalOwnerId());
@@ -348,11 +347,10 @@ class DelegationServiceTest extends TestCase
         $mapper->expects($this->never())->method('insert');
 
         $this->expectException(InvalidArgumentException::class);
-        $service->createDelegation(
+        $service->createAdminHandover(
             secretId: 'sec-1',
             delegatedTo: 'mallory',
             initiatedBy: 'mallory',
-            isAdminPath: true,
         );
     }//end testCreateDelegationAdminHandoverRejectsNonAdmin()
 
@@ -374,11 +372,10 @@ class DelegationServiceTest extends TestCase
         $mapper->expects($this->never())->method('insert');
 
         $this->expectException(InvalidArgumentException::class);
-        $service->createDelegation(
+        $service->createAdminHandover(
             secretId: 'sec-1',
             delegatedTo: 'mallory',
             initiatedBy: 'mallory',
-            isAdminPath: true,
         );
     }//end testCreateDelegationAdminHandoverRejectsWithoutShare()
 
@@ -398,11 +395,10 @@ class DelegationServiceTest extends TestCase
         $mapper->expects($this->never())->method('insert');
 
         $this->expectException(InvalidArgumentException::class);
-        $service->createDelegation(
+        $service->createAdminHandover(
             secretId: 'sec-1',
             delegatedTo: 'alice',
             initiatedBy: 'alice',
-            isAdminPath: true,
         );
     }//end testCreateDelegationAdminHandoverRejectsOwnerAsInitiator()
 

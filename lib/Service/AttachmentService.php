@@ -434,14 +434,12 @@ class AttachmentService
             $this->grantMapper->delete($grant);
             ++$removed;
 
-            // Blob GC: a copy-grant delete can orphan a blob only when the
-            // attachment row itself is already gone (owner deleted first).
-            try {
-                $attachment = $this->mapper->findById(id: $grant->getAttachmentId());
-                $this->unlinkBlobIfOrphaned(attachment: $attachment, keepWhileRowExists: true);
-            } catch (DoesNotExistException) {
-                // Attachment row already removed.
-            }
+            // No blob GC on this path by design: revoking a COPY's grant
+            // must never touch the owner's blob. The previous guarded call
+            // here passed keepWhileRowExists: true, which made the callee
+            // return before any unlink could happen — i.e. it was already
+            // unconditionally a no-op. It is spelled out rather than
+            // performed so the intent is readable.
         }
 
         return $removed;
@@ -485,20 +483,13 @@ class AttachmentService
      * Never deletes a blob while a grant remains; missing blobs are
      * tolerated (idempotent cascade).
      *
-     * @param Attachment $attachment         The attachment row
-     * @param bool       $keepWhileRowExists When true, only unlink if the
-     *                                       attachment row is ALSO gone
-     *                                       (copy-side GC guard)
+     * @param Attachment $attachment The attachment row
      *
      * @return void
      */
-    private function unlinkBlobIfOrphaned(Attachment $attachment, bool $keepWhileRowExists=false): void
+    private function unlinkBlobIfOrphaned(Attachment $attachment): void
     {
         if ($this->grantMapper->countByAttachment(attachmentId: $attachment->getId()) > 0) {
-            return;
-        }
-
-        if ($keepWhileRowExists === true) {
             return;
         }
 
