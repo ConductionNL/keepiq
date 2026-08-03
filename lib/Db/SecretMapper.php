@@ -545,7 +545,7 @@ class SecretMapper extends QBMapper
     {
         $qb = $this->db->getQueryBuilder();
         $qb->update($this->getTableName())
-            ->set('tombstoned_at', $qb->createNamedParameter((new \DateTime())->format('Y-m-d H:i:s')))
+            ->set('tombstoned_at', $qb->createNamedParameter((new DateTime())->format('Y-m-d H:i:s')))
             ->set('tombstone_reason', $qb->createNamedParameter($reason))
             ->where($qb->expr()->eq('id', $qb->createNamedParameter($secretId)));
 

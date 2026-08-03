@@ -41,8 +41,11 @@ use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
 use OCP\User\Events\UserDeletedEvent;
 use OCA\Doriath\Middleware\JwtAuthMiddleware;
+use OCA\Doriath\Controller\SettingsController;
 use OCA\Doriath\Notification\DoriathNotifier;
+use OCA\Doriath\Repair\InitializeSettings;
 use OCA\Doriath\Search\SecretSearchProvider;
+use OCA\Doriath\Service\SettingsService;
 use OCA\OpenRegister\AppHost\Bootstrap;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -124,8 +127,8 @@ class Application extends App implements IBootstrap
 
         // Override the generic aliases with Doriath's domain-divergent concretes.
         $context->registerService(
-            \OCA\Doriath\Service\SettingsService::class,
-            static fn ($c) => new \OCA\Doriath\Service\SettingsService(
+            SettingsService::class,
+            static fn ($c) => new SettingsService(
                 appConfig: $c->get(\OCP\IAppConfig::class),
                 config: $c->get(\OCP\IConfig::class),
                 appManager: $c->get(\OCP\App\IAppManager::class),
@@ -137,17 +140,17 @@ class Application extends App implements IBootstrap
             )
         );
         $context->registerService(
-            \OCA\Doriath\Controller\SettingsController::class,
-            static fn ($c) => new \OCA\Doriath\Controller\SettingsController(
+            SettingsController::class,
+            static fn ($c) => new SettingsController(
                 request: $c->get(\OCP\IRequest::class),
-                settingsService: $c->get(\OCA\Doriath\Service\SettingsService::class),
+                settingsService: $c->get(SettingsService::class),
                 userSession: $c->get(\OCP\IUserSession::class),
             )
         );
         $context->registerService(
-            \OCA\Doriath\Repair\InitializeSettings::class,
-            static fn ($c) => new \OCA\Doriath\Repair\InitializeSettings(
-                settingsService: $c->get(\OCA\Doriath\Service\SettingsService::class),
+            InitializeSettings::class,
+            static fn ($c) => new InitializeSettings(
+                settingsService: $c->get(SettingsService::class),
                 appConfig: $c->get(\OCP\IAppConfig::class),
                 logger: $c->get(\Psr\Log\LoggerInterface::class),
             )

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -174,7 +175,7 @@ class SecretDelegationMapper extends QBMapper
         $qb = $this->db->getQueryBuilder();
         $qb->update($this->getTableName())
             ->set('is_permanent', $qb->createNamedParameter(true, \PDO::PARAM_BOOL))
-            ->set('made_permanent_at', $qb->createNamedParameter((new \DateTime())->format('Y-m-d H:i:s')))
+            ->set('made_permanent_at', $qb->createNamedParameter((new DateTime())->format('Y-m-d H:i:s')))
             ->where($qb->expr()->eq('original_owner_id', $qb->createNamedParameter($originalOwnerId)))
             ->andWhere($qb->expr()->eq('is_permanent', $qb->createNamedParameter(false, \PDO::PARAM_BOOL)));
 
