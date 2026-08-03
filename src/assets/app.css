@@ -6,47 +6,6 @@
 }
 
 /*
- * NcSelect dropdowns must stack ABOVE NcDialog / NcModal.
- *
- * @nextcloud/vue 9.9.0 contradicts itself here. NcSelect defaults to
- * `appendToBody: true`, so vue-select TELEPORTS its dropdown to <body> and
- * nc-vue's `calculatePosition` tags it `.vs__dropdown-menu--floating`. The
- * menu's z-index comes from vue-select's `--vs-dropdown-z-index`, and nc-vue
- * sets that to **9999** — on `body`, in dist/assets/NcSelect-*.css. But
- * NcModal, which NcDialog is built on, puts its mask at 9998 and its wrapper at
- * **10001** (dist/assets/NcModal-*.css). 9999 < 10001, so a dropdown opened
- * from inside a dialog is always painted BEHIND that dialog.
- *
- * The failure is silent and reads as a dead control: the options are in the
- * DOM, visible and enabled, but every click lands on the dialog body instead.
- * On the Move-secret dialog's "Destination folder" select, picking a folder was
- * simply impossible — Playwright retried the click ~100 times over 60s and each
- * attempt hit `<div class="dialog">` instead of the option (CI runs
- * 30798827764, 30800957925, 30804327498).
- *
- * ⚠️ SPECIFICITY IS LOAD-BEARING. The obvious fixes do not work:
- *   - `.vs__dropdown-menu--floating { z-index }` is 0-1-0, the same as
- *     vue-select's own `.vs__dropdown-menu { z-index: var(…) }`, and
- *     vue-select's stylesheet is injected LATER (it rides the NcSelect chunk,
- *     this file is imported at the top of main.js), so source order hands the
- *     win to vue-select. Tried in 30804327498; nothing changed.
- *   - `:root { --vs-dropdown-z-index }` loses too: the variable is declared on
- *     `body` itself, and an element's own declaration beats a value inherited
- *     from `:root`.
- * Hence a two-class selector (0-2-0), which beats vue-select's rule regardless
- * of injection order, plus the `body >` form for belt and braces.
- *
- * The real fix belongs upstream in nc-vue — its own two components disagree
- * about the stacking order. Per-select `:append-to-body="false"` was rejected
- * as the workaround: `.dialog__content` is `overflow: auto`, so an inline menu
- * gets clipped by the dialog instead of overflowing it.
- */
-body > .vs__dropdown-menu,
-.vs__dropdown-menu.vs__dropdown-menu--floating {
-	z-index: 10002;
-}
-
-/*
  * Mobile-first PWA touch + responsive audit (mobile-pwa §4).
  * A single narrow-viewport breakpoint drives single-column layout and a
  * 44×44 CSS-px minimum touch target on the vault-critical controls

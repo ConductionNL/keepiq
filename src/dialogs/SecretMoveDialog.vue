@@ -15,10 +15,34 @@
 				{{ error }}
 			</NcNoteCard>
 
+			<!--
+				⚠️ `append-to-body` MUST stay false inside a dialog.
+
+				NcSelect defaults it to true, which makes vue-select TELEPORT the
+				options list to <body>. A teleported list opened from inside an
+				NcDialog is painted behind that dialog, and the control is then
+				simply dead: the options are in the DOM, visible and enabled, but
+				every click lands on the dialog instead. Choosing a destination
+				folder was impossible — Playwright retried the click ~100 times
+				over 60s and each attempt hit `<div class="dialog">` (CI runs
+				30798827764, 30800957925, 30804327498).
+
+				Raising the menu's z-index does NOT fix it — tried at 10002 in
+				30804327498 and 30805835374, no change — because the teleported
+				list and the dialog end up in different stacking contexts, so the
+				list's own z-index never competes with the dialog's. Keeping the
+				list inside the dialog removes the question entirely.
+
+				The underlying defect is nc-vue's: NcSelect teleports by default
+				while NcModal (which NcDialog builds on) creates a stacking
+				context the teleported node cannot rise above. Every other
+				NcSelect this app renders inside a dialog has the same problem.
+			-->
 			<NcSelect v-model="folderId"
 				:options="folderOptions"
 				:reduce="opt => opt.value"
 				:input-label="t('doriath', 'Destination folder')"
+				:append-to-body="false"
 				:clearable="false" />
 		</div>
 
