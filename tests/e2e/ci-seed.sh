@@ -384,22 +384,3 @@ if [ "$IN_CI" = "true" ]; then
 fi
 
 echo "[ci-seed] done."
-
-# ── TEMPORARY: positive control for the bundle gate — REVERT BEFORE MERGE ────
-#
-# Proves the e2e suite actually exercises the Doriath frontend, rather than
-# passing on surfaces that would be green with no app at all.
-#
-# TRUNCATE, do not delete. A delete-based control is defeated by any
-# `fs.existsSync()` self-heal in globalSetup (opencatalogi's rebuilt the bundle
-# and passed 82/82 with it "removed" — the control proved nothing). Doriath's
-# tests/e2e/global-setup.ts has no such rebuild, but truncating keeps the
-# evidence uniform across the fleet and cannot be defeated by an existence
-# check anywhere else in the pipeline.
-#
-# Placed at the very END, AFTER the bundle gate above, so the gate still sees
-# the real bundle and the specs are what register the damage.
-CONTROL_BUNDLE="apps/doriath/js/doriath-main.js"
-echo "[ci-seed][CONTROL] bytes before: $(stat -c%s "$CONTROL_BUNDLE")"
-printf '/* truncated by the e2e bundle positive control */\n' > "$CONTROL_BUNDLE"
-echo "[ci-seed][CONTROL] bytes after:  $(stat -c%s "$CONTROL_BUNDLE")"
