@@ -23,7 +23,8 @@
     "lint-fix": "npm run lint -- --fix",
     "check:manifest": "node tests/validate-manifest.js",
     "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
-    "stylelint-fix": "stylelint src/**/*.vue src/**/*.scss src/**/*.css --fix"
+    "stylelint-fix": "stylelint src/**/*.vue src/**/*.scss src/**/*.css --fix",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
