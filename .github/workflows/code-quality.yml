@@ -14,7 +14,19 @@ jobs:
       app-name: doriath
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      nextcloud-test-refs: '["stable31", "stable32"]'
+      # Order matters: the PHPUnit matrix uses the whole list, but the E2E
+      # (Playwright), Newman and Journeydoc jobs all check out
+      # `fromJSON(nextcloud-test-refs)[0]` as their single server. That server
+      # has to be one OpenRegister can load, because `additional-apps` below
+      # installs it and doriath's AppHost integration delegates to it —
+      # OpenRegister's lib/ContextChat/ContentProvider.php implements
+      # `OCP\ContextChat\IContentProvider`, which exists in stable32 and NOT in
+      # stable31 (verified: raw.githubusercontent.com returns 404 for the
+      # stable31 path). On stable31 every `occ` invocation printed
+      # `Interface "OCP\ContextChat\IContentProvider" not found` while loading
+      # commands from openregister's info.xml. stable31 is still covered by the
+      # PHPUnit matrix.
+      nextcloud-test-refs: '["stable32", "stable31"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
