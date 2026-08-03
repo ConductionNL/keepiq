@@ -6,6 +6,34 @@
 }
 
 /*
+ * NcSelect dropdowns must stack ABOVE NcDialog / NcModal.
+ *
+ * NcSelect defaults to `appendToBody: true`, so vue-select TELEPORTS its
+ * dropdown to <body> and nc-vue's `calculatePosition` tags it
+ * `.vs__dropdown-menu--floating`. That class carries `position: absolute` and
+ * NO z-index (@nextcloud/vue 9.9.0, dist/assets/NcSelect-*.css), while NcModal
+ * — which NcDialog is built on — puts its mask at z-index 9998 and its wrapper
+ * at 10001. A teleported dropdown opened from inside a dialog is therefore
+ * painted BEHIND that dialog.
+ *
+ * The failure is silent and looks like a dead control: the options are in the
+ * DOM, visible and enabled, but every click lands on the dialog body instead.
+ * Observed on the Move-secret dialog's "Destination folder" select, where
+ * choosing a folder was simply impossible — Playwright retried the click 100
+ * times over 60s and each attempt hit `<div class="dialog">` instead of the
+ * option (CI run 30798827764 / 30800957925).
+ *
+ * The real fix belongs upstream in nc-vue's NcSelect stylesheet; this raises
+ * the teleported menu above the modal layer for this app in the meantime.
+ * Setting `:append-to-body="false"` per select was rejected as the workaround:
+ * `.dialog__content` is `overflow: auto`, so an inline menu gets clipped by the
+ * dialog instead of overflowing it.
+ */
+.vs__dropdown-menu--floating {
+	z-index: 10002;
+}
+
+/*
  * Mobile-first PWA touch + responsive audit (mobile-pwa §4).
  * A single narrow-viewport breakpoint drives single-column layout and a
  * 44×44 CSS-px minimum touch target on the vault-critical controls
@@ -15,8 +43,8 @@
 
 /* Never let app content force horizontal scroll on a phone. */
 #content,
-#content [data-testid="cn-page"],
-#content [data-testid="cn-index-page"] {
+#content [data-testid='cn-page'],
+#content [data-testid='cn-index-page'] {
 	max-width: 100%;
 	overflow-x: hidden;
 }
@@ -54,7 +82,7 @@
 	#content .copy-button button,
 	#content .password-field button,
 	#content .totp-display button,
-	#content [role="button"] {
+	#content [role='button'] {
 		min-height: 44px;
 		min-width: 44px;
 	}
