@@ -86,9 +86,9 @@ class HoneyTripwireListener implements IEventListener
         }
 
         try {
-            $ip = null;
+            $ipAddress = null;
             if ($this->request->getRemoteAddress() !== '') {
-                $ip = $this->request->getRemoteAddress();
+                $ipAddress = $this->request->getRemoteAddress();
             }
 
             $userAgent = null;
@@ -105,13 +105,13 @@ class HoneyTripwireListener implements IEventListener
                     accessorType: $event->getActorType(),
                     accessorId: $event->getActorId(),
                     channel: 'ui',
-                    ip: $ip,
+                    ipAddress: $ipAddress,
                     userAgent: $userAgent,
                 );
                 if ($hit === false) {
                     // Not flagged directly — a share-recipient copy read
                     // trips the wire of its flagged SOURCE secret.
-                    $this->tripSourceOfCopy(event: $event, copySecretId: $secretId, ip: $ip, userAgent: $userAgent);
+                    $this->tripSourceOfCopy(event: $event, copySecretId: $secretId, ipAddress: $ipAddress, userAgent: $userAgent);
                 }
 
                 return;
@@ -123,7 +123,7 @@ class HoneyTripwireListener implements IEventListener
                     accessorType: $event->getActorType(),
                     accessorId: $event->getActorId(),
                     channel: 'machine_api',
-                    ip: $ip,
+                    ipAddress: $ipAddress,
                     userAgent: $userAgent,
                 );
 
@@ -137,7 +137,7 @@ class HoneyTripwireListener implements IEventListener
                     accessorType: $event->getActorType(),
                     accessorId: $event->getActorId(),
                     channel: 'link',
-                    ip: $ip,
+                    ipAddress: $ipAddress,
                     userAgent: $userAgent,
                 );
             }
@@ -156,12 +156,12 @@ class HoneyTripwireListener implements IEventListener
      *
      * @param AuditEvent  $event        The read event
      * @param string      $copySecretId The read (possibly copy) secret id
-     * @param string|null $ip           Remote address
+     * @param string|null $ipAddress    Remote address
      * @param string|null $userAgent    User agent
      *
      * @return void
      */
-    private function tripSourceOfCopy(AuditEvent $event, string $copySecretId, ?string $ip, ?string $userAgent): void
+    private function tripSourceOfCopy(AuditEvent $event, string $copySecretId, ?string $ipAddress, ?string $userAgent): void
     {
         try {
             $shareTarget = $this->shareTargetMapper->findByRecipientSecret($copySecretId);
@@ -174,7 +174,7 @@ class HoneyTripwireListener implements IEventListener
             accessorType: $event->getActorType(),
             accessorId: $event->getActorId(),
             channel: 'share',
-            ip: $ip,
+            ipAddress: $ipAddress,
             userAgent: $userAgent,
         );
     }//end tripSourceOfCopy()

@@ -118,13 +118,13 @@ class CertificateLifecycleService
             }
         }
 
-        $ca = [];
+        $caRows = [];
         if ($isAdmin === true) {
             try {
                 $root         = $this->caMapper->findRoot();
                 $intermediate = $this->caMapper->findActiveIntermediate();
-                $ca[]         = $this->caRow(kind: 'root', pem: $root->getCertificate());
-                $ca[]         = $this->caRow(kind: 'intermediate', pem: $intermediate->getCertificate());
+                $caRows[]     = $this->caRow(kind: 'root', pem: $root->getCertificate());
+                $caRows[]     = $this->caRow(kind: 'intermediate', pem: $intermediate->getCertificate());
             } catch (DoesNotExistException) {
                 // CA not bootstrapped — no CA rows.
             }
@@ -133,7 +133,7 @@ class CertificateLifecycleService
         return [
             'stored' => $stored,
             'suites' => $suites,
-            'ca'     => $ca,
+            'ca'     => $caRows,
         ];
     }//end inventory()
 
@@ -176,8 +176,8 @@ class CertificateLifecycleService
         }
 
         return [
-            'subject'           => $this->dnToString(dn: (array) ($parsed['subject'] ?? [])),
-            'issuer'            => $this->dnToString(dn: (array) ($parsed['issuer'] ?? [])),
+            'subject'           => $this->dnToString(dnParts: (array) ($parsed['subject'] ?? [])),
+            'issuer'            => $this->dnToString(dnParts: (array) ($parsed['issuer'] ?? [])),
             'serial'            => $serial,
             'fingerprintSha256' => $fingerprintValue,
             'notBefore'         => $notBefore?->format('c'),
@@ -427,14 +427,14 @@ class CertificateLifecycleService
     /**
      * Render an X.509 DN array as a readable string.
      *
-     * @param array<string,mixed> $dn The parsed DN parts
+     * @param array<string,mixed> $dnParts The parsed DN parts
      *
      * @return string
      */
-    private function dnToString(array $dn): string
+    private function dnToString(array $dnParts): string
     {
         $parts = [];
-        foreach ($dn as $dnKey => $dnValue) {
+        foreach ($dnParts as $dnKey => $dnValue) {
             if (is_array($dnValue) === true) {
                 $dnValue = implode('+', array_map('strval', $dnValue));
             }

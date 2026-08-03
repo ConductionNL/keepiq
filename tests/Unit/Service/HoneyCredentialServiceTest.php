@@ -190,7 +190,7 @@ class HoneyCredentialServiceTest extends TestCase
             accessorType: 'application',
             accessorId: 'app-9',
             channel: 'machine_api',
-            ip: '10.0.0.9',
+            ipAddress: '10.0.0.9',
             userAgent: 'curl/8',
         );
 
