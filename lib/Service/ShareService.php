@@ -173,7 +173,7 @@ class ShareService
                 targetUserId: $targetUserId,
                 encryptedKey: $encryptedKey,
                 encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
-                encryptedAdditionalFields: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
+                encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
             );
             if ($copy === null) {
                 $report[] = [
@@ -251,11 +251,11 @@ class ShareService
      * Create a recipient's Secret copy from client-encrypted blobs, or
      * null when the recipient has no active suite (skip, not fail).
      *
-     * @param Secret      $source                    The owner's source secret
-     * @param string      $targetUserId              The recipient
-     * @param string      $encryptedKey              Recipient-encrypted key blob
-     * @param string|null $encryptedLogin            Recipient-encrypted login blob
-     * @param string|null $encryptedAdditionalFields Recipient-encrypted extra blob
+     * @param Secret      $source          The owner's source secret
+     * @param string      $targetUserId    The recipient
+     * @param string      $encryptedKey    Recipient-encrypted key blob
+     * @param string|null $encryptedLogin  Recipient-encrypted login blob
+     * @param string|null $encryptedExtras Recipient-encrypted additionalFields blob
      *
      * @return Secret|null
      */
@@ -264,7 +264,7 @@ class ShareService
         string $targetUserId,
         string $encryptedKey,
         ?string $encryptedLogin,
-        ?string $encryptedAdditionalFields,
+        ?string $encryptedExtras,
     ): ?Secret {
         try {
             $suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
@@ -293,7 +293,7 @@ class ShareService
         $copy->setFolderId(null);
         $copy->setKey($encryptedKey);
         $copy->setLogin($encryptedLogin);
-        $copy->setAdditionalFields($encryptedAdditionalFields);
+        $copy->setAdditionalFields($encryptedExtras);
         $copy->setEncryptionSuiteId($suite->getId());
         $copy->setOwnerType('user');
         $copy->setOwnerId($targetUserId);

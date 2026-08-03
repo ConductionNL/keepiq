@@ -117,6 +117,13 @@ class JwtAuthMiddleware extends Middleware
      *
      * @throws Throwable When the controller is not an
      *                   ApplicationApiController (re-thrown).
+     *
+     * $methodName is unused but cannot be dropped: this is an override of
+     * OCP\AppFramework\Middleware::afterException(), whose signature the
+     * framework calls positionally. Narrowing it would be a fatal
+     * incompatible-signature error at class-load time.
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function afterException($controller, $methodName, Throwable $exception): JSONResponse
     {

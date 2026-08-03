@@ -54,6 +54,14 @@ use OCP\AppFramework\Db\Entity;
  * @method void setAcknowledgedBy(?string $acknowledgedBy)
  * @method DateTime|null getSnoozedUntil()
  * @method void setSnoozedUntil(?DateTime $snoozedUntil)
+ *
+ * The `$ip` field name IS the persistence contract: QBMapper derives the column
+ * name from the property, and the column shipped as `ip` in
+ * Migration\Version000030Date20260718220000. Renaming it would silently retarget
+ * every read and write at a non-existent `ip_address` column, so the short name
+ * is load-bearing. It is the only sub-3-character name in this class.
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
  */
 class HoneyAlert extends Entity implements JsonSerializable
 {
@@ -94,7 +102,8 @@ class HoneyAlert extends Entity implements JsonSerializable
     protected string $channel = '';
 
     /**
-     * Remote address when available.
+     * Remote address when available. Name is the column name — see the
+     * class docblock.
      *
      * @var string|null
      */

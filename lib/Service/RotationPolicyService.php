@@ -199,7 +199,7 @@ class RotationPolicyService
             throw new InvalidArgumentException('maxAgeDays must be positive or null');
         }
 
-        $reminderDays = array_values(array_filter(array_map('intval', $reminderDays), static fn ($d) => $d > 0));
+        $reminderDays = array_values(array_filter(array_map('intval', $reminderDays), static fn ($days) => $days > 0));
 
         $encodedReminders = null;
         if ($reminderDays !== []) {

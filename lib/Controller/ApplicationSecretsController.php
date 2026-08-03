@@ -150,7 +150,7 @@ class ApplicationSecretsController extends ApplicationApiController
             data: [
                 'format' => MachineSecretEnvelopeService::FORMAT,
                 'items'  => array_map(
-                    fn (Secret $s) => $this->envelopeService->serialize($s),
+                    fn (Secret $secret) => $this->envelopeService->serialize($secret),
                     $secrets
                 ),
                 'total'  => count($secrets),
@@ -243,7 +243,7 @@ class ApplicationSecretsController extends ApplicationApiController
                 data: [
                     'message'    => 'Multiple secrets match this name; disambiguate by folder or rename',
                     'candidates' => array_map(
-                        fn (Secret $s) => $this->envelopeService->candidate($s),
+                        fn (Secret $secret) => $this->envelopeService->candidate($secret),
                         $matches
                     ),
                 ],

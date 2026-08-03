@@ -293,7 +293,7 @@ class SettingsService
             $thresholds = array_values(
                 array_filter(
                     array_map('intval', (array) $data['expiry_reminder_days']),
-                    static fn (int $d): bool => $d > 0
+                    static fn (int $days): bool => $days > 0
                 )
             );
             if ($thresholds === []) {

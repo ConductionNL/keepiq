@@ -136,7 +136,7 @@ class SecretService
      * @param AuditService|null           $auditService           The audit recorder (single write path)
      * @param AttachmentService|null      $attachmentService      The attachment service (delete cascade)
      * @param SecretVersionService|null   $versionService         The version-history service (pre-update snapshots)
-     * @param RotationPolicyService|null  $rotationPolicyService  The rotation service (flag cascade)
+     * @param RotationPolicyService|null  $rotationService        The rotation service (flag cascade)
      *
      * @return void
      */
@@ -155,7 +155,7 @@ class SecretService
         private ?AuditService $auditService=null,
         private ?AttachmentService $attachmentService=null,
         private ?SecretVersionService $versionService=null,
-        private ?RotationPolicyService $rotationPolicyService=null,
+        private ?RotationPolicyService $rotationService=null,
     ) {
     }//end __construct()
 
@@ -906,7 +906,7 @@ class SecretService
         $this->versionService?->deleteForSecret($id);
 
         // Rotation-flag cascade (rotation-expiry-policies).
-        $this->rotationPolicyService?->deleteForSecret($id);
+        $this->rotationService?->deleteForSecret($id);
 
         $this->mapper->delete($secret);
         $this->logger->info("Doriath: secret {$id} deleted by {$userId}");

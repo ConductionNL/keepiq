@@ -53,16 +53,16 @@ class SecretRequestFillController extends OCSController
     /**
      * Constructor.
      *
-     * @param IRequest               $request                The request object
-     * @param SecretRequestService   $secretRequestService   The secret-request service
-     * @param EncryptionSuiteService $encryptionSuiteService The suite lookup service
+     * @param IRequest               $request              The request object
+     * @param SecretRequestService   $secretRequestService The secret-request service
+     * @param EncryptionSuiteService $suiteService         The suite lookup service
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private SecretRequestService $secretRequestService,
-        private EncryptionSuiteService $encryptionSuiteService,
+        private EncryptionSuiteService $suiteService,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -106,7 +106,7 @@ class SecretRequestFillController extends OCSController
         }
 
         try {
-            $suite = $this->encryptionSuiteService->getSuite(id: $request->getEncryptionSuiteId());
+            $suite = $this->suiteService->getSuite(id: $request->getEncryptionSuiteId());
         } catch (Throwable) {
             return new JSONResponse(
                 data: ['message' => 'Recipient encryption suite is unavailable'],

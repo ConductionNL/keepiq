@@ -186,7 +186,7 @@ class HoneyCredentialService
      * @param string      $accessorType user|application|link_visitor|system
      * @param string|null $accessorId   The accessor id (null = anonymous)
      * @param string      $channel      ui|machine_api|link|share
-     * @param string|null $ip           Remote address when available
+     * @param string|null $remoteIp     Remote address when available
      * @param string|null $userAgent    User agent when available
      *
      * @return bool Whether the secret was honey-flagged (a tripwire hit)
@@ -198,7 +198,7 @@ class HoneyCredentialService
         string $accessorType,
         ?string $accessorId,
         string $channel,
-        ?string $ip=null,
+        ?string $remoteIp=null,
         ?string $userAgent=null,
     ): bool {
         try {
@@ -234,7 +234,7 @@ class HoneyCredentialService
                 $alert->setAccessorType($accessorType);
                 $alert->setAccessorId($accessorId);
                 $alert->setChannel($channel);
-                $alert->setIp($ip);
+                $alert->setIp($remoteIp);
                 $alert->setUserAgent($userAgent);
                 $alert->setAccessCount(1);
                 $alert->setAccessedAt($now);

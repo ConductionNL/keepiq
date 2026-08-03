@@ -145,19 +145,19 @@ class DashboardService
 
         $summary = [
             'total_secrets'        => $this->safeCount(
-                fn: fn () => $this->secretMapper?->countByOwner('user', $userId, null) ?? 0,
+                counter: fn () => $this->secretMapper?->countByOwner('user', $userId, null) ?? 0,
                 metricId: 'total_secrets',
             ),
             'shared_with_me_count' => $this->safeCount(
-                fn: $sharedWithMeCount,
+                counter: $sharedWithMeCount,
                 metricId: 'shared_with_me_count',
             ),
             'folders_count'        => $this->safeCount(
-                fn: $foldersCount,
+                counter: $foldersCount,
                 metricId: 'folders_count',
             ),
             'rotation_due_count'   => $this->safeCount(
-                fn: fn () => count($this->rotationFlagMapper?->findOpenForOwner($userId) ?? []),
+                counter: fn () => count($this->rotationFlagMapper?->findOpenForOwner($userId) ?? []),
                 metricId: 'rotation_due_count',
             ),
             'pending_apps_count'   => null,
@@ -167,12 +167,12 @@ class DashboardService
 
         if ($isAdmin === true) {
             $summary['pending_apps_count'] = $this->safeCount(
-                fn: fn () => $this->applicationMapper?->countPending() ?? 0,
+                counter: fn () => $this->applicationMapper?->countPending() ?? 0,
                 metricId: 'pending_apps_count',
             );
             $summary['ca_health']          = $this->caHealthCard();
             $summary['honey_alert_count']  = $this->safeCount(
-                fn: fn () => $this->honeyAlertMapper?->countUnacknowledged() ?? 0,
+                counter: fn () => $this->honeyAlertMapper?->countUnacknowledged() ?? 0,
                 metricId: 'honey_alert_count',
             );
         }
@@ -216,15 +216,15 @@ class DashboardService
     /**
      * Run a counter callback, logging+degrading to zero on failure.
      *
-     * @param callable():int $fn       The counter
+     * @param callable():int $counter  The counter
      * @param string         $metricId Human-readable metric label for logs
      *
      * @return int
      */
-    private function safeCount(callable $fn, string $metricId): int
+    private function safeCount(callable $counter, string $metricId): int
     {
         try {
-            return $fn();
+            return $counter();
         } catch (Throwable $e) {
             $this->logger->warning(
                 'DashboardService::fetchSummary() failed to compute '.$metricId.': '.$e->getMessage(),

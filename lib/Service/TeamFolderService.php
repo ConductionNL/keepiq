@@ -607,7 +607,7 @@ class TeamFolderService
                     targetUserId: $targetUserId,
                     encryptedKey: $encryptedKey,
                     encryptedLogin: $this->nullableString(value: $row['encryptedLogin'] ?? null),
-                    encryptedAdditionalFields: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
+                    encryptedExtras: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
                 );
                 if ($copy === null) {
                     // Recipient without an active suite — skipped silently.
@@ -1039,11 +1039,11 @@ class TeamFolderService
      * recipient organises their own tree), and the ciphertext fields are
      * stored verbatim — the server never decrypts anything.
      *
-     * @param string      $sourceSecretId            The owner's source secret ID
-     * @param string      $targetUserId              The recipient user ID
-     * @param string      $encryptedKey              The RSA-encrypted key blob
-     * @param string|null $encryptedLogin            The RSA-encrypted login blob
-     * @param string|null $encryptedAdditionalFields The RSA-encrypted additional-fields blob
+     * @param string      $sourceSecretId  The owner's source secret ID
+     * @param string      $targetUserId    The recipient user ID
+     * @param string      $encryptedKey    The RSA-encrypted key blob
+     * @param string|null $encryptedLogin  The RSA-encrypted login blob
+     * @param string|null $encryptedExtras The RSA-encrypted additional-fields blob
      *
      * @return \OCA\Doriath\Db\Secret|null Null when the recipient has no active suite
      */
@@ -1052,7 +1052,7 @@ class TeamFolderService
         string $targetUserId,
         string $encryptedKey,
         ?string $encryptedLogin,
-        ?string $encryptedAdditionalFields,
+        ?string $encryptedExtras,
     ): ?\OCA\Doriath\Db\Secret {
         try {
             $source = $this->secretMapper->findById($sourceSecretId);
@@ -1082,7 +1082,7 @@ class TeamFolderService
         $copy->setFolderId(null);
         $copy->setKey($encryptedKey);
         $copy->setLogin($encryptedLogin);
-        $copy->setAdditionalFields($encryptedAdditionalFields);
+        $copy->setAdditionalFields($encryptedExtras);
         $copy->setEncryptionSuiteId($suite->getId());
         $copy->setOwnerType('user');
         $copy->setOwnerId($targetUserId);

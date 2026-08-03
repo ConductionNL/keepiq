@@ -54,14 +54,14 @@ class ApplicationService
     /**
      * Constructor for ApplicationService.
      *
-     * @param ApplicationMapper                                 $mapper                 The application mapper
-     * @param IGroupManager                                     $groupManager           The group manager (admin lookups)
-     * @param LoggerInterface                                   $logger                 The logger
-     * @param NotificationService                               $notificationService    The notification service
-     * @param EncryptionSuiteService                            $encryptionSuiteService The encryption suite service
-     * @param IEventDispatcher                                  $eventDispatcher        The event dispatcher
-     * @param \OCA\Doriath\Db\MachineLeaseMapper|null           $leaseMapper            The lease mapper (delete cascade)
-     * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper      The lease-policy mapper (delete cascade)
+     * @param ApplicationMapper                                 $mapper              The application mapper
+     * @param IGroupManager                                     $groupManager        The group manager (admin lookups)
+     * @param LoggerInterface                                   $logger              The logger
+     * @param NotificationService                               $notificationService The notification service
+     * @param EncryptionSuiteService                            $suiteService        The encryption suite service
+     * @param IEventDispatcher                                  $eventDispatcher     The event dispatcher
+     * @param \OCA\Doriath\Db\MachineLeaseMapper|null           $leaseMapper         The lease mapper (delete cascade)
+     * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper   The lease-policy mapper (delete cascade)
      *
      * @return void
      */
@@ -70,7 +70,7 @@ class ApplicationService
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
         private ?NotificationService $notificationService=null,
-        private ?EncryptionSuiteService $encryptionSuiteService=null,
+        private ?EncryptionSuiteService $suiteService=null,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?\OCA\Doriath\Db\MachineLeaseMapper $leaseMapper=null,
         private ?\OCA\Doriath\Db\ApplicationLeasePolicyMapper $leasePolicyMapper=null,
@@ -165,7 +165,7 @@ class ApplicationService
         // suite-less; the admin queue can retry via re-approval.
         if ($persisted->isActive() === true
             && $csr !== null && $csr !== ''
-            && $this->encryptionSuiteService !== null
+            && $this->suiteService !== null
         ) {
             $this->tryProvisionSuite(application: $persisted, csr: $csr);
         }
@@ -306,7 +306,7 @@ class ApplicationService
         // the approval transaction. If the CSR is missing the suite is
         // skipped; the admin queue can re-submit a CSR via re-registration.
         if ($storedCsr !== null && $storedCsr !== ''
-            && $this->encryptionSuiteService !== null
+            && $this->suiteService !== null
         ) {
             $this->tryProvisionSuite(application: $updated, csr: $storedCsr);
         }
@@ -339,7 +339,7 @@ class ApplicationService
     private function tryProvisionSuite(Application $application, string $csr): void
     {
         try {
-            $this->encryptionSuiteService?->provisionForApplication(
+            $this->suiteService?->provisionForApplication(
                 applicationId: $application->getId(),
                 csrPem: $csr,
             );
@@ -469,12 +469,12 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'Application is not active');
         }
 
-        if ($this->encryptionSuiteService === null) {
+        if ($this->suiteService === null) {
             return null;
         }
 
         try {
-            $suite = $this->encryptionSuiteService->getActiveSuite('application', $entity->getId());
+            $suite = $this->suiteService->getActiveSuite('application', $entity->getId());
             return $suite->getCertificate();
         } catch (Throwable) {
             return null;
