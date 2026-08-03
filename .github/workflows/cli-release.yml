@@ -17,6 +17,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # No observed runs yet; a Go vet+test of a stdlib-only CLI is minutes at most.
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: cli
@@ -31,6 +33,8 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    # No observed runs yet; a stdlib-only Go cross-compile is minutes at most.
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: cli
