@@ -30,13 +30,39 @@ import { encryptBackup } from '../../src/export/backup.js'
 import { serializeVault } from '../../src/export/serializer.js'
 
 /**
- * Unlock the session store with a freshly generated RSA-4096 key pair so the
- * real encrypt path runs and the test can decrypt to verify the round-trip.
+ * One RSA-4096 key pair shared by every test in this file.
+ *
+ * `generateKeyPair()` is a real WebCrypto RSA-4096 keygen, i.e. a random prime
+ * search whose runtime is unbounded and highly variable — locally it spreads
+ * over 154-850ms across 12 samples, and a contended two-core CI runner running
+ * 69 spec files in parallel workers lands several times higher. Nine
+ * independent keygens in this one file (one per `unlockSession()` call) is what
+ * pushed the round-trip test past vitest's 5000ms per-test default in
+ * ConductionNL/doriath run 30884131373.
+ *
+ * Generating once and reusing keeps the *real* encrypt/decrypt path under test
+ * — every assertion still runs RSA-OAEP against a genuine key — while removing
+ * eight redundant keygens and, with them, the variance that made the timeout a
+ * coin flip. The tests assert the crypto round-trip, never key uniqueness, so a
+ * shared pair is equivalent. Pinia is still recreated per test by `beforeEach`,
+ * so no store state leaks between cases.
+ *
+ * @type {Promise<{privateKey: CryptoKey, publicKeyPem: string}>|null}
+ */
+let keyPairPromise = null
+
+/**
+ * Unlock the session store with the shared RSA-4096 key pair so the real
+ * encrypt path runs and the test can decrypt to verify the round-trip.
  *
  * @return {Promise<CryptoKey>} The private key for decryption assertions.
  */
 async function unlockSession() {
-	const { privateKey, publicKeyPem } = await generateKeyPair()
+	if (keyPairPromise === null) {
+		keyPairPromise = generateKeyPair()
+	}
+
+	const { privateKey, publicKeyPem } = await keyPairPromise
 	const session = useSessionStore()
 	session.certificate = publicKeyPem
 	session.cryptoKey = privateKey

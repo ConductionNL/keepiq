@@ -85,6 +85,58 @@ egf7+MJPI6bZL98sLf0EzvxhcLL6UCgKn17d5awirUgMZjtwz7bUh0rDA29rH8Nq
 -----END PUBLIC KEY-----`
 
 /**
+ * Lazily-generated, per-file cache of real RSA-4096 key pairs.
+ *
+ * `generateKeyPair()` is a genuine WebCrypto RSA-4096 keygen — a random prime
+ * search whose runtime is unbounded and highly variable (measured locally at
+ * 154-850ms over 12 samples; a contended two-core CI runner executing 69 spec
+ * files across parallel workers lands several times higher). Specs that called
+ * it once per test were paying that variance repeatedly against vitest's
+ * 5000ms per-test default, which is what made
+ * `tests/store/import.spec.js` time out in ConductionNL/doriath run
+ * 30884131373 while passing locally.
+ *
+ * Vitest isolates module state per spec file, so this cache is per-file: the
+ * first test in a file pays for one keygen and the rest reuse it. The keys are
+ * real and the encrypt/decrypt paths under test are unchanged — only the
+ * redundant regeneration is removed. Use `freshKeyPair()` where the test's
+ * subject really is key *generation*, and `secondaryKeyPair()` where a test
+ * needs a second, definitely-different pair (wrong-key negative controls).
+ *
+ * @type {{primary: Promise<object>|null, secondary: Promise<object>|null}}
+ */
+const keyPairCache = { primary: null, secondary: null }
+
+/**
+ * The shared RSA-4096 key pair for this spec file.
+ *
+ * @param {Function} generateKeyPair The module-under-test's key generator.
+ * @return {Promise<object>} The cached key pair.
+ */
+export function sharedKeyPair(generateKeyPair) {
+	if (keyPairCache.primary === null) {
+		keyPairCache.primary = generateKeyPair()
+	}
+
+	return keyPairCache.primary
+}
+
+/**
+ * A second RSA-4096 key pair, distinct from `sharedKeyPair()`, for negative
+ * controls that must prove the wrong key cannot decrypt.
+ *
+ * @param {Function} generateKeyPair The module-under-test's key generator.
+ * @return {Promise<object>} The cached secondary key pair.
+ */
+export function secondaryKeyPair(generateKeyPair) {
+	if (keyPairCache.secondary === null) {
+		keyPairCache.secondary = generateKeyPair()
+	}
+
+	return keyPairCache.secondary
+}
+
+/**
  * Decode a PEM body into raw DER bytes (drops armor + whitespace).
  *
  * @param {string} pem PEM-encoded blob
