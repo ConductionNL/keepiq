@@ -29,6 +29,31 @@ use OCP\Migration\SimpleMigrationStep;
 
 /**
  * Create the doriath_ca_certs table.
+ *
+ * `notnull` MUST stay false on the `is_active` BOOLEAN column.
+ *
+ * Nextcloud's own database convention forbids `BOOLEAN NOT NULL`
+ * (developer_manual/basics/storage/database.rst: "Columns with type bool ...
+ * can not be NotNull as it can not store 0/false"), and on Nextcloud 31
+ * `MigrationService::ensureOracleConstraints()` enforces it for EVERY platform
+ * with a hard throw:
+ *
+ * Column "oc_doriath_ca_certs"."is_active" is type Bool and also NotNull, so
+ * it can not store "false".
+ *
+ * With `notnull => true` that exception aborted `occ app:enable doriath` on a
+ * fresh NC 31 install — i.e. Doriath could not be installed at all on the
+ * minimum version its own appinfo/info.xml declares
+ * (`<nextcloud min-version="31" …>`). Nextcloud 32 narrowed the same check to
+ * Oracle only, which is why the defect was invisible on newer servers; no CI
+ * job had ever installed the app on 31.
+ *
+ * Every other boolean column in this app's migrations already uses
+ * `notnull => false` (is_permanent, renewable, has_password, enabled, tls,
+ * is_re_request); this brings the first one into line. The entity declares
+ * `protected bool $isActive = false`, so app code can never write NULL, and
+ * CACertificateMapper only ever queries `is_active = true` — the nullable
+ * column is behaviour-neutral.
  */
 class Version000002Date20260331000001 extends SimpleMigrationStep
 {
@@ -52,6 +77,22 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
             return null;
         }
 
+        $this->createCaCertsTable(schema: $schema);
+
+        return $schema;
+    }//end changeSchema()
+
+    /**
+     * Define the doriath_ca_certs table on a schema that does not have it yet.
+     *
+     * See the class docblock for why `is_active` is a NULLABLE boolean.
+     *
+     * @param ISchemaWrapper $schema The schema to add the table to
+     *
+     * @return void
+     */
+    private function createCaCertsTable(ISchemaWrapper $schema): void
+    {
         $table = $schema->createTable('doriath_ca_certs');
 
         $table->addColumn(
@@ -98,30 +139,8 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                     'notnull' => true,
                 ]
                 );
-        // `notnull` MUST stay false on a BOOLEAN column.
-        //
-        // Nextcloud's own database convention forbids `BOOLEAN NOT NULL`
-        // (developer_manual/basics/storage/database.rst: "Columns with type
-        // bool ... can not be NotNull as it can not store 0/false"), and on
-        // Nextcloud 31 `MigrationService::ensureOracleConstraints()` enforces
-        // it for EVERY platform with a hard throw:
-        //
-        // Column "oc_doriath_ca_certs"."is_active" is type Bool and also
-        // NotNull, so it can not store "false".
-        //
-        // With `notnull => true` that exception aborted `occ app:enable
-        // doriath` on a fresh NC 31 install — i.e. Doriath could not be
-        // installed at all on the minimum version its own appinfo/info.xml
-        // declares (`<nextcloud min-version="31" …>`). Nextcloud 32 narrowed
-        // the same check to Oracle only, which is why the defect was invisible
-        // on newer servers; no CI job had ever installed the app on 31.
-        //
-        // Every other boolean column in this app's migrations already uses
-        // `notnull => false` (is_permanent, renewable, has_password, enabled,
-        // tls, is_re_request); this brings the first one into line. The entity
-        // declares `protected bool $isActive = false`, so app code can never
-        // write NULL, and CACertificateMapper only ever queries
-        // `is_active = true` — the nullable column is behaviour-neutral.
+        // `notnull` MUST stay false on this BOOLEAN column — see the class
+        // docblock; `notnull => true` made the app uninstallable on NC 31.
         $table->addColumn(
                 'is_active',
                 Types::BOOLEAN,
@@ -147,7 +166,5 @@ class Version000002Date20260331000001 extends SimpleMigrationStep
                 );
 
         $table->setPrimaryKey(['id']);
-
-        return $schema;
-    }//end changeSchema()
+    }//end createCaCertsTable()
 }//end class

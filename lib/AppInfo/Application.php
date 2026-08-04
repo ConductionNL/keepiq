@@ -103,7 +103,7 @@ class Application extends App implements IBootstrap
         //
         // Doriath then RE-REGISTERS its three domain-divergent plumbing classes
         // after this call so the concrete leaf classes win over the generic
-        // aliases (see the override block below): SettingsService (register.d
+        // aliases (see registerDomainOverrides()): SettingsService (register.d
         // fragment merge + admin/user-preference split, ADR-037), SettingsController
         // (admin/user settings split + #[AuthorizedAdminSetting(AdminSettings::class)]),
         // and InitializeSettings (domain default-config seeding). The remaining
@@ -114,10 +114,14 @@ class Application extends App implements IBootstrap
         // LOAD-ORDER HAZARD: apps register alphabetically, so doriath registers
         // BEFORE openregister and the AppHost class is not yet autoloadable via
         // Nextcloud's app loader. Left unguarded, the resulting \Error aborted
-        // this entire register() — every registerEventListener below silently
-        // never ran (the audit listener recorded ZERO dispatched events). Pull
-        // in OpenRegister's own composer autoloader when needed, and never let
-        // an AppHost failure take down Doriath's own registrations.
+        // this entire register() — every registerEventListener silently never
+        // ran (the audit listener recorded ZERO dispatched events). Pull in
+        // OpenRegister's own composer autoloader when needed, and never let an
+        // AppHost failure take down Doriath's own registrations.
+        //
+        // The class_exists() guard MUST stay in this method: it is also the
+        // assertion psalm relies on to accept the Bootstrap::register() call
+        // below, and psalm does not carry that narrowing across a call.
         if (class_exists(Bootstrap::class) === false) {
             $openRegisterAutoload = __DIR__.'/../../../openregister/vendor/autoload.php';
             if (file_exists($openRegisterAutoload) === true) {
@@ -129,12 +133,45 @@ class Application extends App implements IBootstrap
             Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Doriath']);
         } catch (\Throwable) {
             // AppHost absent/unloadable: skip the generic plumbing; Doriath's
-            // own listeners and services below MUST still register. No
-            // logger is resolvable this early, so the skip is silent —
-            // /api/health surfaces the degraded AppHost state instead.
+            // own listeners and services MUST still register. No logger is
+            // resolvable this early, so the skip is silent — /api/health
+            // surfaces the degraded AppHost state instead.
         }
 
-        // Override the generic aliases with Doriath's domain-divergent concretes.
+        $this->registerDomainOverrides(context: $context);
+        $this->registerDomainEventListeners(context: $context);
+
+        // Register the Nextcloud unified search provider for secrets. It
+        // queries unencrypted name/url metadata only and needs no vault
+        // session (ADR-003).
+        $context->registerSearchProvider(SecretSearchProvider::class);
+
+        // Register the notifier responsible for rendering sharing,
+        // secret-request and application-management notification subjects.
+        $context->registerNotifierService(DoriathNotifier::class);
+
+        // Register the JWT-Bearer middleware for application-authenticated
+        // routes. Fires only on ApplicationApiController subclasses; session
+        // controllers pass through untouched.
+        $context->registerMiddleware(JwtAuthMiddleware::class);
+
+        // Domain repair steps (BootstrapCertificateAuthority, InitializeSettings,
+        // SeedSecretTypes, the Seed* development data steps) are registered via
+        // info.xml <repair-steps>. InitializeSettings is the Doriath concrete
+        // re-registered above (domain default-config seeding); the rest are
+        // crypto/seed domain steps owned by the app.
+    }//end register()
+
+    /**
+     * Override the generic AppHost aliases with Doriath's domain-divergent
+     * concretes, so the leaf classes win over the engine's generics.
+     *
+     * @param IRegistrationContext $context The registration context
+     *
+     * @return void
+     */
+    private function registerDomainOverrides(IRegistrationContext $context): void
+    {
         $context->registerService(
             SettingsService::class,
             static fn ($c) => new SettingsService(
@@ -164,7 +201,17 @@ class Application extends App implements IBootstrap
                 logger: $c->get(\Psr\Log\LoggerInterface::class),
             )
         );
+    }//end registerDomainOverrides()
 
+    /**
+     * Bind every Doriath domain listener to the events it consumes.
+     *
+     * @param IRegistrationContext $context The registration context
+     *
+     * @return void
+     */
+    private function registerDomainEventListeners(IRegistrationContext $context): void
+    {
         // Compromise-recovery: lock SecretRequests when migration starts and
         // unlock + re-suite them when it completes
         // (implement-secret-requests §6.1-6.3).
@@ -260,27 +307,7 @@ class Application extends App implements IBootstrap
                 );
             }
         }
-
-        // Register the Nextcloud unified search provider for secrets. It
-        // queries unencrypted name/url metadata only and needs no vault
-        // session (ADR-003).
-        $context->registerSearchProvider(SecretSearchProvider::class);
-
-        // Register the notifier responsible for rendering sharing,
-        // secret-request and application-management notification subjects.
-        $context->registerNotifierService(DoriathNotifier::class);
-
-        // Register the JWT-Bearer middleware for application-authenticated
-        // routes. Fires only on ApplicationApiController subclasses; session
-        // controllers pass through untouched.
-        $context->registerMiddleware(JwtAuthMiddleware::class);
-
-        // Domain repair steps (BootstrapCertificateAuthority, InitializeSettings,
-        // SeedSecretTypes, the Seed* development data steps) are registered via
-        // info.xml <repair-steps>. InitializeSettings is the Doriath concrete
-        // re-registered above (domain default-config seeding); the rest are
-        // crypto/seed domain steps owned by the app.
-    }//end register()
+    }//end registerDomainEventListeners()
 
     /**
      * Boot the application.
