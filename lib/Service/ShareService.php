@@ -117,107 +117,12 @@ class ShareService
         $report        = [];
         $newRecipients = [];
         foreach ($shares as $row) {
-            $sourceSecretId = (string) ($row['sourceSecretId'] ?? '');
-            $targetUserId   = (string) ($row['targetUserId'] ?? '');
-            $encryptedKey   = (string) ($row['encryptedKey'] ?? '');
-            if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
-                $report[] = [
-                    'sourceSecretId' => $sourceSecretId,
-                    'targetUserId'   => $targetUserId,
-                    'status'         => 'invalid',
-                ];
-                continue;
+            $entry    = $this->registerDirectShare(userId: $userId, row: $row);
+            $report[] = $entry;
+            if ($entry['status'] === 'created') {
+                $newRecipients[$entry['targetUserId']] = true;
             }
-
-            if ($targetUserId === $userId) {
-                $report[] = [
-                    'sourceSecretId' => $sourceSecretId,
-                    'targetUserId'   => $targetUserId,
-                    'status'         => 'self',
-                ];
-                continue;
-            }
-
-            // Per-item owner guard — a foreign secret is skipped, never a
-            // whole-batch failure and never an oracle.
-            try {
-                $source = $this->secretMapper->findById($sourceSecretId);
-            } catch (DoesNotExistException) {
-                $source = null;
-            }
-
-            if ($source === null || $source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
-                $report[] = [
-                    'sourceSecretId' => $sourceSecretId,
-                    'targetUserId'   => $targetUserId,
-                    'status'         => 'not_owned',
-                ];
-                continue;
-            }
-
-            // Idempotency: an existing share (any provenance) is `exists`.
-            try {
-                $this->mapper->findBySourceSecretAndTargetUser(
-                    sourceSecretId: $sourceSecretId,
-                    targetUserId: $targetUserId
-                );
-                $report[] = [
-                    'sourceSecretId' => $sourceSecretId,
-                    'targetUserId'   => $targetUserId,
-                    'status'         => 'exists',
-                ];
-                continue;
-            } catch (DoesNotExistException) {
-                // No existing share — create below.
-            }
-
-            $copy = $this->createDirectRecipientCopy(
-                source: $source,
-                targetUserId: $targetUserId,
-                encryptedKey: $encryptedKey,
-                encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
-                encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
-            );
-            if ($copy === null) {
-                $report[] = [
-                    'sourceSecretId' => $sourceSecretId,
-                    'targetUserId'   => $targetUserId,
-                    'status'         => 'no_suite',
-                ];
-                continue;
-            }
-
-            $entity = new ShareTarget();
-            $entity->setId(Uuid::uuid4()->toString());
-            $entity->setSourceSecretId($sourceSecretId);
-            $entity->setTargetUserId($targetUserId);
-            $entity->setSecretId($copy->getId());
-            $entity->setCreatedBy($userId);
-            $entity->setCreatedAt(new DateTime());
-            $this->mapper->insert($entity);
-
-            $this->dispatchAudit(
-                event: $this->auditEvents->forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::SHARE_GRANTED,
-                    objectType: 'secret',
-                    objectId: $sourceSecretId,
-                    objectName: $source->getName(),
-                    metadata: [
-                        'recipientType' => 'user',
-                        'recipientId'   => $targetUserId,
-                    ],
-                )
-            );
-
-            $newRecipients[$targetUserId] = true;
-            $report[] = [
-                'sourceSecretId'    => $sourceSecretId,
-                'targetUserId'      => $targetUserId,
-                'status'            => 'created',
-                'recipientSecretId' => $copy->getId(),
-            ];
-        }//end foreach
+        }
 
         // One notification per recipient per run — not per secret.
         foreach (array_keys($newRecipients) as $recipientId) {
@@ -230,6 +135,143 @@ class ShareService
 
         return $report;
     }//end registerDirectShares()
+
+    /**
+     * Validate one bulk-share row and, when it is well-formed, register it.
+     *
+     * Skip-not-fail: every rejection is reported as a status so a mixed
+     * selection never aborts the run.
+     *
+     * @param string              $userId The sharing owner
+     * @param array<string,mixed> $row    One {sourceSecretId, targetUserId, encryptedKey, ...} row
+     *
+     * @return array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}
+     */
+    private function registerDirectShare(string $userId, array $row): array
+    {
+        $sourceSecretId = (string) ($row['sourceSecretId'] ?? '');
+        $targetUserId   = (string) ($row['targetUserId'] ?? '');
+        $encryptedKey   = (string) ($row['encryptedKey'] ?? '');
+        if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
+            return [
+                'sourceSecretId' => $sourceSecretId,
+                'targetUserId'   => $targetUserId,
+                'status'         => 'invalid',
+            ];
+        }
+
+        if ($targetUserId === $userId) {
+            return [
+                'sourceSecretId' => $sourceSecretId,
+                'targetUserId'   => $targetUserId,
+                'status'         => 'self',
+            ];
+        }
+
+        return $this->createDirectShare(
+            userId: $userId,
+            sourceSecretId: $sourceSecretId,
+            targetUserId: $targetUserId,
+            encryptedKey: $encryptedKey,
+            row: $row
+        );
+    }//end registerDirectShare()
+
+    /**
+     * Create the recipient copy and the ShareTarget row for one validated
+     * bulk-share row, enforcing the owner guard and idempotency.
+     *
+     * @param string              $userId         The sharing owner
+     * @param string              $sourceSecretId The owner's source secret
+     * @param string              $targetUserId   The recipient
+     * @param string              $encryptedKey   Recipient-encrypted key blob
+     * @param array<string,mixed> $row            The original row (optional blobs)
+     *
+     * @return array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}
+     */
+    private function createDirectShare(
+        string $userId,
+        string $sourceSecretId,
+        string $targetUserId,
+        string $encryptedKey,
+        array $row,
+    ): array {
+        // Per-item owner guard — a foreign secret is skipped, never a
+        // whole-batch failure and never an oracle.
+        try {
+            $source = $this->secretMapper->findById($sourceSecretId);
+        } catch (DoesNotExistException) {
+            $source = null;
+        }
+
+        if ($source === null || $source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+            return [
+                'sourceSecretId' => $sourceSecretId,
+                'targetUserId'   => $targetUserId,
+                'status'         => 'not_owned',
+            ];
+        }
+
+        // Idempotency: an existing share (any provenance) is `exists`.
+        try {
+            $this->mapper->findBySourceSecretAndTargetUser(
+                sourceSecretId: $sourceSecretId,
+                targetUserId: $targetUserId
+            );
+            return [
+                'sourceSecretId' => $sourceSecretId,
+                'targetUserId'   => $targetUserId,
+                'status'         => 'exists',
+            ];
+        } catch (DoesNotExistException) {
+            // No existing share — create below.
+        }
+
+        $copy = $this->createDirectRecipientCopy(
+            source: $source,
+            targetUserId: $targetUserId,
+            encryptedKey: $encryptedKey,
+            encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
+            encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
+        );
+        if ($copy === null) {
+            return [
+                'sourceSecretId' => $sourceSecretId,
+                'targetUserId'   => $targetUserId,
+                'status'         => 'no_suite',
+            ];
+        }
+
+        $entity = new ShareTarget();
+        $entity->setId(Uuid::uuid4()->toString());
+        $entity->setSourceSecretId($sourceSecretId);
+        $entity->setTargetUserId($targetUserId);
+        $entity->setSecretId($copy->getId());
+        $entity->setCreatedBy($userId);
+        $entity->setCreatedAt(new DateTime());
+        $this->mapper->insert($entity);
+
+        $this->dispatchAudit(
+            event: $this->auditEvents->forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::SHARE_GRANTED,
+                objectType: 'secret',
+                objectId: $sourceSecretId,
+                objectName: $source->getName(),
+                metadata: [
+                    'recipientType' => 'user',
+                    'recipientId'   => $targetUserId,
+                ],
+            )
+        );
+
+        return [
+            'sourceSecretId'    => $sourceSecretId,
+            'targetUserId'      => $targetUserId,
+            'status'            => 'created',
+            'recipientSecretId' => $copy->getId(),
+        ];
+    }//end createDirectShare()
 
     /**
      * The active-suite PEM certificate of a share recipient — public key
@@ -640,106 +682,15 @@ class ShareService
         string $expectedUpdatedAt,
         string $userId,
     ): int {
-        $source = $this->loadSecret(secretId: $secretId);
+        $source   = $this->loadSecret(secretId: $secretId);
+        $isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
+        $this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
-        // Authorization seam (folder-permission-grades §2.3): the owner
-        // and active delegates as before, OR a member holding a `write`
-        // grade on an ancestor team folder. Everyone else keeps the
-        // existing rejection.
-        $isWriter = false;
-        if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === false) {
-            $grade = $this->teamFolderService?->resolveGrade(secret: $source, userId: $userId);
-            if ($grade !== 'write') {
-                $this->assertOwnerOrDelegate(secret: $source, userId: $userId);
-            }
-
-            $isWriter = true;
-        }
-
-        // Optimistic lock — if the source has moved since the browser
-        // last fetched it, refuse the sync so the caller can re-encrypt
-        // against the current value.
-        if ($expectedUpdatedAt !== '' && $source->getUpdatedAt() !== null) {
-            $current = $source->getUpdatedAt()->format(DateTime::ATOM);
-            if ($current !== $expectedUpdatedAt) {
-                throw new InvalidArgumentException(
-                    message: 'Source secret has changed since the sync was prepared'
-                );
-            }
-        }
-
-        // Membership guard: a sync may only touch the source row itself
-        // and its ACTUAL recipient copies. Without this, any authorized
-        // caller could pass arbitrary secret ids and corrupt foreign
-        // ciphertext (pre-existing defect fixed with
-        // folder-permission-grades §2.3).
-        $allowedIds = [$source->getId() => true];
-        foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
-            $allowedIds[$shareRow->getSecretId()] = true;
-        }
-
-        $updated = 0;
-        $this->db->beginTransaction();
-        try {
-            foreach ($updates as $update) {
-                $recipientSecretId = (string) ($update['secretId'] ?? '');
-                if ($recipientSecretId === '' || isset($allowedIds[$recipientSecretId]) === false) {
-                    continue;
-                }
-
-                try {
-                    $copy = $this->secretMapper->findById($recipientSecretId);
-                } catch (DoesNotExistException) {
-                    continue;
-                }
-
-                if (isset($update['key']) === true) {
-                    $copy->setKey((string) $update['key']);
-                }
-
-                if (array_key_exists('login', $update) === true) {
-                    $login = null;
-                    if ($update['login'] !== null) {
-                        $login = (string) $update['login'];
-                    }
-
-                    $copy->setLogin($login);
-                }
-
-                if (array_key_exists('additionalFields', $update) === true) {
-                    $additionalFields = null;
-                    if ($update['additionalFields'] !== null) {
-                        $additionalFields = (string) $update['additionalFields'];
-                    }
-
-                    $copy->setAdditionalFields($additionalFields);
-                }
-
-                $copy->setUpdatedAt(new DateTime());
-
-                // A key rewrite of the SOURCE row is a real rotation —
-                // advance keyUpdatedAt so rotation proofs stay honest
-                // (folder-permission-grades §2.3).
-                if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
-                    $copy->setKeyUpdatedAt(new DateTime());
-                }
-
-                // If the copy was previously flagged as possibly compromised
-                // (e.g. EncryptionSuite migration mid-air), the freshly
-                // re-encrypted blob clears that warning for the recipient.
-                if ($copy->getPossiblyCompromisedAt() !== null) {
-                    $copy->setPossiblyCompromisedAt(null);
-                }
-
-                $this->secretMapper->update($copy);
-                ++$updated;
-            }//end foreach
-
-            $this->db->commit();
-        } catch (Throwable $exception) {
-            $this->db->rollBack();
-            throw $exception;
-        }//end try
+        $updated = $this->applySyncUpdates(
+            source: $source,
+            updates: $updates,
+            allowedIds: $this->collectSyncTargets(source: $source)
+        );
 
         // A non-owner write is attributed to the writer (§3.3) —
         // identifiers only, never key material.
@@ -758,6 +709,170 @@ class ShareService
 
         return $updated;
     }//end syncUpdate()
+
+    /**
+     * Authorization seam for a sync (folder-permission-grades §2.3): the
+     * owner and active delegates as before, OR a member holding a `write`
+     * grade on an ancestor team folder. Everyone else keeps the existing
+     * rejection.
+     *
+     * @param Secret $source The source secret being synced
+     * @param string $userId The requesting user
+     *
+     * @return bool True when the caller writes as a team-folder member rather than the owner.
+     *
+     * @throws InvalidArgumentException When the caller may not write the secret
+     */
+    private function resolveSyncWriter(Secret $source, string $userId): bool
+    {
+        if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
+            return false;
+        }
+
+        $grade = $this->teamFolderService?->resolveGrade(secret: $source, userId: $userId);
+        if ($grade !== 'write') {
+            $this->assertOwnerOrDelegate(secret: $source, userId: $userId);
+        }
+
+        return true;
+    }//end resolveSyncWriter()
+
+    /**
+     * Optimistic lock — if the source has moved since the browser last
+     * fetched it, refuse the sync so the caller can re-encrypt against the
+     * current value.
+     *
+     * @param Secret $source            The source secret being synced
+     * @param string $expectedUpdatedAt The owner-side expected ISO timestamp
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the source has changed since the sync was prepared
+     */
+    private function assertSyncSourceUnchanged(Secret $source, string $expectedUpdatedAt): void
+    {
+        if ($expectedUpdatedAt === '' || $source->getUpdatedAt() === null) {
+            return;
+        }
+
+        if ($source->getUpdatedAt()->format(DateTime::ATOM) !== $expectedUpdatedAt) {
+            throw new InvalidArgumentException(
+                message: 'Source secret has changed since the sync was prepared'
+            );
+        }
+    }//end assertSyncSourceUnchanged()
+
+    /**
+     * Membership guard: a sync may only touch the source row itself and its
+     * ACTUAL recipient copies. Without this, any authorized caller could
+     * pass arbitrary secret ids and corrupt foreign ciphertext (pre-existing
+     * defect fixed with folder-permission-grades §2.3).
+     *
+     * @param Secret $source The source secret being synced
+     *
+     * @return array<string,bool> The secret ids this sync may write, keyed by id.
+     */
+    private function collectSyncTargets(Secret $source): array
+    {
+        $allowedIds = [$source->getId() => true];
+        foreach ($this->mapper->findBySourceSecret($source->getId()) as $shareRow) {
+            $allowedIds[$shareRow->getSecretId()] = true;
+        }
+
+        return $allowedIds;
+    }//end collectSyncTargets()
+
+    /**
+     * Write every permitted recipient blob in a single transaction.
+     *
+     * @param Secret                               $source     The source secret being synced
+     * @param array<int,array<string,string|null>> $updates    The per-recipient blobs
+     * @param array<string,bool>                   $allowedIds The secret ids this sync may write
+     *
+     * @return int Number of recipient copies updated.
+     *
+     * @throws Throwable When the transaction fails; the write is rolled back first.
+     */
+    private function applySyncUpdates(Secret $source, array $updates, array $allowedIds): int
+    {
+        $updated = 0;
+        $this->db->beginTransaction();
+        try {
+            foreach ($updates as $update) {
+                $recipientSecretId = (string) ($update['secretId'] ?? '');
+                if ($recipientSecretId === '' || isset($allowedIds[$recipientSecretId]) === false) {
+                    continue;
+                }
+
+                try {
+                    $copy = $this->secretMapper->findById($recipientSecretId);
+                } catch (DoesNotExistException) {
+                    continue;
+                }
+
+                $this->applyRecipientBlob(copy: $copy, update: $update);
+
+                // A key rewrite of the SOURCE row is a real rotation —
+                // advance keyUpdatedAt so rotation proofs stay honest
+                // (folder-permission-grades §2.3).
+                if ($recipientSecretId === $source->getId() && isset($update['key']) === true) {
+                    $copy->setKeyUpdatedAt(new DateTime());
+                }
+
+                $this->secretMapper->update($copy);
+                ++$updated;
+            }//end foreach
+
+            $this->db->commit();
+        } catch (Throwable $exception) {
+            $this->db->rollBack();
+            throw $exception;
+        }//end try
+
+        return $updated;
+    }//end applySyncUpdates()
+
+    /**
+     * Copy one re-encrypted blob onto a recipient's Secret row.
+     *
+     * @param Secret                    $copy   The recipient copy to mutate
+     * @param array<string,string|null> $update The blob row for this recipient
+     *
+     * @return void
+     */
+    private function applyRecipientBlob(Secret $copy, array $update): void
+    {
+        if (isset($update['key']) === true) {
+            $copy->setKey((string) $update['key']);
+        }
+
+        if (array_key_exists('login', $update) === true) {
+            $login = null;
+            if ($update['login'] !== null) {
+                $login = (string) $update['login'];
+            }
+
+            $copy->setLogin($login);
+        }
+
+        if (array_key_exists('additionalFields', $update) === true) {
+            $additionalFields = null;
+            if ($update['additionalFields'] !== null) {
+                $additionalFields = (string) $update['additionalFields'];
+            }
+
+            $copy->setAdditionalFields($additionalFields);
+        }
+
+        $copy->setUpdatedAt(new DateTime());
+
+        // If the copy was previously flagged as possibly compromised
+        // (e.g. EncryptionSuite migration mid-air), the freshly
+        // re-encrypted blob clears that warning for the recipient.
+        if ($copy->getPossiblyCompromisedAt() !== null) {
+            $copy->setPossiblyCompromisedAt(null);
+        }
+    }//end applyRecipientBlob()
 
     /**
      * The write context of a secret for the current user
