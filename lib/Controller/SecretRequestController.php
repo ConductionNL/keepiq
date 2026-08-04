@@ -173,18 +173,6 @@ class SecretRequestController extends OCSController
             return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        $expiry = null;
-        if ($expiresAt !== null && $expiresAt !== '') {
-            try {
-                $expiry = new DateTime($expiresAt);
-            } catch (Exception) {
-                return new JSONResponse(
-                    data: ['message' => 'Invalid expiry timestamp'],
-                    statusCode: Http::STATUS_BAD_REQUEST
-                );
-            }
-        }
-
         // Resolve the three creation paths to one explicit mode here, so the
         // dispatcher below is a plain lookup rather than a flag-driven branch.
         // An applicationId wins over the re-request discriminator, matching
@@ -201,7 +189,7 @@ class SecretRequestController extends OCSController
                 secretId: $secretId,
                 encryptionSuiteId: $encryptionSuiteId,
                 requestedFields: $requestedFields,
-                expiry: $expiry,
+                expiry: $this->parseExpiry(expiresAt: $expiresAt),
                 applicationId: (string) $applicationId,
                 userId: $user->getUID()
             );
@@ -220,6 +208,29 @@ class SecretRequestController extends OCSController
 
         return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()
+
+    /**
+     * Parse the optional expiry timestamp. An unparseable value surfaces as
+     * an InvalidArgumentException, which the caller already maps to 400.
+     *
+     * @param string|null $expiresAt The ISO-8601 expiry, or null/'' for none
+     *
+     * @return DateTime|null
+     *
+     * @throws InvalidArgumentException When the timestamp cannot be parsed.
+     */
+    private function parseExpiry(?string $expiresAt): ?DateTime
+    {
+        if ($expiresAt === null || $expiresAt === '') {
+            return null;
+        }
+
+        try {
+            return new DateTime($expiresAt);
+        } catch (Exception) {
+            throw new InvalidArgumentException(message: 'Invalid expiry timestamp');
+        }
+    }//end parseExpiry()
 
     /**
      * Route a create to the application, re-request or plain service path.

@@ -207,6 +207,49 @@ class SiemSinkController extends OCSController
             return $this->forbidden();
         }
 
+        $params = $this->collectSinkChanges(
+            name: $name,
+            endpoint: $endpoint,
+            tls: $tls,
+            hmacSecret: $hmacSecret,
+            categoryFilter: $categoryFilter,
+            queueCap: $queueCap,
+            enabled: $enabled
+        );
+
+        try {
+            $sink = $this->service->updateSink(adminUid: $adminUid, sinkId: $id, params: $params);
+        } catch (DoesNotExistException) {
+            return new JSONResponse(data: ['message' => 'Sink not found'], statusCode: Http::STATUS_NOT_FOUND);
+        }
+
+        return new JSONResponse(data: $sink->jsonSerialize());
+    }//end update()
+
+    /**
+     * Collect the sink fields the caller actually supplied. An empty string
+     * or a null means "leave unchanged"; hmacSecret is always forwarded
+     * because the service treats '' as "keep the stored secret".
+     *
+     * @param string                 $name           The new display name, or ''
+     * @param string                 $endpoint       The new endpoint URL, or ''
+     * @param bool|null              $tls            The new TLS flag, or null
+     * @param string                 $hmacSecret     The new HMAC secret, or ''
+     * @param array<int,string>|null $categoryFilter The new category filter, or null
+     * @param int|null               $queueCap       The new queue cap, or null
+     * @param bool|null              $enabled        The new enabled flag, or null
+     *
+     * @return array<string,mixed> The changed fields only.
+     */
+    private function collectSinkChanges(
+        string $name,
+        string $endpoint,
+        ?bool $tls,
+        string $hmacSecret,
+        ?array $categoryFilter,
+        ?int $queueCap,
+        ?bool $enabled,
+    ): array {
         $params = ['hmacSecret' => $hmacSecret];
         if ($name !== '') {
             $params['name'] = $name;
@@ -232,14 +275,8 @@ class SiemSinkController extends OCSController
             $params['enabled'] = $enabled;
         }
 
-        try {
-            $sink = $this->service->updateSink(adminUid: $adminUid, sinkId: $id, params: $params);
-        } catch (DoesNotExistException) {
-            return new JSONResponse(data: ['message' => 'Sink not found'], statusCode: Http::STATUS_NOT_FOUND);
-        }
-
-        return new JSONResponse(data: $sink->jsonSerialize());
-    }//end update()
+        return $params;
+    }//end collectSinkChanges()
 
     /**
      * Delete a sink and its queued events.

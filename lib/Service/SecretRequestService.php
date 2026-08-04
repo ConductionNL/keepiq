@@ -154,22 +154,7 @@ class SecretRequestService
     public function fill(string $token, array $encryptedFields): SecretRequest
     {
         $entity = $this->getByToken(token: $token);
-
-        $requested = json_decode(json: $entity->getRequestedFields(), associative: true);
-        if (is_array($requested) === false) {
-            $requested = [];
-        }
-
-        foreach ($requested as $field) {
-            if (array_key_exists($field, $encryptedFields) === false) {
-                throw new InvalidArgumentException(message: 'Missing required field: '.$field, code: 400);
-            }
-
-            $value = $encryptedFields[$field];
-            if (is_string($value) === false || $value === '') {
-                throw new InvalidArgumentException(message: 'Empty value for field: '.$field, code: 400);
-            }
-        }
+        $this->assertRequestedFieldsFilled(entity: $entity, encryptedFields: $encryptedFields);
 
         // Atomic transition: re-load + flip to defend against a parallel
         // fill that may have raced us between getByToken() and here.
@@ -214,6 +199,35 @@ class SecretRequestService
 
         return $persisted;
     }//end fill()
+
+    /**
+     * Every field the request asked for must arrive as a non-empty string.
+     *
+     * @param SecretRequest       $entity          The request being filled
+     * @param array<string,mixed> $encryptedFields The client-encrypted values
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When a requested field is absent or empty.
+     */
+    private function assertRequestedFieldsFilled(SecretRequest $entity, array $encryptedFields): void
+    {
+        $requested = json_decode(json: $entity->getRequestedFields(), associative: true);
+        if (is_array($requested) === false) {
+            return;
+        }
+
+        foreach ($requested as $field) {
+            if (array_key_exists($field, $encryptedFields) === false) {
+                throw new InvalidArgumentException(message: 'Missing required field: '.$field, code: 400);
+            }
+
+            $value = $encryptedFields[$field];
+            if (is_string($value) === false || $value === '') {
+                throw new InvalidArgumentException(message: 'Empty value for field: '.$field, code: 400);
+            }
+        }
+    }//end assertRequestedFieldsFilled()
 
     /**
      * Lock all pending requests bound to an EncryptionSuite. Invoked by

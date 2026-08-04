@@ -104,38 +104,17 @@ class EphemeralSendService
             throw new InvalidArgumentException('encryptedPayload is required');
         }
 
-        $payloadType = (string) ($params['payloadType'] ?? 'text');
-        if (in_array($payloadType, ['text', 'credential'], true) === false) {
-            throw new InvalidArgumentException('payloadType must be text or credential');
-        }
-
-        $maxViews = (int) ($params['maxViews'] ?? 1);
-        if ($maxViews < 1 || $maxViews > self::MAX_VIEWS_CAP) {
-            throw new InvalidArgumentException(
-                'maxViews must be between 1 and '.self::MAX_VIEWS_CAP.' — unlimited views are not allowed'
-            );
-        }
-
-        $expiresAt  = null;
-        $ttlSeconds = (int) ($params['ttlSeconds'] ?? 0);
-        if ($ttlSeconds > 0) {
-            if ($ttlSeconds > self::TTL_CAP_SECONDS) {
-                throw new InvalidArgumentException('ttlSeconds exceeds the cap of '.self::TTL_CAP_SECONDS);
-            }
-
-            $expiresAt = (new DateTime())->add(new DateInterval('PT'.$ttlSeconds.'S'));
-        }
-
+        $payloadType  = $this->resolvePayloadType(params: $params);
+        $maxViews     = $this->resolveMaxViews(params: $params);
+        $expiresAt    = $this->resolveExpiry(params: $params);
         $hasPassword  = (bool) ($params['hasPassword'] ?? false);
         $wrappedKey   = $this->optionalString(value: ($params['wrappedKey'] ?? null));
         $argon2idSalt = $this->optionalString(value: ($params['argon2idSalt'] ?? null));
-        if ($hasPassword === true && ($wrappedKey === null || $argon2idSalt === null)) {
-            throw new InvalidArgumentException('A password-protected send requires wrappedKey and argon2idSalt');
-        }
-
-        if ($hasPassword === false && ($wrappedKey !== null || $argon2idSalt !== null)) {
-            throw new InvalidArgumentException('wrappedKey/argon2idSalt are only valid with hasPassword');
-        }
+        $this->assertPasswordFieldsConsistent(
+            hasPassword: $hasPassword,
+            wrappedKey: $wrappedKey,
+            argon2idSalt: $argon2idSalt
+        );
 
         $send = new EphemeralSend();
         $send->setId(Uuid::uuid4()->toString());
@@ -152,6 +131,97 @@ class EphemeralSendService
 
         return $this->mapper->insert($send);
     }//end create()
+
+    /**
+     * The requested payload type, defaulting to `text`.
+     *
+     * @param array<string,mixed> $params The create params
+     *
+     * @return string
+     *
+     * @throws InvalidArgumentException On an unsupported payload type.
+     */
+    private function resolvePayloadType(array $params): string
+    {
+        $payloadType = (string) ($params['payloadType'] ?? 'text');
+        if (in_array($payloadType, ['text', 'credential'], true) === false) {
+            throw new InvalidArgumentException('payloadType must be text or credential');
+        }
+
+        return $payloadType;
+    }//end resolvePayloadType()
+
+    /**
+     * The requested view budget. Unlimited views are deliberately not an
+     * option — a send always burns down to zero.
+     *
+     * @param array<string,mixed> $params The create params
+     *
+     * @return int
+     *
+     * @throws InvalidArgumentException When the budget is out of bounds.
+     */
+    private function resolveMaxViews(array $params): int
+    {
+        $maxViews = (int) ($params['maxViews'] ?? 1);
+        if ($maxViews < 1 || $maxViews > self::MAX_VIEWS_CAP) {
+            throw new InvalidArgumentException(
+                'maxViews must be between 1 and '.self::MAX_VIEWS_CAP.' — unlimited views are not allowed'
+            );
+        }
+
+        return $maxViews;
+    }//end resolveMaxViews()
+
+    /**
+     * The absolute expiry derived from the requested TTL, or null when the
+     * send has no time limit.
+     *
+     * @param array<string,mixed> $params The create params
+     *
+     * @return DateTime|null
+     *
+     * @throws InvalidArgumentException When the TTL exceeds the cap.
+     */
+    private function resolveExpiry(array $params): ?DateTime
+    {
+        $ttlSeconds = (int) ($params['ttlSeconds'] ?? 0);
+        if ($ttlSeconds <= 0) {
+            return null;
+        }
+
+        if ($ttlSeconds > self::TTL_CAP_SECONDS) {
+            throw new InvalidArgumentException('ttlSeconds exceeds the cap of '.self::TTL_CAP_SECONDS);
+        }
+
+        return (new DateTime())->add(new DateInterval('PT'.$ttlSeconds.'S'));
+    }//end resolveExpiry()
+
+    /**
+     * The password-protection fields travel together: a protected send needs
+     * both the wrapped key and the salt, an unprotected one may carry neither.
+     *
+     * @param bool        $hasPassword  Whether the send is password-protected
+     * @param string|null $wrappedKey   The password-wrapped payload key
+     * @param string|null $argon2idSalt The Argon2id salt
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When the fields disagree.
+     */
+    private function assertPasswordFieldsConsistent(
+        bool $hasPassword,
+        ?string $wrappedKey,
+        ?string $argon2idSalt,
+    ): void {
+        if ($hasPassword === true && ($wrappedKey === null || $argon2idSalt === null)) {
+            throw new InvalidArgumentException('A password-protected send requires wrappedKey and argon2idSalt');
+        }
+
+        if ($hasPassword === false && ($wrappedKey !== null || $argon2idSalt !== null)) {
+            throw new InvalidArgumentException('wrappedKey/argon2idSalt are only valid with hasPassword');
+        }
+    }//end assertPasswordFieldsConsistent()
 
     /**
      * The owner's sends, newest first.

@@ -123,6 +123,49 @@ class ApplicationService
         ?string $userId,
         bool $isAdmin,
     ): Application {
+        $this->assertRegistrable(name: $name, type: $type, csr: $csr, isAdmin: $isAdmin);
+
+        $persisted = $this->mapper->insert(
+            $this->buildApplicationRow(
+                name: $name,
+                description: $description,
+                type: $type,
+                csr: $csr,
+                userId: $userId,
+                isAdmin: $isAdmin
+            )
+        );
+
+        $this->runPostRegistrationHooks(persisted: $persisted, csr: $csr, userId: $userId);
+
+        $this->dispatchAudit(
+            event: $this->registrationAuditEvent(userId: $userId, persisted: $persisted)
+        );
+
+        return $persisted;
+    }//end register()
+
+    /**
+     * Reject a registration the service cannot accept.
+     *
+     * Per implement-application-mgmt §3.2 / §3.3: when an admin-registered
+     * application supplies a CSR (status will be `active`, suite is
+     * provisioned immediately), gate on PKCS#10 format + >= 4096-bit key
+     * BEFORE the row is persisted. Pending rows (non-admin / anonymous)
+     * store the CSR verbatim; validation runs again when the admin approves
+     * the row, so a malformed CSR is caught there too.
+     *
+     * @param string      $name    The application name
+     * @param string      $type    The application type
+     * @param string|null $csr     The PKCS#10 CSR, when supplied
+     * @param bool        $isAdmin Whether the registrant is an admin
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On an invalid name, type or CSR.
+     */
+    private function assertRegistrable(string $name, string $type, ?string $csr, bool $isAdmin): void
+    {
         if ($name === '') {
             throw new InvalidArgumentException(message: 'name is required');
         }
@@ -131,16 +174,32 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'type must be internal or external');
         }
 
-        // Per implement-application-mgmt §3.2 / §3.3: when an admin-registered
-        // application supplies a CSR (status will be `active`, suite is
-        // provisioned immediately), gate on PKCS#10 format + >= 4096-bit key
-        // BEFORE the row is persisted. Pending rows (non-admin / anonymous)
-        // store the CSR verbatim; validation runs again when the admin
-        // approves the row, so a malformed CSR is caught there too.
         if ($isAdmin === true && $csr !== null && $csr !== '') {
             $this->validateCsr(csr: $csr);
         }
+    }//end assertRegistrable()
 
+    /**
+     * Build the unpersisted Application row. An admin registration is active
+     * and self-approved on the spot; every other registration is pending.
+     *
+     * @param string      $name        The application name
+     * @param string|null $description The application description
+     * @param string      $type        The application type
+     * @param string|null $csr         The PKCS#10 CSR, when supplied
+     * @param string|null $userId      The registering user, or null when anonymous
+     * @param bool        $isAdmin     Whether the registrant is an admin
+     *
+     * @return Application
+     */
+    private function buildApplicationRow(
+        string $name,
+        ?string $description,
+        string $type,
+        ?string $csr,
+        ?string $userId,
+        bool $isAdmin,
+    ): Application {
         $entity = new Application();
         $entity->setId(Uuid::uuid4()->toString());
         $entity->setName($name);
@@ -157,8 +216,22 @@ class ApplicationService
             $entity->setApprovedAt(new DateTime());
         }
 
-        $persisted = $this->mapper->insert($entity);
+        return $entity;
+    }//end buildApplicationRow()
 
+    /**
+     * Best-effort work that follows a successful registration: suite
+     * provisioning, the log line and the admin approval-queue notification.
+     * None of it may block the registration.
+     *
+     * @param Application $persisted The persisted application row
+     * @param string|null $csr       The PKCS#10 CSR, when supplied
+     * @param string|null $userId    The registering user, or null when anonymous
+     *
+     * @return void
+     */
+    private function runPostRegistrationHooks(Application $persisted, ?string $csr, ?string $userId): void
+    {
         // §9.1 — Provision an EncryptionSuite for any application that
         // becomes active immediately (admin auto-approval with CSR).
         // Pending rows wait for the admin approval path to call
@@ -173,7 +246,7 @@ class ApplicationService
         }
 
         $this->logger->info(
-            'Registered application '.$persisted->getId().' ('.$name.') status='.$persisted->getStatus(),
+            'Registered application '.$persisted->getId().' ('.$persisted->getName().') status='.$persisted->getStatus(),
             ['app' => 'doriath']
         );
 
@@ -188,13 +261,7 @@ class ApplicationService
         if ($persisted->isPending() === true && $this->notificationService !== null) {
             $this->dispatchAdminPendingNotification(application: $persisted, registeredBy: $userId);
         }
-
-        $this->dispatchAudit(
-            event: $this->registrationAuditEvent(userId: $userId, persisted: $persisted)
-        );
-
-        return $persisted;
-    }//end register()
+    }//end runPostRegistrationHooks()
 
     /**
      * The APPLICATION_REGISTERED audit event for a registration. Anonymous

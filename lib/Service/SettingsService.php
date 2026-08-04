@@ -220,6 +220,30 @@ class SettingsService
      */
     public function updateAdminSettings(array $data): array
     {
+        // Each group validates and persists one family of keys. Every guard
+        // is independent — an absent key is left untouched, an out-of-bounds
+        // value throws before anything in its group is written.
+        $this->updateAuthenticationSettings(data: $data);
+        $this->updateInstanceSettings(data: $data);
+        $this->updatePolicySettings(data: $data);
+        $this->updateExpirySettings(data: $data);
+        $this->updateLeaseSettings(data: $data);
+        $this->updateRetentionSettings(data: $data);
+
+        return $this->getAdminSettings();
+    }//end updateAdminSettings()
+
+    /**
+     * Password-strength and session keys (implement-dashboard-settings §1.4).
+     *
+     * @param array<string,mixed> $data The admin-settings input
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On out-of-bounds values.
+     */
+    private function updateAuthenticationSettings(array $data): void
+    {
         $appId = Application::APP_ID;
 
         if (isset($data['min_password_length']) === true) {
@@ -253,6 +277,21 @@ class SettingsService
 
             $this->appConfig->setValueString($appId, 'default_session_timeout', $timeout);
         }
+    }//end updateAuthenticationSettings()
+
+    /**
+     * Instance-wide switches: CA renewal, audit retention, breach checking
+     * and the offline read-only cache (offline-readonly-cache §1.1).
+     *
+     * @param array<string,mixed> $data The admin-settings input
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On out-of-bounds values.
+     */
+    private function updateInstanceSettings(array $data): void
+    {
+        $appId = Application::APP_ID;
 
         if (isset($data['ca_auto_renew_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool) $data['ca_auto_renew_enabled']);
@@ -274,15 +313,25 @@ class SettingsService
             $this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool) $data['breach_check_enabled']);
         }
 
-        // Offline read-only cache org-wide switch (offline-readonly-cache §1.1).
         if (isset($data['offline_cache_enabled']) === true) {
             $this->appConfig->setValueBool($appId, 'offline_cache_enabled', (bool) $data['offline_cache_enabled']);
         }
+    }//end updateInstanceSettings()
 
-        $this->updatePolicySettings(data: $data);
+    /**
+     * Expiry defaults (rotation-expiry-policies §2.2): admin max age ships
+     * OFF (0); reminder thresholds validated as positive ints.
+     *
+     * @param array<string,mixed> $data The admin-settings input
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On out-of-bounds values.
+     */
+    private function updateExpirySettings(array $data): void
+    {
+        $appId = Application::APP_ID;
 
-        // Expiry defaults (rotation-expiry-policies §2.2): admin max age
-        // ships OFF (0); reminder thresholds validated as positive ints.
         if (isset($data['expiry_default_max_age_days']) === true) {
             $maxAge = (int) $data['expiry_default_max_age_days'];
             if ($maxAge < 0) {
@@ -309,9 +358,22 @@ class SettingsService
         if (isset($data['expiry_policy_enforced']) === true) {
             $this->appConfig->setValueBool($appId, 'expiry_policy_enforced', (bool) $data['expiry_policy_enforced']);
         }
+    }//end updateExpirySettings()
 
-        // Machine-lease policy (machine-secret-leases §2.4): a 60-second
-        // floor keeps a lease meaningful; max must not undercut default.
+    /**
+     * Machine-lease policy (machine-secret-leases §2.4): a 60-second floor
+     * keeps a lease meaningful; max must not undercut default.
+     *
+     * @param array<string,mixed> $data The admin-settings input
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On out-of-bounds values.
+     */
+    private function updateLeaseSettings(array $data): void
+    {
+        $appId = Application::APP_ID;
+
         foreach (['lease_default_ttl_seconds', 'lease_max_ttl_seconds'] as $leaseKey) {
             if (isset($data[$leaseKey]) === true) {
                 $ttl = (int) $data[$leaseKey];
@@ -334,9 +396,24 @@ class SettingsService
                 (bool) $data['lease_revocation_blocks_refetch']
             );
         }
+    }//end updateLeaseSettings()
 
-        // Version retention (secret-version-history §4.1): a floor of 1
-        // kept version preserves restorability; days 0 = unlimited age.
+    /**
+     * Version retention (secret-version-history §4.1) and attachment limits
+     * (encrypted-attachments §2.5). A floor of 1 kept version preserves
+     * restorability; days 0 = unlimited age. Attachment limits are expressed
+     * and enforced in stored CIPHERTEXT bytes — what actually consumes disk.
+     *
+     * @param array<string,mixed> $data The admin-settings input
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On out-of-bounds values.
+     */
+    private function updateRetentionSettings(array $data): void
+    {
+        $appId = Application::APP_ID;
+
         if (isset($data['version_retention_count']) === true) {
             $count = (int) $data['version_retention_count'];
             if ($count < 1) {
@@ -355,8 +432,6 @@ class SettingsService
             $this->appConfig->setValueInt($appId, 'version_retention_days', $days);
         }
 
-        // Attachment limits (encrypted-attachments §2.5): expressed and
-        // enforced in stored CIPHERTEXT bytes — what actually consumes disk.
         if (isset($data['attachment_max_bytes']) === true) {
             $maxBytes = (int) $data['attachment_max_bytes'];
             if ($maxBytes < 1) {
@@ -374,9 +449,7 @@ class SettingsService
 
             $this->appConfig->setValueInt($appId, 'attachment_user_quota_bytes', $quota);
         }
-
-        return $this->getAdminSettings();
-    }//end updateAdminSettings()
+    }//end updateRetentionSettings()
 
     /**
      * Validate + persist the org password-policy keys and dispatch the

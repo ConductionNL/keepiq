@@ -300,7 +300,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.
     ['name' => 'audit#secret', 'url' => '/api/v1/audit/secret/{id}', 'verb' => 'GET'],
-    ['name' => 'audit#me',     'url' => '/api/v1/audit/me',          'verb' => 'GET'],
+    ['name' => 'audit#mine',   'url' => '/api/v1/audit/me',          'verb' => 'GET'],
     ['name' => 'audit#index',  'url' => '/api/v1/audit',             'verb' => 'GET'],
 
     // Password-health breach-check proxy (password-health §1.5). Prefix-only

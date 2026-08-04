@@ -99,34 +99,12 @@ class RotationPolicyService
 
         $base = $secret->getKeyUpdatedAt() ?? $secret->getCreatedAt();
         if ($base !== null) {
-            foreach ($this->policyMapper->findApplicable(ownerId: $secret->getOwnerId()) as $policy) {
-                if ($this->policyApplies(policy: $policy, secret: $secret) === false) {
-                    continue;
-                }
-
-                $maxAge = $policy->getMaxAgeDays();
-                if ($maxAge !== null && $maxAge > 0) {
-                    $candidates[] = (clone $base)->add(new DateInterval('P'.$maxAge.'D'));
-                }
-            }
-
-            // Per-user override (0 = off), then instance-wide admin
-            // default (0 = off) — precedence is moot under min().
-            $userMax = (int) ($this->config?->getUserValue(
-                $secret->getOwnerId(),
-                Application::APP_ID,
-                'expiry_max_age_days',
-                '0'
-            ) ?? 0);
-            if ($userMax > 0) {
-                $candidates[] = (clone $base)->add(new DateInterval('P'.$userMax.'D'));
-            }
-
-            $adminMax = $this->appConfig->getValueInt(Application::APP_ID, 'expiry_default_max_age_days', 0);
-            if ($adminMax > 0) {
-                $candidates[] = (clone $base)->add(new DateInterval('P'.$adminMax.'D'));
-            }
-        }//end if
+            $candidates = array_merge(
+                $candidates,
+                $this->policyExpiryCandidates(secret: $secret, base: $base),
+                $this->configuredExpiryCandidates(secret: $secret, base: $base)
+            );
+        }
 
         if ($candidates === []) {
             return null;
@@ -134,6 +112,62 @@ class RotationPolicyService
 
         return min($candidates);
     }//end resolveEffectiveExpiry()
+
+    /**
+     * The expiry dates implied by every stored policy that scopes this secret.
+     *
+     * @param Secret   $secret The secret
+     * @param DateTime $base   The age baseline (last key rotation, else creation)
+     *
+     * @return array<int,DateTime>
+     */
+    private function policyExpiryCandidates(Secret $secret, DateTime $base): array
+    {
+        $candidates = [];
+        foreach ($this->policyMapper->findApplicable(ownerId: $secret->getOwnerId()) as $policy) {
+            if ($this->policyApplies(policy: $policy, secret: $secret) === false) {
+                continue;
+            }
+
+            $maxAge = $policy->getMaxAgeDays();
+            if ($maxAge !== null && $maxAge > 0) {
+                $candidates[] = (clone $base)->add(new DateInterval('P'.$maxAge.'D'));
+            }
+        }
+
+        return $candidates;
+    }//end policyExpiryCandidates()
+
+    /**
+     * The expiry dates implied by the per-user override and the instance-wide
+     * admin default. Both use 0 to mean "off"; precedence is moot under min().
+     *
+     * @param Secret   $secret The secret
+     * @param DateTime $base   The age baseline (last key rotation, else creation)
+     *
+     * @return array<int,DateTime>
+     */
+    private function configuredExpiryCandidates(Secret $secret, DateTime $base): array
+    {
+        $candidates = [];
+
+        $userMax = (int) ($this->config?->getUserValue(
+            $secret->getOwnerId(),
+            Application::APP_ID,
+            'expiry_max_age_days',
+            '0'
+        ) ?? 0);
+        if ($userMax > 0) {
+            $candidates[] = (clone $base)->add(new DateInterval('P'.$userMax.'D'));
+        }
+
+        $adminMax = $this->appConfig->getValueInt(Application::APP_ID, 'expiry_default_max_age_days', 0);
+        if ($adminMax > 0) {
+            $candidates[] = (clone $base)->add(new DateInterval('P'.$adminMax.'D'));
+        }
+
+        return $candidates;
+    }//end configuredExpiryCandidates()
 
     /**
      * Whether a policy's scope matches a secret.
@@ -190,32 +224,10 @@ class RotationPolicyService
         ?int $maxAgeDays,
         array $reminderDays=[],
     ): ExpiryPolicy {
-        if (in_array($scope, ['type', 'folder'], true) === false) {
-            throw new InvalidArgumentException('scope must be type or folder');
-        }
+        $this->assertPolicyInput(scope: $scope, scopeId: $scopeId, maxAgeDays: $maxAgeDays);
 
-        if ($scopeId === '') {
-            throw new InvalidArgumentException('scopeId is required');
-        }
-
-        if ($maxAgeDays !== null && $maxAgeDays < 1) {
-            throw new InvalidArgumentException('maxAgeDays must be positive or null');
-        }
-
-        $reminderDays = array_values(array_filter(array_map('intval', $reminderDays), static fn ($days) => $days > 0));
-
-        $encodedReminders = null;
-        if ($reminderDays !== []) {
-            $encodedReminders = (string) json_encode($reminderDays);
-        }
-
-        $policy = null;
-        foreach ($this->policyMapper->findByOwner(ownerId: $userId) as $existing) {
-            if ($existing->getScope() === $scope && $existing->getScopeId() === $scopeId) {
-                $policy = $existing;
-                break;
-            }
-        }
+        $encodedReminders = $this->encodeReminderDays(reminderDays: $reminderDays);
+        $policy           = $this->findScopedPolicy(userId: $userId, scope: $scope, scopeId: $scopeId);
 
         $isNew = ($policy === null);
         if ($isNew === true) {
@@ -249,6 +261,72 @@ class RotationPolicyService
 
         return $policy;
     }//end upsertPolicy()
+
+    /**
+     * Reject a policy the service cannot store.
+     *
+     * @param string   $scope      The policy scope (`type`|`folder`)
+     * @param string   $scopeId    The scoped type or folder UUID
+     * @param int|null $maxAgeDays The maximum key age in days, or null for none
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException On an invalid scope, scopeId or age.
+     */
+    private function assertPolicyInput(string $scope, string $scopeId, ?int $maxAgeDays): void
+    {
+        if (in_array($scope, ['type', 'folder'], true) === false) {
+            throw new InvalidArgumentException('scope must be type or folder');
+        }
+
+        if ($scopeId === '') {
+            throw new InvalidArgumentException('scopeId is required');
+        }
+
+        if ($maxAgeDays !== null && $maxAgeDays < 1) {
+            throw new InvalidArgumentException('maxAgeDays must be positive or null');
+        }
+    }//end assertPolicyInput()
+
+    /**
+     * Normalise the reminder thresholds to a stored JSON list of positive
+     * ints, or null when none survive.
+     *
+     * @param array<int,mixed> $reminderDays The requested thresholds
+     *
+     * @return string|null
+     */
+    private function encodeReminderDays(array $reminderDays): ?string
+    {
+        $thresholds = array_values(
+            array_filter(array_map('intval', $reminderDays), static fn ($days) => $days > 0)
+        );
+        if ($thresholds === []) {
+            return null;
+        }
+
+        return (string) json_encode($thresholds);
+    }//end encodeReminderDays()
+
+    /**
+     * The caller's existing policy for a scope, or null when they have none.
+     *
+     * @param string $userId  The owning user
+     * @param string $scope   The policy scope (`type`|`folder`)
+     * @param string $scopeId The scoped type or folder UUID
+     *
+     * @return ExpiryPolicy|null
+     */
+    private function findScopedPolicy(string $userId, string $scope, string $scopeId): ?ExpiryPolicy
+    {
+        foreach ($this->policyMapper->findByOwner(ownerId: $userId) as $existing) {
+            if ($existing->getScope() === $scope && $existing->getScopeId() === $scopeId) {
+                return $existing;
+            }
+        }
+
+        return null;
+    }//end findScopedPolicy()
 
     /**
      * Delete one of the caller's policies.
