@@ -900,16 +900,76 @@ class CertificateAuthorityService
         string $intermediateCert,
         string $intermediateKeyPem,
     ): ?string {
-        $oldPub = openssl_pkey_get_public(public_key: $oldCert);
-        if ($oldPub === false) {
+        $oldModulus = $this->rsaModulusOf(pemCertificate: $oldCert);
+        if ($oldModulus === null) {
             return null;
         }
 
-        $oldDetails = openssl_pkey_get_details(key: $oldPub);
-        if ($oldDetails === false || isset($oldDetails['rsa']['n']) === false) {
+        $newCertPem = $this->signPreservingSubject(
+            oldCert: $oldCert,
+            intermediateCert: $intermediateCert,
+            intermediateKeyPem: $intermediateKeyPem
+        );
+
+        // The saveX509() helper is declared `: string`, so the only failure
+        // shape left to guard is an empty export.
+        if ($newCertPem === null || $newCertPem === '') {
             return null;
         }
 
+        // Guard the zero-knowledge invariant: the issued certificate MUST carry
+        // the suite's original public key — reject the certificate otherwise so
+        // the caller keeps the correct existing one.
+        $newModulus = $this->rsaModulusOf(pemCertificate: $newCertPem);
+        if ($newModulus === null) {
+            return null;
+        }
+
+        if (hash_equals($oldModulus, $newModulus) === false) {
+            return null;
+        }
+
+        return $newCertPem;
+    }//end resignPreservingPublicKey()
+
+    /**
+     * The RSA modulus of a PEM certificate's public key, or null when the
+     * certificate cannot be parsed or carries no RSA key.
+     *
+     * @param string $pemCertificate The PEM-encoded certificate
+     *
+     * @return string|null
+     */
+    private function rsaModulusOf(string $pemCertificate): ?string
+    {
+        $publicKey = openssl_pkey_get_public(public_key: $pemCertificate);
+        if ($publicKey === false) {
+            return null;
+        }
+
+        $details = openssl_pkey_get_details(key: $publicKey);
+        if ($details === false || isset($details['rsa']['n']) === false) {
+            return null;
+        }
+
+        return (string) $details['rsa']['n'];
+    }//end rsaModulusOf()
+
+    /**
+     * Assemble and sign a new certificate that carries the old certificate's
+     * SubjectPublicKeyInfo and subject DN verbatim, signed by the intermediate.
+     *
+     * @param string $oldCert            The current PEM certificate to re-sign
+     * @param string $intermediateCert   The signing intermediate certificate (PEM)
+     * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
+     *
+     * @return string|null The new PEM certificate, or null when signing failed.
+     */
+    private function signPreservingSubject(
+        string $oldCert,
+        string $intermediateCert,
+        string $intermediateKeyPem,
+    ): ?string {
         try {
             $old = new X509();
             if ($old->loadX509($oldCert) === false) {
@@ -933,7 +993,7 @@ class CertificateAuthorityService
                 return null;
             }
 
-            $newCertPem = $signer->saveX509($signed);
+            return $signer->saveX509($signed);
         } catch (Throwable $exception) {
             $this->logger->warning(
                 'Doriath: phpseclib re-sign failed: '.$exception->getMessage(),
@@ -942,32 +1002,7 @@ class CertificateAuthorityService
 
             return null;
         }//end try
-
-        // The saveX509() helper is declared `: string`, so the only failure
-        // shape left to guard is an empty export.
-        if ($newCertPem === '') {
-            return null;
-        }
-
-        // Guard the zero-knowledge invariant: the issued certificate MUST carry
-        // the suite's original public key — reject the certificate otherwise so
-        // the caller keeps the correct existing one.
-        $newPub = openssl_pkey_get_public(public_key: $newCertPem);
-        if ($newPub === false) {
-            return null;
-        }
-
-        $newDetails = openssl_pkey_get_details(key: $newPub);
-        if ($newDetails === false || isset($newDetails['rsa']['n']) === false) {
-            return null;
-        }
-
-        if (hash_equals($oldDetails['rsa']['n'], $newDetails['rsa']['n']) === false) {
-            return null;
-        }
-
-        return $newCertPem;
-    }//end resignPreservingPublicKey()
+    }//end signPreservingSubject()
 
     /**
      * Set the CA status to degraded.

@@ -190,37 +190,21 @@ class SecretController extends OCSController
             return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
         }
 
-        // Validate required params HERE so a missing body returns 400, not a 500
-        // from the framework dispatcher failing to bind non-nullable arguments.
-        if ($name === null || $name === '' || $key === null || $key === '') {
-            return new JSONResponse(
-                data: ['message' => 'Missing required parameters: name and key are required'],
-                statusCode: Http::STATUS_BAD_REQUEST
-            );
-        }
-
-        $data = [
-            'name'             => $name,
-            'key'              => $key,
-            'url'              => $url,
-            'typeId'           => $typeId,
-            'folderId'         => $folderId,
-            'login'            => $login,
-            'additionalFields' => $additionalFields,
-        ];
-
-        if ($ownerType === 'application' && ($ownerId === null || $ownerId === '')) {
-            return new JSONResponse(
-                data: ['message' => 'ownerId is required when ownerType=application'],
-                statusCode: Http::STATUS_BAD_REQUEST
-            );
-        }
-
         try {
+            $this->assertCreatable(name: $name, key: $key, ownerType: $ownerType, ownerId: $ownerId);
+
             $secret = $this->createOwnedSecret(
                 ownerType: $ownerType,
                 ownerId: (string) $ownerId,
-                data: $data,
+                data: [
+                    'name'             => $name,
+                    'key'              => $key,
+                    'url'              => $url,
+                    'typeId'           => $typeId,
+                    'folderId'         => $folderId,
+                    'login'            => $login,
+                    'additionalFields' => $additionalFields,
+                ],
                 userId: $userId
             );
         } catch (SuiteBlockedException $e) {
@@ -233,6 +217,34 @@ class SecretController extends OCSController
 
         return new JSONResponse(data: $secret->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()
+
+    /**
+     * Validate the required create params HERE so a missing body returns 400,
+     * not a 500 from the framework dispatcher failing to bind non-nullable
+     * arguments. Both rejections surface as InvalidArgumentException, which
+     * the caller already maps to 400.
+     *
+     * @param string|null $name      The secret name
+     * @param string|null $key       The client-encrypted key blob
+     * @param string|null $ownerType The owner type ('application' or null/user)
+     * @param string|null $ownerId   The owning application's ID
+     *
+     * @return void
+     *
+     * @throws InvalidArgumentException When a required parameter is absent.
+     */
+    private function assertCreatable(?string $name, ?string $key, ?string $ownerType, ?string $ownerId): void
+    {
+        if ($name === null || $name === '' || $key === null || $key === '') {
+            throw new InvalidArgumentException(
+                message: 'Missing required parameters: name and key are required'
+            );
+        }
+
+        if ($ownerType === 'application' && ($ownerId === null || $ownerId === '')) {
+            throw new InvalidArgumentException(message: 'ownerId is required when ownerType=application');
+        }
+    }//end assertCreatable()
 
     /**
      * Route a create to the application-owned or user-owned service path.
