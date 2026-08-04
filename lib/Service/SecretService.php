@@ -1048,15 +1048,12 @@ class SecretService
                 break;
             }
 
-            foreach ($pageRows as $secret) {
-                if (isset($matched[$secret->getId()]) === true) {
-                    continue;
-                }
-
-                if ($this->isFuzzyHit(secret: $secret, termLower: $termLower, tolerance: $tolerance) === true) {
-                    $matched[$secret->getId()] = $secret;
-                }
-            }
+            $matched += $this->fuzzyPageHits(
+                pageRows: $pageRows,
+                matched: $matched,
+                termLower: $termLower,
+                tolerance: $tolerance
+            );
 
             $scanned += count($pageRows);
             $offset  += self::FUZZY_SCAN_PAGE_SIZE;
@@ -1076,6 +1073,33 @@ class SecretService
 
         return array_values($matched);
     }//end fuzzyMatch()
+
+    /**
+     * The rows on one scan page that fuzzy-match the term and are not already
+     * matched, keyed by secret id so the caller can union them in.
+     *
+     * @param array<int,Secret>    $pageRows  One page of the owner's secrets
+     * @param array<string,Secret> $matched   The rows already matched
+     * @param string               $termLower The lower-cased search term
+     * @param int                  $tolerance The Levenshtein tolerance
+     *
+     * @return array<string,Secret>
+     */
+    private function fuzzyPageHits(array $pageRows, array $matched, string $termLower, int $tolerance): array
+    {
+        $hits = [];
+        foreach ($pageRows as $secret) {
+            if (isset($matched[$secret->getId()]) === true) {
+                continue;
+            }
+
+            if ($this->isFuzzyHit(secret: $secret, termLower: $termLower, tolerance: $tolerance) === true) {
+                $hits[$secret->getId()] = $secret;
+            }
+        }
+
+        return $hits;
+    }//end fuzzyPageHits()
 
     /**
      * Decide whether a secret's name or url is within Levenshtein tolerance of
