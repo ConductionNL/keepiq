@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Controller;
 
 use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\DashboardService;
+use OCA\Doriath\Service\DashboardSummaryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -42,12 +42,12 @@ class DashboardController extends Controller
     /**
      * Constructor for the DashboardController.
      *
-     * @param IRequest         $request          The request object
-     * @param IInitialState    $initialState     The initial state service
-     * @param IAppConfig       $appConfig        The app config interface
-     * @param DashboardService $dashboardService The dashboard aggregator
-     * @param IUserSession     $userSession      The user session
-     * @param IGroupManager    $groupManager     The group manager
+     * @param IRequest                $request        The request object
+     * @param IInitialState           $initialState   The initial state service
+     * @param IAppConfig              $appConfig      The app config interface
+     * @param DashboardSummaryService $summaryService The dashboard summary aggregator
+     * @param IUserSession            $userSession    The user session
+     * @param IGroupManager           $groupManager   The group manager
      *
      * @return void
      */
@@ -55,7 +55,7 @@ class DashboardController extends Controller
         IRequest $request,
         private IInitialState $initialState,
         private IAppConfig $appConfig,
-        private DashboardService $dashboardService,
+        private DashboardSummaryService $summaryService,
         private IUserSession $userSession,
         private IGroupManager $groupManager,
     ) {
@@ -81,7 +81,7 @@ class DashboardController extends Controller
         $userId  = $user->getUID();
         $isAdmin = $this->groupManager->isAdmin($userId);
 
-        return new JSONResponse(data: $this->dashboardService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
+        return new JSONResponse(data: $this->summaryService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
     }//end summary()
 
     /**
