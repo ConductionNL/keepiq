@@ -221,11 +221,7 @@ class SiemService
     {
         $sink->setLastAttemptAt(new DateTime());
         try {
-            if ($sink->getType() === 'syslog') {
-                $this->deliverSyslog(sink: $sink, payloadJson: $item->getPayload());
-            } else {
-                $this->deliverWebhook(sink: $sink, payloadJson: $item->getPayload());
-            }
+            $this->deliverToSink(sink: $sink, payloadJson: $item->getPayload());
 
             $item->setStatus('delivered');
             $this->queueMapper->update($item);
@@ -240,21 +236,16 @@ class SiemService
         } catch (Throwable $exception) {
             $item->setAttempts($item->getAttempts() + 1);
             $item->setLastError(substr($exception->getMessage(), 0, 500));
-            if ($item->getAttempts() >= self::MAX_ATTEMPTS) {
-                $item->setStatus('dead');
-            } else {
-                $backoff = self::BACKOFF_BASE_SECONDS * (2 ** ($item->getAttempts() - 1));
-                $item->setNextAttemptAt((new DateTime())->add(new DateInterval('PT'.$backoff.'S')));
-            }
+            $this->killOrScheduleRetry(item: $item);
 
             $this->queueMapper->update($item);
 
+            $deliveryStatus = 'failing';
             if ($item->getStatus() === 'dead') {
-                $sink->setLastDeliveryStatus('dead');
-            } else {
-                $sink->setLastDeliveryStatus('failing');
+                $deliveryStatus = 'dead';
             }
 
+            $sink->setLastDeliveryStatus($deliveryStatus);
             $sink->setLastError(substr($exception->getMessage(), 0, 500));
             $sink->setConsecutiveFailures($sink->getConsecutiveFailures() + 1);
             $this->sinkMapper->update($sink);
@@ -262,6 +253,45 @@ class SiemService
             return false;
         }//end try
     }//end deliverOne()
+
+    /**
+     * Route one payload to the transport the sink is configured for.
+     *
+     * @param SiemSink $sink        The sink
+     * @param string   $payloadJson The JSON payload
+     *
+     * @return void
+     *
+     * @throws \RuntimeException On transport failure
+     */
+    private function deliverToSink(SiemSink $sink, string $payloadJson): void
+    {
+        if ($sink->getType() === 'syslog') {
+            $this->deliverSyslog(sink: $sink, payloadJson: $payloadJson);
+            return;
+        }
+
+        $this->deliverWebhook(sink: $sink, payloadJson: $payloadJson);
+    }//end deliverToSink()
+
+    /**
+     * After a failed attempt: bury the item once it has burned through its
+     * attempt budget, otherwise schedule the next exponential-backoff retry.
+     *
+     * @param SiemQueueItem $item The queue item (attempts already incremented)
+     *
+     * @return void
+     */
+    private function killOrScheduleRetry(SiemQueueItem $item): void
+    {
+        if ($item->getAttempts() >= self::MAX_ATTEMPTS) {
+            $item->setStatus('dead');
+            return;
+        }
+
+        $backoff = self::BACKOFF_BASE_SECONDS * (2 ** ($item->getAttempts() - 1));
+        $item->setNextAttemptAt((new DateTime())->add(new DateInterval('PT'.$backoff.'S')));
+    }//end killOrScheduleRetry()
 
     /**
      * RFC 5424 syslog delivery over TCP (TLS when configured, §3.1).
@@ -483,11 +513,7 @@ class SiemService
         $outcome = 'ok';
         $error   = null;
         try {
-            if ($sink->getType() === 'syslog') {
-                $this->deliverSyslog(sink: $sink, payloadJson: $payload);
-            } else {
-                $this->deliverWebhook(sink: $sink, payloadJson: $payload);
-            }
+            $this->deliverToSink(sink: $sink, payloadJson: $payload);
         } catch (Throwable $exception) {
             $outcome = 'failed';
             $error   = $exception->getMessage();
@@ -533,12 +559,13 @@ class SiemService
         }
 
         if (array_key_exists('categoryFilter', $params) === true) {
-            $filter = $params['categoryFilter'];
+            $filter  = $params['categoryFilter'];
+            $encoded = null;
             if (is_array($filter) === true && $filter !== []) {
-                $sink->setCategoryFilter((string) json_encode(array_map('strval', $filter)));
-            } else {
-                $sink->setCategoryFilter(null);
+                $encoded = (string) json_encode(array_map('strval', $filter));
             }
+
+            $sink->setCategoryFilter($encoded);
         }
     }//end applySecretAndFilter()
 

@@ -213,6 +213,10 @@ class ApplicationController extends OCSController
 
         $user = $this->session->getUser();
 
+        // Anonymous default; overridden below when a session user is present.
+        $uid     = null;
+        $isAdmin = false;
+
         if ($user === null) {
             // Anonymous branch: only honoured when the admin opts in via
             // app-config. The flag is read on every call (cheap key
@@ -228,13 +232,12 @@ class ApplicationController extends OCSController
                     statusCode: Http::STATUS_UNAUTHORIZED
                 );
             }
+        }
 
-            $uid     = null;
-            $isAdmin = false;
-        } else {
+        if ($user !== null) {
             $uid     = $user->getUID();
             $isAdmin = $this->groupManager->isAdmin($uid);
-        }//end if
+        }
 
         try {
             $entity = $this->service->register(
@@ -280,10 +283,9 @@ class ApplicationController extends OCSController
         try {
             $entity = $this->service->approve(applicationId: $id, adminUserId: $uid, isAdmin: $isAdmin);
         } catch (InvalidArgumentException $e) {
+            $status = Http::STATUS_BAD_REQUEST;
             if ($isAdmin === false) {
                 $status = Http::STATUS_FORBIDDEN;
-            } else {
-                $status = Http::STATUS_BAD_REQUEST;
             }
 
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: $status);
