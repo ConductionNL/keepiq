@@ -211,54 +211,14 @@ class HoneyCredentialService
         }
 
         try {
-            $now      = new DateTime();
-            $window   = $this->appConfig->getValueInt(Application::APP_ID, 'honey_dedup_window_seconds', self::DEFAULT_DEDUP_WINDOW);
-            $existing = $this->alertMapper->findLatestForAccessor(
-                honeyFlagId: $flag->getId(),
+            $this->recordHoneyAccess(
+                flag: $flag,
+                secretId: $secretId,
                 accessorType: $accessorType,
                 accessorId: $accessorId,
                 channel: $channel,
-            );
-
-            $windowStart = (clone $now)->sub(new DateInterval('PT'.max(0, $window).'S'));
-            $snoozed     = ($existing !== null && $existing->getSnoozedUntil() !== null && $existing->getSnoozedUntil() > $now);
-            $inWindow    = ($existing !== null && $existing->getAccessedAt() !== null && $existing->getAccessedAt() > $windowStart);
-
-            $collapse = ($existing !== null && ($snoozed === true || $inWindow === true));
-            if ($collapse === true && $existing !== null) {
-                // Collapse: update the existing alert, no new page.
-                $existing->setAccessCount($existing->getAccessCount() + 1);
-                $existing->setAccessedAt($now);
-                $this->alertMapper->update($existing);
-            }
-
-            if ($collapse === false) {
-                $alert = new HoneyAlert();
-                $alert->setId(Uuid::uuid4()->toString());
-                $alert->setHoneyFlagId($flag->getId());
-                $alert->setSecretId($secretId);
-                $alert->setAccessorType($accessorType);
-                $alert->setAccessorId($accessorId);
-                $alert->setChannel($channel);
-                $alert->setIp($remoteIp);
-                $alert->setUserAgent($userAgent);
-                $alert->setAccessCount(1);
-                $alert->setAccessedAt($now);
-                $this->alertMapper->insert($alert);
-
-                $this->pageOwnerAndAdmins(flag: $flag, channel: $channel, accessorLabel: ($accessorId ?? 'anonymous'));
-            }//end if
-
-            // The distinguished audit marker fires on EVERY honey access —
-            // snoozed and collapsed accesses stay in the forensic trail (D5/D6).
-            $this->eventDispatcher?->dispatchTyped(
-                $this->auditEvents->forSystem(
-                    eventType: AuditEventTypes::HONEY_ACCESSED,
-                    objectType: 'secret',
-                    objectId: $secretId,
-                    objectName: '',
-                    metadata: ['channel' => $channel],
-                )
+                remoteIp: $remoteIp,
+                userAgent: $userAgent
             );
         } catch (Throwable $exception) {
             // Fail-soft: the tripwire must never break the audited access.
@@ -270,6 +230,105 @@ class HoneyCredentialService
 
         return true;
     }//end raiseAlert()
+
+    /**
+     * Record one honey access: collapse it onto the accessor's latest alert
+     * when it falls inside the dedup window or the alert is snoozed,
+     * otherwise raise a new alert and page the owner and admins. Either way
+     * the distinguished audit marker fires.
+     *
+     * @param HoneyFlag   $flag         The honey flag of the accessed secret
+     * @param string      $secretId     The accessed secret
+     * @param string      $accessorType The accessor type
+     * @param string|null $accessorId   The accessor id, or null when anonymous
+     * @param string      $channel      The access channel
+     * @param string|null $remoteIp     The accessor's remote address
+     * @param string|null $userAgent    The accessor's user agent
+     *
+     * @return void
+     */
+    private function recordHoneyAccess(
+        HoneyFlag $flag,
+        string $secretId,
+        string $accessorType,
+        ?string $accessorId,
+        string $channel,
+        ?string $remoteIp,
+        ?string $userAgent,
+    ): void {
+        $now      = new DateTime();
+        $window   = $this->appConfig->getValueInt(Application::APP_ID, 'honey_dedup_window_seconds', self::DEFAULT_DEDUP_WINDOW);
+        $existing = $this->alertMapper->findLatestForAccessor(
+            honeyFlagId: $flag->getId(),
+            accessorType: $accessorType,
+            accessorId: $accessorId,
+            channel: $channel,
+        );
+
+        $windowStart = (clone $now)->sub(new DateInterval('PT'.max(0, $window).'S'));
+        $collapse    = $this->shouldCollapseAlert(existing: $existing, now: $now, windowStart: $windowStart);
+        if ($collapse === true && $existing !== null) {
+            // Collapse: update the existing alert, no new page.
+            $existing->setAccessCount($existing->getAccessCount() + 1);
+            $existing->setAccessedAt($now);
+            $this->alertMapper->update($existing);
+        }
+
+        if ($collapse === false) {
+            $alert = new HoneyAlert();
+            $alert->setId(Uuid::uuid4()->toString());
+            $alert->setHoneyFlagId($flag->getId());
+            $alert->setSecretId($secretId);
+            $alert->setAccessorType($accessorType);
+            $alert->setAccessorId($accessorId);
+            $alert->setChannel($channel);
+            $alert->setIp($remoteIp);
+            $alert->setUserAgent($userAgent);
+            $alert->setAccessCount(1);
+            $alert->setAccessedAt($now);
+            $this->alertMapper->insert($alert);
+
+            $this->pageOwnerAndAdmins(flag: $flag, channel: $channel, accessorLabel: ($accessorId ?? 'anonymous'));
+        }//end if
+
+        // The distinguished audit marker fires on EVERY honey access —
+        // snoozed and collapsed accesses stay in the forensic trail (D5/D6).
+        $this->eventDispatcher?->dispatchTyped(
+            $this->auditEvents->forSystem(
+                eventType: AuditEventTypes::HONEY_ACCESSED,
+                objectType: 'secret',
+                objectId: $secretId,
+                objectName: '',
+                metadata: ['channel' => $channel],
+            )
+        );
+    }//end recordHoneyAccess()
+
+    /**
+     * Whether a repeat access folds onto the accessor's latest alert rather
+     * than raising a new one: a snoozed alert always collapses, and so does
+     * an access inside the dedup window.
+     *
+     * @param HoneyAlert|null $existing    The accessor's latest alert, when any
+     * @param DateTime        $now         The access moment
+     * @param DateTime        $windowStart The start of the dedup window
+     *
+     * @return bool
+     */
+    private function shouldCollapseAlert(?HoneyAlert $existing, DateTime $now, DateTime $windowStart): bool
+    {
+        if ($existing === null) {
+            return false;
+        }
+
+        $snoozedUntil = $existing->getSnoozedUntil();
+        if ($snoozedUntil !== null && $snoozedUntil > $now) {
+            return true;
+        }
+
+        $accessedAt = $existing->getAccessedAt();
+        return ($accessedAt !== null && $accessedAt > $windowStart);
+    }//end shouldCollapseAlert()
 
     /**
      * List alerts: owner sees own decoys' alerts; admins instance-wide.
