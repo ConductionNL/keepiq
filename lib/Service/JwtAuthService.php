@@ -29,6 +29,7 @@ use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\Algorithm\RS256;
+use Jose\Component\Signature\JWS;
 use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use Jose\Component\Signature\Serializer\JWSSerializerManager;
@@ -157,9 +158,47 @@ class JwtAuthService
             throw new RuntimeException(message: 'Assertion is empty');
         }
 
+        $jws    = $this->deserializeAssertion(assertion: $assertion);
+        $claims = $this->readAssertionClaims(jws: $jws);
+        $this->assertClaimsAcceptable(claims: $claims);
+
+        $jtiCache = $this->cacheFactory->createDistributed(self::JTI_CACHE_NS);
+        $jti      = (string) $claims['jti'];
+        if ($jtiCache->hasKey($jti) === true) {
+            throw new RuntimeException(message: 'Assertion jti replayed');
+        }
+
+        $application = $this->loadActiveIssuer(issuer: (string) $claims['iss']);
+        $jwk         = $this->loadIssuerKey(application: $application);
+
+        // RS256 primary, ES256 fallback.
+        $algorithmManager = new AlgorithmManager([new RS256(), new ES256()]);
+        $verifier         = new JWSVerifier($algorithmManager);
+
+        if ($verifier->verifyWithKey($jws, $jwk, 0) === false) {
+            throw new RuntimeException(message: 'Assertion signature verification failed');
+        }
+
+        // Store jti to prevent replay during max assertion lifetime.
+        $jtiCache->set($jti, true, self::ACCESS_TOKEN_TTL);
+
+        return $this->issueAccessToken(application: $application);
+    }//end exchangeAssertion()
+
+    /**
+     * Deserialize a Compact-Serialized JWS, or reject it as malformed.
+     *
+     * @param string $assertion The JWS compact serialization
+     *
+     * @return JWS
+     *
+     * @throws RuntimeException When the assertion cannot be deserialized.
+     */
+    private function deserializeAssertion(string $assertion): JWS
+    {
         $serializerManager = new JWSSerializerManager([new CompactSerializer()]);
         try {
-            $jws = $serializerManager->unserialize($assertion);
+            return $serializerManager->unserialize($assertion);
         } catch (Throwable $e) {
             $this->logger->warning(
                 'JwtAuthService: failed to deserialize assertion ('.$e->getMessage().')',
@@ -167,7 +206,20 @@ class JwtAuthService
             );
             throw new RuntimeException(message: 'Invalid assertion format');
         }
+    }//end deserializeAssertion()
 
+    /**
+     * Decode the assertion payload and assert every required claim is present.
+     *
+     * @param JWS $jws The deserialized assertion
+     *
+     * @return array<string,mixed> The decoded claim set
+     *
+     * @throws RuntimeException When the payload is absent, not a JSON object,
+     *                          or a required claim is missing.
+     */
+    private function readAssertionClaims(JWS $jws): array
+    {
         $payloadRaw = $jws->getPayload();
         if ($payloadRaw === null) {
             throw new RuntimeException(message: 'Assertion has no payload');
@@ -185,8 +237,21 @@ class JwtAuthService
             }
         }
 
-        $issuer = (string) $claims['iss'];
-        $now    = time();
+        return $claims;
+    }//end readAssertionClaims()
+
+    /**
+     * Audience, expiry, issued-at and lifetime checks on a decoded claim set.
+     *
+     * @param array<string,mixed> $claims The decoded claim set
+     *
+     * @return void
+     *
+     * @throws RuntimeException When any claim is unacceptable.
+     */
+    private function assertClaimsAcceptable(array $claims): void
+    {
+        $now = time();
 
         if ((string) $claims['aud'] !== self::EXPECTED_AUDIENCE) {
             throw new RuntimeException(message: 'Wrong audience');
@@ -209,14 +274,19 @@ class JwtAuthService
                 .self::ACCESS_TOKEN_TTL.' seconds'
             );
         }
+    }//end assertClaimsAcceptable()
 
-        $jtiCache = $this->cacheFactory->createDistributed(self::JTI_CACHE_NS);
-        $jti      = (string) $claims['jti'];
-        if ($jtiCache->hasKey($jti) === true) {
-            throw new RuntimeException(message: 'Assertion jti replayed');
-        }
-
-        // Look up the application.
+    /**
+     * Resolve the `iss` claim to an active registered application.
+     *
+     * @param string $issuer The `iss` claim (an application id)
+     *
+     * @return Application
+     *
+     * @throws RuntimeException When the issuer is unknown or inactive.
+     */
+    private function loadActiveIssuer(string $issuer): Application
+    {
         try {
             $application = $this->applicationMapper->findById($issuer);
         } catch (DoesNotExistException) {
@@ -227,6 +297,22 @@ class JwtAuthService
             throw new RuntimeException(message: 'Issuer application is not active');
         }
 
+        return $application;
+    }//end loadActiveIssuer()
+
+    /**
+     * The verification key of an application, taken from the certificate of
+     * its active encryption suite.
+     *
+     * @param Application $application The issuing application
+     *
+     * @return JWK
+     *
+     * @throws RuntimeException When the application has no active suite or
+     *                          no usable certificate.
+     */
+    private function loadIssuerKey(Application $application): JWK
+    {
         try {
             $suite = $this->suiteMapper->findActiveByOwner(
                 ownerType: 'application',
@@ -241,20 +327,18 @@ class JwtAuthService
             throw new RuntimeException(message: 'Application has no certificate');
         }
 
-        $jwk = $this->buildJwkFromCertificate(pemCertificate: $certificate);
+        return $this->buildJwkFromCertificate(pemCertificate: $certificate);
+    }//end loadIssuerKey()
 
-        // RS256 primary, ES256 fallback.
-        $algorithmManager = new AlgorithmManager([new RS256(), new ES256()]);
-        $verifier         = new JWSVerifier($algorithmManager);
-
-        if ($verifier->verifyWithKey($jws, $jwk, 0) === false) {
-            throw new RuntimeException(message: 'Assertion signature verification failed');
-        }
-
-        // Store jti to prevent replay during max assertion lifetime.
-        $jtiCache->set($jti, true, self::ACCESS_TOKEN_TTL);
-
-        // Issue opaque access token bound to the application id.
+    /**
+     * Mint and cache an opaque access token bound to the application id.
+     *
+     * @param Application $application The verified issuing application
+     *
+     * @return array{access_token:string,token_type:string,expires_in:int}
+     */
+    private function issueAccessToken(Application $application): array
+    {
         $accessToken = bin2hex(random_bytes(32));
         $tokenCache  = $this->cacheFactory->createDistributed(self::TOKEN_CACHE_NS);
         $tokenCache->set($accessToken, $application->getId(), self::ACCESS_TOKEN_TTL);
@@ -274,7 +358,7 @@ class JwtAuthService
             'token_type'   => 'Bearer',
             'expires_in'   => self::ACCESS_TOKEN_TTL,
         ];
-    }//end exchangeAssertion()
+    }//end issueAccessToken()
 
     /**
      * Validate an opaque access token and resolve the bound application.
