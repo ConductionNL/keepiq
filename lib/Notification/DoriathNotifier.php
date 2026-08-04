@@ -25,6 +25,7 @@ namespace OCA\Doriath\Notification;
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\NotificationService;
+use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
@@ -90,17 +91,51 @@ class DoriathNotifier implements INotifier
             throw new UnknownNotificationException();
         }
 
-        $l      = $this->l10nFactory->get(app: Application::APP_ID, lang: $languageCode);
-        $subj   = $notification->getSubject();
-        $params = $notification->getSubjectParameters();
-
+        $subj = $notification->getSubject();
         if (array_key_exists($subj, NotificationService::SUBJECT_SETTING_MAP) === false) {
             throw new UnknownNotificationException();
         }
 
+        $l      = $this->l10nFactory->get(app: Application::APP_ID, lang: $languageCode);
+        $params = $notification->getSubjectParameters();
+
         $notification->setIcon($this->url->getAbsoluteURL($this->url->imagePath(Application::APP_ID, 'app.svg')));
 
-        switch ($subj) {
+        // Each renderer owns one family of subjects and reports whether it
+        // recognised this one. The first renderer that claims the subject wins.
+        $handled = $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l);
+        if ($handled === false) {
+            $handled = $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l);
+        }
+
+        if ($handled === false) {
+            $handled = $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l);
+        }
+
+        if ($handled === false) {
+            $handled = $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l);
+        }
+
+        if ($handled === false) {
+            throw new UnknownNotificationException();
+        }
+
+        return $notification;
+    }//end prepare()
+
+    /**
+     * Render the sharing-workflow subjects. All of them deep-link to a secret.
+     *
+     * @param INotification       $notification The notification to mutate
+     * @param string              $subject      The notification subject identifier
+     * @param array<string,mixed> $params       The subject parameters
+     * @param IL10N               $l            The localisation helper
+     *
+     * @return bool True when this renderer recognised the subject.
+     */
+    private function renderSharingSubject(INotification $notification, string $subject, array $params, IL10N $l): bool
+    {
+        switch ($subject) {
             case 'secret_shared':
                 $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $sharedBy   = (string) ($params['shared_by'] ?? $l->t('a user'));
@@ -109,7 +144,7 @@ class DoriathNotifier implements INotifier
                     (string) $l->t('%1$s shared the secret "%2$s" with you.', [$sharedBy, $secretName])
                 );
                 $this->withSecretLink(notification: $notification, params: $params);
-                break;
+                return true;
 
             case 'share_request':
                 $requester  = (string) ($params['requester'] ?? $l->t('a user'));
@@ -119,7 +154,7 @@ class DoriathNotifier implements INotifier
                     (string) $l->t('%1$s requested access to the secret "%2$s".', [$requester, $secretName])
                 );
                 $this->withSecretLink(notification: $notification, params: $params);
-                break;
+                return true;
 
             case 'share_request_result':
                 $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
@@ -132,7 +167,7 @@ class DoriathNotifier implements INotifier
 
                 $notification->setParsedMessage($resultMessage);
                 $this->withSecretLink(notification: $notification, params: $params);
-                break;
+                return true;
 
             case 'group_member_added':
                 $groupId    = (string) ($params['group_id'] ?? '');
@@ -142,25 +177,25 @@ class DoriathNotifier implements INotifier
                     (string) $l->t('A new member joined the group "%1$s" — approve to share "%2$s".', [$groupId, $secretName])
                 );
                 $this->withSecretLink(notification: $notification, params: $params);
-                break;
+                return true;
+        }//end switch
 
-            case 'team_folder_shared':
-                $sharedBy = (string) ($params['sharedBy'] ?? $l->t('a user'));
-                $notification->setParsedSubject((string) $l->t('Team folder shared with you'));
-                $notification->setParsedMessage(
-                    (string) $l->t('%s shared a team folder with you. Its secrets are now in your vault.', [$sharedBy])
-                );
-                break;
+        return false;
+    }//end renderSharingSubject()
 
-            case 'team_folder_join_request':
-                $newMemberId = (string) ($params['newMemberId'] ?? $l->t('a user'));
-                $joinGroupId = (string) ($params['groupId'] ?? '');
-                $notification->setParsedSubject((string) $l->t('Team folder join request'));
-                $notification->setParsedMessage(
-                    (string) $l->t('%1$s joined the group "%2$s" — approve to share your team folder with them.', [$newMemberId, $joinGroupId])
-                );
-                break;
-
+    /**
+     * Render the secret-lifecycle subjects. All of them deep-link to a secret.
+     *
+     * @param INotification       $notification The notification to mutate
+     * @param string              $subject      The notification subject identifier
+     * @param array<string,mixed> $params       The subject parameters
+     * @param IL10N               $l            The localisation helper
+     *
+     * @return bool True when this renderer recognised the subject.
+     */
+    private function renderSecretLifecycleSubject(INotification $notification, string $subject, array $params, IL10N $l): bool
+    {
+        switch ($subject) {
             case 'secret_compromised':
                 $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $notification->setParsedSubject((string) $l->t('Secret may be compromised'));
@@ -168,7 +203,7 @@ class DoriathNotifier implements INotifier
                     (string) $l->t('Your secret "%s" may be compromised and requires migration.', [$secretName])
                 );
                 $this->withSecretLink(notification: $notification, params: $params);
-                break;
+                return true;
 
             case 'request_fulfilled':
                 $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
@@ -177,8 +212,44 @@ class DoriathNotifier implements INotifier
                     (string) $l->t('Your request for "%s" has been filled in.', [$secretName])
                 );
                 $this->withSecretLink(notification: $notification, params: $params);
-                break;
+                return true;
 
+            case 'secret_expiring':
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
+                $daysLeft   = (int) ($params['days_left'] ?? 0);
+                $notification->setParsedSubject((string) $l->t('Secret expiring soon'));
+                $notification->setParsedMessage(
+                    (string) $l->t('Your secret "%1$s" expires in %2$d day(s). Rotate it before then.', [$secretName, $daysLeft])
+                );
+                $this->withSecretLink(notification: $notification, params: $params);
+                return true;
+
+            case 'secret_rotation_due':
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
+                $notification->setParsedSubject((string) $l->t('Secret rotation due'));
+                $notification->setParsedMessage(
+                    (string) $l->t('Your secret "%s" is past its expiry and has been flagged for rotation.', [$secretName])
+                );
+                $this->withSecretLink(notification: $notification, params: $params);
+                return true;
+        }//end switch
+
+        return false;
+    }//end renderSecretLifecycleSubject()
+
+    /**
+     * Render the administrator-facing subjects. All of them link to the admin section.
+     *
+     * @param INotification       $notification The notification to mutate
+     * @param string              $subject      The notification subject identifier
+     * @param array<string,mixed> $params       The subject parameters
+     * @param IL10N               $l            The localisation helper
+     *
+     * @return bool True when this renderer recognised the subject.
+     */
+    private function renderAdminSubject(INotification $notification, string $subject, array $params, IL10N $l): bool
+    {
+        switch ($subject) {
             case 'app_pending':
                 $appName      = (string) ($params['app_name'] ?? $l->t('an application'));
                 $registeredBy = (string) ($params['registered_by'] ?? $l->t('an external party'));
@@ -186,12 +257,55 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('Application "%1$s" was registered by %2$s and is awaiting approval.', [$appName, $registeredBy])
                 );
-                $notification->setLink(
-                    $this->url->getAbsoluteURL(
-                        $this->url->linkToRoute('settings.AdminSettings.index', ['section' => Application::APP_ID])
+                $this->withAdminSectionLink(notification: $notification);
+                return true;
+
+            case 'siem_dead_letter':
+                $sinkName = (string) ($params['sink_name'] ?? $l->t('a SIEM sink'));
+                $notification->setParsedSubject((string) $l->t('SIEM delivery failing'));
+                $notification->setParsedMessage(
+                    (string) $l->t(
+                        'Audit events for SIEM sink "%1$s" could not be delivered and were dead-lettered. Check the sink configuration.',
+                        [$sinkName]
                     )
                 );
-                break;
+                $this->withAdminSectionLink(notification: $notification);
+                return true;
+        }//end switch
+
+        return false;
+    }//end renderAdminSubject()
+
+    /**
+     * Render the vault-access subjects — team folders, decoys, certificates and
+     * emergency access. None of them carry a deep-link.
+     *
+     * @param INotification       $notification The notification to mutate
+     * @param string              $subject      The notification subject identifier
+     * @param array<string,mixed> $params       The subject parameters
+     * @param IL10N               $l            The localisation helper
+     *
+     * @return bool True when this renderer recognised the subject.
+     */
+    private function renderVaultAccessSubject(INotification $notification, string $subject, array $params, IL10N $l): bool
+    {
+        switch ($subject) {
+            case 'team_folder_shared':
+                $sharedBy = (string) ($params['sharedBy'] ?? $l->t('a user'));
+                $notification->setParsedSubject((string) $l->t('Team folder shared with you'));
+                $notification->setParsedMessage(
+                    (string) $l->t('%s shared a team folder with you. Its secrets are now in your vault.', [$sharedBy])
+                );
+                return true;
+
+            case 'team_folder_join_request':
+                $newMemberId = (string) ($params['newMemberId'] ?? $l->t('a user'));
+                $joinGroupId = (string) ($params['groupId'] ?? '');
+                $notification->setParsedSubject((string) $l->t('Team folder join request'));
+                $notification->setParsedMessage(
+                    (string) $l->t('%1$s joined the group "%2$s" — approve to share your team folder with them.', [$newMemberId, $joinGroupId])
+                );
+                return true;
 
             case 'honey_access':
                 $honeyChannel  = (string) ($params['channel'] ?? $l->t('unknown channel'));
@@ -203,7 +317,7 @@ class DoriathNotifier implements INotifier
                         [$honeyAccessor, $honeyChannel]
                     )
                 );
-                break;
+                return true;
 
             case 'certificate_expiring':
                 $certDaysLeft = (int) ($params['days_left'] ?? 0);
@@ -214,23 +328,7 @@ class DoriathNotifier implements INotifier
                         [$certDaysLeft]
                     )
                 );
-                break;
-
-            case 'siem_dead_letter':
-                $sinkName = (string) ($params['sink_name'] ?? $l->t('a SIEM sink'));
-                $notification->setParsedSubject((string) $l->t('SIEM delivery failing'));
-                $notification->setParsedMessage(
-                    (string) $l->t(
-                        'Audit events for SIEM sink "%1$s" could not be delivered and were dead-lettered. Check the sink configuration.',
-                        [$sinkName]
-                    )
-                );
-                $notification->setLink(
-                    $this->url->getAbsoluteURL(
-                        $this->url->linkToRoute('settings.AdminSettings.index', ['section' => Application::APP_ID])
-                    )
-                );
-                break;
+                return true;
 
             case 'emergency_access_requested':
                 $granteeName = (string) ($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
@@ -242,26 +340,7 @@ class DoriathNotifier implements INotifier
                         [$granteeName, $waitDays]
                     )
                 );
-                break;
-
-            case 'secret_expiring':
-                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
-                $daysLeft   = (int) ($params['days_left'] ?? 0);
-                $notification->setParsedSubject((string) $l->t('Secret expiring soon'));
-                $notification->setParsedMessage(
-                    (string) $l->t('Your secret "%1$s" expires in %2$d day(s). Rotate it before then.', [$secretName, $daysLeft])
-                );
-                $this->withSecretLink(notification: $notification, params: $params);
-                break;
-
-            case 'secret_rotation_due':
-                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
-                $notification->setParsedSubject((string) $l->t('Secret rotation due'));
-                $notification->setParsedMessage(
-                    (string) $l->t('Your secret "%s" is past its expiry and has been flagged for rotation.', [$secretName])
-                );
-                $this->withSecretLink(notification: $notification, params: $params);
-                break;
+                return true;
 
             case 'emergency_access_accessed':
                 $granteeName = (string) ($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
@@ -269,14 +348,11 @@ class DoriathNotifier implements INotifier
                 $notification->setParsedMessage(
                     (string) $l->t('%s accessed your vault through emergency access.', [$granteeName])
                 );
-                break;
-
-            default:
-                throw new UnknownNotificationException();
+                return true;
         }//end switch
 
-        return $notification;
-    }//end prepare()
+        return false;
+    }//end renderVaultAccessSubject()
 
     /**
      * Attach a deep-link to the affected secret, when the params include one.
@@ -300,4 +376,20 @@ class DoriathNotifier implements INotifier
             // Fall back silently — the link is optional.
         }
     }//end withSecretLink()
+
+    /**
+     * Attach a link to the Doriath section of the Nextcloud admin settings.
+     *
+     * @param INotification $notification The notification to mutate
+     *
+     * @return void
+     */
+    private function withAdminSectionLink(INotification $notification): void
+    {
+        $notification->setLink(
+            $this->url->getAbsoluteURL(
+                $this->url->linkToRoute('settings.AdminSettings.index', ['section' => Application::APP_ID])
+            )
+        );
+    }//end withAdminSectionLink()
 }//end class
