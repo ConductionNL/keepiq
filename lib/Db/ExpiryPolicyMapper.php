@@ -75,11 +75,12 @@ class ExpiryPolicyMapper extends QBMapper
         $qb = $this->db->getQueryBuilder();
         $qb->select('*')->from($this->getTableName());
 
-        if ($ownerId === null) {
-            $qb->where($qb->expr()->isNull('owner_id'));
-        } else {
-            $qb->where($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+        $ownerPredicate = $qb->expr()->isNull('owner_id');
+        if ($ownerId !== null) {
+            $ownerPredicate = $qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId));
         }
+
+        $qb->where($ownerPredicate);
 
         return $this->findEntities(query: $qb);
     }//end findByOwner()

@@ -39,10 +39,13 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 
 /**
  * Business logic for the certificate lifecycle capability.
@@ -52,6 +55,8 @@ use Ramsey\Uuid\Uuid;
  */
 class CertificateLifecycleService
 {
+    use SuppressesDiagnostics;
+
     /**
      * Constructor for CertificateLifecycleService.
      *
@@ -63,6 +68,7 @@ class CertificateLifecycleService
      * @param SecretService               $secretService   The secret service (expiry path)
      * @param CertificateAuthorityService $caService       The CA service (re-issue)
      * @param IEventDispatcher|null       $eventDispatcher The audit dispatcher
+     * @param AuditEventFactory           $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -75,6 +81,7 @@ class CertificateLifecycleService
         private SecretService $secretService,
         private CertificateAuthorityService $caService,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -109,7 +116,9 @@ class CertificateLifecycleService
             foreach ($this->suiteMapper->findAllActive() as $suite) {
                 $suites[] = $this->suiteRow(suite: $suite);
             }
-        } else {
+        }
+
+        if ($isAdmin === false) {
             try {
                 $suites[] = $this->suiteRow(suite: $this->suiteMapper->findActiveByOwner('user', $userId));
             } catch (DoesNotExistException) {
@@ -117,13 +126,13 @@ class CertificateLifecycleService
             }
         }
 
-        $ca = [];
+        $caRows = [];
         if ($isAdmin === true) {
             try {
                 $root         = $this->caMapper->findRoot();
                 $intermediate = $this->caMapper->findActiveIntermediate();
-                $ca[]         = $this->caRow(kind: 'root', pem: $root->getCertificate());
-                $ca[]         = $this->caRow(kind: 'intermediate', pem: $intermediate->getCertificate());
+                $caRows[]     = $this->caRow(kind: 'root', pem: $root->getCertificate());
+                $caRows[]     = $this->caRow(kind: 'intermediate', pem: $intermediate->getCertificate());
             } catch (DoesNotExistException) {
                 // CA not bootstrapped — no CA rows.
             }
@@ -132,7 +141,7 @@ class CertificateLifecycleService
         return [
             'stored' => $stored,
             'suites' => $suites,
-            'ca'     => $ca,
+            'ca'     => $caRows,
         ];
     }//end inventory()
 
@@ -147,7 +156,9 @@ class CertificateLifecycleService
      */
     public function parseCaCertificate(string $pem): ?array
     {
-        $parsed = @openssl_x509_parse(certificate: $pem);
+        // The openssl_x509_parse() call warns when handed something that is not
+        // a certificate; the non-array return below is the branch we act on.
+        $parsed = $this->withoutDiagnostics(call: static fn () => openssl_x509_parse(certificate: $pem));
         if (is_array($parsed) === false) {
             return null;
         }
@@ -175,8 +186,8 @@ class CertificateLifecycleService
         }
 
         return [
-            'subject'           => $this->dnToString(dn: (array) ($parsed['subject'] ?? [])),
-            'issuer'            => $this->dnToString(dn: (array) ($parsed['issuer'] ?? [])),
+            'subject'           => $this->dnToString(dnParts: (array) ($parsed['subject'] ?? [])),
+            'issuer'            => $this->dnToString(dnParts: (array) ($parsed['issuer'] ?? [])),
             'serial'            => $serial,
             'fingerprintSha256' => $fingerprintValue,
             'notBefore'         => $notBefore?->format('c'),
@@ -236,7 +247,9 @@ class CertificateLifecycleService
 
         if ($isNew === true) {
             $row = $this->metadataMapper->insert($row);
-        } else {
+        }
+
+        if ($isNew === false) {
             $row = $this->metadataMapper->update($row);
         }
 
@@ -277,7 +290,7 @@ class CertificateLifecycleService
         }
 
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::CERTIFICATE_RENEWAL_MARKED,
                 objectType: 'secret',
@@ -326,11 +339,11 @@ class CertificateLifecycleService
         }
 
         if ($this->caService->reissueSuiteCertificate(suite: $suite) === false) {
-            throw new \RuntimeException('Re-issue could not preserve the existing public key; certificate unchanged');
+            throw new RuntimeException('Re-issue could not preserve the existing public key; certificate unchanged');
         }
 
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::CERTIFICATE_REISSUED,
                 objectType: 'encryption_suite',
@@ -426,14 +439,14 @@ class CertificateLifecycleService
     /**
      * Render an X.509 DN array as a readable string.
      *
-     * @param array<string,mixed> $dn The parsed DN parts
+     * @param array<string,mixed> $dnParts The parsed DN parts
      *
      * @return string
      */
-    private function dnToString(array $dn): string
+    private function dnToString(array $dnParts): string
     {
         $parts = [];
-        foreach ($dn as $dnKey => $dnValue) {
+        foreach ($dnParts as $dnKey => $dnValue) {
             if (is_array($dnValue) === true) {
                 $dnValue = implode('+', array_map('strval', $dnValue));
             }

@@ -30,7 +30,9 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
@@ -48,17 +50,20 @@ use Throwable;
  */
 class ApplicationService
 {
+    use SuppressesDiagnostics;
+
     /**
      * Constructor for ApplicationService.
      *
-     * @param ApplicationMapper                                 $mapper                 The application mapper
-     * @param IGroupManager                                     $groupManager           The group manager (admin lookups)
-     * @param LoggerInterface                                   $logger                 The logger
-     * @param NotificationService                               $notificationService    The notification service
-     * @param EncryptionSuiteService                            $encryptionSuiteService The encryption suite service
-     * @param IEventDispatcher                                  $eventDispatcher        The event dispatcher
-     * @param \OCA\Doriath\Db\MachineLeaseMapper|null           $leaseMapper            The lease mapper (delete cascade)
-     * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper      The lease-policy mapper (delete cascade)
+     * @param ApplicationMapper                                 $mapper              The application mapper
+     * @param IGroupManager                                     $groupManager        The group manager (admin lookups)
+     * @param LoggerInterface                                   $logger              The logger
+     * @param NotificationService                               $notificationService The notification service
+     * @param EncryptionSuiteService                            $suiteService        The encryption suite service
+     * @param IEventDispatcher                                  $eventDispatcher     The event dispatcher
+     * @param \OCA\Doriath\Db\MachineLeaseMapper|null           $leaseMapper         The lease mapper (delete cascade)
+     * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper   The lease-policy mapper (delete cascade)
+     * @param AuditEventFactory                                 $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -67,10 +72,11 @@ class ApplicationService
         private IGroupManager $groupManager,
         private LoggerInterface $logger,
         private ?NotificationService $notificationService=null,
-        private ?EncryptionSuiteService $encryptionSuiteService=null,
+        private ?EncryptionSuiteService $suiteService=null,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?\OCA\Doriath\Db\MachineLeaseMapper $leaseMapper=null,
         private ?\OCA\Doriath\Db\ApplicationLeasePolicyMapper $leasePolicyMapper=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -144,12 +150,11 @@ class ApplicationService
         $entity->setRegisteredBy($userId);
         $entity->setCreatedAt(new DateTime());
 
+        $entity->setStatus(Application::STATUS_PENDING);
         if ($isAdmin === true) {
             $entity->setStatus(Application::STATUS_ACTIVE);
             $entity->setApprovedBy($userId);
             $entity->setApprovedAt(new DateTime());
-        } else {
-            $entity->setStatus(Application::STATUS_PENDING);
         }
 
         $persisted = $this->mapper->insert($entity);
@@ -162,7 +167,7 @@ class ApplicationService
         // suite-less; the admin queue can retry via re-approval.
         if ($persisted->isActive() === true
             && $csr !== null && $csr !== ''
-            && $this->encryptionSuiteService !== null
+            && $this->suiteService !== null
         ) {
             $this->tryProvisionSuite(application: $persisted, csr: $csr);
         }
@@ -184,31 +189,42 @@ class ApplicationService
             $this->dispatchAdminPendingNotification(application: $persisted, registeredBy: $userId);
         }
 
-        // Anonymous (null) registrants have no NC actor — record as a
-        // system-actored event so the audit trail still captures the row.
-        if ($userId !== null && $userId !== '') {
-            $this->dispatchAudit(
-                event: AuditEvent::forUser(
-                    actorId: $userId,
-                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
-                    objectType: 'application',
-                    objectId: $persisted->getId(),
-                    objectName: $persisted->getName(),
-                )
-            );
-        } else {
-            $this->dispatchAudit(
-                event: AuditEvent::forSystem(
-                    eventType: AuditEventTypes::APPLICATION_REGISTERED,
-                    objectType: 'application',
-                    objectId: $persisted->getId(),
-                    objectName: $persisted->getName(),
-                )
-            );
-        }
+        $this->dispatchAudit(
+            event: $this->registrationAuditEvent(userId: $userId, persisted: $persisted)
+        );
 
         return $persisted;
     }//end register()
+
+    /**
+     * The APPLICATION_REGISTERED audit event for a registration. Anonymous
+     * (null/blank) registrants have no Nextcloud actor, so the event is
+     * recorded as system-actored and the trail still captures the row.
+     *
+     * @param string|null $userId    The registering user, or null/'' when anonymous
+     * @param Application $persisted The persisted application row
+     *
+     * @return AuditEvent
+     */
+    private function registrationAuditEvent(?string $userId, Application $persisted): AuditEvent
+    {
+        if ($userId !== null && $userId !== '') {
+            return $this->auditEvents->forUser(
+                actorId: $userId,
+                eventType: AuditEventTypes::APPLICATION_REGISTERED,
+                objectType: 'application',
+                objectId: $persisted->getId(),
+                objectName: $persisted->getName(),
+            );
+        }
+
+        return $this->auditEvents->forSystem(
+            eventType: AuditEventTypes::APPLICATION_REGISTERED,
+            objectType: 'application',
+            objectId: $persisted->getId(),
+            objectName: $persisted->getName(),
+        );
+    }//end registrationAuditEvent()
 
     /**
      * Notify every admin that a pending application is waiting for
@@ -303,13 +319,13 @@ class ApplicationService
         // the approval transaction. If the CSR is missing the suite is
         // skipped; the admin queue can re-submit a CSR via re-registration.
         if ($storedCsr !== null && $storedCsr !== ''
-            && $this->encryptionSuiteService !== null
+            && $this->suiteService !== null
         ) {
             $this->tryProvisionSuite(application: $updated, csr: $storedCsr);
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $adminUserId,
                 eventType: AuditEventTypes::APPLICATION_APPROVED,
                 objectType: 'application',
@@ -336,7 +352,7 @@ class ApplicationService
     private function tryProvisionSuite(Application $application, string $csr): void
     {
         try {
-            $this->encryptionSuiteService?->provisionForApplication(
+            $this->suiteService?->provisionForApplication(
                 applicationId: $application->getId(),
                 csrPem: $csr,
             );
@@ -388,7 +404,7 @@ class ApplicationService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $adminUserId,
                 eventType: AuditEventTypes::APPLICATION_REJECTED,
                 objectType: 'application',
@@ -432,7 +448,7 @@ class ApplicationService
         $this->logger->info('Deleted application '.$applicationId, ['app' => 'doriath']);
 
         $this->dispatchAudit(
-            event: AuditEvent::forSystem(
+            event: $this->auditEvents->forSystem(
                 eventType: AuditEventTypes::APPLICATION_DELETED,
                 objectType: 'application',
                 objectId: $applicationId,
@@ -466,12 +482,12 @@ class ApplicationService
             throw new InvalidArgumentException(message: 'Application is not active');
         }
 
-        if ($this->encryptionSuiteService === null) {
+        if ($this->suiteService === null) {
             return null;
         }
 
         try {
-            $suite = $this->encryptionSuiteService->getActiveSuite('application', $entity->getId());
+            $suite = $this->suiteService->getActiveSuite('application', $entity->getId());
             return $suite->getCertificate();
         } catch (Throwable) {
             return null;
@@ -620,9 +636,9 @@ class ApplicationService
      */
     private function validateCsr(string $csr): void
     {
-        // The openssl_csr_get_public_key() call emits a warning on malformed input
-        // and returns false; we suppress the warning + check the return.
-        $publicKey = @openssl_csr_get_public_key($csr);
+        // The openssl_csr_get_public_key() call emits a warning on malformed
+        // input and returns false; the return value is the contract we check.
+        $publicKey = $this->withoutDiagnostics(call: static fn () => openssl_csr_get_public_key($csr));
         if ($publicKey === false) {
             throw new InvalidArgumentException(message: 'Invalid CSR: PKCS#10 format not recognised');
         }

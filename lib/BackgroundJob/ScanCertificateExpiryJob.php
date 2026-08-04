@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\BackgroundJob;
 
+use DateTime;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
@@ -95,7 +96,8 @@ class ScanCertificateExpiryJob extends TimedJob
         $now    = $this->time->getDateTime();
         $offset = 0;
         do {
-            $page = $this->suiteMapper->findAllActiveWithLimit(self::PAGE_SIZE, $offset);
+            $page      = $this->suiteMapper->findAllActiveWithLimit(self::PAGE_SIZE, $offset);
+            $pageCount = count($page);
             foreach ($page as $suite) {
                 try {
                     $this->scanOne(suite: $suite, now: $now);
@@ -108,7 +110,7 @@ class ScanCertificateExpiryJob extends TimedJob
             }
 
             $offset += self::PAGE_SIZE;
-        } while (count($page) === self::PAGE_SIZE);
+        } while ($pageCount === self::PAGE_SIZE);
     }//end run()
 
     /**
@@ -137,7 +139,7 @@ class ScanCertificateExpiryJob extends TimedJob
             return;
         }
 
-        $notAfter = new \DateTime((string) $parsed['notAfter']);
+        $notAfter = new DateTime((string) $parsed['notAfter']);
         $daysLeft = (int) $now->diff($notAfter)->format('%r%a');
         if (in_array($daysLeft, self::THRESHOLDS, true) === false) {
             return;

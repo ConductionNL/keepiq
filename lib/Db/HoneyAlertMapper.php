@@ -131,11 +131,12 @@ class HoneyAlertMapper extends QBMapper
             ->andWhere($qb->expr()->eq('accessor_type', $qb->createNamedParameter($accessorType)))
             ->andWhere($qb->expr()->eq('channel', $qb->createNamedParameter($channel)));
 
-        if ($accessorId === null) {
-            $qb->andWhere($qb->expr()->isNull('accessor_id'));
-        } else {
-            $qb->andWhere($qb->expr()->eq('accessor_id', $qb->createNamedParameter($accessorId)));
+        $accessorPredicate = $qb->expr()->isNull('accessor_id');
+        if ($accessorId !== null) {
+            $accessorPredicate = $qb->expr()->eq('accessor_id', $qb->createNamedParameter($accessorId));
         }
+
+        $qb->andWhere($accessorPredicate);
 
         $qb->orderBy('accessed_at', 'DESC')->setMaxResults(1);
 

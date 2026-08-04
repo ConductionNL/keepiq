@@ -129,6 +129,14 @@ class SiemSinkController extends OCSController
      * @NoAdminRequired
      *
      * @return JSONResponse
+     *
+     * $tls and $enabled are not behaviour switches inside this method: they
+     * are two fields of the sink being created, bound by name out of the
+     * JSON request body by the Nextcloud router and passed straight into
+     * the params array. Nothing here branches on either. Removing them
+     * would remove them from the HTTP contract.
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     #[NoAdminRequired]
     public function create(

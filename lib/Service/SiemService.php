@@ -33,7 +33,9 @@ use OCA\Doriath\Db\SiemQueueItemMapper;
 use OCA\Doriath\Db\SiemSink;
 use OCA\Doriath\Db\SiemSinkMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Http\Client\IClientService;
@@ -41,6 +43,7 @@ use OCP\IGroupManager;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -52,6 +55,8 @@ use Throwable;
  */
 class SiemService
 {
+    use SuppressesDiagnostics;
+
     /**
      * Retry ceiling before a row dead-letters.
      *
@@ -84,6 +89,7 @@ class SiemService
      * @param NotificationService|null $notificationService The notification dispatcher
      * @param LoggerInterface          $logger              The logger
      * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
+     * @param AuditEventFactory        $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -96,6 +102,7 @@ class SiemService
         private ?NotificationService $notificationService,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -111,16 +118,22 @@ class SiemService
     public function buildPayload(AuditEvent $event): ?array
     {
         $eventType = $event->getEventType();
-        $whitelist = AuditEventTypes::whitelist()[$eventType] ?? null;
+        $whitelist = AuditEventTypes::WHITELIST[$eventType] ?? null;
         if ($whitelist === null) {
             return null;
         }
 
         $metadata = [];
         foreach ($event->getMetadata() as $metaKey => $metaValue) {
-            if (in_array($metaKey, $whitelist, true) === true
-                && in_array($metaKey, AuditEventTypes::FORBIDDEN_KEYS, true) === false
-            ) {
+            // Both predicates are evaluated up front rather than short-circuited.
+            // The forbidden-key check is defence in depth: today no whitelist row
+            // lists a forbidden key, so a && chain lets a static analyser narrow
+            // $metaKey to the whitelist literals and declare the second check
+            // dead. It is NOT dead — it is what stops secret material reaching a
+            // SIEM sink the day someone widens a whitelist row.
+            $isWhitelisted = in_array($metaKey, $whitelist, true);
+            $isForbidden   = in_array($metaKey, AuditEventTypes::FORBIDDEN_KEYS, true);
+            if ($isWhitelisted === true && $isForbidden === false) {
                 $metadata[$metaKey] = $metaValue;
             }
         }
@@ -218,11 +231,7 @@ class SiemService
     {
         $sink->setLastAttemptAt(new DateTime());
         try {
-            if ($sink->getType() === 'syslog') {
-                $this->deliverSyslog(sink: $sink, payloadJson: $item->getPayload());
-            } else {
-                $this->deliverWebhook(sink: $sink, payloadJson: $item->getPayload());
-            }
+            $this->deliverTo(sink: $sink, payloadJson: $item->getPayload());
 
             $item->setStatus('delivered');
             $this->queueMapper->update($item);
@@ -239,17 +248,18 @@ class SiemService
             $item->setLastError(substr($exception->getMessage(), 0, 500));
             if ($item->getAttempts() >= self::MAX_ATTEMPTS) {
                 $item->setStatus('dead');
-            } else {
+            }
+
+            if ($item->getAttempts() < self::MAX_ATTEMPTS) {
                 $backoff = self::BACKOFF_BASE_SECONDS * (2 ** ($item->getAttempts() - 1));
                 $item->setNextAttemptAt((new DateTime())->add(new DateInterval('PT'.$backoff.'S')));
             }
 
             $this->queueMapper->update($item);
 
+            $sink->setLastDeliveryStatus('failing');
             if ($item->getStatus() === 'dead') {
                 $sink->setLastDeliveryStatus('dead');
-            } else {
-                $sink->setLastDeliveryStatus('failing');
             }
 
             $sink->setLastError(substr($exception->getMessage(), 0, 500));
@@ -259,6 +269,28 @@ class SiemService
             return false;
         }//end try
     }//end deliverOne()
+
+    /**
+     * Send one payload over the sink's configured transport. The single
+     * place the syslog/webhook choice is made, shared by deliverOne() and
+     * testSink().
+     *
+     * @param SiemSink $sink        The target sink
+     * @param string   $payloadJson The JSON payload
+     *
+     * @return void
+     *
+     * @throws \RuntimeException On transport failure
+     */
+    private function deliverTo(SiemSink $sink, string $payloadJson): void
+    {
+        if ($sink->getType() === 'syslog') {
+            $this->deliverSyslog(sink: $sink, payloadJson: $payloadJson);
+            return;
+        }
+
+        $this->deliverWebhook(sink: $sink, payloadJson: $payloadJson);
+    }//end deliverTo()
 
     /**
      * RFC 5424 syslog delivery over TCP (TLS when configured, §3.1).
@@ -278,16 +310,23 @@ class SiemService
             $scheme = 'tls://';
         }
 
+        // The stream_socket_client() call warns on an unreachable endpoint and
+        // returns false; the detail is already captured in $errstr/$errno,
+        // which the exception below re-reports.
         $errno  = 0;
         $errstr = '';
-        $socket = @stream_socket_client(
-            $scheme.$endpoint,
-            $errno,
-            $errstr,
-            self::DELIVERY_TIMEOUT
+        $socket = $this->withoutDiagnostics(
+            call: static function () use ($scheme, $endpoint, &$errno, &$errstr) {
+                return stream_socket_client(
+                    $scheme.$endpoint,
+                    $errno,
+                    $errstr,
+                    self::DELIVERY_TIMEOUT
+                );
+            }
         );
         if ($socket === false) {
-            throw new \RuntimeException('syslog connect failed: '.$errstr.' ('.$errno.')');
+            throw new RuntimeException('syslog connect failed: '.$errstr.' ('.$errno.')');
         }
 
         try {
@@ -298,7 +337,7 @@ class SiemService
             $frame   = strlen($message).' '.$message;
             $written = fwrite($socket, $frame);
             if ($written === false || $written < strlen($frame)) {
-                throw new \RuntimeException('syslog write failed');
+                throw new RuntimeException('syslog write failed');
             }
         } finally {
             fclose($socket);
@@ -336,7 +375,7 @@ class SiemService
         );
         $status   = $response->getStatusCode();
         if ($status < 200 || $status > 299) {
-            throw new \RuntimeException('webhook responded '.$status);
+            throw new RuntimeException('webhook responded '.$status);
         }
     }//end deliverWebhook()
 
@@ -480,11 +519,7 @@ class SiemService
         $outcome = 'ok';
         $error   = null;
         try {
-            if ($sink->getType() === 'syslog') {
-                $this->deliverSyslog(sink: $sink, payloadJson: $payload);
-            } else {
-                $this->deliverWebhook(sink: $sink, payloadJson: $payload);
-            }
+            $this->deliverTo(sink: $sink, payloadJson: $payload);
         } catch (Throwable $exception) {
             $outcome = 'failed';
             $error   = $exception->getMessage();
@@ -530,12 +565,13 @@ class SiemService
         }
 
         if (array_key_exists('categoryFilter', $params) === true) {
-            $filter = $params['categoryFilter'];
+            $filter  = $params['categoryFilter'];
+            $encoded = null;
             if (is_array($filter) === true && $filter !== []) {
-                $sink->setCategoryFilter((string) json_encode(array_map('strval', $filter)));
-            } else {
-                $sink->setCategoryFilter(null);
+                $encoded = (string) json_encode(array_map('strval', $filter));
             }
+
+            $sink->setCategoryFilter($encoded);
         }
     }//end applySecretAndFilter()
 
@@ -589,7 +625,7 @@ class SiemService
     private function dispatchAudit(string $actorId, string $eventType, string $sinkId, array $extra=[]): void
     {
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $actorId,
                 eventType: $eventType,
                 objectType: 'siem_sink',

@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use DateTime;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\LinkShareMapper;
 use OCA\Doriath\Db\SecretDelegationMapper;
@@ -59,15 +60,15 @@ class GdprService
     /**
      * Constructor for GdprService.
      *
-     * @param SecretMapper                               $secretMapper          The secret mapper
-     * @param ShareTargetMapper                          $shareMapper           The share-target mapper
-     * @param SecretDelegationMapper                     $delegationMapper      The delegation mapper
-     * @param LinkShareMapper                            $linkShareMapper       The link-share mapper
-     * @param SecretRequestMapper                        $requestMapper         The secret-request mapper
-     * @param EncryptionSuiteMapper                      $suiteMapper           The encryption-suite mapper
-     * @param SettingsService                            $settingsService       The settings service
-     * @param \OCA\Doriath\Db\AttachmentMapper|null      $attachmentMapper      The attachment mapper (export metadata)
-     * @param \OCA\Doriath\Db\AttachmentGrantMapper|null $attachmentGrantMapper The attachment-grant mapper (export metadata)
+     * @param SecretMapper                               $secretMapper     The secret mapper
+     * @param ShareTargetMapper                          $shareMapper      The share-target mapper
+     * @param SecretDelegationMapper                     $delegationMapper The delegation mapper
+     * @param LinkShareMapper                            $linkShareMapper  The link-share mapper
+     * @param SecretRequestMapper                        $requestMapper    The secret-request mapper
+     * @param EncryptionSuiteMapper                      $suiteMapper      The encryption-suite mapper
+     * @param SettingsService                            $settingsService  The settings service
+     * @param \OCA\Doriath\Db\AttachmentMapper|null      $attachmentMapper The attachment mapper (export metadata)
+     * @param \OCA\Doriath\Db\AttachmentGrantMapper|null $grantMapper      The attachment-grant mapper (export metadata)
      *
      * @return void
      */
@@ -80,7 +81,7 @@ class GdprService
         private EncryptionSuiteMapper $suiteMapper,
         private SettingsService $settingsService,
         private ?\OCA\Doriath\Db\AttachmentMapper $attachmentMapper=null,
-        private ?\OCA\Doriath\Db\AttachmentGrantMapper $attachmentGrantMapper=null,
+        private ?\OCA\Doriath\Db\AttachmentGrantMapper $grantMapper=null,
     ) {
     }//end __construct()
 
@@ -111,7 +112,7 @@ class GdprService
             'format'         => self::FORMAT,
             'version'        => self::VERSION,
             'subject'        => $userId,
-            'generated'      => (new \DateTime())->format('c'),
+            'generated'      => (new DateTime())->format('c'),
             'notes'          => [
                 'privateKeyExcluded' => 'Encryption-suite private-key blobs are '
                     .'excluded: they are end-to-end encrypted and unreadable to '
@@ -145,7 +146,7 @@ class GdprService
      */
     private function collectAttachments(array $ownedSecrets, string $userId): array
     {
-        if ($this->attachmentMapper === null || $this->attachmentGrantMapper === null) {
+        if ($this->attachmentMapper === null || $this->grantMapper === null) {
             return [];
         }
 
@@ -154,7 +155,7 @@ class GdprService
             foreach ($this->attachmentMapper->findBySourceSecret(sourceSecretId: $secret->getId()) as $attachment) {
                 $row = $attachment->jsonSerialize();
                 try {
-                    $grant = $this->attachmentGrantMapper->findForRecipient(
+                    $grant = $this->grantMapper->findForRecipient(
                         attachmentId: $attachment->getId(),
                         recipientId: $userId
                     );

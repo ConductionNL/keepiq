@@ -42,6 +42,7 @@ use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\NotFoundException;
 use OCA\Doriath\Service\LeaseService;
@@ -88,6 +89,7 @@ class ApplicationSecretsController extends ApplicationApiController
      * @param MachineSecretEnvelopeService $envelopeService The envelope serializer
      * @param IEventDispatcher             $eventDispatcher The event dispatcher (audit)
      * @param LeaseService|null            $leaseService    The lease service (grant on fetch)
+     * @param AuditEventFactory            $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -99,6 +101,7 @@ class ApplicationSecretsController extends ApplicationApiController
         private MachineSecretEnvelopeService $envelopeService,
         private IEventDispatcher $eventDispatcher,
         private ?LeaseService $leaseService=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
@@ -124,6 +127,7 @@ class ApplicationSecretsController extends ApplicationApiController
             return $this->unauthorized();
         }
 
+        $since           = null;
         $updatedSinceRaw = $this->request->getParam('updated_since');
         if ($updatedSinceRaw !== null && $updatedSinceRaw !== '') {
             $since = $this->parseIso8601(value: (string) $updatedSinceRaw);
@@ -133,30 +137,46 @@ class ApplicationSecretsController extends ApplicationApiController
                     statusCode: Http::STATUS_BAD_REQUEST
                 );
             }
-
-            $secrets = $this->secretMapper->findByOwnerUpdatedSince(
-                ownerType: 'application',
-                ownerId: $application->getId(),
-                since: $since
-            );
-        } else {
-            $secrets = $this->secretMapper->findByOwner(
-                ownerType: 'application',
-                ownerId: $application->getId()
-            );
         }
+
+        $secrets = $this->fetchOwnedSecrets(applicationId: $application->getId(), since: $since);
 
         return new JSONResponse(
             data: [
                 'format' => MachineSecretEnvelopeService::FORMAT,
                 'items'  => array_map(
-                    fn (Secret $s) => $this->envelopeService->serialize($s),
+                    fn (Secret $secret) => $this->envelopeService->serialize($secret),
                     $secrets
                 ),
                 'total'  => count($secrets),
             ]
         );
     }//end index()
+
+    /**
+     * The application's secrets, optionally narrowed to those updated
+     * strictly after $since. Exactly one query runs either way.
+     *
+     * @param string        $applicationId The owning application's ID
+     * @param DateTime|null $since         Lower bound, or null for all rows
+     *
+     * @return Secret[]
+     */
+    private function fetchOwnedSecrets(string $applicationId, ?DateTime $since): array
+    {
+        if ($since !== null) {
+            return $this->secretMapper->findByOwnerUpdatedSince(
+                ownerType: 'application',
+                ownerId: $applicationId,
+                since: $since
+            );
+        }
+
+        return $this->secretMapper->findByOwner(
+            ownerType: 'application',
+            ownerId: $applicationId
+        );
+    }//end fetchOwnedSecrets()
 
     /**
      * Fetch one of the calling application's secrets by id.
@@ -243,7 +263,7 @@ class ApplicationSecretsController extends ApplicationApiController
                 data: [
                     'message'    => 'Multiple secrets match this name; disambiguate by folder or rename',
                     'candidates' => array_map(
-                        fn (Secret $s) => $this->envelopeService->candidate($s),
+                        fn (Secret $secret) => $this->envelopeService->candidate($secret),
                         $matches
                     ),
                 ],
@@ -386,7 +406,7 @@ class ApplicationSecretsController extends ApplicationApiController
         }
 
         $this->eventDispatcher->dispatchTyped(
-            AuditEvent::forApplication(
+            $this->auditEvents->forApplication(
                 actorId: $applicationId,
                 eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED,
                 objectType: 'secret',
@@ -505,6 +525,12 @@ class ApplicationSecretsController extends ApplicationApiController
      * @param string $value The raw timestamp
      *
      * @return DateTime|null
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess) DateTime::createFromFormat() is a
+     * named constructor on a PHP built-in: there is no instance API for
+     * format-strict parsing (an instance would already have to exist), and no
+     * Nextcloud/OCP abstraction offers one — ITimeFactory only produces "now".
+     * Wrapping one call in a bespoke adapter would be disproportionate.
      */
     private function parseIso8601(string $value): ?DateTime
     {

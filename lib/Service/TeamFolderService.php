@@ -43,6 +43,7 @@ use OCA\Doriath\Db\TeamFolderMapper;
 use OCA\Doriath\Db\TeamFolderMember;
 use OCA\Doriath\Db\TeamFolderMemberMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -93,6 +94,7 @@ class TeamFolderService
      * @param IDBConnection          $db                  The database connection
      * @param LoggerInterface        $logger              The logger
      * @param IEventDispatcher|null  $eventDispatcher     The audit event dispatcher
+     * @param AuditEventFactory      $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -111,6 +113,7 @@ class TeamFolderService
         private IDBConnection $db,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -160,7 +163,7 @@ class TeamFolderService
         $persisted = $this->mapper->insert($entity);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::TEAM_FOLDER_SHARED,
                 objectType: 'team_folder',
@@ -209,7 +212,7 @@ class TeamFolderService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::TEAM_FOLDER_UNSHARED,
                 objectType: 'team_folder',
@@ -356,7 +359,7 @@ class TeamFolderService
             $membership = $this->memberMapper->insert($membership);
 
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_ADDED,
                     objectType: 'team_folder',
@@ -430,7 +433,7 @@ class TeamFolderService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_REMOVED,
                 objectType: 'team_folder',
@@ -607,7 +610,7 @@ class TeamFolderService
                     targetUserId: $targetUserId,
                     encryptedKey: $encryptedKey,
                     encryptedLogin: $this->nullableString(value: $row['encryptedLogin'] ?? null),
-                    encryptedAdditionalFields: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
+                    encryptedExtras: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
                 );
                 if ($copy === null) {
                     // Recipient without an active suite — skipped silently.
@@ -843,7 +846,7 @@ class TeamFolderService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $adminId,
                 eventType: AuditEventTypes::TEAM_FOLDER_OFFBOARDED,
                 objectType: 'team_folder',
@@ -1039,11 +1042,11 @@ class TeamFolderService
      * recipient organises their own tree), and the ciphertext fields are
      * stored verbatim — the server never decrypts anything.
      *
-     * @param string      $sourceSecretId            The owner's source secret ID
-     * @param string      $targetUserId              The recipient user ID
-     * @param string      $encryptedKey              The RSA-encrypted key blob
-     * @param string|null $encryptedLogin            The RSA-encrypted login blob
-     * @param string|null $encryptedAdditionalFields The RSA-encrypted additional-fields blob
+     * @param string      $sourceSecretId  The owner's source secret ID
+     * @param string      $targetUserId    The recipient user ID
+     * @param string      $encryptedKey    The RSA-encrypted key blob
+     * @param string|null $encryptedLogin  The RSA-encrypted login blob
+     * @param string|null $encryptedExtras The RSA-encrypted additional-fields blob
      *
      * @return \OCA\Doriath\Db\Secret|null Null when the recipient has no active suite
      */
@@ -1052,7 +1055,7 @@ class TeamFolderService
         string $targetUserId,
         string $encryptedKey,
         ?string $encryptedLogin,
-        ?string $encryptedAdditionalFields,
+        ?string $encryptedExtras,
     ): ?\OCA\Doriath\Db\Secret {
         try {
             $source = $this->secretMapper->findById($sourceSecretId);
@@ -1074,7 +1077,7 @@ class TeamFolderService
         }
 
         $now  = new DateTime();
-        $copy = new \OCA\Doriath\Db\Secret();
+        $copy = new Secret();
         $copy->setId(Uuid::uuid4()->toString());
         $copy->setName($source->getName());
         $copy->setUrl($source->getUrl());
@@ -1082,7 +1085,7 @@ class TeamFolderService
         $copy->setFolderId(null);
         $copy->setKey($encryptedKey);
         $copy->setLogin($encryptedLogin);
-        $copy->setAdditionalFields($encryptedAdditionalFields);
+        $copy->setAdditionalFields($encryptedExtras);
         $copy->setEncryptionSuiteId($suite->getId());
         $copy->setOwnerType('user');
         $copy->setOwnerId($targetUserId);
@@ -1321,7 +1324,7 @@ class TeamFolderService
         $member = $this->memberMapper->update($member);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $ownerId,
                 eventType: AuditEventTypes::TEAM_FOLDER_GRADE_CHANGED,
                 objectType: 'team_folder',

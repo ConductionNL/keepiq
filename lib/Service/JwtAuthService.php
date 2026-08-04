@@ -27,7 +27,6 @@ namespace OCA\Doriath\Service;
 
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
-use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSVerifier;
@@ -37,7 +36,9 @@ use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Support\JwkFactoryAdapter;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ICacheFactory;
@@ -101,6 +102,8 @@ class JwtAuthService
      * @param ICacheFactory         $cacheFactory      The cache factory
      * @param LoggerInterface       $logger            The logger
      * @param IEventDispatcher|null $eventDispatcher   The event dispatcher
+     * @param AuditEventFactory     $auditEvents       The audit-event factory
+     * @param JwkFactoryAdapter     $jwkFactory        The JWK factory
      *
      * @return void
      */
@@ -110,6 +113,8 @@ class JwtAuthService
         private ICacheFactory $cacheFactory,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
+        private JwkFactoryAdapter $jwkFactory=new JwkFactoryAdapter(),
     ) {
     }//end __construct()
 
@@ -255,7 +260,7 @@ class JwtAuthService
         $tokenCache->set($accessToken, $application->getId(), self::ACCESS_TOKEN_TTL);
 
         $this->dispatchAudit(
-            event: AuditEvent::forApplication(
+            event: $this->auditEvents->forApplication(
                 actorId: $application->getId(),
                 eventType: AuditEventTypes::APPLICATION_TOKEN_ISSUED,
                 objectType: 'application',
@@ -333,7 +338,7 @@ class JwtAuthService
         $publicKeyPem = (string) $details['key'];
 
         try {
-            return JWKFactory::createFromKey($publicKeyPem);
+            return $this->jwkFactory->createFromKey($publicKeyPem);
         } catch (Throwable $e) {
             throw new RuntimeException(message: 'Unsupported public key: '.$e->getMessage());
         }

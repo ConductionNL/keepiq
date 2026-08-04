@@ -36,6 +36,7 @@ use OCA\Doriath\Db\HoneyFlag;
 use OCA\Doriath\Db\HoneyFlagMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -68,6 +69,7 @@ class HoneyCredentialService
      * @param NotificationService|null $notificationService The notification dispatcher
      * @param LoggerInterface          $logger              The logger
      * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
+     * @param AuditEventFactory        $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -80,6 +82,7 @@ class HoneyCredentialService
         private ?NotificationService $notificationService,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -186,7 +189,7 @@ class HoneyCredentialService
      * @param string      $accessorType user|application|link_visitor|system
      * @param string|null $accessorId   The accessor id (null = anonymous)
      * @param string      $channel      ui|machine_api|link|share
-     * @param string|null $ip           Remote address when available
+     * @param string|null $remoteIp     Remote address when available
      * @param string|null $userAgent    User agent when available
      *
      * @return bool Whether the secret was honey-flagged (a tripwire hit)
@@ -198,7 +201,7 @@ class HoneyCredentialService
         string $accessorType,
         ?string $accessorId,
         string $channel,
-        ?string $ip=null,
+        ?string $remoteIp=null,
         ?string $userAgent=null,
     ): bool {
         try {
@@ -221,12 +224,15 @@ class HoneyCredentialService
             $snoozed     = ($existing !== null && $existing->getSnoozedUntil() !== null && $existing->getSnoozedUntil() > $now);
             $inWindow    = ($existing !== null && $existing->getAccessedAt() !== null && $existing->getAccessedAt() > $windowStart);
 
-            if ($existing !== null && ($snoozed === true || $inWindow === true)) {
+            $collapse = ($existing !== null && ($snoozed === true || $inWindow === true));
+            if ($collapse === true && $existing !== null) {
                 // Collapse: update the existing alert, no new page.
                 $existing->setAccessCount($existing->getAccessCount() + 1);
                 $existing->setAccessedAt($now);
                 $this->alertMapper->update($existing);
-            } else {
+            }
+
+            if ($collapse === false) {
                 $alert = new HoneyAlert();
                 $alert->setId(Uuid::uuid4()->toString());
                 $alert->setHoneyFlagId($flag->getId());
@@ -234,7 +240,7 @@ class HoneyCredentialService
                 $alert->setAccessorType($accessorType);
                 $alert->setAccessorId($accessorId);
                 $alert->setChannel($channel);
-                $alert->setIp($ip);
+                $alert->setIp($remoteIp);
                 $alert->setUserAgent($userAgent);
                 $alert->setAccessCount(1);
                 $alert->setAccessedAt($now);
@@ -246,7 +252,7 @@ class HoneyCredentialService
             // The distinguished audit marker fires on EVERY honey access —
             // snoozed and collapsed accesses stay in the forensic trail (D5/D6).
             $this->eventDispatcher?->dispatchTyped(
-                AuditEvent::forSystem(
+                $this->auditEvents->forSystem(
                     eventType: AuditEventTypes::HONEY_ACCESSED,
                     objectType: 'secret',
                     objectId: $secretId,

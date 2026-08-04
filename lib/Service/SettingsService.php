@@ -23,6 +23,7 @@ namespace OCA\Doriath\Service;
 
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -114,6 +115,7 @@ class SettingsService
      * @param IUserSession                               $userSession     The user session
      * @param LoggerInterface                            $logger          The logger
      * @param \OCP\EventDispatcher\IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
+     * @param AuditEventFactory                          $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -126,6 +128,7 @@ class SettingsService
         private IUserSession $userSession,
         private LoggerInterface $logger,
         private ?\OCP\EventDispatcher\IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -293,7 +296,7 @@ class SettingsService
             $thresholds = array_values(
                 array_filter(
                     array_map('intval', (array) $data['expiry_reminder_days']),
-                    static fn (int $d): bool => $d > 0
+                    static fn (int $days): bool => $days > 0
                 )
             );
             if ($thresholds === []) {
@@ -464,7 +467,7 @@ class SettingsService
 
         $actorId = $this->userSession->getUser()?->getUID() ?? 'system';
         $this->eventDispatcher?->dispatchTyped(
-            \OCA\Doriath\Event\Audit\AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $actorId,
                 eventType: \OCA\Doriath\Event\Audit\AuditEventTypes::PASSWORD_POLICY_UPDATED,
                 objectType: 'settings',
@@ -554,11 +557,12 @@ class SettingsService
             }
 
             if (is_bool($value) === true) {
+                $encoded = '0';
                 if ($value === true) {
-                    $value = '1';
-                } else {
-                    $value = '0';
+                    $encoded = '1';
                 }
+
+                $value = $encoded;
             }
 
             // Reject an out-of-set staleness threshold so the client cannot store

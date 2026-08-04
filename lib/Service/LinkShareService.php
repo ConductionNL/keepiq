@@ -28,6 +28,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\LinkShare;
 use OCA\Doriath\Db\LinkShareMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -69,6 +70,7 @@ class LinkShareService
      * @param LinkShareMapper       $mapper          The link share mapper
      * @param LoggerInterface       $logger          The logger interface
      * @param IEventDispatcher|null $eventDispatcher The event dispatcher
+     * @param AuditEventFactory     $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -76,6 +78,7 @@ class LinkShareService
         private LinkShareMapper $mapper,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -159,7 +162,7 @@ class LinkShareService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::LINK_SHARE_CREATED,
                 objectType: 'link_share',
@@ -243,7 +246,7 @@ class LinkShareService
         $linkShare = $this->mapper->findByToken($token);
 
         $this->dispatchAudit(
-            event: AuditEvent::forLinkVisitor(
+            event: $this->auditEvents->forLinkVisitor(
                 eventType: AuditEventTypes::LINK_SHARE_ACCESSED,
                 objectType: 'link_share',
                 objectId: $linkShare->getId(),
@@ -289,7 +292,7 @@ class LinkShareService
             );
 
             $this->dispatchAudit(
-                event: AuditEvent::forLinkVisitor(
+                event: $this->auditEvents->forLinkVisitor(
                     eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
                     objectType: 'link_share',
                     objectId: $linkShare->getId(),
@@ -298,7 +301,7 @@ class LinkShareService
             );
 
             $this->dispatchAudit(
-                event: AuditEvent::forLinkVisitor(
+                event: $this->auditEvents->forLinkVisitor(
                     eventType: AuditEventTypes::LINK_SHARE_AUTO_DELETED,
                     objectType: 'link_share',
                     objectId: $linkShare->getId(),
@@ -311,7 +314,7 @@ class LinkShareService
         $this->mapper->update($linkShare);
 
         $this->dispatchAudit(
-            event: AuditEvent::forLinkVisitor(
+            event: $this->auditEvents->forLinkVisitor(
                 eventType: AuditEventTypes::LINK_SHARE_ACCESS_FAILED,
                 objectType: 'link_share',
                 objectId: $linkShare->getId(),
@@ -371,7 +374,7 @@ class LinkShareService
         $this->logger->info("Doriath: link share {$id} revoked by {$userId}");
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::LINK_SHARE_REVOKED,
                 objectType: 'link_share',

@@ -36,6 +36,7 @@ use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -66,6 +67,7 @@ class DelegationService
      * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
      * @param IGroupManager|null     $groupManager      Group membership check (admin path)
      * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
+     * @param AuditEventFactory      $auditEvents       The audit-event factory
      *
      * @return void
      */
@@ -75,6 +77,7 @@ class DelegationService
         private ?ShareTargetMapper $shareTargetMapper=null,
         private ?IGroupManager $groupManager=null,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -93,36 +96,30 @@ class DelegationService
     }//end dispatchAudit()
 
     /**
-     * Create a temporary delegation.
+     * Create a temporary delegation by OWNER SELF-DELEGATION
+     * (FEATURES.md V1 §17.1, ownership-delegation spec.md).
      *
-     * Two paths are supported (FEATURES.md V1 §17.1, ownership-delegation
-     * spec.md):
+     * `initiatedBy` MUST be `secret.owner_id`. The owner hands share/revoke
+     * authority to `delegatedTo`, who MUST already hold a share of the
+     * Secret (when ShareTargetMapper is wired); otherwise the call is
+     * rejected, because a delegation promotes an *existing* recipient copy
+     * to co-owner status.
      *
-     *  - **Owner self-delegation** — `initiatedBy === secret.owner_id`. The
-     *    owner hands share/revoke authority to `delegatedTo`. The delegate
-     *    MUST already hold a share of the Secret (when ShareTargetMapper
-     *    is wired); otherwise the call is rejected because a delegation
-     *    promotes an *existing* recipient copy to co-owner status.
-     *  - **Admin power grab** — `initiatedBy ∈ vault_admin` (Nextcloud
-     *    group) AND `initiatedBy` already holds a share of the Secret. The
-     *    delegation is created with `delegated_to = initiatedBy` so the
-     *    admin's own copy is promoted. Owner consent is NOT required, but
-     *    the admin must already be a recipient — the path widens *who*
-     *    can act, not what can be acted on.
+     * The admin power-grab path lives in createAdminHandover() — the two
+     * are separate entry points rather than one flag-selected method,
+     * because they are different authorization decisions.
      *
      * @param string $secretId    The Secret ID
      * @param string $delegatedTo The user receiving delegation rights
      * @param string $initiatedBy The user initiating the delegation
-     * @param bool   $isAdminPath When true, validate via admin-handover branch
-     *                            instead of owner-self-delegation.
      *
      * @return SecretDelegation
      *
      * @throws InvalidArgumentException When the Secret does not exist,
-     *                                  the caller is not authorized, the
-     *                                  delegate is the original owner, or
-     *                                  the delegate holds no pre-existing
-     *                                  share of the Secret.
+     *                                  the caller is not the owner, the
+     *                                  delegate is the owner themselves,
+     *                                  or the delegate holds no
+     *                                  pre-existing share of the Secret.
      *
      * @spec openspec/changes/implement-user-sharing/tasks.md#task-6.2
      */
@@ -130,51 +127,128 @@ class DelegationService
         string $secretId,
         string $delegatedTo,
         string $initiatedBy,
-        bool $isAdminPath=false,
     ): SecretDelegation {
+        $secret = $this->loadDelegableSecret(secretId: $secretId, delegatedTo: $delegatedTo);
+
+        // The initiator must BE the current owner of the Secret.
+        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $initiatedBy) {
+            throw new InvalidArgumentException(message: 'Not authorized to delegate this secret');
+        }
+
+        if ($delegatedTo === $initiatedBy) {
+            throw new InvalidArgumentException(message: 'Cannot delegate to self');
+        }
+
+        // Delegate MUST already hold a share when the share-target
+        // mapper is wired; this preserves the "delegations promote
+        // existing recipients" invariant from spec.md.
+        $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $delegatedTo);
+
+        return $this->persistDelegation(
+            secret: $secret,
+            secretId: $secretId,
+            delegatedTo: $delegatedTo,
+            initiatedBy: $initiatedBy
+        );
+    }//end createDelegation()
+
+    /**
+     * Create a temporary delegation by ADMIN POWER GRAB
+     * (FEATURES.md V1 §17.1, ownership-delegation spec.md).
+     *
+     * `initiatedBy` MUST be in the vault_admin Nextcloud group AND already
+     * hold a share of the Secret. The delegation is created with
+     * `delegated_to = initiatedBy` so the admin's own copy is promoted.
+     * Owner consent is NOT required, but the admin must already be a
+     * recipient — the path widens *who* can act, not what can be acted on.
+     *
+     * @param string $secretId    The Secret ID
+     * @param string $delegatedTo The user receiving delegation rights; MUST
+     *                            equal $initiatedBy on this path
+     * @param string $initiatedBy The vault admin initiating the handover
+     *
+     * @return SecretDelegation
+     *
+     * @throws InvalidArgumentException When the Secret does not exist, the
+     *                                  caller is not a vault admin,
+     *                                  $delegatedTo is not the initiator,
+     *                                  the initiator is already the owner,
+     *                                  or the initiator holds no
+     *                                  pre-existing share of the Secret.
+     *
+     * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
+     */
+    public function createAdminHandover(
+        string $secretId,
+        string $delegatedTo,
+        string $initiatedBy,
+    ): SecretDelegation {
+        $secret = $this->loadDelegableSecret(secretId: $secretId, delegatedTo: $delegatedTo);
+
+        $this->assertVaultAdmin(userId: $initiatedBy);
+
+        if ($delegatedTo !== $initiatedBy) {
+            throw new InvalidArgumentException(
+                message: 'Admin handover promotes the initiating admin; delegated_to must match the initiator'
+            );
+        }
+
+        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() === $initiatedBy) {
+            throw new InvalidArgumentException(
+                message: 'Admin handover does not apply to the secret owner themselves'
+            );
+        }
+
+        $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $initiatedBy);
+
+        return $this->persistDelegation(
+            secret: $secret,
+            secretId: $secretId,
+            delegatedTo: $delegatedTo,
+            initiatedBy: $initiatedBy
+        );
+    }//end createAdminHandover()
+
+    /**
+     * Load the Secret both delegation paths act on, rejecting a blank
+     * delegate up front so the two entry points share one precondition.
+     *
+     * @param string $secretId    The Secret ID
+     * @param string $delegatedTo The candidate delegate
+     *
+     * @return Secret
+     *
+     * @throws InvalidArgumentException When the Secret does not exist or
+     *                                  $delegatedTo is blank.
+     */
+    private function loadDelegableSecret(string $secretId, string $delegatedTo): Secret
+    {
         $secret = $this->loadSecret(secretId: $secretId);
 
         if ($delegatedTo === '') {
             throw new InvalidArgumentException(message: 'delegated_to is required');
         }
 
-        if ($isAdminPath === true) {
-            // Admin-handover branch: the initiator must be a vault admin
-            // AND already hold a share of the Secret. The delegation
-            // promotes the admin's own existing recipient copy, so the
-            // delegate is always the initiator on this path.
-            $this->assertVaultAdmin(userId: $initiatedBy);
+        return $secret;
+    }//end loadDelegableSecret()
 
-            if ($delegatedTo !== $initiatedBy) {
-                throw new InvalidArgumentException(
-                    message: 'Admin handover promotes the initiating admin; delegated_to must match the initiator'
-                );
-            }
-
-            if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() === $initiatedBy) {
-                throw new InvalidArgumentException(
-                    message: 'Admin handover does not apply to the secret owner themselves'
-                );
-            }
-
-            $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $initiatedBy);
-        } else {
-            // Owner self-delegation branch: the initiator must BE the
-            // current owner of the Secret.
-            if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $initiatedBy) {
-                throw new InvalidArgumentException(message: 'Not authorized to delegate this secret');
-            }
-
-            if ($delegatedTo === $initiatedBy) {
-                throw new InvalidArgumentException(message: 'Cannot delegate to self');
-            }
-
-            // Delegate MUST already hold a share when the share-target
-            // mapper is wired; this preserves the "delegations promote
-            // existing recipients" invariant from spec.md.
-            $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $delegatedTo);
-        }//end if
-
+    /**
+     * Persist an authorized temporary delegation and audit it. Callers
+     * have already made the authorization decision.
+     *
+     * @param Secret $secret      The Secret being delegated
+     * @param string $secretId    The Secret ID as supplied by the caller
+     * @param string $delegatedTo The user receiving delegation rights
+     * @param string $initiatedBy The user initiating the delegation
+     *
+     * @return SecretDelegation
+     */
+    private function persistDelegation(
+        Secret $secret,
+        string $secretId,
+        string $delegatedTo,
+        string $initiatedBy,
+    ): SecretDelegation {
         $entity = new SecretDelegation();
         $entity->setId(Uuid::uuid4()->toString());
         $entity->setSecretId($secretId);
@@ -187,7 +261,7 @@ class DelegationService
         $persisted = $this->mapper->insert($entity);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $initiatedBy,
                 eventType: AuditEventTypes::SHARE_DELEGATED,
                 objectType: 'share',
@@ -201,7 +275,7 @@ class DelegationService
         );
 
         return $persisted;
-    }//end createDelegation()
+    }//end persistDelegation()
 
     /**
      * Assert that $userId is a member of the vault_admin group.
@@ -300,7 +374,7 @@ class DelegationService
 
         if ($removed > 0) {
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $ownerId,
                     eventType: AuditEventTypes::SHARE_DELEGATION_RECLAIMED,
                     objectType: 'share',

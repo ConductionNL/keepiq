@@ -90,9 +90,9 @@ class DoriathNotifier implements INotifier
             throw new UnknownNotificationException();
         }
 
-        $l    = $this->l10nFactory->get(app: Application::APP_ID, lang: $languageCode);
-        $subj = $notification->getSubject();
-        $p    = $notification->getSubjectParameters();
+        $l      = $this->l10nFactory->get(app: Application::APP_ID, lang: $languageCode);
+        $subj   = $notification->getSubject();
+        $params = $notification->getSubjectParameters();
 
         if (array_key_exists($subj, NotificationService::SUBJECT_SETTING_MAP) === false) {
             throw new UnknownNotificationException();
@@ -102,51 +102,50 @@ class DoriathNotifier implements INotifier
 
         switch ($subj) {
             case 'secret_shared':
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
-                $sharedBy   = (string) ($p['shared_by'] ?? $l->t('a user'));
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
+                $sharedBy   = (string) ($params['shared_by'] ?? $l->t('a user'));
                 $notification->setParsedSubject((string) $l->t('Secret shared with you'));
                 $notification->setParsedMessage(
                     (string) $l->t('%1$s shared the secret "%2$s" with you.', [$sharedBy, $secretName])
                 );
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'share_request':
-                $requester  = (string) ($p['requester'] ?? $l->t('a user'));
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
+                $requester  = (string) ($params['requester'] ?? $l->t('a user'));
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $notification->setParsedSubject((string) $l->t('Share request'));
                 $notification->setParsedMessage(
                     (string) $l->t('%1$s requested access to the secret "%2$s".', [$requester, $secretName])
                 );
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'share_request_result':
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
-                $result     = (string) ($p['result'] ?? 'denied');
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
+                $result     = (string) ($params['result'] ?? 'denied');
                 $notification->setParsedSubject((string) $l->t('Share request result'));
+                $resultMessage = (string) $l->t('Your share request for "%s" was denied.', [$secretName]);
                 if ($result === 'approved') {
                     $resultMessage = (string) $l->t('Your share request for "%s" was approved.', [$secretName]);
-                } else {
-                    $resultMessage = (string) $l->t('Your share request for "%s" was denied.', [$secretName]);
                 }
 
                 $notification->setParsedMessage($resultMessage);
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'group_member_added':
-                $groupId    = (string) ($p['group_id'] ?? '');
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
+                $groupId    = (string) ($params['group_id'] ?? '');
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $notification->setParsedSubject((string) $l->t('Group member added'));
                 $notification->setParsedMessage(
                     (string) $l->t('A new member joined the group "%1$s" — approve to share "%2$s".', [$groupId, $secretName])
                 );
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'team_folder_shared':
-                $sharedBy = (string) ($p['sharedBy'] ?? $l->t('a user'));
+                $sharedBy = (string) ($params['sharedBy'] ?? $l->t('a user'));
                 $notification->setParsedSubject((string) $l->t('Team folder shared with you'));
                 $notification->setParsedMessage(
                     (string) $l->t('%s shared a team folder with you. Its secrets are now in your vault.', [$sharedBy])
@@ -154,8 +153,8 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'team_folder_join_request':
-                $newMemberId = (string) ($p['newMemberId'] ?? $l->t('a user'));
-                $joinGroupId = (string) ($p['groupId'] ?? '');
+                $newMemberId = (string) ($params['newMemberId'] ?? $l->t('a user'));
+                $joinGroupId = (string) ($params['groupId'] ?? '');
                 $notification->setParsedSubject((string) $l->t('Team folder join request'));
                 $notification->setParsedMessage(
                     (string) $l->t('%1$s joined the group "%2$s" — approve to share your team folder with them.', [$newMemberId, $joinGroupId])
@@ -163,26 +162,26 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'secret_compromised':
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $notification->setParsedSubject((string) $l->t('Secret may be compromised'));
                 $notification->setParsedMessage(
                     (string) $l->t('Your secret "%s" may be compromised and requires migration.', [$secretName])
                 );
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'request_fulfilled':
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $notification->setParsedSubject((string) $l->t('Secret request fulfilled'));
                 $notification->setParsedMessage(
                     (string) $l->t('Your request for "%s" has been filled in.', [$secretName])
                 );
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'app_pending':
-                $appName      = (string) ($p['app_name'] ?? $l->t('an application'));
-                $registeredBy = (string) ($p['registered_by'] ?? $l->t('an external party'));
+                $appName      = (string) ($params['app_name'] ?? $l->t('an application'));
+                $registeredBy = (string) ($params['registered_by'] ?? $l->t('an external party'));
                 $notification->setParsedSubject((string) $l->t('New application pending approval'));
                 $notification->setParsedMessage(
                     (string) $l->t('Application "%1$s" was registered by %2$s and is awaiting approval.', [$appName, $registeredBy])
@@ -195,8 +194,8 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'honey_access':
-                $honeyChannel  = (string) ($p['channel'] ?? $l->t('unknown channel'));
-                $honeyAccessor = (string) ($p['accessor'] ?? $l->t('an unknown accessor'));
+                $honeyChannel  = (string) ($params['channel'] ?? $l->t('unknown channel'));
+                $honeyAccessor = (string) ($params['accessor'] ?? $l->t('an unknown accessor'));
                 $notification->setParsedSubject((string) $l->t('Honey credential accessed'));
                 $notification->setParsedMessage(
                     (string) $l->t(
@@ -207,7 +206,7 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'certificate_expiring':
-                $certDaysLeft = (int) ($p['days_left'] ?? 0);
+                $certDaysLeft = (int) ($params['days_left'] ?? 0);
                 $notification->setParsedSubject((string) $l->t('Vault certificate expiring soon'));
                 $notification->setParsedMessage(
                     (string) $l->t(
@@ -218,7 +217,7 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'siem_dead_letter':
-                $sinkName = (string) ($p['sink_name'] ?? $l->t('a SIEM sink'));
+                $sinkName = (string) ($params['sink_name'] ?? $l->t('a SIEM sink'));
                 $notification->setParsedSubject((string) $l->t('SIEM delivery failing'));
                 $notification->setParsedMessage(
                     (string) $l->t(
@@ -234,8 +233,8 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'emergency_access_requested':
-                $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
-                $waitDays    = (int) ($p['waitPeriodDays'] ?? 7);
+                $granteeName = (string) ($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
+                $waitDays    = (int) ($params['waitPeriodDays'] ?? 7);
                 $notification->setParsedSubject((string) $l->t('Emergency access requested'));
                 $notification->setParsedMessage(
                     (string) $l->t(
@@ -246,26 +245,26 @@ class DoriathNotifier implements INotifier
                 break;
 
             case 'secret_expiring':
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
-                $daysLeft   = (int) ($p['days_left'] ?? 0);
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
+                $daysLeft   = (int) ($params['days_left'] ?? 0);
                 $notification->setParsedSubject((string) $l->t('Secret expiring soon'));
                 $notification->setParsedMessage(
                     (string) $l->t('Your secret "%1$s" expires in %2$d day(s). Rotate it before then.', [$secretName, $daysLeft])
                 );
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'secret_rotation_due':
-                $secretName = (string) ($p['secret_name'] ?? $l->t('a secret'));
+                $secretName = (string) ($params['secret_name'] ?? $l->t('a secret'));
                 $notification->setParsedSubject((string) $l->t('Secret rotation due'));
                 $notification->setParsedMessage(
                     (string) $l->t('Your secret "%s" is past its expiry and has been flagged for rotation.', [$secretName])
                 );
-                $this->withSecretLink(notification: $notification, params: $p);
+                $this->withSecretLink(notification: $notification, params: $params);
                 break;
 
             case 'emergency_access_accessed':
-                $granteeName = (string) ($p['grantee_name'] ?? $p['granteeUserId'] ?? $l->t('a trusted contact'));
+                $granteeName = (string) ($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
                 $notification->setParsedSubject((string) $l->t('Emergency access used'));
                 $notification->setParsedMessage(
                     (string) $l->t('%s accessed your vault through emergency access.', [$granteeName])

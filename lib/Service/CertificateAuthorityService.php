@@ -30,10 +30,11 @@ use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Doriath\Support\PublicKeyLoaderAdapter;
+use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
-use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\File\X509;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -45,6 +46,8 @@ use Throwable;
  */
 class CertificateAuthorityService
 {
+    use SuppressesDiagnostics;
+
     private const ROOT_LIFETIME_DAYS         = 7300;
     private const INTERMEDIATE_LIFETIME_DAYS = 1095;
     private const RESIGN_BATCH_SIZE          = 100;
@@ -60,13 +63,14 @@ class CertificateAuthorityService
     /**
      * Constructor for CertificateAuthorityService.
      *
-     * @param CACertificateMapper   $caCertificateMapper The CA certificate mapper
-     * @param EncryptionSuiteMapper $suiteMapper         The encryption suite mapper
-     * @param IAppConfig            $appConfig           The app config interface
-     * @param ICrypto               $crypto              The crypto service
-     * @param LoggerInterface       $logger              The logger interface
-     * @param SecretMapper|null     $secretMapper        The secret mapper (issued-cert counts)
-     * @param SecretTypeMapper|null $secretTypeMapper    The type mapper (issued-cert counts)
+     * @param CACertificateMapper    $caCertificateMapper The CA certificate mapper
+     * @param EncryptionSuiteMapper  $suiteMapper         The encryption suite mapper
+     * @param IAppConfig             $appConfig           The app config interface
+     * @param ICrypto                $crypto              The crypto service
+     * @param LoggerInterface        $logger              The logger interface
+     * @param SecretMapper|null      $secretMapper        The secret mapper (issued-cert counts)
+     * @param SecretTypeMapper|null  $secretTypeMapper    The type mapper (issued-cert counts)
+     * @param PublicKeyLoaderAdapter $keyLoader           The phpseclib key loader
      *
      * @return void
      */
@@ -78,6 +82,7 @@ class CertificateAuthorityService
         private LoggerInterface $logger,
         private ?SecretMapper $secretMapper=null,
         private ?SecretTypeMapper $secretTypeMapper=null,
+        private PublicKeyLoaderAdapter $keyLoader=new PublicKeyLoaderAdapter(),
     ) {
     }//end __construct()
 
@@ -253,10 +258,15 @@ class CertificateAuthorityService
         // On some OpenSSL builds a public-only key works here; on others
         // openssl_csr_new() SILENTLY generates a throwaway keypair. The
         // modulus guard below catches that case and reroutes to phpseclib.
-        $csr = @openssl_csr_new(
-            distinguished_names: array_merge(self::DEFAULT_DN, ['commonName' => $commonName]),
-            private_key: $csrKey,
-            options: ['digest_alg' => 'sha256']
+        // The openssl_csr_new() call warns when the key it is handed is
+        // unusable for a CSR; the false return below is the branch we act on.
+        $csrDn = array_merge(self::DEFAULT_DN, ['commonName' => $commonName]);
+        $csr   = $this->withoutDiagnostics(
+            call: static fn () => openssl_csr_new(
+                distinguished_names: $csrDn,
+                private_key: $csrKey,
+                options: ['digest_alg' => 'sha256']
+            )
         );
 
         $certPem = null;
@@ -347,21 +357,21 @@ class CertificateAuthorityService
         string $intermediateCertPem,
         string $intermediatePrivPem,
     ): string {
-        $subjectPublic = \phpseclib3\Crypt\PublicKeyLoader::load($publicKeyPem);
+        $subjectPublic = $this->keyLoader->load($publicKeyPem);
         if ($subjectPublic instanceof \phpseclib3\Crypt\RSA\PublicKey === false) {
             throw new RuntimeException('Submitted public key is not an RSA public key');
         }
 
-        $issuerPrivate = \phpseclib3\Crypt\PublicKeyLoader::load($intermediatePrivPem);
+        $issuerPrivate = $this->keyLoader->load($intermediatePrivPem);
         if ($issuerPrivate instanceof \phpseclib3\Crypt\RSA\PrivateKey === false) {
             throw new RuntimeException('Intermediate private key could not be loaded for issuance');
         }
 
-        $issuer = new \phpseclib3\File\X509();
+        $issuer = new X509();
         $issuer->loadX509($intermediateCertPem);
         $issuer->setPrivateKey($issuerPrivate->withPadding(\phpseclib3\Crypt\RSA::SIGNATURE_PKCS1));
 
-        $subject = new \phpseclib3\File\X509();
+        $subject = new X509();
         // PKCS1 padding on the subject key so the SPKI carries the plain
         // rsaEncryption OID — phpseclib's PSS default would emit an
         // id-RSASSA-PSS SPKI that WebCrypto/openssl consumers reject.
@@ -370,7 +380,7 @@ class CertificateAuthorityService
         $subject->setDNProp('id-at-organizationName', self::DEFAULT_DN['organizationName']);
         $subject->setDNProp('id-at-commonName', $commonName);
 
-        $signer = new \phpseclib3\File\X509();
+        $signer = new X509();
         $signer->setSerialNumber((string) random_int(1, PHP_INT_MAX), 10);
         $signer->setEndDate('+365 days');
         $issued = $signer->sign($issuer, $subject);
@@ -908,7 +918,7 @@ class CertificateAuthorityService
 
             $issuer = new X509();
             $issuer->loadX509($intermediateCert);
-            $issuer->setPrivateKey(PublicKeyLoader::loadPrivateKey($intermediateKeyPem));
+            $issuer->setPrivateKey($this->keyLoader->loadPrivateKey($intermediateKeyPem));
 
             $subject = new X509();
             $subject->setPublicKey($old->getPublicKey());

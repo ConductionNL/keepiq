@@ -31,6 +31,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -57,6 +58,7 @@ class SecretRequestService
      * @param SecretMapper|null          $secretMapper        Optional Secret mapper for owner lookups
      * @param EncryptionSuiteMapper|null $suiteMapper         Optional suite mapper
      * @param IEventDispatcher|null      $eventDispatcher     The event dispatcher
+     * @param AuditEventFactory          $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -67,6 +69,7 @@ class SecretRequestService
         private ?SecretMapper $secretMapper=null,
         private ?EncryptionSuiteMapper $suiteMapper=null,
         private ?IEventDispatcher $eventDispatcher=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -202,7 +205,7 @@ class SecretRequestService
         }
 
         $this->dispatchAudit(
-            event: AuditEvent::forLinkVisitor(
+            event: $this->auditEvents->forLinkVisitor(
                 eventType: AuditEventTypes::REQUEST_FULFILLED,
                 objectType: 'secret_request',
                 objectId: $current->getId(),
@@ -330,7 +333,7 @@ class SecretRequestService
         // createReRequest(); a plain create dispatches REQUEST_CREATED.
         if ($isReRequest === false) {
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::REQUEST_CREATED,
                     objectType: 'secret_request',
@@ -470,7 +473,7 @@ class SecretRequestService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::REQUEST_RE_REQUESTED,
                 objectType: 'secret_request',
@@ -549,7 +552,7 @@ class SecretRequestService
         $updated = $this->mapper->update($entity);
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::REQUEST_REVOKED,
                 objectType: 'secret_request',

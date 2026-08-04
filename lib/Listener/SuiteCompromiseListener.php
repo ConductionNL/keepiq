@@ -46,11 +46,11 @@ class SuiteCompromiseListener implements IEventListener
     /**
      * Constructor.
      *
-     * @param SecretMapper               $secretMapper          The Secret mapper (lookup recipient copies)
-     * @param ShareTargetMapper          $shareTargetMapper     The share-target mapper (resolve owners)
-     * @param NotificationService        $notificationService   The notification dispatcher
-     * @param LoggerInterface            $logger                The logger
-     * @param RotationPolicyService|null $rotationPolicyService The rotation service (auto-flag)
+     * @param SecretMapper               $secretMapper        The Secret mapper (lookup recipient copies)
+     * @param ShareTargetMapper          $shareTargetMapper   The share-target mapper (resolve owners)
+     * @param NotificationService        $notificationService The notification dispatcher
+     * @param LoggerInterface            $logger              The logger
+     * @param RotationPolicyService|null $rotationService     The rotation service (auto-flag)
      *
      * @return void
      */
@@ -59,7 +59,7 @@ class SuiteCompromiseListener implements IEventListener
         private ShareTargetMapper $shareTargetMapper,
         private NotificationService $notificationService,
         private LoggerInterface $logger,
-        private ?RotationPolicyService $rotationPolicyService=null,
+        private ?RotationPolicyService $rotationService=null,
     ) {
     }//end __construct()
 
@@ -89,7 +89,7 @@ class SuiteCompromiseListener implements IEventListener
 
                 // Auto-raise a rotation flag per compromised secret
                 // (rotation-expiry-policies §3.2; idempotent).
-                $this->rotationPolicyService?->flag(
+                $this->rotationService?->flag(
                     secretId: $secret->getId(),
                     reason: 'suite_compromise'
                 );

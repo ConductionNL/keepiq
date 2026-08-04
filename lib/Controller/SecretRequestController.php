@@ -41,6 +41,27 @@ use OCP\IUserSession;
 class SecretRequestController extends OCSController
 {
     /**
+     * Creation path: a plain request against the recipient's suite.
+     *
+     * @var string
+     */
+    private const MODE_PLAIN = 'plain';
+
+    /**
+     * Creation path: a re-request of an already-filled secret.
+     *
+     * @var string
+     */
+    private const MODE_RE_REQUEST = 're_request';
+
+    /**
+     * Creation path: a request owned by an application.
+     *
+     * @var string
+     */
+    private const MODE_APPLICATION = 'application';
+
+    /**
      * Constructor for SecretRequestController.
      *
      * @param IRequest             $request The request object
@@ -129,6 +150,14 @@ class SecretRequestController extends OCSController
      * @return JSONResponse
      *
      * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+     *
+     * $isReRequest is a field of the POST body that the Nextcloud router
+     * binds by name, not an internal switch a caller chooses. Splitting it
+     * into two methods would split the route, changing the HTTP contract;
+     * the discriminator therefore stays and the dispatch to
+     * createReRequest() vs create() is made explicit below.
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     #[NoAdminRequired]
     public function create(
@@ -156,38 +185,31 @@ class SecretRequestController extends OCSController
             }
         }
 
+        // Resolve the three creation paths to one explicit mode here, so the
+        // dispatcher below is a plain lookup rather than a flag-driven branch.
+        // An applicationId wins over the re-request discriminator, matching
+        // the original precedence.
+        $mode = match (true) {
+            ($applicationId !== null && $applicationId !== '') => self::MODE_APPLICATION,
+            ($isReRequest === true) => self::MODE_RE_REQUEST,
+            default => self::MODE_PLAIN,
+        };
+
         try {
-            if ($applicationId !== null && $applicationId !== '') {
-                $entity = $this->service->createForApplication(
-                    secretId: $secretId,
-                    applicationId: $applicationId,
-                    requestedFields: $requestedFields,
-                    expiresAt: $expiry,
-                    userId: $user->getUID(),
-                );
-            } else if ($isReRequest === true) {
-                $entity = $this->service->createReRequest(
-                    secretId: $secretId,
-                    requestedFields: $requestedFields,
-                    expiresAt: $expiry,
-                    userId: $user->getUID(),
-                );
-            } else {
-                $entity = $this->service->create(
-                    secretId: $secretId,
-                    encryptionSuiteId: $encryptionSuiteId,
-                    requestedFields: $requestedFields,
-                    isReRequest: false,
-                    expiresAt: $expiry,
-                    userId: $user->getUID(),
-                );
-            }//end if
+            $entity = $this->dispatchCreate(
+                mode: $mode,
+                secretId: $secretId,
+                encryptionSuiteId: $encryptionSuiteId,
+                requestedFields: $requestedFields,
+                expiry: $expiry,
+                applicationId: (string) $applicationId,
+                userId: $user->getUID()
+            );
         } catch (InvalidArgumentException $e) {
-            $code = $e->getCode();
+            $code   = $e->getCode();
+            $status = Http::STATUS_BAD_REQUEST;
             if ($code === 403 || $code === 404 || $code === 409) {
                 $status = $code;
-            } else {
-                $status = Http::STATUS_BAD_REQUEST;
             }
 
             return new JSONResponse(
@@ -198,6 +220,60 @@ class SecretRequestController extends OCSController
 
         return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()
+
+    /**
+     * Route a create to the application, re-request or plain service path.
+     *
+     * @param string        $mode              One of the MODE_* constants
+     * @param string        $secretId          The Secret ID
+     * @param string        $encryptionSuiteId The recipient's active suite ID
+     * @param array<string> $requestedFields   Field names to be filled in
+     * @param DateTime|null $expiry            Parsed expiry, or null
+     * @param string        $applicationId     Owning application ID ('' unless
+     *                                         $mode is MODE_APPLICATION)
+     * @param string        $userId            The requesting user
+     *
+     * @return \OCA\Doriath\Db\SecretRequest
+     *
+     * @throws InvalidArgumentException Propagated from the service.
+     */
+    private function dispatchCreate(
+        string $mode,
+        string $secretId,
+        string $encryptionSuiteId,
+        array $requestedFields,
+        ?DateTime $expiry,
+        string $applicationId,
+        string $userId
+    ): \OCA\Doriath\Db\SecretRequest {
+        if ($mode === self::MODE_APPLICATION) {
+            return $this->service->createForApplication(
+                secretId: $secretId,
+                applicationId: $applicationId,
+                requestedFields: $requestedFields,
+                expiresAt: $expiry,
+                userId: $userId,
+            );
+        }
+
+        if ($mode === self::MODE_RE_REQUEST) {
+            return $this->service->createReRequest(
+                secretId: $secretId,
+                requestedFields: $requestedFields,
+                expiresAt: $expiry,
+                userId: $userId,
+            );
+        }
+
+        return $this->service->create(
+            secretId: $secretId,
+            encryptionSuiteId: $encryptionSuiteId,
+            requestedFields: $requestedFields,
+            isReRequest: false,
+            expiresAt: $expiry,
+            userId: $userId,
+        );
+    }//end dispatchCreate()
 
     /**
      * Approve a pending secret request.

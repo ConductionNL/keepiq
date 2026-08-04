@@ -76,7 +76,7 @@ class SecretRequestFillControllerTest extends TestCase
         $this->controller = new SecretRequestFillController(
             request: $request,
             secretRequestService: $this->secretRequestService,
-            encryptionSuiteService: $this->encryptionSuiteService,
+            suiteService: $this->encryptionSuiteService,
         );
 
     }//end setUp()

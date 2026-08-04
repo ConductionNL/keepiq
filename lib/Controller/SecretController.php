@@ -209,23 +209,20 @@ class SecretController extends OCSController
             'additionalFields' => $additionalFields,
         ];
 
-        try {
-            if ($ownerType === 'application') {
-                if ($ownerId === null || $ownerId === '') {
-                    return new JSONResponse(
-                        data: ['message' => 'ownerId is required when ownerType=application'],
-                        statusCode: Http::STATUS_BAD_REQUEST
-                    );
-                }
+        if ($ownerType === 'application' && ($ownerId === null || $ownerId === '')) {
+            return new JSONResponse(
+                data: ['message' => 'ownerId is required when ownerType=application'],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
 
-                $secret = $this->secretService->createForApplication(
-                    data: $data,
-                    applicationId: $ownerId,
-                    writingUserId: $userId,
-                );
-            } else {
-                $secret = $this->secretService->create($data, $userId);
-            }
+        try {
+            $secret = $this->createOwnedSecret(
+                ownerType: $ownerType,
+                ownerId: (string) $ownerId,
+                data: $data,
+                userId: $userId
+            );
         } catch (SuiteBlockedException $e) {
             return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
         } catch (WriteLockedException $e) {
@@ -236,6 +233,35 @@ class SecretController extends OCSController
 
         return new JSONResponse(data: $secret->jsonSerialize(), statusCode: Http::STATUS_CREATED);
     }//end create()
+
+    /**
+     * Route a create to the application-owned or user-owned service path.
+     * The caller has already rejected an application create without an
+     * ownerId, so $ownerId is non-empty whenever it is read here.
+     *
+     * @param string|null         $ownerType The owner type ('application' or null/user)
+     * @param string              $ownerId   The owning application's ID
+     * @param array<string,mixed> $data      The encrypted payload
+     * @param string              $userId    The writing user
+     *
+     * @return \OCA\Doriath\Db\Secret
+     */
+    private function createOwnedSecret(
+        ?string $ownerType,
+        string $ownerId,
+        array $data,
+        string $userId
+    ): \OCA\Doriath\Db\Secret {
+        if ($ownerType === 'application') {
+            return $this->secretService->createForApplication(
+                data: $data,
+                applicationId: $ownerId,
+                writingUserId: $userId,
+            );
+        }
+
+        return $this->secretService->create($data, $userId);
+    }//end createOwnedSecret()
 
     /**
      * Update a secret. Only the supplied fields are changed.

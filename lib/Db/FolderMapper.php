@@ -140,11 +140,12 @@ class FolderMapper extends QBMapper
             ->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
             ->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($name)));
 
-        if ($parentId === null) {
-            $qb->andWhere($qb->expr()->isNull('parent_id'));
-        } else {
-            $qb->andWhere($qb->expr()->eq('parent_id', $qb->createNamedParameter($parentId)));
+        $parentPredicate = $qb->expr()->isNull('parent_id');
+        if ($parentId !== null) {
+            $parentPredicate = $qb->expr()->eq('parent_id', $qb->createNamedParameter($parentId));
         }
+
+        $qb->andWhere($parentPredicate);
 
         if ($excludeId !== null) {
             $qb->andWhere($qb->expr()->neq('id', $qb->createNamedParameter($excludeId)));

@@ -35,6 +35,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -75,6 +76,7 @@ class ShareService
      * @param AttachmentService|null $attachmentService   The attachment service (revoke cascade)
      * @param SecretTypeService|null $typeService         The type service (recipient-copy type resolution)
      * @param TeamFolderService|null $teamFolderService   The team-folder service (write-grade resolution)
+     * @param AuditEventFactory      $auditEvents         The audit-event factory
      *
      * @return void
      */
@@ -90,6 +92,7 @@ class ShareService
         private ?AttachmentService $attachmentService=null,
         private ?SecretTypeService $typeService=null,
         private ?TeamFolderService $teamFolderService=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -173,7 +176,7 @@ class ShareService
                 targetUserId: $targetUserId,
                 encryptedKey: $encryptedKey,
                 encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
-                encryptedAdditionalFields: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
+                encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
             );
             if ($copy === null) {
                 $report[] = [
@@ -194,7 +197,7 @@ class ShareService
             $this->mapper->insert($entity);
 
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::SHARE_GRANTED,
                     objectType: 'secret',
@@ -251,11 +254,11 @@ class ShareService
      * Create a recipient's Secret copy from client-encrypted blobs, or
      * null when the recipient has no active suite (skip, not fail).
      *
-     * @param Secret      $source                    The owner's source secret
-     * @param string      $targetUserId              The recipient
-     * @param string      $encryptedKey              Recipient-encrypted key blob
-     * @param string|null $encryptedLogin            Recipient-encrypted login blob
-     * @param string|null $encryptedAdditionalFields Recipient-encrypted extra blob
+     * @param Secret      $source          The owner's source secret
+     * @param string      $targetUserId    The recipient
+     * @param string      $encryptedKey    Recipient-encrypted key blob
+     * @param string|null $encryptedLogin  Recipient-encrypted login blob
+     * @param string|null $encryptedExtras Recipient-encrypted additionalFields blob
      *
      * @return Secret|null
      */
@@ -264,7 +267,7 @@ class ShareService
         string $targetUserId,
         string $encryptedKey,
         ?string $encryptedLogin,
-        ?string $encryptedAdditionalFields,
+        ?string $encryptedExtras,
     ): ?Secret {
         try {
             $suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
@@ -293,7 +296,7 @@ class ShareService
         $copy->setFolderId(null);
         $copy->setKey($encryptedKey);
         $copy->setLogin($encryptedLogin);
-        $copy->setAdditionalFields($encryptedAdditionalFields);
+        $copy->setAdditionalFields($encryptedExtras);
         $copy->setEncryptionSuiteId($suite->getId());
         $copy->setOwnerType('user');
         $copy->setOwnerId($targetUserId);
@@ -425,7 +428,7 @@ class ShareService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SHARE_GRANTED,
                 objectType: 'share',
@@ -594,7 +597,7 @@ class ShareService
         );
 
         $this->dispatchAudit(
-            event: AuditEvent::forUser(
+            event: $this->auditEvents->forUser(
                 actorId: $userId,
                 eventType: AuditEventTypes::SHARE_REVOKED,
                 objectType: 'share',
@@ -742,7 +745,7 @@ class ShareService
         // identifiers only, never key material.
         if ($isWriter === true && $updated > 0) {
             $this->dispatchAudit(
-                event: AuditEvent::forUser(
+                event: $this->auditEvents->forUser(
                     actorId: $userId,
                     eventType: AuditEventTypes::SECRET_UPDATED,
                     objectType: 'secret',
@@ -786,10 +789,13 @@ class ShareService
             // Not a copy — the secret is its own source.
         }
 
-        $grade = 'none';
-        if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === true) {
+        $grade   = 'none';
+        $isOwner = ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === true);
+        if ($isOwner === true) {
             $grade = 'owner';
-        } else {
+        }
+
+        if ($isOwner === false) {
             $resolved = $this->teamFolderService?->resolveGrade(secret: $source, userId: $userId);
             if ($resolved !== null) {
                 $grade = $resolved;

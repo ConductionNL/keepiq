@@ -36,6 +36,7 @@ use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
+use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -61,6 +62,7 @@ class RotationPolicyService
      * @param IAppConfig            $appConfig       The app config (admin defaults)
      * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
      * @param IConfig|null          $config          The NC config (user max-age override)
+     * @param AuditEventFactory     $auditEvents     The audit-event factory
      *
      * @return void
      */
@@ -71,6 +73,7 @@ class RotationPolicyService
         private IAppConfig $appConfig,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?IConfig $config=null,
+        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -199,7 +202,7 @@ class RotationPolicyService
             throw new InvalidArgumentException('maxAgeDays must be positive or null');
         }
 
-        $reminderDays = array_values(array_filter(array_map('intval', $reminderDays), static fn ($d) => $d > 0));
+        $reminderDays = array_values(array_filter(array_map('intval', $reminderDays), static fn ($days) => $days > 0));
 
         $encodedReminders = null;
         if ($reminderDays !== []) {
@@ -214,7 +217,8 @@ class RotationPolicyService
             }
         }
 
-        if ($policy === null) {
+        $isNew = ($policy === null);
+        if ($isNew === true) {
             $policy = new ExpiryPolicy();
             $policy->setId(Uuid::uuid4()->toString());
             $policy->setOwnerId($userId);
@@ -222,16 +226,16 @@ class RotationPolicyService
             $policy->setScopeId($scopeId);
             $policy->setCreatedBy($userId);
             $policy->setCreatedAt(new DateTime());
-            $policy->setMaxAgeDays($maxAgeDays);
-            $policy->setReminderDays($encodedReminders);
-            $policy->setUpdatedAt(new DateTime());
-            $policy = $this->policyMapper->insert($policy);
-        } else {
-            $policy->setMaxAgeDays($maxAgeDays);
-            $policy->setReminderDays($encodedReminders);
-            $policy->setUpdatedAt(new DateTime());
-            $policy = $this->policyMapper->update($policy);
         }
+
+        $policy->setMaxAgeDays($maxAgeDays);
+        $policy->setReminderDays($encodedReminders);
+        $policy->setUpdatedAt(new DateTime());
+
+        $policy = match ($isNew) {
+            true => $this->policyMapper->insert($policy),
+            false => $this->policyMapper->update($policy),
+        };
 
         $this->dispatchAudit(
             actorId: $userId,
@@ -545,7 +549,7 @@ class RotationPolicyService
     private function dispatchAudit(string $actorId, string $eventType, string $objectId, array $metadata): void
     {
         $this->eventDispatcher?->dispatchTyped(
-            AuditEvent::forUser(
+            $this->auditEvents->forUser(
                 actorId: $actorId,
                 eventType: $eventType,
                 objectType: 'secret',
