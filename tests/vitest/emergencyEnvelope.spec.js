@@ -15,6 +15,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { generateKeyPair } from '../../src/crypto/rsa.js'
+import { sharedKeyPair, secondaryKeyPair } from './fixtures/rsa-fixtures.js'
 import { buildRecoveryEnvelope, openRecoveryEnvelope, ENVELOPE_VERSION } from '../../src/crypto/emergencyEnvelope.js'
 
 // A stand-in grantor private-key PEM (the envelope treats it as opaque bytes).
@@ -24,7 +25,7 @@ const GRANTOR_PRIVATE_KEY_PEM = '-----BEGIN PRIVATE KEY-----\n'
 
 describe('emergency recovery envelope', () => {
 	it('builds an envelope the grantee can open, recovering the grantor key', async () => {
-		const grantee = await generateKeyPair()
+		const grantee = await sharedKeyPair(generateKeyPair)
 
 		const envelopeJson = await buildRecoveryEnvelope(GRANTOR_PRIVATE_KEY_PEM, grantee.publicKeyPem)
 		const envelope = JSON.parse(envelopeJson)
@@ -38,7 +39,7 @@ describe('emergency recovery envelope', () => {
 	})
 
 	it('never puts the raw grantor key (or its distinctive material) in the envelope', async () => {
-		const grantee = await generateKeyPair()
+		const grantee = await sharedKeyPair(generateKeyPair)
 		const envelopeJson = await buildRecoveryEnvelope(GRANTOR_PRIVATE_KEY_PEM, grantee.publicKeyPem)
 
 		expect(envelopeJson).not.toContain('GRANTOR-SECRET-KEY-MATERIAL')
@@ -46,8 +47,8 @@ describe('emergency recovery envelope', () => {
 	})
 
 	it('cannot be opened by a non-grantee (wrong private key)', async () => {
-		const grantee = await generateKeyPair()
-		const attacker = await generateKeyPair()
+		const grantee = await sharedKeyPair(generateKeyPair)
+		const attacker = await secondaryKeyPair(generateKeyPair)
 
 		const envelopeJson = await buildRecoveryEnvelope(GRANTOR_PRIVATE_KEY_PEM, grantee.publicKeyPem)
 
@@ -55,7 +56,7 @@ describe('emergency recovery envelope', () => {
 	})
 
 	it('rejects a malformed envelope', async () => {
-		const grantee = await generateKeyPair()
+		const grantee = await sharedKeyPair(generateKeyPair)
 		await expect(openRecoveryEnvelope(JSON.stringify({ v: 99 }), grantee.privateKey)).rejects.toThrow()
 	})
 })
