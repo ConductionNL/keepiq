@@ -9,6 +9,56 @@
         This is a custom ruleset for Doriath Nextcloud.
     </description>
 
+    <!-- ═══════════════════════════════════════════════════════════════════
+         HOW THIS RULESET IS APPLIED  (`composer phpmd`)
+
+           1. ./vendor/bin/phpmd lib     text phpmd.xml  (exclude flag: */lib/Db/*)
+           2. ./vendor/bin/phpmd lib/Db  text phpmd-db.xml
+
+         Both legs run and the worst exit code wins, so leg 2 can never be
+         short-circuited away by a failure in leg 1.
+
+         phpmd-db.xml is this file MINUS `TooManyFields` and
+         `ExcessiveClassLength`. Those two rules are the only exception in the
+         codebase, and only under lib/Db/, because there they measure the
+         width of a DATABASE TABLE rather than a design defect: every class in
+         lib/Db is an `OCP\AppFramework\Db\Entity` subclass (or its QBMapper),
+         and in an Entity ONE PROTECTED PROPERTY IS ONE DATABASE COLUMN -
+         Nextcloud derives the column list, the magic getters/setters and the
+         dirty-field tracking from the declared properties.
+
+         Db\Secret has 19 fields and Db\SiemSink 18. Cross-checked against the
+         migrations that own those tables (Version000008Date20260604000002
+         creates `doriath_secrets` with 15 addColumn() calls; Versions 16, 17
+         and 22 add the rest). The only code change that takes Secret under
+         the threshold of 15 is splitting the app's core secrets table in a
+         destructive migration - the rule is unreachable by refactoring PHP.
+
+         WHY THIS SHAPE AND NOT SOMETHING SIMPLER
+         ════════════════════════════════════════
+         * NOT a threshold bump. `TooManyFields` exposes only `maxfields` and
+           `ExcessiveClassLength` only `minimum`/`ignore-whitespace` - both are
+           GLOBAL knobs. Raising them to clear lib/Db would also stop reporting
+           a 19-field service. (Contrast `StaticAccess`, which ships a real
+           per-class `exceptions` property; where a rule offers one, use it.)
+         * NOT a nested <exclude-pattern> inside a <rule>. PHPMD 2.15 reads
+           exclude-patterns in RuleSetFactory::getIgnorePattern(), which walks
+           `$xml->children()` - i.e. only elements DIRECTLY under <ruleset>.
+           A nested one parses without error and does nothing. Measured on
+           phpmd 2.15.0 / PHP 8.4.22 with a 20-field probe class in lib/Db:
+           nested pattern -> still reported; top-level -> not reported.
+         * NOT a top-level <exclude-pattern> either: that filter runs in
+           PDepend's ExcludePathFilter, so it drops the file from EVERY rule.
+           lib/Db would then stop being checked for complexity, coupling and
+           TooManyPublicMethods - it would silently hide the real
+           ShareTargetMapper finding. Splitting the invocation keeps every
+           other rule live under lib/Db.
+         * NOT @SuppressWarnings and NOT a baseline file. There is no
+           phpmd.baseline.xml in this repo and there must not be: PHPMD
+           AUTO-DISCOVERS that filename, so a baseline stays active even after
+           the `baseline` CLI flag is removed.
+         ═══════════════════════════════════════════════════════════════════ -->
+
     <!-- Clean Code Rules -->
     <rule ref="rulesets/cleancode.xml/BooleanArgumentFlag"/>
     <rule ref="rulesets/cleancode.xml/ElseExpression"/>
@@ -97,7 +147,15 @@
     <rule ref="rulesets/unusedcode.xml/UnusedPrivateField"/>
     <rule ref="rulesets/unusedcode.xml/UnusedLocalVariable"/>
     <rule ref="rulesets/unusedcode.xml/UnusedPrivateMethod"/>
-    <rule ref="rulesets/unusedcode.xml/UnusedFormalParameter">
-        <exclude-pattern>*Migration*</exclude-pattern>
-    </rule>
+    <!-- This rule previously carried a nested
+             <exclude-pattern>*Migration*</exclude-pattern>
+         intended to spare lib/Migration. It was DEAD: PHPMD only reads
+         exclude-patterns that are direct children of <ruleset> (see the header
+         block), so the pattern was parsed and discarded and lib/Migration has
+         always been scanned by this rule. Removed rather than "fixed" - making
+         it effective would have to be a top-level pattern, which drops the
+         migrations from every other rule too, and nothing in lib/Migration is
+         currently reported. Verified byte-for-byte: removing the element
+         changes neither the finding list nor the exit code. -->
+    <rule ref="rulesets/unusedcode.xml/UnusedFormalParameter"/>
 </ruleset>
