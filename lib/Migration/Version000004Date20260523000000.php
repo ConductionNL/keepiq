@@ -83,8 +83,6 @@ class Version000004Date20260523000000 extends SimpleMigrationStep
      * @param array<string,mixed> $options       Migration options
      *
      * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
     {
@@ -139,8 +137,7 @@ class Version000004Date20260523000000 extends SimpleMigrationStep
      *
      * @return null|ISchemaWrapper
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     * @SuppressWarnings(PHPMD.StaticAccess)          Doctrine\DBAL\Types\Type::getType() is a static
+     * @SuppressWarnings(PHPMD.StaticAccess) Doctrine\DBAL\Types\Type::getType() is a static
      *   factory required by the DBAL API for type resolution — no instance-based alternative
      *   exists.
      */
