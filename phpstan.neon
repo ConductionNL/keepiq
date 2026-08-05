@@ -20,6 +20,12 @@ parameters:
         - '#Call to an undefined method OC::#'
         - '#Class OC not found#'
         - '#Access to static property \$server on an unknown class OC#'
+        # OC_App is Nextcloud's legacy bootstrap class, server-private and so
+        # absent from nextcloud/ocp. There is no OCP interface for registering
+        # another app's autoloader, so the ADR-040 AppHost prelude in
+        # AppInfo\OpenRegisterAutoloader must call it directly.
+        - '#unknown class OC_App#'
+        - '#Class OC_App not found#'
         # OCA classes from other apps (OpenRegister) not available during static analysis
         - '#unknown class OCA\\OpenRegister\\#'
         - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'

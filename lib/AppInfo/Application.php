@@ -136,14 +136,13 @@ class Application extends App implements IBootstrap
         // This replaces an earlier `include_once __DIR__.'/../../../openregister/
         // vendor/autoload.php'`, which assumed both apps live in the SAME apps
         // directory and silently did nothing on a multi-`apps_paths` install.
-        try {
-            $openRegisterPath = \OCP\Server::get(\OCP\App\IAppManager::class)->getAppPath('openregister');
-            \OC_App::registerAutoloading('openregister', $openRegisterPath);
-        } catch (\Throwable) {
-            // OpenRegister absent/disabled — fall through to the degraded path
-            // below. Never let an AppHost failure take down Doriath's own
-            // registrations.
-        }
+        //
+        // The prelude lives in its own class so the "never throws" contract is
+        // reachable from a unit test — Application cannot be constructed without
+        // a Nextcloud DI container. It returns false, never throws, when
+        // OpenRegister is absent; the class_exists() guard below then skips the
+        // AppHost plumbing.
+        OpenRegisterAutoloader::register();
 
         // The class_exists() guard MUST stay in this method: it is also the
         // assertion psalm relies on to accept the Bootstrap::register() call
