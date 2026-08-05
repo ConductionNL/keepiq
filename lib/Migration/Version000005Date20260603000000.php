@@ -42,7 +42,6 @@ class Version000005Date20260603000000 extends SimpleMigrationStep
      *
      * @return null|ISchemaWrapper
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Column definitions are inherently verbose.
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper

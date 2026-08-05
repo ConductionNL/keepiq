@@ -14,9 +14,16 @@
 
            1. ./vendor/bin/phpmd lib     text phpmd.xml  (exclude flag: */lib/Db/*)
            2. ./vendor/bin/phpmd lib/Db  text phpmd-db.xml
+           3. ./vendor/bin/phpmd lib     text phpmd-unusedparams.xml
 
-         Both legs run and the worst exit code wins, so leg 2 can never be
-         short-circuited away by a failure in leg 1.
+         All three legs run and the worst exit code wins, so no leg can ever be
+         short-circuited away by a failure in an earlier one.
+
+         phpmd-unusedparams.xml holds `UnusedFormalParameter` and nothing else,
+         with a TOP-LEVEL exclude-pattern for */Migration/*. See the note above
+         that rule's former position at the bottom of this file. It runs over
+         all of lib, including lib/Db, because legs 1 and 2 no longer carry the
+         rule at all.
 
          phpmd-db.xml is this file MINUS `TooManyFields` and
          `ExcessiveClassLength`. Those two rules are the only exception in the
@@ -147,15 +154,35 @@
     <rule ref="rulesets/unusedcode.xml/UnusedPrivateField"/>
     <rule ref="rulesets/unusedcode.xml/UnusedLocalVariable"/>
     <rule ref="rulesets/unusedcode.xml/UnusedPrivateMethod"/>
-    <!-- This rule previously carried a nested
+    <!-- UnusedFormalParameter is NOT declared here. It lives alone in
+         phpmd-unusedparams.xml, run as leg 3 (see the header block).
+
+         HISTORY - and a correction. This rule once carried a nested
              <exclude-pattern>*Migration*</exclude-pattern>
-         intended to spare lib/Migration. It was DEAD: PHPMD only reads
-         exclude-patterns that are direct children of <ruleset> (see the header
-         block), so the pattern was parsed and discarded and lib/Migration has
-         always been scanned by this rule. Removed rather than "fixed" - making
-         it effective would have to be a top-level pattern, which drops the
-         migrations from every other rule too, and nothing in lib/Migration is
-         currently reported. Verified byte-for-byte: removing the element
-         changes neither the finding list nor the exit code. -->
-    <rule ref="rulesets/unusedcode.xml/UnusedFormalParameter"/>
+         intended to spare lib/Migration. That was DEAD: PHPMD only reads
+         exclude-patterns that are direct children of <ruleset>, so the pattern
+         was parsed and discarded and lib/Migration was always scanned by this
+         rule. The element was then removed, and the note left in its place
+         claimed that making the exclusion effective "would have to be a
+         top-level pattern, which drops the migrations from every other rule
+         too, and nothing in lib/Migration is currently reported".
+
+         BOTH halves of that claim were wrong.
+
+         * A top-level pattern is not the only option. Putting the rule in a
+           ruleset OF ITS OWN gives the pattern a top-level home whose blast
+           radius is that single rule, which is what phpmd-unusedparams.xml now
+           does. Leg 1 still analyses lib/Migration with every other rule.
+         * "Nothing in lib/Migration is currently reported" was an artefact of
+           the 32 @SuppressWarnings(PHPMD.UnusedFormalParameter) docblock tags
+           that lib/Migration was carrying. With those stripped, lib/Migration
+           reported 64 UnusedFormalParameter findings - every one of them on a
+           changeSchema/preSchemaChange/postSchemaChange signature mandated by
+           OCP\Migration\IMigrationStep, which a step cannot alter even when it
+           uses none of the three parameters.
+
+         The scoped ruleset replaces all 32 of those suppressions, which have
+         been deleted. lib/Migration's real findings - it has 3, two
+         ExcessiveMethodLength and one StaticAccess - still report from leg 1.
+         Measured on PHPMD 2.15.0 / PHP 8.4.22. -->
 </ruleset>

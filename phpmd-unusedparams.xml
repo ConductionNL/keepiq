@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<ruleset name="Doriath Nextcloud Rules (unused formal parameters)"
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
+                        http://pmd.sourceforge.net/ruleset_xml_schema.xsd">
+
+    <description>
+        Third PHPMD leg: UnusedFormalParameter only, over ALL of lib/ except
+        lib/Migration/.
+
+        This rule lives in its own ruleset because PHPMD honours
+        &lt;exclude-pattern&gt; ONLY as a direct child of &lt;ruleset&gt;; nested inside a
+        &lt;rule&gt; it is parsed and discarded (ConductionNL/.github#155). A direct
+        child, however, is applied by PDepend at file-collection time and drops
+        the file from EVERY rule in the ruleset. Isolating UnusedFormalParameter
+        here means the lib/Migration exclusion applies to this rule and this rule
+        ALONE - every other rule still analyses lib/Migration in leg 1.
+
+        Why lib/Migration is excluded from THIS rule: OCP\Migration\IMigrationStep
+        mandates changeSchema(IOutput $output, Closure $schemaClosure, array $options)
+        and preSchemaChange/postSchemaChange with the same three parameters. A step
+        that needs none of them still cannot drop them. The signature cannot change.
+        Measured: 64 of doriath's UnusedFormalParameter findings were in
+        lib/Migration, and every one of them is on one of those three mandated
+        signatures.
+
+        The pattern is */Migration/* and NOT *Migration*: the latter would also
+        swallow lib/Service/MigrationService.php, lib/Controller/MigrationController.php,
+        lib/Db/SuiteMigration.php and the SuiteMigration* events and listeners,
+        none of which have a mandated signature.
+
+        This leg runs over `lib` as a whole, INCLUDING lib/Db. Leg 1 excludes
+        lib/Db and leg 2 covers it through phpmd-db.xml, which imports this
+        file's sibling phpmd.xml - so with the rule moved out of phpmd.xml,
+        lib/Db would otherwise lose UnusedFormalParameter coverage entirely.
+        Running this leg over all of lib keeps coverage identical to before and
+        cannot double-report, because no other ruleset declares the rule.
+    </description>
+
+    <exclude-pattern>*/Migration/*</exclude-pattern>
+
+    <rule ref="rulesets/unusedcode.xml/UnusedFormalParameter"/>
+</ruleset>

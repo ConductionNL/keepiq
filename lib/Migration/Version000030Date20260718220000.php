@@ -45,7 +45,6 @@ class Version000030Date20260718220000 extends SimpleMigrationStep
      *
      * @return ISchemaWrapper|null
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Straight-line schema DDL.
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
