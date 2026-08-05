@@ -35,7 +35,6 @@ use OCA\Doriath\Db\HoneyAlertMapper;
 use OCA\Doriath\Db\HoneyFlag;
 use OCA\Doriath\Db\HoneyFlagMapper;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -194,7 +193,7 @@ class HoneyCredentialService
      *
      * @return bool Whether the secret was honey-flagged (a tripwire hit)
      *
-     * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md#requirement-tripwire-alerting
+     * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md
      */
     public function raiseAlert(
         string $secretId,

@@ -465,7 +465,7 @@ class SettingsService
      * @SuppressWarnings(PHPMD.CyclomaticComplexity) One flat guard per key.
      * @SuppressWarnings(PHPMD.NPathComplexity)      Same: independent guards.
      *
-     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-policy-storage-and-validation
+     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
      */
     private function updatePolicySettings(array $data): void
     {
@@ -561,7 +561,7 @@ class SettingsService
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-policy-storage-and-validation
+     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
      */
     public function getPolicy(): array
     {
@@ -853,7 +853,11 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, message, and version.
      *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $force is not consumed by this method
+     *   as a branch: it is the fourth argument of OpenRegister's ADR-022
+     *   ConfigurationService::importFromApp(appId, data, version, force) signature and is
+     *   passed straight through. The parameter and its default exist because that foreign
+     *   signature requires the value; the same shape ships in scholiq / procest / decidesk.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
      */

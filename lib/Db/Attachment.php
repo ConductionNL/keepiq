@@ -44,8 +44,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
- *
- * @SuppressWarnings(PHPMD.LongVariable) Property names mirror DB columns.
  */
 class Attachment extends Entity implements JsonSerializable
 {

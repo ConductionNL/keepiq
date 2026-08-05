@@ -65,7 +65,8 @@ class ApproveElapsedEmergencyRequests extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
      * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-approval-by-timeout-and-grantee-view-access
      */

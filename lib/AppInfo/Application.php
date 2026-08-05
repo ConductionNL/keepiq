@@ -76,8 +76,6 @@ class Application extends App implements IBootstrap
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     *
      * @SuppressWarnings(PHPMD.StaticAccess) OCA\OpenRegister\AppHost\Bootstrap
      * is a cross-app static bootstrap entry point in a SIBLING Nextcloud app
      * that may be absent or unloadable at this point — the call is guarded by
@@ -316,7 +314,10 @@ class Application extends App implements IBootstrap
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $context is mandated by
+     *   OCP\AppFramework\Bootstrap\IBootstrap::boot(), which this class implements.
+     *   All wiring happens in register(); there is nothing to do at boot time, but
+     *   the method and its parameter cannot be dropped from the interface.
      */
     public function boot(IBootContext $context): void
     {

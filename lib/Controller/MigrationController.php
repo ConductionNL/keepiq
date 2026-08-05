@@ -94,7 +94,10 @@ class MigrationController extends OCSController
      *
      * @return JSONResponse
      *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $hasErrors is outcome DATA carried
+     *   in the POST body and bound by name by the Nextcloud router, not a mode switch
+     *   the caller picks: it only selects which terminal status string is recorded.
+     *   Splitting the method would split the route and change the HTTP contract.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */

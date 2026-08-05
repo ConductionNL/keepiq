@@ -97,7 +97,7 @@ class SiemSinkController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/siem-audit-export/specs/siem-audit-export/spec.md#requirement-admin-sink-management
+     * @spec openspec/changes/siem-audit-export/specs/siem-audit-export/spec.md
      */
     #[NoAdminRequired]
     public function index(): JSONResponse
@@ -130,13 +130,11 @@ class SiemSinkController extends OCSController
      *
      * @return JSONResponse
      *
-     * $tls and $enabled are not behaviour switches inside this method: they
-     * are two fields of the sink being created, bound by name out of the
-     * JSON request body by the Nextcloud router and passed straight into
-     * the params array. Nothing here branches on either. Removing them
-     * would remove them from the HTTP contract.
-     *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $tls and $enabled are not behaviour
+     *   switches inside this method: they are two fields of the sink being created,
+     *   bound by name out of the JSON request body by the Nextcloud router and passed
+     *   straight into the params array. Nothing here branches on either. Removing them
+     *   would remove them from the HTTP contract.
      */
     #[NoAdminRequired]
     public function create(

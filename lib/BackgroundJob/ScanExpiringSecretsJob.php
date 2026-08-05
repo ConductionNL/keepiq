@@ -84,9 +84,10 @@ class ScanExpiringSecretsJob extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-expiry-scanning-and-reminders
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     protected function run($argument): void
     {

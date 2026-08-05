@@ -96,7 +96,9 @@ class SecretSearchProvider implements IProvider
      *
      * @return int
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $routeParameters is mandated by
+     *   OCP\Search\IProvider::getOrder(); this provider's ranking depends only on
+     *   whether $route belongs to this app, never on the route's parameters.
      */
     public function getOrder(string $route, array $routeParameters): int
     {

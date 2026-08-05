@@ -29,7 +29,6 @@ use DateTime;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\ComplianceReport;
 use OCA\Doriath\Db\ComplianceReportMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\App\IAppManager;
@@ -99,7 +98,7 @@ class ComplianceReportService
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md#requirement-metadata-only-aggregate
+     * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md
      */
     public function aggregate(): array
     {
@@ -150,7 +149,7 @@ class ComplianceReportService
      *
      * @return ComplianceReport
      *
-     * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md#requirement-immutable-snapshots
+     * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md
      */
     public function generate(string $adminUid): ComplianceReport
     {

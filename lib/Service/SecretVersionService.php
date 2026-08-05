@@ -32,7 +32,6 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretVersion;
 use OCA\Doriath\Db\SecretVersionMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -77,7 +76,7 @@ class SecretVersionService
      *
      * @return SecretVersion
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-snapshot-on-update
+     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
     public function snapshot(Secret $preUpdate, string $actorType, string $actorId): SecretVersion
     {
@@ -107,7 +106,7 @@ class SecretVersionService
      *
      * @return SecretVersion[]
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-listing-and-viewing
+     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
     public function list(string $secretId, string $userId): array
     {
@@ -130,7 +129,7 @@ class SecretVersionService
      *
      * @throws InvalidArgumentException On not found / not owned / suite blocked
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-listing-and-viewing
+     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
     public function getVersion(string $versionId, string $userId): SecretVersion
     {
@@ -158,7 +157,7 @@ class SecretVersionService
      *
      * @throws InvalidArgumentException On not found / not owned / suite blocked
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-restore
+     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
     public function restore(string $versionId, string $userId): Secret
     {
@@ -204,7 +203,7 @@ class SecretVersionService
      *
      * @return void
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-retention-and-cascades
+     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
     public function deleteForSecret(string $secretId): void
     {

@@ -65,9 +65,10 @@ class PruneSecretVersionsJob extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-retention-and-cascades
+     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
     protected function run($argument): void
     {

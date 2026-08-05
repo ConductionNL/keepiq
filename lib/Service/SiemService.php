@@ -51,7 +51,6 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Sink CRUD + queue +
  *   two transports deliberately live in one seam.
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One method per API op.
  */
 class SiemService
 {

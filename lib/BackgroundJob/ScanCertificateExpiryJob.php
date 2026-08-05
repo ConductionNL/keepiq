@@ -87,7 +87,8 @@ class ScanCertificateExpiryJob extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
      * @spec openspec/changes/certificate-lifecycle/specs/certificate-lifecycle/spec.md#requirement-expiry-monitoring
      */

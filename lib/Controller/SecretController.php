@@ -170,8 +170,6 @@ class SecretController extends OCSController
      * @return JSONResponse
      *
      * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
-     *
-     * @SuppressWarnings(PHPMD.LongVariable) Parameter names mirror the API payload fields.
      */
     #[NoAdminRequired]
     public function create(
@@ -293,8 +291,6 @@ class SecretController extends OCSController
      *
      * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
      *
-     * @SuppressWarnings(PHPMD.LongVariable)          Parameter names mirror the API payload fields.
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)  Each optional field is an independent branch.
      * @SuppressWarnings(PHPMD.UnusedFormalParameter) Each parameter is read indirectly via the
      *   variable-variable ${$field} loop that forwards only fields present in the request.
      */

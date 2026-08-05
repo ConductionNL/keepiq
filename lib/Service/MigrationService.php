@@ -99,7 +99,10 @@ class MigrationService
      *
      * @return SuiteMigration
      *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $hasErrors is outcome DATA forwarded
+     *   from MigrationController::complete(), not a mode switch: the completion path is
+     *   identical either way and the flag only selects which terminal status string is
+     *   written to the row. The false default is the ordinary success call.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */

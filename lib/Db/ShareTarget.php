@@ -44,8 +44,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedBy(string $createdBy)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
- *
- * @SuppressWarnings(PHPMD.LongVariable) Property names mirror DB columns.
  */
 class ShareTarget extends Entity implements JsonSerializable
 {

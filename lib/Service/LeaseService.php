@@ -32,7 +32,6 @@ use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\ApplicationLeasePolicyMapper;
 use OCA\Doriath\Db\MachineLease;
 use OCA\Doriath\Db\MachineLeaseMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -118,7 +117,7 @@ class LeaseService
      *
      * @return MachineLease
      *
-     * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-grant-on-fetch
+     * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md
      */
     public function grantOrReuse(string $applicationId, string $secretId, ?int $requestedTtl=null): MachineLease
     {

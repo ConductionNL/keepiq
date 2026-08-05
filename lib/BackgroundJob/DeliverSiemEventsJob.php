@@ -60,9 +60,10 @@ class DeliverSiemEventsJob extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
-     * @spec openspec/changes/siem-audit-export/specs/siem-audit-export/spec.md#requirement-bounded-delivery
+     * @spec openspec/changes/siem-audit-export/specs/siem-audit-export/spec.md
      */
     protected function run($argument): void
     {

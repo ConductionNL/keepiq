@@ -35,7 +35,6 @@ use OCA\Doriath\Db\RotationFlag;
 use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -87,7 +86,7 @@ class RotationPolicyService
      *
      * @return DateTime|null The effective expiry (null = never expires)
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-effective-expiry-resolution
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     public function resolveEffectiveExpiry(Secret $secret): ?DateTime
     {
@@ -363,7 +362,7 @@ class RotationPolicyService
      *
      * @return RotationFlag
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     public function flag(string $secretId, string $reason, ?string $flaggedBy=null): RotationFlag
     {
@@ -424,7 +423,7 @@ class RotationPolicyService
      *
      * @return int Flags now open
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     public function flagBatch(string $userId, array $secretIds): int
     {
@@ -469,7 +468,7 @@ class RotationPolicyService
      *
      * @return array{resolved:bool,requiresRotation:bool}
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-mark-rotated
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     public function markRotated(string $flagId, string $userId): array
     {
@@ -512,7 +511,7 @@ class RotationPolicyService
      *
      * @return void
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-mark-rotated
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     public function dismiss(string $flagId, string $userId): void
     {
@@ -538,7 +537,7 @@ class RotationPolicyService
      *
      * @return int Flags raised or already open
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     public function flagCompromisedSecrets(string $ownerId): int
     {

@@ -61,7 +61,8 @@ class CheckRootCertificateExpiry extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */

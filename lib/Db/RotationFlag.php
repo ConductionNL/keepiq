@@ -46,8 +46,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setResolvedAt(?DateTime $resolvedAt)
  * @method DateTime|null getKeyUpdatedAtAtFlag()
  * @method void setKeyUpdatedAtAtFlag(?DateTime $keyUpdatedAtAtFlag)
- *
- * @SuppressWarnings(PHPMD.LongVariable) Property names mirror DB columns.
  */
 class RotationFlag extends Entity implements JsonSerializable
 {

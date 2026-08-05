@@ -59,9 +59,10 @@ class EphemeralSendPurgeJob extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
-     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-purge
+     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md
      */
     protected function run($argument): void
     {
