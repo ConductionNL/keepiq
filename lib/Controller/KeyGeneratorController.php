@@ -69,8 +69,14 @@ class KeyGeneratorController extends OCSController
      *
      * @return JSONResponse
      *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-     * @SuppressWarnings(PHPMD.LongVariable)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $includeSpecialCharacters is an
+     *   optional field of the JSON request body, not an internal mode switch. The
+     *   Nextcloud router binds request fields by NAME, and an optional field must
+     *   carry a default — which is the only thing this rule fires on. Splitting the
+     *   method would split the route and change the HTTP contract.
+     * @SuppressWarnings(PHPMD.LongVariable)        $includeSpecialCharacters is the wire
+     *   field name posted by src/dialogs/KeyGeneratorModal.vue; because the router
+     *   binds by name, shortening the parameter would break the frontend contract.
      */
     #[NoAdminRequired]
     public function generate(

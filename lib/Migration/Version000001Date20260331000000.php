@@ -41,7 +41,11 @@ class Version000001Date20260331000000 extends SimpleMigrationStep
      *
      * @return null|ISchemaWrapper
      *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength) 109 lines of straight-line
+     *   addColumn()/addIndex() DDL for the app's initial schema. There is no
+     *   branching or duplicated logic to extract — the length is the width of the
+     *   tables being created — and this is the one migration every fresh install
+     *   must run, so it is deliberately left as a single auditable block.
      */
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
     {

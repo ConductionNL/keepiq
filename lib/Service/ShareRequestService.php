@@ -38,10 +38,6 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Business logic for the share-request lifecycle.
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Threads the recipient
- *   check, the source-secret lookup, and the notification dispatcher so
- *   the request flow lives in one place.
  */
 class ShareRequestService
 {

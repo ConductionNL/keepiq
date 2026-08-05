@@ -50,8 +50,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getApprovedAt()
  * @method void setApprovedAt(?DateTime $approvedAt)
- *
- * @SuppressWarnings(PHPMD.LongVariable) Property names mirror DB columns.
  */
 class Application extends Entity implements JsonSerializable
 {

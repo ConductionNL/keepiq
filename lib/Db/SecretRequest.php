@@ -50,8 +50,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getFulfilledAt()
  * @method void setFulfilledAt(?DateTime $fulfilledAt)
- *
- * @SuppressWarnings(PHPMD.LongVariable) Property names mirror DB columns.
  */
 class SecretRequest extends Entity implements JsonSerializable
 {

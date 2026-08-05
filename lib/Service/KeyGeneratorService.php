@@ -171,8 +171,13 @@ class KeyGeneratorService
      * @throws InvalidArgumentException When validation fails
      * @throws RuntimeException         When generation cannot satisfy the regex
      *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-     * @SuppressWarnings(PHPMD.LongVariable)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $includeSpecialCharacters mirrors the
+     *   optional request field of KeyGeneratorController::generate() one-for-one; this
+     *   method is the service half of that HTTP contract, so it carries the same
+     *   defaulted parameter. It is forwarded, never branched on, to generateFromCharset().
+     * @SuppressWarnings(PHPMD.LongVariable)        Same reason: the name is the wire field name
+     *   posted by src/dialogs/KeyGeneratorModal.vue and is called out above as part of
+     *   the public API contract, so it is not free to shorten.
      */
     public function generate(
         int $length=16,
@@ -201,8 +206,6 @@ class KeyGeneratorService
      * @return string The generated key
      *
      * @throws InvalidArgumentException When validation fails
-     *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     private function generateFromCharset(
         int $length,

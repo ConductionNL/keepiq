@@ -75,8 +75,6 @@ class ApplicationLeasePolicyMapper extends QBMapper
      * @param bool|null $renewable         Renewability override (null = inherit)
      *
      * @return void
-     *
-     * @SuppressWarnings(PHPMD.LongVariable) Mirrors DB columns.
      */
     public function upsert(string $applicationId, ?int $defaultTtlSeconds, ?int $maxTtlSeconds, ?bool $renewable): void
     {

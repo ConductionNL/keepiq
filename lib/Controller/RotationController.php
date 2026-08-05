@@ -42,8 +42,6 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for rotation & expiry.
- *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) One method per API op.
  */
 class RotationController extends OCSController
 {
@@ -132,7 +130,7 @@ class RotationController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-effective-expiry-resolution
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     #[NoAdminRequired]
     public function getExpiry(string $id): JSONResponse
@@ -252,7 +250,7 @@ class RotationController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     #[NoAdminRequired]
     public function flags(): JSONResponse
@@ -292,7 +290,7 @@ class RotationController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     #[NoAdminRequired]
     public function flagBatch(array $secretIds=[]): JSONResponse
@@ -319,7 +317,7 @@ class RotationController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-mark-rotated
+     * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
      */
     #[NoAdminRequired]
     public function markRotated(string $id): JSONResponse

@@ -220,13 +220,12 @@ class GroupShareController extends OCSController
      *
      * @spec openspec/changes/implement-user-sharing/tasks.md#9.2
      *
-     * Both parameters are deliberately unread. $id is the {id} URL segment of
-     * the registered route (appinfo/routes.php), so the Nextcloud router binds
-     * it whether or not the body uses it, and $newMemberId is the notification
-     * subject the client echoes back. Denial is specified as a server-side
-     * no-op — nothing is persisted — so there is no value to read them into.
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) Both parameters are deliberately
+     *   unread. $id is the {id} URL segment of the registered route (appinfo/routes.php),
+     *   so the Nextcloud router binds it whether or not the body uses it, and
+     *   $newMemberId is the notification subject the client echoes back. Denial is
+     *   specified as a server-side no-op — nothing is persisted — so there is no value
+     *   to read them into.
      */
     #[NoAdminRequired]
     public function denyNewMember(string $id, string $newMemberId): JSONResponse

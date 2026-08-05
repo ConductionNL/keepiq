@@ -151,13 +151,11 @@ class SecretRequestController extends OCSController
      *
      * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
      *
-     * $isReRequest is a field of the POST body that the Nextcloud router
-     * binds by name, not an internal switch a caller chooses. Splitting it
-     * into two methods would split the route, changing the HTTP contract;
-     * the discriminator therefore stays and the dispatch to
-     * createReRequest() vs create() is made explicit below.
-     *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $isReRequest is a field of the POST
+     *   body that the Nextcloud router binds by name, not an internal switch a caller
+     *   chooses. Splitting it into two methods would split the route, changing the HTTP
+     *   contract; the discriminator therefore stays and the dispatch to createReRequest()
+     *   vs create() is made explicit below.
      */
     #[NoAdminRequired]
     public function create(

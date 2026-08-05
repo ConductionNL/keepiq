@@ -41,8 +41,6 @@ use OCP\AppFramework\Db\Entity;
  * @method void setMaxTtlSeconds(?int $maxTtlSeconds)
  * @method bool|null getRenewable()
  * @method void setRenewable(?bool $renewable)
- *
- * @SuppressWarnings(PHPMD.LongVariable) Property names mirror DB columns.
  */
 class ApplicationLeasePolicy extends Entity implements JsonSerializable
 {

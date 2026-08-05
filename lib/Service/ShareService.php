@@ -42,7 +42,6 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
-use RuntimeException;
 use Throwable;
 
 /**
@@ -889,7 +888,7 @@ class ShareService
      *
      * @throws InvalidArgumentException When the secret does not exist
      *
-     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-write-grade-editing
+     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md
      */
     public function writeContext(string $secretId, string $userId): array
     {

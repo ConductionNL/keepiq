@@ -40,12 +40,10 @@ class SuiteMigrationCompletedEvent extends Event
      *
      * @return void
      *
-     * $hasErrors is event payload, not a flag argument: the constructor does
-     * not branch on it: it is stored and read back by listeners through
-     * hasErrors(). The value originates as a field of the POST body on
-     * MigrationController::complete().
-     *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $hasErrors is event payload, not a
+     *   flag argument: the constructor does not branch on it, it is stored and read
+     *   back by listeners through hasErrors(). The value originates as a field of the
+     *   POST body on MigrationController::complete().
      */
     public function __construct(
         private string $oldSuiteId,

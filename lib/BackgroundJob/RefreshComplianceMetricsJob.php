@@ -59,9 +59,10 @@ class RefreshComplianceMetricsJob extends TimedJob
      *
      * @return void
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
      *
-     * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md#requirement-warm-metrics-cache
+     * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md
      */
     protected function run($argument): void
     {

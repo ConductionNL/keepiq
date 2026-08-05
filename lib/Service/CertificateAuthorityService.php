@@ -102,8 +102,6 @@ class CertificateAuthorityService
      * @SuppressWarnings(PHPMD.UndefinedVariable) PHP's openssl_x509_export / openssl_pkey_export
      *   populate $rootCertPem / $rootKeyPem via by-reference output params — PHPMD cannot trace
      *   by-ref semantics and incorrectly reports these as undefined.
-     * @SuppressWarnings(PHPMD.StaticAccess)      Ramsey\Uuid\Uuid::uuid4() is a value-object factory;
-     *   its static API is the standard idiomatic usage — injection is not warranted.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
@@ -223,9 +221,6 @@ class CertificateAuthorityService
      * @param string|null $privateKeyPem The PEM-encoded matching private key, when available
      *
      * @return string
-     *
-     * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export populates $certPem via
-     *   by-reference output param — PHPMD cannot trace by-ref semantics.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
@@ -444,7 +439,11 @@ class CertificateAuthorityService
      *
      * @return int Number of suites re-signed.
      *
-     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $forced does not select between two
+     *   behaviours: the rollover (generate, deactivate, re-sign) is identical either
+     *   way. It adds one extra fact to the old intermediate — an immediate revokedAt —
+     *   for the compromise path. The scheduled caller (RenewIntermediateCertificate)
+     *   relies on the false default, so the default cannot be dropped.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
@@ -492,8 +491,6 @@ class CertificateAuthorityService
      * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export / openssl_pkey_export
      *   populate $rootCertPem / $rootKeyPem via by-reference output params — PHPMD cannot
      *   trace by-ref semantics.
-     * @SuppressWarnings(PHPMD.StaticAccess)      Ramsey\Uuid\Uuid::uuid4() is a value-object
-     *   factory; its static API is the standard idiomatic usage.
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
      */
@@ -744,8 +741,6 @@ class CertificateAuthorityService
      * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_x509_export / openssl_pkey_export
      *   populate $intCertPem / $intKeyPem via by-reference output params — PHPMD cannot
      *   trace by-ref semantics.
-     * @SuppressWarnings(PHPMD.StaticAccess)      Ramsey\Uuid\Uuid::uuid4() is a value-object
-     *   factory; its static API is the standard idiomatic usage.
      */
     private function generateIntermediate($rootKey, $rootCert): CACertificate
     {

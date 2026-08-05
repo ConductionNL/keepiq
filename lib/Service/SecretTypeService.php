@@ -30,7 +30,6 @@ use OCA\Doriath\Db\SecretType;
 use OCA\Doriath\Db\SecretTypeMapper;
 use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Repair\SeedSecretTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
