@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Doriath API Contract Suite",
-		"description": "Newman/Postman API-contract tests for the Doriath (vault) Nextcloud app. Locks the HTTP contract of doriath's controllers (appinfo/routes.php + lib/Controller/*): secrets, encryption suites, CA status, folders, secret-types, and the public link-share access endpoint. Every family is exercised for a happy path, an error/validation case (4xx, not 500 where the controller is correct), and an authorization case (no auth -> 401, or 404 for the public token route). The suite is self-contained and idempotent: it creates the vault objects it needs (a secret, a folder) and deletes them again in teardown.\n\nThis suite asserts the Phase-0 fixes: secret create returns 201 with ownerType:\"user\" (not 500); secret/suite/folder reads return their list/object shape; the public link-share token route is reachable without NC auth and 404s on an unknown token.\n\nMost vault WRITES that mint or use key material (suite create, private-key upload, link-share create) require the in-browser RSA crypto flow and an unlocked vault with a freshly-generated key \u2014 they are not drivable from a headless API client and are QUARANTINED honestly below (covered by Playwright). What IS drivable from the API \u2014 because the dev vault already has an unlocked suite \u2014 is the full secret CRUD round-trip, folder create, and all the reads + authz, which this suite exercises.\n\nAUTH MODEL: collection auth is noauth; every authenticated request carries an EXPLICIT basic-auth block (admin:admin via adminUser/adminPass). The no-auth requests target {{noAuthBase}} (127.0.0.1) so the host-scoped NC session cookie established on {{baseUrl}} (localhost) is never sent to them. Run with --ignore-redirects. See run-newman.sh.\n\nGAP-4 FIX (previously quarantined): SecretController::create and EncryptionSuiteController::create now declare their required params nullable and validate presence in the body, so OMITTING a required field returns a clean JSON 400 instead of NC's reflection param-injection 500 HTML page. EncryptionSuiteController::create additionally catches InvalidArgumentException from the key-signing path, so an invalid public key also degrades to a 400. The corresponding create-error tests now assert 400 (not the old quarantined 500).",
+		"description": "Newman/Postman API-contract tests for the Doriath (vault) Nextcloud app. Locks the HTTP contract of doriath's controllers (appinfo/routes.php + lib/Controller/*): secrets, encryption suites, CA status, folders, secret-types, and the public link-share access endpoint. Every family is exercised for a happy path, an error/validation case (4xx, not 500 where the controller is correct), and an authorization case (no auth -> 401, or 404 for the public token route). The suite is self-contained and idempotent: it creates the vault objects it needs (a secret, a folder) and deletes them again in teardown.\n\nThis suite asserts the Phase-0 fixes: secret create returns 201 with ownerType:\"user\" (not 500); secret/suite/folder reads return their list/object shape; the public link-share token route is reachable without NC auth and 404s on an unknown token.\n\nMost vault WRITES that mint or use key material (suite create, private-key upload, link-share create) require the in-browser RSA crypto flow and an unlocked vault with a freshly-generated key \u2014 they are not drivable from a headless API client and are QUARANTINED honestly below (covered by Playwright). What IS drivable from the API is the full secret CRUD round-trip, folder create, and all the reads + authz, which this suite exercises. That used to depend on the AMBIENT state of a long-lived dev vault that already had an unlocked suite; the CI job installs a FRESH Nextcloud where the caller has none, and every secret write was refused by SecretService::getActiveSuiteOrBlock(). Worse, the refusal is invisible from the status line \u2014 these are OCSController routes and Nextcloud's OCSMiddleware rewrites a 403 into an OCS v1 envelope served as HTTP 200 with the real code in ocs.meta.statuscode. The suite therefore PROVISIONS its own precondition: 'SETUP: ensure the caller has an active encryption suite' uploads a real, committed test RSA-4096 public key when (and only when) the caller has no active suite. The suite no longer assumes any ambient vault state.\n\nAUTH MODEL: collection auth is noauth; every authenticated request carries an EXPLICIT basic-auth block (admin:admin via adminUser/adminPass). The no-auth requests target {{noAuthBase}} (127.0.0.1) so the host-scoped NC session cookie established on {{baseUrl}} (localhost) is never sent to them. Run with --ignore-redirects. See run-newman.sh.\n\nGAP-4 FIX (previously quarantined): SecretController::create and EncryptionSuiteController::create now declare their required params nullable and validate presence in the body, so OMITTING a required field returns a clean JSON 400 instead of NC's reflection param-injection 500 HTML page. EncryptionSuiteController::create additionally catches InvalidArgumentException from the key-signing path, so an invalid public key also degrades to a 400. The corresponding create-error tests now assert 400 (not the old quarantined 500).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -78,7 +78,11 @@
 									"pm.test('is an array', () => pm.expect(b).to.be.an('array'));",
 									"if (b.length) { pm.test('suite carries ownerType', () => pm.expect(b[0]).to.have.property('ownerType')); pm.test('suite carries a certificate', () => pm.expect(b[0]).to.have.property('certificate')); }",
 									"const active = (b || []).find((s) => s.status === 'active') || b[0];",
-									"if (active && active.id) { pm.collectionVariables.set('reqSuiteId', active.id); }"
+									"if (active && active.id) { pm.collectionVariables.set('reqSuiteId', active.id); }",
+									"// Drives the setup request that follows. Every secret write resolves the",
+									"// caller's ONE active suite; on a fresh CI instance there are none, and two",
+									"// active suites are as unusable as zero.",
+									"pm.collectionVariables.set('activeSuiteCount', String((b || []).filter((s) => s.status === 'active').length));"
 								]
 							}
 						}
@@ -110,6 +114,112 @@
 								"value": "application/json"
 							}
 						],
+						"url": {
+							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"doriath",
+								"api",
+								"v1",
+								"suites"
+							]
+						}
+					}
+				},
+				{
+					"name": "SETUP: ensure the caller has an active encryption suite (201)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Run ONLY when the caller has no active suite. Two active suites are as",
+									"// unusable as zero: SecretService::getActiveSuiteOrBlock() resolves exactly",
+									"// one and blocks with 403 otherwise, so an unconditional create would brick",
+									"// every secret write on the second local run.",
+									"const count = Number(pm.collectionVariables.get('activeSuiteCount') || 0);",
+									"if (count > 0) { pm.execution.skipRequest(); }"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// WHY THIS REQUEST EXISTS",
+									"// The collection's description used to say the secret CRUD round-trip is",
+									"// drivable 'because the dev vault already has an unlocked suite'. That held",
+									"// while this suite ran against a long-lived dev instance. The CI job installs",
+									"// a FRESH Nextcloud, where admin has no suite at all, so every secret write",
+									"// hit SecretService::getActiveSuiteOrBlock() and was refused.",
+									"//",
+									"// The refusal is invisible from the status line: these are OCSController",
+									"// routes, and Nextcloud's OCSMiddleware rewrites a 403 from an OCSController",
+									"// into an OCS v1 envelope, which is served as HTTP *200* with the real code",
+									"// in ocs.meta.statuscode. Measured on NC 32.0.12 against a suite-less user:",
+									"//   POST /api/v1/secrets -> HTTP 200, 181 bytes,",
+									"//   {\"ocs\":{\"meta\":{\"status\":\"failure\",\"statuscode\":403,",
+									"//    \"message\":\"No active encryption suite — it may be revoked or not yet",
+									"//    created\"},\"data\":[]}}",
+									"// which is exactly the '200 OK, 864B' that run 31083918823 recorded, and why",
+									"// b.id came back undefined and the follow-up requests addressed /secrets/null.",
+									"//",
+									"// The key material below is a real, committed RSA-4096 public key (test-only,",
+									"// never used for a real vault). It has to be real: EncryptionSuiteController",
+									"// hands it to CaService::signPublicKey, which parses it and mints a",
+									"// certificate. encryptedPrivateKey is opaque client-side ciphertext to the",
+									"// server, so a placeholder is honest there.",
+									"pm.test('suite created (201)', () => pm.response.to.have.status(201));",
+									"const b = pm.response.json();",
+									"pm.test('returns an id', () => pm.expect(b.id).to.be.a('string').and.not.empty);",
+									"pm.test('ownerType is user', () => pm.expect(b.ownerType).to.eql('user'));",
+									"pm.test('server minted a certificate for the uploaded key', () => pm.expect(b.certificate).to.be.a('string').and.include('BEGIN CERTIFICATE'));",
+									"if (b.id) { pm.collectionVariables.set('reqSuiteId', b.id); pm.collectionVariables.set('activeSuiteCount', '1'); }"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{adminUser}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{adminPass}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA5nI971jVJMdGEkzRKJwm\\nOJ8koLePTXiLF//ymL8SIAD+7+oohFsUejkNQttwCRfMdJjMIttmrK4brMoHKded\\nlFgr3athyG3Ad8dvVNOqw1qpPG3i0zRsO/VPZU2MrHFjvbYxGoEgSJUXGJEPG3CM\\nCm8ta6GHwSQ8IksE9ocNu9GHyJYPkcG3/rPxmOGG0644tzBxSrIgrW9ElQJPwrLk\\n5GF+QJnDq08vWOW/14m1FmZhzEILDVdfz/GQYlGKWCapq9EiaS2Q4jZkyMChuJP8\\ny3O+v/Shgk9WZ0werHYz45E0j5pnQN5D1aGMG6G/ygbMJmKS3umzBJw8Wa44RxfF\\n+2dsP2uExrd9fcFN1t5w8xocRX7w7FAiR3dNjAfb/+ldFBQ6VITWwwakmFmh3CbJ\\n96Bbi6i8XtWwyTGtOBKNFb2lqw5wuPcQNvpwo/f/X0251IprMaTHsXZ5i8oPvCcK\\nFe7W7rpB6anp4AvSVjp/fcSxnQpQuxWVSc8sUshv/ReXkBTHO3DNB6tQht2DmbX8\\nREUMNIgOK8GMh0+ucRX5sJGdtmuePmoMqViW+GXMh6kqQ6gZyOzFpjluVuy1Y9nt\\nZcLKDvzasoYOaTfEE7GRuj+5d8gDh+agjLQqprF73HHwefXiKYO+MFhSj5mhmIig\\nD0x5Bm6KbHUJDW0OXOk3FSkCAwEAAQ==\\n-----END PUBLIC KEY-----\",\n  \"encryptedPrivateKey\": \"NEWMAN-placeholder-encrypted-private-key\"\n}"
+						},
 						"url": {
 							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
 							"host": [

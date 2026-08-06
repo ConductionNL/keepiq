@@ -67,7 +67,18 @@ class ApplicationTokenController extends Controller
      * - `assertion`  — the Compact-Serialized JWS signed with the
      *   application's registered private key.
      *
-     * @param string $grantType The grant type
+     * Nextcloud's dispatcher binds request parameters to method arguments by
+     * EXACT name, so the camelCase argument `$grantType` never received the
+     * snake_case `grant_type` that RFC 7523 §2.1 — and this app's own
+     * `.well-known/doriath` discovery document — tell every client to send.
+     * `$grantType` was therefore always the empty-string default, the endpoint
+     * answered `400 unsupported_grant_type` to every well-formed request, and
+     * no standards-compliant client could obtain a token at all. Read the
+     * canonical wire name off the request and keep the camelCase argument as a
+     * fallback for callers already written against it.
+     *
+     * @param string $grantType The grant type (camelCase fallback spelling;
+     *                          the canonical wire name is `grant_type`)
      * @param string $assertion The JWS compact serialization
      *
      * @return JSONResponse
@@ -80,7 +91,9 @@ class ApplicationTokenController extends Controller
     #[AnonRateLimit(limit: 10, period: 60)]
     public function exchange(string $grantType='', string $assertion=''): JSONResponse
     {
-        if ($grantType !== 'urn:ietf:params:oauth:grant-type:jwt-bearer') {
+        $grant = $this->resolveGrantType(fallback: $grantType);
+
+        if ($grant !== 'urn:ietf:params:oauth:grant-type:jwt-bearer') {
             $response = new JSONResponse(
                 data: [
                     'error'             => 'unsupported_grant_type',
@@ -122,4 +135,25 @@ class ApplicationTokenController extends Controller
 
         return new JSONResponse(data: $result);
     }//end exchange()
+
+    /**
+     * Resolve the OAuth grant type from the request.
+     *
+     * The canonical wire name is the snake_case `grant_type` (RFC 7523 §2.1).
+     * `$fallback` carries the camelCase spelling that Nextcloud's dispatcher is
+     * able to bind directly, so callers written against either name work.
+     *
+     * @param string $fallback The dispatcher-bound camelCase `grantType` value
+     *
+     * @return string The requested grant type, or an empty string when absent
+     */
+    private function resolveGrantType(string $fallback): string
+    {
+        $canonical = $this->request->getParam('grant_type');
+        if (is_string($canonical) === true && $canonical !== '') {
+            return $canonical;
+        }
+
+        return $fallback;
+    }//end resolveGrantType()
 }//end class
