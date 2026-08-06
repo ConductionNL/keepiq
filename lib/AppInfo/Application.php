@@ -109,31 +109,53 @@ class Application extends App implements IBootstrap
         // section — is fully owned by the engine. Zero-knowledge (ADR-003) is
         // untouched: no AppHost generic ever sees a plaintext secret.
         //
-        // LOAD-ORDER HAZARD: apps register alphabetically, so doriath registers
-        // BEFORE openregister and the AppHost class is not yet autoloadable via
-        // Nextcloud's app loader. Left unguarded, the resulting \Error aborted
-        // this entire register() — every registerEventListener silently never
-        // ran (the audit listener recorded ZERO dispatched events). Pull in
-        // OpenRegister's own composer autoloader when needed, and never let an
-        // AppHost failure take down Doriath's own registrations.
+        // LOAD-ORDER HAZARD (measured, not theoretical). OC_App::getEnabledApps()
+        // sort()s the app list, and Coordinator::registerApps() walks THAT sorted
+        // list calling OC_App::registerAutoloading($appId) and then $app->register()
+        // for one app at a time. So every app registers before the PSR-4 prefix of
+        // every alphabetically-LATER app exists: `doriath` < `openregister`, so
+        // OCA\OpenRegister\ is not autoloadable at this point on a perfectly
+        // healthy instance.
         //
+        // Left unguarded, the resulting \Error aborted this ENTIRE register() —
+        // every registerEventListener below never ran, and the audit listener
+        // recorded ZERO dispatched events. Coordinator::registerApps() catches the
+        // Throwable and logs an 'emergency', then `continue`s to the next app, so
+        // Doriath stayed enabled and kept serving requests: nothing in the UI, and
+        // nothing in the app itself, reported that half its wiring was missing.
+        //
+        // The fix is to put OpenRegister's prefix on the autoloader ourselves, which
+        // is exactly what Nextcloud will do a few iterations later. Two properties
+        // make this the correct call. First, OC_App::registerAutoloading() touches
+        // ONLY the autoloader and is idempotent — it early-returns on an
+        // $alreadyRegistered key. Second, IAppManager::loadApp('openregister') would
+        // NOT be correct here: it sets loadedApps['openregister']=true and calls
+        // Coordinator::bootApp(), booting OpenRegister BEFORE its own register()
+        // has run.
+        //
+        // This replaces an earlier `include_once __DIR__.'/../../../openregister/
+        // vendor/autoload.php'`, which assumed both apps live in the SAME apps
+        // directory and silently did nothing on a multi-`apps_paths` install.
+        //
+        // The prelude lives in its own class so the "never throws" contract is
+        // reachable from a unit test — Application cannot be constructed without
+        // a Nextcloud DI container. It returns false, never throws, when
+        // OpenRegister is absent; the class_exists() guard below then skips the
+        // AppHost plumbing.
+        OpenRegisterAutoloader::register();
+
         // The class_exists() guard MUST stay in this method: it is also the
         // assertion psalm relies on to accept the Bootstrap::register() call
         // below, and psalm does not carry that narrowing across a call.
-        if (class_exists(Bootstrap::class) === false) {
-            $openRegisterAutoload = __DIR__.'/../../../openregister/vendor/autoload.php';
-            if (file_exists($openRegisterAutoload) === true) {
-                include_once $openRegisterAutoload;
+        if (class_exists(Bootstrap::class) === true) {
+            try {
+                Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Doriath']);
+            } catch (\Throwable) {
+                // AppHost present but unloadable: skip the generic plumbing;
+                // Doriath's own listeners and services MUST still register. No
+                // logger is resolvable this early, so the skip is silent —
+                // /api/health surfaces the degraded AppHost state instead.
             }
-        }
-
-        try {
-            Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Doriath']);
-        } catch (\Throwable) {
-            // AppHost absent/unloadable: skip the generic plumbing; Doriath's
-            // own listeners and services MUST still register. No logger is
-            // resolvable this early, so the skip is silent — /api/health
-            // surfaces the degraded AppHost state instead.
         }
 
         $this->registerDomainOverrides(context: $context);
