@@ -16,27 +16,30 @@ import {
 	rsaEncrypt,
 	rsaDecrypt,
 } from '../../browser-extension/src/crypto/index.js'
+import { RSA4096_PRIVATE_KEY_PKCS8_PEM, RSA4096_PUBLIC_KEY_SPKI_PEM } from '../vitest/fixtures/rsa-fixtures.js'
 
-function toPem(b64, label) {
-	return `-----BEGIN ${label}-----\n${b64.match(/.{1,64}/g).join('\n')}\n-----END ${label}-----\n`
-}
-function b64(buf) {
-	return Buffer.from(new Uint8Array(buf)).toString('base64')
-}
-
-async function rsaKeyPairPems() {
-	const kp = await crypto.subtle.generateKey(
-		{ name: 'RSA-OAEP', modulusLength: 4096, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
-		true, ['encrypt', 'decrypt'],
-	)
-	const pkcs8 = toPem(b64(await crypto.subtle.exportKey('pkcs8', kp.privateKey)), 'PRIVATE KEY')
-	const spki = toPem(b64(await crypto.subtle.exportKey('spki', kp.publicKey)), 'PUBLIC KEY')
-	return { pkcs8, spki }
+/**
+ * The committed RSA-4096 test key pair, as PEM.
+ *
+ * This used to be a live `crypto.subtle.generateKey({ modulusLength: 4096 })`
+ * per test — four unbounded random prime searches on the timed path against
+ * vitest's 5000ms per-test default. That is the same construct that timed out
+ * `tests/vitest/emergencyEnvelope.spec.js` in run 31083918823. The committed
+ * pair is real 4096-bit RSA, so every encrypt/decrypt/import assertion below
+ * runs against genuine crypto — only the nondeterministic keygen is gone.
+ *
+ * @return {{pkcs8: string, spki: string}} PKCS#8 private and SPKI public PEM.
+ */
+function rsaKeyPairPems() {
+	return {
+		pkcs8: RSA4096_PRIVATE_KEY_PKCS8_PEM,
+		spki: RSA4096_PUBLIC_KEY_SPKI_PEM,
+	}
 }
 
 describe('extension shared crypto', () => {
 	it('round-trips the unlock envelope (encrypt/decrypt private key)', async () => {
-		const { pkcs8 } = await rsaKeyPairPems()
+		const { pkcs8 } = rsaKeyPairPems()
 		const master = 'correct horse battery staple'
 		const envelope = await encryptPrivateKey(pkcs8, master)
 		const recovered = await decryptPrivateKey(envelope, master)
@@ -44,19 +47,19 @@ describe('extension shared crypto', () => {
 	})
 
 	it('fails to unlock with the wrong master password', async () => {
-		const { pkcs8 } = await rsaKeyPairPems()
+		const { pkcs8 } = rsaKeyPairPems()
 		const envelope = await encryptPrivateKey(pkcs8, 'right')
 		await expect(decryptPrivateKey(envelope, 'wrong')).rejects.toBeTruthy()
 	})
 
 	it('imports the private key NON-EXTRACTABLE (worker key never leaves)', async () => {
-		const { pkcs8 } = await rsaKeyPairPems()
+		const { pkcs8 } = rsaKeyPairPems()
 		const key = await importPrivateKey(pkcs8)
 		expect(key.extractable).toBe(false)
 	})
 
 	it('round-trips a field: encrypt to the cert, decrypt with the private key', async () => {
-		const { pkcs8, spki } = await rsaKeyPairPems()
+		const { pkcs8, spki } = rsaKeyPairPems()
 		const publicKey = await importPublicKey(spki)
 		const privateKey = await importPrivateKey(pkcs8)
 		const value = 'S3cr3t value — long enough to force multiple RSA-OAEP chunks: ' + 'x'.repeat(700)

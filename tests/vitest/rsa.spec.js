@@ -131,7 +131,7 @@ describe('importPrivateKey', () => {
 
 describe('rsaEncrypt / rsaDecrypt round-trip (RSA-4096, multi-chunk)', () => {
 	it('round-trips a short payload (single chunk)', async () => {
-		const { publicKey, privateKey } = await sharedKeyPair(generateKeyPair)
+		const { publicKey, privateKey } = await sharedKeyPair()
 		const plaintext = 'hello vault'
 		const ciphertext = await rsaEncrypt(plaintext, publicKey)
 		const recovered = await rsaDecrypt(ciphertext, privateKey)
@@ -139,14 +139,14 @@ describe('rsaEncrypt / rsaDecrypt round-trip (RSA-4096, multi-chunk)', () => {
 	})
 
 	it('round-trips an empty string', async () => {
-		const { publicKey, privateKey } = await sharedKeyPair(generateKeyPair)
+		const { publicKey, privateKey } = await sharedKeyPair()
 		const ciphertext = await rsaEncrypt('', publicKey)
 		const recovered = await rsaDecrypt(ciphertext, privateKey)
 		expect(recovered).toBe('')
 	})
 
 	it('round-trips a payload > 446 bytes spanning multiple chunks', async () => {
-		const { publicKey, privateKey } = await sharedKeyPair(generateKeyPair)
+		const { publicKey, privateKey } = await sharedKeyPair()
 		// 1000 bytes -> ceil(1000 / 446) = 3 chunks.
 		const plaintext = 'A'.repeat(1000)
 		const ciphertext = await rsaEncrypt(plaintext, publicKey)
@@ -161,7 +161,7 @@ describe('rsaEncrypt / rsaDecrypt round-trip (RSA-4096, multi-chunk)', () => {
 	})
 
 	it('round-trips a UTF-8 payload with multi-byte characters', async () => {
-		const { publicKey, privateKey } = await sharedKeyPair(generateKeyPair)
+		const { publicKey, privateKey } = await sharedKeyPair()
 		const plaintext = 'wachtwoord-€-ü-日本語-🔐'
 		const ciphertext = await rsaEncrypt(plaintext, publicKey)
 		const recovered = await rsaDecrypt(ciphertext, privateKey)
