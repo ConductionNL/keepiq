@@ -119,51 +119,21 @@ jobs:
       # ── Hydra mechanical gates ───────────────────────────────────────────
       # `enable-hydra-gates` defaults to FALSE, so this tier has never executed
       # here — the job reported `skipped`, which the Quality Report renders
-      # identically to a pass. Pinned so a change to the gate package cannot
-      # move this repo's verdict without a commit here.
+      # identically to a pass.
       # `enable-axe` deliberately NOT set: a vanilla Nextcloud 34 already carries
-      # serious/critical violations from core's own UI.
-      #
-      # PIN MOVED v1.0.1 -> v1.3.0, because v1.0.1 cannot satisfy the contract
-      # the shared workflow now enforces.
-      #
-      # `hydra-gates-require-full-coverage` (default ON) fails the run when a
-      # gate whose subject matter EXISTS did not report. Its contract is that a
-      # gate which is legitimately not applicable must DECLARE itself so —
-      # quoting the input's own description: "A gate that emits nothing at all
-      # still counts against coverage: not-applicable must be DECLARED."
-      #
-      # v1.0.1 contains ZERO `_skip` calls. It has no vocabulary for
-      # na / structural / wiring at all, so a gate whose prerequisite is absent
-      # emits NOTHING and is counted as "DID NOT RUN". v1.3.0 contains 36 such
-      # declarations. Measured on this repo, run 31019022177 on `development`:
-      #
-      #   [hydra-gates] COVERAGE: 58 of 61 declared gates reported a result.
-      #   [hydra-gates] GATES THAT DID NOT RUN: 4 24 33
-      #   RESULT: ALL GATES PASSED — EXCEPT GATES 4 24 33, WHICH DID NOT RUN.
-      #
-      # None of those three is starved by a skipped producer job, which is the
-      # thing worth recording because it is the natural assumption:
-      #   gate-4  composer-audit     — diff-scoped out (ADR-020); no composer
-      #                                file in the diff.
-      #   gate-24 integration-parity — its input is `scripts/check-integration-
-      #                                parity.sh` IN THIS REPO. Newman does not
-      #                                feed it. In v1.3.0 a repo that registers
-      #                                no integration leaves declares this `na`.
-      #   gate-33 axe-core           — its input is tests/axe/report.json, which
-      #                                the Playwright job writes ONLY when
-      #                                `enable-axe: true`. In that same run
-      #                                Playwright PASSED and gate-33 still did
-      #                                not report, which is the proof that
-      #                                un-skipping Playwright is not the fix.
+      # serious/critical violations on core's OWN routes that DOM scoping does
+      # not remove. Enabling axe is a separate decision. Note that gate-33
+      # (axe-core) reads tests/axe/report.json, which the Playwright job writes
+      # ONLY when `enable-axe: true` — un-skipping Playwright is not the fix;
+      # with axe off the gate declares itself not applicable.
       enable-hydra-gates: true
-      hydra-gates-ref: v1.4.0
-      # PIN MOVED v1.3.0 -> v1.4.0 (fleet consumer-ref sweep, 2026-08-05).
-      # A pinned ref is a silent expiry date on every upstream fix: this repo
-      # cannot receive a gate-package fix until this line moves. v1.4.0 is the
-      # latest tag and the FIRST one carrying `hydra-gates/scripts/axe-run.cjs`
-      # (verified absent at v1.3.0), so it is also the first that has #168's
-      # axe DOM scoping and #165's gate-46 fix.
-      # `enable-axe` is deliberately still NOT set — a vanilla Nextcloud 34
-      # reports serious/critical violations on core's OWN routes that DOM
-      # scoping does not remove. Enabling axe is a separate decision.
+      # No `hydra-gates-ref` here on purpose. The shared workflow defaults it
+      # to @main, and this workflow is itself consumed at @main, so the two
+      # sides move together and a gate fix reaches this repo without a commit
+      # in this repo. A pin is a silent expiry date: 22 repos sat on v1.0.1 and
+      # 16 gates were dead fleet-wide while every one reported PASS (.github#159),
+      # and a default flipped at @main later reached those old runners and made
+      # them red on gates they had no subject matter for (.github#173).
+      # To hold this repo still for a specific reason, set the input explicitly
+      # and say why — it is still honoured. To roll back for everyone, revert on
+      # ConductionNL/.github main.
