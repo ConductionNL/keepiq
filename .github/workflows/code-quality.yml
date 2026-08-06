@@ -183,4 +183,4 @@ jobs:
       #                                not report, which is the proof that
       #                                un-skipping Playwright is not the fix.
       enable-hydra-gates: true
-      hydra-gates-ref: v1.3.0
+      hydra-gates-ref: v1.5.0
