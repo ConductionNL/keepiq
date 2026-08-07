@@ -66,9 +66,20 @@ jobs:
       # stable31 (verified: raw.githubusercontent.com returns 404 for the
       # stable31 path). On stable31 every `occ` invocation printed
       # `Interface "OCP\ContextChat\IContentProvider" not found` while loading
-      # commands from openregister's info.xml. stable31 is still covered by the
-      # PHPUnit matrix.
-      nextcloud-test-refs: '["stable32", "stable31"]'
+      # commands from openregister's info.xml.
+      #
+      # The earlier reorder fixed the FIRST-entry problem for E2E/Newman/Journeydoc
+      # but left "stable31 is still covered by the PHPUnit matrix" — and that leg
+      # is broken by the same fact. The phpunit job ALSO installs `additional-apps`
+      # (shared quality.yml, "Checkout additional apps" + "Enabling app: …"), and
+      # its `occ app:enable openregister` failure is only a ::warning::, so the
+      # stable31 leg ran on without OpenRegister loaded. openregister has since
+      # made the floor explicit — `<nextcloud min-version="32"/>`, 8d5181f7a — so
+      # NC31 is now a configuration this fixture cannot produce at all.
+      #
+      # Removing stable31 corrects an impossible configuration; it does not reduce
+      # coverage, because nothing was being covered on that leg.
+      nextcloud-test-refs: '["stable32"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
