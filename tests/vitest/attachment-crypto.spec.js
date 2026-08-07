@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import axios from '@nextcloud/axios'
-import { generateKeyPair } from '../../src/crypto/rsa.js'
+import { sharedKeyPair } from './fixtures/rsa-fixtures.js'
 import { useAttachmentStore } from '../../src/store/modules/attachment.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 
@@ -26,7 +26,10 @@ describe('attachment store crypto', () => {
 	beforeEach(async () => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
-		keys = await generateKeyPair()
+		// Committed RSA-4096 material, not a live keygen: a real 4096-bit
+		// keygen is an unbounded random prime search and this hook ran one per
+		// test (7.4s of the 33s frontend-unit job in run 31083918823).
+		keys = await sharedKeyPair()
 		const session = useSessionStore()
 		session.certificate = keys.publicKeyPem
 		session.cryptoKey = keys.privateKey

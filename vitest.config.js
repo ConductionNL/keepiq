@@ -59,6 +59,36 @@ module.exports = {
 		vue.default ? vue.default() : vue(),
 	],
 	test: {
+		// Vitest's default `testTimeout` is 5000ms, and several specs here do
+		// real WebCrypto work — RSA keygen, envelope wrap/unwrap, backup
+		// round-trips — rather than mocking it. On a shared 2-core CI runner
+		// those sit close enough to 5s that they tip over, and WHICH one tips
+		// over moves from run to run, which is the signature of a marginal
+		// timeout rather than a broken test.
+		//
+		// This was already happening on `development` at vitest 1.6.1: run
+		// 31083918823 failed `emergencyEnvelope.spec.js > builds an envelope
+		// the grantee can open` with "Test timed out in 5000ms" while the run
+		// before and after it passed. So the headroom was already gone.
+		//
+		// Upgrading vitest 1.6.1 -> 3.2.7 then removed what was left. Measured
+		// on the CI runner, same repo, same job:
+		//
+		//                            vitest 1.6.1     vitest 3.2.7
+		//   attachment-crypto.spec       2604ms           5391ms
+		//   import.spec                  3937ms           TIMED OUT
+		//   total `tests` time           29.08s           35.66s
+		//
+		// The likely mechanism is vitest 2's change of the default worker pool
+		// from `threads` to `forks`: more per-worker overhead and more
+		// contention for two cores on CPU-bound crypto.
+		//
+		// 20s is chosen to be well clear of the slowest observed spec while
+		// still failing fast on a genuine hang — the whole suite runs in ~30s.
+		// This changes no assertion; it only stops a slow runner from being
+		// scored as a test failure.
+		testTimeout: 20000,
+		hookTimeout: 20000,
 		// Default to node so the existing pure-crypto specs keep running fast.
 		environment: 'node',
 		environmentMatchGlobs: [

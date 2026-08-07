@@ -25,44 +25,30 @@ import axios from '@nextcloud/axios'
 import { useImportStore, COMMIT_CHUNK_SIZE } from '../../src/store/modules/import.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
-import { generateKeyPair, rsaDecrypt } from '../../src/crypto/rsa.js'
+import { rsaDecrypt } from '../../src/crypto/rsa.js'
+import { sharedKeyPair } from '../vitest/fixtures/rsa-fixtures.js'
 import { encryptBackup } from '../../src/export/backup.js'
 import { serializeVault } from '../../src/export/serializer.js'
-
-/**
- * One RSA-4096 key pair shared by every test in this file.
- *
- * `generateKeyPair()` is a real WebCrypto RSA-4096 keygen, i.e. a random prime
- * search whose runtime is unbounded and highly variable — locally it spreads
- * over 154-850ms across 12 samples, and a contended two-core CI runner running
- * 69 spec files in parallel workers lands several times higher. Nine
- * independent keygens in this one file (one per `unlockSession()` call) is what
- * pushed the round-trip test past vitest's 5000ms per-test default in
- * ConductionNL/doriath run 30884131373.
- *
- * Generating once and reusing keeps the *real* encrypt/decrypt path under test
- * — every assertion still runs RSA-OAEP against a genuine key — while removing
- * eight redundant keygens and, with them, the variance that made the timeout a
- * coin flip. The tests assert the crypto round-trip, never key uniqueness, so a
- * shared pair is equivalent. Pinia is still recreated per test by `beforeEach`,
- * so no store state leaks between cases.
- *
- * @type {Promise<{privateKey: CryptoKey, publicKeyPem: string}>|null}
- */
-let keyPairPromise = null
 
 /**
  * Unlock the session store with the shared RSA-4096 key pair so the real
  * encrypt path runs and the test can decrypt to verify the round-trip.
  *
+ * The key material comes from `tests/vitest/fixtures/rsa-fixtures.js`, which
+ * imports a committed 4096-bit pair rather than generating one. A live
+ * `generateKeyPair()` is a random prime search with unbounded runtime; nine of
+ * them in this file (one per `unlockSession()` call) pushed the round-trip test
+ * past vitest's 5000ms default in ConductionNL/doriath run 30884131373, and
+ * caching a *generated* pair still left the first call on the timed path — that
+ * residual coin flip is what then timed out `emergencyEnvelope.spec.js` in run
+ * 31083918823. Every assertion still runs real RSA-OAEP against a real key;
+ * these tests assert the crypto round-trip, never key freshness. Pinia is
+ * recreated per test by `beforeEach`, so no store state leaks between cases.
+ *
  * @return {Promise<CryptoKey>} The private key for decryption assertions.
  */
 async function unlockSession() {
-	if (keyPairPromise === null) {
-		keyPairPromise = generateKeyPair()
-	}
-
-	const { privateKey, publicKeyPem } = await keyPairPromise
+	const { privateKey, publicKeyPem } = await sharedKeyPair()
 	const session = useSessionStore()
 	session.certificate = publicKeyPem
 	session.cryptoKey = privateKey
