@@ -88,7 +88,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <database min-version="10">pgsql</database>
         <database>sqlite</database>
         <database min-version="8.0">mysql</database>
-        <nextcloud min-version="32" max-version="34"/>
+        <nextcloud min-version="31" max-version="34"/>
     </dependencies>
 
     <navigations>
