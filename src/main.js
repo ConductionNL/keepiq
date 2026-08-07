@@ -40,6 +40,8 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import registry from './registry.js'
 import appIcons from './icons.js'
+import { createVaultGuard } from './router/guards.js'
+import { useSessionStore } from './store/modules/session.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -118,6 +120,15 @@ const router = createRouter({
 	history: createWebHashHistory(generateUrl('/apps/doriath')),
 	routes: routesFromManifest(mergedManifest),
 })
+
+// Keep every application screen behind the master password. This must be a
+// router guard rather than an App.vue lifecycle redirect: `beforeEach` runs
+// before the route resolves, so a locked vault never instantiates a page
+// component and never issues its `mounted()` fetches. The store is passed as
+// a lazy factory because the guard is registered before `app.use(pinia)`;
+// `pinia` is passed explicitly so the guard never depends on an active-Pinia
+// context.
+router.beforeEach(createVaultGuard(() => useSessionStore(pinia)))
 
 tryLoadTranslations()
 
