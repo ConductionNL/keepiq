@@ -7,7 +7,7 @@
   prompts for the password), decrypts client-side, renders the payload
   once with a burn notice. Exempt from the lock guard (PUBLIC_ROUTE_NAMES).
 
-  @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-anonymous-access
+  @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
 -->
 <template>
 	<div class="send-access" data-testid="send-access-page">
@@ -20,8 +20,16 @@
 		<template v-if="payload === null && !gone">
 			<label v-if="needsPassword" class="send-access__field">
 				<span>{{ t('doriath', 'Password') }}</span>
+				<!--
+					autocomplete="off": this is the sender's out-of-band
+					passphrase for ONE ephemeral message, not the visitor's own
+					credential. Offering to save it to a password manager as if
+					it were an account password would be wrong, and on a
+					one-shot send it would also be useless.
+				-->
 				<input v-model="password"
 					type="password"
+					autocomplete="off"
 					data-testid="send-access-password"
 					@keyup.enter="onOpen">
 			</label>
