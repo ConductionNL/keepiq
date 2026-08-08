@@ -165,6 +165,12 @@ console.log(`l10n-check [${appId}]: scanned ${files.length} files, `
 
 if (missing.length === 0) {
 	console.log('l10n-check: OK — every used translation key is present in l10n/en.json')
+	// The English source is complete — now enforce translation PARITY for the
+	// other locales. Without this require the parity gate has no caller at all
+	// and `test:l10n` reports green over every missing translation; that was
+	// this repo's state until doriath#180. The parity script exits the process
+	// itself, so its verdict is this script's verdict.
+	require('./check-l10n-parity.js')
 	process.exit(0)
 }
 
