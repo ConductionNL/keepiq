@@ -83,7 +83,7 @@
 		},
 		{
 			"id": "UserSettings",
-			"label": "Settings",
+			"label": "Personal settings",
 			"icon": "CogOutline",
 			"action": "user-settings",
 			"section": "settings",
