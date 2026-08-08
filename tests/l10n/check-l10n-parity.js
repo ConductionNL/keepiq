@@ -165,6 +165,11 @@ const sets = [
 
 const failures = []
 let checkedSets = 0
+// Work actually performed. These exist so a run that compared NOTHING cannot
+// be mistaken for a run that compared everything and found it clean — see the
+// "did this gate actually execute" block below.
+let comparedLocaleFiles = 0
+let comparedKeys = 0
 
 for (const set of sets) {
 	if (!fs.existsSync(set.enFile)) {
@@ -185,6 +190,8 @@ for (const set of sets) {
 			failures.push({ set: set.kind, loc, kind: 'UNPARSEABLE', detail: e.message })
 			continue
 		}
+		comparedLocaleFiles++
+		comparedKeys += enKeys.length
 		const missing = enKeys.filter((k) => !Object.prototype.hasOwnProperty.call(locObj, k))
 		const empty = enKeys.filter((k) => Object.prototype.hasOwnProperty.call(locObj, k) && isEmpty(locObj[k]))
 		if (missing.length || empty.length) {
@@ -196,9 +203,43 @@ for (const set of sets) {
 const label = appId ? `[${appId}]` : ''
 console.log(`l10n-parity ${label}: ${REQUIRED.length} required locales; checked ${checkedSets} translation set(s)`)
 
+// ---------------------------------------------------------------------------
+// DID THIS GATE ACTUALLY EXECUTE?
+//
+// Every line below exists because a check that fails or passes for an
+// environmental reason is not measuring the code. This file was itself the
+// falsely-GREEN case (doriath#180: it had zero callers for its entire life),
+// and the same week gate-30 fleet-wide reported PASS having matched nothing
+// and written a 0-byte log (.github#213), while gates 22 and 53 reported
+// failures that were an unresolvable `ajv`, not findings.
+//
+// So: a run that compared NOTHING must never look like a run that compared
+// everything and found it clean. Each of these exits non-zero and says which
+// input was empty, rather than printing OK.
+// ---------------------------------------------------------------------------
+console.log(`l10n-parity: WORK DONE — ${comparedLocaleFiles} locale file(s) compared, `
+	+ `${comparedKeys} key comparison(s). A zero here means this gate measured nothing.`)
+
+if (REQUIRED.length === 0) {
+	console.error('l10n-parity: REFUSING TO PASS — the required-locale set is EMPTY '
+		+ '(L10N_REQUIRED_LOCALES resolved to nothing), so every locale would trivially '
+		+ 'be "at parity". An empty scope is a broken configuration, not a clean result.')
+	process.exit(2)
+}
+
 if (checkedSets === 0) {
-	console.log('l10n-parity: no en.js / en.json source set found — nothing to check')
-	process.exit(0)
+	console.error('l10n-parity: REFUSING TO PASS — no en.js / en.json source set found under '
+		+ `${path.relative(ROOT, L10N_DIR)}, so there was nothing to compare against. `
+		+ 'Previously this exited 0 and reported "nothing to check", which is exactly the '
+		+ 'shape of a gate that is green because it never ran.')
+	process.exit(2)
+}
+
+if (comparedKeys === 0) {
+	console.error('l10n-parity: REFUSING TO PASS — a source set exists but ZERO key '
+		+ 'comparisons were performed. Either the English source is empty or every locale '
+		+ 'file is missing/unparseable. A gate cannot report success on an empty comparison.')
+	process.exit(2)
 }
 
 if (failures.length === 0) {
