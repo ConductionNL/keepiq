@@ -457,11 +457,5 @@
 			}
 		]
 	},
-	"deepLinks": [
-		{
-			"registerSlug": "doriath",
-			"schemaSlug": "example",
-			"urlTemplate": "/apps/doriath/#/examples/{uuid}"
-		}
-	]
+	"deepLinks": []
 }
