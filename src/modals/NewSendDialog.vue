@@ -6,7 +6,7 @@
   max-views, optional TTL and password. Encrypts AES-256-GCM in the
   browser and shows the assembled one-time link exactly once.
 
-  @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-create-and-store-ciphertext-only
+  @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
 -->
 <template>
 	<NcDialog :name="t('doriath', 'New ephemeral send')"
@@ -68,8 +68,16 @@
 					{{ t('doriath', 'Copy this link now — it is shown only once. The content burns after {views} view(s).', { views: maxViews }) }}
 				</NcNoteCard>
 				<div class="new-send__link">
+					<!--
+						aria-label rather than a visible <label>: the field is a
+						read-only display of the generated link sitting directly
+						under the note card that explains it, so a visible label
+						would be redundant to sighted users while a screen
+						reader still needs the control named.
+					-->
 					<input :value="link"
 						readonly
+						:aria-label="t('doriath', 'Link')"
 						data-testid="send-link"
 						@focus="$event.target.select()">
 					<NcButton variant="secondary" data-testid="send-copy-link" @click="copyLink">

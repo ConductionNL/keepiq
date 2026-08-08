@@ -7,7 +7,7 @@
   prompts for the password), decrypts client-side, renders the payload
   once with a burn notice. Exempt from the lock guard (PUBLIC_ROUTE_NAMES).
 
-  @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-anonymous-access
+  @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
 -->
 <template>
 	<div class="send-access" data-testid="send-access-page">
