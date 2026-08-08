@@ -315,6 +315,18 @@ export default {
 	transition: stroke-dashoffset 1s linear;
 }
 
+/*
+ * WCAG 2.2 AA 2.3.3. The ring still steps to each new offset once per second,
+ * so the time-remaining cue survives; only the continuous sweep is removed.
+ * The numeric countdown in .totp-display__countdown carries the same
+ * information without any motion at all.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.totp-display__ring-progress {
+		transition: none;
+	}
+}
+
 .totp-display__countdown {
 	font-size: 0.85rem;
 	color: var(--color-text-maxcontrast);

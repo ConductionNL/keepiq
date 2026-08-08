@@ -20,8 +20,16 @@
 		<template v-if="payload === null && !gone">
 			<label v-if="needsPassword" class="send-access__field">
 				<span>{{ t('doriath', 'Password') }}</span>
+				<!--
+					autocomplete="off": this is the sender's out-of-band
+					passphrase for ONE ephemeral message, not the visitor's own
+					credential. Offering to save it to a password manager as if
+					it were an account password would be wrong, and on a
+					one-shot send it would also be useless.
+				-->
 				<input v-model="password"
 					type="password"
+					autocomplete="off"
 					data-testid="send-access-password"
 					@keyup.enter="onOpen">
 			</label>

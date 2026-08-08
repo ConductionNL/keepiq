@@ -49,8 +49,16 @@
 				</label>
 				<label class="new-send__field">
 					<span>{{ t('doriath', 'Password (optional — without one, the key travels in the link itself)') }}</span>
+					<!--
+						autocomplete="new-password": the author is minting a
+						fresh passphrase to protect this send, so suppress
+						autofill of the account password and let a manager offer
+						to generate one. It is not the user's own credential, so
+						it is never `current-password`.
+					-->
 					<input v-model="password"
 						type="password"
+						autocomplete="new-password"
 						data-testid="send-password">
 				</label>
 			</template>
