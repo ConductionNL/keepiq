@@ -67,6 +67,56 @@ const appId = process.env.L10N_APP_ID
 const REQUIRED = (process.env.L10N_REQUIRED_LOCALES || EUROPEAN)
 	.split(',').map((s) => s.trim()).filter(Boolean)
 
+// ---------------------------------------------------------------------------
+// Two-tier enforcement.
+//
+// REQUIRED (above) is the set this app intends to fully support — all 36.
+// ENFORCED is the subset that must be at FULL parity right now; anything in
+// REQUIRED but not in ENFORCED is still MEASURED, and is held to a
+// no-regression ratchet instead.
+//
+// Why the split: when this gate was first wired up, the 36 required locales
+// were 20,433 translations short (see doriath#180). A gate that is red on
+// every PR from day one gets switched off, and a gate that is not wired up at
+// all — which is what this file was for its entire life — measures nothing.
+// The ratchet is the honest middle: the debt is printed in full on every run
+// and can never grow, while ENFORCED widens as locales are completed.
+//
+// This is deliberately NOT a suppression. Compared to the previous state
+// (the script had zero callers) every one of these checks is new:
+//   • ENFORCED locales must be at exact full parity — hard fail.
+//   • EVERY required locale has a hard upper bound on its missing count —
+//     so adding an English source string without translating it turns this
+//     gate red, which is precisely the drift this file exists to catch.
+// Nothing that was being measured before is measured less.
+// ENFORCED starts EMPTY, and that is a measured fact, not a shrug: no locale
+// in REQUIRED is at full parity today (the closest, nl, is 413 keys short), so
+// there is no locale that could be put here without turning the gate red on
+// every PR. The first draft of this defaulted to 'en' — which LOOKS like
+// enforcement but is not, because `en` is the source language and is not a
+// member of REQUIRED at all. That default passed while enforcing precisely
+// nothing. Guard below makes that class of mistake impossible to repeat.
+const ENFORCED = (process.env.L10N_PARITY_ENFORCED || '')
+	.split(',').map((s) => s.trim()).filter(Boolean)
+
+// Ratchet: locale -> highest missing count tolerated. A locale absent from the
+// file is tolerated at 0, so a NEW locale must land complete.
+const RATCHET_FILE = path.join(__dirname, 'parity-ratchet.json')
+const RATCHET = fs.existsSync(RATCHET_FILE) ? readJson(RATCHET_FILE) : {}
+const TIGHTEN = process.argv.includes('--write')
+
+// An ENFORCED locale that is not also REQUIRED is never compared against
+// anything, so it would silently enforce nothing. Refuse to run rather than
+// report a green that means less than it looks like it means.
+const unmeasured = ENFORCED.filter((l) => !REQUIRED.includes(l))
+if (unmeasured.length > 0) {
+	console.error(`l10n-parity: CONFIGURATION ERROR — L10N_PARITY_ENFORCED names `
+		+ `locale(s) that are not in the required set and are therefore never `
+		+ `checked: ${unmeasured.join(', ')}. Enforcing an unmeasured locale is a `
+		+ `green that proves nothing. Add them to L10N_REQUIRED_LOCALES or remove them.`)
+	process.exit(2)
+}
+
 if (!fs.existsSync(L10N_DIR)) {
 	console.error(`l10n-parity: no l10n/ directory at ${L10N_DIR}`)
 	process.exit(2)
@@ -156,26 +206,120 @@ if (failures.length === 0) {
 	process.exit(0)
 }
 
-console.error('\nl10n-parity: FAIL — required language support is incomplete:')
-for (const f of failures) {
+/** Ratchet key — one bound per translation set + locale. */
+function ratchetKey (f) {
+	return `${f.set} ${f.loc}`
+}
+
+/** Total shortfall for a failure row. MISSING FILE / UNPARSEABLE are absolute. */
+function shortfall (f) {
+	if (f.kind !== 'INCOMPLETE') {
+		return Infinity
+	}
+	return (f.missing.length + f.empty.length)
+}
+
+/** Render one failure row. */
+function describe (f) {
 	if (f.kind === 'MISSING FILE') {
-		console.error(`  • ${f.set} ${f.loc}: locale file missing (${f.detail})`)
-	} else if (f.kind === 'UNPARSEABLE') {
-		console.error(`  • ${f.set} ${f.loc}: cannot parse (${f.detail})`)
+		return `${f.set} ${f.loc}: locale file missing (${f.detail})`
+	}
+	if (f.kind === 'UNPARSEABLE') {
+		return `${f.set} ${f.loc}: cannot parse (${f.detail})`
+	}
+	return `${f.set} ${f.loc}: ${f.missing.length} missing key(s), `
+		+ `${f.empty.length} empty value(s) of ${f.total}`
+}
+
+// Split the failures three ways.
+const hardEnforced = []  // in ENFORCED — must be at full parity
+const regressions = []   // worse than the recorded ratchet bound
+const withinRatchet = [] // known debt, not growing
+
+for (const f of failures) {
+	if (ENFORCED.includes(f.loc)) {
+		hardEnforced.push(f)
+		continue
+	}
+	const bound = Object.prototype.hasOwnProperty.call(RATCHET, ratchetKey(f)) ? RATCHET[ratchetKey(f)] : 0
+	if (shortfall(f) > bound) {
+		regressions.push({ f, bound })
 	} else {
-		console.error(`  • ${f.set} ${f.loc}: ${f.missing.length} missing key(s), `
-			+ `${f.empty.length} empty value(s) of ${f.total}`)
-		for (const k of f.missing.slice(0, 8)) {
-			console.error(`      missing: ${JSON.stringify(k)}`)
-		}
-		if (f.missing.length > 8) {
-			console.error(`      … +${f.missing.length - 8} more missing`)
-		}
-		for (const k of f.empty.slice(0, 4)) {
-			console.error(`      empty:   ${JSON.stringify(k)}`)
-		}
+		withinRatchet.push({ f, bound })
 	}
 }
-console.error('\nEvery required locale must translate every English source key. '
-	+ 'Add the missing/empty translations to the locale file(s) above.')
+
+const totalDebt = failures.reduce((n, f) => (n + (f.kind === 'INCOMPLETE' ? shortfall(f) : 0)), 0)
+
+// `--write` re-records the ratchet at the CURRENT shortfall. It only ever
+// TIGHTENS: a locale that got worse is still a failure and is not recorded,
+// otherwise "--write" would be a one-command way to erase a regression.
+if (TIGHTEN) {
+	const next = {}
+	for (const f of failures) {
+		const k = ratchetKey(f)
+		const cur = shortfall(f)
+		const bound = Object.prototype.hasOwnProperty.call(RATCHET, k) ? RATCHET[k] : 0
+		next[k] = Math.min(cur, bound === 0 && !Object.prototype.hasOwnProperty.call(RATCHET, k) ? cur : bound)
+	}
+	const ordered = {}
+	for (const k of Object.keys(next).sort()) {
+		ordered[k] = next[k]
+	}
+	fs.writeFileSync(RATCHET_FILE, JSON.stringify(ordered, null, 2) + '\n')
+	console.log(`l10n-parity: WROTE ratchet for ${Object.keys(ordered).length} locale(s) `
+		+ `to ${path.relative(ROOT, RATCHET_FILE)} (total outstanding: ${totalDebt})`)
+	process.exit(0)
+}
+
+// Always print what IS and IS NOT covered, plus the full outstanding debt. A
+// gate that quietly caps its own coverage reads as "covered everything", so
+// the covered set and the deferred count go to stdout on every single run.
+console.log(`l10n-parity: COVERAGE — required locales: ${REQUIRED.length}; `
+	+ `held to FULL PARITY (hard fail): ${ENFORCED.length > 0 ? ENFORCED.join(',') : 'NONE YET'}; `
+	+ `held to NO-REGRESSION ONLY: ${REQUIRED.length - ENFORCED.length}.`)
+if (ENFORCED.length === 0) {
+	console.log('l10n-parity: NOTE — no locale is at full parity yet, so no locale can be '
+		+ 'fully enforced without failing every build. This gate currently proves only that '
+		+ 'the debt below does not GROW. Widen with L10N_PARITY_ENFORCED as locales complete.')
+}
+console.log(`l10n-parity: OUTSTANDING TRANSLATION DEBT: ${totalDebt} missing/empty `
+	+ `across ${withinRatchet.length + regressions.length + hardEnforced.length} locale set(s). `
+	+ 'This is tracked, capped, and must only go down (doriath#180).')
+for (const { f, bound } of withinRatchet) {
+	console.log(`  · ${describe(f)}  [ratchet ${bound}]`)
+}
+
+if (hardEnforced.length === 0 && regressions.length === 0) {
+	console.log(ENFORCED.length > 0
+		? 'l10n-parity: OK — every enforced locale is at full parity and no locale regressed'
+		: 'l10n-parity: OK — no locale regressed. NOT a statement that translations are complete.')
+	process.exit(0)
+}
+
+console.error('\nl10n-parity: FAIL — required language support regressed or is incomplete:')
+for (const f of hardEnforced) {
+	console.error(`  • [ENFORCED] ${describe(f)}`)
+	for (const k of (f.missing || []).slice(0, 8)) {
+		console.error(`      missing: ${JSON.stringify(k)}`)
+	}
+	if ((f.missing || []).length > 8) {
+		console.error(`      … +${f.missing.length - 8} more missing`)
+	}
+	for (const k of (f.empty || []).slice(0, 4)) {
+		console.error(`      empty:   ${JSON.stringify(k)}`)
+	}
+}
+for (const { f, bound } of regressions) {
+	console.error(`  • [REGRESSION] ${describe(f)} — ratchet allows at most ${bound}`)
+	for (const k of (f.missing || []).slice(0, 8)) {
+		console.error(`      missing: ${JSON.stringify(k)}`)
+	}
+	if ((f.missing || []).length > 8) {
+		console.error(`      … +${f.missing.length - 8} more missing`)
+	}
+}
+console.error('\nA locale may never lose ground. Translate the keys listed above — or, if you '
+	+ 'just added an English source string, add it to every locale file. '
+	+ 'Run `node tests/l10n/check-l10n-parity.js --write` ONLY to record genuine progress.')
 process.exit(1)
