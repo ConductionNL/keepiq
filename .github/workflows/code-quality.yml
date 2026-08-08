@@ -14,7 +14,14 @@ jobs:
       app-name: doriath
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      nextcloud-test-refs: '["stable31", "stable32"]'
+      # stable31 dropped with the NC floor raise to 32. The floor is enforced at INSTALL
+      # time, so `occ app:enable` refuses on NC 31 — but the shared workflow runs app-enable
+      # as `|| echo "::warning::..."`, so that refusal is only a warning. The job then
+      # continues without its data layer and dies ~70s later on missing schemas, which
+      # reads like an app/migration fault rather than an unsatisfiable dependency.
+      # Order matters too: the newman/playwright/journeydoc jobs check the server out at
+      # fromJSON(inputs.nextcloud-test-refs)[0].
+      nextcloud-test-refs: '["stable32"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
