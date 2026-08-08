@@ -259,7 +259,7 @@ class SettingsController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-policy-storage-and-validation
+     * @spec openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy
      */
     #[NoAdminRequired]
     public function getPolicy(): JSONResponse
