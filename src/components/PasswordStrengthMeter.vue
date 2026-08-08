@@ -135,6 +135,17 @@ export default {
 	transition: width 0.3s ease, background 0.3s ease;
 }
 
+/*
+ * WCAG 2.2 AA 2.3.3 Animation from Interactions. The bar still moves to its
+ * new width and colour — only the tween is dropped — so the strength reading
+ * is never lost, just delivered without motion.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.password-strength-meter__fill {
+		transition: none;
+	}
+}
+
 .password-strength-meter__fill--danger { background: var(--color-error); }
 
 .password-strength-meter__fill--warning { background: var(--color-warning); }

@@ -24,8 +24,9 @@
 				type="button"
 				class="doriath-share-request-form__close"
 				data-testid="share-request-form-close"
+				:aria-label="t('doriath', 'Close')"
 				@click="$emit('close')">
-				×
+				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 		<form @submit.prevent="onSubmit">
