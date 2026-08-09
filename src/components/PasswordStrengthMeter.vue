@@ -14,6 +14,11 @@
 
 <script>
 import zxcvbn from 'zxcvbn'
+import { fetchPolicy } from '../policy/policy.js'
+
+/** Floors used when neither the caller nor the server supplies one. */
+const FALLBACK_MIN_LENGTH = 12
+const FALLBACK_MIN_SCORE = 3
 
 export default {
 	name: 'PasswordStrengthMeter',
@@ -23,13 +28,20 @@ export default {
 			type: String,
 			required: true,
 		},
+		/**
+		 * Explicit score floor. `null` (the default) means "use the
+		 * administrator's master-password policy"; no caller in the app
+		 * passes one, which is why the admin setting has to reach this
+		 * component through the policy endpoint (#192).
+		 */
 		minScore: {
 			type: Number,
-			default: 3,
+			default: null,
 		},
+		/** Explicit length floor; `null` defers to the admin policy. */
 		minLength: {
 			type: Number,
-			default: 12,
+			default: null,
 		},
 	},
 
@@ -40,10 +52,33 @@ export default {
 			score: 0,
 			feedback: null,
 			debounceTimer: null,
+			policyMinLength: null,
+			policyMinScore: null,
 		}
 	},
 
 	computed: {
+		/**
+		 * The length floor actually enforced: an explicit prop wins, then
+		 * the administrator's stored policy, then the app fallback.
+		 *
+		 * @return {number} Minimum master-password length.
+		 * @spec openspec/specs/admin-settings/spec.md#requirement-master-password-policy-mvp
+		 */
+		effectiveMinLength() {
+			return this.minLength ?? this.policyMinLength ?? FALLBACK_MIN_LENGTH
+		},
+
+		/**
+		 * The zxcvbn score floor actually enforced.
+		 *
+		 * @return {number} Minimum zxcvbn score.
+		 * @spec openspec/specs/admin-settings/spec.md#requirement-master-password-policy-mvp
+		 */
+		effectiveMinScore() {
+			return this.minScore ?? this.policyMinScore ?? FALLBACK_MIN_SCORE
+		},
+
 		/**
 		 * Map the zxcvbn score (0-4) to a severity colour class for the bar.
 		 *
@@ -64,8 +99,8 @@ export default {
 		 */
 		feedbackText() {
 			if (!this.password) return ''
-			if (this.password.length < this.minLength) {
-				return t('doriath', 'At least {length} characters required', { length: this.minLength })
+			if (this.password.length < this.effectiveMinLength) {
+				return t('doriath', 'At least {length} characters required', { length: this.effectiveMinLength })
 			}
 			if (this.feedback?.warning) return this.feedback.warning
 			const labels = [
@@ -79,7 +114,7 @@ export default {
 		},
 
 		isValid() {
-			return this.password.length >= this.minLength && this.score >= this.minScore
+			return this.password.length >= this.effectiveMinLength && this.score >= this.effectiveMinScore
 		},
 	},
 
@@ -95,11 +130,46 @@ export default {
 		},
 	},
 
+	/**
+	 * Score the initial value, then pull the administrator's floors.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md#requirement-master-password-policy-mvp
+	 */
 	created() {
 		this.evaluate()
+		this.loadPolicyFloors()
 	},
 
 	methods: {
+		/**
+		 * Pull the administrator's master-password floors from the read-only
+		 * policy endpoint and re-evaluate, so a form that passed under the
+		 * fallback floor is re-judged against the floor the admin actually
+		 * configured. Failures leave the fallbacks in place — the meter must
+		 * never become permissive because a request failed.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/admin-settings/spec.md#requirement-master-password-policy-mvp
+		 */
+		async loadPolicyFloors() {
+			try {
+				const policy = await fetchPolicy()
+				const length = Number(policy?.master_password_min_length)
+				const score = Number(policy?.master_password_min_score)
+				if (Number.isFinite(length) && length > 0) {
+					this.policyMinLength = length
+				}
+				if (Number.isFinite(score) && score > 0) {
+					this.policyMinScore = score
+				}
+			} catch (e) {
+				// Keep the fallback floors. Swallowing here is deliberate: the
+				// only alternative outcome is a more permissive meter, and a
+				// failed policy read must never lower the bar.
+			}
+			this.evaluate()
+		},
+
 		/**
 		 * Run zxcvbn on the current password, store the score + feedback,
 		 * and emit a strength-change event with validity to the parent form.

@@ -1,6 +1,8 @@
 {
     "translations": {
         "Select {name}": "{name} auswählen",
+        "Could not load the password policy.": "Die Passwortrichtlinie konnte nicht geladen werden.",
+        "Could not save the password policy.": "Die Passwortrichtlinie konnte nicht gespeichert werden.",
         "Doriath settings": "Doriath-Einstellungen",
         "Configure the app settings": "App-Einstellungen konfigurieren",
         "Configuration": "Konfiguration",

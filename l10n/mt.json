@@ -1,6 +1,8 @@
 {
     "translations": {
         "Select {name}": "Agħżel {name}",
+        "Could not load the password policy.": "Ma setgħetx titgħabba l-politika tal-passwords.",
+        "Could not save the password policy.": "Ma setgħetx tiġi ssejvjata l-politika tal-passwords.",
         "Doriath settings": "Settings ta' Doriath",
         "Configure the app settings": "Ikkonfigura s-settings tal-app",
         "Configuration": "Konfigurazzjoni",

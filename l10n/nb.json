@@ -1,6 +1,8 @@
 {
     "translations": {
         "Select {name}": "Velg {name}",
+        "Could not load the password policy.": "Kunne ikke laste passordpolicyen.",
+        "Could not save the password policy.": "Kunne ikke lagre passordpolicyen.",
         "Doriath settings": "Doriath-innstillinger",
         "Configure the app settings": "Konfigurer appinnstillingene",
         "Configuration": "Konfigurasjon",

@@ -1,6 +1,8 @@
 {
     "translations": {
         "Select {name}": "Изабери {name}",
+        "Could not load the password policy.": "Смерница за лозинке није могла да се учита.",
+        "Could not save the password policy.": "Смерница за лозинке није могла да се сачува.",
         "Doriath settings": "Postavke Doriatija",
         "Configure the app settings": "Konfiguriranje postavki aplikacije",
         "Configuration": "Konfiguracija",

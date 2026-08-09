@@ -240,4 +240,59 @@ class SettingsControllerWriteTest extends TestCase
     }//end testBothWriteEntryPointsDeclareTheAdminGate()
 
 
+    /**
+     * A value the service refuses must answer 400, not the success envelope.
+     *
+     * The defect this guards (#192) was that a discarded write and a stored
+     * one produced byte-identical responses. Once the service can refuse a
+     * value, the controller has to let that refusal reach the caller —
+     * otherwise the panel goes on reporting success for a value it does not
+     * have.
+     *
+     * @return void
+     */
+    public function testARefusedValueAnswers400AndNotTheSuccessEnvelope(): void
+    {
+        $this->request->method('getParams')->willReturn(['master_password_min_length' => '99']);
+
+        $this->settingsService->method('updateSettings')
+            ->willThrowException(new \InvalidArgumentException('master_password_min_length must be a whole number between 12 and 20'));
+
+        $response = $this->controller()->update();
+
+        $this->assertSame(
+            400,
+            $response->getStatus(),
+            'a refused settings value must not be reported as a successful write'
+        );
+        $this->assertSame(
+            [
+                'success' => false,
+                'message' => 'master_password_min_length must be a whole number between 12 and 20',
+            ],
+            $response->getData(),
+            'the caller must be told which value was refused and why'
+        );
+    }//end testARefusedValueAnswers400AndNotTheSuccessEnvelope()
+
+
+    /**
+     * The POST alias refuses identically — both callers still POST.
+     *
+     * @return void
+     */
+    public function testThePostAliasAlsoSurfacesTheRefusal(): void
+    {
+        $this->request->method('getParams')->willReturn(['master_password_min_score' => '9']);
+
+        $this->settingsService->method('updateSettings')
+            ->willThrowException(new \InvalidArgumentException('master_password_min_score must be a whole number between 3 and 4'));
+
+        $response = $this->controller()->create();
+
+        $this->assertSame(400, $response->getStatus());
+        $this->assertFalse($response->getData()['success']);
+    }//end testThePostAliasAlsoSurfacesTheRefusal()
+
+
 }//end class

@@ -1,6 +1,8 @@
 {
     "translations": {
         "Select {name}": "{name} selecteren",
+        "Could not load the password policy.": "Kan het wachtwoordbeleid niet laden.",
+        "Could not save the password policy.": "Kan het wachtwoordbeleid niet opslaan.",
         "Import": "Importeren",
         "Import secrets": "Geheimen importeren",
         "Unlock the vault before importing secrets.": "Ontgrendel de kluis voordat je geheimen importeert.",

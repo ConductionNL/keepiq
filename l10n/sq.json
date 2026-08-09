@@ -1,6 +1,8 @@
 {
     "translations": {
         "Select {name}": "Përzgjidh {name}",
+        "Could not load the password policy.": "Rregullorja e fjalëkalimeve nuk u ngarkua dot.",
+        "Could not save the password policy.": "Rregullorja e fjalëkalimeve nuk u ruajt dot.",
         "Doriath settings": "Cilësimet e Doriath",
         "Configure the app settings": "Konfiguro cilësimet e aplikacionit",
         "Configuration": "Konfigurimi",

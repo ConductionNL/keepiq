@@ -63,7 +63,11 @@ export async function gotoLockSettled(page: Page): Promise<string> {
 		(r) => /\/api\/v1\/suites(\?|$)/.test(r.url()),
 		{ timeout: 20_000 },
 	).catch(() => null)
-	await page.goto(`${APP_BASE}/lock`, { waitUntil: 'networkidle' })
+	// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud. This helper
+	// already carries a stronger readiness signal than a quiet network — the
+	// /api/v1/suites response awaited below, plus the heading-stabilisation
+	// loop — so the wait is dropped rather than replaced by a weaker one.
+	await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 	await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
 	await suitesResp
 	// Stabilise: poll the heading until two consecutive reads agree, so we never

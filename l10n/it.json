@@ -1,6 +1,8 @@
 {
     "translations": {
         "Select {name}": "Seleziona {name}",
+        "Could not load the password policy.": "Impossibile caricare il criterio delle password.",
+        "Could not save the password policy.": "Impossibile salvare il criterio delle password.",
         "Doriath settings": "Impostazioni di Doriath",
         "Configure the app settings": "Configurare le impostazioni dell'app",
         "Configuration": "Configurazione",
