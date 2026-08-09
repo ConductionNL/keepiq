@@ -49,29 +49,19 @@
 				</NcButton>
 			</div>
 
-			<NcDialog :name="t('doriath', 'Confirm offboarding')"
-				:open="confirmOpen"
-				size="small"
-				@update:open="confirmOpen = $event">
-				<p class="offboarding__confirm">
-					{{ t('doriath', 'Revoke all team-folder access of "{leaving}" and transfer their owned team secrets to "{successor}"? This cannot be undone.', { leaving: leavingUserId, successor: successorUserId }) }}
-				</p>
-				<template #actions>
-					<NcButton variant="tertiary" @click="confirmOpen = false">
-						{{ t('doriath', 'Cancel') }}
-					</NcButton>
-					<NcButton variant="error" data-testid="offboarding-confirm" @click="run">
-						{{ t('doriath', 'Offboard') }}
-					</NcButton>
-				</template>
-			</NcDialog>
+			<OffboardingConfirmDialog :open="confirmOpen"
+				:leaving-user-id="leavingUserId"
+				:successor-user-id="successorUserId"
+				@update:open="confirmOpen = $event"
+				@confirm="run" />
 		</div>
 	</CnSettingsSection>
 </template>
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcNoteCard } from '@nextcloud/vue'
+import OffboardingConfirmDialog from '../../dialogs/OffboardingConfirmDialog.vue'
 import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
 
 export default {
@@ -79,8 +69,8 @@ export default {
 	components: {
 		CnSettingsSection,
 		NcButton,
-		NcDialog,
 		NcNoteCard,
+		OffboardingConfirmDialog,
 	},
 
 	data() {
@@ -169,9 +159,5 @@ export default {
 .offboarding__actions {
 	display: flex;
 	justify-content: flex-start;
-}
-
-.offboarding__confirm {
-	padding: 0 12px 12px;
 }
 </style>

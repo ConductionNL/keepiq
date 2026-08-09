@@ -67,7 +67,7 @@
 
 <script>
 import { NcButton, NcDialog, NcNoteCard, NcPasswordField, NcTextArea, NcTextField } from '@nextcloud/vue'
-import { useApplicationStore } from '../../store/modules/application.js'
+import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
 	name: 'WriteSecretForAppDialog',

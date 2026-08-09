@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Take over as vault administrator": "Перебрати як адміністратор сховища",
         "Select {name}": "Вибрати {name}",
         "Could not load the password policy.": "Не вдалося завантажити політику паролів.",
         "Could not save the password policy.": "Не вдалося зберегти політику паролів.",

@@ -43,58 +43,30 @@
 		</p>
 
 		<!-- Read-only view of one decrypted version. -->
-		<NcDialog :name="t('doriath', 'Version details')"
-			:open="viewed !== null"
-			size="normal"
-			@update:open="viewed = null">
-			<dl v-if="viewed" class="version-history__details" data-testid="version-details">
-				<div><dt>{{ t('doriath', 'Name') }}</dt><dd>{{ viewed.name }}</dd></div>
-				<div v-if="viewed.url"><dt>{{ t('doriath', 'URL') }}</dt><dd>{{ viewed.url }}</dd></div>
-				<div>
-					<dt>{{ t('doriath', 'Value') }}</dt>
-					<dd class="version-history__value">
-						<span data-testid="version-value">{{ revealed ? viewed.key : '••••••••••' }}</span>
-						<NcButton variant="tertiary" @click="revealed = !revealed">
-							{{ revealed ? t('doriath', 'Hide') : t('doriath', 'Show') }}
-						</NcButton>
-					</dd>
-				</div>
-				<div v-if="viewed.login"><dt>{{ t('doriath', 'Login') }}</dt><dd>{{ viewed.login }}</dd></div>
-			</dl>
-		</NcDialog>
+		<VersionDetailsDialog :version="viewed" @close="viewed = null" />
 
 		<!-- Restore confirmation. -->
-		<NcDialog :name="t('doriath', 'Restore version')"
-			:open="confirmVersion !== null"
-			size="small"
-			@update:open="confirmVersion = null">
-			<p class="version-history__confirm">
-				{{ t('doriath', 'Restore version {number}? The current value is kept as a new version, and shared recipients receive the restored value.', { number: confirmVersion ? confirmVersion.versionNumber : 0 }) }}
-			</p>
-			<template #actions>
-				<NcButton variant="tertiary" @click="confirmVersion = null">
-					{{ t('doriath', 'Cancel') }}
-				</NcButton>
-				<NcButton variant="primary" data-testid="version-restore-confirm" @click="onRestore">
-					{{ t('doriath', 'Restore') }}
-				</NcButton>
-			</template>
-		</NcDialog>
+		<VersionRestoreDialog :version="confirmVersion"
+			@close="confirmVersion = null"
+			@confirm="onRestore" />
 	</div>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import History from 'vue-material-design-icons/History.vue'
+import VersionDetailsDialog from '../dialogs/VersionDetailsDialog.vue'
+import VersionRestoreDialog from '../dialogs/VersionRestoreDialog.vue'
 import { useSecretVersionStore } from '../store/modules/secretVersion.js'
 
 export default {
 	name: 'VersionHistoryPanel',
 	components: {
 		NcButton,
-		NcDialog,
 		NcNoteCard,
 		History,
+		VersionDetailsDialog,
+		VersionRestoreDialog,
 	},
 	props: {
 		secretId: {
@@ -110,7 +82,6 @@ export default {
 	data() {
 		return {
 			viewed: null,
-			revealed: false,
 			confirmVersion: null,
 		}
 	},
@@ -135,9 +106,11 @@ export default {
 		 *
 		 * @param {object} version The version metadata row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 		 */
 		async onView(version) {
-			this.revealed = false
+			// The mask now resets inside VersionDetailsDialog, which re-masks
+			// whenever a different version is passed in.
 			try {
 				this.viewed = await this.store.viewVersion(version.id)
 			} catch {
@@ -199,30 +172,6 @@ export default {
 	color: var(--color-text-maxcontrast, #777);
 	font-size: 13px;
 	margin-left: 8px;
-}
-
-.version-history__details {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	padding: 4px 12px 12px;
-}
-
-.version-history__details dt {
-	font-weight: 600;
-	font-size: 13px;
-	color: var(--color-text-maxcontrast, #777);
-}
-
-.version-history__value {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	word-break: break-all;
-}
-
-.version-history__confirm {
-	padding: 0 12px 12px;
 }
 
 .version-history__empty {

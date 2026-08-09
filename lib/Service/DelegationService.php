@@ -296,12 +296,37 @@ class DelegationService
             );
         }
 
-        if ($this->groupManager->isInGroup($userId, self::VAULT_ADMIN_GROUP) === false) {
+        if ($this->isVaultAdmin(userId: $userId) === false) {
             throw new InvalidArgumentException(
                 message: 'Admin handover requires membership in the vault_admin group'
             );
         }
     }//end assertVaultAdmin()
+
+    /**
+     * Whether $userId may use the admin handover path at all.
+     *
+     * Exists so the UI can decide whether to OFFER the takeover without
+     * duplicating the membership rule: `assertVaultAdmin()` above is written
+     * in terms of this predicate, so the button and the enforcement can never
+     * drift apart. It answers only the group question — the per-secret
+     * preconditions (not already the owner, already holds a share) stay in
+     * `createAdminHandover()`, because they need the Secret.
+     *
+     * @param string $userId The candidate admin user ID
+     *
+     * @return bool
+     *
+     * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+     */
+    public function isVaultAdmin(string $userId): bool
+    {
+        if ($this->groupManager === null) {
+            return false;
+        }
+
+        return $this->groupManager->isInGroup($userId, self::VAULT_ADMIN_GROUP);
+    }//end isVaultAdmin()
 
     /**
      * Assert that $userId already holds a share of $secretId. No-op when

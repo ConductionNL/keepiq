@@ -161,6 +161,19 @@
 					v-if="isRecipient && !isOwner"
 					:secret-id="secretId"
 					data-testid="secret-detail-share-request" />
+
+				<!--
+				  Vault-admin takeover (user-sharing spec.md § Ownership
+				  Delegation). Only offered to a vault admin looking at
+				  somebody else's secret — the owner has ShareList and
+				  DelegationManager above instead. The server re-checks group
+				  membership AND that the admin already holds a share, so this
+				  condition decides what to SHOW, never what is allowed.
+				-->
+				<AdminHandoverPanel
+					v-if="!isOwner"
+					:secret-id="secretId"
+					data-testid="secret-detail-admin-handover" />
 			</section>
 
 			<!--
@@ -225,6 +238,7 @@ import RotationPanel from '../components/RotationPanel.vue'
 import HoneyPanel from '../components/HoneyPanel.vue'
 import CardDisplay from '../components/CardDisplay.vue'
 import IdentityDisplay from '../components/IdentityDisplay.vue'
+import AdminHandoverPanel from '../components/share/AdminHandoverPanel.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
@@ -262,6 +276,7 @@ export default {
 		HoneyPanel,
 		CardDisplay,
 		IdentityDisplay,
+		AdminHandoverPanel,
 		DelegationManager,
 		ShareList,
 		ShareRequestForm,

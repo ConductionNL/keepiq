@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Take over as vault administrator": "Taka yfir sem hirslustjórnandi",
         "Select {name}": "Velja {name}",
         "Could not load the password policy.": "Ekki tókst að hlaða lykilorðastefnuna.",
         "Could not save the password policy.": "Ekki tókst að vista lykilorðastefnuna.",
