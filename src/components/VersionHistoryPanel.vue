@@ -8,7 +8,7 @@
   in-session key; and a confirmed restore that propagates to recipients
   via sync-on-update.
 
-  @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-listing-and-viewing
+  @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 -->
 <template>
 	<div class="version-history" data-testid="version-history-panel">

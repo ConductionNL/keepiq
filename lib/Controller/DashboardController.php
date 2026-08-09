@@ -69,7 +69,8 @@ class DashboardController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/implement-dashboard-settings/specs/dashboard-settings/spec.md#requirement-the-system-provides-an-aggregated-dashboard-summary
+     * @spec openspec/specs/dashboard/spec.md#requirement-vault-summary-cards-mvp
+     * @spec openspec/specs/dashboard/spec.md#requirement-pending-applications-counter-admin-mvp
      */
     public function summary(): JSONResponse
     {

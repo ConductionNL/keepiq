@@ -530,7 +530,7 @@ export default {
 		 * no-op online-only fallback — never a hard error.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-service-worker-shell
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
 		 */
 		registerServiceWorker() {
 			if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {

@@ -145,7 +145,8 @@ export const useExportStore = defineStore('export', {
 		 * @param {object} [options.typeNamesById] typeId → type-name map.
 		 * @param {boolean} [options.dryRun] Build + report only, no download.
 		 * @return {Promise<{unmapped: Array<string>, itemCount: number}>}
-		 * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-cxf-export
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-re-auth-gated-client-side-cxf-export
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
 		 */
 		async exportCxf(secrets, folders, scope = { mode: 'vault' }, options = {}) {
 			this.loading = true

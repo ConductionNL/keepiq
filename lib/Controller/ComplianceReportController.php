@@ -95,7 +95,7 @@ class ComplianceReportController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md#requirement-immutable-snapshots
+     * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
      */
     #[NoAdminRequired]
     public function generate(): JSONResponse

@@ -421,7 +421,7 @@ class TeamFolderController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-grades-per-membership
+     * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
      */
     #[NoAdminRequired]
     public function setMemberGrade(string $id, string $memberId, string $grade=''): JSONResponse

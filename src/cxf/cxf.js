@@ -19,7 +19,8 @@
  * serialized vault rows and reports every value with no CXF home in an
  * unmapped-item list shown before download (D4).
  *
- * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-cxf-entity-mapping
+ * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-doriath-type-mapping
+ * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
  */
 
 import { makeRow, validateRow, rejectRow } from '../import/model.js'

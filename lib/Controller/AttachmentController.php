@@ -80,7 +80,7 @@ class AttachmentController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-client-side-encryption-and-upload
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
      */
     #[NoAdminRequired]
     public function create(
@@ -132,7 +132,7 @@ class AttachmentController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-listing-and-download
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
      */
     #[NoAdminRequired]
     public function index(string $secretId): JSONResponse
@@ -156,7 +156,7 @@ class AttachmentController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-listing-and-download
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
      */
     #[NoAdminRequired]
     public function download(string $id): JSONResponse
@@ -191,7 +191,7 @@ class AttachmentController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-sharing-follows-the-secret
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
      */
     #[NoAdminRequired]
     public function addGrant(
@@ -234,7 +234,7 @@ class AttachmentController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-deletion-cascades-and-quota
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-deletion-cascade
      */
     #[NoAdminRequired]
     public function destroy(string $id): JSONResponse

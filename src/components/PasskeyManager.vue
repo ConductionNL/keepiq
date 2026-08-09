@@ -8,7 +8,9 @@
   revoke per-row, and prompt re-enrollment for stale envelopes after a
   master-password change. Hidden entirely where WebAuthn is unavailable.
 
-  @spec openspec/changes/passkey-vault-login/specs/passkey-vault-login/spec.md#requirement-passkey-management
+  @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
+  @spec openspec/specs/passkey-vault-login/spec.md#requirement-envelopes-are-invalidated-when-the-unlock-key-changes
+  @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
 -->
 <template>
 	<div v-if="store.supported" class="passkey-manager" data-testid="passkey-manager">

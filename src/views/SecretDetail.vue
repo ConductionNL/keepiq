@@ -343,7 +343,7 @@ export default {
 		 * (card-identity-items §4).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-masked-presentation
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		isCard() {
 			if (!this.secret) {
@@ -357,7 +357,7 @@ export default {
 		 * Whether this secret is an `identity` type (card-identity-items §4).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-masked-presentation
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		isIdentity() {
 			if (!this.secret) {

@@ -60,7 +60,7 @@ class SiemForwardListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/siem-audit-export/specs/siem-audit-export/spec.md#requirement-whitelisted-forwarding
+     * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
      */
     public function handle(Event $event): void
     {

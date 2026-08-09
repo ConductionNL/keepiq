@@ -10,7 +10,7 @@
  * the existing sync-on-update fan-out so shared recipients receive the
  * restored value re-encrypted for them (ADR-003).
  *
- * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-listing-and-viewing
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
  */
 
 import { defineStore } from 'pinia'
