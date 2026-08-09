@@ -49,7 +49,6 @@ use PHPUnit\Framework\TestCase;
  * every non-admin path — anonymous, ordinary user, unknown application —
  * writes nothing.
  *
- * @covers \OCA\Doriath\Controller\LeaseAdminController
  */
 class LeaseAdminControllerTest extends TestCase
 {

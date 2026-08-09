@@ -42,7 +42,6 @@ use PHPUnit\Framework\TestCase;
  * checked for a 200, or only that a JSONResponse came back, would pass
  * against a controller that silently forwarded nothing.
  *
- * @covers \OCA\Doriath\Controller\ShareController
  */
 class ShareControllerTest extends TestCase
 {

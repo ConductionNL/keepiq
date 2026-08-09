@@ -41,7 +41,6 @@ use PHPUnit\Framework\TestCase;
  * admin who fired it, and that the delivery outcome reaches the caller instead
  * of a blanket success.
  *
- * @covers \OCA\Doriath\Controller\SiemSinkController
  */
 class SiemSinkControllerTest extends TestCase
 {

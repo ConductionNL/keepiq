@@ -46,8 +46,6 @@ use PHPUnit\Framework\TestCase;
  * The export beacon additionally validates the format allowlist and must audit
  * with the ADMIN's uid plus the report id from the URL.
  *
- * @covers \OCA\Doriath\Controller\ComplianceReportController::metrics
- * @covers \OCA\Doriath\Controller\ComplianceReportController::exported
  */
 class ComplianceReportControllerTest extends TestCase
 {

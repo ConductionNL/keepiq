@@ -45,7 +45,6 @@ use PHPUnit\Framework\TestCase;
  * InvalidArgumentException (unknown/inactive application) and a null
  * certificate (no active EncryptionSuite) — each map to their own status code.
  *
- * @covers \OCA\Doriath\Controller\ApplicationController::certificate
  */
 class ApplicationControllerCertificateTest extends TestCase
 {

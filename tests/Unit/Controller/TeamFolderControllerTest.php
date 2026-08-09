@@ -42,7 +42,6 @@ use PHPUnit\Framework\TestCase;
  * the service, and the service's answer — an empty member list, a refusal, a
  * reconciliation delta — must reach the caller intact.
  *
- * @covers \OCA\Doriath\Controller\TeamFolderController
  */
 class TeamFolderControllerTest extends TestCase
 {

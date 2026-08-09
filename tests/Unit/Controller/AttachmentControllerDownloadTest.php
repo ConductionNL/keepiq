@@ -42,7 +42,6 @@ use PHPUnit\Framework\TestCase;
  * caller-supplied uid would be the IDOR — it must base64-encode the raw
  * ciphertext it gets back, and it must turn the service's refusal into a 403.
  *
- * @covers \OCA\Doriath\Controller\AttachmentController::download
  */
 class AttachmentControllerDownloadTest extends TestCase
 {

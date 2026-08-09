@@ -46,7 +46,6 @@ use ReflectionProperty;
  * resolves, so "the body contains the service-worker code" is asserted against
  * the shipped code, not against a string the test invented.
  *
- * @covers \OCA\Doriath\Controller\ServiceWorkerController
  */
 class ServiceWorkerControllerTest extends TestCase
 {

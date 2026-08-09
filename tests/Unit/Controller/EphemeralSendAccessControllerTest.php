@@ -44,7 +44,6 @@ use ReflectionMethod;
  * reaches the recipient, and that a missing/expired/burned send answers the
  * SAME 404 shape so the endpoint is not an existence oracle.
  *
- * @covers \OCA\Doriath\Controller\EphemeralSendAccessController
  */
 class EphemeralSendAccessControllerTest extends TestCase
 {

@@ -46,7 +46,6 @@ use PHPUnit\Framework\TestCase;
  * for it asserts exactly that: the service is not touched at all. A deny that
  * quietly called into the service would be an unspecified mutation.
  *
- * @covers \OCA\Doriath\Controller\GroupShareController
  */
 class GroupShareControllerTest extends TestCase
 {

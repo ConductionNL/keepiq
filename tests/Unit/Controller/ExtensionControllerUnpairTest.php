@@ -47,7 +47,6 @@ use ReflectionMethod;
  * The existing ExtensionControllerTest covers pair() and match(); this file
  * adds the unpair() contract without touching it.
  *
- * @covers \OCA\Doriath\Controller\ExtensionController
  */
 class ExtensionControllerUnpairTest extends TestCase
 {

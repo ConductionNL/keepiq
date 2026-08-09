@@ -51,7 +51,6 @@ use PHPUnit\Framework\TestCase;
  * "forbidden" into one 404 so the API is not an existence oracle — a property
  * that only a test comparing BOTH branches' bodies can protect.
  *
- * @covers \OCA\Doriath\Controller\RotationController
  */
 class RotationControllerTest extends TestCase
 {

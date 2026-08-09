@@ -43,7 +43,6 @@ use PHPUnit\Framework\TestCase;
  * would still return a perfectly well-formed 200, so both arguments are
  * asserted explicitly and the anonymous branch is proven to compute nothing.
  *
- * @covers \OCA\Doriath\Controller\DashboardController::summary
  */
 class DashboardControllerTest extends TestCase
 {

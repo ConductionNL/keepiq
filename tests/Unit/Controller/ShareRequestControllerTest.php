@@ -39,7 +39,6 @@ use PHPUnit\Framework\TestCase;
  * caller who does not own the secret must be refused rather than silently
  * having the denial recorded for someone else.
  *
- * @covers \OCA\Doriath\Controller\ShareRequestController
  */
 class ShareRequestControllerTest extends TestCase
 {

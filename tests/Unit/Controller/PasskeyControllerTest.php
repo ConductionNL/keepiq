@@ -41,7 +41,6 @@ use PHPUnit\Framework\TestCase;
  * id, that the payload carries the service's value (not a controller-invented
  * one), and that an anonymous caller is refused before the service is touched.
  *
- * @covers \OCA\Doriath\Controller\PasskeyController
  */
 class PasskeyControllerTest extends TestCase
 {

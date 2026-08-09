@@ -42,7 +42,6 @@ use PHPUnit\Framework\TestCase;
  * caller who does not own the secret must be refused instead of silently
  * reclaiming nothing.
  *
- * @covers \OCA\Doriath\Controller\DelegationController
  */
 class DelegationControllerTest extends TestCase
 {

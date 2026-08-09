@@ -50,7 +50,6 @@ use PHPUnit\Framework\TestCase;
  * override, and must keep the three refusal shapes distinct: unauthenticated
  * (403), not flagged (404) and not permitted (403 with the service's reason).
  *
- * @covers \OCA\Doriath\Controller\HoneyController
  */
 class HoneyControllerTest extends TestCase
 {
