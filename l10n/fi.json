@@ -1,6 +1,7 @@
 {
     "translations": {
         "Take over as vault administrator": "Ota haltuun holvin ylläpitäjänä",
+        "Select {name}": "Valitse {name}",
         "Could not load the password policy.": "Salasanakäytäntöä ei voitu ladata.",
         "Could not save the password policy.": "Salasanakäytäntöä ei voitu tallentaa.",
         "Doriath settings": "Doriath-asetukset",

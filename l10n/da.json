@@ -1,6 +1,7 @@
 {
     "translations": {
         "Take over as vault administrator": "Overtag som boksadministrator",
+        "Select {name}": "Vælg {name}",
         "Could not load the password policy.": "Adgangskodepolitikken kunne ikke indlæses.",
         "Could not save the password policy.": "Adgangskodepolitikken kunne ikke gemmes.",
         "Doriath settings": "Doriath-indstillinger",

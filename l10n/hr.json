@@ -1,6 +1,7 @@
 {
     "translations": {
         "Take over as vault administrator": "Preuzmi kao administrator trezora",
+        "Select {name}": "Odaberi {name}",
         "Could not load the password policy.": "Pravila lozinki nije moguće učitati.",
         "Could not save the password policy.": "Pravila lozinki nije moguće spremiti.",
         "Doriath settings": "Postavke Doriatija",

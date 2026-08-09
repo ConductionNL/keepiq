@@ -188,6 +188,7 @@
 						<input type="checkbox"
 							class="secret-list-view__check"
 							:checked="bulkStore.selectedIds.includes(object.id)"
+							:aria-label="t('doriath', 'Select {name}', { name: object.name })"
 							:data-testid="`bulk-check-${object.id}`"
 							@click="onRowCheck(object, $event)">
 						<SecretListItem

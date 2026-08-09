@@ -34,11 +34,19 @@
 				<table v-else class="cert-inventory__table">
 					<thead>
 						<tr>
-							<th>{{ t('doriath', 'Name') }}</th>
-							<th>{{ t('doriath', 'Subject') }}</th>
-							<th>{{ t('doriath', 'Issuer') }}</th>
-							<th>{{ t('doriath', 'Expires') }}</th>
-							<th />
+							<th scope="col">
+								{{ t('doriath', 'Name') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Subject') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Issuer') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Expires') }}
+							</th>
+							<th scope="col" />
 						</tr>
 					</thead>
 					<tbody>
@@ -83,10 +91,16 @@
 				<table v-if="store.inventory.suites.length" class="cert-inventory__table">
 					<thead>
 						<tr>
-							<th>{{ t('doriath', 'Owner') }}</th>
-							<th>{{ t('doriath', 'Subject') }}</th>
-							<th>{{ t('doriath', 'Expires') }}</th>
-							<th />
+							<th scope="col">
+								{{ t('doriath', 'Owner') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Subject') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Expires') }}
+							</th>
+							<th scope="col" />
 						</tr>
 					</thead>
 					<tbody>
@@ -119,9 +133,15 @@
 				<table class="cert-inventory__table">
 					<thead>
 						<tr>
-							<th>{{ t('doriath', 'Role') }}</th>
-							<th>{{ t('doriath', 'Subject') }}</th>
-							<th>{{ t('doriath', 'Expires') }}</th>
+							<th scope="col">
+								{{ t('doriath', 'Role') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Subject') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Expires') }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -141,29 +161,14 @@
 		</template>
 
 		<!-- Renewal checklist dialog (externally-issued stored certs). -->
-		<NcDialog :name="t('doriath', 'Renew certificate')"
-			:open="checklist !== null"
-			@update:open="checklist = null">
-			<div v-if="checklist" data-testid="cert-checklist">
-				<p>{{ t('doriath', 'This certificate was issued outside Doriath, so it cannot be renewed here. Follow these steps:') }}</p>
-				<ol>
-					<li v-for="(step, index) in checklist.steps" :key="index">
-						{{ step }}
-					</li>
-				</ol>
-			</div>
-			<template #actions>
-				<NcButton variant="primary" @click="checklist = null">
-					{{ t('doriath', 'Close') }}
-				</NcButton>
-			</template>
-		</NcDialog>
+		<CertificateRenewalChecklistDialog :checklist="checklist" @close="checklist = null" />
 	</div>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import { showSuccess, showError } from '@nextcloud/dialogs'
+import CertificateRenewalChecklistDialog from '../dialogs/CertificateRenewalChecklistDialog.vue'
 import { useCertificateStore } from '../store/modules/certificate.js'
 import { useSessionStore } from '../store/modules/session.js'
 
@@ -171,8 +176,8 @@ export default {
 	name: 'CertificateInventoryView',
 
 	components: {
+		CertificateRenewalChecklistDialog,
 		NcButton,
-		NcDialog,
 		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
