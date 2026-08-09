@@ -96,6 +96,11 @@ class SettingsController extends Controller
      * the refreshed settings map (stored keys plus the `openregisters` and
      * `isAdmin` metadata flags read by the settings UI).
      *
+     * A rejected value answers 400 rather than the `{success: true}` envelope.
+     * Before #192 an unwritable value was indistinguishable from a stored one,
+     * because the write loop simply never matched and the envelope was
+     * unconditional; a bounded key that fails validation must now say so.
+     *
      * @AuthorizedAdminSetting(AdminSettings::class)
      *
      * @return JSONResponse The refreshed settings, wrapped as `{success, config}`.
@@ -107,8 +112,16 @@ class SettingsController extends Controller
     #[AuthorizedAdminSetting(AdminSettings::class)]
     public function update(): JSONResponse
     {
-        $data   = $this->request->getParams();
-        $config = $this->settingsService->updateSettings($data);
+        $data = $this->request->getParams();
+
+        try {
+            $config = $this->settingsService->updateSettings($data);
+        } catch (InvalidArgumentException $e) {
+            return new JSONResponse(
+                data: ['success' => false, 'message' => $e->getMessage()],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
 
         return new JSONResponse(
             data: [

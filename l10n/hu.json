@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "A jelszóházirend betöltése nem sikerült.",
+        "Could not save the password policy.": "A jelszóházirend mentése nem sikerült.",
         "Doriath settings": "Doriath beállítások",
         "Configure the app settings": "Az alkalmazás beállításainak konfigurálása",
         "Configuration": "Konfiguráció",

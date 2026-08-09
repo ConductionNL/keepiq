@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "Zásady hesel se nepodařilo načíst.",
+        "Could not save the password policy.": "Zásady hesel se nepodařilo uložit.",
         "Doriath settings": "Postavke Doriatija",
         "Configure the app settings": "Konfiguriranje postavki aplikacije",
         "Configuration": "Konfiguracija",

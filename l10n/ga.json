@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "Níorbh fhéidir an polasaí pasfhocail a lódáil.",
+        "Could not save the password policy.": "Níorbh fhéidir an polasaí pasfhocail a shábháil.",
         "Doriath settings": "Socruithe Doriath",
         "Configure the app settings": "Cumraigh socruithe an aip",
         "Configuration": "Cumraíocht",
