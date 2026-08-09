@@ -8,7 +8,8 @@
   in the attachment store; this component never sees the server's
   ciphertext representation.
 
-  @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-listing-and-download
+  @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+  @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-deletion-cascade
 -->
 <template>
 	<div class="attachment-panel" data-testid="attachment-panel">
@@ -50,7 +51,7 @@
 			<input ref="fileInput"
 				type="file"
 				class="attachment-panel__file-input"
-				:aria-label="t('doriath', 'Choose a file to attach')"
+				:aria-label="t('doriath', 'Add attachment')"
 				data-testid="attachment-file-input"
 				@change="onFilePicked">
 			<NcButton variant="secondary"

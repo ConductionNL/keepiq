@@ -6,7 +6,7 @@
   bar with cancel while the runner is active, then a per-item report
   table (ok / failed+reason / skipped) with a retry-failed button.
 
-  @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-progress-and-report
+  @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 -->
 <template>
 	<div class="bulk-run" data-testid="bulk-run-panel">

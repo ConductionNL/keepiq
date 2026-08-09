@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Velja {name}",
         "Doriath settings": "Doriath stillingar",
         "Configure the app settings": "Stilla forritsstillingar",
         "Configuration": "Stillingar",

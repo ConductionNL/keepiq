@@ -8,7 +8,7 @@
   Recipients never see this panel — the flag lives in a side table and
   is absent from every secret response.
 
-  @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md#requirement-decoy-flagging
+  @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 -->
 <template>
 	<div class="honey-panel" data-testid="honey-panel">

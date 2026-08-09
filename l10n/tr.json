@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "{name} öğesini seç",
         "Doriath settings": "Doriath ayarları",
         "Configure the app settings": "Uygulama ayarlarını yapılandır",
         "Configuration": "Yapılandırma",

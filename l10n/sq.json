@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Përzgjidh {name}",
         "Doriath settings": "Cilësimet e Doriath",
         "Configure the app settings": "Konfiguro cilësimet e aplikacionit",
         "Configuration": "Konfigurimi",

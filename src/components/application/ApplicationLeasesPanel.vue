@@ -8,7 +8,7 @@
   registrant or an admin. Identifiers and lifetimes only — no secret
   material appears here.
 
-  @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-management-api
+  @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 -->
 <template>
 	<section class="app-leases" data-testid="application-leases-panel">

@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Roghnaigh {name}",
         "Doriath settings": "Socruithe Doriath",
         "Configure the app settings": "Cumraigh socruithe an aip",
         "Configuration": "Cumraíocht",

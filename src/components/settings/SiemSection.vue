@@ -7,7 +7,7 @@
   category filter, queue cap), test-fire, and delete. Sinks receive
   whitelisted audit metadata only — never secret material.
 
-  @spec openspec/changes/siem-audit-export/specs/siem-audit-export/spec.md#requirement-admin-sink-management
+  @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 -->
 <template>
 	<CnSettingsSection

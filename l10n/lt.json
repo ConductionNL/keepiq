@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Pasirinkti {name}",
         "Doriath settings": "Doriath nustatymai",
         "Configure the app settings": "Konfigūruoti programėlės nustatymus",
         "Configuration": "Konfigūracija",

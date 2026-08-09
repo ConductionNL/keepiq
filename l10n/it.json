@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Seleziona {name}",
         "Doriath settings": "Impostazioni di Doriath",
         "Configure the app settings": "Configurare le impostazioni dell'app",
         "Configuration": "Configurazione",

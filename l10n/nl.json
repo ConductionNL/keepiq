@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "{name} selecteren",
         "Import": "Importeren",
         "Import secrets": "Geheimen importeren",
         "Unlock the vault before importing secrets.": "Ontgrendel de kluis voordat je geheimen importeert.",

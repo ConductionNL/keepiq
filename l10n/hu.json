@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "{name} kijelölése",
         "Doriath settings": "Doriath beállítások",
         "Configure the app settings": "Az alkalmazás beállításainak konfigurálása",
         "Configuration": "Konfiguráció",

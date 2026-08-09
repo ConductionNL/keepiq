@@ -7,7 +7,7 @@
   acknowledge + per-accessor snooze actions. Alerts carry access
   metadata only — never secret material.
 
-  @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md#requirement-alert-visibility
+  @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 -->
 <template>
 	<CnSettingsSection
