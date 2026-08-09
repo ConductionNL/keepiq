@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "No s'ha pogut carregar la política de contrasenyes.",
+        "Could not save the password policy.": "No s'ha pogut desar la política de contrasenyes.",
         "Doriath settings": "Configuración de Doriath",
         "Configure the app settings": "Configurar los ajustes de la aplicación",
         "Configuration": "Configuración",

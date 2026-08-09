@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "Pravilnika o geslih ni bilo mogoče naložiti.",
+        "Could not save the password policy.": "Pravilnika o geslih ni bilo mogoče shraniti.",
         "Doriath settings": "Postavke Doriatija",
         "Configure the app settings": "Konfiguriranje postavki aplikacije",
         "Configuration": "Konfiguracija",

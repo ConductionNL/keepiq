@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "Adgangskodepolitikken kunne ikke indlæses.",
+        "Could not save the password policy.": "Adgangskodepolitikken kunne ikke gemmes.",
         "Doriath settings": "Doriath-indstillinger",
         "Configure the app settings": "Konfigurér app-indstillinger",
         "Configuration": "Konfiguration",

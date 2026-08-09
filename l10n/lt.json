@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "Nepavyko įkelti slaptažodžių politikos.",
+        "Could not save the password policy.": "Nepavyko išsaugoti slaptažodžių politikos.",
         "Doriath settings": "Doriath nustatymai",
         "Configure the app settings": "Konfigūruoti programėlės nustatymus",
         "Configuration": "Konfigūracija",

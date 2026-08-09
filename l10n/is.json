@@ -1,5 +1,7 @@
 {
     "translations": {
+        "Could not load the password policy.": "Ekki tókst að hlaða lykilorðastefnuna.",
+        "Could not save the password policy.": "Ekki tókst að vista lykilorðastefnuna.",
         "Doriath settings": "Doriath stillingar",
         "Configure the app settings": "Stilla forritsstillingar",
         "Configuration": "Stillingar",
