@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Take over as vault administrator": "Merre në dorëzim si administrator i kasafortës",
         "Could not load the password policy.": "Rregullorja e fjalëkalimeve nuk u ngarkua dot.",
         "Could not save the password policy.": "Rregullorja e fjalëkalimeve nuk u ruajt dot.",
         "Doriath settings": "Cilësimet e Doriath",

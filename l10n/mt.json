@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Take over as vault administrator": "Ħu f'idejk bħala amministratur tal-kaxxaforti",
         "Could not load the password policy.": "Ma setgħetx titgħabba l-politika tal-passwords.",
         "Could not save the password policy.": "Ma setgħetx tiġi ssejvjata l-politika tal-passwords.",
         "Doriath settings": "Settings ta' Doriath",

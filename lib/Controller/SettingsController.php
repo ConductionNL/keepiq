@@ -277,6 +277,17 @@ class SettingsController extends Controller
     #[NoAdminRequired]
     public function getPolicy(): JSONResponse
     {
+        // Same guard as index(): the policy floor is readable by every
+        // AUTHENTICATED user, which is not the same as being public. The
+        // middleware already rejects anonymous callers, but this endpoint
+        // states its own precondition rather than relying on a route
+        // attribute staying correct — index() has always done so, and the two
+        // reads on this controller should not disagree about who may call
+        // them.
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         return new JSONResponse(data: $this->settingsService->getPolicy());
     }//end getPolicy()
 }//end class

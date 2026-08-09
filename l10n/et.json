@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Take over as vault administrator": "Võta hoidla administraatorina üle",
         "Could not load the password policy.": "Paroolipoliitika laadimine ebaõnnestus.",
         "Could not save the password policy.": "Paroolipoliitika salvestamine ebaõnnestus.",
         "Doriath settings": "Doriath sätted",
