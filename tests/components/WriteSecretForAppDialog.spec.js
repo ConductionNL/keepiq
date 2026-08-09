@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Component test for `src/components/application/WriteSecretForAppDialog.vue`.
+ * Component test for `src/dialogs/WriteSecretForAppDialog.vue`.
  *
  * Locks the W30/W31 contract for the "write a secret for an application"
  * flow: the dialog collects plaintext in component state, calls
@@ -25,7 +25,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
-import WriteSecretForAppDialog from '../../src/components/application/WriteSecretForAppDialog.vue'
+import WriteSecretForAppDialog from '../../src/dialogs/WriteSecretForAppDialog.vue'
 import { useApplicationStore } from '../../src/store/modules/application.js'
 
 const ncStubs = {

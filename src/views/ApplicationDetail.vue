@@ -132,7 +132,7 @@ import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue
 import { useApplicationStore } from '../store/modules/application.js'
 import ApplicationSecretsPanel from '../components/application/ApplicationSecretsPanel.vue'
 import ApplicationLeasesPanel from '../components/application/ApplicationLeasesPanel.vue'
-import WriteSecretForAppDialog from '../components/application/WriteSecretForAppDialog.vue'
+import WriteSecretForAppDialog from '../dialogs/WriteSecretForAppDialog.vue'
 import ApplicationDeleteDialog from '../dialogs/ApplicationDeleteDialog.vue'
 
 export default {
