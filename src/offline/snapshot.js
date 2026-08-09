@@ -15,7 +15,7 @@
  *     syncedAt: string,
  *   }
  *
- * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-atomic-snapshot
+ * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
  */
 import { encryptMetadata, decryptMetadata } from '../crypto/metadata.js'
 

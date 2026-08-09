@@ -10,7 +10,7 @@
  * is wrapped with an Argon2id-derived KEK and only the wrapped key +
  * salt reach the server.
  *
- * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-create-and-store-ciphertext-only
+ * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
  */
 
 import { defineStore } from 'pinia'

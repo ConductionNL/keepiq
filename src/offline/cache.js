@@ -7,7 +7,8 @@
  * degrades to a no-op / null so the app falls back to online-only —
  * never a hard error.
  *
- * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-atomic-snapshot
+ * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+ * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-cache-is-evicted-on-lock-logout-and-suite-rotation
  */
 
 const DB_NAME = 'doriath-offline'

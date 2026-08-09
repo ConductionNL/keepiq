@@ -10,7 +10,7 @@
  * The HIBP check reuses the k-anonymity proxy: only the 5-character
  * SHA-1 prefix ever leaves the browser.
  *
- * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-save-flow-enforcement
+ * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
  */
 
 import axios from '@nextcloud/axios'

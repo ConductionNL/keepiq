@@ -7,7 +7,7 @@
  * Session-authenticated admin/registrant surface only — the bearer-side
  * lease API belongs to machine clients. Identifiers and lifetimes only.
  *
- * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-management-api
+ * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
  */
 
 import { defineStore } from 'pinia'

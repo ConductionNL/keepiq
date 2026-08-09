@@ -317,7 +317,7 @@ class ShareController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-write-grade-editing
+     * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
      */
     #[NoAdminRequired]
     public function writeContext(string $id): JSONResponse

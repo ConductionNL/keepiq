@@ -95,7 +95,7 @@ class HoneyController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md#requirement-decoy-flagging
+     * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
      */
     #[NoAdminRequired]
     public function flag(string $id, string $note=''): JSONResponse

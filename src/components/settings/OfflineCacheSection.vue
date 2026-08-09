@@ -7,7 +7,7 @@
   unlock writes an encrypted snapshot the user can read offline; disabling
   it org-wide makes the manifest endpoint 403 and purges caches on next load.
 
-  @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-admin-off-switch
+  @spec openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
 -->
 <template>
 	<CnSettingsSection

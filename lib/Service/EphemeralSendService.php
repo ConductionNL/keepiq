@@ -95,7 +95,7 @@ class EphemeralSendService
      *
      * @throws InvalidArgumentException On invalid parameters
      *
-     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-create-and-store-ciphertext-only
+     * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
      */
     public function create(string $ownerId, array $params): EphemeralSend
     {
@@ -288,7 +288,7 @@ class EphemeralSendService
      *
      * @throws DoesNotExistException When missing, expired, or burned
      *
-     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-view-limits-and-burning
+     * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
      */
     public function access(string $token): array
     {
@@ -344,7 +344,7 @@ class EphemeralSendService
      *
      * @throws DoesNotExistException When missing, expired, or burned
      *
-     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-password-protection
+     * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
      */
     public function reportFailure(string $token): array
     {

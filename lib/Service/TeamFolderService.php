@@ -1423,7 +1423,8 @@ class TeamFolderService
      *
      * @throws InvalidArgumentException On non-owner, unknown member, or invalid grade
      *
-     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-grades-per-membership
+     * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+     * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
      */
     public function setMemberGrade(string $teamFolderId, string $memberId, string $grade, string $ownerId): TeamFolderMember
     {
@@ -1476,7 +1477,7 @@ class TeamFolderService
      *
      * @return string|null `write`, `read`, or null
      *
-     * @spec openspec/changes/folder-permission-grades/specs/folder-permission-grades/spec.md#requirement-effective-grade-resolution
+     * @spec openspec/specs/folder-permission-grades/spec.md#requirement-effective-grade-is-the-highest-grade-along-the-ancestor-folder-chain
      */
     public function resolveGrade(Secret $secret, string $userId): ?string
     {
