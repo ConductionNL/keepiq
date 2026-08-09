@@ -50,6 +50,7 @@
 			<input ref="fileInput"
 				type="file"
 				class="attachment-panel__file-input"
+				:aria-label="t('doriath', 'Choose a file to attach')"
 				data-testid="attachment-file-input"
 				@change="onFilePicked">
 			<NcButton variant="secondary"

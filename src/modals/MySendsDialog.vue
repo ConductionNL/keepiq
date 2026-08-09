@@ -21,11 +21,19 @@
 			<table v-else class="my-sends__table" data-testid="my-sends-table">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'Type') }}</th>
-						<th>{{ t('doriath', 'Views left') }}</th>
-						<th>{{ t('doriath', 'Expires') }}</th>
-						<th>{{ t('doriath', 'Password') }}</th>
-						<th />
+						<th scope="col">
+							{{ t('doriath', 'Type') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Views left') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Expires') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Password') }}
+						</th>
+						<th scope="col" />
 					</tr>
 				</thead>
 				<tbody>

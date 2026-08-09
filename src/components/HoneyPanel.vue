@@ -39,11 +39,19 @@
 			<table v-if="secretAlerts.length" class="honey-panel__table" data-testid="honey-alerts">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'Accessor') }}</th>
-						<th>{{ t('doriath', 'Channel') }}</th>
-						<th>{{ t('doriath', 'Count') }}</th>
-						<th>{{ t('doriath', 'Last access') }}</th>
-						<th />
+						<th scope="col">
+							{{ t('doriath', 'Accessor') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Channel') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Count') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Last access') }}
+						</th>
+						<th scope="col" />
 					</tr>
 				</thead>
 				<tbody>

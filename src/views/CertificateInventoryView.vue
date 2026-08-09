@@ -34,11 +34,19 @@
 				<table v-else class="cert-inventory__table">
 					<thead>
 						<tr>
-							<th>{{ t('doriath', 'Name') }}</th>
-							<th>{{ t('doriath', 'Subject') }}</th>
-							<th>{{ t('doriath', 'Issuer') }}</th>
-							<th>{{ t('doriath', 'Expires') }}</th>
-							<th />
+							<th scope="col">
+								{{ t('doriath', 'Name') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Subject') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Issuer') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Expires') }}
+							</th>
+							<th scope="col" />
 						</tr>
 					</thead>
 					<tbody>
@@ -83,10 +91,16 @@
 				<table v-if="store.inventory.suites.length" class="cert-inventory__table">
 					<thead>
 						<tr>
-							<th>{{ t('doriath', 'Owner') }}</th>
-							<th>{{ t('doriath', 'Subject') }}</th>
-							<th>{{ t('doriath', 'Expires') }}</th>
-							<th />
+							<th scope="col">
+								{{ t('doriath', 'Owner') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Subject') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Expires') }}
+							</th>
+							<th scope="col" />
 						</tr>
 					</thead>
 					<tbody>
@@ -119,9 +133,15 @@
 				<table class="cert-inventory__table">
 					<thead>
 						<tr>
-							<th>{{ t('doriath', 'Role') }}</th>
-							<th>{{ t('doriath', 'Subject') }}</th>
-							<th>{{ t('doriath', 'Expires') }}</th>
+							<th scope="col">
+								{{ t('doriath', 'Role') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Subject') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Expires') }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>

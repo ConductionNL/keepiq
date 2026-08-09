@@ -27,6 +27,7 @@
 			readonly
 			rows="10"
 			class="doriath-private-key-dialog__key"
+			:aria-label="t('doriath', 'Application private key')"
 			data-testid="private-key-textarea"
 			:value="privateKey" />
 

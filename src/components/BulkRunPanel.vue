@@ -24,9 +24,15 @@
 			<table class="bulk-run__report" data-testid="bulk-report">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'Secret') }}</th>
-						<th>{{ t('doriath', 'Result') }}</th>
-						<th>{{ t('doriath', 'Reason') }}</th>
+						<th scope="col">
+							{{ t('doriath', 'Secret') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Result') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Reason') }}
+						</th>
 					</tr>
 				</thead>
 				<tbody>

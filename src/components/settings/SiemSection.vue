@@ -24,13 +24,25 @@
 			<table v-if="sinks.length" class="siem__table" data-testid="siem-sink-list">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'Name') }}</th>
-						<th>{{ t('doriath', 'Type') }}</th>
-						<th>{{ t('doriath', 'Status') }}</th>
-						<th>{{ t('doriath', 'Last success') }}</th>
-						<th>{{ t('doriath', 'Failures') }}</th>
-						<th>{{ t('doriath', 'Dropped') }}</th>
-						<th />
+						<th scope="col">
+							{{ t('doriath', 'Name') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Type') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Status') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Last success') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Failures') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Dropped') }}
+						</th>
+						<th scope="col" />
 					</tr>
 				</thead>
 				<tbody>

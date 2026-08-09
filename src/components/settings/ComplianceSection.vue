@@ -40,10 +40,16 @@
 			<table v-if="reports.length" class="compliance__table" data-testid="compliance-report-list">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'Generated') }}</th>
-						<th>{{ t('doriath', 'By') }}</th>
-						<th>{{ t('doriath', 'Version') }}</th>
-						<th />
+						<th scope="col">
+							{{ t('doriath', 'Generated') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'By') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Version') }}
+						</th>
+						<th scope="col" />
 					</tr>
 				</thead>
 				<tbody>

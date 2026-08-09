@@ -29,9 +29,12 @@
 			</div>
 
 			<div v-if="fillUrl" class="secret-request-create-dialog__url">
-				<label>{{ t('doriath', 'Share this link with the recipient') }}</label>
+				<label for="secret-request-fill-url">{{ t('doriath', 'Share this link with the recipient') }}</label>
 				<div class="secret-request-create-dialog__url-row">
-					<input type="text" readonly :value="fillUrl">
+					<input id="secret-request-fill-url"
+						type="text"
+						readonly
+						:value="fillUrl">
 					<button @click="copyUrl">
 						{{ copied ? t('doriath', 'Copied!') : t('doriath', 'Copy') }}
 					</button>
