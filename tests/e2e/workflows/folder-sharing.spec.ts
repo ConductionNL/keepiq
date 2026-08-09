@@ -166,7 +166,10 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		expect(folder.id).toBeTruthy()
 
 		// Reload so the new folder is in the move dialog's options.
-		await page.reload({ waitUntil: 'networkidle' })
+		// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud. The reload
+		// drops the in-memory key, so `unlockVault()` below has to wait for the
+		// lock screen anyway — that is the readiness signal.
+		await page.reload({ waitUntil: 'domcontentloaded' })
 		await unlockVault(page)
 		await openVault(page)
 
