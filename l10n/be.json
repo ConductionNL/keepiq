@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Выбраць {name}",
         "Could not load the password policy.": "Не ўдалося загрузіць палітыку пароляў.",
         "Could not save the password policy.": "Не ўдалося захаваць палітыку пароляў.",
         "Doriath settings": "Настройки Doriath",

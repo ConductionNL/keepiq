@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Selectează {name}",
         "Could not load the password policy.": "Politica de parole nu a putut fi încărcată.",
         "Could not save the password policy.": "Politica de parole nu a putut fi salvată.",
         "Doriath settings": "Setări Doriath",

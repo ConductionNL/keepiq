@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Atlasīt {name}",
         "Could not load the password policy.": "Neizdevās ielādēt paroļu politiku.",
         "Could not save the password policy.": "Neizdevās saglabāt paroļu politiku.",
         "Doriath settings": "Doriath iestatījumi",

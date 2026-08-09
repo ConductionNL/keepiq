@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Roghnaigh {name}",
         "Could not load the password policy.": "Níorbh fhéidir an polasaí pasfhocail a lódáil.",
         "Could not save the password policy.": "Níorbh fhéidir an polasaí pasfhocail a shábháil.",
         "Doriath settings": "Socruithe Doriath",

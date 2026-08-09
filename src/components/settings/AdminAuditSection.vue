@@ -91,10 +91,18 @@
 			<table v-else class="audit-admin__table" data-testid="audit-table">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'When') }}</th>
-						<th>{{ t('doriath', 'Event') }}</th>
-						<th>{{ t('doriath', 'Actor') }}</th>
-						<th>{{ t('doriath', 'Object') }}</th>
+						<th scope="col">
+							{{ t('doriath', 'When') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Event') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Actor') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Object') }}
+						</th>
 					</tr>
 				</thead>
 				<tbody>

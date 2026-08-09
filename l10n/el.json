@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Επιλογή {name}",
         "Could not load the password policy.": "Δεν ήταν δυνατή η φόρτωση της πολιτικής κωδικών πρόσβασης.",
         "Could not save the password policy.": "Δεν ήταν δυνατή η αποθήκευση της πολιτικής κωδικών πρόσβασης.",
         "Doriath settings": "Ρυθμίσεις Doriath",

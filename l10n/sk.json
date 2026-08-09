@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Vybrať {name}",
         "Could not load the password policy.": "Zásady hesiel sa nepodarilo načítať.",
         "Could not save the password policy.": "Zásady hesiel sa nepodarilo uložiť.",
         "Doriath settings": "Postavke Doriatija",

@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Tscherner {name}",
         "Could not load the password policy.": "La directiva da pled-clav n'ha betg pudì vegnir chargiada.",
         "Could not save the password policy.": "La directiva da pled-clav n'ha betg pudì vegnir memorisada.",
         "Doriath settings": "Impostazioni di Doriath",

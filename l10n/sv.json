@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "Välj {name}",
         "Could not load the password policy.": "Lösenordspolicyn kunde inte läsas in.",
         "Could not save the password policy.": "Lösenordspolicyn kunde inte sparas.",
         "Doriath settings": "Doriath-indstillinger",

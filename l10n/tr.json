@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "{name} öğesini seç",
         "Could not load the password policy.": "Parola ilkesi yüklenemedi.",
         "Could not save the password policy.": "Parola ilkesi kaydedilemedi.",
         "Doriath settings": "Doriath ayarları",

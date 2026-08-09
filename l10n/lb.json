@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Select {name}": "{name} auswielen",
         "Could not load the password policy.": "D'Passwuertrichtlinn konnt net gelueden ginn.",
         "Could not save the password policy.": "D'Passwuertrichtlinn konnt net gespäichert ginn.",
         "Doriath settings": "Doriath-Einstellungen",
