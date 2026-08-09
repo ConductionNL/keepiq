@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Take over as vault administrator": "Átvétel széfadminisztrátorként",
         "Select {name}": "{name} kijelölése",
         "Could not load the password policy.": "A jelszóházirend betöltése nem sikerült.",
         "Could not save the password policy.": "A jelszóházirend mentése nem sikerült.",

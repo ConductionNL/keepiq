@@ -1,5 +1,6 @@
 {
     "translations": {
+        "Take over as vault administrator": "Assumir como administrador do cofre",
         "Select {name}": "Selecionar {name}",
         "Could not load the password policy.": "Não foi possível carregar a política de palavras-passe.",
         "Could not save the password policy.": "Não foi possível guardar a política de palavras-passe.",

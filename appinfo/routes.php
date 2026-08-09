@@ -124,6 +124,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Delegations — implement-user-sharing §9.4.
     ['name' => 'delegation#index',   'url' => '/api/v1/secrets/{secretId}/delegations',         'verb' => 'GET'],
     ['name' => 'delegation#create',  'url' => '/api/v1/secrets/{secretId}/delegations',         'verb' => 'POST'],
+    // The vault-admin power grab (user-sharing spec.md § Ownership Delegation).
+    // Its own route, not a flag on delegation#create: the two are different
+    // authorization decisions and must stay distinguishable in the audit trail.
+    ['name' => 'delegation#handover', 'url' => '/api/v1/secrets/{secretId}/delegations/handover', 'verb' => 'POST'],
+    // Group membership only, so the UI can decide whether to OFFER the
+    // takeover. delegation#index answers only to a secret's owner, so a vault
+    // admin cannot learn it from there.
+    ['name' => 'delegation#capabilities', 'url' => '/api/v1/delegations/capabilities', 'verb' => 'GET'],
     ['name' => 'delegation#reclaim', 'url' => '/api/v1/secrets/{secretId}/delegations/reclaim', 'verb' => 'POST'],
 
     // Secret requests — scaffold (implement-secret-requests).
