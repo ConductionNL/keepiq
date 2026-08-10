@@ -30,6 +30,7 @@ use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
+use OCA\Doriath\Exception\CaUnavailableException;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -103,7 +104,9 @@ class EncryptionSuiteService
     ): EncryptionSuite {
         $caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
         if ($caStatus !== 'healthy') {
-            throw new RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')');
+            throw new CaUnavailableException(
+                message: 'Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')'
+            );
         }
 
         $commonName  = $this->resolveCommonName(ownerType: $ownerType, ownerId: $ownerId);

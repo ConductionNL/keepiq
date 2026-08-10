@@ -24,6 +24,7 @@ namespace OCA\Doriath\Controller;
 use Exception;
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Exception\CaUnavailableException;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
@@ -35,7 +36,9 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Throwable;
 
 /**
  * API controller for EncryptionSuite CRUD operations.
@@ -50,6 +53,7 @@ class EncryptionSuiteController extends OCSController
      * @param MigrationService                         $migrationService The migration service
      * @param LinkShareService                         $linkShareService The link share service (cascade on compromise recovery)
      * @param IUserSession                             $userSession      The user session
+     * @param LoggerInterface                          $logger           The logger (internal faults are logged, not returned)
      * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService   The passkey service (passkey vault login; null when unwired)
      *
      * @return void
@@ -60,6 +64,7 @@ class EncryptionSuiteController extends OCSController
         private MigrationService $migrationService,
         private LinkShareService $linkShareService,
         private IUserSession $userSession,
+        private LoggerInterface $logger,
         private ?\OCA\Doriath\Service\PasskeyService $passkeyService=null,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -180,9 +185,26 @@ class EncryptionSuiteController extends OCSController
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_BAD_REQUEST
             );
-        } catch (RuntimeException $e) {
+        } catch (CaUnavailableException $e) {
+            // A CA fault Doriath itself detected and described. The request was
+            // well-formed and will succeed once the CA is repaired, so this is
+            // 503 rather than 4xx. The message is ours, so it is safe to return.
+            $this->logger->error('Doriath: suite creation refused — CA unavailable', ['exception' => $e]);
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+            );
+        } catch (Throwable $e) {
+            // Anything else is an internal fault whose message was written by
+            // some other layer and is not fit to return. Nextcloud's crypto
+            // layer, for one, throws a bare \RuntimeException("HMAC does not
+            // match.") when the instance secret no longer matches the sealed CA
+            // key — which used to be forwarded verbatim to the client by the
+            // broad `catch (RuntimeException)` this replaces. Log the detail,
+            // return a stable message.
+            $this->logger->error('Doriath: suite creation failed unexpectedly', ['exception' => $e]);
+            return new JSONResponse(
+                data: ['message' => 'Could not create encryption suite. Please contact your administrator.'],
                 statusCode: Http::STATUS_SERVICE_UNAVAILABLE
             );
         }//end try

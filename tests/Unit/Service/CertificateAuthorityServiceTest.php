@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Tests\Unit\Service;
 
+use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\CACertificate;
 use OCA\Doriath\Db\CACertificateMapper;
@@ -30,6 +31,7 @@ use OCP\IAppConfig;
 use OCP\Security\ICrypto;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests for CertificateAuthorityService.
@@ -106,6 +108,9 @@ class CertificateAuthorityServiceTest extends TestCase
     {
         $root         = new CACertificate();
         $intermediate = new CACertificate();
+        // The intermediate needs a key that actually decrypts — existence of
+        // the row is no longer accepted as proof the CA works.
+        $intermediate->setPrivateKey('enc:'.self::usableKeyPem());
         $this->caCertMapper->method('findRoot')->willReturn($root);
         $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
 
@@ -119,6 +124,130 @@ class CertificateAuthorityServiceTest extends TestCase
 
         $this->service->bootstrap();
     }//end testBootstrapSkipsIfCaExists()
+
+    /**
+     * A usable RSA private key PEM, generated once per process.
+     *
+     * @return string The PEM.
+     */
+    private static function usableKeyPem(): string
+    {
+        static $pem = null;
+        if ($pem === null) {
+            $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+            openssl_pkey_export($key, $pem);
+        }
+
+        return $pem;
+    }//end usableKeyPem()
+
+    /**
+     * Test that an undecryptable CA key with nothing issued is regenerated.
+     *
+     * The instance secret in config.php is what seals CA private keys. When it
+     * changes — a container regenerating config.php, a restore out of step with
+     * the database — the rows survive but the keys are gone for good. With no
+     * suites chained to the old material there is nothing to preserve, so the
+     * CA rebuilds itself rather than sitting there reporting healthy and
+     * failing at the point of use.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-hierarchy
+     */
+    public function testBootstrapRegeneratesWhenKeyUnreadableAndNothingIssued(): void
+    {
+        $root         = new CACertificate();
+        $intermediate = new CACertificate();
+        $intermediate->setPrivateKey('sealed-with-a-secret-that-is-gone');
+
+        $this->caCertMapper->method('findRoot')->willReturn($root);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
+
+        // Exactly the failure Nextcloud's Crypto::decrypt() raises.
+        $this->crypto->method('decrypt')->willReturnCallback(
+            function (string $value): string {
+                if (str_starts_with($value, 'enc:') === true) {
+                    return substr($value, 4);
+                }
+
+                throw new RuntimeException('HMAC does not match.');
+            }
+        );
+
+        $this->suiteMapper->method('countActiveByOwnerType')->willReturn(0);
+
+        // The dead rows are cleared and a fresh CA is built.
+        $this->caCertMapper->expects($this->once())->method('deleteAll');
+        $this->caCertMapper->expects($this->atLeastOnce())->method('insert');
+
+        $this->service->bootstrap();
+    }//end testBootstrapRegeneratesWhenKeyUnreadableAndNothingIssued()
+
+    /**
+     * Test that an undecryptable CA key is NOT regenerated when suites exist.
+     *
+     * Every issued suite holds a certificate signed by the current
+     * intermediate. Minting a new root would orphan that chain, so a populated
+     * instance is marked degraded and left for an operator to migrate
+     * deliberately. Silently regenerating would be choosing to break it for
+     * them.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-hierarchy
+     */
+    public function testBootstrapRefusesToRegenerateWhenSuitesAreChainedToTheCa(): void
+    {
+        $root         = new CACertificate();
+        $intermediate = new CACertificate();
+        $intermediate->setPrivateKey('sealed-with-a-secret-that-is-gone');
+
+        $this->caCertMapper->method('findRoot')->willReturn($root);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
+        $this->crypto->method('decrypt')->willThrowException(new RuntimeException('HMAC does not match.'));
+
+        $this->suiteMapper->method('countActiveByOwnerType')->willReturn(3);
+
+        // Nothing is destroyed and nothing is minted.
+        $this->caCertMapper->expects($this->never())->method('deleteAll');
+        $this->caCertMapper->expects($this->never())->method('insert');
+
+        $this->appConfig->expects($this->atLeastOnce())
+            ->method('setValueString')
+            ->with('doriath', 'ca_status', 'degraded');
+
+        $this->service->bootstrap();
+    }//end testBootstrapRefusesToRegenerateWhenSuitesAreChainedToTheCa()
+
+    /**
+     * Test that getStatus reports an unreadable key instead of "healthy".
+     *
+     * This is what the admin CA card renders. Before this change it showed
+     * green — expiry dates were fine and both rows were present — while the CA
+     * could not sign anything at all.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-hierarchy
+     */
+    public function testGetStatusReportsUnreadableKey(): void
+    {
+        $root         = new CACertificate();
+        $intermediate = new CACertificate();
+        $root->setExpiresAt(new DateTime('+10 years'));
+        $intermediate->setExpiresAt(new DateTime('+5 years'));
+        $intermediate->setPrivateKey('sealed-with-a-secret-that-is-gone');
+
+        $this->appConfig->method('getValueString')->willReturn('healthy');
+        $this->caCertMapper->method('findRoot')->willReturn($root);
+        $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
+        $this->crypto->method('decrypt')->willThrowException(new RuntimeException('HMAC does not match.'));
+
+        $status = $this->service->getStatus();
+
+        $this->assertSame(expected: 'key_unreadable', actual: $status['status']);
+    }//end testGetStatusReportsUnreadableKey()
 
     /**
      * Test that bootstrap recovers the intermediate when root exists but no
@@ -194,6 +323,7 @@ class CertificateAuthorityServiceTest extends TestCase
 
         $intermediate = new CACertificate();
         $intermediate->setExpiresAt(new \DateTime('+2 years'));
+        $intermediate->setPrivateKey('enc:'.self::usableKeyPem());
 
         $this->caCertMapper->method('findRoot')->willReturn($root);
         $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
@@ -217,6 +347,7 @@ class CertificateAuthorityServiceTest extends TestCase
 
         $intermediate = new CACertificate();
         $intermediate->setExpiresAt(new \DateTime('+15 days'));
+        $intermediate->setPrivateKey('enc:'.self::usableKeyPem());
 
         $this->caCertMapper->method('findRoot')->willReturn($root);
         $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
@@ -258,6 +389,7 @@ class CertificateAuthorityServiceTest extends TestCase
 
         $intermediate = new CACertificate();
         $intermediate->setExpiresAt(new \DateTime('+2 years'));
+        $intermediate->setPrivateKey('enc:'.self::usableKeyPem());
 
         $this->caCertMapper->method('findRoot')->willReturn($root);
         $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
@@ -281,6 +413,7 @@ class CertificateAuthorityServiceTest extends TestCase
 
         $intermediate = new CACertificate();
         $intermediate->setExpiresAt(new \DateTime('+2 years'));
+        $intermediate->setPrivateKey('enc:'.self::usableKeyPem());
         $intermediate->setRevokedAt(new \DateTime());
 
         $this->caCertMapper->method('findRoot')->willReturn($root);
@@ -318,9 +451,11 @@ class CertificateAuthorityServiceTest extends TestCase
      */
     public function testRetryBootstrapDelegatesToBootstrap(): void
     {
-        // If root + active intermediate already exist, bootstrap is a no-op (idempotent).
+        // If root + active intermediate already exist AND the intermediate's key
+        // still decrypts, bootstrap is a no-op (idempotent).
         $root         = new CACertificate();
         $intermediate = new CACertificate();
+        $intermediate->setPrivateKey('enc:'.self::usableKeyPem());
         $this->caCertMapper->method('findRoot')->willReturn($root);
         $this->caCertMapper->method('findActiveIntermediate')->willReturn($intermediate);
         $this->caCertMapper->expects($this->never())->method('insert');

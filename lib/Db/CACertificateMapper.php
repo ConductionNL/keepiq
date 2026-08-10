@@ -104,4 +104,25 @@ class CACertificateMapper extends QBMapper
 
         return $this->findEntities(query: $qb);
     }//end findExpiringSoon()
+
+    /**
+     * Delete every CA certificate row.
+     *
+     * Only used to clear key material that can no longer be decrypted, and
+     * only once the caller has established that nothing is chained to it —
+     * see CertificateAuthorityService::recoverUnreadableCa(). The rows are
+     * worthless at that point: without the instance secret that sealed them
+     * the private keys cannot be recovered by any means.
+     *
+     * @return int The number of rows removed.
+     *
+     * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-hierarchy
+     */
+    public function deleteAll(): int
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete($this->getTableName());
+
+        return $qb->executeStatement();
+    }//end deleteAll()
 }//end class

@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Controller\EncryptionSuiteController;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\SuiteMigration;
+use OCA\Doriath\Exception\CaUnavailableException;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
@@ -33,6 +34,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -101,6 +103,7 @@ class EncryptionSuiteControllerTest extends TestCase
             migrationService: $this->migrationService,
             linkShareService: $this->linkShareService,
             userSession: $this->userSession,
+            logger: $this->createMock(originalClassName: LoggerInterface::class),
         );
     }//end setUp()
 
@@ -221,20 +224,92 @@ class EncryptionSuiteControllerTest extends TestCase
     }//end testCreateReturns201OnSuccess()
 
     /**
-     * Test create returns 503 when CA is degraded.
+     * Test create returns 503 with Doriath's own message when the CA is degraded.
+     *
+     * A CaUnavailableException is raised deliberately by Doriath and its message
+     * is authored here, so it is safe to hand back to the caller.
      *
      * @return void
      */
     public function testCreateReturns503WhenCaDegraded(): void
     {
         $this->suiteService->method('createSuite')
-            ->willThrowException(new RuntimeException('CA is not healthy'));
+            ->willThrowException(new CaUnavailableException('Cannot create EncryptionSuite: CA is not healthy (status: degraded)'));
 
         $response = $this->controller->create('pub-key', 'encrypted-pk');
 
         $this->assertSame(expected: Http::STATUS_SERVICE_UNAVAILABLE, actual: $response->getStatus());
-        $this->assertArrayHasKey(key: 'message', array: $response->getData());
+        $this->assertSame(
+            expected: 'Cannot create EncryptionSuite: CA is not healthy (status: degraded)',
+            actual: $response->getData()['message']
+        );
     }//end testCreateReturns503WhenCaDegraded()
+
+    /**
+     * Test create never forwards an internal exception message to the client.
+     *
+     * Regression test. Nextcloud's own crypto layer throws a bare
+     * \RuntimeException('HMAC does not match.') when the instance secret in
+     * config.php no longer matches the sealed CA private key. The controller
+     * used to `catch (RuntimeException $e)` and return `$e->getMessage()`
+     * verbatim, so that internal detail was served to the client as a 503 body
+     * with no corresponding log entry anywhere.
+     *
+     * @return void
+     */
+    public function testCreateDoesNotLeakInternalExceptionMessages(): void
+    {
+        $this->suiteService->method('createSuite')
+            ->willThrowException(new RuntimeException('HMAC does not match.'));
+
+        $response = $this->controller->create('pub-key', 'encrypted-pk');
+        $message  = $response->getData()['message'];
+
+        // Still a server-availability fault, not a client error: the request
+        // was well-formed and will succeed once the CA is repaired.
+        $this->assertSame(expected: Http::STATUS_SERVICE_UNAVAILABLE, actual: $response->getStatus());
+        $this->assertStringNotContainsString(needle: 'HMAC', haystack: $message);
+        $this->assertSame(
+            expected: 'Could not create encryption suite. Please contact your administrator.',
+            actual: $message
+        );
+    }//end testCreateDoesNotLeakInternalExceptionMessages()
+
+    /**
+     * Test an internal failure is logged even though it is not returned.
+     *
+     * The detail has to survive somewhere — before this change the only record
+     * of an HMAC failure was the HTTP response body, and nextcloud.log had
+     * nothing at all.
+     *
+     * @return void
+     */
+    public function testCreateLogsInternalFailures(): void
+    {
+        $logger  = $this->createMock(originalClassName: LoggerInterface::class);
+        $request = $this->createMock(originalClassName: IRequest::class);
+
+        $logger->expects($this->once())
+            ->method('error')
+            ->with(
+                $this->stringContains('unexpectedly'),
+                $this->arrayHasKey('exception')
+            );
+
+        $controller = new EncryptionSuiteController(
+            request: $request,
+            suiteService: $this->suiteService,
+            migrationService: $this->migrationService,
+            linkShareService: $this->linkShareService,
+            userSession: $this->userSession,
+            logger: $logger,
+        );
+
+        $this->suiteService->method('createSuite')
+            ->willThrowException(new RuntimeException('HMAC does not match.'));
+
+        $controller->create('pub-key', 'encrypted-pk');
+    }//end testCreateLogsInternalFailures()
 
     /**
      * Test updatePrivateKey returns updated suite.
