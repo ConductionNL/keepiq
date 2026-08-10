@@ -35,6 +35,9 @@ use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Db\SuiteMigrationMapper;
 use OCA\Doriath\Event\AccountDataDeletedEvent;
 use OCA\Doriath\Service\AccountDeletionService;
+use OCA\Doriath\Service\AccountShareCleanupService;
+use OCA\Doriath\Service\AccountSuiteCleanupService;
+use OCA\Doriath\Service\SecretChildDataCleaner;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;
 
@@ -75,15 +78,21 @@ class AccountDeletionServiceTest extends TestCase
         return new AccountDeletionService(
             secretMapper: $this->m['secret'],
             folderMapper: $this->m['folder'],
-            shareMapper: $this->m['share'],
-            groupShareMapper: $this->m['group'],
-            delegationMapper: $this->m['delegation'],
             linkShareMapper: $this->m['link'],
             requestMapper: $this->m['request'],
-            suiteMapper: $this->m['suite'],
-            migrationMapper: $this->m['migration'],
             settingMapper: $this->m['setting'],
             dispatcher: $this->m['dispatcher'],
+            shareCleanup: new AccountShareCleanupService(
+                secretMapper: $this->m['secret'],
+                shareMapper: $this->m['share'],
+                groupShareMapper: $this->m['group'],
+                delegationMapper: $this->m['delegation'],
+            ),
+            suiteCleanup: new AccountSuiteCleanupService(
+                suiteMapper: $this->m['suite'],
+                migrationMapper: $this->m['migration'],
+            ),
+            childData: new SecretChildDataCleaner(secretMapper: $this->m['secret']),
         );
     }//end build()
 

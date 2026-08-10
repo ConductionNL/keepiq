@@ -36,8 +36,15 @@ use OCA\Doriath\Db\TeamFolderMapper;
 use OCA\Doriath\Db\TeamFolderMember;
 use OCA\Doriath\Db\TeamFolderMemberMapper;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\RecipientSecretCopyService;
 use OCA\Doriath\Service\SecretTypeService;
+use OCA\Doriath\Service\TeamFolderAuditor;
+use OCA\Doriath\Service\TeamFolderMembershipResolver;
+use OCA\Doriath\Service\TeamFolderOffboardingService;
+use OCA\Doriath\Service\TeamFolderQueryService;
 use OCA\Doriath\Service\TeamFolderService;
+use OCA\Doriath\Service\TeamFolderShareService;
+use OCA\Doriath\Service\TeamSecretTransferService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroup;
@@ -102,21 +109,55 @@ class TeamFolderServiceTest extends TestCase
         $this->userManager       = $this->createMock(originalClassName: IUserManager::class);
         $this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 
-        $this->service = new TeamFolderService(
-            mapper: $this->mapper,
+        $memberships = new TeamFolderMembershipResolver(
             memberMapper: $this->memberMapper,
             folderMapper: $this->folderMapper,
             secretMapper: $this->secretMapper,
-            shareTargetMapper: $this->shareTargetMapper,
             suiteMapper: $this->suiteMapper,
-            delegationMapper: $this->delegationMapper,
-            typeService: $this->typeService,
             groupManager: $this->groupManager,
             userManager: $this->userManager,
+        );
+
+        $shares = new TeamFolderShareService(
+            shareTargetMapper: $this->shareTargetMapper,
+            copies: new RecipientSecretCopyService(
+                secretMapper: $this->secretMapper,
+                suiteMapper: $this->suiteMapper,
+                typeService: $this->typeService,
+            ),
             notificationService: $this->notificationService,
             db: $this->createMock(originalClassName: IDBConnection::class),
-            logger: $this->createMock(originalClassName: LoggerInterface::class),
-            eventDispatcher: null,
+        );
+
+        $this->service = new TeamFolderService(
+            mapper: $this->mapper,
+            memberMapper: $this->memberMapper,
+            queries: new TeamFolderQueryService(
+                mapper: $this->mapper,
+                memberMapper: $this->memberMapper,
+                folderMapper: $this->folderMapper,
+                secretMapper: $this->secretMapper,
+                groupManager: $this->groupManager,
+                memberships: $memberships,
+            ),
+            memberships: $memberships,
+            shares: $shares,
+            offboarding: new TeamFolderOffboardingService(
+                shares: $shares,
+                transfers: new TeamSecretTransferService(
+                    mapper: $this->mapper,
+                    memberships: $memberships,
+                    shareTargetMapper: $this->shareTargetMapper,
+                    delegationMapper: $this->delegationMapper,
+                    secretMapper: $this->secretMapper,
+                ),
+                groupManager: $this->groupManager,
+                logger: $this->createMock(originalClassName: LoggerInterface::class),
+                audit: new TeamFolderAuditor(eventDispatcher: null),
+            ),
+            audit: new TeamFolderAuditor(eventDispatcher: null),
+            notificationService: $this->notificationService,
+            db: $this->createMock(originalClassName: IDBConnection::class),
         );
     }//end setUp()
 
