@@ -49,7 +49,10 @@ test.describe('audit trail', () => {
 
 	test('admin audit view filters entries and exports CSV', async ({ page }) => {
 		// @e2e openspec/specs/secret-audit-trail/spec.md#admin-filters-by-event-type-and-actor
-		await page.goto('/index.php/settings/admin/doriath', { waitUntil: 'networkidle' })
+		// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud, and the
+		// readiness signal this test needs is the audit section below, not a
+		// quiet network.
+		await page.goto('/index.php/settings/admin/doriath', { waitUntil: 'domcontentloaded' })
 
 		const auditSection = page.locator('[data-testid="audit-table"], [data-testid="audit-empty"]')
 		await expect(auditSection.first()).toBeVisible({ timeout: 20_000 })

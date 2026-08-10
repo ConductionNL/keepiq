@@ -13,7 +13,8 @@
  * Sharing re-wraps only the tiny file key per recipient; the blob is
  * never re-uploaded.
  *
- * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-client-side-encryption-and-upload
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
  */
 
 import { defineStore } from 'pinia'

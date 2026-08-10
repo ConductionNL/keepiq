@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Take over as vault administrator": "Võta hoidla administraatorina üle",
+        "Select {name}": "Vali {name}",
+        "Could not load the password policy.": "Paroolipoliitika laadimine ebaõnnestus.",
+        "Could not save the password policy.": "Paroolipoliitika salvestamine ebaõnnestus.",
         "Doriath settings": "Doriath sätted",
         "Configure the app settings": "Rakenduse sätete konfigureerimine",
         "Configuration": "Konfiguratsioon",

@@ -64,7 +64,8 @@ class WebManifestController extends Controller
      *
      * @return DataDisplayResponse
      *
-     * @spec openspec/changes/mobile-pwa/specs/mobile-pwa/spec.md#requirement-web-app-manifest
+     * @spec openspec/specs/mobile-pwa/spec.md#requirement-installable-web-app-manifest
+     * @spec openspec/specs/mobile-pwa/spec.md#requirement-maskable-and-themed-app-icons
      */
     #[PublicPage]
     #[NoCSRFRequired]

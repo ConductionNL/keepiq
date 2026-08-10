@@ -59,6 +59,7 @@
 				:value="store.oneTimePrivateKey"
 				readonly
 				class="doriath-applications-view__keytext"
+				:aria-label="t('doriath', 'Private key')"
 				data-testid="private-key-text" />
 			<div class="doriath-applications-view__actions">
 				<label>

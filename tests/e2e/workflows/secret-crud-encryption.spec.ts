@@ -95,7 +95,10 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	test('secret routes are gated behind the lock screen (no plaintext leaks while locked)', async ({ page }) => {
 		// Reaching /secrets without an in-memory key must land on the lock screen,
 		// never on a rendered secret list. This is the zero-knowledge boundary.
-		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'networkidle' })
+		// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud. The lock
+		// heading below is the readiness signal, and the zero-count assertion
+		// after it is what actually proves nothing leaked.
+		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
 		await expect(lockHeading(page)).toHaveText(/Unlock Doriath|Set up your master password/i)
 		await expect(page.locator('.secret-list-view .secret-list-item')).toHaveCount(0)

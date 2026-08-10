@@ -8,7 +8,7 @@
   registrant or an admin. Identifiers and lifetimes only — no secret
   material appears here.
 
-  @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-management-api
+  @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 -->
 <template>
 	<section class="app-leases" data-testid="application-leases-panel">
@@ -25,17 +25,29 @@
 		<table v-else class="app-leases__table">
 			<thead>
 				<tr>
-					<th>{{ t('doriath', 'Secret') }}</th>
-					<th>{{ t('doriath', 'Granted') }}</th>
-					<th>{{ t('doriath', 'Expires') }}</th>
-					<th>{{ t('doriath', 'Renewals') }}</th>
-					<th>{{ t('doriath', 'Status') }}</th>
-					<th />
+					<th scope="col">
+						{{ t('doriath', 'Secret') }}
+					</th>
+					<th scope="col">
+						{{ t('doriath', 'Granted') }}
+					</th>
+					<th scope="col">
+						{{ t('doriath', 'Expires') }}
+					</th>
+					<th scope="col">
+						{{ t('doriath', 'Renewals') }}
+					</th>
+					<th scope="col">
+						{{ t('doriath', 'Status') }}
+					</th>
+					<th scope="col" />
 				</tr>
 			</thead>
 			<tbody>
 				<tr v-for="lease in leases" :key="lease.id" :data-testid="`lease-${lease.id}`">
-					<td class="app-leases__mono">{{ lease.secretId }}</td>
+					<td class="app-leases__mono">
+						{{ lease.secretId }}
+					</td>
 					<td>{{ formatDate(lease.grantedAt) }}</td>
 					<td>{{ formatDate(lease.expiresAt) }}</td>
 					<td>{{ lease.renewedCount }}</td>

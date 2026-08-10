@@ -62,7 +62,7 @@ class MachineLeaseController extends ApplicationApiController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-management-api
+     * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
      */
     #[PublicPage]
     #[NoCSRFRequired]

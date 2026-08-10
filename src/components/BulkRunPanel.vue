@@ -6,7 +6,7 @@
   bar with cancel while the runner is active, then a per-item report
   table (ok / failed+reason / skipped) with a retry-failed button.
 
-  @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-progress-and-report
+  @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 -->
 <template>
 	<div class="bulk-run" data-testid="bulk-run-panel">
@@ -24,9 +24,15 @@
 			<table class="bulk-run__report" data-testid="bulk-report">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'Secret') }}</th>
-						<th>{{ t('doriath', 'Result') }}</th>
-						<th>{{ t('doriath', 'Reason') }}</th>
+						<th scope="col">
+							{{ t('doriath', 'Secret') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Result') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Reason') }}
+						</th>
 					</tr>
 				</thead>
 				<tbody>

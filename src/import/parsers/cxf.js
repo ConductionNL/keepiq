@@ -13,7 +13,7 @@
  *
  * All parsing is in-browser; plaintext never leaves the page.
  *
- * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-cxf-import
+ * @spec openspec/specs/cxf-import-export/spec.md#requirement-client-side-cxf-import
  */
 
 import { parseCxfDocument, cxfToRows } from '../../cxf/cxf.js'

@@ -53,6 +53,7 @@
 				<input v-model="editValue"
 					type="date"
 					class="rotation-panel__date"
+					:aria-label="t('doriath', 'Expiry date')"
 					data-testid="expiry-input">
 				<NcButton variant="secondary" data-testid="expiry-save" @click="onSave">
 					{{ t('doriath', 'Set expiry') }}

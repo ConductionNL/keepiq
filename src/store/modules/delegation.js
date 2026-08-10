@@ -24,6 +24,14 @@ export const useDelegationStore = defineStore('delegation', {
 		loading: false,
 		/** @type {string|null} The last error message. */
 		error: null,
+		/**
+		 * Whether the CURRENT USER is in the vault_admin group. Null until
+		 * asked. Group membership, not a per-secret verdict — the per-secret
+		 * preconditions are enforced server-side on the write.
+		 *
+		 * @type {boolean|null}
+		 */
+		isVaultAdmin: null,
 	}),
 
 	getters: {
@@ -86,6 +94,7 @@ export const useDelegationStore = defineStore('delegation', {
 		 * @param {string} secretId    The Secret ID
 		 * @param {string} delegatedTo The Nextcloud UID of the delegate
 		 * @return {Promise<object>} The created delegation
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
 		 */
 		async createDelegation(secretId, delegatedTo) {
 			this.loading = true
@@ -99,6 +108,60 @@ export const useDelegationStore = defineStore('delegation', {
 				return response.data
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message || 'Failed to delegate'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Learn whether the current user may be offered the takeover.
+		 *
+		 * Kept out of `fetchDelegations`: that call answers only to a
+		 * secret's OWNER, and the whole point of this flag is to decide what
+		 * to show someone who is NOT the owner.
+		 *
+		 * A failure leaves the flag false — the takeover is never offered
+		 * because a request failed.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+		 */
+		async fetchCapabilities() {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/delegations/capabilities'),
+				)
+				this.isVaultAdmin = response.data?.isVaultAdmin === true
+			} catch (e) {
+				this.isVaultAdmin = false
+			}
+		},
+
+		/**
+		 * Take over a secret as a vault administrator (the "power grab").
+		 *
+		 * Distinct from `createDelegation`: no delegate is named, because the
+		 * server always promotes the CALLER. Sending a delegate here would
+		 * suggest an admin can hand a secret to a third party, which the spec
+		 * does not allow — the admin must already hold a share, and the
+		 * handover promotes their own copy.
+		 *
+		 * @param {string} secretId The Secret ID
+		 * @return {Promise<object>} The created delegation
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+		 */
+		async adminHandover(secretId) {
+			this.loading = true
+			this.error = null
+			try {
+				const response = await axios.post(
+					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/delegations/handover`),
+				)
+				this.delegations.push(response.data)
+				return response.data
+			} catch (e) {
+				this.error = e?.response?.data?.message || e?.message || 'Failed to take over the secret'
 				throw e
 			} finally {
 				this.loading = false
@@ -134,10 +197,14 @@ export const useDelegationStore = defineStore('delegation', {
 		 * Reset the store between detail-view mounts.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-visibility
 		 */
 		reset() {
 			this.delegations = []
 			this.error = null
+			// `isVaultAdmin` is deliberately NOT reset: it describes the
+			// signed-in user, not the focused secret, so clearing it between
+			// detail mounts would re-fetch it on every navigation.
 		},
 	},
 })

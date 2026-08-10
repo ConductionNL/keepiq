@@ -61,11 +61,21 @@
 				<table class="import-wizard__preview">
 					<thead>
 						<tr>
-							<th>{{ t('doriath', 'Name') }}</th>
-							<th>{{ t('doriath', 'URL') }}</th>
-							<th>{{ t('doriath', 'Login') }}</th>
-							<th>{{ t('doriath', 'Password') }}</th>
-							<th>{{ t('doriath', 'Folder') }}</th>
+							<th scope="col">
+								{{ t('doriath', 'Name') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'URL') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Login') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Password') }}
+							</th>
+							<th scope="col">
+								{{ t('doriath', 'Folder') }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -110,9 +120,15 @@
 					<table class="import-wizard__preview">
 						<thead>
 							<tr>
-								<th>{{ t('doriath', 'Name') }}</th>
-								<th>{{ t('doriath', 'URL') }}</th>
-								<th>{{ t('doriath', 'Resolution') }}</th>
+								<th scope="col">
+									{{ t('doriath', 'Name') }}
+								</th>
+								<th scope="col">
+									{{ t('doriath', 'URL') }}
+								</th>
+								<th scope="col">
+									{{ t('doriath', 'Resolution') }}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -153,9 +169,15 @@
 					<table class="import-wizard__preview">
 						<thead>
 							<tr>
-								<th>{{ t('doriath', 'Row') }}</th>
-								<th>{{ t('doriath', 'Name') }}</th>
-								<th>{{ t('doriath', 'Reason') }}</th>
+								<th scope="col">
+									{{ t('doriath', 'Row') }}
+								</th>
+								<th scope="col">
+									{{ t('doriath', 'Name') }}
+								</th>
+								<th scope="col">
+									{{ t('doriath', 'Reason') }}
+								</th>
 							</tr>
 						</thead>
 						<tbody>

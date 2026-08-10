@@ -6,7 +6,8 @@
   §6.4): per-attachment size limit and per-user quota, expressed in MiB
   for humans, stored and enforced server-side in ciphertext bytes.
 
-  @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-limits-and-quota
+  @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+  @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 -->
 <template>
 	<CnSettingsSection

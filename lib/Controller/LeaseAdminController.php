@@ -77,7 +77,7 @@ class LeaseAdminController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-management-api
+     * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
      */
     #[NoAdminRequired]
     public function index(string $id): JSONResponse

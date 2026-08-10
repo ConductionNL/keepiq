@@ -82,7 +82,8 @@ class OfflineController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-offline-manifest
+     * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+     * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
      */
     #[NoAdminRequired]
     public function manifest(): JSONResponse

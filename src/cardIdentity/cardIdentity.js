@@ -12,7 +12,7 @@
  * brand and last-4 are DERIVED from the decrypted number on render and
  * never stored or transmitted.
  *
- * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-composite-payloads-ride-the-encrypted-key-field
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
  */
 
 /** The system type names. */

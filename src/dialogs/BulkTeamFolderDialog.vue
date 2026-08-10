@@ -7,7 +7,7 @@
   existing idempotent team-folder fan-out so every member receives a
   re-encrypted copy — resume/retry never double-shares.
 
-  @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-team-folder
+  @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 -->
 <template>
 	<NcDialog :name="t('doriath', 'Add {count} secrets to a team folder', { count: bulk.selectionCount })"

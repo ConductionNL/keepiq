@@ -3,7 +3,7 @@
   "info": {
     "title": "Doriath Register",
     "description": "Register containing all schemas for the Doriath application.",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "x-openregister": {
     "type": "application",
@@ -17,9 +17,9 @@
       "example": {
         "slug": "example",
         "icon": "FileDocumentOutline",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Example",
-        "description": "Example schema — replace with your app's actual schemas.",
+        "description": "Import canary. Doriath stores its secrets in its own tables (lib/Db), not as OpenRegister objects, so this is the only schema in the descriptor — and tests/e2e/ci-seed.sh asserts it is present after import, which is what proves the OpenRegister import path actually ran. Do not delete it without moving that assertion to a real schema first.",
         "type": "object",
         "required": [
           "title"
@@ -27,11 +27,13 @@
         "properties": {
           "title": {
             "type": "string",
+            "title": "Title",
             "description": "The title of the example object",
             "example": "My example"
           },
           "description": {
             "type": "string",
+            "title": "Description",
             "description": "An optional description",
             "example": "This is an example"
           }
