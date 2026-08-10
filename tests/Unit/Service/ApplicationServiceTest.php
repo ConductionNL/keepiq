@@ -23,7 +23,9 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\EncryptionSuite;
+use OCA\Doriath\Service\ApplicationLifecycleService;
 use OCA\Doriath\Service\ApplicationService;
+use OCA\Doriath\Service\ApplicationSuiteProvisioner;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -63,12 +65,50 @@ class ApplicationServiceTest extends TestCase
         $this->mapper  = $this->createMock(originalClassName: ApplicationMapper::class);
         $groupManager  = $this->createMock(originalClassName: IGroupManager::class);
         $logger        = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->service = new ApplicationService(
+        $this->service = $this->buildService(
             mapper: $this->mapper,
             groupManager: $groupManager,
             logger: $logger
         );
     }//end setUp()
+
+    /**
+     * Build an ApplicationService with its extracted collaborators wired the
+     * way the Nextcloud container wires them: one shared
+     * ApplicationSuiteProvisioner, and an ApplicationLifecycleService that
+     * owns register / approve / reject.
+     *
+     * @param ApplicationMapper           $mapper              The application mapper
+     * @param IGroupManager               $groupManager        The group manager
+     * @param LoggerInterface             $logger              The logger
+     * @param NotificationService|null    $notificationService The notification service
+     * @param EncryptionSuiteService|null $suiteService        The encryption suite service
+     *
+     * @return ApplicationService
+     */
+    private function buildService(
+        ApplicationMapper $mapper,
+        IGroupManager $groupManager,
+        LoggerInterface $logger,
+        ?NotificationService $notificationService=null,
+        ?EncryptionSuiteService $suiteService=null,
+    ): ApplicationService {
+        $suiteProvisioner = new ApplicationSuiteProvisioner(logger: $logger, suiteService: $suiteService);
+
+        return new ApplicationService(
+            mapper: $mapper,
+            groupManager: $groupManager,
+            logger: $logger,
+            lifecycle: new ApplicationLifecycleService(
+                mapper: $mapper,
+                groupManager: $groupManager,
+                logger: $logger,
+                notificationService: $notificationService,
+                suiteProvisioner: $suiteProvisioner,
+            ),
+            suiteProvisioner: $suiteProvisioner,
+        );
+    }//end buildService()
 
     /**
      * Test admin registration auto-approves and stamps approver fields.
@@ -189,7 +229,7 @@ class ApplicationServiceTest extends TestCase
         // Non-admin caller must be refused without hitting the mapper a second time.
         $solo = $this->createMock(ApplicationMapper::class);
         $solo->expects($this->never())->method('delete');
-        $svc = new ApplicationService(
+        $svc = $this->buildService(
             mapper: $solo,
             groupManager: $this->createMock(IGroupManager::class),
             logger: $this->createMock(LoggerInterface::class)
@@ -391,7 +431,7 @@ class ApplicationServiceTest extends TestCase
         $logger        = $this->createMock(LoggerInterface::class);
         $notifications = $this->createMock(NotificationService::class);
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $logger,
@@ -448,7 +488,7 @@ class ApplicationServiceTest extends TestCase
         $logger        = $this->createMock(LoggerInterface::class);
         $notifications = $this->createMock(NotificationService::class);
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $logger,
@@ -515,7 +555,7 @@ class ApplicationServiceTest extends TestCase
         $groupManager  = $this->createMock(IGroupManager::class);
         $notifications = $this->createMock(NotificationService::class);
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $this->createMock(LoggerInterface::class),
@@ -555,7 +595,7 @@ class ApplicationServiceTest extends TestCase
             ->with($this->isType('string'), $csr)
             ->willReturn(new EncryptionSuite());
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $logger,
@@ -600,7 +640,7 @@ class ApplicationServiceTest extends TestCase
             ->with('app-1', $csr)
             ->willReturn(new EncryptionSuite());
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $logger,
@@ -637,7 +677,7 @@ class ApplicationServiceTest extends TestCase
             ->method('provisionForApplication')
             ->willThrowException(new \RuntimeException('CA down'));
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $logger,
@@ -674,7 +714,7 @@ class ApplicationServiceTest extends TestCase
             ->with('application', 'app-1')
             ->willReturn($suite);
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $logger,
@@ -704,7 +744,7 @@ class ApplicationServiceTest extends TestCase
         $entity->setStatus(Application::STATUS_PENDING);
         $mapper->method('findById')->willReturn($entity);
 
-        $service = new ApplicationService(
+        $service = $this->buildService(
             mapper: $mapper,
             groupManager: $groupManager,
             logger: $logger,
