@@ -23,65 +23,43 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
-use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
-use OCP\IAppConfig;
-use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
-use RuntimeException;
+
 /**
- * Business logic for EncryptionSuite lifecycle: create, revoke, reinstate.
+ * Business logic for the EncryptionSuite lifecycle AFTER provisioning:
+ * revoke, reinstate, compromise and lookups. Minting a suite and its
+ * CA certificate is EncryptionSuiteProvisioningService's job; the two
+ * creation entry points stay here as thin forwards so callers keep one
+ * suite-shaped service.
  */
 class EncryptionSuiteService
 {
-    use SuppressesDiagnostics;
-
     /**
      * Constructor for EncryptionSuiteService.
      *
-     * @param EncryptionSuiteMapper       $mapper          The encryption suite mapper
-     * @param CertificateAuthorityService $caService       The CA service
-     * @param IAppConfig                  $appConfig       The app config interface
-     * @param IUserManager                $userManager     The user manager
-     * @param LoggerInterface             $logger          The logger interface
-     * @param IEventDispatcher|null       $eventDispatcher The event dispatcher
-     * @param AuditEventFactory           $auditEvents     The audit-event factory
+     * @param EncryptionSuiteMapper              $mapper          The encryption suite mapper
+     * @param EncryptionSuiteProvisioningService $provisioning    The suite/certificate minter
+     * @param LoggerInterface                    $logger          The logger interface
+     * @param IEventDispatcher|null              $eventDispatcher The event dispatcher
+     * @param AuditEventFactory                  $auditEvents     The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private EncryptionSuiteMapper $mapper,
-        private CertificateAuthorityService $caService,
-        private IAppConfig $appConfig,
-        private IUserManager $userManager,
+        private EncryptionSuiteProvisioningService $provisioning,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch a typed audit event, fail-soft.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * Create an EncryptionSuite for a user or application.
@@ -101,28 +79,12 @@ class EncryptionSuiteService
         string $publicKeyPem,
         string $encryptedPrivateKey,
     ): EncryptionSuite {
-        $caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
-        if ($caStatus !== 'healthy') {
-            throw new RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: '.$caStatus.')');
-        }
-
-        $commonName  = $this->resolveCommonName(ownerType: $ownerType, ownerId: $ownerId);
-        $certificate = $this->caService->signPublicKey(publicKeyPem: $publicKeyPem, commonName: $commonName);
-
-        $suite = new EncryptionSuite();
-        $suite->setId(Uuid::uuid4()->toString());
-        $suite->setOwnerType($ownerType);
-        $suite->setOwnerId($ownerId);
-        $suite->setCertificate($certificate);
-        $suite->setPrivateKey($encryptedPrivateKey);
-        $suite->setStatus('active');
-        $suite->setCreatedAt(new DateTime());
-
-        $this->mapper->insert($suite);
-
-        $this->logger->info("Doriath: EncryptionSuite created for {$ownerType}/{$ownerId}");
-
-        return $suite;
+        return $this->provisioning->createSuite(
+            ownerType: $ownerType,
+            ownerId: $ownerId,
+            publicKeyPem: $publicKeyPem,
+            encryptedPrivateKey: $encryptedPrivateKey,
+        );
     }//end createSuite()
 
     /**
@@ -143,41 +105,13 @@ class EncryptionSuiteService
      *
      * @return EncryptionSuite
      *
-     * @throws RuntimeException When the CSR's public key cannot be extracted.
+     * @throws \RuntimeException When the CSR's public key cannot be extracted.
      *
      * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
      */
     public function provisionForApplication(string $applicationId, string $csrPem): EncryptionSuite
     {
-        if ($applicationId === '') {
-            throw new InvalidArgumentException('applicationId is required');
-        }
-
-        if ($csrPem === '') {
-            throw new InvalidArgumentException('csrPem is required');
-        }
-
-        // The openssl_csr_get_public_key() call warns on a malformed CSR and
-        // returns false; the false return is the condition we act on.
-        $publicKeyResource = $this->withoutDiagnostics(call: static fn () => openssl_csr_get_public_key($csrPem));
-        if ($publicKeyResource === false) {
-            throw new RuntimeException('Could not extract public key from CSR');
-        }
-
-        $details = openssl_pkey_get_details($publicKeyResource);
-        if ($details === false || isset($details['key']) === false) {
-            throw new RuntimeException('Public key details unreadable from CSR');
-        }
-
-        $publicKeyPem = (string) $details['key'];
-
-        return $this->createSuite(
-            ownerType: 'application',
-            ownerId: $applicationId,
-            publicKeyPem: $publicKeyPem,
-            // Applications hold their own private key — server stores no envelope.
-            encryptedPrivateKey: '',
-        );
+        return $this->provisioning->provisionForApplication(applicationId: $applicationId, csrPem: $csrPem);
     }//end provisionForApplication()
 
     /**
@@ -224,8 +158,8 @@ class EncryptionSuiteService
             );
         }
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
+        $this->eventDispatcher?->dispatchTyped(
+            $this->auditEvents->forUser(
                 actorId: $revokedBy,
                 eventType: AuditEventTypes::SUITE_REVOKED,
                 objectType: 'suite',
@@ -260,21 +194,7 @@ class EncryptionSuiteService
         }
 
         // Re-sign the existing public key with the active intermediate.
-        $publicKey = openssl_pkey_get_public(public_key: $suite->getCertificate());
-        if ($publicKey === false) {
-            throw new RuntimeException('Could not extract public key from suite certificate');
-        }
-
-        $details        = openssl_pkey_get_details(key: $publicKey);
-        $publicKeyPem   = $details['key'];
-        $commonName     = $this->resolveCommonName(
-            ownerType: $suite->getOwnerType(),
-            ownerId: $suite->getOwnerId()
-        );
-        $newCertificate = $this->caService->signPublicKey(
-            publicKeyPem: $publicKeyPem,
-            commonName: $commonName
-        );
+        $newCertificate = $this->provisioning->reissueCertificateForSuite(suite: $suite);
 
         $suite->setCertificate($newCertificate);
         $suite->setStatus('active');
@@ -285,8 +205,8 @@ class EncryptionSuiteService
 
         $this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
+        $this->eventDispatcher?->dispatchTyped(
+            $this->auditEvents->forUser(
                 actorId: $reinstatedBy,
                 eventType: AuditEventTypes::SUITE_REINSTATED,
                 objectType: 'suite',
@@ -323,8 +243,8 @@ class EncryptionSuiteService
 
         $this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
+        $this->eventDispatcher?->dispatchTyped(
+            $this->auditEvents->forUser(
                 actorId: $compromisedBy,
                 eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
                 objectType: 'suite',
@@ -390,27 +310,4 @@ class EncryptionSuiteService
     {
         return $this->mapper->findByOwner($ownerType, $ownerId);
     }//end getSuitesByOwner()
-
-    /**
-     * Resolve the certificate common name for an owner.
-     *
-     * For users, returns the federated cloud ID (user@instance) if available,
-     * otherwise falls back to the user ID. For applications, returns the owner ID.
-     *
-     * @param string $ownerType The owner type (user or application)
-     * @param string $ownerId   The owner ID
-     *
-     * @return string
-     */
-    private function resolveCommonName(string $ownerType, string $ownerId): string
-    {
-        if ($ownerType === 'user') {
-            $user = $this->userManager->get($ownerId);
-            if ($user !== null) {
-                return $user->getCloudId();
-            }
-        }
-
-        return $ownerId;
-    }//end resolveCommonName()
 }//end class
