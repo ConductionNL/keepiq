@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Service;
 
 use DateTime;
+use OCA\Doriath\Db\BulkGrantShareTargetMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Db\TeamFolder;
@@ -46,7 +47,8 @@ class TeamFolderShareService
     /**
      * Constructor for TeamFolderShareService.
      *
-     * @param ShareTargetMapper          $shareTargetMapper   The share-target mapper (fan-out rows)
+     * @param ShareTargetMapper          $shareTargetMapper   The share-target mapper (per-row reads/writes)
+     * @param BulkGrantShareTargetMapper $bulkGrantMapper     The share-target mapper keyed on the grant (cascade)
      * @param RecipientSecretCopyService $copies              The recipient-copy service
      * @param NotificationService        $notificationService The notification dispatcher
      * @param IDBConnection              $db                  The database connection
@@ -57,6 +59,7 @@ class TeamFolderShareService
      */
     public function __construct(
         private ShareTargetMapper $shareTargetMapper,
+        private BulkGrantShareTargetMapper $bulkGrantMapper,
         private RecipientSecretCopyService $copies,
         private NotificationService $notificationService,
         private IDBConnection $db,
@@ -186,7 +189,7 @@ class TeamFolderShareService
     public function revokeForTeamFolder(string $teamFolderId): int
     {
         $revoked = 0;
-        foreach ($this->shareTargetMapper->findByTeamFolder(teamFolderId: $teamFolderId) as $row) {
+        foreach ($this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolderId) as $row) {
             $this->revokeRow(row: $row);
             ++$revoked;
         }
@@ -208,7 +211,7 @@ class TeamFolderShareService
     public function revokeForMember(string $teamFolderId, string $targetUserId): int
     {
         $revoked = 0;
-        foreach ($this->shareTargetMapper->findByTeamFolderAndTargetUser(
+        foreach ($this->bulkGrantMapper->findByTeamFolderAndTargetUser(
             teamFolderId: $teamFolderId,
             targetUserId: $targetUserId
         ) as $row) {

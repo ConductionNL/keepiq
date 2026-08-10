@@ -29,6 +29,7 @@ use OCA\Doriath\Db\SecretDelegation;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
+use OCA\Doriath\Db\BulkGrantShareTargetMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Service\GroupShareService;
 use OCA\Doriath\Service\NotificationService;
@@ -64,6 +65,11 @@ class GroupShareServiceTest extends TestCase
     private ShareTargetMapper $shareTargetMapper;
 
     /**
+     * @var BulkGrantShareTargetMapper&MockObject
+     */
+    private BulkGrantShareTargetMapper $bulkGrantMapper;
+
+    /**
      * @var SecretMapper&MockObject
      */
     private SecretMapper $secretMapper;
@@ -97,6 +103,7 @@ class GroupShareServiceTest extends TestCase
     {
         $this->mapper            = $this->createMock(originalClassName: GroupShareMapper::class);
         $this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+        $this->bulkGrantMapper = $this->createMock(originalClassName: BulkGrantShareTargetMapper::class);
         $this->secretMapper      = $this->createMock(originalClassName: SecretMapper::class);
         $this->suiteMapper       = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
         $this->delegationMapper  = $this->createMock(originalClassName: SecretDelegationMapper::class);
@@ -107,6 +114,7 @@ class GroupShareServiceTest extends TestCase
         $this->service = new GroupShareService(
             mapper: $this->mapper,
             shareTargetMapper: $this->shareTargetMapper,
+            bulkGrantMapper: $this->bulkGrantMapper,
             secretMapper: $this->secretMapper,
             suiteMapper: $this->suiteMapper,
             delegationMapper: $this->delegationMapper,
@@ -289,7 +297,7 @@ class GroupShareServiceTest extends TestCase
         $entity->setSecretId('src-1');
         $this->mapper->method('findById')->willReturn($entity);
 
-        $this->shareTargetMapper->expects($this->once())
+        $this->bulkGrantMapper->expects($this->once())
             ->method('deleteByGroupShare')
             ->with('gs-1');
         $this->mapper->expects($this->once())->method('delete')->with($entity);
@@ -422,7 +430,7 @@ class GroupShareServiceTest extends TestCase
         $aliceTarget->setSecretId('copy-alice');
         $aliceTarget->setGroupShareId('gs-1');
 
-        $this->shareTargetMapper->method('findByGroupShare')
+        $this->bulkGrantMapper->method('findByGroupShare')
             ->willReturn([$bobTarget, $aliceTarget]);
 
         $copy = new Secret();

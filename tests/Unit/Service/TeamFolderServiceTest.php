@@ -30,6 +30,7 @@ use OCA\Doriath\Db\SecretDelegation;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
+use OCA\Doriath\Db\BulkGrantShareTargetMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Db\TeamFolder;
 use OCA\Doriath\Db\TeamFolderMapper;
@@ -77,6 +78,8 @@ class TeamFolderServiceTest extends TestCase
 
     private ShareTargetMapper&MockObject $shareTargetMapper;
 
+    private BulkGrantShareTargetMapper&MockObject $bulkGrantMapper;
+
     private EncryptionSuiteMapper&MockObject $suiteMapper;
 
     private SecretDelegationMapper&MockObject $delegationMapper;
@@ -102,6 +105,9 @@ class TeamFolderServiceTest extends TestCase
         $this->folderMapper      = $this->createMock(originalClassName: FolderMapper::class);
         $this->secretMapper      = $this->createMock(originalClassName: SecretMapper::class);
         $this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+        $this->bulkGrantMapper = $this->createMock(
+            originalClassName: BulkGrantShareTargetMapper::class
+        );
         $this->suiteMapper       = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
         $this->delegationMapper  = $this->createMock(originalClassName: SecretDelegationMapper::class);
         $this->typeService       = $this->createMock(originalClassName: SecretTypeService::class);
@@ -120,6 +126,7 @@ class TeamFolderServiceTest extends TestCase
 
         $shares = new TeamFolderShareService(
             shareTargetMapper: $this->shareTargetMapper,
+            bulkGrantMapper: $this->bulkGrantMapper,
             copies: new RecipientSecretCopyService(
                 secretMapper: $this->secretMapper,
                 suiteMapper: $this->suiteMapper,
@@ -461,7 +468,7 @@ class TeamFolderServiceTest extends TestCase
         $carolShare = new ShareTarget();
         $carolShare->setId('st-carol');
         $carolShare->setSecretId('copy-carol');
-        $this->shareTargetMapper->method('findByTeamFolderAndTargetUser')
+        $this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')
             ->willReturnCallback(
                 static fn (string $teamFolderId, string $targetUserId) => $targetUserId === 'carol' ? [$carolShare] : []
             );
@@ -523,7 +530,7 @@ class TeamFolderServiceTest extends TestCase
         $daveShare = new ShareTarget();
         $daveShare->setId('st-dave');
         $daveShare->setSecretId('copy-dave');
-        $this->shareTargetMapper->method('findByTeamFolderAndTargetUser')->willReturn([$daveShare]);
+        $this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$daveShare]);
         $this->secretMapper->method('findById')->willThrowException(new DoesNotExistException(''));
 
         $revoked = $this->service->handleGroupMemberLeave(userId: 'dave', groupId: 'devops');
