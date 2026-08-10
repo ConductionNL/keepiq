@@ -27,6 +27,7 @@ use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Doriath\Service\OfflineManifestService;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -57,6 +58,11 @@ class OfflineControllerTest extends TestCase
     /**
      * Build the controller over mocked mappers.
      *
+     * The snapshot assembler is the REAL OfflineManifestService wrapped around
+     * those same mocks rather than a mock of its own: these tests assert the
+     * manifest's shape, so stubbing the assembler would assert only that the
+     * controller returns whatever it is handed.
+     *
      * @return void
      */
     protected function setUp(): void
@@ -75,10 +81,12 @@ class OfflineControllerTest extends TestCase
 
         $this->controller = new OfflineController(
             request: $this->createMock(originalClassName: IRequest::class),
-            suiteMapper: $this->suiteMapper,
-            secretMapper: $this->secretMapper,
-            folderMapper: $this->folderMapper,
-            typeMapper: $this->typeMapper,
+            manifestService: new OfflineManifestService(
+                suiteMapper: $this->suiteMapper,
+                secretMapper: $this->secretMapper,
+                folderMapper: $this->folderMapper,
+                typeMapper: $this->typeMapper,
+            ),
             appConfig: $this->appConfig,
             userSession: $this->userSession,
         );
