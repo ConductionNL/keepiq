@@ -27,6 +27,7 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Exception\NotFoundException;
 use OCA\Doriath\Service\MachineSecretEnvelopeService;
+use OCA\Doriath\Service\MachineSecretResponseService;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -67,8 +68,12 @@ class ApplicationSecretsControllerTest extends TestCase
     private array $params = [];
 
     /**
-     * Wire the controller with a real envelope service (over mocked
-     * mappers) and an authenticated application.
+     * Wire the controller with a real envelope service and a real response
+     * service (both over mocked mappers) and an authenticated application.
+     *
+     * The response service is the REAL collaborator, not a stub: the ETag/304
+     * and audit-dispatch assertions below are assertions about what it does,
+     * so stubbing it would assert nothing.
      *
      * @return void
      */
@@ -97,7 +102,11 @@ class ApplicationSecretsControllerTest extends TestCase
             folderMapper: $this->folderMapper,
             secretService: $this->secretService,
             envelopeService: $this->envelopeService,
-            eventDispatcher: $this->dispatcher,
+            responseService: new MachineSecretResponseService(
+                request: $this->request,
+                envelopeService: $this->envelopeService,
+                eventDispatcher: $this->dispatcher,
+            ),
         );
 
         $app = new Application();
