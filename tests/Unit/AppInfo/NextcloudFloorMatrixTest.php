@@ -61,9 +61,47 @@ class NextcloudFloorMatrixTest extends TestCase
         $path = __DIR__.'/../../../appinfo/info.xml';
         $this->assertFileExists($path, 'appinfo/info.xml must exist to be checked');
 
-        $xml = simplexml_load_file($path);
-        $this->assertNotFalse($xml, 'appinfo/info.xml must parse as XML');
+        // Read the bytes ourselves and parse the STRING. `simplexml_load_file()`
+        // cannot be used here: Nextcloud's `lib/base.php` installs
+        //
+        //     libxml_set_external_entity_loader(static fn () => null);
+        //
+        // to stop any XML processing pulling in external entities, and
+        // `simplexml_load_file()` resolves the file it was handed THROUGH that
+        // same resolver. So under a Nextcloud bootstrap it returns false with
+        // "Failed to load external entity because the resolver function returned
+        // null" — for a perfectly well-formed local file.
+        //
+        // That is exactly what happened: these four tests were green locally,
+        // where `tests/bootstrap-unit.php` falls back to OCP stubs and never
+        // loads base.php, and red on BOTH PHP legs in CI, where the suite runs
+        // inside the Nextcloud container and base.php IS loaded. Both legs
+        // failing identically was the signal that the test — not the floor —
+        // was wrong. `file_get_contents()` is a plain filesystem read and does
+        // not go near libxml's resolver.
+        $raw = file_get_contents($path);
+        $this->assertIsString($raw, 'appinfo/info.xml must be readable');
 
+        $previous = libxml_use_internal_errors(true);
+        $xml      = simplexml_load_string($raw);
+        $errors   = libxml_get_errors();
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $this->assertNotFalse(
+            $xml,
+            'appinfo/info.xml must parse as XML. libxml said: '
+            .implode(
+                '; ',
+                array_map(static fn (\LibXMLError $e): string => trim($e->message), $errors)
+            )
+        );
+
+        // `//dependencies/nextcloud`, never a bare search for `min-version`:
+        // this same file carries three <database> elements, the first of which
+        // declares min-version="10" (Postgres), and a COMMENT that discusses
+        // `<nextcloud min-version="32"/>` in prose. A text scan reads any of
+        // those as the floor.
         $nodes = $xml->xpath('//dependencies/nextcloud');
         $this->assertNotEmpty($nodes, 'appinfo/info.xml declares no <nextcloud> dependency');
         $this->assertCount(
