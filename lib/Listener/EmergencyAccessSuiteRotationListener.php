@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Listener;
 
 use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Service\EmergencyAccessService;
+use OCA\Doriath\Service\EmergencyEnvelopeInvalidationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -46,13 +46,13 @@ class EmergencyAccessSuiteRotationListener implements IEventListener
     /**
      * Constructor.
      *
-     * @param EmergencyAccessService $service The emergency-access service
-     * @param LoggerInterface        $logger  The logger
+     * @param EmergencyEnvelopeInvalidationService $service The envelope-invalidation service
+     * @param LoggerInterface                      $logger  The logger
      *
      * @return void
      */
     public function __construct(
-        private EmergencyAccessService $service,
+        private EmergencyEnvelopeInvalidationService $service,
         private LoggerInterface $logger,
     ) {
     }//end __construct()
