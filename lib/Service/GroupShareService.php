@@ -33,6 +33,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\GroupShare;
 use OCA\Doriath\Db\GroupShareMapper;
 use OCA\Doriath\Db\Secret;
+use OCA\Doriath\Db\BulkGrantShareTargetMapper;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
@@ -55,20 +56,22 @@ class GroupShareService
     /**
      * Constructor for GroupShareService.
      *
-     * @param GroupShareMapper       $mapper              The group-share mapper
-     * @param ShareTargetMapper      $shareTargetMapper   The share-target mapper (cascade)
-     * @param SecretMapper           $secretMapper        The Secret mapper (owner lookup)
-     * @param EncryptionSuiteMapper  $suiteMapper         The suite mapper (member-eligibility filter)
-     * @param SecretDelegationMapper $delegationMapper    The delegation mapper (delegate authorization)
-     * @param IGroupManager          $groupManager        The Nextcloud group manager
-     * @param NotificationService    $notificationService The notification dispatcher
-     * @param LoggerInterface        $logger              The logger
+     * @param GroupShareMapper           $mapper              The group-share mapper
+     * @param ShareTargetMapper          $shareTargetMapper   The share-target mapper (per-row reads/writes)
+     * @param BulkGrantShareTargetMapper $bulkGrantMapper     The share-target mapper keyed on the grant (cascade)
+     * @param SecretMapper               $secretMapper        The Secret mapper (owner lookup)
+     * @param EncryptionSuiteMapper      $suiteMapper         The suite mapper (member-eligibility filter)
+     * @param SecretDelegationMapper     $delegationMapper    The delegation mapper (delegate authorization)
+     * @param IGroupManager              $groupManager        The Nextcloud group manager
+     * @param NotificationService        $notificationService The notification dispatcher
+     * @param LoggerInterface            $logger              The logger
      *
      * @return void
      */
     public function __construct(
         private GroupShareMapper $mapper,
         private ShareTargetMapper $shareTargetMapper,
+        private BulkGrantShareTargetMapper $bulkGrantMapper,
         private SecretMapper $secretMapper,
         private EncryptionSuiteMapper $suiteMapper,
         private SecretDelegationMapper $delegationMapper,
@@ -180,7 +183,7 @@ class GroupShareService
         $secret = $this->loadSecret(secretId: $entity->getSecretId());
         $this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 
-        $this->shareTargetMapper->deleteByGroupShare(groupShareId: $groupShareId);
+        $this->bulkGrantMapper->deleteByGroupShare(groupShareId: $groupShareId);
         $this->mapper->delete($entity);
 
         $this->logger->info(
@@ -362,7 +365,7 @@ class GroupShareService
         $revoked     = 0;
         $groupShares = $this->mapper->findByGroup($groupId);
         foreach ($groupShares as $groupShare) {
-            foreach ($this->shareTargetMapper->findByGroupShare($groupShare->getId()) as $row) {
+            foreach ($this->bulkGrantMapper->findByGroupShare($groupShare->getId()) as $row) {
                 if ($row->getTargetUserId() !== $userId) {
                     continue;
                 }

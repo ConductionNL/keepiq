@@ -30,14 +30,22 @@ use OCA\Doriath\Db\SecretDelegation;
 use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
+use OCA\Doriath\Db\BulkGrantShareTargetMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Db\TeamFolder;
 use OCA\Doriath\Db\TeamFolderMapper;
 use OCA\Doriath\Db\TeamFolderMember;
 use OCA\Doriath\Db\TeamFolderMemberMapper;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\RecipientSecretCopyService;
 use OCA\Doriath\Service\SecretTypeService;
+use OCA\Doriath\Service\TeamFolderAuditor;
+use OCA\Doriath\Service\TeamFolderMembershipResolver;
+use OCA\Doriath\Service\TeamFolderOffboardingService;
+use OCA\Doriath\Service\TeamFolderQueryService;
 use OCA\Doriath\Service\TeamFolderService;
+use OCA\Doriath\Service\TeamFolderShareService;
+use OCA\Doriath\Service\TeamSecretTransferService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroup;
@@ -70,6 +78,8 @@ class TeamFolderServiceTest extends TestCase
 
     private ShareTargetMapper&MockObject $shareTargetMapper;
 
+    private BulkGrantShareTargetMapper&MockObject $bulkGrantMapper;
+
     private EncryptionSuiteMapper&MockObject $suiteMapper;
 
     private SecretDelegationMapper&MockObject $delegationMapper;
@@ -95,6 +105,9 @@ class TeamFolderServiceTest extends TestCase
         $this->folderMapper      = $this->createMock(originalClassName: FolderMapper::class);
         $this->secretMapper      = $this->createMock(originalClassName: SecretMapper::class);
         $this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+        $this->bulkGrantMapper = $this->createMock(
+            originalClassName: BulkGrantShareTargetMapper::class
+        );
         $this->suiteMapper       = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
         $this->delegationMapper  = $this->createMock(originalClassName: SecretDelegationMapper::class);
         $this->typeService       = $this->createMock(originalClassName: SecretTypeService::class);
@@ -102,21 +115,56 @@ class TeamFolderServiceTest extends TestCase
         $this->userManager       = $this->createMock(originalClassName: IUserManager::class);
         $this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 
-        $this->service = new TeamFolderService(
-            mapper: $this->mapper,
+        $memberships = new TeamFolderMembershipResolver(
             memberMapper: $this->memberMapper,
             folderMapper: $this->folderMapper,
             secretMapper: $this->secretMapper,
-            shareTargetMapper: $this->shareTargetMapper,
             suiteMapper: $this->suiteMapper,
-            delegationMapper: $this->delegationMapper,
-            typeService: $this->typeService,
             groupManager: $this->groupManager,
             userManager: $this->userManager,
+        );
+
+        $shares = new TeamFolderShareService(
+            shareTargetMapper: $this->shareTargetMapper,
+            bulkGrantMapper: $this->bulkGrantMapper,
+            copies: new RecipientSecretCopyService(
+                secretMapper: $this->secretMapper,
+                suiteMapper: $this->suiteMapper,
+                typeService: $this->typeService,
+            ),
             notificationService: $this->notificationService,
             db: $this->createMock(originalClassName: IDBConnection::class),
-            logger: $this->createMock(originalClassName: LoggerInterface::class),
-            eventDispatcher: null,
+        );
+
+        $this->service = new TeamFolderService(
+            mapper: $this->mapper,
+            memberMapper: $this->memberMapper,
+            queries: new TeamFolderQueryService(
+                mapper: $this->mapper,
+                memberMapper: $this->memberMapper,
+                folderMapper: $this->folderMapper,
+                secretMapper: $this->secretMapper,
+                groupManager: $this->groupManager,
+                memberships: $memberships,
+            ),
+            memberships: $memberships,
+            shares: $shares,
+            offboarding: new TeamFolderOffboardingService(
+                shares: $shares,
+                transfers: new TeamSecretTransferService(
+                    mapper: $this->mapper,
+                    memberships: $memberships,
+                    shareTargetMapper: $this->shareTargetMapper,
+                    delegationMapper: $this->delegationMapper,
+                    secretMapper: $this->secretMapper,
+                ),
+                groupManager: $this->groupManager,
+                logger: $this->createMock(originalClassName: LoggerInterface::class),
+                audit: new TeamFolderAuditor(eventDispatcher: null),
+            ),
+            audit: new TeamFolderAuditor(eventDispatcher: null),
+            notificationService: $this->notificationService,
+            db: $this->createMock(originalClassName: IDBConnection::class),
         );
     }//end setUp()
 
@@ -420,7 +468,7 @@ class TeamFolderServiceTest extends TestCase
         $carolShare = new ShareTarget();
         $carolShare->setId('st-carol');
         $carolShare->setSecretId('copy-carol');
-        $this->shareTargetMapper->method('findByTeamFolderAndTargetUser')
+        $this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')
             ->willReturnCallback(
                 static fn (string $teamFolderId, string $targetUserId) => $targetUserId === 'carol' ? [$carolShare] : []
             );
@@ -482,7 +530,7 @@ class TeamFolderServiceTest extends TestCase
         $daveShare = new ShareTarget();
         $daveShare->setId('st-dave');
         $daveShare->setSecretId('copy-dave');
-        $this->shareTargetMapper->method('findByTeamFolderAndTargetUser')->willReturn([$daveShare]);
+        $this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([$daveShare]);
         $this->secretMapper->method('findById')->willThrowException(new DoesNotExistException(''));
 
         $revoked = $this->service->handleGroupMemberLeave(userId: 'dave', groupId: 'devops');

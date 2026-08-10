@@ -26,6 +26,7 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretVersion;
 use OCA\Doriath\Db\SecretVersionMapper;
+use OCA\Doriath\Service\SecretVersionAccessGuard;
 use OCA\Doriath\Service\SecretVersionService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -60,7 +61,11 @@ class SecretVersionServiceTest extends TestCase
         $this->service = new SecretVersionService(
             mapper: $this->mapper,
             secretMapper: $this->secretMapper,
-            suiteMapper: $this->suiteMapper,
+            accessGuard: new SecretVersionAccessGuard(
+                mapper: $this->mapper,
+                secretMapper: $this->secretMapper,
+                suiteMapper: $this->suiteMapper,
+            ),
             logger: $this->createMock(originalClassName: LoggerInterface::class),
             eventDispatcher: null,
         );

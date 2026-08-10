@@ -27,7 +27,13 @@ use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Exception\DuplicateFolderNameException;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
+use OCA\Doriath\Service\FolderCascadeService;
+use OCA\Doriath\Service\FolderDeletionService;
+use OCA\Doriath\Service\FolderNameGuard;
+use OCA\Doriath\Service\FolderOwnershipGuard;
 use OCA\Doriath\Service\FolderService;
+use OCA\Doriath\Service\FolderTreeService;
+use OCA\Doriath\Service\SecretChildDataCleaner;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -64,10 +70,31 @@ class FolderServiceTest extends TestCase
         $this->secretMapper = $this->createMock(SecretMapper::class);
         $logger = $this->createMock(LoggerInterface::class);
 
+        $nameGuard = new FolderNameGuard(mapper: $this->mapper);
+        $childData = new SecretChildDataCleaner(secretMapper: $this->secretMapper);
+        $ownership = new FolderOwnershipGuard(mapper: $this->mapper);
+
         $this->service = new FolderService(
             mapper: $this->mapper,
-            secretMapper: $this->secretMapper,
-            logger: $logger,
+            ownership: $ownership,
+            tree: new FolderTreeService(
+                mapper: $this->mapper,
+                ownership: $ownership,
+                nameGuard: $nameGuard,
+                logger: $logger,
+            ),
+            deletion: new FolderDeletionService(
+                mapper: $this->mapper,
+                secretMapper: $this->secretMapper,
+                cascade: new FolderCascadeService(
+                    mapper: $this->mapper,
+                    secretMapper: $this->secretMapper,
+                    childData: $childData,
+                    nameGuard: $nameGuard,
+                ),
+                logger: $logger,
+                eventDispatcher: null,
+            ),
         );
     }//end setUp()
 

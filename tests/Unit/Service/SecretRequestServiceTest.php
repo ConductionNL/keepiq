@@ -28,7 +28,10 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\SecretRequestOutbox;
+use OCA\Doriath\Service\SecretRequestPolicy;
 use OCA\Doriath\Service\SecretRequestService;
+use OCA\Doriath\Service\SecretRequestSuiteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -55,6 +58,13 @@ class SecretRequestServiceTest extends TestCase
     private SecretRequestMapper $mapper;
 
     /**
+     * Suite-lock service under test.
+     *
+     * @var SecretRequestSuiteLockService
+     */
+    private SecretRequestSuiteLockService $suiteLockService;
+
+    /**
      * Set up fixtures.
      *
      * @return void
@@ -63,7 +73,17 @@ class SecretRequestServiceTest extends TestCase
     {
         $this->mapper  = $this->createMock(originalClassName: SecretRequestMapper::class);
         $logger        = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->service = new SecretRequestService(mapper: $this->mapper, logger: $logger);
+        $this->service = new SecretRequestService(
+            mapper: $this->mapper,
+            policy: new SecretRequestPolicy(mapper: $this->mapper),
+            outbox: new SecretRequestOutbox(),
+            logger: $logger,
+        );
+
+        $this->suiteLockService = new SecretRequestSuiteLockService(
+            mapper: $this->mapper,
+            logger: $logger,
+        );
     }//end setUp()
 
     /**
@@ -384,8 +404,9 @@ class SecretRequestServiceTest extends TestCase
         $logger  = $this->createMock(originalClassName: LoggerInterface::class);
         $service = new SecretRequestService(
             mapper: $this->mapper,
+            policy: new SecretRequestPolicy(mapper: $this->mapper),
+            outbox: new SecretRequestOutbox(notificationService: $notifier),
             logger: $logger,
-            notificationService: $notifier,
         );
 
         $result = $service->fill(
@@ -443,7 +464,7 @@ class SecretRequestServiceTest extends TestCase
             ->with('suite-old')
             ->willReturn(4);
 
-        $this->assertSame(4, $this->service->lockByEncryptionSuiteId(encryptionSuiteId: 'suite-old'));
+        $this->assertSame(4, $this->suiteLockService->lockByEncryptionSuiteId(encryptionSuiteId: 'suite-old'));
     }//end testLockByEncryptionSuiteIdDelegates()
 
     /**
@@ -460,7 +481,7 @@ class SecretRequestServiceTest extends TestCase
 
         $this->assertSame(
             2,
-            $this->service->unlockAndUpdateSuite(
+            $this->suiteLockService->unlockAndUpdateSuite(
                 oldEncryptionSuiteId: 'suite-old',
                 newEncryptionSuiteId: 'suite-new',
             )
@@ -476,7 +497,7 @@ class SecretRequestServiceTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        $this->service->unlockAndUpdateSuite(
+        $this->suiteLockService->unlockAndUpdateSuite(
             oldEncryptionSuiteId: 'suite-x',
             newEncryptionSuiteId: 'suite-x',
         );
@@ -506,9 +527,9 @@ class SecretRequestServiceTest extends TestCase
         $logger  = $this->createMock(originalClassName: LoggerInterface::class);
         $service = new SecretRequestService(
             mapper: $this->mapper,
+            policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: $secretMapper,
         );
 
         $result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
@@ -534,9 +555,9 @@ class SecretRequestServiceTest extends TestCase
         $logger  = $this->createMock(originalClassName: LoggerInterface::class);
         $service = new SecretRequestService(
             mapper: $this->mapper,
+            policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: $secretMapper,
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -558,9 +579,9 @@ class SecretRequestServiceTest extends TestCase
         $logger  = $this->createMock(originalClassName: LoggerInterface::class);
         $service = new SecretRequestService(
             mapper: $this->mapper,
+            policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: $secretMapper,
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -631,10 +652,9 @@ class SecretRequestServiceTest extends TestCase
 
         $service = new SecretRequestService(
             mapper: $mapper,
+            policy: new SecretRequestPolicy(mapper: $mapper, suiteMapper: $suiteMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: null,
-            suiteMapper: $suiteMapper,
         );
 
         $result = $service->createForApplication(
@@ -670,10 +690,9 @@ class SecretRequestServiceTest extends TestCase
 
         $service = new SecretRequestService(
             mapper: $mapper,
+            policy: new SecretRequestPolicy(mapper: $mapper, suiteMapper: $suiteMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: null,
-            suiteMapper: $suiteMapper,
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -728,9 +747,9 @@ class SecretRequestServiceTest extends TestCase
 
         $service = new SecretRequestService(
             mapper: $mapper,
+            policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: $secretMapper,
         );
 
         $result = $service->createReRequest(
@@ -768,9 +787,9 @@ class SecretRequestServiceTest extends TestCase
 
         $service = new SecretRequestService(
             mapper: $mapper,
+            policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: $secretMapper,
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -814,9 +833,9 @@ class SecretRequestServiceTest extends TestCase
 
         $service = new SecretRequestService(
             mapper: $mapper,
+            policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper),
+            outbox: new SecretRequestOutbox(),
             logger: $logger,
-            notificationService: null,
-            secretMapper: $secretMapper,
         );
 
         $this->expectException(InvalidArgumentException::class);

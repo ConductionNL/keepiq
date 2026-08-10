@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Service\CertificateAuthorityService;
+use OCA\Doriath\Service\EncryptionSuiteProvisioningService;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -78,9 +79,13 @@ class EncryptionSuiteServiceTest extends TestCase
 
         $this->service = new EncryptionSuiteService(
             mapper: $this->mapper,
-            caService: $this->caService,
-            appConfig: $this->appConfig,
-            userManager: $userManager,
+            provisioning: new EncryptionSuiteProvisioningService(
+                mapper: $this->mapper,
+                caService: $this->caService,
+                appConfig: $this->appConfig,
+                userManager: $userManager,
+                logger: $logger,
+            ),
             logger: $logger,
         );
     }//end setUp()

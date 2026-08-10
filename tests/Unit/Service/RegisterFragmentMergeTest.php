@@ -12,14 +12,14 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/modular-register-manifest-fragments/specs/modular-config/spec.md
+ * @spec openspec/specs/apphost-adoption/spec.md#requirement-boilerplate-plumbing-served-by-apphost-generics
  */
 
 declare(strict_types=1);
 
 namespace OCA\Doriath\Tests\Unit\Service;
 
-use OCA\Doriath\Service\SettingsService;
+use OCA\Doriath\Service\RegisterConfigurationLoader;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -30,7 +30,7 @@ use ReflectionMethod;
 final class RegisterFragmentMergeTest extends TestCase
 {
     /**
-     * Invoke the private static SettingsService::deepMergeConfig().
+     * Invoke the private static RegisterConfigurationLoader::deepMergeConfig().
      *
      * @param array<mixed> $base    Base config.
      * @param array<mixed> $overlay Fragment.
@@ -39,7 +39,7 @@ final class RegisterFragmentMergeTest extends TestCase
      */
     private function merge(array $base, array $overlay): array
     {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+        $m = new ReflectionMethod(RegisterConfigurationLoader::class, 'deepMergeConfig');
         $m->setAccessible(true);
         return $m->invoke(null, $base, $overlay);
     }//end merge()

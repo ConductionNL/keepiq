@@ -26,6 +26,7 @@ use OCA\Doriath\Db\RotationFlag;
 use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
+use OCA\Doriath\Service\RotationFlagService;
 use OCA\Doriath\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -65,8 +66,11 @@ class RotationPolicyServiceTest extends TestCase
 
         $this->service = new RotationPolicyService(
             policyMapper: $this->policyMapper,
-            flagMapper: $this->flagMapper,
-            secretMapper: $this->secretMapper,
+            flagService: new RotationFlagService(
+                flagMapper: $this->flagMapper,
+                secretMapper: $this->secretMapper,
+                eventDispatcher: null,
+            ),
             appConfig: $this->appConfig,
             eventDispatcher: null,
             config: null,

@@ -37,13 +37,11 @@ use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretTypeMapper;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
-use Ramsey\Uuid\Uuid;
 use RuntimeException;
 
 /**
@@ -59,26 +57,24 @@ class CertificateLifecycleService
     /**
      * Constructor for CertificateLifecycleService.
      *
-     * @param CertificateMetadataMapper   $metadataMapper  The metadata mapper
-     * @param SecretMapper                $secretMapper    The secret mapper
-     * @param SecretTypeMapper            $typeMapper      The secret type mapper
-     * @param EncryptionSuiteMapper       $suiteMapper     The suite mapper
-     * @param CACertificateMapper         $caMapper        The CA certificate mapper
-     * @param SecretService               $secretService   The secret service (expiry path)
-     * @param CertificateAuthorityService $caService       The CA service (re-issue)
-     * @param IEventDispatcher|null       $eventDispatcher The audit dispatcher
-     * @param AuditEventFactory           $auditEvents     The audit-event factory
+     * @param CertificateMetadataMapper  $metadataMapper  The metadata mapper
+     * @param SecretMapper               $secretMapper    The secret mapper
+     * @param EncryptionSuiteMapper      $suiteMapper     The suite mapper
+     * @param CACertificateMapper        $caMapper        The CA certificate mapper
+     * @param CertificateMetadataService $metadataService The client-parsed metadata path
+     * @param CertificateIssuanceService $issuanceService The certificate issuer (re-issue)
+     * @param IEventDispatcher|null      $eventDispatcher The audit dispatcher
+     * @param AuditEventFactory          $auditEvents     The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private CertificateMetadataMapper $metadataMapper,
         private SecretMapper $secretMapper,
-        private SecretTypeMapper $typeMapper,
         private EncryptionSuiteMapper $suiteMapper,
         private CACertificateMapper $caMapper,
-        private SecretService $secretService,
-        private CertificateAuthorityService $caService,
+        private CertificateMetadataService $metadataService,
+        private CertificateIssuanceService $issuanceService,
         private ?IEventDispatcher $eventDispatcher=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
@@ -102,7 +98,7 @@ class CertificateLifecycleService
     public function inventory(string $userId, bool $isAdmin): array
     {
         $stored     = [];
-        $certTypeId = $this->certificateTypeId();
+        $certTypeId = $this->metadataService->certificateTypeId();
         if ($certTypeId !== null) {
             $metadataBySecret = $this->metadataMapper->findByOwner($userId);
             foreach ($this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, typeId: $certTypeId) as $secret) {
@@ -209,57 +205,12 @@ class CertificateLifecycleService
      *
      * @throws DoesNotExistException    When the secret does not exist
      * @throws InvalidArgumentException When not owned, wrong type, or unparseable dates
+     *
+     * @spec openspec/specs/certificate-lifecycle/spec.md
      */
     public function submitMetadata(string $secretId, string $userId, array $fields): CertificateMetadata
     {
-        $secret = $this->secretMapper->findById($secretId);
-        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-            throw new InvalidArgumentException('Only the owner may submit certificate metadata');
-        }
-
-        $certTypeId = $this->certificateTypeId();
-        if ($certTypeId === null || $secret->getTypeId() !== $certTypeId) {
-            throw new InvalidArgumentException('Secret is not a certificate-type secret');
-        }
-
-        $notBefore = $this->parseClientDate(value: $fields['notBefore'] ?? null);
-        $notAfter  = $this->parseClientDate(value: $fields['notAfter'] ?? null);
-
-        $isNew = false;
-        try {
-            $row = $this->metadataMapper->findBySecretId($secretId);
-        } catch (DoesNotExistException) {
-            $isNew = true;
-            $row   = new CertificateMetadata();
-            $row->setId(Uuid::uuid4()->toString());
-            $row->setSecretId($secretId);
-        }
-
-        $row->setOwnerId($userId);
-        $row->setSubject($this->optionalString(value: $fields['subject'] ?? null));
-        $row->setIssuer($this->optionalString(value: $fields['issuer'] ?? null));
-        $row->setSerial($this->optionalString(value: $fields['serial'] ?? null));
-        $row->setFingerprintSha256($this->optionalString(value: $fields['fingerprintSha256'] ?? null));
-        $row->setNotBefore($notBefore);
-        $row->setNotAfter($notAfter);
-        $row->setParsedAt(new DateTime());
-
-        if ($isNew === true) {
-            $row = $this->metadataMapper->insert($row);
-        }
-
-        if ($isNew === false) {
-            $row = $this->metadataMapper->update($row);
-        }
-
-        // Mirror notAfter into the rotation-expiry per-secret expiry so the
-        // existing ScanExpiringSecretsJob reminds on it. setExpiry touches
-        // neither ciphertext nor key_updated_at and audits SECRET_EXPIRY_SET.
-        if ($notAfter !== null) {
-            $this->secretService->setExpiry(id: $secretId, expiresAt: $notAfter, userId: $userId);
-        }
-
-        return $row;
+        return $this->metadataService->submitMetadata(secretId: $secretId, userId: $userId, fields: $fields);
     }//end submitMetadata()
 
     /**
@@ -275,6 +226,8 @@ class CertificateLifecycleService
      *
      * @throws DoesNotExistException    When the secret does not exist
      * @throws InvalidArgumentException When not owned or wrong type
+     *
+     * @spec openspec/specs/certificate-lifecycle/spec.md
      */
     public function renewalChecklist(string $secretId, string $userId): array
     {
@@ -283,7 +236,7 @@ class CertificateLifecycleService
             throw new InvalidArgumentException('Only the owner may request a renewal checklist');
         }
 
-        $certTypeId = $this->certificateTypeId();
+        $certTypeId = $this->metadataService->certificateTypeId();
         if ($certTypeId === null || $secret->getTypeId() !== $certTypeId) {
             throw new InvalidArgumentException('Secret is not a certificate-type secret');
         }
@@ -328,6 +281,8 @@ class CertificateLifecycleService
      * @throws DoesNotExistException    When the suite does not exist
      * @throws InvalidArgumentException When the caller may not re-issue it
      * @throws \RuntimeException        When the re-sign could not preserve the key
+     *
+     * @spec openspec/specs/certificate-lifecycle/spec.md
      */
     public function reissueSuite(string $suiteId, string $userId, bool $isAdmin): array
     {
@@ -337,7 +292,7 @@ class CertificateLifecycleService
             throw new InvalidArgumentException('Only the suite owner or an admin may re-issue');
         }
 
-        if ($this->caService->reissueSuiteCertificate(suite: $suite) === false) {
+        if ($this->issuanceService->reissueSuiteCertificate(suite: $suite) === false) {
             throw new RuntimeException('Re-issue could not preserve the existing public key; certificate unchanged');
         }
 
@@ -422,20 +377,6 @@ class CertificateLifecycleService
     }//end caRow()
 
     /**
-     * The system certificate type id, or null before seeding.
-     *
-     * @return string|null
-     */
-    private function certificateTypeId(): ?string
-    {
-        try {
-            return $this->typeMapper->findByName('certificate')->getId();
-        } catch (DoesNotExistException) {
-            return null;
-        }
-    }//end certificateTypeId()
-
-    /**
      * Render an X.509 DN array as a readable string.
      *
      * @param array<string,mixed> $dnParts The parsed DN parts
@@ -455,43 +396,4 @@ class CertificateLifecycleService
 
         return implode(', ', $parts);
     }//end dnToString()
-
-    /**
-     * Parse a client-submitted ISO date, rejecting garbage (D5: the
-     * value is trusted in substance but must at least be a date).
-     *
-     * @param mixed $value The submitted value
-     *
-     * @return DateTime|null
-     *
-     * @throws InvalidArgumentException When set but unparseable
-     */
-    private function parseClientDate(mixed $value): ?DateTime
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        try {
-            return new DateTime((string) $value);
-        } catch (\Exception) {
-            throw new InvalidArgumentException('Unparseable certificate date: '.(string) $value);
-        }
-    }//end parseClientDate()
-
-    /**
-     * Trimmed string or null.
-     *
-     * @param mixed $value The submitted value
-     *
-     * @return string|null
-     */
-    private function optionalString(mixed $value): ?string
-    {
-        if (is_string($value) === false || trim($value) === '') {
-            return null;
-        }
-
-        return trim($value);
-    }//end optionalString()
 }//end class

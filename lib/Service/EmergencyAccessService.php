@@ -35,27 +35,27 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\EmergencyContact;
 use OCA\Doriath\Db\EmergencyContactMapper;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
  * Lifecycle service for break-glass emergency access.
+ *
+ * The audit entries of every transition are written by
+ * EmergencyAccessAuditTrail (design D8), and the key-change invalidation
+ * paths live in EmergencyEnvelopeInvalidationService.
  */
 class EmergencyAccessService
 {
     /**
-     * The object type used in audit entries for the emergency-access relation.
+     * The object type used for the emergency-access relation.
      *
      * @var string
      */
-    private const OBJECT_TYPE = 'emergency_access';
+    private const OBJECT_TYPE = EmergencyAccessAuditTrail::OBJECT_TYPE;
 
     /**
      * The grantor-selectable wait periods, in days.
@@ -67,12 +67,11 @@ class EmergencyAccessService
     /**
      * Constructor for EmergencyAccessService.
      *
-     * @param EmergencyContactMapper $mapper              The emergency-contact mapper
-     * @param EncryptionSuiteMapper  $suiteMapper         The encryption-suite mapper
-     * @param NotificationService    $notificationService The notification dispatcher
-     * @param IEventDispatcher       $eventDispatcher     The typed-event dispatcher (audit)
-     * @param LoggerInterface        $logger              The logger
-     * @param AuditEventFactory      $auditEvents         The audit-event factory
+     * @param EmergencyContactMapper    $mapper              The emergency-contact mapper
+     * @param EncryptionSuiteMapper     $suiteMapper         The encryption-suite mapper
+     * @param NotificationService       $notificationService The notification dispatcher
+     * @param EmergencyAccessAuditTrail $auditTrail          The emergency-access audit trail
+     * @param LoggerInterface           $logger              The logger
      *
      * @return void
      */
@@ -80,9 +79,8 @@ class EmergencyAccessService
         private EmergencyContactMapper $mapper,
         private EncryptionSuiteMapper $suiteMapper,
         private NotificationService $notificationService,
-        private IEventDispatcher $eventDispatcher,
+        private EmergencyAccessAuditTrail $auditTrail,
         private LoggerInterface $logger,
-        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -230,20 +228,12 @@ class EmergencyAccessService
 
         $this->logger->debug('Doriath: emergency contact designated for grantee '.$granteeUserId);
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $grantorUserId,
-                eventType: AuditEventTypes::EMERGENCY_ACCESS_GRANTED,
-                objectType: self::OBJECT_TYPE,
-                objectId: $contact->getId(),
-                objectName: $granteeUserId,
-                metadata: [
-                    'grantorUserId'  => $grantorUserId,
-                    'granteeUserId'  => $granteeUserId,
-                    'accessLevel'    => EmergencyContact::ACCESS_VIEW,
-                    'waitPeriodDays' => $waitPeriodDays,
-                ],
-            )
+        $this->auditTrail->recordGranted(
+            grantorUserId: $grantorUserId,
+            granteeUserId: $granteeUserId,
+            id: $contact->getId(),
+            accessLevel: EmergencyContact::ACCESS_VIEW,
+            waitPeriodDays: $waitPeriodDays,
         );
 
         return $contact;
@@ -270,15 +260,10 @@ class EmergencyAccessService
 
         $this->mapper->delete($contact);
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $grantorUserId,
-                eventType: AuditEventTypes::EMERGENCY_ACCESS_REVOKED,
-                objectType: self::OBJECT_TYPE,
-                objectId: $id,
-                objectName: $granteeUserId,
-                metadata: ['grantorUserId' => $grantorUserId, 'granteeUserId' => $granteeUserId],
-            )
+        $this->auditTrail->recordRevoked(
+            grantorUserId: $grantorUserId,
+            granteeUserId: $granteeUserId,
+            id: $id,
         );
     }//end revoke()
 
@@ -324,19 +309,11 @@ class EmergencyAccessService
             objectId: $id,
         );
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $granteeUserId,
-                eventType: AuditEventTypes::EMERGENCY_ACCESS_REQUESTED,
-                objectType: self::OBJECT_TYPE,
-                objectId: $id,
-                objectName: $granteeUserId,
-                metadata: [
-                    'grantorUserId'  => $grantorUserId,
-                    'granteeUserId'  => $granteeUserId,
-                    'waitPeriodDays' => $contact->getWaitPeriodDays(),
-                ],
-            )
+        $this->auditTrail->recordRequested(
+            grantorUserId: $grantorUserId,
+            granteeUserId: $granteeUserId,
+            id: $id,
+            waitPeriodDays: $contact->getWaitPeriodDays(),
         );
 
         return $contact;
@@ -372,15 +349,10 @@ class EmergencyAccessService
         $contact->setUpdatedAt($now);
         $contact = $this->mapper->update($contact);
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $grantorUserId,
-                eventType: AuditEventTypes::EMERGENCY_ACCESS_DECLINED,
-                objectType: self::OBJECT_TYPE,
-                objectId: $id,
-                objectName: $contact->getGranteeUserId(),
-                metadata: ['grantorUserId' => $grantorUserId, 'granteeUserId' => $contact->getGranteeUserId()],
-            )
+        $this->auditTrail->recordDeclined(
+            grantorUserId: $grantorUserId,
+            granteeUserId: $contact->getGranteeUserId(),
+            id: $id,
         );
 
         return $contact;
@@ -434,15 +406,10 @@ class EmergencyAccessService
             objectId: $id,
         );
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $granteeUserId,
-                eventType: AuditEventTypes::EMERGENCY_ACCESS_ACCESSED,
-                objectType: self::OBJECT_TYPE,
-                objectId: $id,
-                objectName: $granteeUserId,
-                metadata: ['grantorUserId' => $grantorUserId, 'granteeUserId' => $granteeUserId],
-            )
+        $this->auditTrail->recordAccessed(
+            grantorUserId: $grantorUserId,
+            granteeUserId: $granteeUserId,
+            id: $id,
         );
 
         return $envelope;
@@ -479,17 +446,10 @@ class EmergencyAccessService
         $contact->setUpdatedAt(new DateTime());
         $contact = $this->mapper->update($contact);
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forSystem(
-                eventType: AuditEventTypes::EMERGENCY_ACCESS_APPROVED,
-                objectType: self::OBJECT_TYPE,
-                objectId: $contact->getId(),
-                objectName: $contact->getGranteeUserId(),
-                metadata: [
-                    'grantorUserId' => $contact->getGrantorUserId(),
-                    'granteeUserId' => $contact->getGranteeUserId(),
-                ],
-            )
+        $this->auditTrail->recordApproved(
+            grantorUserId: $contact->getGrantorUserId(),
+            granteeUserId: $contact->getGranteeUserId(),
+            id: $contact->getId(),
         );
 
         return $contact;
@@ -515,125 +475,6 @@ class EmergencyAccessService
 
         return $promoted;
     }//end approveElapsed()
-
-    /**
-     * Invalidate a grantor's recovery envelopes after their suite is ROTATED
-     * (compromise recovery). The envelopes hold the stale private key, so they
-     * are marked invalid and the grantor must re-establish emergency access.
-     *
-     * @param string $grantorSuiteId The rotated (old) suite ID
-     * @param string $reason         The invalidation reason tag
-     *
-     * @return int The number of relationships invalidated
-     *
-     * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
-     */
-    public function invalidateForGrantorRotation(string $grantorSuiteId, string $reason='grantor_rotation'): int
-    {
-        $count = 0;
-        foreach ($this->mapper->findByGrantorSuite(grantorSuiteId: $grantorSuiteId) as $contact) {
-            if ($contact->getState() === EmergencyContact::STATE_INVALIDATED) {
-                continue;
-            }
-
-            $this->invalidate(contact: $contact, reason: $reason);
-            $count++;
-        }
-
-        return $count;
-    }//end invalidateForGrantorRotation()
-
-    /**
-     * Clear a grantor's recovery envelopes after their suite is REVOKED — the
-     * envelopes hold a now-void key and are deleted outright.
-     *
-     * @param string $grantorSuiteId The revoked suite ID
-     *
-     * @return int The number of relationships cleared
-     *
-     * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
-     */
-    public function clearForGrantorRevocation(string $grantorSuiteId): int
-    {
-        $count = 0;
-        foreach ($this->mapper->findByGrantorSuite(grantorSuiteId: $grantorSuiteId) as $contact) {
-            $this->dispatchAudit(
-                event: $this->auditEvents->forSystem(
-                    eventType: AuditEventTypes::EMERGENCY_ACCESS_INVALIDATED,
-                    objectType: self::OBJECT_TYPE,
-                    objectId: $contact->getId(),
-                    objectName: $contact->getGranteeUserId(),
-                    metadata: [
-                        'grantorUserId' => $contact->getGrantorUserId(),
-                        'granteeUserId' => $contact->getGranteeUserId(),
-                        'reason'        => 'grantor_revocation',
-                    ],
-                )
-            );
-            $this->mapper->delete($contact);
-            $count++;
-        }
-
-        return $count;
-    }//end clearForGrantorRevocation()
-
-    /**
-     * Invalidate envelopes encrypted to a grantee whose suite was revoked — the
-     * grantee can no longer open them, so they are marked invalid.
-     *
-     * @param string $granteeSuiteId The revoked grantee suite ID
-     *
-     * @return int The number of relationships invalidated
-     *
-     * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
-     */
-    public function invalidateForGranteeRevocation(string $granteeSuiteId): int
-    {
-        $count = 0;
-        foreach ($this->mapper->findByGranteeSuite(granteeSuiteId: $granteeSuiteId) as $contact) {
-            if ($contact->getState() === EmergencyContact::STATE_INVALIDATED) {
-                continue;
-            }
-
-            $this->invalidate(contact: $contact, reason: 'grantee_revocation');
-            $count++;
-        }
-
-        return $count;
-    }//end invalidateForGranteeRevocation()
-
-    /**
-     * Mark a relationship invalidated: null the envelope, set the reason, and
-     * audit. The grantee can no longer break glass until the grantor re-establishes.
-     *
-     * @param EmergencyContact $contact The relationship
-     * @param string           $reason  The invalidation reason tag
-     *
-     * @return void
-     */
-    private function invalidate(EmergencyContact $contact, string $reason): void
-    {
-        $contact->setState(EmergencyContact::STATE_INVALIDATED);
-        $contact->setRecoveryEnvelope(null);
-        $contact->setRequestedAt(null);
-        $contact->setInvalidatedReason($reason);
-        $contact->setUpdatedAt(new DateTime());
-        $this->mapper->update($contact);
-
-        $this->dispatchAudit(
-            event: $this->auditEvents->forSystem(
-                eventType: AuditEventTypes::EMERGENCY_ACCESS_INVALIDATED,
-                objectType: self::OBJECT_TYPE,
-                objectId: $contact->getId(),
-                objectName: $contact->getGranteeUserId(),
-                metadata: [
-                    'grantorUserId' => $contact->getGrantorUserId(),
-                    'granteeUserId' => $contact->getGranteeUserId(),
-                    'reason'        => $reason,
-                ],
-            )
-        );
-    }//end invalidate()
 
     /**
      * Load a relationship and assert the caller is its grantor.
@@ -686,16 +527,4 @@ class EmergencyAccessService
 
         return $contact;
     }//end loadOwnedByGrantee()
-
-    /**
-     * Dispatch a typed audit event (fault-isolated by the single AuditListener).
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher->dispatchTyped($event);
-    }//end dispatchAudit()
 }//end class

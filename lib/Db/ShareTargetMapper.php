@@ -116,74 +116,6 @@ class ShareTargetMapper extends QBMapper
     }//end deleteBySourceSecret()
 
     /**
-     * Find all share targets that descend from a given group share.
-     *
-     * The returned set is the per-member fan-out the GroupShareService
-     * created when the source secret was shared with the group; revoking
-     * the GroupShare cascades through this lookup.
-     *
-     * @param string $groupShareId The group-share ID
-     *
-     * @return ShareTarget[]
-     *
-     * @spec openspec/changes/implement-user-sharing/tasks.md#2.2
-     */
-    public function findByGroupShare(string $groupShareId): array
-    {
-        $qb = $this->db->getQueryBuilder();
-        $qb->select('*')
-            ->from($this->getTableName())
-            ->where($qb->expr()->eq('group_share_id', $qb->createNamedParameter($groupShareId)));
-
-        return $this->findEntities(query: $qb);
-    }//end findByGroupShare()
-
-    /**
-     * Find all share targets that descend from a given team folder.
-     *
-     * The returned set is the per-(secret × recipient) fan-out the
-     * TeamFolderService created; unsharing the folder or removing a
-     * member cascades through this lookup.
-     *
-     * @param string $teamFolderId The team-folder ID
-     *
-     * @return ShareTarget[]
-     *
-     * @spec openspec/changes/team-folder-sharing/tasks.md#1.3
-     */
-    public function findByTeamFolder(string $teamFolderId): array
-    {
-        $qb = $this->db->getQueryBuilder();
-        $qb->select('*')
-            ->from($this->getTableName())
-            ->where($qb->expr()->eq('team_folder_id', $qb->createNamedParameter($teamFolderId)));
-
-        return $this->findEntities(query: $qb);
-    }//end findByTeamFolder()
-
-    /**
-     * Find the team-folder-derived share targets held by one recipient
-     * across a single team folder (leave/remove revocation scope).
-     *
-     * @param string $teamFolderId The team-folder ID
-     * @param string $targetUserId The recipient Nextcloud user ID
-     *
-     * @return ShareTarget[]
-     *
-     * @spec openspec/changes/team-folder-sharing/tasks.md#1.3
-     */
-    public function findByTeamFolderAndTargetUser(string $teamFolderId, string $targetUserId): array
-    {
-        $qb = $this->db->getQueryBuilder();
-        $qb->select('*')
-            ->from($this->getTableName())
-            ->where($qb->expr()->eq('team_folder_id', $qb->createNamedParameter($teamFolderId)))
-            ->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)));
-
-        return $this->findEntities(query: $qb);
-    }//end findByTeamFolderAndTargetUser()
-
-    /**
      * Find the share target identifying a (source secret, recipient user) pair.
      *
      * Used by the authorization path before creating a new share to enforce
@@ -231,28 +163,6 @@ class ShareTargetMapper extends QBMapper
 
         $qb->executeStatement();
     }//end deleteByTargetUser()
-
-    /**
-     * Delete every share target derived from a given group share (cascade).
-     *
-     * Pair with `deleteBySourceSecret` on the GroupShare cascade so the
-     * recipient's encrypted copies vanish together with the group-share
-     * row that created them.
-     *
-     * @param string $groupShareId The group-share ID
-     *
-     * @return void
-     *
-     * @spec openspec/changes/implement-user-sharing/tasks.md#2.2
-     */
-    public function deleteByGroupShare(string $groupShareId): void
-    {
-        $qb = $this->db->getQueryBuilder();
-        $qb->delete($this->getTableName())
-            ->where($qb->expr()->eq('group_share_id', $qb->createNamedParameter($groupShareId)));
-
-        $qb->executeStatement();
-    }//end deleteByGroupShare()
 
     /**
      * Reverse-lookup a ShareTarget by the recipient Secret copy ID.

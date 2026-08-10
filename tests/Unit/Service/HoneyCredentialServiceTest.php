@@ -29,7 +29,9 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Doriath\Service\HoneyAlertRecorder;
 use OCA\Doriath\Service\HoneyCredentialService;
+use OCA\Doriath\Service\HoneyTripwireService;
 use OCA\Doriath\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -45,6 +47,8 @@ use Psr\Log\NullLogger;
 class HoneyCredentialServiceTest extends TestCase
 {
     private HoneyCredentialService $service;
+
+    private HoneyTripwireService $tripwireService;
 
     private HoneyFlagMapper&MockObject $flagMapper;
 
@@ -82,8 +86,15 @@ class HoneyCredentialServiceTest extends TestCase
             flagMapper: $this->flagMapper,
             alertMapper: $this->alertMapper,
             secretMapper: $this->secretMapper,
+        );
+
+        $this->tripwireService = new HoneyTripwireService(
+            flagMapper: $this->flagMapper,
+            alertRecorder: new HoneyAlertRecorder(
+                alertMapper: $this->alertMapper,
+                appConfig: $appConfig,
+            ),
             groupManager: $groupManager,
-            appConfig: $appConfig,
             notificationService: $this->notificationService,
             logger: new NullLogger(),
             eventDispatcher: $this->eventDispatcher,
@@ -185,7 +196,7 @@ class HoneyCredentialServiceTest extends TestCase
                     && $event->getMetadata() === ['channel' => 'machine_api'];
             }));
 
-        $hit = $this->service->raiseAlert(
+        $hit = $this->tripwireService->raiseAlert(
             secretId: 'secret-1',
             accessorType: 'application',
             accessorId: 'app-9',
@@ -224,7 +235,7 @@ class HoneyCredentialServiceTest extends TestCase
         $this->notificationService->expects($this->never())->method('notify');
         $this->eventDispatcher->expects($this->once())->method('dispatchTyped');
 
-        $this->service->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+        $this->tripwireService->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
 
         $this->assertSame(2, $existing->getAccessCount());
     }//end testRaiseAlertDedupsWithinWindow()
@@ -249,7 +260,7 @@ class HoneyCredentialServiceTest extends TestCase
         $this->notificationService->expects($this->never())->method('notify');
         $this->eventDispatcher->expects($this->once())->method('dispatchTyped');
 
-        $this->service->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+        $this->tripwireService->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
     }//end testSnoozedAccessorIsAuditedButNotPaged()
 
     /**
@@ -264,7 +275,7 @@ class HoneyCredentialServiceTest extends TestCase
         $this->notificationService->expects($this->never())->method('notify');
         $this->eventDispatcher->expects($this->never())->method('dispatchTyped');
 
-        $hit = $this->service->raiseAlert(secretId: 'other', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+        $hit = $this->tripwireService->raiseAlert(secretId: 'other', accessorType: 'user', accessorId: 'bob', channel: 'ui');
 
         $this->assertFalse($hit);
     }//end testRaiseAlertMissOnUnflaggedSecret()
@@ -280,7 +291,7 @@ class HoneyCredentialServiceTest extends TestCase
         $this->flagMapper->method('findBySecretId')->willReturn($this->makeFlag());
         $this->alertMapper->method('findLatestForAccessor')->willThrowException(new \RuntimeException('db down'));
 
-        $hit = $this->service->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
+        $hit = $this->tripwireService->raiseAlert(secretId: 'secret-1', accessorType: 'user', accessorId: 'bob', channel: 'ui');
 
         $this->assertTrue($hit, 'the hit is still reported; the failure is logged, not thrown');
     }//end testRaiseAlertIsFailSoft()

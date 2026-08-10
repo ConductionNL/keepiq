@@ -41,11 +41,9 @@ use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\LeaseService;
 use OCA\Doriath\Service\MachineSecretEnvelopeService;
+use OCA\Doriath\Service\MachineSecretResponseService;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -53,7 +51,6 @@ use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;
 use InvalidArgumentException;
 
@@ -72,6 +69,10 @@ use InvalidArgumentException;
  * Responses contain ciphertext only — the calling application decrypts
  * with its private key.
  *
+ * The single-secret answer itself — lease policy, ETag/304 negotiation, the
+ * retrieval audit event and the envelope body — is built by
+ * MachineSecretResponseService, which three of these endpoints share.
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Thin transport layer that
  *   wires the mappers, the envelope serializer, and the write service; the
  *   coupling is the controller's whole job.
@@ -86,9 +87,7 @@ class ApplicationSecretsController extends ApplicationApiController
      * @param FolderMapper                 $folderMapper    The folder mapper
      * @param SecretService                $secretService   The secret write service
      * @param MachineSecretEnvelopeService $envelopeService The envelope serializer
-     * @param IEventDispatcher             $eventDispatcher The event dispatcher (audit)
-     * @param LeaseService|null            $leaseService    The lease service (grant on fetch)
-     * @param AuditEventFactory            $auditEvents     The audit-event factory
+     * @param MachineSecretResponseService $responseService The single-secret response builder
      *
      * @return void
      */
@@ -98,9 +97,7 @@ class ApplicationSecretsController extends ApplicationApiController
         private FolderMapper $folderMapper,
         private SecretService $secretService,
         private MachineSecretEnvelopeService $envelopeService,
-        private IEventDispatcher $eventDispatcher,
-        private ?LeaseService $leaseService=null,
-        private AuditEventFactory $auditEvents=new AuditEventFactory(),
+        private MachineSecretResponseService $responseService,
     ) {
         parent::__construct(appName: DoriathApp::APP_ID, request: $request);
     }//end __construct()
@@ -206,7 +203,7 @@ class ApplicationSecretsController extends ApplicationApiController
             return $this->notFound();
         }
 
-        return $this->envelopeResponse(secret: $secret, applicationId: $application->getId());
+        return $this->responseService->envelope(secret: $secret, applicationId: $application->getId());
     }//end show()
 
     /**
@@ -270,7 +267,7 @@ class ApplicationSecretsController extends ApplicationApiController
             );
         }
 
-        return $this->envelopeResponse(secret: $matches[0], applicationId: $application->getId());
+        return $this->responseService->envelope(secret: $matches[0], applicationId: $application->getId());
     }//end byName()
 
     /**
@@ -354,90 +351,8 @@ class ApplicationSecretsController extends ApplicationApiController
             );
         }
 
-        return $this->envelopeResponse(secret: $secret, applicationId: $application->getId());
+        return $this->responseService->envelope(secret: $secret, applicationId: $application->getId());
     }//end update()
-
-    /**
-     * Build the envelope response for a single secret, with ETag / 304
-     * handling and an `application.secret_retrieved` audit event (on a
-     * full read only — a 304 dispatches nothing).
-     *
-     * @param Secret $secret        The secret
-     * @param string $applicationId The calling application id (audit actor)
-     *
-     * @return JSONResponse
-     */
-    private function envelopeResponse(Secret $secret, string $applicationId): JSONResponse
-    {
-        // Machine leases (machine-secret-leases §3.1/§3.2): refuse the
-        // fetch when block-on-revoke applies; otherwise grant or reuse a
-        // lease (a reuse never extends) and expose it in headers. The
-        // envelope body stays byte-identical to the pre-lease contract.
-        if ($this->leaseService?->fetchBlocked(applicationId: $applicationId, secretId: $secret->getId()) === true) {
-            return new JSONResponse(
-                data: ['message' => 'Lease revoked — access to this secret is blocked until re-granted'],
-                statusCode: Http::STATUS_FORBIDDEN
-            );
-        }
-
-        $lease = null;
-        if ($this->leaseService !== null) {
-            $requestedTtlRaw = $this->request->getParam('lease_ttl');
-            $requestedTtl    = null;
-            if ($requestedTtlRaw !== null && $requestedTtlRaw !== '') {
-                $requestedTtl = (int) $requestedTtlRaw;
-            }
-
-            $lease = $this->leaseService->grantOrReuse(
-                applicationId: $applicationId,
-                secretId: $secret->getId(),
-                requestedTtl: $requestedTtl,
-            );
-        }
-
-        $etag        = $this->envelopeService->etag($secret);
-        $ifNoneMatch = $this->request->getHeader('If-None-Match');
-        if ($ifNoneMatch !== '' && $this->etagMatches(ifNoneMatch: $ifNoneMatch, etag: $etag) === true) {
-            $response = new JSONResponse(data: [], statusCode: Http::STATUS_NOT_MODIFIED);
-            $response->addHeader('ETag', $etag);
-            $this->addLeaseHeaders(response: $response, lease: $lease);
-            return $response;
-        }
-
-        $this->eventDispatcher->dispatchTyped(
-            $this->auditEvents->forApplication(
-                actorId: $applicationId,
-                eventType: AuditEventTypes::APPLICATION_SECRET_RETRIEVED,
-                objectType: 'secret',
-                objectId: $secret->getId(),
-                objectName: $secret->getName(),
-            )
-        );
-
-        $response = new JSONResponse(data: $this->envelopeService->serialize($secret));
-        $response->addHeader('ETag', $etag);
-        $this->addLeaseHeaders(response: $response, lease: $lease);
-        return $response;
-    }//end envelopeResponse()
-
-    /**
-     * Attach the lease id + expiry headers when a lease was granted or
-     * reused (machine-secret-leases §3.1).
-     *
-     * @param JSONResponse                      $response The response to mutate
-     * @param \OCA\Doriath\Db\MachineLease|null $lease    The lease (null = leases off)
-     *
-     * @return void
-     */
-    private function addLeaseHeaders(JSONResponse $response, ?\OCA\Doriath\Db\MachineLease $lease): void
-    {
-        if ($lease === null) {
-            return;
-        }
-
-        $response->addHeader('Doriath-Lease-Id', (string) $lease->getId());
-        $response->addHeader('Doriath-Lease-Expires', (string) $lease->getExpiresAt()?->format('c'));
-    }//end addLeaseHeaders()
 
     /**
      * Load a secret only when it is owned by the given application, else
@@ -545,36 +460,6 @@ class ApplicationSecretsController extends ApplicationApiController
             return null;
         }
     }//end parseIso8601()
-
-    /**
-     * Match an `If-None-Match` header (possibly a comma list, possibly
-     * weak-prefixed) against the secret's strong ETag.
-     *
-     * @param string $ifNoneMatch The raw If-None-Match header
-     * @param string $etag        The current strong ETag (quoted)
-     *
-     * @return bool
-     */
-    private function etagMatches(string $ifNoneMatch, string $etag): bool
-    {
-        if (trim($ifNoneMatch) === '*') {
-            return true;
-        }
-
-        foreach (explode(',', $ifNoneMatch) as $candidate) {
-            $candidate = trim($candidate);
-            // Strip an optional weak validator prefix.
-            if (str_starts_with($candidate, 'W/') === true) {
-                $candidate = substr($candidate, 2);
-            }
-
-            if ($candidate === $etag) {
-                return true;
-            }
-        }
-
-        return false;
-    }//end etagMatches()
 
     /**
      * 401 response for a missing/invalid Bearer token (defence in depth —

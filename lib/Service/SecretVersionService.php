@@ -26,40 +26,41 @@ declare(strict_types=1);
 namespace OCA\Doriath\Service;
 
 use DateTime;
-use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretVersion;
 use OCA\Doriath\Db\SecretVersionMapper;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
 /**
  * Business logic for the secret-version lifecycle.
+ *
+ * Read authorization — ownership and the revoked-suite read gate — lives in
+ * SecretVersionAccessGuard so the "may this caller read this version"
+ * decision has exactly one home.
  */
 class SecretVersionService
 {
     /**
      * Constructor for SecretVersionService.
      *
-     * @param SecretVersionMapper   $mapper          The version mapper
-     * @param SecretMapper          $secretMapper    The secret mapper
-     * @param EncryptionSuiteMapper $suiteMapper     The suite mapper (read gating)
-     * @param LoggerInterface       $logger          The logger
-     * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
-     * @param AuditEventFactory     $auditEvents     The audit-event factory
+     * @param SecretVersionMapper      $mapper          The version mapper
+     * @param SecretMapper             $secretMapper    The secret mapper
+     * @param SecretVersionAccessGuard $accessGuard     The read-authorization guard
+     * @param LoggerInterface          $logger          The logger
+     * @param IEventDispatcher|null    $eventDispatcher The audit event dispatcher
+     * @param AuditEventFactory        $auditEvents     The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private SecretVersionMapper $mapper,
         private SecretMapper $secretMapper,
-        private EncryptionSuiteMapper $suiteMapper,
+        private SecretVersionAccessGuard $accessGuard,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
@@ -110,7 +111,7 @@ class SecretVersionService
      */
     public function list(string $secretId, string $userId): array
     {
-        if ($this->isOwned(secretId: $secretId, userId: $userId) === false) {
+        if ($this->accessGuard->isOwned(secretId: $secretId, userId: $userId) === false) {
             return [];
         }
 
@@ -127,21 +128,13 @@ class SecretVersionService
      *
      * @return SecretVersion
      *
-     * @throws InvalidArgumentException On not found / not owned / suite blocked
+     * @throws \InvalidArgumentException On not found / not owned / suite blocked
      *
      * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
     public function getVersion(string $versionId, string $userId): SecretVersion
     {
-        $version = $this->loadOwnedVersion(versionId: $versionId, userId: $userId);
-
-        if ($this->isSuiteBlocked(suiteId: $version->getEncryptionSuiteId()) === true) {
-            throw new InvalidArgumentException(
-                'This version is locked because its encryption suite was revoked'
-            );
-        }
-
-        return $version;
+        return $this->accessGuard->requireReadableVersion(versionId: $versionId, userId: $userId);
     }//end getVersion()
 
     /**
@@ -155,7 +148,7 @@ class SecretVersionService
      *
      * @return Secret The updated head
      *
-     * @throws InvalidArgumentException On not found / not owned / suite blocked
+     * @throws \InvalidArgumentException On not found / not owned / suite blocked
      *
      * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
      */
@@ -209,71 +202,4 @@ class SecretVersionService
     {
         $this->mapper->deleteBySecret(secretId: $secretId);
     }//end deleteForSecret()
-
-    /**
-     * Whether the caller owns the given secret.
-     *
-     * @param string $secretId The secret UUID
-     * @param string $userId   The caller
-     *
-     * @return bool
-     */
-    private function isOwned(string $secretId, string $userId): bool
-    {
-        try {
-            $secret = $this->secretMapper->findById($secretId);
-        } catch (DoesNotExistException) {
-            return false;
-        }
-
-        return $secret->getOwnerType() === 'user' && $secret->getOwnerId() === $userId;
-    }//end isOwned()
-
-    /**
-     * Load a version and assert the caller owns its secret. A version of
-     * an inaccessible secret is indistinguishable from a missing one.
-     *
-     * @param string $versionId The version UUID
-     * @param string $userId    The caller
-     *
-     * @return SecretVersion
-     *
-     * @throws InvalidArgumentException On not found / not owned
-     */
-    private function loadOwnedVersion(string $versionId, string $userId): SecretVersion
-    {
-        try {
-            $version = $this->mapper->findById($versionId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException('Version not found');
-        }
-
-        if ($this->isOwned(secretId: $version->getSecretId(), userId: $userId) === false) {
-            throw new InvalidArgumentException('Version not found');
-        }
-
-        return $version;
-    }//end loadOwnedVersion()
-
-    /**
-     * Whether a wrapping suite is revoked/compromised (read gating).
-     *
-     * @param string|null $suiteId The suite UUID
-     *
-     * @return bool
-     */
-    private function isSuiteBlocked(?string $suiteId): bool
-    {
-        if ($suiteId === null || $suiteId === '') {
-            return false;
-        }
-
-        try {
-            $suite = $this->suiteMapper->findById($suiteId);
-        } catch (DoesNotExistException) {
-            return false;
-        }
-
-        return in_array($suite->getStatus(), ['revoked', 'compromised'], true);
-    }//end isSuiteBlocked()
 }//end class

@@ -32,9 +32,7 @@ use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\ExpiryPolicy;
 use OCA\Doriath\Db\ExpiryPolicyMapper;
 use OCA\Doriath\Db\RotationFlag;
-use OCA\Doriath\Db\RotationFlagMapper;
 use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -44,10 +42,12 @@ use OCP\IConfig;
 use Ramsey\Uuid\Uuid;
 
 /**
- * Business logic for the rotation/expiry lifecycle.
+ * Business logic for the expiry-policy half of the rotation/expiry
+ * lifecycle. The rotation-FLAG half lives in {@see RotationFlagService};
+ * this class stays the API-facing entry point and forwards to it.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The resolution +
- *   flag invariants live in one place across policy/flag/secret mappers.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The resolution rules
+ *   span policy/secret/config sources in one place.
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One method per API op.
  */
 class RotationPolicyService
@@ -56,8 +56,7 @@ class RotationPolicyService
      * Constructor for RotationPolicyService.
      *
      * @param ExpiryPolicyMapper    $policyMapper    The policy mapper
-     * @param RotationFlagMapper    $flagMapper      The flag mapper
-     * @param SecretMapper          $secretMapper    The secret mapper
+     * @param RotationFlagService   $flagService     The rotation-flag lifecycle
      * @param IAppConfig            $appConfig       The app config (admin defaults)
      * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
      * @param IConfig|null          $config          The NC config (user max-age override)
@@ -67,8 +66,7 @@ class RotationPolicyService
      */
     public function __construct(
         private ExpiryPolicyMapper $policyMapper,
-        private RotationFlagMapper $flagMapper,
-        private SecretMapper $secretMapper,
+        private RotationFlagService $flagService,
         private IAppConfig $appConfig,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?IConfig $config=null,
@@ -366,52 +364,7 @@ class RotationPolicyService
      */
     public function flag(string $secretId, string $reason, ?string $flaggedBy=null): RotationFlag
     {
-        try {
-            $existing = $this->flagMapper->findBySecret(secretId: $secretId);
-            if ($existing->getStatus() === 'open') {
-                return $existing;
-            }
-
-            // A resolved flag is re-opened (fresh reason + proof point) —
-            // audited exactly like a first raise.
-            $existing->setReason($reason);
-            $existing->setStatus('open');
-            $existing->setFlaggedAt(new DateTime());
-            $existing->setFlaggedBy($flaggedBy);
-            $existing->setResolvedAt(null);
-            $existing->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId));
-            $existing = $this->flagMapper->update($existing);
-
-            $this->dispatchAudit(
-                actorId: ($flaggedBy ?? 'system'),
-                eventType: AuditEventTypes::SECRET_ROTATION_FLAGGED,
-                objectId: $secretId,
-                metadata: ['reason' => $reason],
-            );
-
-            return $existing;
-        } catch (DoesNotExistException) {
-            // No flag yet — create below.
-        }//end try
-
-        $flagRow = new RotationFlag();
-        $flagRow->setId(Uuid::uuid4()->toString());
-        $flagRow->setSecretId($secretId);
-        $flagRow->setReason($reason);
-        $flagRow->setStatus('open');
-        $flagRow->setFlaggedAt(new DateTime());
-        $flagRow->setFlaggedBy($flaggedBy);
-        $flagRow->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId));
-        $flagRow = $this->flagMapper->insert($flagRow);
-
-        $this->dispatchAudit(
-            actorId: ($flaggedBy ?? 'system'),
-            eventType: AuditEventTypes::SECRET_ROTATION_FLAGGED,
-            objectId: $secretId,
-            metadata: ['reason' => $reason],
-        );
-
-        return $flagRow;
+        return $this->flagService->flag(secretId: $secretId, reason: $reason, flaggedBy: $flaggedBy);
     }//end flag()
 
     /**
@@ -427,23 +380,7 @@ class RotationPolicyService
      */
     public function flagBatch(string $userId, array $secretIds): int
     {
-        $flagged = 0;
-        foreach ($secretIds as $secretId) {
-            try {
-                $secret = $this->secretMapper->findById((string) $secretId);
-            } catch (DoesNotExistException) {
-                continue;
-            }
-
-            if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-                continue;
-            }
-
-            $this->flag(secretId: (string) $secretId, reason: 'user_flagged', flaggedBy: $userId);
-            ++$flagged;
-        }
-
-        return $flagged;
+        return $this->flagService->flagBatch(userId: $userId, secretIds: $secretIds);
     }//end flagBatch()
 
     /**
@@ -452,10 +389,12 @@ class RotationPolicyService
      * @param string $userId The caller
      *
      * @return RotationFlag[]
+     *
+     * @spec openspec/specs/rotation-expiry-policies/spec.md
      */
     public function openFlags(string $userId): array
     {
-        return $this->flagMapper->findOpenForOwner(ownerId: $userId);
+        return $this->flagService->openFlags(userId: $userId);
     }//end openFlags()
 
     /**
@@ -472,35 +411,7 @@ class RotationPolicyService
      */
     public function markRotated(string $flagId, string $userId): array
     {
-        $flagRow = $this->loadOwnedFlag(flagId: $flagId, userId: $userId);
-
-        $head    = $this->secretMapper->findById($flagRow->getSecretId());
-        $frozen  = $flagRow->getKeyUpdatedAtAtFlag();
-        $current = $head->getKeyUpdatedAt();
-
-        $advanced = $current !== null && ($frozen === null || $current > $frozen);
-        if ($advanced === false) {
-            return [
-                'resolved'         => false,
-                'requiresRotation' => true,
-            ];
-        }
-
-        $flagRow->setStatus('rotated');
-        $flagRow->setResolvedAt(new DateTime());
-        $this->flagMapper->update($flagRow);
-
-        $this->dispatchAudit(
-            actorId: $userId,
-            eventType: AuditEventTypes::SECRET_ROTATED,
-            objectId: $flagRow->getSecretId(),
-            metadata: ['reason' => $flagRow->getReason()],
-        );
-
-        return [
-            'resolved'         => true,
-            'requiresRotation' => false,
-        ];
+        return $this->flagService->markRotated(flagId: $flagId, userId: $userId);
     }//end markRotated()
 
     /**
@@ -515,18 +426,7 @@ class RotationPolicyService
      */
     public function dismiss(string $flagId, string $userId): void
     {
-        $flagRow = $this->loadOwnedFlag(flagId: $flagId, userId: $userId);
-
-        $flagRow->setStatus('dismissed');
-        $flagRow->setResolvedAt(new DateTime());
-        $this->flagMapper->update($flagRow);
-
-        $this->dispatchAudit(
-            actorId: $userId,
-            eventType: AuditEventTypes::SECRET_ROTATION_DISMISSED,
-            objectId: $flagRow->getSecretId(),
-            metadata: ['reason' => $flagRow->getReason()],
-        );
+        $this->flagService->dismiss(flagId: $flagId, userId: $userId);
     }//end dismiss()
 
     /**
@@ -541,17 +441,7 @@ class RotationPolicyService
      */
     public function flagCompromisedSecrets(string $ownerId): int
     {
-        $count = 0;
-        foreach ($this->secretMapper->findByOwner('user', $ownerId, null, null, 'asc', 100000, 0) as $secret) {
-            if ($secret->getPossiblyCompromisedAt() === null) {
-                continue;
-            }
-
-            $this->flag(secretId: $secret->getId(), reason: 'suite_compromise');
-            ++$count;
-        }
-
-        return $count;
+        return $this->flagService->flagCompromisedSecrets(ownerId: $ownerId);
     }//end flagCompromisedSecrets()
 
     /**
@@ -560,58 +450,13 @@ class RotationPolicyService
      * @param string $secretId The secret UUID
      *
      * @return void
+     *
+     * @spec openspec/specs/rotation-expiry-policies/spec.md
      */
     public function deleteForSecret(string $secretId): void
     {
-        $this->flagMapper->deleteBySecret(secretId: $secretId);
+        $this->flagService->deleteForSecret(secretId: $secretId);
     }//end deleteForSecret()
-
-    /**
-     * The head's current key_updated_at (null-tolerant).
-     *
-     * @param string $secretId The secret UUID
-     *
-     * @return DateTime|null
-     */
-    private function headKeyUpdatedAt(string $secretId): ?DateTime
-    {
-        try {
-            return $this->secretMapper->findById($secretId)->getKeyUpdatedAt();
-        } catch (DoesNotExistException) {
-            return null;
-        }
-    }//end headKeyUpdatedAt()
-
-    /**
-     * Load a flag and assert the caller owns its secret.
-     *
-     * @param string $flagId The flag UUID
-     * @param string $userId The caller
-     *
-     * @return RotationFlag
-     *
-     * @throws InvalidArgumentException On not found / foreign owner
-     */
-    private function loadOwnedFlag(string $flagId, string $userId): RotationFlag
-    {
-        try {
-            $flagRow = $this->flagMapper->findById($flagId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException('Flag not found');
-        }
-
-        try {
-            $secret = $this->secretMapper->findById($flagRow->getSecretId());
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException('Flag not found');
-        }
-
-        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-            throw new InvalidArgumentException('Flag not found');
-        }
-
-        return $flagRow;
-    }//end loadOwnedFlag()
 
     /**
      * Dispatch an audit event (identifiers only).
