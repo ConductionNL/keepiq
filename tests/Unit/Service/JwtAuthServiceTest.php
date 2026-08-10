@@ -29,6 +29,8 @@ use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Service\ApplicationJwkResolver;
+use OCA\Doriath\Service\JwtAssertionVerifier;
 use OCA\Doriath\Service\JwtAuthService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\ICache;
@@ -111,9 +113,9 @@ class JwtAuthServiceTest extends TestCase
 
         $this->service = new JwtAuthService(
             applicationMapper: $this->applicationMapper,
-            suiteMapper: $this->suiteMapper,
             cacheFactory: $this->cacheFactory,
-            logger: $this->logger,
+            verifier: new JwtAssertionVerifier(logger: $this->logger),
+            keyResolver: new ApplicationJwkResolver(suiteMapper: $this->suiteMapper),
         );
     }//end setUp()
 

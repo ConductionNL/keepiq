@@ -25,36 +25,26 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
-use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Core\JWK;
-use Jose\Component\Signature\Algorithm\ES256;
-use Jose\Component\Signature\Algorithm\RS256;
-use Jose\Component\Signature\JWS;
-use Jose\Component\Signature\JWSVerifier;
-use Jose\Component\Signature\Serializer\CompactSerializer;
-use Jose\Component\Signature\Serializer\JWSSerializerManager;
 use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Support\JwkFactoryAdapter;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ICacheFactory;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
-use Throwable;
 
 /**
  * Implements the JWT-Bearer "assertion -> access_token" exchange that
  * powers the `/api/v1/token` endpoint plus the access-token validation
  * helper consumed by JwtAuthMiddleware.
  *
- * Algorithm priority is RS256 (primary, mandatory for production); ES256
- * is supported as a fallback when the application's certificate carries
- * an EC public key.
+ * The JOSE work (deserialising, claim vetting, signature verification)
+ * lives in JwtAssertionVerifier and the issuer's verification key comes
+ * from ApplicationJwkResolver; what remains here is the exchange policy
+ * itself: issuer resolution, jti replay protection, opaque access-token
+ * minting and validation.
  */
 class JwtAuthService
 {
@@ -98,24 +88,22 @@ class JwtAuthService
     /**
      * Constructor for JwtAuthService.
      *
-     * @param ApplicationMapper     $applicationMapper The application mapper
-     * @param EncryptionSuiteMapper $suiteMapper       The encryption-suite mapper
-     * @param ICacheFactory         $cacheFactory      The cache factory
-     * @param LoggerInterface       $logger            The logger
-     * @param IEventDispatcher|null $eventDispatcher   The event dispatcher
-     * @param AuditEventFactory     $auditEvents       The audit-event factory
-     * @param JwkFactoryAdapter     $jwkFactory        The JWK factory
+     * @param ApplicationMapper      $applicationMapper The application mapper
+     * @param ICacheFactory          $cacheFactory      The cache factory
+     * @param JwtAssertionVerifier   $verifier          The JOSE assertion verifier
+     * @param ApplicationJwkResolver $keyResolver       The issuer key resolver
+     * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
+     * @param AuditEventFactory      $auditEvents       The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private ApplicationMapper $applicationMapper,
-        private EncryptionSuiteMapper $suiteMapper,
         private ICacheFactory $cacheFactory,
-        private LoggerInterface $logger,
+        private JwtAssertionVerifier $verifier,
+        private ApplicationJwkResolver $keyResolver,
         private ?IEventDispatcher $eventDispatcher=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
-        private JwkFactoryAdapter $jwkFactory=new JwkFactoryAdapter(),
     ) {
     }//end __construct()
 
@@ -158,9 +146,7 @@ class JwtAuthService
             throw new RuntimeException(message: 'Assertion is empty');
         }
 
-        $jws    = $this->deserializeAssertion(assertion: $assertion);
-        $claims = $this->readAssertionClaims(jws: $jws);
-        $this->assertClaimsAcceptable(claims: $claims);
+        $claims = $this->verifier->readAcceptableClaims(assertion: $assertion);
 
         $jtiCache = $this->cacheFactory->createDistributed(self::JTI_CACHE_NS);
         $jti      = (string) $claims['jti'];
@@ -169,112 +155,17 @@ class JwtAuthService
         }
 
         $application = $this->loadActiveIssuer(issuer: (string) $claims['iss']);
-        $jwk         = $this->loadIssuerKey(application: $application);
 
-        // RS256 primary, ES256 fallback.
-        $algorithmManager = new AlgorithmManager([new RS256(), new ES256()]);
-        $verifier         = new JWSVerifier($algorithmManager);
-
-        if ($verifier->verifyWithKey($jws, $jwk, 0) === false) {
-            throw new RuntimeException(message: 'Assertion signature verification failed');
-        }
+        $this->verifier->verifySignature(
+            assertion: $assertion,
+            jwk: $this->keyResolver->forApplication(application: $application)
+        );
 
         // Store jti to prevent replay during max assertion lifetime.
         $jtiCache->set($jti, true, self::ACCESS_TOKEN_TTL);
 
         return $this->issueAccessToken(application: $application);
     }//end exchangeAssertion()
-
-    /**
-     * Deserialize a Compact-Serialized JWS, or reject it as malformed.
-     *
-     * @param string $assertion The JWS compact serialization
-     *
-     * @return JWS
-     *
-     * @throws RuntimeException When the assertion cannot be deserialized.
-     */
-    private function deserializeAssertion(string $assertion): JWS
-    {
-        $serializerManager = new JWSSerializerManager([new CompactSerializer()]);
-        try {
-            return $serializerManager->unserialize($assertion);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'JwtAuthService: failed to deserialize assertion ('.$e->getMessage().')',
-                ['app' => 'doriath']
-            );
-            throw new RuntimeException(message: 'Invalid assertion format');
-        }
-    }//end deserializeAssertion()
-
-    /**
-     * Decode the assertion payload and assert every required claim is present.
-     *
-     * @param JWS $jws The deserialized assertion
-     *
-     * @return array<string,mixed> The decoded claim set
-     *
-     * @throws RuntimeException When the payload is absent, not a JSON object,
-     *                          or a required claim is missing.
-     */
-    private function readAssertionClaims(JWS $jws): array
-    {
-        $payloadRaw = $jws->getPayload();
-        if ($payloadRaw === null) {
-            throw new RuntimeException(message: 'Assertion has no payload');
-        }
-
-        $claims = json_decode($payloadRaw, true);
-        if (is_array($claims) === false) {
-            throw new RuntimeException(message: 'Assertion payload is not a JSON object');
-        }
-
-        // Required claims.
-        foreach (['iss', 'aud', 'exp', 'iat', 'jti'] as $required) {
-            if (array_key_exists($required, $claims) === false) {
-                throw new RuntimeException(message: 'Missing required claim: '.$required);
-            }
-        }
-
-        return $claims;
-    }//end readAssertionClaims()
-
-    /**
-     * Audience, expiry, issued-at and lifetime checks on a decoded claim set.
-     *
-     * @param array<string,mixed> $claims The decoded claim set
-     *
-     * @return void
-     *
-     * @throws RuntimeException When any claim is unacceptable.
-     */
-    private function assertClaimsAcceptable(array $claims): void
-    {
-        $now = time();
-
-        if ((string) $claims['aud'] !== self::EXPECTED_AUDIENCE) {
-            throw new RuntimeException(message: 'Wrong audience');
-        }
-
-        if ((int) $claims['exp'] <= $now) {
-            throw new RuntimeException(message: 'Assertion expired');
-        }
-
-        if ((int) $claims['iat'] > ($now + self::CLOCK_SKEW_SECONDS)) {
-            throw new RuntimeException(message: 'Assertion iat in future');
-        }
-
-        // Bound the assertion lifetime to the documented maximum so a
-        // consumer cannot mint a long-lived signed assertion that would
-        // sit replayable in the jti window for hours (secret-store-api D7).
-        if (((int) $claims['exp'] - (int) $claims['iat']) > self::ACCESS_TOKEN_TTL) {
-            throw new RuntimeException(
-                message: 'Assertion lifetime exceeds the maximum of '
-                .self::ACCESS_TOKEN_TTL.' seconds'
-            );
-        }
-    }//end assertClaimsAcceptable()
 
     /**
      * Resolve the `iss` claim to an active registered application.
@@ -299,36 +190,6 @@ class JwtAuthService
 
         return $application;
     }//end loadActiveIssuer()
-
-    /**
-     * The verification key of an application, taken from the certificate of
-     * its active encryption suite.
-     *
-     * @param Application $application The issuing application
-     *
-     * @return JWK
-     *
-     * @throws RuntimeException When the application has no active suite or
-     *                          no usable certificate.
-     */
-    private function loadIssuerKey(Application $application): JWK
-    {
-        try {
-            $suite = $this->suiteMapper->findActiveByOwner(
-                ownerType: 'application',
-                ownerId: $application->getId()
-            );
-        } catch (DoesNotExistException) {
-            throw new RuntimeException(message: 'No active encryption suite for application');
-        }
-
-        $certificate = $suite->getCertificate();
-        if ($certificate === null || $certificate === '') {
-            throw new RuntimeException(message: 'Application has no certificate');
-        }
-
-        return $this->buildJwkFromCertificate(pemCertificate: $certificate);
-    }//end loadIssuerKey()
 
     /**
      * Mint and cache an opaque access token bound to the application id.
@@ -395,36 +256,4 @@ class JwtAuthService
 
         return $application;
     }//end validateAccessToken()
-
-    /**
-     * Build a JWK from a PEM-encoded X.509 certificate. Supports both
-     * RSA (RS256) and EC (ES256) public keys.
-     *
-     * @param string $pemCertificate The PEM-encoded certificate
-     *
-     * @return JWK
-     *
-     * @throws RuntimeException When the certificate cannot be parsed or
-     *                          the public key is unsupported.
-     */
-    private function buildJwkFromCertificate(string $pemCertificate): JWK
-    {
-        $resource = openssl_pkey_get_public($pemCertificate);
-        if ($resource === false) {
-            throw new RuntimeException(message: 'Unable to extract public key from certificate');
-        }
-
-        $details = openssl_pkey_get_details($resource);
-        if (is_array($details) === false || array_key_exists('key', $details) === false) {
-            throw new RuntimeException(message: 'Unable to read public-key details');
-        }
-
-        $publicKeyPem = (string) $details['key'];
-
-        try {
-            return $this->jwkFactory->createFromKey($publicKeyPem);
-        } catch (Throwable $e) {
-            throw new RuntimeException(message: 'Unsupported public key: '.$e->getMessage());
-        }
-    }//end buildJwkFromCertificate()
 }//end class

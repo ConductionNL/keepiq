@@ -30,8 +30,9 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretType;
 use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Service\CertificateAuthorityService;
+use OCA\Doriath\Service\CertificateIssuanceService;
 use OCA\Doriath\Service\CertificateLifecycleService;
+use OCA\Doriath\Service\CertificateMetadataService;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -54,7 +55,7 @@ class CertificateLifecycleServiceTest extends TestCase
 
     private SecretService&MockObject $secretService;
 
-    private CertificateAuthorityService&MockObject $caService;
+    private CertificateIssuanceService&MockObject $issuanceService;
 
     /**
      * A self-signed PEM generated once per test run for server-parse
@@ -72,21 +73,25 @@ class CertificateLifecycleServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->metadataMapper = $this->createMock(originalClassName: CertificateMetadataMapper::class);
-        $this->secretMapper   = $this->createMock(originalClassName: SecretMapper::class);
-        $this->typeMapper     = $this->createMock(originalClassName: SecretTypeMapper::class);
-        $this->suiteMapper    = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
-        $this->secretService  = $this->createMock(originalClassName: SecretService::class);
-        $this->caService      = $this->createMock(originalClassName: CertificateAuthorityService::class);
+        $this->metadataMapper  = $this->createMock(originalClassName: CertificateMetadataMapper::class);
+        $this->secretMapper    = $this->createMock(originalClassName: SecretMapper::class);
+        $this->typeMapper      = $this->createMock(originalClassName: SecretTypeMapper::class);
+        $this->suiteMapper     = $this->createMock(originalClassName: EncryptionSuiteMapper::class);
+        $this->secretService   = $this->createMock(originalClassName: SecretService::class);
+        $this->issuanceService = $this->createMock(originalClassName: CertificateIssuanceService::class);
 
         $this->service = new CertificateLifecycleService(
             metadataMapper: $this->metadataMapper,
             secretMapper: $this->secretMapper,
-            typeMapper: $this->typeMapper,
             suiteMapper: $this->suiteMapper,
             caMapper: $this->createMock(originalClassName: CACertificateMapper::class),
-            secretService: $this->secretService,
-            caService: $this->caService,
+            metadataService: new CertificateMetadataService(
+                metadataMapper: $this->metadataMapper,
+                secretMapper: $this->secretMapper,
+                typeMapper: $this->typeMapper,
+                secretService: $this->secretService,
+            ),
+            issuanceService: $this->issuanceService,
             eventDispatcher: null,
         );
 
@@ -272,7 +277,7 @@ class CertificateLifecycleServiceTest extends TestCase
         $suite->setOwnerType('user');
         $suite->setOwnerId('alice');
         $this->suiteMapper->method('findById')->willReturn($suite);
-        $this->caService->expects($this->never())->method('reissueSuiteCertificate');
+        $this->issuanceService->expects($this->never())->method('reissueSuiteCertificate');
 
         $this->expectException(InvalidArgumentException::class);
         $this->service->reissueSuite(suiteId: 'suite-1', userId: 'mallory', isAdmin: false);
@@ -291,7 +296,7 @@ class CertificateLifecycleServiceTest extends TestCase
         $suite->setOwnerType('user');
         $suite->setOwnerId('alice');
         $this->suiteMapper->method('findById')->willReturn($suite);
-        $this->caService->method('reissueSuiteCertificate')->willReturn(false);
+        $this->issuanceService->method('reissueSuiteCertificate')->willReturn(false);
 
         $this->expectException(\RuntimeException::class);
         $this->service->reissueSuite(suiteId: 'suite-1', userId: 'alice', isAdmin: false);
@@ -311,7 +316,7 @@ class CertificateLifecycleServiceTest extends TestCase
         $suite->setOwnerId('alice');
         $suite->setCertificate($this->pem);
         $this->suiteMapper->method('findById')->willReturn($suite);
-        $this->caService->expects($this->once())->method('reissueSuiteCertificate')->willReturn(true);
+        $this->issuanceService->expects($this->once())->method('reissueSuiteCertificate')->willReturn(true);
 
         $row = $this->service->reissueSuite(suiteId: 'suite-1', userId: 'alice', isAdmin: false);
 

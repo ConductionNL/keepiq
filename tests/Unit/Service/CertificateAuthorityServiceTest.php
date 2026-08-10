@@ -25,6 +25,9 @@ use OCA\Doriath\Db\CACertificateMapper;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Service\CertificateAuthorityService;
+use OCA\Doriath\Service\CertificateAuthorityStatusService;
+use OCA\Doriath\Service\CertificateIssuanceService;
+use OCA\Doriath\Service\X509CertificateAssembler;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
@@ -43,6 +46,13 @@ class CertificateAuthorityServiceTest extends TestCase
      * @var CertificateAuthorityService
      */
     private CertificateAuthorityService $service;
+
+    /**
+     * The real issuance collaborator the service forwards signing to.
+     *
+     * @var CertificateIssuanceService
+     */
+    private CertificateIssuanceService $issuance;
 
     /**
      * The mocked CA certificate mapper.
@@ -88,12 +98,25 @@ class CertificateAuthorityServiceTest extends TestCase
         $this->crypto->method('encrypt')->willReturnCallback(fn ($v) => 'enc:'.$v);
         $this->crypto->method('decrypt')->willReturnCallback(fn ($v) => substr($v, 4));
 
-        $this->service = new CertificateAuthorityService(
+        $this->issuance = new CertificateIssuanceService(
             caCertificateMapper: $this->caCertMapper,
             suiteMapper: $this->suiteMapper,
+            crypto: $this->crypto,
+            logger: $logger,
+            assembler: new X509CertificateAssembler(logger: $logger),
+        );
+
+        $this->service = new CertificateAuthorityService(
+            caCertificateMapper: $this->caCertMapper,
             appConfig: $this->appConfig,
             crypto: $this->crypto,
             logger: $logger,
+            issuanceService: $this->issuance,
+            statusService: new CertificateAuthorityStatusService(
+                caCertificateMapper: $this->caCertMapper,
+                suiteMapper: $this->suiteMapper,
+                appConfig: $this->appConfig,
+            ),
         );
     }//end setUp()
 
@@ -926,7 +949,7 @@ class CertificateAuthorityServiceTest extends TestCase
         $suite->setCertificate($oldSuiteCertPem);
         $this->suiteMapper->expects($this->once())->method('update');
 
-        $result = $this->service->reissueSuiteCertificate(suite: $suite);
+        $result = $this->issuance->reissueSuiteCertificate(suite: $suite);
 
         $this->assertTrue($result, 're-issue must succeed with a real intermediate');
         $newCertPem = $suite->getCertificate();
