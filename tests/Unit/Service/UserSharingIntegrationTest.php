@@ -49,6 +49,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Exception\NotFoundException;
+use OCA\Doriath\Service\DelegationAuthorizer;
 use OCA\Doriath\Service\DelegationService;
 use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
@@ -269,7 +270,7 @@ class UserSharingIntegrationTest extends TestCase
 
         $service = new DelegationService(
             mapper: $mapper,
-            secretMapper: $secretMapper,
+            authorizer: new DelegationAuthorizer(secretMapper: $secretMapper),
         );
 
         $secret = $this->makeSecret('s-1', 'alice');
@@ -313,15 +314,17 @@ class UserSharingIntegrationTest extends TestCase
 
         $service = new DelegationService(
             mapper: $mapper,
-            secretMapper: $secretMapper,
-            shareTargetMapper: $shareTargetMapper,
-            groupManager: $groupManager,
+            authorizer: new DelegationAuthorizer(
+                secretMapper: $secretMapper,
+                shareTargetMapper: $shareTargetMapper,
+                groupManager: $groupManager,
+            ),
         );
 
         $secret = $this->makeSecret('s-1', 'alice');
         $secretMapper->method('findById')->willReturn($secret);
         $groupManager->method('isInGroup')
-            ->with('mallory', DelegationService::VAULT_ADMIN_GROUP)
+            ->with('mallory', DelegationAuthorizer::VAULT_ADMIN_GROUP)
             ->willReturn(true);
         $shareTargetMapper->method('findBySourceSecretAndTargetUser')
             ->willReturn(new ShareTarget());

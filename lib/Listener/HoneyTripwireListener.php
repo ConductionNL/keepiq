@@ -30,7 +30,7 @@ use OCA\Doriath\Db\LinkShareMapper;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Service\HoneyCredentialService;
+use OCA\Doriath\Service\HoneyTripwireService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -48,16 +48,16 @@ class HoneyTripwireListener implements IEventListener
     /**
      * Constructor for HoneyTripwireListener.
      *
-     * @param HoneyCredentialService $honeyService      The honey service
-     * @param LinkShareMapper        $linkShareMapper   Link → secret resolution
-     * @param ShareTargetMapper      $shareTargetMapper Copy → source resolution
-     * @param IRequest               $request           IP/user-agent source
-     * @param LoggerInterface        $logger            The logger
+     * @param HoneyTripwireService $honeyService      The honey tripwire service
+     * @param LinkShareMapper      $linkShareMapper   Link → secret resolution
+     * @param ShareTargetMapper    $shareTargetMapper Copy → source resolution
+     * @param IRequest             $request           IP/user-agent source
+     * @param LoggerInterface      $logger            The logger
      *
      * @return void
      */
     public function __construct(
-        private HoneyCredentialService $honeyService,
+        private HoneyTripwireService $honeyService,
         private LinkShareMapper $linkShareMapper,
         private ShareTargetMapper $shareTargetMapper,
         private IRequest $request,
