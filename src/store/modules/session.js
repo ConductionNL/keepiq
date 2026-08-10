@@ -121,7 +121,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {Uint8Array} rawUnlockKey The recovered raw vault unlock key.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/passkey-vault-login/specs/passkey-vault-login/spec.md#requirement-passkey-unlock
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 		 */
 		async unlockWithRawKey(rawUnlockKey) {
 			const response = await axios.get(generateUrl('/apps/doriath/api/v1/suites'))

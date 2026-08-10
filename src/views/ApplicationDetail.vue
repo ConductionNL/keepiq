@@ -117,6 +117,11 @@
 			:application-name="application?.name"
 			@close="closeWriteDialog"
 			@written="onSecretWritten" />
+
+		<ApplicationDeleteDialog v-if="deleteDialogOpen"
+			:open="deleteDialogOpen"
+			@close="deleteDialogOpen = false"
+			@confirm="performDelete" />
 	</div>
 </template>
 
@@ -127,7 +132,8 @@ import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue
 import { useApplicationStore } from '../store/modules/application.js'
 import ApplicationSecretsPanel from '../components/application/ApplicationSecretsPanel.vue'
 import ApplicationLeasesPanel from '../components/application/ApplicationLeasesPanel.vue'
-import WriteSecretForAppDialog from '../components/application/WriteSecretForAppDialog.vue'
+import WriteSecretForAppDialog from '../dialogs/WriteSecretForAppDialog.vue'
+import ApplicationDeleteDialog from '../dialogs/ApplicationDeleteDialog.vue'
 
 export default {
 	name: 'ApplicationDetail',
@@ -142,6 +148,7 @@ export default {
 		ApplicationSecretsPanel,
 		ApplicationLeasesPanel,
 		WriteSecretForAppDialog,
+		ApplicationDeleteDialog,
 	},
 
 	props: {
@@ -158,6 +165,7 @@ export default {
 			suiteLoading: false,
 			certificate: '',
 			writeDialogOpen: false,
+			deleteDialogOpen: false,
 		}
 	},
 
@@ -264,11 +272,22 @@ export default {
 			})
 		},
 
-		async confirmDelete() {
-			// eslint-disable-next-line no-alert
-			if (typeof window !== 'undefined' && !window.confirm(this.t('doriath', 'Delete this application? This cascades to its secrets.'))) {
-				return
-			}
+		/**
+		 * Open the confirmation dialog. The delete itself is performDelete().
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+		 */
+		confirmDelete() {
+			this.deleteDialogOpen = true
+		},
+
+		/**
+		 * Perform the delete once the user has confirmed in the dialog.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+		 */
+		async performDelete() {
+			this.deleteDialogOpen = false
 			try {
 				await this.store.deleteApplication(this.application.id)
 				if (this.$router) {

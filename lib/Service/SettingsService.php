@@ -40,12 +40,44 @@ class SettingsService
 {
 
     /**
-     * Configuration keys managed by this service.
+     * Configuration keys managed by this service, mapped to the value
+     * `getSettings()` reports when the key has never been written.
      *
-     * @var array<string>
+     * This map is a WHITELIST on both directions: `updateSettings()` writes
+     * only keys present here, and `getSettings()` reads back only keys
+     * present here. A key the settings UI posts that is missing from this
+     * map is discarded silently while the endpoint still answers
+     * `{"success": true}` — which is exactly how the two master-password
+     * floors went unpersisted from the day the panel shipped (#192).
+     *
+     * The `master_password_*` defaults deliberately match
+     * `Repair\InitializeSettings::DEFAULT_CONFIG`, so a vault whose repair
+     * step has not run still reports the real floor instead of an empty
+     * string that the UI would parse as `NaN`.
+     *
+     * @var array<string,string> key => default value
      */
     private const CONFIG_KEYS = [
-        'register',
+        'register'                   => '',
+        'master_password_min_length' => '12',
+        'master_password_min_score'  => '3',
+    ];
+
+    /**
+     * Inclusive [min, max] bounds for the numeric keys of CONFIG_KEYS.
+     *
+     * The admin panel clamps to these ranges in the browser, which means an
+     * out-of-range value can only ever arrive from a caller that bypassed
+     * the UI. Storing it unchecked would let an administrator lower the
+     * master-password floor below the app minimum through the API alone, so
+     * the bound is enforced here as well — the browser clamp is a
+     * convenience, this is the rule.
+     *
+     * @var array<string,array{0:int,1:int}>
+     */
+    private const CONFIG_KEY_BOUNDS = [
+        'master_password_min_length' => [12, 20],
+        'master_password_min_score'  => [3, 4],
     ];
 
     /**
@@ -559,6 +591,17 @@ class SettingsService
      * generator floor, score floor, HIBP block, and exempt types only
      * (org-password-policies §1.3).
      *
+     * The two `master_password_*` entries are the floors the admin panel
+     * writes through `updateSettings()`. They are republished here because
+     * this is the endpoint every authenticated user may read, and
+     * `PasswordStrengthMeter` — which gates the master-password forms — has
+     * no other source for them. Without this the admin panel would persist
+     * a value that nothing ever consults.
+     *
+     * They are read as strings and cast, matching how `updateSettings()` and
+     * `Repair\InitializeSettings` write them; `getValueInt()` on a
+     * string-typed app-config key raises a type conflict in Nextcloud.
+     *
      * @return array<string,mixed>
      *
      * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
@@ -568,15 +611,25 @@ class SettingsService
         $appId = Application::APP_ID;
 
         return [
-            'policy_enabled'           => $this->appConfig->getValueBool($appId, 'policy_enabled', false),
-            'generator_min_length'     => $this->appConfig->getValueInt($appId, 'generator_min_length', 12),
-            'generator_require_upper'  => $this->appConfig->getValueBool($appId, 'generator_require_upper', false),
-            'generator_require_lower'  => $this->appConfig->getValueBool($appId, 'generator_require_lower', false),
-            'generator_require_digit'  => $this->appConfig->getValueBool($appId, 'generator_require_digit', false),
-            'generator_require_symbol' => $this->appConfig->getValueBool($appId, 'generator_require_symbol', false),
-            'min_zxcvbn_score'         => $this->appConfig->getValueInt($appId, 'min_zxcvbn_score', 0),
-            'block_on_hibp_hit'        => $this->appConfig->getValueBool($appId, 'block_on_hibp_hit', false),
-            'policy_exempt_types'      => json_decode(
+            'master_password_min_length' => (int) $this->appConfig->getValueString(
+                $appId,
+                'master_password_min_length',
+                self::CONFIG_KEYS['master_password_min_length']
+            ),
+            'master_password_min_score'  => (int) $this->appConfig->getValueString(
+                $appId,
+                'master_password_min_score',
+                self::CONFIG_KEYS['master_password_min_score']
+            ),
+            'policy_enabled'             => $this->appConfig->getValueBool($appId, 'policy_enabled', false),
+            'generator_min_length'       => $this->appConfig->getValueInt($appId, 'generator_min_length', 12),
+            'generator_require_upper'    => $this->appConfig->getValueBool($appId, 'generator_require_upper', false),
+            'generator_require_lower'    => $this->appConfig->getValueBool($appId, 'generator_require_lower', false),
+            'generator_require_digit'    => $this->appConfig->getValueBool($appId, 'generator_require_digit', false),
+            'generator_require_symbol'   => $this->appConfig->getValueBool($appId, 'generator_require_symbol', false),
+            'min_zxcvbn_score'           => $this->appConfig->getValueInt($appId, 'min_zxcvbn_score', 0),
+            'block_on_hibp_hit'          => $this->appConfig->getValueBool($appId, 'block_on_hibp_hit', false),
+            'policy_exempt_types'        => json_decode(
                 $this->appConfig->getValueString($appId, 'policy_exempt_types', '["note","ssh_key","certificate","passkey","card","identity"]'),
                 true
             ),
@@ -677,8 +730,8 @@ class SettingsService
     public function getSettings(): array
     {
         $settings = [];
-        foreach (self::CONFIG_KEYS as $key) {
-            $settings[$key] = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+        foreach (self::CONFIG_KEYS as $key => $default) {
+            $settings[$key] = $this->appConfig->getValueString(Application::APP_ID, $key, $default);
         }
 
         $user    = $this->userSession->getUser();
@@ -700,18 +753,57 @@ class SettingsService
      *
      * @return array<string,mixed> The updated settings
      *
+     * @throws InvalidArgumentException When a bounded key carries a value
+     *                                  outside its CONFIG_KEY_BOUNDS range.
+     *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-5
      */
     public function updateSettings(array $data): array
     {
-        foreach (self::CONFIG_KEYS as $key) {
-            if (isset($data[$key]) === true) {
-                $this->appConfig->setValueString(Application::APP_ID, $key, (string) $data[$key]);
+        foreach (array_keys(self::CONFIG_KEYS) as $key) {
+            if (isset($data[$key]) === false) {
+                continue;
             }
+
+            $this->appConfig->setValueString(
+                Application::APP_ID,
+                $key,
+                $this->boundedConfigValue(key: $key, value: $data[$key])
+            );
         }
 
         return $this->getSettings();
     }//end updateSettings()
+
+    /**
+     * Coerce one CONFIG_KEYS value to the string that gets stored, enforcing
+     * the key's bounds when it has any.
+     *
+     * @param string $key   The CONFIG_KEYS key being written
+     * @param mixed  $value The submitted value
+     *
+     * @return string The value to store
+     *
+     * @throws InvalidArgumentException When a bounded key is non-integer or
+     *                                  outside its inclusive range.
+     */
+    private function boundedConfigValue(string $key, mixed $value): string
+    {
+        if (isset(self::CONFIG_KEY_BOUNDS[$key]) === false) {
+            return (string) $value;
+        }
+
+        [$min, $max] = self::CONFIG_KEY_BOUNDS[$key];
+
+        $number = filter_var($value, FILTER_VALIDATE_INT);
+        if ($number === false || $number < $min || $number > $max) {
+            throw new InvalidArgumentException(
+                message: $key.' must be a whole number between '.$min.' and '.$max
+            );
+        }
+
+        return (string) $number;
+    }//end boundedConfigValue()
 
     /**
      * Load and parse the doriath_register.json configuration file.

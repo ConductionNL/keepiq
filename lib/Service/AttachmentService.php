@@ -131,7 +131,9 @@ class AttachmentService
      *
      * @throws InvalidArgumentException On validation/authorization failure
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-client-side-encryption-and-upload
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-operations-are-auditable
      */
     public function upload(
         string $secretId,
@@ -221,7 +223,7 @@ class AttachmentService
      *
      * @return array<int,array<string,mixed>>
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-listing-and-download
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
      */
     public function listForSecret(string $secretId, string $userId): array
     {
@@ -255,7 +257,7 @@ class AttachmentService
      *
      * @throws InvalidArgumentException When not found / no grant held
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-listing-and-download
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
      */
     public function downloadBlob(string $attachmentId, string $userId): string
     {
@@ -306,7 +308,7 @@ class AttachmentService
      *
      * @throws InvalidArgumentException On validation/authorization failure
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-sharing-follows-the-secret
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
      */
     public function addGrant(
         string $attachmentId,
@@ -362,7 +364,8 @@ class AttachmentService
      *
      * @throws InvalidArgumentException On not found / not authorized
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-deletion-cascades-and-quota
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-deletion-cascade
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-operations-are-auditable
      */
     public function delete(string $attachmentId, string $userId): void
     {
@@ -401,7 +404,7 @@ class AttachmentService
      *
      * @return int Attachments removed
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-deletion-cascades-and-quota
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-deletion-cascade
      */
     public function deleteForSecret(string $sourceSecretId): int
     {
@@ -428,7 +431,7 @@ class AttachmentService
      *
      * @return int Grants removed
      *
-     * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-sharing-follows-the-secret
+     * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-deletion-cascade
      */
     public function deleteGrantsForSecretCopy(string $copySecretId): int
     {

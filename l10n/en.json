@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Take over as vault administrator": "Take over as vault administrator",
+        "Select {name}": "Select {name}",
+        "Could not load the password policy.": "Could not load the password policy.",
+        "Could not save the password policy.": "Could not save the password policy.",
         "Import": "Import",
         "Import secrets": "Import secrets",
         "Unlock the vault before importing secrets.": "Unlock the vault before importing secrets.",

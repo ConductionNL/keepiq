@@ -64,7 +64,7 @@ class EphemeralSendAccessController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-anonymous-access
+     * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
      */
     #[PublicPage]
     #[NoCSRFRequired]

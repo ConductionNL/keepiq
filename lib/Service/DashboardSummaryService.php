@@ -104,7 +104,8 @@ class DashboardSummaryService
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/implement-dashboard-settings/specs/dashboard-settings/spec.md#requirement-the-system-provides-an-aggregated-dashboard-summary
+     * @spec openspec/specs/dashboard/spec.md#requirement-vault-summary-cards-mvp
+     * @spec openspec/specs/dashboard/spec.md#requirement-pending-applications-counter-admin-mvp
      */
     public function fetchSummary(string $userId, bool $isAdmin): array
     {

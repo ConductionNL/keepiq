@@ -6,7 +6,8 @@
  * selection (client-only, cleared on lock, never persisted) and the
  * shared chunked runner with cancel, per-item report, and retry-failed.
  *
- * @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-chunked-runner
+ * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
+ * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
  */
 
 import { defineStore } from 'pinia'

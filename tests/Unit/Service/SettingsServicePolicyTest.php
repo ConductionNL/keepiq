@@ -180,6 +180,14 @@ class SettingsServicePolicyTest extends TestCase
     /**
      * §1.3: the read-only policy exposes exactly the floor + exempt types.
      *
+     * The two `master_password_*` entries joined this list in #192. They are
+     * floors in the same sense as the generator keys — the numbers the write
+     * dialogs must enforce — and this endpoint is the only one every
+     * authenticated user may read, so `PasswordStrengthMeter` has no other
+     * source for them. The list stays exhaustive on purpose: this assertion
+     * exists to catch an admin-only or secret-bearing key leaking into a
+     * response that any logged-in user can fetch.
+     *
      * @return void
      */
     public function testGetPolicyExposesFloorOnly(): void
@@ -188,6 +196,8 @@ class SettingsServicePolicyTest extends TestCase
 
         $this->assertSame(
             [
+                'master_password_min_length',
+                'master_password_min_score',
                 'policy_enabled',
                 'generator_min_length',
                 'generator_require_upper',

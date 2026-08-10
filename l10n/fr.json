@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Take over as vault administrator": "Reprendre en tant qu'administrateur du coffre",
+        "Select {name}": "Sélectionner {name}",
+        "Could not load the password policy.": "Impossible de charger la politique de mots de passe.",
+        "Could not save the password policy.": "Impossible d'enregistrer la politique de mots de passe.",
         "Doriath settings": "Paramètres de Doriath",
         "Configure the app settings": "Configurer les paramètres de l'application",
         "Configuration": "Configuration",

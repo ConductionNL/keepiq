@@ -7,7 +7,7 @@
   server-authoritative generator floor (length + required classes), with
   the exempt-type picker.
 
-  @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-policy-storage-and-validation
+  @spec openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy
 -->
 <template>
 	<CnSettingsSection

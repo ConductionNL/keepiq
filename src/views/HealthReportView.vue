@@ -172,7 +172,7 @@ export default {
 		 * Open rotation flags as health findings (deep-link to secret).
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
 		 */
 		rotationFindings() {
 			return this.rotation.flags.map((flag) => ({
@@ -240,7 +240,7 @@ export default {
 		 * ONLY leave the client (no verdicts, counts, or digests).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
 		 */
 		async flagBreached() {
 			try {

@@ -77,7 +77,7 @@ class HoneyTripwireListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md#requirement-central-tripwire
+     * @spec openspec/specs/honey-credentials/spec.md#requirement-any-access-to-a-honey-secret-raises-a-high-severity-alert
      */
     public function handle(Event $event): void
     {

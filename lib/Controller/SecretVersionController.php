@@ -76,7 +76,7 @@ class SecretVersionController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-listing-and-viewing
+     * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
      */
     #[NoAdminRequired]
     public function index(string $secretId): JSONResponse
@@ -103,7 +103,7 @@ class SecretVersionController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-listing-and-viewing
+     * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
      */
     #[NoAdminRequired]
     public function show(string $id): JSONResponse
@@ -137,7 +137,7 @@ class SecretVersionController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md#requirement-restore
+     * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
      */
     #[NoAdminRequired]
     public function restore(string $id): JSONResponse

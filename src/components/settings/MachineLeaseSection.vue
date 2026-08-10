@@ -7,7 +7,7 @@
   switch. Per-application overrides live on the application via the
   lease-policy endpoint.
 
-  @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-policy
+  @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 -->
 <template>
 	<CnSettingsSection

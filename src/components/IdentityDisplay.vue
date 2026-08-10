@@ -7,7 +7,7 @@
   Renders nothing while locked — the parent only mounts this with a
   decrypted payload.
 
-  @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-masked-presentation
+  @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 -->
 <template>
 	<div v-if="payload" class="identity-display" data-testid="identity-display">

@@ -11,10 +11,21 @@
 			<li
 				v-for="secret in secrets"
 				:key="secret.id"
-				class="recent-secrets-widget__item"
-				@click="open(secret)">
-				<span class="recent-secrets-widget__icon" :data-type="secret.type" />
-				<span class="recent-secrets-widget__name">{{ secret.name }}</span>
+				class="recent-secrets-widget__item">
+				<!--
+					The row is a real <button>: a bare @click on the <li> was
+					unreachable by keyboard and announced as a plain list item.
+					Using the element that already carries the role, focus and
+					Enter/Space handling beats bolting role/tabindex/@keydown
+					onto a non-interactive tag.
+				-->
+				<button
+					type="button"
+					class="recent-secrets-widget__button"
+					@click="open(secret)">
+					<span class="recent-secrets-widget__icon" :data-type="secret.type" />
+					<span class="recent-secrets-widget__name">{{ secret.name }}</span>
+				</button>
 			</li>
 		</ul>
 	</div>
@@ -93,15 +104,35 @@ export default {
 }
 
 .recent-secrets-widget__item {
+	display: block;
+}
+
+/*
+ * The row button carries the layout the <li> used to own, and resets the
+ * default button chrome so the visual result is unchanged from before.
+ */
+.recent-secrets-widget__button {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	padding: 6px 0;
 	cursor: pointer;
+	width: 100%;
+	background: none;
+	border: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-align: left;
 }
 
-.recent-secrets-widget__item:hover {
+.recent-secrets-widget__button:hover {
 	background: var(--color-background-hover);
+}
+
+.recent-secrets-widget__button:focus-visible {
+	outline: 2px solid var(--color-primary-element);
+	outline-offset: -2px;
 }
 
 .recent-secrets-widget__icon {
