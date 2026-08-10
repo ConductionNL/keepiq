@@ -12,7 +12,7 @@
  * touches private-key material and parses only the certificate
  * structure it needs — no external ASN.1 library.
  *
- * @spec openspec/changes/certificate-lifecycle/specs/certificate-lifecycle/spec.md#requirement-client-parsed-metadata
+ * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
  */
 
 /** Common DN attribute OIDs → short labels. */

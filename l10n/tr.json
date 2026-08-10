@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Take over as vault administrator": "Kasa yöneticisi olarak devral",
+        "Select {name}": "{name} öğesini seç",
+        "Could not load the password policy.": "Parola ilkesi yüklenemedi.",
+        "Could not save the password policy.": "Parola ilkesi kaydedilemedi.",
         "Doriath settings": "Doriath ayarları",
         "Configure the app settings": "Uygulama ayarlarını yapılandır",
         "Configuration": "Yapılandırma",

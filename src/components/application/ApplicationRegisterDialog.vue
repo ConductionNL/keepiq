@@ -20,8 +20,11 @@
 		data-testid="application-register-dialog">
 		<header class="doriath-app-register-dialog__header">
 			<h3>{{ t('doriath', 'Register application') }}</h3>
-			<button type="button" data-testid="application-register-close" @click="$emit('close')">
-				×
+			<button type="button"
+				data-testid="application-register-close"
+				:aria-label="t('doriath', 'Close')"
+				@click="$emit('close')">
+				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 

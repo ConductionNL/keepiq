@@ -8,7 +8,8 @@
  * and AES-256-GCM for the envelope, matching src/crypto/envelope.js's
  * posture.
  *
- * @spec openspec/changes/passkey-vault-login/specs/passkey-vault-login/spec.md#requirement-prf-derived-unlock-key
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
  */
 
 const HKDF_INFO = new TextEncoder().encode('doriath-passkey-kek-v1')

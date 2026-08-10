@@ -64,7 +64,7 @@ class EphemeralSendController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-create-and-store-ciphertext-only
+     * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
      */
     #[NoAdminRequired]
     public function create(): JSONResponse

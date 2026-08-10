@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Take over as vault administrator": "Przejmij jako administrator sejfu",
+        "Select {name}": "Zaznacz {name}",
+        "Could not load the password policy.": "Nie można wczytać zasad haseł.",
+        "Could not save the password policy.": "Nie można zapisać zasad haseł.",
         "Doriath settings": "Ustawienia Doriath",
         "Configure the app settings": "Skonfiguruj ustawienia aplikacji",
         "Configuration": "Konfiguracja",

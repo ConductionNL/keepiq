@@ -83,7 +83,7 @@
 		},
 		{
 			"id": "UserSettings",
-			"label": "Settings",
+			"label": "Personal settings",
 			"icon": "CogOutline",
 			"action": "user-settings",
 			"section": "settings",
@@ -457,11 +457,5 @@
 			}
 		]
 	},
-	"deepLinks": [
-		{
-			"registerSlug": "doriath",
-			"schemaSlug": "example",
-			"urlTemplate": "/apps/doriath/#/examples/{uuid}"
-		}
-	]
+	"deepLinks": []
 }

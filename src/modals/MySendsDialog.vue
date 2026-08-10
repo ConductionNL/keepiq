@@ -6,7 +6,7 @@
   remaining views / expiry and one-click revoke. Metadata only — the
   ciphertext and any key material never appear here.
 
-  @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md#requirement-owner-management
+  @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 -->
 <template>
 	<NcDialog :name="t('doriath', 'My ephemeral sends')"
@@ -21,11 +21,19 @@
 			<table v-else class="my-sends__table" data-testid="my-sends-table">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'Type') }}</th>
-						<th>{{ t('doriath', 'Views left') }}</th>
-						<th>{{ t('doriath', 'Expires') }}</th>
-						<th>{{ t('doriath', 'Password') }}</th>
-						<th />
+						<th scope="col">
+							{{ t('doriath', 'Type') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Views left') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Expires') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Password') }}
+						</th>
+						<th scope="col" />
 					</tr>
 				</thead>
 				<tbody>

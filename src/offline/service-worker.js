@@ -11,7 +11,7 @@
  *
  * ⚠️ THE ONLINE PATH IS NOT INTERPOSED ON. See the fetch listener.
  *
- * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-service-worker-shell
+ * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
  */
 
 /* eslint-disable no-restricted-globals */

@@ -8,7 +8,10 @@
  * any call here. Batch-flag sends secret IDs ONLY (no breach verdicts,
  * scores, or digests ever leave the client).
  *
- * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-rotation-flags
+ * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+ * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+ * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
+ * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-proven-mark-rotated-flow
  */
 
 import { defineStore } from 'pinia'

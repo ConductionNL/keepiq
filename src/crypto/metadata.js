@@ -13,7 +13,7 @@
  * call), these helpers take an existing non-extractable AES-GCM CryptoKey.
  * The stored form is base64([12-byte IV][ciphertext+GCM tag]).
  *
- * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-metadata-encrypted-at-rest
+ * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
  */
 
 const IV_LENGTH = 12

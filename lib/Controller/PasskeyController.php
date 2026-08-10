@@ -86,7 +86,7 @@ class PasskeyController extends OCSController
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/passkey-vault-login/specs/passkey-vault-login/spec.md#requirement-passkey-management
+     * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
      */
     #[NoAdminRequired]
     public function index(): JSONResponse

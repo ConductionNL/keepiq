@@ -65,7 +65,7 @@ class PasskeyService
      *
      * @return PasskeyCredential[]
      *
-     * @spec openspec/changes/passkey-vault-login/specs/passkey-vault-login/spec.md#requirement-passkey-management
+     * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
      */
     public function listForOwner(string $uid): array
     {

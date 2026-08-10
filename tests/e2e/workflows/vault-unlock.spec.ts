@@ -63,7 +63,10 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 
 	test('all secret routes redirect to the lock screen while locked (zero-knowledge gate)', async ({ page }) => {
 		for (const route of ['secrets', 'secrets/some-id', 'folders/some-folder']) {
-			await page.goto(`/index.php/apps/doriath/${route}`, { waitUntil: 'networkidle' })
+			// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud, and this
+			// loop pays the cost three times. The lock heading is the readiness
+			// signal.
+			await page.goto(`/index.php/apps/doriath/${route}`, { waitUntil: 'domcontentloaded' })
 			await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
 			await expect(lockHeading(page)).toHaveText(/Unlock Doriath|Set up your master password/i)
 			// No unlocked content leaks through the guard.
