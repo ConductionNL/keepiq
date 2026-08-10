@@ -27,6 +27,8 @@ use OCA\Doriath\Db\SiemSinkMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Service\SiemService;
+use OCA\Doriath\Service\SiemSinkService;
+use OCA\Doriath\Service\SiemTransport;
 use OCP\Http\Client\IClientService;
 use OCP\IGroupManager;
 use OCP\Security\ICrypto;
@@ -63,15 +65,21 @@ class SiemServiceTest extends TestCase
         $this->crypto        = $this->createMock(originalClassName: ICrypto::class);
         $this->clientService = $this->createMock(originalClassName: IClientService::class);
 
+        $transport = new SiemTransport(crypto: $this->crypto, clientService: $this->clientService);
+
         $this->service = new SiemService(
             sinkMapper: $this->sinkMapper,
             queueMapper: $this->queueMapper,
-            crypto: $this->crypto,
-            clientService: $this->clientService,
+            transport: $transport,
+            sinkService: new SiemSinkService(
+                sinkMapper: $this->sinkMapper,
+                queueMapper: $this->queueMapper,
+                crypto: $this->crypto,
+                transport: $transport,
+            ),
             groupManager: $this->createMock(originalClassName: IGroupManager::class),
             notificationService: null,
             logger: new NullLogger(),
-            eventDispatcher: null,
         );
     }//end setUp()
 

@@ -3,11 +3,14 @@
 /**
  * Doriath SIEM Service
  *
- * Sink CRUD, forwarding-queue backpressure, and delivery (siem-audit-
- * export §2/§3). Forwarded payloads are rebuilt through the audit
- * whitelist so they are strict subsets of sanitized audit entries; the
- * webhook HMAC secret is ICrypto-encrypted at rest, decrypted in memory
- * only, write-only over the API.
+ * Payload building, forwarding-queue backpressure, and delivery drainage
+ * (siem-audit-export §2/§4/§5). Forwarded payloads are rebuilt through
+ * the audit whitelist so they are strict subsets of sanitized audit
+ * entries.
+ *
+ * Sink administration lives in SiemSinkService, the wire in
+ * SiemTransport, and the sink audit vocabulary in SiemAuditTrail; this
+ * class keeps the queue.
  *
  * @category Service
  * @package  OCA\Doriath\Service
@@ -27,35 +30,32 @@ namespace OCA\Doriath\Service;
 
 use DateInterval;
 use DateTime;
-use InvalidArgumentException;
 use OCA\Doriath\Db\SiemQueueItem;
 use OCA\Doriath\Db\SiemQueueItemMapper;
 use OCA\Doriath\Db\SiemSink;
 use OCA\Doriath\Db\SiemSinkMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Support\SuppressesDiagnostics;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
-use OCP\Http\Client\IClientService;
 use OCP\IGroupManager;
-use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
-use RuntimeException;
 use Throwable;
 
 /**
- * Business logic for SIEM audit export.
+ * Business logic for the SIEM forwarding queue and its drainage.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Sink CRUD + queue +
- *   two transports deliberately live in one seam.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Pre-existing suppression,
+ *   narrowed but not yet retired. Sink administration (SiemSinkService), the
+ *   wire (SiemTransport) and the sink audit vocabulary (SiemAuditTrail) have
+ *   been split out, which took the value from 22 to 17. What remains is the
+ *   queue itself: two mappers plus their two entities, the audit event it
+ *   reshapes, the transport it drains through, and the admin dead-letter
+ *   notification — plus the five sink methods this class still re-exports for
+ *   SiemSinkController. Retiring the tag needs that controller repointed at
+ *   SiemSinkService, which is outside this change.
  */
 class SiemService
 {
-    use SuppressesDiagnostics;
-
     /**
      * Retry ceiling before a row dead-letters.
      *
@@ -71,37 +71,26 @@ class SiemService
     private const BACKOFF_BASE_SECONDS = 60;
 
     /**
-     * Per-request delivery timeout in seconds.
-     *
-     * @var int
-     */
-    private const DELIVERY_TIMEOUT = 10;
-
-    /**
      * Constructor for SiemService.
      *
      * @param SiemSinkMapper           $sinkMapper          The sink mapper
      * @param SiemQueueItemMapper      $queueMapper         The queue mapper
-     * @param ICrypto                  $crypto              NC crypto (HMAC secret at rest)
-     * @param IClientService           $clientService       The HTTP client factory (webhooks)
+     * @param SiemTransport            $transport           The sink transport
+     * @param SiemSinkService          $sinkService         The sink administration service
      * @param IGroupManager            $groupManager        The group manager (admin notifications)
      * @param NotificationService|null $notificationService The notification dispatcher
      * @param LoggerInterface          $logger              The logger
-     * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
-     * @param AuditEventFactory        $auditEvents         The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private SiemSinkMapper $sinkMapper,
         private SiemQueueItemMapper $queueMapper,
-        private ICrypto $crypto,
-        private IClientService $clientService,
+        private SiemTransport $transport,
+        private SiemSinkService $sinkService,
         private IGroupManager $groupManager,
         private ?NotificationService $notificationService,
         private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
-        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
 
@@ -225,12 +214,14 @@ class SiemService
      * @param SiemQueueItem $item The queued payload
      *
      * @return bool Whether the delivery succeeded
+     *
+     * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
      */
     public function deliverOne(SiemSink $sink, SiemQueueItem $item): bool
     {
         $sink->setLastAttemptAt(new DateTime());
         try {
-            $this->deliverTo(sink: $sink, payloadJson: $item->getPayload());
+            $this->transport->deliver(sink: $sink, payloadJson: $item->getPayload());
 
             $item->setStatus('delivered');
             $this->queueMapper->update($item);
@@ -270,115 +261,6 @@ class SiemService
     }//end deliverOne()
 
     /**
-     * Send one payload over the sink's configured transport. The single
-     * place the syslog/webhook choice is made, shared by deliverOne() and
-     * testSink().
-     *
-     * @param SiemSink $sink        The target sink
-     * @param string   $payloadJson The JSON payload
-     *
-     * @return void
-     *
-     * @throws \RuntimeException On transport failure
-     */
-    private function deliverTo(SiemSink $sink, string $payloadJson): void
-    {
-        if ($sink->getType() === 'syslog') {
-            $this->deliverSyslog(sink: $sink, payloadJson: $payloadJson);
-            return;
-        }
-
-        $this->deliverWebhook(sink: $sink, payloadJson: $payloadJson);
-    }//end deliverTo()
-
-    /**
-     * RFC 5424 syslog delivery over TCP (TLS when configured, §3.1).
-     *
-     * @param SiemSink $sink        The sink (endpoint host:port)
-     * @param string   $payloadJson The JSON payload
-     *
-     * @return void
-     *
-     * @throws \RuntimeException On transport failure
-     */
-    private function deliverSyslog(SiemSink $sink, string $payloadJson): void
-    {
-        $endpoint = $sink->getEndpoint();
-        $scheme   = 'tcp://';
-        if ($sink->getTls() === true) {
-            $scheme = 'tls://';
-        }
-
-        // The stream_socket_client() call warns on an unreachable endpoint and
-        // returns false; the detail is already captured in $errstr/$errno,
-        // which the exception below re-reports.
-        $errno  = 0;
-        $errstr = '';
-        $socket = $this->withoutDiagnostics(
-            call: static function () use ($scheme, $endpoint, &$errno, &$errstr) {
-                return stream_socket_client(
-                    $scheme.$endpoint,
-                    $errno,
-                    $errstr,
-                    self::DELIVERY_TIMEOUT
-                );
-            }
-        );
-        if ($socket === false) {
-            throw new RuntimeException('syslog connect failed: '.$errstr.' ('.$errno.')');
-        }
-
-        try {
-            // RFC 5424: <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID SD MSG
-            // PRI 134 = facility 16 (local0), severity 6 (informational).
-            $message = '<134>1 '.(new DateTime())->format('c').' nextcloud doriath - - - '.$payloadJson;
-            // RFC 6587 octet-counted framing for TCP transport.
-            $frame   = strlen($message).' '.$message;
-            $written = fwrite($socket, $frame);
-            if ($written === false || $written < strlen($frame)) {
-                throw new RuntimeException('syslog write failed');
-            }
-        } finally {
-            fclose($socket);
-        }
-    }//end deliverSyslog()
-
-    /**
-     * HTTPS webhook delivery with an HMAC-SHA256 signature header
-     * (§3.2). The secret is decrypted in memory only.
-     *
-     * @param SiemSink $sink        The sink (HTTPS endpoint)
-     * @param string   $payloadJson The JSON payload
-     *
-     * @return void
-     *
-     * @throws \RuntimeException On transport failure / non-2xx
-     */
-    private function deliverWebhook(SiemSink $sink, string $payloadJson): void
-    {
-        $headers = ['Content-Type' => 'application/json'];
-        $enc     = $sink->getHmacSecretEnc();
-        if ($enc !== null && $enc !== '') {
-            $secret = $this->crypto->decrypt($enc);
-            $headers['X-Doriath-Signature'] = 'sha256='.hash_hmac('sha256', $payloadJson, $secret);
-        }
-
-        $client   = $this->clientService->newClient();
-        $response = $client->post(
-            $sink->getEndpoint(),
-            [
-                'body'    => $payloadJson,
-                'headers' => $headers,
-                'timeout' => self::DELIVERY_TIMEOUT,
-            ]
-        );
-        $status   = $response->getStatusCode();
-        if ($status < 200 || $status > 299) {
-            throw new RuntimeException('webhook responded '.$status);
-        }
-    }//end deliverWebhook()
-
-    /**
      * Create a sink (§6.1).
      *
      * @param string              $adminUid The creating admin
@@ -386,45 +268,13 @@ class SiemService
      *
      * @return SiemSink
      *
-     * @throws InvalidArgumentException On invalid parameters
+     * @throws \InvalidArgumentException On invalid parameters
+     *
+     * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
      */
     public function createSink(string $adminUid, array $params): SiemSink
     {
-        $type = (string) ($params['type'] ?? '');
-        if (in_array($type, ['syslog', 'webhook'], true) === false) {
-            throw new InvalidArgumentException('type must be syslog or webhook');
-        }
-
-        $endpoint = (string) ($params['endpoint'] ?? '');
-        if ($endpoint === '') {
-            throw new InvalidArgumentException('endpoint is required');
-        }
-
-        if ($type === 'webhook' && str_starts_with($endpoint, 'https://') === false) {
-            throw new InvalidArgumentException('webhook endpoints must be https://');
-        }
-
-        $sink = new SiemSink();
-        $sink->setId(Uuid::uuid4()->toString());
-        $sink->setName((string) ($params['name'] ?? $type));
-        $sink->setType($type);
-        $sink->setEnabled((bool) ($params['enabled'] ?? true));
-        $sink->setEndpoint($endpoint);
-        $sink->setTls((bool) ($params['tls'] ?? true));
-        $sink->setQueueCap(max(10, (int) ($params['queueCap'] ?? 1000)));
-        $sink->setCreatedBy($adminUid);
-        $sink->setCreatedAt(new DateTime());
-        $this->applySecretAndFilter(sink: $sink, params: $params);
-        $sink = $this->sinkMapper->insert($sink);
-
-        $this->dispatchAudit(
-            actorId: $adminUid,
-            eventType: AuditEventTypes::SIEM_SINK_CREATED,
-            sinkId: $sink->getId(),
-            extra: ['type' => $type],
-        );
-
-        return $sink;
+        return $this->sinkService->createSink(adminUid: $adminUid, params: $params);
     }//end createSink()
 
     /**
@@ -436,38 +286,13 @@ class SiemService
      *
      * @return SiemSink
      *
-     * @throws DoesNotExistException When the sink is missing
+     * @throws \OCP\AppFramework\Db\DoesNotExistException When the sink is missing
+     *
+     * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
      */
     public function updateSink(string $adminUid, string $sinkId, array $params): SiemSink
     {
-        $sink = $this->sinkMapper->findById($sinkId);
-        if (isset($params['name']) === true) {
-            $sink->setName((string) $params['name']);
-        }
-
-        if (isset($params['enabled']) === true) {
-            $sink->setEnabled((bool) $params['enabled']);
-        }
-
-        if (isset($params['endpoint']) === true && (string) $params['endpoint'] !== '') {
-            $sink->setEndpoint((string) $params['endpoint']);
-        }
-
-        if (isset($params['tls']) === true) {
-            $sink->setTls((bool) $params['tls']);
-        }
-
-        if (isset($params['queueCap']) === true) {
-            $sink->setQueueCap(max(10, (int) $params['queueCap']));
-        }
-
-        $this->applySecretAndFilter(sink: $sink, params: $params);
-        $sink->setUpdatedAt(new DateTime());
-        $sink = $this->sinkMapper->update($sink);
-
-        $this->dispatchAudit(actorId: $adminUid, eventType: AuditEventTypes::SIEM_SINK_UPDATED, sinkId: $sinkId);
-
-        return $sink;
+        return $this->sinkService->updateSink(adminUid: $adminUid, sinkId: $sinkId, params: $params);
     }//end updateSink()
 
     /**
@@ -478,15 +303,13 @@ class SiemService
      *
      * @return void
      *
-     * @throws DoesNotExistException When the sink is missing
+     * @throws \OCP\AppFramework\Db\DoesNotExistException When the sink is missing
+     *
+     * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
      */
     public function deleteSink(string $adminUid, string $sinkId): void
     {
-        $sink = $this->sinkMapper->findById($sinkId);
-        $this->queueMapper->deleteBySink($sinkId);
-        $this->sinkMapper->delete($sink);
-
-        $this->dispatchAudit(actorId: $adminUid, eventType: AuditEventTypes::SIEM_SINK_DELETED, sinkId: $sinkId);
+        $this->sinkService->deleteSink(adminUid: $adminUid, sinkId: $sinkId);
     }//end deleteSink()
 
     /**
@@ -497,82 +320,26 @@ class SiemService
      *
      * @return array{ok:bool, error:string|null}
      *
-     * @throws DoesNotExistException When the sink is missing
+     * @throws \OCP\AppFramework\Db\DoesNotExistException When the sink is missing
+     *
+     * @spec openspec/specs/siem-audit-export/spec.md#requirement-backpressure-and-observability
      */
     public function testSink(string $adminUid, string $sinkId): array
     {
-        $sink    = $this->sinkMapper->findById($sinkId);
-        $payload = (string) json_encode(
-            [
-                'eventType'  => 'siem.sink_tested',
-                'category'   => 'siem',
-                'actorType'  => 'user',
-                'actorId'    => $adminUid,
-                'objectType' => 'siem_sink',
-                'objectId'   => $sinkId,
-                'occurredAt' => (new DateTime())->format('c'),
-                'metadata'   => ['test' => true],
-            ]
-        );
-
-        $outcome = 'ok';
-        $error   = null;
-        try {
-            $this->deliverTo(sink: $sink, payloadJson: $payload);
-        } catch (Throwable $exception) {
-            $outcome = 'failed';
-            $error   = $exception->getMessage();
-        }
-
-        $this->dispatchAudit(
-            actorId: $adminUid,
-            eventType: AuditEventTypes::SIEM_SINK_TESTED,
-            sinkId: $sinkId,
-            extra: ['outcome' => $outcome],
-        );
-
-        return [
-            'ok'    => ($outcome === 'ok'),
-            'error' => $error,
-        ];
+        return $this->sinkService->testSink(adminUid: $adminUid, sinkId: $sinkId);
     }//end testSink()
 
     /**
      * All sinks (secrets never included in serialization).
      *
      * @return SiemSink[]
+     *
+     * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
      */
     public function listSinks(): array
     {
-        return $this->sinkMapper->findAll();
+        return $this->sinkService->listSinks();
     }//end listSinks()
-
-    /**
-     * Apply the write-only HMAC secret (blank preserves) and the
-     * category filter from request params.
-     *
-     * @param SiemSink            $sink   The sink to mutate
-     * @param array<string,mixed> $params The request params
-     *
-     * @return void
-     */
-    private function applySecretAndFilter(SiemSink $sink, array $params): void
-    {
-        $secret = $params['hmacSecret'] ?? null;
-        if (is_string($secret) === true && $secret !== '') {
-            $sink->setHmacSecretEnc($this->crypto->encrypt($secret));
-        }
-
-        if (array_key_exists('categoryFilter', $params) === true) {
-            $filter  = $params['categoryFilter'];
-            $encoded = null;
-            if (is_array($filter) === true && $filter !== []) {
-                $encoded = (string) json_encode(array_map('strval', $filter));
-            }
-
-            $sink->setCategoryFilter($encoded);
-        }
-    }//end applySecretAndFilter()
 
     /**
      * Notify every admin once when a sink first accrues dead letters
@@ -610,28 +377,4 @@ class SiemService
             }
         }
     }//end notifyDeadLetter()
-
-    /**
-     * Dispatch a SIEM audit event (identifiers only).
-     *
-     * @param string              $actorId   The admin actor
-     * @param string              $eventType The event type
-     * @param string              $sinkId    The sink id
-     * @param array<string,mixed> $extra     Additional whitelisted metadata
-     *
-     * @return void
-     */
-    private function dispatchAudit(string $actorId, string $eventType, string $sinkId, array $extra=[]): void
-    {
-        $this->eventDispatcher?->dispatchTyped(
-            $this->auditEvents->forUser(
-                actorId: $actorId,
-                eventType: $eventType,
-                objectType: 'siem_sink',
-                objectId: $sinkId,
-                objectName: '',
-                metadata: array_merge(['sinkId' => $sinkId], $extra),
-            )
-        );
-    }//end dispatchAudit()
 }//end class
