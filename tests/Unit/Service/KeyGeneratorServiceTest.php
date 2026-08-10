@@ -350,7 +350,7 @@ class KeyGeneratorServiceTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-server-authoritative-generator-clamp
+     * @spec openspec/specs/org-password-policies/spec.md#requirement-generator-locked-to-policy
      */
     public function testPolicyClampRaisesLengthAndForcesClasses(): void
     {

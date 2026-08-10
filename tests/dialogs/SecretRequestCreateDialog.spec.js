@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Component test for `src/components/secretRequest/SecretRequestCreateDialog.vue`.
+ * Component test for `src/dialogs/SecretRequestCreateDialog.vue`.
  *
  * What these lock down:
  *  - the available-fields list grows from the secret's `additional_fields_keys`
@@ -24,7 +24,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
-import SecretRequestCreateDialog from '../../src/components/secretRequest/SecretRequestCreateDialog.vue'
+import SecretRequestCreateDialog from '../../src/dialogs/SecretRequestCreateDialog.vue'
 import { useSecretRequestStore } from '../../src/store/modules/secretRequest.js'
 
 const ncStubs = {

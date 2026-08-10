@@ -15,7 +15,7 @@
  *    a string value (so the same lazy-decrypt contract holds)
  *
  * @spec openspec/changes/implement-secrets/tasks.md#7.7
- * @spec openspec/changes/implement-secrets/tasks.md#13.7
+ * @spec openspec/changes/implement-secrets/tasks.md#13.3
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'

@@ -4,7 +4,7 @@
  *
  * Component test for `src/views/DashboardSettingsView.vue`.
  *
- * @spec openspec/changes/implement-dashboard-settings/tasks.md#15.1
+ * @spec openspec/changes/implement-dashboard-settings/tasks.md#5.3
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'

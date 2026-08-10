@@ -7,7 +7,7 @@
  * in any request body; the listed metadata decrypts back with the
  * session key; download reproduces the exact plaintext bytes.
  *
- * @spec openspec/changes/encrypted-attachments/specs/encrypted-attachments/spec.md#requirement-client-side-encryption-and-upload
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'

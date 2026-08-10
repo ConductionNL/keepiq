@@ -23,7 +23,7 @@
  * pull the entire NC design-system tree into the test bundle.
  *
  * @spec openspec/changes/implement-link-sharing/tasks.md#13.4
- * @spec openspec/changes/implement-link-sharing/tasks.md#13.5
+ * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'

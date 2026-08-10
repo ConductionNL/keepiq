@@ -7,7 +7,7 @@
  * derivation (never stored), Luhn/expiry hinting, and the import
  * mapper's Bitwarden card/identity routing.
  *
- * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-composite-payloads-ride-the-encrypted-key-field
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
  */
 
 import { describe, it, expect } from 'vitest'
