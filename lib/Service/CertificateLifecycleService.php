@@ -226,6 +226,8 @@ class CertificateLifecycleService
      *
      * @throws DoesNotExistException    When the secret does not exist
      * @throws InvalidArgumentException When not owned or wrong type
+     *
+     * @spec openspec/specs/certificate-lifecycle/spec.md
      */
     public function renewalChecklist(string $secretId, string $userId): array
     {
@@ -279,6 +281,8 @@ class CertificateLifecycleService
      * @throws DoesNotExistException    When the suite does not exist
      * @throws InvalidArgumentException When the caller may not re-issue it
      * @throws \RuntimeException        When the re-sign could not preserve the key
+     *
+     * @spec openspec/specs/certificate-lifecycle/spec.md
      */
     public function reissueSuite(string $suiteId, string $userId, bool $isAdmin): array
     {
