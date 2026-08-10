@@ -168,7 +168,7 @@ class SeedSecretTypesTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/card-identity-items/specs/card-identity-items/spec.md#requirement-system-secret-types
+     * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
      */
     public function testCardAndIdentityTypesSeededDeterministically(): void
     {

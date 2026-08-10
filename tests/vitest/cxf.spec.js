@@ -15,8 +15,8 @@
  *    CXF home land in the unmapped report.
  *  - Export → import round-trips core credentials and folders.
  *
- * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-cxf-entity-mapping
- * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-unmapped-item-reporting
+ * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-doriath-type-mapping
+ * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
  */
 
 import { describe, it, expect } from 'vitest'

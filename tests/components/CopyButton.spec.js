@@ -16,7 +16,7 @@
  *    is unavailable (legacy IE/quirks paths)
  *
  * @spec openspec/changes/implement-secrets/tasks.md#7.6
- * @spec openspec/changes/implement-secrets/tasks.md#13.6
+ * @spec openspec/changes/implement-secrets/tasks.md#13.3
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
