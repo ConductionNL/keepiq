@@ -45,6 +45,11 @@ class ZzGate7ProbeController extends Controller
     #[NoAdminRequired]
     public function showProbe(string $id): JSONResponse
     {
+        $userId = $this->userSession->getUser()?->getUID();
+        if ($userId === null) {
+            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: 401);
+        }
+
         $row = $this->secretMapper->find($id);
         return new JSONResponse(data: $row->jsonSerialize());
     }//end showProbe()
