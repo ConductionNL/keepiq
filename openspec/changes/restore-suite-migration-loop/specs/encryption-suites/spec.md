@@ -53,6 +53,68 @@ Owner and suite scoping MUST be enforced server-side on every re-encryption writ
 - **THEN** the server MUST refuse to mark the migration terminal
 - **AND** the migration MUST remain `in_progress` with the write lock held
 
+### Requirement: A Migration Always Has A Way To Terminate
+
+Completion is gated on rows nobody has attempted, NOT on every row still bound to `old_suite_id`. The two are different situations and conflating them makes the write lock inescapable: a record that can never be re-encrypted would hold the migration open forever, leaving the owner permanently unable to write to their own vault.
+
+A row is **unaccounted for** when it is still bound to `old_suite_id` and its owning secret carries no `migration_error`. The system MUST refuse to terminate a migration while any unaccounted-for row exists, because terminating locks the old suite and would take every un-reached row down with it. The refusal MUST name the remaining count and point at resuming.
+
+A row that was attempted and recorded a failure MUST NOT block termination. Terminating with such rows present MUST require an explicit acknowledgement from the client stating how many records it accepts losing, and the count MUST match what the server observes; an absent or mismatched acknowledgement MUST be refused. This makes locking a secret out of the vault a decision the owner made, never a side-effect of a client calling completion — a run in which every record failed would otherwise silently lock an owner out of everything.
+
+Only a failure to decrypt the EXISTING ciphertext with the old key may be recorded as a per-record failure. A re-encryption that does not survive its round-trip check MUST NOT be recorded, because the original decrypted successfully and is therefore readable: the fault lies in the new key material, it will recur on every record, and the run MUST stop instead. It follows that finalisation can only ever remove access from rows that were already unreadable under the old key.
+
+#### Scenario: Unattempted rows refuse termination and point at resuming
+
+@e2e exclude Server-side query and status transition; covered by PHPUnit on the completion path.
+- **GIVEN** a migration whose client stopped before processing every record, leaving rows with no `migration_error`
+- **WHEN** completion is requested
+- **THEN** the server MUST refuse, MUST leave the old suite `active`, and MUST keep the migration `in_progress`
+- **AND** the refusal MUST report how many records remain and state that the migration can be resumed
+
+#### Scenario: An unrecoverable record does not trap the vault
+
+@e2e exclude Terminal status transition and suite locking are server-side; covered by PHPUnit on the completion path.
+- **GIVEN** a migration in which every remaining row on `old_suite_id` has a recorded `migration_error`
+- **WHEN** completion is requested WITHOUT an acknowledgement
+- **THEN** the server MUST refuse and MUST state how many records would lose access
+- **WHEN** completion is requested WITH an acknowledgement matching that count
+- **THEN** the migration MUST terminate as `completed_with_errors`, the old suite MUST be locked, and the write lock MUST be released
+- **AND** the response MUST identify the secrets that lost access
+
+#### Scenario: A round-trip failure halts rather than sacrificing the record
+
+@e2e exclude Injected at the crypto layer; no DOM path induces it. Covered by unit tests of the migration pipeline.
+- **GIVEN** a record whose existing ciphertext decrypts correctly but whose re-encryption does not survive the round-trip check
+- **WHEN** the migration processes that record
+- **THEN** the failure MUST NOT be recorded as a per-record migration failure
+- **AND** the run MUST stop so the new key material can be investigated
+- **AND** records already committed MUST remain valid, each having been verified before its own commit
+
+### Requirement: Suite Resolution Is Deterministic During A Migration
+
+For the duration of a compromise-recovery migration an owner legitimately has two `active` EncryptionSuites: the new one, and the old one which must stay readable so the browser can decrypt what it is migrating. Every resolution of "the owner's active suite" MUST therefore be deterministic and MUST select the most recently created active suite, which is always the write target.
+
+Resolution MUST NOT fail merely because more than one suite is active. Treating a legitimate mid-migration state as an error made ordinary writes fail, and reported the one diagnosis that was certainly false — that the owner had no active suite when in fact they had two.
+
+Listings of an owner's suites MUST likewise be ordered newest-first, so that clients selecting "the active suite" from a list bind to the same suite the server would resolve. A client bound to the old suite mid-migration holds the wrong private key for verification, which makes a resumed migration fail on every record.
+
+The system MUST refuse to begin a compromise recovery while a migration is already in progress. Starting a second rotation strands everything the first had not yet reached on a suite that is neither endpoint of the new migration, and no resume can reach it.
+
+#### Scenario: Writes keep working mid-migration
+
+@e2e exclude Suite resolution is a server-side query; covered by PHPUnit.
+- **GIVEN** a compromise-recovery migration is in progress, so the owner has two active suites
+- **WHEN** the owner's active suite is resolved
+- **THEN** the newest active suite MUST be returned rather than an error
+
+#### Scenario: A second rotation is refused
+
+@e2e exclude Guard is server-side and returns a status code; covered by PHPUnit on the recovery endpoint.
+- **GIVEN** a migration is already in progress
+- **WHEN** the owner submits another compromise recovery
+- **THEN** the system MUST refuse, MUST create no suite, and MUST start no migration
+- **AND** the error MUST direct the owner to resume or abort the existing migration
+
 ### Requirement: Re-Encrypted Ciphertext Is Verified Before The Original Is Discarded
 
 The system MUST prove that freshly produced ciphertext decrypts back to the original plaintext under the new private key **before** the original ciphertext is overwritten or discarded. A round-trip that does not yield a byte-identical plaintext MUST be treated as a per-record migration failure: the original ciphertext MUST be left intact, the failure MUST be recorded, and the migration MUST continue with the remaining records.
