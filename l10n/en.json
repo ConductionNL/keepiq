@@ -910,7 +910,26 @@
         "Your emergency contacts": "Your emergency contacts",
         "Your master password": "Your master password",
         "Your master password changed — re-enroll your passkeys to unlock with them again.": "Your master password changed — re-enroll your passkeys to unlock with them again.",
-        "Zero-knowledge boundary: this report aggregates server-visible metadata only. No secret value, name, login, or ciphertext was read; no password strength, reuse, or breach figure exists anywhere in Doriath server-side. Ciphertext-age figures describe encryption-blob age, not password strength.": "Zero-knowledge boundary: this report aggregates server-visible metadata only. No secret value, name, login, or ciphertext was read; no password strength, reuse, or breach figure exists anywhere in Doriath server-side. Ciphertext-age figures describe encryption-blob age, not password strength."
+        "Zero-knowledge boundary: this report aggregates server-visible metadata only. No secret value, name, login, or ciphertext was read; no password strength, reuse, or breach figure exists anywhere in Doriath server-side. Ciphertext-age figures describe encryption-blob age, not password strength.": "Zero-knowledge boundary: this report aggregates server-visible metadata only. No secret value, name, login, or ciphertext was read; no password strength, reuse, or breach figure exists anywhere in Doriath server-side. Ciphertext-age figures describe encryption-blob age, not password strength.",
+        "{done} of {total} records re-encrypted": "{done} of {total} records re-encrypted",
+        "%n older version was dropped because only recent history can be carried across.": "%n older version was dropped because only recent history can be carried across.",
+        "%n older versions were dropped because only recent history can be carried across.": "%n older versions were dropped because only recent history can be carried across.",
+        "%n secret could not be decrypted with your old key, so it did not migrate.": "%n secret could not be decrypted with your old key, so it did not migrate.",
+        "%n secret did not migrate.": "%n secret did not migrate.",
+        "%n secrets could not be decrypted with your old key, so they did not migrate.": "%n secrets could not be decrypted with your old key, so they did not migrate.",
+        "%n secrets did not migrate.": "%n secrets did not migrate.",
+        "Every value stored in this vault must be assumed to have been exposed and must be changed at its source.": "Every value stored in this vault must be assumed to have been exposed and must be changed at its source.",
+        "Finish anyway, losing access to %n secret": "Finish anyway, losing access to %n secret",
+        "Finish anyway, losing access to %n secrets": "Finish anyway, losing access to %n secrets",
+        "Finishing the rotation locks the old key, so these secrets can no longer be opened. Their stored data is kept, but you will need to set their values again at the source.": "Finishing the rotation locks the old key, so these secrets can no longer be opened. Their stored data is kept, but you will need to set their values again at the source.",
+        "Key rotation finished. %n secret was re-encrypted under your new key.": "Key rotation finished. %n secret was re-encrypted under your new key.",
+        "Key rotation finished. %n secrets were re-encrypted under your new key.": "Key rotation finished. %n secrets were re-encrypted under your new key.",
+        "Preparing…": "Preparing…",
+        "Re-enter your old password to retry the remaining secrets.": "Re-enter your old password to retry the remaining secrets.",
+        "Rotating keys…": "Rotating keys…",
+        "Rotating your key restores access to your secrets so you can go and change those values in an orderly fashion. It does not make the old values safe.": "Rotating your key restores access to your secrets so you can go and change those values in an orderly fashion. It does not make the old values safe.",
+        "The migrated values are still to be considered exposed. Change each of them at its source.": "The migrated values are still to be considered exposed. Change each of them at its source.",
+        "Try these again": "Try these again"
     },
     "plurals": ""
 }
