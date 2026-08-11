@@ -63,7 +63,17 @@ class FolderNameGuard
      *
      * @throws DuplicateFolderNameException When a sibling with the same name exists
      *
-     * @spec exclude Rescued bugfix (PR #22) — folder-name uniqueness has no dedicated spec requirement yet.
+     * @spec exclude Sibling-name uniqueness is a rescued bugfix (PR #22) with no requirement of its
+     *       own in openspec/specs/secrets/spec.md — the Folder Management requirement specifies
+     *       create/rename/move but is silent on duplicate sibling names. Behaviour is regression-tested
+     *       in tests/Unit/Service/FolderServiceTest.php (testCreateDuplicateNameRejected,
+     *       testRenameDuplicateNameRejected, testMoveDuplicateNameRejected,
+     *       testDeleteKeepDuplicateNameRejected), which run in the "Unit Tests" suite of phpunit.xml.
+     *       This waiver covers ONLY the uniqueness rule. It previously also sat on
+     *       FolderService/FolderTreeService create/rename/move, which DO have scenarios under
+     *       openspec/specs/secrets/spec.md#requirement-folder-management and are now anchored there.
+     *       Writing a requirement here to close the gap would reverse-engineer a spec from shipped
+     *       code; the gap is real and belongs to a spec author, not to this annotation.
      */
     public function assertNameUnique(
         string $ownerType,

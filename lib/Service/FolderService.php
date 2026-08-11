@@ -108,7 +108,7 @@ class FolderService
      * @throws ForbiddenException When the parent is not owned
      * @throws DuplicateFolderNameException When a sibling folder already uses the name
      *
-     * @spec exclude Rescued bugfix (PR #22) — folder-name uniqueness has no dedicated spec requirement yet.
+     * @spec openspec/specs/secrets/spec.md#requirement-folder-management
      */
     public function create(string $name, ?string $parentId, string $userId): Folder
     {
@@ -129,7 +129,7 @@ class FolderService
      * @throws ForbiddenException When not owned
      * @throws DuplicateFolderNameException When a sibling folder already uses the name
      *
-     * @spec exclude Rescued bugfix (PR #22) — folder-name uniqueness has no dedicated spec requirement yet.
+     * @spec openspec/specs/secrets/spec.md#requirement-folder-management
      */
     public function rename(string $id, string $name, string $userId): Folder
     {
@@ -150,7 +150,7 @@ class FolderService
      * @throws ForbiddenException When the folder or target is not owned
      * @throws DuplicateFolderNameException When the target parent already contains the name
      *
-     * @spec exclude Rescued bugfix (PR #22) — folder-name uniqueness has no dedicated spec requirement yet.
+     * @spec openspec/specs/secrets/spec.md#requirement-folder-management
      */
     public function move(string $id, ?string $newParentId, string $userId): Folder
     {
