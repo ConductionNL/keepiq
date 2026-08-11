@@ -28,7 +28,16 @@
  * helper dispatches a native button click because the themed NcButton swallows
  * Playwright's synthetic click.
  *
- * @e2e openspec/specs/secrets/spec.md#user-stores-a-secret
+ * ⚠️ The file-level anchor that used to be here pointed at
+ * `openspec/specs/secrets/spec.md#user-stores-a-secret` (sigil omitted on
+ * purpose — gate-19 parses a tag written in prose exactly like a real one, so
+ * quoting a broken anchor re-creates it). It was DANGLING —
+ * there is no `user-stores-a-secret` scenario in `openspec/specs/secrets/spec.md`
+ * (the create scenarios there are `create-with-required-fields` and friends, and
+ * every one of them carries an `@e2e exclude`). gate-19 does not report a
+ * dangling anchor, so this file claimed one scenario and was credited with none.
+ * The UI round-trip below is genuinely the `secrets-write-ui` write path, and it
+ * is anchored there, per-test, so each claim sits next to the body that backs it.
  */
 import { test, expect } from '@playwright/test'
 import {
@@ -247,6 +256,13 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	 * edit the value → assert the new value round-trips → delete → assert gone.
 	 */
 	test('zero-knowledge round-trip via the UI: create → encrypt → persist → retrieve → edit → delete', async ({ page }) => {
+		// @e2e secrets-write-ui::create-a-secret-with-required-fields
+		//   name + value entered in the "New secret" dialog, the stored `key` is
+		//   a >100-char blob that does not contain the plaintext, the secret
+		//   appears in the list, and opening + revealing returns the exact value.
+		// @e2e secrets-write-ui::edit-a-secrets-value
+		//   the Edit dialog changes the value, saves, and re-revealing returns
+		//   the NEW value.
 		const NAME = `__e2e_rt_${Date.now()}`
 		const VALUE = 'S3cr3t-roundtrip-Æ-✓-1234567890'
 		const NEW_VALUE = 'edited-value-Ø-9876543210'

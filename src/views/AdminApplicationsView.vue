@@ -1,3 +1,16 @@
+<!--
+  @visual exclude UNREACHABLE, not un-baselined — tracked in issue #208. Nothing
+  in src/ imports this component: it is in no `pages[]` entry, not in
+  src/registry.js, and there is no router. The shipped bundle settles it —
+  `grep -c doriath-applications-view js/doriath-main.js` returns 0 while the
+  same probe returns 1 for wired views (personal-activity, cert-inventory), so
+  webpack tree-shook it out entirely. There is no route for a browser to visit
+  and therefore no screen to capture. The admin approval queue that DOES ship is
+  src/components/settings/ApplicationQueueSection.vue, wired into
+  src/views/settings/Settings.vue; this file is very likely its predecessor.
+  ⚠️ This waiver is not "no baseline needed" — it records a defect. It must be
+  removed together with issue #208, by deleting this file or by wiring it up.
+-->
 <template>
 	<div class="doriath-applications-view">
 		<h2>{{ t('doriath', 'Registered applications') }}</h2>

@@ -1,3 +1,18 @@
+<!--
+  @visual exclude UNREACHABLE, not un-baselined — tracked in issue #208. Nothing
+  in src/ imports this component; `grep -rn DashboardSettingsView src/` returns
+  only this file. It is in no `pages[]` entry, not in src/registry.js, and there
+  is no router. The shipped bundle settles it —
+  `grep -c doriath-dashboard-settings js/doriath-main.js` returns 0 while the
+  same probe returns 1 for wired views, so webpack tree-shook it out. There is
+  no route for a browser to visit and therefore no screen to capture.
+  ⚠️ This waiver is not "no baseline needed" — it records a defect, and a larger
+  one than its neighbour: this view is the ONLY consumer of
+  useDashboardSettingsStore, which is backed by a real controller and the
+  oc_doriath_dashboard_settings table, so the whole dashboard-preferences
+  feature is implemented end to end with no way in. Remove this waiver together
+  with issue #208, by wiring the view up or by deleting the feature.
+-->
 <template>
 	<div class="doriath-dashboard-settings">
 		<h2>{{ t('doriath', 'Dashboard preferences') }}</h2>
