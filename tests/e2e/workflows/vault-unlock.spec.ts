@@ -36,6 +36,7 @@
  */
 import { test, expect } from '@playwright/test'
 import {
+	APP_BASE,
 	gotoLockSettled,
 	lockHeading,
 	unlockVault,
@@ -72,6 +73,51 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// No unlocked content leaks through the guard.
 			await expect(page.locator('.secret-detail__card')).toHaveCount(0)
 		}
+	})
+
+	/*
+	 * Regression guard for the "lock screen is a redirect, not a gate" bug.
+	 *
+	 * The test above asserts the EVENTUAL state, which is why it stayed green
+	 * while the gate was broken: the lock redirect used to fire from App.vue's
+	 * `created()` hook, behind `await initializeStores()`. By the time it
+	 * landed, CnPageRenderer had already mounted the target page and that
+	 * page's `mounted()` had already issued its fetches. Playwright's
+	 * networkidle + 20s heading wait sailed straight past the leak.
+	 *
+	 * Secret `name` / `url` / folder placement are plaintext server-side by
+	 * design (searchable for the owner — see lib/Db/Secret.php), so those
+	 * fetches put the real vault inventory on the wire and on screen before
+	 * the lock screen replaced it.
+	 *
+	 * The invariant that actually catches it: while locked, no secret-bearing
+	 * endpoint is requested AT ALL. Asserted on the wire, not on the DOM.
+	 *
+	 * @e2e openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
+	 */
+	test('a locked vault issues no secret-bearing request at any point', async ({ page }) => {
+		const leaked: string[] = []
+		// The lock screen legitimately reads suite + migration state; those are
+		// key-management endpoints and carry no secret metadata.
+		const ALLOWED = /\/api\/v1\/(suites|migrations)\b/
+		const SECRET_BEARING = /\/api\/(v1\/(secrets|folders|shares|group-shares|link-shares)\b|dashboard\/summary)/
+
+		page.on('request', (req) => {
+			const url = req.url()
+			if (SECRET_BEARING.test(url) && !ALLOWED.test(url)) {
+				leaked.push(`${req.method()} ${url}`)
+			}
+		})
+
+		// Hash-mode deep links — the real attack shape. `#/secrets/some-id`
+		// names the route directly, where the bare path form used by the test
+		// above only ever lands on the Dashboard route.
+		for (const hash of ['#/secrets', '#/secrets/some-id', '#/folders/some-folder', '#/password-health', '#/']) {
+			await page.goto(`${APP_BASE}/${hash}`, { waitUntil: 'networkidle' })
+			await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
+		}
+
+		expect(leaked, `locked vault requested secret-bearing endpoints:\n${leaked.join('\n')}`).toEqual([])
 	})
 
 	/*
