@@ -513,6 +513,10 @@ class SecretService
             if ($key !== $secret->getKey()) {
                 $secret->setKey($key);
                 $secret->setKeyUpdatedAt($now);
+                // Replacing the value answers the possibly-compromised warning;
+                // metadata-only writes leave it standing. See the owner path in
+                // update() for the full reasoning.
+                $secret->setPossiblyCompromisedAt(null);
                 $keyChanged = true;
             }
         }
@@ -817,6 +821,17 @@ class SecretService
             if ($key !== $secret->getKey()) {
                 $secret->setKey($key);
                 $secret->setKeyUpdatedAt(new DateTime());
+
+                // The possibly-compromised warning says "this value was exposed,
+                // replace it at its source". Replacing the value is exactly what
+                // just happened, so the warning has been answered and is cleared.
+                // It is cleared HERE and nowhere else in this method on purpose:
+                // a rename, a folder move, a type change or a metadata edit
+                // leaves the exposed value in place and must leave the warning
+                // standing. The same-ciphertext guard above means a client that
+                // resends the unchanged key alongside a rename does not clear it
+                // either.
+                $secret->setPossiblyCompromisedAt(null);
             }
         }
 
