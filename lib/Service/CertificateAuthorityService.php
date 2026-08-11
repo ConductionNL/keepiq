@@ -295,15 +295,42 @@ class CertificateAuthorityService
             );
         }
 
-        if ($this->certCarriesPublicKey(certPem: $certPem, publicKeyPem: $publicKeyPem) === false) {
-            // Never hand out a certificate for a key nobody holds.
-            throw new RuntimeException(
-                'Refusing to issue a certificate that does not carry the submitted public key'
-            );
-        }
+        // Never hand out a certificate for a key nobody holds. Shares the
+        // assertion with the compromise-recovery precondition so the two can
+        // never diverge.
+        $this->assertCertCarriesPublicKey(certPem: $certPem, publicKeyPem: $publicKeyPem);
 
         return $certPem;
     }//end signPublicKey()
+
+    /**
+     * Assert that an X.509 certificate carries exactly the given RSA public key.
+     *
+     * The throwing counterpart of certCarriesPublicKey(), for callers that must
+     * refuse to proceed rather than choose a fallback. Compromise recovery is
+     * the motivating case: if the new suite's certificate does not carry the
+     * browser-submitted public key, then every record the migration re-encrypts
+     * under that certificate would be sealed to a key nobody holds — silent,
+     * total, irreversible vault loss. Verified live 2026-07-18, when PHP
+     * 8.4/OpenSSL minted an RSA-2048 throwaway for an RSA-4096 browser key.
+     *
+     * @param string $certPem      The PEM certificate
+     * @param string $publicKeyPem The PEM public key it must carry
+     *
+     * @return void
+     *
+     * @throws RuntimeException When the certificate does not carry the key.
+     *
+     * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-preconditions
+     */
+    public function assertCertCarriesPublicKey(string $certPem, string $publicKeyPem): void
+    {
+        if ($this->certCarriesPublicKey(certPem: $certPem, publicKeyPem: $publicKeyPem) === false) {
+            throw new RuntimeException(
+                'Certificate does not carry the submitted public key'
+            );
+        }
+    }//end assertCertCarriesPublicKey()
 
     /**
      * Whether an X.509 certificate carries exactly the given RSA public key.

@@ -24,7 +24,6 @@ use OCA\Doriath\Controller\EncryptionSuiteController;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -63,13 +62,6 @@ class EncryptionSuiteControllerTest extends TestCase
     private MigrationService&MockObject $migrationService;
 
     /**
-     * The mocked link share service.
-     *
-     * @var LinkShareService&MockObject
-     */
-    private LinkShareService&MockObject $linkShareService;
-
-    /**
      * The mocked user session.
      *
      * @var IUserSession&MockObject
@@ -88,7 +80,6 @@ class EncryptionSuiteControllerTest extends TestCase
         $request            = $this->createMock(originalClassName: IRequest::class);
         $this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
         $this->migrationService = $this->createMock(originalClassName: MigrationService::class);
-        $this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
         $this->userSession      = $this->createMock(originalClassName: IUserSession::class);
 
         $user = $this->createMock(originalClassName: IUser::class);
@@ -99,7 +90,6 @@ class EncryptionSuiteControllerTest extends TestCase
             request: $request,
             suiteService: $this->suiteService,
             migrationService: $this->migrationService,
-            linkShareService: $this->linkShareService,
             userSession: $this->userSession,
         );
     }//end setUp()
@@ -386,7 +376,7 @@ class EncryptionSuiteControllerTest extends TestCase
     }//end testCompromiseRecoveryReturns500OnFailure()
 
     /**
-     * Test compromiseRecovery cascades to LinkShareService.deleteByUserId.
+     * Test compromiseRecovery defers all terminal work to migration completion.
      *
      * Every outstanding link share signed against the now-compromised public
      * key must be invalidated so a holder cannot decrypt the snapshot after
@@ -398,7 +388,7 @@ class EncryptionSuiteControllerTest extends TestCase
      *
      * @spec openspec/changes/implement-link-sharing/tasks.md#5.2
      */
-    public function testCompromiseRecoveryCascadesLinkShareDeleteByUserId(): void
+    public function testCompromiseRecoveryLeavesTerminalWorkToCompletion(): void
     {
         $oldSuite = new EncryptionSuite();
         $oldSuite->setId('old-suite');
@@ -422,12 +412,16 @@ class EncryptionSuiteControllerTest extends TestCase
         $this->migrationService->method('initiateCompromiseRecovery')
             ->willReturn($migration);
 
-        $this->linkShareService->expects($this->once())
-            ->method('deleteByUserId')
-            ->with('testuser');
+        // The controller must NOT perform any terminal work. Marking the old
+        // suite compromised (or revoking its link shares) before the migration
+        // has run is what locked the user out of their whole vault: every read
+        // then threw SuiteBlockedException, including the reads the migration
+        // itself depends on. All of it now happens in
+        // MigrationService::completeMigration once every store is migrated.
+        $this->suiteService->expects($this->never())->method('markCompromised');
 
         $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
 
         $this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
-    }//end testCompromiseRecoveryCascadesLinkShareDeleteByUserId()
+    }//end testCompromiseRecoveryLeavesTerminalWorkToCompletion()
 }//end class

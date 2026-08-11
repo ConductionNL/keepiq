@@ -25,7 +25,6 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCA\Doriath\Settings\AdminSettings;
 use OCP\AppFramework\Http;
@@ -48,7 +47,6 @@ class EncryptionSuiteController extends OCSController
      * @param IRequest                                 $request          The request object
      * @param EncryptionSuiteService                   $suiteService     The suite service
      * @param MigrationService                         $migrationService The migration service
-     * @param LinkShareService                         $linkShareService The link share service (cascade on compromise recovery)
      * @param IUserSession                             $userSession      The user session
      * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService   The passkey service (passkey vault login; null when unwired)
      *
@@ -58,7 +56,6 @@ class EncryptionSuiteController extends OCSController
         IRequest $request,
         private EncryptionSuiteService $suiteService,
         private MigrationService $migrationService,
-        private LinkShareService $linkShareService,
         private IUserSession $userSession,
         private ?\OCA\Doriath\Service\PasskeyService $passkeyService=null,
     ) {
@@ -313,33 +310,35 @@ class EncryptionSuiteController extends OCSController
         try {
             $oldSuite = $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId);
 
-            // Mark the old suite as compromised immediately — it must not be
-            // used for new encryption operations from this point on.
-            $this->suiteService->markCompromised(id: $oldSuite->getId(), compromisedBy: $userId);
-
-            // Cascade-revoke every link share created by this user: the
-            // public-key fingerprint baked into each share's encrypted
-            // snapshot now belongs to a compromised key pair. Any holder of
-            // an outstanding link must be force-locked-out so a re-share
-            // under the new suite is required. See the method docblock @spec
-            // implement-link-sharing#5.2 for the cascade-revoke requirement.
-            $this->linkShareService->deleteByUserId(userId: $userId);
-
-            $newSuite  = $this->suiteService->createSuite(
+            // The old suite stays ACTIVE for the duration of the migration.
+            // Marking it compromised here — as this method used to — made every
+            // subsequent read of every secret throw SuiteBlockedException, which
+            // locked the user out of the whole vault at exactly the moment they
+            // needed to open it and change every password, and left the browser
+            // unable to read the ciphertext it has to migrate. The terminal work
+            // (markCompromised, link-share revocation, passkey deletion) now runs
+            // in MigrationService::completeMigration once every store is migrated.
+            //
+            // createSuite() signs the certificate BEFORE inserting the suite row,
+            // and signPublicKey() asserts the issued certificate carries the
+            // submitted public key. So a certificate that does not carry the
+            // browser's key aborts here with nothing written: no new suite, no
+            // migration, and the old suite still active.
+            $newSuite = $this->suiteService->createSuite(
                 ownerType: 'user',
                 ownerId: $userId,
                 publicKeyPem: $publicKey,
                 encryptedPrivateKey: $encryptedPrivateKey
             );
+
+            // Creating the migration IS the write lock: isWriteLocked() derives
+            // from an in-progress migration. It also dispatches
+            // SuiteMigrationStartedEvent, which locks pending SecretRequests via
+            // SuiteMigrationStartedListener.
             $migration = $this->migrationService->initiateCompromiseRecovery(
                 oldSuiteId: $oldSuite->getId(),
                 newSuiteId: $newSuite->getId()
             );
-
-            // A new key pair invalidates every passkey unlock envelope (the
-            // wrapped unlock key can never open the new suite) — delete them
-            // all (passkey-vault-login §D4).
-            $this->passkeyService?->deleteAllOnRotation($userId);
 
             return new JSONResponse(
                 data: [
@@ -348,6 +347,26 @@ class EncryptionSuiteController extends OCSController
                     'oldEncryptedPrivateKey' => $oldSuite->getPrivateKey(),
                 ],
                 statusCode: Http::STATUS_CREATED
+            );
+        } catch (RuntimeException $e) {
+            // Certificate precondition failure. Distinct from a generic fault
+            // because the vault is provably untouched — nothing was written, so
+            // the client can safely retry — and because proceeding would have
+            // sealed every migrated record to a key nobody holds.
+            if (str_contains($e->getMessage(), 'does not carry the submitted public key') === true) {
+                return new JSONResponse(
+                    data: [
+                        'error'   => 'certificate_key_mismatch',
+                        'message' => 'The issued certificate does not carry your public key. '
+                            .'Key rotation was aborted and your vault is unchanged.',
+                    ],
+                    statusCode: Http::STATUS_CONFLICT
+                );
+            }
+
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
             );
         } catch (Exception $e) {
             return new JSONResponse(

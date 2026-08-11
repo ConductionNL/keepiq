@@ -8,6 +8,8 @@ use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Db\SuiteMigrationMapper;
+use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
@@ -28,10 +30,15 @@ class MigrationServiceTest extends TestCase
         $this->suiteMapper     = $this->createMock(EncryptionSuiteMapper::class);
         $logger = $this->createMock(LoggerInterface::class);
 
+        // Named arguments: the constructor gained collaborators for the terminal
+        // work moved out of EncryptionSuiteController, and positional wiring
+        // would silently slot the logger into the suite-service parameter.
         $this->service = new MigrationService(
-            $this->migrationMapper,
-            $this->suiteMapper,
-            $logger,
+            mapper: $this->migrationMapper,
+            suiteMapper: $this->suiteMapper,
+            suiteService: $this->createMock(EncryptionSuiteService::class),
+            linkShareService: $this->createMock(LinkShareService::class),
+            logger: $logger,
         );
     }//end setUp()
 
