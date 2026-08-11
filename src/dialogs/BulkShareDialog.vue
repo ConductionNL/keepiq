@@ -178,7 +178,7 @@ export default {
 }
 
 .bulk-share__error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
 </style>

@@ -165,12 +165,12 @@ export default {
 }
 
 .doriath-secret-request-fill__submit-error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
 
 .doriath-secret-request-fill__success {
-	color: var(--color-success, #46ba61);
+	color: var(--color-success-text);
 	font-weight: 600;
 }
 

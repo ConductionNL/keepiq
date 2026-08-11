@@ -146,7 +146,7 @@ export default {
 	   --color-error / --color-error-text pairing is guaranteed contrasty. */
 	background-color: var(--color-error);
 	color: var(--color-error-text);
-	border: 1px solid var(--color-error);
+	border: 1px solid var(--color-error-text);
 	padding: 8px;
 	border-radius: var(--border-radius, 4px);
 	margin-bottom: 8px;

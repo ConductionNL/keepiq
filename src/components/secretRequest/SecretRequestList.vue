@@ -174,7 +174,7 @@ export default {
 .doriath-secret-request-list__revoke {
 	background: transparent;
 	border: 1px solid var(--color-border-dark, #999);
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	padding: 4px 12px;
 	border-radius: var(--border-radius, 4px);
 	cursor: pointer;
@@ -186,7 +186,7 @@ export default {
 }
 
 .doriath-secret-request-list__error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
 </style>

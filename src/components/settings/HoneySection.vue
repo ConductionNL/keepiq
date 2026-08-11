@@ -180,7 +180,7 @@ export default {
 	}
 
 	&__open {
-		color: var(--color-error);
+		color: var(--color-error-text);
 	}
 
 	&__actions {

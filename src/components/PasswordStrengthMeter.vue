@@ -227,9 +227,9 @@ export default {
 	margin: 0.25rem 0 0;
 }
 
-.password-strength-meter__feedback--danger { color: var(--color-error); }
+.password-strength-meter__feedback--danger { color: var(--color-error-text); }
 
-.password-strength-meter__feedback--warning { color: var(--color-warning); }
+.password-strength-meter__feedback--warning { color: var(--color-warning-text); }
 
-.password-strength-meter__feedback--success { color: var(--color-success); }
+.password-strength-meter__feedback--success { color: var(--color-success-text); }
 </style>

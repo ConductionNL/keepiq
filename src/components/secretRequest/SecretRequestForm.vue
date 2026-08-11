@@ -169,7 +169,7 @@ export default {
 }
 
 .doriath-secret-request-form__error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
 
@@ -180,7 +180,7 @@ export default {
 	   semantic colour on the border and use a themed background with an
 	   explicit foreground, which is contrast-guaranteed in both themes. */
 	background-color: var(--color-background-dark);
-	border: 1px solid var(--color-success);
+	border: 1px solid var(--color-success-text);
 	color: var(--color-main-text);
 	padding: 8px;
 	border-radius: var(--border-radius, 4px);

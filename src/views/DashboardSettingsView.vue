@@ -224,7 +224,7 @@ export default {
 }
 
 .doriath-dashboard-settings__error {
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 }
 
 .doriath-dashboard-settings__intro {
