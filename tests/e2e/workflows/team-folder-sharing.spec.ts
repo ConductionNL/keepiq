@@ -16,7 +16,26 @@
  * approval leg needs a second NC group mutation and is asserted at the API
  * level in a follow-up when a group fixture exists.
  *
- * @e2e openspec/changes/team-folder-sharing/specs/team-folder-sharing/spec.md#requirement-folder-sharing-fan-out
+ * ⚠️ THE ANCHOR THAT USED TO BE HERE WAS INERT, AND REMOVING IT IS NOT A LOSS.
+ * It pointed at
+ * `openspec/changes/team-folder-sharing/specs/…/spec.md#requirement-folder-sharing-fan-out`
+ * (sigil omitted on purpose — a tag written in prose is parsed like a real one).
+ * gate-19 matches only `openspec/specs/<spec>/…#<slug>` or `<spec>::<slug>`, so a
+ * path under `openspec/changes/` matches NEITHER pattern — the gate never even
+ * builds a ref for it. It looked like coverage and was worth zero.
+ *
+ * ⚠️ AND IT IS NOT REPOINTED, DELIBERATELY. The obvious move is to aim it at
+ * `team-folder-sharing::owner-shares-a-folder`, and that would be false. That
+ * scenario is "the owner shares it with users and groups totalling R eligible
+ * recipients THEN the system MUST create … up to N×R per-recipient encrypted
+ * copies". The test below never adds a recipient and never puts a secret in the
+ * folder: it asserts create / idempotency / listing / a reconcile that reports
+ * ZERO members / delete. Its title says "fans out to a user" and its body does
+ * not fan out to anyone — the title is the aspiration, not the assertion.
+ * Anchoring it here would be exactly the defect gate-19 already has in
+ * `.github#343` (a tag credited without reading the body), reproduced by hand.
+ * The seven `team-folder-sharing` scenarios stay in the gate's findings list
+ * until a test exists that adds a second user and counts the copies.
  */
 import { test, expect } from '@playwright/test'
 import {
