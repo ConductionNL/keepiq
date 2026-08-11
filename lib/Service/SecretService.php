@@ -1180,6 +1180,17 @@ class SecretService
         }
 
         if (in_array($suite->getStatus(), self::BLOCKING_STATUSES, true) === true) {
+            // A secret carrying a migration failure on a now-compromised suite is
+            // not merely "behind a blocked suite" — it is a secret compromise
+            // recovery could not carry across, and the user needs to be told
+            // that specifically rather than being shown the generic suite
+            // message. The ciphertext is retained; only access is blocked, so an
+            // older master password could still recover it.
+            if ($secret->getMigrationError() !== null) {
+                return 'Could not be decrypted with the previous key during compromise recovery, '
+                    .'so it did not migrate. The stored value is retained but cannot be opened.';
+            }
+
             return 'Encryption suite is '.$suite->getStatus();
         }
 

@@ -50,6 +50,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'migration#getStatus',                'url' => '/api/v1/migrations/status',               'verb' => 'GET'],
     ['name' => 'migration#complete',                 'url' => '/api/v1/migrations/{id}/complete',        'verb' => 'POST'],
 
+    // Compromise-recovery migration work loop. One record per request: the
+    // browser decrypts with the old private key, re-encrypts under the new one,
+    // proves the round-trip, and posts the ciphertext here. Store-specific
+    // paths rather than a generic {store, id} — authorization differs per store
+    // and a store-name parameter on a per-object write path invites an IDOR.
+    ['name' => 'migration#getWork',                  'url' => '/api/v1/migrations/{id}/work',            'verb' => 'GET'],
+    ['name' => 'migration#reEncryptSecret',          'url' => '/api/v1/migrations/{id}/secrets/{secretId}', 'verb' => 'POST'],
+    ['name' => 'migration#reEncryptVersion',         'url' => '/api/v1/migrations/{id}/versions/{versionId}', 'verb' => 'POST'],
+    ['name' => 'migration#reEncryptAttachmentGrant', 'url' => '/api/v1/migrations/{id}/attachment-grants/{grantId}', 'verb' => 'POST'],
+
     // Key generator endpoint (stateless, authenticated).
     ['name' => 'keyGenerator#generate', 'url' => '/api/v1/generate-key', 'verb' => 'POST'],
 

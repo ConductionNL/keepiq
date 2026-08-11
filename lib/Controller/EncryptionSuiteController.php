@@ -307,6 +307,26 @@ class EncryptionSuiteController extends OCSController
 
         $userId = $user->getUID();
 
+        // Refuse a second rotation while one is still running. `create()` has
+        // always had this guard; this method did not, and the gap is how a vault
+        // ends up with secrets stranded on a suite that is neither endpoint of
+        // the current migration: rotation 1 leaves A→B in progress, rotation 2
+        // starts B→C, and whatever was still on A is now unreachable by any
+        // resume, because resuming only ever walks the migration's own suite
+        // pair. Those secrets cannot be recovered without the master password
+        // of a generation the UI no longer asks for.
+        if ($this->migrationService->isWriteLocked(ownerType: 'user', ownerId: $userId) === true) {
+            return new JSONResponse(
+                data: [
+                    'error'   => 'migration_in_progress',
+                    'message' => 'A key rotation is already in progress. Resume or abort that migration '
+                        .'before starting another — starting a second rotation now would leave the '
+                        .'secrets it has not reached yet unrecoverable.',
+                ],
+                statusCode: Http::STATUS_CONFLICT
+            );
+        }
+
         try {
             $oldSuite = $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId);
 

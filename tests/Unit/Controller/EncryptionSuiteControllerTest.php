@@ -361,6 +361,35 @@ class EncryptionSuiteControllerTest extends TestCase
     }//end testCompromiseRecoverySuccess()
 
     /**
+     * Test a second rotation is refused while one is still in progress.
+     *
+     * Without this guard, rotation 2 starts B→C while A→B is still open, and
+     * whatever was still on A becomes unreachable by any resume: resuming only
+     * ever walks its own migration's suite pair, so nothing will ever ask for
+     * the master password that opens A. The refusal must happen before any
+     * suite is created — a third suite is the damage.
+     *
+     * @return void
+     */
+    public function testCompromiseRecoveryRefusedWhileMigrationInProgress(): void
+    {
+        $this->migrationService->method('isWriteLocked')
+            ->with('user', 'testuser')
+            ->willReturn(true);
+
+        // Nothing may be created and no migration started.
+        $this->suiteService->expects($this->never())->method('createSuite');
+        $this->migrationService->expects($this->never())->method('initiateCompromiseRecovery');
+
+        $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+
+        $this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+        $this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
+        // The message must point the user at the way out, not just say "no".
+        $this->assertStringContainsString('Resume or abort', $response->getData()['message']);
+    }//end testCompromiseRecoveryRefusedWhileMigrationInProgress()
+
+    /**
      * Test compromiseRecovery returns 500 on failure.
      *
      * @return void

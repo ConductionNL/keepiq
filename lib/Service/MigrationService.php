@@ -27,6 +27,7 @@ use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Db\SuiteMigrationMapper;
 use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
 use OCA\Doriath\Event\SuiteMigrationStartedEvent;
+use OCA\Doriath\Exception\MigrationIncompleteException;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\LinkShareService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -36,19 +37,25 @@ use Ramsey\Uuid\Uuid;
 
 /**
  * Tracks compromise recovery migrations (suite to suite).
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Terminating a migration is an
+ *   ordered sequence over several subsystems — suite status, link shares,
+ *   passkeys, the outstanding-row gate and the completion event — and the order
+ *   is the security property. Keeping the sequence in one place is the point.
  */
 class MigrationService
 {
     /**
      * Constructor for MigrationService.
      *
-     * @param SuiteMigrationMapper                     $mapper          The suite migration mapper
-     * @param EncryptionSuiteMapper                    $suiteMapper     The encryption suite mapper
-     * @param EncryptionSuiteService                   $suiteService    The suite service (terminal markCompromised)
+     * @param SuiteMigrationMapper                     $mapper           The suite migration mapper
+     * @param EncryptionSuiteMapper                    $suiteMapper      The encryption suite mapper
+     * @param EncryptionSuiteService                   $suiteService     The suite service (terminal markCompromised)
      * @param LinkShareService                         $linkShareService The link share service (terminal cascade-revoke)
-     * @param LoggerInterface                          $logger          The logger interface
-     * @param IEventDispatcher|null                    $eventDispatcher The optional event dispatcher
-     * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService  The passkey service (null when unwired)
+     * @param MigrationWorkService                     $workService      The work service (outstanding-row evidence)
+     * @param LoggerInterface                          $logger           The logger interface
+     * @param IEventDispatcher|null                    $eventDispatcher  The optional event dispatcher
+     * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService   The passkey service (null when unwired)
      *
      * @return void
      */
@@ -57,6 +64,7 @@ class MigrationService
         private EncryptionSuiteMapper $suiteMapper,
         private EncryptionSuiteService $suiteService,
         private LinkShareService $linkShareService,
+        private MigrationWorkService $workService,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?\OCA\Doriath\Service\PasskeyService $passkeyService=null,
@@ -102,10 +110,13 @@ class MigrationService
     /**
      * Complete a migration (with or without errors).
      *
-     * @param string $migrationId The migration ID
-     * @param bool   $hasErrors   Whether the migration had errors
+     * @param string   $migrationId         The migration ID
+     * @param bool     $hasErrors           Whether the migration had errors
+     * @param int|null $acceptUnrecoverable How many records the caller accepts losing access to,
+     *                                      required when any row on the old suite has a recorded
+     *                                      failure. Null means "no loss accepted", which refuses.
      *
-     * @return SuiteMigration
+     * @return array<string,mixed> The terminal migration, dropped-version count and lost secrets
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $hasErrors is outcome DATA forwarded
      *   from MigrationController::complete(), not a mode switch: the completion path is
@@ -114,20 +125,12 @@ class MigrationService
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
      */
-    public function completeMigration(string $migrationId, bool $hasErrors=false): SuiteMigration
-    {
+    public function completeMigration(
+        string $migrationId,
+        bool $hasErrors=false,
+        ?int $acceptUnrecoverable=null,
+    ): array {
         $migration = $this->mapper->findById($migrationId);
-
-        $status = 'completed';
-        if ($hasErrors === true) {
-            $status = 'completed_with_errors';
-        }
-
-        $migration->setStatus($status);
-
-        $migration->setCompletedAt(new DateTime());
-
-        $this->mapper->update($migration);
 
         // Terminal work, moved here from EncryptionSuiteController::compromiseRecovery.
         // It used to run at the START of recovery, which marked the old suite
@@ -136,6 +139,60 @@ class MigrationService
         // ciphertext it needed to migrate. None of this can safely happen until
         // the migration is over.
         $ownerId = $this->resolveOwnerId(suiteId: $migration->getOldSuiteId());
+
+        // Version history is deliberately lossy: only the head plus the N most
+        // recent snapshots are re-encrypted, and the rest are dropped here so
+        // the count is final and can be stated to the user in one number
+        // (secret-version-history spec). This runs BEFORE the outstanding-row
+        // check so out-of-window rows the client was never asked to migrate
+        // cannot hold the gate shut.
+        $droppedVersions = 0;
+        $unrecoverable   = [];
+        if ($ownerId !== null) {
+            $droppedVersions = $this->workService->dropVersionsBeyondWindow(
+                migration: $migration,
+                ownerId: $ownerId
+            );
+
+            // The gate. Terminating marks the old suite compromised, and a
+            // compromised suite refuses to serve its ciphertext, so every row
+            // still bound to it loses access. Two very different situations look
+            // alike from here and must not be treated alike.
+            //
+            // Rows nobody attempted (no migration_error) mean the migration is
+            // simply unfinished — a closed tab, a crash, a `complete` that was
+            // never called. Finalising would take the whole un-reached remainder
+            // of the vault down with it, so this refuses and the user resumes.
+            //
+            // Rows that were attempted and reported unrecoverable are the other
+            // case: retrying will not help them, and holding the migration open
+            // forever would leave the vault write-locked with no way out. Those
+            // may be finalised, but only against an explicit acknowledgement of
+            // how many lose access — see assertLossAcknowledged below.
+            $this->assertNothingUnaccountedFor(migration: $migration, ownerId: $ownerId);
+
+            $unrecoverable = $this->workService->listUnrecoverable(
+                migration: $migration,
+                ownerId: $ownerId
+            );
+
+            $this->assertLossAcknowledged(
+                migration: $migration,
+                unrecoverable: $unrecoverable,
+                acceptUnrecoverable: $acceptUnrecoverable
+            );
+        }//end if
+
+        $status = 'completed';
+        if ($hasErrors === true || $unrecoverable !== []) {
+            $status = 'completed_with_errors';
+        }
+
+        $migration->setStatus($status);
+
+        $migration->setCompletedAt(new DateTime());
+
+        $this->mapper->update($migration);
 
         $this->suiteService->markCompromised(
             id: $migration->getOldSuiteId(),
@@ -186,8 +243,125 @@ class MigrationService
             );
         }
 
-        return $migration;
+        return (
+            $migration->jsonSerialize() + [
+                'droppedVersions' => $droppedVersions,
+                'unrecoverable'   => $unrecoverable,
+            ]
+        );
     }//end completeMigration()
+
+    /**
+     * Refuse to terminate while rows remain that nobody has attempted.
+     *
+     * "Unaccounted for" means still on the old suite with no `migration_error`
+     * recorded against the owning secret — nobody has tried to migrate it. That
+     * is an unfinished migration, and finalising it would mark the old suite
+     * compromised and take the entire un-reached remainder of the vault down
+     * with it. The refusal is what pushes the user toward resuming instead.
+     *
+     * Rows that WERE attempted and reported unrecoverable are deliberately not
+     * counted here: keeping the migration open for them would hold the write
+     * lock forever with no way out, which is worse than the loss they represent
+     * and, per the invariant enforced in assertLossAcknowledged, they were
+     * already unreadable before this migration started.
+     *
+     * @param SuiteMigration $migration The migration being completed
+     * @param string         $ownerId   The migration owner's user id
+     *
+     * @return void
+     *
+     * @throws MigrationIncompleteException When unattempted rows remain
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    private function assertNothingUnaccountedFor(SuiteMigration $migration, string $ownerId): void
+    {
+        $outstanding = $this->workService->countOutstanding(
+            migration: $migration,
+            ownerId: $ownerId
+        );
+
+        if ($outstanding['unaccountedTotal'] === 0) {
+            return;
+        }
+
+        $this->logger->warning(
+            'Doriath: refused to complete a migration with unattempted rows on the old suite',
+            [
+                'migrationId'      => $migration->getId(),
+                'oldSuiteId'       => $migration->getOldSuiteId(),
+                'unaccountedTotal' => $outstanding['unaccountedTotal'],
+                'failedTotal'      => $outstanding['failedTotal'],
+            ]
+        );
+
+        throw new MigrationIncompleteException(
+            message: sprintf(
+                'Migration is not complete: %d record(s) have not been migrated yet '
+                .'(%d secret(s), %d version(s), %d attachment grant(s)). '
+                .'The migration remains in progress and can be resumed with the old master password.',
+                $outstanding['unaccountedTotal'],
+                $outstanding['unaccountedSecrets'],
+                $outstanding['unaccountedVersions'],
+                $outstanding['unaccountedGrants']
+            )
+        );
+    }//end assertNothingUnaccountedFor()
+
+    /**
+     * Refuse to lock secrets out of the vault without an explicit acknowledgement.
+     *
+     * Finalising with failures marks the old suite compromised, so every failed
+     * row loses access. That MUST be a decision the user made, never a
+     * side-effect of a client calling `complete`: a run in which every record
+     * failed — a wrong new public key, a broken crypto path — would otherwise
+     * silently lock a user out of their entire vault. The client therefore has
+     * to state how many losses it believes it is accepting, and the number has
+     * to match what the server can see.
+     *
+     * @param SuiteMigration                 $migration           The migration being completed
+     * @param array<int,array<string,mixed>> $unrecoverable       The rows that will lose access
+     * @param int|null                       $acceptUnrecoverable The client's acknowledged count
+     *
+     * @return void
+     *
+     * @throws MigrationIncompleteException When the loss is unacknowledged or miscounted
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+     */
+    private function assertLossAcknowledged(
+        SuiteMigration $migration,
+        array $unrecoverable,
+        ?int $acceptUnrecoverable,
+    ): void {
+        $count = count($unrecoverable);
+        if ($count === 0) {
+            return;
+        }
+
+        if ($acceptUnrecoverable === $count) {
+            $this->logger->warning(
+                'Doriath: finalising a migration with acknowledged unrecoverable secrets',
+                [
+                    'migrationId'   => $migration->getId(),
+                    'oldSuiteId'    => $migration->getOldSuiteId(),
+                    'unrecoverable' => $count,
+                ]
+            );
+            return;
+        }
+
+        throw new MigrationIncompleteException(
+            message: sprintf(
+                '%d secret(s) could not be decrypted with the old key and will lose access when this '
+                .'migration is finalised. Confirm by completing with acceptUnrecoverable=%d. '
+                .'Their stored ciphertext is retained either way.',
+                $count,
+                $count
+            )
+        );
+    }//end assertLossAcknowledged()
 
     /**
      * Resolve the owning user id for a suite.
@@ -214,7 +388,9 @@ class MigrationService
             return null;
         }
 
-        if ($ownerId === null || $ownerId === '') {
+        // EncryptionSuite::$ownerId is a non-nullable string defaulting to '',
+        // so an unset owner arrives as the empty string, never as null.
+        if ($ownerId === '') {
             return null;
         }
 
