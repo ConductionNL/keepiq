@@ -169,8 +169,11 @@ export default {
 }
 
 .doriath-delegation-manager__status--permanent {
-	background: var(--color-warning, #f5a623);
-	color: #fff;
+	/* The only genuinely hardcoded colour in the app. White is not a safe
+	   foreground for --color-warning, which is a lighter yellow in dark mode;
+	   --color-warning-text is the paired value that stays readable on it. */
+	background: var(--color-warning);
+	color: var(--color-warning-text);
 }
 
 .doriath-delegation-manager__actions {

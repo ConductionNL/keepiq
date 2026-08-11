@@ -174,8 +174,14 @@ export default {
 }
 
 .doriath-secret-request-form__link {
-	background-color: var(--color-success-rest, #e6f4ea);
-	border: 1px solid var(--color-success, #46ba61);
+	/* --color-success-rest is not a Nextcloud variable, so this always fell back
+	   to the pale light-theme green. The panel inherits the surrounding text
+	   colour, which is near-white in dark mode, leaving it unreadable. Keep the
+	   semantic colour on the border and use a themed background with an
+	   explicit foreground, which is contrast-guaranteed in both themes. */
+	background-color: var(--color-background-dark);
+	border: 1px solid var(--color-success);
+	color: var(--color-main-text);
 	padding: 8px;
 	border-radius: var(--border-radius, 4px);
 	font-size: 13px;

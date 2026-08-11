@@ -129,8 +129,12 @@ export default {
 }
 
 .doriath-secret-request-list__count {
-	background-color: var(--color-warning-rest, #fdf6e3);
-	color: var(--color-warning, #c08410);
+	/* A badge needs its own contrast, not the page's. --color-warning-rest does
+	   not exist, so this was a pale cream fallback carrying warning-coloured
+	   text — low contrast in light mode and wrong in dark. Nextcloud guarantees
+	   the --color-warning / --color-warning-text pairing in both themes. */
+	background-color: var(--color-warning);
+	color: var(--color-warning-text);
 	border-radius: 999px;
 	font-size: 12px;
 	padding: 2px 8px;
