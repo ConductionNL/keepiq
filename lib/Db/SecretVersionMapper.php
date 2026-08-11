@@ -31,6 +31,11 @@ use OCP\IDBConnection;
  * Mapper for the doriath_secret_versions table.
  *
  * @template-extends QBMapper<SecretVersion>
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) Each method is a single,
+ *   focused query the service layer composes (find/prune/count/migrate);
+ *   splitting the mapper would scatter one table's access across several
+ *   classes for no benefit. Mirrors the same suppression on SecretMapper.
  */
 class SecretVersionMapper extends QBMapper
 {
@@ -196,4 +201,149 @@ class SecretVersionMapper extends QBMapper
 
         return $ids;
     }//end findSecretIdsWithVersions()
+
+    /**
+     * A secret's versions still bound to a suite, newest first.
+     *
+     * The head lives in `doriath_secrets` and is migrated separately; this
+     * returns only the snapshot rows, which carry their own
+     * `encryption_suite_id` and so migrate independently of their head.
+     *
+     * @param string $secretId          The secret UUID
+     * @param string $encryptionSuiteId The suite ID
+     *
+     * @return SecretVersion[]
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function findBySecretAndSuite(string $secretId, string $encryptionSuiteId): array
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)))
+            ->andWhere($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->orderBy('version_number', 'DESC');
+
+        return $this->findEntities(query: $qb);
+    }//end findBySecretAndSuite()
+
+    /**
+     * Count an owner's version rows still bound to a suite.
+     *
+     * A version has no owner column of its own — ownership is resolved
+     * through the secret it snapshots, which is why this joins rather than
+     * filtering. Note the join is on the secret's identity only, NOT on the
+     * secret's suite: a head that has already migrated still owns versions
+     * that have not.
+     *
+     * @param string $encryptionSuiteId The suite ID
+     * @param string $ownerType         The owner type
+     * @param string $ownerId           The owner ID
+     *
+     * @return int
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function countBySuiteForOwner(
+        string $encryptionSuiteId,
+        string $ownerType,
+        string $ownerId,
+    ): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'cnt'))
+            ->from($this->getTableName(), 'v')
+            ->innerJoin('v', 'doriath_secrets', 's', $qb->expr()->eq('v.secret_id', 's.id'))
+            ->where($qb->expr()->eq('v.encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('s.owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ownerId)));
+
+        $result = $qb->executeQuery();
+        $row    = $result->fetch();
+        $result->closeCursor();
+
+        return (int) ($row['cnt'] ?? 0);
+    }//end countBySuiteForOwner()
+
+    /**
+     * Count an owner's version rows on a suite whose owning secret carries NO
+     * recorded migration failure.
+     *
+     * A version has no `migration_error` column of its own — the column exists
+     * only on `doriath_secrets` — so a failed version is recorded against the
+     * secret that owns it. That makes the owning secret's error the only
+     * available "accounted for" signal here.
+     *
+     * @param string $encryptionSuiteId The suite ID
+     * @param string $ownerType         The owner type
+     * @param string $ownerId           The owner ID
+     *
+     * @return int
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function countUnaccountedBySuiteForOwner(
+        string $encryptionSuiteId,
+        string $ownerType,
+        string $ownerId,
+    ): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'cnt'))
+            ->from($this->getTableName(), 'v')
+            ->innerJoin('v', 'doriath_secrets', 's', $qb->expr()->eq('v.secret_id', 's.id'))
+            ->where($qb->expr()->eq('v.encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('s.owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ownerId)))
+            ->andWhere($qb->expr()->isNull('s.migration_error'));
+
+        $result = $qb->executeQuery();
+        $row    = $result->fetch();
+        $result->closeCursor();
+
+        return (int) ($row['cnt'] ?? 0);
+    }//end countUnaccountedBySuiteForOwner()
+
+    /**
+     * The owner's secret IDs that still have versions bound to a suite, paged.
+     *
+     * Version work is paged by SECRET rather than by version row because the
+     * re-encryption window ("head plus the N most recent") is defined per
+     * secret. Paging by version row could split one secret's history across
+     * two pages, and the window would then be computed against a partial
+     * group — re-encrypting the wrong versions and dropping survivors.
+     *
+     * @param string $encryptionSuiteId The suite ID
+     * @param string $ownerType         The owner type
+     * @param string $ownerId           The owner ID
+     * @param int    $limit             Maximum secret IDs
+     * @param int    $offset            Row offset
+     *
+     * @return string[]
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function findSecretIdsWithSuiteVersionsForOwner(
+        string $encryptionSuiteId,
+        string $ownerType,
+        string $ownerId,
+        int $limit=100,
+        int $offset=0,
+    ): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->selectDistinct('v.secret_id')
+            ->from($this->getTableName(), 'v')
+            ->innerJoin('v', 'doriath_secrets', 's', $qb->expr()->eq('v.secret_id', 's.id'))
+            ->where($qb->expr()->eq('v.encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('s.owner_type', $qb->createNamedParameter($ownerType)))
+            ->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ownerId)))
+            ->orderBy('v.secret_id', 'ASC')
+            ->setMaxResults(max(1, $limit))
+            ->setFirstResult(max(0, $offset));
+
+        $result = $qb->executeQuery();
+        $ids    = array_column($result->fetchAll(), 'secret_id');
+        $result->closeCursor();
+
+        return $ids;
+    }//end findSecretIdsWithSuiteVersionsForOwner()
 }//end class

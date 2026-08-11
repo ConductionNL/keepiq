@@ -125,4 +125,131 @@ class AttachmentGrantMapper extends QBMapper
 
         return (int) ($row['cnt'] ?? 0);
     }//end countByAttachment()
+
+    /**
+     * Count a recipient's own grants still bound to a suite.
+     *
+     * Scoped by RECIPIENT, not by the owner of the attachment: a grant is the
+     * file key wrapped to one holder's certificate, so the rotating user can
+     * only re-wrap the grants addressed to them. Every other recipient's grant
+     * stays bound to its own suite and MUST NOT be counted as outstanding work
+     * — counting it would block completion on a row nobody in this migration
+     * is able to touch.
+     *
+     * @param string $encryptionSuiteId The suite ID
+     * @param string $recipientType     The recipient type
+     * @param string $recipientId       The recipient ID
+     *
+     * @return int
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function countBySuiteForRecipient(
+        string $encryptionSuiteId,
+        string $recipientType,
+        string $recipientId,
+    ): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'cnt'))
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('recipient_type', $qb->createNamedParameter($recipientType)))
+            ->andWhere($qb->expr()->eq('recipient_id', $qb->createNamedParameter($recipientId)));
+
+        $result = $qb->executeQuery();
+        $row    = $result->fetch();
+        $result->closeCursor();
+
+        return (int) ($row['cnt'] ?? 0);
+    }//end countBySuiteForRecipient()
+
+    /**
+     * Count a recipient's own grants on a suite whose owning secret carries NO
+     * recorded migration failure.
+     *
+     * Like versions, grants have no `migration_error` column of their own, so
+     * the owning secret's error is the "accounted for" signal.
+     *
+     * @param string $encryptionSuiteId The suite ID
+     * @param string $recipientType     The recipient type
+     * @param string $recipientId       The recipient ID
+     *
+     * @return int
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function countUnaccountedBySuiteForRecipient(
+        string $encryptionSuiteId,
+        string $recipientType,
+        string $recipientId,
+    ): int {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select($qb->func()->count('*', 'cnt'))
+            ->from($this->getTableName(), 'g')
+            ->innerJoin('g', 'doriath_secrets', 's', $qb->expr()->eq('g.secret_id', 's.id'))
+            ->where($qb->expr()->eq('g.encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('g.recipient_type', $qb->createNamedParameter($recipientType)))
+            ->andWhere($qb->expr()->eq('g.recipient_id', $qb->createNamedParameter($recipientId)))
+            ->andWhere($qb->expr()->isNull('s.migration_error'));
+
+        $result = $qb->executeQuery();
+        $row    = $result->fetch();
+        $result->closeCursor();
+
+        return (int) ($row['cnt'] ?? 0);
+    }//end countUnaccountedBySuiteForRecipient()
+
+    /**
+     * List a recipient's own grants still bound to a suite, paged.
+     *
+     * @param string $encryptionSuiteId The suite ID
+     * @param string $recipientType     The recipient type
+     * @param string $recipientId       The recipient ID
+     * @param int    $limit             Maximum rows
+     * @param int    $offset            Row offset
+     *
+     * @return AttachmentGrant[]
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function findBySuiteForRecipient(
+        string $encryptionSuiteId,
+        string $recipientType,
+        string $recipientId,
+        int $limit=100,
+        int $offset=0,
+    ): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+            ->andWhere($qb->expr()->eq('recipient_type', $qb->createNamedParameter($recipientType)))
+            ->andWhere($qb->expr()->eq('recipient_id', $qb->createNamedParameter($recipientId)))
+            ->orderBy('id', 'ASC')
+            ->setMaxResults(max(1, $limit))
+            ->setFirstResult(max(0, $offset));
+
+        return $this->findEntities(query: $qb);
+    }//end findBySuiteForRecipient()
+
+    /**
+     * Find a grant by its UUID.
+     *
+     * @param string $id The grant UUID
+     *
+     * @return AttachmentGrant
+     *
+     * @throws DoesNotExistException When no grant matches
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+     */
+    public function findById(string $id): AttachmentGrant
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
+
+        return $this->findEntity(query: $qb);
+    }//end findById()
 }//end class
