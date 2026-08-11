@@ -233,7 +233,7 @@ The system MUST allow an administrator to reinstate a revoked EncryptionSuite. B
 The system MUST generate RSA keys of at least 4096 bits. The minimum MUST only be allowed to increase, never decrease.
 
 #### Scenario: Generated key meets the minimum size
-@e2e exclude Server-side key-generation contract — RSA key bit-length is enforced in the key-generation service; covered by PHPUnit, not browser-observable.
+@e2e exclude Key bit-length is not browser-observable: under ADR-003 the keypair is generated in the browser and only the PUBLIC half is ever transmitted, so no DOM surface reports the modulus size. Covered by PHPUnit in tests/Unit/Service/CertificateIssuanceServiceTest.php::testIssuedCertificatePreservesA4096BitBrowserKeyWithoutThePrivateHalf, which submits a real RSA-4096 public key with no private half and asserts the issued certificate carries that exact modulus at 4096 bits. That test runs in the "Unit Tests" suite of phpunit.xml. NOTE the earlier wording here ("enforced in the key-generation service") described a server-side check that does not exist and named no test; when written, no test in this repo asserted a generated key's bit length and CertificateIssuanceService had no test class at all. The guard that actually holds is the issuance-time reroute in CertificateIssuanceService::signPublicKey — verified 2026-08-11 to be live, not vestigial: removing it makes PHP 8.4/OpenSSL mint a throwaway keypair for a public-only 4096-bit key, which the final invariant then refuses.
 - GIVEN the system generates a new RSA key pair
 - WHEN the key is created
 - THEN the key size MUST be at least 4096 bits
