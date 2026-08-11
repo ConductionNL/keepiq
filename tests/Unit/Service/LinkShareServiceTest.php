@@ -24,6 +24,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\LinkShare;
 use OCA\Doriath\Db\LinkShareMapper;
 use OCA\Doriath\Service\LinkShareService;
+use OCA\Doriath\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -59,7 +60,11 @@ class LinkShareServiceTest extends TestCase
         $this->mapper = $this->createMock(originalClassName: LinkShareMapper::class);
         $logger       = $this->createMock(originalClassName: LoggerInterface::class);
 
-        $this->service = new LinkShareService(mapper: $this->mapper, logger: $logger);
+        $this->service = new LinkShareService(
+            mapper: $this->mapper,
+            logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
+        );
     }//end setUp()
 
     /**

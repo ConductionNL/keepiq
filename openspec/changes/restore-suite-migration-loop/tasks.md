@@ -14,7 +14,7 @@
 
 ## 3. Server — write lock
 
-- [ ] 3.1 Extend `MigrationService::isWriteLocked` (`lib/Service/MigrationService.php:199`) enforcement to the write paths of `AttachmentService`, `LinkShareService` and `SecretRequestService`; `SecretService:1265` already guards secret writes and `EncryptionSuiteController:161` already guards suite creation — extend those two rather than duplicating them. Reads MUST stay open so the migration and the user can both still read
+- [x] 3.1 Extend `MigrationService::isWriteLocked` (`lib/Service/MigrationService.php:199`) enforcement to the write paths of `AttachmentService`, `LinkShareService` and `SecretRequestService`; `SecretService:1265` already guards secret writes and `EncryptionSuiteController:161` already guards suite creation — extend those two rather than duplicating them. Reads MUST stay open so the migration and the user can both still read
 
 ## 4. Server — flag clearing
 

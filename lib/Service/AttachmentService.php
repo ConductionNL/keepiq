@@ -63,14 +63,15 @@ class AttachmentService
     /**
      * Constructor for AttachmentService.
      *
-     * @param AttachmentMapper      $mapper          The attachment mapper
-     * @param AttachmentGrantMapper $grantMapper     The grant mapper
-     * @param SecretMapper          $secretMapper    The secret mapper (authorization)
-     * @param EncryptionSuiteMapper $suiteMapper     The suite mapper (grant provenance)
-     * @param IAppDataFactory       $appDataFactory  The app-data factory (blob storage)
-     * @param IAppConfig            $appConfig       The app config (limits)
-     * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
-     * @param AuditEventFactory     $auditEvents     The audit-event factory
+     * @param AttachmentMapper      $mapper           The attachment mapper
+     * @param AttachmentGrantMapper $grantMapper      The grant mapper
+     * @param SecretMapper          $secretMapper     The secret mapper (authorization)
+     * @param EncryptionSuiteMapper $suiteMapper      The suite mapper (grant provenance)
+     * @param IAppDataFactory       $appDataFactory   The app-data factory (blob storage)
+     * @param IAppConfig            $appConfig        The app config (limits)
+     * @param WriteLockService      $writeLockService The compromise-recovery write lock
+     * @param IEventDispatcher|null $eventDispatcher  The audit event dispatcher
+     * @param AuditEventFactory     $auditEvents      The audit-event factory
      *
      * @return void
      */
@@ -81,6 +82,7 @@ class AttachmentService
         private EncryptionSuiteMapper $suiteMapper,
         private IAppDataFactory $appDataFactory,
         private IAppConfig $appConfig,
+        private WriteLockService $writeLockService,
         private ?IEventDispatcher $eventDispatcher=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
@@ -142,6 +144,12 @@ class AttachmentService
         string $encryptedMetadata,
         string $wrappedFileKey,
     ): array {
+        // A new attachment would be wrapped to whichever suite is current, while
+        // the migration is walking the other one — so it would either be missed
+        // or counted as outstanding work that the client never fetched. Reads
+        // stay open; only the write is refused.
+        $this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+
         $secret = $this->loadOwnedSecret(secretId: $secretId, userId: $userId);
 
         if ($blob === '' || $encryptedMetadata === '' || $wrappedFileKey === '') {
@@ -318,6 +326,8 @@ class AttachmentService
         string $wrappedFileKey,
         string $recipientType='user',
     ): AttachmentGrant {
+        $this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+
         $attachment = $this->loadAttachment(attachmentId: $attachmentId);
         $this->loadOwnedSecret(secretId: $attachment->getSourceSecretId(), userId: $userId);
 
@@ -369,6 +379,12 @@ class AttachmentService
      */
     public function delete(string $attachmentId, string $userId): void
     {
+        // Deliberately NOT write-locked. The lock exists to stop new ciphertext
+        // appearing under a suite the migration has already walked past;
+        // deleting only shrinks the work list, which is re-derived from the rows
+        // on every pass, so it cannot strand a run. And a user who has just
+        // declared their key compromised is precisely the user who may need to
+        // revoke something immediately.
         $attachment = $this->loadAttachment(attachmentId: $attachmentId);
         $secret     = $this->loadOwnedSecret(secretId: $attachment->getSourceSecretId(), userId: $userId);
 

@@ -67,16 +67,18 @@ class LinkShareService
     /**
      * Constructor for LinkShareService.
      *
-     * @param LinkShareMapper       $mapper          The link share mapper
-     * @param LoggerInterface       $logger          The logger interface
-     * @param IEventDispatcher|null $eventDispatcher The event dispatcher
-     * @param AuditEventFactory     $auditEvents     The audit-event factory
+     * @param LinkShareMapper       $mapper           The link share mapper
+     * @param LoggerInterface       $logger           The logger interface
+     * @param WriteLockService      $writeLockService The compromise-recovery write lock
+     * @param IEventDispatcher|null $eventDispatcher  The event dispatcher
+     * @param AuditEventFactory     $auditEvents      The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private LinkShareMapper $mapper,
         private LoggerInterface $logger,
+        private WriteLockService $writeLockService,
         private ?IEventDispatcher $eventDispatcher=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
@@ -128,6 +130,12 @@ class LinkShareService
         ?DateTime $expiresAt,
         string $userId,
     ): LinkShare {
+        // A link share bakes an encrypted snapshot against a specific suite, and
+        // completing a migration cascade-revokes every link share anyway. One
+        // created mid-migration would be destroyed moments later, so refuse it
+        // rather than take the user's time.
+        $this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+
         if ($secretId === '' || $encryptedSnapshot === '' || $salt === '') {
             throw new InvalidArgumentException('Missing required link share fields');
         }

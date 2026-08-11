@@ -53,6 +53,7 @@ class MigrationService
      * @param EncryptionSuiteService                   $suiteService     The suite service (terminal markCompromised)
      * @param LinkShareService                         $linkShareService The link share service (terminal cascade-revoke)
      * @param MigrationWorkService                     $workService      The work service (outstanding-row evidence)
+     * @param WriteLockService                         $writeLockService The write-lock oracle
      * @param LoggerInterface                          $logger           The logger interface
      * @param IEventDispatcher|null                    $eventDispatcher  The optional event dispatcher
      * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService   The passkey service (null when unwired)
@@ -65,6 +66,7 @@ class MigrationService
         private EncryptionSuiteService $suiteService,
         private LinkShareService $linkShareService,
         private MigrationWorkService $workService,
+        private WriteLockService $writeLockService,
         private LoggerInterface $logger,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?\OCA\Doriath\Service\PasskeyService $passkeyService=null,
@@ -450,11 +452,9 @@ class MigrationService
      */
     public function isWriteLocked(string $ownerType, string $ownerId): bool
     {
-        try {
-            $this->getInProgressMigration(ownerType: $ownerType, ownerId: $ownerId);
-            return true;
-        } catch (DoesNotExistException) {
-            return false;
-        }
+        // Delegated so there is one implementation. Services that only need to
+        // ASK about the lock depend on WriteLockService directly, because
+        // depending on this class would close a cycle through LinkShareService.
+        return $this->writeLockService->isWriteLocked(ownerType: $ownerType, ownerId: $ownerId);
     }//end isWriteLocked()
 }//end class

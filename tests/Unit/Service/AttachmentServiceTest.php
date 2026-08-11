@@ -28,6 +28,7 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Service\AttachmentService;
+use OCA\Doriath\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IAppData;
@@ -84,6 +85,7 @@ class AttachmentServiceTest extends TestCase
             suiteMapper: $suiteMapper,
             appDataFactory: $appDataFactory,
             appConfig: $this->appConfig,
+            writeLockService: $this->createMock(WriteLockService::class),
             eventDispatcher: null,
         );
     }//end setUp()

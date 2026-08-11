@@ -10,6 +10,7 @@ use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Db\SuiteMigrationMapper;
 use OCA\Doriath\Exception\MigrationIncompleteException;
 use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Doriath\Service\WriteLockService;
 use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCA\Doriath\Service\MigrationWorkService;
@@ -33,6 +34,8 @@ class MigrationServiceTest extends TestCase
 
     private LinkShareService&MockObject $linkShareService;
 
+    private WriteLockService&MockObject $writeLockService;
+
     protected function setUp(): void
     {
         $this->migrationMapper  = $this->createMock(SuiteMigrationMapper::class);
@@ -40,6 +43,7 @@ class MigrationServiceTest extends TestCase
         $this->workService      = $this->createMock(MigrationWorkService::class);
         $this->suiteService     = $this->createMock(EncryptionSuiteService::class);
         $this->linkShareService = $this->createMock(LinkShareService::class);
+        $this->writeLockService = $this->createMock(WriteLockService::class);
         $logger = $this->createMock(LoggerInterface::class);
 
         // Named arguments: the constructor gained collaborators for the terminal
@@ -51,6 +55,7 @@ class MigrationServiceTest extends TestCase
             suiteService: $this->suiteService,
             linkShareService: $this->linkShareService,
             workService: $this->workService,
+            writeLockService: $this->writeLockService,
             logger: $logger,
         );
     }//end setUp()
@@ -102,18 +107,16 @@ class MigrationServiceTest extends TestCase
 
     public function testIsWriteLockedWhenMigrationInProgress(): void
     {
-        $suite = new EncryptionSuite();
-        $suite->setId('suite-1');
-
-        $this->suiteMapper->method('findByOwner')->willReturn([$suite]);
-        $this->migrationMapper->method('hasInProgress')->willReturn(true);
+        // Delegated to WriteLockService so there is one implementation; the
+        // walk over the owner's suites is covered by WriteLockServiceTest.
+        $this->writeLockService->method('isWriteLocked')->willReturn(true);
 
         $this->assertTrue($this->service->isWriteLocked('user', 'testuser'));
     }//end testIsWriteLockedWhenMigrationInProgress()
 
     public function testIsNotWriteLockedWhenNoMigration(): void
     {
-        $this->suiteMapper->method('findByOwner')->willReturn([]);
+        $this->writeLockService->method('isWriteLocked')->willReturn(false);
 
         $this->assertFalse($this->service->isWriteLocked('user', 'testuser'));
     }//end testIsNotWriteLockedWhenNoMigration()

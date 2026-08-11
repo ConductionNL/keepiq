@@ -28,6 +28,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\WriteLockService;
 use OCA\Doriath\Service\SecretRequestService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
@@ -63,7 +64,11 @@ class SecretRequestServiceTest extends TestCase
     {
         $this->mapper  = $this->createMock(originalClassName: SecretRequestMapper::class);
         $logger        = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->service = new SecretRequestService(mapper: $this->mapper, logger: $logger);
+        $this->service = new SecretRequestService(
+            mapper: $this->mapper,
+            logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
+        );
     }//end setUp()
 
     /**
@@ -385,6 +390,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $this->mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: $notifier,
         );
 
@@ -507,6 +513,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $this->mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: $secretMapper,
         );
@@ -535,6 +542,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $this->mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: $secretMapper,
         );
@@ -559,6 +567,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $this->mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: $secretMapper,
         );
@@ -632,6 +641,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: null,
             suiteMapper: $suiteMapper,
@@ -671,6 +681,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: null,
             suiteMapper: $suiteMapper,
@@ -729,6 +740,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: $secretMapper,
         );
@@ -769,6 +781,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: $secretMapper,
         );
@@ -815,6 +828,7 @@ class SecretRequestServiceTest extends TestCase
         $service = new SecretRequestService(
             mapper: $mapper,
             logger: $logger,
+            writeLockService: $this->createMock(WriteLockService::class),
             notificationService: null,
             secretMapper: $secretMapper,
         );

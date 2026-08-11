@@ -107,16 +107,16 @@ export default {
 }
 
 .ca-health-card--healthy .ca-health-card__indicator {
-	background: var(--color-success);
+	background: var(--color-success-text);
 }
 
 .ca-health-card--expiring_soon .ca-health-card__indicator {
-	background: var(--color-warning);
+	background: var(--color-warning-text);
 }
 
 .ca-health-card--degraded .ca-health-card__indicator,
 .ca-health-card--not_configured .ca-health-card__indicator {
-	background: var(--color-error);
+	background: var(--color-error-text);
 }
 
 .ca-health-card__row {

@@ -54,6 +54,7 @@ class SecretRequestService
      *
      * @param SecretRequestMapper        $mapper              The mapper
      * @param LoggerInterface            $logger              The logger
+     * @param WriteLockService           $writeLockService    The compromise-recovery write lock
      * @param NotificationService|null   $notificationService Optional notification dispatcher
      * @param SecretMapper|null          $secretMapper        Optional Secret mapper for owner lookups
      * @param EncryptionSuiteMapper|null $suiteMapper         Optional suite mapper
@@ -65,6 +66,7 @@ class SecretRequestService
     public function __construct(
         private SecretRequestMapper $mapper,
         private LoggerInterface $logger,
+        private WriteLockService $writeLockService,
         private ?NotificationService $notificationService=null,
         private ?SecretMapper $secretMapper=null,
         private ?EncryptionSuiteMapper $suiteMapper=null,
@@ -308,6 +310,11 @@ class SecretRequestService
         ?DateTime $expiresAt,
         string $userId,
     ): SecretRequest {
+        // Pending requests are locked for the duration of a migration and
+        // re-pointed to the new suite on completion. A request created now would
+        // be born locked, so refuse it with an explanation instead.
+        $this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+
         if ($secretId === '') {
             throw new InvalidArgumentException(message: 'secretId is required');
         }
@@ -388,6 +395,12 @@ class SecretRequestService
         ?DateTime $expiresAt,
         string $userId,
     ): SecretRequest {
+        // Scoped to the ACTING user, not the application: the request row hangs
+        // off a secret this user owns and is one of the suite-bound stores the
+        // migration locks, so it must not be created mid-rotation even though
+        // the application's own suite is unaffected.
+        $this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+
         if ($applicationId === '') {
             throw new InvalidArgumentException(message: 'applicationId is required');
         }
@@ -446,6 +459,8 @@ class SecretRequestService
         ?DateTime $expiresAt,
         string $userId,
     ): SecretRequest {
+        $this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+
         if ($secretId === '') {
             throw new InvalidArgumentException(message: 'secretId is required');
         }
