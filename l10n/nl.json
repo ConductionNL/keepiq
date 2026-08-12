@@ -520,7 +520,19 @@
         "Assume this value was exposed — change it at its source": "Ga ervan uit dat deze waarde is uitgelekt — wijzig hem bij de bron",
         "This value was in the vault when the encryption key was declared compromised, so it must be assumed exposed.": "Deze waarde stond in de kluis toen de encryptiesleutel als gecompromitteerd is gemeld, dus moet je ervan uitgaan dat hij is uitgelekt.",
         "Change it at its source, then save the new value here. Saving a new value clears this warning.": "Wijzig hem bij de bron en sla de nieuwe waarde hier op. Bij het opslaan van een nieuwe waarde verdwijnt deze waarschuwing.",
-        "Could not be migrated to your new key": "Kon niet worden gemigreerd naar je nieuwe sleutel"
+        "Could not be migrated to your new key": "Kon niet worden gemigreerd naar je nieuwe sleutel",
+        "Key rotation unfinished": "Sleutelrotatie niet afgerond",
+        "%n secret is still encrypted under your previous key.": "%n geheim is nog versleuteld met je vorige sleutel.",
+        "%n secrets are still encrypted under your previous key.": "%n geheimen zijn nog versleuteld met je vorige sleutel.",
+        "Some secrets are still encrypted under your previous key.": "Sommige geheimen zijn nog versleuteld met je vorige sleutel.",
+        "Your vault is read-only until it finishes.": "Je kluis is alleen-lezen totdat dit is afgerond.",
+        "Your previous master password": "Je vorige hoofdwachtwoord",
+        "Resume now": "Nu hervatten",
+        "Resuming…": "Hervatten…",
+        "Resume rotation": "Rotatie hervatten",
+        "Unlock your vault first, then resume.": "Ontgrendel eerst je kluis en hervat daarna.",
+        "Could not resume the rotation.": "Kon de rotatie niet hervatten.",
+        "Some secrets could not be migrated. Open key rotation to decide what to do with them.": "Sommige geheimen konden niet worden gemigreerd. Open sleutelrotatie om te bepalen wat ermee moet gebeuren."
     },
     "plurals": null
 }

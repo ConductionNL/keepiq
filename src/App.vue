@@ -36,6 +36,12 @@
 			{{ t('doriath', 'Offline — read-only. Last synced {when}.', { when: syncedLabel }) }}
 		</div>
 
+		<!-- An interrupted compromise recovery leaves the vault write-locked with
+		     nothing else in the UI saying why, so this sits at shell level rather
+		     than inside any one view. It renders nothing when no migration is in
+		     progress. -->
+		<MigrationResumeBanner />
+
 		<CnAppRoot
 			:ai-companion="true"
 			:manifest="manifest"
@@ -185,6 +191,7 @@ import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
+import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
@@ -209,6 +216,7 @@ export default {
 		MasterPasswordForm,
 		PasskeyManager,
 		CompromiseRecoveryForm,
+		MigrationResumeBanner,
 	},
 
 	props: {

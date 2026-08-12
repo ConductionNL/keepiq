@@ -28,7 +28,7 @@
 - [x] 5.3 Rewrite `initiateCompromiseRecovery` (`src/store/modules/encryptionSuite.js:113`): delete the premature `POST .../migrations/<migration-id>/complete` at `:149`, unwrap and import the old private key, drive fetch-work → re-encrypt → POST with a 4-wide in-flight window, and only then call `complete` with the real `hasErrors`; expose progress and the failure list as store state
 - [x] 5.4 `CompromiseRecoveryForm.vue` — consume the return value that `:108` currently discards; render live progress (`n of m` across all stores), terminal counts, the failure list and a retry action inside the recovery dialog
 - [x] 5.5 Replace the warning copy in all three surfaces: before confirm, during, and after. Every stored value must be assumed exposed and changed at its source; rotating the key restores access so the user can go and do that in an orderly fashion. Delete the false "Your vault is now secured with a new encryption key" message (`CompromiseRecoveryForm.vue:34`)
-- [ ] 5.6 Resume banner on unlock driven by the existing `GET /api/v1/migrations/status`, showing how many records remain and offering resume (re-enter the old master password), per the existing "Tab closed mid-migration" scenario
+- [x] 5.6 Resume banner on unlock driven by the existing `GET /api/v1/migrations/status`, showing how many records remain and offering resume (re-enter the old master password), per the existing "Tab closed mid-migration" scenario
 - [x] 5.7 Prominent, non-dismissible-while-set `possiblyCompromisedAt` warning on the secret row and detail view, wired to the health surface that already computes it (`src/health/engine.js:152`)
 
 ## 6. Tests

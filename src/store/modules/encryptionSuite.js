@@ -31,6 +31,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		migrationDroppedVersions: 0,
 		/** @type {Array<{id: string, name: string, error: string}>} Secrets that lost access */
 		migrationUnrecoverable: [],
+		/** @type {number|null} Records still on the old suite, for the resume banner */
+		migrationRemaining: null,
 		/** @type {boolean} Server wants the loss acknowledged before finalising */
 		migrationNeedsAcknowledgement: false,
 		/** @type {string|null} Why the server refused to finalise */
@@ -579,6 +581,39 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			} finally {
 				await this.fetchMigrationStatus()
 			}
+		},
+
+		/**
+		 * How many records an interrupted migration still has to move.
+		 *
+		 * The resume banner needs a number, and the only trustworthy one is
+		 * derived server-side from the rows themselves — a client-side count
+		 * would be lost with the tab that produced it. Asks for the smallest
+		 * possible page because only the totals are wanted.
+		 *
+		 * @return {Promise<number|null>} Records remaining, or null when there is
+		 *   no migration to resume.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
+		 */
+		async fetchMigrationRemaining() {
+			if (this.migrationStatus === null) {
+				this.migrationRemaining = null
+				return null
+			}
+
+			try {
+				const { data } = await axios.get(
+					generateUrl(`/apps/doriath/api/v1/migrations/${this.migrationStatus.id}/work`),
+					{ params: { limit: 1 } },
+				)
+				this.migrationRemaining = data.totalRemaining ?? 0
+			} catch (e) {
+				// A banner that cannot count is still worth showing, so leave the
+				// count null rather than hiding the migration entirely.
+				this.migrationRemaining = null
+			}
+
+			return this.migrationRemaining
 		},
 
 		/**
