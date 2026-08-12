@@ -76,6 +76,9 @@ class TeamFolderShareService {
 	 * Idempotent: an existing (source, recipient) pair is skipped, so a
 	 * retried or duplicated chunk never double-shares.
 	 *
+	 * In the returned array, `created` is the number of fan-out shares created
+	 * (skips excluded) and `rows` describes each one.
+	 *
 	 * @param TeamFolder $teamFolder The team folder being fanned out
 	 * @param array<int,array<string,mixed>> $shares Rows of sourceSecretId, targetUserId,
 	 *                                               encryptedKey, encryptedLogin,
@@ -84,8 +87,6 @@ class TeamFolderShareService {
 	 * @param string $userId The caller (the folder owner)
 	 *
 	 * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}
-	 *                                                                                                                              `created` is the number of fan-out shares created (skips
-	 *                                                                                                                              excluded); `rows` describes each one.
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
