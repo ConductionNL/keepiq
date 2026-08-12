@@ -38,7 +38,7 @@
 - [x] 6.3 PHPUnit (lifecycle): completion is refused while any store still has rows on `old_suite_id`; the terminal step performs its work in the specified order; a precondition failure leaves the old suite `active`, creates no migration and re-encrypts nothing
 - [x] 6.4 PHPUnit (flag): `possibly_compromised_at` is raised on every migrated row, idempotent on retry, never raised for failed rows, preserved through metadata edits, cleared on value replacement and propagated to shares; `SuiteCompromiseListener` de-duplicates notifications across a large migration
   - Raise half in `MigrationWorkServiceTest` (raised on commit, idempotent on retry, never for a failed row); de-duplication in `SuiteCompromiseListenerTest` (one notification per owner across a 500-secret migration, unflagged rows silent); preserve/clear half in `SecretServiceTest` (metadata edit and unchanged-key re-send both preserve, value replacement clears); share propagation already covered by `ShareServiceTest:515,550`.
-- [ ] 6.5 e2e (Playwright): the compromise-recovery flow — the rotate-every-value warning is shown before the user confirms, progress renders inside the dialog, the terminal message reports counts without claiming the vault is secure, and a migrated secret shows the possibly-compromised warning afterwards
+- [x] 6.5 e2e (Playwright): the compromise-recovery flow — the rotate-every-value warning is shown before the user confirms, progress renders inside the dialog, the terminal message reports counts without claiming the vault is secure, and a migrated secret shows the possibly-compromised warning afterwards
 
 ## Acceptance criteria
 

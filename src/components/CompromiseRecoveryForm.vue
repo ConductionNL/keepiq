@@ -186,6 +186,7 @@ export default {
 		 * Progress as a percentage for the bar.
 		 *
 		 * @return {number} 0-100.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-compromise-recovery-states-that-regained-access-is-not-an-all-clear
 		 */
 		progressPercent() {
 			const p = this.progress
@@ -200,6 +201,7 @@ export default {
 		 * card is the only thing allowed to report an outcome.
 		 *
 		 * @return {string} The progress label.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-compromise-recovery-states-that-regained-access-is-not-an-all-clear
 		 */
 		progressLabel() {
 			const p = this.progress
@@ -347,6 +349,7 @@ export default {
 		 *
 		 * @param {Error} e The caught error.
 		 * @return {string} The message to display.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
 		 */
 		describe(e) {
 			return e?.response?.data?.message

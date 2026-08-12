@@ -560,6 +560,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			return data
 		},
 
+		/**
+		 * Ask the server to terminate the migration.
+		 *
+		 * Thin wrapper over the endpoint: the decision-making lives in
+		 * finaliseMigration and acceptMigrationLosses, and the server owns the
+		 * gate. Always refreshes migration status afterwards, including on
+		 * failure, so a refused completion leaves the UI showing the truth.
+		 *
+		 * @param {string} migrationId The migration ID.
+		 * @param {boolean} hasErrors Whether any record failed.
+		 * @param {number|null} acceptUnrecoverable Losses the user has accepted.
+		 * @return {Promise<object>} The completion response body.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+		 */
 		async completeMigration(migrationId, hasErrors, acceptUnrecoverable = null) {
 			try {
 				const body = { hasErrors }

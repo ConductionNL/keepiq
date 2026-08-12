@@ -90,6 +90,7 @@ export default {
 		 * The in-progress migration, or null when there is nothing to resume.
 		 *
 		 * @return {object|null} The migration status record.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
 		 */
 		migration() {
 			return useEncryptionSuiteStore().migrationStatus
@@ -99,6 +100,7 @@ export default {
 		 * Whether the vault is locked, which resume requires it not to be.
 		 *
 		 * @return {boolean} True when locked.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
 		 */
 		locked() {
 			return useSessionStore().isLocked
@@ -111,6 +113,7 @@ export default {
 		 * the count could not be fetched — claiming zero would read as "finished".
 		 *
 		 * @return {string} The sentence fragment.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
 		 */
 		remainingLabel() {
 			const remaining = useEncryptionSuiteStore().migrationRemaining
@@ -128,6 +131,7 @@ export default {
 		 * Live progress while a resumed run is going.
 		 *
 		 * @return {string|null} The progress label, or null when idle.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
 		 */
 		progressLabel() {
 			const progress = useEncryptionSuiteStore().migrationProgress
@@ -142,6 +146,16 @@ export default {
 		},
 	},
 
+	/**
+	 * Ask the server whether a migration is parked, and how much is left.
+	 *
+	 * Both come from the server every time the shell mounts, because the whole
+	 * point of this banner is the case where the client that started the
+	 * migration is gone.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
+	 */
 	async mounted() {
 		const store = useEncryptionSuiteStore()
 		await store.fetchMigrationStatus()
