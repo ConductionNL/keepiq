@@ -113,7 +113,11 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 		// names the route directly, where the bare path form used by the test
 		// above only ever lands on the Dashboard route.
 		for (const hash of ['#/secrets', '#/secrets/some-id', '#/folders/some-folder', '#/password-health', '#/']) {
-			await page.goto(`${APP_BASE}/${hash}`, { waitUntil: 'networkidle' })
+			// ADR-074 rule 4, and the note above: `networkidle` never settles on
+			// Nextcloud, and it was never what caught this bug — the `request`
+			// listener above is attached before navigation and records every
+			// request regardless. The lock heading is the readiness signal.
+			await page.goto(`${APP_BASE}/${hash}`, { waitUntil: 'domcontentloaded' })
 			await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
 		}
 

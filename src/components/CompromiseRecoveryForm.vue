@@ -247,8 +247,13 @@ export default {
 		/**
 		 * Track password-strength validity from the strength meter.
 		 *
+		 * The new master password is held to the same floor as any other: this
+		 * is what keeps the submit button disabled until the meter reports the
+		 * floor is met. A rotation is not a licence to set a weak key.
+		 *
 		 * @param {object} root0 Strength event.
 		 * @param {boolean} root0.isValid Whether the new password meets the floor.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-strength
 		 */
 		onStrengthChange({ isValid }) {
 			this.strengthValid = isValid

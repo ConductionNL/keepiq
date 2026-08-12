@@ -159,7 +159,50 @@ for frag in $(find "${APP_DIR}/lib/Settings/register.d" -maxdepth 1 -name '*.jso
 	import_configuration "$frag"
 done
 
-# ── 3. Verify — every claim below is checked, none is assumed ────────────────
+# ── 3. Provision the non-admin vault fixture user ────────────────────────────
+# tests/e2e/workflows/compromise-recovery.spec.ts cannot drive ADMIN's vault:
+# SeedDevelopmentData writes admin's AES-GCM private-key envelope with the PHP
+# EncryptService and the browser's decryptPrivateKey() rejects it (that spec's
+# header, and bug #5 in workflows/vault-unlock.spec.ts). Recovery lives behind
+# the unlock gate, so the spec instead logs in as a NON-ADMIN account owning no
+# EncryptionSuite, lets the BROWSER create the vault, and rotates that.
+#
+# On a dev box that account is `alice`, seeded by nextcloud-docker-dev. An
+# instance installed with `occ maintenance:install` has no such user, so the
+# spec sat on /login?user=alice&direct=1 until it timed out — four failures that
+# read as a broken login flow and were really a missing fixture account.
+#
+# The shipped password_policy app rejects a password as short as the fixture's,
+# so it is disabled first. This instance exists only for this run.
+VAULT_FIXTURE_USER="${DORIATH_VAULT_USER:-alice}"
+VAULT_FIXTURE_PASS="${DORIATH_VAULT_PASS:-alice}"
+
+if php occ app:list | sed -n '/Enabled:/,/Disabled:/p' | grep -q 'password_policy'; then
+	echo "[ci-seed] disabling password_policy so the short fixture password is accepted"
+	php occ app:disable password_policy
+fi
+
+# Idempotent: an existing account has its password forced to the known value,
+# because a run that inherits an unknown password fails the same way a missing
+# account does.
+if php occ user:info "$VAULT_FIXTURE_USER" >/dev/null 2>&1; then
+	echo "[ci-seed] fixture user ${VAULT_FIXTURE_USER} exists; forcing its password"
+	OC_PASS="$VAULT_FIXTURE_PASS" php occ user:resetpassword --password-from-env "$VAULT_FIXTURE_USER"
+else
+	echo "[ci-seed] creating fixture user ${VAULT_FIXTURE_USER}"
+	OC_PASS="$VAULT_FIXTURE_PASS" php occ user:add --password-from-env \
+		--display-name="Doriath e2e vault fixture" "$VAULT_FIXTURE_USER"
+fi
+
+if ! php occ user:info "$VAULT_FIXTURE_USER" >/dev/null 2>&1; then
+	echo "::error::ci-seed.sh could not provision the vault fixture user ${VAULT_FIXTURE_USER}."
+	exit 1
+fi
+echo "[ci-seed] vault fixture user ready: ${VAULT_FIXTURE_USER}"
+# Whether it still owns no suite is checked by the spec itself, which skips
+# rather than asserting against the wrong surface if setup mode is absent.
+
+# ── 4. Verify — every claim below is checked, none is assumed ────────────────
 # A 200 from an importer is not the same as a register existing, and a repair
 # step that exits 0 is not evidence that it seeded anything. Query the real
 # endpoints and fail loudly on anything missing.
@@ -310,7 +353,7 @@ echo "[ci-seed] CA status: $(head -c 400 "$CA_BODY")"
 
 echo "[ci-seed] Doriath dev vault provisioned."
 
-# ── 4. Warm the SPA so the first spec doesn't pay the cold start ─────────────
+# ── 5. Warm the SPA so the first spec doesn't pay the cold start ─────────────
 # The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080`. It now sets
 # PHP_CLI_SERVER_WORKERS=8, but that is an UNVERIFIED fix for the measured
 # cold-start effect (the first spec to run blew its test timeout waiting for the
@@ -331,7 +374,7 @@ do
 	echo "[ci-seed] warm ${path} -> ${code}"
 done
 
-# ── 5. The bundle gate ───────────────────────────────────────────────────────
+# ── 6. The bundle gate ───────────────────────────────────────────────────────
 # Do NOT hardcode the bundle URL. Nextcloud serves an app's assets from whichever
 # apps directory it was installed into — `/apps/<app>/js/…` on the CI runner,
 # `/custom_apps/<app>/js/…` in the docker dev images — and asking for the wrong

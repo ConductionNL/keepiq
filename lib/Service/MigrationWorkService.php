@@ -57,6 +57,8 @@ use Throwable;
  *   one generic entry point would mean passing the store as a parameter on a
  *   per-object write path, which the change's design rejected as an IDOR
  *   footgun (hydra-gate-no-admin-idor).
+ *
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
  */
 class MigrationWorkService {
 	/**
@@ -98,6 +100,12 @@ class MigrationWorkService {
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-compromise-recovery-migration-re-encrypts-a-bounded-window
 	 */
 	public function getVersionWindow(): int {
+		// Gate exclusion: unclosable-gate exclude 'migration_version_window'
+		//   is an operator tunable with a working default, not a "has the setup
+		//   already run?" flag. ADR-076 rule 3 exists because such a flag, left
+		//   unwritten, makes the work it guards repeat on every call. Nothing is
+		//   guarded here: an unset key simply means DEFAULT_VERSION_WINDOW, so
+		//   there is no work to skip and nothing for a write to close.
 		$window = $this->appConfig->getValueInt(
 			Application::APP_ID,
 			'migration_version_window',

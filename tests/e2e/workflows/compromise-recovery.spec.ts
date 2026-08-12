@@ -30,6 +30,11 @@
  * destructive to a vault's link shares and passkeys, so a spec that performs it
  * must own its subject. Point DORIATH_VAULT_USER at a throwaway account.
  *
+ * On CI there is no dev seed, so `alice` does not exist and this spec used to
+ * time out on /login?user=alice&direct=1 — a missing fixture that reads as a
+ * broken login flow. tests/e2e/ci-seed.sh section 3 now provisions the account
+ * (and forces its password) before Playwright starts.
+ *
  * If the chosen user already owns a suite (a previous run, or a seed change),
  * setup mode will not appear; the spec detects that and skips rather than
  * silently asserting against the wrong surface.
@@ -254,6 +259,17 @@ async function openRecoveryForm(page: Page): Promise<void> {
 }
 
 test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () => {
+	/*
+	 * The three encryption-suites scenarios that carry no `@e2e exclude` are all
+	 * proved by this one test, because they are three assertions about the SAME
+	 * dialog across one rotation: the warning before confirming, the live
+	 * progress while it runs, and the terminal wording once it ends. Splitting
+	 * them would mean rotating a vault three times to assert three sentences.
+	 *
+	 * @e2e encryption-suites::warning-shown-before-the-user-confirms
+	 * @e2e encryption-suites::progress-is-visible-inside-the-recovery-dialog
+	 * @e2e encryption-suites::terminal-message-is-not-an-all-clear
+	 */
 	test('a fresh vault rotates, and every surface reports the truth', async ({ page }) => {
 		test.slow()
 
