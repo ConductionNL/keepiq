@@ -94,7 +94,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             31 was never actually deliverable: the CI matrix already tests only
             stable32 (see nextcloud-test-refs in .github/workflows/
             code-quality.yml), because OpenRegister — which this app builds on —
-            declares `<nextcloud min-version="32"/>` itself. Advertising 31 in
+            declares `<nextcloud min-version="32" max-version="34"/>` itself. Advertising 31 in
             the App Store promised a range no test leg covered and no dependency
             could satisfy.
 
