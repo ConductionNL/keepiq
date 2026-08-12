@@ -29,6 +29,23 @@
 				</span>
 			</h2>
 
+			<!--
+			  Placed above the value, not below it: the point is that the user
+			  reads this BEFORE they copy the password and carry on as if it were
+			  still good. Not dismissible — it clears when the value is actually
+			  replaced, which is what clears the flag server-side.
+			-->
+			<NcNoteCard v-if="secret.possiblyCompromisedAt"
+				type="error"
+				data-testid="secret-detail-possibly-compromised">
+				<p>
+					{{ t('doriath', 'This value was in the vault when the encryption key was declared compromised, so it must be assumed exposed.') }}
+				</p>
+				<p>
+					{{ t('doriath', 'Change it at its source, then save the new value here. Saving a new value clears this warning.') }}
+				</p>
+			</NcNoteCard>
+
 			<div v-if="secret.url" class="secret-detail__field">
 				<span class="secret-detail__label">{{ t('doriath', 'URL') }}</span>
 				<a :href="secret.url" target="_blank" rel="noopener noreferrer">{{ secret.url }}</a>
@@ -221,7 +238,7 @@
 </template>
 
 <script>
-import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
@@ -260,6 +277,7 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcLoadingIcon,
+		NcNoteCard,
 		ArrowLeft,
 		Delete,
 		Lock,

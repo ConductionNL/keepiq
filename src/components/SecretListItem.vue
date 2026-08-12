@@ -26,11 +26,26 @@
 			<span v-if="secret.tombstonedAt" class="secret-list-item__tombstone">
 				{{ t('doriath', 'Shared by a deleted account — no longer synced') }}
 			</span>
+			<!--
+			  Driven by possiblyCompromisedAt on the secret payload, NOT by the
+			  health pass: health analysis needs decrypted values, and a secret
+			  that failed migration returns no ciphertext at all — so exactly the
+			  rows that most need this warning would be the ones missing it. The
+			  flag is plaintext metadata, so this renders on a locked vault too.
+			  There is no dismiss affordance by design: it stays until the value
+			  is actually replaced, which is what clears the flag server-side.
+			-->
+			<span v-if="secret.possiblyCompromisedAt"
+				class="secret-list-item__compromised"
+				data-testid="secret-possibly-compromised">
+				<AlertOutline :size="16" />
+				{{ t('doriath', 'Assume this value was exposed — change it at its source') }}
+			</span>
 		</span>
 
 		<span v-if="secret.blocked" class="secret-list-item__blocked">
 			<Lock :size="16" />
-			{{ t('doriath', 'Locked — suite revoked') }}
+			{{ blockedLabel }}
 		</span>
 
 		<span v-else
@@ -47,6 +62,7 @@
 
 <script>
 import Lock from 'vue-material-design-icons/Lock.vue'
+import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Key from 'vue-material-design-icons/Key.vue'
 import CodeTags from 'vue-material-design-icons/CodeTags.vue'
 import Console from 'vue-material-design-icons/Console.vue'
@@ -68,6 +84,7 @@ export default {
 
 	components: {
 		Lock,
+		AlertOutline,
 		Key,
 		CodeTags,
 		Console,
@@ -100,6 +117,25 @@ export default {
 			const typeStore = useSecretTypeStore()
 			const type = typeStore.typesById[this.secret.typeId]
 			return typeIconName(type ? type.name : 'login')
+		},
+
+		/**
+		 * Why this row is locked.
+		 *
+		 * "Suite revoked" was the only reason a row could be blocked, but a
+		 * secret that compromise recovery could not carry across is blocked for a
+		 * different reason and telling the user their suite was revoked would send
+		 * them looking in the wrong place. The server sends the specific reason.
+		 *
+		 * @return {string} The label to show beside the lock icon.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+		 */
+		blockedLabel() {
+			if (this.secret.unrecoverable === true) {
+				return t('doriath', 'Could not be migrated to your new key')
+			}
+
+			return t('doriath', 'Locked — suite revoked')
 		},
 	},
 
@@ -181,5 +217,19 @@ export default {
 	align-items: center;
 	gap: 4px;
 	color: var(--color-warning-text, var(--color-text-maxcontrast));
+}
+
+/*
+ * Deliberately louder than the muted url/tombstone lines beside it: this is the
+ * one row-level signal telling the user a stored value is burned. --color-error-text
+ * is the readable member of the error family in both themes.
+ */
+.secret-list-item__compromised {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 2px;
+	font-weight: 600;
+	color: var(--color-error-text);
 }
 </style>
