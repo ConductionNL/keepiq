@@ -16,9 +16,16 @@
 			</template>
 
 			<template v-else>
-				<!-- Migration paused banner -->
+				<!--
+				  Migration paused. The copy here used to say "enter your master
+				  password to resume", which conflated two different passwords:
+				  unlocking uses the CURRENT one and does not resume anything,
+				  while resuming needs the PREVIOUS one. Unlocking is step one;
+				  MigrationResumeBanner then asks for the old password and does
+				  the actual resuming.
+				-->
 				<NcNoteCard v-if="hasPausedMigration" type="warning">
-					{{ t('doriath', 'Key migration paused — enter your master password to resume') }}
+					{{ t('doriath', 'Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.') }}
 				</NcNoteCard>
 
 				<!-- First-time setup mode -->

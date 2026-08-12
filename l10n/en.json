@@ -945,7 +945,8 @@
         "Some secrets could not be migrated. Open key rotation to decide what to do with them.": "Some secrets could not be migrated. Open key rotation to decide what to do with them.",
         "Unlock your vault first, then resume.": "Unlock your vault first, then resume.",
         "Your previous master password": "Your previous master password",
-        "Your vault is read-only until it finishes.": "Your vault is read-only until it finishes."
+        "Your vault is read-only until it finishes.": "Your vault is read-only until it finishes.",
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it."
     },
     "plurals": ""
 }
