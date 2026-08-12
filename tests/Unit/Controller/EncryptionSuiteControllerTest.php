@@ -452,6 +452,53 @@ class EncryptionSuiteControllerTest extends TestCase
     }//end testCompromiseRecoveryReturns500OnFailure()
 
     /**
+     * Test a certificate that does not carry the submitted key aborts with a
+     * DISTINCT error, not a generic fault.
+     *
+     * The distinction is the point: nothing was written, so the user's vault is
+     * provably untouched and retrying is safe — whereas a 500 tells them nothing
+     * and invites a support ticket. If this ever regressed to a generic error the
+     * user would be told their vault might be damaged when it is not.
+     *
+     * This also pins a coupling that is easy to break from a distance. The
+     * controller recognises the condition by matching a SUBSTRING of the message
+     * CertificateIssuanceService throws. Rewording that message upstream — which
+     * has already happened once, when the signing body was extracted out of
+     * CertificateAuthorityService — silently downgrades this to a 500 with no
+     * test failing anywhere. Asserting it here makes that rewording loud.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-refuses-to-start-on-an-unusable-new-suite
+     */
+    public function testCompromiseRecoveryReportsCertificateKeyMismatchDistinctly(): void
+    {
+        $oldSuite = new EncryptionSuite();
+        $oldSuite->setId('old-suite');
+
+        $this->suiteService->method('getActiveSuite')->willReturn($oldSuite);
+
+        // Verbatim from CertificateIssuanceService, which throws when the issued
+        // certificate does not carry the key that was submitted for it.
+        $this->suiteService->method('createSuite')->willThrowException(
+            new \RuntimeException(
+                'Refusing to issue a certificate that does not carry the submitted public key'
+            )
+        );
+
+        // The vault must be left alone: no migration, so no write lock either.
+        $this->migrationService->expects($this->never())->method('initiateCompromiseRecovery');
+
+        $response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+        $data     = $response->getData();
+
+        $this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+        $this->assertSame(expected: 'certificate_key_mismatch', actual: $data['error']);
+        // And the message must tell the user their data is safe to retry.
+        $this->assertStringContainsString('vault is unchanged', $data['message']);
+    }//end testCompromiseRecoveryReportsCertificateKeyMismatchDistinctly()
+
+    /**
      * Test compromiseRecovery defers all terminal work to migration completion.
      *
      * Every outstanding link share signed against the now-compromised public
