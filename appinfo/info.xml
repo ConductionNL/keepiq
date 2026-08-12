@@ -104,15 +104,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <nextcloud min-version="32" max-version="34"/>
     </dependencies>
 
-    <navigations>
-        <navigation>
-            <id>doriath</id>
-            <name>Doriath</name>
-            <route>doriath.dashboard.page</route>
-            <icon>app.svg</icon>
-        </navigation>
-    </navigations>
-
     <background-jobs>
         <job>OCA\Doriath\BackgroundJob\RenewIntermediateCertificate</job>
         <job>OCA\Doriath\BackgroundJob\CheckRootCertificateExpiry</job>
@@ -128,18 +119,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </background-jobs>
 
     <repair-steps>
-        <install>
-            <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
-            <step>OCA\Doriath\Repair\InitializeSettings</step>
-            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentApplications</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecretRequests</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentLinkShares</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentShares</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecretDelegations</step>
-        </install>
         <post-migration>
             <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Doriath\Repair\InitializeSettings</step>
@@ -152,10 +131,31 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Doriath\Repair\SeedDevelopmentShares</step>
             <step>OCA\Doriath\Repair\SeedDevelopmentSecretDelegations</step>
         </post-migration>
+        <install>
+            <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
+            <step>OCA\Doriath\Repair\InitializeSettings</step>
+            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentApplications</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecretRequests</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentLinkShares</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentShares</step>
+            <step>OCA\Doriath\Repair\SeedDevelopmentSecretDelegations</step>
+        </install>
     </repair-steps>
 
     <settings>
         <admin>OCA\Doriath\Settings\AdminSettings</admin>
         <admin-section>OCA\Doriath\Sections\SettingsSection</admin-section>
     </settings>
+
+    <navigations>
+        <navigation>
+            <id>doriath</id>
+            <name>Doriath</name>
+            <route>doriath.dashboard.page</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
 </info>
