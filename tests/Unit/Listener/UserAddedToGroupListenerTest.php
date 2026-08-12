@@ -32,64 +32,61 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for UserAddedToGroupListener.
  */
-class UserAddedToGroupListenerTest extends TestCase
-{
-    /**
-     * Test the listener dispatches to GroupShareService.handleNewGroupMember
-     * for a UserAddedEvent.
-     *
-     * @return void
-     */
-    public function testHandleDispatchesForMatchingEvent(): void
-    {
-        $service     = $this->createMock(GroupShareService::class);
-        $teamService = $this->createMock(TeamFolderService::class);
-        $logger      = $this->createMock(LoggerInterface::class);
-        $listener    = new UserAddedToGroupListener(
-            groupShareService: $service,
-            teamFolderService: $teamService,
-            logger: $logger
-        );
+class UserAddedToGroupListenerTest extends TestCase {
+	/**
+	 * Test the listener dispatches to GroupShareService.handleNewGroupMember
+	 * for a UserAddedEvent.
+	 *
+	 * @return void
+	 */
+	public function testHandleDispatchesForMatchingEvent(): void {
+		$service = $this->createMock(GroupShareService::class);
+		$teamService = $this->createMock(TeamFolderService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new UserAddedToGroupListener(
+			groupShareService: $service,
+			teamFolderService: $teamService,
+			logger: $logger
+		);
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('bob');
-        $group = $this->createMock(IGroup::class);
-        $group->method('getGID')->willReturn('engineering');
-        $event = new UserAddedEvent(group: $group, user: $user);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('bob');
+		$group = $this->createMock(IGroup::class);
+		$group->method('getGID')->willReturn('engineering');
+		$event = new UserAddedEvent(group: $group, user: $user);
 
-        $service->expects($this->once())
-            ->method('handleNewGroupMember')
-            ->with('bob', 'engineering')
-            ->willReturn(3);
+		$service->expects($this->once())
+			->method('handleNewGroupMember')
+			->with('bob', 'engineering')
+			->willReturn(3);
 
-        // Team-folder branch fires alongside the group-share branch.
-        $teamService->expects($this->once())
-            ->method('handleGroupMemberJoin')
-            ->with(userId: 'bob', groupId: 'engineering')
-            ->willReturn(1);
+		// Team-folder branch fires alongside the group-share branch.
+		$teamService->expects($this->once())
+			->method('handleGroupMemberJoin')
+			->with(userId: 'bob', groupId: 'engineering')
+			->willReturn(1);
 
-        $listener->handle($event);
-    }//end testHandleDispatchesForMatchingEvent()
+		$listener->handle($event);
+	}//end testHandleDispatchesForMatchingEvent()
 
-    /**
-     * Test the listener no-ops on unrelated events.
-     *
-     * @return void
-     */
-    public function testHandleIgnoresUnrelatedEvents(): void
-    {
-        $service     = $this->createMock(GroupShareService::class);
-        $teamService = $this->createMock(TeamFolderService::class);
-        $logger      = $this->createMock(LoggerInterface::class);
-        $listener    = new UserAddedToGroupListener(
-            groupShareService: $service,
-            teamFolderService: $teamService,
-            logger: $logger
-        );
+	/**
+	 * Test the listener no-ops on unrelated events.
+	 *
+	 * @return void
+	 */
+	public function testHandleIgnoresUnrelatedEvents(): void {
+		$service = $this->createMock(GroupShareService::class);
+		$teamService = $this->createMock(TeamFolderService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new UserAddedToGroupListener(
+			groupShareService: $service,
+			teamFolderService: $teamService,
+			logger: $logger
+		);
 
-        $service->expects($this->never())->method('handleNewGroupMember');
-        $teamService->expects($this->never())->method('handleGroupMemberJoin');
+		$service->expects($this->never())->method('handleNewGroupMember');
+		$teamService->expects($this->never())->method('handleGroupMemberJoin');
 
-        $listener->handle($this->createMock(Event::class));
-    }//end testHandleIgnoresUnrelatedEvents()
+		$listener->handle($this->createMock(Event::class));
+	}//end testHandleIgnoresUnrelatedEvents()
 }//end class

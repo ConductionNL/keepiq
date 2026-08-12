@@ -31,228 +31,219 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for SettingsController.
  */
-class SettingsControllerTest extends TestCase
-{
+class SettingsControllerTest extends TestCase {
 
-    /**
-     * The controller under test.
-     *
-     * @var SettingsController
-     */
-    private SettingsController $controller;
+	/**
+	 * The controller under test.
+	 *
+	 * @var SettingsController
+	 */
+	private SettingsController $controller;
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock SettingsService.
-     *
-     * @var SettingsService&MockObject
-     */
-    private SettingsService&MockObject $settingsService;
+	/**
+	 * Mock SettingsService.
+	 *
+	 * @var SettingsService&MockObject
+	 */
+	private SettingsService&MockObject $settingsService;
 
-    /**
-     * Mock IUserSession.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $userSession;
+	/**
+	 * Mock IUserSession.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $userSession;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->request         = $this->createMock(IRequest::class);
-        $this->settingsService = $this->createMock(SettingsService::class);
-        $this->userSession     = $this->createMock(IUserSession::class);
+		$this->request = $this->createMock(IRequest::class);
+		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->userSession = $this->createMock(IUserSession::class);
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('testuser');
-        $this->userSession->method('getUser')->willReturn($user);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('testuser');
+		$this->userSession->method('getUser')->willReturn($user);
 
-        $this->controller = new SettingsController(
-            $this->request,
-            $this->settingsService,
-            $this->userSession,
-        );
+		$this->controller = new SettingsController(
+			$this->request,
+			$this->settingsService,
+			$this->userSession,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Test that index() returns a JSONResponse containing the settings from the service.
-     *
-     * @return void
-     */
-    public function testIndexReturnsJsonResponseWithSettings(): void
-    {
-        $settings = [
-            'register'      => 'some-uuid',
-            'openregisters' => true,
-            'isAdmin'       => false,
-        ];
+	/**
+	 * Test that index() returns a JSONResponse containing the settings from the service.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsJsonResponseWithSettings(): void {
+		$settings = [
+			'register' => 'some-uuid',
+			'openregisters' => true,
+			'isAdmin' => false,
+		];
 
-        $this->settingsService->expects($this->once())
-            ->method('getSettings')
-            ->willReturn($settings);
+		$this->settingsService->expects($this->once())
+			->method('getSettings')
+			->willReturn($settings);
 
-        $result = $this->controller->index();
+		$result = $this->controller->index();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertSame($settings, $result->getData());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertSame($settings, $result->getData());
 
-    }//end testIndexReturnsJsonResponseWithSettings()
+	}//end testIndexReturnsJsonResponseWithSettings()
 
-    /**
-     * Test that create() calls updateSettings with request params and returns success.
-     *
-     * @return void
-     */
-    public function testCreateCallsUpdateSettingsAndReturnsSuccess(): void
-    {
-        $params  = ['register' => 'new-uuid'];
-        $updated = ['register' => 'new-uuid', 'openregisters' => true, 'isAdmin' => false];
+	/**
+	 * Test that create() calls updateSettings with request params and returns success.
+	 *
+	 * @return void
+	 */
+	public function testCreateCallsUpdateSettingsAndReturnsSuccess(): void {
+		$params = ['register' => 'new-uuid'];
+		$updated = ['register' => 'new-uuid', 'openregisters' => true, 'isAdmin' => false];
 
-        $this->request->expects($this->once())
-            ->method('getParams')
-            ->willReturn($params);
+		$this->request->expects($this->once())
+			->method('getParams')
+			->willReturn($params);
 
-        $this->settingsService->expects($this->once())
-            ->method('updateSettings')
-            ->with($params)
-            ->willReturn($updated);
+		$this->settingsService->expects($this->once())
+			->method('updateSettings')
+			->with($params)
+			->willReturn($updated);
 
-        $result = $this->controller->create();
+		$result = $this->controller->create();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertTrue($result->getData()['success']);
-        self::assertArrayHasKey('config', $result->getData());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertTrue($result->getData()['success']);
+		self::assertArrayHasKey('config', $result->getData());
 
-    }//end testCreateCallsUpdateSettingsAndReturnsSuccess()
+	}//end testCreateCallsUpdateSettingsAndReturnsSuccess()
 
-    /**
-     * Test that load() returns the result of loadConfiguration.
-     *
-     * @return void
-     */
-    public function testLoadReturnsConfigurationResult(): void
-    {
-        $loadResult = [
-            'success' => true,
-            'message' => 'Configuration imported successfully.',
-            'version' => '0.1.0',
-        ];
+	/**
+	 * Test that load() returns the result of loadConfiguration.
+	 *
+	 * @return void
+	 */
+	public function testLoadReturnsConfigurationResult(): void {
+		$loadResult = [
+			'success' => true,
+			'message' => 'Configuration imported successfully.',
+			'version' => '0.1.0',
+		];
 
-        $this->settingsService->expects($this->once())
-            ->method('loadConfiguration')
-            ->with(force: true)
-            ->willReturn($loadResult);
+		$this->settingsService->expects($this->once())
+			->method('loadConfiguration')
+			->with(force: true)
+			->willReturn($loadResult);
 
-        $result = $this->controller->load();
+		$result = $this->controller->load();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertTrue($result->getData()['success']);
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertTrue($result->getData()['success']);
 
-    }//end testLoadReturnsConfigurationResult()
+	}//end testLoadReturnsConfigurationResult()
 
-    /**
-     * Test that getAdminSettings() returns the admin settings from the service.
-     *
-     * @return void
-     */
-    public function testGetAdminSettingsReturnsServiceResponse(): void
-    {
-        $expected = [
-            'min_password_length'     => 12,
-            'min_password_score'      => 3,
-            'default_session_timeout' => 'session',
-            'ca_auto_renew_enabled'   => true,
-        ];
+	/**
+	 * Test that getAdminSettings() returns the admin settings from the service.
+	 *
+	 * @return void
+	 */
+	public function testGetAdminSettingsReturnsServiceResponse(): void {
+		$expected = [
+			'min_password_length' => 12,
+			'min_password_score' => 3,
+			'default_session_timeout' => 'session',
+			'ca_auto_renew_enabled' => true,
+		];
 
-        $this->settingsService->expects($this->once())
-            ->method('getAdminSettings')
-            ->willReturn($expected);
+		$this->settingsService->expects($this->once())
+			->method('getAdminSettings')
+			->willReturn($expected);
 
-        $result = $this->controller->getAdminSettings();
+		$result = $this->controller->getAdminSettings();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertSame($expected, $result->getData());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertSame($expected, $result->getData());
 
-    }//end testGetAdminSettingsReturnsServiceResponse()
+	}//end testGetAdminSettingsReturnsServiceResponse()
 
-    /**
-     * Test that updateAdminSettings() returns 400 on InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testUpdateAdminSettingsReturns400OnInvalidInput(): void
-    {
-        $this->request->expects($this->once())
-            ->method('getParams')
-            ->willReturn(['min_password_length' => 5]);
+	/**
+	 * Test that updateAdminSettings() returns 400 on InvalidArgumentException.
+	 *
+	 * @return void
+	 */
+	public function testUpdateAdminSettingsReturns400OnInvalidInput(): void {
+		$this->request->expects($this->once())
+			->method('getParams')
+			->willReturn(['min_password_length' => 5]);
 
-        $this->settingsService->expects($this->once())
-            ->method('updateAdminSettings')
-            ->willThrowException(new \InvalidArgumentException('min_password_length must be between 12 and 20'));
+		$this->settingsService->expects($this->once())
+			->method('updateAdminSettings')
+			->willThrowException(new \InvalidArgumentException('min_password_length must be between 12 and 20'));
 
-        $result = $this->controller->updateAdminSettings();
+		$result = $this->controller->updateAdminSettings();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertSame(400, $result->getStatus());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertSame(400, $result->getStatus());
 
-    }//end testUpdateAdminSettingsReturns400OnInvalidInput()
+	}//end testUpdateAdminSettingsReturns400OnInvalidInput()
 
-    /**
-     * Test that getUserSettings() returns prefs for the authenticated user.
-     *
-     * @return void
-     */
-    public function testGetUserSettingsReturnsPrefs(): void
-    {
-        $expected = ['notify_shares' => '1', 'default_view' => 'list'];
-        $this->settingsService->expects($this->once())
-            ->method('getUserPreferences')
-            ->with('testuser')
-            ->willReturn($expected);
+	/**
+	 * Test that getUserSettings() returns prefs for the authenticated user.
+	 *
+	 * @return void
+	 */
+	public function testGetUserSettingsReturnsPrefs(): void {
+		$expected = ['notify_shares' => '1', 'default_view' => 'list'];
+		$this->settingsService->expects($this->once())
+			->method('getUserPreferences')
+			->with('testuser')
+			->willReturn($expected);
 
-        $result = $this->controller->getUserSettings();
+		$result = $this->controller->getUserSettings();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertSame($expected, $result->getData());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertSame($expected, $result->getData());
 
-    }//end testGetUserSettingsReturnsPrefs()
+	}//end testGetUserSettingsReturnsPrefs()
 
-    /**
-     * Test that updateUserSettings() forwards to the service for the user.
-     *
-     * @return void
-     */
-    public function testUpdateUserSettingsForwardsToService(): void
-    {
-        $params  = ['notify_shares' => '0'];
-        $updated = ['notify_shares' => '0', 'default_view' => 'list'];
+	/**
+	 * Test that updateUserSettings() forwards to the service for the user.
+	 *
+	 * @return void
+	 */
+	public function testUpdateUserSettingsForwardsToService(): void {
+		$params = ['notify_shares' => '0'];
+		$updated = ['notify_shares' => '0', 'default_view' => 'list'];
 
-        $this->request->expects($this->once())
-            ->method('getParams')
-            ->willReturn($params);
+		$this->request->expects($this->once())
+			->method('getParams')
+			->willReturn($params);
 
-        $this->settingsService->expects($this->once())
-            ->method('updateUserPreferences')
-            ->with('testuser', $params)
-            ->willReturn($updated);
+		$this->settingsService->expects($this->once())
+			->method('updateUserPreferences')
+			->with('testuser', $params)
+			->willReturn($updated);
 
-        $result = $this->controller->updateUserSettings();
+		$result = $this->controller->updateUserSettings();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertSame($updated, $result->getData());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertSame($updated, $result->getData());
 
-    }//end testUpdateUserSettingsForwardsToService()
+	}//end testUpdateUserSettingsForwardsToService()
 }//end class

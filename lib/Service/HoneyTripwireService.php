@@ -40,154 +40,152 @@ use Throwable;
 /**
  * Decoy tripwire detection: alert, page and audit a honey access.
  */
-class HoneyTripwireService
-{
-    /**
-     * Constructor for HoneyTripwireService.
-     *
-     * @param HoneyFlagMapper          $flagMapper          The flag mapper
-     * @param HoneyAlertRecorder       $alertRecorder       The deduplicating alert recorder
-     * @param IGroupManager            $groupManager        The group manager (admin paging)
-     * @param NotificationService|null $notificationService The notification dispatcher
-     * @param LoggerInterface          $logger              The logger
-     * @param IEventDispatcher|null    $eventDispatcher     The audit dispatcher
-     * @param AuditEventFactory        $auditEvents         The audit-event factory
-     *
-     * @return void
-     *
-     * @spec exclude Constructor wiring only — no domain logic.
-     */
-    public function __construct(
-        private HoneyFlagMapper $flagMapper,
-        private HoneyAlertRecorder $alertRecorder,
-        private IGroupManager $groupManager,
-        private ?NotificationService $notificationService,
-        private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
-        private AuditEventFactory $auditEvents=new AuditEventFactory(),
-    ) {
-    }//end __construct()
+class HoneyTripwireService {
+	/**
+	 * Constructor for HoneyTripwireService.
+	 *
+	 * @param HoneyFlagMapper $flagMapper The flag mapper
+	 * @param HoneyAlertRecorder $alertRecorder The deduplicating alert recorder
+	 * @param IGroupManager $groupManager The group manager (admin paging)
+	 * @param NotificationService|null $notificationService The notification dispatcher
+	 * @param LoggerInterface $logger The logger
+	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher
+	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only — no domain logic.
+	 */
+	public function __construct(
+		private HoneyFlagMapper $flagMapper,
+		private HoneyAlertRecorder $alertRecorder,
+		private IGroupManager $groupManager,
+		private ?NotificationService $notificationService,
+		private LoggerInterface $logger,
+		private ?IEventDispatcher $eventDispatcher = null,
+		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+	) {
+	}//end __construct()
 
-    /**
-     * Raise (or collapse into) an alert for an access to a possibly-
-     * flagged secret (§2.2). Fail-soft by contract: any failure is
-     * logged and swallowed — the observed access is already served.
-     *
-     * Dedup (D5): repeats by the same (accessor, channel) within the
-     * configurable window update the existing alert instead of paging
-     * again. A snoozed accessor never pages but IS still audited — the
-     * forensic trail stays complete.
-     *
-     * @param string      $secretId     The accessed secret UUID
-     * @param string      $accessorType user|application|link_visitor|system
-     * @param string|null $accessorId   The accessor id (null = anonymous)
-     * @param string      $channel      ui|machine_api|link|share
-     * @param string|null $remoteIp     Remote address when available
-     * @param string|null $userAgent    User agent when available
-     *
-     * @return bool Whether the secret was honey-flagged (a tripwire hit)
-     *
-     * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md
-     */
-    public function raiseAlert(
-        string $secretId,
-        string $accessorType,
-        ?string $accessorId,
-        string $channel,
-        ?string $remoteIp=null,
-        ?string $userAgent=null,
-    ): bool {
-        try {
-            $flag = $this->flagMapper->findBySecretId($secretId);
-        } catch (DoesNotExistException) {
-            return false;
-        }
+	/**
+	 * Raise (or collapse into) an alert for an access to a possibly-
+	 * flagged secret (§2.2). Fail-soft by contract: any failure is
+	 * logged and swallowed — the observed access is already served.
+	 *
+	 * Dedup (D5): repeats by the same (accessor, channel) within the
+	 * configurable window update the existing alert instead of paging
+	 * again. A snoozed accessor never pages but IS still audited — the
+	 * forensic trail stays complete.
+	 *
+	 * @param string $secretId The accessed secret UUID
+	 * @param string $accessorType user|application|link_visitor|system
+	 * @param string|null $accessorId The accessor id (null = anonymous)
+	 * @param string $channel ui|machine_api|link|share
+	 * @param string|null $remoteIp Remote address when available
+	 * @param string|null $userAgent User agent when available
+	 *
+	 * @return bool Whether the secret was honey-flagged (a tripwire hit)
+	 *
+	 * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md
+	 */
+	public function raiseAlert(
+		string $secretId,
+		string $accessorType,
+		?string $accessorId,
+		string $channel,
+		?string $remoteIp = null,
+		?string $userAgent = null,
+	): bool {
+		try {
+			$flag = $this->flagMapper->findBySecretId($secretId);
+		} catch (DoesNotExistException) {
+			return false;
+		}
 
-        try {
-            $raised = $this->alertRecorder->record(
-                flag: $flag,
-                secretId: $secretId,
-                accessorType: $accessorType,
-                accessorId: $accessorId,
-                channel: $channel,
-                remoteIp: $remoteIp,
-                userAgent: $userAgent
-            );
+		try {
+			$raised = $this->alertRecorder->record(
+				flag: $flag,
+				secretId: $secretId,
+				accessorType: $accessorType,
+				accessorId: $accessorId,
+				channel: $channel,
+				remoteIp: $remoteIp,
+				userAgent: $userAgent
+			);
 
-            if ($raised === true) {
-                $this->pageOwnerAndAdmins(
-                    ownerId: (string) $flag->getOwnerId(),
-                    secretId: (string) $flag->getSecretId(),
-                    channel: $channel,
-                    accessorLabel: ($accessorId ?? 'anonymous')
-                );
-            }
+			if ($raised === true) {
+				$this->pageOwnerAndAdmins(
+					ownerId: (string)$flag->getOwnerId(),
+					secretId: (string)$flag->getSecretId(),
+					channel: $channel,
+					accessorLabel: ($accessorId ?? 'anonymous')
+				);
+			}
 
-            // The distinguished audit marker fires on EVERY honey access —
-            // snoozed and collapsed accesses stay in the forensic trail (D5/D6).
-            $this->eventDispatcher?->dispatchTyped(
-                $this->auditEvents->forSystem(
-                    eventType: AuditEventTypes::HONEY_ACCESSED,
-                    objectType: 'secret',
-                    objectId: $secretId,
-                    objectName: '',
-                    metadata: ['channel' => $channel],
-                )
-            );
-        } catch (Throwable $exception) {
-            // Fail-soft: the tripwire must never break the audited access.
-            $this->logger->error(
-                'Doriath: honey alert failed for secret '.$secretId.': '.$exception->getMessage(),
-                ['app' => Application::APP_ID]
-            );
-        }//end try
+			// The distinguished audit marker fires on EVERY honey access —
+			// snoozed and collapsed accesses stay in the forensic trail (D5/D6).
+			$this->eventDispatcher?->dispatchTyped(
+				$this->auditEvents->forSystem(
+					eventType: AuditEventTypes::HONEY_ACCESSED,
+					objectType: 'secret',
+					objectId: $secretId,
+					objectName: '',
+					metadata: ['channel' => $channel],
+				)
+			);
+		} catch (Throwable $exception) {
+			// Fail-soft: the tripwire must never break the audited access.
+			$this->logger->error(
+				'Doriath: honey alert failed for secret ' . $secretId . ': ' . $exception->getMessage(),
+				['app' => Application::APP_ID]
+			);
+		}//end try
 
-        return true;
-    }//end raiseAlert()
+		return true;
+	}//end raiseAlert()
 
-    /**
-     * Page the decoy owner and every admin — ungated (D3): a muted
-     * tripwire is worthless, so honey_access bypasses notify_* prefs.
-     *
-     * @param string $ownerId       The decoy owner
-     * @param string $secretId      The tripped secret
-     * @param string $channel       The access channel
-     * @param string $accessorLabel Human accessor label
-     *
-     * @return void
-     */
-    private function pageOwnerAndAdmins(string $ownerId, string $secretId, string $channel, string $accessorLabel): void
-    {
-        if ($this->notificationService === null) {
-            return;
-        }
+	/**
+	 * Page the decoy owner and every admin — ungated (D3): a muted
+	 * tripwire is worthless, so honey_access bypasses notify_* prefs.
+	 *
+	 * @param string $ownerId The decoy owner
+	 * @param string $secretId The tripped secret
+	 * @param string $channel The access channel
+	 * @param string $accessorLabel Human accessor label
+	 *
+	 * @return void
+	 */
+	private function pageOwnerAndAdmins(string $ownerId, string $secretId, string $channel, string $accessorLabel): void {
+		if ($this->notificationService === null) {
+			return;
+		}
 
-        $recipients = [$ownerId];
-        $adminGroup = $this->groupManager->get('admin');
-        if ($adminGroup !== null) {
-            foreach ($adminGroup->getUsers() as $admin) {
-                $recipients[] = $admin->getUID();
-            }
-        }
+		$recipients = [$ownerId];
+		$adminGroup = $this->groupManager->get('admin');
+		if ($adminGroup !== null) {
+			foreach ($adminGroup->getUsers() as $admin) {
+				$recipients[] = $admin->getUID();
+			}
+		}
 
-        foreach (array_unique($recipients) as $recipientId) {
-            try {
-                $this->notificationService->notify(
-                    subject: 'honey_access',
-                    recipientId: $recipientId,
-                    params: [
-                        'channel'  => $channel,
-                        'accessor' => $accessorLabel,
-                    ],
-                    objectType: 'secret',
-                    objectId: $secretId,
-                );
-            } catch (Throwable $exception) {
-                $this->logger->warning(
-                    'Doriath: honey page failed for '.$recipientId.': '.$exception->getMessage(),
-                    ['app' => Application::APP_ID]
-                );
-            }
-        }
-    }//end pageOwnerAndAdmins()
+		foreach (array_unique($recipients) as $recipientId) {
+			try {
+				$this->notificationService->notify(
+					subject: 'honey_access',
+					recipientId: $recipientId,
+					params: [
+						'channel' => $channel,
+						'accessor' => $accessorLabel,
+					],
+					objectType: 'secret',
+					objectId: $secretId,
+				);
+			} catch (Throwable $exception) {
+				$this->logger->warning(
+					'Doriath: honey page failed for ' . $recipientId . ': ' . $exception->getMessage(),
+					['app' => Application::APP_ID]
+				);
+			}
+		}
+	}//end pageOwnerAndAdmins()
 }//end class

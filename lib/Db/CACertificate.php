@@ -45,128 +45,123 @@ use OCP\AppFramework\Db\Entity;
  * @method string|null getSuccessorId()
  * @method void setSuccessorId(?string $successorId)
  */
-class CACertificate extends Entity implements JsonSerializable
-{
+class CACertificate extends Entity implements JsonSerializable {
 
-    /**
-     * The certificate type (root or intermediate).
-     *
-     * @var string
-     */
-    protected string $type = '';
+	/**
+	 * The certificate type (root or intermediate).
+	 *
+	 * @var string
+	 */
+	protected string $type = '';
 
-    /**
-     * The PEM-encoded certificate.
-     *
-     * @var string
-     */
-    protected string $certificate = '';
+	/**
+	 * The PEM-encoded certificate.
+	 *
+	 * @var string
+	 */
+	protected string $certificate = '';
 
-    /**
-     * The encrypted private key.
-     *
-     * @var string|null
-     */
-    protected ?string $privateKey = null;
+	/**
+	 * The encrypted private key.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $privateKey = null;
 
-    /**
-     * When the certificate was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the certificate was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * When the certificate expires.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $expiresAt = null;
+	/**
+	 * When the certificate expires.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $expiresAt = null;
 
-    /**
-     * Whether the certificate is active.
-     *
-     * @var boolean
-     */
-    protected bool $isActive = false;
+	/**
+	 * Whether the certificate is active.
+	 *
+	 * @var boolean
+	 */
+	protected bool $isActive = false;
 
-    /**
-     * When the certificate was revoked.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $revokedAt = null;
+	/**
+	 * When the certificate was revoked.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $revokedAt = null;
 
-    /**
-     * The ID of the successor certificate.
-     *
-     * @var string|null
-     */
-    protected ?string $successorId = null;
+	/**
+	 * The ID of the successor certificate.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $successorId = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for CACertificate.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'type', type: 'string');
-        $this->addType(fieldName: 'certificate', type: 'string');
-        $this->addType(fieldName: 'privateKey', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-        $this->addType(fieldName: 'expiresAt', type: 'datetime');
-        $this->addType(fieldName: 'isActive', type: 'boolean');
-        $this->addType(fieldName: 'revokedAt', type: 'datetime');
-        $this->addType(fieldName: 'successorId', type: 'string');
-    }//end __construct()
+	/**
+	 * Constructor for CACertificate.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'type', type: 'string');
+		$this->addType(fieldName: 'certificate', type: 'string');
+		$this->addType(fieldName: 'privateKey', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+		$this->addType(fieldName: 'expiresAt', type: 'datetime');
+		$this->addType(fieldName: 'isActive', type: 'boolean');
+		$this->addType(fieldName: 'revokedAt', type: 'datetime');
+		$this->addType(fieldName: 'successorId', type: 'string');
+	}//end __construct()
 
-    /**
-     * Serialize the entity to an array for JSON output.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'          => $this->getId(),
-            'type'        => $this->type,
-            'certificate' => $this->certificate,
-            'createdAt'   => $this->createdAt?->format('c'),
-            'expiresAt'   => $this->expiresAt?->format('c'),
-            'isActive'    => $this->isActive,
-            'revokedAt'   => $this->revokedAt?->format('c'),
-            'successorId' => $this->successorId,
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for JSON output.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'type' => $this->type,
+			'certificate' => $this->certificate,
+			'createdAt' => $this->createdAt?->format('c'),
+			'expiresAt' => $this->expiresAt?->format('c'),
+			'isActive' => $this->isActive,
+			'revokedAt' => $this->revokedAt?->format('c'),
+			'successorId' => $this->successorId,
+		];
+	}//end jsonSerialize()
 }//end class

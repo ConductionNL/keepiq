@@ -40,17 +40,15 @@ use Jose\Component\KeyManagement\JWKFactory;
  * instance API to call and nothing to construct — so the static access cannot
  * be removed, only confined to a documented, injectable adapter.
  */
-class JwkFactoryAdapter
-{
-    /**
-     * Build a JWK from a PEM-encoded key.
-     *
-     * @param string $key The PEM-encoded key
-     *
-     * @return JWK
-     */
-    public function createFromKey(string $key): JWK
-    {
-        return JWKFactory::createFromKey($key);
-    }//end createFromKey()
+class JwkFactoryAdapter {
+	/**
+	 * Build a JWK from a PEM-encoded key.
+	 *
+	 * @param string $key The PEM-encoded key
+	 *
+	 * @return JWK
+	 */
+	public function createFromKey(string $key): JWK {
+		return JWKFactory::createFromKey($key);
+	}//end createFromKey()
 }//end class

@@ -40,93 +40,88 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
  */
-class TeamFolder extends Entity implements JsonSerializable
-{
+class TeamFolder extends Entity implements JsonSerializable {
 
-    /**
-     * The owner's Folder this team folder shares.
-     *
-     * @var string
-     */
-    protected string $folderId = '';
+	/**
+	 * The owner's Folder this team folder shares.
+	 *
+	 * @var string
+	 */
+	protected string $folderId = '';
 
-    /**
-     * The Nextcloud user ID that owns the folder and manages its sharing.
-     *
-     * @var string
-     */
-    protected string $ownerId = '';
+	/**
+	 * The Nextcloud user ID that owns the folder and manages its sharing.
+	 *
+	 * @var string
+	 */
+	protected string $ownerId = '';
 
-    /**
-     * When the team folder was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the team folder was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * When the team folder was last updated.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $updatedAt = null;
+	/**
+	 * When the team folder was last updated.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $updatedAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for TeamFolder.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'folderId', type: 'string');
-        $this->addType(fieldName: 'ownerId', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-        $this->addType(fieldName: 'updatedAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Constructor for TeamFolder.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'folderId', type: 'string');
+		$this->addType(fieldName: 'ownerId', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+		$this->addType(fieldName: 'updatedAt', type: 'datetime');
+	}//end __construct()
 
-    /**
-     * Serialize the entity to an array for the API.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'        => $this->getId(),
-            'folderId'  => $this->folderId,
-            'ownerId'   => $this->ownerId,
-            'createdAt' => $this->createdAt?->format('c'),
-            'updatedAt' => $this->updatedAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'folderId' => $this->folderId,
+			'ownerId' => $this->ownerId,
+			'createdAt' => $this->createdAt?->format('c'),
+			'updatedAt' => $this->updatedAt?->format('c'),
+		];
+	}//end jsonSerialize()
 }//end class

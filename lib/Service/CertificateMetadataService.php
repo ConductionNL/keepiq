@@ -42,150 +42,145 @@ use Ramsey\Uuid\Uuid;
 /**
  * Client-parsed metadata for certificate-type stored secrets.
  */
-class CertificateMetadataService
-{
-    /**
-     * Constructor for CertificateMetadataService.
-     *
-     * @param CertificateMetadataMapper $metadataMapper The metadata mapper
-     * @param SecretMapper              $secretMapper   The secret mapper
-     * @param SecretTypeMapper          $typeMapper     The secret type mapper
-     * @param SecretService             $secretService  The secret service (expiry path)
-     *
-     * @return void
-     *
-     * @spec exclude Constructor wiring only; no behaviour.
-     */
-    public function __construct(
-        private CertificateMetadataMapper $metadataMapper,
-        private SecretMapper $secretMapper,
-        private SecretTypeMapper $typeMapper,
-        private SecretService $secretService,
-    ) {
-    }//end __construct()
+class CertificateMetadataService {
+	/**
+	 * Constructor for CertificateMetadataService.
+	 *
+	 * @param CertificateMetadataMapper $metadataMapper The metadata mapper
+	 * @param SecretMapper $secretMapper The secret mapper
+	 * @param SecretTypeMapper $typeMapper The secret type mapper
+	 * @param SecretService $secretService The secret service (expiry path)
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only; no behaviour.
+	 */
+	public function __construct(
+		private CertificateMetadataMapper $metadataMapper,
+		private SecretMapper $secretMapper,
+		private SecretTypeMapper $typeMapper,
+		private SecretService $secretService,
+	) {
+	}//end __construct()
 
-    /**
-     * The system certificate type id, or null before seeding.
-     *
-     * @return string|null
-     *
-     * @spec openspec/specs/certificate-lifecycle/spec.md
-     */
-    public function certificateTypeId(): ?string
-    {
-        try {
-            return $this->typeMapper->findByName('certificate')->getId();
-        } catch (DoesNotExistException) {
-            return null;
-        }
-    }//end certificateTypeId()
+	/**
+	 * The system certificate type id, or null before seeding.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md
+	 */
+	public function certificateTypeId(): ?string {
+		try {
+			return $this->typeMapper->findByName('certificate')->getId();
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end certificateTypeId()
 
-    /**
-     * Persist client-parsed metadata for an owned certificate-type
-     * secret and mirror not_after to the secret's expires_at via the
-     * rotation-expiry per-secret path — no ciphertext change, no
-     * key_updated_at reset (§2.3, D5: the submission is trusted but
-     * owner-scoped and type-checked).
-     *
-     * @param string              $secretId The secret UUID
-     * @param string              $userId   The calling owner
-     * @param array<string,mixed> $fields   subject/issuer/serial/fingerprintSha256/notBefore/notAfter
-     *
-     * @return CertificateMetadata
-     *
-     * @throws DoesNotExistException    When the secret does not exist
-     * @throws InvalidArgumentException When not owned, wrong type, or unparseable dates
-     *
-     * @spec openspec/specs/certificate-lifecycle/spec.md
-     */
-    public function submitMetadata(string $secretId, string $userId, array $fields): CertificateMetadata
-    {
-        $secret = $this->secretMapper->findById($secretId);
-        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-            throw new InvalidArgumentException('Only the owner may submit certificate metadata');
-        }
+	/**
+	 * Persist client-parsed metadata for an owned certificate-type
+	 * secret and mirror not_after to the secret's expires_at via the
+	 * rotation-expiry per-secret path — no ciphertext change, no
+	 * key_updated_at reset (§2.3, D5: the submission is trusted but
+	 * owner-scoped and type-checked).
+	 *
+	 * @param string $secretId The secret UUID
+	 * @param string $userId The calling owner
+	 * @param array<string,mixed> $fields subject/issuer/serial/fingerprintSha256/notBefore/notAfter
+	 *
+	 * @return CertificateMetadata
+	 *
+	 * @throws DoesNotExistException When the secret does not exist
+	 * @throws InvalidArgumentException When not owned, wrong type, or unparseable dates
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md
+	 */
+	public function submitMetadata(string $secretId, string $userId, array $fields): CertificateMetadata {
+		$secret = $this->secretMapper->findById($secretId);
+		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+			throw new InvalidArgumentException('Only the owner may submit certificate metadata');
+		}
 
-        $certTypeId = $this->certificateTypeId();
-        if ($certTypeId === null || $secret->getTypeId() !== $certTypeId) {
-            throw new InvalidArgumentException('Secret is not a certificate-type secret');
-        }
+		$certTypeId = $this->certificateTypeId();
+		if ($certTypeId === null || $secret->getTypeId() !== $certTypeId) {
+			throw new InvalidArgumentException('Secret is not a certificate-type secret');
+		}
 
-        $notBefore = $this->parseClientDate(value: $fields['notBefore'] ?? null);
-        $notAfter  = $this->parseClientDate(value: $fields['notAfter'] ?? null);
+		$notBefore = $this->parseClientDate(value: $fields['notBefore'] ?? null);
+		$notAfter = $this->parseClientDate(value: $fields['notAfter'] ?? null);
 
-        $isNew = false;
-        try {
-            $row = $this->metadataMapper->findBySecretId($secretId);
-        } catch (DoesNotExistException) {
-            $isNew = true;
-            $row   = new CertificateMetadata();
-            $row->setId(Uuid::uuid4()->toString());
-            $row->setSecretId($secretId);
-        }
+		$isNew = false;
+		try {
+			$row = $this->metadataMapper->findBySecretId($secretId);
+		} catch (DoesNotExistException) {
+			$isNew = true;
+			$row = new CertificateMetadata();
+			$row->setId(Uuid::uuid4()->toString());
+			$row->setSecretId($secretId);
+		}
 
-        $row->setOwnerId($userId);
-        $row->setSubject($this->optionalString(value: $fields['subject'] ?? null));
-        $row->setIssuer($this->optionalString(value: $fields['issuer'] ?? null));
-        $row->setSerial($this->optionalString(value: $fields['serial'] ?? null));
-        $row->setFingerprintSha256($this->optionalString(value: $fields['fingerprintSha256'] ?? null));
-        $row->setNotBefore($notBefore);
-        $row->setNotAfter($notAfter);
-        $row->setParsedAt(new DateTime());
+		$row->setOwnerId($userId);
+		$row->setSubject($this->optionalString(value: $fields['subject'] ?? null));
+		$row->setIssuer($this->optionalString(value: $fields['issuer'] ?? null));
+		$row->setSerial($this->optionalString(value: $fields['serial'] ?? null));
+		$row->setFingerprintSha256($this->optionalString(value: $fields['fingerprintSha256'] ?? null));
+		$row->setNotBefore($notBefore);
+		$row->setNotAfter($notAfter);
+		$row->setParsedAt(new DateTime());
 
-        if ($isNew === true) {
-            $row = $this->metadataMapper->insert($row);
-        }
+		if ($isNew === true) {
+			$row = $this->metadataMapper->insert($row);
+		}
 
-        if ($isNew === false) {
-            $row = $this->metadataMapper->update($row);
-        }
+		if ($isNew === false) {
+			$row = $this->metadataMapper->update($row);
+		}
 
-        // Mirror notAfter into the rotation-expiry per-secret expiry so the
-        // existing ScanExpiringSecretsJob reminds on it. setExpiry touches
-        // neither ciphertext nor key_updated_at and audits SECRET_EXPIRY_SET.
-        if ($notAfter !== null) {
-            $this->secretService->setExpiry(id: $secretId, expiresAt: $notAfter, userId: $userId);
-        }
+		// Mirror notAfter into the rotation-expiry per-secret expiry so the
+		// existing ScanExpiringSecretsJob reminds on it. setExpiry touches
+		// neither ciphertext nor key_updated_at and audits SECRET_EXPIRY_SET.
+		if ($notAfter !== null) {
+			$this->secretService->setExpiry(id: $secretId, expiresAt: $notAfter, userId: $userId);
+		}
 
-        return $row;
-    }//end submitMetadata()
+		return $row;
+	}//end submitMetadata()
 
-    /**
-     * Parse a client-submitted ISO date, rejecting garbage (D5: the
-     * value is trusted in substance but must at least be a date).
-     *
-     * @param mixed $value The submitted value
-     *
-     * @return DateTime|null
-     *
-     * @throws InvalidArgumentException When set but unparseable
-     */
-    private function parseClientDate(mixed $value): ?DateTime
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
+	/**
+	 * Parse a client-submitted ISO date, rejecting garbage (D5: the
+	 * value is trusted in substance but must at least be a date).
+	 *
+	 * @param mixed $value The submitted value
+	 *
+	 * @return DateTime|null
+	 *
+	 * @throws InvalidArgumentException When set but unparseable
+	 */
+	private function parseClientDate(mixed $value): ?DateTime {
+		if ($value === null || $value === '') {
+			return null;
+		}
 
-        try {
-            return new DateTime((string) $value);
-        } catch (\Exception) {
-            throw new InvalidArgumentException('Unparseable certificate date: '.(string) $value);
-        }
-    }//end parseClientDate()
+		try {
+			return new DateTime((string)$value);
+		} catch (\Exception) {
+			throw new InvalidArgumentException('Unparseable certificate date: ' . (string)$value);
+		}
+	}//end parseClientDate()
 
-    /**
-     * Trimmed string or null.
-     *
-     * @param mixed $value The submitted value
-     *
-     * @return string|null
-     */
-    private function optionalString(mixed $value): ?string
-    {
-        if (is_string($value) === false || trim($value) === '') {
-            return null;
-        }
+	/**
+	 * Trimmed string or null.
+	 *
+	 * @param mixed $value The submitted value
+	 *
+	 * @return string|null
+	 */
+	private function optionalString(mixed $value): ?string {
+		if (is_string($value) === false || trim($value) === '') {
+			return null;
+		}
 
-        return trim($value);
-    }//end optionalString()
+		return trim($value);
+	}//end optionalString()
 }//end class

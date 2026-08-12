@@ -41,59 +41,57 @@ use OCP\IRequest;
 /**
  * Serves the offline service-worker script with the correct headers.
  */
-class ServiceWorkerController extends Controller
-{
-    /**
-     * Constructor for ServiceWorkerController.
-     *
-     * @param IRequest    $request    The HTTP request
-     * @param IAppManager $appManager Resolves the app install path
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private IAppManager $appManager,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+class ServiceWorkerController extends Controller {
+	/**
+	 * Constructor for ServiceWorkerController.
+	 *
+	 * @param IRequest $request The HTTP request
+	 * @param IAppManager $appManager Resolves the app install path
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private IAppManager $appManager,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Return the built service-worker script as JavaScript with the
-     * scope-widening header.
-     *
-     * @PublicPage
-     * @NoCSRFRequired
-     *
-     * @return DataDisplayResponse
-     *
-     * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
-     */
-    #[PublicPage]
-    #[NoCSRFRequired]
-    public function script(): DataDisplayResponse
-    {
-        $path   = $this->appManager->getAppPath(Application::APP_ID).'/js/'.Application::APP_ID.'-service-worker.js';
-        $script = false;
-        if (is_file($path) === true && is_readable($path) === true) {
-            $script = file_get_contents($path);
-        }
+	/**
+	 * Return the built service-worker script as JavaScript with the
+	 * scope-widening header.
+	 *
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 *
+	 * @return DataDisplayResponse
+	 *
+	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function script(): DataDisplayResponse {
+		$path = $this->appManager->getAppPath(Application::APP_ID) . '/js/' . Application::APP_ID . '-service-worker.js';
+		$script = false;
+		if (is_file($path) === true && is_readable($path) === true) {
+			$script = file_get_contents($path);
+		}
 
-        if ($script === false) {
-            return new DataDisplayResponse(
-                data: '/* service worker unavailable */',
-                statusCode: Http::STATUS_NOT_FOUND,
-                headers: ['Content-Type' => 'application/javascript']
-            );
-        }
+		if ($script === false) {
+			return new DataDisplayResponse(
+				data: '/* service worker unavailable */',
+				statusCode: Http::STATUS_NOT_FOUND,
+				headers: ['Content-Type' => 'application/javascript']
+			);
+		}
 
-        $response = new DataDisplayResponse(
-            data: $script,
-            statusCode: Http::STATUS_OK,
-            headers: ['Content-Type' => 'application/javascript']
-        );
-        $response->cacheFor(0);
+		$response = new DataDisplayResponse(
+			data: $script,
+			statusCode: Http::STATUS_OK,
+			headers: ['Content-Type' => 'application/javascript']
+		);
+		$response->cacheFor(0);
 
-        return $response;
-    }//end script()
+		return $response;
+	}//end script()
 }//end class

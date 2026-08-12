@@ -48,153 +48,139 @@ use ReflectionMethod;
  * adds the unpair() contract without touching it.
  *
  */
-class ExtensionControllerUnpairTest extends TestCase
-{
+class ExtensionControllerUnpairTest extends TestCase {
 
-    /**
-     * The mocked secret mapper — the controller's only storage collaborator.
-     *
-     * @var SecretMapper&MockObject
-     */
-    private SecretMapper&MockObject $secretMapper;
+	/**
+	 * The mocked secret mapper — the controller's only storage collaborator.
+	 *
+	 * @var SecretMapper&MockObject
+	 */
+	private SecretMapper&MockObject $secretMapper;
 
-    /**
-     * The mocked user session.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $userSession;
+	/**
+	 * The mocked user session.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $userSession;
 
+	/**
+	 * Set up the mocks shared by every test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-    /**
-     * Set up the mocks shared by every test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+		$this->secretMapper = $this->createMock(SecretMapper::class);
+		$this->userSession = $this->createMock(IUserSession::class);
+	}//end setUp()
 
-        $this->secretMapper = $this->createMock(SecretMapper::class);
-        $this->userSession  = $this->createMock(IUserSession::class);
-    }//end setUp()
+	/**
+	 * Log a paired user into the mocked session, or leave it anonymous.
+	 *
+	 * @param string|null $uid The paired user id, or null for anonymous.
+	 *
+	 * @return void
+	 */
+	private function signIn(?string $uid): void {
+		if ($uid === null) {
+			$this->userSession->method('getUser')->willReturn(null);
+			return;
+		}
 
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn($uid);
+		$this->userSession->method('getUser')->willReturn($user);
+	}//end signIn()
 
-    /**
-     * Log a paired user into the mocked session, or leave it anonymous.
-     *
-     * @param string|null $uid The paired user id, or null for anonymous.
-     *
-     * @return void
-     */
-    private function signIn(?string $uid): void
-    {
-        if ($uid === null) {
-            $this->userSession->method('getUser')->willReturn(null);
-            return;
-        }
+	/**
+	 * Build the controller under test with its collaborators mocked.
+	 *
+	 * @return ExtensionController The controller under test.
+	 */
+	private function controller(): ExtensionController {
+		return new ExtensionController(
+			$this->createMock(IRequest::class),
+			$this->secretMapper,
+			$this->userSession
+		);
+	}//end controller()
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn($uid);
-        $this->userSession->method('getUser')->willReturn($user);
-    }//end signIn()
+	/**
+	 * A paired caller gets the acknowledgement AND the revocation instruction,
+	 * and no secret storage is consulted or mutated.
+	 *
+	 * @return void
+	 */
+	public function testUnpairAcknowledgesAndTouchesNoSecretStorage(): void {
+		$this->signIn('alice');
 
+		// The ITEM: unpairing is a local-state acknowledgement — the secret
+		// store must not be read from or written to on this path.
+		$this->secretMapper->expects($this->never())->method($this->anything());
 
-    /**
-     * Build the controller under test with its collaborators mocked.
-     *
-     * @return ExtensionController The controller under test.
-     */
-    private function controller(): ExtensionController
-    {
-        return new ExtensionController(
-            $this->createMock(IRequest::class),
-            $this->secretMapper,
-            $this->userSession
-        );
-    }//end controller()
+		$response = $this->controller()->unpair();
+		$data = $response->getData();
 
+		$this->assertSame(
+			Http::STATUS_OK,
+			$response->getStatus(),
+			'a paired caller may unpair and receives 200'
+		);
+		$this->assertTrue(
+			$data['ok'],
+			'the extension keys its local teardown off ok:true'
+		);
+		$this->assertSame(
+			'Revoke the app-password in Nextcloud security settings to fully unpair.',
+			$data['note'],
+			'the caller must be told that revoking the app-password is what actually unpairs'
+		);
+	}//end testUnpairAcknowledgesAndTouchesNoSecretStorage()
 
-    /**
-     * A paired caller gets the acknowledgement AND the revocation instruction,
-     * and no secret storage is consulted or mutated.
-     *
-     * @return void
-     */
-    public function testUnpairAcknowledgesAndTouchesNoSecretStorage(): void
-    {
-        $this->signIn('alice');
+	/**
+	 * An unauthenticated caller is refused — the acknowledgement is not public.
+	 *
+	 * @return void
+	 */
+	public function testUnpairWithoutThePairingCredentialIs401(): void {
+		$this->signIn(null);
 
-        // The ITEM: unpairing is a local-state acknowledgement — the secret
-        // store must not be read from or written to on this path.
-        $this->secretMapper->expects($this->never())->method($this->anything());
+		$this->secretMapper->expects($this->never())->method($this->anything());
 
-        $response = $this->controller()->unpair();
-        $data     = $response->getData();
+		$response = $this->controller()->unpair();
 
-        $this->assertSame(
-            Http::STATUS_OK,
-            $response->getStatus(),
-            'a paired caller may unpair and receives 200'
-        );
-        $this->assertTrue(
-            $data['ok'],
-            'the extension keys its local teardown off ok:true'
-        );
-        $this->assertSame(
-            'Revoke the app-password in Nextcloud security settings to fully unpair.',
-            $data['note'],
-            'the caller must be told that revoking the app-password is what actually unpairs'
-        );
-    }//end testUnpairAcknowledgesAndTouchesNoSecretStorage()
+		$this->assertSame(
+			Http::STATUS_UNAUTHORIZED,
+			$response->getStatus(),
+			'unpair() must not answer an anonymous caller'
+		);
+		$this->assertSame(
+			['error' => 'unauthorized'],
+			$response->getData(),
+			'the refusal shape must match the rest of the extension surface'
+		);
+	}//end testUnpairWithoutThePairingCredentialIs401()
 
+	/**
+	 * The endpoint must stay reachable by ordinary (non-admin) users.
+	 *
+	 * SecurityMiddleware evaluates the dispatched method's own attributes;
+	 * without `#[NoAdminRequired]` every non-admin extension user would be
+	 * rejected before unpair() ever ran.
+	 *
+	 * @return void
+	 */
+	public function testUnpairIsReachableByNonAdminExtensionUsers(): void {
+		$attributes = (new ReflectionMethod(ExtensionController::class, 'unpair'))
+			->getAttributes(NoAdminRequired::class);
 
-    /**
-     * An unauthenticated caller is refused — the acknowledgement is not public.
-     *
-     * @return void
-     */
-    public function testUnpairWithoutThePairingCredentialIs401(): void
-    {
-        $this->signIn(null);
-
-        $this->secretMapper->expects($this->never())->method($this->anything());
-
-        $response = $this->controller()->unpair();
-
-        $this->assertSame(
-            Http::STATUS_UNAUTHORIZED,
-            $response->getStatus(),
-            'unpair() must not answer an anonymous caller'
-        );
-        $this->assertSame(
-            ['error' => 'unauthorized'],
-            $response->getData(),
-            'the refusal shape must match the rest of the extension surface'
-        );
-    }//end testUnpairWithoutThePairingCredentialIs401()
-
-
-    /**
-     * The endpoint must stay reachable by ordinary (non-admin) users.
-     *
-     * SecurityMiddleware evaluates the dispatched method's own attributes;
-     * without `#[NoAdminRequired]` every non-admin extension user would be
-     * rejected before unpair() ever ran.
-     *
-     * @return void
-     */
-    public function testUnpairIsReachableByNonAdminExtensionUsers(): void
-    {
-        $attributes = (new ReflectionMethod(ExtensionController::class, 'unpair'))
-            ->getAttributes(NoAdminRequired::class);
-
-        $this->assertCount(
-            1,
-            $attributes,
-            'unpair() must declare #[NoAdminRequired] itself — attributes are not inherited from pair()'
-        );
-    }//end testUnpairIsReachableByNonAdminExtensionUsers()
-
+		$this->assertCount(
+			1,
+			$attributes,
+			'unpair() must declare #[NoAdminRequired] itself — attributes are not inherited from pair()'
+		);
+	}//end testUnpairIsReachableByNonAdminExtensionUsers()
 
 }//end class

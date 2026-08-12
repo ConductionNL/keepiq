@@ -45,48 +45,46 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * autowiring because the container already holds an alias for these ids; a
  * closure is the only registration shape that overrides one.
  */
-final class DomainOverrideRegistrar
-{
-    /**
-     * Override the generic AppHost aliases with Doriath's concretes.
-     *
-     * @param IRegistrationContext $context The registration context
-     *
-     * @return void
-     *
-     * @spec openspec/specs/apphost-adoption/spec.md
-     */
-    public function register(IRegistrationContext $context): void
-    {
-        $context->registerService(
-            SettingsService::class,
-            static fn ($c) => new SettingsService(
-                appConfig: $c->get(\OCP\IAppConfig::class),
-                config: $c->get(\OCP\IConfig::class),
-                appManager: $c->get(\OCP\App\IAppManager::class),
-                container: $c,
-                groupManager: $c->get(\OCP\IGroupManager::class),
-                userSession: $c->get(\OCP\IUserSession::class),
-                logger: $c->get(\Psr\Log\LoggerInterface::class),
-                eventDispatcher: $c->get(\OCP\EventDispatcher\IEventDispatcher::class),
-            )
-        );
-        $context->registerService(
-            SettingsController::class,
-            static fn ($c) => new SettingsController(
-                request: $c->get(\OCP\IRequest::class),
-                settingsService: $c->get(SettingsService::class),
-                userSession: $c->get(\OCP\IUserSession::class),
-            )
-        );
-        $context->registerService(
-            InitializeSettings::class,
-            static fn ($c) => new InitializeSettings(
-                settingsService: $c->get(SettingsService::class),
-                appConfig: $c->get(\OCP\IAppConfig::class),
-                logger: $c->get(\Psr\Log\LoggerInterface::class),
-            )
-        );
+final class DomainOverrideRegistrar {
+	/**
+	 * Override the generic AppHost aliases with Doriath's concretes.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	public function register(IRegistrationContext $context): void {
+		$context->registerService(
+			SettingsService::class,
+			static fn ($c) => new SettingsService(
+				appConfig: $c->get(\OCP\IAppConfig::class),
+				config: $c->get(\OCP\IConfig::class),
+				appManager: $c->get(\OCP\App\IAppManager::class),
+				container: $c,
+				groupManager: $c->get(\OCP\IGroupManager::class),
+				userSession: $c->get(\OCP\IUserSession::class),
+				logger: $c->get(\Psr\Log\LoggerInterface::class),
+				eventDispatcher: $c->get(\OCP\EventDispatcher\IEventDispatcher::class),
+			)
+		);
+		$context->registerService(
+			SettingsController::class,
+			static fn ($c) => new SettingsController(
+				request: $c->get(\OCP\IRequest::class),
+				settingsService: $c->get(SettingsService::class),
+				userSession: $c->get(\OCP\IUserSession::class),
+			)
+		);
+		$context->registerService(
+			InitializeSettings::class,
+			static fn ($c) => new InitializeSettings(
+				settingsService: $c->get(SettingsService::class),
+				appConfig: $c->get(\OCP\IAppConfig::class),
+				logger: $c->get(\Psr\Log\LoggerInterface::class),
+			)
+		);
 
-    }//end register()
+	}//end register()
 }//end class

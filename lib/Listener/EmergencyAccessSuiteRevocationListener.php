@@ -40,48 +40,46 @@ use Throwable;
  *
  * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
  */
-class EmergencyAccessSuiteRevocationListener implements IEventListener
-{
-    /**
-     * Constructor.
-     *
-     * @param EmergencyEnvelopeInvalidationService $service The envelope-invalidation service
-     * @param LoggerInterface                      $logger  The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        private EmergencyEnvelopeInvalidationService $service,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class EmergencyAccessSuiteRevocationListener implements IEventListener {
+	/**
+	 * Constructor.
+	 *
+	 * @param EmergencyEnvelopeInvalidationService $service The envelope-invalidation service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private EmergencyEnvelopeInvalidationService $service,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle the EncryptionSuiteRevokedEvent.
-     *
-     * @param Event $event The dispatched event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof EncryptionSuiteRevokedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle the EncryptionSuiteRevokedEvent.
+	 *
+	 * @param Event $event The dispatched event
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof EncryptionSuiteRevokedEvent === false) {
+			return;
+		}
 
-        if ($event->getOwnerType() !== 'user') {
-            return;
-        }
+		if ($event->getOwnerType() !== 'user') {
+			return;
+		}
 
-        $suiteId = $event->getSuiteId();
+		$suiteId = $event->getSuiteId();
 
-        try {
-            $this->service->clearForGrantorRevocation(grantorSuiteId: $suiteId);
-            $this->service->invalidateForGranteeRevocation(granteeSuiteId: $suiteId);
-        } catch (Throwable $e) {
-            $this->logger->error('Doriath: emergency-access revocation cleanup failed: '.$e->getMessage());
-        }
-    }//end handle()
+		try {
+			$this->service->clearForGrantorRevocation(grantorSuiteId: $suiteId);
+			$this->service->invalidateForGranteeRevocation(granteeSuiteId: $suiteId);
+		} catch (Throwable $e) {
+			$this->logger->error('Doriath: emergency-access revocation cleanup failed: ' . $e->getMessage());
+		}
+	}//end handle()
 }//end class

@@ -34,6 +34,5 @@ use OCA\OpenRegister\AppHost\Settings\GenericSettingsSection;
  *
  * @psalm-suppress UnusedClass
  */
-class SettingsSection extends GenericSettingsSection
-{
+class SettingsSection extends GenericSettingsSection {
 }//end class

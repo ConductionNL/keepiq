@@ -41,135 +41,134 @@ use Throwable;
 /**
  * Builds and signs X.509 certificates with phpseclib.
  */
-class X509CertificateAssembler
-{
-    /**
-     * Constructor for X509CertificateAssembler.
-     *
-     * @param LoggerInterface        $logger    The logger interface
-     * @param PublicKeyLoaderAdapter $keyLoader The phpseclib key loader
-     *
-     * @return void
-     *
-     * @spec exclude Constructor wiring only; no behaviour.
-     */
-    public function __construct(
-        private LoggerInterface $logger,
-        private PublicKeyLoaderAdapter $keyLoader=new PublicKeyLoaderAdapter(),
-    ) {
-    }//end __construct()
+class X509CertificateAssembler {
+	/**
+	 * Constructor for X509CertificateAssembler.
+	 *
+	 * @param LoggerInterface $logger The logger interface
+	 * @param PublicKeyLoaderAdapter $keyLoader The phpseclib key loader
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only; no behaviour.
+	 */
+	public function __construct(
+		private LoggerInterface $logger,
+		private PublicKeyLoaderAdapter $keyLoader = new PublicKeyLoaderAdapter(),
+	) {
+	}//end __construct()
 
-    /**
-     * Issue an X.509 certificate carrying an arbitrary submitted public key,
-     * signed by the intermediate — via phpseclib, which (unlike ext-openssl's
-     * CSR path) can bind a public-only key deterministically on every build.
-     *
-     * @param string               $publicKeyPem        The subject public key (PEM)
-     * @param array<string,string> $subjectDn           Ordered map of phpseclib DN prop => value
-     * @param string               $intermediateCertPem The signing intermediate certificate (PEM)
-     * @param string               $intermediatePrivPem The intermediate private key (PEM, decrypted)
-     *
-     * @return string The issued certificate PEM
-     *
-     * @throws RuntimeException When issuance fails
-     *
-     * @spec openspec/specs/certificate-lifecycle/spec.md
-     */
-    public function issueForPublicKey(
-        string $publicKeyPem,
-        array $subjectDn,
-        string $intermediateCertPem,
-        string $intermediatePrivPem,
-    ): string {
-        $subjectPublic = $this->keyLoader->load($publicKeyPem);
-        if ($subjectPublic instanceof PublicKey === false) {
-            throw new RuntimeException('Submitted public key is not an RSA public key');
-        }
+	/**
+	 * Issue an X.509 certificate carrying an arbitrary submitted public key,
+	 * signed by the intermediate — via phpseclib, which (unlike ext-openssl's
+	 * CSR path) can bind a public-only key deterministically on every build.
+	 *
+	 * @param string $publicKeyPem The subject public key (PEM)
+	 * @param array<string,string> $subjectDn Ordered map of phpseclib DN prop => value
+	 * @param string $intermediateCertPem The signing intermediate certificate (PEM)
+	 * @param string $intermediatePrivPem The intermediate private key (PEM, decrypted)
+	 *
+	 * @return string The issued certificate PEM
+	 *
+	 * @throws RuntimeException When issuance fails
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md
+	 */
+	public function issueForPublicKey(
+		string $publicKeyPem,
+		array $subjectDn,
+		string $intermediateCertPem,
+		string $intermediatePrivPem,
+	): string {
+		$subjectPublic = $this->keyLoader->load($publicKeyPem);
+		if ($subjectPublic instanceof PublicKey === false) {
+			throw new RuntimeException('Submitted public key is not an RSA public key');
+		}
 
-        $issuerPrivate = $this->keyLoader->load($intermediatePrivPem);
-        if ($issuerPrivate instanceof PrivateKey === false) {
-            throw new RuntimeException('Intermediate private key could not be loaded for issuance');
-        }
+		$issuerPrivate = $this->keyLoader->load($intermediatePrivPem);
+		if ($issuerPrivate instanceof PrivateKey === false) {
+			throw new RuntimeException('Intermediate private key could not be loaded for issuance');
+		}
 
-        $issuer = new X509();
-        $issuer->loadX509($intermediateCertPem);
-        $issuer->setPrivateKey($issuerPrivate->withPadding(RSA::SIGNATURE_PKCS1));
+		$issuer = new X509();
+		$issuer->loadX509($intermediateCertPem);
+		$issuer->setPrivateKey($issuerPrivate->withPadding(RSA::SIGNATURE_PKCS1));
 
-        $subject = new X509();
-        // PKCS1 padding on the subject key so the SPKI carries the plain
-        // rsaEncryption OID — phpseclib's PSS default would emit an
-        // id-RSASSA-PSS SPKI that WebCrypto/openssl consumers reject.
-        $subject->setPublicKey($subjectPublic->withPadding(RSA::SIGNATURE_PKCS1));
-        foreach ($subjectDn as $dnProp => $dnValue) {
-            $subject->setDNProp($dnProp, $dnValue);
-        }
+		$subject = new X509();
+		// PKCS1 padding on the subject key so the SPKI carries the plain
+		// rsaEncryption OID — phpseclib's PSS default would emit an
+		// id-RSASSA-PSS SPKI that WebCrypto/openssl consumers reject.
+		$subject->setPublicKey($subjectPublic->withPadding(RSA::SIGNATURE_PKCS1));
+		foreach ($subjectDn as $dnProp => $dnValue) {
+			$subject->setDNProp($dnProp, $dnValue);
+		}
 
-        $signer = new X509();
-        $signer->setSerialNumber((string) random_int(1, PHP_INT_MAX), 10);
-        $signer->setEndDate('+365 days');
-        $issued = $signer->sign($issuer, $subject);
-        if ($issued === false) {
-            throw new RuntimeException('phpseclib certificate issuance failed');
-        }
+		$signer = new X509();
+		$signer->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
+		$signer->setEndDate('+365 days');
+		$issued = $signer->sign($issuer, $subject);
+		if ($issued === false) {
+			throw new RuntimeException('phpseclib certificate issuance failed');
+		}
 
-        // The saveX509() helper is declared `: string`, so the only failure
-        // shape left to guard is an empty export.
-        $pem = $signer->saveX509($issued);
-        if ($pem === '') {
-            throw new RuntimeException('phpseclib certificate export failed');
-        }
+		// The saveX509() helper is declared `: string`, so the only failure
+		// shape left to guard is an empty export.
+		$pem = $signer->saveX509($issued);
+		if ($pem === '') {
+			throw new RuntimeException('phpseclib certificate export failed');
+		}
 
-        return $pem;
-    }//end issueForPublicKey()
+		return $pem;
+	}//end issueForPublicKey()
 
-    /**
-     * Assemble and sign a new certificate that carries the old certificate's
-     * SubjectPublicKeyInfo and subject DN verbatim, signed by the intermediate.
-     *
-     * @param string $oldCert            The current PEM certificate to re-sign
-     * @param string $intermediateCert   The signing intermediate certificate (PEM)
-     * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
-     *
-     * @return string|null The new PEM certificate, or null when signing failed.
-     *
-     * @spec openspec/specs/certificate-lifecycle/spec.md
-     */
-    public function resignPreservingSubject(
-        string $oldCert,
-        string $intermediateCert,
-        string $intermediateKeyPem,
-    ): ?string {
-        try {
-            $old = new X509();
-            if ($old->loadX509($oldCert) === false) {
-                return null;
-            }
+	/**
+	 * Assemble and sign a new certificate that carries the old certificate's
+	 * SubjectPublicKeyInfo and subject DN verbatim, signed by the intermediate.
+	 *
+	 * @param string $oldCert The current PEM certificate to re-sign
+	 * @param string $intermediateCert The signing intermediate certificate (PEM)
+	 * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
+	 *
+	 * @return string|null The new PEM certificate, or null when signing failed.
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md
+	 */
+	public function resignPreservingSubject(
+		string $oldCert,
+		string $intermediateCert,
+		string $intermediateKeyPem,
+	): ?string {
+		try {
+			$old = new X509();
+			if ($old->loadX509($oldCert) === false) {
+				return null;
+			}
 
-            $issuer = new X509();
-            $issuer->loadX509($intermediateCert);
-            $issuer->setPrivateKey($this->keyLoader->loadPrivateKey($intermediateKeyPem));
+			$issuer = new X509();
+			$issuer->loadX509($intermediateCert);
+			$issuer->setPrivateKey($this->keyLoader->loadPrivateKey($intermediateKeyPem));
 
-            $subject = new X509();
-            $subject->setPublicKey($old->getPublicKey());
-            $subject->setDN($old->getDN());
+			$subject = new X509();
+			$subject->setPublicKey($old->getPublicKey());
+			$subject->setDN($old->getDN());
 
-            $signer = new X509();
-            $signer->setStartDate('-1 day');
-            $signer->setEndDate('+365 days');
-            $signer->setSerialNumber((string) random_int(1, PHP_INT_MAX), 10);
-            $signed = $signer->sign($issuer, $subject);
-            if ($signed === false) {
-                return null;
-            }
+			$signer = new X509();
+			$signer->setStartDate('-1 day');
+			$signer->setEndDate('+365 days');
+			$signer->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
+			$signed = $signer->sign($issuer, $subject);
+			if ($signed === false) {
+				return null;
+			}
 
-            return $signer->saveX509($signed);
-        } catch (Throwable $exception) {
-            $this->logger->warning(
-                'Doriath: phpseclib re-sign failed: '.$exception->getMessage(),
-                ['app' => Application::APP_ID]
-            );
+			return $signer->saveX509($signed);
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Doriath: phpseclib re-sign failed: ' . $exception->getMessage(),
+				['app' => Application::APP_ID]
+			);
 
-            return null;
-        }//end try
-    }//end resignPreservingSubject()
+			return null;
+		}//end try
+	}//end resignPreservingSubject()
 }//end class

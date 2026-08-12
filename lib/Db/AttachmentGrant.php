@@ -47,122 +47,117 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  */
-class AttachmentGrant extends Entity implements JsonSerializable
-{
+class AttachmentGrant extends Entity implements JsonSerializable {
 
-    /**
-     * The attachment this grant unlocks.
-     *
-     * @var string
-     */
-    protected string $attachmentId = '';
+	/**
+	 * The attachment this grant unlocks.
+	 *
+	 * @var string
+	 */
+	protected string $attachmentId = '';
 
-    /**
-     * The Secret copy this grant belongs to.
-     *
-     * @var string
-     */
-    protected string $secretId = '';
+	/**
+	 * The Secret copy this grant belongs to.
+	 *
+	 * @var string
+	 */
+	protected string $secretId = '';
 
-    /**
-     * The recipient type: `user` or `application`. Initialized empty on
-     * purpose — a non-empty default would make a same-value set a no-op
-     * so the Entity never marks the column dirty and INSERT omits it
-     * (NOT NULL violation; found live in team-folder-sharing).
-     *
-     * @var string
-     */
-    protected string $recipientType = '';
+	/**
+	 * The recipient type: `user` or `application`. Initialized empty on
+	 * purpose — a non-empty default would make a same-value set a no-op
+	 * so the Entity never marks the column dirty and INSERT omits it
+	 * (NOT NULL violation; found live in team-folder-sharing).
+	 *
+	 * @var string
+	 */
+	protected string $recipientType = '';
 
-    /**
-     * The Nextcloud user id or application id holding this grant.
-     *
-     * @var string
-     */
-    protected string $recipientId = '';
+	/**
+	 * The Nextcloud user id or application id holding this grant.
+	 *
+	 * @var string
+	 */
+	protected string $recipientId = '';
 
-    /**
-     * The RSA-wrapped AES file key for this copy.
-     *
-     * @var string
-     */
-    protected string $wrappedFileKey = '';
+	/**
+	 * The RSA-wrapped AES file key for this copy.
+	 *
+	 * @var string
+	 */
+	protected string $wrappedFileKey = '';
 
-    /**
-     * The EncryptionSuite that wrapped this grant's key.
-     *
-     * @var string|null
-     */
-    protected ?string $encryptionSuiteId = null;
+	/**
+	 * The EncryptionSuite that wrapped this grant's key.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $encryptionSuiteId = null;
 
-    /**
-     * When the grant was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the grant was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for AttachmentGrant.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'attachmentId', type: 'string');
-        $this->addType(fieldName: 'secretId', type: 'string');
-        $this->addType(fieldName: 'recipientType', type: 'string');
-        $this->addType(fieldName: 'recipientId', type: 'string');
-        $this->addType(fieldName: 'wrappedFileKey', type: 'string');
-        $this->addType(fieldName: 'encryptionSuiteId', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Constructor for AttachmentGrant.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'attachmentId', type: 'string');
+		$this->addType(fieldName: 'secretId', type: 'string');
+		$this->addType(fieldName: 'recipientType', type: 'string');
+		$this->addType(fieldName: 'recipientId', type: 'string');
+		$this->addType(fieldName: 'wrappedFileKey', type: 'string');
+		$this->addType(fieldName: 'encryptionSuiteId', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+	}//end __construct()
 
-    /**
-     * Serialize the entity to an array for the API.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'             => $this->getId(),
-            'attachmentId'   => $this->attachmentId,
-            'secretId'       => $this->secretId,
-            'recipientType'  => $this->recipientType,
-            'recipientId'    => $this->recipientId,
-            'wrappedFileKey' => $this->wrappedFileKey,
-            'createdAt'      => $this->createdAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'attachmentId' => $this->attachmentId,
+			'secretId' => $this->secretId,
+			'recipientType' => $this->recipientType,
+			'recipientId' => $this->recipientId,
+			'wrappedFileKey' => $this->wrappedFileKey,
+			'createdAt' => $this->createdAt?->format('c'),
+		];
+	}//end jsonSerialize()
 }//end class

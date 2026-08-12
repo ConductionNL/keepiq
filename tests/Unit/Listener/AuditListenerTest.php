@@ -32,88 +32,84 @@ use RuntimeException;
 /**
  * Tests for AuditListener — records AuditEvents and is fail-soft.
  */
-class AuditListenerTest extends TestCase
-{
+class AuditListenerTest extends TestCase {
 
-    /**
-     * The mocked audit service.
-     *
-     * @var AuditService&MockObject
-     */
-    private AuditService $auditService;
+	/**
+	 * The mocked audit service.
+	 *
+	 * @var AuditService&MockObject
+	 */
+	private AuditService $auditService;
 
-    /**
-     * The mocked logger.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface $logger;
+	/**
+	 * The mocked logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface $logger;
 
-    /**
-     * The listener under test.
-     *
-     * @var AuditListener
-     */
-    private AuditListener $listener;
+	/**
+	 * The listener under test.
+	 *
+	 * @var AuditListener
+	 */
+	private AuditListener $listener;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->auditService = $this->createMock(AuditService::class);
-        $this->logger       = $this->createMock(LoggerInterface::class);
-        $this->listener     = new AuditListener($this->auditService, $this->logger);
-    }//end setUp()
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->auditService = $this->createMock(AuditService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->listener = new AuditListener($this->auditService, $this->logger);
+	}//end setUp()
 
-    /**
-     * An AuditEvent is recorded through the service.
-     *
-     * @return void
-     */
-    public function testRecordsAuditEvent(): void
-    {
-        $event = AuditEvent::forUser(
-            actorId: 'alice',
-            eventType: AuditEventTypes::SECRET_CREATED,
-            objectType: 'secret',
-            objectId: 'sec-1',
-            objectName: 'X',
-        );
+	/**
+	 * An AuditEvent is recorded through the service.
+	 *
+	 * @return void
+	 */
+	public function testRecordsAuditEvent(): void {
+		$event = AuditEvent::forUser(
+			actorId: 'alice',
+			eventType: AuditEventTypes::SECRET_CREATED,
+			objectType: 'secret',
+			objectId: 'sec-1',
+			objectName: 'X',
+		);
 
-        $this->auditService->expects($this->once())
-            ->method('record')
-            ->with($event)
-            ->willReturn(new AuditEntry());
+		$this->auditService->expects($this->once())
+			->method('record')
+			->with($event)
+			->willReturn(new AuditEntry());
 
-        $this->listener->handle($event);
-    }//end testRecordsAuditEvent()
+		$this->listener->handle($event);
+	}//end testRecordsAuditEvent()
 
-    /**
-     * A record() failure is swallowed and logged at error level — it MUST NOT
-     * propagate into the audited business operation (fail-soft requirement).
-     *
-     * @return void
-     */
-    public function testRecordFailureIsSwallowedAndLogged(): void
-    {
-        $event = AuditEvent::forUser(
-            actorId: 'alice',
-            eventType: AuditEventTypes::SECRET_CREATED,
-            objectType: 'secret',
-            objectId: 'sec-1',
-            objectName: 'X',
-        );
+	/**
+	 * A record() failure is swallowed and logged at error level — it MUST NOT
+	 * propagate into the audited business operation (fail-soft requirement).
+	 *
+	 * @return void
+	 */
+	public function testRecordFailureIsSwallowedAndLogged(): void {
+		$event = AuditEvent::forUser(
+			actorId: 'alice',
+			eventType: AuditEventTypes::SECRET_CREATED,
+			objectType: 'secret',
+			objectId: 'sec-1',
+			objectName: 'X',
+		);
 
-        $this->auditService->method('record')
-            ->willThrowException(new RuntimeException('db down'));
+		$this->auditService->method('record')
+			->willThrowException(new RuntimeException('db down'));
 
-        $this->logger->expects($this->once())->method('error');
+		$this->logger->expects($this->once())->method('error');
 
-        // Must not throw.
-        $this->listener->handle($event);
-        $this->addToAssertionCount(1);
-    }//end testRecordFailureIsSwallowedAndLogged()
+		// Must not throw.
+		$this->listener->handle($event);
+		$this->addToAssertionCount(1);
+	}//end testRecordFailureIsSwallowedAndLogged()
 }//end class

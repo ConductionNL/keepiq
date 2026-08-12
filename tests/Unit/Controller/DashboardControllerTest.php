@@ -44,155 +44,143 @@ use PHPUnit\Framework\TestCase;
  * asserted explicitly and the anonymous branch is proven to compute nothing.
  *
  */
-class DashboardControllerTest extends TestCase
-{
+class DashboardControllerTest extends TestCase {
 
-    /**
-     * The mocked summary aggregator.
-     *
-     * @var DashboardSummaryService&MockObject
-     */
-    private DashboardSummaryService&MockObject $summaryService;
+	/**
+	 * The mocked summary aggregator.
+	 *
+	 * @var DashboardSummaryService&MockObject
+	 */
+	private DashboardSummaryService&MockObject $summaryService;
 
-    /**
-     * The mocked user session.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $userSession;
+	/**
+	 * The mocked user session.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $userSession;
 
-    /**
-     * The mocked group manager.
-     *
-     * @var IGroupManager&MockObject
-     */
-    private IGroupManager&MockObject $groupManager;
+	/**
+	 * The mocked group manager.
+	 *
+	 * @var IGroupManager&MockObject
+	 */
+	private IGroupManager&MockObject $groupManager;
 
+	/**
+	 * Set up the mocks shared by every test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-    /**
-     * Set up the mocks shared by every test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+		$this->summaryService = $this->createMock(DashboardSummaryService::class);
+		$this->userSession = $this->createMock(IUserSession::class);
+		$this->groupManager = $this->createMock(IGroupManager::class);
+	}//end setUp()
 
-        $this->summaryService = $this->createMock(DashboardSummaryService::class);
-        $this->userSession    = $this->createMock(IUserSession::class);
-        $this->groupManager   = $this->createMock(IGroupManager::class);
-    }//end setUp()
+	/**
+	 * Build the controller under test with its collaborators mocked.
+	 *
+	 * @param string|null $userId The session uid, or null for an anonymous caller.
+	 *
+	 * @return DashboardController The controller under test.
+	 */
+	private function controller(?string $userId = 'alice'): DashboardController {
+		if ($userId === null) {
+			$this->userSession->method('getUser')->willReturn(null);
+		} else {
+			$user = $this->createMock(IUser::class);
+			$user->method('getUID')->willReturn($userId);
+			$this->userSession->method('getUser')->willReturn($user);
+		}
 
+		return new DashboardController(
+			request: $this->createMock(IRequest::class),
+			initialState: $this->createMock(IInitialState::class),
+			appConfig: $this->createMock(IAppConfig::class),
+			summaryService: $this->summaryService,
+			userSession: $this->userSession,
+			groupManager: $this->groupManager
+		);
+	}//end controller()
 
-    /**
-     * Build the controller under test with its collaborators mocked.
-     *
-     * @param string|null $userId The session uid, or null for an anonymous caller.
-     *
-     * @return DashboardController The controller under test.
-     */
-    private function controller(?string $userId='alice'): DashboardController
-    {
-        if ($userId === null) {
-            $this->userSession->method('getUser')->willReturn(null);
-        } else {
-            $user = $this->createMock(IUser::class);
-            $user->method('getUID')->willReturn($userId);
-            $this->userSession->method('getUser')->willReturn($user);
-        }
+	/**
+	 * The happy path for an ordinary user: the aggregate is scoped to that
+	 * user's own uid with isAdmin false, and the service payload is returned.
+	 *
+	 * @return void
+	 */
+	public function testSummaryScopesTheAggregateToTheSessionUserAndReturnsThePayload(): void {
+		$summary = [
+			'secrets' => 12,
+			'sharedWithMe' => 3,
+			'applications' => 1,
+			'expiringSoon' => 0,
+		];
 
-        return new DashboardController(
-            request: $this->createMock(IRequest::class),
-            initialState: $this->createMock(IInitialState::class),
-            appConfig: $this->createMock(IAppConfig::class),
-            summaryService: $this->summaryService,
-            userSession: $this->userSession,
-            groupManager: $this->groupManager
-        );
-    }//end controller()
+		$this->groupManager->expects($this->once())
+			->method('isAdmin')
+			->with('alice')
+			->willReturn(false);
 
+		// The ITEM: the aggregate is computed for the SESSION uid, unprivileged.
+		$this->summaryService->expects($this->once())
+			->method('fetchSummary')
+			->with('alice', false)
+			->willReturn($summary);
 
-    /**
-     * The happy path for an ordinary user: the aggregate is scoped to that
-     * user's own uid with isAdmin false, and the service payload is returned.
-     *
-     * @return void
-     */
-    public function testSummaryScopesTheAggregateToTheSessionUserAndReturnsThePayload(): void
-    {
-        $summary = [
-            'secrets'       => 12,
-            'sharedWithMe'  => 3,
-            'applications'  => 1,
-            'expiringSoon'  => 0,
-        ];
+		$response = $this->controller(userId: 'alice')->summary();
 
-        $this->groupManager->expects($this->once())
-            ->method('isAdmin')
-            ->with('alice')
-            ->willReturn(false);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($summary, $response->getData());
+	}//end testSummaryScopesTheAggregateToTheSessionUserAndReturnsThePayload()
 
-        // The ITEM: the aggregate is computed for the SESSION uid, unprivileged.
-        $this->summaryService->expects($this->once())
-            ->method('fetchSummary')
-            ->with('alice', false)
-            ->willReturn($summary);
+	/**
+	 * An admin session forwards isAdmin true, so the service can widen the
+	 * aggregate — proving the flag is read from the group manager and not
+	 * hard-coded.
+	 *
+	 * @return void
+	 */
+	public function testSummaryForwardsTheAdminFlagFromTheGroupManager(): void {
+		$summary = [
+			'secrets' => 480,
+			'sharedWithMe' => 0,
+			'applications' => 9,
+			'instanceWide' => true,
+		];
 
-        $response = $this->controller(userId: 'alice')->summary();
+		$this->groupManager->expects($this->once())
+			->method('isAdmin')
+			->with('root')
+			->willReturn(true);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame($summary, $response->getData());
-    }//end testSummaryScopesTheAggregateToTheSessionUserAndReturnsThePayload()
+		$this->summaryService->expects($this->once())
+			->method('fetchSummary')
+			->with('root', true)
+			->willReturn($summary);
 
+		$response = $this->controller(userId: 'root')->summary();
 
-    /**
-     * An admin session forwards isAdmin true, so the service can widen the
-     * aggregate — proving the flag is read from the group manager and not
-     * hard-coded.
-     *
-     * @return void
-     */
-    public function testSummaryForwardsTheAdminFlagFromTheGroupManager(): void
-    {
-        $summary = [
-            'secrets'      => 480,
-            'sharedWithMe' => 0,
-            'applications' => 9,
-            'instanceWide' => true,
-        ];
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($summary, $response->getData());
+	}//end testSummaryForwardsTheAdminFlagFromTheGroupManager()
 
-        $this->groupManager->expects($this->once())
-            ->method('isAdmin')
-            ->with('root')
-            ->willReturn(true);
+	/**
+	 * An anonymous caller gets 401 and no aggregate is computed for anybody.
+	 *
+	 * @return void
+	 */
+	public function testSummaryRejectsAnAnonymousCallerWithoutAggregatingAnything(): void {
+		$this->summaryService->expects($this->never())->method('fetchSummary');
+		$this->groupManager->expects($this->never())->method('isAdmin');
 
-        $this->summaryService->expects($this->once())
-            ->method('fetchSummary')
-            ->with('root', true)
-            ->willReturn($summary);
+		$response = $this->controller(userId: null)->summary();
 
-        $response = $this->controller(userId: 'root')->summary();
-
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame($summary, $response->getData());
-    }//end testSummaryForwardsTheAdminFlagFromTheGroupManager()
-
-
-    /**
-     * An anonymous caller gets 401 and no aggregate is computed for anybody.
-     *
-     * @return void
-     */
-    public function testSummaryRejectsAnAnonymousCallerWithoutAggregatingAnything(): void
-    {
-        $this->summaryService->expects($this->never())->method('fetchSummary');
-        $this->groupManager->expects($this->never())->method('isAdmin');
-
-        $response = $this->controller(userId: null)->summary();
-
-        $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-        $this->assertSame(['error' => 'unauthenticated'], $response->getData());
-    }//end testSummaryRejectsAnAnonymousCallerWithoutAggregatingAnything()
-
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$this->assertSame(['error' => 'unauthenticated'], $response->getData());
+	}//end testSummaryRejectsAnAnonymousCallerWithoutAggregatingAnything()
 
 }//end class
