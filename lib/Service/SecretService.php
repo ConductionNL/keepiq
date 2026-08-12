@@ -833,7 +833,7 @@ class SecretService
                 // either.
                 $secret->setPossiblyCompromisedAt(null);
             }
-        }
+        }//end if
 
         if (array_key_exists('login', $data) === true) {
             $secret->setLogin($this->nullableString(value: $data['login']));
