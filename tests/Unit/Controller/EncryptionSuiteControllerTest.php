@@ -178,7 +178,7 @@ class EncryptionSuiteControllerTest extends TestCase
      *
      * @return void
      */
-    public function testShowReturns403ForOtherUsersSuite(): void
+    public function testShowReturns404ForOtherUsersSuite(): void
     {
         $suite = new EncryptionSuite();
         $suite->setId('suite-1');
@@ -195,7 +195,7 @@ class EncryptionSuiteControllerTest extends TestCase
         $this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
         $this->assertArrayHasKey(key: 'message', array: $response->getData());
         $this->assertStringContainsString(needle: 'Access denied', haystack: $response->getData()['message']);
-    }//end testShowReturns403ForOtherUsersSuite()
+    }//end testShowReturns404ForOtherUsersSuite()
 
     /**
      * Test create returns 201 on success.
@@ -266,10 +266,18 @@ class EncryptionSuiteControllerTest extends TestCase
      */
     public function testRevokeReturnsSuite(): void
     {
+        $owned = new EncryptionSuite();
+        $owned->setId('suite-1');
+        $owned->setOwnerType('user');
+        $owned->setOwnerId('testuser');
+
         $suite = new EncryptionSuite();
         $suite->setId('suite-1');
         $suite->setStatus('revoked');
 
+        $this->suiteService->method('getSuite')
+            ->with('suite-1')
+            ->willReturn($owned);
         $this->suiteService->method('revokeSuite')
             ->with('suite-1', 'security concern', 'testuser')
             ->willReturn($suite);
@@ -287,6 +295,12 @@ class EncryptionSuiteControllerTest extends TestCase
      */
     public function testRevokeReturns400ForCompromisedSuite(): void
     {
+        $owned = new EncryptionSuite();
+        $owned->setId('suite-1');
+        $owned->setOwnerType('user');
+        $owned->setOwnerId('testuser');
+
+        $this->suiteService->method('getSuite')->willReturn($owned);
         $this->suiteService->method('revokeSuite')
             ->willThrowException(new InvalidArgumentException('Cannot revoke a compromised suite'));
 
@@ -294,6 +308,39 @@ class EncryptionSuiteControllerTest extends TestCase
 
         $this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
     }//end testRevokeReturns400ForCompromisedSuite()
+
+    /**
+     * Revoke must refuse a suite owned by ANOTHER user, and must not reach the
+     * service at all.
+     *
+     * The `$user === null` preamble is an AUTHENTICATION check. Before this
+     * test existed, any authenticated user could revoke any suite by id, and
+     * revocation cascades a hard delete of the owner's ShareTargets plus a
+     * permanent promotion of their delegations.
+     *
+     * @return void
+     */
+    public function testRevokeRefusesAnotherUsersSuiteAndNeverCallsTheService(): void
+    {
+        $foreign = new EncryptionSuite();
+        $foreign->setId('suite-1');
+        $foreign->setOwnerType('user');
+        $foreign->setOwnerId('victim');
+        $foreign->setStatus('active');
+
+        $this->suiteService->method('getSuite')
+            ->with('suite-1')
+            ->willReturn($foreign);
+        $this->suiteService->expects($this->never())->method('revokeSuite');
+
+        $response = $this->controller->revoke('suite-1', 'security concern');
+
+        $this->assertSame(expected: Http::STATUS_FORBIDDEN, actual: $response->getStatus());
+        $this->assertStringContainsString(
+            needle: 'Access denied',
+            haystack: $response->getData()['message']
+        );
+    }//end testRevokeRefusesAnotherUsersSuiteAndNeverCallsTheService()
 
     /**
      * Test reinstate returns reinstated suite.
