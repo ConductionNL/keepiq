@@ -332,12 +332,12 @@ export default {
 
 .application-detail__status--active {
 	background: var(--color-success);
-	color: white;
+	color: var(--color-success-text);
 }
 
 .application-detail__status--pending {
 	background: var(--color-warning);
-	color: white;
+	color: var(--color-warning-text);
 }
 
 .application-detail__description {

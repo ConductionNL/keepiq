@@ -214,13 +214,18 @@ export default {
 .doriath-applications-view__keydialog {
 	margin-top: 2rem;
 	padding: 1rem;
-	border: 1px solid var(--color-warning, #f00);
-	background: var(--color-warning-rest, #ffe);
+	/* --color-warning-rest is not a Nextcloud variable, so this always fell back
+	   to the pale light-theme yellow and the inherited near-white dark-mode text
+	   was unreadable on it. The old #f00 border fallback was wrong twice over:
+	   red for a warning, and unreachable because --color-warning is defined. */
+	border: 1px solid var(--color-warning-text);
+	background: var(--color-background-dark);
+	color: var(--color-main-text);
 }
 
 .doriath-applications-view__warning {
 	font-weight: 600;
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 }
 
 .doriath-applications-view__keytext {

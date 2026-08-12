@@ -181,11 +181,11 @@ export default {
 	}
 
 	&__status--active {
-		color: var(--color-success);
+		color: var(--color-success-text);
 	}
 
 	&__status--stale {
-		color: var(--color-warning, #b07100);
+		color: var(--color-warning-text);
 	}
 
 	&__form {
