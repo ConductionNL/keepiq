@@ -81,11 +81,23 @@ class SecretRequestService
     /**
      * Mark a pending request as fulfilled from the public fill endpoint.
      *
-     * The caller (controller) is responsible for writing the encrypted
-     * blobs to the linked Secret row. This method validates the
-     * lifecycle / expiry / requested-fields invariants and atomically
-     * flips status to fulfilled, then dispatches the request_fulfilled
-     * notification to the original requester.
+     * Validates the lifecycle / expiry / requested-fields invariants, atomically
+     * flips status to fulfilled, and announces it to the original requester.
+     *
+     * ⚠️ `$encryptedFields` IS NOT PERSISTED ANYWHERE. This docblock used to say
+     * the calling controller was responsible for writing the blobs to the linked
+     * Secret row; no caller does. SecretRequestFillController::fill() invokes
+     * this method and returns the status, so a fill-in silently discards the
+     * value the recipient submitted and the request is marked fulfilled anyway.
+     *
+     * Two consequences worth knowing before relying on this method:
+     *   - the requested value never reaches the vault, so the request is
+     *     "fulfilled" with nothing to show for it;
+     *   - a secret carrying `possibly_compromised_at` cannot be cleared this way,
+     *     because clearing is bound to an actual `key` write (see the
+     *     possibly-compromised-flag lifecycle requirement). Whoever wires the
+     *     write MUST route it through SecretService::update so the flag clears
+     *     and version history snapshots, rather than touching the mapper.
      *
      * @param string              $token           The access token
      * @param array<string,mixed> $encryptedFields A map of fieldName => encryptedValue

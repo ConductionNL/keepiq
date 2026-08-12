@@ -19,7 +19,7 @@
 ## 4. Server — flag clearing
 
 - [x] 4.1 Ensure `possibly_compromised_at` is cleared only when a secret's `key` value is actually replaced (owner write, or secret-request fulfilment) and propagates to shared copies via the existing sync path (`lib/Service/ShareService.php:872`); confirm renames, folder moves, metadata edits and share operations leave it set
-  - Owner and application writes clear it, gated on the existing `$key !== $secret->getKey()` check so a client that echoes the unchanged key back alongside a rename does not clear it. Share propagation already existed at `ShareService:871`. **Secret-request fulfilment has no hook**: `SecretRequestService::fill()` marks the request fulfilled but never writes the blobs into the secret — its docblock says the controller is responsible, and `SecretRequestFillController::fill` does not do it either. So fulfilment does not currently write a value at all; when that path is built it must clear the flag, and the spec scenario stays honest in the meantime.
+  - Owner and application writes clear it, gated on the existing `$key !== $secret->getKey()` check so a client that echoes the unchanged key back alongside a rename does not clear it. Share propagation already existed at `ShareService:871`. The spec delta now binds clearing to the key WRITE rather than to a named writer, so any future path inherits it; `SecretRequestService::fill()`'s docblock records that it persists nothing today (a defect in the secret-requests capability, not here) and tells whoever wires the write to route it through `SecretService::update` so the flag clears.
 
 ## 5. Frontend
 

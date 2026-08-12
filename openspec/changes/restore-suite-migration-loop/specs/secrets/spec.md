@@ -8,7 +8,11 @@ The system MUST raise, render and clear the `possibly_compromised_at` flag as se
 
 **Render.** A secret carrying `possibly_compromised_at` MUST be surfaced as a warning that is hard to ignore — visible on the secret itself and in the vault-wide health surface, not only in a report the user must go looking for. The warning MUST say that the stored value should be considered exposed and replaced at its source, and MUST NOT be dismissible in a way that hides it while the flag is still set. The flag is plaintext metadata, not ciphertext, so rendering it requires no decryption and MUST work whether or not the vault is unlocked.
 
-**Clear.** The flag MUST be cleared only when the secret's value is actually replaced — that is, when the `key` ciphertext is written with a new value by the owner or by the fulfilment of a secret request. It MUST NOT be cleared by a rename, a folder move, a metadata edit, a share operation, or by the migration itself. Clearing a source secret's flag MUST propagate to shared copies through the existing sync-on-update path.
+**Clear.** The flag MUST be cleared exactly when the secret's `key` ciphertext is written with a value different from the stored one, whoever writes it. Binding the rule to the write rather than to the writer is deliberate: any future path that replaces the value inherits the clearing without needing its own rule, and no path can replace a value while leaving the warning standing.
+
+It MUST NOT be cleared by a rename, a folder move, a type change, a metadata edit, a share operation, or by the migration itself. It MUST NOT be cleared by a write that re-submits the ciphertext already stored — a client that echoes the whole record back on every save must not silence the warning without the value having changed. Clearing a source secret's flag MUST propagate to shared copies through the existing sync-on-update path.
+
+Note for implementers: secret-request **fulfilment** is expected to be such a write, but currently is not one. `SecretRequestService::fill()` flips the request to `fulfilled` and notifies the requester without ever writing the submitted blobs to the linked Secret row, so there is no key write to clear the flag on — and, more seriously, the filled-in values are discarded. That is a defect in the secret-requests capability rather than in this requirement; the rule above applies unchanged the moment fulfilment writes the value.
 
 #### Scenario: Every migrated secret is flagged
 
@@ -43,5 +47,7 @@ The system MUST raise, render and clear the `possibly_compromised_at` flag as se
 
 @e2e exclude Clearing is asserted on the persisted row and on shared copies after sync-on-update; covered by PHPUnit on the secret-update and share-sync paths.
 - **GIVEN** a secret carrying `possibly_compromised_at`
-- **WHEN** the owner writes a new `key` value, or a secret request against it is fulfilled with a new value
+- **WHEN** any path writes a `key` ciphertext different from the stored one
 - **THEN** `possibly_compromised_at` MUST be cleared on that secret and on every shared copy of it
+- **WHEN** a write re-submits the ciphertext already stored, alongside a rename
+- **THEN** `possibly_compromised_at` MUST remain set
