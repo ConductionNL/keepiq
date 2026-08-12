@@ -291,12 +291,27 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 						break
 					}
 
-					// No progress and nothing permanently failed means the whole
-					// page was transient (offline, server down). Asking again
-					// would spin on the same page, so stop and let the user
-					// resume later; the rows stay unaccounted server-side.
-					if (outcome.committed === 0 && outcome.failures.length === 0) {
-						halted = 'Migration could not reach the server; no records were changed.'
+					// A pass that commits nothing cannot make progress, and the
+					// work list is re-derived from the rows — so asking again
+					// returns exactly the same page. Stop either way; what
+					// differs is whether it counts as a halt.
+					if (outcome.committed === 0) {
+						if (outcome.failures.length === 0) {
+							// Nothing committed and nothing permanently failed:
+							// the whole page was transient (offline, server
+							// down). The rows stay unaccounted server-side, so
+							// the completion gate will refuse and the resume
+							// banner picks it up.
+							halted = 'Migration could not reach the server; no records were changed.'
+						}
+
+						// Otherwise every record in this page failed permanently
+						// and is now recorded against its owning secret. Letting
+						// the loop continue here was an infinite spin: the rows
+						// stay bound to the old suite, so each pass re-fetched
+						// and re-failed the same page and the dialog sat at
+						// "0 of N" forever. Fall through to completion, which
+						// asks the user what to do about them.
 						break
 					}
 				}

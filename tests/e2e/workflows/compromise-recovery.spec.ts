@@ -53,7 +53,13 @@ const NEW_MASTER = 'R0tated-master-passphrase!'
  * Start from a clean, unauthenticated context: the global setup stores an ADMIN
  * session, and this spec deliberately runs as somebody else.
  */
-test.use({ storageState: { cookies: [], origins: [] } })
+test.use({
+	storageState: { cookies: [], origins: [] },
+	// Wide enough that the app navigation is not collapsed. The settings entry
+	// still gets a programmatic click below, because at 1280x720 Nextcloud keeps
+	// the nav closed and the entry present-but-hidden.
+	viewport: { width: 1600, height: 1000 },
+})
 
 /**
  * Log into Nextcloud as the vault fixture user.
@@ -116,46 +122,139 @@ async function setUpVault(page: Page): Promise<boolean> {
 }
 
 /**
- * Create one secret through the API, so the migration has something to move.
+ * Create one secret holding REAL ciphertext, encrypted to the vault's own suite.
  *
- * Ciphertext is produced in the browser by the app's own crypto for realism;
- * this only needs the row to exist and be bound to the active suite.
+ * The migration decrypts with the old private key before re-encrypting, so a
+ * placeholder string is not merely unrealistic — it fails `rsaDecrypt` and the
+ * record is correctly classified unrecoverable, which is a different test. To
+ * exercise the happy path the blob has to be genuine.
  *
- * @param page The Playwright page (vault unlocked).
+ * The chunked wire format is the one src/crypto/rsa.js writes:
+ * [4-byte big-endian chunk count][512-byte RSA-OAEP blocks], 446 plaintext
+ * bytes per chunk. The X.509 → SubjectPublicKeyInfo walk mirrors the app's
+ * importPublicKey() and the same walk already used by
+ * workflows/secret-crud-encryption.spec.ts.
+ *
+ * @param page  The Playwright page (vault unlocked).
+ * @param name  The secret name.
+ * @param value The plaintext to seal.
  */
-async function seedOneSecret(page: Page): Promise<void> {
-	const created = await page.evaluate(async (base) => {
+async function seedEncryptedSecret(page: Page, name: string, value: string): Promise<void> {
+	const created = await page.evaluate(async ([base, secretName, plaintext]) => {
 		const token = (window as unknown as { OC?: { requestToken?: string } }).OC?.requestToken || ''
+
+		const suites = await (await fetch(`${base}/api/v1/suites`, {
+			credentials: 'include',
+			headers: { requesttoken: token, 'OCS-APIREQUEST': 'true' },
+		})).json()
+		const suite = suites.find((x: { status: string }) => x.status === 'active')
+		if (!suite) {
+			return { status: 0, body: 'no active suite' }
+		}
+
+		const certBody = String(suite.certificate)
+			.replace(/-----BEGIN CERTIFICATE-----/, '')
+			.replace(/-----END CERTIFICATE-----/, '')
+			.replace(/\s/g, '')
+		const der = Uint8Array.from(atob(certBody), (c) => c.charCodeAt(0))
+		const readLen = (d: Uint8Array, o: number) => {
+			const f = d[o]
+			if ((f & 0x80) === 0) {
+				return { length: f, headerEnd: o + 1 }
+			}
+			const n = f & 0x7f
+			let l = 0
+			for (let i = 0; i < n; i++) {
+				l = (l << 8) | d[o + 1 + i]
+			}
+			return { length: l, headerEnd: o + 1 + n }
+		}
+		const outer = readLen(der, 1)
+		const tbs = readLen(der, outer.headerEnd + 1)
+		let pos = tbs.headerEnd
+		const tbsEnd = tbs.headerEnd + tbs.length
+		const fields: Array<{ tag: number, start: number, end: number }> = []
+		while (pos < tbsEnd) {
+			const tag = der[pos]
+			const { length, headerEnd } = readLen(der, pos + 1)
+			const end = headerEnd + length
+			fields.push({ tag, start: pos, end })
+			pos = end
+		}
+		const spkiIdx = fields[0].tag === 0xa0 ? 6 : 5
+		const spki = der.slice(fields[spkiIdx].start, fields[spkiIdx].end)
+		const pub = await crypto.subtle.importKey(
+			'spki', spki, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt'],
+		)
+
+		const CHUNK = 446
+		const BLOCK = 512
+		const data = new TextEncoder().encode(plaintext)
+		const chunks: Uint8Array[] = []
+		for (let i = 0; i < data.length; i += CHUNK) {
+			chunks.push(data.slice(i, i + CHUNK))
+		}
+		if (chunks.length === 0) {
+			chunks.push(new Uint8Array(0))
+		}
+		const out = new Uint8Array(4 + chunks.length * BLOCK)
+		new DataView(out.buffer).setUint32(0, chunks.length, false)
+		for (let i = 0; i < chunks.length; i++) {
+			const enc = new Uint8Array(
+				await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, chunks[i]),
+			)
+			out.set(enc, 4 + i * BLOCK)
+		}
+		const ciphertext = btoa(String.fromCharCode(...out))
+
 		const res = await fetch(`${base}/api/v1/secrets`, {
 			method: 'POST',
+			credentials: 'include',
 			headers: {
 				'Content-Type': 'application/json',
 				requesttoken: token,
 				'OCS-APIREQUEST': 'true',
 			},
-			body: JSON.stringify({
-				name: 'e2e-rotation-subject',
-				key: 'PLACEHOLDER-CIPHERTEXT-FOR-ROTATION',
-			}),
+			body: JSON.stringify({ name: secretName, key: ciphertext }),
 		})
-		return { status: res.status, body: await res.text() }
-	}, APP_BASE)
+		return { status: res.status, body: (await res.text()).slice(0, 200) }
+	}, [APP_BASE, name, value] as const)
 
 	expect(created.status, `secret create failed: ${created.body}`).toBeLessThan(400)
 }
 
 /**
- * Open the compromise-recovery form inside the user-settings dialog.
+ * Open the user-settings dialog, then reveal the compromise-recovery form.
+ *
+ * The dialog is opened by CnAppRoot's own nav entry, matched on its stable
+ * data-testid. Matching on the word "Settings" instead — as an earlier version
+ * of this spec did — hits Nextcloud's account-menu Settings anchor, which is a
+ * real navigation: it tears down the SPA, wipes the in-memory CryptoKey, and
+ * fails with "Execution context was destroyed".
  *
  * @param page The Playwright page (vault unlocked).
  */
 async function openRecoveryForm(page: Page): Promise<void> {
+	// Present but hidden while the app navigation is collapsed, so wait for it in
+	// the DOM and dispatch the click directly rather than requiring visibility —
+	// the Vue handler fires either way, and this is the same native-click
+	// technique _workflow-helpers.ts uses for themed controls.
+	await page.locator('[data-testid="cn-nav-entry-UserSettings"]').first()
+		.waitFor({ state: 'attached', timeout: 30_000 })
+	await page.evaluate(() => {
+		const entry = document.querySelector('[data-testid="cn-nav-entry-UserSettings"] a')
+		if (entry) {
+			(entry as HTMLElement).click()
+		}
+	})
+	await page.waitForTimeout(1200)
+
 	await clickByLabel(page, 'My master password was compromised')
 	await expect(page.locator('.compromise-recovery-form')).toBeVisible({ timeout: 15_000 })
 }
 
 test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () => {
-	test('a fresh vault can be created, rotated, and reports the truth throughout', async ({ page }) => {
+	test('a fresh vault rotates, and every surface reports the truth', async ({ page }) => {
 		test.slow()
 
 		await loginAsVaultUser(page)
@@ -164,24 +263,17 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		test.skip(
 			didSetUp === false,
 			`${VAULT_USER} already owns an EncryptionSuite, so first-time setup was not offered. `
-			+ 'Point DORIATH_VAULT_USER at an account with no suite.',
+			+ 'Reset that account or point DORIATH_VAULT_USER at one with no suite.',
 		)
 
-		await seedOneSecret(page)
+		// Several secrets so the run lasts long enough for progress to be
+		// observable: RSA-4096 over each field is the slow part, which is the
+		// whole reason the loop runs in a worker.
+		for (let i = 0; i < 4; i++) {
+			await seedEncryptedSecret(page, `e2e-rotation-${i}`, `rotation-subject-value-${i}`)
+		}
 
-		// The recovery form lives in the user-settings dialog; the manifest entry
-		// opens it. Navigate in place so the in-memory CryptoKey survives.
-		await page.evaluate(() => {
-			const entry = Array.from(document.querySelectorAll('a, button')).find(
-				(el) => /settings/i.test(el.textContent || ''),
-			)
-			if (entry) {
-				(entry as HTMLElement).click()
-			}
-		})
-		await page.waitForTimeout(800)
 		await openRecoveryForm(page)
-
 		const form = page.locator('.compromise-recovery-form')
 
 		// SURFACE 1 — before confirm. Access restored, not safety.
@@ -199,16 +291,20 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		await page.waitForTimeout(400)
 		await clickByLabel(page, 'Start key rotation')
 
-		// SURFACE 3 — terminal. Counts, and never an all-clear. (Surface 2, the
-		// progress bar, is asserted in the dedicated test below; a single-secret
-		// vault can migrate faster than a poll can observe it.)
+		// SURFACE 2 — during, and inside the dialog: the maintainer decision
+		// recorded in design.md, not a toast and not a separate page.
+		await expect(form.locator('.compromise-recovery-form__progress')).toBeVisible({ timeout: 60_000 })
+
+		// SURFACE 3 — terminal. Counts, and never an all-clear.
 		await expect(form).toContainText(/Key rotation finished/i, { timeout: 180_000 })
 		await expect(form).toContainText(/re-encrypted under your new key/i)
 		await expect(form).toContainText(/still to be considered exposed/i)
 		await expect(form).not.toContainText(/now secured with a new encryption key/i)
 		await expect(form).not.toContainText(/vault is now secure/i)
 
-		// The migration must actually be terminal, not merely reported so.
+		// The migration must actually be terminal, not merely reported so — this
+		// is the assertion the old premature-complete bug would have passed and
+		// the gate could have failed.
 		const status = await page.evaluate(async (base) => {
 			const token = (window as unknown as { OC?: { requestToken?: string } }).OC?.requestToken || ''
 			const res = await fetch(`${base}/api/v1/migrations/status`, {
@@ -217,80 +313,19 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 			return res.text()
 		}, APP_BASE)
 		expect(status).toContain('none')
-	})
 
-	test('progress renders inside the dialog, not in a toast or a separate page', async ({ page }) => {
-		test.slow()
+		// SURFACE 4 — the migrated rows say so. This is what was entirely missing
+		// before: six consumers of possibly_compromised_at and no producer, so no
+		// row ever said anything.
+		// The user-settings dialog is modal. Navigating the hash underneath it
+		// leaves the vault list mounted but covered, so the row indicator is
+		// never shown — close the dialog first.
+		await page.keyboard.press('Escape')
+		await expect(page.locator('[role="dialog"]')).toHaveCount(0, { timeout: 15_000 })
 
-		await loginAsVaultUser(page)
-		const didSetUp = await setUpVault(page)
-		test.skip(didSetUp === false, `${VAULT_USER} already owns an EncryptionSuite.`)
-
-		// Several secrets, so the run lasts long enough to observe. RSA-4096 over
-		// each field is the slow part, which is exactly what the worker exists for.
-		for (let i = 0; i < 6; i++) {
-			await seedOneSecret(page)
-		}
-
-		await page.evaluate(() => {
-			const entry = Array.from(document.querySelectorAll('a, button')).find(
-				(el) => /settings/i.test(el.textContent || ''),
-			)
-			if (entry) {
-				(entry as HTMLElement).click()
-			}
-		})
-		await page.waitForTimeout(800)
-		await openRecoveryForm(page)
-
-		const form = page.locator('.compromise-recovery-form')
-		const pw = form.locator('input[type="password"]')
-		await pw.nth(0).fill(OLD_MASTER, { force: true })
-		await pw.nth(1).fill(NEW_MASTER, { force: true })
-		await pw.nth(2).fill(NEW_MASTER, { force: true })
-		await page.waitForTimeout(400)
-		await clickByLabel(page, 'Start key rotation')
-
-		// Inside the dialog — the maintainer decision recorded in design.md.
-		await expect(form.locator('.compromise-recovery-form__progress')).toBeVisible({ timeout: 60_000 })
-		await expect(form).toContainText(/records re-encrypted|Preparing/i)
-	})
-
-	test('a migrated secret carries the possibly-compromised warning afterwards', async ({ page }) => {
-		test.slow()
-
-		await loginAsVaultUser(page)
-		const didSetUp = await setUpVault(page)
-		test.skip(didSetUp === false, `${VAULT_USER} already owns an EncryptionSuite.`)
-
-		await seedOneSecret(page)
-
-		await page.evaluate(() => {
-			const entry = Array.from(document.querySelectorAll('a, button')).find(
-				(el) => /settings/i.test(el.textContent || ''),
-			)
-			if (entry) {
-				(entry as HTMLElement).click()
-			}
-		})
-		await page.waitForTimeout(800)
-		await openRecoveryForm(page)
-
-		const form = page.locator('.compromise-recovery-form')
-		const pw = form.locator('input[type="password"]')
-		await pw.nth(0).fill(OLD_MASTER, { force: true })
-		await pw.nth(1).fill(NEW_MASTER, { force: true })
-		await pw.nth(2).fill(NEW_MASTER, { force: true })
-		await page.waitForTimeout(400)
-		await clickByLabel(page, 'Start key rotation')
-		await expect(form).toContainText(/Key rotation finished/i, { timeout: 180_000 })
-
-		// Into the vault list, in place so the CryptoKey survives.
 		await page.evaluate(() => { window.location.hash = '#/secrets' })
-		await page.waitForTimeout(1500)
+		await page.waitForTimeout(2500)
 
-		// This is the surface that was entirely missing before: six consumers of
-		// possibly_compromised_at and no producer, so no row ever said anything.
 		const warned = page.locator('[data-testid="secret-possibly-compromised"]')
 		await expect(warned.first()).toBeVisible({ timeout: 30_000 })
 		await expect(warned.first()).toContainText(/change it at its source/i)
