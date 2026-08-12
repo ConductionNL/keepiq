@@ -245,14 +245,31 @@ class EncryptionSuiteController extends OCSController
         $userId = $user->getUID();
 
         try {
+            // AUTHORISATION, not authentication. The `$user === null` check
+            // above only asks whether ANYONE is logged in; it does not ask
+            // whether THIS user owns THIS suite. `revokeSuite()` records
+            // `$revokedBy` as the audit actor and never compares it to the
+            // suite's owner, so without the line below any authenticated user
+            // could revoke any other user's suite by id — and revocation is
+            // destructive: EncryptionSuiteRevokedListener hard-deletes every
+            // ShareTarget where the owner is the recipient and promotes their
+            // delegations to permanent. `show()` and `updatePrivateKey()`
+            // already call this same helper; revoke() did not.
+            $this->validateOwnership(suite: $this->suiteService->getSuite($id));
+
             $suite = $this->suiteService->revokeSuite(id: $id, reason: $reason, revokedBy: $userId);
             return new JSONResponse(data: $suite->jsonSerialize());
+        } catch (RuntimeException $e) {
+            return new JSONResponse(
+                data: ['message' => $e->getMessage()],
+                statusCode: Http::STATUS_FORBIDDEN
+            );
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(
                 data: ['message' => $e->getMessage()],
                 statusCode: Http::STATUS_BAD_REQUEST
             );
-        }
+        }//end try
     }//end revoke()
 
     /**

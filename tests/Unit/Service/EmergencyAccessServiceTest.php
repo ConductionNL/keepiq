@@ -32,7 +32,9 @@ use OCA\Doriath\Db\EncryptionSuiteMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Exception\ForbiddenException;
+use OCA\Doriath\Service\EmergencyAccessAuditTrail;
 use OCA\Doriath\Service\EmergencyAccessService;
+use OCA\Doriath\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Doriath\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -76,6 +78,11 @@ class EmergencyAccessServiceTest extends TestCase
     private EmergencyAccessService $service;
 
     /**
+     * @var EmergencyEnvelopeInvalidationService
+     */
+    private EmergencyEnvelopeInvalidationService $invalidationService;
+
+    /**
      * Set up mocks and capture dispatched audit events.
      *
      * @return void
@@ -95,12 +102,19 @@ class EmergencyAccessServiceTest extends TestCase
             }
         );
 
+        $auditTrail = new EmergencyAccessAuditTrail(eventDispatcher: $this->dispatcher);
+
         $this->service = new EmergencyAccessService(
             mapper: $this->mapper,
             suiteMapper: $this->suiteMapper,
             notificationService: $this->notificationService,
-            eventDispatcher: $this->dispatcher,
+            auditTrail: $auditTrail,
             logger: $this->createMock(LoggerInterface::class),
+        );
+
+        $this->invalidationService = new EmergencyEnvelopeInvalidationService(
+            mapper: $this->mapper,
+            auditTrail: $auditTrail,
         );
     }//end setUp()
 
@@ -378,7 +392,7 @@ class EmergencyAccessServiceTest extends TestCase
         $this->mapper->method('findByGrantorSuite')->willReturn([$this->contact(EmergencyContact::STATE_GRANTED)]);
         $this->mapper->expects($this->once())->method('update')->willReturnArgument(0);
 
-        $count = $this->service->invalidateForGrantorRotation(grantorSuiteId: 'grantor-suite');
+        $count = $this->invalidationService->invalidateForGrantorRotation(grantorSuiteId: 'grantor-suite');
 
         $this->assertSame(1, $count);
         $this->assertSame(1, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_INVALIDATED));
@@ -394,7 +408,7 @@ class EmergencyAccessServiceTest extends TestCase
         $this->mapper->method('findByGrantorSuite')->willReturn([$this->contact(EmergencyContact::STATE_GRANTED)]);
         $this->mapper->expects($this->once())->method('delete');
 
-        $count = $this->service->clearForGrantorRevocation(grantorSuiteId: 'grantor-suite');
+        $count = $this->invalidationService->clearForGrantorRevocation(grantorSuiteId: 'grantor-suite');
 
         $this->assertSame(1, $count);
         $this->assertSame(1, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_INVALIDATED));
@@ -410,7 +424,7 @@ class EmergencyAccessServiceTest extends TestCase
         $this->mapper->method('findByGranteeSuite')->willReturn([$this->contact(EmergencyContact::STATE_GRANTED)]);
         $this->mapper->expects($this->once())->method('update')->willReturnArgument(0);
 
-        $count = $this->service->invalidateForGranteeRevocation(granteeSuiteId: 'grantee-suite');
+        $count = $this->invalidationService->invalidateForGranteeRevocation(granteeSuiteId: 'grantee-suite');
 
         $this->assertSame(1, $count);
     }//end testGranteeRevocationInvalidatesEnvelopes()

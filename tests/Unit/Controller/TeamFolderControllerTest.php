@@ -2,8 +2,10 @@
 
 /**
  * Contract tests for the TeamFolderController endpoints that carry no wire
- * proof: `teamFolder#members`, `teamFolder#reconcile`,
- * `teamFolder#registerShares` and `teamFolder#approveJoin`.
+ * proof: `teamFolder#reconcile` and `teamFolder#registerShares`.
+ *
+ * The membership endpoints moved to TeamFolderMemberController; their tests
+ * moved with them, unchanged, to TeamFolderMemberControllerTest.
  *
  * @category Test
  * @package  OCA\Doriath\Tests\Unit\Controller
@@ -26,7 +28,6 @@ namespace OCA\Doriath\Tests\Unit\Controller;
 
 use InvalidArgumentException;
 use OCA\Doriath\Controller\TeamFolderController;
-use OCA\Doriath\Db\TeamFolderMember;
 use OCA\Doriath\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -39,8 +40,8 @@ use PHPUnit\Framework\TestCase;
  * Every method here is `#[NoAdminRequired]`; the per-object owner check lives
  * in TeamFolderService. The controller's own contract is therefore narrow but
  * load-bearing: the URL's team-folder id and the SESSION user must both reach
- * the service, and the service's answer — an empty member list, a refusal, a
- * reconciliation delta — must reach the caller intact.
+ * the service, and the service's answer — a refusal, a reconciliation delta,
+ * a created-row count — must reach the caller intact.
  *
  */
 class TeamFolderControllerTest extends TestCase
@@ -106,115 +107,6 @@ class TeamFolderControllerTest extends TestCase
             userSession: $this->userSession
         );
     }//end controller()
-
-
-    /**
-     * Build a TeamFolderMember whose serialization is known.
-     *
-     * @param array<string,mixed> $row The serialized row the entity reports.
-     *
-     * @return TeamFolderMember&MockObject The stubbed entity.
-     */
-    private function member(array $row): TeamFolderMember&MockObject
-    {
-        $entity = $this->createMock(TeamFolderMember::class);
-        $entity->method('jsonSerialize')->willReturn($row);
-
-        return $entity;
-    }//end member()
-
-
-    /**
-     * GET /api/v1/team-folders/{id}/members must ask the service for THIS
-     * folder as THIS user and return the serialized membership rows.
-     *
-     * @return void
-     */
-    public function testMembersReturnsTheSerializedMembershipRowsForTheOwner(): void
-    {
-        $rows = [
-            $this->member(
-                [
-                    'id'         => 'm-1',
-                    'memberType' => 'user',
-                    'memberId'   => 'bob',
-                    'grade'      => 'read',
-                ]
-            ),
-            $this->member(
-                [
-                    'id'         => 'm-2',
-                    'memberType' => 'group',
-                    'memberId'   => 'finance',
-                    'grade'      => 'write',
-                ]
-            ),
-        ];
-
-        // The ITEM: the lookup is scoped to the URL's folder AND the session user.
-        $this->teamFolderService->expects($this->once())
-            ->method('listMembers')
-            ->with('tf-1', 'owner')
-            ->willReturn($rows);
-
-        $response = $this->controller('owner')->members(id: 'tf-1');
-
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame(
-            [
-                [
-                    'id'         => 'm-1',
-                    'memberType' => 'user',
-                    'memberId'   => 'bob',
-                    'grade'      => 'read',
-                ],
-                [
-                    'id'         => 'm-2',
-                    'memberType' => 'group',
-                    'memberId'   => 'finance',
-                    'grade'      => 'write',
-                ],
-            ],
-            $response->getData(),
-            'members() must serialize every row the service returned'
-        );
-    }//end testMembersReturnsTheSerializedMembershipRowsForTheOwner()
-
-
-    /**
-     * A non-owner receives an EMPTY list — the membership of someone else's
-     * team folder must never leak through this endpoint.
-     *
-     * @return void
-     */
-    public function testMembersLeaksNothingToANonOwner(): void
-    {
-        $this->teamFolderService->expects($this->once())
-            ->method('listMembers')
-            ->with('tf-1', 'mallory')
-            ->willReturn([]);
-
-        $response = $this->controller('mallory')->members(id: 'tf-1');
-
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame([], $response->getData(), 'a non-owner must see no membership rows');
-    }//end testMembersLeaksNothingToANonOwner()
-
-
-    /**
-     * An anonymous caller is refused with 401 and the service is never asked.
-     *
-     * @return void
-     */
-    public function testMembersRejectsAnAnonymousCallerBeforeTheService(): void
-    {
-        $this->teamFolderService->expects($this->never())->method('listMembers');
-
-        $response = $this->controller(null)->members(id: 'tf-1');
-
-        $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-        $this->assertSame(['message' => 'Unauthorized'], $response->getData());
-    }//end testMembersRejectsAnAnonymousCallerBeforeTheService()
 
 
     /**
@@ -382,87 +274,6 @@ class TeamFolderControllerTest extends TestCase
         $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
         $this->assertSame(['message' => 'Unauthorized'], $response->getData());
     }//end testRegisterSharesRejectsAnAnonymousCallerBeforeTheService()
-
-
-    /**
-     * POST /api/v1/team-folders/{id}/approve-join must name the approved user
-     * to the service and return the fan-out payload the browser needs:
-     * the recipient's certificate plus the subtree secrets to encrypt.
-     *
-     * @return void
-     */
-    public function testApproveJoinReturnsTheFanOutPayloadForTheApprovedUser(): void
-    {
-        $payload = [
-            'recipients' => [
-                [
-                    'userId'      => 'newbie',
-                    'certificate' => 'CERT_NEWBIE',
-                ],
-            ],
-            'secrets'    => [
-                [
-                    'id'   => 'secret-1',
-                    'name' => 'Shared login',
-                ],
-            ],
-        ];
-
-        $this->teamFolderService->expects($this->once())
-            ->method('approveJoin')
-            ->with('tf-1', 'newbie', 'owner')
-            ->willReturn($payload);
-
-        $response = $this->controller('owner')->approveJoin(id: 'tf-1', newMemberId: 'newbie');
-
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame(
-            $payload,
-            $response->getData(),
-            'approveJoin() must return the recipients and secrets the fan-out needs'
-        );
-    }//end testApproveJoinReturnsTheFanOutPayloadForTheApprovedUser()
-
-
-    /**
-     * Approving a user who is not covered by the folder's membership is a
-     * 400 — approving must not manufacture access the membership never gave.
-     *
-     * @return void
-     */
-    public function testApproveJoinAnswers400ForAUserOutsideTheMembership(): void
-    {
-        $this->teamFolderService->expects($this->once())
-            ->method('approveJoin')
-            ->with('tf-1', 'outsider', 'owner')
-            ->willThrowException(
-                new InvalidArgumentException('User is not covered by this team folder\'s membership')
-            );
-
-        $response = $this->controller('owner')->approveJoin(id: 'tf-1', newMemberId: 'outsider');
-
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-        $this->assertSame(
-            ['message' => 'User is not covered by this team folder\'s membership'],
-            $response->getData()
-        );
-    }//end testApproveJoinAnswers400ForAUserOutsideTheMembership()
-
-
-    /**
-     * An anonymous caller may not approve a group join.
-     *
-     * @return void
-     */
-    public function testApproveJoinRejectsAnAnonymousCallerBeforeTheService(): void
-    {
-        $this->teamFolderService->expects($this->never())->method('approveJoin');
-
-        $response = $this->controller(null)->approveJoin(id: 'tf-1', newMemberId: 'newbie');
-
-        $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-        $this->assertSame(['message' => 'Unauthorized'], $response->getData());
-    }//end testApproveJoinRejectsAnAnonymousCallerBeforeTheService()
 
 
 }//end class

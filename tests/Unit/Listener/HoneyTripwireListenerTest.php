@@ -27,7 +27,7 @@ use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Listener\HoneyTripwireListener;
-use OCA\Doriath\Service\HoneyCredentialService;
+use OCA\Doriath\Service\HoneyTripwireService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -41,7 +41,7 @@ class HoneyTripwireListenerTest extends TestCase
 {
     private HoneyTripwireListener $listener;
 
-    private HoneyCredentialService&MockObject $honeyService;
+    private HoneyTripwireService&MockObject $honeyService;
 
     private LinkShareMapper&MockObject $linkShareMapper;
 
@@ -55,7 +55,7 @@ class HoneyTripwireListenerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->honeyService      = $this->createMock(originalClassName: HoneyCredentialService::class);
+        $this->honeyService      = $this->createMock(originalClassName: HoneyTripwireService::class);
         $this->linkShareMapper   = $this->createMock(originalClassName: LinkShareMapper::class);
         $this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
 

@@ -11,6 +11,17 @@
  * the browser encrypts every (secret × recipient) pair and this service
  * only records provenance-linked ShareTarget rows idempotently.
  *
+ * This class owns the ATTACHMENT lifecycle (share, unshare, membership rows)
+ * and sequences the collaborators that own the rest:
+ *  - TeamFolderQueryService          ownership guards, listings, ancestor-chain
+ *                                    recipient and grade resolution
+ *  - TeamFolderMembershipResolver    membership validation and expansion,
+ *                                    recipient eligibility, subtree secrets
+ *  - TeamFolderShareService          the derived ShareTarget rows: fan-out,
+ *                                    reconciliation gaps, revocation
+ *  - TeamFolderOffboardingService    admin offboarding of a departing user
+ *  - TeamFolderAuditor               the team-folder audit vocabulary
+ *
  * @category Service
  * @package  OCA\Doriath\Service
  *
@@ -29,105 +40,57 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Db\TeamFolder;
 use OCA\Doriath\Db\TeamFolderMapper;
 use OCA\Doriath\Db\TeamFolderMember;
 use OCA\Doriath\Db\TeamFolderMemberMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
-use OCP\IGroupManager;
-use OCP\IUserManager;
-use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 
 /**
  * Business logic for the TeamFolder lifecycle.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   The service threads
- *   through the folder/secret/share/suite/delegation mappers plus the
- *   user/group managers so the folder fan-out invariants live in one
- *   place; splitting it would scatter them.
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)     One public method per
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The service threads
+ *   through the team-folder mappers plus the five collaborators that own
+ *   the folder fan-out invariants, so the ORDER of the lifecycle lives in
+ *   one place.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One public method per
  *   API operation of the team-folder lifecycle.
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The membership
- *   expansion + fan-out reconciliation logic is inherently branchy; the
- *   individual methods stay small.
  */
 class TeamFolderService
 {
     /**
-     * The Nextcloud group whose members may run the offboarding action
-     * (in addition to instance admins). Mirrors DelegationService.
-     *
-     * @var string
-     */
-    private const VAULT_ADMIN_GROUP = 'vault_admin';
-
-    /**
      * Constructor for TeamFolderService.
      *
-     * @param TeamFolderMapper       $mapper              The team-folder mapper
-     * @param TeamFolderMemberMapper $memberMapper        The membership mapper
-     * @param FolderMapper           $folderMapper        The folder mapper (subtree walk)
-     * @param SecretMapper           $secretMapper        The secret mapper
-     * @param ShareTargetMapper      $shareTargetMapper   The share-target mapper (fan-out rows)
-     * @param EncryptionSuiteMapper  $suiteMapper         The suite mapper (eligibility filter)
-     * @param SecretDelegationMapper $delegationMapper    The delegation mapper (offboarding)
-     * @param SecretTypeService      $typeService         The secret-type resolver (copy typing)
-     * @param IGroupManager          $groupManager        The Nextcloud group manager
-     * @param IUserManager           $userManager         The Nextcloud user manager
-     * @param NotificationService    $notificationService The notification dispatcher
-     * @param IDBConnection          $db                  The database connection
-     * @param LoggerInterface        $logger              The logger
-     * @param IEventDispatcher|null  $eventDispatcher     The audit event dispatcher
-     * @param AuditEventFactory      $auditEvents         The audit-event factory
+     * @param TeamFolderMapper             $mapper              The team-folder mapper
+     * @param TeamFolderMemberMapper       $memberMapper        The membership mapper
+     * @param TeamFolderQueryService       $queries             The team-folder read side
+     * @param TeamFolderMembershipResolver $memberships         The membership resolver
+     * @param TeamFolderShareService       $shares              The derived-share service
+     * @param TeamFolderOffboardingService $offboarding         The offboarding service
+     * @param TeamFolderAuditor            $audit               The team-folder auditor
+     * @param NotificationService          $notificationService The notification dispatcher
+     * @param IDBConnection                $db                  The database connection
      *
      * @return void
+     *
+     * @spec exclude Constructor wiring only.
      */
     public function __construct(
         private TeamFolderMapper $mapper,
         private TeamFolderMemberMapper $memberMapper,
-        private FolderMapper $folderMapper,
-        private SecretMapper $secretMapper,
-        private ShareTargetMapper $shareTargetMapper,
-        private EncryptionSuiteMapper $suiteMapper,
-        private SecretDelegationMapper $delegationMapper,
-        private SecretTypeService $typeService,
-        private IGroupManager $groupManager,
-        private IUserManager $userManager,
+        private TeamFolderQueryService $queries,
+        private TeamFolderMembershipResolver $memberships,
+        private TeamFolderShareService $shares,
+        private TeamFolderOffboardingService $offboarding,
+        private TeamFolderAuditor $audit,
         private NotificationService $notificationService,
         private IDBConnection $db,
-        private LoggerInterface $logger,
-        private ?IEventDispatcher $eventDispatcher=null,
-        private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
     }//end __construct()
-
-    /**
-     * Dispatch an audit event when a dispatcher is wired.
-     *
-     * @param AuditEvent $event The audit event
-     *
-     * @return void
-     */
-    private function dispatchAudit(AuditEvent $event): void
-    {
-        $this->eventDispatcher?->dispatchTyped($event);
-    }//end dispatchAudit()
 
     /**
      * Share an owned folder — creates the TeamFolder attachment.
@@ -146,12 +109,10 @@ class TeamFolderService
      */
     public function shareFolder(string $folderId, string $userId): TeamFolder
     {
-        $folder = $this->loadOwnedFolder(folderId: $folderId, userId: $userId);
-
-        try {
-            return $this->mapper->findByFolder(folderId: $folder->getId());
-        } catch (DoesNotExistException) {
-            // Not shared yet — create below.
+        $folder   = $this->queries->loadOwnedFolder(folderId: $folderId, userId: $userId);
+        $existing = $this->queries->findByFolder(folderId: $folder->getId());
+        if ($existing !== null) {
+            return $existing;
         }
 
         $entity = new TeamFolder();
@@ -162,15 +123,11 @@ class TeamFolderService
         $entity->setUpdatedAt(new DateTime());
         $persisted = $this->mapper->insert($entity);
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::TEAM_FOLDER_SHARED,
-                objectType: 'team_folder',
-                objectId: $persisted->getId(),
-                objectName: $folder->getName(),
-                metadata: ['folderId' => $folder->getId()],
-            )
+        $this->audit->folderShared(
+            actorId: $userId,
+            teamFolderId: $persisted->getId(),
+            folderName: $folder->getName(),
+            folderId: $folder->getId(),
         );
 
         return $persisted;
@@ -192,16 +149,11 @@ class TeamFolderService
      */
     public function unshareFolder(string $teamFolderId, string $userId): int
     {
-        $teamFolder = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+        $teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
-        $revoked = 0;
         $this->db->beginTransaction();
         try {
-            foreach ($this->shareTargetMapper->findByTeamFolder(teamFolderId: $teamFolderId) as $row) {
-                $this->deleteRecipientCopy(row: $row);
-                $this->shareTargetMapper->delete($row);
-                ++$revoked;
-            }
+            $revoked = $this->shares->revokeForTeamFolder(teamFolderId: $teamFolderId);
 
             $this->memberMapper->deleteByTeamFolder(teamFolderId: $teamFolderId);
             $this->mapper->delete($teamFolder);
@@ -211,18 +163,11 @@ class TeamFolderService
             throw $exception;
         }
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::TEAM_FOLDER_UNSHARED,
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-                objectName: '',
-                metadata: [
-                    'folderId'     => $teamFolder->getFolderId(),
-                    'revokedCount' => $revoked,
-                ],
-            )
+        $this->audit->folderUnshared(
+            actorId: $userId,
+            teamFolderId: $teamFolderId,
+            folderId: $teamFolder->getFolderId(),
+            revoked: $revoked,
         );
 
         return $revoked;
@@ -240,35 +185,7 @@ class TeamFolderService
      */
     public function listForUser(string $userId): array
     {
-        $owned = [];
-        foreach ($this->mapper->findByOwner(ownerId: $userId) as $teamFolder) {
-            $owned[] = $this->describe(teamFolder: $teamFolder, includeMembers: true);
-        }
-
-        $memberOf = [];
-        $seen     = [];
-        foreach ($this->membershipRowsForUser(userId: $userId) as $membership) {
-            $teamFolderId = $membership->getTeamFolderId();
-            if (isset($seen[$teamFolderId]) === true) {
-                continue;
-            }
-
-            $seen[$teamFolderId] = true;
-            try {
-                $teamFolder = $this->mapper->findById(id: $teamFolderId);
-            } catch (DoesNotExistException) {
-                continue;
-            }
-
-            // Recipients see the folder identity, never the member list
-            // (share-visibility rule, user-sharing spec).
-            $memberOf[] = $this->describe(teamFolder: $teamFolder, includeMembers: false);
-        }
-
-        return [
-            'owned'    => $owned,
-            'memberOf' => $memberOf,
-        ];
+        return $this->queries->listForUser(userId: $userId);
     }//end listForUser()
 
     /**
@@ -277,23 +194,13 @@ class TeamFolderService
      * @param string $teamFolderId The TeamFolder UUID
      * @param string $userId       The caller
      *
-     * @return TeamFolderMember[] Empty for non-owners
+     * @return array<int,TeamFolderMember> Empty for non-owners
      *
      * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
      */
     public function listMembers(string $teamFolderId, string $userId): array
     {
-        try {
-            $teamFolder = $this->mapper->findById(id: $teamFolderId);
-        } catch (DoesNotExistException) {
-            return [];
-        }
-
-        if ($teamFolder->getOwnerId() !== $userId) {
-            return [];
-        }
-
-        return $this->memberMapper->findByTeamFolder(teamFolderId: $teamFolderId);
+        return $this->queries->listMembers(teamFolderId: $teamFolderId, userId: $userId);
     }//end listMembers()
 
     /**
@@ -318,10 +225,14 @@ class TeamFolderService
      */
     public function addMember(string $teamFolderId, string $memberType, string $memberId, string $userId): array
     {
-        $teamFolder = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
-        $this->assertMemberAddable(teamFolder: $teamFolder, memberType: $memberType, memberId: $memberId);
+        $teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+        $this->memberships->assertMemberAddable(
+            teamFolder: $teamFolder,
+            memberType: $memberType,
+            memberId: $memberId
+        );
 
-        $coveredBefore = $this->effectiveUsers(teamFolderId: $teamFolderId);
+        $coveredBefore = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
         $membership    = $this->findOrCreateMembership(
             teamFolderId: $teamFolderId,
             memberType: $memberType,
@@ -331,7 +242,7 @@ class TeamFolderService
 
         $newUsers = array_values(
             array_diff(
-                $this->expandMember(memberType: $memberType, memberId: $memberId),
+                $this->memberships->expandMember(memberType: $memberType, memberId: $memberId),
                 $coveredBefore,
                 [$teamFolder->getOwnerId()]
             )
@@ -339,49 +250,10 @@ class TeamFolderService
 
         return [
             'member'     => $membership,
-            'recipients' => $this->eligibleRecipients(userIds: $newUsers),
-            'secrets'    => $this->subtreeSecretRefs(teamFolder: $teamFolder),
+            'recipients' => $this->memberships->eligibleRecipients(userIds: $newUsers),
+            'secrets'    => $this->memberships->subtreeSecretRefs(teamFolder: $teamFolder),
         ];
     }//end addMember()
-
-    /**
-     * Reject a membership the folder cannot accept: an unknown member type,
-     * a blank id, the folder owner, or a user / group that does not exist.
-     *
-     * @param TeamFolder $teamFolder The team folder receiving the member
-     * @param string     $memberType The member type (`user`|`group`)
-     * @param string     $memberId   The Nextcloud user or group ID
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When the membership is not acceptable
-     */
-    private function assertMemberAddable(TeamFolder $teamFolder, string $memberType, string $memberId): void
-    {
-        if (in_array($memberType, ['user', 'group'], true) === false) {
-            throw new InvalidArgumentException(message: 'memberType must be user or group');
-        }
-
-        if ($memberId === '') {
-            throw new InvalidArgumentException(message: 'memberId is required');
-        }
-
-        if ($memberType === 'group') {
-            if ($this->groupManager->get($memberId) === null) {
-                throw new InvalidArgumentException(message: 'Group not found');
-            }
-
-            return;
-        }
-
-        if ($memberId === $teamFolder->getOwnerId()) {
-            throw new InvalidArgumentException(message: 'Cannot add the folder owner as a member');
-        }
-
-        if ($this->userManager->get($memberId) === null) {
-            throw new InvalidArgumentException(message: 'User not found');
-        }
-    }//end assertMemberAddable()
 
     /**
      * Return the existing membership row, or create (and audit) a new one.
@@ -392,6 +264,8 @@ class TeamFolderService
      * @param string $userId       The caller adding the member
      *
      * @return TeamFolderMember
+     *
+     * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
      */
     private function findOrCreateMembership(
         string $teamFolderId,
@@ -418,18 +292,11 @@ class TeamFolderService
         $membership->setCreatedAt(new DateTime());
         $membership = $this->memberMapper->insert($membership);
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_ADDED,
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-                objectName: '',
-                metadata: [
-                    'memberType' => $memberType,
-                    'memberId'   => $memberId,
-                ],
-            )
+        $this->audit->memberAdded(
+            actorId: $userId,
+            teamFolderId: $teamFolderId,
+            memberType: $memberType,
+            memberId: $memberId,
         );
 
         return $membership;
@@ -451,7 +318,7 @@ class TeamFolderService
      */
     public function removeMember(string $teamFolderId, string $membershipId, string $userId): int
     {
-        $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+        $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
         try {
             $membership = $this->memberMapper->findById(id: $membershipId);
@@ -465,9 +332,9 @@ class TeamFolderService
 
         $this->memberMapper->delete($membership);
 
-        $coveredAfter = $this->effectiveUsers(teamFolderId: $teamFolderId);
+        $coveredAfter = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
         $dropped      = array_diff(
-            $this->expandMember(
+            $this->memberships->expandMember(
                 memberType: $membership->getMemberType(),
                 memberId: $membership->getMemberId()
             ),
@@ -476,22 +343,18 @@ class TeamFolderService
 
         $revoked = 0;
         foreach ($dropped as $droppedUserId) {
-            $revoked += $this->revokeDerivedShares(teamFolderId: $teamFolderId, targetUserId: $droppedUserId);
+            $revoked += $this->shares->revokeForMember(
+                teamFolderId: $teamFolderId,
+                targetUserId: $droppedUserId
+            );
         }
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $userId,
-                eventType: AuditEventTypes::TEAM_FOLDER_MEMBER_REMOVED,
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-                objectName: '',
-                metadata: [
-                    'memberType'   => $membership->getMemberType(),
-                    'memberId'     => $membership->getMemberId(),
-                    'revokedCount' => $revoked,
-                ],
-            )
+        $this->audit->memberRemoved(
+            actorId: $userId,
+            teamFolderId: $teamFolderId,
+            memberType: $membership->getMemberType(),
+            memberId: $membership->getMemberId(),
+            revoked: $revoked,
         );
 
         return $revoked;
@@ -510,27 +373,7 @@ class TeamFolderService
      */
     public function resolveRecipients(string $secretId): array
     {
-        try {
-            $secret = $this->secretMapper->findById($secretId);
-        } catch (DoesNotExistException) {
-            return [];
-        }
-
-        $folderId = $secret->getFolderId();
-        if ($folderId === null || $folderId === '') {
-            return [];
-        }
-
-        $users = [];
-        foreach ($this->ancestorTeamFolders(folderId: $folderId) as $teamFolder) {
-            foreach ($this->effectiveUsers(teamFolderId: $teamFolder->getId()) as $memberUserId) {
-                $users[$memberUserId] = true;
-            }
-        }
-
-        unset($users[$secret->getOwnerId()]);
-
-        return array_keys($users);
+        return $this->queries->resolveRecipients(secretId: $secretId);
     }//end resolveRecipients()
 
     /**
@@ -550,52 +393,29 @@ class TeamFolderService
      */
     public function reconcile(string $teamFolderId, string $userId): array
     {
-        $teamFolder = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+        $teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
-        $secrets    = $this->subtreeSecretRefs(teamFolder: $teamFolder);
-        $recipients = $this->eligibleRecipients(
+        $secrets    = $this->memberships->subtreeSecretRefs(teamFolder: $teamFolder);
+        $recipients = $this->memberships->eligibleRecipients(
             userIds: array_values(
                 array_diff(
-                    $this->effectiveUsers(teamFolderId: $teamFolderId),
+                    $this->memberships->effectiveUsers(teamFolderId: $teamFolderId),
                     [$teamFolder->getOwnerId()]
                 )
             )
         );
 
-        $missing = [];
-        foreach ($secrets as $secretRef) {
-            foreach ($recipients as $recipient) {
-                try {
-                    $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-                        sourceSecretId: $secretRef['id'],
-                        targetUserId: $recipient['userId']
-                    );
-                } catch (DoesNotExistException) {
-                    $missing[] = [
-                        'secretId' => $secretRef['id'],
-                        'userId'   => $recipient['userId'],
-                    ];
-                }
-            }
-        }
-
         return [
             'secrets'    => $secrets,
             'recipients' => $recipients,
-            'missing'    => $missing,
+            'missing'    => $this->shares->missingPairs(secrets: $secrets, recipients: $recipients),
         ];
     }//end reconcile()
 
     /**
-     * Register a batch of browser-encrypted fan-out shares. Each row
-     * carries the ciphertext of one (source secret × recipient) pair,
-     * RSA-encrypted in the owner's browser under the recipient's public
-     * certificate. The server creates the recipient's Secret copy AND
-     * the provenance-linked ShareTarget in one transaction — it only
-     * ever handles ciphertext (ADR-003).
-     *
-     * Idempotent: an existing (source, recipient) pair is skipped, so a
-     * retried or duplicated chunk never double-shares.
+     * Register a batch of browser-encrypted fan-out shares — the caller is
+     * authorized here, the ciphertext rows are materialised by
+     * TeamFolderShareService.
      *
      * @param string                         $teamFolderId The TeamFolder UUID
      * @param array<int,array<string,mixed>> $shares       Rows of sourceSecretId, targetUserId,
@@ -604,8 +424,6 @@ class TeamFolderService
      * @param string                         $userId       The caller (must be the owner)
      *
      * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}
-     *         `created` is the number of fan-out shares created (skips
-     *         excluded); `rows` describes each one.
      *
      * @throws InvalidArgumentException On not found / not authorized
      *
@@ -613,133 +431,20 @@ class TeamFolderService
      */
     public function registerFanOutShares(string $teamFolderId, array $shares, string $userId): array
     {
-        $createdRows = [];
-        $teamFolder  = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+        $teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
         $subtreeSecretIds = [];
-        foreach ($this->subtreeSecretRefs(teamFolder: $teamFolder) as $secretRef) {
+        foreach ($this->memberships->subtreeSecretRefs(teamFolder: $teamFolder) as $secretRef) {
             $subtreeSecretIds[$secretRef['id']] = true;
         }
 
-        $newRecipients = [];
-        $this->db->beginTransaction();
-        try {
-            foreach ($shares as $row) {
-                $createdRow = $this->createFanOutShare(
-                    teamFolder: $teamFolder,
-                    row: $row,
-                    subtreeSecretIds: $subtreeSecretIds,
-                    userId: $userId
-                );
-                if ($createdRow === null) {
-                    continue;
-                }
-
-                $createdRows[] = $createdRow;
-                $newRecipients[$createdRow['targetUserId']] = true;
-            }//end foreach
-
-            $this->db->commit();
-        } catch (Throwable $exception) {
-            $this->db->rollBack();
-            throw $exception;
-        }//end try
-
-        // One notification per recipient per fan-out run — not per secret.
-        foreach (array_keys($newRecipients) as $recipientId) {
-            $this->notificationService->notify(
-                subject: 'team_folder_shared',
-                recipientId: (string) $recipientId,
-                params: [
-                    'teamFolderId' => $teamFolderId,
-                    'sharedBy'     => $userId,
-                ],
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-            );
-        }
-
-        return [
-            'created' => count($createdRows),
-            'rows'    => $createdRows,
-        ];
-    }//end registerFanOutShares()
-
-    /**
-     * Materialise one fan-out share row, or report a skip.
-     *
-     * A row is skipped (null) when it is incomplete, when the source secret
-     * is outside this folder's subtree, when the target is the folder owner,
-     * when the share already exists, or when the recipient has no active
-     * encryption suite.
-     *
-     * @param TeamFolder          $teamFolder       The team folder being fanned out
-     * @param array<string,mixed> $row              One {sourceSecretId, targetUserId, encryptedKey, ...} row
-     * @param array<string,bool>  $subtreeSecretIds The secret ids inside the folder subtree
-     * @param string              $userId           The caller (the folder owner)
-     *
-     * @return array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}|null
-     */
-    private function createFanOutShare(
-        TeamFolder $teamFolder,
-        array $row,
-        array $subtreeSecretIds,
-        string $userId,
-    ): ?array {
-        $sourceSecretId = (string) ($row['sourceSecretId'] ?? '');
-        $targetUserId   = (string) ($row['targetUserId'] ?? '');
-        $encryptedKey   = (string) ($row['encryptedKey'] ?? '');
-
-        if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
-            return null;
-        }
-
-        // Only secrets inside this team folder's subtree may carry
-        // its provenance, and never a copy for the owner.
-        if (isset($subtreeSecretIds[$sourceSecretId]) === false
-            || $targetUserId === $teamFolder->getOwnerId()
-        ) {
-            return null;
-        }
-
-        try {
-            $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-                sourceSecretId: $sourceSecretId,
-                targetUserId: $targetUserId
-            );
-            return null;
-        } catch (DoesNotExistException) {
-            // No existing share — create below.
-        }
-
-        $copy = $this->createRecipientCopy(
-            sourceSecretId: $sourceSecretId,
-            targetUserId: $targetUserId,
-            encryptedKey: $encryptedKey,
-            encryptedLogin: $this->nullableString(value: $row['encryptedLogin'] ?? null),
-            encryptedExtras: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
+        return $this->shares->registerFanOutShares(
+            teamFolder: $teamFolder,
+            shares: $shares,
+            subtreeSecretIds: $subtreeSecretIds,
+            userId: $userId
         );
-        if ($copy === null) {
-            // Recipient without an active suite — skipped silently.
-            return null;
-        }
-
-        $entity = new ShareTarget();
-        $entity->setId(Uuid::uuid4()->toString());
-        $entity->setSourceSecretId($sourceSecretId);
-        $entity->setTargetUserId($targetUserId);
-        $entity->setSecretId($copy->getId());
-        $entity->setTeamFolderId($teamFolder->getId());
-        $entity->setCreatedBy($userId);
-        $entity->setCreatedAt(new DateTime());
-        $this->shareTargetMapper->insert($entity);
-
-        return [
-            'sourceSecretId'    => $sourceSecretId,
-            'targetUserId'      => $targetUserId,
-            'recipientSecretId' => $copy->getId(),
-        ];
-    }//end createFanOutShare()
+    }//end registerFanOutShares()
 
     /**
      * Group-join propagation: a user joined a group that is a member of
@@ -801,15 +506,16 @@ class TeamFolderService
      */
     public function approveJoin(string $teamFolderId, string $newMemberId, string $userId): array
     {
-        $teamFolder = $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
+        $teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 
-        if (in_array($newMemberId, $this->effectiveUsers(teamFolderId: $teamFolderId), true) === false) {
+        $covered = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
+        if (in_array($newMemberId, $covered, true) === false) {
             throw new InvalidArgumentException(message: 'User is not covered by this team folder\'s membership');
         }
 
         return [
-            'recipients' => $this->eligibleRecipients(userIds: [$newMemberId]),
-            'secrets'    => $this->subtreeSecretRefs(teamFolder: $teamFolder),
+            'recipients' => $this->memberships->eligibleRecipients(userIds: [$newMemberId]),
+            'secrets'    => $this->memberships->subtreeSecretRefs(teamFolder: $teamFolder),
         ];
     }//end approveJoin()
 
@@ -830,12 +536,13 @@ class TeamFolderService
         $revoked = 0;
         foreach ($this->memberMapper->findGroupMemberships(groupId: $groupId) as $membership) {
             $teamFolderId = $membership->getTeamFolderId();
-            if (in_array($userId, $this->effectiveUsers(teamFolderId: $teamFolderId), true) === true) {
+            $covered      = $this->memberships->effectiveUsers(teamFolderId: $teamFolderId);
+            if (in_array($userId, $covered, true) === true) {
                 // Still covered by a direct membership or another group.
                 continue;
             }
 
-            $revoked += $this->revokeDerivedShares(teamFolderId: $teamFolderId, targetUserId: $userId);
+            $revoked += $this->shares->revokeForMember(teamFolderId: $teamFolderId, targetUserId: $userId);
         }
 
         return $revoked;
@@ -844,11 +551,7 @@ class TeamFolderService
     /**
      * Admin offboarding: revoke every team-folder-derived share held by
      * the leaving user, then transfer each team secret the leaver OWNS to
-     * the successor via the existing permanent-delegation mechanics
-     * (SecretDelegation row + owner reassignment, mirroring the
-     * account-deletion transfer path). Secrets whose successor holds no
-     * recipient copy yet are reported as skipped — the admin re-runs the
-     * offboarding after adding the successor to the folder.
+     * the successor. Run by TeamFolderOffboardingService.
      *
      * @param string $leavingUserId   The user being offboarded
      * @param string $successorUserId The user taking over owned team secrets
@@ -862,553 +565,12 @@ class TeamFolderService
      */
     public function offboard(string $leavingUserId, string $successorUserId, string $adminId): array
     {
-        $this->assertOffboardingAdmin(userId: $adminId);
-
-        if ($leavingUserId === '' || $successorUserId === '') {
-            throw new InvalidArgumentException(message: 'leavingUserId and successorUserId are required');
-        }
-
-        if ($leavingUserId === $successorUserId) {
-            throw new InvalidArgumentException(message: 'Successor must differ from the leaving user');
-        }
-
-        // Step 1 — revoke every team-folder-derived share held by the leaver.
-        $revoked = $this->revokeOffboardedShares(leavingUserId: $leavingUserId);
-
-        // Step 2 — transfer team secrets the leaver owns to the successor.
-        $transfer    = $this->transferTeamSecrets(
+        return $this->offboarding->offboard(
             leavingUserId: $leavingUserId,
             successorUserId: $successorUserId,
             adminId: $adminId
         );
-        $transferred = $transfer['transferred'];
-        $skipped     = $transfer['skipped'];
-
-        $this->logger->info(
-            'Offboarded '.$leavingUserId.': revoked '.$revoked.' team shares, transferred '
-            .$transferred.' secrets to '.$successorUserId,
-            ['app' => 'doriath']
-        );
-
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $adminId,
-                eventType: AuditEventTypes::TEAM_FOLDER_OFFBOARDED,
-                objectType: 'team_folder',
-                objectId: $leavingUserId,
-                objectName: '',
-                metadata: [
-                    'leavingUserId'    => $leavingUserId,
-                    'successorUserId'  => $successorUserId,
-                    'revokedCount'     => $revoked,
-                    'transferredCount' => $transferred,
-                ],
-            )
-        );
-
-        return [
-            'revoked'     => $revoked,
-            'transferred' => $transferred,
-            'skipped'     => $skipped,
-        ];
     }//end offboard()
-
-    /**
-     * Offboarding step 1 — revoke every team-folder-derived share held by
-     * the leaving user. Direct (non-team) shares are left untouched.
-     *
-     * @param string $leavingUserId The departing user
-     *
-     * @return int Number of derived shares revoked
-     */
-    private function revokeOffboardedShares(string $leavingUserId): int
-    {
-        $revoked = 0;
-        foreach ($this->shareTargetMapper->findByTargetUser(targetUserId: $leavingUserId) as $row) {
-            if ($row->getTeamFolderId() === null || $row->getTeamFolderId() === '') {
-                continue;
-            }
-
-            $this->deleteRecipientCopy(row: $row);
-            $this->shareTargetMapper->delete($row);
-            ++$revoked;
-        }
-
-        return $revoked;
-    }//end revokeOffboardedShares()
-
-    /**
-     * Offboarding step 2 — delegate and reassign every team secret the
-     * leaving user owns to the successor. A secret the successor holds no
-     * recipient copy of is reported as skipped rather than transferred,
-     * because delegation promotes an existing copy.
-     *
-     * @param string $leavingUserId   The departing user
-     * @param string $successorUserId The successor taking ownership
-     * @param string $adminId         The admin running the offboarding
-     *
-     * @return array{transferred:int,skipped:array<int,string>}
-     */
-    private function transferTeamSecrets(string $leavingUserId, string $successorUserId, string $adminId): array
-    {
-        $transferred = 0;
-        $skipped     = [];
-        foreach ($this->mapper->findByOwner(ownerId: $leavingUserId) as $teamFolder) {
-            foreach ($this->subtreeSecretRefs(teamFolder: $teamFolder) as $secretRef) {
-                try {
-                    $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-                        sourceSecretId: $secretRef['id'],
-                        targetUserId: $successorUserId
-                    );
-                } catch (DoesNotExistException) {
-                    // Delegation promotes an existing recipient copy; the
-                    // successor holds none for this secret yet.
-                    $skipped[] = $secretRef['id'];
-                    continue;
-                }
-
-                $delegation = new SecretDelegation();
-                $delegation->setId(Uuid::uuid4()->toString());
-                $delegation->setSecretId($secretRef['id']);
-                $delegation->setOriginalOwnerId($leavingUserId);
-                $delegation->setDelegatedTo($successorUserId);
-                $delegation->setDelegatedAt(new DateTime());
-                $delegation->setInitiatedBy($adminId);
-                $delegation->setIsPermanent(true);
-                $this->delegationMapper->insert($delegation);
-
-                $this->secretMapper->reassignOwner(
-                    secretId: $secretRef['id'],
-                    newOwnerId: $successorUserId
-                );
-                ++$transferred;
-            }//end foreach
-        }//end foreach
-
-        return [
-            'transferred' => $transferred,
-            'skipped'     => $skipped,
-        ];
-    }//end transferTeamSecrets()
-
-    /**
-     * Expand a membership to concrete user IDs (a group expands to its
-     * current users — static expansion per ADR-003, no live group key).
-     *
-     * @param string $memberType The member type (`user`|`group`)
-     * @param string $memberId   The user or group ID
-     *
-     * @return string[]
-     */
-    private function expandMember(string $memberType, string $memberId): array
-    {
-        if ($memberType === 'user') {
-            return [$memberId];
-        }
-
-        $group = $this->groupManager->get($memberId);
-        if ($group === null) {
-            return [];
-        }
-
-        $ids = [];
-        foreach ($group->getUsers() as $user) {
-            $ids[] = $user->getUID();
-        }
-
-        return $ids;
-    }//end expandMember()
-
-    /**
-     * The effective (deduplicated) user set covered by a team folder's
-     * current memberships. The owner is NOT excluded here; callers strip
-     * the owner where relevant.
-     *
-     * @param string $teamFolderId The TeamFolder UUID
-     *
-     * @return string[]
-     */
-    private function effectiveUsers(string $teamFolderId): array
-    {
-        $users = [];
-        foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $teamFolderId) as $membership) {
-            foreach ($this->expandMember(
-                memberType: $membership->getMemberType(),
-                memberId: $membership->getMemberId()
-            ) as $memberUserId) {
-                $users[$memberUserId] = true;
-            }
-        }
-
-        return array_keys($users);
-    }//end effectiveUsers()
-
-    /**
-     * Filter user IDs to those with an active EncryptionSuite and return
-     * their public certificates for browser-side encryption. Users
-     * without a suite are skipped silently (§2.2).
-     *
-     * @param string[] $userIds The candidate user IDs
-     *
-     * @return array<int,array{userId:string,certificate:string}>
-     */
-    private function eligibleRecipients(array $userIds): array
-    {
-        $recipients = [];
-        foreach ($userIds as $candidateId) {
-            try {
-                $suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $candidateId);
-            } catch (DoesNotExistException) {
-                continue;
-            }
-
-            $recipients[] = [
-                'userId'      => $candidateId,
-                'certificate' => $suite->getCertificate(),
-            ];
-        }
-
-        return $recipients;
-    }//end eligibleRecipients()
-
-    /**
-     * The owner's secrets in the team folder's subtree (id + plaintext
-     * display name only — names are server-visible metadata already).
-     *
-     * @param TeamFolder $teamFolder The team folder
-     *
-     * @return array<int,array{id:string,name:string}>
-     */
-    private function subtreeSecretRefs(TeamFolder $teamFolder): array
-    {
-        $refs      = [];
-        $folderIds = $this->folderMapper->getSubtreeIds(folderId: $teamFolder->getFolderId());
-        foreach ($folderIds as $folderId) {
-            foreach ($this->secretMapper->findByOwner(
-                ownerType: 'user',
-                ownerId: $teamFolder->getOwnerId(),
-                folderId: (string) $folderId
-            ) as $secret) {
-                $refs[] = [
-                    'id'   => $secret->getId(),
-                    'name' => $secret->getName(),
-                ];
-            }
-        }
-
-        return $refs;
-    }//end subtreeSecretRefs()
-
-    /**
-     * Walk a folder's ancestor chain (including itself) and collect every
-     * attached TeamFolder, nearest first.
-     *
-     * @param string $folderId The starting Folder UUID
-     *
-     * @return TeamFolder[]
-     */
-    private function ancestorTeamFolders(string $folderId): array
-    {
-        $found   = [];
-        $current = $folderId;
-        $guard   = 0;
-        while ($current !== null && $current !== '' && $guard < 100) {
-            ++$guard;
-            try {
-                $found[] = $this->mapper->findByFolder(folderId: $current);
-            } catch (DoesNotExistException) {
-                // This level is not shared — continue up.
-            }
-
-            try {
-                $folder = $this->folderMapper->findById($current);
-            } catch (DoesNotExistException) {
-                break;
-            }
-
-            $current = $folder->getParentId();
-        }
-
-        return $found;
-    }//end ancestorTeamFolders()
-
-    /**
-     * Revoke one user's derived ShareTargets for one team folder,
-     * deleting their recipient Secret copies too.
-     *
-     * @param string $teamFolderId The TeamFolder UUID
-     * @param string $targetUserId The recipient losing access
-     *
-     * @return int Rows revoked
-     */
-    private function revokeDerivedShares(string $teamFolderId, string $targetUserId): int
-    {
-        $revoked = 0;
-        foreach ($this->shareTargetMapper->findByTeamFolderAndTargetUser(
-            teamFolderId: $teamFolderId,
-            targetUserId: $targetUserId
-        ) as $row) {
-            $this->deleteRecipientCopy(row: $row);
-            $this->shareTargetMapper->delete($row);
-            ++$revoked;
-        }
-
-        return $revoked;
-    }//end revokeDerivedShares()
-
-    /**
-     * Create the recipient's encrypted Secret copy from browser-supplied
-     * ciphertext. Mirrors SecretService::create's entity construction:
-     * plaintext metadata (name/url) is copied from the source, the type
-     * is re-resolved for the recipient (their unavailable custom types
-     * fall back to the system default), the folder is left null (the
-     * recipient organises their own tree), and the ciphertext fields are
-     * stored verbatim — the server never decrypts anything.
-     *
-     * @param string      $sourceSecretId  The owner's source secret ID
-     * @param string      $targetUserId    The recipient user ID
-     * @param string      $encryptedKey    The RSA-encrypted key blob
-     * @param string|null $encryptedLogin  The RSA-encrypted login blob
-     * @param string|null $encryptedExtras The RSA-encrypted additional-fields blob
-     *
-     * @return \OCA\Doriath\Db\Secret|null Null when the recipient has no active suite
-     */
-    private function createRecipientCopy(
-        string $sourceSecretId,
-        string $targetUserId,
-        string $encryptedKey,
-        ?string $encryptedLogin,
-        ?string $encryptedExtras,
-    ): ?\OCA\Doriath\Db\Secret {
-        try {
-            $source = $this->secretMapper->findById($sourceSecretId);
-        } catch (DoesNotExistException) {
-            return null;
-        }
-
-        try {
-            $suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
-        } catch (DoesNotExistException) {
-            return null;
-        }
-
-        try {
-            $typeId = $this->typeService->resolveTypeForSecret($source->getTypeId(), $targetUserId);
-        } catch (InvalidArgumentException) {
-            // Owner's custom type is not visible to the recipient — default.
-            $typeId = $this->typeService->resolveTypeForSecret(null, $targetUserId);
-        }
-
-        $now  = new DateTime();
-        $copy = new Secret();
-        $copy->setId(Uuid::uuid4()->toString());
-        $copy->setName($source->getName());
-        $copy->setUrl($source->getUrl());
-        $copy->setTypeId($typeId);
-        $copy->setFolderId(null);
-        $copy->setKey($encryptedKey);
-        $copy->setLogin($encryptedLogin);
-        $copy->setAdditionalFields($encryptedExtras);
-        $copy->setEncryptionSuiteId($suite->getId());
-        $copy->setOwnerType('user');
-        $copy->setOwnerId($targetUserId);
-        $copy->setCreatedAt($now);
-        $copy->setUpdatedAt($now);
-        $copy->setKeyUpdatedAt($now);
-        $this->secretMapper->insert($copy);
-
-        return $copy;
-    }//end createRecipientCopy()
-
-    /**
-     * Normalize an optional string value: empty becomes null.
-     *
-     * @param mixed $value The candidate value
-     *
-     * @return string|null
-     */
-    private function nullableString(mixed $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $string = (string) $value;
-
-        if ($string === '') {
-            return null;
-        }
-
-        return $string;
-    }//end nullableString()
-
-    /**
-     * Delete the recipient's encrypted Secret copy of a ShareTarget row
-     * (best-effort — a missing copy is already gone).
-     *
-     * @param ShareTarget $row The share-target row
-     *
-     * @return void
-     */
-    private function deleteRecipientCopy(ShareTarget $row): void
-    {
-        try {
-            $copy = $this->secretMapper->findById($row->getSecretId());
-            $this->secretMapper->delete($copy);
-        } catch (DoesNotExistException) {
-            // Already gone.
-        }
-    }//end deleteRecipientCopy()
-
-    /**
-     * All membership rows that cover a user: direct user rows plus group
-     * rows of every group the user belongs to.
-     *
-     * @param string $userId The user
-     *
-     * @return TeamFolderMember[]
-     */
-    private function membershipRowsForUser(string $userId): array
-    {
-        $rows = [];
-        $user = $this->userManager->get($userId);
-
-        // Direct user memberships.
-        foreach ($this->userMemberships(userId: $userId) as $row) {
-            $rows[] = $row;
-        }
-
-        // Group memberships via the user's groups.
-        if ($user !== null) {
-            foreach ($this->groupManager->getUserGroupIds($user) as $groupId) {
-                foreach ($this->memberMapper->findGroupMemberships(groupId: (string) $groupId) as $row) {
-                    $rows[] = $row;
-                }
-            }
-        }
-
-        return $rows;
-    }//end membershipRowsForUser()
-
-    /**
-     * Direct user-type membership rows for a user.
-     *
-     * @param string $userId The user
-     *
-     * @return TeamFolderMember[]
-     */
-    private function userMemberships(string $userId): array
-    {
-        return $this->memberMapper->findUserMemberships(userId: $userId);
-    }//end userMemberships()
-
-    /**
-     * Describe a team folder for the API (folder name resolved; members
-     * included for the owner view only).
-     *
-     * @param TeamFolder $teamFolder     The team folder
-     * @param bool       $includeMembers Whether to include the member list
-     *
-     * @return array<string,mixed>
-     */
-    private function describe(TeamFolder $teamFolder, bool $includeMembers): array
-    {
-        $folderName = '';
-        try {
-            $folderName = $this->folderMapper->findById($teamFolder->getFolderId())->getName();
-        } catch (DoesNotExistException) {
-            // Folder vanished — describe with an empty name.
-        }
-
-        $data = [
-            'id'         => $teamFolder->getId(),
-            'folderId'   => $teamFolder->getFolderId(),
-            'folderName' => $folderName,
-            'ownerId'    => $teamFolder->getOwnerId(),
-            'createdAt'  => $teamFolder->getCreatedAt()?->format('c'),
-        ];
-
-        if ($includeMembers === true) {
-            $data['members'] = $this->memberMapper->findByTeamFolder(teamFolderId: $teamFolder->getId());
-        }
-
-        return $data;
-    }//end describe()
-
-    /**
-     * Load a Folder and assert user ownership.
-     *
-     * @param string $folderId The Folder UUID
-     * @param string $userId   The candidate owner
-     *
-     * @return Folder
-     *
-     * @throws InvalidArgumentException On missing folder / foreign owner
-     */
-    private function loadOwnedFolder(string $folderId, string $userId): Folder
-    {
-        try {
-            $folder = $this->folderMapper->findById($folderId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Folder not found');
-        }
-
-        if ($folder->getOwnerType() !== 'user' || $folder->getOwnerId() !== $userId) {
-            throw new InvalidArgumentException(message: 'Not authorized to share this folder');
-        }
-
-        return $folder;
-    }//end loadOwnedFolder()
-
-    /**
-     * Load a TeamFolder and assert the caller owns it.
-     *
-     * @param string $teamFolderId The TeamFolder UUID
-     * @param string $userId       The candidate owner
-     *
-     * @return TeamFolder
-     *
-     * @throws InvalidArgumentException On missing row / foreign owner
-     */
-    private function loadOwnedTeamFolder(string $teamFolderId, string $userId): TeamFolder
-    {
-        try {
-            $teamFolder = $this->mapper->findById(id: $teamFolderId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Team folder not found');
-        }
-
-        if ($teamFolder->getOwnerId() !== $userId) {
-            throw new InvalidArgumentException(message: 'Not authorized to manage this team folder');
-        }
-
-        return $teamFolder;
-    }//end loadOwnedTeamFolder()
-
-    /**
-     * Assert the caller may run the offboarding action: a Nextcloud
-     * instance admin or a member of the vault_admin group.
-     *
-     * @param string $userId The candidate admin
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When unauthorized
-     */
-    private function assertOffboardingAdmin(string $userId): void
-    {
-        if ($this->groupManager->isAdmin($userId) === true) {
-            return;
-        }
-
-        if ($this->groupManager->isInGroup($userId, self::VAULT_ADMIN_GROUP) === true) {
-            return;
-        }
-
-        throw new InvalidArgumentException(
-            message: 'Offboarding requires instance admin or vault_admin membership'
-        );
-    }//end assertOffboardingAdmin()
 
     /**
      * Set a membership's permission grade — owner-only; grade changes
@@ -1432,7 +594,7 @@ class TeamFolderService
             throw new InvalidArgumentException(message: 'grade must be read or write');
         }
 
-        $this->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $ownerId);
+        $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $ownerId);
 
         try {
             $member = $this->memberMapper->findById($memberId);
@@ -1447,19 +609,12 @@ class TeamFolderService
         $member->setGrade($grade);
         $member = $this->memberMapper->update($member);
 
-        $this->dispatchAudit(
-            event: $this->auditEvents->forUser(
-                actorId: $ownerId,
-                eventType: AuditEventTypes::TEAM_FOLDER_GRADE_CHANGED,
-                objectType: 'team_folder',
-                objectId: $teamFolderId,
-                objectName: '',
-                metadata: [
-                    'memberType' => $member->getMemberType(),
-                    'memberId'   => $member->getMemberId(),
-                    'grade'      => $grade,
-                ],
-            )
+        $this->audit->gradeChanged(
+            actorId: $ownerId,
+            teamFolderId: $teamFolderId,
+            memberType: $member->getMemberType(),
+            memberId: $member->getMemberId(),
+            grade: $grade,
         );
 
         return $member;
@@ -1468,9 +623,7 @@ class TeamFolderService
     /**
      * The MAX grade any team-folder membership along a secret's folder
      * ancestor chain grants a user (`write` outranks `read`), or null
-     * when nothing applies. Group memberships expand via the Nextcloud
-     * group manager (folder-permission-grades §2.2). Server-visible
-     * metadata only — never any ciphertext.
+     * when nothing applies.
      *
      * @param Secret $secret The SOURCE secret
      * @param string $userId The candidate user
@@ -1481,56 +634,6 @@ class TeamFolderService
      */
     public function resolveGrade(Secret $secret, string $userId): ?string
     {
-        $best     = null;
-        $folderId = $secret->getFolderId();
-        $hops     = 0;
-        while ($folderId !== null && $folderId !== '' && $hops < 50) {
-            ++$hops;
-            try {
-                $teamFolder = $this->mapper->findByFolder($folderId);
-                foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $teamFolder->getId()) as $membership) {
-                    if ($this->membershipCovers(membership: $membership, userId: $userId) === false) {
-                        continue;
-                    }
-
-                    if ($membership->effectiveGrade() === 'write') {
-                        return 'write';
-                    }
-
-                    $best = 'read';
-                }
-            } catch (DoesNotExistException) {
-                // Not a team folder — keep climbing.
-            }
-
-            try {
-                $folderId = $this->folderMapper->findById($folderId)->getParentId();
-            } catch (DoesNotExistException) {
-                break;
-            }
-        }//end while
-
-        return $best;
+        return $this->queries->resolveGrade(secret: $secret, userId: $userId);
     }//end resolveGrade()
-
-    /**
-     * Whether a membership row covers a user (direct or via group).
-     *
-     * @param TeamFolderMember $membership The membership row
-     * @param string           $userId     The candidate user
-     *
-     * @return bool
-     */
-    private function membershipCovers(TeamFolderMember $membership, string $userId): bool
-    {
-        if ($membership->getMemberType() === 'user') {
-            return $membership->getMemberId() === $userId;
-        }
-
-        if ($membership->getMemberType() === 'group') {
-            return $this->groupManager->isInGroup($userId, $membership->getMemberId());
-        }
-
-        return false;
-    }//end membershipCovers()
 }//end class

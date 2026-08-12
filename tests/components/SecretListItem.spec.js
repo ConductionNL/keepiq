@@ -23,7 +23,7 @@
  *  - keyboard activation of the inner copy control does NOT bubble as `open`
  *
  * @spec openspec/changes/implement-secrets/tasks.md#7.3
- * @spec openspec/changes/implement-secrets/tasks.md#13.4
+ * @spec openspec/changes/implement-secrets/tasks.md#13.3
  * @spec openspec/changes/keyboard-accessible-secret-rows/tasks.md#2.3
  */
 

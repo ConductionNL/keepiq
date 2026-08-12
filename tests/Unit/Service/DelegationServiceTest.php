@@ -26,6 +26,7 @@ use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Doriath\Service\DelegationAuthorizer;
 use OCA\Doriath\Service\DelegationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
@@ -47,7 +48,7 @@ class DelegationServiceTest extends TestCase
         $secretMapper = $this->createMock(originalClassName: SecretMapper::class);
         $service      = new DelegationService(
             mapper: $mapper,
-            secretMapper: $secretMapper,
+            authorizer: new DelegationAuthorizer(secretMapper: $secretMapper),
         );
 
         return [$service, $mapper, $secretMapper];
@@ -247,9 +248,11 @@ class DelegationServiceTest extends TestCase
 
         $service = new DelegationService(
             mapper: $mapper,
-            secretMapper: $secretMapper,
-            shareTargetMapper: $shareTargetMapper,
-            groupManager: $groupManager,
+            authorizer: new DelegationAuthorizer(
+                secretMapper: $secretMapper,
+                shareTargetMapper: $shareTargetMapper,
+                groupManager: $groupManager,
+            ),
         );
 
         return [$service, $mapper, $secretMapper, $shareTargetMapper, $groupManager];
@@ -312,7 +315,7 @@ class DelegationServiceTest extends TestCase
         [$service, $mapper, $secretMapper, $shareTargetMapper, $groupManager] = $this->buildWithAdmin();
         $secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'alice'));
         $groupManager->method('isInGroup')
-            ->with('mallory', DelegationService::VAULT_ADMIN_GROUP)
+            ->with('mallory', DelegationAuthorizer::VAULT_ADMIN_GROUP)
             ->willReturn(true);
         $shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
         $mapper->expects($this->once())

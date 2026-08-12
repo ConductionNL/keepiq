@@ -33,49 +33,34 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretDelegation;
 use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Event\Audit\AuditEvent;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
-use OCP\IGroupManager;
 use Ramsey\Uuid\Uuid;
 
 /**
  * Business logic for the SecretDelegation lifecycle (scaffold).
+ *
+ * The authorization decisions — Secret existence, vault_admin membership
+ * and the pre-existing-share precondition — live in DelegationAuthorizer;
+ * this class owns the delegation ROWS and their audit trail.
  */
 class DelegationService
 {
     /**
-     * The Nextcloud group whose members can initiate admin-handover
-     * delegations (override the owner-consent requirement). Members of
-     * this group still MUST already hold a share of the target Secret —
-     * the admin path widens *who* can create the delegation, not what
-     * can be delegated without a pre-existing share.
-     *
-     * @var string
-     */
-    public const VAULT_ADMIN_GROUP = 'vault_admin';
-
-    /**
      * Constructor for DelegationService.
      *
-     * @param SecretDelegationMapper $mapper            The delegation mapper
-     * @param SecretMapper           $secretMapper      The Secret mapper (owner lookup)
-     * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
-     * @param IGroupManager|null     $groupManager      Group membership check (admin path)
-     * @param IEventDispatcher|null  $eventDispatcher   The event dispatcher
-     * @param AuditEventFactory      $auditEvents       The audit-event factory
+     * @param SecretDelegationMapper $mapper          The delegation mapper
+     * @param DelegationAuthorizer   $authorizer      The delegation authorization guard
+     * @param IEventDispatcher|null  $eventDispatcher The event dispatcher
+     * @param AuditEventFactory      $auditEvents     The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private SecretDelegationMapper $mapper,
-        private SecretMapper $secretMapper,
-        private ?ShareTargetMapper $shareTargetMapper=null,
-        private ?IGroupManager $groupManager=null,
+        private DelegationAuthorizer $authorizer,
         private ?IEventDispatcher $eventDispatcher=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
     ) {
@@ -128,7 +113,7 @@ class DelegationService
         string $delegatedTo,
         string $initiatedBy,
     ): SecretDelegation {
-        $secret = $this->loadDelegableSecret(secretId: $secretId, delegatedTo: $delegatedTo);
+        $secret = $this->authorizer->requireDelegableSecret(secretId: $secretId, delegatedTo: $delegatedTo);
 
         // The initiator must BE the current owner of the Secret.
         if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $initiatedBy) {
@@ -142,7 +127,7 @@ class DelegationService
         // Delegate MUST already hold a share when the share-target
         // mapper is wired; this preserves the "delegations promote
         // existing recipients" invariant from spec.md.
-        $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $delegatedTo);
+        $this->authorizer->requirePreExistingShare(secretId: $secretId, userId: $delegatedTo);
 
         return $this->persistDelegation(
             secret: $secret,
@@ -183,9 +168,9 @@ class DelegationService
         string $delegatedTo,
         string $initiatedBy,
     ): SecretDelegation {
-        $secret = $this->loadDelegableSecret(secretId: $secretId, delegatedTo: $delegatedTo);
+        $secret = $this->authorizer->requireDelegableSecret(secretId: $secretId, delegatedTo: $delegatedTo);
 
-        $this->assertVaultAdmin(userId: $initiatedBy);
+        $this->authorizer->requireVaultAdmin(userId: $initiatedBy);
 
         if ($delegatedTo !== $initiatedBy) {
             throw new InvalidArgumentException(
@@ -199,7 +184,7 @@ class DelegationService
             );
         }
 
-        $this->assertHoldsPreExistingShare(secretId: $secretId, userId: $initiatedBy);
+        $this->authorizer->requirePreExistingShare(secretId: $secretId, userId: $initiatedBy);
 
         return $this->persistDelegation(
             secret: $secret,
@@ -208,29 +193,6 @@ class DelegationService
             initiatedBy: $initiatedBy
         );
     }//end createAdminHandover()
-
-    /**
-     * Load the Secret both delegation paths act on, rejecting a blank
-     * delegate up front so the two entry points share one precondition.
-     *
-     * @param string $secretId    The Secret ID
-     * @param string $delegatedTo The candidate delegate
-     *
-     * @return Secret
-     *
-     * @throws InvalidArgumentException When the Secret does not exist or
-     *                                  $delegatedTo is blank.
-     */
-    private function loadDelegableSecret(string $secretId, string $delegatedTo): Secret
-    {
-        $secret = $this->loadSecret(secretId: $secretId);
-
-        if ($delegatedTo === '') {
-            throw new InvalidArgumentException(message: 'delegated_to is required');
-        }
-
-        return $secret;
-    }//end loadDelegableSecret()
 
     /**
      * Persist an authorized temporary delegation and audit it. Callers
@@ -278,40 +240,11 @@ class DelegationService
     }//end persistDelegation()
 
     /**
-     * Assert that $userId is a member of the vault_admin group.
-     *
-     * @param string $userId The candidate admin user ID
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When the group manager is wired
-     *                                  but the user is not a vault admin.
-     */
-    private function assertVaultAdmin(string $userId): void
-    {
-        if ($this->groupManager === null) {
-            // No group manager wired — admin path cannot be authorized.
-            throw new InvalidArgumentException(
-                message: 'Admin handover is not available in this context'
-            );
-        }
-
-        if ($this->isVaultAdmin(userId: $userId) === false) {
-            throw new InvalidArgumentException(
-                message: 'Admin handover requires membership in the vault_admin group'
-            );
-        }
-    }//end assertVaultAdmin()
-
-    /**
      * Whether $userId may use the admin handover path at all.
      *
-     * Exists so the UI can decide whether to OFFER the takeover without
-     * duplicating the membership rule: `assertVaultAdmin()` above is written
-     * in terms of this predicate, so the button and the enforcement can never
-     * drift apart. It answers only the group question — the per-secret
-     * preconditions (not already the owner, already holds a share) stay in
-     * `createAdminHandover()`, because they need the Secret.
+     * Exposed here so the UI can decide whether to OFFER the takeover; the
+     * membership rule itself has a single home in DelegationAuthorizer, so
+     * the button and the enforcement can never drift apart.
      *
      * @param string $userId The candidate admin user ID
      *
@@ -321,44 +254,8 @@ class DelegationService
      */
     public function isVaultAdmin(string $userId): bool
     {
-        if ($this->groupManager === null) {
-            return false;
-        }
-
-        return $this->groupManager->isInGroup($userId, self::VAULT_ADMIN_GROUP);
+        return $this->authorizer->isVaultAdmin(userId: $userId);
     }//end isVaultAdmin()
-
-    /**
-     * Assert that $userId already holds a share of $secretId. No-op when
-     * the share-target mapper is not wired (preserves backward compat with
-     * existing constructors that pre-date the §17.1 hardening).
-     *
-     * @param string $secretId The source Secret ID
-     * @param string $userId   The candidate recipient
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When the share-target mapper is
-     *                                  wired but no share row exists for
-     *                                  (sourceSecret, user).
-     */
-    private function assertHoldsPreExistingShare(string $secretId, string $userId): void
-    {
-        if ($this->shareTargetMapper === null) {
-            return;
-        }
-
-        try {
-            $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-                sourceSecretId: $secretId,
-                targetUserId: $userId,
-            );
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(
-                message: 'Delegation requires the recipient to already hold a share of the secret'
-            );
-        }
-    }//end assertHoldsPreExistingShare()
 
     /**
      * Reclaim — the original owner revokes all TEMPORARY delegations they
@@ -377,7 +274,7 @@ class DelegationService
      */
     public function reclaimDelegation(string $secretId, string $ownerId): int
     {
-        $secret = $this->loadSecret(secretId: $secretId);
+        $secret = $this->authorizer->requireSecret(secretId: $secretId);
 
         if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(message: 'Not authorized to reclaim this delegation');
@@ -428,7 +325,7 @@ class DelegationService
      */
     public function getDelegationsForSecret(string $secretId, string $ownerId): array
     {
-        $secret = $this->loadSecret(secretId: $secretId);
+        $secret = $this->authorizer->requireSecret(secretId: $secretId);
 
         if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
             throw new InvalidArgumentException(message: 'Not authorized for this secret');
@@ -453,22 +350,4 @@ class DelegationService
     {
         return $this->mapper->makePermanentByOriginalOwner($originalOwnerId);
     }//end makePermanent()
-
-    /**
-     * Look up a Secret by ID, raising InvalidArgumentException on miss.
-     *
-     * @param string $secretId The Secret ID
-     *
-     * @return Secret
-     *
-     * @throws InvalidArgumentException
-     */
-    private function loadSecret(string $secretId): Secret
-    {
-        try {
-            return $this->secretMapper->findById($secretId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Secret not found');
-        }
-    }//end loadSecret()
 }//end class

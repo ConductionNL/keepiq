@@ -5,7 +5,7 @@
  * Unit tests for the `useDashboardSettingsStore` Pinia store
  * (`src/store/modules/dashboardSettings.js`).
  *
- * @spec openspec/changes/implement-dashboard-settings/tasks.md#15.1
+ * @spec openspec/changes/implement-dashboard-settings/tasks.md#6.1
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'

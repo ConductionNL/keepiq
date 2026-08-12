@@ -29,8 +29,14 @@ use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Doriath\Service\DirectShareRegistrar;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\RecipientSecretCopyFactory;
+use OCA\Doriath\Service\ShareAuthorizationService;
+use OCA\Doriath\Service\ShareRevocationService;
 use OCA\Doriath\Service\ShareService;
+use OCA\Doriath\Service\ShareSyncService;
+use OCA\Doriath\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -110,16 +116,65 @@ class ShareServiceTest extends TestCase
         $this->db = $this->createMock(originalClassName: IDBConnection::class);
         $logger   = $this->createMock(originalClassName: LoggerInterface::class);
 
-        $this->service = new ShareService(
-            mapper: $this->mapper,
+        $this->service = $this->wireService(logger: $logger);
+    }//end setUp()
+
+    /**
+     * Assemble a ShareService over the shared mocks with its extracted
+     * collaborators wired the way the Nextcloud container wires them: one
+     * ShareAuthorizationService and one RecipientSecretCopyFactory, shared
+     * by the registrar, the sync service and the revocation service.
+     *
+     * @param LoggerInterface|null   $logger            The logger
+     * @param TeamFolderService|null $teamFolderService The team-folder service (grade resolution)
+     *
+     * @return ShareService
+     */
+    private function wireService(
+        ?LoggerInterface $logger=null,
+        ?TeamFolderService $teamFolderService=null,
+    ): ShareService {
+        $logger ??= $this->createMock(originalClassName: LoggerInterface::class);
+
+        $auth = new ShareAuthorizationService(
+            secretMapper: $this->secretMapper,
+            delegationMapper: $this->delegationMapper,
+            suiteMapper: $this->suiteMapper,
+            teamFolderService: $teamFolderService,
+        );
+
+        $copyFactory = new RecipientSecretCopyFactory(
             secretMapper: $this->secretMapper,
             suiteMapper: $this->suiteMapper,
-            delegationMapper: $this->delegationMapper,
-            notificationService: $this->notificationService,
-            db: $this->db,
-            logger: $logger
         );
-    }//end setUp()
+
+        return new ShareService(
+            mapper: $this->mapper,
+            db: $this->db,
+            notificationService: $this->notificationService,
+            auth: $auth,
+            directRegistrar: new DirectShareRegistrar(
+                mapper: $this->mapper,
+                secretMapper: $this->secretMapper,
+                copyFactory: $copyFactory,
+                notificationService: $this->notificationService,
+            ),
+            syncService: new ShareSyncService(
+                mapper: $this->mapper,
+                secretMapper: $this->secretMapper,
+                suiteMapper: $this->suiteMapper,
+                db: $this->db,
+                auth: $auth,
+            ),
+            revocationService: new ShareRevocationService(
+                mapper: $this->mapper,
+                secretMapper: $this->secretMapper,
+                db: $this->db,
+                logger: $logger,
+                auth: $auth,
+            ),
+        );
+    }//end wireService()
 
     /**
      * Helper: build a Secret with user owner.
@@ -723,20 +778,10 @@ class ShareServiceTest extends TestCase
      */
     private function gradedService(?string $grade): ShareService
     {
-        $teamFolderService = $this->createMock(originalClassName: \OCA\Doriath\Service\TeamFolderService::class);
+        $teamFolderService = $this->createMock(originalClassName: TeamFolderService::class);
         $teamFolderService->method('resolveGrade')->willReturn($grade);
 
-        return new ShareService(
-            mapper: $this->mapper,
-            secretMapper: $this->secretMapper,
-            suiteMapper: $this->suiteMapper,
-            delegationMapper: $this->delegationMapper,
-            notificationService: $this->notificationService,
-            db: $this->db,
-            logger: $this->createMock(originalClassName: LoggerInterface::class),
-            eventDispatcher: null,
-            teamFolderService: $teamFolderService,
-        );
+        return $this->wireService(teamFolderService: $teamFolderService);
     }//end gradedService()
 
     /**

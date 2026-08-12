@@ -213,3 +213,60 @@ describe('rsaEncrypt / rsaDecrypt round-trip (RSA-4096, multi-chunk)', () => {
 		expect(reimported.type).toBe('public')
 	})
 })
+
+/**
+ * The minimum-key-size requirement.
+ *
+ * openspec/specs/encryption-suites/spec.md "Requirement: Minimum Key Size" —
+ * "The system MUST generate RSA keys of at least 4096 bits. The minimum MUST
+ * only be allowed to increase, never decrease."
+ *
+ * WHY THIS BLOCK EXISTS. That requirement's scenario was waived as "RSA key
+ * bit-length is enforced in the key-generation service; covered by PHPUnit".
+ * There is no such server-side service: under ADR-003 the keypair is generated
+ * in the BROWSER by src/crypto/rsa.js and only the public half is ever
+ * transmitted, so no server-side check can enforce it. Nothing anywhere
+ * asserted a GENERATED key's bit length — the one existing generateKeyPair
+ * test above asserts PEM shape and re-importability, both of which hold
+ * identically for a 2048-bit key. Lowering RSA_KEY_BITS was a silent,
+ * green-tested change.
+ *
+ * These assertions deliberately measure the KEY, not the constant. Asserting
+ * `RSA_KEY_BITS === 4096` would only restate the source line; the modulus of
+ * an actually-generated key is the thing the requirement is about.
+ *
+ * NOTE the explicit timeout. generateKeyPair() is a real RSA-4096 prime search
+ * with unbounded, highly variable runtime (measured 105-681ms on an idle
+ * machine, several times higher on a contended CI runner). Vitest's 5000ms
+ * default has already lost that coin flip twice in this repo — runs
+ * 30884131373 and 31083918823 — which is why the fixtures are static
+ * elsewhere. Key generation is irreducibly the subject here, so the timeout is
+ * raised rather than the keygen avoided.
+ */
+describe('generateKeyPair — minimum key size (encryption-suites: Minimum Key Size)', () => {
+	it('generates a key whose real modulus is at least the 4096-bit floor', async () => {
+		const { publicKey, privateKey } = await generateKeyPair()
+
+		// Stated as an inequality, matching "MUST only be allowed to increase,
+		// never decrease": raising the floor later must not fail this test,
+		// lowering it must.
+		expect(publicKey.algorithm.modulusLength).toBeGreaterThanOrEqual(4096)
+		expect(privateKey.algorithm.modulusLength).toBeGreaterThanOrEqual(4096)
+	}, 30000)
+
+	it('exports a public key whose DER modulus really is 4096 bits', async () => {
+		const { publicKeyPem } = await generateKeyPair()
+
+		// Independent of the WebCrypto algorithm metadata above: parse the
+		// exported SPKI and measure the modulus that a server, or OpenSSL,
+		// would actually see. The exported bytes are what leaves the browser.
+		const jwk = createPublicKey(publicKeyPem).export({ format: 'jwk' })
+		const modulusBits = Buffer.from(jwk.n, 'base64url').length * 8
+
+		expect(modulusBits).toBeGreaterThanOrEqual(4096)
+
+		// 65537. A small or even exponent would weaken the key while leaving
+		// the modulus size — and therefore every size-based check — untouched.
+		expect(Buffer.from(jwk.e, 'base64url').toString('hex')).toBe('010001')
+	}, 30000)
+})

@@ -301,19 +301,23 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Team folder sharing (team-folder-sharing §4.1). Static segments
     // (offboard) precede the {id} routes so they resolve first. Per-object
     // owner/admin guards live in TeamFolderService method bodies.
-    ['name' => 'teamFolder#index',          'url' => '/api/v1/team-folders',                            'verb' => 'GET'],
-    ['name' => 'teamFolder#create',         'url' => '/api/v1/team-folders',                            'verb' => 'POST'],
-    ['name' => 'teamFolder#offboard',       'url' => '/api/v1/team-folders/offboard',                   'verb' => 'POST'],
-    ['name' => 'teamFolder#members',        'url' => '/api/v1/team-folders/{id}/members',               'verb' => 'GET'],
-    ['name' => 'teamFolder#addMember',      'url' => '/api/v1/team-folders/{id}/members',               'verb' => 'POST'],
-    ['name' => 'teamFolder#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}',    'verb' => 'DELETE'],
+    //
+    // The membership routes target TeamFolderMemberController; the folder
+    // routes target TeamFolderController. The URLs are identical to before
+    // that split — only the route names differ — so no client changes.
+    ['name' => 'teamFolder#index',                'url' => '/api/v1/team-folders',                         'verb' => 'GET'],
+    ['name' => 'teamFolder#create',               'url' => '/api/v1/team-folders',                         'verb' => 'POST'],
+    ['name' => 'teamFolder#offboard',             'url' => '/api/v1/team-folders/offboard',                'verb' => 'POST'],
+    ['name' => 'teamFolderMember#members',        'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'GET'],
+    ['name' => 'teamFolderMember#addMember',      'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'POST'],
+    ['name' => 'teamFolderMember#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}', 'verb' => 'DELETE'],
     // Folder permission grades (folder-permission-grades §3.1).
-    ['name' => 'teamFolder#setMemberGrade', 'url' => '/api/v1/team-folders/{id}/members/{memberId}',    'verb' => 'PATCH'],
-    ['name' => 'share#writeContext',        'url' => '/api/v1/secrets/{id}/write-context',              'verb' => 'GET'],
-    ['name' => 'teamFolder#reconcile',      'url' => '/api/v1/team-folders/{id}/reconcile',             'verb' => 'GET'],
-    ['name' => 'teamFolder#registerShares', 'url' => '/api/v1/team-folders/{id}/shares',                'verb' => 'POST'],
-    ['name' => 'teamFolder#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',          'verb' => 'POST'],
-    ['name' => 'teamFolder#destroy',        'url' => '/api/v1/team-folders/{id}',                       'verb' => 'DELETE'],
+    ['name' => 'teamFolderMember#setMemberGrade', 'url' => '/api/v1/team-folders/{id}/members/{memberId}', 'verb' => 'PATCH'],
+    ['name' => 'share#writeContext',              'url' => '/api/v1/secrets/{id}/write-context',           'verb' => 'GET'],
+    ['name' => 'teamFolder#reconcile',            'url' => '/api/v1/team-folders/{id}/reconcile',          'verb' => 'GET'],
+    ['name' => 'teamFolder#registerShares',       'url' => '/api/v1/team-folders/{id}/shares',             'verb' => 'POST'],
+    ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
+    ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
 
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.

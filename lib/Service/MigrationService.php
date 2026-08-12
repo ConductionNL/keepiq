@@ -148,42 +148,11 @@ class MigrationService
         // (secret-version-history spec). This runs BEFORE the outstanding-row
         // check so out-of-window rows the client was never asked to migrate
         // cannot hold the gate shut.
-        $droppedVersions = 0;
-        $unrecoverable   = [];
-        if ($ownerId !== null) {
-            $droppedVersions = $this->workService->dropVersionsBeyondWindow(
-                migration: $migration,
-                ownerId: $ownerId
-            );
-
-            // The gate. Terminating marks the old suite compromised, and a
-            // compromised suite refuses to serve its ciphertext, so every row
-            // still bound to it loses access. Two very different situations look
-            // alike from here and must not be treated alike.
-            //
-            // Rows nobody attempted (no migration_error) mean the migration is
-            // simply unfinished — a closed tab, a crash, a `complete` that was
-            // never called. Finalising would take the whole un-reached remainder
-            // of the vault down with it, so this refuses and the user resumes.
-            //
-            // Rows that were attempted and reported unrecoverable are the other
-            // case: retrying will not help them, and holding the migration open
-            // forever would leave the vault write-locked with no way out. Those
-            // may be finalised, but only against an explicit acknowledgement of
-            // how many lose access — see assertLossAcknowledged below.
-            $this->assertNothingUnaccountedFor(migration: $migration, ownerId: $ownerId);
-
-            $unrecoverable = $this->workService->listUnrecoverable(
-                migration: $migration,
-                ownerId: $ownerId
-            );
-
-            $this->assertLossAcknowledged(
-                migration: $migration,
-                unrecoverable: $unrecoverable,
-                acceptUnrecoverable: $acceptUnrecoverable
-            );
-        }//end if
+        [$droppedVersions, $unrecoverable] = $this->prepareTermination(
+            migration: $migration,
+            ownerId: $ownerId,
+            acceptUnrecoverable: $acceptUnrecoverable
+        );
 
         $status = 'completed';
         if ($hasErrors === true || $unrecoverable !== []) {
@@ -201,49 +170,25 @@ class MigrationService
             compromisedBy: ($ownerId ?? '')
         );
 
-        // The remaining terminal steps are owner-scoped. Running them with an
-        // unresolved owner would target the wrong rows (or none), so skip and
-        // shout rather than guess — the suite is still correctly marked
-        // compromised above, which is the security-critical half.
-        if ($ownerId === null) {
-            $this->logger->error(
-                'Doriath: migration completed but owner could not be resolved — '
-                .'link shares and passkeys were NOT revoked and need manual review',
-                ['migrationId' => $migrationId, 'oldSuiteId' => $migration->getOldSuiteId()]
-            );
-        } else {
-            // Cascade-revoke every link share created by this user: the public-key
-            // fingerprint baked into each share's encrypted snapshot belongs to the
-            // now-compromised key pair, so any outstanding link must be force-locked
-            // out and re-shared under the new suite (implement-link-sharing §5.2).
-            $this->linkShareService->deleteByUserId(userId: $ownerId);
-
-            // A new key pair invalidates every passkey unlock envelope — the wrapped
-            // unlock key can never open the new suite (passkey-vault-login §D4).
-            $this->passkeyService?->deleteAllOnRotation($ownerId);
-        }
+        $this->revokeOwnerKeyMaterial(migration: $migration, ownerId: $ownerId);
 
         // NOT re-implemented here: pending SecretRequests are unlocked and
         // re-pointed by SuiteMigrationCompletedListener, and emergency-access
         // envelopes are invalidated by EmergencyAccessSuiteRotationListener.
         // Both already listen for the event dispatched below.
         $this->logger->info(
-                "Doriath: Compromise recovery completed for migration {$migrationId}",
-                [
-                    'hasErrors' => $hasErrors,
-                ]
-                );
+            "Doriath: Compromise recovery completed for migration {$migrationId}",
+            ['hasErrors' => $hasErrors]
+        );
 
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatchTyped(
-                new SuiteMigrationCompletedEvent(
-                    oldSuiteId: $migration->getOldSuiteId(),
-                    newSuiteId: $migration->getNewSuiteId(),
-                    migrationId: $migration->getId(),
-                    hasErrors: $hasErrors,
-                )
-            );
-        }
+        $this->eventDispatcher?->dispatchTyped(
+            new SuiteMigrationCompletedEvent(
+                oldSuiteId: $migration->getOldSuiteId(),
+                newSuiteId: $migration->getNewSuiteId(),
+                migrationId: $migration->getId(),
+                hasErrors: $hasErrors,
+            )
+        );
 
         return (
             $migration->jsonSerialize() + [
@@ -252,6 +197,111 @@ class MigrationService
             ]
         );
     }//end completeMigration()
+
+    /**
+     * Run everything that must happen — and must be allowed — before a
+     * migration may be marked terminal.
+     *
+     * Version history is deliberately lossy: only the head plus the N most
+     * recent snapshots are re-encrypted, and the rest are dropped here so the
+     * count is final and can be stated to the user in one number
+     * (secret-version-history spec). The drop runs BEFORE the outstanding-row
+     * check so out-of-window rows the client was never asked to migrate cannot
+     * hold the gate shut.
+     *
+     * Then the gate. Terminating marks the old suite compromised, and a
+     * compromised suite refuses to serve its ciphertext, so every row still
+     * bound to it loses access. Two very different situations look alike from
+     * here and must not be treated alike.
+     *
+     * Rows nobody attempted (no migration_error) mean the migration is simply
+     * unfinished — a closed tab, a crash, a `complete` that was never called.
+     * Finalising would take the whole un-reached remainder of the vault down
+     * with it, so this refuses and the user resumes.
+     *
+     * Rows that were attempted and reported unrecoverable are the other case:
+     * retrying will not help them, and holding the migration open forever would
+     * leave the vault write-locked with no way out. Those may be finalised, but
+     * only against an explicit acknowledgement of how many lose access.
+     *
+     * @param SuiteMigration $migration           The migration being completed
+     * @param string|null    $ownerId             The resolved owner, or null
+     * @param int|null       $acceptUnrecoverable The client's acknowledged loss count
+     *
+     * @return array{0:int,1:array<int,array<string,mixed>>} Dropped-version count
+     *                                                       and the rows that lose access
+     *
+     * @throws MigrationIncompleteException When the migration may not terminate
+     *
+     * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+     */
+    private function prepareTermination(
+        SuiteMigration $migration,
+        ?string $ownerId,
+        ?int $acceptUnrecoverable,
+    ): array {
+        if ($ownerId === null) {
+            return [0, []];
+        }
+
+        $droppedVersions = $this->workService->dropVersionsBeyondWindow(
+            migration: $migration,
+            ownerId: $ownerId
+        );
+
+        $this->assertNothingUnaccountedFor(migration: $migration, ownerId: $ownerId);
+
+        $unrecoverable = $this->workService->listUnrecoverable(
+            migration: $migration,
+            ownerId: $ownerId
+        );
+
+        $this->assertLossAcknowledged(
+            migration: $migration,
+            unrecoverable: $unrecoverable,
+            acceptUnrecoverable: $acceptUnrecoverable
+        );
+
+        return [$droppedVersions, $unrecoverable];
+    }//end prepareTermination()
+
+    /**
+     * Revoke the key material the rotated-away suite could still open.
+     *
+     * Owner-scoped, so it cannot run without a resolved owner: targeting the
+     * wrong rows would revoke somebody else's shares. When the owner is
+     * unresolved this shouts and returns rather than guessing — the suite is
+     * already marked compromised by the caller, which is the security-critical
+     * half, and the rest needs manual review.
+     *
+     * @param SuiteMigration $migration The completed migration
+     * @param string|null    $ownerId   The resolved owner, or null
+     *
+     * @return void
+     *
+     * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
+     */
+    private function revokeOwnerKeyMaterial(SuiteMigration $migration, ?string $ownerId): void
+    {
+        if ($ownerId === null) {
+            $this->logger->error(
+                'Doriath: migration completed but owner could not be resolved — '
+                .'link shares and passkeys were NOT revoked and need manual review',
+                ['migrationId' => $migration->getId(), 'oldSuiteId' => $migration->getOldSuiteId()]
+            );
+            return;
+        }
+
+        // Cascade-revoke every link share created by this user: the public-key
+        // fingerprint baked into each share's encrypted snapshot belongs to the
+        // now-compromised key pair, so any outstanding link must be force-locked
+        // out and re-shared under the new suite (implement-link-sharing §5.2).
+        $this->linkShareService->deleteByUserId(userId: $ownerId);
+
+        // A new key pair invalidates every passkey unlock envelope — the wrapped
+        // unlock key can never open the new suite (passkey-vault-login §D4).
+        $this->passkeyService?->deleteAllOnRotation($ownerId);
+    }//end revokeOwnerKeyMaterial()
 
     /**
      * Refuse to terminate while rows remain that nobody has attempted.

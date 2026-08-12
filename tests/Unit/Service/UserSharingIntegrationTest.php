@@ -49,13 +49,19 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\ShareTarget;
 use OCA\Doriath\Db\ShareTargetMapper;
 use OCA\Doriath\Exception\NotFoundException;
+use OCA\Doriath\Service\DelegationAuthorizer;
 use OCA\Doriath\Service\DelegationService;
+use OCA\Doriath\Service\DirectShareRegistrar;
 use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\RecipientSecretCopyFactory;
 use OCA\Doriath\Service\SecretService;
 use OCA\Doriath\Service\SecretTypeService;
+use OCA\Doriath\Service\ShareAuthorizationService;
+use OCA\Doriath\Service\ShareRevocationService;
 use OCA\Doriath\Service\ShareService;
+use OCA\Doriath\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
@@ -140,14 +146,42 @@ class UserSharingIntegrationTest extends TestCase
         $db     = $this->createMock(IDBConnection::class);
         $logger = $this->createMock(LoggerInterface::class);
 
-        $service = new ShareService(
-            mapper: $shareTargetMapper,
+        $auth = new ShareAuthorizationService(
+            secretMapper: $secretMapper,
+            delegationMapper: $delegationMapper,
+            suiteMapper: $suiteMapper,
+        );
+
+        $copyFactory = new RecipientSecretCopyFactory(
             secretMapper: $secretMapper,
             suiteMapper: $suiteMapper,
-            delegationMapper: $delegationMapper,
-            notificationService: $notificationService,
+        );
+
+        $service = new ShareService(
+            mapper: $shareTargetMapper,
             db: $db,
-            logger: $logger,
+            notificationService: $notificationService,
+            auth: $auth,
+            directRegistrar: new DirectShareRegistrar(
+                mapper: $shareTargetMapper,
+                secretMapper: $secretMapper,
+                copyFactory: $copyFactory,
+                notificationService: $notificationService,
+            ),
+            syncService: new ShareSyncService(
+                mapper: $shareTargetMapper,
+                secretMapper: $secretMapper,
+                suiteMapper: $suiteMapper,
+                db: $db,
+                auth: $auth,
+            ),
+            revocationService: new ShareRevocationService(
+                mapper: $shareTargetMapper,
+                secretMapper: $secretMapper,
+                db: $db,
+                logger: $logger,
+                auth: $auth,
+            ),
         );
 
         return [$service, $shareTargetMapper, $secretMapper, $suiteMapper, $delegationMapper, $notificationService, $db];
@@ -269,7 +303,7 @@ class UserSharingIntegrationTest extends TestCase
 
         $service = new DelegationService(
             mapper: $mapper,
-            secretMapper: $secretMapper,
+            authorizer: new DelegationAuthorizer(secretMapper: $secretMapper),
         );
 
         $secret = $this->makeSecret('s-1', 'alice');
@@ -313,15 +347,17 @@ class UserSharingIntegrationTest extends TestCase
 
         $service = new DelegationService(
             mapper: $mapper,
-            secretMapper: $secretMapper,
-            shareTargetMapper: $shareTargetMapper,
-            groupManager: $groupManager,
+            authorizer: new DelegationAuthorizer(
+                secretMapper: $secretMapper,
+                shareTargetMapper: $shareTargetMapper,
+                groupManager: $groupManager,
+            ),
         );
 
         $secret = $this->makeSecret('s-1', 'alice');
         $secretMapper->method('findById')->willReturn($secret);
         $groupManager->method('isInGroup')
-            ->with('mallory', DelegationService::VAULT_ADMIN_GROUP)
+            ->with('mallory', DelegationAuthorizer::VAULT_ADMIN_GROUP)
             ->willReturn(true);
         $shareTargetMapper->method('findBySourceSecretAndTargetUser')
             ->willReturn(new ShareTarget());

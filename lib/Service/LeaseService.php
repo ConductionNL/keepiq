@@ -28,15 +28,12 @@ namespace OCA\Doriath\Service;
 use DateInterval;
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\ApplicationLeasePolicyMapper;
 use OCA\Doriath\Db\MachineLease;
 use OCA\Doriath\Db\MachineLeaseMapper;
 use OCA\Doriath\Event\Audit\AuditEventFactory;
 use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
-use OCP\IAppConfig;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -47,19 +44,17 @@ class LeaseService
     /**
      * Constructor for LeaseService.
      *
-     * @param MachineLeaseMapper           $leaseMapper     The lease mapper
-     * @param ApplicationLeasePolicyMapper $policyMapper    The per-app policy mapper
-     * @param IAppConfig                   $appConfig       The app config (instance defaults)
-     * @param IEventDispatcher|null        $eventDispatcher The audit dispatcher
-     * @param RotationPolicyService|null   $rotationService The rotation service (revoke/expire trigger)
-     * @param AuditEventFactory            $auditEvents     The audit-event factory
+     * @param MachineLeaseMapper         $leaseMapper     The lease mapper
+     * @param LeasePolicyService         $policyService   The lease-policy resolver
+     * @param IEventDispatcher|null      $eventDispatcher The audit dispatcher
+     * @param RotationPolicyService|null $rotationService The rotation service (revoke/expire trigger)
+     * @param AuditEventFactory          $auditEvents     The audit-event factory
      *
      * @return void
      */
     public function __construct(
         private MachineLeaseMapper $leaseMapper,
-        private ApplicationLeasePolicyMapper $policyMapper,
-        private IAppConfig $appConfig,
+        private LeasePolicyService $policyService,
         private ?IEventDispatcher $eventDispatcher=null,
         private ?RotationPolicyService $rotationService=null,
         private AuditEventFactory $auditEvents=new AuditEventFactory(),
@@ -67,43 +62,19 @@ class LeaseService
     }//end __construct()
 
     /**
-     * The effective lease policy of an application: per-app override
-     * fields fall through to the instance defaults.
+     * The effective lease policy of an application — resolved by
+     * LeasePolicyService, exposed here because the lease API surface is
+     * the caller of record for policy reads.
      *
      * @param string $applicationId The application id
      *
      * @return array{defaultTtl:int, maxTtl:int, renewable:bool, blockOnRevoke:bool}
+     *
+     * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md
      */
     public function effectivePolicy(string $applicationId): array
     {
-        $appId      = Application::APP_ID;
-        $defaultTtl = $this->appConfig->getValueInt($appId, 'lease_default_ttl_seconds', 900);
-        $maxTtl     = $this->appConfig->getValueInt($appId, 'lease_max_ttl_seconds', 86400);
-        $renewable  = $this->appConfig->getValueBool($appId, 'lease_renewable', true);
-
-        try {
-            $override = $this->policyMapper->findByApplication(applicationId: $applicationId);
-            if ($override->getDefaultTtlSeconds() !== null) {
-                $defaultTtl = $override->getDefaultTtlSeconds();
-            }
-
-            if ($override->getMaxTtlSeconds() !== null) {
-                $maxTtl = $override->getMaxTtlSeconds();
-            }
-
-            if ($override->getRenewable() !== null) {
-                $renewable = $override->getRenewable();
-            }
-        } catch (DoesNotExistException) {
-            // No override — instance defaults apply.
-        }
-
-        return [
-            'defaultTtl'    => max(60, $defaultTtl),
-            'maxTtl'        => max(60, $maxTtl),
-            'renewable'     => $renewable,
-            'blockOnRevoke' => $this->appConfig->getValueBool($appId, 'lease_revocation_blocks_refetch', false),
-        ];
+        return $this->policyService->effectivePolicy(applicationId: $applicationId);
     }//end effectivePolicy()
 
     /**
@@ -328,7 +299,8 @@ class LeaseService
     }//end listForApplication()
 
     /**
-     * Store a per-application policy override (admin surface).
+     * Store a per-application policy override (admin surface) — validated
+     * and persisted by LeasePolicyService.
      *
      * @param string    $applicationId The application id
      * @param int|null  $defaultTtl    Default TTL seconds (null = inherit)
@@ -337,18 +309,14 @@ class LeaseService
      *
      * @return void
      *
-     * @throws InvalidArgumentException On non-positive TTLs
+     * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md
      */
     public function setPolicyOverride(string $applicationId, ?int $defaultTtl, ?int $maxTtl, ?bool $renewable): void
     {
-        if (($defaultTtl !== null && $defaultTtl < 60) || ($maxTtl !== null && $maxTtl < 60)) {
-            throw new InvalidArgumentException('Lease TTLs must be at least 60 seconds');
-        }
-
-        $this->policyMapper->upsert(
+        $this->policyService->setPolicyOverride(
             applicationId: $applicationId,
-            defaultTtlSeconds: $defaultTtl,
-            maxTtlSeconds: $maxTtl,
+            defaultTtl: $defaultTtl,
+            maxTtl: $maxTtl,
             renewable: $renewable,
         );
     }//end setPolicyOverride()

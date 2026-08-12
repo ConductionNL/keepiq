@@ -29,7 +29,14 @@
  * store are unbuilt, so the share dialog surfaces it only as a disabled
  * affordance; that leg is asserted as disabled, not exercised.
  *
- * @e2e openspec/specs/folders/spec.md#user-organises-secrets-into-folders
+ * ⚠️ The file-level anchor that used to be here pointed at
+ * `openspec/specs/folders/spec.md#user-organises-secrets-into-folders` (sigil
+ * omitted on purpose — gate-19 parses a tag written in prose exactly like a real
+ * one, so quoting a broken anchor re-creates it). It was DANGLING:
+ * `openspec/specs/folders/` does not exist in this repository at all.
+ * gate-19 says nothing about a dangling anchor, so these four passing UI tests
+ * were credited to zero scenarios. They are anchored per-test below, against the
+ * `secrets-write-ui` scenarios they actually drive.
  */
 import { test, expect } from '@playwright/test'
 import {
@@ -109,6 +116,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 	 * and is persisted (owner_type written, no NOT-NULL violation).
 	 */
 	test('create a folder via the UI dialog (appears in the tree, persists)', async ({ page }) => {
+		// @e2e secrets-write-ui::create-a-folder
 		const FOLDER = `__e2e_folder_${Date.now()}`
 		await unlockVault(page)
 		await openVault(page)
@@ -149,6 +157,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 	 * folder.
 	 */
 	test('move a secret into a folder via the UI (folderId persisted)', async ({ page }) => {
+		// @e2e secrets-write-ui::move-a-secret-into-a-folder
 		const FOLDER = `__e2e_movefolder_${Date.now()}`
 		await unlockVault(page)
 		await openVault(page)
@@ -157,7 +166,8 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			const res = await fetch('/index.php/apps/doriath/api/v1/folders', {
-				method: 'POST', credentials: 'include',
+				method: 'POST',
+				credentials: 'include',
 				headers: { requesttoken: token, 'Content-Type': 'application/json' },
 				body: JSON.stringify({ name }),
 			})
@@ -198,11 +208,24 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		expect(moved, 'moved secret must exist').toBeTruthy()
 		expect(moved.folderId).toBe(folder.id)
 
+		// The scenario's SECOND clause: "the secret MUST appear under that
+		// folder's filter in the vault list". A persisted `folderId` is the
+		// write; this is the read, and they are not the same claim — the list
+		// could filter on something else entirely and the row would vanish.
+		// Navigate in place (a reload would drop the in-memory key).
+		await page.evaluate((id) => { window.location.hash = `#/folders/${id}` }, folder.id)
+		await page.waitForLoadState('domcontentloaded')
+		await expect(
+			page.locator('.secret-list-item', { hasText: secretName }),
+			`"${secretName}" is not listed under the folder it was moved into`,
+		).toBeVisible({ timeout: 20_000 })
+
 		await page.evaluate(async ({ tokExpr, secretApiId, folderId }) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			await fetch(`/index.php/apps/doriath/api/v1/secrets/${secretApiId}`, {
-				method: 'PUT', credentials: 'include',
+				method: 'PUT',
+				credentials: 'include',
 				headers: { requesttoken: token, 'Content-Type': 'application/json' },
 				body: JSON.stringify({ folderId: null }),
 			})
@@ -219,6 +242,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 	 * once and the token resolves via the public two-phase endpoint.
 	 */
 	test('share a secret via a public link (link shown once, token resolves)', async ({ page }) => {
+		// @e2e secrets-write-ui::create-a-public-link-share
 		await unlockVault(page)
 		await openVault(page)
 		await openFirstSecret(page)
@@ -229,8 +253,18 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 
 		// The one-time reveal shows the link URL and password.
 		await expect(page.locator('.share-dialog__reveal')).toBeVisible({ timeout: 15_000 })
-		const linkUrl = (await page.locator('.share-dialog__reveal .share-dialog__value').first().textContent())?.trim() || ''
+		const revealed = page.locator('.share-dialog__reveal .share-dialog__value')
+		const linkUrl = (await revealed.first().textContent())?.trim() || ''
 		expect(linkUrl).toMatch(/\/share\/link\/|link-shares|token=/i)
+		// The scenario says the dialog MUST show the link URL *and* the one-time
+		// password, "each with a copy control". Two revealed values and two copy
+		// controls — asserting only the URL would pass on a dialog that never
+		// showed the password the recipient needs.
+		await expect(revealed).toHaveCount(2)
+		const generatedPassword = (await revealed.nth(1).textContent())?.trim() || ''
+		expect(generatedPassword.length, 'no one-time link password was revealed').toBeGreaterThan(7)
+		await expect(page.locator('.share-dialog__reveal button, .share-dialog__reveal .copy-button'))
+			.toHaveCount(2)
 
 		// The created share's token must resolve via the PUBLIC two-phase endpoint.
 		const tokenResolves = await page.evaluate(async ({ tokExpr }) => {
@@ -284,6 +318,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 	 * and disabled rather than exercising a flow that has no backing store.
 	 */
 	test('share-with-a-user affordance is present but disabled (deferred backend)', async ({ page }) => {
+		// @e2e secrets-write-ui::user-to-user-sharing-is-deferred
 		await unlockVault(page)
 		await openVault(page)
 		await openFirstSecret(page)
@@ -293,5 +328,31 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await expect(userBtn).toBeVisible()
 		await expect(userBtn).toBeDisabled()
 		await expect(userBtn).toContainText(/coming soon/i)
+
+		// "…MUST NOT issue any request until the implement-user-sharing backend
+		// exists." A disabled attribute is a claim about the markup; this is the
+		// claim about the wire. Record every user-share request the page makes
+		// while the affordance is clicked, and require none.
+		const userShareRequests: string[] = []
+		const listener = (r: { url: () => string }) => {
+			if (/\/api\/v1\/(secrets\/[^/]+\/)?(user-)?shares?(\b|\/|\?)/.test(r.url())
+				&& !/link-shares/.test(r.url())) {
+				userShareRequests.push(r.url())
+			}
+		}
+		page.on('request', listener)
+		// A disabled button swallows a normal click, so dispatch a native one —
+		// the same trick the themed-NcButton helpers use. If the handler is
+		// wired up anyway, this is what would catch it.
+		await page.evaluate(() => {
+			const b = document.querySelector('.share-dialog__user button') as HTMLButtonElement | null
+			b?.click()
+		})
+		await page.waitForTimeout(2_000)
+		page.off('request', listener)
+		expect(
+			userShareRequests,
+			'the deferred user-share affordance issued a request',
+		).toEqual([])
 	})
 })

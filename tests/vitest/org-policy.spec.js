@@ -7,7 +7,7 @@
  * checks, the HIBP block fires only on a breached verdict, and an
  * unavailable proxy never blocks a save.
  *
- * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md#requirement-save-flow-enforcement
+ * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
  */
 
 import { describe, it, expect, vi } from 'vitest'

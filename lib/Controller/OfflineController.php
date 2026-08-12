@@ -3,15 +3,14 @@
 /**
  * Doriath Offline Controller
  *
- * The consolidated offline-cache manifest (offline-readonly-cache §1.3):
- * one owner-scoped snapshot — active suite blob + KDF params, every
- * secret's RSA ciphertext, the folder tree, and a server syncedAt — that
- * the client commits to IndexedDB in a single atomic transaction. The
- * manifest reads through the mappers directly and NEVER decrypts: the
- * secret key/login/additionalFields are already ciphertext (ADR-003),
- * and the plaintext name/url metadata is encrypted at rest client-side.
- * It is a bulk cache sync, not an individual reveal, so it emits no
- * secret.read audit event.
+ * The consolidated offline-cache manifest endpoint (offline-readonly-cache
+ * §1.3). The controller owns the two transport-level decisions — is the
+ * caller authenticated, and is the org-wide switch on — and delegates the
+ * snapshot itself to OfflineManifestService, which reads through the mappers
+ * directly and NEVER decrypts: the secret key/login/additionalFields are
+ * already ciphertext (ADR-003), and the plaintext name/url metadata is
+ * encrypted at rest client-side. It is a bulk cache sync, not an individual
+ * reveal, so it emits no secret.read audit event.
  *
  * @category Controller
  * @package  OCA\Doriath\Controller
@@ -29,13 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Controller;
 
-use DateTime;
 use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Doriath\Service\OfflineManifestService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,22 +47,16 @@ class OfflineController extends OCSController
     /**
      * Constructor for OfflineController.
      *
-     * @param IRequest              $request      The request object
-     * @param EncryptionSuiteMapper $suiteMapper  The suite mapper
-     * @param SecretMapper          $secretMapper The secret mapper
-     * @param FolderMapper          $folderMapper The folder mapper
-     * @param SecretTypeMapper      $typeMapper   The secret type mapper
-     * @param IAppConfig            $appConfig    The app config (off switch)
-     * @param IUserSession          $userSession  The user session
+     * @param IRequest               $request         The request object
+     * @param OfflineManifestService $manifestService The snapshot assembler
+     * @param IAppConfig             $appConfig       The app config (off switch)
+     * @param IUserSession           $userSession     The user session
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
-        private EncryptionSuiteMapper $suiteMapper,
-        private SecretMapper $secretMapper,
-        private FolderMapper $folderMapper,
-        private SecretTypeMapper $typeMapper,
+        private OfflineManifestService $manifestService,
         private IAppConfig $appConfig,
         private IUserSession $userSession,
     ) {
@@ -100,38 +88,12 @@ class OfflineController extends OCSController
             );
         }
 
-        $userId = $user->getUID();
-
         try {
-            $suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
+            $manifest = $this->manifestService->buildForUser(userId: $user->getUID());
         } catch (DoesNotExistException) {
             return new JSONResponse(data: ['message' => 'No active encryption suite'], statusCode: Http::STATUS_NOT_FOUND);
         }
 
-        $secrets = array_map(
-            static fn (Secret $secret) => $secret->jsonSerialize(),
-            $this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId)
-        );
-
-        $folders = array_map(
-            static fn ($folder) => $folder->jsonSerialize(),
-            $this->folderMapper->findByOwner('user', $userId)
-        );
-
-        // Secret types the list schema needs to render type badges offline.
-        $types = array_map(
-            static fn ($type) => $type->jsonSerialize(),
-            $this->typeMapper->findAvailableForUser($userId)
-        );
-
-        return new JSONResponse(
-            data: [
-                'suite'    => $suite,
-                'secrets'  => $secrets,
-                'folders'  => $folders,
-                'types'    => $types,
-                'syncedAt' => (new DateTime())->format('c'),
-            ]
-        );
+        return new JSONResponse(data: $manifest);
     }//end manifest()
 }//end class

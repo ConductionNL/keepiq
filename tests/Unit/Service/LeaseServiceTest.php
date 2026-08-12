@@ -24,6 +24,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\ApplicationLeasePolicyMapper;
 use OCA\Doriath\Db\MachineLease;
 use OCA\Doriath\Db\MachineLeaseMapper;
+use OCA\Doriath\Service\LeasePolicyService;
 use OCA\Doriath\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -64,8 +65,10 @@ class LeaseServiceTest extends TestCase
 
         $this->service = new LeaseService(
             leaseMapper: $this->leaseMapper,
-            policyMapper: $this->policyMapper,
-            appConfig: $appConfig,
+            policyService: new LeasePolicyService(
+                policyMapper: $this->policyMapper,
+                appConfig: $appConfig,
+            ),
             eventDispatcher: null,
             rotationService: null,
         );

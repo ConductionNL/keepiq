@@ -19,7 +19,8 @@
  *  - cancel button closes the dialog without calling deleteFolder
  *
  * @spec openspec/changes/implement-secrets/tasks.md#7.5
- * @spec openspec/changes/implement-secrets/tasks.md#13.5
+ * @spec openspec/changes/implement-secrets/tasks.md#13.3
+ * @spec openspec/specs/secrets/spec.md#requirement-folder-management
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'

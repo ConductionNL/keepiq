@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Listener;
 
 use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Doriath\Service\SecretRequestSuiteLockService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -42,13 +42,13 @@ class SuiteMigrationCompletedListener implements IEventListener
     /**
      * Constructor.
      *
-     * @param SecretRequestService $secretRequestService The SecretRequest service
-     * @param LoggerInterface      $logger               The logger
+     * @param SecretRequestSuiteLockService $secretRequestService The SecretRequest suite-lock service
+     * @param LoggerInterface               $logger               The logger
      *
      * @return void
      */
     public function __construct(
-        private SecretRequestService $secretRequestService,
+        private SecretRequestSuiteLockService $secretRequestService,
         private LoggerInterface $logger,
     ) {
     }//end __construct()

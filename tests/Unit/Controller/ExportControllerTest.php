@@ -113,7 +113,7 @@ class ExportControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/cxf-import-export/specs/cxf-import-export/spec.md#requirement-cxf-export
+     * @spec openspec/specs/cxf-import-export/spec.md#requirement-re-auth-gated-client-side-cxf-export
      */
     public function testCxfModeAcceptedAndDispatched(): void
     {

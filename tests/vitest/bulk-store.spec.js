@@ -6,7 +6,7 @@
  * (client-only, cleared on lock), the chunked runner's exactly-once
  * report guarantee, cancellation, and retry-failed-only.
  *
- * @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-chunked-runner
+ * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
