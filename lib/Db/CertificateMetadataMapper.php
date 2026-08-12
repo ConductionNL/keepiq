@@ -31,74 +31,69 @@ use OCP\IDBConnection;
  *
  * @template-extends QBMapper<CertificateMetadata>
  */
-class CertificateMetadataMapper extends QBMapper
-{
-    /**
-     * Constructor for CertificateMetadataMapper.
-     *
-     * @param IDBConnection $db The database connection
-     *
-     * @return void
-     */
-    public function __construct(IDBConnection $db)
-    {
-        parent::__construct(db: $db, tableName: 'doriath_certificate_metadata', entityClass: CertificateMetadata::class);
-    }//end __construct()
+class CertificateMetadataMapper extends QBMapper {
+	/**
+	 * Constructor for CertificateMetadataMapper.
+	 *
+	 * @param IDBConnection $db The database connection
+	 *
+	 * @return void
+	 */
+	public function __construct(IDBConnection $db) {
+		parent::__construct(db: $db, tableName: 'doriath_certificate_metadata', entityClass: CertificateMetadata::class);
+	}//end __construct()
 
-    /**
-     * Find the metadata row of a secret.
-     *
-     * @param string $secretId The secret UUID
-     *
-     * @return CertificateMetadata
-     *
-     * @throws DoesNotExistException When no row exists
-     */
-    public function findBySecretId(string $secretId): CertificateMetadata
-    {
-        $qb = $this->db->getQueryBuilder();
-        $qb->select('*')
-            ->from($this->getTableName())
-            ->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)));
+	/**
+	 * Find the metadata row of a secret.
+	 *
+	 * @param string $secretId The secret UUID
+	 *
+	 * @return CertificateMetadata
+	 *
+	 * @throws DoesNotExistException When no row exists
+	 */
+	public function findBySecretId(string $secretId): CertificateMetadata {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)));
 
-        return $this->findEntity(query: $qb);
-    }//end findBySecretId()
+		return $this->findEntity(query: $qb);
+	}//end findBySecretId()
 
-    /**
-     * All metadata rows of an owner, keyed by secret id.
-     *
-     * @param string $ownerId The NC user id
-     *
-     * @return array<string,CertificateMetadata>
-     */
-    public function findByOwner(string $ownerId): array
-    {
-        $qb = $this->db->getQueryBuilder();
-        $qb->select('*')
-            ->from($this->getTableName())
-            ->where($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+	/**
+	 * All metadata rows of an owner, keyed by secret id.
+	 *
+	 * @param string $ownerId The NC user id
+	 *
+	 * @return array<string,CertificateMetadata>
+	 */
+	public function findByOwner(string $ownerId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
 
-        $bySecret = [];
-        foreach ($this->findEntities(query: $qb) as $row) {
-            $bySecret[$row->getSecretId()] = $row;
-        }
+		$bySecret = [];
+		foreach ($this->findEntities(query: $qb) as $row) {
+			$bySecret[$row->getSecretId()] = $row;
+		}
 
-        return $bySecret;
-    }//end findByOwner()
+		return $bySecret;
+	}//end findByOwner()
 
-    /**
-     * Delete the metadata row of a secret, if any (secret-delete
-     * cascade).
-     *
-     * @param string $secretId The secret UUID
-     *
-     * @return void
-     */
-    public function deleteBySecretId(string $secretId): void
-    {
-        $qb = $this->db->getQueryBuilder();
-        $qb->delete($this->getTableName())
-            ->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)));
-        $qb->executeStatement();
-    }//end deleteBySecretId()
+	/**
+	 * Delete the metadata row of a secret, if any (secret-delete
+	 * cascade).
+	 *
+	 * @param string $secretId The secret UUID
+	 *
+	 * @return void
+	 */
+	public function deleteBySecretId(string $secretId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)));
+		$qb->executeStatement();
+	}//end deleteBySecretId()
 }//end class

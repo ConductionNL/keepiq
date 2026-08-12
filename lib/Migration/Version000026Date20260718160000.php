@@ -33,28 +33,26 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Adds the grade column to team-folder memberships.
  */
-class Version000026Date20260718160000 extends SimpleMigrationStep
-{
-    /**
-     * Apply the schema changes.
-     *
-     * @param IOutput                   $output        The migration output
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
-     * @param array<string,mixed>       $options       The migration options
-     *
-     * @return ISchemaWrapper|null
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        $schema = $schemaClosure();
+class Version000026Date20260718160000 extends SimpleMigrationStep {
+	/**
+	 * Apply the schema changes.
+	 *
+	 * @param IOutput $output The migration output
+	 * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
+	 * @param array<string,mixed> $options The migration options
+	 *
+	 * @return ISchemaWrapper|null
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_team_folder_members') === true) {
-            $table = $schema->getTable('doriath_team_folder_members');
-            if ($table->hasColumn('grade') === false) {
-                $table->addColumn('grade', Types::STRING, ['notnull' => true, 'length' => 8, 'default' => 'read']);
-            }
-        }
+		if ($schema->hasTable('doriath_team_folder_members') === true) {
+			$table = $schema->getTable('doriath_team_folder_members');
+			if ($table->hasColumn('grade') === false) {
+				$table->addColumn('grade', Types::STRING, ['notnull' => true, 'length' => 8, 'default' => 'read']);
+			}
+		}
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

@@ -45,69 +45,67 @@ use ReflectionMethod;
 /**
  * Tests for #[AnonRateLimit] coverage on public endpoints.
  */
-class RateLimitAttributesTest extends TestCase
-{
-    /**
-     * Data provider mapping each public endpoint to its documented limit.
-     *
-     * @return array<string, array{0: class-string, 1: string, 2: int, 3: int}>
-     */
-    public static function publicEndpointsProvider(): array
-    {
-        return [
-            'token exchange'            => [ApplicationTokenController::class, 'exchange', 10, 60],
-            'link share show'           => [LinkShareAccessController::class, 'show', 15, 60],
-            'link share confirm'        => [LinkShareAccessController::class, 'confirm', 15, 60],
-            'secret request show'       => [SecretRequestFillController::class, 'show', 20, 60],
-            'secret request fill'       => [SecretRequestFillController::class, 'fill', 20, 60],
-            'application secrets index' => [ApplicationSecretsController::class, 'index', 30, 60],
-            'application secrets show'  => [ApplicationSecretsController::class, 'show', 30, 60],
-            'application create'        => [ApplicationController::class, 'create', 10, 60],
-        ];
-    }//end publicEndpointsProvider()
+class RateLimitAttributesTest extends TestCase {
+	/**
+	 * Data provider mapping each public endpoint to its documented limit.
+	 *
+	 * @return array<string, array{0: class-string, 1: string, 2: int, 3: int}>
+	 */
+	public static function publicEndpointsProvider(): array {
+		return [
+			'token exchange' => [ApplicationTokenController::class, 'exchange', 10, 60],
+			'link share show' => [LinkShareAccessController::class, 'show', 15, 60],
+			'link share confirm' => [LinkShareAccessController::class, 'confirm', 15, 60],
+			'secret request show' => [SecretRequestFillController::class, 'show', 20, 60],
+			'secret request fill' => [SecretRequestFillController::class, 'fill', 20, 60],
+			'application secrets index' => [ApplicationSecretsController::class, 'index', 30, 60],
+			'application secrets show' => [ApplicationSecretsController::class, 'show', 30, 60],
+			'application create' => [ApplicationController::class, 'create', 10, 60],
+		];
+	}//end publicEndpointsProvider()
 
-    /**
-     * Every documented public endpoint carries #[AnonRateLimit] with the
-     * expected limit and period.
-     *
-     * @param class-string $controllerClass The controller class
-     * @param string       $method          The method name
-     * @param int          $expectedLimit   The expected `limit` value
-     * @param int          $expectedPeriod  The expected `period` value
-     *
-     * @return void
-     *
-     * @dataProvider publicEndpointsProvider
-     */
-    public function testEndpointCarriesAnonRateLimit(
-        string $controllerClass,
-        string $method,
-        int $expectedLimit,
-        int $expectedPeriod,
-    ): void {
-        $reflection = new ReflectionMethod($controllerClass, $method);
-        $attributes = $reflection->getAttributes(AnonRateLimit::class);
+	/**
+	 * Every documented public endpoint carries #[AnonRateLimit] with the
+	 * expected limit and period.
+	 *
+	 * @param class-string $controllerClass The controller class
+	 * @param string $method The method name
+	 * @param int $expectedLimit The expected `limit` value
+	 * @param int $expectedPeriod The expected `period` value
+	 *
+	 * @return void
+	 *
+	 * @dataProvider publicEndpointsProvider
+	 */
+	public function testEndpointCarriesAnonRateLimit(
+		string $controllerClass,
+		string $method,
+		int $expectedLimit,
+		int $expectedPeriod,
+	): void {
+		$reflection = new ReflectionMethod($controllerClass, $method);
+		$attributes = $reflection->getAttributes(AnonRateLimit::class);
 
-        $this->assertNotEmpty(
-            $attributes,
-            sprintf(
-                '%s::%s must carry #[AnonRateLimit] — see docs/ARCHITECTURE.md#41-public-endpoint-rate-limits',
-                $controllerClass,
-                $method
-            )
-        );
+		$this->assertNotEmpty(
+			$attributes,
+			sprintf(
+				'%s::%s must carry #[AnonRateLimit] — see docs/ARCHITECTURE.md#41-public-endpoint-rate-limits',
+				$controllerClass,
+				$method
+			)
+		);
 
-        $instance = $attributes[0]->newInstance();
+		$instance = $attributes[0]->newInstance();
 
-        $this->assertSame(
-            $expectedLimit,
-            $instance->getLimit(),
-            sprintf('%s::%s AnonRateLimit limit changed from the documented value', $controllerClass, $method)
-        );
-        $this->assertSame(
-            $expectedPeriod,
-            $instance->getPeriod(),
-            sprintf('%s::%s AnonRateLimit period changed from the documented value', $controllerClass, $method)
-        );
-    }//end testEndpointCarriesAnonRateLimit()
+		$this->assertSame(
+			$expectedLimit,
+			$instance->getLimit(),
+			sprintf('%s::%s AnonRateLimit limit changed from the documented value', $controllerClass, $method)
+		);
+		$this->assertSame(
+			$expectedPeriod,
+			$instance->getPeriod(),
+			sprintf('%s::%s AnonRateLimit period changed from the documented value', $controllerClass, $method)
+		);
+	}//end testEndpointCarriesAnonRateLimit()
 }//end class

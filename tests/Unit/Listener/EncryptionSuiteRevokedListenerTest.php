@@ -30,90 +30,86 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for EncryptionSuiteRevokedListener.
  */
-class EncryptionSuiteRevokedListenerTest extends TestCase
-{
-    /**
-     * Test the listener sweeps share targets and promotes delegations
-     * for a user-owned suite.
-     *
-     * @return void
-     */
-    public function testHandleSweepsAndPromotesForUserSuite(): void
-    {
-        $mapper   = $this->createMock(ShareTargetMapper::class);
-        $service  = $this->createMock(DelegationService::class);
-        $logger   = $this->createMock(LoggerInterface::class);
-        $listener = new EncryptionSuiteRevokedListener(
-            shareTargetMapper: $mapper,
-            delegationService: $service,
-            logger: $logger
-        );
+class EncryptionSuiteRevokedListenerTest extends TestCase {
+	/**
+	 * Test the listener sweeps share targets and promotes delegations
+	 * for a user-owned suite.
+	 *
+	 * @return void
+	 */
+	public function testHandleSweepsAndPromotesForUserSuite(): void {
+		$mapper = $this->createMock(ShareTargetMapper::class);
+		$service = $this->createMock(DelegationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new EncryptionSuiteRevokedListener(
+			shareTargetMapper: $mapper,
+			delegationService: $service,
+			logger: $logger
+		);
 
-        $event = new EncryptionSuiteRevokedEvent(
-            suiteId: 'suite-1',
-            ownerType: 'user',
-            ownerId: 'alice',
-            revokedBy: 'admin'
-        );
+		$event = new EncryptionSuiteRevokedEvent(
+			suiteId: 'suite-1',
+			ownerType: 'user',
+			ownerId: 'alice',
+			revokedBy: 'admin'
+		);
 
-        $mapper->expects($this->once())
-            ->method('deleteByTargetUser')
-            ->with('alice');
-        $service->expects($this->once())
-            ->method('makePermanent')
-            ->with('alice')
-            ->willReturn(2);
+		$mapper->expects($this->once())
+			->method('deleteByTargetUser')
+			->with('alice');
+		$service->expects($this->once())
+			->method('makePermanent')
+			->with('alice')
+			->willReturn(2);
 
-        $listener->handle($event);
-    }//end testHandleSweepsAndPromotesForUserSuite()
+		$listener->handle($event);
+	}//end testHandleSweepsAndPromotesForUserSuite()
 
-    /**
-     * Test the listener skips application suites.
-     *
-     * @return void
-     */
-    public function testHandleSkipsApplicationSuites(): void
-    {
-        $mapper   = $this->createMock(ShareTargetMapper::class);
-        $service  = $this->createMock(DelegationService::class);
-        $logger   = $this->createMock(LoggerInterface::class);
-        $listener = new EncryptionSuiteRevokedListener(
-            shareTargetMapper: $mapper,
-            delegationService: $service,
-            logger: $logger
-        );
+	/**
+	 * Test the listener skips application suites.
+	 *
+	 * @return void
+	 */
+	public function testHandleSkipsApplicationSuites(): void {
+		$mapper = $this->createMock(ShareTargetMapper::class);
+		$service = $this->createMock(DelegationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new EncryptionSuiteRevokedListener(
+			shareTargetMapper: $mapper,
+			delegationService: $service,
+			logger: $logger
+		);
 
-        $event = new EncryptionSuiteRevokedEvent(
-            suiteId: 'suite-1',
-            ownerType: 'application',
-            ownerId: 'app-1',
-            revokedBy: 'admin'
-        );
+		$event = new EncryptionSuiteRevokedEvent(
+			suiteId: 'suite-1',
+			ownerType: 'application',
+			ownerId: 'app-1',
+			revokedBy: 'admin'
+		);
 
-        $mapper->expects($this->never())->method('deleteByTargetUser');
-        $service->expects($this->never())->method('makePermanent');
+		$mapper->expects($this->never())->method('deleteByTargetUser');
+		$service->expects($this->never())->method('makePermanent');
 
-        $listener->handle($event);
-    }//end testHandleSkipsApplicationSuites()
+		$listener->handle($event);
+	}//end testHandleSkipsApplicationSuites()
 
-    /**
-     * Test the listener no-ops on unrelated events.
-     *
-     * @return void
-     */
-    public function testHandleIgnoresUnrelatedEvents(): void
-    {
-        $mapper   = $this->createMock(ShareTargetMapper::class);
-        $service  = $this->createMock(DelegationService::class);
-        $logger   = $this->createMock(LoggerInterface::class);
-        $listener = new EncryptionSuiteRevokedListener(
-            shareTargetMapper: $mapper,
-            delegationService: $service,
-            logger: $logger
-        );
+	/**
+	 * Test the listener no-ops on unrelated events.
+	 *
+	 * @return void
+	 */
+	public function testHandleIgnoresUnrelatedEvents(): void {
+		$mapper = $this->createMock(ShareTargetMapper::class);
+		$service = $this->createMock(DelegationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new EncryptionSuiteRevokedListener(
+			shareTargetMapper: $mapper,
+			delegationService: $service,
+			logger: $logger
+		);
 
-        $mapper->expects($this->never())->method('deleteByTargetUser');
+		$mapper->expects($this->never())->method('deleteByTargetUser');
 
-        $listener->handle($this->createMock(Event::class));
-    }//end testHandleIgnoresUnrelatedEvents()
+		$listener->handle($this->createMock(Event::class));
+	}//end testHandleIgnoresUnrelatedEvents()
 }//end class

@@ -34,53 +34,51 @@ use Throwable;
 /**
  * Hourly expiry of overdue machine leases.
  */
-class ExpireMachineLeasesJob extends TimedJob
-{
-    /**
-     * Constructor for ExpireMachineLeasesJob.
-     *
-     * @param ITimeFactory    $time         The time factory
-     * @param LeaseService    $leaseService The lease service
-     * @param LoggerInterface $logger       The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private LeaseService $leaseService,
-        private LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: 3600);
-    }//end __construct()
+class ExpireMachineLeasesJob extends TimedJob {
+	/**
+	 * Constructor for ExpireMachineLeasesJob.
+	 *
+	 * @param ITimeFactory $time The time factory
+	 * @param LeaseService $leaseService The lease service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private LeaseService $leaseService,
+		private LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: 3600);
+	}//end __construct()
 
-    /**
-     * Run the lease expiry sweep (fail-soft).
-     *
-     * @param mixed $argument Unused job argument
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
-     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
-     *
-     * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-expiry
-     */
-    protected function run($argument): void
-    {
-        try {
-            $expired = $this->leaseService->expireDue();
-            if ($expired > 0) {
-                $this->logger->info(
-                    'Doriath: expired '.$expired.' machine leases',
-                    ['app' => Application::APP_ID]
-                );
-            }
-        } catch (Throwable $exception) {
-            $this->logger->warning(
-                'Doriath: lease expiry sweep failed: '.$exception->getMessage(),
-                ['app' => Application::APP_ID]
-            );
-        }
-    }//end run()
+	/**
+	 * Run the lease expiry sweep (fail-soft).
+	 *
+	 * @param mixed $argument Unused job argument
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+	 *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
+	 *
+	 * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-expiry
+	 */
+	protected function run($argument): void {
+		try {
+			$expired = $this->leaseService->expireDue();
+			if ($expired > 0) {
+				$this->logger->info(
+					'Doriath: expired ' . $expired . ' machine leases',
+					['app' => Application::APP_ID]
+				);
+			}
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Doriath: lease expiry sweep failed: ' . $exception->getMessage(),
+				['app' => Application::APP_ID]
+			);
+		}
+	}//end run()
 }//end class

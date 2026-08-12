@@ -35,44 +35,42 @@ use OCP\Migration\SimpleMigrationStep;
  * Full JWT-Bearer auth + EncryptionSuite provisioning + cross-app
  * notification ship with the dedicated build cycle.
  */
-class Version000012Date20260611000003 extends SimpleMigrationStep
-{
-    /**
-     * Change the database schema to add the applications table.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+class Version000012Date20260611000003 extends SimpleMigrationStep {
+	/**
+	 * Change the database schema to add the applications table.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_applications') === true) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_applications') === true) {
+			return null;
+		}
 
-        $table = $schema->createTable('doriath_applications');
+		$table = $schema->createTable('doriath_applications');
 
-        $table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
-        $table->addColumn('name', Types::STRING, ['notnull' => true, 'length' => 128]);
-        $table->addColumn('description', Types::TEXT, ['notnull' => false]);
-        $table->addColumn('type', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'external']);
-        $table->addColumn('status', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'pending']);
-        $table->addColumn('csr', Types::TEXT, ['notnull' => false]);
-        $table->addColumn('registered_by', Types::STRING, ['notnull' => false, 'length' => 64]);
-        $table->addColumn('approved_by', Types::STRING, ['notnull' => false, 'length' => 64]);
-        $table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
-        $table->addColumn('approved_at', Types::DATETIME, ['notnull' => false]);
+		$table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
+		$table->addColumn('name', Types::STRING, ['notnull' => true, 'length' => 128]);
+		$table->addColumn('description', Types::TEXT, ['notnull' => false]);
+		$table->addColumn('type', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'external']);
+		$table->addColumn('status', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'pending']);
+		$table->addColumn('csr', Types::TEXT, ['notnull' => false]);
+		$table->addColumn('registered_by', Types::STRING, ['notnull' => false, 'length' => 64]);
+		$table->addColumn('approved_by', Types::STRING, ['notnull' => false, 'length' => 64]);
+		$table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
+		$table->addColumn('approved_at', Types::DATETIME, ['notnull' => false]);
 
-        $table->setPrimaryKey(['id']);
-        $table->addIndex(['status'], 'doriath_app_status_idx');
-        $table->addIndex(['registered_by'], 'doriath_app_registrant_idx');
-        $table->addIndex(['name'], 'doriath_app_name_idx');
+		$table->setPrimaryKey(['id']);
+		$table->addIndex(['status'], 'doriath_app_status_idx');
+		$table->addIndex(['registered_by'], 'doriath_app_registrant_idx');
+		$table->addIndex(['name'], 'doriath_app_name_idx');
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

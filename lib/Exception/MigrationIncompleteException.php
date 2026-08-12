@@ -30,6 +30,5 @@ use RuntimeException;
 /**
  * Thrown when a migration cannot yet be terminated.
  */
-class MigrationIncompleteException extends RuntimeException
-{
+class MigrationIncompleteException extends RuntimeException {
 }//end class

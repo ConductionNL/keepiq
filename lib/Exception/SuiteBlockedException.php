@@ -28,6 +28,5 @@ use RuntimeException;
 /**
  * Thrown when a secret's encryption suite is revoked or compromised.
  */
-class SuiteBlockedException extends RuntimeException
-{
+class SuiteBlockedException extends RuntimeException {
 }//end class

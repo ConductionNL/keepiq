@@ -32,53 +32,51 @@ use Throwable;
 /**
  * Hourly purge of dead ephemeral sends.
  */
-class EphemeralSendPurgeJob extends TimedJob
-{
-    /**
-     * Constructor for EphemeralSendPurgeJob.
-     *
-     * @param ITimeFactory         $time    The time factory
-     * @param EphemeralSendService $service The send service
-     * @param LoggerInterface      $logger  The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private EphemeralSendService $service,
-        private LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: 3600);
-    }//end __construct()
+class EphemeralSendPurgeJob extends TimedJob {
+	/**
+	 * Constructor for EphemeralSendPurgeJob.
+	 *
+	 * @param ITimeFactory $time The time factory
+	 * @param EphemeralSendService $service The send service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private EphemeralSendService $service,
+		private LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: 3600);
+	}//end __construct()
 
-    /**
-     * Run the purge (fail-soft).
-     *
-     * @param mixed $argument Unused job argument
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
-     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
-     *
-     * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md
-     */
-    protected function run($argument): void
-    {
-        try {
-            $purged = $this->service->purge();
-            if ($purged > 0) {
-                $this->logger->info(
-                    'Doriath: purged '.$purged.' dead ephemeral sends',
-                    ['app' => Application::APP_ID]
-                );
-            }
-        } catch (Throwable $exception) {
-            $this->logger->warning(
-                'Doriath: ephemeral-send purge failed: '.$exception->getMessage(),
-                ['app' => Application::APP_ID]
-            );
-        }
-    }//end run()
+	/**
+	 * Run the purge (fail-soft).
+	 *
+	 * @param mixed $argument Unused job argument
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+	 *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
+	 *
+	 * @spec openspec/changes/ephemeral-send/specs/ephemeral-send/spec.md
+	 */
+	protected function run($argument): void {
+		try {
+			$purged = $this->service->purge();
+			if ($purged > 0) {
+				$this->logger->info(
+					'Doriath: purged ' . $purged . ' dead ephemeral sends',
+					['app' => Application::APP_ID]
+				);
+			}
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Doriath: ephemeral-send purge failed: ' . $exception->getMessage(),
+				['app' => Application::APP_ID]
+			);
+		}
+	}//end run()
 }//end class

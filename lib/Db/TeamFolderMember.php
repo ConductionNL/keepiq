@@ -43,132 +43,126 @@ use OCP\AppFramework\Db\Entity;
  * @method string getGrade()
  * @method void setGrade(string $grade)
  */
-class TeamFolderMember extends Entity implements JsonSerializable
-{
+class TeamFolderMember extends Entity implements JsonSerializable {
 
-    /**
-     * The TeamFolder this membership belongs to.
-     *
-     * @var string
-     */
-    protected string $teamFolderId = '';
+	/**
+	 * The TeamFolder this membership belongs to.
+	 *
+	 * @var string
+	 */
+	protected string $teamFolderId = '';
 
-    /**
-     * The member type: `user` or `group`.
-     *
-     * Initialized empty on purpose: a non-empty default would make
-     * setMemberType('user') a no-change set, so the Entity would never
-     * mark the field dirty and QBMapper::insert would omit the column
-     * (NOT NULL violation) — found in live verification.
-     *
-     * @var string
-     */
-    protected string $memberType = '';
+	/**
+	 * The member type: `user` or `group`.
+	 *
+	 * Initialized empty on purpose: a non-empty default would make
+	 * setMemberType('user') a no-change set, so the Entity would never
+	 * mark the field dirty and QBMapper::insert would omit the column
+	 * (NOT NULL violation) — found in live verification.
+	 *
+	 * @var string
+	 */
+	protected string $memberType = '';
 
-    /**
-     * The Nextcloud user ID or group ID.
-     *
-     * @var string
-     */
-    protected string $memberId = '';
+	/**
+	 * The Nextcloud user ID or group ID.
+	 *
+	 * @var string
+	 */
+	protected string $memberId = '';
 
-    /**
-     * The owner user ID that added this member.
-     *
-     * @var string
-     */
-    protected string $addedBy = '';
+	/**
+	 * The owner user ID that added this member.
+	 *
+	 * @var string
+	 */
+	protected string $addedBy = '';
 
-    /**
-     * When the membership was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the membership was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * The permission grade: `read` (default) or `write`
-     * (folder-permission-grades §1.2). Empty default (NC Entity
-     * dirty-tracking); readers treat '' as `read`.
-     *
-     * @var string
-     */
-    protected string $grade = '';
+	/**
+	 * The permission grade: `read` (default) or `write`
+	 * (folder-permission-grades §1.2). Empty default (NC Entity
+	 * dirty-tracking); readers treat '' as `read`.
+	 *
+	 * @var string
+	 */
+	protected string $grade = '';
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for TeamFolderMember.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'teamFolderId', type: 'string');
-        $this->addType(fieldName: 'memberType', type: 'string');
-        $this->addType(fieldName: 'memberId', type: 'string');
-        $this->addType(fieldName: 'addedBy', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-        $this->addType(fieldName: 'grade', type: 'string');
-    }//end __construct()
+	/**
+	 * Constructor for TeamFolderMember.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'teamFolderId', type: 'string');
+		$this->addType(fieldName: 'memberType', type: 'string');
+		$this->addType(fieldName: 'memberId', type: 'string');
+		$this->addType(fieldName: 'addedBy', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+		$this->addType(fieldName: 'grade', type: 'string');
+	}//end __construct()
 
-    /**
-     * The effective grade — an unset/legacy row reads as `read`.
-     *
-     * @return string
-     */
-    public function effectiveGrade(): string
-    {
-        if ($this->grade === 'write') {
-            return 'write';
-        }
+	/**
+	 * The effective grade — an unset/legacy row reads as `read`.
+	 *
+	 * @return string
+	 */
+	public function effectiveGrade(): string {
+		if ($this->grade === 'write') {
+			return 'write';
+		}
 
-        return 'read';
-    }//end effectiveGrade()
+		return 'read';
+	}//end effectiveGrade()
 
-    /**
-     * Serialize the entity to an array for the API.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'           => $this->getId(),
-            'teamFolderId' => $this->teamFolderId,
-            'memberType'   => $this->memberType,
-            'memberId'     => $this->memberId,
-            'addedBy'      => $this->addedBy,
-            'createdAt'    => $this->createdAt?->format('c'),
-            'grade'        => $this->effectiveGrade(),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'teamFolderId' => $this->teamFolderId,
+			'memberType' => $this->memberType,
+			'memberId' => $this->memberId,
+			'addedBy' => $this->addedBy,
+			'createdAt' => $this->createdAt?->format('c'),
+			'grade' => $this->effectiveGrade(),
+		];
+	}//end jsonSerialize()
 }//end class

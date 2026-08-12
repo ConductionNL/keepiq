@@ -47,53 +47,51 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * a single invariant: no ciphertext may survive a suite it can no longer be
  * decrypted under.
  */
-final class SuiteLifecycleEventRegistrar
-{
-    /**
-     * Bind the suite-lifecycle listeners to their events.
-     *
-     * @param IRegistrationContext $context The registration context
-     *
-     * @return void
-     *
-     * @spec openspec/specs/encryption-suites/spec.md
-     */
-    public function register(IRegistrationContext $context): void
-    {
-        // Compromise-recovery: lock SecretRequests when migration starts and
-        // unlock + re-suite them when it completes
-        // (implement-secret-requests §6.1-6.3).
-        $context->registerEventListener(
-            event: SuiteMigrationStartedEvent::class,
-            listener: SuiteMigrationStartedListener::class
-        );
-        $context->registerEventListener(
-            event: SuiteMigrationCompletedEvent::class,
-            listener: SuiteMigrationCompletedListener::class
-        );
+final class SuiteLifecycleEventRegistrar {
+	/**
+	 * Bind the suite-lifecycle listeners to their events.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md
+	 */
+	public function register(IRegistrationContext $context): void {
+		// Compromise-recovery: lock SecretRequests when migration starts and
+		// unlock + re-suite them when it completes
+		// (implement-secret-requests §6.1-6.3).
+		$context->registerEventListener(
+			event: SuiteMigrationStartedEvent::class,
+			listener: SuiteMigrationStartedListener::class
+		);
+		$context->registerEventListener(
+			event: SuiteMigrationCompletedEvent::class,
+			listener: SuiteMigrationCompletedListener::class
+		);
 
-        // Implement-user-sharing §8 — sharing-graph reactions to suite
-        // revocation and post-migration possibly-compromised flagging.
-        $context->registerEventListener(
-            event: EncryptionSuiteRevokedEvent::class,
-            listener: EncryptionSuiteRevokedListener::class
-        );
-        $context->registerEventListener(
-            event: SuiteMigrationCompletedEvent::class,
-            listener: SuiteCompromiseListener::class
-        );
+		// Implement-user-sharing §8 — sharing-graph reactions to suite
+		// revocation and post-migration possibly-compromised flagging.
+		$context->registerEventListener(
+			event: EncryptionSuiteRevokedEvent::class,
+			listener: EncryptionSuiteRevokedListener::class
+		);
+		$context->registerEventListener(
+			event: SuiteMigrationCompletedEvent::class,
+			listener: SuiteCompromiseListener::class
+		);
 
-        // Emergency access — invalidate/clear recovery envelopes on a grantor's
-        // suite rotation (compromise recovery) or revocation, and invalidate
-        // envelopes to a grantee whose suite is revoked (add-emergency-access §3).
-        $context->registerEventListener(
-            event: SuiteMigrationCompletedEvent::class,
-            listener: EmergencyAccessSuiteRotationListener::class
-        );
-        $context->registerEventListener(
-            event: EncryptionSuiteRevokedEvent::class,
-            listener: EmergencyAccessSuiteRevocationListener::class
-        );
+		// Emergency access — invalidate/clear recovery envelopes on a grantor's
+		// suite rotation (compromise recovery) or revocation, and invalidate
+		// envelopes to a grantee whose suite is revoked (add-emergency-access §3).
+		$context->registerEventListener(
+			event: SuiteMigrationCompletedEvent::class,
+			listener: EmergencyAccessSuiteRotationListener::class
+		);
+		$context->registerEventListener(
+			event: EncryptionSuiteRevokedEvent::class,
+			listener: EmergencyAccessSuiteRevocationListener::class
+		);
 
-    }//end register()
+	}//end register()
 }//end class

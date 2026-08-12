@@ -39,38 +39,36 @@ use OCP\User\Events\UserDeletedEvent;
  * seam visible in one place, so a new core event is added next to the
  * existing ones rather than buried in a general listener list.
  */
-final class UserLifecycleEventRegistrar
-{
-    /**
-     * Bind the account and group-membership listeners to their core events.
-     *
-     * @param IRegistrationContext $context The registration context
-     *
-     * @return void
-     *
-     * @spec openspec/specs/user-sharing/spec.md
-     */
-    public function register(IRegistrationContext $context): void
-    {
-        // Implement-user-sharing §8 — sharing-graph reactions to group
-        // membership churn.
-        $context->registerEventListener(
-            event: UserAddedEvent::class,
-            listener: UserAddedToGroupListener::class
-        );
-        $context->registerEventListener(
-            event: UserRemovedEvent::class,
-            listener: UserRemovedFromGroupListener::class
-        );
+final class UserLifecycleEventRegistrar {
+	/**
+	 * Bind the account and group-membership listeners to their core events.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md
+	 */
+	public function register(IRegistrationContext $context): void {
+		// Implement-user-sharing §8 — sharing-graph reactions to group
+		// membership churn.
+		$context->registerEventListener(
+			event: UserAddedEvent::class,
+			listener: UserAddedToGroupListener::class
+		);
+		$context->registerEventListener(
+			event: UserRemovedEvent::class,
+			listener: UserRemovedFromGroupListener::class
+		);
 
-        // Secret-export-gdpr D4 — cascade-delete all of a user's Doriath data
-        // when their Nextcloud account is removed, so vault data never outlives
-        // its account. The cascade is idempotent and shares its implementation
-        // with the in-app GDPR Art. 17 deletion flow.
-        $context->registerEventListener(
-            event: UserDeletedEvent::class,
-            listener: UserDeletedListener::class
-        );
+		// Secret-export-gdpr D4 — cascade-delete all of a user's Doriath data
+		// when their Nextcloud account is removed, so vault data never outlives
+		// its account. The cascade is idempotent and shares its implementation
+		// with the in-app GDPR Art. 17 deletion flow.
+		$context->registerEventListener(
+			event: UserDeletedEvent::class,
+			listener: UserDeletedListener::class
+		);
 
-    }//end register()
+	}//end register()
 }//end class

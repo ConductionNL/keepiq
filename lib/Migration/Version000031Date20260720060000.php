@@ -34,51 +34,49 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Creates the passkey-credential table + suite unlock-key epoch.
  */
-class Version000031Date20260720060000 extends SimpleMigrationStep
-{
-    /**
-     * Apply the schema changes.
-     *
-     * @param IOutput                   $output        The migration output
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
-     * @param array<string,mixed>       $options       The migration options
-     *
-     * @return ISchemaWrapper|null
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        $schema = $schemaClosure();
+class Version000031Date20260720060000 extends SimpleMigrationStep {
+	/**
+	 * Apply the schema changes.
+	 *
+	 * @param IOutput $output The migration output
+	 * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
+	 * @param array<string,mixed> $options The migration options
+	 *
+	 * @return ISchemaWrapper|null
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_passkey_credentials') === false) {
-            $table = $schema->createTable('doriath_passkey_credentials');
-            $table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('owner_id', Types::STRING, ['notnull' => true, 'length' => 64]);
-            $table->addColumn('credential_id', Types::TEXT, ['notnull' => true]);
-            $table->addColumn('public_key', Types::TEXT, ['notnull' => false]);
-            $table->addColumn('prf_salt', Types::TEXT, ['notnull' => true]);
-            $table->addColumn('wrapped_unlock_key', Types::TEXT, ['notnull' => true]);
-            $table->addColumn('unlock_key_epoch', Types::INTEGER, ['notnull' => true, 'default' => 1]);
-            $table->addColumn('label', Types::STRING, ['notnull' => false, 'length' => 128]);
-            $table->addColumn('transports', Types::STRING, ['notnull' => false, 'length' => 128]);
-            $table->addColumn('aaguid', Types::STRING, ['notnull' => false, 'length' => 64]);
-            $table->addColumn('status', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'active']);
-            $table->addColumn('last_used_at', Types::DATETIME, ['notnull' => false]);
-            $table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
-            $table->setPrimaryKey(['id']);
-            $table->addIndex(['owner_id', 'status'], 'doriath_pk_owner_status');
-            // The credential_id column is TEXT (base64url, variable length) — a plain
-            // index prefix suffices for the per-owner uniqueness check done
-            // in the mapper; a unique index over TEXT is not portable.
-            $table->addIndex(['owner_id'], 'doriath_pk_owner');
-        }//end if
+		if ($schema->hasTable('doriath_passkey_credentials') === false) {
+			$table = $schema->createTable('doriath_passkey_credentials');
+			$table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('owner_id', Types::STRING, ['notnull' => true, 'length' => 64]);
+			$table->addColumn('credential_id', Types::TEXT, ['notnull' => true]);
+			$table->addColumn('public_key', Types::TEXT, ['notnull' => false]);
+			$table->addColumn('prf_salt', Types::TEXT, ['notnull' => true]);
+			$table->addColumn('wrapped_unlock_key', Types::TEXT, ['notnull' => true]);
+			$table->addColumn('unlock_key_epoch', Types::INTEGER, ['notnull' => true, 'default' => 1]);
+			$table->addColumn('label', Types::STRING, ['notnull' => false, 'length' => 128]);
+			$table->addColumn('transports', Types::STRING, ['notnull' => false, 'length' => 128]);
+			$table->addColumn('aaguid', Types::STRING, ['notnull' => false, 'length' => 64]);
+			$table->addColumn('status', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'active']);
+			$table->addColumn('last_used_at', Types::DATETIME, ['notnull' => false]);
+			$table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
+			$table->setPrimaryKey(['id']);
+			$table->addIndex(['owner_id', 'status'], 'doriath_pk_owner_status');
+			// The credential_id column is TEXT (base64url, variable length) — a plain
+			// index prefix suffices for the per-owner uniqueness check done
+			// in the mapper; a unique index over TEXT is not portable.
+			$table->addIndex(['owner_id'], 'doriath_pk_owner');
+		}//end if
 
-        if ($schema->hasTable('doriath_enc_suites') === true) {
-            $suites = $schema->getTable('doriath_enc_suites');
-            if ($suites->hasColumn('unlock_key_epoch') === false) {
-                $suites->addColumn('unlock_key_epoch', Types::INTEGER, ['notnull' => true, 'default' => 1]);
-            }
-        }
+		if ($schema->hasTable('doriath_enc_suites') === true) {
+			$suites = $schema->getTable('doriath_enc_suites');
+			if ($suites->hasColumn('unlock_key_epoch') === false) {
+				$suites->addColumn('unlock_key_epoch', Types::INTEGER, ['notnull' => true, 'default' => 1]);
+			}
+		}
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

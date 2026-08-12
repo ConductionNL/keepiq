@@ -41,295 +41,282 @@ use RuntimeException;
 /**
  * Preconditions and authorization for the SecretRequest lifecycle.
  */
-class SecretRequestPolicy
-{
-    /**
-     * Constructor for SecretRequestPolicy.
-     *
-     * @param SecretRequestMapper        $mapper       The request mapper
-     * @param SecretMapper|null          $secretMapper Optional Secret mapper for owner lookups
-     * @param EncryptionSuiteMapper|null $suiteMapper  Optional suite mapper
-     *
-     * @return void
-     *
-     * @spec exclude Constructor wiring only — no domain logic.
-     */
-    public function __construct(
-        private SecretRequestMapper $mapper,
-        private ?SecretMapper $secretMapper=null,
-        private ?EncryptionSuiteMapper $suiteMapper=null,
-    ) {
-    }//end __construct()
+class SecretRequestPolicy {
+	/**
+	 * Constructor for SecretRequestPolicy.
+	 *
+	 * @param SecretRequestMapper $mapper The request mapper
+	 * @param SecretMapper|null $secretMapper Optional Secret mapper for owner lookups
+	 * @param EncryptionSuiteMapper|null $suiteMapper Optional suite mapper
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only — no domain logic.
+	 */
+	public function __construct(
+		private SecretRequestMapper $mapper,
+		private ?SecretMapper $secretMapper = null,
+		private ?EncryptionSuiteMapper $suiteMapper = null,
+	) {
+	}//end __construct()
 
-    /**
-     * Look up a pending, non-expired request by its public access token.
-     *
-     * Distinguishes locked / expired / fulfilled / unknown via specific
-     * error codes so the public fill page can render targeted messaging.
-     *
-     * @param string $token The access token
-     *
-     * @return SecretRequest
-     *
-     * @throws InvalidArgumentException With code 404 (unknown), 410 (fulfilled),
-     *                                  423 (locked) or 408 (expired).
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
-     */
-    public function requireOpenByToken(string $token): SecretRequest
-    {
-        if ($token === '') {
-            throw new InvalidArgumentException(message: 'token is required', code: 400);
-        }
+	/**
+	 * Look up a pending, non-expired request by its public access token.
+	 *
+	 * Distinguishes locked / expired / fulfilled / unknown via specific
+	 * error codes so the public fill page can render targeted messaging.
+	 *
+	 * @param string $token The access token
+	 *
+	 * @return SecretRequest
+	 *
+	 * @throws InvalidArgumentException With code 404 (unknown), 410 (fulfilled),
+	 *                                  423 (locked) or 408 (expired).
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function requireOpenByToken(string $token): SecretRequest {
+		if ($token === '') {
+			throw new InvalidArgumentException(message: 'token is required', code: 400);
+		}
 
-        try {
-            $entity = $this->mapper->findByToken($token);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Request not found', code: 404);
-        }
+		try {
+			$entity = $this->mapper->findByToken($token);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Request not found', code: 404);
+		}
 
-        switch ($entity->getStatus()) {
-            case SecretRequest::STATUS_LOCKED:
-                throw new InvalidArgumentException(message: 'Request is temporarily unavailable', code: 423);
+		switch ($entity->getStatus()) {
+			case SecretRequest::STATUS_LOCKED:
+				throw new InvalidArgumentException(message: 'Request is temporarily unavailable', code: 423);
+			case SecretRequest::STATUS_FULFILLED:
+				throw new InvalidArgumentException(message: 'Request was already fulfilled', code: 410);
+			case SecretRequest::STATUS_DECLINED:
+				throw new InvalidArgumentException(message: 'Request was declined', code: 410);
+			case SecretRequest::STATUS_PENDING:
+				if ($entity->isExpired() === true) {
+					throw new InvalidArgumentException(message: 'Request has expired', code: 408);
+				}
+				return $entity;
+			default:
+				throw new InvalidArgumentException(message: 'Request is in an unknown state', code: 500);
+		}
+	}//end requireOpenByToken()
 
-            case SecretRequest::STATUS_FULFILLED:
-                throw new InvalidArgumentException(message: 'Request was already fulfilled', code: 410);
+	/**
+	 * Re-read a request by ID and assert it is still pending. Used by the
+	 * fill flow to defend against a parallel fill that raced the token
+	 * lookup.
+	 *
+	 * @param string $requestId The request ID
+	 *
+	 * @return SecretRequest
+	 *
+	 * @throws InvalidArgumentException With code 404 (gone) or 409 (not pending).
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-write-once
+	 */
+	public function requirePendingById(string $requestId): SecretRequest {
+		try {
+			$current = $this->mapper->findById($requestId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Request not found', code: 404);
+		}
 
-            case SecretRequest::STATUS_DECLINED:
-                throw new InvalidArgumentException(message: 'Request was declined', code: 410);
+		if ($current->getStatus() !== SecretRequest::STATUS_PENDING) {
+			throw new InvalidArgumentException(message: 'Request is not pending', code: 409);
+		}
 
-            case SecretRequest::STATUS_PENDING:
-                if ($entity->isExpired() === true) {
-                    throw new InvalidArgumentException(message: 'Request has expired', code: 408);
-                }
-                return $entity;
+		return $current;
+	}//end requirePendingById()
 
-            default:
-                throw new InvalidArgumentException(message: 'Request is in an unknown state', code: 500);
-        }
-    }//end requireOpenByToken()
+	/**
+	 * Every field the request asked for must arrive as a non-empty string.
+	 *
+	 * @param SecretRequest $entity The request being filled
+	 * @param array<string,mixed> $encryptedFields The client-encrypted values
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a requested field is absent or empty.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-field-validation
+	 */
+	public function requireAllRequestedFields(SecretRequest $entity, array $encryptedFields): void {
+		$requested = json_decode(json: $entity->getRequestedFields(), associative: true);
+		if (is_array($requested) === false) {
+			return;
+		}
 
-    /**
-     * Re-read a request by ID and assert it is still pending. Used by the
-     * fill flow to defend against a parallel fill that raced the token
-     * lookup.
-     *
-     * @param string $requestId The request ID
-     *
-     * @return SecretRequest
-     *
-     * @throws InvalidArgumentException With code 404 (gone) or 409 (not pending).
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-write-once
-     */
-    public function requirePendingById(string $requestId): SecretRequest
-    {
-        try {
-            $current = $this->mapper->findById($requestId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Request not found', code: 404);
-        }
+		foreach ($requested as $field) {
+			if (array_key_exists($field, $encryptedFields) === false) {
+				throw new InvalidArgumentException(message: 'Missing required field: ' . $field, code: 400);
+			}
 
-        if ($current->getStatus() !== SecretRequest::STATUS_PENDING) {
-            throw new InvalidArgumentException(message: 'Request is not pending', code: 409);
-        }
+			$value = $encryptedFields[$field];
+			if (is_string($value) === false || $value === '') {
+				throw new InvalidArgumentException(message: 'Empty value for field: ' . $field, code: 400);
+			}
+		}
+	}//end requireAllRequestedFields()
 
-        return $current;
-    }//end requirePendingById()
+	/**
+	 * Look up a request and verify the caller is its creator.
+	 *
+	 * @param string $requestId The request ID
+	 * @param string $userId The Nextcloud user
+	 *
+	 * @return SecretRequest
+	 *
+	 * @throws InvalidArgumentException When the request is missing or the
+	 *                                  caller did not create it.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-revoke-request
+	 */
+	public function requireOwnRequest(string $requestId, string $userId): SecretRequest {
+		try {
+			$entity = $this->mapper->findById($requestId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Request not found');
+		}
 
-    /**
-     * Every field the request asked for must arrive as a non-empty string.
-     *
-     * @param SecretRequest       $entity          The request being filled
-     * @param array<string,mixed> $encryptedFields The client-encrypted values
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When a requested field is absent or empty.
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-field-validation
-     */
-    public function requireAllRequestedFields(SecretRequest $entity, array $encryptedFields): void
-    {
-        $requested = json_decode(json: $entity->getRequestedFields(), associative: true);
-        if (is_array($requested) === false) {
-            return;
-        }
+		if ($entity->getCreatedBy() !== $userId) {
+			throw new InvalidArgumentException(message: 'Not authorized for this request');
+		}
 
-        foreach ($requested as $field) {
-            if (array_key_exists($field, $encryptedFields) === false) {
-                throw new InvalidArgumentException(message: 'Missing required field: '.$field, code: 400);
-            }
+		return $entity;
+	}//end requireOwnRequest()
 
-            $value = $encryptedFields[$field];
-            if (is_string($value) === false || $value === '') {
-                throw new InvalidArgumentException(message: 'Empty value for field: '.$field, code: 400);
-            }
-        }
-    }//end requireAllRequestedFields()
+	/**
+	 * The Secret a re-request may renew: it must exist and the caller must
+	 * be its owner.
+	 *
+	 * @param string $secretId The Secret ID
+	 * @param string $userId The Nextcloud user creating the re-request
+	 *
+	 * @return Secret
+	 *
+	 * @throws InvalidArgumentException When the Secret is missing or the
+	 *                                  caller is not the owner.
+	 * @throws RuntimeException When the Secret mapper dependency is not wired.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-re-request-update-in-place
+	 */
+	public function requireReRequestableSecret(string $secretId, string $userId): Secret {
+		if ($secretId === '') {
+			throw new InvalidArgumentException(message: 'secretId is required');
+		}
 
-    /**
-     * Look up a request and verify the caller is its creator.
-     *
-     * @param string $requestId The request ID
-     * @param string $userId    The Nextcloud user
-     *
-     * @return SecretRequest
-     *
-     * @throws InvalidArgumentException When the request is missing or the
-     *                                  caller did not create it.
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-revoke-request
-     */
-    public function requireOwnRequest(string $requestId, string $userId): SecretRequest
-    {
-        try {
-            $entity = $this->mapper->findById($requestId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Request not found');
-        }
+		if ($this->secretMapper === null) {
+			throw new RuntimeException(message: 'Secret mapper not wired for re-requests');
+		}
 
-        if ($entity->getCreatedBy() !== $userId) {
-            throw new InvalidArgumentException(message: 'Not authorized for this request');
-        }
+		try {
+			$secret = $this->secretMapper->findById($secretId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Secret not found', code: 404);
+		}
 
-        return $entity;
-    }//end requireOwnRequest()
+		if ($secret->getOwnerId() !== $userId) {
+			throw new InvalidArgumentException(message: 'Only the secret owner may create a re-request', code: 403);
+		}
 
-    /**
-     * The Secret a re-request may renew: it must exist and the caller must
-     * be its owner.
-     *
-     * @param string $secretId The Secret ID
-     * @param string $userId   The Nextcloud user creating the re-request
-     *
-     * @return Secret
-     *
-     * @throws InvalidArgumentException When the Secret is missing or the
-     *                                  caller is not the owner.
-     * @throws RuntimeException When the Secret mapper dependency is not wired.
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-re-request-update-in-place
-     */
-    public function requireReRequestableSecret(string $secretId, string $userId): Secret
-    {
-        if ($secretId === '') {
-            throw new InvalidArgumentException(message: 'secretId is required');
-        }
+		return $secret;
+	}//end requireReRequestableSecret()
 
-        if ($this->secretMapper === null) {
-            throw new RuntimeException(message: 'Secret mapper not wired for re-requests');
-        }
+	/**
+	 * Assert the caller may see the request history of a Secret — the
+	 * Secret owner only.
+	 *
+	 * @param string $secretId The Secret ID
+	 * @param string $userId The requesting Nextcloud user ID
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the ownership lookup is
+	 *                                  unavailable, the Secret does not
+	 *                                  exist, or the caller is not its owner.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function requireListableSecret(string $secretId, string $userId): void {
+		if ($this->secretMapper === null) {
+			// Defensive: the bind is optional only to preserve test-mock
+			// call sites that do not exercise this path. When invoked
+			// without the mapper, refuse rather than skip the ownership
+			// check (fail closed).
+			throw new InvalidArgumentException(message: 'Ownership lookup unavailable');
+		}
 
-        try {
-            $secret = $this->secretMapper->findById($secretId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Secret not found', code: 404);
-        }
+		try {
+			$secret = $this->secretMapper->findById($secretId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Secret not found');
+		}
 
-        if ($secret->getOwnerId() !== $userId) {
-            throw new InvalidArgumentException(message: 'Only the secret owner may create a re-request', code: 403);
-        }
+		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+			throw new InvalidArgumentException(message: 'Not authorized for this secret');
+		}
+	}//end requireListableSecret()
 
-        return $secret;
-    }//end requireReRequestableSecret()
+	/**
+	 * Resolve the active EncryptionSuite of an application. An application
+	 * without an active suite cannot receive a request (no pending or
+	 * rejected applications).
+	 *
+	 * @param string $applicationId The recipient application ID
+	 *
+	 * @return string The active EncryptionSuite ID
+	 *
+	 * @throws InvalidArgumentException When the application ID is blank or
+	 *                                  it has no active suite.
+	 * @throws RuntimeException When the suite mapper dependency is not wired.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function requireApplicationSuiteId(string $applicationId): string {
+		if ($applicationId === '') {
+			throw new InvalidArgumentException(message: 'applicationId is required');
+		}
 
-    /**
-     * Assert the caller may see the request history of a Secret — the
-     * Secret owner only.
-     *
-     * @param string $secretId The Secret ID
-     * @param string $userId   The requesting Nextcloud user ID
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When the ownership lookup is
-     *                                  unavailable, the Secret does not
-     *                                  exist, or the caller is not its owner.
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-     */
-    public function requireListableSecret(string $secretId, string $userId): void
-    {
-        if ($this->secretMapper === null) {
-            // Defensive: the bind is optional only to preserve test-mock
-            // call sites that do not exercise this path. When invoked
-            // without the mapper, refuse rather than skip the ownership
-            // check (fail closed).
-            throw new InvalidArgumentException(message: 'Ownership lookup unavailable');
-        }
+		if ($this->suiteMapper === null) {
+			throw new RuntimeException(message: 'EncryptionSuite mapper not wired for application requests');
+		}
 
-        try {
-            $secret = $this->secretMapper->findById($secretId);
-        } catch (DoesNotExistException) {
-            throw new InvalidArgumentException(message: 'Secret not found');
-        }
+		try {
+			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			throw new InvalidArgumentException(
+				message: 'No active EncryptionSuite for application ' . $applicationId,
+				code: 400,
+			);
+		}
 
-        if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-            throw new InvalidArgumentException(message: 'Not authorized for this secret');
-        }
-    }//end requireListableSecret()
+		return $suite->getId();
+	}//end requireApplicationSuiteId()
 
-    /**
-     * Resolve the active EncryptionSuite of an application. An application
-     * without an active suite cannot receive a request (no pending or
-     * rejected applications).
-     *
-     * @param string $applicationId The recipient application ID
-     *
-     * @return string The active EncryptionSuite ID
-     *
-     * @throws InvalidArgumentException When the application ID is blank or
-     *                                  it has no active suite.
-     * @throws RuntimeException When the suite mapper dependency is not wired.
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-     */
-    public function requireApplicationSuiteId(string $applicationId): string
-    {
-        if ($applicationId === '') {
-            throw new InvalidArgumentException(message: 'applicationId is required');
-        }
-
-        if ($this->suiteMapper === null) {
-            throw new RuntimeException(message: 'EncryptionSuite mapper not wired for application requests');
-        }
-
-        try {
-            $suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
-        } catch (DoesNotExistException | MultipleObjectsReturnedException) {
-            throw new InvalidArgumentException(
-                message: 'No active EncryptionSuite for application '.$applicationId,
-                code: 400,
-            );
-        }
-
-        return $suite->getId();
-    }//end requireApplicationSuiteId()
-
-    /**
-     * Reject when a pending request is already open for the Secret —
-     * fence-posts both double-submits and the spec invariant "one pending
-     * request per secret at a time".
-     *
-     * @param string $secretId The Secret ID
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When a pending request already exists.
-     *
-     * @spec openspec/specs/secret-requests/spec.md#requirement-re-request-update-in-place
-     */
-    public function requireNoPendingRequest(string $secretId): void
-    {
-        try {
-            $this->mapper->findPendingBySecretId($secretId);
-            throw new InvalidArgumentException(
-                message: 'A pending request already exists for this secret',
-                code: 409,
-            );
-        } catch (DoesNotExistException) {
-            // Expected — no pending request, continue.
-        }
-    }//end requireNoPendingRequest()
+	/**
+	 * Reject when a pending request is already open for the Secret —
+	 * fence-posts both double-submits and the spec invariant "one pending
+	 * request per secret at a time".
+	 *
+	 * @param string $secretId The Secret ID
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a pending request already exists.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-re-request-update-in-place
+	 */
+	public function requireNoPendingRequest(string $secretId): void {
+		try {
+			$this->mapper->findPendingBySecretId($secretId);
+			throw new InvalidArgumentException(
+				message: 'A pending request already exists for this secret',
+				code: 409,
+			);
+		} catch (DoesNotExistException) {
+			// Expected — no pending request, continue.
+		}
+	}//end requireNoPendingRequest()
 }//end class

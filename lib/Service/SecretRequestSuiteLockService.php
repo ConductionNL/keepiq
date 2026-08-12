@@ -35,82 +35,79 @@ use RuntimeException;
 /**
  * Suite-migration locking of pending secret requests.
  */
-class SecretRequestSuiteLockService
-{
-    /**
-     * Constructor for SecretRequestSuiteLockService.
-     *
-     * @param SecretRequestMapper $mapper The request mapper
-     * @param LoggerInterface     $logger The logger
-     *
-     * @return void
-     *
-     * @spec exclude Constructor wiring only — no domain logic.
-     */
-    public function __construct(
-        private SecretRequestMapper $mapper,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class SecretRequestSuiteLockService {
+	/**
+	 * Constructor for SecretRequestSuiteLockService.
+	 *
+	 * @param SecretRequestMapper $mapper The request mapper
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only — no domain logic.
+	 */
+	public function __construct(
+		private SecretRequestMapper $mapper,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Lock all pending requests bound to an EncryptionSuite. Invoked by
-     * the compromise-recovery flow when the recipient's keys are flagged.
-     *
-     * @param string $encryptionSuiteId The recipient's old EncryptionSuite ID
-     *
-     * @return int The number of rows affected.
-     *
-     * @throws InvalidArgumentException When the suite ID is blank.
-     *
-     * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change--compromise-recovery
-     */
-    public function lockByEncryptionSuiteId(string $encryptionSuiteId): int
-    {
-        if ($encryptionSuiteId === '') {
-            throw new InvalidArgumentException(message: 'encryptionSuiteId is required');
-        }
+	/**
+	 * Lock all pending requests bound to an EncryptionSuite. Invoked by
+	 * the compromise-recovery flow when the recipient's keys are flagged.
+	 *
+	 * @param string $encryptionSuiteId The recipient's old EncryptionSuite ID
+	 *
+	 * @return int The number of rows affected.
+	 *
+	 * @throws InvalidArgumentException When the suite ID is blank.
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change--compromise-recovery
+	 */
+	public function lockByEncryptionSuiteId(string $encryptionSuiteId): int {
+		if ($encryptionSuiteId === '') {
+			throw new InvalidArgumentException(message: 'encryptionSuiteId is required');
+		}
 
-        $count = $this->mapper->lockByEncryptionSuiteId($encryptionSuiteId);
+		$count = $this->mapper->lockByEncryptionSuiteId($encryptionSuiteId);
 
-        $this->logger->info(
-            'Locked '.$count.' pending secret requests for compromised suite '.$encryptionSuiteId,
-            ['app' => 'doriath']
-        );
+		$this->logger->info(
+			'Locked ' . $count . ' pending secret requests for compromised suite ' . $encryptionSuiteId,
+			['app' => 'doriath']
+		);
 
-        return $count;
-    }//end lockByEncryptionSuiteId()
+		return $count;
+	}//end lockByEncryptionSuiteId()
 
-    /**
-     * Re-point locked requests at a new EncryptionSuite + reopen them.
-     *
-     * @param string $oldEncryptionSuiteId The old EncryptionSuite ID
-     * @param string $newEncryptionSuiteId The new EncryptionSuite ID
-     *
-     * @return int The number of rows affected.
-     *
-     * @throws InvalidArgumentException When either suite ID is blank.
-     * @throws RuntimeException When both suite IDs are the same.
-     *
-     * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
-     */
-    public function unlockAndUpdateSuite(string $oldEncryptionSuiteId, string $newEncryptionSuiteId): int
-    {
-        if ($oldEncryptionSuiteId === '' || $newEncryptionSuiteId === '') {
-            throw new InvalidArgumentException(message: 'Both suite IDs are required');
-        }
+	/**
+	 * Re-point locked requests at a new EncryptionSuite + reopen them.
+	 *
+	 * @param string $oldEncryptionSuiteId The old EncryptionSuite ID
+	 * @param string $newEncryptionSuiteId The new EncryptionSuite ID
+	 *
+	 * @return int The number of rows affected.
+	 *
+	 * @throws InvalidArgumentException When either suite ID is blank.
+	 * @throws RuntimeException When both suite IDs are the same.
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
+	 */
+	public function unlockAndUpdateSuite(string $oldEncryptionSuiteId, string $newEncryptionSuiteId): int {
+		if ($oldEncryptionSuiteId === '' || $newEncryptionSuiteId === '') {
+			throw new InvalidArgumentException(message: 'Both suite IDs are required');
+		}
 
-        if ($oldEncryptionSuiteId === $newEncryptionSuiteId) {
-            throw new RuntimeException(message: 'oldEncryptionSuiteId and newEncryptionSuiteId must differ');
-        }
+		if ($oldEncryptionSuiteId === $newEncryptionSuiteId) {
+			throw new RuntimeException(message: 'oldEncryptionSuiteId and newEncryptionSuiteId must differ');
+		}
 
-        $count = $this->mapper->unlockAndUpdateSuite($oldEncryptionSuiteId, $newEncryptionSuiteId);
+		$count = $this->mapper->unlockAndUpdateSuite($oldEncryptionSuiteId, $newEncryptionSuiteId);
 
-        $this->logger->info(
-            'Unlocked '.$count.' secret requests by migrating suite '.$oldEncryptionSuiteId.' -> '.$newEncryptionSuiteId,
-            ['app' => 'doriath']
-        );
+		$this->logger->info(
+			'Unlocked ' . $count . ' secret requests by migrating suite ' . $oldEncryptionSuiteId . ' -> ' . $newEncryptionSuiteId,
+			['app' => 'doriath']
+		);
 
-        return $count;
-    }//end unlockAndUpdateSuite()
+		return $count;
+	}//end unlockAndUpdateSuite()
 }//end class

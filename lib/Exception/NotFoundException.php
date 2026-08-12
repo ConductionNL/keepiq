@@ -27,6 +27,5 @@ use RuntimeException;
 /**
  * Thrown when a referenced entity does not exist.
  */
-class NotFoundException extends RuntimeException
-{
+class NotFoundException extends RuntimeException {
 }//end class

@@ -35,38 +35,36 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Creates the certificate-metadata table.
  */
-class Version000029Date20260718200000 extends SimpleMigrationStep
-{
-    /**
-     * Apply the schema changes.
-     *
-     * @param IOutput                   $output        The migration output
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
-     * @param array<string,mixed>       $options       The migration options
-     *
-     * @return ISchemaWrapper|null
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        $schema = $schemaClosure();
+class Version000029Date20260718200000 extends SimpleMigrationStep {
+	/**
+	 * Apply the schema changes.
+	 *
+	 * @param IOutput $output The migration output
+	 * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
+	 * @param array<string,mixed> $options The migration options
+	 *
+	 * @return ISchemaWrapper|null
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_certificate_metadata') === false) {
-            $table = $schema->createTable('doriath_certificate_metadata');
-            $table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('owner_id', Types::STRING, ['notnull' => true, 'length' => 64]);
-            $table->addColumn('subject', Types::TEXT, ['notnull' => false]);
-            $table->addColumn('issuer', Types::TEXT, ['notnull' => false]);
-            $table->addColumn('serial', Types::STRING, ['notnull' => false, 'length' => 128]);
-            $table->addColumn('fingerprint_sha256', Types::STRING, ['notnull' => false, 'length' => 128]);
-            $table->addColumn('not_before', Types::DATETIME, ['notnull' => false]);
-            $table->addColumn('not_after', Types::DATETIME, ['notnull' => false]);
-            $table->addColumn('parsed_at', Types::DATETIME, ['notnull' => true]);
-            $table->setPrimaryKey(['id']);
-            $table->addUniqueIndex(['secret_id'], 'doriath_cm_secret');
-            $table->addIndex(['owner_id'], 'doriath_cm_owner');
-        }
+		if ($schema->hasTable('doriath_certificate_metadata') === false) {
+			$table = $schema->createTable('doriath_certificate_metadata');
+			$table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('owner_id', Types::STRING, ['notnull' => true, 'length' => 64]);
+			$table->addColumn('subject', Types::TEXT, ['notnull' => false]);
+			$table->addColumn('issuer', Types::TEXT, ['notnull' => false]);
+			$table->addColumn('serial', Types::STRING, ['notnull' => false, 'length' => 128]);
+			$table->addColumn('fingerprint_sha256', Types::STRING, ['notnull' => false, 'length' => 128]);
+			$table->addColumn('not_before', Types::DATETIME, ['notnull' => false]);
+			$table->addColumn('not_after', Types::DATETIME, ['notnull' => false]);
+			$table->addColumn('parsed_at', Types::DATETIME, ['notnull' => true]);
+			$table->setPrimaryKey(['id']);
+			$table->addUniqueIndex(['secret_id'], 'doriath_cm_secret');
+			$table->addIndex(['owner_id'], 'doriath_cm_owner');
+		}
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

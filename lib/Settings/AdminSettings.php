@@ -35,6 +35,5 @@ use OCA\OpenRegister\AppHost\Settings\GenericAdminSettings;
  *
  * @psalm-suppress UnusedClass
  */
-class AdminSettings extends GenericAdminSettings
-{
+class AdminSettings extends GenericAdminSettings {
 }//end class

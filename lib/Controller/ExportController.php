@@ -43,83 +43,81 @@ use OCP\IUserSession;
 /**
  * Controller for client-reported export events.
  */
-class ExportController extends Controller
-{
-    /**
-     * The accepted export modes.
-     *
-     * @var string[]
-     */
-    private const MODES = ['encrypted-backup', 'plaintext-csv', 'cxf', 'cxp'];
+class ExportController extends Controller {
+	/**
+	 * The accepted export modes.
+	 *
+	 * @var string[]
+	 */
+	private const MODES = ['encrypted-backup', 'plaintext-csv', 'cxf', 'cxp'];
 
-    /**
-     * The accepted export scopes.
-     *
-     * @var string[]
-     */
-    private const SCOPES = ['vault', 'folders'];
+	/**
+	 * The accepted export scopes.
+	 *
+	 * @var string[]
+	 */
+	private const SCOPES = ['vault', 'folders'];
 
-    /**
-     * Constructor for ExportController.
-     *
-     * @param IRequest         $request     The request
-     * @param IUserSession     $userSession The user session
-     * @param IEventDispatcher $dispatcher  The event dispatcher
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private IUserSession $userSession,
-        private IEventDispatcher $dispatcher,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+	/**
+	 * Constructor for ExportController.
+	 *
+	 * @param IRequest $request The request
+	 * @param IUserSession $userSession The user session
+	 * @param IEventDispatcher $dispatcher The event dispatcher
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private IUserSession $userSession,
+		private IEventDispatcher $dispatcher,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Record a completed export by dispatching SecretExportedEvent.
-     *
-     * Self-scoped: the event is always emitted for the authenticated session
-     * user; the request body carries no user selector. Validates the mode and
-     * scope enums and the non-negative count; rejects anything else with 400.
-     *
-     * @NoAdminRequired
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
-     */
-    #[NoAdminRequired]
-    public function events(): JSONResponse
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Record a completed export by dispatching SecretExportedEvent.
+	 *
+	 * Self-scoped: the event is always emitted for the authenticated session
+	 * user; the request body carries no user selector. Validates the mode and
+	 * scope enums and the non-negative count; rejects anything else with 400.
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+	 */
+	#[NoAdminRequired]
+	public function events(): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-        $mode  = (string) $this->request->getParam('mode', '');
-        $scope = (string) $this->request->getParam('scope', '');
-        $count = (int) $this->request->getParam('secretCount', 0);
+		$mode = (string)$this->request->getParam('mode', '');
+		$scope = (string)$this->request->getParam('scope', '');
+		$count = (int)$this->request->getParam('secretCount', 0);
 
-        if (in_array($mode, self::MODES, true) === false
-            || in_array($scope, self::SCOPES, true) === false
-            || $count < 0
-        ) {
-            return new JSONResponse(
-                data: ['message' => 'Invalid export mode, scope, or count'],
-                statusCode: Http::STATUS_BAD_REQUEST
-            );
-        }
+		if (in_array($mode, self::MODES, true) === false
+			|| in_array($scope, self::SCOPES, true) === false
+			|| $count < 0
+		) {
+			return new JSONResponse(
+				data: ['message' => 'Invalid export mode, scope, or count'],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        $this->dispatcher->dispatchTyped(
-            new SecretExportedEvent(
-                userId: $user->getUID(),
-                mode: $mode,
-                scope: $scope,
-                secretCount: $count,
-            )
-        );
+		$this->dispatcher->dispatchTyped(
+			new SecretExportedEvent(
+				userId: $user->getUID(),
+				mode: $mode,
+				scope: $scope,
+				secretCount: $count,
+			)
+		);
 
-        return new JSONResponse(data: ['recorded' => true]);
-    }//end events()
+		return new JSONResponse(data: ['recorded' => true]);
+	}//end events()
 }//end class

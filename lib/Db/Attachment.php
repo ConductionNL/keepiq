@@ -45,110 +45,105 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
  */
-class Attachment extends Entity implements JsonSerializable
-{
+class Attachment extends Entity implements JsonSerializable {
 
-    /**
-     * The owner's canonical Secret this file was uploaded against.
-     *
-     * @var string
-     */
-    protected string $sourceSecretId = '';
+	/**
+	 * The owner's canonical Secret this file was uploaded against.
+	 *
+	 * @var string
+	 */
+	protected string $sourceSecretId = '';
 
-    /**
-     * Locator into the IAppData folder holding the ciphertext.
-     *
-     * @var string
-     */
-    protected string $blobRef = '';
+	/**
+	 * Locator into the IAppData folder holding the ciphertext.
+	 *
+	 * @var string
+	 */
+	protected string $blobRef = '';
 
-    /**
-     * AES-GCM ciphertext of { filename, contentType } under the file key.
-     *
-     * @var string
-     */
-    protected string $encryptedMetadata = '';
+	/**
+	 * AES-GCM ciphertext of { filename, contentType } under the file key.
+	 *
+	 * @var string
+	 */
+	protected string $encryptedMetadata = '';
 
-    /**
-     * Ciphertext byte length (quota accounting).
-     *
-     * @var integer
-     */
-    protected int $sizeBytes = 0;
+	/**
+	 * Ciphertext byte length (quota accounting).
+	 *
+	 * @var integer
+	 */
+	protected int $sizeBytes = 0;
 
-    /**
-     * When the attachment was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the attachment was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * When the attachment was last updated.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $updatedAt = null;
+	/**
+	 * When the attachment was last updated.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $updatedAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for Attachment.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'sourceSecretId', type: 'string');
-        $this->addType(fieldName: 'blobRef', type: 'string');
-        $this->addType(fieldName: 'encryptedMetadata', type: 'string');
-        $this->addType(fieldName: 'sizeBytes', type: 'integer');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-        $this->addType(fieldName: 'updatedAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Constructor for Attachment.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'sourceSecretId', type: 'string');
+		$this->addType(fieldName: 'blobRef', type: 'string');
+		$this->addType(fieldName: 'encryptedMetadata', type: 'string');
+		$this->addType(fieldName: 'sizeBytes', type: 'integer');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+		$this->addType(fieldName: 'updatedAt', type: 'datetime');
+	}//end __construct()
 
-    /**
-     * Serialize the entity to an array for the API. The blob locator is
-     * server-internal and never exposed.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'                => $this->getId(),
-            'sourceSecretId'    => $this->sourceSecretId,
-            'encryptedMetadata' => $this->encryptedMetadata,
-            'sizeBytes'         => $this->sizeBytes,
-            'createdAt'         => $this->createdAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API. The blob locator is
+	 * server-internal and never exposed.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'sourceSecretId' => $this->sourceSecretId,
+			'encryptedMetadata' => $this->encryptedMetadata,
+			'sizeBytes' => $this->sizeBytes,
+			'createdAt' => $this->createdAt?->format('c'),
+		];
+	}//end jsonSerialize()
 }//end class

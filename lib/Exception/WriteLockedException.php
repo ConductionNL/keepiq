@@ -27,6 +27,5 @@ use RuntimeException;
 /**
  * Thrown when a write is attempted during a compromise-recovery migration.
  */
-class WriteLockedException extends RuntimeException
-{
+class WriteLockedException extends RuntimeException {
 }//end class

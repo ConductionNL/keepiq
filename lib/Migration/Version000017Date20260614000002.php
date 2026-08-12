@@ -39,43 +39,41 @@ use OCP\Migration\SimpleMigrationStep;
  * ordinary secret the recipient owns; these fields only let the UI badge it and
  * future cleanup policies find it, without a join table (design D6).
  */
-class Version000017Date20260614000002 extends SimpleMigrationStep
-{
-    /**
-     * Add the tombstone columns.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+class Version000017Date20260614000002 extends SimpleMigrationStep {
+	/**
+	 * Add the tombstone columns.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_secrets') === false) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_secrets') === false) {
+			return null;
+		}
 
-        $table   = $schema->getTable('doriath_secrets');
-        $changed = false;
+		$table = $schema->getTable('doriath_secrets');
+		$changed = false;
 
-        if ($table->hasColumn('tombstoned_at') === false) {
-            $table->addColumn('tombstoned_at', Types::DATETIME, ['notnull' => false]);
-            $changed = true;
-        }
+		if ($table->hasColumn('tombstoned_at') === false) {
+			$table->addColumn('tombstoned_at', Types::DATETIME, ['notnull' => false]);
+			$changed = true;
+		}
 
-        if ($table->hasColumn('tombstone_reason') === false) {
-            $table->addColumn('tombstone_reason', Types::STRING, ['notnull' => false, 'length' => 64]);
-            $changed = true;
-        }
+		if ($table->hasColumn('tombstone_reason') === false) {
+			$table->addColumn('tombstone_reason', Types::STRING, ['notnull' => false, 'length' => 64]);
+			$changed = true;
+		}
 
-        if ($changed === false) {
-            return null;
-        }
+		if ($changed === false) {
+			return null;
+		}
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

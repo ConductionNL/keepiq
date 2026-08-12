@@ -44,118 +44,113 @@ use OCP\AppFramework\Db\Entity;
  * @method string|null getLastError()
  * @method void setLastError(?string $lastError)
  */
-class SiemQueueItem extends Entity implements JsonSerializable
-{
+class SiemQueueItem extends Entity implements JsonSerializable {
 
-    /**
-     * The target sink.
-     *
-     * @var string
-     */
-    protected string $sinkId = '';
+	/**
+	 * The target sink.
+	 *
+	 * @var string
+	 */
+	protected string $sinkId = '';
 
-    /**
-     * The JSON payload (sanitized-audit subset).
-     *
-     * @var string
-     */
-    protected string $payload = '';
+	/**
+	 * The JSON payload (sanitized-audit subset).
+	 *
+	 * @var string
+	 */
+	protected string $payload = '';
 
-    /**
-     * Enqueue instant.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $enqueuedAt = null;
+	/**
+	 * Enqueue instant.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $enqueuedAt = null;
 
-    /**
-     * The delivery status: pending|delivering|delivered|dead.
-     *
-     * @var string
-     */
-    protected string $status = '';
+	/**
+	 * The delivery status: pending|delivering|delivered|dead.
+	 *
+	 * @var string
+	 */
+	protected string $status = '';
 
-    /**
-     * Delivery attempts so far.
-     *
-     * @var integer
-     */
-    protected int $attempts = 0;
+	/**
+	 * Delivery attempts so far.
+	 *
+	 * @var integer
+	 */
+	protected int $attempts = 0;
 
-    /**
-     * Earliest next attempt (backoff).
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $nextAttemptAt = null;
+	/**
+	 * Earliest next attempt (backoff).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $nextAttemptAt = null;
 
-    /**
-     * Last transport error.
-     *
-     * @var string|null
-     */
-    protected ?string $lastError = null;
+	/**
+	 * Last transport error.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $lastError = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor: declare column types for QBMapper hydration.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'sinkId', type: 'string');
-        $this->addType(fieldName: 'payload', type: 'string');
-        $this->addType(fieldName: 'enqueuedAt', type: 'datetime');
-        $this->addType(fieldName: 'status', type: 'string');
-        $this->addType(fieldName: 'attempts', type: 'integer');
-        $this->addType(fieldName: 'nextAttemptAt', type: 'datetime');
-        $this->addType(fieldName: 'lastError', type: 'string');
-    }//end __construct()
+	/**
+	 * Constructor: declare column types for QBMapper hydration.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'sinkId', type: 'string');
+		$this->addType(fieldName: 'payload', type: 'string');
+		$this->addType(fieldName: 'enqueuedAt', type: 'datetime');
+		$this->addType(fieldName: 'status', type: 'string');
+		$this->addType(fieldName: 'attempts', type: 'integer');
+		$this->addType(fieldName: 'nextAttemptAt', type: 'datetime');
+		$this->addType(fieldName: 'lastError', type: 'string');
+	}//end __construct()
 
-    /**
-     * JSON shape.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'         => $this->getId(),
-            'sinkId'     => $this->sinkId,
-            'status'     => $this->status,
-            'attempts'   => $this->attempts,
-            'enqueuedAt' => $this->enqueuedAt?->format('c'),
-            'lastError'  => $this->lastError,
-        ];
-    }//end jsonSerialize()
+	/**
+	 * JSON shape.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'sinkId' => $this->sinkId,
+			'status' => $this->status,
+			'attempts' => $this->attempts,
+			'enqueuedAt' => $this->enqueuedAt?->format('c'),
+			'lastError' => $this->lastError,
+		];
+	}//end jsonSerialize()
 }//end class

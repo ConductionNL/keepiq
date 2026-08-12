@@ -36,41 +36,39 @@ use OCP\Migration\SimpleMigrationStep;
  * tables are intentionally NOT created in this scaffold and are deferred
  * to the dedicated build cycle that ships the full sharing graph.
  */
-class Version000009Date20260611000000 extends SimpleMigrationStep
-{
-    /**
-     * Change the database schema to add the share_targets table.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+class Version000009Date20260611000000 extends SimpleMigrationStep {
+	/**
+	 * Change the database schema to add the share_targets table.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_share_targets') === true) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_share_targets') === true) {
+			return null;
+		}
 
-        $table = $schema->createTable('doriath_share_targets');
+		$table = $schema->createTable('doriath_share_targets');
 
-        $table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
-        $table->addColumn('source_secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
-        $table->addColumn('target_user_id', Types::STRING, ['notnull' => true, 'length' => 64]);
-        $table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
-        $table->addColumn('group_share_id', Types::STRING, ['notnull' => false, 'length' => 36]);
-        $table->addColumn('created_by', Types::STRING, ['notnull' => true, 'length' => 64]);
-        $table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
+		$table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
+		$table->addColumn('source_secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
+		$table->addColumn('target_user_id', Types::STRING, ['notnull' => true, 'length' => 64]);
+		$table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
+		$table->addColumn('group_share_id', Types::STRING, ['notnull' => false, 'length' => 36]);
+		$table->addColumn('created_by', Types::STRING, ['notnull' => true, 'length' => 64]);
+		$table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
 
-        $table->setPrimaryKey(['id']);
-        $table->addIndex(['source_secret_id'], 'doriath_st_source_idx');
-        $table->addIndex(['target_user_id'], 'doriath_st_target_idx');
-        $table->addIndex(['secret_id'], 'doriath_st_copy_idx');
+		$table->setPrimaryKey(['id']);
+		$table->addIndex(['source_secret_id'], 'doriath_st_source_idx');
+		$table->addIndex(['target_user_id'], 'doriath_st_target_idx');
+		$table->addIndex(['secret_id'], 'doriath_st_copy_idx');
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

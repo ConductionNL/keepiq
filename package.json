@@ -22,7 +22,7 @@
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
     "check:manifest": "node tests/validate-manifest.js",
-    "stylelint": "stylelint \"src/**/*.vue\" \"src/**/*.scss\" \"src/**/*.css\"",
+    "stylelint": "stylelint \"src/**/*.{vue,scss,css}\"",
     "stylelint-fix": "stylelint \"src/**/*.vue\" \"src/**/*.scss\" \"src/**/*.css\" --fix",
     "prepare": "git config core.hooksPath .githooks || true"
   },
@@ -30,7 +30,7 @@
     "extends @nextcloud/browserslist-config"
   ],
   "dependencies": {
-    "@conduction/nextcloud-vue": "2.2.0-vue3.9",
+    "@conduction/nextcloud-vue": "2.2.0-vue3.15",
     "@nextcloud/auth": "^2.6.0",
     "@nextcloud/axios": "~2.5.2",
     "@nextcloud/capabilities": "^1.2.1",

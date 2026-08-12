@@ -37,48 +37,46 @@ use Throwable;
  *
  * @implements IEventListener<AuditEvent>
  */
-class SiemForwardListener implements IEventListener
-{
-    /**
-     * Constructor for SiemForwardListener.
-     *
-     * @param SiemService     $siemService The SIEM service
-     * @param LoggerInterface $logger      The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        private SiemService $siemService,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class SiemForwardListener implements IEventListener {
+	/**
+	 * Constructor for SiemForwardListener.
+	 *
+	 * @param SiemService $siemService The SIEM service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private SiemService $siemService,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle a dispatched audit event (fail-soft, §2.2).
-     *
-     * @param Event $event The dispatched event
-     *
-     * @return void
-     *
-     * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof AuditEvent === false) {
-            return;
-        }
+	/**
+	 * Handle a dispatched audit event (fail-soft, §2.2).
+	 *
+	 * @param Event $event The dispatched event
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof AuditEvent === false) {
+			return;
+		}
 
-        try {
-            $payload = $this->siemService->buildPayload(event: $event);
-            if ($payload !== null) {
-                $this->siemService->enqueue(payload: $payload);
-            }
-        } catch (Throwable $exception) {
-            // Fail-soft: forwarding must never break the audited action.
-            $this->logger->error(
-                'Doriath: SIEM forward failed: '.$exception->getMessage(),
-                ['app' => 'doriath']
-            );
-        }
-    }//end handle()
+		try {
+			$payload = $this->siemService->buildPayload(event: $event);
+			if ($payload !== null) {
+				$this->siemService->enqueue(payload: $payload);
+			}
+		} catch (Throwable $exception) {
+			// Fail-soft: forwarding must never break the audited action.
+			$this->logger->error(
+				'Doriath: SIEM forward failed: ' . $exception->getMessage(),
+				['app' => 'doriath']
+			);
+		}
+	}//end handle()
 }//end class
