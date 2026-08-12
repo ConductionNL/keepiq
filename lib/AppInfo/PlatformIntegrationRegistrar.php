@@ -37,33 +37,31 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * class handed to a core registry, with no ordering relationship to the
  * domain listeners or the AppHost plumbing.
  */
-final class PlatformIntegrationRegistrar
-{
-    /**
-     * Register the search provider, the notifier and the middleware.
-     *
-     * @param IRegistrationContext $context The registration context
-     *
-     * @return void
-     *
-     * @spec exclude composition-root wiring — the registered classes carry the
-     *   behaviour and their own spec references; this method only binds them.
-     */
-    public function register(IRegistrationContext $context): void
-    {
-        // The Nextcloud unified search provider for secrets. It queries
-        // unencrypted name/url metadata only and needs no vault session
-        // (ADR-003).
-        $context->registerSearchProvider(SecretSearchProvider::class);
+final class PlatformIntegrationRegistrar {
+	/**
+	 * Register the search provider, the notifier and the middleware.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec exclude composition-root wiring — the registered classes carry the
+	 *   behaviour and their own spec references; this method only binds them.
+	 */
+	public function register(IRegistrationContext $context): void {
+		// The Nextcloud unified search provider for secrets. It queries
+		// unencrypted name/url metadata only and needs no vault session
+		// (ADR-003).
+		$context->registerSearchProvider(SecretSearchProvider::class);
 
-        // The notifier responsible for rendering sharing, secret-request and
-        // application-management notification subjects.
-        $context->registerNotifierService(DoriathNotifier::class);
+		// The notifier responsible for rendering sharing, secret-request and
+		// application-management notification subjects.
+		$context->registerNotifierService(DoriathNotifier::class);
 
-        // The JWT-Bearer middleware for application-authenticated routes.
-        // Fires only on ApplicationApiController subclasses; session
-        // controllers pass through untouched.
-        $context->registerMiddleware(JwtAuthMiddleware::class);
+		// The JWT-Bearer middleware for application-authenticated routes.
+		// Fires only on ApplicationApiController subclasses; session
+		// controllers pass through untouched.
+		$context->registerMiddleware(JwtAuthMiddleware::class);
 
-    }//end register()
+	}//end register()
 }//end class

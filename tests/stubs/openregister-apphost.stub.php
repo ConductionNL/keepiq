@@ -43,170 +43,138 @@ use OCP\Settings\IIconSection;
  *
  * The real class lives in the openregister sibling app (ADR-040).
  */
-class GenericSettingsSection implements IIconSection
-{
+class GenericSettingsSection implements IIconSection {
 
-    /**
-     * Construct a settings section.
-     *
-     * @param string        $sectionId    The section id.
-     * @param string        $name         The display name.
-     * @param string        $appId        The app id.
-     * @param string        $iconFile     The icon file name.
-     * @param int           $priority     The display priority.
-     * @param IURLGenerator $urlGenerator The URL generator.
-     */
-    public function __construct(
-        protected string $sectionId,
-        protected string $name,
-        protected string $appId,
-        protected string $iconFile,
-        protected int $priority,
-        protected IURLGenerator $urlGenerator,
-    ) {
+	/**
+	 * Construct a settings section.
+	 *
+	 * @param string $sectionId The section id.
+	 * @param string $name The display name.
+	 * @param string $appId The app id.
+	 * @param string $iconFile The icon file name.
+	 * @param int $priority The display priority.
+	 * @param IURLGenerator $urlGenerator The URL generator.
+	 */
+	public function __construct(
+		protected string $sectionId,
+		protected string $name,
+		protected string $appId,
+		protected string $iconFile,
+		protected int $priority,
+		protected IURLGenerator $urlGenerator,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Return the section id.
+	 *
+	 * @return string
+	 */
+	public function getID(): string {
+		return $this->sectionId;
+	}//end getID()
 
-    /**
-     * Return the section id.
-     *
-     * @return string
-     */
-    public function getID(): string
-    {
-        return $this->sectionId;
+	/**
+	 * Return the display name.
+	 *
+	 * @return string
+	 */
+	public function getName(): string {
+		return $this->name;
+	}//end getName()
 
-    }//end getID()
+	/**
+	 * Return the display priority.
+	 *
+	 * @return int
+	 */
+	public function getPriority(): int {
+		return $this->priority;
+	}//end getPriority()
 
-
-    /**
-     * Return the display name.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-
-    }//end getName()
-
-
-    /**
-     * Return the display priority.
-     *
-     * @return int
-     */
-    public function getPriority(): int
-    {
-        return $this->priority;
-
-    }//end getPriority()
-
-
-    /**
-     * Return the absolute URL to the section icon.
-     *
-     * @return string
-     */
-    public function getIcon(): string
-    {
-        return $this->urlGenerator->imagePath($this->appId, $this->iconFile);
-
-    }//end getIcon()
-
+	/**
+	 * Return the absolute URL to the section icon.
+	 *
+	 * @return string
+	 */
+	public function getIcon(): string {
+		return $this->urlGenerator->imagePath($this->appId, $this->iconFile);
+	}//end getIcon()
 
 }//end class
-
 
 /**
  * Analysis-only stub for the AppHost admin-settings panel base class.
  *
  * The real class lives in the openregister sibling app (ADR-040).
  */
-class GenericAdminSettings implements IDelegatedSettings
-{
+class GenericAdminSettings implements IDelegatedSettings {
 
-    /**
-     * Construct an admin settings panel.
-     *
-     * @param string        $appId        The app id.
-     * @param string        $sectionId    The section id.
-     * @param int           $priority     The display priority.
-     * @param IAppManager   $appManager   The app manager.
-     * @param IInitialState $initialState The initial state service.
-     * @param IAppConfig    $appConfig    The app config service.
-     */
-    public function __construct(
-        protected string $appId,
-        protected string $sectionId,
-        protected int $priority,
-        protected IAppManager $appManager,
-        protected IInitialState $initialState,
-        protected IAppConfig $appConfig,
-    ) {
+	/**
+	 * Construct an admin settings panel.
+	 *
+	 * @param string $appId The app id.
+	 * @param string $sectionId The section id.
+	 * @param int $priority The display priority.
+	 * @param IAppManager $appManager The app manager.
+	 * @param IInitialState $initialState The initial state service.
+	 * @param IAppConfig $appConfig The app config service.
+	 */
+	public function __construct(
+		protected string $appId,
+		protected string $sectionId,
+		protected int $priority,
+		protected IAppManager $appManager,
+		protected IInitialState $initialState,
+		protected IAppConfig $appConfig,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
+	/**
+	 * Return the settings form template response.
+	 *
+	 * @return TemplateResponse
+	 */
+	public function getForm(): TemplateResponse {
+		return new TemplateResponse($this->appId, 'settings-admin');
+	}//end getForm()
 
-    /**
-     * Return the settings form template response.
-     *
-     * @return TemplateResponse
-     */
-    public function getForm(): TemplateResponse
-    {
-        return new TemplateResponse($this->appId, 'settings-admin');
+	/**
+	 * Return the section id.
+	 *
+	 * @return string
+	 */
+	public function getSection(): string {
+		return $this->sectionId;
+	}//end getSection()
 
-    }//end getForm()
+	/**
+	 * Return the display priority.
+	 *
+	 * @return int
+	 */
+	public function getPriority(): int {
+		return $this->priority;
+	}//end getPriority()
 
+	/**
+	 * Return the delegated-settings display name.
+	 *
+	 * @return string|null
+	 */
+	public function getName(): ?string {
+		return null;
+	}//end getName()
 
-    /**
-     * Return the section id.
-     *
-     * @return string
-     */
-    public function getSection(): string
-    {
-        return $this->sectionId;
-
-    }//end getSection()
-
-
-    /**
-     * Return the display priority.
-     *
-     * @return int
-     */
-    public function getPriority(): int
-    {
-        return $this->priority;
-
-    }//end getPriority()
-
-
-    /**
-     * Return the delegated-settings display name.
-     *
-     * @return string|null
-     */
-    public function getName(): ?string
-    {
-        return null;
-
-    }//end getName()
-
-
-    /**
-     * Return the app-config keys this panel is authorised to write.
-     *
-     * @return array<string, list<string>>
-     */
-    public function getAuthorizedAppConfig(): array
-    {
-        return [];
-
-    }//end getAuthorizedAppConfig()
-
+	/**
+	 * Return the app-config keys this panel is authorised to write.
+	 *
+	 * @return array<string, list<string>>
+	 */
+	public function getAuthorizedAppConfig(): array {
+		return [];
+	}//end getAuthorizedAppConfig()
 
 }//end class

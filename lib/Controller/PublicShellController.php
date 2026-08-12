@@ -38,48 +38,45 @@ use OCP\IRequest;
 /**
  * Anonymous SPA shell for recipient pages.
  */
-class PublicShellController extends Controller
-{
-    /**
-     * Constructor for PublicShellController.
-     *
-     * @param IRequest $request The HTTP request
-     *
-     * @return void
-     */
-    public function __construct(IRequest $request)
-    {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+class PublicShellController extends Controller {
+	/**
+	 * Constructor for PublicShellController.
+	 *
+	 * @param IRequest $request The HTTP request
+	 *
+	 * @return void
+	 */
+	public function __construct(IRequest $request) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Render the SPA shell for account-less recipients (guest layout).
-     *
-     * Mirrors DashboardController::page()'s CSP relaxations: the
-     * Argon2id WASM module needs 'wasm-unsafe-eval' for the
-     * password-protected flows, and the health worker allowance is
-     * harmless here.
-     *
-     * @return TemplateResponse
-     *
-     * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
-     */
-    #[PublicPage]
-    #[NoCSRFRequired]
-    public function page(): TemplateResponse
-    {
-        $response = new TemplateResponse(
-            appName: Application::APP_ID,
-            templateName: 'index',
-            params: [],
-            renderAs: TemplateResponse::RENDER_AS_BASE
-        );
+	/**
+	 * Render the SPA shell for account-less recipients (guest layout).
+	 *
+	 * Mirrors DashboardController::page()'s CSP relaxations: the
+	 * Argon2id WASM module needs 'wasm-unsafe-eval' for the
+	 * password-protected flows, and the health worker allowance is
+	 * harmless here.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function page(): TemplateResponse {
+		$response = new TemplateResponse(
+			appName: Application::APP_ID,
+			templateName: 'index',
+			params: [],
+			renderAs: TemplateResponse::RENDER_AS_BASE
+		);
 
-        $csp = new ContentSecurityPolicy();
-        $csp->allowEvalWasm(true);
-        $csp->addAllowedWorkerSrcDomain("'self'");
-        $response->setContentSecurityPolicy($csp);
+		$csp = new ContentSecurityPolicy();
+		$csp->allowEvalWasm(true);
+		$csp->addAllowedWorkerSrcDomain("'self'");
+		$response->setContentSecurityPolicy($csp);
 
-        return $response;
-    }//end page()
+		return $response;
+	}//end page()
 }//end class

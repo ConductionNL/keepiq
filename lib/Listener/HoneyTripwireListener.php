@@ -43,177 +43,171 @@ use Throwable;
  *
  * @implements IEventListener<AuditEvent>
  */
-class HoneyTripwireListener implements IEventListener
-{
-    /**
-     * Constructor for HoneyTripwireListener.
-     *
-     * @param HoneyTripwireService $honeyService      The honey tripwire service
-     * @param LinkShareMapper      $linkShareMapper   Link → secret resolution
-     * @param ShareTargetMapper    $shareTargetMapper Copy → source resolution
-     * @param IRequest             $request           IP/user-agent source
-     * @param LoggerInterface      $logger            The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        private HoneyTripwireService $honeyService,
-        private LinkShareMapper $linkShareMapper,
-        private ShareTargetMapper $shareTargetMapper,
-        private IRequest $request,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class HoneyTripwireListener implements IEventListener {
+	/**
+	 * Constructor for HoneyTripwireListener.
+	 *
+	 * @param HoneyTripwireService $honeyService The honey tripwire service
+	 * @param LinkShareMapper $linkShareMapper Link → secret resolution
+	 * @param ShareTargetMapper $shareTargetMapper Copy → source resolution
+	 * @param IRequest $request IP/user-agent source
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private HoneyTripwireService $honeyService,
+		private LinkShareMapper $linkShareMapper,
+		private ShareTargetMapper $shareTargetMapper,
+		private IRequest $request,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Inspect a dispatched audit event for honey hits (fail-soft).
-     *
-     * Channel derivation (D2): secret.read → ui (a share-recipient
-     * copy read pivots to the flagged SOURCE and reports share);
-     * application.secret_retrieved → machine_api;
-     * link_share.accessed → link (resolved through the link row).
-     *
-     * @param Event $event The dispatched event
-     *
-     * @return void
-     *
-     * @spec openspec/specs/honey-credentials/spec.md#requirement-any-access-to-a-honey-secret-raises-a-high-severity-alert
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof AuditEvent === false) {
-            return;
-        }
+	/**
+	 * Inspect a dispatched audit event for honey hits (fail-soft).
+	 *
+	 * Channel derivation (D2): secret.read → ui (a share-recipient
+	 * copy read pivots to the flagged SOURCE and reports share);
+	 * application.secret_retrieved → machine_api;
+	 * link_share.accessed → link (resolved through the link row).
+	 *
+	 * @param Event $event The dispatched event
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-any-access-to-a-honey-secret-raises-a-high-severity-alert
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof AuditEvent === false) {
+			return;
+		}
 
-        try {
-            $this->trip(
-                event: $event,
-                remoteIp: $this->resolveRemoteIp(),
-                userAgent: $this->resolveUserAgent()
-            );
-        } catch (Throwable $exception) {
-            // Fail-soft: the tripwire never breaks the observed access.
-            $this->logger->error(
-                'Doriath: honey tripwire failed: '.$exception->getMessage(),
-                ['app' => 'doriath']
-            );
-        }//end try
-    }//end handle()
+		try {
+			$this->trip(
+				event: $event,
+				remoteIp: $this->resolveRemoteIp(),
+				userAgent: $this->resolveUserAgent()
+			);
+		} catch (Throwable $exception) {
+			// Fail-soft: the tripwire never breaks the observed access.
+			$this->logger->error(
+				'Doriath: honey tripwire failed: ' . $exception->getMessage(),
+				['app' => 'doriath']
+			);
+		}//end try
+	}//end handle()
 
-    /**
-     * Remote address of the observed access, or null when it is unavailable.
-     *
-     * @return string|null
-     */
-    private function resolveRemoteIp(): ?string
-    {
-        $remoteAddress = $this->request->getRemoteAddress();
-        if ($remoteAddress === '') {
-            return null;
-        }
+	/**
+	 * Remote address of the observed access, or null when it is unavailable.
+	 *
+	 * @return string|null
+	 */
+	private function resolveRemoteIp(): ?string {
+		$remoteAddress = $this->request->getRemoteAddress();
+		if ($remoteAddress === '') {
+			return null;
+		}
 
-        return $remoteAddress;
-    }//end resolveRemoteIp()
+		return $remoteAddress;
+	}//end resolveRemoteIp()
 
-    /**
-     * Truncated user agent of the observed access, or null when it is unavailable.
-     *
-     * @return string|null
-     */
-    private function resolveUserAgent(): ?string
-    {
-        $userAgent = $this->request->getHeader('User-Agent');
-        if ($userAgent === '') {
-            return null;
-        }
+	/**
+	 * Truncated user agent of the observed access, or null when it is unavailable.
+	 *
+	 * @return string|null
+	 */
+	private function resolveUserAgent(): ?string {
+		$userAgent = $this->request->getHeader('User-Agent');
+		if ($userAgent === '') {
+			return null;
+		}
 
-        return substr($userAgent, 0, 512);
-    }//end resolveUserAgent()
+		return substr($userAgent, 0, 512);
+	}//end resolveUserAgent()
 
-    /**
-     * Route one audit event onto the honey channel it belongs to.
-     *
-     * @param AuditEvent  $event     The dispatched audit event
-     * @param string|null $remoteIp  Remote address of the access
-     * @param string|null $userAgent User agent of the access
-     *
-     * @return void
-     */
-    private function trip(AuditEvent $event, ?string $remoteIp, ?string $userAgent): void
-    {
-        $eventType = $event->getEventType();
+	/**
+	 * Route one audit event onto the honey channel it belongs to.
+	 *
+	 * @param AuditEvent $event The dispatched audit event
+	 * @param string|null $remoteIp Remote address of the access
+	 * @param string|null $userAgent User agent of the access
+	 *
+	 * @return void
+	 */
+	private function trip(AuditEvent $event, ?string $remoteIp, ?string $userAgent): void {
+		$eventType = $event->getEventType();
 
-        if ($eventType === AuditEventTypes::SECRET_READ && $event->getObjectType() === 'secret') {
-            $secretId = (string) $event->getObjectId();
-            $hit      = $this->honeyService->raiseAlert(
-                secretId: $secretId,
-                accessorType: $event->getActorType(),
-                accessorId: $event->getActorId(),
-                channel: 'ui',
-                remoteIp: $remoteIp,
-                userAgent: $userAgent,
-            );
-            if ($hit === false) {
-                // Not flagged directly — a share-recipient copy read
-                // trips the wire of its flagged SOURCE secret.
-                $this->tripSourceOfCopy(event: $event, copySecretId: $secretId, remoteIp: $remoteIp, userAgent: $userAgent);
-            }
+		if ($eventType === AuditEventTypes::SECRET_READ && $event->getObjectType() === 'secret') {
+			$secretId = (string)$event->getObjectId();
+			$hit = $this->honeyService->raiseAlert(
+				secretId: $secretId,
+				accessorType: $event->getActorType(),
+				accessorId: $event->getActorId(),
+				channel: 'ui',
+				remoteIp: $remoteIp,
+				userAgent: $userAgent,
+			);
+			if ($hit === false) {
+				// Not flagged directly — a share-recipient copy read
+				// trips the wire of its flagged SOURCE secret.
+				$this->tripSourceOfCopy(event: $event, copySecretId: $secretId, remoteIp: $remoteIp, userAgent: $userAgent);
+			}
 
-            return;
-        }
+			return;
+		}
 
-        if ($eventType === AuditEventTypes::APPLICATION_SECRET_RETRIEVED && $event->getObjectType() === 'secret') {
-            $this->honeyService->raiseAlert(
-                secretId: (string) $event->getObjectId(),
-                accessorType: $event->getActorType(),
-                accessorId: $event->getActorId(),
-                channel: 'machine_api',
-                remoteIp: $remoteIp,
-                userAgent: $userAgent,
-            );
+		if ($eventType === AuditEventTypes::APPLICATION_SECRET_RETRIEVED && $event->getObjectType() === 'secret') {
+			$this->honeyService->raiseAlert(
+				secretId: (string)$event->getObjectId(),
+				accessorType: $event->getActorType(),
+				accessorId: $event->getActorId(),
+				channel: 'machine_api',
+				remoteIp: $remoteIp,
+				userAgent: $userAgent,
+			);
 
-            return;
-        }
+			return;
+		}
 
-        if ($eventType === AuditEventTypes::LINK_SHARE_ACCESSED && $event->getObjectType() === 'link_share') {
-            $linkShare = $this->linkShareMapper->findById((string) $event->getObjectId());
-            $this->honeyService->raiseAlert(
-                secretId: $linkShare->getSecretId(),
-                accessorType: $event->getActorType(),
-                accessorId: $event->getActorId(),
-                channel: 'link',
-                remoteIp: $remoteIp,
-                userAgent: $userAgent,
-            );
-        }
-    }//end trip()
+		if ($eventType === AuditEventTypes::LINK_SHARE_ACCESSED && $event->getObjectType() === 'link_share') {
+			$linkShare = $this->linkShareMapper->findById((string)$event->getObjectId());
+			$this->honeyService->raiseAlert(
+				secretId: $linkShare->getSecretId(),
+				accessorType: $event->getActorType(),
+				accessorId: $event->getActorId(),
+				channel: 'link',
+				remoteIp: $remoteIp,
+				userAgent: $userAgent,
+			);
+		}
+	}//end trip()
 
-    /**
-     * A read of a share-recipient COPY trips the wire of its flagged
-     * source secret (channel: share).
-     *
-     * @param AuditEvent  $event        The read event
-     * @param string      $copySecretId The read (possibly copy) secret id
-     * @param string|null $remoteIp     Remote address
-     * @param string|null $userAgent    User agent
-     *
-     * @return void
-     */
-    private function tripSourceOfCopy(AuditEvent $event, string $copySecretId, ?string $remoteIp, ?string $userAgent): void
-    {
-        try {
-            $shareTarget = $this->shareTargetMapper->findByRecipientSecret($copySecretId);
-        } catch (DoesNotExistException) {
-            return;
-        }
+	/**
+	 * A read of a share-recipient COPY trips the wire of its flagged
+	 * source secret (channel: share).
+	 *
+	 * @param AuditEvent $event The read event
+	 * @param string $copySecretId The read (possibly copy) secret id
+	 * @param string|null $remoteIp Remote address
+	 * @param string|null $userAgent User agent
+	 *
+	 * @return void
+	 */
+	private function tripSourceOfCopy(AuditEvent $event, string $copySecretId, ?string $remoteIp, ?string $userAgent): void {
+		try {
+			$shareTarget = $this->shareTargetMapper->findByRecipientSecret($copySecretId);
+		} catch (DoesNotExistException) {
+			return;
+		}
 
-        $this->honeyService->raiseAlert(
-            secretId: $shareTarget->getSourceSecretId(),
-            accessorType: $event->getActorType(),
-            accessorId: $event->getActorId(),
-            channel: 'share',
-            remoteIp: $remoteIp,
-            userAgent: $userAgent,
-        );
-    }//end tripSourceOfCopy()
+		$this->honeyService->raiseAlert(
+			secretId: $shareTarget->getSourceSecretId(),
+			accessorType: $event->getActorType(),
+			accessorId: $event->getActorId(),
+			channel: 'share',
+			remoteIp: $remoteIp,
+			userAgent: $userAgent,
+		);
+	}//end tripSourceOfCopy()
 }//end class

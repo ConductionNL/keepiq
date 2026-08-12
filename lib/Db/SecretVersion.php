@@ -54,171 +54,165 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  */
-class SecretVersion extends Entity implements JsonSerializable
-{
+class SecretVersion extends Entity implements JsonSerializable {
 
-    /**
-     * The secret this version belongs to.
-     *
-     * @var string
-     */
-    protected string $secretId = '';
+	/**
+	 * The secret this version belongs to.
+	 *
+	 * @var string
+	 */
+	protected string $secretId = '';
 
-    /**
-     * The monotonically increasing version number per secret.
-     *
-     * @var integer
-     */
-    protected int $versionNumber = 0;
+	/**
+	 * The monotonically increasing version number per secret.
+	 *
+	 * @var integer
+	 */
+	protected int $versionNumber = 0;
 
-    /**
-     * The plaintext display name at snapshot time.
-     *
-     * @var string
-     */
-    protected string $name = '';
+	/**
+	 * The plaintext display name at snapshot time.
+	 *
+	 * @var string
+	 */
+	protected string $name = '';
 
-    /**
-     * The plaintext url at snapshot time.
-     *
-     * @var string|null
-     */
-    protected ?string $url = null;
+	/**
+	 * The plaintext url at snapshot time.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $url = null;
 
-    /**
-     * The ciphertext key blob at snapshot time.
-     *
-     * @var string
-     */
-    protected string $key = '';
+	/**
+	 * The ciphertext key blob at snapshot time.
+	 *
+	 * @var string
+	 */
+	protected string $key = '';
 
-    /**
-     * The ciphertext login blob at snapshot time.
-     *
-     * @var string|null
-     */
-    protected ?string $login = null;
+	/**
+	 * The ciphertext login blob at snapshot time.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $login = null;
 
-    /**
-     * The ciphertext additional-fields blob at snapshot time.
-     *
-     * @var string|null
-     */
-    protected ?string $additionalFields = null;
+	/**
+	 * The ciphertext additional-fields blob at snapshot time.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $additionalFields = null;
 
-    /**
-     * The suite that wrapped this version's ciphertext.
-     *
-     * @var string|null
-     */
-    protected ?string $encryptionSuiteId = null;
+	/**
+	 * The suite that wrapped this version's ciphertext.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $encryptionSuiteId = null;
 
-    /**
-     * The actor type (`user`|`application`). Initialized empty on purpose
-     * (NC Entity dirty-tracking: a non-empty default makes a same-value
-     * set a no-op and the INSERT omits the column).
-     *
-     * @var string
-     */
-    protected string $actorType = '';
+	/**
+	 * The actor type (`user`|`application`). Initialized empty on purpose
+	 * (NC Entity dirty-tracking: a non-empty default makes a same-value
+	 * set a no-op and the INSERT omits the column).
+	 *
+	 * @var string
+	 */
+	protected string $actorType = '';
 
-    /**
-     * The actor id.
-     *
-     * @var string
-     */
-    protected string $actorId = '';
+	/**
+	 * The actor id.
+	 *
+	 * @var string
+	 */
+	protected string $actorId = '';
 
-    /**
-     * When the snapshot was taken.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the snapshot was taken.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for SecretVersion.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'secretId', type: 'string');
-        $this->addType(fieldName: 'versionNumber', type: 'integer');
-        $this->addType(fieldName: 'name', type: 'string');
-        $this->addType(fieldName: 'url', type: 'string');
-        $this->addType(fieldName: 'key', type: 'string');
-        $this->addType(fieldName: 'login', type: 'string');
-        $this->addType(fieldName: 'additionalFields', type: 'string');
-        $this->addType(fieldName: 'encryptionSuiteId', type: 'string');
-        $this->addType(fieldName: 'actorType', type: 'string');
-        $this->addType(fieldName: 'actorId', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Constructor for SecretVersion.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'secretId', type: 'string');
+		$this->addType(fieldName: 'versionNumber', type: 'integer');
+		$this->addType(fieldName: 'name', type: 'string');
+		$this->addType(fieldName: 'url', type: 'string');
+		$this->addType(fieldName: 'key', type: 'string');
+		$this->addType(fieldName: 'login', type: 'string');
+		$this->addType(fieldName: 'additionalFields', type: 'string');
+		$this->addType(fieldName: 'encryptionSuiteId', type: 'string');
+		$this->addType(fieldName: 'actorType', type: 'string');
+		$this->addType(fieldName: 'actorId', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+	}//end __construct()
 
-    /**
-     * Serialize metadata only — ciphertext blobs are returned exclusively
-     * by the dedicated show endpoint.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'            => $this->getId(),
-            'secretId'      => $this->secretId,
-            'versionNumber' => $this->versionNumber,
-            'name'          => $this->name,
-            'url'           => $this->url,
-            'actorType'     => $this->actorType,
-            'actorId'       => $this->actorId,
-            'createdAt'     => $this->createdAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize metadata only — ciphertext blobs are returned exclusively
+	 * by the dedicated show endpoint.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'secretId' => $this->secretId,
+			'versionNumber' => $this->versionNumber,
+			'name' => $this->name,
+			'url' => $this->url,
+			'actorType' => $this->actorType,
+			'actorId' => $this->actorId,
+			'createdAt' => $this->createdAt?->format('c'),
+		];
+	}//end jsonSerialize()
 
-    /**
-     * Serialize INCLUDING the ciphertext blobs (the show endpoint).
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerializeWithBlobs(): array
-    {
-        $data = $this->jsonSerialize();
+	/**
+	 * Serialize INCLUDING the ciphertext blobs (the show endpoint).
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerializeWithBlobs(): array {
+		$data = $this->jsonSerialize();
 
-        $data['key']   = $this->key;
-        $data['login'] = $this->login;
-        $data['additionalFields'] = $this->additionalFields;
+		$data['key'] = $this->key;
+		$data['login'] = $this->login;
+		$data['additionalFields'] = $this->additionalFields;
 
-        return $data;
-    }//end jsonSerializeWithBlobs()
+		return $data;
+	}//end jsonSerializeWithBlobs()
 }//end class

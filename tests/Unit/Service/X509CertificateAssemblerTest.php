@@ -55,287 +55,276 @@ use RuntimeException;
  *    build, whichever branch signPublicKey takes. This is added coverage, not
  *    a relaxed threshold.
  */
-class X509CertificateAssemblerTest extends TestCase
-{
-    /**
-     * The assembler under test.
-     *
-     * @var X509CertificateAssembler
-     */
-    private X509CertificateAssembler $assembler;
+class X509CertificateAssemblerTest extends TestCase {
+	/**
+	 * The assembler under test.
+	 *
+	 * @var X509CertificateAssembler
+	 */
+	private X509CertificateAssembler $assembler;
 
-    /**
-     * The signing intermediate certificate PEM.
-     *
-     * @var string
-     */
-    private string $intermediateCertPem = '';
+	/**
+	 * The signing intermediate certificate PEM.
+	 *
+	 * @var string
+	 */
+	private string $intermediateCertPem = '';
 
-    /**
-     * The intermediate private key PEM.
-     *
-     * @var string
-     */
-    private string $intermediatePrivPem = '';
+	/**
+	 * The intermediate private key PEM.
+	 *
+	 * @var string
+	 */
+	private string $intermediatePrivPem = '';
 
-    /**
-     * Build a real intermediate CA and the assembler.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Build a real intermediate CA and the assembler.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        if (function_exists('openssl_pkey_new') === false) {
-            $this->markTestSkipped('ext-openssl is required to build the test CA');
-        }
+		if (function_exists('openssl_pkey_new') === false) {
+			$this->markTestSkipped('ext-openssl is required to build the test CA');
+		}
 
-        $key = openssl_pkey_new(
-            [
-                'private_key_bits' => 2048,
-                'private_key_type' => OPENSSL_KEYTYPE_RSA,
-            ]
-        );
+		$key = openssl_pkey_new(
+			[
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			]
+		);
 
-        $dn = array_merge(
-            CertificateIssuanceService::DEFAULT_DN,
-            ['commonName' => 'Doriath Test Intermediate']
-        );
+		$dn = array_merge(
+			CertificateIssuanceService::DEFAULT_DN,
+			['commonName' => 'Doriath Test Intermediate']
+		);
 
-        $csr  = openssl_csr_new($dn, $key, ['digest_alg' => 'sha256']);
-        $cert = openssl_csr_sign($csr, null, $key, 3650, ['digest_alg' => 'sha256'], 1);
+		$csr = openssl_csr_new($dn, $key, ['digest_alg' => 'sha256']);
+		$cert = openssl_csr_sign($csr, null, $key, 3650, ['digest_alg' => 'sha256'], 1);
 
-        openssl_x509_export($cert, $this->intermediateCertPem);
-        openssl_pkey_export($key, $this->intermediatePrivPem);
+		openssl_x509_export($cert, $this->intermediateCertPem);
+		openssl_pkey_export($key, $this->intermediatePrivPem);
 
-        $this->assembler = new X509CertificateAssembler($this->createMock(LoggerInterface::class));
+		$this->assembler = new X509CertificateAssembler($this->createMock(LoggerInterface::class));
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Generate an RSA public key PEM of the given size.
-     *
-     * @param int $bits The modulus size in bits
-     *
-     * @return string
-     */
-    private function publicKeyPem(int $bits=4096): string
-    {
-        $key = openssl_pkey_new(
-            [
-                'private_key_bits' => $bits,
-                'private_key_type' => OPENSSL_KEYTYPE_RSA,
-            ]
-        );
+	/**
+	 * Generate an RSA public key PEM of the given size.
+	 *
+	 * @param int $bits The modulus size in bits
+	 *
+	 * @return string
+	 */
+	private function publicKeyPem(int $bits = 4096): string {
+		$key = openssl_pkey_new(
+			[
+				'private_key_bits' => $bits,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			]
+		);
 
-        return openssl_pkey_get_details($key)['key'];
+		return openssl_pkey_get_details($key)['key'];
+	}//end publicKeyPem()
 
-    }//end publicKeyPem()
+	/**
+	 * The whole point of the assembler: bind the SUBMITTED public key
+	 * deterministically, which is what ext-openssl's CSR path cannot do.
+	 *
+	 * @return void
+	 */
+	public function testIssuedCertificateCarriesTheSubmittedPublicKey(): void {
+		$pub = $this->publicKeyPem(4096);
 
-    /**
-     * The whole point of the assembler: bind the SUBMITTED public key
-     * deterministically, which is what ext-openssl's CSR path cannot do.
-     *
-     * @return void
-     */
-    public function testIssuedCertificateCarriesTheSubmittedPublicKey(): void
-    {
-        $pub = $this->publicKeyPem(4096);
+		$certPem = $this->assembler->issueForPublicKey(
+			$pub,
+			[
+				'id-at-countryName' => 'NL',
+				'id-at-organizationName' => 'Conduction',
+				'id-at-commonName' => 'assembler@example.com',
+			],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
 
-        $certPem = $this->assembler->issueForPublicKey(
-            $pub,
-            [
-                'id-at-countryName'      => 'NL',
-                'id-at-organizationName' => 'Conduction',
-                'id-at-commonName'       => 'assembler@example.com',
-            ],
-            $this->intermediateCertPem,
-            $this->intermediatePrivPem,
-        );
+		$expected = openssl_pkey_get_details(openssl_pkey_get_public($pub))['rsa']['n'];
+		$actual = openssl_pkey_get_details(openssl_pkey_get_public($certPem))['rsa']['n'];
 
-        $expected = openssl_pkey_get_details(openssl_pkey_get_public($pub))['rsa']['n'];
-        $actual   = openssl_pkey_get_details(openssl_pkey_get_public($certPem))['rsa']['n'];
+		$this->assertSame(
+			bin2hex($expected),
+			bin2hex($actual),
+			'the assembler did not bind the submitted public key — this is the fallback that '
+			. 'exists precisely to stop that happening'
+		);
 
-        $this->assertSame(
-            bin2hex($expected),
-            bin2hex($actual),
-            'the assembler did not bind the submitted public key — this is the fallback that '
-            . 'exists precisely to stop that happening'
-        );
+		$this->assertSame(4096, openssl_pkey_get_details(openssl_pkey_get_public($certPem))['bits']);
 
-        $this->assertSame(4096, openssl_pkey_get_details(openssl_pkey_get_public($certPem))['bits']);
+	}//end testIssuedCertificateCarriesTheSubmittedPublicKey()
 
-    }//end testIssuedCertificateCarriesTheSubmittedPublicKey()
+	/**
+	 * The SPKI must carry the plain rsaEncryption OID. phpseclib's PSS default
+	 * would emit an id-RSASSA-PSS SPKI that WebCrypto and openssl consumers
+	 * reject — a certificate that parses here but is unusable in the browser.
+	 *
+	 * openssl_pkey_get_public() succeeding above already proves openssl accepts
+	 * it; this asserts the OID directly so a padding regression names itself.
+	 *
+	 * @return void
+	 */
+	public function testIssuedCertificateUsesThePlainRsaEncryptionOid(): void {
+		$certPem = $this->assembler->issueForPublicKey(
+			$this->publicKeyPem(2048),
+			['id-at-commonName' => 'oid@example.com'],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
 
-    /**
-     * The SPKI must carry the plain rsaEncryption OID. phpseclib's PSS default
-     * would emit an id-RSASSA-PSS SPKI that WebCrypto and openssl consumers
-     * reject — a certificate that parses here but is unusable in the browser.
-     *
-     * openssl_pkey_get_public() succeeding above already proves openssl accepts
-     * it; this asserts the OID directly so a padding regression names itself.
-     *
-     * @return void
-     */
-    public function testIssuedCertificateUsesThePlainRsaEncryptionOid(): void
-    {
-        $certPem = $this->assembler->issueForPublicKey(
-            $this->publicKeyPem(2048),
-            ['id-at-commonName' => 'oid@example.com'],
-            $this->intermediateCertPem,
-            $this->intermediatePrivPem,
-        );
+		$der = base64_decode(
+			preg_replace('/-----(BEGIN|END) CERTIFICATE-----|\s+/', '', $certPem)
+		);
 
-        $der = base64_decode(
-            preg_replace('/-----(BEGIN|END) CERTIFICATE-----|\s+/', '', $certPem)
-        );
+		// OID 1.2.840.113549.1.1.1 (rsaEncryption) DER-encoded.
+		$rsaEncryption = hex2bin('2a864886f70d010101');
+		// OID 1.2.840.113549.1.1.10 (id-RSASSA-PSS) DER-encoded.
+		$rsassaPss = hex2bin('2a864886f70d01010a');
 
-        // OID 1.2.840.113549.1.1.1 (rsaEncryption) DER-encoded.
-        $rsaEncryption = hex2bin('2a864886f70d010101');
-        // OID 1.2.840.113549.1.1.10 (id-RSASSA-PSS) DER-encoded.
-        $rsassaPss = hex2bin('2a864886f70d01010a');
+		$this->assertStringContainsString($rsaEncryption, $der, 'SPKI is not rsaEncryption');
+		$this->assertStringNotContainsString(
+			$rsassaPss,
+			$der,
+			'SPKI carries id-RSASSA-PSS — WebCrypto and openssl consumers reject this'
+		);
 
-        $this->assertStringContainsString($rsaEncryption, $der, 'SPKI is not rsaEncryption');
-        $this->assertStringNotContainsString(
-            $rsassaPss,
-            $der,
-            'SPKI carries id-RSASSA-PSS — WebCrypto and openssl consumers reject this'
-        );
+	}//end testIssuedCertificateUsesThePlainRsaEncryptionOid()
 
-    }//end testIssuedCertificateUsesThePlainRsaEncryptionOid()
+	/**
+	 * The subject DN must be built from the supplied ordered map, and the
+	 * certificate chained to the intermediate.
+	 *
+	 * @return void
+	 */
+	public function testIssuedCertificateCarriesTheSubjectDnAndIssuerChain(): void {
+		$certPem = $this->assembler->issueForPublicKey(
+			$this->publicKeyPem(2048),
+			[
+				'id-at-countryName' => 'NL',
+				'id-at-organizationName' => 'Conduction',
+				'id-at-commonName' => 'dn@example.com',
+			],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
 
-    /**
-     * The subject DN must be built from the supplied ordered map, and the
-     * certificate chained to the intermediate.
-     *
-     * @return void
-     */
-    public function testIssuedCertificateCarriesTheSubjectDnAndIssuerChain(): void
-    {
-        $certPem = $this->assembler->issueForPublicKey(
-            $this->publicKeyPem(2048),
-            [
-                'id-at-countryName'      => 'NL',
-                'id-at-organizationName' => 'Conduction',
-                'id-at-commonName'       => 'dn@example.com',
-            ],
-            $this->intermediateCertPem,
-            $this->intermediatePrivPem,
-        );
+		$parsed = openssl_x509_parse($certPem);
 
-        $parsed = openssl_x509_parse($certPem);
+		$this->assertSame('dn@example.com', $parsed['subject']['CN']);
+		$this->assertSame('NL', $parsed['subject']['C']);
+		$this->assertSame('Conduction', $parsed['subject']['O']);
+		$this->assertSame(
+			openssl_x509_parse($this->intermediateCertPem)['subject'],
+			$parsed['issuer'],
+			'the issued certificate is not chained to the intermediate'
+		);
 
-        $this->assertSame('dn@example.com', $parsed['subject']['CN']);
-        $this->assertSame('NL', $parsed['subject']['C']);
-        $this->assertSame('Conduction', $parsed['subject']['O']);
-        $this->assertSame(
-            openssl_x509_parse($this->intermediateCertPem)['subject'],
-            $parsed['issuer'],
-            'the issued certificate is not chained to the intermediate'
-        );
+	}//end testIssuedCertificateCarriesTheSubjectDnAndIssuerChain()
 
-    }//end testIssuedCertificateCarriesTheSubjectDnAndIssuerChain()
+	/**
+	 * A private key handed in where a public key belongs must be refused
+	 * rather than issued against — the guard distinguishes the two key shapes.
+	 *
+	 * @return void
+	 */
+	public function testNonPublicSubjectKeyIsRejected(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Submitted public key is not an RSA public key');
 
-    /**
-     * A private key handed in where a public key belongs must be refused
-     * rather than issued against — the guard distinguishes the two key shapes.
-     *
-     * @return void
-     */
-    public function testNonPublicSubjectKeyIsRejected(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Submitted public key is not an RSA public key');
+		$this->assembler->issueForPublicKey(
+			$this->intermediatePrivPem,
+			['id-at-commonName' => 'wrong@example.com'],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
 
-        $this->assembler->issueForPublicKey(
-            $this->intermediatePrivPem,
-            ['id-at-commonName' => 'wrong@example.com'],
-            $this->intermediateCertPem,
-            $this->intermediatePrivPem,
-        );
+	}//end testNonPublicSubjectKeyIsRejected()
 
-    }//end testNonPublicSubjectKeyIsRejected()
+	/**
+	 * An unusable intermediate private key must fail loudly. Issuing with a
+	 * key that is not the CA's would produce a certificate that no client can
+	 * chain — a failure best surfaced at issuance.
+	 *
+	 * @return void
+	 */
+	public function testUnloadableIntermediateKeyIsRejected(): void {
+		$this->expectException(RuntimeException::class);
 
-    /**
-     * An unusable intermediate private key must fail loudly. Issuing with a
-     * key that is not the CA's would produce a certificate that no client can
-     * chain — a failure best surfaced at issuance.
-     *
-     * @return void
-     */
-    public function testUnloadableIntermediateKeyIsRejected(): void
-    {
-        $this->expectException(RuntimeException::class);
+		$this->assembler->issueForPublicKey(
+			$this->publicKeyPem(2048),
+			['id-at-commonName' => 'badca@example.com'],
+			$this->intermediateCertPem,
+			'not-a-key',
+		);
 
-        $this->assembler->issueForPublicKey(
-            $this->publicKeyPem(2048),
-            ['id-at-commonName' => 'badca@example.com'],
-            $this->intermediateCertPem,
-            'not-a-key',
-        );
+	}//end testUnloadableIntermediateKeyIsRejected()
 
-    }//end testUnloadableIntermediateKeyIsRejected()
+	/**
+	 * Re-signing must preserve the old certificate's public key and subject
+	 * verbatim: a renewal that changed either would strand every value already
+	 * encrypted under the original key.
+	 *
+	 * @return void
+	 */
+	public function testResignPreservesTheSubjectPublicKeyAndDn(): void {
+		$pub = $this->publicKeyPem(2048);
 
-    /**
-     * Re-signing must preserve the old certificate's public key and subject
-     * verbatim: a renewal that changed either would strand every value already
-     * encrypted under the original key.
-     *
-     * @return void
-     */
-    public function testResignPreservesTheSubjectPublicKeyAndDn(): void
-    {
-        $pub = $this->publicKeyPem(2048);
+		$original = $this->assembler->issueForPublicKey(
+			$pub,
+			[
+				'id-at-countryName' => 'NL',
+				'id-at-commonName' => 'renew@example.com',
+			],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
 
-        $original = $this->assembler->issueForPublicKey(
-            $pub,
-            [
-                'id-at-countryName' => 'NL',
-                'id-at-commonName'  => 'renew@example.com',
-            ],
-            $this->intermediateCertPem,
-            $this->intermediatePrivPem,
-        );
+		$renewed = $this->assembler->resignPreservingSubject(
+			$original,
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
 
-        $renewed = $this->assembler->resignPreservingSubject(
-            $original,
-            $this->intermediateCertPem,
-            $this->intermediatePrivPem,
-        );
+		$this->assertNotNull($renewed, 're-signing returned null');
 
-        $this->assertNotNull($renewed, 're-signing returned null');
+		$this->assertSame(
+			bin2hex(openssl_pkey_get_details(openssl_pkey_get_public($original))['rsa']['n']),
+			bin2hex(openssl_pkey_get_details(openssl_pkey_get_public($renewed))['rsa']['n']),
+			're-signing changed the public key — every secret encrypted under the original '
+			. 'would become undecryptable'
+		);
 
-        $this->assertSame(
-            bin2hex(openssl_pkey_get_details(openssl_pkey_get_public($original))['rsa']['n']),
-            bin2hex(openssl_pkey_get_details(openssl_pkey_get_public($renewed))['rsa']['n']),
-            're-signing changed the public key — every secret encrypted under the original '
-            . 'would become undecryptable'
-        );
+		$this->assertSame(
+			openssl_x509_parse($original)['subject'],
+			openssl_x509_parse($renewed)['subject'],
+			're-signing changed the subject DN'
+		);
 
-        $this->assertSame(
-            openssl_x509_parse($original)['subject'],
-            openssl_x509_parse($renewed)['subject'],
-            're-signing changed the subject DN'
-        );
+	}//end testResignPreservesTheSubjectPublicKeyAndDn()
 
-    }//end testResignPreservesTheSubjectPublicKeyAndDn()
+	/**
+	 * Re-signing garbage must degrade to null rather than throw, since the
+	 * caller treats null as "this certificate could not be renewed".
+	 *
+	 * @return void
+	 */
+	public function testResignReturnsNullForAnUnparseableCertificate(): void {
+		$this->assertNull(
+			$this->assembler->resignPreservingSubject(
+				'-----BEGIN CERTIFICATE-----\nnope\n-----END CERTIFICATE-----',
+				$this->intermediateCertPem,
+				$this->intermediatePrivPem,
+			)
+		);
 
-    /**
-     * Re-signing garbage must degrade to null rather than throw, since the
-     * caller treats null as "this certificate could not be renewed".
-     *
-     * @return void
-     */
-    public function testResignReturnsNullForAnUnparseableCertificate(): void
-    {
-        $this->assertNull(
-            $this->assembler->resignPreservingSubject(
-                '-----BEGIN CERTIFICATE-----\nnope\n-----END CERTIFICATE-----',
-                $this->intermediateCertPem,
-                $this->intermediatePrivPem,
-            )
-        );
-
-    }//end testResignReturnsNullForAnUnparseableCertificate()
+	}//end testResignReturnsNullForAnUnparseableCertificate()
 }//end class

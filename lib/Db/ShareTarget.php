@@ -45,120 +45,115 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  */
-class ShareTarget extends Entity implements JsonSerializable
-{
+class ShareTarget extends Entity implements JsonSerializable {
 
-    /**
-     * The source secret ID (owner's copy).
-     *
-     * @var string
-     */
-    protected string $sourceSecretId = '';
+	/**
+	 * The source secret ID (owner's copy).
+	 *
+	 * @var string
+	 */
+	protected string $sourceSecretId = '';
 
-    /**
-     * The Nextcloud user ID of the recipient.
-     *
-     * @var string
-     */
-    protected string $targetUserId = '';
+	/**
+	 * The Nextcloud user ID of the recipient.
+	 *
+	 * @var string
+	 */
+	protected string $targetUserId = '';
 
-    /**
-     * The ID of the recipient's encrypted Secret copy.
-     *
-     * @var string
-     */
-    protected string $secretId = '';
+	/**
+	 * The ID of the recipient's encrypted Secret copy.
+	 *
+	 * @var string
+	 */
+	protected string $secretId = '';
 
-    /**
-     * Optional ID of the group share this row was derived from.
-     *
-     * @var string|null
-     */
-    protected ?string $groupShareId = null;
+	/**
+	 * Optional ID of the group share this row was derived from.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $groupShareId = null;
 
-    /**
-     * Optional ID of the team folder this row was derived from.
-     *
-     * @var string|null
-     */
-    protected ?string $teamFolderId = null;
+	/**
+	 * Optional ID of the team folder this row was derived from.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $teamFolderId = null;
 
-    /**
-     * The user ID that initiated the share.
-     *
-     * @var string
-     */
-    protected string $createdBy = '';
+	/**
+	 * The user ID that initiated the share.
+	 *
+	 * @var string
+	 */
+	protected string $createdBy = '';
 
-    /**
-     * When the share was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the share was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for ShareTarget.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'sourceSecretId', type: 'string');
-        $this->addType(fieldName: 'targetUserId', type: 'string');
-        $this->addType(fieldName: 'secretId', type: 'string');
-        $this->addType(fieldName: 'groupShareId', type: 'string');
-        $this->addType(fieldName: 'teamFolderId', type: 'string');
-        $this->addType(fieldName: 'createdBy', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Constructor for ShareTarget.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'sourceSecretId', type: 'string');
+		$this->addType(fieldName: 'targetUserId', type: 'string');
+		$this->addType(fieldName: 'secretId', type: 'string');
+		$this->addType(fieldName: 'groupShareId', type: 'string');
+		$this->addType(fieldName: 'teamFolderId', type: 'string');
+		$this->addType(fieldName: 'createdBy', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+	}//end __construct()
 
-    /**
-     * Serialize the entity to an array for the API.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'             => $this->getId(),
-            'sourceSecretId' => $this->sourceSecretId,
-            'targetUserId'   => $this->targetUserId,
-            'secretId'       => $this->secretId,
-            'groupShareId'   => $this->groupShareId,
-            'teamFolderId'   => $this->teamFolderId,
-            'createdBy'      => $this->createdBy,
-            'createdAt'      => $this->createdAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'sourceSecretId' => $this->sourceSecretId,
+			'targetUserId' => $this->targetUserId,
+			'secretId' => $this->secretId,
+			'groupShareId' => $this->groupShareId,
+			'teamFolderId' => $this->teamFolderId,
+			'createdBy' => $this->createdBy,
+			'createdAt' => $this->createdAt?->format('c'),
+		];
+	}//end jsonSerialize()
 }//end class

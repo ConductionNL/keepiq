@@ -42,39 +42,36 @@ use phpseclib3\Crypt\PublicKeyLoader;
  * instance API to call and nothing to construct — so the static access cannot
  * be removed, only confined to a documented, injectable adapter.
  */
-class PublicKeyLoaderAdapter
-{
-    /**
-     * Parse any supported key (public or private) from its PEM/DER encoding.
-     *
-     * @param string $key      The encoded key
-     * @param string $password The passphrase, or '' when the key is unencrypted
-     *
-     * @return AsymmetricKey
-     */
-    public function load(string $key, string $password=''): AsymmetricKey
-    {
-        if ($password === '') {
-            return PublicKeyLoader::load($key);
-        }
+class PublicKeyLoaderAdapter {
+	/**
+	 * Parse any supported key (public or private) from its PEM/DER encoding.
+	 *
+	 * @param string $key The encoded key
+	 * @param string $password The passphrase, or '' when the key is unencrypted
+	 *
+	 * @return AsymmetricKey
+	 */
+	public function load(string $key, string $password = ''): AsymmetricKey {
+		if ($password === '') {
+			return PublicKeyLoader::load($key);
+		}
 
-        return PublicKeyLoader::load($key, $password);
-    }//end load()
+		return PublicKeyLoader::load($key, $password);
+	}//end load()
 
-    /**
-     * Parse a private key from its PEM/DER encoding.
-     *
-     * @param string $key      The encoded private key
-     * @param string $password The passphrase, or '' when the key is unencrypted
-     *
-     * @return PrivateKey
-     */
-    public function loadPrivateKey(string $key, string $password=''): PrivateKey
-    {
-        if ($password === '') {
-            return PublicKeyLoader::loadPrivateKey($key);
-        }
+	/**
+	 * Parse a private key from its PEM/DER encoding.
+	 *
+	 * @param string $key The encoded private key
+	 * @param string $password The passphrase, or '' when the key is unencrypted
+	 *
+	 * @return PrivateKey
+	 */
+	public function loadPrivateKey(string $key, string $password = ''): PrivateKey {
+		if ($password === '') {
+			return PublicKeyLoader::loadPrivateKey($key);
+		}
 
-        return PublicKeyLoader::loadPrivateKey($key, $password);
-    }//end loadPrivateKey()
+		return PublicKeyLoader::loadPrivateKey($key, $password);
+	}//end loadPrivateKey()
 }//end class

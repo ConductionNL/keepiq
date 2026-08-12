@@ -36,49 +36,47 @@ use Throwable;
 /**
  * Approve elapsed emergency-access requests on a timer.
  */
-class ApproveElapsedEmergencyRequests extends TimedJob
-{
-    /**
-     * Constructor for ApproveElapsedEmergencyRequests.
-     *
-     * @param ITimeFactory           $time    The time factory
-     * @param EmergencyAccessService $service The emergency-access service
-     * @param LoggerInterface        $logger  The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private EmergencyAccessService $service,
-        private LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        // Hourly — the wait periods are measured in days, so an hourly sweep is
-        // well within tolerance while keeping approvals timely.
-        $this->setInterval(seconds: 3600);
-    }//end __construct()
+class ApproveElapsedEmergencyRequests extends TimedJob {
+	/**
+	 * Constructor for ApproveElapsedEmergencyRequests.
+	 *
+	 * @param ITimeFactory $time The time factory
+	 * @param EmergencyAccessService $service The emergency-access service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private EmergencyAccessService $service,
+		private LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		// Hourly — the wait periods are measured in days, so an hourly sweep is
+		// well within tolerance while keeping approvals timely.
+		$this->setInterval(seconds: 3600);
+	}//end __construct()
 
-    /**
-     * Promote every elapsed pending request to `approved`.
-     *
-     * @param mixed $argument The job argument
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
-     *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
-     *
-     * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-approval-by-timeout-and-grantee-view-access
-     */
-    protected function run($argument): void
-    {
-        try {
-            $promoted = $this->service->approveElapsed();
-            if ($promoted > 0) {
-                $this->logger->info('Doriath: approved '.$promoted.' elapsed emergency-access request(s)');
-            }
-        } catch (Throwable $e) {
-            $this->logger->error('Doriath: emergency-access approval job failed: '.$e->getMessage());
-        }
-    }//end run()
+	/**
+	 * Promote every elapsed pending request to `approved`.
+	 *
+	 * @param mixed $argument The job argument
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+	 *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
+	 *
+	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-approval-by-timeout-and-grantee-view-access
+	 */
+	protected function run($argument): void {
+		try {
+			$promoted = $this->service->approveElapsed();
+			if ($promoted > 0) {
+				$this->logger->info('Doriath: approved ' . $promoted . ' elapsed emergency-access request(s)');
+			}
+		} catch (Throwable $e) {
+			$this->logger->error('Doriath: emergency-access approval job failed: ' . $e->getMessage());
+		}
+	}//end run()
 }//end class

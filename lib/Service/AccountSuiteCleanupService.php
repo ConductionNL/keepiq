@@ -31,43 +31,41 @@ use OCA\Doriath\Db\SuiteMigrationMapper;
 /**
  * Removes a user's encryption suites and their migration records.
  */
-class AccountSuiteCleanupService
-{
-    /**
-     * Constructor for AccountSuiteCleanupService.
-     *
-     * @param EncryptionSuiteMapper $suiteMapper     The encryption-suite mapper
-     * @param SuiteMigrationMapper  $migrationMapper The suite-migration mapper
-     *
-     * @return void
-     *
-     * @spec exclude Constructor wiring only.
-     */
-    public function __construct(
-        private EncryptionSuiteMapper $suiteMapper,
-        private SuiteMigrationMapper $migrationMapper,
-    ) {
-    }//end __construct()
+class AccountSuiteCleanupService {
+	/**
+	 * Constructor for AccountSuiteCleanupService.
+	 *
+	 * @param EncryptionSuiteMapper $suiteMapper The encryption-suite mapper
+	 * @param SuiteMigrationMapper $migrationMapper The suite-migration mapper
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only.
+	 */
+	public function __construct(
+		private EncryptionSuiteMapper $suiteMapper,
+		private SuiteMigrationMapper $migrationMapper,
+	) {
+	}//end __construct()
 
-    /**
-     * Remove the user's suites and their migration records.
-     *
-     * @param string         $userId The departing user
-     * @param DeletionReport $report The running report
-     *
-     * @return void
-     *
-     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
-     */
-    public function removeSuites(string $userId, DeletionReport $report): void
-    {
-        $suites   = $this->suiteMapper->findByOwner(ownerType: 'user', ownerId: $userId);
-        $suiteIds = [];
-        foreach ($suites as $suite) {
-            $suiteIds[] = $suite->getId();
-        }
+	/**
+	 * Remove the user's suites and their migration records.
+	 *
+	 * @param string $userId The departing user
+	 * @param DeletionReport $report The running report
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 */
+	public function removeSuites(string $userId, DeletionReport $report): void {
+		$suites = $this->suiteMapper->findByOwner(ownerType: 'user', ownerId: $userId);
+		$suiteIds = [];
+		foreach ($suites as $suite) {
+			$suiteIds[] = $suite->getId();
+		}
 
-        $this->migrationMapper->deleteBySuiteIds(suiteIds: $suiteIds);
-        $report->suitesDeleted = $this->suiteMapper->deleteByOwnerUser(ownerId: $userId);
-    }//end removeSuites()
+		$this->migrationMapper->deleteBySuiteIds(suiteIds: $suiteIds);
+		$report->suitesDeleted = $this->suiteMapper->deleteByOwnerUser(ownerId: $userId);
+	}//end removeSuites()
 }//end class

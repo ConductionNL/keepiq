@@ -26,6 +26,5 @@ use RuntimeException;
 /**
  * Thrown when decryption fails due to GCM auth failure, invalid format, or wrong key.
  */
-class DecryptionException extends RuntimeException
-{
+class DecryptionException extends RuntimeException {
 }//end class

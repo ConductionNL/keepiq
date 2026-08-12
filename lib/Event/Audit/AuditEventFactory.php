@@ -42,93 +42,92 @@ namespace OCA\Doriath\Event\Audit;
  * this class instead would duplicate the ACTOR_* mapping and break the tests
  * that construct AuditEvent directly.
  */
-class AuditEventFactory
-{
-    /**
-     * Build an event actored by a Nextcloud user.
-     *
-     * @param string              $actorId    The user id
-     * @param string              $eventType  The event type
-     * @param string              $objectType The object type
-     * @param string|null         $objectId   The object id
-     * @param string|null         $objectName The object name
-     * @param array<string,mixed> $metadata   The metadata
-     *
-     * @return AuditEvent
-     */
-    public function forUser(
-        string $actorId,
-        string $eventType,
-        string $objectType,
-        ?string $objectId=null,
-        ?string $objectName=null,
-        array $metadata=[],
-    ): AuditEvent {
-        return AuditEvent::forUser($actorId, $eventType, $objectType, $objectId, $objectName, $metadata);
-    }//end forUser()
+class AuditEventFactory {
+	/**
+	 * Build an event actored by a Nextcloud user.
+	 *
+	 * @param string $actorId The user id
+	 * @param string $eventType The event type
+	 * @param string $objectType The object type
+	 * @param string|null $objectId The object id
+	 * @param string|null $objectName The object name
+	 * @param array<string,mixed> $metadata The metadata
+	 *
+	 * @return AuditEvent
+	 */
+	public function forUser(
+		string $actorId,
+		string $eventType,
+		string $objectType,
+		?string $objectId = null,
+		?string $objectName = null,
+		array $metadata = [],
+	): AuditEvent {
+		return AuditEvent::forUser($actorId, $eventType, $objectType, $objectId, $objectName, $metadata);
+	}//end forUser()
 
-    /**
-     * Build an event actored by an application.
-     *
-     * @param string              $actorId    The application id
-     * @param string              $eventType  The event type
-     * @param string              $objectType The object type
-     * @param string|null         $objectId   The object id
-     * @param string|null         $objectName The object name
-     * @param array<string,mixed> $metadata   The metadata
-     *
-     * @return AuditEvent
-     */
-    public function forApplication(
-        string $actorId,
-        string $eventType,
-        string $objectType,
-        ?string $objectId=null,
-        ?string $objectName=null,
-        array $metadata=[],
-    ): AuditEvent {
-        return AuditEvent::forApplication($actorId, $eventType, $objectType, $objectId, $objectName, $metadata);
-    }//end forApplication()
+	/**
+	 * Build an event actored by an application.
+	 *
+	 * @param string $actorId The application id
+	 * @param string $eventType The event type
+	 * @param string $objectType The object type
+	 * @param string|null $objectId The object id
+	 * @param string|null $objectName The object name
+	 * @param array<string,mixed> $metadata The metadata
+	 *
+	 * @return AuditEvent
+	 */
+	public function forApplication(
+		string $actorId,
+		string $eventType,
+		string $objectType,
+		?string $objectId = null,
+		?string $objectName = null,
+		array $metadata = [],
+	): AuditEvent {
+		return AuditEvent::forApplication($actorId, $eventType, $objectType, $objectId, $objectName, $metadata);
+	}//end forApplication()
 
-    /**
-     * Build an event with no human/application actor (background/system).
-     *
-     * @param string              $eventType  The event type
-     * @param string              $objectType The object type
-     * @param string|null         $objectId   The object id
-     * @param string|null         $objectName The object name
-     * @param array<string,mixed> $metadata   The metadata
-     *
-     * @return AuditEvent
-     */
-    public function forSystem(
-        string $eventType,
-        string $objectType,
-        ?string $objectId=null,
-        ?string $objectName=null,
-        array $metadata=[],
-    ): AuditEvent {
-        return AuditEvent::forSystem($eventType, $objectType, $objectId, $objectName, $metadata);
-    }//end forSystem()
+	/**
+	 * Build an event with no human/application actor (background/system).
+	 *
+	 * @param string $eventType The event type
+	 * @param string $objectType The object type
+	 * @param string|null $objectId The object id
+	 * @param string|null $objectName The object name
+	 * @param array<string,mixed> $metadata The metadata
+	 *
+	 * @return AuditEvent
+	 */
+	public function forSystem(
+		string $eventType,
+		string $objectType,
+		?string $objectId = null,
+		?string $objectName = null,
+		array $metadata = [],
+	): AuditEvent {
+		return AuditEvent::forSystem($eventType, $objectType, $objectId, $objectName, $metadata);
+	}//end forSystem()
 
-    /**
-     * Build an event for an anonymous link-share visitor (no actor id).
-     *
-     * @param string              $eventType  The event type
-     * @param string              $objectType The object type
-     * @param string|null         $objectId   The object id
-     * @param string|null         $objectName The object name
-     * @param array<string,mixed> $metadata   The metadata
-     *
-     * @return AuditEvent
-     */
-    public function forLinkVisitor(
-        string $eventType,
-        string $objectType,
-        ?string $objectId=null,
-        ?string $objectName=null,
-        array $metadata=[],
-    ): AuditEvent {
-        return AuditEvent::forLinkVisitor($eventType, $objectType, $objectId, $objectName, $metadata);
-    }//end forLinkVisitor()
+	/**
+	 * Build an event for an anonymous link-share visitor (no actor id).
+	 *
+	 * @param string $eventType The event type
+	 * @param string $objectType The object type
+	 * @param string|null $objectId The object id
+	 * @param string|null $objectName The object name
+	 * @param array<string,mixed> $metadata The metadata
+	 *
+	 * @return AuditEvent
+	 */
+	public function forLinkVisitor(
+		string $eventType,
+		string $objectType,
+		?string $objectId = null,
+		?string $objectName = null,
+		array $metadata = [],
+	): AuditEvent {
+		return AuditEvent::forLinkVisitor($eventType, $objectType, $objectId, $objectName, $metadata);
+	}//end forLinkVisitor()
 }//end class

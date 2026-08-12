@@ -34,55 +34,53 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Creates the honey flag + alert tables.
  */
-class Version000030Date20260718220000 extends SimpleMigrationStep
-{
-    /**
-     * Apply the schema changes.
-     *
-     * @param IOutput                   $output        The migration output
-     * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
-     * @param array<string,mixed>       $options       The migration options
-     *
-     * @return ISchemaWrapper|null
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        $schema = $schemaClosure();
+class Version000030Date20260718220000 extends SimpleMigrationStep {
+	/**
+	 * Apply the schema changes.
+	 *
+	 * @param IOutput $output The migration output
+	 * @param Closure(): ISchemaWrapper $schemaClosure The schema closure
+	 * @param array<string,mixed> $options The migration options
+	 *
+	 * @return ISchemaWrapper|null
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_honey_flags') === false) {
-            $table = $schema->createTable('doriath_honey_flags');
-            $table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('owner_id', Types::STRING, ['notnull' => true, 'length' => 64]);
-            $table->addColumn('note', Types::TEXT, ['notnull' => false]);
-            $table->addColumn('created_by', Types::STRING, ['notnull' => true, 'length' => 64]);
-            $table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
-            $table->setPrimaryKey(['id']);
-            $table->addUniqueIndex(['secret_id'], 'doriath_hf_secret');
-            $table->addIndex(['owner_id'], 'doriath_hf_owner');
-        }
+		if ($schema->hasTable('doriath_honey_flags') === false) {
+			$table = $schema->createTable('doriath_honey_flags');
+			$table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('owner_id', Types::STRING, ['notnull' => true, 'length' => 64]);
+			$table->addColumn('note', Types::TEXT, ['notnull' => false]);
+			$table->addColumn('created_by', Types::STRING, ['notnull' => true, 'length' => 64]);
+			$table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
+			$table->setPrimaryKey(['id']);
+			$table->addUniqueIndex(['secret_id'], 'doriath_hf_secret');
+			$table->addIndex(['owner_id'], 'doriath_hf_owner');
+		}
 
-        if ($schema->hasTable('doriath_honey_alerts') === false) {
-            $table = $schema->createTable('doriath_honey_alerts');
-            $table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('honey_flag_id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
-            $table->addColumn('accessor_type', Types::STRING, ['notnull' => true, 'length' => 32]);
-            $table->addColumn('accessor_id', Types::STRING, ['notnull' => false, 'length' => 128]);
-            $table->addColumn('channel', Types::STRING, ['notnull' => true, 'length' => 32]);
-            $table->addColumn('ip', Types::STRING, ['notnull' => false, 'length' => 64]);
-            $table->addColumn('user_agent', Types::STRING, ['notnull' => false, 'length' => 512]);
-            $table->addColumn('access_count', Types::INTEGER, ['notnull' => true, 'default' => 1]);
-            $table->addColumn('accessed_at', Types::DATETIME, ['notnull' => true]);
-            $table->addColumn('acknowledged_at', Types::DATETIME, ['notnull' => false]);
-            $table->addColumn('acknowledged_by', Types::STRING, ['notnull' => false, 'length' => 64]);
-            $table->addColumn('snoozed_until', Types::DATETIME, ['notnull' => false]);
-            $table->setPrimaryKey(['id']);
-            $table->addIndex(['honey_flag_id'], 'doriath_ha_flag');
-            $table->addIndex(['secret_id'], 'doriath_ha_secret');
-            $table->addIndex(['acknowledged_at'], 'doriath_ha_ack');
-        }
+		if ($schema->hasTable('doriath_honey_alerts') === false) {
+			$table = $schema->createTable('doriath_honey_alerts');
+			$table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('honey_flag_id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
+			$table->addColumn('accessor_type', Types::STRING, ['notnull' => true, 'length' => 32]);
+			$table->addColumn('accessor_id', Types::STRING, ['notnull' => false, 'length' => 128]);
+			$table->addColumn('channel', Types::STRING, ['notnull' => true, 'length' => 32]);
+			$table->addColumn('ip', Types::STRING, ['notnull' => false, 'length' => 64]);
+			$table->addColumn('user_agent', Types::STRING, ['notnull' => false, 'length' => 512]);
+			$table->addColumn('access_count', Types::INTEGER, ['notnull' => true, 'default' => 1]);
+			$table->addColumn('accessed_at', Types::DATETIME, ['notnull' => true]);
+			$table->addColumn('acknowledged_at', Types::DATETIME, ['notnull' => false]);
+			$table->addColumn('acknowledged_by', Types::STRING, ['notnull' => false, 'length' => 64]);
+			$table->addColumn('snoozed_until', Types::DATETIME, ['notnull' => false]);
+			$table->setPrimaryKey(['id']);
+			$table->addIndex(['honey_flag_id'], 'doriath_ha_flag');
+			$table->addIndex(['secret_id'], 'doriath_ha_secret');
+			$table->addIndex(['acknowledged_at'], 'doriath_ha_ack');
+		}
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

@@ -55,114 +55,111 @@ use OCP\Migration\SimpleMigrationStep;
  * CACertificateMapper only ever queries `is_active = true` — the nullable
  * column is behaviour-neutral.
  */
-class Version000002Date20260331000001 extends SimpleMigrationStep
-{
-    /**
-     * Change the database schema to add the CA certificates table.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+class Version000002Date20260331000001 extends SimpleMigrationStep {
+	/**
+	 * Change the database schema to add the CA certificates table.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_ca_certs') === true) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_ca_certs') === true) {
+			return null;
+		}
 
-        $this->createCaCertsTable(schema: $schema);
+		$this->createCaCertsTable(schema: $schema);
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 
-    /**
-     * Define the doriath_ca_certs table on a schema that does not have it yet.
-     *
-     * See the class docblock for why `is_active` is a NULLABLE boolean.
-     *
-     * @param ISchemaWrapper $schema The schema to add the table to
-     *
-     * @return void
-     */
-    private function createCaCertsTable(ISchemaWrapper $schema): void
-    {
-        $table = $schema->createTable('doriath_ca_certs');
+	/**
+	 * Define the doriath_ca_certs table on a schema that does not have it yet.
+	 *
+	 * See the class docblock for why `is_active` is a NULLABLE boolean.
+	 *
+	 * @param ISchemaWrapper $schema The schema to add the table to
+	 *
+	 * @return void
+	 */
+	private function createCaCertsTable(ISchemaWrapper $schema): void {
+		$table = $schema->createTable('doriath_ca_certs');
 
-        $table->addColumn(
-                'id',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 36,
-                ]
-                );
-        $table->addColumn(
-                'type',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 20,
-                ]
-                );
-        $table->addColumn(
-                'certificate',
-                Types::TEXT,
-                [
-                    'notnull' => true,
-                ]
-                );
-        $table->addColumn(
-                'private_key',
-                Types::TEXT,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'created_at',
-                Types::DATETIME,
-                [
-                    'notnull' => true,
-                ]
-                );
-        $table->addColumn(
-                'expires_at',
-                Types::DATETIME,
-                [
-                    'notnull' => true,
-                ]
-                );
-        // `notnull` MUST stay false on this BOOLEAN column — see the class
-        // docblock; `notnull => true` made the app uninstallable on NC 31.
-        $table->addColumn(
-                'is_active',
-                Types::BOOLEAN,
-                [
-                    'notnull' => false,
-                    'default' => false,
-                ]
-                );
-        $table->addColumn(
-                'revoked_at',
-                Types::DATETIME,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'successor_id',
-                Types::STRING,
-                [
-                    'notnull' => false,
-                    'length'  => 36,
-                ]
-                );
+		$table->addColumn(
+			'id',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 36,
+			]
+		);
+		$table->addColumn(
+			'type',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 20,
+			]
+		);
+		$table->addColumn(
+			'certificate',
+			Types::TEXT,
+			[
+				'notnull' => true,
+			]
+		);
+		$table->addColumn(
+			'private_key',
+			Types::TEXT,
+			[
+				'notnull' => false,
+			]
+		);
+		$table->addColumn(
+			'created_at',
+			Types::DATETIME,
+			[
+				'notnull' => true,
+			]
+		);
+		$table->addColumn(
+			'expires_at',
+			Types::DATETIME,
+			[
+				'notnull' => true,
+			]
+		);
+		// `notnull` MUST stay false on this BOOLEAN column — see the class
+		// docblock; `notnull => true` made the app uninstallable on NC 31.
+		$table->addColumn(
+			'is_active',
+			Types::BOOLEAN,
+			[
+				'notnull' => false,
+				'default' => false,
+			]
+		);
+		$table->addColumn(
+			'revoked_at',
+			Types::DATETIME,
+			[
+				'notnull' => false,
+			]
+		);
+		$table->addColumn(
+			'successor_id',
+			Types::STRING,
+			[
+				'notnull' => false,
+				'length' => 36,
+			]
+		);
 
-        $table->setPrimaryKey(['id']);
-    }//end createCaCertsTable()
+		$table->setPrimaryKey(['id']);
+	}//end createCaCertsTable()
 }//end class

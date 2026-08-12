@@ -39,78 +39,76 @@ use OCP\IURLGenerator;
 /**
  * Serves the PWA web app manifest.
  */
-class WebManifestController extends Controller
-{
-    /**
-     * Constructor for WebManifestController.
-     *
-     * @param IRequest      $request      The HTTP request
-     * @param IURLGenerator $urlGenerator Builds absolute asset + scope URLs
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private IURLGenerator $urlGenerator,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+class WebManifestController extends Controller {
+	/**
+	 * Constructor for WebManifestController.
+	 *
+	 * @param IRequest $request The HTTP request
+	 * @param IURLGenerator $urlGenerator Builds absolute asset + scope URLs
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private IURLGenerator $urlGenerator,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * The Doriath web app manifest.
-     *
-     * @PublicPage
-     * @NoCSRFRequired
-     *
-     * @return DataDisplayResponse
-     *
-     * @spec openspec/specs/mobile-pwa/spec.md#requirement-installable-web-app-manifest
-     * @spec openspec/specs/mobile-pwa/spec.md#requirement-maskable-and-themed-app-icons
-     */
-    #[PublicPage]
-    #[NoCSRFRequired]
-    public function manifest(): DataDisplayResponse
-    {
-        $vaultUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page').'#/secrets';
-        $startUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page');
-        $scope    = $this->urlGenerator->linkToRoute('doriath.dashboard.page');
-        $maskable = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon-maskable.svg'));
-        $anyIcon  = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon.svg'));
+	/**
+	 * The Doriath web app manifest.
+	 *
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 *
+	 * @return DataDisplayResponse
+	 *
+	 * @spec openspec/specs/mobile-pwa/spec.md#requirement-installable-web-app-manifest
+	 * @spec openspec/specs/mobile-pwa/spec.md#requirement-maskable-and-themed-app-icons
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	public function manifest(): DataDisplayResponse {
+		$vaultUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page') . '#/secrets';
+		$startUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page');
+		$scope = $this->urlGenerator->linkToRoute('doriath.dashboard.page');
+		$maskable = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon-maskable.svg'));
+		$anyIcon = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon.svg'));
 
-        $manifest = [
-            'name'             => 'Doriath',
-            'short_name'       => 'Doriath',
-            'description'      => 'Encrypted secrets manager — your zero-knowledge vault.',
-            'display'          => 'standalone',
-            // NL Design System / brand tokens (cobalt) — the app icon is a
-            // brand asset; the browser chrome colour matches it.
-            'theme_color'      => '#21468B',
-            'background_color' => '#21468B',
-            'start_url'        => $startUrl,
-            'scope'            => $scope,
-            'orientation'      => 'portrait-primary',
-            'icons'            => [
-                ['src' => $anyIcon, 'sizes' => '192x192', 'type' => 'image/svg+xml', 'purpose' => 'any'],
-                ['src' => $anyIcon, 'sizes' => '512x512', 'type' => 'image/svg+xml', 'purpose' => 'any'],
-                ['src' => $maskable, 'sizes' => '192x192', 'type' => 'image/svg+xml', 'purpose' => 'maskable'],
-                ['src' => $maskable, 'sizes' => '512x512', 'type' => 'image/svg+xml', 'purpose' => 'maskable'],
-            ],
-            'shortcuts'        => [
-                [
-                    'name'  => 'Open vault',
-                    'url'   => $vaultUrl,
-                    'icons' => [['src' => $anyIcon, 'sizes' => '192x192', 'type' => 'image/svg+xml']],
-                ],
-            ],
-        ];
+		$manifest = [
+			'name' => 'Doriath',
+			'short_name' => 'Doriath',
+			'description' => 'Encrypted secrets manager — your zero-knowledge vault.',
+			'display' => 'standalone',
+			// NL Design System / brand tokens (cobalt) — the app icon is a
+			// brand asset; the browser chrome colour matches it.
+			'theme_color' => '#21468B',
+			'background_color' => '#21468B',
+			'start_url' => $startUrl,
+			'scope' => $scope,
+			'orientation' => 'portrait-primary',
+			'icons' => [
+				['src' => $anyIcon, 'sizes' => '192x192', 'type' => 'image/svg+xml', 'purpose' => 'any'],
+				['src' => $anyIcon, 'sizes' => '512x512', 'type' => 'image/svg+xml', 'purpose' => 'any'],
+				['src' => $maskable, 'sizes' => '192x192', 'type' => 'image/svg+xml', 'purpose' => 'maskable'],
+				['src' => $maskable, 'sizes' => '512x512', 'type' => 'image/svg+xml', 'purpose' => 'maskable'],
+			],
+			'shortcuts' => [
+				[
+					'name' => 'Open vault',
+					'url' => $vaultUrl,
+					'icons' => [['src' => $anyIcon, 'sizes' => '192x192', 'type' => 'image/svg+xml']],
+				],
+			],
+		];
 
-        return new DataDisplayResponse(
-            data: (string) json_encode($manifest, JSON_UNESCAPED_SLASHES),
-            statusCode: Http::STATUS_OK,
-            headers: [
-                'Content-Type'  => 'application/manifest+json',
-                'Cache-Control' => 'public, max-age=3600',
-            ]
-        );
-    }//end manifest()
+		return new DataDisplayResponse(
+			data: (string)json_encode($manifest, JSON_UNESCAPED_SLASHES),
+			statusCode: Http::STATUS_OK,
+			headers: [
+				'Content-Type' => 'application/manifest+json',
+				'Cache-Control' => 'public, max-age=3600',
+			]
+		);
+	}//end manifest()
 }//end class

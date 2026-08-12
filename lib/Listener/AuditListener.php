@@ -46,153 +46,147 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  */
-class AuditListener implements IEventListener
-{
-    /**
-     * Constructor for AuditListener.
-     *
-     * @param AuditService      $auditService The audit service
-     * @param LoggerInterface   $logger       The logger
-     * @param AuditEventFactory $auditEvents  The audit-event factory
-     *
-     * @return void
-     */
-    public function __construct(
-        private AuditService $auditService,
-        private LoggerInterface $logger,
-        private AuditEventFactory $auditEvents=new AuditEventFactory(),
-    ) {
-    }//end __construct()
+class AuditListener implements IEventListener {
+	/**
+	 * Constructor for AuditListener.
+	 *
+	 * @param AuditService $auditService The audit service
+	 * @param LoggerInterface $logger The logger
+	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private AuditService $auditService,
+		private LoggerInterface $logger,
+		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+	) {
+	}//end __construct()
 
-    /**
-     * Handle an audit-relevant event.
-     *
-     * @param Event $event The dispatched event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.4
-     */
-    public function handle(Event $event): void
-    {
-        try {
-            if ($event instanceof AuditEvent) {
-                $this->auditService->record($event);
-                return;
-            }
+	/**
+	 * Handle an audit-relevant event.
+	 *
+	 * @param Event $event The dispatched event
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-2.4
+	 */
+	public function handle(Event $event): void {
+		try {
+			if ($event instanceof AuditEvent) {
+				$this->auditService->record($event);
+				return;
+			}
 
-            $this->handleExportGdprEvent(event: $event);
-        } catch (Throwable $e) {
-            // Fail-soft: never let an audit-write failure roll back or fail the
-            // audited operation. Log at error level so dropped entries surface.
-            $this->logger->error(
-                'Doriath: audit entry could not be recorded: '.$e->getMessage(),
-                ['exception' => $e]
-            );
-        }
-    }//end handle()
+			$this->handleExportGdprEvent(event: $event);
+		} catch (Throwable $e) {
+			// Fail-soft: never let an audit-write failure roll back or fail the
+			// audited operation. Log at error level so dropped entries surface.
+			$this->logger->error(
+				'Doriath: audit entry could not be recorded: ' . $e->getMessage(),
+				['exception' => $e]
+			);
+		}
+	}//end handle()
 
-    /**
-     * Map a secret-export-gdpr event to an audit row, if that capability ships.
-     *
-     * The three event classes belong to the secret-export-gdpr change, which is
-     * its scoped producer. They are matched by short class name so this listener
-     * compiles and runs whether or not that change has landed yet (no hard
-     * dependency on classes that may not exist). Payloads are read via the
-     * conventional getter/accessor shape and mapped as-is.
-     *
-     * @param Event $event The dispatched event
-     *
-     * @return void
-     */
-    private function handleExportGdprEvent(Event $event): void
-    {
-        $shortName = (new ReflectionClass($event))->getShortName();
+	/**
+	 * Map a secret-export-gdpr event to an audit row, if that capability ships.
+	 *
+	 * The three event classes belong to the secret-export-gdpr change, which is
+	 * its scoped producer. They are matched by short class name so this listener
+	 * compiles and runs whether or not that change has landed yet (no hard
+	 * dependency on classes that may not exist). Payloads are read via the
+	 * conventional getter/accessor shape and mapped as-is.
+	 *
+	 * @param Event $event The dispatched event
+	 *
+	 * @return void
+	 */
+	private function handleExportGdprEvent(Event $event): void {
+		$shortName = (new ReflectionClass($event))->getShortName();
 
-        switch ($shortName) {
-            case 'SecretExportedEvent':
-                $this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_EXPORTED);
-                break;
-            case 'GdprExportPerformedEvent':
-                $this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_GDPR_EXPORTED);
-                break;
-            case 'AccountDataDeletedEvent':
-                $this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_ACCOUNT_DELETED);
-                $userId = $this->readActorId(event: $event);
-                if ($userId !== null && $userId !== '') {
-                    $this->auditService->anonymizeUser($userId);
-                }
-                break;
-            default:
-                // Not an audit-relevant event family — ignore.
-                break;
-        }
-    }//end handleExportGdprEvent()
+		switch ($shortName) {
+			case 'SecretExportedEvent':
+				$this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_EXPORTED);
+				break;
+			case 'GdprExportPerformedEvent':
+				$this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_GDPR_EXPORTED);
+				break;
+			case 'AccountDataDeletedEvent':
+				$this->recordVaultEvent(event: $event, eventType: AuditEventTypes::VAULT_ACCOUNT_DELETED);
+				$userId = $this->readActorId(event: $event);
+				if ($userId !== null && $userId !== '') {
+					$this->auditService->anonymizeUser($userId);
+				}
+				break;
+			default:
+				// Not an audit-relevant event family — ignore.
+				break;
+		}
+	}//end handleExportGdprEvent()
 
-    /**
-     * Record a vault.* entry from an export/deletion event, mapping its payload.
-     *
-     * @param Event  $event     The export/deletion event
-     * @param string $eventType The target audit event type
-     *
-     * @return void
-     */
-    private function recordVaultEvent(Event $event, string $eventType): void
-    {
-        $actorId  = $this->readActorId(event: $event);
-        $metadata = $this->readPayload(event: $event);
+	/**
+	 * Record a vault.* entry from an export/deletion event, mapping its payload.
+	 *
+	 * @param Event $event The export/deletion event
+	 * @param string $eventType The target audit event type
+	 *
+	 * @return void
+	 */
+	private function recordVaultEvent(Event $event, string $eventType): void {
+		$actorId = $this->readActorId(event: $event);
+		$metadata = $this->readPayload(event: $event);
 
-        $auditEvent = $this->auditEvents->forUser(
-            actorId: ($actorId ?? AuditEventTypes::VAULT_ACCOUNT_DELETED),
-            eventType: $eventType,
-            objectType: 'vault',
-            objectId: $actorId,
-            objectName: null,
-            metadata: $metadata,
-        );
+		$auditEvent = $this->auditEvents->forUser(
+			actorId: ($actorId ?? AuditEventTypes::VAULT_ACCOUNT_DELETED),
+			eventType: $eventType,
+			objectType: 'vault',
+			objectId: $actorId,
+			objectName: null,
+			metadata: $metadata,
+		);
 
-        $this->auditService->record($auditEvent);
-    }//end recordVaultEvent()
+		$this->auditService->record($auditEvent);
+	}//end recordVaultEvent()
 
-    /**
-     * Best-effort read of the acting user id from an export/deletion event.
-     *
-     * @param Event $event The event
-     *
-     * @return string|null
-     */
-    private function readActorId(Event $event): ?string
-    {
-        foreach (['getUserId', 'getUid', 'getActorId'] as $method) {
-            if (method_exists($event, $method) === true) {
-                $value = $event->$method();
-                if (is_string($value) === true) {
-                    return $value;
-                }
-            }
-        }
+	/**
+	 * Best-effort read of the acting user id from an export/deletion event.
+	 *
+	 * @param Event $event The event
+	 *
+	 * @return string|null
+	 */
+	private function readActorId(Event $event): ?string {
+		foreach (['getUserId', 'getUid', 'getActorId'] as $method) {
+			if (method_exists($event, $method) === true) {
+				$value = $event->$method();
+				if (is_string($value) === true) {
+					return $value;
+				}
+			}
+		}
 
-        return null;
-    }//end readActorId()
+		return null;
+	}//end readActorId()
 
-    /**
-     * Best-effort read of the event payload as an associative array.
-     *
-     * @param Event $event The event
-     *
-     * @return array<string,mixed>
-     */
-    private function readPayload(Event $event): array
-    {
-        foreach (['getMetadata', 'getPayload', 'jsonSerialize', 'toArray'] as $method) {
-            if (method_exists($event, $method) === true) {
-                $value = $event->$method();
-                if (is_array($value) === true) {
-                    return $value;
-                }
-            }
-        }
+	/**
+	 * Best-effort read of the event payload as an associative array.
+	 *
+	 * @param Event $event The event
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function readPayload(Event $event): array {
+		foreach (['getMetadata', 'getPayload', 'jsonSerialize', 'toArray'] as $method) {
+			if (method_exists($event, $method) === true) {
+				$value = $event->$method();
+				if (is_array($value) === true) {
+					return $value;
+				}
+			}
+		}
 
-        return [];
-    }//end readPayload()
+		return [];
+	}//end readPayload()
 }//end class

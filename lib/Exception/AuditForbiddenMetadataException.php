@@ -31,6 +31,5 @@ use RuntimeException;
 /**
  * Thrown when audit metadata contains a forbidden secret-material key.
  */
-class AuditForbiddenMetadataException extends RuntimeException
-{
+class AuditForbiddenMetadataException extends RuntimeException {
 }//end class

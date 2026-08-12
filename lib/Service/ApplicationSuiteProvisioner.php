@@ -35,81 +35,78 @@ use Throwable;
 /**
  * Provisions and reads the EncryptionSuite of a registered application.
  */
-class ApplicationSuiteProvisioner
-{
-    /**
-     * Constructor for ApplicationSuiteProvisioner.
-     *
-     * @param LoggerInterface             $logger       The logger
-     * @param EncryptionSuiteService|null $suiteService The encryption suite service
-     *
-     * @return void
-     *
-     * @spec exclude Constructor wiring only; the provisioning behaviour carries the spec anchors.
-     */
-    public function __construct(
-        private LoggerInterface $logger,
-        private ?EncryptionSuiteService $suiteService=null,
-    ) {
-    }//end __construct()
+class ApplicationSuiteProvisioner {
+	/**
+	 * Constructor for ApplicationSuiteProvisioner.
+	 *
+	 * @param LoggerInterface $logger The logger
+	 * @param EncryptionSuiteService|null $suiteService The encryption suite service
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only; the provisioning behaviour carries the spec anchors.
+	 */
+	public function __construct(
+		private LoggerInterface $logger,
+		private ?EncryptionSuiteService $suiteService = null,
+	) {
+	}//end __construct()
 
-    /**
-     * Provision an EncryptionSuite for an application. Failures are
-     * logged + swallowed — a missing suite is recoverable via re-approval
-     * and must never roll back the approval transaction.
-     *
-     * @param string $applicationId The newly active application's ID
-     * @param string $csr           The PEM-encoded PKCS#10 CSR
-     *
-     * @return void
-     *
-     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
-     */
-    public function provision(string $applicationId, string $csr): void
-    {
-        if ($this->suiteService === null) {
-            return;
-        }
+	/**
+	 * Provision an EncryptionSuite for an application. Failures are
+	 * logged + swallowed — a missing suite is recoverable via re-approval
+	 * and must never roll back the approval transaction.
+	 *
+	 * @param string $applicationId The newly active application's ID
+	 * @param string $csr The PEM-encoded PKCS#10 CSR
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
+	 */
+	public function provision(string $applicationId, string $csr): void {
+		if ($this->suiteService === null) {
+			return;
+		}
 
-        try {
-            $this->suiteService->provisionForApplication(
-                applicationId: $applicationId,
-                csrPem: $csr,
-            );
-            $this->logger->info(
-                'Provisioned EncryptionSuite for application '.$applicationId,
-                ['app' => 'doriath']
-            );
-        } catch (Throwable $exception) {
-            $this->logger->warning(
-                'Failed to provision EncryptionSuite for application '
-                .$applicationId.': '.$exception->getMessage(),
-                ['app' => 'doriath']
-            );
-        }
-    }//end provision()
+		try {
+			$this->suiteService->provisionForApplication(
+				applicationId: $applicationId,
+				csrPem: $csr,
+			);
+			$this->logger->info(
+				'Provisioned EncryptionSuite for application ' . $applicationId,
+				['app' => 'doriath']
+			);
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Failed to provision EncryptionSuite for application '
+				. $applicationId . ': ' . $exception->getMessage(),
+				['app' => 'doriath']
+			);
+		}
+	}//end provision()
 
-    /**
-     * The active EncryptionSuite certificate of an application, or null when
-     * no suite exists (or no suite service is wired). Public key material
-     * only — the caller encrypts against it client-side (ADR-003).
-     *
-     * @param string $applicationId The application ID
-     *
-     * @return string|null The PEM-encoded certificate, or null when absent.
-     *
-     * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
-     */
-    public function activeCertificate(string $applicationId): ?string
-    {
-        if ($this->suiteService === null) {
-            return null;
-        }
+	/**
+	 * The active EncryptionSuite certificate of an application, or null when
+	 * no suite exists (or no suite service is wired). Public key material
+	 * only — the caller encrypts against it client-side (ADR-003).
+	 *
+	 * @param string $applicationId The application ID
+	 *
+	 * @return string|null The PEM-encoded certificate, or null when absent.
+	 *
+	 * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
+	 */
+	public function activeCertificate(string $applicationId): ?string {
+		if ($this->suiteService === null) {
+			return null;
+		}
 
-        try {
-            return $this->suiteService->getActiveSuite('application', $applicationId)->getCertificate();
-        } catch (Throwable) {
-            return null;
-        }
-    }//end activeCertificate()
+		try {
+			return $this->suiteService->getActiveSuite('application', $applicationId)->getCertificate();
+		} catch (Throwable) {
+			return null;
+		}
+	}//end activeCertificate()
 }//end class

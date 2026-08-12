@@ -47,72 +47,70 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * and is the org-wide switch on — while the snapshot's shape (which mappers,
  * in which order, serialised how) is assembled and tested here.
  */
-class OfflineManifestService
-{
-    /**
-     * Constructor for OfflineManifestService.
-     *
-     * @param EncryptionSuiteMapper $suiteMapper  The suite mapper
-     * @param SecretMapper          $secretMapper The secret mapper
-     * @param FolderMapper          $folderMapper The folder mapper
-     * @param SecretTypeMapper      $typeMapper   The secret type mapper
-     *
-     * @return void
-     */
-    public function __construct(
-        private EncryptionSuiteMapper $suiteMapper,
-        private SecretMapper $secretMapper,
-        private FolderMapper $folderMapper,
-        private SecretTypeMapper $typeMapper,
-    ) {
-    }//end __construct()
+class OfflineManifestService {
+	/**
+	 * Constructor for OfflineManifestService.
+	 *
+	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper
+	 * @param SecretMapper $secretMapper The secret mapper
+	 * @param FolderMapper $folderMapper The folder mapper
+	 * @param SecretTypeMapper $typeMapper The secret type mapper
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private EncryptionSuiteMapper $suiteMapper,
+		private SecretMapper $secretMapper,
+		private FolderMapper $folderMapper,
+		private SecretTypeMapper $typeMapper,
+	) {
+	}//end __construct()
 
-    /**
-     * Build the consolidated offline snapshot for one user.
-     *
-     * Every read is keyed by `('user', $userId)` so the snapshot can only ever
-     * contain rows the caller already owns — there is no cross-owner path
-     * through this method.
-     *
-     * @param string $userId The owning Nextcloud user ID
-     *
-     * @return array<string,mixed> The manifest payload
-     *
-     * @throws DoesNotExistException When the user has no active encryption
-     *                               suite — the caller maps this to a 404,
-     *                               because a snapshot without the suite blob
-     *                               cannot be decrypted offline and is worse
-     *                               than no snapshot at all.
-     *
-     * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
-     */
-    public function buildForUser(string $userId): array
-    {
-        $suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
+	/**
+	 * Build the consolidated offline snapshot for one user.
+	 *
+	 * Every read is keyed by `('user', $userId)` so the snapshot can only ever
+	 * contain rows the caller already owns — there is no cross-owner path
+	 * through this method.
+	 *
+	 * @param string $userId The owning Nextcloud user ID
+	 *
+	 * @return array<string,mixed> The manifest payload
+	 *
+	 * @throws DoesNotExistException When the user has no active encryption
+	 *                               suite — the caller maps this to a 404,
+	 *                               because a snapshot without the suite blob
+	 *                               cannot be decrypted offline and is worse
+	 *                               than no snapshot at all.
+	 *
+	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+	 */
+	public function buildForUser(string $userId): array {
+		$suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
 
-        $secrets = array_map(
-            static fn (Secret $secret) => $secret->jsonSerialize(),
-            $this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId)
-        );
+		$secrets = array_map(
+			static fn (Secret $secret) => $secret->jsonSerialize(),
+			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId)
+		);
 
-        $folders = array_map(
-            static fn ($folder) => $folder->jsonSerialize(),
-            $this->folderMapper->findByOwner('user', $userId)
-        );
+		$folders = array_map(
+			static fn ($folder) => $folder->jsonSerialize(),
+			$this->folderMapper->findByOwner('user', $userId)
+		);
 
-        // Secret types the list schema needs to render type badges offline.
-        $types = array_map(
-            static fn ($type) => $type->jsonSerialize(),
-            $this->typeMapper->findAvailableForUser($userId)
-        );
+		// Secret types the list schema needs to render type badges offline.
+		$types = array_map(
+			static fn ($type) => $type->jsonSerialize(),
+			$this->typeMapper->findAvailableForUser($userId)
+		);
 
-        return [
-            'suite'    => $suite,
-            'secrets'  => $secrets,
-            'folders'  => $folders,
-            'types'    => $types,
-            'syncedAt' => (new DateTime())->format('c'),
-        ];
+		return [
+			'suite' => $suite,
+			'secrets' => $secrets,
+			'folders' => $folders,
+			'types' => $types,
+			'syncedAt' => (new DateTime())->format('c'),
+		];
 
-    }//end buildForUser()
+	}//end buildForUser()
 }//end class

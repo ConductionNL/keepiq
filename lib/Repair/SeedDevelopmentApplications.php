@@ -39,110 +39,106 @@ use Ramsey\Uuid\Uuid;
  *
  * @spec openspec/changes/implement-application-mgmt/tasks.md#task-1.2
  */
-class SeedDevelopmentApplications implements IRepairStep
-{
-    /**
-     * Constructor.
-     *
-     * @param ApplicationMapper $appMapper The application mapper
-     * @param IConfig           $config    The system config
-     * @param LoggerInterface   $logger    The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        private ApplicationMapper $appMapper,
-        private IConfig $config,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class SeedDevelopmentApplications implements IRepairStep {
+	/**
+	 * Constructor.
+	 *
+	 * @param ApplicationMapper $appMapper The application mapper
+	 * @param IConfig $config The system config
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private ApplicationMapper $appMapper,
+		private IConfig $config,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Repair step display name.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return 'Seed Doriath development applications (debug only)';
-    }//end getName()
+	/**
+	 * Repair step display name.
+	 *
+	 * @return string
+	 */
+	public function getName(): string {
+		return 'Seed Doriath development applications (debug only)';
+	}//end getName()
 
-    /**
-     * Run the repair step.
-     *
-     * @param IOutput $output The output channel
-     *
-     * @return void
-     */
-    public function run(IOutput $output): void
-    {
-        if ($this->config->getSystemValueBool('debug', false) === false) {
-            return;
-        }
+	/**
+	 * Run the repair step.
+	 *
+	 * @param IOutput $output The output channel
+	 *
+	 * @return void
+	 */
+	public function run(IOutput $output): void {
+		if ($this->config->getSystemValueBool('debug', false) === false) {
+			return;
+		}
 
-        $apps = [
-            [
-                'name'        => 'OpenConnector Dev',
-                'description' => 'Internal connector dev integration',
-                'type'        => Application::TYPE_INTERNAL,
-                'status'      => Application::STATUS_ACTIVE,
-            ],
-            [
-                'name'        => 'CI Pipeline Bot',
-                'description' => 'External CI bot — pending admin approval',
-                'type'        => Application::TYPE_EXTERNAL,
-                'status'      => Application::STATUS_PENDING,
-            ],
-            [
-                'name'        => 'Monitoring Agent',
-                'description' => 'External monitoring agent for endpoint health',
-                'type'        => Application::TYPE_EXTERNAL,
-                'status'      => Application::STATUS_ACTIVE,
-            ],
-        ];
+		$apps = [
+			[
+				'name' => 'OpenConnector Dev',
+				'description' => 'Internal connector dev integration',
+				'type' => Application::TYPE_INTERNAL,
+				'status' => Application::STATUS_ACTIVE,
+			],
+			[
+				'name' => 'CI Pipeline Bot',
+				'description' => 'External CI bot — pending admin approval',
+				'type' => Application::TYPE_EXTERNAL,
+				'status' => Application::STATUS_PENDING,
+			],
+			[
+				'name' => 'Monitoring Agent',
+				'description' => 'External monitoring agent for endpoint health',
+				'type' => Application::TYPE_EXTERNAL,
+				'status' => Application::STATUS_ACTIVE,
+			],
+		];
 
-        $seeded = 0;
-        foreach ($apps as $spec) {
-            $id = $this->deterministicId(name: $spec['name']);
+		$seeded = 0;
+		foreach ($apps as $spec) {
+			$id = $this->deterministicId(name: $spec['name']);
 
-            // Idempotency: skip if the deterministic ID is already present.
-            try {
-                $this->appMapper->findById($id);
-                continue;
-            } catch (DoesNotExistException) {
-                // Not yet present — seed it.
-            }
+			// Idempotency: skip if the deterministic ID is already present.
+			try {
+				$this->appMapper->findById($id);
+				continue;
+			} catch (DoesNotExistException) {
+				// Not yet present — seed it.
+			}
 
-            $application = new Application();
-            $application->setId($id);
-            $application->setName($spec['name']);
-            $application->setDescription($spec['description']);
-            $application->setType($spec['type']);
-            $application->setStatus($spec['status']);
-            $application->setRegisteredBy('admin');
-            if ($spec['status'] === Application::STATUS_ACTIVE) {
-                $application->setApprovedBy('admin');
-                $application->setApprovedAt(new DateTime());
-            }
+			$application = new Application();
+			$application->setId($id);
+			$application->setName($spec['name']);
+			$application->setDescription($spec['description']);
+			$application->setType($spec['type']);
+			$application->setStatus($spec['status']);
+			$application->setRegisteredBy('admin');
+			if ($spec['status'] === Application::STATUS_ACTIVE) {
+				$application->setApprovedBy('admin');
+				$application->setApprovedAt(new DateTime());
+			}
 
-            $application->setCreatedAt(new DateTime());
-            $this->appMapper->insert($application);
-            $seeded++;
-        }//end foreach
+			$application->setCreatedAt(new DateTime());
+			$this->appMapper->insert($application);
+			$seeded++;
+		}//end foreach
 
-        $output->info('Doriath: seeded '.$seeded.' development applications');
-        $this->logger->info('Doriath dev seed: created '.$seeded.' applications');
-    }//end run()
+		$output->info('Doriath: seeded ' . $seeded . ' development applications');
+		$this->logger->info('Doriath dev seed: created ' . $seeded . ' applications');
+	}//end run()
 
-    /**
-     * Produce a deterministic UUIDv5 from an application name.
-     *
-     * @param string $name The application name
-     *
-     * @return string
-     */
-    private function deterministicId(string $name): string
-    {
-        return Uuid::uuid5(Uuid::NAMESPACE_OID, 'doriath:application:'.$name)->toString();
-    }//end deterministicId()
+	/**
+	 * Produce a deterministic UUIDv5 from an application name.
+	 *
+	 * @param string $name The application name
+	 *
+	 * @return string
+	 */
+	private function deterministicId(string $name): string {
+		return Uuid::uuid5(Uuid::NAMESPACE_OID, 'doriath:application:' . $name)->toString();
+	}//end deterministicId()
 }//end class

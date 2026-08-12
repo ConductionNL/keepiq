@@ -28,6 +28,5 @@ use RuntimeException;
 /**
  * Thrown when a requester is not authorised to perform an operation.
  */
-class ForbiddenException extends RuntimeException
-{
+class ForbiddenException extends RuntimeException {
 }//end class

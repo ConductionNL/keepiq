@@ -36,185 +36,173 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for SecretController.
  */
-class SecretControllerTest extends TestCase
-{
+class SecretControllerTest extends TestCase {
 
-    /**
-     * @var SecretController
-     */
-    private SecretController $controller;
+	/**
+	 * @var SecretController
+	 */
+	private SecretController $controller;
 
-    /**
-     * @var SecretService&MockObject
-     */
-    private SecretService&MockObject $secretService;
+	/**
+	 * @var SecretService&MockObject
+	 */
+	private SecretService&MockObject $secretService;
 
-    /**
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->request       = $this->createMock(IRequest::class);
-        $this->secretService = $this->createMock(SecretService::class);
+		$this->request = $this->createMock(IRequest::class);
+		$this->secretService = $this->createMock(SecretService::class);
 
-        $userSession = $this->createMock(IUserSession::class);
-        $user        = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $userSession->method('getUser')->willReturn($user);
+		$userSession = $this->createMock(IUserSession::class);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$userSession->method('getUser')->willReturn($user);
 
-        $this->controller = new SecretController(
-            request: $this->request,
-            secretService: $this->secretService,
-            userSession: $userSession,
-        );
-    }//end setUp()
+		$this->controller = new SecretController(
+			request: $this->request,
+			secretService: $this->secretService,
+			userSession: $userSession,
+		);
+	}//end setUp()
 
-    /**
-     * Build a secret with ciphertext.
-     *
-     * @return Secret
-     */
-    private function makeSecret(): Secret
-    {
-        $secret = new Secret();
-        $secret->setId('s-1');
-        $secret->setName('GitHub');
-        $secret->setKey('ENCRYPTED');
-        $secret->setEncryptionSuiteId('suite-1');
-        $secret->setOwnerType('user');
-        $secret->setOwnerId('alice');
-        return $secret;
-    }//end makeSecret()
+	/**
+	 * Build a secret with ciphertext.
+	 *
+	 * @return Secret
+	 */
+	private function makeSecret(): Secret {
+		$secret = new Secret();
+		$secret->setId('s-1');
+		$secret->setName('GitHub');
+		$secret->setKey('ENCRYPTED');
+		$secret->setEncryptionSuiteId('suite-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('alice');
+		return $secret;
+	}//end makeSecret()
 
-    /**
-     * show() returns the ciphertext, never a decrypted value.
-     *
-     * @return void
-     */
-    public function testShowReturnsCiphertext(): void
-    {
-        $this->secretService->method('get')->willReturn($this->makeSecret());
+	/**
+	 * show() returns the ciphertext, never a decrypted value.
+	 *
+	 * @return void
+	 */
+	public function testShowReturnsCiphertext(): void {
+		$this->secretService->method('get')->willReturn($this->makeSecret());
 
-        $response = $this->controller->show('s-1');
-        $data     = $response->getData();
+		$response = $this->controller->show('s-1');
+		$data = $response->getData();
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('ENCRYPTED', $data['key']);
-    }//end testShowReturnsCiphertext()
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('ENCRYPTED', $data['key']);
+	}//end testShowReturnsCiphertext()
 
-    /**
-     * show() on another user's secret returns 403.
-     *
-     * @return void
-     */
-    public function testShowForeignSecretForbidden(): void
-    {
-        $this->secretService->method('get')->willThrowException(new ForbiddenException('nope'));
+	/**
+	 * show() on another user's secret returns 403.
+	 *
+	 * @return void
+	 */
+	public function testShowForeignSecretForbidden(): void {
+		$this->secretService->method('get')->willThrowException(new ForbiddenException('nope'));
 
-        $response = $this->controller->show('s-1');
-        $this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-    }//end testShowForeignSecretForbidden()
+		$response = $this->controller->show('s-1');
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testShowForeignSecretForbidden()
 
-    /**
-     * show() on a missing secret returns 404.
-     *
-     * @return void
-     */
-    public function testShowMissingSecretNotFound(): void
-    {
-        $this->secretService->method('get')->willThrowException(new NotFoundException('gone'));
+	/**
+	 * show() on a missing secret returns 404.
+	 *
+	 * @return void
+	 */
+	public function testShowMissingSecretNotFound(): void {
+		$this->secretService->method('get')->willThrowException(new NotFoundException('gone'));
 
-        $response = $this->controller->show('s-1');
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }//end testShowMissingSecretNotFound()
+		$response = $this->controller->show('s-1');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testShowMissingSecretNotFound()
 
-    /**
-     * show() on a revoked-suite secret returns 403.
-     *
-     * @return void
-     */
-    public function testShowRevokedSuiteForbidden(): void
-    {
-        $this->secretService->method('get')->willThrowException(new SuiteBlockedException('revoked'));
+	/**
+	 * show() on a revoked-suite secret returns 403.
+	 *
+	 * @return void
+	 */
+	public function testShowRevokedSuiteForbidden(): void {
+		$this->secretService->method('get')->willThrowException(new SuiteBlockedException('revoked'));
 
-        $response = $this->controller->show('s-1');
-        $this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-    }//end testShowRevokedSuiteForbidden()
+		$response = $this->controller->show('s-1');
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testShowRevokedSuiteForbidden()
 
-    /**
-     * create() during a write lock returns 423 Locked.
-     *
-     * @return void
-     */
-    public function testCreateWriteLockedReturns423(): void
-    {
-        $this->secretService->method('create')->willThrowException(new WriteLockedException('locked'));
+	/**
+	 * create() during a write lock returns 423 Locked.
+	 *
+	 * @return void
+	 */
+	public function testCreateWriteLockedReturns423(): void {
+		$this->secretService->method('create')->willThrowException(new WriteLockedException('locked'));
 
-        $response = $this->controller->create('Name', 'CIPHER');
-        $this->assertSame(423, $response->getStatus());
-    }//end testCreateWriteLockedReturns423()
+		$response = $this->controller->create('Name', 'CIPHER');
+		$this->assertSame(423, $response->getStatus());
+	}//end testCreateWriteLockedReturns423()
 
-    /**
-     * create() with no active suite returns 403.
-     *
-     * @return void
-     */
-    public function testCreateNoSuiteReturns403(): void
-    {
-        $this->secretService->method('create')->willThrowException(new SuiteBlockedException('no suite'));
+	/**
+	 * create() with no active suite returns 403.
+	 *
+	 * @return void
+	 */
+	public function testCreateNoSuiteReturns403(): void {
+		$this->secretService->method('create')->willThrowException(new SuiteBlockedException('no suite'));
 
-        $response = $this->controller->create('Name', 'CIPHER');
-        $this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-    }//end testCreateNoSuiteReturns403()
+		$response = $this->controller->create('Name', 'CIPHER');
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testCreateNoSuiteReturns403()
 
-    /**
-     * create() returns the created secret with 201.
-     *
-     * @return void
-     */
-    public function testCreateReturns201(): void
-    {
-        $this->secretService->method('create')->willReturn($this->makeSecret());
+	/**
+	 * create() returns the created secret with 201.
+	 *
+	 * @return void
+	 */
+	public function testCreateReturns201(): void {
+		$this->secretService->method('create')->willReturn($this->makeSecret());
 
-        $response = $this->controller->create('GitHub', 'ENCRYPTED');
-        $this->assertSame(Http::STATUS_CREATED, $response->getStatus());
-        $this->assertSame('ENCRYPTED', $response->getData()['key']);
-    }//end testCreateReturns201()
+		$response = $this->controller->create('GitHub', 'ENCRYPTED');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('ENCRYPTED', $response->getData()['key']);
+	}//end testCreateReturns201()
 
-    /**
-     * destroy() deletes and returns a status payload.
-     *
-     * @return void
-     */
-    public function testDestroyReturnsStatus(): void
-    {
-        $this->secretService->expects($this->once())->method('delete')->with('s-1', 'alice');
+	/**
+	 * destroy() deletes and returns a status payload.
+	 *
+	 * @return void
+	 */
+	public function testDestroyReturnsStatus(): void {
+		$this->secretService->expects($this->once())->method('delete')->with('s-1', 'alice');
 
-        $response = $this->controller->destroy('s-1');
-        $this->assertSame('deleted', $response->getData()['status']);
-    }//end testDestroyReturnsStatus()
+		$response = $this->controller->destroy('s-1');
+		$this->assertSame('deleted', $response->getData()['status']);
+	}//end testDestroyReturnsStatus()
 
-    /**
-     * index() returns the service list result.
-     *
-     * @return void
-     */
-    public function testIndexReturnsList(): void
-    {
-        $this->secretService->method('list')->willReturn(
-            ['items' => [], 'total' => 0, 'page' => 1, 'limit' => 50]
-        );
+	/**
+	 * index() returns the service list result.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsList(): void {
+		$this->secretService->method('list')->willReturn(
+			['items' => [], 'total' => 0, 'page' => 1, 'limit' => 50]
+		);
 
-        $response = $this->controller->index();
-        $this->assertSame(0, $response->getData()['total']);
-    }//end testIndexReturnsList()
+		$response = $this->controller->index();
+		$this->assertSame(0, $response->getData()['total']);
+	}//end testIndexReturnsList()
 }//end class
