@@ -30,10 +30,15 @@
 	<div class="doriath-shell">
 		<!-- Stale-data banner (offline-readonly-cache §4.3): shown whenever the
 		     vault is being served from the offline cache. -->
-		<div v-if="offlineStore.servedFromCache"
+		<div
+			v-if="offlineStore.servedFromCache"
 			class="doriath-offline-banner"
 			data-testid="offline-stale-banner">
-			{{ t('doriath', 'Offline — read-only. Last synced {when}.', { when: syncedLabel }) }}
+			{{
+				t('doriath', 'Offline — read-only. Last synced {when}.', {
+					when: syncedLabel,
+				})
+			}}
 		</div>
 
 		<CnAppRoot
@@ -50,9 +55,7 @@
 		     cnOpenUserSettings inject). Sections preserve the legacy
 		     UserSettings.vue surface unchanged. -->
 			<template #user-settings>
-				<NcAppSettingsSection
-					id="session"
-					:name="t('doriath', 'Session')">
+				<NcAppSettingsSection id="session" :name="t('doriath', 'Session')">
 					<template #icon>
 						<TimerIcon :size="20" />
 					</template>
@@ -62,14 +65,12 @@
 							:options="timeoutOptions"
 							:input-label="t('doriath', 'Session timeout')"
 							label="label"
-							:reduce="opt => opt.value"
+							:reduce="(opt) => opt.value"
 							@input="saveTimeout" />
 					</div>
 				</NcAppSettingsSection>
 
-				<NcAppSettingsSection
-					id="security"
-					:name="t('doriath', 'Security')">
+				<NcAppSettingsSection id="security" :name="t('doriath', 'Security')">
 					<template #icon>
 						<ShieldIcon :size="20" />
 					</template>
@@ -80,7 +81,9 @@
 						<PasskeyManager />
 					</div>
 					<div class="user-settings__field">
-						<NcButton variant="error" @click="showRecovery = !showRecovery">
+						<NcButton
+							variant="error"
+							@click="showRecovery = !showRecovery">
 							{{ t('doriath', 'My master password was compromised') }}
 						</NcButton>
 						<CompromiseRecoveryForm v-if="showRecovery" />
@@ -93,28 +96,62 @@
 					<template #icon>
 						<KeyIcon :size="20" />
 					</template>
-					<div v-if="suiteStore.currentSuite" class="user-settings__suite-info">
-						<p><strong>{{ t('doriath', 'Status') }}:</strong> {{ suiteStore.currentSuite.status }}</p>
-						<p><strong>{{ t('doriath', 'Created') }}:</strong> {{ suiteStore.currentSuite.createdAt }}</p>
-						<p><strong>{{ t('doriath', 'Suite ID') }}:</strong> {{ suiteStore.currentSuite.id }}</p>
+					<div
+						v-if="suiteStore.currentSuite"
+						class="user-settings__suite-info">
+						<p>
+							<strong>{{ t('doriath', 'Status') }}:</strong>
+							{{ suiteStore.currentSuite.status }}
+						</p>
+						<p>
+							<strong>{{ t('doriath', 'Created') }}:</strong>
+							{{ suiteStore.currentSuite.createdAt }}
+						</p>
+						<p>
+							<strong>{{ t('doriath', 'Suite ID') }}:</strong>
+							{{ suiteStore.currentSuite.id }}
+						</p>
 
 						<template v-if="suiteStore.currentSuite.status === 'active'">
 							<NcNoteCard v-if="revokeConfirm" type="warning">
-								{{ t('doriath', 'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.') }}
-								<div style="margin-top: 0.5rem;">
+								{{
+									t(
+										'doriath',
+										'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.',
+									)
+								}}
+								<div style="margin-top: 0.5rem">
 									<NcTextField
 										v-model="revokeReason"
-										:label="t('doriath', 'Reason for revocation')"
-										:placeholder="t('doriath', 'e.g. Device lost, key compromised')" />
+										:label="
+											t('doriath', 'Reason for revocation')
+										"
+										:placeholder="
+											t(
+												'doriath',
+												'e.g. Device lost, key compromised',
+											)
+										" />
 								</div>
-								<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+								<div
+									style="
+										display: flex;
+										gap: 0.5rem;
+										margin-top: 0.5rem;
+									">
 									<NcButton
 										variant="error"
 										:disabled="!revokeReason || revoking"
 										@click="handleRevoke">
-										{{ revoking ? t('doriath', 'Revoking...') : t('doriath', 'Confirm revocation') }}
+										{{
+											revoking
+												? t('doriath', 'Revoking...')
+												: t('doriath', 'Confirm revocation')
+										}}
 									</NcButton>
-									<NcButton variant="secondary" @click="revokeConfirm = false">
+									<NcButton
+										variant="secondary"
+										@click="revokeConfirm = false">
 										{{ t('doriath', 'Cancel') }}
 									</NcButton>
 								</div>
@@ -128,7 +165,12 @@
 						</template>
 
 						<NcNoteCard v-if="revokeSuccess" type="success">
-							{{ t('doriath', 'Encryption suite revoked. Contact an administrator to reinstate it.') }}
+							{{
+								t(
+									'doriath',
+									'Encryption suite revoked. Contact an administrator to reinstate it.',
+								)
+							}}
 						</NcNoteCard>
 						<NcNoteCard v-if="revokeError" type="error">
 							{{ revokeError }}
@@ -137,7 +179,9 @@
 					<NcEmptyContent
 						v-else
 						:name="t('doriath', 'No encryption suite')"
-						:description="t('doriath', 'Unlock the vault to set up encryption')">
+						:description="
+							t('doriath', 'Unlock the vault to set up encryption')
+						">
 						<template #icon>
 							<KeyIcon :size="64" />
 						</template>
@@ -151,12 +195,38 @@
 						<PuzzleIcon :size="20" />
 					</template>
 					<p>
-						{{ t('doriath', 'The Doriath browser extension autofills your logins, provides passkeys, and shows TOTP codes — decrypting everything inside the extension. The server only ever ships encrypted blobs, so your master password and secrets never leave your device.') }}
+						{{
+							t(
+								'doriath',
+								'The Doriath browser extension autofills your logins, provides passkeys, and shows TOTP codes — decrypting everything inside the extension. The server only ever ships encrypted blobs, so your master password and secrets never leave your device.',
+							)
+						}}
 					</p>
 					<ol class="user-settings__steps">
-						<li>{{ t('doriath', 'Install the Doriath extension for your browser.') }}</li>
-						<li>{{ t('doriath', 'Create a dedicated app password in Nextcloud security settings (never use your login password).') }}</li>
-						<li>{{ t('doriath', 'In the extension, enter this server URL, your username, and the app password, then unlock with your master password.') }}</li>
+						<li>
+							{{
+								t(
+									'doriath',
+									'Install the Doriath extension for your browser.',
+								)
+							}}
+						</li>
+						<li>
+							{{
+								t(
+									'doriath',
+									'Create a dedicated app password in Nextcloud security settings (never use your login password).',
+								)
+							}}
+						</li>
+						<li>
+							{{
+								t(
+									'doriath',
+									'In the extension, enter this server URL, your username, and the app password, then unlock with your master password.',
+								)
+							}}
+						</li>
 					</ol>
 					<div class="user-settings__field">
 						<NcButton :href="securitySettingsUrl" variant="secondary">
@@ -164,7 +234,12 @@
 						</NcButton>
 					</div>
 					<p class="user-settings__hint">
-						{{ t('doriath', 'Revoke the app password in Nextcloud security settings at any time to disconnect the extension.') }}
+						{{
+							t(
+								'doriath',
+								'Revoke the app password in Nextcloud security settings at any time to disconnect the extension.',
+							)
+						}}
 					</p>
 				</NcAppSettingsSection>
 			</template>
@@ -177,7 +252,14 @@ import { translate as ncT } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 // eslint-disable-next-line import/named
 import { CnAppRoot } from '@conduction/nextcloud-vue'
-import { NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
+import {
+	NcAppSettingsSection,
+	NcButton,
+	NcEmptyContent,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
@@ -197,7 +279,11 @@ import { useOfflineStore } from './store/modules/offline.js'
  *
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-9.2
  */
-const PUBLIC_ROUTE_NAMES = ['SecretRequestFill', 'LinkShareAccess', 'EphemeralSendAccess']
+const PUBLIC_ROUTE_NAMES = [
+	'SecretRequestFill',
+	'LinkShareAccess',
+	'EphemeralSendAccess',
+]
 
 /**
  * Whether a vue-router route lives outside the locked-vault guard.
@@ -339,7 +425,9 @@ export default {
 		 * @return {string}
 		 */
 		syncedLabel() {
-			return this.offlineStore.syncedAt ? new Date(this.offlineStore.syncedAt).toLocaleString() : ncT('doriath', 'unknown')
+			return this.offlineStore.syncedAt
+				? new Date(this.offlineStore.syncedAt).toLocaleString()
+				: ncT('doriath', 'unknown')
 		},
 		/**
 		 * Whether the vault is locked (no in-memory CryptoKey).
@@ -361,7 +449,11 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		isLocked(locked) {
-			if (locked && this.$route?.name !== 'Lock' && !isPublicRoute(this.$route)) {
+			if (
+				locked
+				&& this.$route?.name !== 'Lock'
+				&& !isPublicRoute(this.$route)
+			) {
 				this.$router.replace({
 					name: 'Lock',
 					query: { returnUrl: this.$route?.fullPath },
@@ -369,7 +461,11 @@ export default {
 			}
 			// Write-through the encrypted offline snapshot on each ONLINE unlock
 			// (offline-readonly-cache §2.3). Fail-soft — never blocks the session.
-			if (!locked && this.offlineStore.online && !this.offlineStore.servedFromCache) {
+			if (
+				!locked
+				&& this.offlineStore.online
+				&& !this.offlineStore.servedFromCache
+			) {
 				this.offlineStore.syncNow().catch(() => {})
 			}
 		},
@@ -423,7 +519,11 @@ export default {
 		// path as the return URL. The router-level guard from the
 		// pre-Tier-4 router is gone (vue-router is now built from
 		// the manifest), so the App.vue lifecycle owns the redirect.
-		if (this.sessionStore.isLocked && this.$route?.name !== 'Lock' && !isPublicRoute(this.$route)) {
+		if (
+			this.sessionStore.isLocked
+			&& this.$route?.name !== 'Lock'
+			&& !isPublicRoute(this.$route)
+		) {
 			this.$router.replace({
 				name: 'Lock',
 				query: { returnUrl: this.$route?.fullPath },
@@ -518,7 +618,10 @@ export default {
 				this.revokeConfirm = false
 				this.revokeReason = ''
 			} catch (e) {
-				this.revokeError = e.response?.data?.message || e.message || ncT('doriath', 'Failed to revoke suite')
+				this.revokeError =
+					e.response?.data?.message
+					|| e.message
+					|| ncT('doriath', 'Failed to revoke suite')
 			} finally {
 				this.revoking = false
 			}
@@ -533,17 +636,19 @@ export default {
 		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
 		 */
 		registerServiceWorker() {
-			if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+			if (
+				typeof navigator === 'undefined'
+				|| !('serviceWorker' in navigator)
+			) {
 				return
 			}
 			// Served by ServiceWorkerController at the app root so the browser
 			// gets the correct JS MIME and the worker's default scope is the
 			// whole SPA (offline-readonly-cache §3.2).
 			const swUrl = generateUrl('/apps/doriath/serviceworker.js')
-			navigator.serviceWorker.register(swUrl)
-				.catch(() => {
-					// Online-only fallback; the offline cache is simply absent.
-				})
+			navigator.serviceWorker.register(swUrl).catch(() => {
+				// Online-only fallback; the offline cache is simply absent.
+			})
 		},
 	},
 }
@@ -565,7 +670,18 @@ export default {
 	padding: 6px 16px;
 	text-align: center;
 	font-weight: bold;
-	color: var(--color-primary-element-text, #fff);
-	background-color: var(--color-warning, #b07100);
+	/*
+	 * --color-warning is the pale tint (#FFEEC5 in light), so the primary
+	 * element foreground — white for the default primary — landed at roughly
+	 * 1.3:1 on it. Dark mode was fine (#3D3010), making this the same
+	 * one-theme failure as the rest of this change. The paired *-text value is
+	 * the one the theme flips alongside the tint.
+	 *
+	 * This banner is sticky at z-index 2000 and is the app's only signal that
+	 * the data on screen is stale and read-only, so it is the last thing that
+	 * should be invisible.
+	 */
+	color: var(--color-warning-text);
+	background-color: var(--color-warning);
 }
 </style>
