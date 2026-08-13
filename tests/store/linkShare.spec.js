@@ -54,7 +54,9 @@ function recordingStorage() {
 
 	return {
 		entries,
-		getItem: vi.fn((key) => (entries.has(String(key)) ? entries.get(String(key)) : null)),
+		getItem: vi.fn((key) =>
+			entries.has(String(key)) ? entries.get(String(key)) : null,
+		),
 		setItem: vi.fn((key, value) => entries.set(String(key), String(value))),
 		removeItem: vi.fn((key) => entries.delete(String(key))),
 		clear: vi.fn(() => entries.clear()),
