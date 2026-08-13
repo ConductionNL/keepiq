@@ -15,7 +15,11 @@ import {
 	toBase64Url,
 	fromBase64Url,
 } from '../../src/crypto/passkey.js'
-import { deriveUnlockKeyRaw, decryptPrivateKeyWithRawKey, encryptPrivateKey } from '../../src/crypto/aes.js'
+import {
+	deriveUnlockKeyRaw,
+	decryptPrivateKeyWithRawKey,
+	encryptPrivateKey,
+} from '../../src/crypto/aes.js'
 import { decodeEnvelope } from '../../src/crypto/envelope.js'
 
 const PRF_A = new Uint8Array(32).fill(7)
@@ -59,7 +63,8 @@ describe('passkey PRF crypto', () => {
 	it('the PRF-recovered raw key decrypts the same private-key blob as the master password', async () => {
 		// End-to-end: wrap the master-derived unlock key under PRF, unwrap it,
 		// and confirm it opens the private-key envelope identically.
-		const pem = '-----BEGIN PRIVATE KEY-----\nMOCKKEYDATA\n-----END PRIVATE KEY-----'
+		const pem =
+			'-----BEGIN PRIVATE KEY-----\nMOCKKEYDATA\n-----END PRIVATE KEY-----'
 		const password = 'TfMaster2026!vault'
 		const blob = await encryptPrivateKey(pem, password)
 		const { salt } = decodeEnvelope(blob)
@@ -67,7 +72,10 @@ describe('passkey PRF crypto', () => {
 
 		const kek = await deriveKekFromPrf(PRF_A, CRED)
 		const wrapped = await wrapUnlockKey(kek, rawUnlockKey)
-		const recovered = await unwrapUnlockKey(await deriveKekFromPrf(PRF_A, CRED), wrapped)
+		const recovered = await unwrapUnlockKey(
+			await deriveKekFromPrf(PRF_A, CRED),
+			wrapped,
+		)
 
 		const decrypted = await decryptPrivateKeyWithRawKey(blob, recovered)
 		expect(decrypted).toBe(pem)

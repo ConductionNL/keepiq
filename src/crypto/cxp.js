@@ -11,7 +11,14 @@
  * revision touches only these two files.
  */
 
-import { seal, open, generateRecipientKeyPair, KEM_ID, KDF_ID, AEAD_ID } from './hpke.js'
+import {
+	seal,
+	open,
+	generateRecipientKeyPair,
+	KEM_ID,
+	KDF_ID,
+	AEAD_ID,
+} from './hpke.js'
 
 /** Pinned CXP transport version, validated at open time (fail-fast on mismatch). */
 export const CXP_VERSION = 'doriath-cxp-v1'
@@ -31,12 +38,14 @@ function bytesToB64(bytes) {
 }
 
 function b64ToBytes(b64) {
-	return Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+	return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
 }
 
 async function fingerprint(bytes) {
 	const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
-	return Array.from(digest).map(b => b.toString(16).padStart(2, '0')).join('')
+	return Array.from(digest)
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('')
 }
 
 function randomNonce() {
@@ -99,7 +108,9 @@ export async function sealForRequest(request, cxfBytes) {
 		throw new Error(`cxp: unsupported request version ${request && request.v}`)
 	}
 	if (request.requestedFormat !== REQUESTED_FORMAT) {
-		throw new Error(`cxp: unsupported requested format ${request.requestedFormat}`)
+		throw new Error(
+			`cxp: unsupported requested format ${request.requestedFormat}`,
+		)
 	}
 	const pkRraw = b64ToBytes(request.requesterPublicKey)
 	const nonce = b64ToBytes(request.nonce)
@@ -117,8 +128,15 @@ export async function sealForRequest(request, cxfBytes) {
 }
 
 function assertPinnedSuite(suite) {
-	if (!suite || suite.kem !== PINNED_SUITE.kem || suite.kdf !== PINNED_SUITE.kdf || suite.aead !== PINNED_SUITE.aead) {
-		throw new Error('cxp: unsupported HPKE suite — refusing to open (possible downgrade)')
+	if (
+		!suite
+		|| suite.kem !== PINNED_SUITE.kem
+		|| suite.kdf !== PINNED_SUITE.kdf
+		|| suite.aead !== PINNED_SUITE.aead
+	) {
+		throw new Error(
+			'cxp: unsupported HPKE suite — refusing to open (possible downgrade)',
+		)
 	}
 }
 
@@ -134,15 +152,21 @@ function assertPinnedSuite(suite) {
  */
 export async function openEnvelope(session, envelope) {
 	if (!envelope || envelope.v !== CXP_VERSION) {
-		throw new Error(`cxp: unsupported envelope version ${envelope && envelope.v}`)
+		throw new Error(
+			`cxp: unsupported envelope version ${envelope && envelope.v}`,
+		)
 	}
 	assertPinnedSuite(envelope.suite)
 	// Pre-open binding checks — reject a misdirected envelope before decrypting.
 	if (envelope.nonce !== bytesToB64(session.nonce)) {
-		throw new Error('cxp: envelope nonce does not match the request — misdirected envelope')
+		throw new Error(
+			'cxp: envelope nonce does not match the request — misdirected envelope',
+		)
 	}
 	if (envelope.recipientFp !== session.recipientFp) {
-		throw new Error('cxp: envelope recipient fingerprint does not match this session')
+		throw new Error(
+			'cxp: envelope recipient fingerprint does not match this session',
+		)
 	}
 	const info = bindingInfo(session.nonce)
 	const aad = suiteAad(PINNED_SUITE)
@@ -157,4 +181,11 @@ export async function openEnvelope(session, envelope) {
 	return plaintext
 }
 
-export const _internals = { bytesToB64, b64ToBytes, fingerprint, bindingInfo, suiteAad, PINNED_SUITE }
+export const _internals = {
+	bytesToB64,
+	b64ToBytes,
+	fingerprint,
+	bindingInfo,
+	suiteAad,
+	PINNED_SUITE,
+}

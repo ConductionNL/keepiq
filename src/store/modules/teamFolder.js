@@ -62,11 +62,16 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/team-folders'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/team-folders'),
+				)
 				this.owned = response.data?.owned ?? []
 				this.memberOf = response.data?.memberOf ?? []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load team folders'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load team folders'
 				throw e
 			} finally {
 				this.loading = false
@@ -99,7 +104,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async addMember(teamFolderId, memberType, memberId) {
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/members`),
+				generateUrl(
+					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members`,
+				),
 				{ memberType, memberId },
 			)
 			await this.fetchTeamFolders()
@@ -115,7 +122,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async removeMember(teamFolderId, membershipId) {
 			const response = await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`),
+				generateUrl(
+					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
+				),
 			)
 			await this.fetchTeamFolders()
 			return response.data
@@ -132,7 +141,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async setMemberGrade(teamFolderId, membershipId, grade) {
 			const response = await axios.patch(
-				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`),
+				generateUrl(
+					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
+				),
 				{ grade },
 			)
 			await this.fetchTeamFolders()
@@ -162,7 +173,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async reconcile(teamFolderId) {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/reconcile`),
+				generateUrl(
+					`/apps/doriath/api/v1/team-folders/${teamFolderId}/reconcile`,
+				),
 			)
 			return response.data
 		},
@@ -177,7 +190,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async approveJoin(teamFolderId, newMemberId) {
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/approve-join`),
+				generateUrl(
+					`/apps/doriath/api/v1/team-folders/${teamFolderId}/approve-join`,
+				),
 				{ newMemberId },
 			)
 			return response.data
@@ -290,9 +305,11 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						plaintextCache[pair.secretId] = {
 							key: plain.key ?? '',
 							login: plain.login ?? '',
-							additionalFields: typeof plain.additionalFields === 'object' && plain.additionalFields !== null
-								? JSON.stringify(plain.additionalFields)
-								: (plain.additionalFields ?? ''),
+							additionalFields:
+								typeof plain.additionalFields === 'object'
+								&& plain.additionalFields !== null
+									? JSON.stringify(plain.additionalFields)
+									: (plain.additionalFields ?? ''),
 						}
 					}
 
@@ -312,12 +329,17 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
 						// eslint-disable-next-line no-await-in-loop
 						const response = await axios.post(
-							generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`),
+							generateUrl(
+								`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`,
+							),
 							{ shares: chunk },
 						)
 						created += response.data?.created ?? 0
 						// eslint-disable-next-line no-await-in-loop
-						await this.regrantAttachments(response.data?.rows ?? [], certByUser)
+						await this.regrantAttachments(
+							response.data?.rows ?? [],
+							certByUser,
+						)
 						this.fanOut.done += chunk.length
 						chunk = []
 					}
@@ -325,17 +347,23 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 
 				if (chunk.length > 0 && !this.fanOutCancelled) {
 					const response = await axios.post(
-						generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`),
+						generateUrl(
+							`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`,
+						),
 						{ shares: chunk },
 					)
 					created += response.data?.created ?? 0
-					await this.regrantAttachments(response.data?.rows ?? [], certByUser)
+					await this.regrantAttachments(
+						response.data?.rows ?? [],
+						certByUser,
+					)
 					this.fanOut.done += chunk.length
 				}
 
 				return { created, cancelled: this.fanOutCancelled }
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Fan-out failed'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Fan-out failed'
 				throw e
 			} finally {
 				this.fanOut.running = false

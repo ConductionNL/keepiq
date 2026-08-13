@@ -18,7 +18,12 @@
 		<h2>{{ t('doriath', 'Dashboard preferences') }}</h2>
 
 		<p class="doriath-dashboard-settings__intro">
-			{{ t('doriath', 'Customise how your Doriath dashboard looks. Leave a value blank to fall back to the system default.') }}
+			{{
+				t(
+					'doriath',
+					'Customise how your Doriath dashboard looks. Leave a value blank to fall back to the system default.',
+				)
+			}}
 		</p>
 
 		<form data-testid="dashboard-settings-form" @submit.prevent="save">
@@ -27,8 +32,12 @@
 
 				<label class="doriath-dashboard-settings__field">
 					<span>{{ t('doriath', 'Default view') }}</span>
-					<select v-model="form.default_view" data-testid="default-view-select">
-						<option value="">{{ t('doriath', 'System default') }}</option>
+					<select
+						v-model="form.default_view"
+						data-testid="default-view-select">
+						<option value="">
+							{{ t('doriath', 'System default') }}
+						</option>
 						<option value="list">{{ t('doriath', 'List') }}</option>
 						<option value="grid">{{ t('doriath', 'Grid') }}</option>
 					</select>
@@ -36,20 +45,34 @@
 
 				<label class="doriath-dashboard-settings__field">
 					<span>{{ t('doriath', 'Sort field') }}</span>
-					<select v-model="form.sort_field" data-testid="sort-field-select">
-						<option value="">{{ t('doriath', 'System default') }}</option>
+					<select
+						v-model="form.sort_field"
+						data-testid="sort-field-select">
+						<option value="">
+							{{ t('doriath', 'System default') }}
+						</option>
 						<option value="name">{{ t('doriath', 'Name') }}</option>
-						<option value="created_at">{{ t('doriath', 'Created at') }}</option>
-						<option value="updated_at">{{ t('doriath', 'Last modified') }}</option>
+						<option value="created_at">
+							{{ t('doriath', 'Created at') }}
+						</option>
+						<option value="updated_at">
+							{{ t('doriath', 'Last modified') }}
+						</option>
 					</select>
 				</label>
 
 				<label class="doriath-dashboard-settings__field">
 					<span>{{ t('doriath', 'Sort direction') }}</span>
-					<select v-model="form.sort_direction" data-testid="sort-direction-select">
-						<option value="">{{ t('doriath', 'System default') }}</option>
+					<select
+						v-model="form.sort_direction"
+						data-testid="sort-direction-select">
+						<option value="">
+							{{ t('doriath', 'System default') }}
+						</option>
 						<option value="asc">{{ t('doriath', 'Ascending') }}</option>
-						<option value="desc">{{ t('doriath', 'Descending') }}</option>
+						<option value="desc">
+							{{ t('doriath', 'Descending') }}
+						</option>
 					</select>
 				</label>
 			</fieldset>
@@ -58,17 +81,26 @@
 				<legend>{{ t('doriath', 'Widgets') }}</legend>
 
 				<label>
-					<input v-model="form.show_kpi_widget" type="checkbox" data-testid="kpi-toggle">
+					<input
+						v-model="form.show_kpi_widget"
+						type="checkbox"
+						data-testid="kpi-toggle" />
 					{{ t('doriath', 'Show KPI cards') }}
 				</label>
 
 				<label>
-					<input v-model="form.show_recent_widget" type="checkbox" data-testid="recent-toggle">
+					<input
+						v-model="form.show_recent_widget"
+						type="checkbox"
+						data-testid="recent-toggle" />
 					{{ t('doriath', 'Show recent secrets') }}
 				</label>
 
 				<label>
-					<input v-model="form.show_migration_banner" type="checkbox" data-testid="migration-toggle">
+					<input
+						v-model="form.show_migration_banner"
+						type="checkbox"
+						data-testid="migration-toggle" />
 					{{ t('doriath', 'Show migration banner when active') }}
 				</label>
 			</fieldset>
@@ -79,7 +111,11 @@
 					class="primary"
 					:disabled="store.loading"
 					data-testid="save-settings">
-					{{ store.loading ? t('doriath', 'Saving…') : t('doriath', 'Save') }}
+					{{
+						store.loading
+							? t('doriath', 'Saving…')
+							: t('doriath', 'Save')
+					}}
 				</button>
 				<button
 					type="button"
@@ -98,7 +134,10 @@
 </template>
 
 <script>
-import { useDashboardSettingsStore, ALLOWED_DASHBOARD_KEYS } from '../store/modules/dashboardSettings.js'
+import {
+	useDashboardSettingsStore,
+	ALLOWED_DASHBOARD_KEYS,
+} from '../store/modules/dashboardSettings.js'
 
 /**
  * Per-user dashboard preferences view backed by
@@ -148,8 +187,14 @@ export default {
 			this.form.sort_field = s.sort_field ?? ''
 			this.form.sort_direction = s.sort_direction ?? ''
 			this.form.show_kpi_widget = this.coerceBool(s.show_kpi_widget, true)
-			this.form.show_recent_widget = this.coerceBool(s.show_recent_widget, true)
-			this.form.show_migration_banner = this.coerceBool(s.show_migration_banner, true)
+			this.form.show_recent_widget = this.coerceBool(
+				s.show_recent_widget,
+				true,
+			)
+			this.form.show_migration_banner = this.coerceBool(
+				s.show_migration_banner,
+				true,
+			)
 		},
 
 		/**

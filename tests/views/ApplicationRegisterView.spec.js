@@ -68,7 +68,9 @@ describe('ApplicationRegisterView', () => {
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
 		await wrapper.find('[data-testid="cn-cta-primary"]').trigger('click')
-		expect(wrapper.find('[data-testid="application-register-dialog"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="application-register-dialog"]').exists(),
+		).toBe(true)
 	})
 
 	it('mounts the PrivateKeyDownloadDialog when the store has a one-time key', async () => {
@@ -76,10 +78,14 @@ describe('ApplicationRegisterView', () => {
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
 		// Simulate the registration flow having captured the key.
-		const { useApplicationStore } = await import('../../src/store/modules/application.js')
+		const { useApplicationStore } =
+			await import('../../src/store/modules/application.js')
 		const store = useApplicationStore()
-		store.oneTimePrivateKey = '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----'
+		store.oneTimePrivateKey =
+			'-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----'
 		await flush()
-		expect(wrapper.find('[data-testid="private-key-dialog"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="private-key-dialog"]').exists()).toBe(
+			true,
+		)
 	})
 })

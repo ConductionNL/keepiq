@@ -8,10 +8,14 @@
 function encodeType(major, value) {
 	if (value < 24) return Uint8Array.of((major << 5) | value)
 	if (value < 0x100) return Uint8Array.of((major << 5) | 24, value)
-	if (value < 0x10000) return Uint8Array.of((major << 5) | 25, value >> 8, value & 0xff)
+	if (value < 0x10000)
+		return Uint8Array.of((major << 5) | 25, value >> 8, value & 0xff)
 	return Uint8Array.of(
 		(major << 5) | 26,
-		(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff,
+		(value >>> 24) & 0xff,
+		(value >>> 16) & 0xff,
+		(value >>> 8) & 0xff,
+		value & 0xff,
 	)
 }
 

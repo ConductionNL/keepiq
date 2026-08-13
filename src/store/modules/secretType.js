@@ -21,7 +21,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 * @param {object} state The store state.
 		 * @return {object} The id -> type map.
 		 */
-		typesById: (state) => Object.fromEntries(state.types.map(t => [t.id, t])),
+		typesById: (state) => Object.fromEntries(state.types.map((t) => [t.id, t])),
 	},
 
 	actions: {
@@ -46,7 +46,10 @@ export const useSecretTypeStore = defineStore('secretType', {
 			} catch (e) {
 				// Offline fallback: serve cached type definitions so the list
 				// schema can render (offline-readonly-cache §4.2).
-				const netErr = e?.message === 'Network Error' || e?.code === 'ERR_NETWORK' || (e?.request && !e?.response)
+				const netErr =
+					e?.message === 'Network Error'
+					|| e?.code === 'ERR_NETWORK'
+					|| (e?.request && !e?.response)
 				if (netErr && offline.vault?.types) {
 					offline.servedFromCache = true
 					this.types = offline.vault.types
@@ -85,7 +88,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 				generateUrl(`/apps/doriath/api/v1/secret-types/${id}`),
 				{ label },
 			)
-			const index = this.types.findIndex(t => t.id === id)
+			const index = this.types.findIndex((t) => t.id === id)
 			if (index !== -1) {
 				this.types.splice(index, 1, response.data)
 			}
@@ -99,8 +102,10 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 * @return {Promise<void>}
 		 */
 		async deleteType(id) {
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/secret-types/${id}`))
-			this.types = this.types.filter(t => t.id !== id)
+			await axios.delete(
+				generateUrl(`/apps/doriath/api/v1/secret-types/${id}`),
+			)
+			this.types = this.types.filter((t) => t.id !== id)
 		},
 	},
 })

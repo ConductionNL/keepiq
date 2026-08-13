@@ -17,14 +17,28 @@
 			{{ store.error }}
 		</NcNoteCard>
 
-		<ul v-if="store.attachments.length" class="attachment-panel__list" data-testid="attachment-list">
-			<li v-for="attachment in store.attachments" :key="attachment.id" class="attachment-panel__row">
+		<ul
+			v-if="store.attachments.length"
+			class="attachment-panel__list"
+			data-testid="attachment-list">
+			<li
+				v-for="attachment in store.attachments"
+				:key="attachment.id"
+				class="attachment-panel__row">
 				<Paperclip :size="16" />
-				<span class="attachment-panel__name" :data-testid="`attachment-name-${attachment.id}`">
-					{{ attachment.filename || t('doriath', '(undecryptable attachment)') }}
+				<span
+					class="attachment-panel__name"
+					:data-testid="`attachment-name-${attachment.id}`">
+					{{
+						attachment.filename
+						|| t('doriath', '(undecryptable attachment)')
+					}}
 				</span>
-				<span class="attachment-panel__size">{{ humanSize(attachment.sizeBytes) }}</span>
-				<NcButton variant="tertiary"
+				<span class="attachment-panel__size">{{
+					humanSize(attachment.sizeBytes)
+				}}</span>
+				<NcButton
+					variant="tertiary"
 					:aria-label="t('doriath', 'Download attachment')"
 					:data-testid="`attachment-download-${attachment.id}`"
 					@click="store.download(attachment)">
@@ -32,7 +46,8 @@
 						<Download :size="18" />
 					</template>
 				</NcButton>
-				<NcButton v-if="canManage"
+				<NcButton
+					v-if="canManage"
 					variant="tertiary"
 					:aria-label="t('doriath', 'Delete attachment')"
 					:data-testid="`attachment-delete-${attachment.id}`"
@@ -48,13 +63,15 @@
 		</p>
 
 		<div v-if="canManage" class="attachment-panel__upload">
-			<input ref="fileInput"
+			<input
+				ref="fileInput"
 				type="file"
 				class="attachment-panel__file-input"
 				:aria-label="t('doriath', 'Add attachment')"
 				data-testid="attachment-file-input"
-				@change="onFilePicked">
-			<NcButton variant="secondary"
+				@change="onFilePicked" />
+			<NcButton
+				variant="secondary"
 				:disabled="store.loading"
 				data-testid="attachment-upload"
 				@click="$refs.fileInput.click()">

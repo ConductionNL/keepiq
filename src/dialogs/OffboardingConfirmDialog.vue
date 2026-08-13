@@ -16,19 +16,29 @@
   @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Confirm offboarding')"
+	<NcDialog
+		:name="t('doriath', 'Confirm offboarding')"
 		:open="open"
 		size="small"
 		data-testid="offboarding-confirm-dialog"
 		@update:open="$emit('update:open', $event)">
 		<p class="offboarding__confirm">
-			{{ t('doriath', 'Revoke all team-folder access of "{leaving}" and transfer their owned team secrets to "{successor}"? This cannot be undone.', { leaving: leavingUserId, successor: successorUserId }) }}
+			{{
+				t(
+					'doriath',
+					'Revoke all team-folder access of "{leaving}" and transfer their owned team secrets to "{successor}"? This cannot be undone.',
+					{ leaving: leavingUserId, successor: successorUserId },
+				)
+			}}
 		</p>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('update:open', false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="error" data-testid="offboarding-confirm" @click="$emit('confirm')">
+			<NcButton
+				variant="error"
+				data-testid="offboarding-confirm"
+				@click="$emit('confirm')">
 				{{ t('doriath', 'Offboard') }}
 			</NcButton>
 		</template>

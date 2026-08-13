@@ -31,18 +31,28 @@ describe('serializeVault', () => {
 		const payload = serializeVault(secrets, folders, { mode: 'vault' })
 		expect(payload.format).toBe(PAYLOAD_FORMAT)
 		expect(payload.secrets).toHaveLength(3)
-		const aws = payload.secrets.find(s => s.name === 'AWS')
+		const aws = payload.secrets.find((s) => s.name === 'AWS')
 		expect(aws.folder).toBe('Work/Cloud')
 		expect(aws.password).toBe('k1')
-		const root = payload.secrets.find(s => s.name === 'Root')
+		const root = payload.secrets.find((s) => s.name === 'Root')
 		expect(root.folder).toBe('')
-		expect(payload.folders.map(f => f.path).sort()).toEqual(['Personal', 'Work', 'Work/Cloud'])
+		expect(payload.folders.map((f) => f.path).sort()).toEqual([
+			'Personal',
+			'Work',
+			'Work/Cloud',
+		])
 	})
 
 	it('folder-scoped export includes only the selected subtree', () => {
 		// Selecting "Work" (f1) must include its subtree (f2/Cloud) secrets.
-		const payload = serializeVault(secrets, folders, { mode: 'folders', folderIds: ['f1'] })
-		expect(payload.secrets.map(s => s.name)).toEqual(['AWS'])
-		expect(payload.folders.map(f => f.path).sort()).toEqual(['Work', 'Work/Cloud'])
+		const payload = serializeVault(secrets, folders, {
+			mode: 'folders',
+			folderIds: ['f1'],
+		})
+		expect(payload.secrets.map((s) => s.name)).toEqual(['AWS'])
+		expect(payload.folders.map((f) => f.path).sort()).toEqual([
+			'Work',
+			'Work/Cloud',
+		])
 	})
 })

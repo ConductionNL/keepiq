@@ -13,9 +13,19 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { assembleGdprPackage, GDPR_PACKAGE_FORMAT, VAULT_UNAVAILABLE_REASON } from '../../src/export/gdprPackage.js'
+import {
+	assembleGdprPackage,
+	GDPR_PACKAGE_FORMAT,
+	VAULT_UNAVAILABLE_REASON,
+} from '../../src/export/gdprPackage.js'
 
-const metadata = { format: 'doriath-gdpr-metadata', version: 1, subject: 'alice', suites: [], settings: {} }
+const metadata = {
+	format: 'doriath-gdpr-metadata',
+	version: 1,
+	subject: 'alice',
+	suites: [],
+	settings: {},
+}
 const vaultPayload = { secrets: [{ name: 'A' }], folders: [{ path: 'Work' }] }
 
 describe('assembleGdprPackage', () => {

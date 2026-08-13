@@ -26,21 +26,27 @@ describe('ShareRequestForm', () => {
 		const wrapper = mount(ShareRequestForm, {
 			propsData: { secretId: 'sec-1', open: false },
 		})
-		expect(wrapper.find('[data-testid="share-request-form"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="share-request-form"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('renders when open', () => {
 		const wrapper = mount(ShareRequestForm, {
 			propsData: { secretId: 'sec-1', open: true },
 		})
-		expect(wrapper.find('[data-testid="share-request-form"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="share-request-form"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('emits close when the cancel button is clicked', async () => {
 		const wrapper = mount(ShareRequestForm, {
 			propsData: { secretId: 'sec-1', open: true },
 		})
-		await wrapper.find('[data-testid="share-request-form-cancel"]').trigger('click')
+		await wrapper
+			.find('[data-testid="share-request-form-cancel"]')
+			.trigger('click')
 		expect(wrapper.emitted('close')).toBeTruthy()
 	})
 
@@ -49,7 +55,9 @@ describe('ShareRequestForm', () => {
 		const wrapper = mount(ShareRequestForm, {
 			propsData: { secretId: 'sec-1', open: true },
 		})
-		await wrapper.find('[data-testid="share-request-form-target"]').setValue('carol')
+		await wrapper
+			.find('[data-testid="share-request-form-target"]')
+			.setValue('carol')
 		await wrapper.find('form').trigger('submit.prevent')
 		await flush()
 		expect(post).toHaveBeenCalled()
@@ -66,10 +74,13 @@ describe('ShareRequestForm', () => {
 		const wrapper = mount(ShareRequestForm, {
 			propsData: { secretId: 'sec-1', open: true },
 		})
-		await wrapper.find('[data-testid="share-request-form-target"]').setValue('carol')
+		await wrapper
+			.find('[data-testid="share-request-form-target"]')
+			.setValue('carol')
 		await wrapper.find('form').trigger('submit.prevent')
 		await flush()
-		expect(wrapper.find('[data-testid="share-request-form-error"]').text())
-			.toContain('rate limited')
+		expect(
+			wrapper.find('[data-testid="share-request-form-error"]').text(),
+		).toContain('rate limited')
 	})
 })

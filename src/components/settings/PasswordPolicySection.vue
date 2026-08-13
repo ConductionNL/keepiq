@@ -1,7 +1,9 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Password Policy')"
-		:description="t('doriath', 'Configure master password requirements for all users')">
+		:description="
+			t('doriath', 'Configure master password requirements for all users')
+		">
 		<div class="password-policy">
 			<div class="password-policy__field">
 				<label for="min-length">{{ t('doriath', 'Minimum length') }}</label>
@@ -11,12 +13,16 @@
 					type="number"
 					min="12"
 					max="20"
-					@change="save">
-				<span class="password-policy__hint">{{ t('doriath', '12–20 characters') }}</span>
+					@change="save" />
+				<span class="password-policy__hint">{{
+					t('doriath', '12–20 characters')
+				}}</span>
 			</div>
 
 			<div class="password-policy__field">
-				<label for="min-score">{{ t('doriath', 'Minimum strength score') }}</label>
+				<label for="min-score">{{
+					t('doriath', 'Minimum strength score')
+				}}</label>
 				<select id="min-score" v-model.number="minScore" @change="save">
 					<option :value="3">
 						{{ t('doriath', 'Strong (score 3)') }}
@@ -27,7 +33,8 @@
 				</select>
 			</div>
 
-			<p v-if="error"
+			<p
+				v-if="error"
 				class="password-policy__error"
 				role="alert"
 				data-testid="password-policy-error">
@@ -62,7 +69,9 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings'),
+			)
 			const settings = response.data
 			this.minLength = parseInt(settings.master_password_min_length) || 12
 			this.minScore = parseInt(settings.master_password_min_score) || 3
@@ -86,21 +95,31 @@ export default {
 		async save() {
 			this.error = ''
 			try {
-				const response = await axios.post(generateUrl('/apps/doriath/api/settings'), {
-					master_password_min_length: String(Math.min(20, Math.max(12, this.minLength))),
-					master_password_min_score: String(Math.min(4, Math.max(3, this.minScore))),
-				})
+				const response = await axios.post(
+					generateUrl('/apps/doriath/api/settings'),
+					{
+						master_password_min_length: String(
+							Math.min(20, Math.max(12, this.minLength)),
+						),
+						master_password_min_score: String(
+							Math.min(4, Math.max(3, this.minScore)),
+						),
+					},
+				)
 				// Read the stored values back, not the submission: the panel must
 				// show what the server actually kept.
 				const stored = response?.data?.config ?? {}
-				this.minLength = parseInt(stored.master_password_min_length) || this.minLength
-				this.minScore = parseInt(stored.master_password_min_score) || this.minScore
+				this.minLength =
+					parseInt(stored.master_password_min_length) || this.minLength
+				this.minScore =
+					parseInt(stored.master_password_min_score) || this.minScore
 				// The strength meters cache the policy per page load; the floor
 				// just changed, so drop it or the new floor takes effect only
 				// after a reload.
 				resetPolicyCache()
 			} catch (e) {
-				this.error = e?.response?.data?.message
+				this.error =
+					e?.response?.data?.message
 					|| t('doriath', 'Could not save the password policy.')
 			}
 		},

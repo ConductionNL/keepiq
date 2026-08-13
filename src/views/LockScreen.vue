@@ -5,13 +5,22 @@
 				<LockIcon :size="48" />
 			</div>
 			<h1 class="lock-screen__title">
-				{{ isFirstSetup ? t('doriath', 'Set up your master password') : t('doriath', 'Unlock Doriath') }}
+				{{
+					isFirstSetup
+						? t('doriath', 'Set up your master password')
+						: t('doriath', 'Unlock Doriath')
+				}}
 			</h1>
 
 			<!-- Insecure context warning -->
 			<template v-if="!isSecureContext">
 				<NcNoteCard type="error">
-					{{ t('doriath', 'Doriath requires a secure connection (HTTPS) to function. Please access this instance over HTTPS.') }}
+					{{
+						t(
+							'doriath',
+							'Doriath requires a secure connection (HTTPS) to function. Please access this instance over HTTPS.',
+						)
+					}}
 				</NcNoteCard>
 			</template>
 
@@ -25,7 +34,12 @@
 				  the actual resuming.
 				-->
 				<NcNoteCard v-if="hasPausedMigration" type="warning">
-					{{ t('doriath', 'Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.') }}
+					{{
+						t(
+							'doriath',
+							'Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.',
+						)
+					}}
 				</NcNoteCard>
 
 				<!-- First-time setup mode -->
@@ -49,7 +63,11 @@
 						:disabled="!canSubmitSetup || loading"
 						:wide="true"
 						@click="handleSetup">
-						{{ loading ? t('doriath', 'Setting up...') : t('doriath', 'Set up vault') }}
+						{{
+							loading
+								? t('doriath', 'Setting up...')
+								: t('doriath', 'Set up vault')
+						}}
 					</NcButton>
 				</template>
 
@@ -65,7 +83,11 @@
 						<template #icon>
 							<KeyIcon :size="20" />
 						</template>
-						{{ loading ? t('doriath', 'Unlocking...') : t('doriath', 'Unlock with passkey') }}
+						{{
+							loading
+								? t('doriath', 'Unlocking...')
+								: t('doriath', 'Unlock with passkey')
+						}}
 					</NcButton>
 
 					<NcPasswordField
@@ -78,7 +100,11 @@
 						:disabled="!masterPassword || loading"
 						:wide="true"
 						@click="handleUnlock">
-						{{ loading ? t('doriath', 'Unlocking...') : t('doriath', 'Unlock') }}
+						{{
+							loading
+								? t('doriath', 'Unlocking...')
+								: t('doriath', 'Unlock')
+						}}
 					</NcButton>
 				</template>
 
@@ -157,10 +183,12 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		canSubmitSetup() {
-			return this.masterPassword
+			return (
+				this.masterPassword
 				&& this.confirmPassword
 				&& this.masterPassword === this.confirmPassword
 				&& this.strengthValid
+			)
 		},
 	},
 
@@ -195,7 +223,12 @@ export default {
 				await usePasskeyStore().unlockWithPasskey()
 				this.$router.push(this.$route.query.returnUrl || '/')
 			} catch (e) {
-				this.error = e?.message || t('doriath', 'Passkey unlock failed — use your master password')
+				this.error =
+					e?.message
+					|| t(
+						'doriath',
+						'Passkey unlock failed — use your master password',
+					)
 			} finally {
 				this.loading = false
 			}
@@ -233,7 +266,10 @@ export default {
 						// fall through to the generic error below
 					}
 				}
-				this.error = t('doriath', 'Wrong master password or decryption failed')
+				this.error = t(
+					'doriath',
+					'Wrong master password or decryption failed',
+				)
 			} finally {
 				this.loading = false
 				this.masterPassword = ''
@@ -248,7 +284,12 @@ export default {
 		 * @return {boolean}
 		 */
 		isNetworkError(e) {
-			return !!e && (e.message === 'Network Error' || e.code === 'ERR_NETWORK' || (e.request && !e.response))
+			return (
+				!!e
+				&& (e.message === 'Network Error'
+					|| e.code === 'ERR_NETWORK'
+					|| (e.request && !e.response))
+			)
 		},
 
 		/**

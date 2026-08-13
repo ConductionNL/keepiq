@@ -1,19 +1,27 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Applications')"
-		:description="t('doriath', 'Pending external applications waiting for admin approval')">
+		:description="
+			t('doriath', 'Pending external applications waiting for admin approval')
+		">
 		<div v-if="loading" class="application-queue">
 			{{ t('doriath', 'Loading…') }}
 		</div>
-		<div v-else-if="pending.length === 0" class="application-queue application-queue--empty">
+		<div
+			v-else-if="pending.length === 0"
+			class="application-queue application-queue--empty">
 			{{ t('doriath', 'No pending applications') }}
 		</div>
 		<ul v-else class="application-queue">
 			<li v-for="app in pending" :key="app.id" class="application-queue__row">
 				<div class="application-queue__meta">
 					<strong>{{ app.name }}</strong>
-					<span class="application-queue__description">{{ app.description }}</span>
-					<span class="application-queue__date">{{ formatDate(app.created_at) }}</span>
+					<span class="application-queue__description">{{
+						app.description
+					}}</span>
+					<span class="application-queue__date">{{
+						formatDate(app.created_at)
+					}}</span>
 				</div>
 				<div class="application-queue__actions">
 					<button class="primary" @click="approve(app)">
@@ -62,8 +70,12 @@ export default {
 		async refresh() {
 			this.loading = true
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/applications/pending'))
-				this.pending = Array.isArray(response.data) ? response.data : (response.data.applications || [])
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/applications/pending'),
+				)
+				this.pending = Array.isArray(response.data)
+					? response.data
+					: response.data.applications || []
 			} catch (e) {
 				console.warn('Doriath: failed to load pending applications', e)
 				this.pending = []
@@ -80,7 +92,9 @@ export default {
 		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-4.3
 		 */
 		async approve(app) {
-			await axios.post(generateUrl(`/apps/doriath/api/v1/applications/${app.id}/approve`))
+			await axios.post(
+				generateUrl(`/apps/doriath/api/v1/applications/${app.id}/approve`),
+			)
 			await this.refresh()
 		},
 
@@ -92,7 +106,9 @@ export default {
 		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-4.3
 		 */
 		async reject(app) {
-			await axios.post(generateUrl(`/apps/doriath/api/v1/applications/${app.id}/reject`))
+			await axios.post(
+				generateUrl(`/apps/doriath/api/v1/applications/${app.id}/reject`),
+			)
 			await this.refresh()
 		},
 

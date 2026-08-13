@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { generateKeyPair, encryptPrivateKey, decryptPrivateKey, importPrivateKey, importPublicKey } from '../../crypto/index.js'
+import {
+	generateKeyPair,
+	encryptPrivateKey,
+	decryptPrivateKey,
+	importPrivateKey,
+	importPublicKey,
+} from '../../crypto/index.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
 import { useSessionStore, onVaultLock } from './session.js'
@@ -54,7 +60,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					generateUrl('/apps/doriath/api/v1/suites'),
 				)
 				const suites = response.data
-				this.currentSuite = suites.find(s => s.status === 'active') || null
+				this.currentSuite = suites.find((s) => s.status === 'active') || null
 			} finally {
 				this.loading = false
 			}
@@ -73,11 +79,17 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 				// Export private key as PEM for encryption.
 				const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-				const privateKeyPem = '-----BEGIN PRIVATE KEY-----\n'
-					+ btoa(String.fromCharCode(...new Uint8Array(pkcs8))).match(/.{1,64}/g).join('\n')
+				const privateKeyPem =
+					'-----BEGIN PRIVATE KEY-----\n'
+					+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
+						.match(/.{1,64}/g)
+						.join('\n')
 					+ '\n-----END PRIVATE KEY-----'
 
-				const encryptedPk = await encryptPrivateKey(privateKeyPem, masterPassword)
+				const encryptedPk = await encryptPrivateKey(
+					privateKeyPem,
+					masterPassword,
+				)
 
 				const response = await axios.post(
 					generateUrl('/apps/doriath/api/v1/suites'),
@@ -119,11 +131,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			)
 
 			// Re-encrypt with new password.
-			const newEncryptedPk = await encryptPrivateKey(privateKeyPem, newPassword)
+			const newEncryptedPk = await encryptPrivateKey(
+				privateKeyPem,
+				newPassword,
+			)
 
 			// Update on server.
 			await axios.put(
-				generateUrl(`/apps/doriath/api/v1/suites/${session.suiteId}/private-key`),
+				generateUrl(
+					`/apps/doriath/api/v1/suites/${session.suiteId}/private-key`,
+				),
 				{ encryptedPrivateKey: newEncryptedPk },
 			)
 
@@ -155,11 +172,17 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			// Export new private key as PEM.
 			const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-			const newPrivateKeyPem = '-----BEGIN PRIVATE KEY-----\n'
-				+ btoa(String.fromCharCode(...new Uint8Array(pkcs8))).match(/.{1,64}/g).join('\n')
+			const newPrivateKeyPem =
+				'-----BEGIN PRIVATE KEY-----\n'
+				+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
+					.match(/.{1,64}/g)
+					.join('\n')
 				+ '\n-----END PRIVATE KEY-----'
 
-			const newEncryptedPk = await encryptPrivateKey(newPrivateKeyPem, newPassword)
+			const newEncryptedPk = await encryptPrivateKey(
+				newPrivateKeyPem,
+				newPassword,
+			)
 
 			this.migrationProgress = { done: 0, total: 0, phase: 'starting' }
 			this.migrationFailures = []
@@ -231,7 +254,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		}) {
 			// Unwrap the old private key with the old master password. Both stay
 			// in this scope; neither is ever sent anywhere (ADR-003).
-			const oldPrivateKeyPem = await decryptPrivateKey(oldEncryptedPrivateKey, oldPassword)
+			const oldPrivateKeyPem = await decryptPrivateKey(
+				oldEncryptedPrivateKey,
+				oldPassword,
+			)
 
 			const keys = {
 				oldPrivateKey: await importPrivateKey(oldPrivateKeyPem),
@@ -252,10 +278,13 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				// front.
 				for (;;) {
 					const { data } = await axios.get(
-						generateUrl(`/apps/doriath/api/v1/migrations/${migrationId}/work`),
+						generateUrl(
+							`/apps/doriath/api/v1/migrations/${migrationId}/work`,
+						),
 					)
 
-					this.migrationDroppedVersions = data.versions?.dropCandidates || 0
+					this.migrationDroppedVersions =
+						data.versions?.dropCandidates || 0
 
 					const jobs = this.buildJobs(data)
 					if (jobs.length === 0) {
@@ -264,12 +293,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 					this.migrationProgress = {
 						done: migrated,
-						total: (migrated + data.totalRemaining),
+						total: migrated + data.totalRemaining,
 						phase: 'migrating',
 					}
 
 					const results = await runner.run(jobs)
-					const outcome = await this.postResults(migrationId, results, jobs)
+					const outcome = await this.postResults(
+						migrationId,
+						results,
+						jobs,
+					)
 
 					migrated += outcome.committed
 					failures.push(...outcome.failures)
@@ -277,7 +310,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 					this.migrationProgress = {
 						done: migrated,
-						total: (migrated + data.totalRemaining),
+						total: migrated + data.totalRemaining,
 						phase: 'migrating',
 					}
 
@@ -302,7 +335,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 							// down). The rows stay unaccounted server-side, so
 							// the completion gate will refuse and the resume
 							// banner picks it up.
-							halted = 'Migration could not reach the server; no records were changed.'
+							halted =
+								'Migration could not reach the server; no records were changed.'
 						}
 
 						// Otherwise every record in this page failed permanently
@@ -321,7 +355,11 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			}
 
 			if (halted !== null) {
-				this.migrationProgress = { done: migrated, total: migrated, phase: 'halted' }
+				this.migrationProgress = {
+					done: migrated,
+					total: migrated,
+					phase: 'halted',
+				}
 				const error = new Error(halted)
 				error.name = 'MigrationHaltedError'
 				error.migrated = migrated
@@ -329,7 +367,11 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				throw error
 			}
 
-			this.migrationProgress = { done: migrated, total: migrated, phase: 'done' }
+			this.migrationProgress = {
+				done: migrated,
+				total: migrated,
+				phase: 'done',
+			}
 
 			return {
 				migrated,
@@ -351,13 +393,28 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			const jobs = []
 
 			for (const record of work.secrets?.records || []) {
-				jobs.push({ store: MIGRATION_STORES.SECRETS, id: record.id, name: record.name, record })
+				jobs.push({
+					store: MIGRATION_STORES.SECRETS,
+					id: record.id,
+					name: record.name,
+					record,
+				})
 			}
 			for (const record of work.versions?.records || []) {
-				jobs.push({ store: MIGRATION_STORES.VERSIONS, id: record.id, name: null, record })
+				jobs.push({
+					store: MIGRATION_STORES.VERSIONS,
+					id: record.id,
+					name: null,
+					record,
+				})
 			}
 			for (const record of work.attachmentGrants?.records || []) {
-				jobs.push({ store: MIGRATION_STORES.ATTACHMENT_GRANTS, id: record.id, name: null, record })
+				jobs.push({
+					store: MIGRATION_STORES.ATTACHMENT_GRANTS,
+					id: record.id,
+					name: null,
+					record,
+				})
 			}
 
 			return jobs
@@ -377,60 +434,82 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-re-encrypted-ciphertext-is-verified-before-the-original-is-discarded
 		 */
 		async postResults(migrationId, results, jobs) {
-			const namesById = new Map(jobs.map(job => [job.id, job.name]))
+			const namesById = new Map(jobs.map((job) => [job.id, job.name]))
 			let committed = 0
 			const failures = []
 			const retryable = []
 			let halt = null
 
-			for (let start = 0; start < results.length; start += MIGRATION_CONCURRENCY) {
+			for (
+				let start = 0;
+				start < results.length;
+				start += MIGRATION_CONCURRENCY
+			) {
 				const window = results.slice(start, start + MIGRATION_CONCURRENCY)
 
 				// eslint-disable-next-line no-await-in-loop
-				const settled = await Promise.all(window.map(async (result) => {
-					// A round-trip mismatch means the STORED value read back fine
-					// and the new key could not carry it. Reporting that as a
-					// failure would let the server finalise a readable secret as
-					// unrecoverable, so it is never sent — the run stops instead.
-					if (result.halt === true) {
-						return { outcome: 'halt', result, error: result.error }
-					}
-
-					// Only an old-key decrypt failure is reported. Anything else
-					// unproven stays unreported, which leaves the row unaccounted
-					// server-side so the completion gate keeps blocking and a
-					// resume retries it.
-					if (result.ok !== true && result.permanent !== true) {
-						return { outcome: 'retryable', result, error: result.error }
-					}
-
-					const url = this.recordUrl(migrationId, result.store, result.id)
-					if (url === null) {
-						return { outcome: 'retryable', result, error: `Unknown migration store: ${result.store}` }
-					}
-
-					const body = result.ok === true
-						? result.payload
-						: { error: result.error }
-
-					try {
-						await axios.post(url, body)
-						return {
-							outcome: (result.ok === true ? 'committed' : 'permanent'),
-							result,
-							error: result.error,
+				const settled = await Promise.all(
+					window.map(async (result) => {
+						// A round-trip mismatch means the STORED value read back fine
+						// and the new key could not carry it. Reporting that as a
+						// failure would let the server finalise a readable secret as
+						// unrecoverable, so it is never sent — the run stops instead.
+						if (result.halt === true) {
+							return { outcome: 'halt', result, error: result.error }
 						}
-					} catch (e) {
-						// The commit itself never landed (network, guard
-						// rejection), so nothing was written and the row is
-						// simply still outstanding. Retryable by definition.
-						return {
-							outcome: 'retryable',
-							result,
-							error: e?.response?.data?.message || String(e?.message || e),
+
+						// Only an old-key decrypt failure is reported. Anything else
+						// unproven stays unreported, which leaves the row unaccounted
+						// server-side so the completion gate keeps blocking and a
+						// resume retries it.
+						if (result.ok !== true && result.permanent !== true) {
+							return {
+								outcome: 'retryable',
+								result,
+								error: result.error,
+							}
 						}
-					}
-				}))
+
+						const url = this.recordUrl(
+							migrationId,
+							result.store,
+							result.id,
+						)
+						if (url === null) {
+							return {
+								outcome: 'retryable',
+								result,
+								error: `Unknown migration store: ${result.store}`,
+							}
+						}
+
+						const body =
+							result.ok === true
+								? result.payload
+								: { error: result.error }
+
+						try {
+							await axios.post(url, body)
+							return {
+								outcome:
+									result.ok === true ? 'committed' : 'permanent',
+								result,
+								error: result.error,
+							}
+						} catch (e) {
+							// The commit itself never landed (network, guard
+							// rejection), so nothing was written and the row is
+							// simply still outstanding. Retryable by definition.
+							return {
+								outcome: 'retryable',
+								result,
+								error:
+									e?.response?.data?.message
+									|| String(e?.message || e),
+							}
+						}
+					}),
+				)
 
 				for (const entry of settled) {
 					if (entry.outcome === 'committed') {
@@ -439,7 +518,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					}
 
 					if (entry.outcome === 'halt') {
-						halt = halt ?? (entry.error || 'Re-encryption could not be verified')
+						halt =
+							halt
+							?? (entry.error || 'Re-encryption could not be verified')
 						continue
 					}
 
@@ -534,7 +615,11 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			try {
 				await this.completeMigration(migrationId, outcome.failed > 0)
-				return { finalised: true, needsAcknowledgement: false, message: null }
+				return {
+					finalised: true,
+					needsAcknowledgement: false,
+					message: null,
+				}
 			} catch (e) {
 				const status = e?.response?.status
 				const code = e?.response?.data?.error
@@ -544,11 +629,11 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					// Expected, not exceptional: either work remains (resume) or a
 					// loss needs acknowledging (the dialog asks). Either way the
 					// migration is intact.
-					this.migrationNeedsAcknowledgement = (outcome.failed > 0)
+					this.migrationNeedsAcknowledgement = outcome.failed > 0
 					this.migrationBlockedMessage = message
 					return {
 						finalised: false,
-						needsAcknowledgement: (outcome.failed > 0),
+						needsAcknowledgement: outcome.failed > 0,
 						message,
 					}
 				}
@@ -569,7 +654,11 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
 		 */
 		async acceptMigrationLosses(migrationId, acceptUnrecoverable) {
-			const data = await this.completeMigration(migrationId, true, acceptUnrecoverable)
+			const data = await this.completeMigration(
+				migrationId,
+				true,
+				acceptUnrecoverable,
+			)
 			this.migrationNeedsAcknowledgement = false
 			this.migrationBlockedMessage = null
 			return data
@@ -601,10 +690,13 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				}
 
 				const { data } = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/migrations/${migrationId}/complete`),
+					generateUrl(
+						`/apps/doriath/api/v1/migrations/${migrationId}/complete`,
+					),
 					body,
 				)
-				this.migrationDroppedVersions = data.droppedVersions ?? this.migrationDroppedVersions
+				this.migrationDroppedVersions =
+					data.droppedVersions ?? this.migrationDroppedVersions
 				this.migrationUnrecoverable = data.unrecoverable ?? []
 				return data
 			} finally {
@@ -632,7 +724,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			try {
 				const { data } = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/migrations/${this.migrationStatus.id}/work`),
+					generateUrl(
+						`/apps/doriath/api/v1/migrations/${this.migrationStatus.id}/work`,
+					),
 					{ params: { limit: 1 } },
 				)
 				this.migrationRemaining = data.totalRemaining ?? 0
@@ -679,10 +773,14 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// every single record would fail its round-trip and the run would look
 			// like a vault full of corrupt data instead of one mis-wired resume.
 			const { data: oldSuite } = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/suites/${this.migrationStatus.oldSuiteId}`),
+				generateUrl(
+					`/apps/doriath/api/v1/suites/${this.migrationStatus.oldSuiteId}`,
+				),
 			)
 			const { data: newSuite } = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/suites/${this.migrationStatus.newSuiteId}`),
+				generateUrl(
+					`/apps/doriath/api/v1/suites/${this.migrationStatus.newSuiteId}`,
+				),
 			)
 
 			// The session must be bound to the migration's NEW suite, because
@@ -696,7 +794,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			if (session.suiteId !== newSuite.id) {
 				throw new Error(
 					'Your session is unlocked against the previous encryption suite. '
-					+ 'Lock and unlock the vault, then resume the migration.',
+						+ 'Lock and unlock the vault, then resume the migration.',
 				)
 			}
 
@@ -708,7 +806,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				oldEncryptedPrivateKey: oldSuite.privateKey,
 				oldPassword,
 				// Taken from the migration's own new suite, not from the session.
-				newPublicKeyPem: (newSuite.certificate ?? newSuite.publicKey),
+				newPublicKeyPem: newSuite.certificate ?? newSuite.publicKey,
 				newPrivateKey: session.cryptoKey,
 			})
 
@@ -759,7 +857,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			}
 
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/suites/${this.currentSuite.id}/revoke`),
+				generateUrl(
+					`/apps/doriath/api/v1/suites/${this.currentSuite.id}/revoke`,
+				),
 				{ reason },
 			)
 
@@ -784,7 +884,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				const response = await axios.get(
 					generateUrl('/apps/doriath/api/v1/migrations/status'),
 				)
-				this.migrationStatus = response.data.status === 'none' ? null : response.data
+				this.migrationStatus =
+					response.data.status === 'none' ? null : response.data
 			} catch {
 				this.migrationStatus = null
 			}

@@ -51,9 +51,9 @@ export function resolveBaseUrl(): string {
 
 	throw new Error(
 		'No Nextcloud base URL configured for the e2e suite. Set one of '
-		+ CANDIDATES.join(', ')
-		+ '. Refusing to default to http://localhost:8080 — that is the SHARED '
-		+ 'dev container.',
+			+ CANDIDATES.join(', ')
+			+ '. Refusing to default to http://localhost:8080 — that is the SHARED '
+			+ 'dev container.',
 	)
 }
 

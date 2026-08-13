@@ -35,15 +35,25 @@ import { useSessionStore } from '../../src/store/modules/session.js'
 function mountBanner() {
 	return mount(MigrationResumeBanner, {
 		global: {
-			mixins: [{
-				methods: {
-					t: (app, text, vars) => (vars
-						? Object.keys(vars).reduce((out, k) => out.replace(`{${k}}`, String(vars[k])), text)
-						: text),
-					n: (app, singular, plural, count) => (count === 1 ? singular : plural)
-						.replace('%n', String(count)),
+			mixins: [
+				{
+					methods: {
+						t: (app, text, vars) =>
+							vars
+								? Object.keys(vars).reduce(
+										(out, k) =>
+											out.replace(`{${k}}`, String(vars[k])),
+										text,
+									)
+								: text,
+						n: (app, singular, plural, count) =>
+							(count === 1 ? singular : plural).replace(
+								'%n',
+								String(count),
+							),
+					},
 				},
-			}],
+			],
 			stubs: {
 				NcButton: { template: '<button><slot /></button>' },
 				// Renders its label so the "which password are we asking for?"
@@ -72,19 +82,29 @@ describe('MigrationResumeBanner', () => {
 		const wrapper = mountBanner()
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('[data-testid="migration-resume-banner"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="migration-resume-banner"]').exists(),
+		).toBe(false)
 	})
 
 	it('states how many records remain and that the vault is read-only', async () => {
 		const store = useEncryptionSuiteStore()
-		store.migrationStatus = { id: 'migration-1', oldSuiteId: 'old', newSuiteId: 'new' }
+		store.migrationStatus = {
+			id: 'migration-1',
+			oldSuiteId: 'old',
+			newSuiteId: 'new',
+		}
 		store.migrationRemaining = 7
 
 		const wrapper = mountBanner()
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('[data-testid="migration-resume-banner"]').exists()).toBe(true)
-		expect(wrapper.text()).toContain('7 secrets are still encrypted under your previous key')
+		expect(
+			wrapper.find('[data-testid="migration-resume-banner"]').exists(),
+		).toBe(true)
+		expect(wrapper.text()).toContain(
+			'7 secrets are still encrypted under your previous key',
+		)
 		expect(wrapper.text()).toContain('read-only until it finishes')
 	})
 
@@ -99,7 +119,9 @@ describe('MigrationResumeBanner', () => {
 		const text = wrapper.text()
 		// "0 secrets" would read as "finished", which is the opposite of the truth.
 		expect(text).not.toContain('0 secrets')
-		expect(text).toContain('Some secrets are still encrypted under your previous key')
+		expect(text).toContain(
+			'Some secrets are still encrypted under your previous key',
+		)
 	})
 
 	it('asks for the previous master password, not both', async () => {
@@ -135,7 +157,9 @@ describe('MigrationResumeBanner', () => {
 		store.migrationStatus = { id: 'migration-1' }
 		const session = useSessionStore()
 		session.cryptoKey = {}
-		const resume = vi.spyOn(store, 'resumeMigration').mockResolvedValue({ migrated: 7, failed: 0 })
+		const resume = vi
+			.spyOn(store, 'resumeMigration')
+			.mockResolvedValue({ migrated: 7, failed: 0 })
 
 		const wrapper = mountBanner()
 		wrapper.vm.expanded = true
@@ -156,7 +180,8 @@ describe('MigrationResumeBanner', () => {
 		session.cryptoKey = {}
 		vi.spyOn(store, 'resumeMigration').mockImplementation(async () => {
 			store.migrationNeedsAcknowledgement = true
-			store.migrationBlockedMessage = '2 secret(s) could not be decrypted with the old key'
+			store.migrationBlockedMessage =
+				'2 secret(s) could not be decrypted with the old key'
 			return { migrated: 5, failed: 2 }
 		})
 
@@ -174,7 +199,9 @@ describe('MigrationResumeBanner', () => {
 		const session = useSessionStore()
 		session.cryptoKey = {}
 		vi.spyOn(store, 'resumeMigration').mockRejectedValue(
-			new Error('Your session is unlocked against the previous encryption suite.'),
+			new Error(
+				'Your session is unlocked against the previous encryption suite.',
+			),
 		)
 
 		const wrapper = mountBanner()
@@ -184,6 +211,8 @@ describe('MigrationResumeBanner', () => {
 		await wrapper.vm.$nextTick()
 
 		expect(wrapper.vm.error).toContain('previous encryption suite')
-		expect(wrapper.find('[data-testid="migration-resume-banner"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="migration-resume-banner"]').exists(),
+		).toBe(true)
 	})
 })

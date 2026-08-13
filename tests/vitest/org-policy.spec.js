@@ -24,7 +24,11 @@ vi.mock('../../src/health/hibp.js', () => ({
 	}),
 }))
 
-import { evaluateScore, evaluateHibp, isExemptType } from '../../src/policy/policy.js'
+import {
+	evaluateScore,
+	evaluateHibp,
+	isExemptType,
+} from '../../src/policy/policy.js'
 import { checkValue } from '../../src/health/hibp.js'
 
 const POLICY = {
@@ -42,7 +46,11 @@ describe('org policy: score gate', () => {
 	})
 
 	it('passes a strong value', () => {
-		const verdict = evaluateScore(POLICY, 'login', 'x7$Kq99!theRealHorseBatteryStaple-2026')
+		const verdict = evaluateScore(
+			POLICY,
+			'login',
+			'x7$Kq99!theRealHorseBatteryStaple-2026',
+		)
 		expect(verdict.compliant).toBe(true)
 	})
 
@@ -53,7 +61,10 @@ describe('org policy: score gate', () => {
 	})
 
 	it('is a no-op when the policy gate is off or missing', () => {
-		expect(evaluateScore({ ...POLICY, policy_enabled: false }, 'login', 'weak').compliant).toBe(true)
+		expect(
+			evaluateScore({ ...POLICY, policy_enabled: false }, 'login', 'weak')
+				.compliant,
+		).toBe(true)
 		expect(evaluateScore(null, 'login', 'weak').compliant).toBe(true)
 	})
 })
@@ -79,7 +90,13 @@ describe('org policy: HIBP gate', () => {
 
 	it('never runs when the block is off', async () => {
 		checkValue.mockClear()
-		expect(await evaluateHibp({ ...POLICY, block_on_hibp_hit: false }, 'login', 'breached-value')).toBeNull()
+		expect(
+			await evaluateHibp(
+				{ ...POLICY, block_on_hibp_hit: false },
+				'login',
+				'breached-value',
+			),
+		).toBeNull()
 		expect(checkValue).not.toHaveBeenCalled()
 	})
 })

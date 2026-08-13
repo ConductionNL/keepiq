@@ -22,7 +22,12 @@
 import { makeRow, validateRow, joinFolderPath } from '../model.js'
 
 /** Standard KeePass string keys that map onto top-level row fields. */
-const STANDARD_KEYS = { Title: 'name', URL: 'url', UserName: 'login', Password: 'password' }
+const STANDARD_KEYS = {
+	Title: 'name',
+	URL: 'url',
+	UserName: 'login',
+	Password: 'password',
+}
 
 /**
  * Read the immediate child elements with a given tag name.
@@ -50,7 +55,11 @@ function childrenByTag(parent, tag) {
  * @return {object} A normalized, validated row.
  */
 function parseEntry(entry, pathSegments, sourceRow) {
-	const fields = { folder: joinFolderPath(pathSegments), type: 'login', additionalFields: null }
+	const fields = {
+		folder: joinFolderPath(pathSegments),
+		type: 'login',
+		additionalFields: null,
+	}
 	const additional = {}
 
 	// Only DIRECT <String> children — never descend into <History>.
@@ -90,7 +99,7 @@ function walkGroup(group, parentPath, counter, isRoot) {
 	const nameEl = childrenByTag(group, 'Name')[0]
 	const name = nameEl ? (nameEl.textContent ?? '').trim() : ''
 	// Drop the root group name (it is the database title, not a user folder).
-	const path = isRoot ? parentPath : (name ? [...parentPath, name] : parentPath)
+	const path = isRoot ? parentPath : name ? [...parentPath, name] : parentPath
 
 	const rows = []
 	for (const entry of childrenByTag(group, 'Entry')) {
@@ -117,7 +126,9 @@ export function parseKeepassXml(xml) {
 	}
 	const root = doc.querySelector('KeePassFile')
 	if (!root) {
-		throw new Error('Not a KeePass 2.x XML export (missing KeePassFile root element)')
+		throw new Error(
+			'Not a KeePass 2.x XML export (missing KeePassFile root element)',
+		)
 	}
 	const rootEl = root.querySelector('Root')
 	if (!rootEl) {

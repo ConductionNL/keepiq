@@ -1,40 +1,46 @@
 <template>
-	<NcDialog
-		:open="open"
-		:name="title"
-		size="normal"
-		@update:open="onClose">
+	<NcDialog :open="open" :name="title" size="normal" @update:open="onClose">
 		<div class="secret-request-create-dialog">
 			<p v-if="isReRequest" class="secret-request-create-dialog__note">
-				{{ t('doriath', 'Existing values will be overwritten when the recipient fills in this re-request.') }}
+				{{
+					t(
+						'doriath',
+						'Existing values will be overwritten when the recipient fills in this re-request.',
+					)
+				}}
 			</p>
 
 			<fieldset class="secret-request-create-dialog__fields">
 				<legend>{{ t('doriath', 'Requested fields') }}</legend>
-				<label v-for="field in availableFields" :key="field.key" class="secret-request-create-dialog__field">
+				<label
+					v-for="field in availableFields"
+					:key="field.key"
+					class="secret-request-create-dialog__field">
 					<input
 						v-model="requestedFields"
 						type="checkbox"
-						:value="field.key">
+						:value="field.key" />
 					{{ field.label }}
 				</label>
 			</fieldset>
 
 			<div class="secret-request-create-dialog__expiry">
-				<label for="expiry-input">{{ t('doriath', 'Expires at (optional)') }}</label>
-				<input
-					id="expiry-input"
-					v-model="expiresAt"
-					type="datetime-local">
+				<label for="expiry-input">{{
+					t('doriath', 'Expires at (optional)')
+				}}</label>
+				<input id="expiry-input" v-model="expiresAt" type="datetime-local" />
 			</div>
 
 			<div v-if="fillUrl" class="secret-request-create-dialog__url">
-				<label for="secret-request-fill-url">{{ t('doriath', 'Share this link with the recipient') }}</label>
+				<label for="secret-request-fill-url">{{
+					t('doriath', 'Share this link with the recipient')
+				}}</label>
 				<div class="secret-request-create-dialog__url-row">
-					<input id="secret-request-fill-url"
+					<input
+						id="secret-request-fill-url"
 						type="text"
 						readonly
-						:value="fillUrl">
+						:value="fillUrl" />
 					<button @click="copyUrl">
 						{{ copied ? t('doriath', 'Copied!') : t('doriath', 'Copy') }}
 					</button>
@@ -50,11 +56,16 @@
 			<button @click="onClose(false)">
 				{{ t('doriath', 'Cancel') }}
 			</button>
-			<button v-if="!fillUrl"
+			<button
+				v-if="!fillUrl"
 				class="primary"
 				:disabled="submitting"
 				@click="submit">
-				{{ submitting ? t('doriath', 'Creating…') : t('doriath', 'Create request') }}
+				{{
+					submitting
+						? t('doriath', 'Creating…')
+						: t('doriath', 'Create request')
+				}}
 			</button>
 			<button v-else class="primary" @click="onClose(true)">
 				{{ t('doriath', 'Done') }}
@@ -122,7 +133,9 @@ export default {
 			this.submitting = true
 			try {
 				const store = useSecretRequestStore()
-				const expires = this.expiresAt ? new Date(this.expiresAt).toISOString() : null
+				const expires = this.expiresAt
+					? new Date(this.expiresAt).toISOString()
+					: null
 
 				const payload = {
 					secret_id: this.secret.id,
@@ -133,20 +146,27 @@ export default {
 
 				const request = this.isReRequest
 					? await store.createReRequest(
-						this.secret.id,
-						this.secret.encryption_suite_id,
-						this.requestedFields,
-						expires,
-					)
+							this.secret.id,
+							this.secret.encryption_suite_id,
+							this.requestedFields,
+							expires,
+						)
 					: await store.createRequest(payload)
 
 				if (request && request.token) {
-					this.fillUrl = generateUrl(`/apps/doriath/share/request/${request.token}`, {}, { absolute: true })
+					this.fillUrl = generateUrl(
+						`/apps/doriath/share/request/${request.token}`,
+						{},
+						{ absolute: true },
+					)
 				}
 
 				this.$emit('created', request)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to create request')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to create request')
 			} finally {
 				this.submitting = false
 			}
@@ -156,7 +176,9 @@ export default {
 			try {
 				await navigator.clipboard.writeText(this.fillUrl)
 				this.copied = true
-				setTimeout(() => { this.copied = false }, 1500)
+				setTimeout(() => {
+					this.copied = false
+				}, 1500)
 			} catch (e) {
 				console.warn('Doriath: clipboard write failed', e)
 			}

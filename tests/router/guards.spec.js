@@ -78,7 +78,11 @@ describe('createVaultGuard', () => {
 		it('preserves the attempted path as returnUrl so unlock resumes it', () => {
 			const { guard, next } = harness(true)
 
-			guard(route('SecretDetail', '/secrets/42'), route('Dashboard', '/'), next)
+			guard(
+				route('SecretDetail', '/secrets/42'),
+				route('Dashboard', '/'),
+				next,
+			)
 
 			expect(next).toHaveBeenCalledWith({
 				name: LOCK_ROUTE_NAME,
@@ -94,18 +98,29 @@ describe('createVaultGuard', () => {
 			expect(next).toHaveBeenCalledWith()
 		})
 
-		it.each(PUBLIC_ROUTE_NAMES)('lets the recipient-facing route %s through', (name) => {
-			const { guard, next } = harness(true)
+		it.each(PUBLIC_ROUTE_NAMES)(
+			'lets the recipient-facing route %s through',
+			(name) => {
+				const { guard, next } = harness(true)
 
-			guard(route(name, `/share/${name}/tok`), route('Dashboard', '/'), next)
+				guard(
+					route(name, `/share/${name}/tok`),
+					route('Dashboard', '/'),
+					next,
+				)
 
-			expect(next).toHaveBeenCalledWith()
-		})
+				expect(next).toHaveBeenCalledWith()
+			},
+		)
 
 		it('lets a route flagged meta.public through', () => {
 			const { guard, next } = harness(true)
 
-			guard(route('SomeFuturePublicPage', '/pub', { public: true }), route('Dashboard', '/'), next)
+			guard(
+				route('SomeFuturePublicPage', '/pub', { public: true }),
+				route('Dashboard', '/'),
+				next,
+			)
 
 			expect(next).toHaveBeenCalledWith()
 		})
@@ -134,7 +149,11 @@ describe('createVaultGuard', () => {
 	it('is synchronous — it must not defer the decision behind a promise', () => {
 		const { guard, next } = harness(true)
 
-		const returned = guard(route('SecretList', '/secrets'), route('Dashboard', '/'), next)
+		const returned = guard(
+			route('SecretList', '/secrets'),
+			route('Dashboard', '/'),
+			next,
+		)
 
 		expect(returned).toBeUndefined()
 		expect(next).toHaveBeenCalledTimes(1)

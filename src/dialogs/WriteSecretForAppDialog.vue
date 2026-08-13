@@ -14,7 +14,8 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.6
 -->
 <template>
-	<NcDialog :name="dialogName"
+	<NcDialog
+		:name="dialogName"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -22,31 +23,45 @@
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
-			<NcNoteCard v-if="success" type="success" data-testid="write-secret-success">
-				{{ t('doriath', 'Secret written. The application can decrypt it with its private key.') }}
+			<NcNoteCard
+				v-if="success"
+				type="success"
+				data-testid="write-secret-success">
+				{{
+					t(
+						'doriath',
+						'Secret written. The application can decrypt it with its private key.',
+					)
+				}}
 			</NcNoteCard>
 
 			<p class="write-secret-for-app__intro">
-				{{ t('doriath', 'These fields are encrypted in your browser with the application\'s public key. You will not be able to read the secret back.') }}
+				{{
+					t(
+						'doriath',
+						"These fields are encrypted in your browser with the application's public key. You will not be able to read the secret back.",
+					)
+				}}
 			</p>
 
-			<NcTextField v-model="name"
+			<NcTextField
+				v-model="name"
 				:label="t('doriath', 'Name')"
 				:required="true"
 				data-testid="write-secret-name" />
 
-			<NcTextField v-model="url"
-				:label="t('doriath', 'URL (optional)')" />
+			<NcTextField v-model="url" :label="t('doriath', 'URL (optional)')" />
 
-			<NcTextField v-model="login"
-				:label="t('doriath', 'Login (optional)')" />
+			<NcTextField v-model="login" :label="t('doriath', 'Login (optional)')" />
 
-			<NcPasswordField v-model="value"
+			<NcPasswordField
+				v-model="value"
 				:label="t('doriath', 'Secret value')"
 				:required="true"
 				data-testid="write-secret-value" />
 
-			<NcTextArea v-model="additionalFields"
+			<NcTextArea
+				v-model="additionalFields"
 				:label="t('doriath', 'Additional fields (optional JSON)')"
 				rows="3" />
 		</div>
@@ -55,7 +70,8 @@
 			<NcButton variant="secondary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton variant="primary"
+			<NcButton
+				variant="primary"
 				:disabled="busy || !canSubmit"
 				data-testid="write-secret-submit"
 				@click="submit">
@@ -66,7 +82,14 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcPasswordField, NcTextArea, NcTextField } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcNoteCard,
+	NcPasswordField,
+	NcTextArea,
+	NcTextField,
+} from '@nextcloud/vue'
 import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
@@ -114,14 +137,22 @@ export default {
 	computed: {
 		dialogName() {
 			return this.applicationName
-				? this.t('doriath', 'Write secret for {app}', { app: this.applicationName })
+				? this.t('doriath', 'Write secret for {app}', {
+						app: this.applicationName,
+					})
 				: this.t('doriath', 'Write secret')
 		},
 		canSubmit() {
-			return this.applicationId !== '' && this.name.trim() !== '' && this.value !== ''
+			return (
+				this.applicationId !== ''
+				&& this.name.trim() !== ''
+				&& this.value !== ''
+			)
 		},
 		submitLabel() {
-			return this.busy ? this.t('doriath', 'Encrypting…') : this.t('doriath', 'Write secret')
+			return this.busy
+				? this.t('doriath', 'Encrypting…')
+				: this.t('doriath', 'Write secret')
 		},
 	},
 
@@ -153,13 +184,18 @@ export default {
 
 			try {
 				const store = useApplicationStore()
-				const result = await store.writeSecretForApplication(this.applicationId, {
-					name: this.name.trim(),
-					url: this.url || null,
-					login: this.login || null,
-					key: this.value,
-					additionalFields: this.additionalFields ? this.parseAdditional() : null,
-				})
+				const result = await store.writeSecretForApplication(
+					this.applicationId,
+					{
+						name: this.name.trim(),
+						url: this.url || null,
+						login: this.login || null,
+						key: this.value,
+						additionalFields: this.additionalFields
+							? this.parseAdditional()
+							: null,
+					},
+				)
 
 				// Wipe the plaintext immediately so a stale dialog
 				// cannot leak it back via the v-model.
@@ -167,7 +203,10 @@ export default {
 				this.success = true
 				this.$emit('written', result)
 			} catch (e) {
-				this.error = e?.response?.data?.message ?? e?.message ?? this.t('doriath', 'Write failed')
+				this.error =
+					e?.response?.data?.message
+					?? e?.message
+					?? this.t('doriath', 'Write failed')
 			} finally {
 				this.busy = false
 			}

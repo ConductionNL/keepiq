@@ -44,7 +44,10 @@ function concat(chunks) {
 	for (const c of chunks) len += c.length
 	const out = new Uint8Array(len)
 	let off = 0
-	for (const c of chunks) { out.set(c, off); off += c.length }
+	for (const c of chunks) {
+		out.set(c, off)
+		off += c.length
+	}
 	return out
 }
 
@@ -64,7 +67,12 @@ function b64(buf) {
 // --- authenticator data ---
 
 function u32be(n) {
-	return Uint8Array.of((n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff)
+	return Uint8Array.of(
+		(n >>> 24) & 0xff,
+		(n >>> 16) & 0xff,
+		(n >>> 8) & 0xff,
+		n & 0xff,
+	)
 }
 
 /**
@@ -110,9 +118,17 @@ export async function createCredential(options, origin) {
 		throw new Error('unsupported-algorithm') // caller falls through to platform
 	}
 
-	const keyPair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify'])
-	const rawPoint = new Uint8Array(await crypto.subtle.exportKey('raw', keyPair.publicKey))
-	const pkcs8 = new Uint8Array(await crypto.subtle.exportKey('pkcs8', keyPair.privateKey))
+	const keyPair = await crypto.subtle.generateKey(
+		{ name: 'ECDSA', namedCurve: 'P-256' },
+		true,
+		['sign', 'verify'],
+	)
+	const rawPoint = new Uint8Array(
+		await crypto.subtle.exportKey('raw', keyPair.publicKey),
+	)
+	const pkcs8 = new Uint8Array(
+		await crypto.subtle.exportKey('pkcs8', keyPair.privateKey),
+	)
 	const privateKeyPem = pemFrom(b64(pkcs8), 'PRIVATE KEY')
 
 	const credentialId = crypto.getRandomValues(new Uint8Array(16))
@@ -132,7 +148,12 @@ export async function createCredential(options, origin) {
 		credentialId,
 		cosePub,
 	])
-	const authData = await buildAuthData(rpId, FLAG_UP | FLAG_UV | FLAG_AT, 0, attestedCredentialData)
+	const authData = await buildAuthData(
+		rpId,
+		FLAG_UP | FLAG_UV | FLAG_AT,
+		0,
+		attestedCredentialData,
+	)
 
 	const attObj = new Map()
 	attObj.set('fmt', 'none')
@@ -189,11 +210,19 @@ export async function getAssertion(options, origin, stored) {
 	const authData = await buildAuthData(rpId, FLAG_UP | FLAG_UV, nextCounter, null)
 
 	const privateKey = await crypto.subtle.importKey(
-		'pkcs8', pemToPkcs8(stored.privateKey), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'],
+		'pkcs8',
+		pemToPkcs8(stored.privateKey),
+		{ name: 'ECDSA', namedCurve: 'P-256' },
+		false,
+		['sign'],
 	)
-	const signed = new Uint8Array(await crypto.subtle.sign(
-		{ name: 'ECDSA', hash: 'SHA-256' }, privateKey, concat([authData, clientDataHash]),
-	))
+	const signed = new Uint8Array(
+		await crypto.subtle.sign(
+			{ name: 'ECDSA', hash: 'SHA-256' },
+			privateKey,
+			concat([authData, clientDataHash]),
+		),
+	)
 	const signature = rawEcdsaToDer(signed)
 
 	const credIdBytes = b64urlDecode(stored.credentialId)
@@ -205,15 +234,27 @@ export async function getAssertion(options, origin, stored) {
 			clientDataJSON: Array.from(clientDataJSON),
 			authenticatorData: Array.from(authData),
 			signature: Array.from(signature),
-			userHandle: stored.userHandle ? Array.from(b64urlDecode(stored.userHandle)) : null,
+			userHandle: stored.userHandle
+				? Array.from(b64urlDecode(stored.userHandle))
+				: null,
 		},
 	}
 	return { assertion, counter: nextCounter }
 }
 
 function pemToPkcs8(pem) {
-	const b64body = pem.replace(/-----BEGIN [^-]+-----/, '').replace(/-----END [^-]+-----/, '').replace(/\s+/g, '')
+	const b64body = pem
+		.replace(/-----BEGIN [^-]+-----/, '')
+		.replace(/-----END [^-]+-----/, '')
+		.replace(/\s+/g, '')
 	return Uint8Array.from(atob(b64body), (c) => c.charCodeAt(0))
 }
 
-export const _internals = { b64urlEncode, b64urlDecode, coseKeyFromRawPoint, buildAuthData, sha256, pemToPkcs8 }
+export const _internals = {
+	b64urlEncode,
+	b64urlDecode,
+	coseKeyFromRawPoint,
+	buildAuthData,
+	sha256,
+	pemToPkcs8,
+}

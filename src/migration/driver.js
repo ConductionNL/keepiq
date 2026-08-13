@@ -40,7 +40,9 @@ const INLINE_YIELD_EVERY = 4
  * @return {Promise<void>}
  */
 function yieldToEventLoop() {
-	return new Promise(resolve => { setTimeout(resolve, 0) })
+	return new Promise((resolve) => {
+		setTimeout(resolve, 0)
+	})
 }
 
 /**
@@ -82,10 +84,9 @@ async function tryStartWorker(keys) {
 			worker.addEventListener('message', onMessage)
 			worker.addEventListener('error', onError)
 
-			setTimeout(
-				() => { reject(new Error('Migration worker handshake timed out')) },
-				HANDSHAKE_TIMEOUT_MS,
-			)
+			setTimeout(() => {
+				reject(new Error('Migration worker handshake timed out'))
+			}, HANDSHAKE_TIMEOUT_MS)
 		})
 
 		// A CryptoKey that cannot be cloned throws DataCloneError here,
@@ -180,7 +181,9 @@ export async function createMigrationRunner(keys) {
 					if (event.data.ok === true) {
 						resolve(event.data.results)
 					} else {
-						reject(new Error(event.data.error || 'Migration batch failed'))
+						reject(
+							new Error(event.data.error || 'Migration batch failed'),
+						)
 					}
 				}
 

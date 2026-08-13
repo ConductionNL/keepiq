@@ -9,7 +9,8 @@
 
 		<NcLoadingIcon v-if="loading" :size="32" class="secret-detail__loading" />
 
-		<NcEmptyContent v-else-if="error"
+		<NcEmptyContent
+			v-else-if="error"
 			:name="t('doriath', 'Cannot open secret')"
 			:description="error">
 			<template #icon>
@@ -22,7 +23,8 @@
 				{{ secret.name }}
 				<!-- Write-grade badge (folder-permission-grades §4.3): the
 				     member knows an edit propagates to the whole team. -->
-				<span v-if="teamWritable"
+				<span
+					v-if="teamWritable"
 					class="secret-detail__team-badge"
 					data-testid="team-writable-badge">
 					{{ t('doriath', 'Editable — changes sync to the whole team') }}
@@ -35,26 +37,41 @@
 			  still good. Not dismissible — it clears when the value is actually
 			  replaced, which is what clears the flag server-side.
 			-->
-			<NcNoteCard v-if="secret.possiblyCompromisedAt"
+			<NcNoteCard
+				v-if="secret.possiblyCompromisedAt"
 				type="error"
 				data-testid="secret-detail-possibly-compromised">
 				<p>
-					{{ t('doriath', 'This value was in the vault when the encryption key was declared compromised, so it must be assumed exposed.') }}
+					{{
+						t(
+							'doriath',
+							'This value was in the vault when the encryption key was declared compromised, so it must be assumed exposed.',
+						)
+					}}
 				</p>
 				<p>
-					{{ t('doriath', 'Change it at its source, then save the new value here. Saving a new value clears this warning.') }}
+					{{
+						t(
+							'doriath',
+							'Change it at its source, then save the new value here. Saving a new value clears this warning.',
+						)
+					}}
 				</p>
 			</NcNoteCard>
 
 			<div v-if="secret.url" class="secret-detail__field">
 				<span class="secret-detail__label">{{ t('doriath', 'URL') }}</span>
-				<a :href="secret.url" target="_blank" rel="noopener noreferrer">{{ secret.url }}</a>
+				<a :href="secret.url" target="_blank" rel="noopener noreferrer">{{
+					secret.url
+				}}</a>
 			</div>
 
 			<div v-if="secret.login" class="secret-detail__field">
 				<span class="secret-detail__label">{{ t('doriath', 'Login') }}</span>
 				<span class="secret-detail__value">{{ secret.login }}</span>
-				<CopyButton :value="secret.login" :label="t('doriath', 'Copy login')" />
+				<CopyButton
+					:value="secret.login"
+					:label="t('doriath', 'Copy login')" />
 			</div>
 
 			<div class="secret-detail__field">
@@ -62,50 +79,97 @@
 				<PasswordField :label="keyLabel" :resolve="resolveKey" />
 			</div>
 
-			<div v-if="isTotp" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'One-time code') }}</span>
-				<TotpDisplay :seed="secret.key || ''" data-testid="secret-detail-totp" />
+			<div
+				v-if="isTotp"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'One-time code')
+				}}</span>
+				<TotpDisplay
+					:seed="secret.key || ''"
+					data-testid="secret-detail-totp" />
 			</div>
 
-			<div v-if="isPasskey" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Passkey') }}</span>
-				<PasskeyDisplay :credential-json="secret.key || ''" data-testid="secret-detail-passkey" />
+			<div
+				v-if="isPasskey"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'Passkey')
+				}}</span>
+				<PasskeyDisplay
+					:credential-json="secret.key || ''"
+					data-testid="secret-detail-passkey" />
 			</div>
 
-			<div v-if="isCard" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Payment card') }}</span>
-				<CardDisplay :payload-json="secret.key || ''" data-testid="secret-detail-card" />
+			<div
+				v-if="isCard"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'Payment card')
+				}}</span>
+				<CardDisplay
+					:payload-json="secret.key || ''"
+					data-testid="secret-detail-card" />
 			</div>
 
-			<div v-if="isIdentity" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Identity') }}</span>
-				<IdentityDisplay :payload-json="secret.key || ''" data-testid="secret-detail-identity" />
+			<div
+				v-if="isIdentity"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'Identity')
+				}}</span>
+				<IdentityDisplay
+					:payload-json="secret.key || ''"
+					data-testid="secret-detail-identity" />
 			</div>
 
 			<div class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Attachments') }}</span>
+				<span class="secret-detail__label">{{
+					t('doriath', 'Attachments')
+				}}</span>
 				<AttachmentPanel :secret-id="secretId" :can-manage="isOwner" />
 			</div>
 
-			<div v-if="isOwner" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Version history') }}</span>
-				<VersionHistoryPanel :secret-id="secretId" :can-manage="isOwner" @restored="load" />
+			<div
+				v-if="isOwner"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'Version history')
+				}}</span>
+				<VersionHistoryPanel
+					:secret-id="secretId"
+					:can-manage="isOwner"
+					@restored="load" />
 			</div>
 
-			<div v-if="isOwner" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Rotation & expiry') }}</span>
+			<div
+				v-if="isOwner"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'Rotation & expiry')
+				}}</span>
 				<RotationPanel :secret-id="secretId" :can-manage="isOwner" />
 			</div>
 
-			<div v-if="isOwner" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Honey tripwire') }}</span>
+			<div
+				v-if="isOwner"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'Honey tripwire')
+				}}</span>
 				<HoneyPanel :secret-id="secretId" />
 			</div>
 
-			<div v-if="hasAdditionalFields" class="secret-detail__field secret-detail__field--block">
-				<span class="secret-detail__label">{{ t('doriath', 'Additional fields') }}</span>
+			<div
+				v-if="hasAdditionalFields"
+				class="secret-detail__field secret-detail__field--block">
+				<span class="secret-detail__label">{{
+					t('doriath', 'Additional fields')
+				}}</span>
 				<dl class="secret-detail__extra">
-					<template v-for="(value, key) in secret.additionalFields" :key="key">
+					<template
+						v-for="(value, key) in secret.additionalFields"
+						:key="key">
 						<dt>
 							{{ key }}
 						</dt>
@@ -116,8 +180,16 @@
 				</dl>
 			</div>
 
-			<div v-if="offlineReadOnly" class="secret-detail__offline-note" data-testid="secret-detail-offline-note">
-				{{ t('doriath', 'Read-only while offline — reconnect to edit, move, share, or delete.') }}
+			<div
+				v-if="offlineReadOnly"
+				class="secret-detail__offline-note"
+				data-testid="secret-detail-offline-note">
+				{{
+					t(
+						'doriath',
+						'Read-only while offline — reconnect to edit, move, share, or delete.',
+					)
+				}}
 			</div>
 			<div v-else class="secret-detail__actions">
 				<NcButton variant="primary" @click="openEdit">
@@ -155,7 +227,8 @@
 			    - recipient        → ShareRequestForm (request that the
 			                          owner share with a third party).
 			-->
-			<section v-if="canSeeSharing"
+			<section
+				v-if="canSeeSharing"
 				class="secret-detail__sharing"
 				data-testid="secret-detail-sharing">
 				<h3 class="secret-detail__sharing-heading">
@@ -199,7 +272,8 @@
 			  a "Request fill-in" button that opens SecretRequestCreateDialog
 			  for write-without-read filling.
 			-->
-			<section v-if="isOwner"
+			<section
+				v-if="isOwner"
 				class="secret-detail__requests"
 				data-testid="secret-detail-requests">
 				<h3 class="secret-detail__requests-heading">
@@ -326,9 +400,11 @@ export default {
 			return this.$route.params.id
 		},
 		hasAdditionalFields() {
-			return this.secret
+			return (
+				this.secret
 				&& this.secret.additionalFields
 				&& typeof this.secret.additionalFields === 'object'
+			)
 		},
 		keyLabel() {
 			const typeStore = useSecretTypeStore()
@@ -421,7 +497,8 @@ export default {
 			}
 			// Backend serializes ownerType / ownerId on the Secret entity;
 			// fallback to userId for legacy responses.
-			const owner = this.secret.ownerId ?? this.secret.owner_id ?? this.secret.userId
+			const owner =
+				this.secret.ownerId ?? this.secret.owner_id ?? this.secret.userId
 			return owner === this.currentUserId
 		},
 
@@ -478,18 +555,27 @@ export default {
 				// Write-grade badge (folder-permission-grades §4.3) — a
 				// copy the user may team-write shows the sync warning.
 				try {
-					const { useShareStore } = await import('../store/modules/share.js')
-					const context = await useShareStore().fetchWriteContext(this.secretId)
-					this.teamWritable = context.effectiveGrade === 'write'
+					const { useShareStore } =
+						await import('../store/modules/share.js')
+					const context = await useShareStore().fetchWriteContext(
+						this.secretId,
+					)
+					this.teamWritable =
+						context.effectiveGrade === 'write'
 						&& context.sourceSecretId !== this.secretId
 				} catch {
 					this.teamWritable = false
 				}
 			} catch (e) {
 				if (e?.response?.status === 403) {
-					this.error = t('doriath', 'This secret is locked because its encryption suite was revoked.')
+					this.error = t(
+						'doriath',
+						'This secret is locked because its encryption suite was revoked.',
+					)
 				} else {
-					this.error = e?.response?.data?.message || t('doriath', 'Failed to load secret')
+					this.error =
+						e?.response?.data?.message
+						|| t('doriath', 'Failed to load secret')
 				}
 			} finally {
 				this.loading = false
@@ -502,7 +588,7 @@ export default {
 		 * @return {Promise<string>}
 		 */
 		async resolveKey() {
-			return this.secret ? (this.secret.key || '') : ''
+			return this.secret ? this.secret.key || '' : ''
 		},
 
 		/**
@@ -525,7 +611,7 @@ export default {
 		openMove() {
 			this.cnOpenModal('secret-move', {
 				secretId: this.secretId,
-				currentFolderId: this.secret ? (this.secret.folderId || null) : null,
+				currentFolderId: this.secret ? this.secret.folderId || null : null,
 				onSaved: () => this.load(),
 			})
 		},

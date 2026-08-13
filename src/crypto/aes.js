@@ -4,7 +4,13 @@
  * Used for encrypting/decrypting the user's RSA private key with their master password.
  */
 
-import { encodeEnvelope, decodeEnvelope, ENVELOPE_VERSION, SALT_LENGTH, IV_LENGTH } from './envelope.js'
+import {
+	encodeEnvelope,
+	decodeEnvelope,
+	ENVELOPE_VERSION,
+	SALT_LENGTH,
+	IV_LENGTH,
+} from './envelope.js'
 
 const PBKDF2_ITERATIONS = 600000
 
@@ -125,7 +131,17 @@ export async function deriveUnlockKeyRaw(password, salt) {
  */
 export async function decryptPrivateKeyWithRawKey(envelope, rawKey) {
 	const { iv, ciphertextWithTag } = decodeEnvelope(envelope)
-	const key = await crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, ['decrypt'])
-	const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertextWithTag)
+	const key = await crypto.subtle.importKey(
+		'raw',
+		rawKey,
+		{ name: 'AES-GCM' },
+		false,
+		['decrypt'],
+	)
+	const plaintext = await crypto.subtle.decrypt(
+		{ name: 'AES-GCM', iv },
+		key,
+		ciphertextWithTag,
+	)
 	return new TextDecoder().decode(plaintext)
 }

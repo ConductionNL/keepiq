@@ -27,10 +27,19 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 // The pipeline is the shared module both paths import; stub it so the inline
 // path is observable without doing RSA work.
-const migrateRecord = vi.fn(async (job) => ({ store: job.store, id: job.id, ok: true, payload: {} }))
+const migrateRecord = vi.fn(async (job) => ({
+	store: job.store,
+	id: job.id,
+	ok: true,
+	payload: {},
+}))
 vi.mock('../../src/migration/pipeline.js', () => ({
 	migrateRecord: (...args) => migrateRecord(...args),
-	MIGRATION_STORES: { SECRETS: 'secrets', VERSIONS: 'versions', ATTACHMENT_GRANTS: 'attachmentGrants' },
+	MIGRATION_STORES: {
+		SECRETS: 'secrets',
+		VERSIONS: 'versions',
+		ATTACHMENT_GRANTS: 'attachmentGrants',
+	},
 }))
 
 const { createMigrationRunner } = await import('../../src/migration/driver.js')
@@ -143,19 +152,27 @@ describe('createMigrationRunner — path selection', () => {
 			}
 
 			removeEventListener(type, fn) {
-				this.listeners[type] = (this.listeners[type] || []).filter(f => f !== fn)
+				this.listeners[type] = (this.listeners[type] || []).filter(
+					(f) => f !== fn,
+				)
 			}
 
 			postMessage(msg) {
 				posted.push(msg)
-				const reply = msg.type === 'init'
-					? { requestId: msg.requestId, type: 'ready', ok: true }
-					: {
-						requestId: msg.requestId,
-						type: 'batch',
-						ok: true,
-						results: msg.jobs.map(j => ({ store: j.store, id: j.id, ok: true, payload: {} })),
-					}
+				const reply =
+					msg.type === 'init'
+						? { requestId: msg.requestId, type: 'ready', ok: true }
+						: {
+								requestId: msg.requestId,
+								type: 'batch',
+								ok: true,
+								results: msg.jobs.map((j) => ({
+									store: j.store,
+									id: j.id,
+									ok: true,
+									payload: {},
+								})),
+							}
 				// Deliver asynchronously, as a real worker would.
 				setTimeout(() => {
 					for (const fn of this.listeners.message || []) {
@@ -172,7 +189,7 @@ describe('createMigrationRunner — path selection', () => {
 		expect(results).toHaveLength(2)
 
 		// The keys are handed over exactly once, at init — not per batch.
-		const inits = posted.filter(m => m.type === 'init')
+		const inits = posted.filter((m) => m.type === 'init')
 		expect(inits).toHaveLength(1)
 		expect(inits[0]).toMatchObject({
 			oldPrivateKey: 'old',

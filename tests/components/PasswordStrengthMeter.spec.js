@@ -29,10 +29,12 @@ vi.mock('../../src/policy/policy.js', () => ({
 	resetPolicyCache: () => {},
 }))
 
-const PasswordStrengthMeter = (await import('../../src/components/PasswordStrengthMeter.vue')).default
+const PasswordStrengthMeter = (
+	await import('../../src/components/PasswordStrengthMeter.vue')
+).default
 
 /** Drain pending microtasks and the 300ms debounce. */
-const flush = () => new Promise(resolve => setTimeout(resolve, 0))
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 /**
  * Mount the meter and return the last `strength-change` payload.
@@ -106,7 +108,9 @@ describe('PasswordStrengthMeter', () => {
 			master_password_min_score: 4,
 		})
 
-		const wrapper = mount(PasswordStrengthMeter, { props: { password: 'tooshort' } })
+		const wrapper = mount(PasswordStrengthMeter, {
+			props: { password: 'tooshort' },
+		})
 		await flush()
 		await wrapper.vm.$nextTick()
 
@@ -123,7 +127,10 @@ describe('PasswordStrengthMeter', () => {
 			master_password_min_score: 4,
 		})
 
-		const verdict = await verdictFor('correct-horse-battery-staple-42', { minLength: 12, minScore: 3 })
+		const verdict = await verdictFor('correct-horse-battery-staple-42', {
+			minLength: 12,
+			minScore: 3,
+		})
 
 		expect(verdict.isValid).toBe(true)
 	})

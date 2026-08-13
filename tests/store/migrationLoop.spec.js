@@ -47,7 +47,10 @@ function workPage(remaining) {
 	return {
 		data: {
 			migrationId: 'migration-1',
-			secrets: { records: [{ id: 'secret-1', name: 'stuck', key: 'CIPHERTEXT' }], remaining },
+			secrets: {
+				records: [{ id: 'secret-1', name: 'stuck', key: 'CIPHERTEXT' }],
+				remaining,
+			},
 			versions: { records: [], remaining: 0, dropCandidates: 0 },
 			attachmentGrants: { records: [], remaining: 0 },
 			totalRemaining: remaining,
@@ -72,7 +75,8 @@ vi.mock('../../src/migration/driver.js', () => ({
 
 vi.mock('../../src/crypto/index.js', async (importOriginal) => ({
 	...(await importOriginal()),
-	decryptPrivateKey: async () => '-----BEGIN PRIVATE KEY-----stub-----END PRIVATE KEY-----',
+	decryptPrivateKey: async () =>
+		'-----BEGIN PRIVATE KEY-----stub-----END PRIVATE KEY-----',
 	importPrivateKey: async () => 'imported-old-key',
 	importPublicKey: async () => 'imported-new-key',
 }))
@@ -87,18 +91,22 @@ describe('migration driver loop — termination', () => {
 	it('stops after a page where every record failed permanently', async () => {
 		// The regression. The server keeps returning the row (it is still bound to
 		// the old suite), so without a no-progress exit this never returns.
-		nextResults = [{
-			store: 'secrets',
-			id: 'secret-1',
-			ok: false,
-			permanent: true,
-			halt: false,
-			phase: 'decrypt-old',
-			error: 'Existing key could not be decrypted with the previous key',
-		}]
+		nextResults = [
+			{
+				store: 'secrets',
+				id: 'secret-1',
+				ok: false,
+				permanent: true,
+				halt: false,
+				phase: 'decrypt-old',
+				error: 'Existing key could not be decrypted with the previous key',
+			},
+		]
 
 		const get = vi.spyOn(axios, 'get').mockResolvedValue(workPage(1))
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { recorded: true } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { recorded: true } })
 
 		const store = useEncryptionSuiteStore()
 		const outcome = await store.runMigration({
@@ -122,28 +130,33 @@ describe('migration driver loop — termination', () => {
 	it('halts, rather than reporting a loss, when a page is entirely transient', async () => {
 		// Nothing committed and nothing permanent: the rows stay unaccounted
 		// server-side so the gate refuses and the banner picks it up later.
-		nextResults = [{
-			store: 'secrets',
-			id: 'secret-1',
-			ok: false,
-			permanent: false,
-			halt: false,
-			phase: 'unclassified',
-			error: 'Network error',
-		}]
+		nextResults = [
+			{
+				store: 'secrets',
+				id: 'secret-1',
+				ok: false,
+				permanent: false,
+				halt: false,
+				phase: 'unclassified',
+				error: 'Network error',
+			},
+		]
 
 		vi.spyOn(axios, 'get').mockResolvedValue(workPage(1))
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 
 		const store = useEncryptionSuiteStore()
 
-		await expect(store.runMigration({
-			migrationId: 'migration-1',
-			oldEncryptedPrivateKey: 'wrapped',
-			oldPassword: 'previous',
-			newPublicKeyPem: '-----BEGIN PUBLIC KEY-----x-----END PUBLIC KEY-----',
-			newPrivateKey: KEYS.newPrivateKey,
-		})).rejects.toThrow(/could not reach the server/i)
+		await expect(
+			store.runMigration({
+				migrationId: 'migration-1',
+				oldEncryptedPrivateKey: 'wrapped',
+				oldPassword: 'previous',
+				newPublicKeyPem:
+					'-----BEGIN PUBLIC KEY-----x-----END PUBLIC KEY-----',
+				newPrivateKey: KEYS.newPrivateKey,
+			}),
+		).rejects.toThrow(/could not reach the server/i)
 
 		// A retryable failure must never be reported as a per-record error: doing
 		// so would let the server finalise it as unrecoverable.
@@ -153,28 +166,33 @@ describe('migration driver loop — termination', () => {
 	it('halts immediately on a round-trip mismatch and reports nothing', async () => {
 		// The stored value decrypted fine, so it is readable and must not be
 		// recorded as a loss; the new key is at fault and will fail every record.
-		nextResults = [{
-			store: 'secrets',
-			id: 'secret-1',
-			ok: false,
-			permanent: false,
-			halt: true,
-			phase: 'verify',
-			error: 'Re-encrypted key did not decrypt back to the original value',
-		}]
+		nextResults = [
+			{
+				store: 'secrets',
+				id: 'secret-1',
+				ok: false,
+				permanent: false,
+				halt: true,
+				phase: 'verify',
+				error: 'Re-encrypted key did not decrypt back to the original value',
+			},
+		]
 
 		vi.spyOn(axios, 'get').mockResolvedValue(workPage(1))
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 
 		const store = useEncryptionSuiteStore()
 
-		await expect(store.runMigration({
-			migrationId: 'migration-1',
-			oldEncryptedPrivateKey: 'wrapped',
-			oldPassword: 'previous',
-			newPublicKeyPem: '-----BEGIN PUBLIC KEY-----x-----END PUBLIC KEY-----',
-			newPrivateKey: KEYS.newPrivateKey,
-		})).rejects.toThrow(/did not decrypt back/i)
+		await expect(
+			store.runMigration({
+				migrationId: 'migration-1',
+				oldEncryptedPrivateKey: 'wrapped',
+				oldPassword: 'previous',
+				newPublicKeyPem:
+					'-----BEGIN PUBLIC KEY-----x-----END PUBLIC KEY-----',
+				newPrivateKey: KEYS.newPrivateKey,
+			}),
+		).rejects.toThrow(/did not decrypt back/i)
 
 		expect(post).not.toHaveBeenCalled()
 	})

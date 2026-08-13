@@ -15,9 +15,22 @@
 // approximation, not the full PSL — a wrong guess only widens/narrows the
 // candidate list the user must still pick from; it never causes a silent fill.
 const MULTI_LABEL_SUFFIXES = new Set([
-	'co.uk', 'org.uk', 'gov.uk', 'ac.uk', 'co.jp', 'or.jp', 'ne.jp',
-	'com.au', 'net.au', 'org.au', 'com.br', 'co.nz', 'co.za', 'com.mx',
-	'co.in', 'gov.nl', // Dutch government (the primary audience)
+	'co.uk',
+	'org.uk',
+	'gov.uk',
+	'ac.uk',
+	'co.jp',
+	'or.jp',
+	'ne.jp',
+	'com.au',
+	'net.au',
+	'org.au',
+	'com.br',
+	'co.nz',
+	'co.za',
+	'com.mx',
+	'co.in',
+	'gov.nl', // Dutch government (the primary audience)
 ])
 
 /**

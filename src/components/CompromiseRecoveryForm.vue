@@ -6,10 +6,20 @@
 		     regaining access is never the same thing as being safe. -->
 		<NcNoteCard type="warning">
 			<p>
-				{{ t('doriath', 'Every value stored in this vault must be assumed to have been exposed and must be changed at its source.') }}
+				{{
+					t(
+						'doriath',
+						'Every value stored in this vault must be assumed to have been exposed and must be changed at its source.',
+					)
+				}}
 			</p>
 			<p>
-				{{ t('doriath', 'Rotating your key restores access to your secrets so you can go and change those values in an orderly fashion. It does not make the old values safe.') }}
+				{{
+					t(
+						'doriath',
+						'Rotating your key restores access to your secrets so you can go and change those values in an orderly fashion. It does not make the old values safe.',
+					)
+				}}
 			</p>
 		</NcNoteCard>
 
@@ -54,20 +64,33 @@
 		<template v-if="needsAcknowledgement">
 			<NcNoteCard type="error">
 				<p>
-					{{ n('doriath',
-						'%n secret could not be decrypted with your old key, so it did not migrate.',
-						'%n secrets could not be decrypted with your old key, so they did not migrate.',
-						unrecoverable.length) }}
+					{{
+						n(
+							'doriath',
+							'%n secret could not be decrypted with your old key, so it did not migrate.',
+							'%n secrets could not be decrypted with your old key, so they did not migrate.',
+							unrecoverable.length,
+						)
+					}}
 				</p>
 				<p>
-					{{ t('doriath', 'Finishing the rotation locks the old key, so these secrets can no longer be opened. Their stored data is kept, but you will need to set their values again at the source.') }}
+					{{
+						t(
+							'doriath',
+							'Finishing the rotation locks the old key, so these secrets can no longer be opened. Their stored data is kept, but you will need to set their values again at the source.',
+						)
+					}}
 				</p>
 			</NcNoteCard>
 
 			<ul class="compromise-recovery-form__list">
 				<li v-for="item in unrecoverable" :key="item.id">
-					<span class="compromise-recovery-form__list-name">{{ item.name }}</span>
-					<span class="compromise-recovery-form__list-detail">{{ item.error }}</span>
+					<span class="compromise-recovery-form__list-name">{{
+						item.name
+					}}</span>
+					<span class="compromise-recovery-form__list-detail">{{
+						item.error
+					}}</span>
 				</li>
 			</ul>
 
@@ -75,11 +98,18 @@
 				<NcButton :disabled="loading" @click="handleRetry">
 					{{ t('doriath', 'Try these again') }}
 				</NcButton>
-				<NcButton variant="error" :disabled="loading" @click="handleAcceptLosses">
-					{{ n('doriath',
-						'Finish anyway, losing access to %n secret',
-						'Finish anyway, losing access to %n secrets',
-						unrecoverable.length) }}
+				<NcButton
+					variant="error"
+					:disabled="loading"
+					@click="handleAcceptLosses">
+					{{
+						n(
+							'doriath',
+							'Finish anyway, losing access to %n secret',
+							'Finish anyway, losing access to %n secrets',
+							unrecoverable.length,
+						)
+					}}
 				</NcButton>
 			</div>
 		</template>
@@ -89,33 +119,54 @@
 		<template v-if="phase === 'terminal'">
 			<NcNoteCard type="info">
 				<p>
-					{{ n('doriath',
-						'Key rotation finished. %n secret was re-encrypted under your new key.',
-						'Key rotation finished. %n secrets were re-encrypted under your new key.',
-						result.migrated) }}
+					{{
+						n(
+							'doriath',
+							'Key rotation finished. %n secret was re-encrypted under your new key.',
+							'Key rotation finished. %n secrets were re-encrypted under your new key.',
+							result.migrated,
+						)
+					}}
 				</p>
 				<p v-if="result.droppedVersions > 0">
-					{{ n('doriath',
-						'%n older version was dropped because only recent history can be carried across.',
-						'%n older versions were dropped because only recent history can be carried across.',
-						result.droppedVersions) }}
+					{{
+						n(
+							'doriath',
+							'%n older version was dropped because only recent history can be carried across.',
+							'%n older versions were dropped because only recent history can be carried across.',
+							result.droppedVersions,
+						)
+					}}
 				</p>
 				<p>
-					{{ t('doriath', 'The migrated values are still to be considered exposed. Change each of them at its source.') }}
+					{{
+						t(
+							'doriath',
+							'The migrated values are still to be considered exposed. Change each of them at its source.',
+						)
+					}}
 				</p>
 			</NcNoteCard>
 
 			<template v-if="result.failures.length > 0">
 				<NcNoteCard type="warning">
-					{{ n('doriath',
-						'%n secret did not migrate.',
-						'%n secrets did not migrate.',
-						result.failures.length) }}
+					{{
+						n(
+							'doriath',
+							'%n secret did not migrate.',
+							'%n secrets did not migrate.',
+							result.failures.length,
+						)
+					}}
 				</NcNoteCard>
 				<ul class="compromise-recovery-form__list">
 					<li v-for="item in result.failures" :key="item.store + item.id">
-						<span class="compromise-recovery-form__list-name">{{ item.name || item.id }}</span>
-						<span class="compromise-recovery-form__list-detail">{{ item.error }}</span>
+						<span class="compromise-recovery-form__list-name">{{
+							item.name || item.id
+						}}</span>
+						<span class="compromise-recovery-form__list-detail">{{
+							item.error
+						}}</span>
 					</li>
 				</ul>
 			</template>
@@ -126,7 +177,11 @@
 			variant="error"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
-			{{ loading ? t('doriath', 'Rotating keys…') : t('doriath', 'Start key rotation') }}
+			{{
+				loading
+					? t('doriath', 'Rotating keys…')
+					: t('doriath', 'Start key rotation')
+			}}
 		</NcButton>
 	</div>
 </template>
@@ -138,7 +193,13 @@ import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
 
 export default {
 	name: 'CompromiseRecoveryForm',
-	components: { NcButton, NcNoteCard, NcPasswordField, NcProgressBar, PasswordStrengthMeter },
+	components: {
+		NcButton,
+		NcNoteCard,
+		NcPasswordField,
+		NcProgressBar,
+		PasswordStrengthMeter,
+	},
 
 	data() {
 		return {
@@ -165,11 +226,13 @@ export default {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-compromise-recovery-states-that-regained-access-is-not-an-all-clear
 		 */
 		canSubmit() {
-			return this.oldPassword
+			return (
+				this.oldPassword
 				&& this.newPassword
 				&& this.confirmPassword
 				&& this.newPassword === this.confirmPassword
 				&& this.strengthValid
+			)
 		},
 
 		/**
@@ -282,7 +345,9 @@ export default {
 				// Only terminal once the server actually accepted completion. When
 				// an acknowledgement is pending the migration is still in progress,
 				// so the dialog must not present an outcome yet.
-				this.phase = store.migrationNeedsAcknowledgement ? 'running' : 'terminal'
+				this.phase = store.migrationNeedsAcknowledgement
+					? 'running'
+					: 'terminal'
 				this.oldPassword = ''
 				this.newPassword = ''
 				this.confirmPassword = ''
@@ -301,7 +366,10 @@ export default {
 		 */
 		async handleRetry() {
 			if (this.activeOldPassword === null) {
-				this.error = this.t('doriath', 'Re-enter your old password to retry the remaining secrets.')
+				this.error = this.t(
+					'doriath',
+					'Re-enter your old password to retry the remaining secrets.',
+				)
 				this.phase = 'idle'
 				return
 			}
@@ -313,7 +381,9 @@ export default {
 				const store = useEncryptionSuiteStore()
 				const outcome = await store.resumeMigration(this.activeOldPassword)
 				this.result = outcome
-				this.phase = store.migrationNeedsAcknowledgement ? 'running' : 'terminal'
+				this.phase = store.migrationNeedsAcknowledgement
+					? 'running'
+					: 'terminal'
 			} catch (e) {
 				this.error = this.describe(e)
 			} finally {
@@ -336,7 +406,10 @@ export default {
 			try {
 				const store = useEncryptionSuiteStore()
 				const accepted = this.unrecoverable.length
-				await store.acceptMigrationLosses(store.migrationStatus?.id, accepted)
+				await store.acceptMigrationLosses(
+					store.migrationStatus?.id,
+					accepted,
+				)
 				this.result = {
 					...(this.result ?? { migrated: 0, droppedVersions: 0 }),
 					failures: this.unrecoverable,
@@ -357,9 +430,11 @@ export default {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
 		 */
 		describe(e) {
-			return e?.response?.data?.message
+			return (
+				e?.response?.data?.message
 				|| e?.message
 				|| this.t('doriath', 'Failed to start recovery')
+			)
 		},
 	},
 }

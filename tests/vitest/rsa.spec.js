@@ -65,8 +65,14 @@ describe('importPublicKey — X.509 SPKI extraction (Phase-0 fix)', () => {
 		// SPKI PEM using Node's crypto as an independent oracle: the SPKI Node
 		// pulls from the certificate must equal the standalone SPKI DER, and
 		// the module imports the certificate without error.
-		const spkiFromCert = createPublicKey(CERTIFICATE_PEM).export({ type: 'spki', format: 'der' })
-		const spkiStandalone = createPublicKey(PUBLIC_KEY_SPKI_PEM).export({ type: 'spki', format: 'der' })
+		const spkiFromCert = createPublicKey(CERTIFICATE_PEM).export({
+			type: 'spki',
+			format: 'der',
+		})
+		const spkiStandalone = createPublicKey(PUBLIC_KEY_SPKI_PEM).export({
+			type: 'spki',
+			format: 'der',
+		})
 		expect(Buffer.compare(spkiFromCert, spkiStandalone)).toBe(0)
 
 		// And the module successfully imports the cert (would throw DataError
@@ -96,17 +102,17 @@ describe('importPublicKey — X.509 SPKI extraction (Phase-0 fix)', () => {
 describe('extractSpkiFromCertificate failure modes', () => {
 	it('throws when the PEM is not a DER SEQUENCE certificate', async () => {
 		// 0x02 is INTEGER, not the 0x30 SEQUENCE a certificate must start with.
-		const notACert = '-----BEGIN CERTIFICATE-----\n'
+		const notACert =
+			'-----BEGIN CERTIFICATE-----\n'
 			+ btoa(String.fromCharCode(0x02, 0x01, 0x05))
 			+ '\n-----END CERTIFICATE-----'
-		await expect(importPublicKey(notACert)).rejects.toThrow(
-			/Not a DER SEQUENCE/,
-		)
+		await expect(importPublicKey(notACert)).rejects.toThrow(/Not a DER SEQUENCE/)
 	})
 
 	it('throws when the certificate body is truncated garbage', async () => {
 		// A SEQUENCE header claiming a long body but with no real TBS inside.
-		const truncated = '-----BEGIN CERTIFICATE-----\n'
+		const truncated =
+			'-----BEGIN CERTIFICATE-----\n'
 			+ btoa(String.fromCharCode(0x30, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00))
 			+ '\n-----END CERTIFICATE-----'
 		await expect(importPublicKey(truncated)).rejects.toThrow()
@@ -122,7 +128,8 @@ describe('importPrivateKey', () => {
 	})
 
 	it('rejects malformed PKCS#8 DER', async () => {
-		const bad = '-----BEGIN PRIVATE KEY-----\n'
+		const bad =
+			'-----BEGIN PRIVATE KEY-----\n'
 			+ btoa(String.fromCharCode(0x30, 0x02, 0x00, 0x00))
 			+ '\n-----END PRIVATE KEY-----'
 		await expect(importPrivateKey(bad)).rejects.toThrow()
@@ -152,8 +159,12 @@ describe('rsaEncrypt / rsaDecrypt round-trip (RSA-4096, multi-chunk)', () => {
 		const ciphertext = await rsaEncrypt(plaintext, publicKey)
 
 		// Chunk count is encoded big-endian in the first 4 bytes.
-		const raw = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0))
-		const chunkCount = new DataView(raw.buffer, raw.byteOffset, raw.byteLength).getUint32(0, false)
+		const raw = Uint8Array.from(atob(ciphertext), (c) => c.charCodeAt(0))
+		const chunkCount = new DataView(
+			raw.buffer,
+			raw.byteOffset,
+			raw.byteLength,
+		).getUint32(0, false)
 		expect(chunkCount).toBe(3)
 
 		const recovered = await rsaDecrypt(ciphertext, privateKey)

@@ -47,7 +47,6 @@ export const MIGRATION_STORES = {
  * and persisted server-side in `migration_error`.
  */
 export class RoundTripMismatchError extends Error {
-
 	/**
 	 * @param {string} field The field whose round-trip failed.
 	 */
@@ -62,7 +61,6 @@ export class RoundTripMismatchError extends Error {
 		this.permanent = false
 		this.halt = true
 	}
-
 }
 
 /**
@@ -76,19 +74,19 @@ export class RoundTripMismatchError extends Error {
  * key", never "gone".
  */
 export class OldKeyDecryptError extends Error {
-
 	/**
 	 * @param {string} field The field that could not be decrypted.
 	 * @param {string} detail The underlying crypto error message.
 	 */
 	constructor(field, detail) {
-		super(`Existing ${field} could not be decrypted with the previous key (${detail})`)
+		super(
+			`Existing ${field} could not be decrypted with the previous key (${detail})`,
+		)
 		this.name = 'OldKeyDecryptError'
 		this.phase = 'decrypt-old'
 		this.permanent = true
 		this.halt = false
 	}
-
 }
 
 /**
@@ -195,9 +193,11 @@ export async function reEncryptSecretFields(record, keys) {
 	}
 
 	let additionalFields = null
-	if (record.additionalFields !== null
+	if (
+		record.additionalFields !== null
 		&& record.additionalFields !== undefined
-		&& record.additionalFields !== '') {
+		&& record.additionalFields !== ''
+	) {
 		additionalFields = await verifiedReEncrypt(
 			record.additionalFields,
 			keys,
@@ -285,8 +285,10 @@ export async function migrateRecord(job, keys) {
 			}
 		}
 
-		if (job.store === MIGRATION_STORES.SECRETS
-			|| job.store === MIGRATION_STORES.VERSIONS) {
+		if (
+			job.store === MIGRATION_STORES.SECRETS
+			|| job.store === MIGRATION_STORES.VERSIONS
+		) {
 			return {
 				store: job.store,
 				id: job.id,
@@ -314,9 +316,9 @@ export async function migrateRecord(job, keys) {
 			// Default to NOT permanent. An unclassified error must never cost the
 			// user access to a secret, so anything we cannot positively identify
 			// as an old-key decrypt failure is treated as retryable.
-			permanent: (e?.permanent === true),
-			halt: (e?.halt === true),
-			phase: (e?.phase ?? 'unclassified'),
+			permanent: e?.permanent === true,
+			halt: e?.halt === true,
+			phase: e?.phase ?? 'unclassified',
 			error: String(e?.message || e),
 		}
 	}

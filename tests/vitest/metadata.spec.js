@@ -14,7 +14,10 @@ import { encryptMetadata, decryptMetadata } from '../../src/crypto/metadata.js'
  * @return {Promise<CryptoKey>}
  */
 function makeKey() {
-	return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
+	return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+		'encrypt',
+		'decrypt',
+	])
 }
 
 describe('metadata at-rest encryption', () => {
@@ -52,7 +55,9 @@ describe('metadata at-rest encryption', () => {
 		const key = await makeKey()
 		const envelope = await encryptMetadata(key, { name: 'x' })
 		const bytes = atob(envelope).split('')
-		bytes[bytes.length - 1] = String.fromCharCode(bytes[bytes.length - 1].charCodeAt(0) ^ 0xff)
+		bytes[bytes.length - 1] = String.fromCharCode(
+			bytes[bytes.length - 1].charCodeAt(0) ^ 0xff,
+		)
 		const tampered = btoa(bytes.join(''))
 		await expect(decryptMetadata(key, tampered)).rejects.toThrow()
 	})

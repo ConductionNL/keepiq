@@ -79,11 +79,20 @@ function decryptViaOpenssl(ciphertextB64, privateKeyPem) {
 
 	const recovered = []
 	for (let i = 0; i < chunkCount; i++) {
-		const block = raw.subarray(4 + i * RSA_BLOCK_SIZE, 4 + (i + 1) * RSA_BLOCK_SIZE)
-		recovered.push(privateDecrypt(
-			{ key, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
-			block,
-		))
+		const block = raw.subarray(
+			4 + i * RSA_BLOCK_SIZE,
+			4 + (i + 1) * RSA_BLOCK_SIZE,
+		)
+		recovered.push(
+			privateDecrypt(
+				{
+					key,
+					padding: constants.RSA_PKCS1_OAEP_PADDING,
+					oaepHash: 'sha256',
+				},
+				block,
+			),
+		)
 	}
 
 	return Buffer.concat(recovered).toString('utf8')
@@ -140,9 +149,12 @@ describe('reEncryptSecretFields', () => {
 		const out = await reEncryptSecretFields(record, keys)
 
 		expect(await rsaDecrypt(out.key, keys.newPrivateKey)).toBe('s3cret')
-		expect(await rsaDecrypt(out.login, keys.newPrivateKey)).toBe('alice@example.org')
-		expect(await rsaDecrypt(out.additionalFields, keys.newPrivateKey))
-			.toBe('{"note":"recovery codes"}')
+		expect(await rsaDecrypt(out.login, keys.newPrivateKey)).toBe(
+			'alice@example.org',
+		)
+		expect(await rsaDecrypt(out.additionalFields, keys.newPrivateKey)).toBe(
+			'{"note":"recovery codes"}',
+		)
 	})
 
 	it('leaves absent optional fields null rather than encrypting an empty string', async () => {
@@ -172,18 +184,23 @@ describe('reEncryptAttachmentGrant', () => {
 
 		const recovered = await rsaDecrypt(out.wrappedFileKey, keys.newPrivateKey)
 		expect(recovered).toBe(fileKeyB64)
-		expect(Uint8Array.from(atob(recovered), c => c.charCodeAt(0))).toEqual(rawFileKey)
+		expect(Uint8Array.from(atob(recovered), (c) => c.charCodeAt(0))).toEqual(
+			rawFileKey,
+		)
 	})
 })
 
 describe('migrateRecord — failure isolation', () => {
 	it('reports a per-record failure instead of throwing', async () => {
-		const result = await migrateRecord({
-			store: MIGRATION_STORES.SECRETS,
-			id: 'secret-1',
-			// Not valid base64 ciphertext — decryption fails at the crypto layer.
-			record: { key: 'not-ciphertext' },
-		}, keys)
+		const result = await migrateRecord(
+			{
+				store: MIGRATION_STORES.SECRETS,
+				id: 'secret-1',
+				// Not valid base64 ciphertext — decryption fails at the crypto layer.
+				record: { key: 'not-ciphertext' },
+			},
+			keys,
+		)
 
 		expect(result.ok).toBe(false)
 		expect(result.id).toBe('secret-1')
@@ -191,11 +208,14 @@ describe('migrateRecord — failure isolation', () => {
 	})
 
 	it('refuses an unknown store rather than guessing', async () => {
-		const result = await migrateRecord({
-			store: 'linkShares',
-			id: 'share-1',
-			record: {},
-		}, keys)
+		const result = await migrateRecord(
+			{
+				store: 'linkShares',
+				id: 'share-1',
+				record: {},
+			},
+			keys,
+		)
 
 		expect(result.ok).toBe(false)
 		expect(result.error).toContain('Unknown migration store')
@@ -207,15 +227,23 @@ describe('migrateRecord — failure isolation', () => {
 		const results = []
 		for (const job of [
 			{ store: MIGRATION_STORES.SECRETS, id: 'ok-1', record: good },
-			{ store: MIGRATION_STORES.SECRETS, id: 'bad', record: { key: 'not-ciphertext' } },
+			{
+				store: MIGRATION_STORES.SECRETS,
+				id: 'bad',
+				record: { key: 'not-ciphertext' },
+			},
 			{ store: MIGRATION_STORES.SECRETS, id: 'ok-2', record: good },
 		]) {
 			results.push(await migrateRecord(job, keys))
 		}
 
-		expect(results.map(r => r.ok)).toEqual([true, false, true])
-		expect(await rsaDecrypt(results[0].payload.key, keys.newPrivateKey)).toBe('survivor')
-		expect(await rsaDecrypt(results[2].payload.key, keys.newPrivateKey)).toBe('survivor')
+		expect(results.map((r) => r.ok)).toEqual([true, false, true])
+		expect(await rsaDecrypt(results[0].payload.key, keys.newPrivateKey)).toBe(
+			'survivor',
+		)
+		expect(await rsaDecrypt(results[2].payload.key, keys.newPrivateKey)).toBe(
+			'survivor',
+		)
 	})
 })
 
@@ -230,12 +258,18 @@ describe('cross-implementation round-trip (re-chunking against the new key)', ()
 		const after = await verifiedReEncrypt(before, keys, 'key')
 
 		// The wire header must describe the NEW chunking: ceil(1200 / 446) = 3.
-		const raw = Uint8Array.from(atob(after), c => c.charCodeAt(0))
-		const chunkCount = new DataView(raw.buffer, raw.byteOffset, raw.byteLength).getUint32(0, false)
+		const raw = Uint8Array.from(atob(after), (c) => c.charCodeAt(0))
+		const chunkCount = new DataView(
+			raw.buffer,
+			raw.byteOffset,
+			raw.byteLength,
+		).getUint32(0, false)
 		expect(chunkCount).toBe(Math.ceil(1200 / RSA_CHUNK_SIZE))
 
 		// PHP/OpenSSL, the server-side reader, recovers it byte-for-byte.
-		expect(decryptViaOpenssl(after, RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM)).toBe(plaintext)
+		expect(
+			decryptViaOpenssl(after, RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM),
+		).toBe(plaintext)
 	})
 
 	it('OpenSSL decrypts a migrated non-ASCII value spanning chunk boundaries', async () => {
@@ -244,12 +278,16 @@ describe('cross-implementation round-trip (re-chunking against the new key)', ()
 		// step tears them, the round-trip compare fails and the record can never
 		// migrate — so this pins the whole path, not just rsaDecrypt.
 		const plaintext = 'wachtwoord-€-ü-日本語-🔐-'.repeat(120)
-		expect(new TextEncoder().encode(plaintext).length).toBeGreaterThan(RSA_CHUNK_SIZE * 3)
+		expect(new TextEncoder().encode(plaintext).length).toBeGreaterThan(
+			RSA_CHUNK_SIZE * 3,
+		)
 
 		const before = await sealUnderOldSuite(plaintext)
 		const after = await verifiedReEncrypt(before, keys, 'additionalFields')
 
 		expect(await rsaDecrypt(after, keys.newPrivateKey)).toBe(plaintext)
-		expect(decryptViaOpenssl(after, RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM)).toBe(plaintext)
+		expect(
+			decryptViaOpenssl(after, RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM),
+		).toBe(plaintext)
 	})
 })

@@ -13,7 +13,10 @@
 	<section class="doriath-secret-request-list" data-testid="secret-request-list">
 		<header class="doriath-secret-request-list__header">
 			<h4>{{ t('doriath', 'Outstanding requests') }}</h4>
-			<span v-if="store.pendingCount > 0" class="doriath-secret-request-list__count" data-testid="secret-request-pending-count">
+			<span
+				v-if="store.pendingCount > 0"
+				class="doriath-secret-request-list__count"
+				data-testid="secret-request-pending-count">
 				{{ store.pendingCount }}
 			</span>
 		</header>
@@ -22,7 +25,10 @@
 			{{ t('doriath', 'Loading…') }}
 		</p>
 
-		<p v-else-if="rows.length === 0" class="doriath-secret-request-list__empty" data-testid="secret-request-list-empty">
+		<p
+			v-else-if="rows.length === 0"
+			class="doriath-secret-request-list__empty"
+			data-testid="secret-request-list-empty">
 			{{ t('doriath', 'No outstanding requests.') }}
 		</p>
 
@@ -34,8 +40,12 @@
 				:data-testid="`secret-request-row-${row.status}`">
 				<div class="doriath-secret-request-list__meta">
 					<strong>{{ statusLabel(row.status) }}</strong>
-					<span class="doriath-secret-request-list__token">{{ truncateToken(row.token) }}</span>
-					<span class="doriath-secret-request-list__fields">{{ formatFields(row.requestedFields || row.requested_fields) }}</span>
+					<span class="doriath-secret-request-list__token">{{
+						truncateToken(row.token)
+					}}</span>
+					<span class="doriath-secret-request-list__fields">{{
+						formatFields(row.requestedFields || row.requested_fields)
+					}}</span>
 				</div>
 				<div class="doriath-secret-request-list__actions">
 					<button
@@ -51,7 +61,10 @@
 			</li>
 		</ul>
 
-		<p v-if="store.error" class="doriath-secret-request-list__error" data-testid="secret-request-list-error">
+		<p
+			v-if="store.error"
+			class="doriath-secret-request-list__error"
+			data-testid="secret-request-list-error">
 			{{ store.error }}
 		</p>
 	</section>
@@ -106,12 +119,18 @@ export default {
 		},
 		statusLabel(status) {
 			switch (status) {
-			case 'pending': return t('doriath', 'Pending')
-			case 'fulfilled': return t('doriath', 'Fulfilled')
-			case 'declined': return t('doriath', 'Declined')
-			case 'locked': return t('doriath', 'Locked')
-			case 'expired': return t('doriath', 'Expired')
-			default: return status
+				case 'pending':
+					return t('doriath', 'Pending')
+				case 'fulfilled':
+					return t('doriath', 'Fulfilled')
+				case 'declined':
+					return t('doriath', 'Declined')
+				case 'locked':
+					return t('doriath', 'Locked')
+				case 'expired':
+					return t('doriath', 'Expired')
+				default:
+					return status
 			}
 		},
 		onRevoke(id) {

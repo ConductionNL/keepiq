@@ -25,8 +25,14 @@ import { serializePasskey, parsePasskey } from './vault-passkey.js'
 function requestConsent(rpId, op) {
 	return new Promise((resolve) => {
 		const id = Math.floor(performance.now()) + ':' + rpId
-		const url = chrome.runtime.getURL('consent.html')
-			+ '?rp=' + encodeURIComponent(rpId) + '&op=' + encodeURIComponent(op) + '&id=' + encodeURIComponent(id)
+		const url =
+			chrome.runtime.getURL('consent.html')
+			+ '?rp='
+			+ encodeURIComponent(rpId)
+			+ '&op='
+			+ encodeURIComponent(op)
+			+ '&id='
+			+ encodeURIComponent(id)
 		let settled = false
 		const listener = (msg) => {
 			if (msg && msg.type === 'passkey-consent-result' && msg.id === id) {
@@ -36,19 +42,22 @@ function requestConsent(rpId, op) {
 			}
 		}
 		chrome.runtime.onMessage.addListener(listener)
-		chrome.windows.create({ url, type: 'popup', width: 380, height: 260 }, (win) => {
-			// If the window is closed without a decision, treat as decline.
-			if (chrome.windows && chrome.windows.onRemoved) {
-				const onClosed = (closedId) => {
-					if (win && closedId === win.id && !settled) {
-						chrome.windows.onRemoved.removeListener(onClosed)
-						chrome.runtime.onMessage.removeListener(listener)
-						resolve(false)
+		chrome.windows.create(
+			{ url, type: 'popup', width: 380, height: 260 },
+			(win) => {
+				// If the window is closed without a decision, treat as decline.
+				if (chrome.windows && chrome.windows.onRemoved) {
+					const onClosed = (closedId) => {
+						if (win && closedId === win.id && !settled) {
+							chrome.windows.onRemoved.removeListener(onClosed)
+							chrome.runtime.onMessage.removeListener(listener)
+							resolve(false)
+						}
 					}
+					chrome.windows.onRemoved.addListener(onClosed)
 				}
-				chrome.windows.onRemoved.addListener(onClosed)
-			}
-		})
+			},
+		)
 	})
 }
 
@@ -88,7 +97,9 @@ export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 
 		// Candidate passkeys for this RP (matched on the plaintext url index).
 		const rows = await api.match(config, rpId)
-		const allow = (options.allowCredentials || []).map((c) => encodeAllowId(c.id))
+		const allow = (options.allowCredentials || []).map((c) =>
+			encodeAllowId(c.id),
+		)
 
 		let chosen = null
 		for (const row of rows) {
@@ -107,7 +118,11 @@ export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 
 		if (!(await requestConsent(rpId, 'get'))) throw new Error('declined')
 
-		const { assertion, counter } = await getAssertion(options, origin, chosen.record)
+		const { assertion, counter } = await getAssertion(
+			options,
+			origin,
+			chosen.record,
+		)
 
 		// Write back a non-zero (hardware-style) counter via the existing update path.
 		if (counter > 0 && counter !== chosen.record.counter) {

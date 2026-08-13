@@ -39,21 +39,27 @@ function mountForm() {
 			// verbatim, which is fine for most specs but hides the counts this
 			// dialog is judged on. A mount-level mixin wins over the global one,
 			// so interpolate here to assert on what the user actually reads.
-			mixins: [{
-				methods: {
-					t: (app, text, vars) => {
-						if (!vars) {
-							return text
-						}
-						return Object.keys(vars).reduce(
-							(out, key) => out.replace(`{${key}}`, String(vars[key])),
-							text,
-						)
+			mixins: [
+				{
+					methods: {
+						t: (app, text, vars) => {
+							if (!vars) {
+								return text
+							}
+							return Object.keys(vars).reduce(
+								(out, key) =>
+									out.replace(`{${key}}`, String(vars[key])),
+								text,
+							)
+						},
+						n: (app, singular, plural, count) =>
+							(count === 1 ? singular : plural).replace(
+								'%n',
+								String(count),
+							),
 					},
-					n: (app, singular, plural, count) => (count === 1 ? singular : plural)
-						.replace('%n', String(count)),
 				},
-			}],
+			],
 			stubs: {
 				NcButton: { template: '<button><slot /></button>' },
 				NcNoteCard: { template: '<div class="note-card"><slot /></div>' },
@@ -120,7 +126,12 @@ describe('CompromiseRecoveryForm', () => {
 		const store = useEncryptionSuiteStore()
 		store.migrationNeedsAcknowledgement = true
 		store.migrationFailures = [
-			{ store: 'secrets', id: 'secret-1', name: 'router-admin', error: 'secrets: could not decrypt' },
+			{
+				store: 'secrets',
+				id: 'secret-1',
+				name: 'router-admin',
+				error: 'secrets: could not decrypt',
+			},
 		]
 
 		const wrapper = mountForm()
@@ -135,8 +146,18 @@ describe('CompromiseRecoveryForm', () => {
 		const store = useEncryptionSuiteStore()
 		store.migrationNeedsAcknowledgement = true
 		store.migrationFailures = [
-			{ store: 'secrets', id: 'secret-1', name: 'router-admin', error: 'secrets: could not decrypt' },
-			{ store: 'secrets', id: 'secret-2', name: 'nas-backup', error: 'secrets: could not decrypt' },
+			{
+				store: 'secrets',
+				id: 'secret-1',
+				name: 'router-admin',
+				error: 'secrets: could not decrypt',
+			},
+			{
+				store: 'secrets',
+				id: 'secret-2',
+				name: 'nas-backup',
+				error: 'secrets: could not decrypt',
+			},
 		]
 
 		const wrapper = mountForm()
@@ -159,7 +180,12 @@ describe('CompromiseRecoveryForm', () => {
 		store.migrationStatus = { id: 'migration-1' }
 		store.migrationNeedsAcknowledgement = true
 		store.migrationFailures = [
-			{ store: 'secrets', id: 'secret-1', name: 'router-admin', error: 'secrets: could not decrypt' },
+			{
+				store: 'secrets',
+				id: 'secret-1',
+				name: 'router-admin',
+				error: 'secrets: could not decrypt',
+			},
 		]
 		const accept = vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({})
 

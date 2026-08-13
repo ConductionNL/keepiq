@@ -85,7 +85,12 @@ describe('SecretListItem', () => {
 		// returns null and the <img> branch is skipped.
 		const wrapper = mount(SecretListItem, {
 			propsData: {
-				secret: { id: 's-1', name: 'X', url: 'https://github.com', typeId: 'type-api' },
+				secret: {
+					id: 's-1',
+					name: 'X',
+					url: 'https://github.com',
+					typeId: 'type-api',
+				},
 			},
 		})
 
@@ -128,7 +133,9 @@ describe('SecretListItem', () => {
 			},
 		})
 
-		expect(wrapper.find('[data-testid="secret-possibly-compromised"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(true)
 		expect(wrapper.text()).toContain('Assume this value was exposed')
 		expect(wrapper.text()).toContain('change it at its source')
 	})
@@ -146,7 +153,9 @@ describe('SecretListItem', () => {
 			},
 		})
 
-		expect(wrapper.find('[data-testid="secret-possibly-compromised"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(false)
 	})
 
 	it('warns on a BLOCKED row too, where the flag matters most', () => {
@@ -165,7 +174,9 @@ describe('SecretListItem', () => {
 			},
 		})
 
-		expect(wrapper.find('[data-testid="secret-possibly-compromised"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(true)
 		// And the lock reason must not blame a revoked suite.
 		expect(wrapper.text()).toContain('Could not be migrated to your new key')
 		expect(wrapper.text()).not.toContain('suite revoked')
@@ -195,7 +206,12 @@ describe('SecretListItem', () => {
 	it('exposes an interactive role, tabindex and accessible name on the row', () => {
 		const wrapper = mount(SecretListItem, {
 			propsData: {
-				secret: { id: 's-1', name: 'GitHub PAT', url: null, typeId: 'type-api' },
+				secret: {
+					id: 's-1',
+					name: 'GitHub PAT',
+					url: null,
+					typeId: 'type-api',
+				},
 			},
 		})
 
@@ -240,7 +256,9 @@ describe('SecretListItem', () => {
 
 	it('keyboard activation inside the copy control does NOT bubble as `open`', async () => {
 		const secretStore = useSecretStore()
-		secretStore.fetchSecret = vi.fn().mockResolvedValue({ id: 's-1', name: 'X', key: 'k' })
+		secretStore.fetchSecret = vi
+			.fn()
+			.mockResolvedValue({ id: 's-1', name: 'X', key: 'k' })
 
 		const wrapper = mount(SecretListItem, {
 			propsData: {

@@ -93,11 +93,11 @@ async function loginAsVaultUser(page: Page): Promise<void> {
 async function clickByLabel(page: Page, label: string): Promise<void> {
 	await page.evaluate((pattern) => {
 		const re = new RegExp(pattern, 'i')
-		const btn = Array.from(document.querySelectorAll('button')).find(
-			(b) => re.test(b.textContent || ''),
+		const btn = Array.from(document.querySelectorAll('button')).find((b) =>
+			re.test(b.textContent || ''),
 		)
 		if (btn) {
-			(btn as HTMLButtonElement).click()
+			;(btn as HTMLButtonElement).click()
 		}
 	}, label)
 }
@@ -110,11 +110,13 @@ async function clickByLabel(page: Page, label: string): Promise<void> {
  */
 async function setUpVault(page: Page): Promise<boolean> {
 	await page.goto(`${APP_BASE}/#/lock`, { waitUntil: 'domcontentloaded' })
-	await page.locator('.lock-screen__card').waitFor({ state: 'visible', timeout: 30_000 })
+	await page
+		.locator('.lock-screen__card')
+		.waitFor({ state: 'visible', timeout: 30_000 })
 
 	// Setup mode has TWO password fields; unlock mode has one.
 	const fields = page.locator('.lock-screen input[type="password"]')
-	if (await fields.count() < 2) {
+	if ((await fields.count()) < 2) {
 		return false
 	}
 
@@ -144,86 +146,107 @@ async function setUpVault(page: Page): Promise<boolean> {
  * @param name  The secret name.
  * @param value The plaintext to seal.
  */
-async function seedEncryptedSecret(page: Page, name: string, value: string): Promise<void> {
-	const created = await page.evaluate(async ([base, secretName, plaintext]) => {
-		const token = (window as unknown as { OC?: { requestToken?: string } }).OC?.requestToken || ''
+async function seedEncryptedSecret(
+	page: Page,
+	name: string,
+	value: string,
+): Promise<void> {
+	const created = await page.evaluate(
+		async ([base, secretName, plaintext]) => {
+			const token =
+				(window as unknown as { OC?: { requestToken?: string } }).OC
+					?.requestToken || ''
 
-		const suites = await (await fetch(`${base}/api/v1/suites`, {
-			credentials: 'include',
-			headers: { requesttoken: token, 'OCS-APIREQUEST': 'true' },
-		})).json()
-		const suite = suites.find((x: { status: string }) => x.status === 'active')
-		if (!suite) {
-			return { status: 0, body: 'no active suite' }
-		}
-
-		const certBody = String(suite.certificate)
-			.replace(/-----BEGIN CERTIFICATE-----/, '')
-			.replace(/-----END CERTIFICATE-----/, '')
-			.replace(/\s/g, '')
-		const der = Uint8Array.from(atob(certBody), (c) => c.charCodeAt(0))
-		const readLen = (d: Uint8Array, o: number) => {
-			const f = d[o]
-			if ((f & 0x80) === 0) {
-				return { length: f, headerEnd: o + 1 }
-			}
-			const n = f & 0x7f
-			let l = 0
-			for (let i = 0; i < n; i++) {
-				l = (l << 8) | d[o + 1 + i]
-			}
-			return { length: l, headerEnd: o + 1 + n }
-		}
-		const outer = readLen(der, 1)
-		const tbs = readLen(der, outer.headerEnd + 1)
-		let pos = tbs.headerEnd
-		const tbsEnd = tbs.headerEnd + tbs.length
-		const fields: Array<{ tag: number, start: number, end: number }> = []
-		while (pos < tbsEnd) {
-			const tag = der[pos]
-			const { length, headerEnd } = readLen(der, pos + 1)
-			const end = headerEnd + length
-			fields.push({ tag, start: pos, end })
-			pos = end
-		}
-		const spkiIdx = fields[0].tag === 0xa0 ? 6 : 5
-		const spki = der.slice(fields[spkiIdx].start, fields[spkiIdx].end)
-		const pub = await crypto.subtle.importKey(
-			'spki', spki, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt'],
-		)
-
-		const CHUNK = 446
-		const BLOCK = 512
-		const data = new TextEncoder().encode(plaintext)
-		const chunks: Uint8Array[] = []
-		for (let i = 0; i < data.length; i += CHUNK) {
-			chunks.push(data.slice(i, i + CHUNK))
-		}
-		if (chunks.length === 0) {
-			chunks.push(new Uint8Array(0))
-		}
-		const out = new Uint8Array(4 + chunks.length * BLOCK)
-		new DataView(out.buffer).setUint32(0, chunks.length, false)
-		for (let i = 0; i < chunks.length; i++) {
-			const enc = new Uint8Array(
-				await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, chunks[i]),
+			const suites = await (
+				await fetch(`${base}/api/v1/suites`, {
+					credentials: 'include',
+					headers: { requesttoken: token, 'OCS-APIREQUEST': 'true' },
+				})
+			).json()
+			const suite = suites.find(
+				(x: { status: string }) => x.status === 'active',
 			)
-			out.set(enc, 4 + i * BLOCK)
-		}
-		const ciphertext = btoa(String.fromCharCode(...out))
+			if (!suite) {
+				return { status: 0, body: 'no active suite' }
+			}
 
-		const res = await fetch(`${base}/api/v1/secrets`, {
-			method: 'POST',
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json',
-				requesttoken: token,
-				'OCS-APIREQUEST': 'true',
-			},
-			body: JSON.stringify({ name: secretName, key: ciphertext }),
-		})
-		return { status: res.status, body: (await res.text()).slice(0, 200) }
-	}, [APP_BASE, name, value] as const)
+			const certBody = String(suite.certificate)
+				.replace(/-----BEGIN CERTIFICATE-----/, '')
+				.replace(/-----END CERTIFICATE-----/, '')
+				.replace(/\s/g, '')
+			const der = Uint8Array.from(atob(certBody), (c) => c.charCodeAt(0))
+			const readLen = (d: Uint8Array, o: number) => {
+				const f = d[o]
+				if ((f & 0x80) === 0) {
+					return { length: f, headerEnd: o + 1 }
+				}
+				const n = f & 0x7f
+				let l = 0
+				for (let i = 0; i < n; i++) {
+					l = (l << 8) | d[o + 1 + i]
+				}
+				return { length: l, headerEnd: o + 1 + n }
+			}
+			const outer = readLen(der, 1)
+			const tbs = readLen(der, outer.headerEnd + 1)
+			let pos = tbs.headerEnd
+			const tbsEnd = tbs.headerEnd + tbs.length
+			const fields: Array<{ tag: number; start: number; end: number }> = []
+			while (pos < tbsEnd) {
+				const tag = der[pos]
+				const { length, headerEnd } = readLen(der, pos + 1)
+				const end = headerEnd + length
+				fields.push({ tag, start: pos, end })
+				pos = end
+			}
+			const spkiIdx = fields[0].tag === 0xa0 ? 6 : 5
+			const spki = der.slice(fields[spkiIdx].start, fields[spkiIdx].end)
+			const pub = await crypto.subtle.importKey(
+				'spki',
+				spki,
+				{ name: 'RSA-OAEP', hash: 'SHA-256' },
+				false,
+				['encrypt'],
+			)
+
+			const CHUNK = 446
+			const BLOCK = 512
+			const data = new TextEncoder().encode(plaintext)
+			const chunks: Uint8Array[] = []
+			for (let i = 0; i < data.length; i += CHUNK) {
+				chunks.push(data.slice(i, i + CHUNK))
+			}
+			if (chunks.length === 0) {
+				chunks.push(new Uint8Array(0))
+			}
+			const out = new Uint8Array(4 + chunks.length * BLOCK)
+			new DataView(out.buffer).setUint32(0, chunks.length, false)
+			for (let i = 0; i < chunks.length; i++) {
+				const enc = new Uint8Array(
+					await crypto.subtle.encrypt(
+						{ name: 'RSA-OAEP' },
+						pub,
+						chunks[i],
+					),
+				)
+				out.set(enc, 4 + i * BLOCK)
+			}
+			const ciphertext = btoa(String.fromCharCode(...out))
+
+			const res = await fetch(`${base}/api/v1/secrets`, {
+				method: 'POST',
+				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json',
+					requesttoken: token,
+					'OCS-APIREQUEST': 'true',
+				},
+				body: JSON.stringify({ name: secretName, key: ciphertext }),
+			})
+			return { status: res.status, body: (await res.text()).slice(0, 200) }
+		},
+		[APP_BASE, name, value] as const,
+	)
 
 	expect(created.status, `secret create failed: ${created.body}`).toBeLessThan(400)
 }
@@ -244,18 +267,24 @@ async function openRecoveryForm(page: Page): Promise<void> {
 	// the DOM and dispatch the click directly rather than requiring visibility —
 	// the Vue handler fires either way, and this is the same native-click
 	// technique _workflow-helpers.ts uses for themed controls.
-	await page.locator('[data-testid="cn-nav-entry-UserSettings"]').first()
+	await page
+		.locator('[data-testid="cn-nav-entry-UserSettings"]')
+		.first()
 		.waitFor({ state: 'attached', timeout: 30_000 })
 	await page.evaluate(() => {
-		const entry = document.querySelector('[data-testid="cn-nav-entry-UserSettings"] a')
+		const entry = document.querySelector(
+			'[data-testid="cn-nav-entry-UserSettings"] a',
+		)
 		if (entry) {
-			(entry as HTMLElement).click()
+			;(entry as HTMLElement).click()
 		}
 	})
 	await page.waitForTimeout(1200)
 
 	await clickByLabel(page, 'My master password was compromised')
-	await expect(page.locator('.compromise-recovery-form')).toBeVisible({ timeout: 15_000 })
+	await expect(page.locator('.compromise-recovery-form')).toBeVisible({
+		timeout: 15_000,
+	})
 }
 
 test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () => {
@@ -270,7 +299,9 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 	 * @e2e encryption-suites::progress-is-visible-inside-the-recovery-dialog
 	 * @e2e encryption-suites::terminal-message-is-not-an-all-clear
 	 */
-	test('a fresh vault rotates, and every surface reports the truth', async ({ page }) => {
+	test('a fresh vault rotates, and every surface reports the truth', async ({
+		page,
+	}) => {
 		test.slow()
 
 		await loginAsVaultUser(page)
@@ -279,14 +310,18 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		test.skip(
 			didSetUp === false,
 			`${VAULT_USER} already owns an EncryptionSuite, so first-time setup was not offered. `
-			+ 'Reset that account or point DORIATH_VAULT_USER at one with no suite.',
+				+ 'Reset that account or point DORIATH_VAULT_USER at one with no suite.',
 		)
 
 		// Several secrets so the run lasts long enough for progress to be
 		// observable: RSA-4096 over each field is the slow part, which is the
 		// whole reason the loop runs in a worker.
 		for (let i = 0; i < 4; i++) {
-			await seedEncryptedSecret(page, `e2e-rotation-${i}`, `rotation-subject-value-${i}`)
+			await seedEncryptedSecret(
+				page,
+				`e2e-rotation-${i}`,
+				`rotation-subject-value-${i}`,
+			)
 		}
 
 		await openRecoveryForm(page)
@@ -309,20 +344,28 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 
 		// SURFACE 2 — during, and inside the dialog: the maintainer decision
 		// recorded in design.md, not a toast and not a separate page.
-		await expect(form.locator('.compromise-recovery-form__progress')).toBeVisible({ timeout: 60_000 })
+		await expect(
+			form.locator('.compromise-recovery-form__progress'),
+		).toBeVisible({ timeout: 60_000 })
 
 		// SURFACE 3 — terminal. Counts, and never an all-clear.
-		await expect(form).toContainText(/Key rotation finished/i, { timeout: 180_000 })
+		await expect(form).toContainText(/Key rotation finished/i, {
+			timeout: 180_000,
+		})
 		await expect(form).toContainText(/re-encrypted under your new key/i)
 		await expect(form).toContainText(/still to be considered exposed/i)
-		await expect(form).not.toContainText(/now secured with a new encryption key/i)
+		await expect(form).not.toContainText(
+			/now secured with a new encryption key/i,
+		)
 		await expect(form).not.toContainText(/vault is now secure/i)
 
 		// The migration must actually be terminal, not merely reported so — this
 		// is the assertion the old premature-complete bug would have passed and
 		// the gate could have failed.
 		const status = await page.evaluate(async (base) => {
-			const token = (window as unknown as { OC?: { requestToken?: string } }).OC?.requestToken || ''
+			const token =
+				(window as unknown as { OC?: { requestToken?: string } }).OC
+					?.requestToken || ''
 			const res = await fetch(`${base}/api/v1/migrations/status`, {
 				headers: { requesttoken: token, 'OCS-APIREQUEST': 'true' },
 			})
@@ -337,9 +380,13 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		// leaves the vault list mounted but covered, so the row indicator is
 		// never shown — close the dialog first.
 		await page.keyboard.press('Escape')
-		await expect(page.locator('[role="dialog"]')).toHaveCount(0, { timeout: 15_000 })
+		await expect(page.locator('[role="dialog"]')).toHaveCount(0, {
+			timeout: 15_000,
+		})
 
-		await page.evaluate(() => { window.location.hash = '#/secrets' })
+		await page.evaluate(() => {
+			window.location.hash = '#/secrets'
+		})
 		await page.waitForTimeout(2500)
 
 		const warned = page.locator('[data-testid="secret-possibly-compromised"]')
@@ -347,13 +394,19 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		await expect(warned.first()).toContainText(/change it at its source/i)
 	})
 
-	test('the resume banner stays silent when no migration is in progress', async ({ page }) => {
+	test('the resume banner stays silent when no migration is in progress', async ({
+		page,
+	}) => {
 		// The negative case is the one that regresses quietly: a banner shown to
 		// everyone gets noticed immediately, one shown to nobody does not.
 		await loginAsVaultUser(page)
 		await page.goto(`${APP_BASE}/#/lock`, { waitUntil: 'domcontentloaded' })
-		await page.locator('.lock-screen__card').waitFor({ state: 'visible', timeout: 30_000 })
+		await page
+			.locator('.lock-screen__card')
+			.waitFor({ state: 'visible', timeout: 30_000 })
 
-		await expect(page.locator('[data-testid="migration-resume-banner"]')).toHaveCount(0)
+		await expect(
+			page.locator('[data-testid="migration-resume-banner"]'),
+		).toHaveCount(0)
 	})
 })

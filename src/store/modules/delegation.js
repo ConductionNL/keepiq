@@ -77,11 +77,16 @@ export const useDelegationStore = defineStore('delegation', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/delegations`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/delegations`,
+					),
 				)
 				this.delegations = response.data || []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load delegations'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load delegations'
 				throw e
 			} finally {
 				this.loading = false
@@ -101,13 +106,16 @@ export const useDelegationStore = defineStore('delegation', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/delegations`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/delegations`,
+					),
 					{ delegatedTo },
 				)
 				this.delegations.push(response.data)
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to delegate'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Failed to delegate'
 				throw e
 			} finally {
 				this.loading = false
@@ -156,12 +164,17 @@ export const useDelegationStore = defineStore('delegation', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/delegations/handover`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/delegations/handover`,
+					),
 				)
 				this.delegations.push(response.data)
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to take over the secret'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to take over the secret'
 				throw e
 			} finally {
 				this.loading = false
@@ -179,14 +192,19 @@ export const useDelegationStore = defineStore('delegation', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/delegations/reclaim`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/delegations/reclaim`,
+					),
 				)
 				// Drop temporary rows locally to match the server-side
 				// behaviour without a refetch.
-				this.delegations = this.delegations.filter((row) => row.isPermanent === true)
+				this.delegations = this.delegations.filter(
+					(row) => row.isPermanent === true,
+				)
 				return response.data?.removed ?? 0
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to reclaim'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Failed to reclaim'
 				throw e
 			} finally {
 				this.loading = false

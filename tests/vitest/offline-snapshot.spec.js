@@ -15,11 +15,19 @@ import { encryptSnapshot, decryptSnapshot } from '../../src/offline/snapshot.js'
  * @return {Promise<CryptoKey>}
  */
 function makeKey() {
-	return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
+	return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+		'encrypt',
+		'decrypt',
+	])
 }
 
 const MANIFEST = {
-	suite: { id: 'suite-1', certificate: 'CERT-PEM', privateKey: 'ENVELOPE-BLOB', status: 'active' },
+	suite: {
+		id: 'suite-1',
+		certificate: 'CERT-PEM',
+		privateKey: 'ENVELOPE-BLOB',
+		status: 'active',
+	},
 	secrets: [
 		{
 			id: 'sec-1',

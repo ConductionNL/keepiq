@@ -9,13 +9,15 @@
   @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-move
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Move {count} secrets', { count: bulk.selectionCount })"
+	<NcDialog
+		:name="t('doriath', 'Move {count} secrets', { count: bulk.selectionCount })"
 		:open="open"
 		size="normal"
 		data-testid="bulk-move-dialog"
 		@update:open="$emit('close')">
 		<div class="bulk-move">
-			<NcSelect v-model="targetFolder"
+			<NcSelect
+				v-model="targetFolder"
 				:options="folderOptions"
 				:input-label="t('doriath', 'Target folder')"
 				label="label"
@@ -26,7 +28,8 @@
 			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton variant="primary"
+			<NcButton
+				variant="primary"
 				:disabled="!targetFolder || bulk.progress.running"
 				data-testid="bulk-move-run"
 				@click="onRun">
@@ -83,7 +86,9 @@ export default {
 		 * @return {Promise<object>}
 		 */
 		async moveOne(secretId) {
-			await useSecretStore().updateSecret(secretId, { folderId: this.targetFolder.id })
+			await useSecretStore().updateSecret(secretId, {
+				folderId: this.targetFolder.id,
+			})
 			return { status: 'ok' }
 		},
 
@@ -107,7 +112,10 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed((id) => this.moveOne(id), this.t('doriath', 'Retrying move'))
+			await this.bulk.retryFailed(
+				(id) => this.moveOne(id),
+				this.t('doriath', 'Retrying move'),
+			)
 			this.$emit('done')
 		},
 	},

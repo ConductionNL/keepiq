@@ -32,7 +32,10 @@
 			{{ t('doriath', 'Loading…') }}
 		</p>
 
-		<div v-else-if="loadError" class="doriath-link-share-access__error" data-testid="link-share-load-error">
+		<div
+			v-else-if="loadError"
+			class="doriath-link-share-access__error"
+			data-testid="link-share-load-error">
 			<p>{{ loadError }}</p>
 		</div>
 
@@ -41,7 +44,14 @@
 			class="doriath-link-share-access__form"
 			data-testid="link-share-form"
 			@submit.prevent="onUnlock">
-			<p>{{ t('doriath', 'This link is protected with a password. Enter the password you received to view the secret.') }}</p>
+			<p>
+				{{
+					t(
+						'doriath',
+						'This link is protected with a password. Enter the password you received to view the secret.',
+					)
+				}}
+			</p>
 
 			<label>
 				<span>{{ t('doriath', 'Access password') }}</span>
@@ -50,15 +60,25 @@
 					type="password"
 					autocomplete="off"
 					required
-					data-testid="link-share-password">
+					data-testid="link-share-password" />
 			</label>
 
-			<p v-if="unlockError" class="doriath-link-share-access__error" data-testid="link-share-unlock-error">
+			<p
+				v-if="unlockError"
+				class="doriath-link-share-access__error"
+				data-testid="link-share-unlock-error">
 				{{ unlockError }}
 			</p>
 
-			<button type="submit" :disabled="busy || !password" data-testid="link-share-submit">
-				{{ busy ? t('doriath', 'Decrypting…') : t('doriath', 'Reveal secret') }}
+			<button
+				type="submit"
+				:disabled="busy || !password"
+				data-testid="link-share-submit">
+				{{
+					busy
+						? t('doriath', 'Decrypting…')
+						: t('doriath', 'Reveal secret')
+				}}
 			</button>
 		</form>
 
@@ -85,7 +105,12 @@
 				</dd>
 			</dl>
 			<p class="doriath-link-share-access__warning">
-				{{ t('doriath', 'You have viewed this share. It will not be reachable again once the usage cap is reached.') }}
+				{{
+					t(
+						'doriath',
+						'You have viewed this share. It will not be reachable again once the usage cap is reached.',
+					)
+				}}
 			</p>
 		</div>
 	</div>
@@ -125,7 +150,9 @@ export default {
 
 	methods: {
 		tokenFromUrl() {
-			const m = String(window?.location?.pathname ?? '').match(/share\/link\/([^/?#]+)/)
+			const m = String(window?.location?.pathname ?? '').match(
+				/share\/link\/([^/?#]+)/,
+			)
 			return m ? decodeURIComponent(m[1]) : ''
 		},
 
@@ -134,11 +161,18 @@ export default {
 			this.loadError = ''
 			try {
 				const store = useLinkShareStore()
-				this.share = await store.fetchPublicLinkShare(this.token, this.priorFailure)
+				this.share = await store.fetchPublicLinkShare(
+					this.token,
+					this.priorFailure,
+				)
 			} catch (e) {
 				this.share = null
-				this.loadError = e?.response?.data?.message
-					?? this.t('doriath', 'This share is not available. It may have expired or been used up.')
+				this.loadError =
+					e?.response?.data?.message
+					?? this.t(
+						'doriath',
+						'This share is not available. It may have expired or been used up.',
+					)
 			} finally {
 				this.loading = false
 			}
@@ -153,11 +187,17 @@ export default {
 
 			const store = useLinkShareStore()
 			try {
-				this.snapshot = await store.decryptPublicSnapshot(this.share, this.password)
+				this.snapshot = await store.decryptPublicSnapshot(
+					this.share,
+					this.password,
+				)
 				// Phase 2: confirm so the server can increment usage.
 				await store.confirmPublicLinkShare(this.token)
 			} catch (e) {
-				this.unlockError = this.t('doriath', 'The password does not match. Please try again.')
+				this.unlockError = this.t(
+					'doriath',
+					'The password does not match. Please try again.',
+				)
 				// Re-fetch with failed=1 so the brute-force counter ticks
 				// server-side. We swallow re-fetch errors so a now-deleted
 				// share simply surfaces as a load error on the next try.

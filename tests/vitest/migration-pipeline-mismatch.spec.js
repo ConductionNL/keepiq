@@ -57,8 +57,9 @@ describe('round-trip byte-compare', () => {
 		// another. Both crypto calls "succeed".
 		decryptQueue = ['the real password', 'a different password']
 
-		await expect(verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key'))
-			.rejects.toThrow(RoundTripMismatchError)
+		await expect(
+			verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key'),
+		).rejects.toThrow(RoundTripMismatchError)
 	})
 
 	it('throws on a mismatch that differs only in trailing bytes', async () => {
@@ -68,33 +69,39 @@ describe('round-trip byte-compare', () => {
 		// an assertion on.
 		decryptQueue = ['secret', 'secret\u0000']
 
-		await expect(verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key'))
-			.rejects.toThrow(RoundTripMismatchError)
+		await expect(
+			verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key'),
+		).rejects.toThrow(RoundTripMismatchError)
 	})
 
 	it('throws on a mismatch that differs only by a replacement character', async () => {
 		// The exact shape of a torn multi-byte UTF-8 character.
 		decryptQueue = ['café', 'caf\uFFFD\uFFFD']
 
-		await expect(verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key'))
-			.rejects.toThrow(RoundTripMismatchError)
+		await expect(
+			verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key'),
+		).rejects.toThrow(RoundTripMismatchError)
 	})
 
 	it('accepts a byte-identical round-trip', async () => {
 		decryptQueue = ['identical', 'identical']
 
-		await expect(verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key'))
-			.resolves.toBe('NEW-CIPHERTEXT')
+		await expect(verifiedReEncrypt('OLD-CIPHERTEXT', KEYS, 'key')).resolves.toBe(
+			'NEW-CIPHERTEXT',
+		)
 	})
 
 	it('a mismatch halts the run and is NOT reportable as unrecoverable', async () => {
 		decryptQueue = ['the real password', 'corrupted']
 
-		const result = await migrateRecord({
-			store: MIGRATION_STORES.SECRETS,
-			id: 'secret-1',
-			record: { key: 'OLD-CIPHERTEXT' },
-		}, KEYS)
+		const result = await migrateRecord(
+			{
+				store: MIGRATION_STORES.SECRETS,
+				id: 'secret-1',
+				record: { key: 'OLD-CIPHERTEXT' },
+			},
+			KEYS,
+		)
 
 		expect(result.ok).toBe(false)
 		expect(result.payload).toBeUndefined()
@@ -114,27 +121,35 @@ describe('round-trip byte-compare', () => {
 		// ciphertext will not open with the key we hold.
 		decryptQueue = []
 
-		const result = await migrateRecord({
-			store: MIGRATION_STORES.SECRETS,
-			id: 'secret-1',
-			record: { key: 'OLD-CIPHERTEXT' },
-		}, KEYS)
+		const result = await migrateRecord(
+			{
+				store: MIGRATION_STORES.SECRETS,
+				id: 'secret-1',
+				record: { key: 'OLD-CIPHERTEXT' },
+			},
+			KEYS,
+		)
 
 		expect(result.ok).toBe(false)
 		expect(result.permanent).toBe(true)
 		expect(result.halt).toBe(false)
 		expect(result.phase).toBe('decrypt-old')
-		expect(result.error).toContain('could not be decrypted with the previous key')
+		expect(result.error).toContain(
+			'could not be decrypted with the previous key',
+		)
 	})
 
 	it('defaults to NOT permanent for an unclassified failure', async () => {
 		// An unknown store never touches crypto: nothing proven about the data,
 		// so it must not cost the user access.
-		const result = await migrateRecord({
-			store: 'linkShares',
-			id: 'share-1',
-			record: {},
-		}, KEYS)
+		const result = await migrateRecord(
+			{
+				store: 'linkShares',
+				id: 'share-1',
+				record: {},
+			},
+			KEYS,
+		)
 
 		expect(result.ok).toBe(false)
 		expect(result.permanent).toBe(false)

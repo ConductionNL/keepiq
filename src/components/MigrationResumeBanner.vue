@@ -18,7 +18,8 @@
   @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
 -->
 <template>
-	<div v-if="migration !== null"
+	<div
+		v-if="migration !== null"
 		class="doriath-migration-banner"
 		role="status"
 		data-testid="migration-resume-banner">
@@ -33,14 +34,18 @@
 
 		<!-- Resume needs the OLD master password to unwrap the old private key.
 		     The new one is already in the session, so it is not asked for. -->
-		<form v-if="expanded && locked === false"
+		<form
+			v-if="expanded && locked === false"
 			class="doriath-migration-banner__form"
 			@submit.prevent="onResume">
 			<NcPasswordField
 				v-model="oldPassword"
 				:label="t('doriath', 'Your previous master password')"
 				:disabled="busy" />
-			<NcButton type="submit" variant="primary" :disabled="busy || oldPassword === ''">
+			<NcButton
+				type="submit"
+				variant="primary"
+				:disabled="busy || oldPassword === ''">
 				{{ busy ? t('doriath', 'Resuming…') : t('doriath', 'Resume now') }}
 			</NcButton>
 		</form>
@@ -57,7 +62,8 @@
 			{{ error }}
 		</p>
 
-		<NcButton v-if="expanded === false"
+		<NcButton
+			v-if="expanded === false"
 			variant="secondary"
 			data-testid="migration-resume-open"
 			@click="expanded = true">
@@ -118,13 +124,18 @@ export default {
 		remainingLabel() {
 			const remaining = useEncryptionSuiteStore().migrationRemaining
 			if (remaining === null) {
-				return this.t('doriath', 'Some secrets are still encrypted under your previous key.')
+				return this.t(
+					'doriath',
+					'Some secrets are still encrypted under your previous key.',
+				)
 			}
 
-			return this.n('doriath',
+			return this.n(
+				'doriath',
 				'%n secret is still encrypted under your previous key.',
 				'%n secrets are still encrypted under your previous key.',
-				remaining)
+				remaining,
+			)
 		},
 
 		/**
@@ -183,11 +194,16 @@ export default {
 				// loss acknowledged, so say where that decision now lives instead
 				// of leaving an unexplained banner behind.
 				if (store.migrationNeedsAcknowledgement === true) {
-					this.error = store.migrationBlockedMessage
-						|| this.t('doriath', 'Some secrets could not be migrated. Open key rotation to decide what to do with them.')
+					this.error =
+						store.migrationBlockedMessage
+						|| this.t(
+							'doriath',
+							'Some secrets could not be migrated. Open key rotation to decide what to do with them.',
+						)
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.message
+				this.error =
+					e?.response?.data?.message
 					|| e?.message
 					|| this.t('doriath', 'Could not resume the rotation.')
 			} finally {

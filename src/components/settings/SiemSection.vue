@@ -12,7 +12,12 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'SIEM audit export')"
-		:description="t('doriath', 'Forward whitelisted audit events to syslog or webhook sinks. Payloads carry sanitized metadata only — no secret value, name, login, or ciphertext ever leaves the server.')">
+		:description="
+			t(
+				'doriath',
+				'Forward whitelisted audit events to syslog or webhook sinks. Payloads carry sanitized metadata only — no secret value, name, login, or ciphertext ever leaves the server.',
+			)
+		">
 		<div class="siem" data-testid="siem-section">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
@@ -21,7 +26,10 @@
 				{{ notice }}
 			</NcNoteCard>
 
-			<table v-if="sinks.length" class="siem__table" data-testid="siem-sink-list">
+			<table
+				v-if="sinks.length"
+				class="siem__table"
+				data-testid="siem-sink-list">
 				<thead>
 					<tr>
 						<th scope="col">
@@ -46,17 +54,26 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="sink in sinks" :key="sink.id" :data-testid="`siem-sink-${sink.id}`">
+					<tr
+						v-for="sink in sinks"
+						:key="sink.id"
+						:data-testid="`siem-sink-${sink.id}`">
 						<td>
 							{{ sink.name }}
-							<span v-if="!sink.enabled" class="siem__muted">({{ t('doriath', 'disabled') }})</span>
+							<span v-if="!sink.enabled" class="siem__muted"
+								>({{ t('doriath', 'disabled') }})</span
+							>
 						</td>
 						<td>{{ sink.type }}</td>
 						<td>
-							<span :class="statusClass(sink)" :data-testid="`siem-status-${sink.id}`">
+							<span
+								:class="statusClass(sink)"
+								:data-testid="`siem-status-${sink.id}`">
 								{{ statusLabel(sink) }}
 							</span>
-							<div v-if="sink.lastError" class="siem__muted siem__error-detail">
+							<div
+								v-if="sink.lastError"
+								class="siem__muted siem__error-detail">
 								{{ sink.lastError }}
 							</div>
 						</td>
@@ -64,19 +81,22 @@
 						<td>{{ sink.consecutiveFailures }}</td>
 						<td>{{ sink.droppedCount }}</td>
 						<td class="siem__actions">
-							<NcButton variant="tertiary"
+							<NcButton
+								variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-test-${sink.id}`"
 								@click="onTest(sink)">
 								{{ t('doriath', 'Test') }}
 							</NcButton>
-							<NcButton variant="tertiary"
+							<NcButton
+								variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-edit-${sink.id}`"
 								@click="startEdit(sink)">
 								{{ t('doriath', 'Edit') }}
 							</NcButton>
-							<NcButton variant="tertiary"
+							<NcButton
+								variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-delete-${sink.id}`"
 								@click="onDelete(sink)">
@@ -90,7 +110,8 @@
 				{{ t('doriath', 'No SIEM sinks configured.') }}
 			</p>
 
-			<NcButton v-if="!formOpen"
+			<NcButton
+				v-if="!formOpen"
 				variant="primary"
 				data-testid="siem-add"
 				@click="startCreate">
@@ -99,54 +120,88 @@
 
 			<!-- Add / edit form. -->
 			<div v-if="formOpen" class="siem__form" data-testid="siem-form">
-				<h4>{{ editingId ? t('doriath', 'Edit sink') : t('doriath', 'New sink') }}</h4>
-				<NcTextField v-model="form.name"
+				<h4>
+					{{
+						editingId
+							? t('doriath', 'Edit sink')
+							: t('doriath', 'New sink')
+					}}
+				</h4>
+				<NcTextField
+					v-model="form.name"
 					:label="t('doriath', 'Name')"
 					data-testid="siem-form-name" />
-				<NcSelect v-if="!editingId"
+				<NcSelect
+					v-if="!editingId"
 					v-model="form.type"
 					:options="['syslog', 'webhook']"
 					:clearable="false"
 					:input-label="t('doriath', 'Type')"
 					data-testid="siem-form-type" />
-				<NcTextField v-model="form.endpoint"
-					:label="form.type === 'syslog' ? t('doriath', 'Endpoint (host:port)') : t('doriath', 'Endpoint (https URL)')"
-					:placeholder="form.type === 'syslog' ? 'siem.example.org:6514' : 'https://siem.example.org/ingest'"
+				<NcTextField
+					v-model="form.endpoint"
+					:label="
+						form.type === 'syslog'
+							? t('doriath', 'Endpoint (host:port)')
+							: t('doriath', 'Endpoint (https URL)')
+					"
+					:placeholder="
+						form.type === 'syslog'
+							? 'siem.example.org:6514'
+							: 'https://siem.example.org/ingest'
+					"
 					data-testid="siem-form-endpoint" />
-				<NcCheckboxRadioSwitch v-if="form.type === 'syslog'"
+				<NcCheckboxRadioSwitch
+					v-if="form.type === 'syslog'"
 					v-model="form.tls"
 					type="switch"
 					data-testid="siem-form-tls">
 					{{ t('doriath', 'Use TLS transport') }}
 				</NcCheckboxRadioSwitch>
-				<NcTextField v-if="form.type === 'webhook'"
+				<NcTextField
+					v-if="form.type === 'webhook'"
 					v-model="form.hmacSecret"
 					type="password"
 					:label="t('doriath', 'HMAC signing secret (write-only)')"
-					:placeholder="editingHasSecret ? t('doriath', 'Leave blank to keep the current secret') : ''"
+					:placeholder="
+						editingHasSecret
+							? t('doriath', 'Leave blank to keep the current secret')
+							: ''
+					"
 					data-testid="siem-form-secret" />
-				<NcSelect v-model="form.categoryFilter"
+				<NcSelect
+					v-model="form.categoryFilter"
 					:options="categoryOptions"
 					multiple
-					:input-label="t('doriath', 'Category filter (empty = all events)')"
+					:input-label="
+						t('doriath', 'Category filter (empty = all events)')
+					"
 					data-testid="siem-form-categories" />
-				<NcTextField v-model="form.queueCap"
+				<NcTextField
+					v-model="form.queueCap"
 					type="number"
-					:label="t('doriath', 'Queue cap (oldest events drop beyond this)')"
+					:label="
+						t('doriath', 'Queue cap (oldest events drop beyond this)')
+					"
 					data-testid="siem-form-queuecap" />
-				<NcCheckboxRadioSwitch v-model="form.enabled"
+				<NcCheckboxRadioSwitch
+					v-model="form.enabled"
 					type="switch"
 					data-testid="siem-form-enabled">
 					{{ t('doriath', 'Enabled') }}
 				</NcCheckboxRadioSwitch>
 				<div class="siem__form-actions">
-					<NcButton variant="primary"
+					<NcButton
+						variant="primary"
 						:disabled="busy || !formValid"
 						data-testid="siem-form-save"
 						@click="onSave">
-						{{ editingId ? t('doriath', 'Save') : t('doriath', 'Create') }}
+						{{
+							editingId ? t('doriath', 'Save') : t('doriath', 'Create')
+						}}
 					</NcButton>
-					<NcButton variant="tertiary"
+					<NcButton
+						variant="tertiary"
 						:disabled="busy"
 						data-testid="siem-form-cancel"
 						@click="formOpen = false">
@@ -160,7 +215,13 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
@@ -169,9 +230,22 @@ import { generateUrl } from '@nextcloud/router'
  * type). Kept in sync with lib/Event/Audit/AuditEventTypes.php.
  */
 const CATEGORY_OPTIONS = [
-	'secret', 'folder', 'share', 'link_share', 'request', 'suite',
-	'application', 'vault', 'emergency_access', 'policy', 'password_policy',
-	'compliance', 'lease', 'attachment', 'team_folder', 'siem',
+	'secret',
+	'folder',
+	'share',
+	'link_share',
+	'request',
+	'suite',
+	'application',
+	'vault',
+	'emergency_access',
+	'policy',
+	'password_policy',
+	'compliance',
+	'lease',
+	'attachment',
+	'team_folder',
+	'siem',
 ]
 
 const EMPTY_FORM = () => ({
@@ -215,7 +289,10 @@ export default {
 			if (this.form.endpoint === '') {
 				return false
 			}
-			if (this.form.type === 'webhook' && !this.form.endpoint.startsWith('https://')) {
+			if (
+				this.form.type === 'webhook'
+				&& !this.form.endpoint.startsWith('https://')
+			) {
 				return false
 			}
 			return true
@@ -227,7 +304,9 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/siem/sinks'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/siem/sinks'),
+			)
 			this.sinks = response.data ?? []
 		} catch (e) {
 			this.error = e?.response?.data?.message || e?.message
@@ -288,13 +367,23 @@ export default {
 					enabled: this.form.enabled,
 				}
 				if (this.editingId) {
-					const response = await axios.put(generateUrl(`/apps/doriath/api/v1/siem/sinks/${this.editingId}`), payload)
-					this.sinks = this.sinks.map(s => (s.id === this.editingId ? response.data : s))
+					const response = await axios.put(
+						generateUrl(
+							`/apps/doriath/api/v1/siem/sinks/${this.editingId}`,
+						),
+						payload,
+					)
+					this.sinks = this.sinks.map((s) =>
+						s.id === this.editingId ? response.data : s,
+					)
 				} else {
-					const response = await axios.post(generateUrl('/apps/doriath/api/v1/siem/sinks'), {
-						...payload,
-						type: this.form.type,
-					})
+					const response = await axios.post(
+						generateUrl('/apps/doriath/api/v1/siem/sinks'),
+						{
+							...payload,
+							type: this.form.type,
+						},
+					)
 					this.sinks = [response.data, ...this.sinks]
 				}
 				this.formOpen = false
@@ -316,14 +405,24 @@ export default {
 			this.error = null
 			this.notice = null
 			try {
-				const response = await axios.post(generateUrl(`/apps/doriath/api/v1/siem/sinks/${sink.id}/test`))
+				const response = await axios.post(
+					generateUrl(`/apps/doriath/api/v1/siem/sinks/${sink.id}/test`),
+				)
 				if (response.data?.ok) {
-					this.notice = t('doriath', 'Test event delivered to "{name}".', { name: sink.name })
-				} else {
-					this.error = t('doriath', 'Test delivery to "{name}" failed: {error}', {
+					this.notice = t('doriath', 'Test event delivered to "{name}".', {
 						name: sink.name,
-						error: response.data?.error || t('doriath', 'unknown error'),
 					})
+				} else {
+					this.error = t(
+						'doriath',
+						'Test delivery to "{name}" failed: {error}',
+						{
+							name: sink.name,
+							error:
+								response.data?.error
+								|| t('doriath', 'unknown error'),
+						},
+					)
 				}
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
@@ -342,8 +441,10 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				await axios.delete(generateUrl(`/apps/doriath/api/v1/siem/sinks/${sink.id}`))
-				this.sinks = this.sinks.filter(s => s.id !== sink.id)
+				await axios.delete(
+					generateUrl(`/apps/doriath/api/v1/siem/sinks/${sink.id}`),
+				)
+				this.sinks = this.sinks.filter((s) => s.id !== sink.id)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			} finally {
@@ -374,7 +475,10 @@ export default {
 			if (sink.lastDeliveryStatus === 'ok') {
 				return 'siem__status--ok'
 			}
-			if (sink.lastDeliveryStatus === 'failing' || sink.lastDeliveryStatus === 'dead') {
+			if (
+				sink.lastDeliveryStatus === 'failing'
+				|| sink.lastDeliveryStatus === 'dead'
+			) {
 				return 'siem__status--bad'
 			}
 			return 'siem__muted'

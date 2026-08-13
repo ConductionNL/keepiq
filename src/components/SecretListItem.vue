@@ -1,5 +1,6 @@
 <template>
-	<div class="secret-list-item"
+	<div
+		class="secret-list-item"
 		role="button"
 		tabindex="0"
 		:aria-label="t('doriath', 'Open {name}', { name: secret.name })"
@@ -8,12 +9,13 @@
 		@keydown.enter="onRowActivate"
 		@keydown.space.prevent="onRowActivate">
 		<span class="secret-list-item__icon">
-			<img v-if="faviconUrl && !faviconFailed"
+			<img
+				v-if="faviconUrl && !faviconFailed"
 				:src="faviconUrl"
 				:alt="''"
 				width="24"
 				height="24"
-				@error="faviconFailed = true">
+				@error="faviconFailed = true" />
 			<component :is="iconComponent" v-else :size="24" />
 		</span>
 
@@ -22,7 +24,9 @@
 				{{ secret.name }}
 				<StrengthBadge v-if="!secret.blocked" :secret-id="secret.id" />
 			</span>
-			<span v-if="secret.url" class="secret-list-item__url">{{ secret.url }}</span>
+			<span v-if="secret.url" class="secret-list-item__url">{{
+				secret.url
+			}}</span>
 			<span v-if="secret.tombstonedAt" class="secret-list-item__tombstone">
 				{{ t('doriath', 'Shared by a deleted account — no longer synced') }}
 			</span>
@@ -35,11 +39,17 @@
 			  There is no dismiss affordance by design: it stays until the value
 			  is actually replaced, which is what clears the flag server-side.
 			-->
-			<span v-if="secret.possiblyCompromisedAt"
+			<span
+				v-if="secret.possiblyCompromisedAt"
 				class="secret-list-item__compromised"
 				data-testid="secret-possibly-compromised">
 				<AlertOutline :size="16" />
-				{{ t('doriath', 'Assume this value was exposed — change it at its source') }}
+				{{
+					t(
+						'doriath',
+						'Assume this value was exposed — change it at its source',
+					)
+				}}
 			</span>
 		</span>
 
@@ -48,12 +58,14 @@
 			{{ blockedLabel }}
 		</span>
 
-		<span v-else
+		<span
+			v-else
 			class="secret-list-item__actions"
 			@click.stop
 			@keydown.enter.stop
 			@keydown.space.stop>
-			<CopyButton :resolve="resolveKey"
+			<CopyButton
+				:resolve="resolveKey"
 				:label="t('doriath', 'Copy password')"
 				@copied="$emit('copied')" />
 		</span>

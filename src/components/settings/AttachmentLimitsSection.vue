@@ -12,42 +12,53 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Attachments & version history')"
-		:description="t('doriath', 'Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes) and version-history retention.')">
+		:description="
+			t(
+				'doriath',
+				'Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes) and version-history retention.',
+			)
+		">
 		<div class="attachment-limits" data-testid="attachment-limits-section">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
 			<label class="attachment-limits__field">
 				<span>{{ t('doriath', 'Maximum size per attachment (MiB)') }}</span>
-				<input v-model.number="maxMib"
+				<input
+					v-model.number="maxMib"
 					type="number"
 					min="1"
 					data-testid="attachment-max-mib"
-					@change="save">
+					@change="save" />
 			</label>
 			<label class="attachment-limits__field">
 				<span>{{ t('doriath', 'Quota per user (MiB)') }}</span>
-				<input v-model.number="quotaMib"
+				<input
+					v-model.number="quotaMib"
 					type="number"
 					min="1"
 					data-testid="attachment-quota-mib"
-					@change="save">
+					@change="save" />
 			</label>
 			<label class="attachment-limits__field">
 				<span>{{ t('doriath', 'Versions kept per secret') }}</span>
-				<input v-model.number="retentionCount"
+				<input
+					v-model.number="retentionCount"
 					type="number"
 					min="1"
 					data-testid="version-retention-count"
-					@change="save">
+					@change="save" />
 			</label>
 			<label class="attachment-limits__field">
-				<span>{{ t('doriath', 'Version age limit (days, 0 = unlimited)') }}</span>
-				<input v-model.number="retentionDays"
+				<span>{{
+					t('doriath', 'Version age limit (days, 0 = unlimited)')
+				}}</span>
+				<input
+					v-model.number="retentionDays"
 					type="number"
 					min="0"
 					data-testid="version-retention-days"
-					@change="save">
+					@change="save" />
 			</label>
 		</div>
 	</CnSettingsSection>
@@ -80,9 +91,15 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
-			this.maxMib = Math.round((response.data.attachment_max_bytes ?? 25 * MIB) / MIB)
-			this.quotaMib = Math.round((response.data.attachment_user_quota_bytes ?? 100 * MIB) / MIB)
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings/admin'),
+			)
+			this.maxMib = Math.round(
+				(response.data.attachment_max_bytes ?? 25 * MIB) / MIB,
+			)
+			this.quotaMib = Math.round(
+				(response.data.attachment_user_quota_bytes ?? 100 * MIB) / MIB,
+			)
 			this.retentionCount = response.data.version_retention_count ?? 20
 			this.retentionDays = response.data.version_retention_days ?? 365
 		} catch (e) {
