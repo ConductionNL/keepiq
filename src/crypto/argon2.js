@@ -68,7 +68,10 @@ function fromBase64(base64) {
  * @return {boolean} True when WASM is available
  */
 export function isArgon2Supported() {
-	return typeof WebAssembly === 'object' && typeof WebAssembly.instantiate === 'function'
+	return (
+		typeof WebAssembly === 'object'
+		&& typeof WebAssembly.instantiate === 'function'
+	)
 }
 
 /**
@@ -89,15 +92,17 @@ export async function deriveAesKeyArgon2id(password, salt) {
 	// otherwise `atob()` that URL string as if it were embedded base64 and throw
 	// "string to be decoded is not correctly encoded". Provide a binary loader so
 	// it fetches the real .wasm bytes instead.
-	const globalScope = (typeof globalThis !== 'undefined' && globalThis)
+	const globalScope =
+		(typeof globalThis !== 'undefined' && globalThis)
 		|| (typeof window !== 'undefined' && window)
 		|| null
 	if (globalScope && !globalScope.loadArgon2WasmBinary) {
 		// eslint-disable-next-line import/no-unresolved
 		const wasmUrl = (await import('argon2-browser/dist/argon2.wasm')).default
-		globalScope.loadArgon2WasmBinary = () => fetch(wasmUrl)
-			.then((res) => res.arrayBuffer())
-			.then((ab) => new Uint8Array(ab))
+		globalScope.loadArgon2WasmBinary = () =>
+			fetch(wasmUrl)
+				.then((res) => res.arrayBuffer())
+				.then((ab) => new Uint8Array(ab))
 	}
 
 	// Lazy-load the WASM KDF so it is excluded from the initial vault bundle.
@@ -192,7 +197,8 @@ export async function decryptSnapshot(base64Blob, base64Salt, password) {
  * @return {string} A 20-character random password
  */
 export function generateLinkPassword() {
-	const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*-_=+'
+	const alphabet =
+		'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*-_=+'
 	const length = 20
 	const max = Math.floor(256 / alphabet.length) * alphabet.length
 	const out = []

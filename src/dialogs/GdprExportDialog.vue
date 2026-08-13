@@ -14,7 +14,8 @@
   @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Download my data (GDPR)')"
+	<NcDialog
+		:name="t('doriath', 'Download my data (GDPR)')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -24,14 +25,29 @@
 			</NcNoteCard>
 
 			<p>
-				{{ t('doriath', 'This downloads a machine-readable package of all personal data Doriath holds about you (GDPR Article 15).') }}
+				{{
+					t(
+						'doriath',
+						'This downloads a machine-readable package of all personal data Doriath holds about you (GDPR Article 15).',
+					)
+				}}
 			</p>
 
 			<NcNoteCard v-if="locked" type="info">
-				{{ t('doriath', 'Your vault is locked. The package will contain your account metadata only; your secrets stay end-to-end encrypted and are not included unless you unlock the vault first.') }}
+				{{
+					t(
+						'doriath',
+						'Your vault is locked. The package will contain your account metadata only; your secrets stay end-to-end encrypted and are not included unless you unlock the vault first.',
+					)
+				}}
 			</NcNoteCard>
 			<NcNoteCard v-else type="success">
-				{{ t('doriath', 'Your vault is unlocked. The package will include both your account metadata and your decrypted secrets.') }}
+				{{
+					t(
+						'doriath',
+						'Your vault is unlocked. The package will include both your account metadata and your decrypted secrets.',
+					)
+				}}
 			</NcNoteCard>
 		</div>
 
@@ -39,10 +55,12 @@
 			<NcButton @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="primary"
-				:disabled="loading"
-				@click="onDownload">
-				{{ locked ? t('doriath', 'Download metadata only') : t('doriath', 'Download full package') }}
+			<NcButton variant="primary" :disabled="loading" @click="onDownload">
+				{{
+					locked
+						? t('doriath', 'Download metadata only')
+						: t('doriath', 'Download full package')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -129,7 +147,10 @@ export default {
 				await this.exportStore.exportGdprPackage(secrets, this.folders)
 				this.$emit('update:open', false)
 			} catch (e) {
-				this.error = this.exportStore.error || (e && e.message) || this.t('doriath', 'GDPR export failed')
+				this.error =
+					this.exportStore.error
+					|| (e && e.message)
+					|| this.t('doriath', 'GDPR export failed')
 			}
 		},
 		/**

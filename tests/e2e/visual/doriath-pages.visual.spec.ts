@@ -74,12 +74,14 @@ async function api(
 	method: string,
 	path: string,
 	body?: Record<string, unknown>,
-): Promise<{ status: number, json: any }> {
+): Promise<{ status: number; json: any }> {
 	return await page.evaluate(
 		async ({ method, path, body, base }) => {
 			const head = document.querySelector('head[data-requesttoken]')
-			const token = (head && head.getAttribute('data-requesttoken'))
-				|| ((window as any).OC && (window as any).OC.requestToken) || ''
+			const token =
+				(head && head.getAttribute('data-requesttoken'))
+				|| ((window as any).OC && (window as any).OC.requestToken)
+				|| ''
 			const res = await fetch(`${base}${path}`, {
 				method,
 				headers: {
@@ -112,7 +114,11 @@ test.describe('Doriath — routed page baselines', () => {
 	test('PersonalActivityView — /my-activity', async ({ page }) => {
 		await unlockVault(page)
 		await gotoVaultRoute(page, 'my-activity')
-		await shootComponent(page, 'personal-activity-view', 'personal-activity-view.png')
+		await shootComponent(
+			page,
+			'personal-activity-view',
+			'personal-activity-view.png',
+		)
 	})
 
 	test('HealthReportView — /password-health', async ({ page }) => {
@@ -124,13 +130,21 @@ test.describe('Doriath — routed page baselines', () => {
 	test('CertificateInventoryView — /certificates', async ({ page }) => {
 		await unlockVault(page)
 		await gotoVaultRoute(page, 'certificates')
-		await shootComponent(page, 'certificate-inventory-view', 'certificate-inventory-view.png')
+		await shootComponent(
+			page,
+			'certificate-inventory-view',
+			'certificate-inventory-view.png',
+		)
 	})
 
 	test('ApplicationRegisterView — /applications', async ({ page }) => {
 		await unlockVault(page)
 		await gotoVaultRoute(page, 'applications')
-		await shootComponent(page, 'application-register-view', 'application-register-view.png')
+		await shootComponent(
+			page,
+			'application-register-view',
+			'application-register-view.png',
+		)
 	})
 
 	test('ApplicationDetail — /applications/:id', async ({ page }) => {
@@ -156,9 +170,12 @@ test.describe('Doriath — routed page baselines', () => {
 	test('SecretRequestFill — /share/request/:token', async ({ page }) => {
 		await page.goto(`${APP_BASE}/`, { waitUntil: 'domcontentloaded' })
 		const reqs = await api(page, 'GET', '/api/v1/secret-requests')
-		expect(reqs.status, `GET /api/v1/secret-requests -> ${reqs.status}`).toBe(200)
-		const pending = (Array.isArray(reqs.json) ? reqs.json : [])
-			.find((r: any) => r.status === 'pending')
+		expect(reqs.status, `GET /api/v1/secret-requests -> ${reqs.status}`).toBe(
+			200,
+		)
+		const pending = (Array.isArray(reqs.json) ? reqs.json : []).find(
+			(r: any) => r.status === 'pending',
+		)
 		expect(pending, 'no pending secret request to fill').toBeTruthy()
 		await page.goto(`${APP_BASE}/#/share/request/${pending.token}`, {
 			waitUntil: 'domcontentloaded',
@@ -172,18 +189,25 @@ test.describe('Doriath — routed page baselines', () => {
 		expect(secrets.status, `GET /api/v1/secrets -> ${secrets.status}`).toBe(200)
 		const secret = (secrets.json?.items ?? [])[0]
 		expect(secret, 'no secret to share — is the dev seed present?').toBeTruthy()
-		const created = await api(page, 'POST', `/api/v1/secrets/${secret.id}/link-shares`, {
-			encryptedSecretSnapshot: OPAQUE,
-			argon2idSalt: OPAQUE,
-			usageLimit: 5,
-		})
+		const created = await api(
+			page,
+			'POST',
+			`/api/v1/secrets/${secret.id}/link-shares`,
+			{
+				encryptedSecretSnapshot: OPAQUE,
+				argon2idSalt: OPAQUE,
+				usageLimit: 5,
+			},
+		)
 		expect(
 			created.status,
 			`POST link-share -> ${created.status} ${JSON.stringify(created.json).slice(0, 200)}`,
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created link share carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/share/link/${token}`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP_BASE}/#/share/link/${token}`, {
+			waitUntil: 'domcontentloaded',
+		})
 		await shootComponent(page, 'link-share-access', 'link-share-access.png')
 	})
 
@@ -204,7 +228,9 @@ test.describe('Doriath — routed page baselines', () => {
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created ephemeral send carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/send/${token}`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP_BASE}/#/send/${token}`, {
+			waitUntil: 'domcontentloaded',
+		})
 		await shootComponent(page, 'send-access-page', 'ephemeral-send-access.png')
 	})
 })

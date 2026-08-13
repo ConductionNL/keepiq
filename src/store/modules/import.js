@@ -33,7 +33,14 @@ import '../../import/parsers/index.js'
 export const COMMIT_CHUNK_SIZE = 50
 
 /** The wizard steps in order. */
-export const STEPS = ['pick', 'mapping', 'folders', 'duplicates', 'commit', 'summary']
+export const STEPS = [
+	'pick',
+	'mapping',
+	'folders',
+	'duplicates',
+	'commit',
+	'summary',
+]
 
 export const useImportStore = defineStore('import', {
 	state: () => ({
@@ -72,7 +79,7 @@ export const useImportStore = defineStore('import', {
 		 * @return {Array<object>} The committable rows.
 		 */
 		acceptedRows: (state) => {
-			const dupRows = new Set(state.duplicates.map(d => d.sourceRow))
+			const dupRows = new Set(state.duplicates.map((d) => d.sourceRow))
 			return state.rows.filter((row) => {
 				if (row.errors && row.errors.length > 0) {
 					return false
@@ -106,11 +113,15 @@ export const useImportStore = defineStore('import', {
 				const parsed = await parser.parse(text, options)
 				this.format = format
 				this.rows = this.expandTotpRows(
-					parsed.filter(r => !r.errors || r.errors.length === 0),
+					parsed.filter((r) => !r.errors || r.errors.length === 0),
 				)
 				this.rejected = parsed
-					.filter(r => r.errors && r.errors.length > 0)
-					.map(r => ({ sourceRow: r.sourceRow, reason: r.errors.join('; '), name: r.name }))
+					.filter((r) => r.errors && r.errors.length > 0)
+					.map((r) => ({
+						sourceRow: r.sourceRow,
+						reason: r.errors.join('; '),
+						name: r.name,
+					}))
 			} catch (e) {
 				this.error = e.message || 'Could not parse the file'
 				throw e
@@ -135,7 +146,10 @@ export const useImportStore = defineStore('import', {
 		 */
 		expandTotpRows(rows) {
 			const out = []
-			let nextSourceRow = rows.reduce((max, r) => Math.max(max, r.sourceRow || 0), 0)
+			let nextSourceRow = rows.reduce(
+				(max, r) => Math.max(max, r.sourceRow || 0),
+				0,
+			)
 			for (const row of rows) {
 				const seed = row.additionalFields && row.additionalFields.totp
 				if (typeof seed === 'string' && seed.trim() !== '') {
@@ -176,13 +190,14 @@ export const useImportStore = defineStore('import', {
 			// Pull the full vault metadata (names/urls are plaintext), paged
 			// within the server's per-request cap.
 			await secretStore.fetchAllSecrets()
-			const existing = new Set(secretStore.secrets.map(s => dedupeKey(s)))
+			const existing = new Set(secretStore.secrets.map((s) => dedupeKey(s)))
 
-			this.duplicates = this.rows.filter(row => existing.has(dedupeKey(row)))
+			this.duplicates = this.rows.filter((row) => existing.has(dedupeKey(row)))
 			// Default resolution: skip.
 			const resolutions = {}
 			for (const dup of this.duplicates) {
-				resolutions[dup.sourceRow] = this.duplicateResolutions[dup.sourceRow] ?? 'skip'
+				resolutions[dup.sourceRow] =
+					this.duplicateResolutions[dup.sourceRow] ?? 'skip'
 			}
 			this.duplicateResolutions = resolutions
 		},
@@ -196,7 +211,10 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveDuplicate(sourceRow, resolution) {
-			this.duplicateResolutions = { ...this.duplicateResolutions, [sourceRow]: resolution }
+			this.duplicateResolutions = {
+				...this.duplicateResolutions,
+				[sourceRow]: resolution,
+			}
 		},
 
 		/**
@@ -227,7 +245,14 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 */
-		async encryptRow(row, publicKey, asCopy, totpTypeId = null, passkeyTypeId = null, typedIds = {}) {
+		async encryptRow(
+			row,
+			publicKey,
+			asCopy,
+			totpTypeId = null,
+			passkeyTypeId = null,
+			typedIds = {},
+		) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
 			const item = {
 				sourceRow: row.sourceRow,
@@ -252,16 +277,20 @@ export const useImportStore = defineStore('import', {
 			// `card` / `identity` rows carry their composite JSON payload in
 			// `password` (now ciphertext in `key`); the type is a UI hint
 			// only (card-identity-items §5.1).
-			if ((row.type === 'card' || row.type === 'identity') && typedIds[row.type]) {
+			if (
+				(row.type === 'card' || row.type === 'identity')
+				&& typedIds[row.type]
+			) {
 				item.typeId = typedIds[row.type]
 			}
 			if (row.login != null && row.login !== '') {
 				item.login = await rsaEncrypt(String(row.login), publicKey)
 			}
 			if (row.additionalFields != null) {
-				const json = typeof row.additionalFields === 'string'
-					? row.additionalFields
-					: JSON.stringify(row.additionalFields)
+				const json =
+					typeof row.additionalFields === 'string'
+						? row.additionalFields
+						: JSON.stringify(row.additionalFields)
 				if (json && json !== '{}' && json !== 'null') {
 					item.additionalFields = await rsaEncrypt(json, publicKey)
 				}
@@ -288,7 +317,7 @@ export const useImportStore = defineStore('import', {
 
 			const publicKey = await importPublicKey(session.certificate)
 			const rows = this.acceptedRows
-			const dupRows = new Set(this.duplicates.map(d => d.sourceRow))
+			const dupRows = new Set(this.duplicates.map((d) => d.sourceRow))
 
 			// Resolve the `totp` type id once so imported authenticator seeds are
 			// filed as Authenticator secrets (add-totp-secrets D6). Best-effort:
@@ -296,7 +325,10 @@ export const useImportStore = defineStore('import', {
 			let totpTypeId = null
 			if (rows.some((row) => row.type === 'totp')) {
 				const typeStore = useSecretTypeStore()
-				if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+				if (
+					!Array.isArray(typeStore.types)
+					|| typeStore.types.length === 0
+				) {
 					try {
 						await typeStore.fetchTypes()
 					} catch {
@@ -312,7 +344,10 @@ export const useImportStore = defineStore('import', {
 			let passkeyTypeId = null
 			if (rows.some((row) => row.type === 'passkey')) {
 				const typeStore = useSecretTypeStore()
-				if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+				if (
+					!Array.isArray(typeStore.types)
+					|| typeStore.types.length === 0
+				) {
 					try {
 						await typeStore.fetchTypes()
 					} catch {
@@ -320,7 +355,9 @@ export const useImportStore = defineStore('import', {
 					}
 				}
 				const types = Array.isArray(typeStore.types) ? typeStore.types : []
-				const passkeyType = types.find((type) => type && type.name === 'passkey')
+				const passkeyType = types.find(
+					(type) => type && type.name === 'passkey',
+				)
 				passkeyTypeId = passkeyType ? passkeyType.id : null
 			}
 
@@ -328,7 +365,10 @@ export const useImportStore = defineStore('import', {
 			const typedIds = {}
 			if (rows.some((row) => row.type === 'card' || row.type === 'identity')) {
 				const typeStore = useSecretTypeStore()
-				if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+				if (
+					!Array.isArray(typeStore.types)
+					|| typeStore.types.length === 0
+				) {
 					try {
 						await typeStore.fetchTypes()
 					} catch {
@@ -349,7 +389,16 @@ export const useImportStore = defineStore('import', {
 			const itemRowByIndex = []
 			for (const row of rows) {
 				const asCopy = dupRows.has(row.sourceRow)
-				items.push(await this.encryptRow(row, publicKey, asCopy, totpTypeId, passkeyTypeId, typedIds))
+				items.push(
+					await this.encryptRow(
+						row,
+						publicKey,
+						asCopy,
+						totpTypeId,
+						passkeyTypeId,
+						typedIds,
+					),
+				)
 				itemRowByIndex.push(row)
 			}
 
@@ -364,16 +413,25 @@ export const useImportStore = defineStore('import', {
 			const foldersCreated = new Set()
 
 			for (const chunk of chunks) {
-				const folders = [...new Set(chunk.map(it => it.folderPath.join('/')).filter(p => p !== ''))]
-					.map(p => p.split('/'))
+				const folders = [
+					...new Set(
+						chunk
+							.map((it) => it.folderPath.join('/'))
+							.filter((p) => p !== ''),
+					),
+				].map((p) => p.split('/'))
 				const result = await this.postChunk({ folders, items: chunk })
 				if (result === null) {
 					// Chunk failed twice: reject all its rows.
 					for (const it of chunk) {
-						this.rejected.push({ sourceRow: it.sourceRow, reason: 'server error', name: it.name })
+						this.rejected.push({
+							sourceRow: it.sourceRow,
+							reason: 'server error',
+							name: it.name,
+						})
 					}
 				} else {
-					for (const r of (result.results || [])) {
+					for (const r of result.results || []) {
 						const item = chunk[r.index]
 						if (r.status === 'created') {
 							created += 1
@@ -385,7 +443,7 @@ export const useImportStore = defineStore('import', {
 							})
 						}
 					}
-					for (const f of (result.foldersCreated || [])) {
+					for (const f of result.foldersCreated || []) {
 						foldersCreated.add(f)
 					}
 				}
@@ -395,7 +453,7 @@ export const useImportStore = defineStore('import', {
 			this.summary = {
 				imported: created,
 				skippedDuplicates: this.duplicates.filter(
-					d => this.duplicateResolutions[d.sourceRow] !== 'copy',
+					(d) => this.duplicateResolutions[d.sourceRow] !== 'copy',
 				).length,
 				rejected: this.rejected.length,
 				foldersCreated: foldersCreated.size,
@@ -440,10 +498,12 @@ export const useImportStore = defineStore('import', {
 		rejectedCsv() {
 			const lines = ['row,name,reason']
 			for (const r of this.rejected) {
-				const cells = [r.sourceRow, r.name ?? '', r.reason ?? ''].map((v) => {
-					const s = String(v)
-					return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-				})
+				const cells = [r.sourceRow, r.name ?? '', r.reason ?? ''].map(
+					(v) => {
+						const s = String(v)
+						return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+					},
+				)
 				lines.push(cells.join(','))
 			}
 			return lines.join('\r\n')

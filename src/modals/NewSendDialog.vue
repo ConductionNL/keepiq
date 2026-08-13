@@ -9,7 +9,8 @@
   @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
 -->
 <template>
-	<NcDialog :name="t('doriath', 'New ephemeral send')"
+	<NcDialog
+		:name="t('doriath', 'New ephemeral send')"
 		:open="open"
 		size="normal"
 		data-testid="new-send-dialog"
@@ -22,33 +23,47 @@
 			<template v-if="link === ''">
 				<label class="new-send__field">
 					<span>{{ t('doriath', 'Content to send') }}</span>
-					<textarea v-model="payload"
+					<textarea
+						v-model="payload"
 						rows="4"
 						data-testid="send-payload" />
 				</label>
-				<NcSelect v-model="payloadType"
+				<NcSelect
+					v-model="payloadType"
 					:options="['text', 'credential']"
 					:input-label="t('doriath', 'Type')"
 					:clearable="false"
 					data-testid="send-type" />
 				<label class="new-send__field">
 					<span>{{ t('doriath', 'Maximum views (burns after)') }}</span>
-					<input v-model.number="maxViews"
+					<input
+						v-model.number="maxViews"
 						type="number"
 						min="1"
 						max="100"
-						data-testid="send-max-views">
+						data-testid="send-max-views" />
 				</label>
 				<label class="new-send__field">
-					<span>{{ t('doriath', 'Expires after (hours, 0 = no time limit, max 720)') }}</span>
-					<input v-model.number="ttlHours"
+					<span>{{
+						t(
+							'doriath',
+							'Expires after (hours, 0 = no time limit, max 720)',
+						)
+					}}</span>
+					<input
+						v-model.number="ttlHours"
 						type="number"
 						min="0"
 						max="720"
-						data-testid="send-ttl">
+						data-testid="send-ttl" />
 				</label>
 				<label class="new-send__field">
-					<span>{{ t('doriath', 'Password (optional — without one, the key travels in the link itself)') }}</span>
+					<span>{{
+						t(
+							'doriath',
+							'Password (optional — without one, the key travels in the link itself)',
+						)
+					}}</span>
 					<!--
 						autocomplete="new-password": the author is minting a
 						fresh passphrase to protect this send, so suppress
@@ -56,16 +71,23 @@
 						to generate one. It is not the user's own credential, so
 						it is never `current-password`.
 					-->
-					<input v-model="password"
+					<input
+						v-model="password"
 						type="password"
 						autocomplete="new-password"
-						data-testid="send-password">
+						data-testid="send-password" />
 				</label>
 			</template>
 
 			<template v-else>
 				<NcNoteCard type="warning" data-testid="send-link-once">
-					{{ t('doriath', 'Copy this link now — it is shown only once. The content burns after {views} view(s).', { views: maxViews }) }}
+					{{
+						t(
+							'doriath',
+							'Copy this link now — it is shown only once. The content burns after {views} view(s).',
+							{ views: maxViews },
+						)
+					}}
 				</NcNoteCard>
 				<div class="new-send__link">
 					<!--
@@ -75,12 +97,16 @@
 						would be redundant to sighted users while a screen
 						reader still needs the control named.
 					-->
-					<input :value="link"
+					<input
+						:value="link"
 						readonly
 						:aria-label="t('doriath', 'Link')"
 						data-testid="send-link"
-						@focus="$event.target.select()">
-					<NcButton variant="secondary" data-testid="send-copy-link" @click="copyLink">
+						@focus="$event.target.select()" />
+					<NcButton
+						variant="secondary"
+						data-testid="send-copy-link"
+						@click="copyLink">
 						{{ t('doriath', 'Copy link') }}
 					</NcButton>
 				</div>
@@ -90,7 +116,8 @@
 			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton v-if="link === ''"
+			<NcButton
+				v-if="link === ''"
 				variant="primary"
 				:disabled="payload === '' || busy"
 				data-testid="send-create"
@@ -153,7 +180,10 @@ export default {
 				this.payload = ''
 				this.password = ''
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to create send'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to create send'
 			} finally {
 				this.busy = false
 			}

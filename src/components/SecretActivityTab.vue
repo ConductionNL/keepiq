@@ -6,7 +6,8 @@
 
 		<NcLoadingIcon v-if="loading" :size="24" />
 
-		<NcEmptyContent v-else-if="entries.length === 0"
+		<NcEmptyContent
+			v-else-if="entries.length === 0"
 			:name="t('doriath', 'No activity recorded yet')"
 			data-testid="secret-activity-empty">
 			<template #icon>
@@ -15,13 +16,18 @@
 		</NcEmptyContent>
 
 		<ul v-else class="secret-activity__list">
-			<li v-for="entry in entries"
+			<li
+				v-for="entry in entries"
 				:key="entry.id"
 				class="secret-activity__item"
 				data-testid="secret-activity-item">
-				<span class="secret-activity__event">{{ label(entry.eventType) }}</span>
+				<span class="secret-activity__event">{{
+					label(entry.eventType)
+				}}</span>
 				<span class="secret-activity__actor">{{ actor(entry) }}</span>
-				<span class="secret-activity__time">{{ relativeTime(entry.occurredAt) }}</span>
+				<span class="secret-activity__time">{{
+					relativeTime(entry.occurredAt)
+				}}</span>
 			</li>
 		</ul>
 	</section>

@@ -59,9 +59,12 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/ca/status'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/ca/status'),
+			)
 			this.status = response.data.status || 'unknown'
-			this.intermediateExpiresAt = response.data.intermediate_expires_at || null
+			this.intermediateExpiresAt =
+				response.data.intermediate_expires_at || null
 			this.rootExpiresAt = response.data.root_expires_at || null
 		} catch (e) {
 			console.warn('Doriath: failed to load CA status', e)
@@ -72,7 +75,11 @@ export default {
 	methods: {
 		formatDate(date) {
 			if (!date) return ''
-			try { return new Date(date).toLocaleDateString() } catch { return String(date) }
+			try {
+				return new Date(date).toLocaleDateString()
+			} catch {
+				return String(date)
+			}
 		},
 	},
 }

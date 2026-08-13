@@ -21,20 +21,30 @@
 			<h1>{{ t('doriath', 'Fill in secret') }}</h1>
 		</header>
 
-		<p v-if="store.loading && !store.publicRequest" class="doriath-secret-request-fill__loading">
+		<p
+			v-if="store.loading && !store.publicRequest"
+			class="doriath-secret-request-fill__loading">
 			{{ t('doriath', 'Loading…') }}
 		</p>
 
-		<div v-else-if="loadError" class="doriath-secret-request-fill__error" data-testid="fill-load-error">
+		<div
+			v-else-if="loadError"
+			class="doriath-secret-request-fill__error"
+			data-testid="fill-load-error">
 			<p>{{ loadError }}</p>
 		</div>
 
-		<div v-else-if="store.publicRequest && unavailableMessage" class="doriath-secret-request-fill__unavailable" data-testid="fill-unavailable">
+		<div
+			v-else-if="store.publicRequest && unavailableMessage"
+			class="doriath-secret-request-fill__unavailable"
+			data-testid="fill-unavailable">
 			<p>{{ unavailableMessage }}</p>
 		</div>
 
 		<form
-			v-else-if="store.publicRequest && store.publicRequest.status === 'pending'"
+			v-else-if="
+				store.publicRequest && store.publicRequest.status === 'pending'
+			"
 			class="doriath-secret-request-fill__form"
 			data-testid="fill-form"
 			@submit.prevent="onSubmit">
@@ -48,14 +58,20 @@
 					:type="inputType(field)"
 					autocomplete="off"
 					required
-					:data-testid="`fill-field-${field}`">
+					:data-testid="`fill-field-${field}`" />
 			</label>
 
-			<p v-if="submitError" class="doriath-secret-request-fill__submit-error" data-testid="fill-submit-error">
+			<p
+				v-if="submitError"
+				class="doriath-secret-request-fill__submit-error"
+				data-testid="fill-submit-error">
 				{{ submitError }}
 			</p>
 
-			<p v-if="submitted" class="doriath-secret-request-fill__success" data-testid="fill-success">
+			<p
+				v-if="submitted"
+				class="doriath-secret-request-fill__success"
+				data-testid="fill-success">
 				{{ t('doriath', 'Thanks — the secret has been delivered.') }}
 			</p>
 
@@ -96,16 +112,19 @@ export default {
 		unavailableMessage() {
 			const status = this.store.publicRequest?.status
 			switch (status) {
-			case 'fulfilled':
-				return t('doriath', 'This request has already been fulfilled.')
-			case 'declined':
-				return t('doriath', 'This request was declined.')
-			case 'locked':
-				return t('doriath', 'This request is temporarily unavailable while a compromise recovery is in progress.')
-			case 'expired':
-				return t('doriath', 'This request has expired.')
-			default:
-				return null
+				case 'fulfilled':
+					return t('doriath', 'This request has already been fulfilled.')
+				case 'declined':
+					return t('doriath', 'This request was declined.')
+				case 'locked':
+					return t(
+						'doriath',
+						'This request is temporarily unavailable while a compromise recovery is in progress.',
+					)
+				case 'expired':
+					return t('doriath', 'This request has expired.')
+				default:
+					return null
 			}
 		},
 	},
@@ -114,13 +133,20 @@ export default {
 		try {
 			await this.store.fetchPublicRequest(this.token)
 		} catch (e) {
-			this.loadError = e?.response?.data?.message || e?.message || t('doriath', 'Request not found')
+			this.loadError =
+				e?.response?.data?.message
+				|| e?.message
+				|| t('doriath', 'Request not found')
 		}
 	},
 	methods: {
 		inputType(field) {
 			const name = String(field || '').toLowerCase()
-			if (name.includes('password') || name.includes('key') || name.includes('secret')) {
+			if (
+				name.includes('password')
+				|| name.includes('key')
+				|| name.includes('secret')
+			) {
 				return 'password'
 			}
 			return 'text'
@@ -132,7 +158,10 @@ export default {
 				await this.store.submitFill(this.token, this.values)
 				this.submitted = true
 			} catch (e) {
-				this.submitError = e?.response?.data?.message || e?.message || t('doriath', 'Failed to submit')
+				this.submitError =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to submit')
 			} finally {
 				this.busy = false
 			}

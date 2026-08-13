@@ -21,7 +21,17 @@ import { getParser } from '../../src/import/parserRegistry.js'
 const payload = {
 	format: 'doriath-vault',
 	version: 1,
-	secrets: [{ name: 'AWS', url: 'https://aws.test', login: 'l', password: 'k', additionalFields: null, folder: 'Work', type: 'login' }],
+	secrets: [
+		{
+			name: 'AWS',
+			url: 'https://aws.test',
+			login: 'l',
+			password: 'k',
+			additionalFields: null,
+			folder: 'Work',
+			type: 'login',
+		},
+	],
 	folders: [{ path: 'Work' }],
 }
 
@@ -35,7 +45,13 @@ describe('backup parser registry', () => {
 		const envelope = await encryptBackup(payload, 'restore-pass-1')
 		const rows = await parseBackup(envelope, { passphrase: 'restore-pass-1' })
 		expect(rows).toHaveLength(1)
-		expect(rows[0]).toMatchObject({ name: 'AWS', login: 'l', password: 'k', folder: 'Work', type: 'login' })
+		expect(rows[0]).toMatchObject({
+			name: 'AWS',
+			login: 'l',
+			password: 'k',
+			folder: 'Work',
+			type: 'login',
+		})
 	})
 
 	it('throws on a wrong restore passphrase and yields no rows', async () => {

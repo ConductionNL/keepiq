@@ -22,7 +22,13 @@ import axios from '@nextcloud/axios'
 import { useExportStore } from '../../src/store/modules/export.js'
 
 const secrets = [
-	{ name: 'AWS', key: 'super-secret-key', login: 'admin', folderId: null, typeId: 'login' },
+	{
+		name: 'AWS',
+		key: 'super-secret-key',
+		login: 'admin',
+		folderId: null,
+		typeId: 'login',
+	},
 ]
 const folders = []
 
@@ -34,7 +40,9 @@ describe('useExportStore', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		// Intercept the Blob download so it never actually navigates.
-		clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+		clickSpy = vi
+			.spyOn(HTMLAnchorElement.prototype, 'click')
+			.mockImplementation(() => {})
 		global.URL.createObjectURL = () => 'blob:mock'
 		global.URL.revokeObjectURL = () => {}
 		lsSpy = vi.spyOn(Storage.prototype, 'setItem')
@@ -43,21 +51,29 @@ describe('useExportStore', () => {
 
 	it('calls the export-event endpoint before offering the backup download', async () => {
 		const order = []
-		vi.spyOn(axios, 'post').mockImplementation(async () => { order.push('event') })
+		vi.spyOn(axios, 'post').mockImplementation(async () => {
+			order.push('event')
+		})
 		clickSpy.mockImplementation(() => order.push('download'))
 
 		const store = useExportStore()
-		await store.exportBackup(secrets, folders, 'a-very-strong-passphrase-1', { mode: 'vault' })
+		await store.exportBackup(secrets, folders, 'a-very-strong-passphrase-1', {
+			mode: 'vault',
+		})
 
 		expect(order).toEqual(['event', 'download'])
 	})
 
 	it('sends only mode/scope/secretCount — no passphrase or secret material', async () => {
 		let body = null
-		vi.spyOn(axios, 'post').mockImplementation(async (url, payload) => { body = payload })
+		vi.spyOn(axios, 'post').mockImplementation(async (url, payload) => {
+			body = payload
+		})
 
 		const store = useExportStore()
-		await store.exportBackup(secrets, folders, 'another-strong-passphrase-2', { mode: 'vault' })
+		await store.exportBackup(secrets, folders, 'another-strong-passphrase-2', {
+			mode: 'vault',
+		})
 
 		expect(Object.keys(body).sort()).toEqual(['mode', 'scope', 'secretCount'])
 		const serialized = JSON.stringify(body)
@@ -71,8 +87,11 @@ describe('useExportStore', () => {
 		vi.spyOn(axios, 'post').mockRejectedValue(new Error('event endpoint down'))
 
 		const store = useExportStore()
-		await expect(store.exportBackup(secrets, folders, 'strong-passphrase-xyz-3', { mode: 'vault' }))
-			.rejects.toThrow()
+		await expect(
+			store.exportBackup(secrets, folders, 'strong-passphrase-xyz-3', {
+				mode: 'vault',
+			}),
+		).rejects.toThrow()
 		expect(clickSpy).not.toHaveBeenCalled()
 		expect(store.error).toBeTruthy()
 	})
@@ -81,7 +100,9 @@ describe('useExportStore', () => {
 		vi.spyOn(axios, 'post').mockResolvedValue({})
 
 		const store = useExportStore()
-		await store.exportBackup(secrets, folders, 'persist-guard-passphrase-4', { mode: 'vault' })
+		await store.exportBackup(secrets, folders, 'persist-guard-passphrase-4', {
+			mode: 'vault',
+		})
 		await store.exportCsv(secrets, folders, { mode: 'vault' })
 
 		// If any storage write happened, assert it contained no sensitive value.

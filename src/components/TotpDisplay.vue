@@ -8,29 +8,42 @@
 		<template v-else-if="code">
 			<div v-if="account || issuer" class="totp-display__label">
 				<span v-if="issuer" class="totp-display__issuer">{{ issuer }}</span>
-				<span v-if="account" class="totp-display__account">{{ account }}</span>
+				<span v-if="account" class="totp-display__account">{{
+					account
+				}}</span>
 			</div>
 
 			<div class="totp-display__row">
-				<span class="totp-display__code" data-testid="totp-code">{{ spacedCode }}</span>
+				<span class="totp-display__code" data-testid="totp-code">{{
+					spacedCode
+				}}</span>
 
-				<svg class="totp-display__ring" viewBox="0 0 36 36" aria-hidden="true">
-					<circle class="totp-display__ring-track"
+				<svg
+					class="totp-display__ring"
+					viewBox="0 0 36 36"
+					aria-hidden="true">
+					<circle
+						class="totp-display__ring-track"
 						cx="18"
 						cy="18"
 						r="16" />
-					<circle class="totp-display__ring-progress"
+					<circle
+						class="totp-display__ring-progress"
 						cx="18"
 						cy="18"
 						r="16"
 						:stroke-dasharray="ringCircumference"
 						:stroke-dashoffset="ringOffset" />
 				</svg>
-				<span class="totp-display__countdown"
+				<span
+					class="totp-display__countdown"
 					data-testid="totp-countdown"
-					:aria-label="countdownLabel">{{ remaining }}s</span>
+					:aria-label="countdownLabel"
+					>{{ remaining }}s</span
+				>
 
-				<CopyButton :value="code"
+				<CopyButton
+					:value="code"
 					:label="t('doriath', 'Copy one-time code')"
 					data-testid="totp-copy" />
 			</div>
@@ -157,7 +170,9 @@ export default {
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
 		 */
 		countdownLabel() {
-			return t('doriath', '{seconds} seconds until the code refreshes', { seconds: this.remaining })
+			return t('doriath', '{seconds} seconds until the code refreshes', {
+				seconds: this.remaining,
+			})
 		},
 	},
 

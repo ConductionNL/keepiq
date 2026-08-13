@@ -15,7 +15,11 @@
  */
 
 const notStubbed = (method) => () =>
-	Promise.reject(new Error(`[test stub] @nextcloud/axios.${method} called without a vi.spyOn() override`))
+	Promise.reject(
+		new Error(
+			`[test stub] @nextcloud/axios.${method} called without a vi.spyOn() override`,
+		),
+	)
 
 const axios = {
 	get: notStubbed('get'),

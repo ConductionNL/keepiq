@@ -48,7 +48,9 @@ const HEADER_SYNONYMS = {
 export function detectMapping(headers) {
 	const used = new Set()
 	return headers.map((header) => {
-		const key = String(header ?? '').trim().toLowerCase()
+		const key = String(header ?? '')
+			.trim()
+			.toLowerCase()
 		let target = 'ignore'
 		for (const [field, synonyms] of Object.entries(HEADER_SYNONYMS)) {
 			if (field === 'notes') {

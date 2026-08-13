@@ -13,32 +13,66 @@
   @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
 -->
 <template>
-	<div v-if="store.supported" class="passkey-manager" data-testid="passkey-manager">
+	<div
+		v-if="store.supported"
+		class="passkey-manager"
+		data-testid="passkey-manager">
 		<h4>{{ t('doriath', 'Passkey unlock') }}</h4>
 		<p class="passkey-manager__hint">
-			{{ t('doriath', 'Unlock your vault with a passkey (Touch ID, Windows Hello, or a security key). Your master password always keeps working — losing an authenticator loses no data.') }}
+			{{
+				t(
+					'doriath',
+					'Unlock your vault with a passkey (Touch ID, Windows Hello, or a security key). Your master password always keeps working — losing an authenticator loses no data.',
+				)
+			}}
 		</p>
 
 		<NcNoteCard v-if="store.error" type="error">
 			{{ store.error }}
 		</NcNoteCard>
 		<NcNoteCard v-if="hasStale" type="warning" data-testid="passkey-stale-note">
-			{{ t('doriath', 'Your master password changed — re-enroll your passkeys to unlock with them again.') }}
+			{{
+				t(
+					'doriath',
+					'Your master password changed — re-enroll your passkeys to unlock with them again.',
+				)
+			}}
 		</NcNoteCard>
 
-		<ul v-if="store.credentials.length" class="passkey-manager__list" data-testid="passkey-list">
-			<li v-for="cred in store.credentials" :key="cred.id" :data-testid="`passkey-${cred.id}`">
-				<span class="passkey-manager__label">{{ cred.label || t('doriath', 'Passkey') }}</span>
-				<span :class="`passkey-manager__status passkey-manager__status--${cred.status}`">{{ cred.status }}</span>
-				<span class="passkey-manager__muted">{{ cred.lastUsedAt ? t('doriath', 'last used {when}', { when: formatDate(cred.lastUsedAt) }) : t('doriath', 'never used') }}</span>
-				<NcButton variant="tertiary" :data-testid="`passkey-revoke-${cred.id}`" @click="store.revoke(cred.id)">
+		<ul
+			v-if="store.credentials.length"
+			class="passkey-manager__list"
+			data-testid="passkey-list">
+			<li
+				v-for="cred in store.credentials"
+				:key="cred.id"
+				:data-testid="`passkey-${cred.id}`">
+				<span class="passkey-manager__label">{{
+					cred.label || t('doriath', 'Passkey')
+				}}</span>
+				<span
+					:class="`passkey-manager__status passkey-manager__status--${cred.status}`"
+					>{{ cred.status }}</span
+				>
+				<span class="passkey-manager__muted">{{
+					cred.lastUsedAt
+						? t('doriath', 'last used {when}', {
+								when: formatDate(cred.lastUsedAt),
+							})
+						: t('doriath', 'never used')
+				}}</span>
+				<NcButton
+					variant="tertiary"
+					:data-testid="`passkey-revoke-${cred.id}`"
+					@click="store.revoke(cred.id)">
 					{{ t('doriath', 'Revoke') }}
 				</NcButton>
 			</li>
 		</ul>
 
 		<div v-if="!enrollOpen" class="passkey-manager__add">
-			<NcButton variant="secondary"
+			<NcButton
+				variant="secondary"
 				:disabled="vaultLocked"
 				data-testid="passkey-add"
 				@click="enrollOpen = true">
@@ -47,18 +81,31 @@
 				</template>
 				{{ t('doriath', 'Add passkey') }}
 			</NcButton>
-			<span v-if="vaultLocked" class="passkey-manager__muted">{{ t('doriath', 'Unlock your vault to add a passkey.') }}</span>
+			<span v-if="vaultLocked" class="passkey-manager__muted">{{
+				t('doriath', 'Unlock your vault to add a passkey.')
+			}}</span>
 		</div>
 
 		<div v-else class="passkey-manager__form" data-testid="passkey-enroll-form">
-			<NcTextField v-model="label" :label="t('doriath', 'Passkey name (e.g. MacBook Touch ID)')" data-testid="passkey-label" />
-			<NcPasswordField v-model="masterPassword" :label="t('doriath', 'Confirm your master password')" data-testid="passkey-master" />
+			<NcTextField
+				v-model="label"
+				:label="t('doriath', 'Passkey name (e.g. MacBook Touch ID)')"
+				data-testid="passkey-label" />
+			<NcPasswordField
+				v-model="masterPassword"
+				:label="t('doriath', 'Confirm your master password')"
+				data-testid="passkey-master" />
 			<div class="passkey-manager__form-actions">
-				<NcButton variant="primary"
+				<NcButton
+					variant="primary"
 					:disabled="busy || !masterPassword"
 					data-testid="passkey-enroll"
 					@click="onEnroll">
-					{{ busy ? t('doriath', 'Enrolling…') : t('doriath', 'Enroll passkey') }}
+					{{
+						busy
+							? t('doriath', 'Enrolling…')
+							: t('doriath', 'Enroll passkey')
+					}}
 				</NcButton>
 				<NcButton variant="tertiary" :disabled="busy" @click="cancel">
 					{{ t('doriath', 'Cancel') }}
@@ -101,7 +148,7 @@ export default {
 			return useSessionStore().isLocked
 		},
 		hasStale() {
-			return this.store.credentials.some(c => c.status === 'stale')
+			return this.store.credentials.some((c) => c.status === 'stale')
 		},
 	},
 

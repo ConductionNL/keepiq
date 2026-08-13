@@ -66,10 +66,11 @@ export const useExportStore = defineStore('export', {
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
 		 */
 		async reportExport(mode, scope, secretCount) {
-			await axios.post(
-				generateUrl('/apps/doriath/api/v1/export/events'),
-				{ mode, scope, secretCount },
-			)
+			await axios.post(generateUrl('/apps/doriath/api/v1/export/events'), {
+				mode,
+				scope,
+				secretCount,
+			})
 		},
 
 		/**
@@ -89,7 +90,11 @@ export const useExportStore = defineStore('export', {
 				const payload = serializeVault(secrets, folders, scope)
 				const envelope = await encryptBackup(payload, passphrase)
 				// Report BEFORE offering the download; a failure aborts the export.
-				await this.reportExport('encrypted-backup', scope.mode || 'vault', payload.secrets.length)
+				await this.reportExport(
+					'encrypted-backup',
+					scope.mode || 'vault',
+					payload.secrets.length,
+				)
 				downloadBlob(
 					'vault.doriath-backup',
 					JSON.stringify(envelope, null, 2),
@@ -120,7 +125,11 @@ export const useExportStore = defineStore('export', {
 			try {
 				const payload = serializeVault(secrets, folders, scope)
 				const csv = generateCsv(payload.secrets)
-				await this.reportExport('plaintext-csv', scope.mode || 'vault', payload.secrets.length)
+				await this.reportExport(
+					'plaintext-csv',
+					scope.mode || 'vault',
+					payload.secrets.length,
+				)
 				downloadBlob('vault.csv', csv, 'text/csv')
 			} catch (e) {
 				this.error = e.message || 'CSV export failed'
@@ -153,15 +162,22 @@ export const useExportStore = defineStore('export', {
 			this.error = null
 			try {
 				const payload = serializeVault(secrets, folders, scope)
-				const { document, unmapped, itemCount } = buildCxfDocument(payload.secrets, {
-					typeNamesById: options.typeNamesById,
-				})
+				const { document, unmapped, itemCount } = buildCxfDocument(
+					payload.secrets,
+					{
+						typeNamesById: options.typeNamesById,
+					},
+				)
 				if (options.dryRun) {
 					return { unmapped, itemCount }
 				}
 				// Report BEFORE offering the download; a failure aborts.
 				await this.reportExport('cxf', scope.mode || 'vault', itemCount)
-				downloadBlob('vault.cxf', JSON.stringify(document, null, 2), 'application/json')
+				downloadBlob(
+					'vault.cxf',
+					JSON.stringify(document, null, 2),
+					'application/json',
+				)
 				return { unmapped, itemCount }
 			} catch (e) {
 				this.error = e.message || 'CXF export failed'
@@ -187,14 +203,23 @@ export const useExportStore = defineStore('export', {
 		 * @param {object} options Options ({ dryRun, typeNamesById })
 		 * @return {Promise<{ envelope: object|null, unmapped: Array, itemCount: number }>}
 		 */
-		async exportCxpSealed(request, secrets, folders, scope = { mode: 'vault' }, options = {}) {
+		async exportCxpSealed(
+			request,
+			secrets,
+			folders,
+			scope = { mode: 'vault' },
+			options = {},
+		) {
 			this.loading = true
 			this.error = null
 			try {
 				const payload = serializeVault(secrets, folders, scope)
-				const { document, unmapped, itemCount } = buildCxfDocument(payload.secrets, {
-					typeNamesById: options.typeNamesById,
-				})
+				const { document, unmapped, itemCount } = buildCxfDocument(
+					payload.secrets,
+					{
+						typeNamesById: options.typeNamesById,
+					},
+				)
 				if (options.dryRun) {
 					return { envelope: null, unmapped, itemCount }
 				}

@@ -5,7 +5,12 @@
  * autofill §4.1, task 6.2). Matching never touches ciphertext.
  */
 import { describe, it, expect } from 'vitest'
-import { hostOf, registrableDomain, matchScore, matchSecrets } from '../../browser-extension/src/lib/match.js'
+import {
+	hostOf,
+	registrableDomain,
+	matchScore,
+	matchSecrets,
+} from '../../browser-extension/src/lib/match.js'
 
 describe('extension host matching', () => {
 	it('extracts hosts from URLs and bare hosts', () => {
@@ -24,10 +29,16 @@ describe('extension host matching', () => {
 
 	it('scores exact host highest, same-site next, name fallback lowest', () => {
 		expect(matchScore({ url: 'https://example.com' }, 'example.com')).toBe(100)
-		expect(matchScore({ url: 'https://login.example.com' }, 'example.com')).toBe(80)
-		expect(matchScore({ name: 'Login for example.com', url: '' }, 'example.com')).toBe(40)
+		expect(matchScore({ url: 'https://login.example.com' }, 'example.com')).toBe(
+			80,
+		)
+		expect(
+			matchScore({ name: 'Login for example.com', url: '' }, 'example.com'),
+		).toBe(40)
 		expect(matchScore({ name: 'Example mail', url: '' }, 'example.com')).toBe(20)
-		expect(matchScore({ name: 'Nope', url: 'https://other.org' }, 'example.com')).toBe(0)
+		expect(
+			matchScore({ name: 'Nope', url: 'https://other.org' }, 'example.com'),
+		).toBe(0)
 	})
 
 	it('ranks candidates best-first and drops non-matches', () => {

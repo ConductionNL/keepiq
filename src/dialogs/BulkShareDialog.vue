@@ -12,7 +12,8 @@
   @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-share
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Share {count} secrets', { count: bulk.selectionCount })"
+	<NcDialog
+		:name="t('doriath', 'Share {count} secrets', { count: bulk.selectionCount })"
 		:open="open"
 		size="normal"
 		data-testid="bulk-share-dialog"
@@ -20,7 +21,10 @@
 		<div class="bulk-share">
 			<label class="bulk-share__field">
 				<span>{{ t('doriath', 'Recipient user ID') }}</span>
-				<input v-model="targetUserId" type="text" data-testid="bulk-share-recipient">
+				<input
+					v-model="targetUserId"
+					type="text"
+					data-testid="bulk-share-recipient" />
 			</label>
 			<p v-if="error" class="bulk-share__error" data-testid="bulk-share-error">
 				{{ error }}
@@ -31,7 +35,8 @@
 			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton variant="primary"
+			<NcButton
+				variant="primary"
 				:disabled="targetUserId === '' || bulk.progress.running"
 				data-testid="bulk-share-run"
 				@click="onRun">
@@ -94,24 +99,37 @@ export default {
 			const snapshot = {
 				key: plain.key ?? '',
 				login: plain.login ?? '',
-				additionalFields: typeof plain.additionalFields === 'object' && plain.additionalFields !== null
-					? JSON.stringify(plain.additionalFields)
-					: (plain.additionalFields ?? ''),
+				additionalFields:
+					typeof plain.additionalFields === 'object'
+					&& plain.additionalFields !== null
+						? JSON.stringify(plain.additionalFields)
+						: (plain.additionalFields ?? ''),
 			}
-			const blob = await shareStore.encryptForRecipient(snapshot, this.certificate)
+			const blob = await shareStore.encryptForRecipient(
+				snapshot,
+				this.certificate,
+			)
 
-			const response = await axios.post(generateUrl('/apps/doriath/api/v1/shares/register-batch'), {
-				shares: [{
-					sourceSecretId: secretId,
-					targetUserId: this.targetUserId,
-					encryptedKey: blob.key ?? '',
-					encryptedLogin: blob.login ?? null,
-					encryptedAdditionalFields: blob.additionalFields ?? null,
-				}],
-			})
+			const response = await axios.post(
+				generateUrl('/apps/doriath/api/v1/shares/register-batch'),
+				{
+					shares: [
+						{
+							sourceSecretId: secretId,
+							targetUserId: this.targetUserId,
+							encryptedKey: blob.key ?? '',
+							encryptedLogin: blob.login ?? null,
+							encryptedAdditionalFields: blob.additionalFields ?? null,
+						},
+					],
+				},
+			)
 			const item = response.data?.items?.[0]
 			if (item?.status === 'created' || item?.status === 'exists') {
-				return { status: 'ok', reason: item.status === 'exists' ? 'already shared' : undefined }
+				return {
+					status: 'ok',
+					reason: item.status === 'exists' ? 'already shared' : undefined,
+				}
 			}
 			return { status: 'skipped', reason: item?.status || 'not registered' }
 		},
@@ -130,9 +148,13 @@ export default {
 				)
 				this.certificate = response.data?.certificate ?? ''
 			} catch (e) {
-				this.error = e?.response?.status === 404
-					? this.t('doriath', 'Recipient has no active encryption suite')
-					: (e?.response?.data?.message || e?.message)
+				this.error =
+					e?.response?.status === 404
+						? this.t(
+								'doriath',
+								'Recipient has no active encryption suite',
+							)
+						: e?.response?.data?.message || e?.message
 				return
 			}
 
@@ -150,7 +172,10 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed((id) => this.shareOne(id), this.t('doriath', 'Retrying share'))
+			await this.bulk.retryFailed(
+				(id) => this.shareOne(id),
+				this.t('doriath', 'Retrying share'),
+			)
 			this.$emit('done')
 		},
 	},

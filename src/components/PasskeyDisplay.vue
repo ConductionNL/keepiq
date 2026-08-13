@@ -15,7 +15,10 @@
 -->
 <template>
 	<div class="passkey-display" data-testid="passkey-display">
-		<div v-if="credential === null" class="passkey-display__invalid" data-testid="passkey-invalid">
+		<div
+			v-if="credential === null"
+			class="passkey-display__invalid"
+			data-testid="passkey-invalid">
 			<AlertCircleOutline :size="20" />
 			<span>{{ t('doriath', 'Not a valid passkey credential') }}</span>
 		</div>
@@ -24,14 +27,22 @@
 			<div class="passkey-display__field">
 				<dt>{{ t('doriath', 'Site') }}</dt>
 				<dd data-testid="passkey-site">
-					{{ credential.rpName ? `${credential.rpName} (${credential.rpId})` : credential.rpId }}
+					{{
+						credential.rpName
+							? `${credential.rpName} (${credential.rpId})`
+							: credential.rpId
+					}}
 				</dd>
 			</div>
-			<div v-if="credential.userName || credential.userDisplayName" class="passkey-display__field">
+			<div
+				v-if="credential.userName || credential.userDisplayName"
+				class="passkey-display__field">
 				<dt>{{ t('doriath', 'Account') }}</dt>
 				<dd data-testid="passkey-account">
 					{{ credential.userDisplayName || credential.userName }}
-					<span v-if="credential.userDisplayName && credential.userName" class="passkey-display__muted">
+					<span
+						v-if="credential.userDisplayName && credential.userName"
+						class="passkey-display__muted">
 						({{ credential.userName }})
 					</span>
 				</dd>
@@ -42,7 +53,9 @@
 			</div>
 			<div v-if="credential.transports.length" class="passkey-display__field">
 				<dt>{{ t('doriath', 'Transports') }}</dt>
-				<dd data-testid="passkey-transports">{{ credential.transports.join(', ') }}</dd>
+				<dd data-testid="passkey-transports">
+					{{ credential.transports.join(', ') }}
+				</dd>
 			</div>
 			<div v-if="credential.createdAt" class="passkey-display__field">
 				<dt>{{ t('doriath', 'Created') }}</dt>
@@ -51,15 +64,23 @@
 			<div class="passkey-display__field">
 				<dt>{{ t('doriath', 'Private key') }}</dt>
 				<dd class="passkey-display__key-row">
-					<span data-testid="passkey-private-key">{{ revealed ? credential.privateKey : maskedKey }}</span>
-					<button type="button"
+					<span data-testid="passkey-private-key">{{
+						revealed ? credential.privateKey : maskedKey
+					}}</span>
+					<button
+						type="button"
 						class="passkey-display__reveal"
-						:aria-label="revealed ? t('doriath', 'Hide private key') : t('doriath', 'Show private key')"
+						:aria-label="
+							revealed
+								? t('doriath', 'Hide private key')
+								: t('doriath', 'Show private key')
+						"
 						data-testid="passkey-reveal"
 						@click="revealed = !revealed">
 						<component :is="revealed ? 'EyeOff' : 'Eye'" :size="18" />
 					</button>
-					<CopyButton :value="credential.privateKey"
+					<CopyButton
+						:value="credential.privateKey"
 						:label="t('doriath', 'Copy private key')"
 						data-testid="passkey-copy-key" />
 				</dd>
@@ -107,7 +128,9 @@ export default {
 		},
 		createdDisplay() {
 			const parsed = Date.parse(this.credential?.createdAt ?? '')
-			return Number.isNaN(parsed) ? this.credential?.createdAt : new Date(parsed).toLocaleDateString()
+			return Number.isNaN(parsed)
+				? this.credential?.createdAt
+				: new Date(parsed).toLocaleDateString()
 		},
 	},
 }

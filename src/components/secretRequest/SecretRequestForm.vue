@@ -25,33 +25,57 @@
 						v-model="selectedFields"
 						type="checkbox"
 						:value="field"
-						:data-testid="`field-${field}`">
+						:data-testid="`field-${field}`" />
 					<span>{{ field }}</span>
 				</label>
 			</fieldset>
 
 			<label class="doriath-secret-request-form__expires">
 				<span>{{ t('doriath', 'Expires at (optional)') }}</span>
-				<input v-model="expiresAt" type="datetime-local" data-testid="secret-request-form-expires">
+				<input
+					v-model="expiresAt"
+					type="datetime-local"
+					data-testid="secret-request-form-expires" />
 			</label>
 
-			<label v-if="canReRequest" class="doriath-secret-request-form__rerequest">
-				<input v-model="isReRequest" type="checkbox" data-testid="secret-request-form-rerequest">
-				<span>{{ t('doriath', 'Refresh existing values (re-request)') }}</span>
+			<label
+				v-if="canReRequest"
+				class="doriath-secret-request-form__rerequest">
+				<input
+					v-model="isReRequest"
+					type="checkbox"
+					data-testid="secret-request-form-rerequest" />
+				<span>{{
+					t('doriath', 'Refresh existing values (re-request)')
+				}}</span>
 			</label>
 
-			<p v-if="error" class="doriath-secret-request-form__error" data-testid="secret-request-form-error">
+			<p
+				v-if="error"
+				class="doriath-secret-request-form__error"
+				data-testid="secret-request-form-error">
 				{{ error }}
 			</p>
 
-			<p v-if="createdLink" class="doriath-secret-request-form__link" data-testid="secret-request-form-link">
-				{{ t('doriath', 'Share this link with the recipient. It is only valid once.') }}
-				<br>
+			<p
+				v-if="createdLink"
+				class="doriath-secret-request-form__link"
+				data-testid="secret-request-form-link">
+				{{
+					t(
+						'doriath',
+						'Share this link with the recipient. It is only valid once.',
+					)
+				}}
+				<br />
 				<code>{{ createdLink }}</code>
 			</p>
 
 			<div class="doriath-secret-request-form__actions">
-				<button type="button" data-testid="secret-request-form-cancel" @click="$emit('cancel')">
+				<button
+					type="button"
+					data-testid="secret-request-form-cancel"
+					@click="$emit('cancel')">
 					{{ t('doriath', 'Cancel') }}
 				</button>
 				<button
@@ -59,7 +83,11 @@
 					class="primary"
 					data-testid="secret-request-form-submit"
 					:disabled="busy || selectedFields.length === 0">
-					{{ busy ? t('doriath', 'Creating…') : t('doriath', 'Create request') }}
+					{{
+						busy
+							? t('doriath', 'Creating…')
+							: t('doriath', 'Create request')
+					}}
 				</button>
 			</div>
 		</form>
@@ -120,7 +148,9 @@ export default {
 					encryptionSuiteId: this.encryptionSuiteId,
 					requestedFields: [...this.selectedFields],
 					isReRequest: this.isReRequest,
-					expiresAt: this.expiresAt ? new Date(this.expiresAt).toISOString() : null,
+					expiresAt: this.expiresAt
+						? new Date(this.expiresAt).toISOString()
+						: null,
 				}
 				const row = await store.createRequest(payload)
 				if (row && row.token) {
@@ -128,7 +158,10 @@ export default {
 				}
 				this.$emit('created', row)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to create request')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to create request')
 			} finally {
 				this.busy = false
 			}

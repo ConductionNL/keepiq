@@ -13,7 +13,12 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Breach checking')"
-		:description="t('doriath', 'Allow users to check their passwords against the Have I Been Pwned breach corpus.')">
+		:description="
+			t(
+				'doriath',
+				'Allow users to check their passwords against the Have I Been Pwned breach corpus.',
+			)
+		">
 		<div class="breach-check">
 			<label class="breach-check__toggle" for="breach-check-enabled">
 				<input
@@ -21,11 +26,16 @@
 					v-model="enabled"
 					type="checkbox"
 					data-testid="breach-check-enabled"
-					@change="save">
+					@change="save" />
 				{{ t('doriath', 'Enable breach checking for this instance') }}
 			</label>
 			<p class="breach-check__disclosure">
-				{{ t('doriath', 'When a user opts in, Doriath sends 5-character SHA-1 hash prefixes of their passwords to Have I Been Pwned (api.pwnedpasswords.com). The full hash and the password never leave the server. Leave this off for air-gapped instances.') }}
+				{{
+					t(
+						'doriath',
+						'When a user opts in, Doriath sends 5-character SHA-1 hash prefixes of their passwords to Have I Been Pwned (api.pwnedpasswords.com). The full hash and the password never leave the server. Leave this off for air-gapped instances.',
+					)
+				}}
 			</p>
 		</div>
 	</CnSettingsSection>
@@ -54,8 +64,12 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
-			this.enabled = response.data?.breach_check_enabled === true || response.data?.breach_check_enabled === '1'
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings/admin'),
+			)
+			this.enabled =
+				response.data?.breach_check_enabled === true
+				|| response.data?.breach_check_enabled === '1'
 		} catch (e) {
 			console.warn('Doriath: failed to load breach-check gate', e)
 		}

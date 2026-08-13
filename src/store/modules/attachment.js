@@ -59,7 +59,9 @@ function fromBase64(base64) {
  */
 async function aesEncryptBytes(key, bytes) {
 	const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
-	const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, bytes))
+	const ciphertext = new Uint8Array(
+		await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, bytes),
+	)
 	const out = new Uint8Array(IV_LENGTH + ciphertext.length)
 	out.set(iv, 0)
 	out.set(ciphertext, IV_LENGTH)
@@ -76,7 +78,9 @@ async function aesEncryptBytes(key, bytes) {
 async function aesDecryptBytes(key, data) {
 	const iv = data.subarray(0, IV_LENGTH)
 	const ciphertext = data.subarray(IV_LENGTH)
-	return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext))
+	return new Uint8Array(
+		await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext),
+	)
 }
 
 export const useAttachmentStore = defineStore('attachment', {
@@ -102,7 +106,13 @@ export const useAttachmentStore = defineStore('attachment', {
 				throw new Error('Vault is locked')
 			}
 			const rawBase64 = await rsaDecrypt(wrappedFileKey, session.cryptoKey)
-			return crypto.subtle.importKey('raw', fromBase64(rawBase64), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+			return crypto.subtle.importKey(
+				'raw',
+				fromBase64(rawBase64),
+				{ name: 'AES-GCM' },
+				false,
+				['encrypt', 'decrypt'],
+			)
 		},
 
 		/**
@@ -116,16 +126,21 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/attachments`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/attachments`,
+					),
 				)
 				const rows = []
-				for (const row of (response.data || [])) {
+				for (const row of response.data || []) {
 					let meta = { filename: null, contentType: null }
 					try {
 						// eslint-disable-next-line no-await-in-loop
 						const key = await this.unwrapFileKey(row.wrappedFileKey)
 						// eslint-disable-next-line no-await-in-loop
-						const metaBytes = await aesDecryptBytes(key, fromBase64(row.encryptedMetadata))
+						const metaBytes = await aesDecryptBytes(
+							key,
+							fromBase64(row.encryptedMetadata),
+						)
 						meta = JSON.parse(new TextDecoder().decode(metaBytes))
 					} catch {
 						// Honest failure: undecryptable metadata shows as invalid.
@@ -141,7 +156,10 @@ export const useAttachmentStore = defineStore('attachment', {
 				}
 				this.attachments = rows
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load attachments'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load attachments'
 				throw e
 			} finally {
 				this.loading = false
@@ -163,21 +181,33 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.loading = true
 			this.error = null
 			try {
-				const fileKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'])
+				const fileKey = await crypto.subtle.generateKey(
+					{ name: 'AES-GCM', length: 256 },
+					true,
+					['encrypt', 'decrypt'],
+				)
 				const bytes = new Uint8Array(await file.arrayBuffer())
 				const blob = await aesEncryptBytes(fileKey, bytes)
-				const metaBytes = new TextEncoder().encode(JSON.stringify({
-					filename: file.name,
-					contentType: file.type || 'application/octet-stream',
-				}))
-				const encryptedMetadata = toBase64(await aesEncryptBytes(fileKey, metaBytes))
+				const metaBytes = new TextEncoder().encode(
+					JSON.stringify({
+						filename: file.name,
+						contentType: file.type || 'application/octet-stream',
+					}),
+				)
+				const encryptedMetadata = toBase64(
+					await aesEncryptBytes(fileKey, metaBytes),
+				)
 
-				const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', fileKey))
+				const rawKey = new Uint8Array(
+					await crypto.subtle.exportKey('raw', fileKey),
+				)
 				const publicKey = await importPublicKey(session.certificate)
 				const wrappedFileKey = await rsaEncrypt(toBase64(rawKey), publicKey)
 
 				await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/attachments`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/attachments`,
+					),
 					{
 						blob: toBase64(blob),
 						encryptedMetadata,
@@ -186,7 +216,8 @@ export const useAttachmentStore = defineStore('attachment', {
 				)
 				await this.fetchAttachments(secretId)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Upload failed'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Upload failed'
 				throw e
 			} finally {
 				this.loading = false
@@ -204,11 +235,18 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/attachments/${attachment.id}/blob`),
+					generateUrl(
+						`/apps/doriath/api/v1/attachments/${attachment.id}/blob`,
+					),
 				)
 				const key = await this.unwrapFileKey(attachment.wrappedFileKey)
-				const plaintext = await aesDecryptBytes(key, fromBase64(response.data.blob))
-				const blob = new Blob([plaintext], { type: attachment.contentType || 'application/octet-stream' })
+				const plaintext = await aesDecryptBytes(
+					key,
+					fromBase64(response.data.blob),
+				)
+				const blob = new Blob([plaintext], {
+					type: attachment.contentType || 'application/octet-stream',
+				})
 				const url = URL.createObjectURL(blob)
 				const a = document.createElement('a')
 				a.href = url
@@ -216,7 +254,8 @@ export const useAttachmentStore = defineStore('attachment', {
 				a.click()
 				URL.revokeObjectURL(url)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Download failed'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Download failed'
 				throw e
 			} finally {
 				this.loading = false
@@ -234,10 +273,13 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.loading = true
 			this.error = null
 			try {
-				await axios.delete(generateUrl(`/apps/doriath/api/v1/attachments/${attachmentId}`))
+				await axios.delete(
+					generateUrl(`/apps/doriath/api/v1/attachments/${attachmentId}`),
+				)
 				await this.fetchAttachments(secretId)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Delete failed'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Delete failed'
 				throw e
 			} finally {
 				this.loading = false
@@ -256,19 +298,29 @@ export const useAttachmentStore = defineStore('attachment', {
 		 * @param {string} recipientCertificate The recipient's PEM certificate.
 		 * @return {Promise<number>} Grants created.
 		 */
-		async regrantForRecipient(sourceSecretId, copySecretId, recipientId, recipientCertificate) {
+		async regrantForRecipient(
+			sourceSecretId,
+			copySecretId,
+			recipientId,
+			recipientCertificate,
+		) {
 			const session = useSessionStore()
 			if (!session.cryptoKey) {
 				throw new Error('Vault is locked')
 			}
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/secrets/${sourceSecretId}/attachments`),
+				generateUrl(
+					`/apps/doriath/api/v1/secrets/${sourceSecretId}/attachments`,
+				),
 			)
 			const recipientKey = await importPublicKey(recipientCertificate)
 			let created = 0
-			for (const row of (response.data || [])) {
+			for (const row of response.data || []) {
 				// eslint-disable-next-line no-await-in-loop
-				const rawBase64 = await rsaDecrypt(row.wrappedFileKey, session.cryptoKey)
+				const rawBase64 = await rsaDecrypt(
+					row.wrappedFileKey,
+					session.cryptoKey,
+				)
 				// eslint-disable-next-line no-await-in-loop
 				const rewrapped = await rsaEncrypt(rawBase64, recipientKey)
 				// eslint-disable-next-line no-await-in-loop

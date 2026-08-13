@@ -283,11 +283,20 @@ async function importFixtureKeyPair(privatePem, publicPem) {
 	const algorithm = { name: 'RSA-OAEP', hash: 'SHA-256' }
 	const [privateKey, publicKey] = await Promise.all([
 		// extractable = false mirrors the production import in src/crypto/rsa.js.
-		crypto.subtle.importKey('pkcs8', pemToDer(privatePem), algorithm, false, ['decrypt']),
-		crypto.subtle.importKey('spki', pemToDer(publicPem), algorithm, true, ['encrypt']),
+		crypto.subtle.importKey('pkcs8', pemToDer(privatePem), algorithm, false, [
+			'decrypt',
+		]),
+		crypto.subtle.importKey('spki', pemToDer(publicPem), algorithm, true, [
+			'encrypt',
+		]),
 	])
 
-	return { publicKey, privateKey, publicKeyPem: publicPem, privateKeyPem: privatePem }
+	return {
+		publicKey,
+		privateKey,
+		publicKeyPem: publicPem,
+		privateKeyPem: privatePem,
+	}
 }
 
 /**
@@ -297,7 +306,10 @@ async function importFixtureKeyPair(privatePem, publicPem) {
  */
 export function sharedKeyPair() {
 	if (keyPairCache.primary === null) {
-		keyPairCache.primary = importFixtureKeyPair(RSA4096_PRIVATE_KEY_PKCS8_PEM, RSA4096_PUBLIC_KEY_SPKI_PEM)
+		keyPairCache.primary = importFixtureKeyPair(
+			RSA4096_PRIVATE_KEY_PKCS8_PEM,
+			RSA4096_PUBLIC_KEY_SPKI_PEM,
+		)
 	}
 
 	return keyPairCache.primary
@@ -331,5 +343,5 @@ export function pemToDer(pem) {
 		.replace(/-----BEGIN [^-]+-----/, '')
 		.replace(/-----END [^-]+-----/, '')
 		.replace(/\s/g, '')
-	return Uint8Array.from(atob(body), c => c.charCodeAt(0))
+	return Uint8Array.from(atob(body), (c) => c.charCodeAt(0))
 }

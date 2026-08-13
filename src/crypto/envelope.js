@@ -21,7 +21,9 @@ const HEADER_LENGTH = 4 + SALT_LENGTH + IV_LENGTH // version + salt + IV
  * @return {string} Base64-encoded envelope
  */
 export function encodeEnvelope(version, salt, iv, ciphertext) {
-	const buffer = new ArrayBuffer(4 + salt.byteLength + iv.byteLength + ciphertext.byteLength)
+	const buffer = new ArrayBuffer(
+		4 + salt.byteLength + iv.byteLength + ciphertext.byteLength,
+	)
 	const view = new DataView(buffer)
 
 	view.setUint32(0, version, false) // big-endian
@@ -41,7 +43,7 @@ export function encodeEnvelope(version, salt, iv, ciphertext) {
  * @return {{ version: number, salt: Uint8Array, iv: Uint8Array, ciphertext: Uint8Array, tag: Uint8Array }}
  */
 export function decodeEnvelope(base64) {
-	const raw = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+	const raw = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
 
 	if (raw.byteLength < HEADER_LENGTH + TAG_LENGTH) {
 		throw new Error('Envelope too short')

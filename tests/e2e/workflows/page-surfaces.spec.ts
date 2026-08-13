@@ -73,12 +73,14 @@ async function api(
 	method: string,
 	path: string,
 	body?: Record<string, unknown>,
-): Promise<{ status: number, json: any }> {
+): Promise<{ status: number; json: any }> {
 	return await page.evaluate(
 		async ({ method, path, body, base }) => {
 			const head = document.querySelector('head[data-requesttoken]')
-			const token = (head && head.getAttribute('data-requesttoken'))
-				|| ((window as any).OC && (window as any).OC.requestToken) || ''
+			const token =
+				(head && head.getAttribute('data-requesttoken'))
+				|| ((window as any).OC && (window as any).OC.requestToken)
+				|| ''
 			const res = await fetch(`${base}${path}`, {
 				method,
 				headers: {
@@ -121,10 +123,11 @@ async function landForFixtures(page: Page): Promise<void> {
 	await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 	await expect
 		.poll(
-			async () => await page.evaluate(() => {
-				const head = document.querySelector('head[data-requesttoken]')
-				return (head && head.getAttribute('data-requesttoken')) || ''
-			}),
+			async () =>
+				await page.evaluate(() => {
+					const head = document.querySelector('head[data-requesttoken]')
+					return (head && head.getAttribute('data-requesttoken')) || ''
+				}),
 			{ message: 'no CSRF request token on the page', timeout: 20_000 },
 		)
 		.not.toBe('')
@@ -150,13 +153,16 @@ async function expectComponentMounted(page: Page, testId: string): Promise<void>
 }
 
 test.describe('Routed page surfaces — authenticated', () => {
-	test('PersonalActivityView renders the personal audit trail at #/my-activity', async ({ page }) => {
+	test('PersonalActivityView renders the personal audit trail at #/my-activity', async ({
+		page,
+	}) => {
 		await unlockVault(page)
 		await gotoVaultRoute(page, 'my-activity')
 		await expectComponentMounted(page, 'personal-activity-view')
 		// Component-specific, not chrome: this heading exists on no other route.
 		await expect(
-			page.locator('[data-testid="personal-activity-view"]')
+			page
+				.locator('[data-testid="personal-activity-view"]')
 				.getByText('My activity', { exact: true }),
 		).toBeVisible()
 		// The trail is either populated or explicitly empty — both are the
@@ -165,36 +171,49 @@ test.describe('Routed page surfaces — authenticated', () => {
 		const rows = page.locator('[data-testid="personal-activity-item"]')
 		const empty = page.locator('[data-testid="personal-activity-empty"]')
 		await expect
-			.poll(async () => (await rows.count()) + (await empty.count()),
-				{ message: 'neither activity rows nor the empty state rendered' })
+			.poll(async () => (await rows.count()) + (await empty.count()), {
+				message: 'neither activity rows nor the empty state rendered',
+			})
 			.toBeGreaterThan(0)
 	})
 
-	test('HealthReportView renders the password-health controls at #/password-health', async ({ page }) => {
+	test('HealthReportView renders the password-health controls at #/password-health', async ({
+		page,
+	}) => {
 		await unlockVault(page)
 		await gotoVaultRoute(page, 'password-health')
 		await expectComponentMounted(page, 'health-report')
 		await expect(
-			page.locator('[data-testid="health-report"]').getByText('Password health'),
+			page
+				.locator('[data-testid="health-report"]')
+				.getByText('Password health'),
 		).toBeVisible()
 		// The unlocked view must render its own controls, not the locked
 		// placeholder. `staleness-select` is unconditional on the unlocked
 		// branch; `breach-optin` is NOT — it is gated on the admin
 		// `breachGateOn` setting, which is off by default, so asserting it here
 		// fails on a stock instance. (It did, on the first run of this file.)
-		await expect(page.locator('[data-testid="health-report-locked"]')).toHaveCount(0)
+		await expect(
+			page.locator('[data-testid="health-report-locked"]'),
+		).toHaveCount(0)
 		await expect(page.locator('[data-testid="staleness-select"]')).toBeVisible()
 		// The analysis runs client-side over the unlocked vault, so the body
 		// must reach one of its two terminal states. Neither appearing means the
 		// component mounted its shell and never ran — which is what a broken
 		// unlock hand-off looks like, and is exactly what this must not pass on.
 		await expect(
-			page.locator('[data-testid="health-score"], [data-testid="health-report-analysing"]').first(),
+			page
+				.locator(
+					'[data-testid="health-score"], [data-testid="health-report-analysing"]',
+				)
+				.first(),
 			'password-health rendered neither a score nor an "analysing" state',
 		).toBeVisible({ timeout: 25_000 })
 	})
 
-	test('CertificateInventoryView renders the stored-certificate section at #/certificates', async ({ page }) => {
+	test('CertificateInventoryView renders the stored-certificate section at #/certificates', async ({
+		page,
+	}) => {
 		// @e2e certificate-lifecycle::owner-lists-their-certificates
 		// Scenario: GIVEN a user owns certificate-type secrets and an active
 		// EncryptionSuite, WHEN they request the inventory, THEN the entries MUST
@@ -204,12 +223,20 @@ test.describe('Routed page surfaces — authenticated', () => {
 		await gotoVaultRoute(page, 'certificates')
 		await expectComponentMounted(page, 'certificate-inventory-view')
 		await expect(
-			page.locator('[data-testid="certificate-inventory-view"]').getByText('Certificates').first(),
+			page
+				.locator('[data-testid="certificate-inventory-view"]')
+				.getByText('Certificates')
+				.first(),
 		).toBeVisible()
-		await expect(page.locator('[data-testid="cert-stored-section"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="cert-stored-section"]'),
+		).toBeVisible()
 
 		const inv = await api(page, 'GET', '/api/v1/certificates/inventory')
-		expect(inv.status, `GET /api/v1/certificates/inventory -> ${inv.status}`).toBe(200)
+		expect(
+			inv.status,
+			`GET /api/v1/certificates/inventory -> ${inv.status}`,
+		).toBe(200)
 		const entries = [
 			...(inv.json.stored ?? []),
 			...(inv.json.suites ?? []),
@@ -220,7 +247,7 @@ test.describe('Routed page surfaces — authenticated', () => {
 		expect(
 			(inv.json.stored ?? []).length,
 			'no certificate-type secret in the vault — the GIVEN does not hold, so '
-			+ 'the tagging assertions below could not fail',
+				+ 'the tagging assertions below could not fail',
 		).toBeGreaterThan(0)
 		expect(
 			(inv.json.suites ?? []).length,
@@ -234,13 +261,25 @@ test.describe('Routed page surfaces — authenticated', () => {
 		}
 		// …and no private key or ciphertext rides along with the metadata.
 		const raw = JSON.stringify(inv.json)
-		expect(raw, 'the inventory leaked a PEM private key').not.toMatch(/PRIVATE KEY/)
-		for (const key of ['privateKey', 'private_key', 'key', 'ciphertext', 'encryptedKey']) {
-			expect(raw, `the inventory carries a "${key}" field`).not.toContain(`"${key}"`)
+		expect(raw, 'the inventory leaked a PEM private key').not.toMatch(
+			/PRIVATE KEY/,
+		)
+		for (const key of [
+			'privateKey',
+			'private_key',
+			'key',
+			'ciphertext',
+			'encryptedKey',
+		]) {
+			expect(raw, `the inventory carries a "${key}" field`).not.toContain(
+				`"${key}"`,
+			)
 		}
 	})
 
-	test('the Applications entry lives in the settings foldout, not the main navigation', async ({ page }) => {
+	test('the Applications entry lives in the settings foldout, not the main navigation', async ({
+		page,
+	}) => {
 		// @e2e menu-architecture::applications-entry-appears-in-the-settings-foldout-not-main-nav
 		// `src/menu-layout.json` lifts "ApplicationsMenu" into `settingsSection`,
 		// which NC renders as `NcAppNavigationSettings` — the gear foldout that
@@ -289,7 +328,9 @@ test.describe('Routed page surfaces — authenticated', () => {
 		).toBe('foldout')
 	})
 
-	test('ApplicationRegisterView lists the caller’s applications at #/applications', async ({ page }) => {
+	test('ApplicationRegisterView lists the caller’s applications at #/applications', async ({
+		page,
+	}) => {
 		// @e2e menu-architecture::relocated-route-stays-reachable
 		// Scenario: the ApplicationsMenu entry moved out of the main nav into the
 		// settings foldout, and the route itself is unchanged — so a DIRECT DEEP
@@ -307,12 +348,16 @@ test.describe('Routed page surfaces — authenticated', () => {
 			'no application registered — the dev seed is missing, so this assertion could not fail',
 		).toBe(true)
 		await expect(
-			page.locator('[data-testid="application-register-view"]')
-				.getByText(apps.json[0].name, { exact: false }).first(),
+			page
+				.locator('[data-testid="application-register-view"]')
+				.getByText(apps.json[0].name, { exact: false })
+				.first(),
 		).toBeVisible({ timeout: 20_000 })
 	})
 
-	test('ApplicationDetail opens one application at #/applications/:id', async ({ page }) => {
+	test('ApplicationDetail opens one application at #/applications/:id', async ({
+		page,
+	}) => {
 		await unlockVault(page)
 		const apps = await api(page, 'GET', '/api/v1/applications')
 		expect(apps.status, `GET /api/v1/applications -> ${apps.status}`).toBe(200)
@@ -322,28 +367,47 @@ test.describe('Routed page surfaces — authenticated', () => {
 		await expectComponentMounted(page, 'application-detail')
 		// The detail page must show THIS application, not a generic shell.
 		await expect(
-			page.locator('[data-testid="application-detail"]').getByText(app.name, { exact: false }).first(),
+			page
+				.locator('[data-testid="application-detail"]')
+				.getByText(app.name, { exact: false })
+				.first(),
 		).toBeVisible({ timeout: 20_000 })
 		// And its own secrets panel, which no other route renders.
-		await expect(page.locator('[data-testid="application-secrets-panel"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="application-secrets-panel"]'),
+		).toBeVisible()
 	})
 })
 
 test.describe('Routed page surfaces — public recipient routes', () => {
-	test('SecretRequestFill renders the fill form at #/share/request/:token', async ({ page }) => {
+	test('SecretRequestFill renders the fill form at #/share/request/:token', async ({
+		page,
+	}) => {
 		await landForFixtures(page)
 		const reqs = await api(page, 'GET', '/api/v1/secret-requests')
-		expect(reqs.status, `GET /api/v1/secret-requests -> ${reqs.status}`).toBe(200)
-		const pending = (Array.isArray(reqs.json) ? reqs.json : [])
-			.find((r: any) => r.status === 'pending')
-		expect(pending, 'no pending secret request — the dev seed is missing').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/share/request/${pending.token}`, { waitUntil: 'domcontentloaded' })
-		await expect(page.locator('[data-testid="secret-request-fill"]')).toBeVisible({ timeout: 25_000 })
+		expect(reqs.status, `GET /api/v1/secret-requests -> ${reqs.status}`).toBe(
+			200,
+		)
+		const pending = (Array.isArray(reqs.json) ? reqs.json : []).find(
+			(r: any) => r.status === 'pending',
+		)
+		expect(
+			pending,
+			'no pending secret request — the dev seed is missing',
+		).toBeTruthy()
+		await page.goto(`${APP_BASE}/#/share/request/${pending.token}`, {
+			waitUntil: 'domcontentloaded',
+		})
+		await expect(
+			page.locator('[data-testid="secret-request-fill"]'),
+		).toBeVisible({ timeout: 25_000 })
 		// The public route is exempt from the lock guard: an external recipient
 		// has no vault, so a lock screen here would make the flow unusable.
 		await expect(page.locator('.lock-screen')).toHaveCount(0)
 		// The form itself, keyed on the fields the request asked for.
-		await expect(page.locator('[data-testid="fill-form"]')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('[data-testid="fill-form"]')).toBeVisible({
+			timeout: 20_000,
+		})
 		for (const field of pending.requestedFields as string[]) {
 			await expect(
 				page.locator(`[data-testid="fill-field-${field}"]`),
@@ -352,7 +416,9 @@ test.describe('Routed page surfaces — public recipient routes', () => {
 		}
 	})
 
-	test('LinkShareAccess prompts an external recipient at #/share/link/:token', async ({ page }) => {
+	test('LinkShareAccess prompts an external recipient at #/share/link/:token', async ({
+		page,
+	}) => {
 		await landForFixtures(page)
 		const secrets = await api(page, 'GET', '/api/v1/secrets?limit=1')
 		expect(secrets.status, `GET /api/v1/secrets -> ${secrets.status}`).toBe(200)
@@ -362,28 +428,45 @@ test.describe('Routed page surfaces — public recipient routes', () => {
 		// link-share workflow spec REVOKES them (hard delete), so depending on
 		// them makes this test a function of run order. Observed on a dev rig:
 		// oc_doriath_link_shares went 3 rows -> 0 across one suite run.
-		const created = await api(page, 'POST', `/api/v1/secrets/${secret.id}/link-shares`, {
-			encryptedSecretSnapshot: OPAQUE,
-			argon2idSalt: OPAQUE,
-			usageLimit: 5,
-		})
+		const created = await api(
+			page,
+			'POST',
+			`/api/v1/secrets/${secret.id}/link-shares`,
+			{
+				encryptedSecretSnapshot: OPAQUE,
+				argon2idSalt: OPAQUE,
+				usageLimit: 5,
+			},
+		)
 		expect(
 			created.status,
 			`POST link-share -> ${created.status} ${JSON.stringify(created.json).slice(0, 200)}`,
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created link share carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/share/link/${token}`, { waitUntil: 'domcontentloaded' })
-		await expect(page.locator('[data-testid="link-share-access"]')).toBeVisible({ timeout: 25_000 })
+		await page.goto(`${APP_BASE}/#/share/link/${token}`, {
+			waitUntil: 'domcontentloaded',
+		})
+		await expect(page.locator('[data-testid="link-share-access"]')).toBeVisible({
+			timeout: 25_000,
+		})
 		await expect(page.locator('.lock-screen')).toHaveCount(0)
 		// Phase 1 of the recipient protocol: the password prompt. The salt was
 		// supplied above, so a load error here is a real regression.
-		await expect(page.locator('[data-testid="link-share-load-error"]')).toHaveCount(0)
-		await expect(page.locator('[data-testid="link-share-form"]')).toBeVisible({ timeout: 20_000 })
-		await expect(page.locator('[data-testid="link-share-password"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="link-share-load-error"]'),
+		).toHaveCount(0)
+		await expect(page.locator('[data-testid="link-share-form"]')).toBeVisible({
+			timeout: 20_000,
+		})
+		await expect(
+			page.locator('[data-testid="link-share-password"]'),
+		).toBeVisible()
 	})
 
-	test('EphemeralSendAccess prompts an external recipient at #/send/:token', async ({ page }) => {
+	test('EphemeralSendAccess prompts an external recipient at #/send/:token', async ({
+		page,
+	}) => {
 		await landForFixtures(page)
 		const created = await api(page, 'POST', '/api/v1/sends', {
 			encryptedPayload: OPAQUE,
@@ -400,12 +483,20 @@ test.describe('Routed page surfaces — public recipient routes', () => {
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created ephemeral send carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/send/${token}`, { waitUntil: 'domcontentloaded' })
-		await expect(page.locator('[data-testid="send-access-page"]')).toBeVisible({ timeout: 25_000 })
+		await page.goto(`${APP_BASE}/#/send/${token}`, {
+			waitUntil: 'domcontentloaded',
+		})
+		await expect(page.locator('[data-testid="send-access-page"]')).toBeVisible({
+			timeout: 25_000,
+		})
 		await expect(page.locator('.lock-screen')).toHaveCount(0)
-		await expect(page.locator('[data-testid="send-access-error"]')).toHaveCount(0)
+		await expect(page.locator('[data-testid="send-access-error"]')).toHaveCount(
+			0,
+		)
 		// The send was created WITH a password, so the recipient must be asked
 		// for one before anything is revealed.
-		await expect(page.locator('[data-testid="send-access-password"]')).toBeVisible({ timeout: 20_000 })
+		await expect(
+			page.locator('[data-testid="send-access-password"]'),
+		).toBeVisible({ timeout: 20_000 })
 	})
 })

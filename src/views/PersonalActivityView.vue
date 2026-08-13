@@ -16,9 +16,15 @@
 
 		<NcLoadingIcon v-if="loading" :size="24" />
 
-		<NcEmptyContent v-else-if="entries.length === 0"
+		<NcEmptyContent
+			v-else-if="entries.length === 0"
 			:name="t('doriath', 'No activity recorded yet')"
-			:description="t('doriath', 'Your secret operations will appear here. The trail starts at the deployment of this feature.')"
+			:description="
+				t(
+					'doriath',
+					'Your secret operations will appear here. The trail starts at the deployment of this feature.',
+				)
+			"
 			data-testid="personal-activity-empty">
 			<template #icon>
 				<History :size="20" />
@@ -26,13 +32,20 @@
 		</NcEmptyContent>
 
 		<ul v-else class="personal-activity__list">
-			<li v-for="entry in entries"
+			<li
+				v-for="entry in entries"
 				:key="entry.id"
 				class="personal-activity__item"
 				data-testid="personal-activity-item">
-				<span class="personal-activity__event">{{ label(entry.eventType) }}</span>
-				<span class="personal-activity__object">{{ entry.objectName || entry.objectId || '' }}</span>
-				<span class="personal-activity__time">{{ formatTime(entry.occurredAt) }}</span>
+				<span class="personal-activity__event">{{
+					label(entry.eventType)
+				}}</span>
+				<span class="personal-activity__object">{{
+					entry.objectName || entry.objectId || ''
+				}}</span>
+				<span class="personal-activity__time">{{
+					formatTime(entry.occurredAt)
+				}}</span>
 			</li>
 		</ul>
 	</div>

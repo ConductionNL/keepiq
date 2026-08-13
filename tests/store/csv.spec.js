@@ -32,11 +32,16 @@ describe('csv util', () => {
 
 	describe('buildCsv', () => {
 		it('joins a header row and data rows with CRLF', () => {
-			const csv = buildCsv(['When', 'Event'], [
-				['2026-06-14', 'secret.read'],
-				['2026-06-14', 'share.granted'],
-			])
-			expect(csv).toBe('When,Event\r\n2026-06-14,secret.read\r\n2026-06-14,share.granted')
+			const csv = buildCsv(
+				['When', 'Event'],
+				[
+					['2026-06-14', 'secret.read'],
+					['2026-06-14', 'share.granted'],
+				],
+			)
+			expect(csv).toBe(
+				'When,Event\r\n2026-06-14,secret.read\r\n2026-06-14,share.granted',
+			)
 		})
 	})
 })

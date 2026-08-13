@@ -28,7 +28,9 @@ describe('DelegationManager', () => {
 			propsData: { secretId: 'sec-1', canReclaim: true },
 		})
 		await flush()
-		expect(wrapper.find('[data-testid="delegation-manager-empty"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="delegation-manager-empty"]').exists(),
+		).toBe(true)
 	})
 
 	it('renders rows with permanent + temporary status pills', async () => {
@@ -69,7 +71,9 @@ describe('DelegationManager', () => {
 			propsData: { secretId: 'sec-1', canReclaim: true },
 		})
 		await flush()
-		await wrapper.find('[data-testid="delegation-manager-reclaim"]').trigger('click')
+		await wrapper
+			.find('[data-testid="delegation-manager-reclaim"]')
+			.trigger('click')
 		await flush()
 		expect(wrapper.emitted('reclaimed')).toBeTruthy()
 		expect(wrapper.emitted('reclaimed')[0][0]).toBe(1)
@@ -83,6 +87,8 @@ describe('DelegationManager', () => {
 			propsData: { secretId: 'sec-1', canReclaim: false },
 		})
 		await flush()
-		expect(wrapper.find('[data-testid="delegation-manager-reclaim"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="delegation-manager-reclaim"]').exists(),
+		).toBe(false)
 	})
 })

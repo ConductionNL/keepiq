@@ -19,7 +19,12 @@
 		</NcNoteCard>
 
 		<p v-if="leases.length === 0" class="app-leases__empty">
-			{{ t('doriath', 'No leases yet — a lease appears when the application fetches a secret.') }}
+			{{
+				t(
+					'doriath',
+					'No leases yet — a lease appears when the application fetches a secret.',
+				)
+			}}
 		</p>
 
 		<table v-else class="app-leases__table">
@@ -44,7 +49,10 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="lease in leases" :key="lease.id" :data-testid="`lease-${lease.id}`">
+				<tr
+					v-for="lease in leases"
+					:key="lease.id"
+					:data-testid="`lease-${lease.id}`">
 					<td class="app-leases__mono">
 						{{ lease.secretId }}
 					</td>
@@ -52,12 +60,17 @@
 					<td>{{ formatDate(lease.expiresAt) }}</td>
 					<td>{{ lease.renewedCount }}</td>
 					<td>
-						<span :class="['app-leases__status', `app-leases__status--${lease.status}`]">
+						<span
+							:class="[
+								'app-leases__status',
+								`app-leases__status--${lease.status}`,
+							]">
 							{{ lease.status }}
 						</span>
 					</td>
 					<td>
-						<NcButton v-if="lease.status === 'active'"
+						<NcButton
+							v-if="lease.status === 'active'"
 							variant="tertiary"
 							:data-testid="`lease-revoke-${lease.id}`"
 							@click="onRevoke(lease)">
@@ -107,7 +120,10 @@ export default {
 			// A 404 means the viewer may not manage this application's
 			// leases — hide silently rather than surfacing an error.
 			if (e?.response?.status !== 404) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load leases'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load leases'
 			}
 		}
 	},
@@ -123,7 +139,10 @@ export default {
 				await this.store.revoke(lease.id)
 				this.error = null
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to revoke lease'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to revoke lease'
 			}
 		},
 
@@ -135,7 +154,9 @@ export default {
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed) ? (iso ?? '') : new Date(parsed).toLocaleString()
+			return Number.isNaN(parsed)
+				? (iso ?? '')
+				: new Date(parsed).toLocaleString()
 		},
 	},
 }

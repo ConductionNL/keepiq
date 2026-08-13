@@ -10,18 +10,29 @@
   @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-delete
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Delete {count} secrets', { count: bulk.selectionCount })"
+	<NcDialog
+		:name="
+			t('doriath', 'Delete {count} secrets', { count: bulk.selectionCount })
+		"
 		:open="open"
 		size="normal"
 		data-testid="bulk-delete-dialog"
 		@update:open="$emit('close')">
 		<div class="bulk-delete">
 			<NcNoteCard type="warning" data-testid="bulk-delete-warning">
-				{{ t('doriath', 'This permanently deletes {count} secrets and revokes their shares. There is no trash — this cannot be undone.', { count: bulk.selectionCount }) }}
+				{{
+					t(
+						'doriath',
+						'This permanently deletes {count} secrets and revokes their shares. There is no trash — this cannot be undone.',
+						{ count: bulk.selectionCount },
+					)
+				}}
 			</NcNoteCard>
 			<label v-if="needsTypedConfirmation" class="bulk-delete__confirm">
-				<span>{{ t('doriath', 'Type {word} to confirm', { word: confirmWord }) }}</span>
-				<input v-model="typed" type="text" data-testid="bulk-delete-typed">
+				<span>{{
+					t('doriath', 'Type {word} to confirm', { word: confirmWord })
+				}}</span>
+				<input v-model="typed" type="text" data-testid="bulk-delete-typed" />
 			</label>
 			<BulkRunPanel @retry="onRetry" />
 		</div>
@@ -29,11 +40,16 @@
 			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton variant="error"
+			<NcButton
+				variant="error"
 				:disabled="!confirmed || bulk.progress.running"
 				data-testid="bulk-delete-run"
 				@click="onRun">
-				{{ t('doriath', 'Delete {count} secrets', { count: bulk.selectionCount }) }}
+				{{
+					t('doriath', 'Delete {count} secrets', {
+						count: bulk.selectionCount,
+					})
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -125,7 +141,10 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed((id) => this.deleteOne(id), this.t('doriath', 'Retrying delete'))
+			await this.bulk.retryFailed(
+				(id) => this.deleteOne(id),
+				this.t('doriath', 'Retrying delete'),
+			)
 			this.$emit('done')
 		},
 	},

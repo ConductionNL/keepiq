@@ -14,7 +14,13 @@
  * of it is cleared on lock.
  */
 
-import { decryptPrivateKey, importPrivateKey, importPublicKey, rsaDecrypt, rsaEncrypt } from '../crypto/index.js'
+import {
+	decryptPrivateKey,
+	importPrivateKey,
+	importPublicKey,
+	rsaDecrypt,
+	rsaEncrypt,
+} from '../crypto/index.js'
 import { fetchActiveSuite } from './api.js'
 
 // Locked state: no key material present.

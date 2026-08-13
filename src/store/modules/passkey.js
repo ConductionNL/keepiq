@@ -46,9 +46,11 @@ export const usePasskeyStore = defineStore('passkey', {
 		async fetchCredentials() {
 			this.error = null
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/passkeys'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/passkeys'),
+				)
 				this.credentials = response.data ?? []
-				this.hasActive = this.credentials.some(c => c.status === 'active')
+				this.hasActive = this.credentials.some((c) => c.status === 'active')
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}
@@ -65,7 +67,9 @@ export const usePasskeyStore = defineStore('passkey', {
 				return false
 			}
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/passkeys/login-options'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/passkeys/login-options'),
+				)
 				return (response.data?.credentials?.length ?? 0) > 0
 			} catch (e) {
 				return false
@@ -90,17 +94,33 @@ export const usePasskeyStore = defineStore('passkey', {
 			}
 
 			// 1. Creation options + challenge from the server.
-			const challengeResp = await axios.get(generateUrl('/apps/doriath/api/v1/passkeys/challenge'))
-			const challenge = fromBase64Url(challengeResp.data.challenge.replace(/\+/g, '-').replace(/\//g, '_'))
+			const challengeResp = await axios.get(
+				generateUrl('/apps/doriath/api/v1/passkeys/challenge'),
+			)
+			const challenge = fromBase64Url(
+				challengeResp.data.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
+			)
 
-			const userId = new TextEncoder().encode(window.OC?.getCurrentUser?.()?.uid || 'doriath-user')
+			const userId = new TextEncoder().encode(
+				window.OC?.getCurrentUser?.()?.uid || 'doriath-user',
+			)
 			const created = await navigator.credentials.create({
 				publicKey: {
 					rp: { id: RP_ID, name: 'Doriath' },
-					user: { id: userId, name: label || 'Doriath vault', displayName: label || 'Doriath vault' },
+					user: {
+						id: userId,
+						name: label || 'Doriath vault',
+						displayName: label || 'Doriath vault',
+					},
 					challenge,
-					pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-					authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
+					pubKeyCredParams: [
+						{ type: 'public-key', alg: -7 },
+						{ type: 'public-key', alg: -257 },
+					],
+					authenticatorSelection: {
+						residentKey: 'preferred',
+						userVerification: 'preferred',
+					},
 					extensions: { prf: {} },
 				},
 			})
@@ -108,7 +128,9 @@ export const usePasskeyStore = defineStore('passkey', {
 			// 2. PRF must be enabled by this authenticator.
 			const ext = created.getClientExtensionResults()
 			if (!ext?.prf?.enabled) {
-				throw new Error('Your authenticator does not support passkey unlock (PRF).')
+				throw new Error(
+					'Your authenticator does not support passkey unlock (PRF).',
+				)
 			}
 
 			const credentialId = toBase64Url(created.rawId)
@@ -123,7 +145,8 @@ export const usePasskeyStore = defineStore('passkey', {
 					extensions: { prf: { eval: { first: prfSaltBytes } } },
 				},
 			})
-			const prfOutput = assertion.getClientExtensionResults()?.prf?.results?.first
+			const prfOutput =
+				assertion.getClientExtensionResults()?.prf?.results?.first
 			if (!prfOutput) {
 				throw new Error('Your authenticator did not return a PRF result.')
 			}
@@ -136,15 +159,20 @@ export const usePasskeyStore = defineStore('passkey', {
 			const wrappedUnlockKey = await wrapUnlockKey(kek, rawUnlockKey)
 
 			// 5. Persist the envelope (never the raw key or PRF output).
-			const response = await axios.post(generateUrl('/apps/doriath/api/v1/passkeys'), {
-				credentialId,
-				wrappedUnlockKey,
-				prfSalt: btoa(String.fromCharCode(...prfSaltBytes)),
-				publicKey: '',
-				label: label || 'Passkey',
-				transports: (created.response?.getTransports?.() || []).join(','),
-				aaguid: '',
-			})
+			const response = await axios.post(
+				generateUrl('/apps/doriath/api/v1/passkeys'),
+				{
+					credentialId,
+					wrappedUnlockKey,
+					prfSalt: btoa(String.fromCharCode(...prfSaltBytes)),
+					publicKey: '',
+					label: label || 'Passkey',
+					transports: (created.response?.getTransports?.() || []).join(
+						',',
+					),
+					aaguid: '',
+				},
+			)
 			await this.fetchCredentials()
 			return response.data
 		},
@@ -158,20 +186,27 @@ export const usePasskeyStore = defineStore('passkey', {
 		 */
 		async unlockWithPasskey() {
 			this.error = null
-			const optResp = await axios.get(generateUrl('/apps/doriath/api/v1/passkeys/login-options'))
+			const optResp = await axios.get(
+				generateUrl('/apps/doriath/api/v1/passkeys/login-options'),
+			)
 			const options = optResp.data
 			if (!options.credentials?.length) {
 				throw new Error('No passkey enrolled for unlock')
 			}
 
-			const challenge = fromBase64Url(options.challenge.replace(/\+/g, '-').replace(/\//g, '_'))
-			const allowCredentials = options.credentials.map(c => ({
+			const challenge = fromBase64Url(
+				options.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
+			)
+			const allowCredentials = options.credentials.map((c) => ({
 				type: 'public-key',
 				id: fromBase64Url(c.credentialId),
 			}))
 			// Same PRF salt the envelope was wrapped with (from the first cred
 			// the authenticator satisfies — allowCredentials narrows it).
-			const prfSalt = Uint8Array.from(atob(options.credentials[0].prfSalt), ch => ch.charCodeAt(0))
+			const prfSalt = Uint8Array.from(
+				atob(options.credentials[0].prfSalt),
+				(ch) => ch.charCodeAt(0),
+			)
 
 			const assertion = await navigator.credentials.get({
 				publicKey: {
@@ -183,8 +218,11 @@ export const usePasskeyStore = defineStore('passkey', {
 				},
 			})
 			const usedId = toBase64Url(assertion.rawId)
-			const cred = options.credentials.find(c => c.credentialId === usedId) || options.credentials[0]
-			const prfOutput = assertion.getClientExtensionResults()?.prf?.results?.first
+			const cred =
+				options.credentials.find((c) => c.credentialId === usedId)
+				|| options.credentials[0]
+			const prfOutput =
+				assertion.getClientExtensionResults()?.prf?.results?.first
 			if (!prfOutput) {
 				throw new Error('Passkey unlock failed — no PRF result')
 			}
@@ -196,7 +234,9 @@ export const usePasskeyStore = defineStore('passkey', {
 			await session.unlockWithRawKey(rawUnlockKey)
 
 			// Best-effort last-used stamp.
-			axios.post(generateUrl(`/apps/doriath/api/v1/passkeys/${cred.id}/used`)).catch(() => {})
+			axios
+				.post(generateUrl(`/apps/doriath/api/v1/passkeys/${cred.id}/used`))
+				.catch(() => {})
 			return true
 		},
 
@@ -209,9 +249,11 @@ export const usePasskeyStore = defineStore('passkey', {
 		async revoke(id) {
 			this.error = null
 			try {
-				await axios.delete(generateUrl(`/apps/doriath/api/v1/passkeys/${id}`))
-				this.credentials = this.credentials.filter(c => c.id !== id)
-				this.hasActive = this.credentials.some(c => c.status === 'active')
+				await axios.delete(
+					generateUrl(`/apps/doriath/api/v1/passkeys/${id}`),
+				)
+				this.credentials = this.credentials.filter((c) => c.id !== id)
+				this.hasActive = this.credentials.some((c) => c.status === 'active')
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}

@@ -70,7 +70,10 @@ export const useFolderStore = defineStore('folder', {
 			} catch (e) {
 				// Offline fallback: serve the cached folder tree (offline-
 				// readonly-cache §4.2).
-				const netErr = e?.message === 'Network Error' || e?.code === 'ERR_NETWORK' || (e?.request && !e?.response)
+				const netErr =
+					e?.message === 'Network Error'
+					|| e?.code === 'ERR_NETWORK'
+					|| (e?.request && !e?.response)
 				if (netErr && offline.vault?.folders) {
 					offline.servedFromCache = true
 					this.folders = offline.vault.folders
@@ -110,7 +113,7 @@ export const useFolderStore = defineStore('folder', {
 				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
 				data,
 			)
-			const index = this.folders.findIndex(f => f.id === id)
+			const index = this.folders.findIndex((f) => f.id === id)
 			if (index !== -1) {
 				this.folders.splice(index, 1, response.data)
 			}
@@ -148,8 +151,11 @@ export const useFolderStore = defineStore('folder', {
 					directSecrets: options.directSecrets || 'move',
 				}
 			}
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/folders/${id}`), config)
-			this.folders = this.folders.filter(f => f.id !== id)
+			await axios.delete(
+				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
+				config,
+			)
+			this.folders = this.folders.filter((f) => f.id !== id)
 		},
 	},
 })

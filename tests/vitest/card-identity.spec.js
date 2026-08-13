@@ -85,13 +85,24 @@ describe('identity payload', () => {
 
 describe('import mapper: Bitwarden card/identity routing', () => {
 	it('routes a Bitwarden card item into a card row with the payload in password', () => {
-		const rows = parseBitwardenJson(JSON.stringify({
-			items: [{
-				type: 3,
-				name: 'My Visa',
-				card: { cardholderName: 'R. Tester', brand: 'Visa', number: '4111111111111111', expMonth: '3', expYear: '2028', code: '123' },
-			}],
-		}))
+		const rows = parseBitwardenJson(
+			JSON.stringify({
+				items: [
+					{
+						type: 3,
+						name: 'My Visa',
+						card: {
+							cardholderName: 'R. Tester',
+							brand: 'Visa',
+							number: '4111111111111111',
+							expMonth: '3',
+							expYear: '2028',
+							code: '123',
+						},
+					},
+				],
+			}),
+		)
 		expect(rows).toHaveLength(1)
 		expect(rows[0].type).toBe('card')
 		expect(rows[0].errors).toEqual([])
@@ -104,13 +115,24 @@ describe('import mapper: Bitwarden card/identity routing', () => {
 	})
 
 	it('routes a Bitwarden identity item into an identity row with ssn -> bsn', () => {
-		const rows = parseBitwardenJson(JSON.stringify({
-			items: [{
-				type: 4,
-				name: 'My identity',
-				identity: { firstName: 'Test', lastName: 'Persoon', ssn: '999990019', email: 't@example.nl', address1: 'Stationsplein 1', city: 'Amsterdam' },
-			}],
-		}))
+		const rows = parseBitwardenJson(
+			JSON.stringify({
+				items: [
+					{
+						type: 4,
+						name: 'My identity',
+						identity: {
+							firstName: 'Test',
+							lastName: 'Persoon',
+							ssn: '999990019',
+							email: 't@example.nl',
+							address1: 'Stationsplein 1',
+							city: 'Amsterdam',
+						},
+					},
+				],
+			}),
+		)
 		expect(rows).toHaveLength(1)
 		expect(rows[0].type).toBe('identity')
 		expect(rows[0].errors).toEqual([])
@@ -120,12 +142,14 @@ describe('import mapper: Bitwarden card/identity routing', () => {
 	})
 
 	it('rejects a card item without a number and an empty identity item', () => {
-		const rows = parseBitwardenJson(JSON.stringify({
-			items: [
-				{ type: 3, name: 'Empty card', card: {} },
-				{ type: 4, name: 'Empty identity', identity: {} },
-			],
-		}))
+		const rows = parseBitwardenJson(
+			JSON.stringify({
+				items: [
+					{ type: 3, name: 'Empty card', card: {} },
+					{ type: 4, name: 'Empty identity', identity: {} },
+				],
+			}),
+		)
 		expect(rows).toHaveLength(2)
 		expect(rows[0].errors.length).toBeGreaterThan(0)
 		expect(rows[1].errors.length).toBeGreaterThan(0)

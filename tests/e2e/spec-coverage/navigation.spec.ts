@@ -31,9 +31,11 @@ function appNav(page: import('@playwright/test').Page) {
 // entries become visible. The toggle is clicked via a real DOM `.click()` so
 // the full-page lock-screen layout cannot swallow the synthetic pointer event.
 async function expandSettingsFoldout(page: import('@playwright/test').Page) {
-	const toggle = page.locator(
-		'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',
-	).first()
+	const toggle = page
+		.locator(
+			'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',
+		)
+		.first()
 	await expect(toggle).toBeVisible({ timeout: 5_000 })
 	await toggle.evaluate((el: HTMLElement) => el.click())
 }
@@ -64,7 +66,9 @@ test.describe('App navigation — manifest menu', () => {
 		assertNoDoriathErrors(errors)
 	})
 
-	test('clicking the Lock vault nav entry keeps the locked user on the lock gate', async ({ page }) => {
+	test('clicking the Lock vault nav entry keeps the locked user on the lock gate', async ({
+		page,
+	}) => {
 		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 

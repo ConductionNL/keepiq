@@ -26,11 +26,19 @@
 			<section data-testid="cert-stored-section">
 				<h3>{{ t('doriath', 'Stored certificates') }}</h3>
 				<p class="cert-inventory__hint">
-					{{ t('doriath', 'These live encrypted in your vault. Metadata is parsed in your browser after unlocking — the certificate itself never leaves it.') }}
+					{{
+						t(
+							'doriath',
+							'These live encrypted in your vault. Metadata is parsed in your browser after unlocking — the certificate itself never leaves it.',
+						)
+					}}
 				</p>
-				<NcEmptyContent v-if="store.inventory.stored.length === 0"
+				<NcEmptyContent
+					v-if="store.inventory.stored.length === 0"
 					:name="t('doriath', 'No certificate secrets')"
-					:description="t('doriath', 'Secrets of the Certificate type appear here.')" />
+					:description="
+						t('doriath', 'Secrets of the Certificate type appear here.')
+					" />
 				<table v-else class="cert-inventory__table">
 					<thead>
 						<tr>
@@ -50,24 +58,37 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in store.inventory.stored" :key="row.id" :data-testid="`cert-stored-${row.id}`">
+						<tr
+							v-for="row in store.inventory.stored"
+							:key="row.id"
+							:data-testid="`cert-stored-${row.id}`">
 							<td>{{ row.name }}</td>
 							<td>{{ row.metadata?.subject || '—' }}</td>
 							<td>{{ row.metadata?.issuer || '—' }}</td>
 							<td>
-								<span v-if="row.metadata?.notAfter" :class="expiryClass(row.metadata.notAfter)">
+								<span
+									v-if="row.metadata?.notAfter"
+									:class="expiryClass(row.metadata.notAfter)">
 									{{ formatDate(row.metadata.notAfter) }}
 								</span>
-								<span v-else class="cert-inventory__muted">{{ t('doriath', 'not parsed yet') }}</span>
+								<span v-else class="cert-inventory__muted">{{
+									t('doriath', 'not parsed yet')
+								}}</span>
 							</td>
 							<td class="cert-inventory__actions">
-								<NcButton variant="tertiary"
+								<NcButton
+									variant="tertiary"
 									:disabled="busy || locked"
 									:data-testid="`cert-parse-${row.id}`"
 									@click="onParse(row)">
-									{{ row.metadata ? t('doriath', 'Re-parse') : t('doriath', 'Parse certificate') }}
+									{{
+										row.metadata
+											? t('doriath', 'Re-parse')
+											: t('doriath', 'Parse certificate')
+									}}
 								</NcButton>
-								<NcButton variant="tertiary"
+								<NcButton
+									variant="tertiary"
 									:disabled="busy"
 									:data-testid="`cert-renew-${row.id}`"
 									@click="onChecklist(row)">
@@ -77,8 +98,16 @@
 						</tr>
 					</tbody>
 				</table>
-				<p v-if="locked" class="cert-inventory__muted" data-testid="cert-locked-hint">
-					{{ t('doriath', 'Unlock your vault to parse stored certificates.') }}
+				<p
+					v-if="locked"
+					class="cert-inventory__muted"
+					data-testid="cert-locked-hint">
+					{{
+						t(
+							'doriath',
+							'Unlock your vault to parse stored certificates.',
+						)
+					}}
 				</p>
 			</section>
 
@@ -86,9 +115,16 @@
 			<section data-testid="cert-suites-section">
 				<h3>{{ t('doriath', 'Vault encryption certificates') }}</h3>
 				<p class="cert-inventory__hint">
-					{{ t('doriath', 'Issued by the built-in certificate authority. Re-issuing keeps your existing key pair — nothing becomes unreadable.') }}
+					{{
+						t(
+							'doriath',
+							'Issued by the built-in certificate authority. Re-issuing keeps your existing key pair — nothing becomes unreadable.',
+						)
+					}}
 				</p>
-				<table v-if="store.inventory.suites.length" class="cert-inventory__table">
+				<table
+					v-if="store.inventory.suites.length"
+					class="cert-inventory__table">
 					<thead>
 						<tr>
 							<th scope="col">
@@ -104,17 +140,23 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in store.inventory.suites" :key="row.id" :data-testid="`cert-suite-${row.id}`">
+						<tr
+							v-for="row in store.inventory.suites"
+							:key="row.id"
+							:data-testid="`cert-suite-${row.id}`">
 							<td>{{ row.ownerType }}: {{ row.ownerId }}</td>
 							<td>{{ row.metadata?.subject || '—' }}</td>
 							<td>
-								<span v-if="row.metadata?.notAfter" :class="expiryClass(row.metadata.notAfter)">
+								<span
+									v-if="row.metadata?.notAfter"
+									:class="expiryClass(row.metadata.notAfter)">
 									{{ formatDate(row.metadata.notAfter) }}
 								</span>
 								<span v-else>—</span>
 							</td>
 							<td>
-								<NcButton variant="tertiary"
+								<NcButton
+									variant="tertiary"
 									:disabled="busy"
 									:data-testid="`cert-reissue-${row.id}`"
 									@click="onReissue(row)">
@@ -124,7 +166,9 @@
 						</tr>
 					</tbody>
 				</table>
-				<NcEmptyContent v-else :name="t('doriath', 'No active vault certificate')" />
+				<NcEmptyContent
+					v-else
+					:name="t('doriath', 'No active vault certificate')" />
 			</section>
 
 			<!-- CA certificates (admin only). -->
@@ -145,11 +189,16 @@
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in store.inventory.ca" :key="row.caRole" :data-testid="`cert-ca-${row.caRole}`">
+						<tr
+							v-for="row in store.inventory.ca"
+							:key="row.caRole"
+							:data-testid="`cert-ca-${row.caRole}`">
 							<td>{{ row.caRole }}</td>
 							<td>{{ row.metadata?.subject || '—' }}</td>
 							<td>
-								<span v-if="row.metadata?.notAfter" :class="expiryClass(row.metadata.notAfter)">
+								<span
+									v-if="row.metadata?.notAfter"
+									:class="expiryClass(row.metadata.notAfter)">
 									{{ formatDate(row.metadata.notAfter) }}
 								</span>
 								<span v-else>—</span>
@@ -161,7 +210,9 @@
 		</template>
 
 		<!-- Renewal checklist dialog (externally-issued stored certs). -->
-		<CertificateRenewalChecklistDialog :checklist="checklist" @close="checklist = null" />
+		<CertificateRenewalChecklistDialog
+			:checklist="checklist"
+			@close="checklist = null" />
 	</div>
 </template>
 
@@ -218,7 +269,9 @@ export default {
 			try {
 				const result = await this.store.parseAndSubmit(row.id)
 				if (result) {
-					showSuccess(t('doriath', 'Certificate parsed — expiry reminder set.'))
+					showSuccess(
+						t('doriath', 'Certificate parsed — expiry reminder set.'),
+					)
 				}
 			} finally {
 				this.busy = false
@@ -251,7 +304,12 @@ export default {
 			try {
 				const result = await this.store.reissueSuite(row.id)
 				if (result) {
-					showSuccess(t('doriath', 'Certificate re-issued with the same key pair.'))
+					showSuccess(
+						t(
+							'doriath',
+							'Certificate re-issued with the same key pair.',
+						),
+					)
 				} else if (this.store.error) {
 					showError(this.store.error)
 				}

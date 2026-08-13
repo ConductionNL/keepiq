@@ -30,11 +30,13 @@ import { useSessionStore } from '../../src/store/modules/session.js'
 const ncStubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
-		template: '<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['type', 'disabled', 'title', 'ariaLabel'],
-		template: '<button :disabled="disabled" :title="title" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
+		template:
+			'<button :disabled="disabled" :title="title" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
 	},
 	NcSelect: {
 		props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'],
@@ -46,7 +48,8 @@ const ncStubs = {
 	},
 	NcPasswordField: {
 		props: ['value', 'label'],
-		template: '<input type="password" class="nc-password-stub" :value="value" />',
+		template:
+			'<input type="password" class="nc-password-stub" :value="value" />',
 	},
 	NcNoteCard: {
 		props: ['type'],
@@ -57,7 +60,8 @@ const ncStubs = {
 	Dice5: { template: '<i class="icon-dice5" />' },
 	KeyGeneratorModal: {
 		props: ['open'],
-		template: '<div class="key-generator-modal-stub" :data-open="open"><slot /></div>',
+		template:
+			'<div class="key-generator-modal-stub" :data-open="open"><slot /></div>',
 	},
 }
 

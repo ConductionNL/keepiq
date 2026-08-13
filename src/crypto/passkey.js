@@ -23,10 +23,12 @@ const IV_LENGTH = 12
  * @return {boolean}
  */
 export function isPrfSupported() {
-	return typeof window !== 'undefined'
+	return (
+		typeof window !== 'undefined'
 		&& typeof window.PublicKeyCredential !== 'undefined'
 		&& typeof navigator !== 'undefined'
 		&& !!navigator.credentials
+	)
 }
 
 /**
@@ -50,7 +52,7 @@ function toBase64(bytes) {
  * @return {Uint8Array} The bytes.
  */
 function fromBase64(b64) {
-	return Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+	return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
 }
 
 /**
@@ -62,8 +64,11 @@ function fromBase64(b64) {
  * @return {Promise<CryptoKey>} The KEK (usages: encrypt, decrypt).
  */
 export async function deriveKekFromPrf(prfOutput, credentialId) {
-	const ikm = prfOutput instanceof Uint8Array ? prfOutput : new Uint8Array(prfOutput)
-	const baseKey = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveKey'])
+	const ikm =
+		prfOutput instanceof Uint8Array ? prfOutput : new Uint8Array(prfOutput)
+	const baseKey = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, [
+		'deriveKey',
+	])
 	return crypto.subtle.deriveKey(
 		{
 			name: 'HKDF',
@@ -123,7 +128,10 @@ export async function unwrapUnlockKey(kek, envelope) {
  * @return {string} base64url.
  */
 export function toBase64Url(buffer) {
-	return toBase64(new Uint8Array(buffer)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+	return toBase64(new Uint8Array(buffer))
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=+$/, '')
 }
 
 /**
@@ -133,6 +141,8 @@ export function toBase64Url(buffer) {
  * @return {Uint8Array} The bytes.
  */
 export function fromBase64Url(value) {
-	const b64 = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (value.length % 4)) % 4)
+	const b64 =
+		value.replace(/-/g, '+').replace(/_/g, '/')
+		+ '='.repeat((4 - (value.length % 4)) % 4)
 	return fromBase64(b64)
 }

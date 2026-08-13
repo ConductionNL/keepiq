@@ -92,9 +92,5 @@ export default defineConfig({
 		},
 	],
 
-	testIgnore: [
-		'**/node_modules/**',
-		'**/custom_apps/**',
-		'**/.claude/**',
-	],
+	testIgnore: ['**/node_modules/**', '**/custom_apps/**', '**/.claude/**'],
 })

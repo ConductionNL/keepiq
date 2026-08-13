@@ -3,8 +3,13 @@
 		:name="t('doriath', 'Session')"
 		:description="t('doriath', 'Vault session timeout for this account')">
 		<div class="session-timeout">
-			<label for="session-timeout-select">{{ t('doriath', 'Lock vault after') }}</label>
-			<select id="session-timeout-select" v-model="sessionTimeout" @change="save">
+			<label for="session-timeout-select">{{
+				t('doriath', 'Lock vault after')
+			}}</label>
+			<select
+				id="session-timeout-select"
+				v-model="sessionTimeout"
+				@change="save">
 				<option value="session">
 					{{ t('doriath', 'Nextcloud session') }}
 				</option>
@@ -41,7 +46,9 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings/user'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings/user'),
+			)
 			this.sessionTimeout = response.data.session_timeout || 'session'
 		} catch (e) {
 			console.warn('Doriath: failed to load user settings', e)

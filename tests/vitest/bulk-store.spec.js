@@ -61,7 +61,12 @@ describe('bulk store: chunked runner', () => {
 
 		const report = await bulk.run(
 			ids,
-			async (id) => (id.endsWith('7') ? (() => { throw new Error('boom') })() : { status: 'ok' }),
+			async (id) =>
+				id.endsWith('7')
+					? (() => {
+							throw new Error('boom')
+						})()
+					: { status: 'ok' },
 			'testing',
 		)
 
@@ -93,7 +98,9 @@ describe('bulk store: chunked runner', () => {
 		// The first chunk (25) completes; chunks after the cancel are skipped.
 		expect(processed).toBe(25)
 		expect(report).toHaveLength(60)
-		expect(report.filter((r) => r.status === 'skipped' && r.reason === 'cancelled')).toHaveLength(35)
+		expect(
+			report.filter((r) => r.status === 'skipped' && r.reason === 'cancelled'),
+		).toHaveLength(35)
 	})
 
 	it('retryFailed re-runs ONLY the failed subset and merges the report', async () => {
@@ -134,7 +141,11 @@ describe('bulk store: chunked runner', () => {
 
 	it('deduplicates ids before running', async () => {
 		const bulk = useBulkStore()
-		const report = await bulk.run(['x', 'x', 'y'], async () => ({ status: 'ok' }), 'testing')
+		const report = await bulk.run(
+			['x', 'x', 'y'],
+			async () => ({ status: 'ok' }),
+			'testing',
+		)
 		expect(report).toHaveLength(2)
 	})
 })

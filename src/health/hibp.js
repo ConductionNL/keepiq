@@ -101,7 +101,9 @@ export async function checkValue(value, fetchRange = defaultFetchRange) {
  */
 async function defaultFetchRange(prefix) {
 	const response = await axios.get(
-		generateUrl('/apps/doriath/api/v1/breach-check/range/' + encodeURIComponent(prefix)),
+		generateUrl(
+			'/apps/doriath/api/v1/breach-check/range/' + encodeURIComponent(prefix),
+		),
 	)
 	return response?.data?.suffixes ?? ''
 }

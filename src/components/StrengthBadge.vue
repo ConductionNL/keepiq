@@ -45,7 +45,7 @@ export default {
 		score() {
 			const store = useHealthStore()
 			const value = store.scoreById[this.secretId]
-			return (value === undefined || value === null) ? null : value
+			return value === undefined || value === null ? null : value
 		},
 
 		/**

@@ -14,7 +14,9 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.1
 -->
 <template>
-	<div class="doriath-application-register-view" data-testid="application-register-view">
+	<div
+		class="doriath-application-register-view"
+		data-testid="application-register-view">
 		<CnIndexPage
 			view-mode="list"
 			:available-view-modes="['list', 'cards', 'table']"
@@ -30,7 +32,9 @@
 			:search-value="searchTerm"
 			:search-placeholder="t('doriath', 'Search applications')"
 			row-key="id"
-			:empty-text="t('doriath', 'You have not registered any applications yet.')"
+			:empty-text="
+				t('doriath', 'You have not registered any applications yet.')
+			"
 			@add="dialogOpen = true"
 			@search="onSearch"
 			@row-click="openApplication">
@@ -39,7 +43,8 @@
 					:label="statusLabel(object.status)"
 					:variant="statusVariant(object.status)"
 					size="small" />
-				<CnStatusBadge v-if="object.type"
+				<CnStatusBadge
+					v-if="object.type"
 					:label="object.type"
 					variant="default"
 					size="small" />
@@ -52,7 +57,9 @@
 			@registered="onRegistered" />
 
 		<PrivateKeyDownloadDialog
-			:open="store.oneTimePrivateKey !== null && store.oneTimePrivateKey !== ''"
+			:open="
+				store.oneTimePrivateKey !== null && store.oneTimePrivateKey !== ''
+			"
 			:private-key="store.oneTimePrivateKey || ''"
 			@close="onAcknowledgeKey" />
 	</div>
@@ -94,9 +101,15 @@ export default {
 			return {
 				properties: {
 					name: { title: t('doriath', 'Name'), type: 'string' },
-					description: { title: t('doriath', 'Description'), type: 'string' },
+					description: {
+						title: t('doriath', 'Description'),
+						type: 'string',
+					},
 				},
-				configuration: { objectNameField: 'name', objectDescriptionField: 'description' },
+				configuration: {
+					objectNameField: 'name',
+					objectDescriptionField: 'description',
+				},
 			}
 		},
 		listConfig() {
@@ -121,19 +134,27 @@ export default {
 
 		statusLabel(status) {
 			switch (status) {
-			case 'active': return t('doriath', 'Active')
-			case 'pending': return t('doriath', 'Pending approval')
-			case 'rejected': return t('doriath', 'Rejected')
-			default: return status || ''
+				case 'active':
+					return t('doriath', 'Active')
+				case 'pending':
+					return t('doriath', 'Pending approval')
+				case 'rejected':
+					return t('doriath', 'Rejected')
+				default:
+					return status || ''
 			}
 		},
 
 		statusVariant(status) {
 			switch (status) {
-			case 'active': return 'success'
-			case 'pending': return 'warning'
-			case 'rejected': return 'error'
-			default: return 'default'
+				case 'active':
+					return 'success'
+				case 'pending':
+					return 'warning'
+				case 'rejected':
+					return 'error'
+				default:
+					return 'default'
 			}
 		},
 

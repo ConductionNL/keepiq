@@ -14,10 +14,13 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.5
 -->
 <template>
-	<section class="application-secrets-panel" data-testid="application-secrets-panel">
+	<section
+		class="application-secrets-panel"
+		data-testid="application-secrets-panel">
 		<header class="application-secrets-panel__header">
 			<h3>{{ t('doriath', 'Application secrets') }}</h3>
-			<NcButton v-if="applicationActive"
+			<NcButton
+				v-if="applicationActive"
 				variant="primary"
 				data-testid="write-secret-button"
 				@click="$emit('write-secret')">
@@ -34,15 +37,26 @@
 		</NcNoteCard>
 
 		<p v-else-if="!applicationActive" class="application-secrets-panel__empty">
-			{{ t('doriath', 'Approve this application before writing secrets to it.') }}
+			{{
+				t(
+					'doriath',
+					'Approve this application before writing secrets to it.',
+				)
+			}}
 		</p>
 
 		<p v-else-if="secrets.length === 0" class="application-secrets-panel__empty">
-			{{ t('doriath', 'No secrets have been written for this application yet.') }}
+			{{
+				t(
+					'doriath',
+					'No secrets have been written for this application yet.',
+				)
+			}}
 		</p>
 
 		<ul v-else class="application-secrets-panel__list">
-			<li v-for="secret in secrets"
+			<li
+				v-for="secret in secrets"
 				:key="secret.id"
 				class="application-secrets-panel__item"
 				data-testid="application-secret-row">
@@ -115,9 +129,14 @@ export default {
 			this.loading = true
 			this.error = ''
 			try {
-				this.secrets = await this.store.listApplicationSecrets(this.applicationId)
+				this.secrets = await this.store.listApplicationSecrets(
+					this.applicationId,
+				)
 			} catch (e) {
-				this.error = e?.response?.data?.message ?? e?.message ?? this.t('doriath', 'Failed to load secrets')
+				this.error =
+					e?.response?.data?.message
+					?? e?.message
+					?? this.t('doriath', 'Failed to load secrets')
 			} finally {
 				this.loading = false
 			}

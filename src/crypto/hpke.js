@@ -76,7 +76,13 @@ async function hmacSha256(key, data) {
 	// key hashes identically, so we substitute it when salt is empty (WebCrypto
 	// rejects a zero-length key).
 	const keyBytes = key.length === 0 ? new Uint8Array(NH) : key
-	const k = await crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+	const k = await crypto.subtle.importKey(
+		'raw',
+		keyBytes,
+		{ name: 'HMAC', hash: 'SHA-256' },
+		false,
+		['sign'],
+	)
 	return new Uint8Array(await crypto.subtle.sign('HMAC', k, data))
 }
 
@@ -106,7 +112,13 @@ function labeledExtract(salt, label, ikm) {
 }
 
 function labeledExpand(prk, label, info, length) {
-	const labeledInfo = concat(i2osp(length, 2), HPKE_V1, KEM_SUITE_ID, strToBytes(label), info)
+	const labeledInfo = concat(
+		i2osp(length, 2),
+		HPKE_V1,
+		KEM_SUITE_ID,
+		strToBytes(label),
+		info,
+	)
 	return expand(prk, labeledInfo, length)
 }
 
@@ -116,7 +128,13 @@ function labeledExtractHpke(salt, label, ikm) {
 }
 
 function labeledExpandHpke(prk, label, info, length) {
-	const labeledInfo = concat(i2osp(length, 2), HPKE_V1, HPKE_SUITE_ID, strToBytes(label), info)
+	const labeledInfo = concat(
+		i2osp(length, 2),
+		HPKE_V1,
+		HPKE_SUITE_ID,
+		strToBytes(label),
+		info,
+	)
 	return expand(prk, labeledInfo, length)
 }
 
@@ -132,8 +150,12 @@ async function extractAndExpand(dh, kemContext) {
  * @return {Promise<{ publicKey: CryptoKey, privateKey: CryptoKey, publicKeyRaw: Uint8Array }>}
  */
 export async function generateRecipientKeyPair() {
-	const kp = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveBits'])
-	const publicKeyRaw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey))
+	const kp = await crypto.subtle.generateKey({ name: 'X25519' }, true, [
+		'deriveBits',
+	])
+	const publicKeyRaw = new Uint8Array(
+		await crypto.subtle.exportKey('raw', kp.publicKey),
+	)
 	return { publicKey: kp.publicKey, privateKey: kp.privateKey, publicKeyRaw }
 }
 
@@ -142,12 +164,20 @@ async function importPublicKeyRaw(raw) {
 }
 
 async function dh(privateKey, publicKey) {
-	return new Uint8Array(await crypto.subtle.deriveBits({ name: 'X25519', public: publicKey }, privateKey, 256))
+	return new Uint8Array(
+		await crypto.subtle.deriveBits(
+			{ name: 'X25519', public: publicKey },
+			privateKey,
+			256,
+		),
+	)
 }
 
 // DHKEM.Encap(pkR) -> { sharedSecret, enc }
 async function encap(pkRraw) {
-	const eph = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveBits'])
+	const eph = await crypto.subtle.generateKey({ name: 'X25519' }, true, [
+		'deriveBits',
+	])
 	const pkR = await importPublicKeyRaw(pkRraw)
 	const dhBytes = await dh(eph.privateKey, pkR)
 	const enc = new Uint8Array(await crypto.subtle.exportKey('raw', eph.publicKey))
@@ -167,17 +197,33 @@ async function decap(enc, skR, pkRraw) {
 // --- HPKE base-mode key schedule (RFC 9180 §5.1, mode_base = 0x00) ---
 
 async function keySchedule(sharedSecret, info) {
-	const pskIdHash = await labeledExtractHpke(new Uint8Array(0), 'psk_id_hash', new Uint8Array(0))
+	const pskIdHash = await labeledExtractHpke(
+		new Uint8Array(0),
+		'psk_id_hash',
+		new Uint8Array(0),
+	)
 	const infoHash = await labeledExtractHpke(new Uint8Array(0), 'info_hash', info)
 	const keyScheduleContext = concat(Uint8Array.of(0x00), pskIdHash, infoHash)
-	const secret = await labeledExtractHpke(sharedSecret, 'secret', new Uint8Array(0))
+	const secret = await labeledExtractHpke(
+		sharedSecret,
+		'secret',
+		new Uint8Array(0),
+	)
 	const key = await labeledExpandHpke(secret, 'key', keyScheduleContext, NK)
-	const baseNonce = await labeledExpandHpke(secret, 'base_nonce', keyScheduleContext, NN)
+	const baseNonce = await labeledExpandHpke(
+		secret,
+		'base_nonce',
+		keyScheduleContext,
+		NN,
+	)
 	return { key, baseNonce }
 }
 
 async function aeadKey(keyBytes) {
-	return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+	return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, [
+		'encrypt',
+		'decrypt',
+	])
 }
 
 /**
@@ -194,7 +240,13 @@ export async function seal(pkRraw, info, aad, plaintext) {
 	const { sharedSecret, enc } = await encap(pkRraw)
 	const { key, baseNonce } = await keySchedule(sharedSecret, info)
 	const aeadK = await aeadKey(key)
-	const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: baseNonce, additionalData: aad }, aeadK, plaintext))
+	const ct = new Uint8Array(
+		await crypto.subtle.encrypt(
+			{ name: 'AES-GCM', iv: baseNonce, additionalData: aad },
+			aeadK,
+			plaintext,
+		),
+	)
 	return { enc, ciphertext: ct }
 }
 
@@ -215,7 +267,13 @@ export async function open(skR, pkRraw, enc, info, aad, ciphertext) {
 	const sharedSecret = await decap(enc, skR, pkRraw)
 	const { key, baseNonce } = await keySchedule(sharedSecret, info)
 	const aeadK = await aeadKey(key)
-	return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: baseNonce, additionalData: aad }, aeadK, ciphertext))
+	return new Uint8Array(
+		await crypto.subtle.decrypt(
+			{ name: 'AES-GCM', iv: baseNonce, additionalData: aad },
+			aeadK,
+			ciphertext,
+		),
+	)
 }
 
 // deriveSharedSecret exposes DHKEM's ExtractAndExpand for the RFC 9180 A.1
@@ -224,4 +282,14 @@ async function deriveSharedSecret(dh, enc, pkRraw) {
 	return extractAndExpand(dh, concat(enc, pkRraw))
 }
 
-export const _internals = { i2osp, concat, extract, expand, labeledExtract, labeledExpand, deriveSharedSecret, KEM_SUITE_ID, HPKE_SUITE_ID }
+export const _internals = {
+	i2osp,
+	concat,
+	extract,
+	expand,
+	labeledExtract,
+	labeledExpand,
+	deriveSharedSecret,
+	KEM_SUITE_ID,
+	HPKE_SUITE_ID,
+}

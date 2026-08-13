@@ -21,11 +21,22 @@
 			<div v-if="payload.number">
 				<dt>{{ t('doriath', 'Number') }}</dt>
 				<dd class="card-display__masked">
-					<span data-testid="card-number-value">{{ revealed.number ? payload.number : '•••• •••• •••• ••••' }}</span>
-					<NcButton variant="tertiary" :data-testid="'card-reveal-number'" @click="toggle('number')">
-						{{ revealed.number ? t('doriath', 'Hide') : t('doriath', 'Show') }}
+					<span data-testid="card-number-value">{{
+						revealed.number ? payload.number : '•••• •••• •••• ••••'
+					}}</span>
+					<NcButton
+						variant="tertiary"
+						:data-testid="'card-reveal-number'"
+						@click="toggle('number')">
+						{{
+							revealed.number
+								? t('doriath', 'Hide')
+								: t('doriath', 'Show')
+						}}
 					</NcButton>
-					<CopyButton :value="payload.number" :label="t('doriath', 'Copy number')" />
+					<CopyButton
+						:value="payload.number"
+						:label="t('doriath', 'Copy number')" />
 				</dd>
 			</div>
 			<div v-if="payload.expiry">
@@ -35,21 +46,43 @@
 			<div v-if="payload.cvv">
 				<dt>{{ t('doriath', 'CVV') }}</dt>
 				<dd class="card-display__masked">
-					<span data-testid="card-cvv-value">{{ revealed.cvv ? payload.cvv : '•••' }}</span>
-					<NcButton variant="tertiary" :data-testid="'card-reveal-cvv'" @click="toggle('cvv')">
-						{{ revealed.cvv ? t('doriath', 'Hide') : t('doriath', 'Show') }}
+					<span data-testid="card-cvv-value">{{
+						revealed.cvv ? payload.cvv : '•••'
+					}}</span>
+					<NcButton
+						variant="tertiary"
+						:data-testid="'card-reveal-cvv'"
+						@click="toggle('cvv')">
+						{{
+							revealed.cvv
+								? t('doriath', 'Hide')
+								: t('doriath', 'Show')
+						}}
 					</NcButton>
-					<CopyButton :value="payload.cvv" :label="t('doriath', 'Copy CVV')" />
+					<CopyButton
+						:value="payload.cvv"
+						:label="t('doriath', 'Copy CVV')" />
 				</dd>
 			</div>
 			<div v-if="payload.pin">
 				<dt>{{ t('doriath', 'PIN') }}</dt>
 				<dd class="card-display__masked">
-					<span data-testid="card-pin-value">{{ revealed.pin ? payload.pin : '••••' }}</span>
-					<NcButton variant="tertiary" :data-testid="'card-reveal-pin'" @click="toggle('pin')">
-						{{ revealed.pin ? t('doriath', 'Hide') : t('doriath', 'Show') }}
+					<span data-testid="card-pin-value">{{
+						revealed.pin ? payload.pin : '••••'
+					}}</span>
+					<NcButton
+						variant="tertiary"
+						:data-testid="'card-reveal-pin'"
+						@click="toggle('pin')">
+						{{
+							revealed.pin
+								? t('doriath', 'Hide')
+								: t('doriath', 'Show')
+						}}
 					</NcButton>
-					<CopyButton :value="payload.pin" :label="t('doriath', 'Copy PIN')" />
+					<CopyButton
+						:value="payload.pin"
+						:label="t('doriath', 'Copy PIN')" />
 				</dd>
 			</div>
 			<div v-if="payload.cardholder">
