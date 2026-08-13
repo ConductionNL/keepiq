@@ -18,7 +18,11 @@
 
 import { createApp, h } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import {
+	translate as t,
+	translatePlural as n,
+	loadTranslations,
+} from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	// eslint-disable-next-line import/named
@@ -73,7 +77,10 @@ function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('doriath', () => {})
 		if (result && typeof result.then === 'function') {
-			result.then(() => {}, () => {})
+			result.then(
+				() => {},
+				() => {},
+			)
 		}
 	} catch {
 		// no-op
@@ -88,7 +95,10 @@ function tryLoadTranslations() {
 const RoutePageRenderer = { ...CnPageRenderer }
 
 const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
-const fragments = fragmentCtx.keys().sort().map((key) => fragmentCtx(key))
+const fragments = fragmentCtx
+	.keys()
+	.sort()
+	.map((key) => fragmentCtx(key))
 const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
 
 /**
@@ -141,12 +151,13 @@ const customComponentsProp = Object.fromEntries(
 
 // Create and mount the app immediately so the shell renders.
 const app = createApp({
-	render: () => h(App, {
-		manifest: mergedManifest,
-		customComponents: customComponentsProp,
-		pageTypes: pageTypesProp,
-		registry: registryProp,
-	}),
+	render: () =>
+		h(App, {
+			manifest: mergedManifest,
+			customComponents: customComponentsProp,
+			pageTypes: pageTypesProp,
+			registry: registryProp,
+		}),
 })
 
 // `t` / `n` were provided by a global `Vue.mixin` under Vue 2. An app-level

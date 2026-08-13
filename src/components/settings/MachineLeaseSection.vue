@@ -12,40 +12,54 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Machine leases')"
-		:description="t('doriath', 'Access-grant lifetimes for the machine secret-store API. Leases govern grant lifetime only — stored ciphertext is untouched.')">
+		:description="
+			t(
+				'doriath',
+				'Access-grant lifetimes for the machine secret-store API. Leases govern grant lifetime only — stored ciphertext is untouched.',
+			)
+		">
 		<div class="lease-policy" data-testid="machine-lease-section">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
 			<label class="lease-policy__field">
 				<span>{{ t('doriath', 'Default lease TTL (seconds)') }}</span>
-				<input v-model.number="defaultTtl"
+				<input
+					v-model.number="defaultTtl"
 					type="number"
 					min="60"
 					data-testid="lease-default-ttl"
-					@change="save">
+					@change="save" />
 			</label>
 			<label class="lease-policy__field">
 				<span>{{ t('doriath', 'Maximum lease TTL (seconds)') }}</span>
-				<input v-model.number="maxTtl"
+				<input
+					v-model.number="maxTtl"
 					type="number"
 					min="60"
 					data-testid="lease-max-ttl"
-					@change="save">
+					@change="save" />
 			</label>
 			<label class="lease-policy__check">
-				<input v-model="renewable"
+				<input
+					v-model="renewable"
 					type="checkbox"
 					data-testid="lease-renewable"
-					@change="save">
+					@change="save" />
 				<span>{{ t('doriath', 'Leases are renewable') }}</span>
 			</label>
 			<label class="lease-policy__check">
-				<input v-model="blockOnRevoke"
+				<input
+					v-model="blockOnRevoke"
 					type="checkbox"
 					data-testid="lease-block-on-revoke"
-					@change="save">
-				<span>{{ t('doriath', 'A revoked lease blocks re-fetching the secret until re-granted') }}</span>
+					@change="save" />
+				<span>{{
+					t(
+						'doriath',
+						'A revoked lease blocks re-fetching the secret until re-granted',
+					)
+				}}</span>
 			</label>
 		</div>
 	</CnSettingsSection>
@@ -76,11 +90,14 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings/admin'),
+			)
 			this.defaultTtl = response.data.lease_default_ttl_seconds ?? 900
 			this.maxTtl = response.data.lease_max_ttl_seconds ?? 86400
 			this.renewable = response.data.lease_renewable !== false
-			this.blockOnRevoke = response.data.lease_revocation_blocks_refetch === true
+			this.blockOnRevoke =
+				response.data.lease_revocation_blocks_refetch === true
 		} catch (e) {
 			this.error = e?.response?.data?.message || e?.message
 		}

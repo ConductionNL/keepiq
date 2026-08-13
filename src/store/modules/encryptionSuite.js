@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { generateKeyPair, encryptPrivateKey, decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
+import {
+	generateKeyPair,
+	encryptPrivateKey,
+	decryptPrivateKey,
+	importPrivateKey,
+} from '../../crypto/index.js'
 import { useSessionStore } from './session.js'
 
 export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
@@ -27,7 +32,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					generateUrl('/apps/doriath/api/v1/suites'),
 				)
 				const suites = response.data
-				this.currentSuite = suites.find(s => s.status === 'active') || null
+				this.currentSuite = suites.find((s) => s.status === 'active') || null
 			} finally {
 				this.loading = false
 			}
@@ -46,11 +51,17 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 				// Export private key as PEM for encryption.
 				const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-				const privateKeyPem = '-----BEGIN PRIVATE KEY-----\n'
-					+ btoa(String.fromCharCode(...new Uint8Array(pkcs8))).match(/.{1,64}/g).join('\n')
+				const privateKeyPem =
+					'-----BEGIN PRIVATE KEY-----\n'
+					+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
+						.match(/.{1,64}/g)
+						.join('\n')
 					+ '\n-----END PRIVATE KEY-----'
 
-				const encryptedPk = await encryptPrivateKey(privateKeyPem, masterPassword)
+				const encryptedPk = await encryptPrivateKey(
+					privateKeyPem,
+					masterPassword,
+				)
 
 				const response = await axios.post(
 					generateUrl('/apps/doriath/api/v1/suites'),
@@ -92,11 +103,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			)
 
 			// Re-encrypt with new password.
-			const newEncryptedPk = await encryptPrivateKey(privateKeyPem, newPassword)
+			const newEncryptedPk = await encryptPrivateKey(
+				privateKeyPem,
+				newPassword,
+			)
 
 			// Update on server.
 			await axios.put(
-				generateUrl(`/apps/doriath/api/v1/suites/${session.suiteId}/private-key`),
+				generateUrl(
+					`/apps/doriath/api/v1/suites/${session.suiteId}/private-key`,
+				),
 				{ encryptedPrivateKey: newEncryptedPk },
 			)
 
@@ -115,11 +131,17 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			// Export new private key as PEM.
 			const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-			const newPrivateKeyPem = '-----BEGIN PRIVATE KEY-----\n'
-				+ btoa(String.fromCharCode(...new Uint8Array(pkcs8))).match(/.{1,64}/g).join('\n')
+			const newPrivateKeyPem =
+				'-----BEGIN PRIVATE KEY-----\n'
+				+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
+					.match(/.{1,64}/g)
+					.join('\n')
 				+ '\n-----END PRIVATE KEY-----'
 
-			const newEncryptedPk = await encryptPrivateKey(newPrivateKeyPem, newPassword)
+			const newEncryptedPk = await encryptPrivateKey(
+				newPrivateKeyPem,
+				newPassword,
+			)
 
 			const response = await axios.post(
 				generateUrl('/apps/doriath/api/v1/suites/compromise-recovery'),
@@ -147,7 +169,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// and then call completeMigration.
 			const migrationId = response.data.migration.id
 			await axios.post(
-				generateUrl(`/apps/doriath/api/v1/migrations/${migrationId}/complete`),
+				generateUrl(
+					`/apps/doriath/api/v1/migrations/${migrationId}/complete`,
+				),
 				{ hasErrors: false },
 			)
 			await this.fetchMigrationStatus()
@@ -172,7 +196,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			}
 
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/suites/${this.currentSuite.id}/revoke`),
+				generateUrl(
+					`/apps/doriath/api/v1/suites/${this.currentSuite.id}/revoke`,
+				),
 				{ reason },
 			)
 
@@ -197,7 +223,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				const response = await axios.get(
 					generateUrl('/apps/doriath/api/v1/migrations/status'),
 				)
-				this.migrationStatus = response.data.status === 'none' ? null : response.data
+				this.migrationStatus =
+					response.data.status === 'none' ? null : response.data
 			} catch {
 				this.migrationStatus = null
 			}

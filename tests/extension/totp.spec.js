@@ -10,7 +10,8 @@ import { describe, it, expect } from 'vitest'
 import { computeTotp } from '../../browser-extension/src/lib/totp-service.js'
 
 // base32 of ASCII "12345678901234567890" (the RFC 6238 SHA1 seed)
-const RFC_SEED = 'otpauth://totp/rfc?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&algorithm=SHA1&digits=6&period=30'
+const RFC_SEED =
+	'otpauth://totp/rfc?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&algorithm=SHA1&digits=6&period=30'
 
 describe('extension TOTP service', () => {
 	it('matches the RFC 6238 vector at T=59s (6-digit)', async () => {

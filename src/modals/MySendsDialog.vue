@@ -9,7 +9,8 @@
   @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 -->
 <template>
-	<NcDialog :name="t('doriath', 'My ephemeral sends')"
+	<NcDialog
+		:name="t('doriath', 'My ephemeral sends')"
 		:open="open"
 		size="normal"
 		data-testid="my-sends-dialog"
@@ -37,13 +38,29 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="send in store.sends" :key="send.id" :data-testid="`send-row-${send.id}`">
+					<tr
+						v-for="send in store.sends"
+						:key="send.id"
+						:data-testid="`send-row-${send.id}`">
 						<td>{{ send.payloadType }}</td>
 						<td>{{ send.remainingViews }}</td>
-						<td>{{ send.expiresAt ? formatDate(send.expiresAt) : t('doriath', 'never') }}</td>
-						<td>{{ send.hasPassword ? t('doriath', 'yes') : t('doriath', 'no') }}</td>
 						<td>
-							<NcButton variant="tertiary"
+							{{
+								send.expiresAt
+									? formatDate(send.expiresAt)
+									: t('doriath', 'never')
+							}}
+						</td>
+						<td>
+							{{
+								send.hasPassword
+									? t('doriath', 'yes')
+									: t('doriath', 'no')
+							}}
+						</td>
+						<td>
+							<NcButton
+								variant="tertiary"
 								:data-testid="`send-revoke-${send.id}`"
 								@click="onRevoke(send.id)">
 								{{ t('doriath', 'Revoke') }}
@@ -110,7 +127,9 @@ export default {
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed) ? (iso ?? '') : new Date(parsed).toLocaleString()
+			return Number.isNaN(parsed)
+				? (iso ?? '')
+				: new Date(parsed).toLocaleString()
 		},
 	},
 }

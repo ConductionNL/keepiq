@@ -59,10 +59,11 @@ export function lockHeading(page: Page) {
  * returning. When admin owns an active suite this lands on "Unlock Doriath".
  */
 export async function gotoLockSettled(page: Page): Promise<string> {
-	const suitesResp = page.waitForResponse(
-		(r) => /\/api\/v1\/suites(\?|$)/.test(r.url()),
-		{ timeout: 20_000 },
-	).catch(() => null)
+	const suitesResp = page
+		.waitForResponse((r) => /\/api\/v1\/suites(\?|$)/.test(r.url()), {
+			timeout: 20_000,
+		})
+		.catch(() => null)
 	// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud. This helper
 	// already carries a stronger readiness signal than a quiet network — the
 	// /api/v1/suites response awaited below, plus the heading-stabilisation
@@ -92,18 +93,29 @@ export async function gotoLockSettled(page: Page): Promise<string> {
 export async function attemptUnlock(page: Page, password: string): Promise<string> {
 	const input = page.locator('.lock-screen input[type="password"]').first()
 	await input.fill(password, { force: true })
-	const btn = page.locator('.lock-screen button')
-		.filter({ hasText: /^\s*Unlock\s*$/i }).first()
+	const btn = page
+		.locator('.lock-screen button')
+		.filter({ hasText: /^\s*Unlock\s*$/i })
+		.first()
 	await expect(btn).toBeEnabled()
 	await btn.click({ force: true })
 	// Allow the WebCrypto decrypt + (attempted) router push to run.
 	await page.waitForTimeout(4_000)
-	const errCount = await page.locator('.lock-screen')
-		.getByText(/Wrong master password|decryption failed/i).count().catch(() => 0)
+	const errCount = await page
+		.locator('.lock-screen')
+		.getByText(/Wrong master password|decryption failed/i)
+		.count()
+		.catch(() => 0)
 	if (errCount > 0) {
-		return (await page.locator('.lock-screen')
-			.getByText(/Wrong master password|decryption failed/i).first()
-			.textContent())?.trim() ?? 'error'
+		return (
+			(
+				await page
+					.locator('.lock-screen')
+					.getByText(/Wrong master password|decryption failed/i)
+					.first()
+					.textContent()
+			)?.trim() ?? 'error'
+		)
 	}
 	return ''
 }
@@ -125,14 +137,22 @@ export async function attemptUnlock(page: Page, password: string): Promise<strin
  * @param password The master password (defaults to the dev password).
  * @return Resolves once the vault is unlocked and off the lock screen.
  */
-export async function unlockVault(page: Page, password: string = DEV_MASTER_PASSWORD): Promise<void> {
+export async function unlockVault(
+	page: Page,
+	password: string = DEV_MASTER_PASSWORD,
+): Promise<void> {
 	await gotoLockSettled(page)
-	await page.locator('.lock-screen input[type="password"]').first().fill(password, { force: true })
+	await page
+		.locator('.lock-screen input[type="password"]')
+		.first()
+		.fill(password, { force: true })
 	// Give the v-model a tick so the Unlock button enables.
 	await page.waitForTimeout(300)
 	// Native click — the themed NcButton swallows Playwright's synthetic click.
 	await page.evaluate(() => {
-		const btns = Array.from(document.querySelectorAll('.lock-screen button')) as HTMLButtonElement[]
+		const btns = Array.from(
+			document.querySelectorAll('.lock-screen button'),
+		) as HTMLButtonElement[]
 		const unlock = btns.find((b) => /Unlock/i.test(b.textContent || ''))
 		if (unlock) {
 			unlock.click()
@@ -158,11 +178,13 @@ export async function openVault(page: Page): Promise<void> {
 	// (which does NOT reload the page, so the in-memory CryptoKey survives and
 	// the vault stays unlocked, unlike a full `page.goto`).
 	await page.evaluate(() => {
-		const a = Array.from(document.querySelectorAll('a')).find(
-			(x) => /(#\/secrets$)|(\/apps\/doriath\/?#\/secrets$)/.test(x.getAttribute('href') || ''),
+		const a = Array.from(document.querySelectorAll('a')).find((x) =>
+			/(#\/secrets$)|(\/apps\/doriath\/?#\/secrets$)/.test(
+				x.getAttribute('href') || '',
+			),
 		)
 		if (a) {
-			(a as HTMLElement).click()
+			;(a as HTMLElement).click()
 		} else if (!/#\/secrets$/.test(window.location.hash)) {
 			window.location.hash = '#/secrets'
 		}
@@ -184,7 +206,9 @@ export async function openVault(page: Page): Promise<void> {
  */
 export async function gotoVaultRoute(page: Page, route: string): Promise<void> {
 	const hash = `#/${route}`.replace(/\/$/, route === '' ? '/' : '')
-	await page.evaluate((h) => { window.location.hash = h }, hash)
+	await page.evaluate((h) => {
+		window.location.hash = h
+	}, hash)
 	// Let the hashchange-driven router transition settle. Polling surfaces never
 	// reach networkidle, so wait on the DOM instead.
 	await page.waitForLoadState('domcontentloaded')

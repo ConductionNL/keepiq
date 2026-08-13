@@ -53,7 +53,11 @@ describe('useEncryptionSuiteStore — revocation', () => {
 
 	it('POSTs the revocation to the active suite with the supplied reason', async () => {
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
-			data: { id: 'suite-1', status: 'revoked', revoked_reason: 'laptop stolen' },
+			data: {
+				id: 'suite-1',
+				status: 'revoked',
+				revoked_reason: 'laptop stolen',
+			},
 		})
 		const store = useEncryptionSuiteStore()
 		store.currentSuite = { id: 'suite-1', status: 'active' }

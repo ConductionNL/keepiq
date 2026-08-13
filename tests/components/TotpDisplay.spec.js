@@ -72,7 +72,9 @@ describe('TotpDisplay', () => {
 		const session = useSessionStore()
 		session.cryptoKey = { fake: true }
 
-		const wrapper = mount(TotpDisplay, { propsData: { seed: 'not a valid seed !!!' } })
+		const wrapper = mount(TotpDisplay, {
+			propsData: { seed: 'not a valid seed !!!' },
+		})
 		await flush()
 		await wrapper.vm.$nextTick()
 

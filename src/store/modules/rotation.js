@@ -56,10 +56,15 @@ export const useRotationStore = defineStore('rotation', {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/rotation-flags'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/rotation-flags'),
+				)
 				this.flags = response.data || []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load rotation flags'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load rotation flags'
 				throw e
 			} finally {
 				this.loading = false
@@ -73,10 +78,15 @@ export const useRotationStore = defineStore('rotation', {
 		 */
 		async fetchPolicies() {
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/expiry-policies'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/expiry-policies'),
+				)
 				this.policies = response.data || []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load policies'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load policies'
 				throw e
 			}
 		},
@@ -107,7 +117,9 @@ export const useRotationStore = defineStore('rotation', {
 		 * @return {Promise<void>}
 		 */
 		async deletePolicy(policyId) {
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/expiry-policies/${policyId}`))
+			await axios.delete(
+				generateUrl(`/apps/doriath/api/v1/expiry-policies/${policyId}`),
+			)
 			this.policies = this.policies.filter((p) => p.id !== policyId)
 		},
 
@@ -118,7 +130,9 @@ export const useRotationStore = defineStore('rotation', {
 		 * @return {Promise<object>} { expiresAt, effectiveExpiry }.
 		 */
 		async getExpiry(secretId) {
-			const response = await axios.get(generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/expiry`))
+			const response = await axios.get(
+				generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/expiry`),
+			)
 			return response.data
 		},
 
@@ -178,7 +192,9 @@ export const useRotationStore = defineStore('rotation', {
 		 * @return {Promise<void>}
 		 */
 		async dismissFlag(flagId) {
-			await axios.post(generateUrl(`/apps/doriath/api/v1/rotation-flags/${flagId}/dismiss`))
+			await axios.post(
+				generateUrl(`/apps/doriath/api/v1/rotation-flags/${flagId}/dismiss`),
+			)
 			this.flags = this.flags.filter((f) => f.id !== flagId)
 		},
 	},

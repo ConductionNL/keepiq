@@ -4,7 +4,9 @@
 		<div v-if="loading" class="recent-secrets-widget__row">
 			{{ t('doriath', 'Loading…') }}
 		</div>
-		<div v-else-if="secrets.length === 0" class="recent-secrets-widget__row recent-secrets-widget__row--empty">
+		<div
+			v-else-if="secrets.length === 0"
+			class="recent-secrets-widget__row recent-secrets-widget__row--empty">
 			{{ t('doriath', 'No secrets accessed yet') }}
 		</div>
 		<ul v-else class="recent-secrets-widget__list">
@@ -23,8 +25,12 @@
 					type="button"
 					class="recent-secrets-widget__button"
 					@click="open(secret)">
-					<span class="recent-secrets-widget__icon" :data-type="secret.type" />
-					<span class="recent-secrets-widget__name">{{ secret.name }}</span>
+					<span
+						class="recent-secrets-widget__icon"
+						:data-type="secret.type" />
+					<span class="recent-secrets-widget__name">{{
+						secret.name
+					}}</span>
 				</button>
 			</li>
 		</ul>
@@ -52,10 +58,14 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/secrets'), {
-				params: { limit: 5, sort: 'last_accessed_at:desc' },
-			})
-			const list = response.data.secrets || response.data.results || response.data || []
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/secrets'),
+				{
+					params: { limit: 5, sort: 'last_accessed_at:desc' },
+				},
+			)
+			const list =
+				response.data.secrets || response.data.results || response.data || []
 			this.secrets = Array.isArray(list) ? list.slice(0, 5) : []
 		} catch (e) {
 			console.warn('Doriath: failed to load recent secrets', e)
@@ -75,9 +85,14 @@ export default {
 		 */
 		open(secret) {
 			if (this.$router) {
-				this.$router.push({ name: 'secret-detail', params: { id: secret.id } })
+				this.$router.push({
+					name: 'secret-detail',
+					params: { id: secret.id },
+				})
 			} else {
-				window.location.href = generateUrl(`/apps/doriath/secrets/${secret.id}`)
+				window.location.href = generateUrl(
+					`/apps/doriath/secrets/${secret.id}`,
+				)
 			}
 		},
 	},

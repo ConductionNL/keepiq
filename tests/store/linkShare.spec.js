@@ -80,7 +80,8 @@ describe('useLinkShareStore', () => {
 				data: {
 					id: 'ls-001',
 					token: 'abcdef1234567890abcdef1234567890',
-					linkUrl: 'https://nc.example/index.php/apps/doriath/share/link/abcdef1234567890abcdef1234567890',
+					linkUrl:
+						'https://nc.example/index.php/apps/doriath/share/link/abcdef1234567890abcdef1234567890',
 					usageLimit: 1,
 					usageCount: 0,
 					createdAt: '2026-06-11T12:00:00Z',

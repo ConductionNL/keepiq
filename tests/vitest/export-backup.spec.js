@@ -18,13 +18,25 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { encryptBackup, decryptBackup, BACKUP_FORMAT, BACKUP_VERSION } from '../../src/export/backup.js'
+import {
+	encryptBackup,
+	decryptBackup,
+	BACKUP_FORMAT,
+	BACKUP_VERSION,
+} from '../../src/export/backup.js'
 
 const payload = {
 	format: 'doriath-vault',
 	version: 1,
 	secrets: [
-		{ name: 'GitHub', url: 'https://github.com', login: 'me', password: 'p@ss', additionalFields: null, folder: 'Work' },
+		{
+			name: 'GitHub',
+			url: 'https://github.com',
+			login: 'me',
+			password: 'p@ss',
+			additionalFields: null,
+			folder: 'Work',
+		},
 	],
 	folders: [{ path: 'Work' }],
 }
@@ -32,7 +44,10 @@ const payload = {
 describe('encryptBackup / decryptBackup', () => {
 	it('round-trips a payload with the correct passphrase', async () => {
 		const envelope = await encryptBackup(payload, 'correct horse battery staple')
-		const restored = await decryptBackup(envelope, 'correct horse battery staple')
+		const restored = await decryptBackup(
+			envelope,
+			'correct horse battery staple',
+		)
 		expect(restored).toEqual(payload)
 	})
 
@@ -53,7 +68,11 @@ describe('encryptBackup / decryptBackup', () => {
 		// Simulate a future parameter bump recorded in the envelope. Because the
 		// salt drives the (stubbed) derivation and the params live in the
 		// envelope, decryption must still succeed.
-		const bumped = { ...envelope, version: 2, kdf: { ...envelope.kdf, memory: 131072, iterations: 4 } }
+		const bumped = {
+			...envelope,
+			version: 2,
+			kdf: { ...envelope.kdf, memory: 131072, iterations: 4 },
+		}
 		const restored = await decryptBackup(bumped, 'pass-for-bump-test')
 		expect(restored).toEqual(payload)
 	})
@@ -64,6 +83,8 @@ describe('encryptBackup / decryptBackup', () => {
 	})
 
 	it('rejects a non-backup envelope', async () => {
-		await expect(decryptBackup({ format: 'something-else' }, 'x')).rejects.toThrow()
+		await expect(
+			decryptBackup({ format: 'something-else' }, 'x'),
+		).rejects.toThrow()
 	})
 })

@@ -1,5 +1,6 @@
 <template>
-	<NcButton :variant="buttonType"
+	<NcButton
+		:variant="buttonType"
 		:aria-label="label"
 		:title="label"
 		@pointerdown="prewarm"
@@ -111,7 +112,8 @@ export default {
 				// Prefer a value already resolved by the pointerdown pre-warm so
 				// the clipboard write stays inside the tap gesture (mobile Safari
 				// drops a write that follows a fresh async decrypt, §5.2).
-				text = this.prewarmed !== null ? this.prewarmed : await this.resolve()
+				text =
+					this.prewarmed !== null ? this.prewarmed : await this.resolve()
 			}
 			await this.writeClipboard(text)
 

@@ -6,13 +6,23 @@
  * a decrypt attempt).
  */
 import { describe, it, expect } from 'vitest'
-import { createImportRequest, sealForRequest, openEnvelope, CXP_VERSION } from '../../src/crypto/cxp.js'
+import {
+	createImportRequest,
+	sealForRequest,
+	openEnvelope,
+	CXP_VERSION,
+} from '../../src/crypto/cxp.js'
 
 const enc = new TextEncoder()
 const dec = new TextDecoder()
 
 function cxfBytes() {
-	return enc.encode(JSON.stringify({ version: { major: 1, minor: 0 }, accounts: [{ items: [] }] }))
+	return enc.encode(
+		JSON.stringify({
+			version: { major: 1, minor: 0 },
+			accounts: [{ items: [] }],
+		}),
+	)
 }
 
 describe('CXP transport', () => {
@@ -33,19 +43,28 @@ describe('CXP transport', () => {
 
 	it('rejects an unsupported request version at seal time', async () => {
 		const { request } = await createImportRequest()
-		await expect(sealForRequest({ ...request, v: 'doriath-cxp-v99' }, cxfBytes())).rejects.toThrow(/version/)
+		await expect(
+			sealForRequest({ ...request, v: 'doriath-cxp-v99' }, cxfBytes()),
+		).rejects.toThrow(/version/)
 	})
 
 	it('rejects an unsupported envelope version at open time (fail fast)', async () => {
 		const { request, session } = await createImportRequest()
 		const envelope = await sealForRequest(request, cxfBytes())
-		await expect(openEnvelope(session, { ...envelope, v: 'doriath-cxp-v99' })).rejects.toThrow(/version/)
+		await expect(
+			openEnvelope(session, { ...envelope, v: 'doriath-cxp-v99' }),
+		).rejects.toThrow(/version/)
 	})
 
 	it('refuses to open on an HPKE suite downgrade', async () => {
 		const { request, session } = await createImportRequest()
 		const envelope = await sealForRequest(request, cxfBytes())
-		await expect(openEnvelope(session, { ...envelope, suite: { kem: 0x0020, kdf: 0x0001, aead: 0x0001 } })).rejects.toThrow(/suite/)
+		await expect(
+			openEnvelope(session, {
+				...envelope,
+				suite: { kem: 0x0020, kdf: 0x0001, aead: 0x0001 },
+			}),
+		).rejects.toThrow(/suite/)
 	})
 
 	it('rejects a misdirected envelope before a decrypt attempt (nonce binding)', async () => {
@@ -53,7 +72,9 @@ describe('CXP transport', () => {
 		const b = await createImportRequest()
 		// Seal for A's request, then try to open with B's session.
 		const envelopeForA = await sealForRequest(a.request, cxfBytes())
-		await expect(openEnvelope(b.session, envelopeForA)).rejects.toThrow(/misdirected|fingerprint/)
+		await expect(openEnvelope(b.session, envelopeForA)).rejects.toThrow(
+			/misdirected|fingerprint/,
+		)
 	})
 
 	it('binds the envelope nonce to the request', async () => {
@@ -61,6 +82,11 @@ describe('CXP transport', () => {
 		const envelope = await sealForRequest(request, cxfBytes())
 		expect(envelope.nonce).toBe(request.nonce)
 		// Tamper the nonce → rejected before decrypt.
-		await expect(openEnvelope(session, { ...envelope, nonce: 'AAAAAAAAAAAAAAAAAAAAAA==' })).rejects.toThrow(/nonce/)
+		await expect(
+			openEnvelope(session, {
+				...envelope,
+				nonce: 'AAAAAAAAAAAAAAAAAAAAAA==',
+			}),
+		).rejects.toThrow(/nonce/)
 	})
 })

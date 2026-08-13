@@ -18,15 +18,25 @@
 
 import { describe, it, expect } from 'vitest'
 import { parseCsvImport, detectMapping } from '../../src/import/parsers/csv.js'
-import { parseBitwardenJson, parseBitwardenCsv } from '../../src/import/parsers/bitwarden.js'
+import {
+	parseBitwardenJson,
+	parseBitwardenCsv,
+} from '../../src/import/parsers/bitwarden.js'
 import { parseKeepassXml } from '../../src/import/parsers/keepassXml.js'
 import { parseNcPasswords } from '../../src/import/parsers/ncPasswords.js'
 import { isKdbx, dedupeKey, normalizeUrl } from '../../src/import/model.js'
 
 describe('CSV parser', () => {
 	it('auto-detects common headers case-insensitively', () => {
-		const mapping = detectMapping(['Title', 'Website', 'Username', 'Password', 'Notes', 'Group'])
-		const targets = Object.fromEntries(mapping.map(m => [m.column, m.target]))
+		const mapping = detectMapping([
+			'Title',
+			'Website',
+			'Username',
+			'Password',
+			'Notes',
+			'Group',
+		])
+		const targets = Object.fromEntries(mapping.map((m) => [m.column, m.target]))
 		expect(targets.Title).toBe('name')
 		expect(targets.Website).toBe('url')
 		expect(targets.Username).toBe('login')
@@ -36,7 +46,8 @@ describe('CSV parser', () => {
 	})
 
 	it('parses quoted/escaped fields and folder paths', () => {
-		const csv = 'name,url,username,password,folder\r\n'
+		const csv =
+			'name,url,username,password,folder\r\n'
 			+ '"GitHub, Inc.",https://github.com,octocat,"hun""ter2",Work/CI\r\n'
 		const { rows } = parseCsvImport(csv)
 		expect(rows).toHaveLength(1)
@@ -75,9 +86,19 @@ describe('Bitwarden JSON parser', () => {
 				name: 'GitHub',
 				folderId: 'f1',
 				notes: 'a note',
-				login: { username: 'octocat', password: 'hunter2', uri: 'https://github.com', totp: 'otpauth://x' },
+				login: {
+					username: 'octocat',
+					password: 'hunter2',
+					uri: 'https://github.com',
+					totp: 'otpauth://x',
+				},
 			},
-			{ type: 1, name: 'SharedThing', collectionIds: ['c1'], login: { username: 'u', password: 'p' } },
+			{
+				type: 1,
+				name: 'SharedThing',
+				collectionIds: ['c1'],
+				login: { username: 'u', password: 'p' },
+			},
 			{ type: 2, name: 'A secure note', secureNote: { type: 0 } },
 		],
 	}
@@ -100,7 +121,8 @@ describe('Bitwarden JSON parser', () => {
 	})
 
 	it('parses Bitwarden CSV via the fixed header mapping', () => {
-		const csv = 'name,login_uri,login_username,login_password,notes,login_totp,folder,type\r\n'
+		const csv =
+			'name,login_uri,login_username,login_password,notes,login_totp,folder,type\r\n'
 			+ 'Item,https://x.test,user,pass,note1,seed1,Work,login\r\n'
 		const rows = parseBitwardenCsv(csv)
 		expect(rows[0].name).toBe('Item')
@@ -138,13 +160,13 @@ describe('KeePass XML parser', () => {
 	it('parses entries with group hierarchy as folder paths and ignores History', () => {
 		const rows = parseKeepassXml(xml)
 		expect(rows).toHaveLength(2)
-		const root = rows.find(r => r.name === 'RootEntry')
+		const root = rows.find((r) => r.name === 'RootEntry')
 		expect(root.folder).toBe('')
 		expect(root.password).toBe('rootpass')
 		// The History value must NOT leak.
 		expect(JSON.stringify(rows)).not.toContain('OLD-SHOULD-IGNORE')
 
-		const jenkins = rows.find(r => r.name === 'Jenkins')
+		const jenkins = rows.find((r) => r.name === 'Jenkins')
 		expect(jenkins.folder).toBe('Work/CI')
 		expect(jenkins.login).toBe('ci')
 		expect(jenkins.url).toBe('https://ci.test')
@@ -159,14 +181,24 @@ describe('KeePass XML parser', () => {
 describe('Nextcloud Passwords parser', () => {
 	const backup = {
 		folders: [
-			{ id: 'fa', label: 'Work', parent: '00000000-0000-0000-0000-000000000000' },
+			{
+				id: 'fa',
+				label: 'Work',
+				parent: '00000000-0000-0000-0000-000000000000',
+			},
 			{ id: 'fb', label: 'CI', parent: 'fa' },
 		],
 		passwords: [
 			{
-				label: 'Jenkins', url: 'https://ci.test', username: 'ci', password: 'cipass',
-				notes: 'ci notes', folder: 'fb',
-				customFields: JSON.stringify([{ label: 'PIN', type: 'text', value: '1234' }]),
+				label: 'Jenkins',
+				url: 'https://ci.test',
+				username: 'ci',
+				password: 'cipass',
+				notes: 'ci notes',
+				folder: 'fb',
+				customFields: JSON.stringify([
+					{ label: 'PIN', type: 'text', value: '1234' },
+				]),
 			},
 		],
 	}
@@ -189,8 +221,8 @@ describe('Nextcloud Passwords parser', () => {
 
 describe('KDBX detection + dedupe helpers', () => {
 	it('detects the KDBX magic bytes', () => {
-		expect(isKdbx(new Uint8Array([0x9A, 0xA2, 0xD9, 0x03, 0x00]))).toBe(true)
-		expect(isKdbx(new Uint8Array([0x7B, 0x22, 0x61]))).toBe(false)
+		expect(isKdbx(new Uint8Array([0x9a, 0xa2, 0xd9, 0x03, 0x00]))).toBe(true)
+		expect(isKdbx(new Uint8Array([0x7b, 0x22, 0x61]))).toBe(false)
 	})
 
 	it('normalizes urls scheme/trailing-slash-insensitively', () => {
@@ -200,8 +232,11 @@ describe('KDBX detection + dedupe helpers', () => {
 	})
 
 	it('matches duplicates on normalized name + url, both-empty too', () => {
-		expect(dedupeKey({ name: 'GitHub', url: 'https://github.com/' }))
-			.toBe(dedupeKey({ name: ' github ', url: 'http://github.com' }))
-		expect(dedupeKey({ name: 'X', url: '' })).toBe(dedupeKey({ name: 'x', url: null }))
+		expect(dedupeKey({ name: 'GitHub', url: 'https://github.com/' })).toBe(
+			dedupeKey({ name: ' github ', url: 'http://github.com' }),
+		)
+		expect(dedupeKey({ name: 'X', url: '' })).toBe(
+			dedupeKey({ name: 'x', url: null }),
+		)
 	})
 })

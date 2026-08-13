@@ -64,7 +64,7 @@ export const useSessionStore = defineStore('session', {
 				generateUrl('/apps/doriath/api/v1/suites'),
 			)
 			const suites = response.data
-			const activeSuite = suites.find(s => s.status === 'active')
+			const activeSuite = suites.find((s) => s.status === 'active')
 
 			if (!activeSuite) {
 				throw new Error('No active EncryptionSuite found')
@@ -94,9 +94,17 @@ export const useSessionStore = defineStore('session', {
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/offline-readonly-cache/specs/offline-readonly-cache/spec.md#requirement-offline-unlock
 		 */
-		async unlockFromBlob({ privateKeyEnvelope, certificate, suiteId, masterPassword }) {
+		async unlockFromBlob({
+			privateKeyEnvelope,
+			certificate,
+			suiteId,
+			masterPassword,
+		}) {
 			// Decrypt the private key using the master password (all in browser).
-			const privateKeyPem = await decryptPrivateKey(privateKeyEnvelope, masterPassword)
+			const privateKeyPem = await decryptPrivateKey(
+				privateKeyEnvelope,
+				masterPassword,
+			)
 
 			// Import as non-extractable CryptoKey.
 			const cryptoKey = await importPrivateKey(privateKeyPem)
@@ -124,16 +132,27 @@ export const useSessionStore = defineStore('session', {
 		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 		 */
 		async unlockWithRawKey(rawUnlockKey) {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/suites'))
-			const activeSuite = response.data.find(s => s.status === 'active')
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/suites'),
+			)
+			const activeSuite = response.data.find((s) => s.status === 'active')
 			if (!activeSuite) {
 				throw new Error('No active EncryptionSuite found')
 			}
 
-			const privateKeyPem = await decryptPrivateKeyWithRawKey(activeSuite.privateKey, rawUnlockKey)
+			const privateKeyPem = await decryptPrivateKeyWithRawKey(
+				activeSuite.privateKey,
+				rawUnlockKey,
+			)
 			this.cryptoKey = await importPrivateKey(privateKeyPem)
 			// The raw unlock key IS the AES metadata key (offline cache §D1).
-			this.aesKey = await crypto.subtle.importKey('raw', rawUnlockKey, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+			this.aesKey = await crypto.subtle.importKey(
+				'raw',
+				rawUnlockKey,
+				{ name: 'AES-GCM' },
+				false,
+				['encrypt', 'decrypt'],
+			)
 			this.encryptedPrivateKey = activeSuite.privateKey
 			this.certificate = activeSuite.certificate
 			this.suiteId = activeSuite.id

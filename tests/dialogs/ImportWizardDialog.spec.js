@@ -24,12 +24,28 @@ import { useImportStore } from '../../src/store/modules/import.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 
 const ncStubs = {
-	NcDialog: { props: ['name', 'open', 'size'], template: '<div><slot /><slot name="actions" /></div>' },
-	NcButton: { props: ['type', 'disabled'], template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>' },
+	NcDialog: {
+		props: ['name', 'open', 'size'],
+		template: '<div><slot /><slot name="actions" /></div>',
+	},
+	NcButton: {
+		props: ['type', 'disabled'],
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
-	NcSelect: { props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'], template: '<div />' },
-	NcPasswordField: { props: ['value', 'label'], template: '<input type="password" />' },
-	NcCheckboxRadioSwitch: { props: ['modelValue'], template: '<label><slot /></label>' },
+	NcSelect: {
+		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'],
+		template: '<div />',
+	},
+	NcPasswordField: {
+		props: ['value', 'label'],
+		template: '<input type="password" />',
+	},
+	NcCheckboxRadioSwitch: {
+		props: ['modelValue'],
+		template: '<label><slot /></label>',
+	},
 	NcLoadingIcon: { props: ['size'], template: '<div />' },
 	NcEmptyContent: { props: ['name'], template: '<div><slot /></div>' },
 }
@@ -44,19 +60,36 @@ describe('ImportWizardDialog', () => {
 	it('shows the lock guard and reads no file when the vault is locked', async () => {
 		const session = useSessionStore()
 		session.cryptoKey = null // locked
-		const wrapper = mount(ImportWizardDialog, { propsData: { open: true }, ...mountOpts })
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
 		const store = useImportStore()
 		const parseSpy = vi.spyOn(store, 'parseFile')
 
 		expect(wrapper.vm.locked).toBe(true)
 		// A file pick while locked must not read/parse.
-		await wrapper.vm.onFilePicked({ target: { files: [{ text: async () => 'x', slice: () => ({ arrayBuffer: async () => new Uint8Array(4).buffer }) }] } })
+		await wrapper.vm.onFilePicked({
+			target: {
+				files: [
+					{
+						text: async () => 'x',
+						slice: () => ({
+							arrayBuffer: async () => new Uint8Array(4).buffer,
+						}),
+					},
+				],
+			},
+		})
 		expect(parseSpy).not.toHaveBeenCalled()
 	})
 
 	it('cannot proceed from mapping without at least one parsed row', async () => {
 		useSessionStore().cryptoKey = { fake: true }
-		const wrapper = mount(ImportWizardDialog, { propsData: { open: true }, ...mountOpts })
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
 		const store = useImportStore()
 		store.goToStep('mapping')
 		store.rows = []
@@ -70,7 +103,10 @@ describe('ImportWizardDialog', () => {
 
 	it('abandoning before commit resets the store and creates nothing', async () => {
 		useSessionStore().cryptoKey = { fake: true }
-		const wrapper = mount(ImportWizardDialog, { propsData: { open: true }, ...mountOpts })
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
 		const store = useImportStore()
 		store.goToStep('mapping')
 		store.rows = [{ sourceRow: 1, name: 'X', errors: [] }]
@@ -84,13 +120,23 @@ describe('ImportWizardDialog', () => {
 
 	it('detects a KDBX file on pick and shows guidance instead of parsing', async () => {
 		useSessionStore().cryptoKey = { fake: true }
-		const wrapper = mount(ImportWizardDialog, { propsData: { open: true }, ...mountOpts })
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
 		const store = useImportStore()
 		const parseSpy = vi.spyOn(store, 'parseFile')
 
-		const kdbxHead = new Uint8Array([0x9A, 0xA2, 0xD9, 0x03]).buffer
+		const kdbxHead = new Uint8Array([0x9a, 0xa2, 0xd9, 0x03]).buffer
 		await wrapper.vm.onFilePicked({
-			target: { files: [{ slice: () => ({ arrayBuffer: async () => kdbxHead }), text: async () => '' }] },
+			target: {
+				files: [
+					{
+						slice: () => ({ arrayBuffer: async () => kdbxHead }),
+						text: async () => '',
+					},
+				],
+			},
 		})
 		expect(wrapper.vm.kdbxDetected).toBe(true)
 		expect(parseSpy).not.toHaveBeenCalled()

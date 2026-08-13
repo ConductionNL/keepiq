@@ -33,7 +33,9 @@ export const useCertificateStore = defineStore('certificate', {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/certificates/inventory'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/certificates/inventory'),
+				)
 				this.inventory = response.data
 				return this.inventory
 			} catch (e) {
@@ -58,11 +60,16 @@ export const useCertificateStore = defineStore('certificate', {
 			const secret = await secretStore.fetchSecret(secretId)
 			const parsed = await parseCertificatePem(secret?.key || '')
 			if (!parsed) {
-				this.error = t('doriath', 'The secret value is not a parseable PEM certificate.')
+				this.error = t(
+					'doriath',
+					'The secret value is not a parseable PEM certificate.',
+				)
 				return null
 			}
 			const response = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/certificates/${secretId}/metadata`),
+				generateUrl(
+					`/apps/doriath/api/v1/certificates/${secretId}/metadata`,
+				),
 				parsed,
 			)
 			await this.fetchInventory()
@@ -79,7 +86,9 @@ export const useCertificateStore = defineStore('certificate', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/certificates/${secretId}/renewal-checklist`),
+					generateUrl(
+						`/apps/doriath/api/v1/certificates/${secretId}/renewal-checklist`,
+					),
 				)
 				return response.data
 			} catch (e) {
@@ -98,7 +107,9 @@ export const useCertificateStore = defineStore('certificate', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/certificates/suites/${suiteId}/reissue`),
+					generateUrl(
+						`/apps/doriath/api/v1/certificates/suites/${suiteId}/reissue`,
+					),
 				)
 				await this.fetchInventory()
 				return response.data

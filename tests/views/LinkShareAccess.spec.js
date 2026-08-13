@@ -74,7 +74,9 @@ describe('LinkShareAccess', () => {
 		expect(wrapper.vm.share.encryptedSecretSnapshot).toBe('CIPHERTEXT_B64')
 		// Password form is on screen, snapshot is not yet.
 		expect(wrapper.find('[data-testid="link-share-form"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="link-share-snapshot"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="link-share-snapshot"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('Phase 2: unlocks with the password and POSTs confirm', async () => {
@@ -108,7 +110,9 @@ describe('LinkShareAccess', () => {
 		expect(store.confirmPublicLinkShare).toHaveBeenCalledWith('tok-abc')
 		expect(wrapper.vm.snapshot.key).toBe('ghp_AAA')
 		// Snapshot view rendered, form gone.
-		expect(wrapper.find('[data-testid="link-share-snapshot"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="link-share-snapshot"]').exists()).toBe(
+			true,
+		)
 		expect(wrapper.find('[data-testid="link-share-form"]').exists()).toBe(false)
 	})
 
@@ -117,7 +121,8 @@ describe('LinkShareAccess', () => {
 		// First fetch: returns the share.
 		// After a failed decrypt the view calls loadShare again with
 		// priorFailure=true, which translates to failed=true on the API.
-		store.fetchPublicLinkShare = vi.fn()
+		store.fetchPublicLinkShare = vi
+			.fn()
 			.mockResolvedValueOnce({
 				encryptedSecretSnapshot: 'CIPHERTEXT_B64',
 				argon2idSalt: 'SALT_B64',
@@ -130,7 +135,9 @@ describe('LinkShareAccess', () => {
 				usageLimit: 3,
 				usageCount: 0,
 			})
-		store.decryptPublicSnapshot = vi.fn().mockRejectedValue(new Error('OperationError'))
+		store.decryptPublicSnapshot = vi
+			.fn()
+			.mockRejectedValue(new Error('OperationError'))
 		store.confirmPublicLinkShare = vi.fn()
 
 		const wrapper = mount(LinkShareAccess)
@@ -150,14 +157,19 @@ describe('LinkShareAccess', () => {
 	it('404 on load: surfaces the not-available message and does not render the form', async () => {
 		const store = useLinkShareStore()
 		store.fetchPublicLinkShare = vi.fn().mockRejectedValue({
-			response: { status: 404, data: { message: 'Link not found or expired' } },
+			response: {
+				status: 404,
+				data: { message: 'Link not found or expired' },
+			},
 		})
 
 		const wrapper = mount(LinkShareAccess)
 		await flushPromises()
 
 		expect(wrapper.vm.loadError).toBe('Link not found or expired')
-		expect(wrapper.find('[data-testid="link-share-load-error"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="link-share-load-error"]').exists()).toBe(
+			true,
+		)
 		expect(wrapper.find('[data-testid="link-share-form"]').exists()).toBe(false)
 	})
 })

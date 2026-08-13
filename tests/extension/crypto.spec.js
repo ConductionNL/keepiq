@@ -16,7 +16,10 @@ import {
 	rsaEncrypt,
 	rsaDecrypt,
 } from '../../browser-extension/src/crypto/index.js'
-import { RSA4096_PRIVATE_KEY_PKCS8_PEM, RSA4096_PUBLIC_KEY_SPKI_PEM } from '../vitest/fixtures/rsa-fixtures.js'
+import {
+	RSA4096_PRIVATE_KEY_PKCS8_PEM,
+	RSA4096_PUBLIC_KEY_SPKI_PEM,
+} from '../vitest/fixtures/rsa-fixtures.js'
 
 /**
  * The committed RSA-4096 test key pair, as PEM.
@@ -62,7 +65,9 @@ describe('extension shared crypto', () => {
 		const { pkcs8, spki } = rsaKeyPairPems()
 		const publicKey = await importPublicKey(spki)
 		const privateKey = await importPrivateKey(pkcs8)
-		const value = 'S3cr3t value — long enough to force multiple RSA-OAEP chunks: ' + 'x'.repeat(700)
+		const value =
+			'S3cr3t value — long enough to force multiple RSA-OAEP chunks: '
+			+ 'x'.repeat(700)
 		const ciphertext = await rsaEncrypt(value, publicKey)
 		const recovered = await rsaDecrypt(ciphertext, privateKey)
 		expect(recovered).toBe(value)

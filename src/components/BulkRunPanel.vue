@@ -11,11 +11,17 @@
 <template>
 	<div class="bulk-run" data-testid="bulk-run-panel">
 		<div v-if="progress.running" class="bulk-run__progress">
-			<progress :value="progress.done" :max="progress.total" class="bulk-run__bar" />
+			<progress
+				:value="progress.done"
+				:max="progress.total"
+				class="bulk-run__bar" />
 			<span data-testid="bulk-progress-label">
 				{{ progress.label }} — {{ progress.done }} / {{ progress.total }}
 			</span>
-			<NcButton variant="tertiary" data-testid="bulk-cancel" @click="store.cancel()">
+			<NcButton
+				variant="tertiary"
+				data-testid="bulk-cancel"
+				@click="store.cancel()">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
 		</div>
@@ -41,7 +47,11 @@
 							{{ nameFor(row.secretId) }}
 						</td>
 						<td>
-							<span :class="['bulk-run__status', `bulk-run__status--${row.status}`]">
+							<span
+								:class="[
+									'bulk-run__status',
+									`bulk-run__status--${row.status}`,
+								]">
 								{{ row.status }}
 							</span>
 						</td>
@@ -49,7 +59,8 @@
 					</tr>
 				</tbody>
 			</table>
-			<NcButton v-if="failedCount > 0"
+			<NcButton
+				v-if="failedCount > 0"
 				variant="secondary"
 				data-testid="bulk-retry-failed"
 				@click="$emit('retry')">

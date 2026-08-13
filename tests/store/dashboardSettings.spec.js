@@ -144,7 +144,9 @@ describe('useDashboardSettingsStore', () => {
 
 			await store.reset()
 
-			expect(del).toHaveBeenCalledWith('/apps/doriath/api/v1/dashboard-settings')
+			expect(del).toHaveBeenCalledWith(
+				'/apps/doriath/api/v1/dashboard-settings',
+			)
 			expect(store.settings).toEqual({})
 		})
 	})

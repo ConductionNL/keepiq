@@ -21,10 +21,17 @@
  * password, and the dev seed provides at least one secret.
  */
 import { test, expect } from '@playwright/test'
-import { DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } from './_workflow-helpers'
+import {
+	DEV_MASTER_PASSWORD,
+	gotoLockSettled,
+	gotoVaultRoute,
+	unlockVault,
+} from './_workflow-helpers'
 
 test.describe('secret export + GDPR', () => {
-	test('encrypted backup export downloads a .doriath-backup file client-side', async ({ page }) => {
+	test('encrypted backup export downloads a .doriath-backup file client-side', async ({
+		page,
+	}) => {
 		// @e2e secret-export::backup-created-client-side
 		// @e2e secret-export::export-restore-round-trip
 		await gotoLockSettled(page)
@@ -34,8 +41,12 @@ test.describe('secret export + GDPR', () => {
 		// Open the "My data" actions and start an export.
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
 		// click so the "My data" actions menu opens.
-		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
-		await page.getByRole('menuitem', { name: /Export data/i }).evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('button', { name: /My data/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('menuitem', { name: /Export data/i })
+			.evaluate((el: HTMLElement) => el.click())
 
 		// Backup is the visually-primary option; enter a strong passphrase.
 		const passphrase = page.getByLabel(/Backup passphrase/i)
@@ -48,7 +59,9 @@ test.describe('secret export + GDPR', () => {
 		expect(download.suggestedFilename()).toContain('.doriath-backup')
 	})
 
-	test('plaintext CSV requires warning acknowledgement and a correct master password', async ({ page }) => {
+	test('plaintext CSV requires warning acknowledgement and a correct master password', async ({
+		page,
+	}) => {
 		// @e2e secret-export::warning-precedes-plaintext-export
 		// @e2e secret-export::re-auth-required-despite-unlocked-session
 		await gotoLockSettled(page)
@@ -57,8 +70,12 @@ test.describe('secret export + GDPR', () => {
 
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
 		// click so the "My data" actions menu opens.
-		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
-		await page.getByRole('menuitem', { name: /Export data/i }).evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('button', { name: /My data/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('menuitem', { name: /Export data/i })
+			.evaluate((el: HTMLElement) => el.click())
 
 		// Select the plaintext CSV mode and confirm the warning gates the flow.
 		await page.getByText(/Plaintext CSV/i).click()
@@ -67,12 +84,18 @@ test.describe('secret export + GDPR', () => {
 		await ack.click()
 
 		// Wrong master password is rejected client-side.
-		await page.getByLabel(/Re-enter your master password/i).fill('definitely-wrong')
+		await page
+			.getByLabel(/Re-enter your master password/i)
+			.fill('definitely-wrong')
 		await page.getByRole('button', { name: /^Export$/ }).click()
-		await expect(page.getByText(/Incorrect master password/i)).toBeVisible({ timeout: 20_000 })
+		await expect(page.getByText(/Incorrect master password/i)).toBeVisible({
+			timeout: 20_000,
+		})
 	})
 
-	test('in-app account deletion is double-gated by phrase + master password', async ({ page }) => {
+	test('in-app account deletion is double-gated by phrase + master password', async ({
+		page,
+	}) => {
 		// @e2e gdpr-compliance::in-app-deletion-double-gated
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
@@ -80,8 +103,12 @@ test.describe('secret export + GDPR', () => {
 
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
 		// click so the "My data" actions menu opens.
-		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
-		await page.getByRole('menuitem', { name: /Delete my Doriath data/i }).evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('button', { name: /My data/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('menuitem', { name: /Delete my Doriath data/i })
+			.evaluate((el: HTMLElement) => el.click())
 
 		// The delete action stays disabled until BOTH gates are satisfied.
 		const deleteBtn = page.getByRole('button', { name: /Delete everything/i })
@@ -89,7 +116,9 @@ test.describe('secret export + GDPR', () => {
 		await expect(deleteBtn).toBeDisabled()
 
 		// Master password alone does not enable it.
-		await page.getByLabel(/Re-enter your master password/i).fill(DEV_MASTER_PASSWORD)
+		await page
+			.getByLabel(/Re-enter your master password/i)
+			.fill(DEV_MASTER_PASSWORD)
 		await expect(deleteBtn).toBeDisabled()
 	})
 
@@ -101,11 +130,19 @@ test.describe('secret export + GDPR', () => {
 
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
 		// click so the "My data" actions menu opens.
-		await page.getByRole('button', { name: /My data/i }).evaluate((el: HTMLElement) => el.click())
-		await page.getByRole('menuitem', { name: /GDPR export/i }).evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('button', { name: /My data/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByRole('menuitem', { name: /GDPR export/i })
+			.evaluate((el: HTMLElement) => el.click())
 
 		// Unlocked: the dialog offers the full package download.
-		await expect(page.getByText(/will include both your account metadata/i)).toBeVisible({ timeout: 20_000 })
-		await expect(page.getByRole('button', { name: /Download full package/i })).toBeVisible()
+		await expect(
+			page.getByText(/will include both your account metadata/i),
+		).toBeVisible({ timeout: 20_000 })
+		await expect(
+			page.getByRole('button', { name: /Download full package/i }),
+		).toBeVisible()
 	})
 })

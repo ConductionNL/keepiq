@@ -83,7 +83,7 @@ export function unpair(config) {
  */
 export async function fetchActiveSuite(config) {
 	const suites = await request(config, 'GET', '/api/v1/suites')
-	const list = Array.isArray(suites) ? suites : (suites.items || [])
+	const list = Array.isArray(suites) ? suites : suites.items || []
 	const active = list.find((s) => s.status === 'active')
 	if (!active) throw new Error('no active encryption suite')
 	return active
@@ -95,7 +95,11 @@ export async function fetchActiveSuite(config) {
  * @param host
  */
 export async function match(config, host) {
-	const data = await request(config, 'GET', '/api/v1/extension/match?host=' + encodeURIComponent(host))
+	const data = await request(
+		config,
+		'GET',
+		'/api/v1/extension/match?host=' + encodeURIComponent(host),
+	)
 	return data.items || []
 }
 
@@ -134,7 +138,7 @@ export function updateSecret(config, id, body) {
  */
 export async function typeIdByName(config, name) {
 	const types = await request(config, 'GET', '/api/v1/secret-types')
-	const list = Array.isArray(types) ? types : (types.items || [])
+	const list = Array.isArray(types) ? types : types.items || []
 	const match = list.find((t) => t.name === name || t.slug === name)
 	return match ? match.id : null
 }

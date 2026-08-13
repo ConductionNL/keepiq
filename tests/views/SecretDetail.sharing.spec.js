@@ -37,7 +37,9 @@ const stubAll = {
 	DelegationManager: { template: '<div data-testid="stub-delegation-manager" />' },
 	ShareRequestForm: { template: '<div data-testid="stub-share-request-form" />' },
 	SecretRequestList: { template: '<div data-testid="stub-request-list" />' },
-	SecretRequestCreateDialog: { template: '<div data-testid="stub-request-dialog" />' },
+	SecretRequestCreateDialog: {
+		template: '<div data-testid="stub-request-dialog" />',
+	},
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -88,10 +90,20 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-share-list"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-delegation-manager"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-share-request"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper
+				.find('[data-testid="secret-detail-delegation-manager"]')
+				.exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
+		).toBe(false)
 	})
 
 	it('renders the share-request form for a non-owner recipient', async () => {
@@ -100,10 +112,20 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'bob',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-share-list"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="secret-detail-delegation-manager"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="secret-detail-share-request"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper
+				.find('[data-testid="secret-detail-delegation-manager"]')
+				.exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
+		).toBe(true)
 	})
 
 	it('hides the entire sharing section when no secret is loaded', async () => {
@@ -113,7 +135,9 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 		// renders.
 		const wrapper = await mountDetail({ secret: null, currentUser: 'alice' })
 
-		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('falls back to legacy owner_id field when ownerId is absent', async () => {
@@ -122,7 +146,9 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-share-list"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(true)
 	})
 
 	it('renders the Requests section + SecretRequestList for the owner', async () => {
@@ -131,10 +157,16 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-request-list"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="secret-detail-request-list"]').exists(),
+		).toBe(true)
 		// The dialog is mounted lazily; not visible until the create button fires.
-		expect(wrapper.find('[data-testid="secret-detail-request-dialog"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-detail-request-dialog"]').exists(),
+		).toBe(false)
 	})
 
 	it('hides the Requests section from non-owner recipients', async () => {
@@ -143,6 +175,8 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'bob',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(
+			false,
+		)
 	})
 })

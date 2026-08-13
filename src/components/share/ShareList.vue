@@ -13,7 +13,10 @@
 	<section class="doriath-share-list" data-testid="share-list">
 		<header class="doriath-share-list__header">
 			<h4>{{ t('doriath', 'Shared with') }}</h4>
-			<span v-if="store.recipientCount > 0" class="doriath-share-list__count" data-testid="share-list-count">
+			<span
+				v-if="store.recipientCount > 0"
+				class="doriath-share-list__count"
+				data-testid="share-list-count">
 				{{ store.recipientCount }}
 			</span>
 		</header>
@@ -22,7 +25,10 @@
 			{{ t('doriath', 'Loading…') }}
 		</p>
 
-		<p v-else-if="store.recipientCount === 0" class="doriath-share-list__empty" data-testid="share-list-empty">
+		<p
+			v-else-if="store.recipientCount === 0"
+			class="doriath-share-list__empty"
+			data-testid="share-list-empty">
 			{{ t('doriath', 'This secret is not shared with anyone yet.') }}
 		</p>
 
@@ -32,8 +38,14 @@
 				:key="share.id"
 				class="doriath-share-list__row"
 				data-testid="share-row">
-				<span class="doriath-share-list__user" data-testid="share-row-target">{{ share.target_user_id }}</span>
-				<span v-if="share.group_share_id" class="doriath-share-list__group-badge">
+				<span
+					class="doriath-share-list__user"
+					data-testid="share-row-target"
+					>{{ share.target_user_id }}</span
+				>
+				<span
+					v-if="share.group_share_id"
+					class="doriath-share-list__group-badge">
 					{{ t('doriath', 'via group') }}
 				</span>
 				<button
@@ -48,7 +60,10 @@
 			</li>
 		</ul>
 
-		<p v-if="store.error" class="doriath-share-list__error" data-testid="share-list-error">
+		<p
+			v-if="store.error"
+			class="doriath-share-list__error"
+			data-testid="share-list-error">
 			{{ store.error }}
 		</p>
 	</section>

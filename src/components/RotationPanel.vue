@@ -18,17 +18,22 @@
 		</NcNoteCard>
 
 		<!-- Open rotation flag. -->
-		<div v-if="openFlag" class="rotation-panel__flag" data-testid="rotation-flag">
+		<div
+			v-if="openFlag"
+			class="rotation-panel__flag"
+			data-testid="rotation-flag">
 			<span class="rotation-panel__chip rotation-panel__chip--due">
 				{{ flagLabel }}
 			</span>
-			<NcButton v-if="canManage"
+			<NcButton
+				v-if="canManage"
 				variant="secondary"
 				data-testid="rotation-mark-rotated"
 				@click="onMarkRotated">
 				{{ t('doriath', 'Mark rotated') }}
 			</NcButton>
-			<NcButton v-if="canManage"
+			<NcButton
+				v-if="canManage"
 				variant="tertiary"
 				data-testid="rotation-dismiss"
 				@click="onDismiss">
@@ -36,13 +41,24 @@
 			</NcButton>
 		</div>
 
-		<NcNoteCard v-if="rotationRequired" type="warning" data-testid="rotation-required-note">
-			{{ t('doriath', 'The credential has not changed since it was flagged — update the secret value first, then mark it rotated.') }}
+		<NcNoteCard
+			v-if="rotationRequired"
+			type="warning"
+			data-testid="rotation-required-note">
+			{{
+				t(
+					'doriath',
+					'The credential has not changed since it was flagged — update the secret value first, then mark it rotated.',
+				)
+			}}
 		</NcNoteCard>
 
 		<!-- Expiry line. -->
 		<div class="rotation-panel__expiry">
-			<span v-if="effectiveExpiry" :class="['rotation-panel__chip', expiryChipClass]" data-testid="expiry-chip">
+			<span
+				v-if="effectiveExpiry"
+				:class="['rotation-panel__chip', expiryChipClass]"
+				data-testid="expiry-chip">
 				{{ expiryLabel }}
 			</span>
 			<span v-else class="rotation-panel__none">
@@ -50,21 +66,27 @@
 			</span>
 
 			<template v-if="canManage">
-				<input v-model="editValue"
+				<input
+					v-model="editValue"
 					type="date"
 					class="rotation-panel__date"
 					:aria-label="t('doriath', 'Expiry date')"
-					data-testid="expiry-input">
-				<NcButton variant="secondary" data-testid="expiry-save" @click="onSave">
+					data-testid="expiry-input" />
+				<NcButton
+					variant="secondary"
+					data-testid="expiry-save"
+					@click="onSave">
 					{{ t('doriath', 'Set expiry') }}
 				</NcButton>
-				<NcButton v-if="expiresAt"
+				<NcButton
+					v-if="expiresAt"
 					variant="tertiary"
 					data-testid="expiry-clear"
 					@click="onClear">
 					{{ t('doriath', 'Clear') }}
 				</NcButton>
-				<NcButton v-if="!openFlag"
+				<NcButton
+					v-if="!openFlag"
 					variant="tertiary"
 					data-testid="rotation-flag-now"
 					@click="onFlag">
@@ -116,15 +138,22 @@ export default {
 			const reasons = {
 				user_flagged: this.t('doriath', 'Rotation requested'),
 				policy_expiry: this.t('doriath', 'Rotation due — expired'),
-				suite_compromise: this.t('doriath', 'Rotation due — possible compromise'),
+				suite_compromise: this.t(
+					'doriath',
+					'Rotation due — possible compromise',
+				),
 			}
-			return reasons[this.openFlag?.reason] || this.t('doriath', 'Rotation due')
+			return (
+				reasons[this.openFlag?.reason] || this.t('doriath', 'Rotation due')
+			)
 		},
 		daysLeft() {
 			if (!this.effectiveExpiry) {
 				return null
 			}
-			return Math.floor((Date.parse(this.effectiveExpiry) - Date.now()) / 86400000)
+			return Math.floor(
+				(Date.parse(this.effectiveExpiry) - Date.now()) / 86400000,
+			)
 		},
 		expiryChipClass() {
 			if (this.daysLeft === null) {
@@ -139,7 +168,9 @@ export default {
 			return 'rotation-panel__chip--ok'
 		},
 		expiryLabel() {
-			const date = new Date(Date.parse(this.effectiveExpiry)).toLocaleDateString()
+			const date = new Date(
+				Date.parse(this.effectiveExpiry),
+			).toLocaleDateString()
 			if (this.daysLeft !== null && this.daysLeft < 0) {
 				return this.t('doriath', 'Expired {date}', { date })
 			}
@@ -163,7 +194,10 @@ export default {
 				this.editValue = this.expiresAt ? this.expiresAt.slice(0, 10) : ''
 				await this.store.fetchFlags()
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load expiry'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load expiry'
 			}
 		},
 
@@ -177,12 +211,19 @@ export default {
 				return
 			}
 			try {
-				const data = await this.store.setExpiry(this.secretId, `${this.editValue}T00:00:00Z`)
-				this.expiresAt = data.secret?.expiresAt ?? `${this.editValue}T00:00:00Z`
+				const data = await this.store.setExpiry(
+					this.secretId,
+					`${this.editValue}T00:00:00Z`,
+				)
+				this.expiresAt =
+					data.secret?.expiresAt ?? `${this.editValue}T00:00:00Z`
 				this.effectiveExpiry = data.effectiveExpiry
 				this.error = null
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to set expiry'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to set expiry'
 			}
 		},
 
@@ -199,7 +240,10 @@ export default {
 				this.editValue = ''
 				this.error = null
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to clear expiry'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to clear expiry'
 			}
 		},
 
@@ -213,7 +257,8 @@ export default {
 				await this.store.flagSecrets([this.secretId])
 				this.error = null
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to flag'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Failed to flag'
 			}
 		},
 
@@ -228,7 +273,10 @@ export default {
 				this.rotationRequired = result?.requiresRotation === true
 				this.error = null
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to mark rotated'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to mark rotated'
 			}
 		},
 
@@ -243,7 +291,8 @@ export default {
 				this.rotationRequired = false
 				this.error = null
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to dismiss'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Failed to dismiss'
 			}
 		},
 	},

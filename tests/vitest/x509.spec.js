@@ -44,14 +44,18 @@ describe('parseCertificatePem', () => {
 		expect(parsed.notAfter).toBe('2036-07-15T14:43:57Z')
 		expect(parsed.fingerprintSha256).toBe(
 			'sha256:'
-			+ 'f573d3b4f1ac2d13c3a34c424539293a64117f3803e8c3243fe0eba93620a7fd',
+				+ 'f573d3b4f1ac2d13c3a34c424539293a64117f3803e8c3243fe0eba93620a7fd',
 		)
 	})
 
 	it('returns null for non-certificate input', async () => {
 		expect(await parseCertificatePem('not a pem')).toBeNull()
 		expect(await parseCertificatePem('')).toBeNull()
-		expect(await parseCertificatePem('-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----')).toBeNull()
+		expect(
+			await parseCertificatePem(
+				'-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----',
+			),
+		).toBeNull()
 	})
 
 	it('never returns private-key material', async () => {
@@ -59,7 +63,12 @@ describe('parseCertificatePem', () => {
 		const json = JSON.stringify(parsed)
 		expect(json).not.toContain('PRIVATE KEY')
 		expect(Object.keys(parsed).sort()).toEqual([
-			'fingerprintSha256', 'issuer', 'notAfter', 'notBefore', 'serial', 'subject',
+			'fingerprintSha256',
+			'issuer',
+			'notAfter',
+			'notBefore',
+			'serial',
+			'subject',
 		])
 	})
 })

@@ -19,7 +19,8 @@
   @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Export vault')"
+	<NcDialog
+		:name="t('doriath', 'Export vault')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -30,21 +31,24 @@
 
 			<fieldset class="export-dialog__modes">
 				<legend>{{ t('doriath', 'Export format') }}</legend>
-				<NcCheckboxRadioSwitch :model-value="mode"
+				<NcCheckboxRadioSwitch
+					:model-value="mode"
 					value="encrypted-backup"
 					name="export-mode"
 					type="radio"
 					@update:model-value="mode = $event">
 					{{ t('doriath', 'Encrypted backup (recommended)') }}
 				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch :model-value="mode"
+				<NcCheckboxRadioSwitch
+					:model-value="mode"
 					value="plaintext-csv"
 					name="export-mode"
 					type="radio"
 					@update:model-value="mode = $event">
 					{{ t('doriath', 'Plaintext CSV (unencrypted)') }}
 				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch :model-value="mode"
+				<NcCheckboxRadioSwitch
+					:model-value="mode"
 					value="cxf"
 					name="export-mode"
 					type="radio"
@@ -57,31 +61,48 @@
 			<!-- CXF unmapped-item report: shown BEFORE the download so the
 			     user knows exactly what will not survive the round-trip
 			     (cxf-import-export D4). -->
-			<NcNoteCard v-if="mode === 'cxf' && cxfReport && cxfReport.unmapped.length"
+			<NcNoteCard
+				v-if="mode === 'cxf' && cxfReport && cxfReport.unmapped.length"
 				type="warning"
 				data-testid="cxf-unmapped-report">
-				<p>{{ t('doriath', 'The following will not survive a CXF export:') }}</p>
+				<p>
+					{{
+						t('doriath', 'The following will not survive a CXF export:')
+					}}
+				</p>
 				<ul>
-					<li v-for="(entry, idx) in cxfReport.unmapped" :key="idx">{{ entry }}</li>
+					<li v-for="(entry, idx) in cxfReport.unmapped" :key="idx">
+						{{ entry }}
+					</li>
 				</ul>
 				<p>{{ t('doriath', 'Export again to proceed anyway.') }}</p>
 			</NcNoteCard>
 
-			<NcSelect v-model="scopeFolder"
+			<NcSelect
+				v-model="scopeFolder"
 				:input-label="t('doriath', 'Scope')"
 				:options="scopeOptions"
-				:reduce="opt => opt.value"
+				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
 			<!-- Encrypted backup path -->
 			<div v-if="mode === 'encrypted-backup'" class="export-dialog__backup">
-				<NcPasswordField v-model="passphrase"
+				<NcPasswordField
+					v-model="passphrase"
 					:label="t('doriath', 'Backup passphrase')"
 					@update:model-value="onPassphraseInput" />
 				<p class="export-dialog__hint">
-					{{ t('doriath', 'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.') }}
+					{{
+						t(
+							'doriath',
+							'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.',
+						)
+					}}
 				</p>
-				<p v-if="passphrase" class="export-dialog__strength" :class="'export-dialog__strength--' + passphraseScore">
+				<p
+					v-if="passphrase"
+					class="export-dialog__strength"
+					:class="'export-dialog__strength--' + passphraseScore">
 					{{ strengthLabel }}
 				</p>
 			</div>
@@ -89,13 +110,25 @@
 			<!-- Plaintext CSV path: warning -> ack -> re-auth -->
 			<div v-else class="export-dialog__csv">
 				<NcNoteCard type="warning">
-					{{ t('doriath', 'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.') }}
+					{{
+						t(
+							'doriath',
+							'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
+						)
+					}}
 				</NcNoteCard>
-				<NcCheckboxRadioSwitch :model-value="warningAcknowledged"
+				<NcCheckboxRadioSwitch
+					:model-value="warningAcknowledged"
 					@update:model-value="warningAcknowledged = $event">
-					{{ t('doriath', 'I understand the file is unencrypted and will delete it after use') }}
+					{{
+						t(
+							'doriath',
+							'I understand the file is unencrypted and will delete it after use',
+						)
+					}}
 				</NcCheckboxRadioSwitch>
-				<NcPasswordField v-if="warningAcknowledged"
+				<NcPasswordField
+					v-if="warningAcknowledged"
 					v-model="masterPassword"
 					:label="t('doriath', 'Re-enter your master password')" />
 			</div>
@@ -105,7 +138,8 @@
 			<NcButton @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="primary"
+			<NcButton
+				variant="primary"
 				:disabled="!canSubmit || loading"
 				@click="onExport">
 				{{ t('doriath', 'Export') }}
@@ -115,7 +149,14 @@
 </template>
 
 <script>
-import { NcButton, NcCheckboxRadioSwitch, NcDialog, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcNoteCard,
+	NcPasswordField,
+	NcSelect,
+} from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -201,7 +242,9 @@ export default {
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
 		 */
 		scopeOptions() {
-			const opts = [{ label: this.t('doriath', 'Entire vault'), value: 'vault' }]
+			const opts = [
+				{ label: this.t('doriath', 'Entire vault'), value: 'vault' },
+			]
 			for (const folder of this.folders) {
 				opts.push({ label: folder.name, value: folder.id })
 			}
@@ -217,7 +260,10 @@ export default {
 			if (this.passphraseScore >= PASSPHRASE_FLOOR) {
 				return this.t('doriath', 'Passphrase strength: strong enough')
 			}
-			return this.t('doriath', 'Passphrase too weak — choose a longer, less predictable passphrase')
+			return this.t(
+				'doriath',
+				'Passphrase too weak — choose a longer, less predictable passphrase',
+			)
 		},
 		/**
 		 * Whether the export may be submitted: backup needs a passphrase at/above
@@ -229,7 +275,10 @@ export default {
 		 */
 		canSubmit() {
 			if (this.mode === 'encrypted-backup') {
-				return this.passphrase.length > 0 && this.passphraseScore >= PASSPHRASE_FLOOR
+				return (
+					this.passphrase.length > 0
+					&& this.passphraseScore >= PASSPHRASE_FLOOR
+				)
 			}
 			// Plaintext CSV: warning acknowledged + a master password entered.
 			return this.warningAcknowledged && this.masterPassword.length > 0
@@ -249,7 +298,9 @@ export default {
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
 		 */
 		onPassphraseInput() {
-			this.passphraseScore = this.passphrase ? zxcvbn(this.passphrase).score : 0
+			this.passphraseScore = this.passphrase
+				? zxcvbn(this.passphrase).score
+				: 0
 		},
 		/**
 		 * Build the scope selector for the store action.
@@ -275,7 +326,12 @@ export default {
 			try {
 				const scope = this.buildScope()
 				if (this.mode === 'encrypted-backup') {
-					await this.exportStore.exportBackup(this.secrets, this.folders, this.passphrase, scope)
+					await this.exportStore.exportBackup(
+						this.secrets,
+						this.folders,
+						this.passphrase,
+						scope,
+					)
 				} else {
 					// Fresh master-password re-auth (client-side proof of knowledge).
 					const ok = await verifyMasterPassword(
@@ -292,7 +348,9 @@ export default {
 						// pass (or a clean report) proceeds to the download.
 						if (this.cxfReport === null) {
 							const report = await this.exportStore.exportCxf(
-								this.secrets, this.folders, scope,
+								this.secrets,
+								this.folders,
+								scope,
 								{ typeNamesById: this.typeNamesById, dryRun: true },
 							)
 							if (report.unmapped.length > 0) {
@@ -301,17 +359,26 @@ export default {
 							}
 						}
 						await this.exportStore.exportCxf(
-							this.secrets, this.folders, scope,
+							this.secrets,
+							this.folders,
+							scope,
 							{ typeNamesById: this.typeNamesById },
 						)
 					} else {
-						await this.exportStore.exportCsv(this.secrets, this.folders, scope)
+						await this.exportStore.exportCsv(
+							this.secrets,
+							this.folders,
+							scope,
+						)
 					}
 				}
 				this.reset()
 				this.$emit('update:open', false)
 			} catch (e) {
-				this.error = this.exportStore.error || (e && e.message) || this.t('doriath', 'Export failed')
+				this.error =
+					this.exportStore.error
+					|| (e && e.message)
+					|| this.t('doriath', 'Export failed')
 			}
 		},
 		/**

@@ -91,8 +91,15 @@ export async function buildRecoveryEnvelope(privateKeyPem, granteeCertificatePem
  * @return {Promise<string>} The grantor's PKCS8 private-key PEM.
  */
 export async function openRecoveryEnvelope(envelopeJson, granteePrivateKey) {
-	const envelope = typeof envelopeJson === 'string' ? JSON.parse(envelopeJson) : envelopeJson
-	if (!envelope || envelope.v !== ENVELOPE_VERSION || !envelope.encKey || !envelope.iv || !envelope.ct) {
+	const envelope =
+		typeof envelopeJson === 'string' ? JSON.parse(envelopeJson) : envelopeJson
+	if (
+		!envelope
+		|| envelope.v !== ENVELOPE_VERSION
+		|| !envelope.encKey
+		|| !envelope.iv
+		|| !envelope.ct
+	) {
 		throw new Error('Malformed recovery envelope')
 	}
 

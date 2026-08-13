@@ -30,12 +30,17 @@ const ADMIN_SETTINGS = '/index.php/settings/admin/doriath'
 // tracks the real deployed version instead of a hard-coded literal that breaks
 // on every cache-bust bump.
 const APP_VERSION = (() => {
-	const infoXml = fs.readFileSync(path.resolve(__dirname, '../../../appinfo/info.xml'), 'utf8')
+	const infoXml = fs.readFileSync(
+		path.resolve(__dirname, '../../../appinfo/info.xml'),
+		'utf8',
+	)
 	return infoXml.match(/<version>([^<]+)<\/version>/)?.[1] ?? ''
 })()
 
 test.describe('Admin settings — spec: admin-settings/spec.md', () => {
-	test('settings section loads with the Doriath administration heading', async ({ page }) => {
+	test('settings section loads with the Doriath administration heading', async ({
+		page,
+	}) => {
 		const errors = collectDoriathErrors(page)
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 
@@ -46,7 +51,9 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 		assertNoDoriathErrors(errors)
 	})
 
-	test('Version Information card shows app name and the current app version', async ({ page }) => {
+	test('Version Information card shows app name and the current app version', async ({
+		page,
+	}) => {
 		// @e2e admin-settings::admin-opens-settings
 		// The scenario is "the FIRST section MUST be a CnVersionInfoCard with app
 		// name Doriath and the current version" — which is what this asserts.
@@ -54,13 +61,19 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 
 		const content = page.locator('#app-content, #content').first()
-		await expect(content.getByText(/Version Information/i).first()).toBeVisible({ timeout: 15_000 })
+		await expect(content.getByText(/Version Information/i).first()).toBeVisible({
+			timeout: 15_000,
+		})
 		// CnVersionInfoCard renders the app name and the current version
 		// (read from appinfo/info.xml so this tracks cache-bust bumps).
 		await expect(content.getByText(/Application Name/i).first()).toBeVisible()
-		await expect(content.getByText(APP_VERSION, { exact: false }).first()).toBeVisible()
+		await expect(
+			content.getByText(APP_VERSION, { exact: false }).first(),
+		).toBeVisible()
 		// Support footer slot is rendered by AdminRoot.vue.
-		await expect(content.getByText(/support@conduction\.nl/i).first()).toBeVisible()
+		await expect(
+			content.getByText(/support@conduction\.nl/i).first(),
+		).toBeVisible()
 
 		assertNoDoriathErrors(errors)
 	})
@@ -70,12 +83,16 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 
 		const content = page.locator('#app-content, #content').first()
-		await expect(content.getByText(/Password Policy/i).first()).toBeVisible({ timeout: 15_000 })
+		await expect(content.getByText(/Password Policy/i).first()).toBeVisible({
+			timeout: 15_000,
+		})
 
 		assertNoDoriathErrors(errors)
 	})
 
-	test('Certificate Authority section renders and reports Healthy status', async ({ page }) => {
+	test('Certificate Authority section renders and reports Healthy status', async ({
+		page,
+	}) => {
 		// @e2e admin-settings::ca-healthy
 		// Scenario: GIVEN the CA is bootstrapped and no renewal is needed, WHEN
 		// admin views settings, THEN the CA section MUST show "Healthy" status
@@ -106,8 +123,10 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 		const caStatus = await page.evaluate(async () => {
 			const head = document.querySelector('head[data-requesttoken]')
-			const token = (head && head.getAttribute('data-requesttoken'))
-				|| ((window as any).OC && (window as any).OC.requestToken) || ''
+			const token =
+				(head && head.getAttribute('data-requesttoken'))
+				|| ((window as any).OC && (window as any).OC.requestToken)
+				|| ''
 			const res = await fetch('/index.php/apps/doriath/api/v1/ca/status', {
 				credentials: 'include',
 				headers: { requesttoken: token, Accept: 'application/json' },
@@ -117,18 +136,24 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 		expect(caStatus.status, 'GET /api/v1/ca/status').toBe(200)
 		expect(
 			caStatus.body.status,
-			'the CA is not bootstrapped, so the scenario\'s GIVEN does not hold — '
-			+ 'fix the fixture rather than skipping the assertion',
+			"the CA is not bootstrapped, so the scenario's GIVEN does not hold — "
+				+ 'fix the fixture rather than skipping the assertion',
 		).toBe('healthy')
 
 		const content = page.locator('#app-content, #content').first()
-		await expect(content.getByText(/Certificate Authority/i).first()).toBeVisible({ timeout: 15_000 })
-		await expect(content.getByText(/Healthy|Gezond/i).first()).toBeVisible({ timeout: 15_000 })
+		await expect(
+			content.getByText(/Certificate Authority/i).first(),
+		).toBeVisible({ timeout: 15_000 })
+		await expect(content.getByText(/Healthy|Gezond/i).first()).toBeVisible({
+			timeout: 15_000,
+		})
 
 		// …WITH root and intermediate expiry dates. The section must name both
 		// tiers and render a date for each; a section that shows only the word
 		// "Healthy" does not satisfy the scenario.
-		await expect(content.getByText(/\broot\b/i).first()).toBeVisible({ timeout: 15_000 })
+		await expect(content.getByText(/\broot\b/i).first()).toBeVisible({
+			timeout: 15_000,
+		})
 		await expect(content.getByText(/intermediate/i).first()).toBeVisible()
 		const sectionText = (await content.textContent()) ?? ''
 		const dates = sectionText.match(/\d{1,4}[-/]\d{1,2}[-/]\d{1,4}/g) ?? []

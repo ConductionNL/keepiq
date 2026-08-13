@@ -11,7 +11,8 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.4
 -->
 <template>
-	<section v-if="open"
+	<section
+		v-if="open"
 		class="doriath-private-key-dialog"
 		role="dialog"
 		data-testid="private-key-dialog">
@@ -19,8 +20,15 @@
 			<h3>{{ t('doriath', 'Your private key') }}</h3>
 		</header>
 
-		<p class="doriath-private-key-dialog__warning" data-testid="private-key-warning">
-			{{ t('doriath', 'This is the only time this private key will be shown. Save it securely; it cannot be recovered.') }}
+		<p
+			class="doriath-private-key-dialog__warning"
+			data-testid="private-key-warning">
+			{{
+				t(
+					'doriath',
+					'This is the only time this private key will be shown. Save it securely; it cannot be recovered.',
+				)
+			}}
 		</p>
 
 		<textarea
@@ -35,7 +43,10 @@
 			<button type="button" data-testid="private-key-copy" @click="onCopy">
 				{{ copyLabel }}
 			</button>
-			<button type="button" data-testid="private-key-download" @click="onDownload">
+			<button
+				type="button"
+				data-testid="private-key-download"
+				@click="onDownload">
 				{{ t('doriath', 'Download as .pem') }}
 			</button>
 		</div>
@@ -44,8 +55,10 @@
 			<input
 				v-model="acknowledged"
 				type="checkbox"
-				data-testid="private-key-ack">
-			<span>{{ t('doriath', 'I have stored the private key in a safe place.') }}</span>
+				data-testid="private-key-ack" />
+			<span>{{
+				t('doriath', 'I have stored the private key in a safe place.')
+			}}</span>
 		</label>
 
 		<div class="doriath-private-key-dialog__close">
@@ -87,7 +100,9 @@ export default {
 	},
 	computed: {
 		copyLabel() {
-			return this.copied ? t('doriath', 'Copied!') : t('doriath', 'Copy to clipboard')
+			return this.copied
+				? t('doriath', 'Copied!')
+				: t('doriath', 'Copy to clipboard')
 		},
 	},
 	watch: {
@@ -104,7 +119,9 @@ export default {
 				if (navigator?.clipboard?.writeText) {
 					await navigator.clipboard.writeText(this.privateKey)
 					this.copied = true
-					setTimeout(() => { this.copied = false }, 1500)
+					setTimeout(() => {
+						this.copied = false
+					}, 1500)
 				}
 			} catch (_e) {
 				// Silently ignore — the user can still copy from the textarea.
@@ -112,7 +129,9 @@ export default {
 		},
 		onDownload() {
 			try {
-				const blob = new Blob([this.privateKey], { type: 'application/x-pem-file' })
+				const blob = new Blob([this.privateKey], {
+					type: 'application/x-pem-file',
+				})
 				const url = URL.createObjectURL(blob)
 				const a = document.createElement('a')
 				a.href = url

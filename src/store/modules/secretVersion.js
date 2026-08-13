@@ -47,7 +47,10 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 				)
 				this.versions = response.data || []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load versions'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load versions'
 				throw e
 			} finally {
 				this.loading = false
@@ -78,7 +81,10 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			if (version.additionalFields) {
 				try {
 					version.additionalFields = JSON.parse(
-						await rsaDecrypt(version.additionalFields, session.cryptoKey),
+						await rsaDecrypt(
+							version.additionalFields,
+							session.cryptoKey,
+						),
 					)
 				} catch {
 					version.additionalFields = null
@@ -100,7 +106,9 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/versions/${versionId}/restore`),
+					generateUrl(
+						`/apps/doriath/api/v1/versions/${versionId}/restore`,
+					),
 				)
 				// Propagate to recipients: decrypt the restored head with the
 				// session key, then re-encrypt per recipient (share fan-out).
@@ -112,15 +120,18 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 					{
 						key: plain.key ?? '',
 						login: plain.login ?? '',
-						additionalFields: typeof plain.additionalFields === 'object' && plain.additionalFields !== null
-							? JSON.stringify(plain.additionalFields)
-							: (plain.additionalFields ?? ''),
+						additionalFields:
+							typeof plain.additionalFields === 'object'
+							&& plain.additionalFields !== null
+								? JSON.stringify(plain.additionalFields)
+								: (plain.additionalFields ?? ''),
 					},
 					response.data.updatedAt,
 				)
 				await this.fetchVersions(secretId)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Restore failed'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Restore failed'
 				throw e
 			} finally {
 				this.loading = false

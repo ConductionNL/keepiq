@@ -20,7 +20,10 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { useSessionStore } from './session.js'
 import { decryptPrivateKey } from '../../crypto/index.js'
-import { buildRecoveryEnvelope, openRecoveryEnvelope } from '../../crypto/emergencyEnvelope.js'
+import {
+	buildRecoveryEnvelope,
+	openRecoveryEnvelope,
+} from '../../crypto/emergencyEnvelope.js'
 
 export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 	state: () => ({
@@ -36,9 +39,11 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 
 	getters: {
 		/** @return {Array<object>} Incoming relationships pending grantor decline. */
-		pendingRequests: (state) => state.contacts.filter((c) => c.state === 'requested'),
+		pendingRequests: (state) =>
+			state.contacts.filter((c) => c.state === 'requested'),
 		/** @return {Array<object>} Relationships that need re-establishing after a key change. */
-		invalidatedContacts: (state) => state.contacts.filter((c) => c.state === 'invalidated'),
+		invalidatedContacts: (state) =>
+			state.contacts.filter((c) => c.state === 'invalidated'),
 	},
 
 	actions: {
@@ -51,7 +56,9 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		async fetchContacts() {
 			this.loading = true
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/emergency-access/contacts'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/emergency-access/contacts'),
+				)
 				this.contacts = Array.isArray(response.data) ? response.data : []
 			} finally {
 				this.loading = false
@@ -67,7 +74,9 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		async fetchIncoming() {
 			this.loading = true
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/emergency-access/incoming'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/emergency-access/incoming'),
+				)
 				this.incoming = Array.isArray(response.data) ? response.data : []
 			} finally {
 				this.loading = false
@@ -89,22 +98,32 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		async designate({ granteeUserId, waitPeriodDays, masterPassword }) {
 			const session = useSessionStore()
 			if (session.isLocked || !session.encryptedPrivateKey) {
-				throw new Error('Unlock your vault before designating an emergency contact')
+				throw new Error(
+					'Unlock your vault before designating an emergency contact',
+				)
 			}
 
 			// 1. Fetch the grantee's public certificate (validates active suite).
 			const certResponse = await axios.get(
-				generateUrl('/apps/doriath/api/v1/emergency-access/grantee-certificate'),
+				generateUrl(
+					'/apps/doriath/api/v1/emergency-access/grantee-certificate',
+				),
 				{ params: { granteeUserId } },
 			)
 			const granteeCertificate = certResponse.data.certificate
 
 			// 2. Transiently re-derive the grantor's private-key PEM, build the
 			//    envelope, and discard the raw key. Only ciphertext leaves here.
-			let privateKeyPem = await decryptPrivateKey(session.encryptedPrivateKey, masterPassword)
+			let privateKeyPem = await decryptPrivateKey(
+				session.encryptedPrivateKey,
+				masterPassword,
+			)
 			let recoveryEnvelope
 			try {
-				recoveryEnvelope = await buildRecoveryEnvelope(privateKeyPem, granteeCertificate)
+				recoveryEnvelope = await buildRecoveryEnvelope(
+					privateKeyPem,
+					granteeCertificate,
+				)
 			} finally {
 				privateKeyPem = null
 			}
@@ -112,7 +131,12 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 			// 3. Persist only the grantee-encrypted envelope.
 			const response = await axios.post(
 				generateUrl('/apps/doriath/api/v1/emergency-access/contacts'),
-				{ granteeUserId, waitPeriodDays, accessLevel: 'view', recoveryEnvelope },
+				{
+					granteeUserId,
+					waitPeriodDays,
+					accessLevel: 'view',
+					recoveryEnvelope,
+				},
 			)
 			await this.fetchContacts()
 			return response.data
@@ -126,7 +150,9 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 		 */
 		async revoke(id) {
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/emergency-access/contacts/${id}`))
+			await axios.delete(
+				generateUrl(`/apps/doriath/api/v1/emergency-access/contacts/${id}`),
+			)
 			await this.fetchContacts()
 		},
 
@@ -138,7 +164,11 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-break-glass-request-and-wait-timer
 		 */
 		async request(id) {
-			await axios.post(generateUrl(`/apps/doriath/api/v1/emergency-access/contacts/${id}/request`))
+			await axios.post(
+				generateUrl(
+					`/apps/doriath/api/v1/emergency-access/contacts/${id}/request`,
+				),
+			)
 			await this.fetchIncoming()
 		},
 
@@ -150,7 +180,11 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-grantor-decline-veto
 		 */
 		async decline(id) {
-			await axios.post(generateUrl(`/apps/doriath/api/v1/emergency-access/contacts/${id}/decline`))
+			await axios.post(
+				generateUrl(
+					`/apps/doriath/api/v1/emergency-access/contacts/${id}/decline`,
+				),
+			)
 			await this.fetchContacts()
 		},
 
@@ -168,7 +202,9 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 				throw new Error('Unlock your vault to recover emergency access')
 			}
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/emergency-access/contacts/${id}/envelope`),
+				generateUrl(
+					`/apps/doriath/api/v1/emergency-access/contacts/${id}/envelope`,
+				),
 			)
 			const envelope = response.data.recoveryEnvelope
 			return openRecoveryEnvelope(envelope, session.cryptoKey)

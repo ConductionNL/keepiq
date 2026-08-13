@@ -79,7 +79,9 @@ function fromBase64Url(base64url) {
  */
 async function aesEncrypt(key, plaintext) {
 	const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
-	const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext))
+	const ciphertext = new Uint8Array(
+		await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext),
+	)
 	const combined = new Uint8Array(iv.length + ciphertext.length)
 	combined.set(iv, 0)
 	combined.set(ciphertext, iv.length)
@@ -97,7 +99,9 @@ async function aesDecrypt(key, blob) {
 	const combined = fromBase64(blob)
 	const iv = combined.slice(0, IV_LENGTH)
 	const ciphertext = combined.slice(IV_LENGTH)
-	return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext))
+	return new Uint8Array(
+		await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext),
+	)
 }
 
 export const useEphemeralSendStore = defineStore('ephemeralSend', {
@@ -124,9 +128,18 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @return {Promise<string>} The full share URL (fragment included when keyless).
 		 */
 		async createSend({ payload, payloadType, maxViews, ttlSeconds, password }) {
-			const contentKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'])
-			const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', contentKey))
-			const encryptedPayload = await aesEncrypt(contentKey, new TextEncoder().encode(payload))
+			const contentKey = await crypto.subtle.generateKey(
+				{ name: 'AES-GCM', length: 256 },
+				true,
+				['encrypt', 'decrypt'],
+			)
+			const rawKey = new Uint8Array(
+				await crypto.subtle.exportKey('raw', contentKey),
+			)
+			const encryptedPayload = await aesEncrypt(
+				contentKey,
+				new TextEncoder().encode(payload),
+			)
 
 			const body = {
 				encryptedPayload,
@@ -142,14 +155,20 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 				body.argon2idSalt = toBase64(salt)
 			}
 
-			const response = await axios.post(generateUrl('/apps/doriath/api/v1/sends'), body)
+			const response = await axios.post(
+				generateUrl('/apps/doriath/api/v1/sends'),
+				body,
+			)
 			const token = response.data?.token
 			await this.fetchSends()
 
 			// The /public shell serves the SPA as #[PublicPage] so an
 			// account-less recipient reaches the access route.
-			const base = window.location.origin
-				+ generateUrl('/apps/doriath/public') + '#/send/' + encodeURIComponent(token)
+			const base =
+				window.location.origin
+				+ generateUrl('/apps/doriath/public')
+				+ '#/send/'
+				+ encodeURIComponent(token)
 			// Fragment-mode: the content key NEVER reaches the server — it
 			// rides after a second '#k=' marker inside the SPA fragment.
 			return password !== '' ? base : `${base}?k=${toBase64Url(rawKey)}`
@@ -163,7 +182,9 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		async fetchSends() {
 			this.loading = true
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/sends'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/sends'),
+				)
 				this.sends = response.data || []
 			} finally {
 				this.loading = false
@@ -191,7 +212,9 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 */
 		async accessSend(token, fragmentKey, password) {
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/access`),
+				generateUrl(
+					`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/access`,
+				),
 			)
 			const data = response.data
 
@@ -199,15 +222,26 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 			try {
 				let rawKey
 				if (data.hasPassword) {
-					const kek = await deriveAesKeyArgon2id(password, fromBase64(data.argon2idSalt))
+					const kek = await deriveAesKeyArgon2id(
+						password,
+						fromBase64(data.argon2idSalt),
+					)
 					rawKey = await aesDecrypt(kek, data.wrappedKey)
 				} else {
 					rawKey = fromBase64Url(fragmentKey)
 				}
-				contentKey = await crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, ['decrypt'])
+				contentKey = await crypto.subtle.importKey(
+					'raw',
+					rawKey,
+					{ name: 'AES-GCM' },
+					false,
+					['decrypt'],
+				)
 				const plaintext = await aesDecrypt(contentKey, data.encryptedPayload)
 				const confirm = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/confirm`),
+					generateUrl(
+						`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/confirm`,
+					),
 				)
 				return {
 					payload: new TextDecoder().decode(plaintext),
@@ -219,7 +253,9 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 					// Report the failed password attempt (burns at 5); the
 					// caller surfaces attemptsLeft.
 					const failure = await axios.post(
-						generateUrl(`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/failure`),
+						generateUrl(
+							`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/failure`,
+						),
 					)
 					const err = new Error('wrong-password')
 					err.attemptsLeft = failure.data?.attemptsLeft ?? 0

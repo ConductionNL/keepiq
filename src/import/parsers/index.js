@@ -26,4 +26,11 @@ registerParser(keepassXmlParser)
 registerParser(ncPasswordsParser)
 registerParser(cxfParser)
 
-export { csvParser, bitwardenParser, keepassXmlParser, ncPasswordsParser, cxfParser, backupParser }
+export {
+	csvParser,
+	bitwardenParser,
+	keepassXmlParser,
+	ncPasswordsParser,
+	cxfParser,
+	backupParser,
+}

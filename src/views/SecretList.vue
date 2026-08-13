@@ -21,13 +21,17 @@
 			     deletion (secret-export-gdpr §6.5, secret-import). "New secret"
 			     itself is CnIndexPage's own add button below. -->
 			<div class="secret-list-view__actions">
-				<NcButton variant="secondary" :disabled="offlineReadOnly" @click="openCreateFolder">
+				<NcButton
+					variant="secondary"
+					:disabled="offlineReadOnly"
+					@click="openCreateFolder">
 					<template #icon>
 						<FolderPlus :size="20" />
 					</template>
 					{{ t('doriath', 'New folder') }}
 				</NcButton>
-				<NcButton variant="secondary"
+				<NcButton
+					variant="secondary"
 					:disabled="vaultLocked || offlineReadOnly"
 					data-testid="import-secrets"
 					@click="openImport">
@@ -39,7 +43,8 @@
 
 				<!-- Team folder sharing (team-folder-sharing §5.1): only for a
 				     concrete selected folder; the dialog owns membership + fan-out. -->
-				<NcButton v-if="selectedFolderId"
+				<NcButton
+					v-if="selectedFolderId"
 					variant="secondary"
 					:disabled="vaultLocked"
 					data-testid="team-folder-open"
@@ -56,27 +61,37 @@
 				     `update:modelValue`. The Vue-2 pair (`:value` + `@input`)
 				     is dead on BOTH sides: the filter never showed a selection
 				     and selecting a type never filtered. -->
-				<NcSelect class="secret-list-view__type-filter"
+				<NcSelect
+					class="secret-list-view__type-filter"
 					:model-value="typeFilterOption"
 					:options="typeFilterOptions"
 					:input-label="t('doriath', 'Type')"
 					:clearable="true"
 					:placeholder="t('doriath', 'All types')"
 					data-testid="secret-type-filter"
-					@update:model-value="onTypeFilter($event ? $event.value : null)" />
+					@update:model-value="
+						onTypeFilter($event ? $event.value : null)
+					" />
 
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
 				<NcActions :menu-name="t('doriath', 'My data')">
-					<NcActionButton data-testid="open-new-send" @click="newSendOpen = true">
+					<NcActionButton
+						data-testid="open-new-send"
+						@click="newSendOpen = true">
 						{{ t('doriath', 'New ephemeral send') }}
 					</NcActionButton>
-					<NcActionButton data-testid="open-my-sends" @click="mySendsOpen = true">
+					<NcActionButton
+						data-testid="open-my-sends"
+						@click="mySendsOpen = true">
 						{{ t('doriath', 'My ephemeral sends') }}
 					</NcActionButton>
 					<NcActionButton @click="openExport">
 						{{ t('doriath', 'Export data') }}
 					</NcActionButton>
-					<NcActionButton :disabled="vaultLocked" data-testid="cxp-transfer" @click="openCxp">
+					<NcActionButton
+						:disabled="vaultLocked"
+						data-testid="cxp-transfer"
+						@click="openCxp">
 						{{ t('doriath', 'Encrypted transfer (CXP)') }}
 					</NcActionButton>
 					<NcActionButton @click="openGdpr">
@@ -88,71 +103,109 @@
 				</NcActions>
 			</div>
 
-			<ExportDialog :open="exportOpen"
+			<ExportDialog
+				:open="exportOpen"
 				:secrets="decryptedSecrets"
 				:folders="folders"
 				@update:open="exportOpen = $event" />
-			<CxpTransferDialog :open="cxpOpen"
+			<CxpTransferDialog
+				:open="cxpOpen"
 				:secrets="decryptedSecrets"
 				:folders="folders"
 				@update:open="cxpOpen = $event"
 				@open-import="importOpen = true" />
-			<GdprExportDialog :open="gdprOpen"
+			<GdprExportDialog
+				:open="gdprOpen"
 				:secrets="decryptedSecrets"
 				:folders="folders"
 				@update:open="gdprOpen = $event" />
-			<AccountDeletionDialog :open="deletionOpen"
+			<AccountDeletionDialog
+				:open="deletionOpen"
 				@update:open="deletionOpen = $event"
 				@export-first="onExportFirst" />
-			<ImportWizardDialog :open="importOpen"
+			<ImportWizardDialog
+				:open="importOpen"
 				@update:open="importOpen = $event"
 				@imported="onImported" />
-			<TeamFolderDialog :open="teamFolderOpen"
+			<TeamFolderDialog
+				:open="teamFolderOpen"
 				:folder-id="selectedFolderId"
 				:folder-name="selectedFolderName"
 				@update:open="teamFolderOpen = $event" />
 
 			<!-- Ephemeral send (ephemeral-send §5). -->
-			<NewSendDialog v-if="newSendOpen" :open="true" @close="newSendOpen = false" />
-			<MySendsDialog v-if="mySendsOpen" :open="true" @close="mySendsOpen = false" />
+			<NewSendDialog
+				v-if="newSendOpen"
+				:open="true"
+				@close="newSendOpen = false" />
+			<MySendsDialog
+				v-if="mySendsOpen"
+				:open="true"
+				@close="mySendsOpen = false" />
 
 			<!-- Bulk action dialogs (bulk-actions §3). -->
-			<BulkMoveDialog v-if="bulkDialog === 'move'"
+			<BulkMoveDialog
+				v-if="bulkDialog === 'move'"
 				:open="true"
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
-			<BulkDeleteDialog v-if="bulkDialog === 'delete'"
+			<BulkDeleteDialog
+				v-if="bulkDialog === 'delete'"
 				:open="true"
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
-			<BulkShareDialog v-if="bulkDialog === 'share'"
+			<BulkShareDialog
+				v-if="bulkDialog === 'share'"
 				:open="true"
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
-			<BulkTeamFolderDialog v-if="bulkDialog === 'teamFolder'"
+			<BulkTeamFolderDialog
+				v-if="bulkDialog === 'teamFolder'"
 				:open="true"
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
 
 			<!-- Bulk action bar (bulk-actions §3.1): visible only while a
 			     selection is active; selection is client-only (§1.2). -->
-			<div v-if="bulkStore.selectionCount > 0" class="secret-list-view__bulk-bar" data-testid="bulk-action-bar">
+			<div
+				v-if="bulkStore.selectionCount > 0"
+				class="secret-list-view__bulk-bar"
+				data-testid="bulk-action-bar">
 				<span data-testid="bulk-selection-count">
-					{{ t('doriath', '{count} selected', { count: bulkStore.selectionCount }) }}
+					{{
+						t('doriath', '{count} selected', {
+							count: bulkStore.selectionCount,
+						})
+					}}
 				</span>
-				<NcButton variant="secondary" data-testid="bulk-open-move" @click="bulkDialog = 'move'">
+				<NcButton
+					variant="secondary"
+					data-testid="bulk-open-move"
+					@click="bulkDialog = 'move'">
 					{{ t('doriath', 'Move') }}
 				</NcButton>
-				<NcButton variant="secondary" data-testid="bulk-open-share" @click="bulkDialog = 'share'">
+				<NcButton
+					variant="secondary"
+					data-testid="bulk-open-share"
+					@click="bulkDialog = 'share'">
 					{{ t('doriath', 'Share') }}
 				</NcButton>
-				<NcButton variant="secondary" data-testid="bulk-open-team-folder" @click="bulkDialog = 'teamFolder'">
+				<NcButton
+					variant="secondary"
+					data-testid="bulk-open-team-folder"
+					@click="bulkDialog = 'teamFolder'">
 					{{ t('doriath', 'Add to team folder') }}
 				</NcButton>
-				<NcButton variant="error" data-testid="bulk-open-delete" @click="bulkDialog = 'delete'">
+				<NcButton
+					variant="error"
+					data-testid="bulk-open-delete"
+					@click="bulkDialog = 'delete'">
 					{{ t('doriath', 'Delete') }}
 				</NcButton>
-				<NcButton variant="tertiary" data-testid="bulk-clear-selection" @click="bulkStore.clearSelection()">
+				<NcButton
+					variant="tertiary"
+					data-testid="bulk-clear-selection"
+					@click="bulkStore.clearSelection()">
 					{{ t('doriath', 'Clear selection') }}
 				</NcButton>
 			</div>
@@ -185,12 +238,15 @@
 						<!-- Per-row selection (bulk-actions §1.1): click
 						     toggles, shift-click selects the range from the
 						     last-clicked row in the current view. -->
-						<input type="checkbox"
+						<input
+							type="checkbox"
 							class="secret-list-view__check"
 							:checked="bulkStore.selectedIds.includes(object.id)"
-							:aria-label="t('doriath', 'Select {name}', { name: object.name })"
+							:aria-label="
+								t('doriath', 'Select {name}', { name: object.name })
+							"
 							:data-testid="`bulk-check-${object.id}`"
-							@click="onRowCheck(object, $event)">
+							@click="onRowCheck(object, $event)" />
 						<SecretListItem
 							class="secret-list-view__row-item"
 							:secret="object"
@@ -201,10 +257,11 @@
 				<template #actions>
 					<!-- Select-all for the current filtered/paginated view. -->
 					<label class="secret-list-view__select-all">
-						<input type="checkbox"
+						<input
+							type="checkbox"
 							:checked="allCurrentSelected"
 							data-testid="bulk-select-all"
-							@change="onSelectAll">
+							@change="onSelectAll" />
 						<span>{{ t('doriath', 'Select all') }}</span>
 					</label>
 				</template>
@@ -360,7 +417,10 @@ export default {
 		pagination() {
 			return {
 				page: this.secretStore.page,
-				pages: Math.max(1, Math.ceil(this.secretStore.totalCount / PAGE_SIZE)),
+				pages: Math.max(
+					1,
+					Math.ceil(this.secretStore.totalCount / PAGE_SIZE),
+				),
 				total: this.secretStore.totalCount,
 				limit: PAGE_SIZE,
 			}
@@ -372,7 +432,10 @@ export default {
 					name: { title: t('doriath', 'Name'), type: 'string' },
 					url: { title: t('doriath', 'URL'), type: 'string' },
 				},
-				configuration: { objectNameField: 'name', objectDescriptionField: 'url' },
+				configuration: {
+					objectNameField: 'name',
+					objectDescriptionField: 'url',
+				},
 			}
 		},
 		sortOptions() {
@@ -392,7 +455,10 @@ export default {
 		},
 		/** The currently selected type-filter option object (or null). */
 		typeFilterOption() {
-			return this.typeFilterOptions.find((opt) => opt.value === this.typeFilter) ?? null
+			return (
+				this.typeFilterOptions.find((opt) => opt.value === this.typeFilter)
+				?? null
+			)
 		},
 		/** Bulk selection store (bulk-actions §1). */
 		bulkStore() {
@@ -400,8 +466,12 @@ export default {
 		},
 		/** Whether every secret in the current view is selected. */
 		allCurrentSelected() {
-			return this.secrets.length > 0
-				&& this.secrets.every((s) => this.bulkStore.selectedIds.includes(s.id))
+			return (
+				this.secrets.length > 0
+				&& this.secrets.every((s) =>
+					this.bulkStore.selectedIds.includes(s.id),
+				)
+			)
 		},
 	},
 
@@ -454,7 +524,10 @@ export default {
 				const from = order.indexOf(this.lastCheckedId)
 				const to = order.indexOf(object.id)
 				if (from !== -1 && to !== -1) {
-					for (const id of order.slice(Math.min(from, to), Math.max(from, to) + 1)) {
+					for (const id of order.slice(
+						Math.min(from, to),
+						Math.max(from, to) + 1,
+					)) {
 						ids.add(id)
 					}
 					this.bulkStore.setSelection([...ids])
@@ -615,7 +688,12 @@ export default {
 			const health = useHealthStore()
 			health.registerLockReset()
 			if (health.status === 'idle') {
-				health.analyseVault({ stalenessThreshold: '365', breachEnabled: false }).catch(() => {})
+				health
+					.analyseVault({
+						stalenessThreshold: '365',
+						breachEnabled: false,
+					})
+					.catch(() => {})
 			}
 		},
 

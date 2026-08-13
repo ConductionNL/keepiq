@@ -114,7 +114,11 @@ describe('encryptSnapshot / decryptSnapshot round-trip', () => {
 		expect(first.salt).not.toBe(second.salt)
 
 		// And BOTH must still decrypt back to the same plaintext.
-		expect(await decryptSnapshot(first.blob, first.salt, password)).toBe(plaintext)
-		expect(await decryptSnapshot(second.blob, second.salt, password)).toBe(plaintext)
+		expect(await decryptSnapshot(first.blob, first.salt, password)).toBe(
+			plaintext,
+		)
+		expect(await decryptSnapshot(second.blob, second.salt, password)).toBe(
+			plaintext,
+		)
 	})
 })

@@ -34,10 +34,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import {
-	encryptPrivateKey,
-	decryptPrivateKey,
-} from '../../src/crypto/aes.js'
+import { encryptPrivateKey, decryptPrivateKey } from '../../src/crypto/aes.js'
 import {
 	decodeEnvelope,
 	ENVELOPE_VERSION,
@@ -45,7 +42,8 @@ import {
 	IV_LENGTH,
 } from '../../src/crypto/envelope.js'
 
-const SAMPLE_PEM = '-----BEGIN PRIVATE KEY-----\n'
+const SAMPLE_PEM =
+	'-----BEGIN PRIVATE KEY-----\n'
 	+ 'MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC2Yp1bZk3Yp1bZ\n'
 	+ 'k3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk\n'
 	+ '3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3Yp1bZk3\n'
@@ -90,16 +88,14 @@ describe('AES-GCM master-password envelope round-trip', () => {
 describe('AES-GCM master-password envelope — authenticity guarantees', () => {
 	it('rejects decryption with the wrong master password (GCM tag mismatch)', async () => {
 		const envelope = await encryptPrivateKey(SAMPLE_PEM, 'correct-pw')
-		await expect(
-			decryptPrivateKey(envelope, 'wrong-pw'),
-		).rejects.toThrow()
+		await expect(decryptPrivateKey(envelope, 'wrong-pw')).rejects.toThrow()
 	})
 
 	it('rejects a tampered ciphertext byte (GCM authenticity)', async () => {
 		const envelope = await encryptPrivateKey(SAMPLE_PEM, 'pw')
 
 		// Flip one byte deep inside the ciphertext body (past the header).
-		const raw = Uint8Array.from(atob(envelope), c => c.charCodeAt(0))
+		const raw = Uint8Array.from(atob(envelope), (c) => c.charCodeAt(0))
 		const tamperIndex = 4 + SALT_LENGTH + IV_LENGTH + 1
 		raw[tamperIndex] ^= 0x01
 		const tampered = btoa(String.fromCharCode(...raw))
@@ -109,7 +105,7 @@ describe('AES-GCM master-password envelope — authenticity guarantees', () => {
 
 	it('rejects a tampered GCM tag (last byte flip)', async () => {
 		const envelope = await encryptPrivateKey(SAMPLE_PEM, 'pw')
-		const raw = Uint8Array.from(atob(envelope), c => c.charCodeAt(0))
+		const raw = Uint8Array.from(atob(envelope), (c) => c.charCodeAt(0))
 		raw[raw.length - 1] ^= 0x01
 		const tampered = btoa(String.fromCharCode(...raw))
 		await expect(decryptPrivateKey(tampered, 'pw')).rejects.toThrow()

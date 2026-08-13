@@ -15,13 +15,15 @@
   @spec openspec/changes/implement-user-sharing/tasks.md#task-12.1
 -->
 <template>
-	<section v-if="open"
+	<section
+		v-if="open"
 		class="doriath-share-dialog"
 		role="dialog"
 		data-testid="share-dialog">
 		<header class="doriath-share-dialog__header">
 			<h3>{{ t('doriath', 'Share with a Nextcloud user') }}</h3>
-			<button type="button"
+			<button
+				type="button"
 				class="doriath-share-dialog__close"
 				data-testid="share-dialog-close"
 				:aria-label="t('doriath', 'Close')"
@@ -37,13 +39,19 @@
 					type="text"
 					required
 					autocomplete="off"
-					data-testid="share-dialog-target">
+					data-testid="share-dialog-target" />
 			</label>
-			<p v-if="error" class="doriath-share-dialog__error" data-testid="share-dialog-error">
+			<p
+				v-if="error"
+				class="doriath-share-dialog__error"
+				data-testid="share-dialog-error">
 				{{ error }}
 			</p>
 			<div class="doriath-share-dialog__actions">
-				<button type="button" data-testid="share-dialog-cancel" @click="$emit('close')">
+				<button
+					type="button"
+					data-testid="share-dialog-cancel"
+					@click="$emit('close')">
 					{{ t('doriath', 'Cancel') }}
 				</button>
 				<button
@@ -113,13 +121,17 @@ export default {
 			const store = useShareStore()
 			this.busy = true
 			try {
-				const encrypted = await store.encryptForRecipient(this.plaintextSnapshot, this.recipientCertificate)
+				const encrypted = await store.encryptForRecipient(
+					this.plaintextSnapshot,
+					this.recipientCertificate,
+				)
 				this.$emit('shared', {
 					targetUserId: this.targetUserId,
 					encryptedFields: encrypted,
 				})
 			} catch (e) {
-				this.error = e?.message || t('doriath', 'Failed to encrypt for recipient')
+				this.error =
+					e?.message || t('doriath', 'Failed to encrypt for recipient')
 			} finally {
 				this.busy = false
 			}

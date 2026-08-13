@@ -22,7 +22,7 @@ import { registerParser } from './parserRegistry.js'
  */
 function toRows(payload) {
 	const secrets = (payload && payload.secrets) || []
-	return secrets.map(s => ({
+	return secrets.map((s) => ({
 		name: s.name ?? '',
 		url: s.url ?? null,
 		login: s.login ?? null,

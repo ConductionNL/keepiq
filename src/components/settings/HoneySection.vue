@@ -12,13 +12,21 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Honey credentials')"
-		:description="t('doriath', 'Decoy tripwires: instance-wide alerts raised when anyone accesses a honey-flagged secret. Deception is detection — an alert never blocks the access.')">
+		:description="
+			t(
+				'doriath',
+				'Decoy tripwires: instance-wide alerts raised when anyone accesses a honey-flagged secret. Deception is detection — an alert never blocks the access.',
+			)
+		">
 		<div class="honey-admin" data-testid="honey-section">
 			<NcNoteCard v-if="store.error" type="error">
 				{{ store.error }}
 			</NcNoteCard>
 
-			<table v-if="store.alerts.length" class="honey-admin__table" data-testid="honey-admin-alerts">
+			<table
+				v-if="store.alerts.length"
+				class="honey-admin__table"
+				data-testid="honey-admin-alerts">
 				<thead>
 					<tr>
 						<th scope="col">
@@ -43,8 +51,14 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="alert in store.alerts" :key="alert.id" :data-testid="`honey-admin-alert-${alert.id}`">
-						<td>{{ alert.accessorType }}: {{ alert.accessorId || t('doriath', 'anonymous') }}</td>
+					<tr
+						v-for="alert in store.alerts"
+						:key="alert.id"
+						:data-testid="`honey-admin-alert-${alert.id}`">
+						<td>
+							{{ alert.accessorType }}:
+							{{ alert.accessorId || t('doriath', 'anonymous') }}
+						</td>
 						<td>{{ alert.channel }}</td>
 						<td class="honey-admin__transport">
 							{{ alert.ip || '—' }}
@@ -55,20 +69,34 @@
 						<td>{{ alert.accessCount }}</td>
 						<td>{{ formatDate(alert.accessedAt) }}</td>
 						<td>
-							<span v-if="alert.acknowledgedAt" class="honey-admin__muted">
-								{{ t('doriath', 'handled by {who}', { who: alert.acknowledgedBy }) }}
+							<span
+								v-if="alert.acknowledgedAt"
+								class="honey-admin__muted">
+								{{
+									t('doriath', 'handled by {who}', {
+										who: alert.acknowledgedBy,
+									})
+								}}
 							</span>
-							<span v-else-if="isSnoozed(alert)" class="honey-admin__muted">{{ t('doriath', 'snoozed') }}</span>
-							<strong v-else class="honey-admin__open">{{ t('doriath', 'OPEN') }}</strong>
+							<span
+								v-else-if="isSnoozed(alert)"
+								class="honey-admin__muted"
+								>{{ t('doriath', 'snoozed') }}</span
+							>
+							<strong v-else class="honey-admin__open">{{
+								t('doriath', 'OPEN')
+							}}</strong>
 						</td>
 						<td class="honey-admin__actions">
-							<NcButton v-if="!alert.acknowledgedAt"
+							<NcButton
+								v-if="!alert.acknowledgedAt"
 								variant="tertiary"
 								:data-testid="`honey-admin-ack-${alert.id}`"
 								@click="store.acknowledge(alert.id)">
 								{{ t('doriath', 'Acknowledge') }}
 							</NcButton>
-							<NcButton v-if="!isSnoozed(alert)"
+							<NcButton
+								v-if="!isSnoozed(alert)"
 								variant="tertiary"
 								:data-testid="`honey-admin-snooze-${alert.id}`"
 								@click="store.snooze(alert.id)">
@@ -79,7 +107,12 @@
 				</tbody>
 			</table>
 			<p v-else class="honey-admin__muted">
-				{{ t('doriath', 'No honey alerts. Owners arm tripwires from a secret\'s detail page.') }}
+				{{
+					t(
+						'doriath',
+						"No honey alerts. Owners arm tripwires from a secret's detail page.",
+					)
+				}}
 			</p>
 		</div>
 	</CnSettingsSection>
@@ -120,7 +153,10 @@ export default {
 		 * @return {boolean}
 		 */
 		isSnoozed(alert) {
-			return !!alert.snoozedUntil && new Date(alert.snoozedUntil).getTime() > Date.now()
+			return (
+				!!alert.snoozedUntil
+				&& new Date(alert.snoozedUntil).getTime() > Date.now()
+			)
 		},
 
 		/**

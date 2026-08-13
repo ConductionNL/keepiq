@@ -33,7 +33,9 @@ export const useHoneyStore = defineStore('honey', {
 		async fetchStatus(secretId) {
 			this.error = null
 			try {
-				const response = await axios.get(generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`))
+				const response = await axios.get(
+					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`),
+				)
 				this.status = response.data
 				return this.status
 			} catch (e) {
@@ -52,7 +54,10 @@ export const useHoneyStore = defineStore('honey', {
 		async flag(secretId, note = '') {
 			this.error = null
 			try {
-				const response = await axios.post(generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`), { note })
+				const response = await axios.post(
+					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`),
+					{ note },
+				)
 				this.status = { flagged: true, flag: response.data }
 				return true
 			} catch (e) {
@@ -70,7 +75,9 @@ export const useHoneyStore = defineStore('honey', {
 		async unflag(secretId) {
 			this.error = null
 			try {
-				await axios.delete(generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`))
+				await axios.delete(
+					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`),
+				)
 				this.status = { flagged: false, flag: null }
 				return true
 			} catch (e) {
@@ -88,7 +95,9 @@ export const useHoneyStore = defineStore('honey', {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/honey/alerts'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/honey/alerts'),
+				)
 				this.alerts = response.data ?? []
 				return this.alerts
 			} catch (e) {
@@ -108,8 +117,14 @@ export const useHoneyStore = defineStore('honey', {
 		async acknowledge(alertId) {
 			this.error = null
 			try {
-				const response = await axios.post(generateUrl(`/apps/doriath/api/v1/honey/alerts/${alertId}/acknowledge`))
-				this.alerts = this.alerts.map(a => (a.id === alertId ? response.data : a))
+				const response = await axios.post(
+					generateUrl(
+						`/apps/doriath/api/v1/honey/alerts/${alertId}/acknowledge`,
+					),
+				)
+				this.alerts = this.alerts.map((a) =>
+					a.id === alertId ? response.data : a,
+				)
 				return true
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
@@ -127,8 +142,15 @@ export const useHoneyStore = defineStore('honey', {
 		async snooze(alertId, hours = 24) {
 			this.error = null
 			try {
-				const response = await axios.post(generateUrl(`/apps/doriath/api/v1/honey/alerts/${alertId}/snooze`), { hours })
-				this.alerts = this.alerts.map(a => (a.id === alertId ? response.data : a))
+				const response = await axios.post(
+					generateUrl(
+						`/apps/doriath/api/v1/honey/alerts/${alertId}/snooze`,
+					),
+					{ hours },
+				)
+				this.alerts = this.alerts.map((a) =>
+					a.id === alertId ? response.data : a,
+				)
 				return true
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message

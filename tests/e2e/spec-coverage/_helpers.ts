@@ -72,7 +72,9 @@ export function lockHeading(page: Page) {
 /** Wait for the lock screen to be mounted and visible. */
 export async function expectLockScreen(page: Page): Promise<void> {
 	await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
-	await expect(lockHeading(page)).toHaveText(/Unlock Doriath|Set up your master password/i)
+	await expect(lockHeading(page)).toHaveText(
+		/Unlock Doriath|Set up your master password/i,
+	)
 }
 
 /** Assert no doriath-origin console errors / 5xx were collected. */

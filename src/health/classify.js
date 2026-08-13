@@ -61,7 +61,10 @@ export function isKeyMaterial(value) {
 	}
 
 	// PEM / OpenSSH key headers.
-	if (/-----BEGIN [A-Z ]+-----/.test(value) || /^ssh-(rsa|ed25519|dss) /.test(value)) {
+	if (
+		/-----BEGIN [A-Z ]+-----/.test(value)
+		|| /^ssh-(rsa|ed25519|dss) /.test(value)
+	) {
 		return true
 	}
 
