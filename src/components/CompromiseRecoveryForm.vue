@@ -3,7 +3,12 @@
 		<h2>{{ t('doriath', 'Compromise recovery') }}</h2>
 
 		<NcNoteCard type="warning">
-			{{ t('doriath', 'This will generate a new encryption key pair and re-encrypt all your secrets. This process may take a moment.') }}
+			{{
+				t(
+					'doriath',
+					'This will generate a new encryption key pair and re-encrypt all your secrets. This process may take a moment.',
+				)
+			}}
 		</NcNoteCard>
 
 		<NcPasswordField
@@ -31,7 +36,12 @@
 		</NcNoteCard>
 
 		<NcNoteCard v-if="success" type="success">
-			{{ t('doriath', 'Key rotation complete. Your vault is now secured with a new encryption key.') }}
+			{{
+				t(
+					'doriath',
+					'Key rotation complete. Your vault is now secured with a new encryption key.',
+				)
+			}}
 		</NcNoteCard>
 
 		<NcButton
@@ -39,7 +49,11 @@
 			variant="error"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
-			{{ loading ? t('doriath', 'Rotating keys...') : t('doriath', 'Start key rotation') }}
+			{{
+				loading
+					? t('doriath', 'Rotating keys...')
+					: t('doriath', 'Start key rotation')
+			}}
 		</NcButton>
 	</div>
 </template>
@@ -73,11 +87,13 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		canSubmit() {
-			return this.oldPassword
+			return (
+				this.oldPassword
 				&& this.newPassword
 				&& this.confirmPassword
 				&& this.newPassword === this.confirmPassword
 				&& this.strengthValid
+			)
 		},
 	},
 
@@ -105,7 +121,10 @@ export default {
 
 			try {
 				const store = useEncryptionSuiteStore()
-				await store.initiateCompromiseRecovery(this.oldPassword, this.newPassword)
+				await store.initiateCompromiseRecovery(
+					this.oldPassword,
+					this.newPassword,
+				)
 				this.success = true
 				this.oldPassword = ''
 				this.newPassword = ''

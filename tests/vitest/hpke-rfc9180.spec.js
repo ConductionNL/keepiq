@@ -17,7 +17,9 @@ function hexToBytes(hex) {
 	return out
 }
 function bytesToHex(bytes) {
-	return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+	return Array.from(bytes)
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('')
 }
 
 // RFC 9180 §A.1.1 (DHKEM(X25519, HKDF-SHA256))
@@ -39,11 +41,33 @@ function x25519Pkcs8(rawScalar) {
 
 describe('HPKE DHKEM — RFC 9180 A.1 known-answer', () => {
 	it('derives the RFC A.1 shared_secret', async () => {
-		const skEm = await crypto.subtle.importKey('pkcs8', x25519Pkcs8(hexToBytes(A1.skEm)), { name: 'X25519' }, false, ['deriveBits'])
-		const pkR = await crypto.subtle.importKey('raw', hexToBytes(A1.pkRm), { name: 'X25519' }, true, [])
-		const dh = new Uint8Array(await crypto.subtle.deriveBits({ name: 'X25519', public: pkR }, skEm, 256))
+		const skEm = await crypto.subtle.importKey(
+			'pkcs8',
+			x25519Pkcs8(hexToBytes(A1.skEm)),
+			{ name: 'X25519' },
+			false,
+			['deriveBits'],
+		)
+		const pkR = await crypto.subtle.importKey(
+			'raw',
+			hexToBytes(A1.pkRm),
+			{ name: 'X25519' },
+			true,
+			[],
+		)
+		const dh = new Uint8Array(
+			await crypto.subtle.deriveBits(
+				{ name: 'X25519', public: pkR },
+				skEm,
+				256,
+			),
+		)
 
-		const shared = await _internals.deriveSharedSecret(dh, hexToBytes(A1.enc), hexToBytes(A1.pkRm))
+		const shared = await _internals.deriveSharedSecret(
+			dh,
+			hexToBytes(A1.enc),
+			hexToBytes(A1.pkRm),
+		)
 		expect(bytesToHex(shared)).toBe(A1.sharedSecret)
 	})
 })

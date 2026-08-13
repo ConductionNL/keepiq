@@ -16,7 +16,12 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { useSessionStore, onVaultLock } from './session.js'
 import { encryptSnapshot, decryptSnapshot } from '../../offline/snapshot.js'
-import { writeSnapshot, readSnapshot, purge, isCacheAvailable } from '../../offline/cache.js'
+import {
+	writeSnapshot,
+	readSnapshot,
+	purge,
+	isCacheAvailable,
+} from '../../offline/cache.js'
 
 let lockHookRegistered = false
 
@@ -81,8 +86,12 @@ export const useOfflineStore = defineStore('offline', {
 			if (typeof window === 'undefined') {
 				return
 			}
-			window.addEventListener('online', () => { this.online = true })
-			window.addEventListener('offline', () => { this.online = false })
+			window.addEventListener('online', () => {
+				this.online = true
+			})
+			window.addEventListener('offline', () => {
+				this.online = false
+			})
 		},
 
 		/**
@@ -99,7 +108,9 @@ export const useOfflineStore = defineStore('offline', {
 				return false
 			}
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/v1/offline/manifest'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/v1/offline/manifest'),
+				)
 				const snapshot = await encryptSnapshot(session.aesKey, response.data)
 				const written = await writeSnapshot(snapshot)
 				if (written) {

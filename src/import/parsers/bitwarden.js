@@ -94,13 +94,13 @@ export function parseBitwardenJson(input) {
 	}
 
 	const folderNames = new Map()
-	for (const folder of (data.folders || [])) {
+	for (const folder of data.folders || []) {
 		if (folder && folder.id != null) {
 			folderNames.set(folder.id, folder.name ?? '')
 		}
 	}
 	const collectionNames = new Map()
-	for (const collection of (data.collections || [])) {
+	for (const collection of data.collections || []) {
 		if (collection && collection.id != null) {
 			collectionNames.set(collection.id, collection.name ?? '')
 		}
@@ -125,7 +125,9 @@ export function parseBitwardenJson(input) {
 		if (item.type !== 1 && item.type !== undefined) {
 			const row = makeRow({ name: item.name ?? '' }, sourceRow)
 			const kind = { 2: 'secure note' }[item.type] ?? 'non-login'
-			row.errors.push(`Unsupported Bitwarden item type (${kind}); only login items import`)
+			row.errors.push(
+				`Unsupported Bitwarden item type (${kind}); only login items import`,
+			)
 			rows.push(row)
 			continue
 		}
@@ -148,7 +150,9 @@ export function parseBitwardenJson(input) {
 		// JSON in `password` (which becomes the encrypted `key` at commit).
 		// A partial entry is rejected, never imported partially
 		// (passkey-item-type D5).
-		const fido2 = Array.isArray(login.fido2Credentials) ? login.fido2Credentials : []
+		const fido2 = Array.isArray(login.fido2Credentials)
+			? login.fido2Credentials
+			: []
 		for (const entry of fido2) {
 			nextSourceRow += 1
 			rows.push(buildPasskeyRow(item, entry, nextSourceRow))
@@ -183,15 +187,21 @@ function buildPasskeyRow(item, entry, sourceRow) {
 		counter: Number.parseInt(entry?.counter, 10) || 0,
 		createdAt: entry?.creationDate ?? '',
 	})
-	const row = makeRow({
-		name: `${item.name ?? 'Passkey'} (passkey)`,
-		url: entry?.rpId ?? null,
-		password: json ?? '',
-		folder: '',
-		type: 'passkey',
-	}, sourceRow)
+	const row = makeRow(
+		{
+			name: `${item.name ?? 'Passkey'} (passkey)`,
+			url: entry?.rpId ?? null,
+			password: json ?? '',
+			folder: '',
+			type: 'passkey',
+		},
+		sourceRow,
+	)
 	if (json === null) {
-		return rejectRow(row, 'Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)')
+		return rejectRow(
+			row,
+			'Incomplete Bitwarden passkey (needs credentialId, rpId, and key material)',
+		)
 	}
 	return validateRow(row)
 }
@@ -210,21 +220,25 @@ function buildCardRow(item, sourceRow) {
 	const card = item.card || {}
 	const expMonth = String(card.expMonth ?? '').padStart(2, '0')
 	const expYear = String(card.expYear ?? '')
-	const expiry = card.expMonth != null && card.expYear != null
-		? `${expMonth}/${expYear.slice(-2)}`
-		: ''
-	const row = makeRow({
-		name: item.name ?? 'Payment card',
-		password: serializeCard({
-			number: card.number ?? '',
-			expiry,
-			cvv: card.code ?? '',
-			pin: '',
-			cardholder: card.cardholderName ?? '',
-		}),
-		folder: '',
-		type: 'card',
-	}, sourceRow)
+	const expiry =
+		card.expMonth != null && card.expYear != null
+			? `${expMonth}/${expYear.slice(-2)}`
+			: ''
+	const row = makeRow(
+		{
+			name: item.name ?? 'Payment card',
+			password: serializeCard({
+				number: card.number ?? '',
+				expiry,
+				cvv: card.code ?? '',
+				pin: '',
+				cardholder: card.cardholderName ?? '',
+			}),
+			folder: '',
+			type: 'card',
+		},
+		sourceRow,
+	)
 	if ((card.number ?? '') === '') {
 		return rejectRow(row, 'Bitwarden card item without a card number')
 	}
@@ -242,24 +256,38 @@ function buildCardRow(item, sourceRow) {
  */
 function buildIdentityRow(item, sourceRow) {
 	const identity = item.identity || {}
-	const address = [identity.address1, identity.address2, identity.city, identity.postalCode, identity.country]
+	const address = [
+		identity.address1,
+		identity.address2,
+		identity.city,
+		identity.postalCode,
+		identity.country,
+	]
 		.filter(Boolean)
 		.join(', ')
-	const row = makeRow({
-		name: item.name ?? 'Identity',
-		password: serializeIdentity({
-			firstName: identity.firstName ?? '',
-			lastName: identity.lastName ?? '',
-			address,
-			phone: identity.phone ?? '',
-			email: identity.email ?? '',
-			bsn: identity.ssn ?? '',
-		}),
-		folder: '',
-		type: 'identity',
-	}, sourceRow)
-	const hasAnything = [identity.firstName, identity.lastName, identity.email, identity.phone, identity.ssn]
-		.some(v => v != null && v !== '')
+	const row = makeRow(
+		{
+			name: item.name ?? 'Identity',
+			password: serializeIdentity({
+				firstName: identity.firstName ?? '',
+				lastName: identity.lastName ?? '',
+				address,
+				phone: identity.phone ?? '',
+				email: identity.email ?? '',
+				bsn: identity.ssn ?? '',
+			}),
+			folder: '',
+			type: 'identity',
+		},
+		sourceRow,
+	)
+	const hasAnything = [
+		identity.firstName,
+		identity.lastName,
+		identity.email,
+		identity.phone,
+		identity.ssn,
+	].some((v) => v != null && v !== '')
 	if (!hasAnything) {
 		return rejectRow(row, 'Bitwarden identity item with no usable fields')
 	}

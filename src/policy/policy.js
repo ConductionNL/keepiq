@@ -30,7 +30,9 @@ export async function fetchPolicy() {
 		return cachedPolicy
 	}
 	try {
-		const response = await axios.get(generateUrl('/apps/doriath/api/settings/policy'))
+		const response = await axios.get(
+			generateUrl('/apps/doriath/api/settings/policy'),
+		)
 		cachedPolicy = response?.data ?? null
 	} catch {
 		cachedPolicy = null
@@ -55,7 +57,9 @@ export function resetPolicyCache() {
  * @return {boolean}
  */
 export function isExemptType(policy, typeName) {
-	const exempt = Array.isArray(policy?.policy_exempt_types) ? policy.policy_exempt_types : []
+	const exempt = Array.isArray(policy?.policy_exempt_types)
+		? policy.policy_exempt_types
+		: []
 	return exempt.includes(typeName)
 }
 
@@ -68,7 +72,11 @@ export function isExemptType(policy, typeName) {
  * @return {{compliant: boolean, reason: string|null}}
  */
 export function evaluateScore(policy, typeName, value) {
-	if (!policy || policy.policy_enabled !== true || isExemptType(policy, typeName)) {
+	if (
+		!policy
+		|| policy.policy_enabled !== true
+		|| isExemptType(policy, typeName)
+	) {
 		return { compliant: true, reason: null }
 	}
 	if (typeof value !== 'string' || value === '') {
@@ -82,7 +90,11 @@ export function evaluateScore(policy, typeName, value) {
 	if (score < floor) {
 		return {
 			compliant: false,
-			reason: t('doriath', 'Value strength {score} is below the org minimum of {floor}', { score, floor }),
+			reason: t(
+				'doriath',
+				'Value strength {score} is below the org minimum of {floor}',
+				{ score, floor },
+			),
 		}
 	}
 	return { compliant: true, reason: null }
@@ -99,13 +111,23 @@ export function evaluateScore(policy, typeName, value) {
  * @return {Promise<string|null>} The blocking reason, or null.
  */
 export async function evaluateHibp(policy, typeName, value) {
-	if (!policy || policy.policy_enabled !== true || policy.block_on_hibp_hit !== true
-		|| isExemptType(policy, typeName) || typeof value !== 'string' || value === '') {
+	if (
+		!policy
+		|| policy.policy_enabled !== true
+		|| policy.block_on_hibp_hit !== true
+		|| isExemptType(policy, typeName)
+		|| typeof value !== 'string'
+		|| value === ''
+	) {
 		return null
 	}
 	const result = await checkValue(value)
 	if (result.status === 'breached') {
-		return t('doriath', 'This value appears in known breaches {count} times — choose another', { count: result.count })
+		return t(
+			'doriath',
+			'This value appears in known breaches {count} times — choose another',
+			{ count: result.count },
+		)
 	}
 	return null
 }

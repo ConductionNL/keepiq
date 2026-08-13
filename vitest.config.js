@@ -54,10 +54,7 @@ const cssNoop = {
 }
 
 module.exports = {
-	plugins: [
-		cssNoop,
-		vue.default ? vue.default() : vue(),
-	],
+	plugins: [cssNoop, vue.default ? vue.default() : vue()],
 	test: {
 		// Vitest's default `testTimeout` is 5000ms, and several specs here do
 		// real WebCrypto work — RSA keygen, envelope wrap/unwrap, backup
@@ -112,7 +109,13 @@ module.exports = {
 			'tests/store/**/*.spec.{js,ts}',
 			'tests/extension/**/*.spec.{js,ts}',
 		],
-		exclude: ['tests/e2e/**', 'tests/integration/**', 'tests/Unit/**', 'tests/unit/**', 'node_modules/**'],
+		exclude: [
+			'tests/e2e/**',
+			'tests/integration/**',
+			'tests/Unit/**',
+			'tests/unit/**',
+			'node_modules/**',
+		],
 		setupFiles: [path.resolve(__dirname, 'tests/vitest/setup.js')],
 		server: {
 			deps: {
@@ -132,15 +135,24 @@ module.exports = {
 			{ find: '@', replacement: path.resolve(__dirname, 'src') },
 			{
 				find: /^@conduction\/nextcloud-vue$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/conduction-nextcloud-vue.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/conduction-nextcloud-vue.js',
+				),
 			},
 			{
 				find: /^@nextcloud\/axios$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-axios.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/nextcloud-axios.js',
+				),
 			},
 			{
 				find: /^@nextcloud\/router$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-router.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/nextcloud-router.js',
+				),
 			},
 			// The full `@nextcloud/vue` design-system package needs the NC
 			// window globals (`imagePath`, `appName`, capabilities initial
@@ -149,7 +161,10 @@ module.exports = {
 			// primitives they touch (NcDialog, NcButton, NcSelect, ...).
 			{
 				find: /^@nextcloud\/vue$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-vue.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/nextcloud-vue.js',
+				),
 			},
 			// `argon2-browser` is an emscripten WASM module built for the
 			// browser; under Node 22's global `fetch` the wasm-loader path
@@ -159,7 +174,10 @@ module.exports = {
 			// The production WASM is exercised by the Playwright e2e suite.
 			{
 				find: /^argon2-browser$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/argon2-browser.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/argon2-browser.js',
+				),
 			},
 			// The doriath shim does `await import('argon2-browser/dist/argon2.wasm')`
 			// in the browser to get the webpack-emitted URL; in node we
@@ -167,7 +185,10 @@ module.exports = {
 			// above ignores the URL anyway).
 			{
 				find: /^argon2-browser\/dist\/argon2\.wasm$/,
-				replacement: path.resolve(__dirname, 'tests/vitest/stubs/wasm-noop.js'),
+				replacement: path.resolve(
+					__dirname,
+					'tests/vitest/stubs/wasm-noop.js',
+				),
 			},
 		],
 	},

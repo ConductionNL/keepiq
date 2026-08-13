@@ -16,21 +16,29 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-6.1
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Delete application')"
+	<NcDialog
+		:name="t('doriath', 'Delete application')"
 		:open="open"
 		size="normal"
 		data-testid="application-delete-dialog"
 		@update:open="$emit('close')">
 		<NcNoteCard type="warning" data-testid="application-delete-warning">
-			{{ t('doriath', 'Delete this application? This cascades to its secrets.') }}
+			{{
+				t(
+					'doriath',
+					'Delete this application? This cascades to its secrets.',
+				)
+			}}
 		</NcNoteCard>
 		<template #actions>
-			<NcButton variant="tertiary"
+			<NcButton
+				variant="tertiary"
 				data-testid="application-delete-cancel"
 				@click="$emit('close')">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="error"
+			<NcButton
+				variant="error"
 				data-testid="application-delete-confirm"
 				@click="$emit('confirm')">
 				{{ t('doriath', 'Delete') }}

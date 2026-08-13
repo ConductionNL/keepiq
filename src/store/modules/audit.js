@@ -48,7 +48,8 @@ export const useAuditStore = defineStore('audit', {
 		 * @param {object} state The store state.
 		 * @return {number}
 		 */
-		adminPageCount: (state) => Math.max(1, Math.ceil(state.adminTotal / state.adminLimit)),
+		adminPageCount: (state) =>
+			Math.max(1, Math.ceil(state.adminTotal / state.adminLimit)),
 	},
 
 	actions: {

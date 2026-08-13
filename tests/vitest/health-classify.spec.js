@@ -14,12 +14,20 @@ import { isKeyMaterial, isPasswordBearing } from '../../src/health/classify.js'
 
 describe('classify: isKeyMaterial', () => {
 	it('treats PEM private keys as key material', () => {
-		expect(isKeyMaterial('-----BEGIN PRIVATE KEY-----\nMIIEvable\n-----END PRIVATE KEY-----')).toBe(true)
+		expect(
+			isKeyMaterial(
+				'-----BEGIN PRIVATE KEY-----\nMIIEvable\n-----END PRIVATE KEY-----',
+			),
+		).toBe(true)
 	})
 
 	it('treats OpenSSH public keys as key material', () => {
-		expect(isKeyMaterial('ssh-rsa AAAAB3NzaC1yc2EAAAADAQAB user@host')).toBe(true)
-		expect(isKeyMaterial('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 user@host')).toBe(true)
+		expect(isKeyMaterial('ssh-rsa AAAAB3NzaC1yc2EAAAADAQAB user@host')).toBe(
+			true,
+		)
+		expect(isKeyMaterial('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 user@host')).toBe(
+			true,
+		)
 	})
 
 	it('treats a 64+ char hex blob as key material', () => {

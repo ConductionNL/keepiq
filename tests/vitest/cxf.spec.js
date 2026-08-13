@@ -29,73 +29,94 @@ const SAMPLE_DOC = {
 	version: { major: 1, minor: 0 },
 	exporter: 'other-vault',
 	timestamp: 1750000000,
-	accounts: [{
-		id: 'acc-1',
-		userName: 'alice',
-		items: [
-			{
-				id: 'it-1',
-				title: 'Example login',
-				credentials: [{
-					type: 'basic-auth',
-					urls: ['https://example.com'],
-					username: { fieldType: 'string', value: 'alice' },
-					password: { fieldType: 'concealed-string', value: 'pw-placeholder' },
-				}],
-			},
-			{
-				id: 'it-2',
-				title: 'Example passkey',
-				credentials: [{
-					type: 'passkey',
-					credentialId: 'CXF_CRED_ID_PLACEHOLDER',
-					rpId: 'example.com',
-					rpName: 'Example',
-					userName: 'alice',
-					userDisplayName: 'Alice',
-					userHandle: 'CXF_HANDLE_PLACEHOLDER',
-					key: 'CXF_KEY_PLACEHOLDER',
-				}],
-			},
-			{
-				id: 'it-3',
-				title: 'Example TOTP',
-				credentials: [{ type: 'totp', url: 'otpauth://totp/x?secret=PLACEHOLDERSEED' }],
-			},
-			{
-				id: 'it-4',
-				title: 'A note',
-				credentials: [{ type: 'note', content: 'note body' }],
-			},
-			{
-				id: 'it-5',
-				title: 'Deploy key',
-				credentials: [{
-					type: 'ssh-key',
-					privateKey: { value: 'SSH_PRIVATE_PLACEHOLDER' },
-					publicKey: { value: 'ssh-ed25519 AAAA_PLACEHOLDER' },
-				}],
-			},
-			{
-				id: 'it-6',
-				title: 'Office Wi-Fi',
-				credentials: [{ type: 'wifi', ssid: 'OfficeNet', passphrase: 'wifi-pw-placeholder', security: 'WPA2' }],
-			},
-			{
-				id: 'it-7',
-				title: 'Mystery',
-				credentials: [{ type: 'quantum-vault-token' }],
-			},
-			{
-				id: 'it-8',
-				title: 'Broken passkey',
-				credentials: [{ type: 'passkey', rpId: 'partial.example.com' }],
-			},
-		],
-		collections: [
-			{ id: 'col-1', title: 'Work', items: ['it-1', 'it-5'] },
-		],
-	}],
+	accounts: [
+		{
+			id: 'acc-1',
+			userName: 'alice',
+			items: [
+				{
+					id: 'it-1',
+					title: 'Example login',
+					credentials: [
+						{
+							type: 'basic-auth',
+							urls: ['https://example.com'],
+							username: { fieldType: 'string', value: 'alice' },
+							password: {
+								fieldType: 'concealed-string',
+								value: 'pw-placeholder',
+							},
+						},
+					],
+				},
+				{
+					id: 'it-2',
+					title: 'Example passkey',
+					credentials: [
+						{
+							type: 'passkey',
+							credentialId: 'CXF_CRED_ID_PLACEHOLDER',
+							rpId: 'example.com',
+							rpName: 'Example',
+							userName: 'alice',
+							userDisplayName: 'Alice',
+							userHandle: 'CXF_HANDLE_PLACEHOLDER',
+							key: 'CXF_KEY_PLACEHOLDER',
+						},
+					],
+				},
+				{
+					id: 'it-3',
+					title: 'Example TOTP',
+					credentials: [
+						{
+							type: 'totp',
+							url: 'otpauth://totp/x?secret=PLACEHOLDERSEED',
+						},
+					],
+				},
+				{
+					id: 'it-4',
+					title: 'A note',
+					credentials: [{ type: 'note', content: 'note body' }],
+				},
+				{
+					id: 'it-5',
+					title: 'Deploy key',
+					credentials: [
+						{
+							type: 'ssh-key',
+							privateKey: { value: 'SSH_PRIVATE_PLACEHOLDER' },
+							publicKey: { value: 'ssh-ed25519 AAAA_PLACEHOLDER' },
+						},
+					],
+				},
+				{
+					id: 'it-6',
+					title: 'Office Wi-Fi',
+					credentials: [
+						{
+							type: 'wifi',
+							ssid: 'OfficeNet',
+							passphrase: 'wifi-pw-placeholder',
+							security: 'WPA2',
+						},
+					],
+				},
+				{
+					id: 'it-7',
+					title: 'Mystery',
+					credentials: [{ type: 'quantum-vault-token' }],
+				},
+				{
+					id: 'it-8',
+					title: 'Broken passkey',
+					credentials: [{ type: 'passkey', rpId: 'partial.example.com' }],
+				},
+			],
+			collections: [{ id: 'col-1', title: 'Work', items: ['it-1', 'it-5'] }],
+		},
+	],
 }
 
 describe('CXF document validation', () => {
@@ -125,7 +146,10 @@ describe('CXF import mapping', () => {
 		expect(byName['A note'].type).toBe('note')
 		expect(byName['Deploy key'].type).toBe('ssh_key')
 		expect(byName['Office Wi-Fi'].type).toBe('note')
-		expect(byName['Office Wi-Fi'].additionalFields).toEqual({ ssid: 'OfficeNet', security: 'WPA2' })
+		expect(byName['Office Wi-Fi'].additionalFields).toEqual({
+			ssid: 'OfficeNet',
+			security: 'WPA2',
+		})
 	})
 
 	it('routes passkeys onto the canonical passkey-item-type schema', () => {
@@ -144,26 +168,47 @@ describe('CXF import mapping', () => {
 
 	it('rejects unrepresentable and partial entries with reasons — never silently drops', () => {
 		expect(byName.Mystery.errors[0]).toMatch(/Unsupported CXF credential type/)
-		expect(byName['Broken passkey (passkey)'].errors[0]).toMatch(/Incomplete CXF passkey/)
+		expect(byName['Broken passkey (passkey)'].errors[0]).toMatch(
+			/Incomplete CXF passkey/,
+		)
 	})
 })
 
 describe('CXF export mapping', () => {
 	const serialized = [
-		{ name: 'Example login', url: 'https://example.com', type: 'login', login: 'alice', password: 'pw-placeholder', additionalFields: null, folder: 'Work' },
+		{
+			name: 'Example login',
+			url: 'https://example.com',
+			type: 'login',
+			login: 'alice',
+			password: 'pw-placeholder',
+			additionalFields: null,
+			folder: 'Work',
+		},
 		{
 			name: 'My passkey',
 			url: 'example.com',
 			type: 'passkey',
 			login: null,
 			password: serializePasskey({
-				credentialId: 'EXPORT_CRED_ID', rpId: 'example.com', privateKey: 'EXPORT_KEY',
-				counter: 7, transports: ['internal'],
+				credentialId: 'EXPORT_CRED_ID',
+				rpId: 'example.com',
+				privateKey: 'EXPORT_KEY',
+				counter: 7,
+				transports: ['internal'],
 			}),
 			additionalFields: null,
 			folder: '',
 		},
-		{ name: 'Root CA', url: null, type: 'certificate', login: null, password: 'PEM_PLACEHOLDER', additionalFields: null, folder: '' },
+		{
+			name: 'Root CA',
+			url: null,
+			type: 'certificate',
+			login: null,
+			password: 'PEM_PLACEHOLDER',
+			additionalFields: null,
+			folder: '',
+		},
 	]
 
 	it('builds a document, reports unmapped values, and preserves folders as collections', () => {
@@ -173,12 +218,16 @@ describe('CXF export mapping', () => {
 		expect(document.accounts[0].collections[0].title).toBe('Work')
 		// Certificate has no CXF entity; passkey extensions are lossy — both reported.
 		expect(unmapped.some((entry) => entry.includes('Root CA'))).toBe(true)
-		expect(unmapped.some((entry) => entry.includes('counter/transports'))).toBe(true)
+		expect(unmapped.some((entry) => entry.includes('counter/transports'))).toBe(
+			true,
+		)
 	})
 
 	it('round-trips core credentials through export → import', () => {
 		const { document } = buildCxfDocument(serialized)
-		const rows = cxfToRows(parseCxfDocument(JSON.parse(JSON.stringify(document))))
+		const rows = cxfToRows(
+			parseCxfDocument(JSON.parse(JSON.stringify(document))),
+		)
 		const login = rows.find((row) => row.type === 'login')
 		expect(login.password).toBe('pw-placeholder')
 		expect(login.login).toBe('alice')

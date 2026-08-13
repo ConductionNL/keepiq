@@ -6,7 +6,8 @@
   name (+ optional parent) form wired to the folder store.
 -->
 <template>
-	<NcDialog :name="t('doriath', 'New folder')"
+	<NcDialog
+		:name="t('doriath', 'New folder')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -15,13 +16,15 @@
 				{{ error }}
 			</NcNoteCard>
 
-			<NcTextField v-model="name"
+			<NcTextField
+				v-model="name"
 				:label="t('doriath', 'Folder name')"
 				:required="true" />
 
-			<NcSelect v-model="selectedParentId"
+			<NcSelect
+				v-model="selectedParentId"
 				:options="parentOptions"
-				:reduce="opt => opt.value"
+				:reduce="(opt) => opt.value"
 				:input-label="t('doriath', 'Parent folder')"
 				:clearable="false" />
 		</div>
@@ -30,9 +33,7 @@
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="primary"
-				:disabled="!canSubmit"
-				@click="submit">
+			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<FolderPlus v-else :size="20" />
@@ -44,7 +45,14 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
@@ -92,7 +100,7 @@ export default {
 		parentOptions() {
 			const roots = [{ value: null, label: t('doriath', 'Vault root') }]
 			return roots.concat(
-				useFolderStore().folders.map(folder => ({
+				useFolderStore().folders.map((folder) => ({
 					value: folder.id,
 					label: folder.name,
 				})),
@@ -138,14 +146,20 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
-				const created = await useFolderStore().createFolder(this.name.trim(), this.selectedParentId)
+				const created = await useFolderStore().createFolder(
+					this.name.trim(),
+					this.selectedParentId,
+				)
 				this.$emit('saved', created)
 				if (this.onSaved) {
 					this.onSaved(created)
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to create folder')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to create folder')
 			} finally {
 				this.saving = false
 			}

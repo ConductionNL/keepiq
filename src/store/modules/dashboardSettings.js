@@ -97,7 +97,9 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 			if (ALLOWED_DASHBOARD_KEYS.includes(key) === false) {
 				return null
 			}
-			return this.setMany({ [key]: value }).then(() => this.settings[key] ?? null)
+			return this.setMany({ [key]: value }).then(
+				() => this.settings[key] ?? null,
+			)
 		},
 
 		/**

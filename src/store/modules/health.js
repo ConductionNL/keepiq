@@ -46,15 +46,20 @@ export const useHealthStore = defineStore('health', {
 
 	getters: {
 		/** @return {Array<object>} Weak findings. */
-		weakFindings: (state) => state.findings.filter((f) => f.flags.includes('weak')),
+		weakFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('weak')),
 		/** @return {Array<object>} Reused findings. */
-		reusedFindings: (state) => state.findings.filter((f) => f.flags.includes('reused')),
+		reusedFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('reused')),
 		/** @return {Array<object>} Stale findings. */
-		staleFindings: (state) => state.findings.filter((f) => f.flags.includes('stale')),
+		staleFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('stale')),
 		/** @return {Array<object>} Breached findings. */
-		breachedFindings: (state) => state.findings.filter((f) => f.flags.includes('breached')),
+		breachedFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('breached')),
 		/** @return {Array<object>} Possibly-compromised findings. */
-		compromisedFindings: (state) => state.findings.filter((f) => f.flags.includes('compromised')),
+		compromisedFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('compromised')),
 		/**
 		 * Map of secretId -> zxcvbn score for the StrengthBadge component.
 		 *
@@ -152,7 +157,12 @@ export const useHealthStore = defineStore('health', {
 			// material — scoring, reuse-matching, or breach-checking them is
 			// meaningless noise (add-totp-secrets D7, passkey-item-type D6).
 			const excludedTypeIds = new Set(
-				types.filter((type) => type && (type.name === 'totp' || type.name === 'passkey'))
+				types
+					.filter(
+						(type) =>
+							type
+							&& (type.name === 'totp' || type.name === 'passkey'),
+					)
 					.map((type) => type.id),
 			)
 
@@ -239,7 +249,9 @@ export const useHealthStore = defineStore('health', {
 				return analyse(rows, options)
 			}
 			if (!this.worker) {
-				this.worker = new Worker(new URL('../../health/worker.js', import.meta.url))
+				this.worker = new Worker(
+					new URL('../../health/worker.js', import.meta.url),
+				)
 			}
 			const worker = this.worker
 			const requestId = Math.random().toString(36).slice(2)
@@ -248,7 +260,9 @@ export const useHealthStore = defineStore('health', {
 				rows,
 				options: {
 					stalenessThreshold: options.stalenessThreshold,
-					breachResults: options.breachResults ? Array.from(options.breachResults.entries()) : null,
+					breachResults: options.breachResults
+						? Array.from(options.breachResults.entries())
+						: null,
 				},
 			}
 			return new Promise((resolve, reject) => {
@@ -260,7 +274,9 @@ export const useHealthStore = defineStore('health', {
 					if (event.data.ok) {
 						resolve(event.data.result)
 					} else {
-						reject(new Error(event.data.error || 'Worker analysis failed'))
+						reject(
+							new Error(event.data.error || 'Worker analysis failed'),
+						)
 					}
 				}
 				worker.addEventListener('message', onMessage)

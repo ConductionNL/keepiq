@@ -30,7 +30,7 @@ const ROOT_FOLDER_ID = '00000000-0000-0000-0000-000000000000'
  */
 function buildFolderPaths(folders) {
 	const byId = new Map()
-	for (const folder of (folders || [])) {
+	for (const folder of folders || []) {
 		if (folder && folder.id != null) {
 			byId.set(folder.id, folder)
 		}
@@ -48,7 +48,9 @@ function buildFolderPaths(folders) {
 			return []
 		}
 		const parentPath = resolve(folder.parent, guard + 1)
-		const path = folder.label ? [...parentPath, String(folder.label)] : parentPath
+		const path = folder.label
+			? [...parentPath, String(folder.label)]
+			: parentPath
 		cache.set(id, path)
 		return path
 	}
@@ -101,14 +103,18 @@ function buildAdditional(password) {
 export function parseNcPasswords(input) {
 	const data = typeof input === 'string' ? JSON.parse(input) : input
 	if (!data || !Array.isArray(data.passwords)) {
-		throw new Error('Not a Nextcloud Passwords JSON backup (missing passwords array)')
+		throw new Error(
+			'Not a Nextcloud Passwords JSON backup (missing passwords array)',
+		)
 	}
 
 	const folderPaths = buildFolderPaths(data.folders)
 
 	return data.passwords.map((password, index) => {
 		const sourceRow = index + 1
-		const segments = password.folder ? (folderPaths.get(password.folder) || []) : []
+		const segments = password.folder
+			? folderPaths.get(password.folder) || []
+			: []
 		const fields = {
 			name: password.label ?? '',
 			url: password.url ?? null,

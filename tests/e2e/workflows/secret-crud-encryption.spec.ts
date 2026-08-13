@@ -55,21 +55,36 @@ const REQ_TOKEN = `(() => {
 })()`
 
 /** Click the first button matching `text` within `selector` (native DOM click). */
-async function nativeClickByText(page, selector: string, text: string): Promise<void> {
-	await page.evaluate(({ selector, text }) => {
-		const b = (Array.from(document.querySelectorAll(selector)) as HTMLButtonElement[])
-			.find((x) => new RegExp(text, 'i').test(x.textContent || ''))
-		if (b) {
-			b.click()
-		}
-	}, { selector, text })
+async function nativeClickByText(
+	page,
+	selector: string,
+	text: string,
+): Promise<void> {
+	await page.evaluate(
+		({ selector, text }) => {
+			const b = (
+				Array.from(
+					document.querySelectorAll(selector),
+				) as HTMLButtonElement[]
+			).find((x) => new RegExp(text, 'i').test(x.textContent || ''))
+			if (b) {
+				b.click()
+			}
+		},
+		{ selector, text },
+	)
 }
 
 /** Click a button by its aria-label / title (native DOM click). */
 async function nativeClickByLabel(page, label: string): Promise<void> {
 	await page.evaluate((label) => {
-		const b = (Array.from(document.querySelectorAll('button')) as HTMLButtonElement[])
-			.find((x) => (x.getAttribute('aria-label') || x.getAttribute('title') || '') === label)
+		const b = (
+			Array.from(document.querySelectorAll('button')) as HTMLButtonElement[]
+		).find(
+			(x) =>
+				(x.getAttribute('aria-label') || x.getAttribute('title') || '')
+				=== label,
+		)
 		if (b) {
 			b.click()
 		}
@@ -78,30 +93,44 @@ async function nativeClickByLabel(page, label: string): Promise<void> {
 
 /** Find a secret by exact name through the list API; returns it or null. */
 async function apiFind(page, name: string) {
-	return page.evaluate(async ({ tokExpr, name }) => {
-		// eslint-disable-next-line no-eval
-		const token = eval(tokExpr)
-		const res = await fetch('/index.php/apps/doriath/api/v1/secrets?limit=200', {
-			credentials: 'include', headers: { requesttoken: token },
-		})
-		const body = await res.json()
-		return (body.items || []).find((s) => s.name === name) || null
-	}, { tokExpr: REQ_TOKEN, name })
+	return page.evaluate(
+		async ({ tokExpr, name }) => {
+			// eslint-disable-next-line no-eval
+			const token = eval(tokExpr)
+			const res = await fetch(
+				'/index.php/apps/doriath/api/v1/secrets?limit=200',
+				{
+					credentials: 'include',
+					headers: { requesttoken: token },
+				},
+			)
+			const body = await res.json()
+			return (body.items || []).find((s) => s.name === name) || null
+		},
+		{ tokExpr: REQ_TOKEN, name },
+	)
 }
 
 /** Delete a secret by id through the API (cleanup). */
 async function apiDelete(page, id: string): Promise<void> {
-	await page.evaluate(async ({ tokExpr, id }) => {
-		// eslint-disable-next-line no-eval
-		const token = eval(tokExpr)
-		await fetch(`/index.php/apps/doriath/api/v1/secrets/${id}`, {
-			method: 'DELETE', credentials: 'include', headers: { requesttoken: token },
-		})
-	}, { tokExpr: REQ_TOKEN, id })
+	await page.evaluate(
+		async ({ tokExpr, id }) => {
+			// eslint-disable-next-line no-eval
+			const token = eval(tokExpr)
+			await fetch(`/index.php/apps/doriath/api/v1/secrets/${id}`, {
+				method: 'DELETE',
+				credentials: 'include',
+				headers: { requesttoken: token },
+			})
+		},
+		{ tokExpr: REQ_TOKEN, id },
+	)
 }
 
 test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
-	test('secret routes are gated behind the lock screen (no plaintext leaks while locked)', async ({ page }) => {
+	test('secret routes are gated behind the lock screen (no plaintext leaks while locked)', async ({
+		page,
+	}) => {
 		// Reaching /secrets without an in-memory key must land on the lock screen,
 		// never on a rendered secret list. This is the zero-knowledge boundary.
 		// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud. The lock
@@ -109,39 +138,59 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		// after it is what actually proves nothing leaked.
 		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
-		await expect(lockHeading(page)).toHaveText(/Unlock Doriath|Set up your master password/i)
-		await expect(page.locator('.secret-list-view .secret-list-item')).toHaveCount(0)
+		await expect(lockHeading(page)).toHaveText(
+			/Unlock Doriath|Set up your master password/i,
+		)
+		await expect(
+			page.locator('.secret-list-view .secret-list-item'),
+		).toHaveCount(0)
 	})
 
-	test('the secrets list API returns a clean, well-formed (empty) vault', async ({ page }) => {
+	test('the secrets list API returns a clean, well-formed (empty) vault', async ({
+		page,
+	}) => {
 		await gotoLockSettled(page)
 		const list = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			const res = await fetch('/index.php/apps/doriath/api/v1/secrets', {
-				credentials: 'include', headers: { requesttoken: token },
+				credentials: 'include',
+				headers: { requesttoken: token },
 			})
 			return { status: res.status, body: await res.json().catch(() => null) }
 		}, REQ_TOKEN)
 		expect(list.status).toBe(200)
-		expect(list.body).toMatchObject({ items: expect.any(Array), total: expect.any(Number) })
+		expect(list.body).toMatchObject({
+			items: expect.any(Array),
+			total: expect.any(Number),
+		})
 	})
 
-	test('the secret-type catalogue is seeded (login/api_key/note/...) for typed secrets', async ({ page }) => {
+	test('the secret-type catalogue is seeded (login/api_key/note/...) for typed secrets', async ({
+		page,
+	}) => {
 		await gotoLockSettled(page)
 		const types = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			const res = await fetch('/index.php/apps/doriath/api/v1/secret-types', {
-				credentials: 'include', headers: { requesttoken: token },
+				credentials: 'include',
+				headers: { requesttoken: token },
 			})
-			return { status: res.status, names: (await res.json()).map((t) => t.name) }
+			return {
+				status: res.status,
+				names: (await res.json()).map((t) => t.name),
+			}
 		}, REQ_TOKEN)
 		expect(types.status).toBe(200)
-		expect(types.names).toEqual(expect.arrayContaining(['login', 'api_key', 'note']))
+		expect(types.names).toEqual(
+			expect.arrayContaining(['login', 'api_key', 'note']),
+		)
 	})
 
-	test('the suite endpoint exposes a wrapped private key + certificate (decrypt material present)', async ({ page }) => {
+	test('the suite endpoint exposes a wrapped private key + certificate (decrypt material present)', async ({
+		page,
+	}) => {
 		await gotoLockSettled(page)
 		// The read/decrypt half of the zero-knowledge model depends on the suite
 		// shipping the AES-wrapped PKCS#8 private key and the X.509 certificate.
@@ -151,14 +200,17 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			const res = await fetch('/index.php/apps/doriath/api/v1/suites', {
-				credentials: 'include', headers: { requesttoken: token },
+				credentials: 'include',
+				headers: { requesttoken: token },
 			})
 			const body = await res.json()
 			const active = body.find((s) => s.status === 'active')
 			return {
 				status: res.status,
 				hasPrivateKey: !!active?.privateKey,
-				certIsX509: (active?.certificate || '').includes('BEGIN CERTIFICATE'),
+				certIsX509: (active?.certificate || '').includes(
+					'BEGIN CERTIFICATE',
+				),
 			}
 		}, REQ_TOKEN)
 		expect(suite.status).toBe(200)
@@ -171,7 +223,9 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	 * default was changed from 'user' to '' so setOwnerType('user') marks the
 	 * column dirty and QBMapper writes it on INSERT (no more NOT-NULL violation).
 	 */
-	test('create a secret via the API stores it (HTTP 201, persists owner_type)', async ({ page }) => {
+	test('create a secret via the API stores it (HTTP 201, persists owner_type)', async ({
+		page,
+	}) => {
 		await gotoLockSettled(page)
 		const created = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
@@ -180,7 +234,10 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 				method: 'POST',
 				credentials: 'include',
 				headers: { requesttoken: token, 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: '__e2e_roundtrip', key: btoa('opaque-ciphertext') }),
+				body: JSON.stringify({
+					name: '__e2e_roundtrip',
+					key: btoa('opaque-ciphertext'),
+				}),
 			})
 			const body = await res.json().catch(() => ({}))
 			// Clean up so re-runs stay idempotent.
@@ -191,7 +248,11 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 					headers: { requesttoken: token },
 				})
 			}
-			return { status: res.status, ownerType: body.ownerType, ownerId: body.ownerId }
+			return {
+				status: res.status,
+				ownerType: body.ownerType,
+				ownerId: body.ownerId,
+			}
 		}, REQ_TOKEN)
 		// Previously a 500 (owner_type NOT-NULL violation); now persists cleanly.
 		expect(created.status).toBe(201)
@@ -204,19 +265,25 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	 * This test drives the app's real importPublicKey via the secret store, so it
 	 * proves the production encrypt path, not a hand-rolled SPKI extraction.
 	 */
-	test('the browser can RSA-encrypt a value with the suite certificate', async ({ page }) => {
+	test('the browser can RSA-encrypt a value with the suite certificate', async ({
+		page,
+	}) => {
 		await gotoLockSettled(page)
 		const ok = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			const suites = await (await fetch('/index.php/apps/doriath/api/v1/suites', {
-				credentials: 'include', headers: { requesttoken: token },
-			})).json()
+			const suites = await (
+				await fetch('/index.php/apps/doriath/api/v1/suites', {
+					credentials: 'include',
+					headers: { requesttoken: token },
+				})
+			).json()
 			const suite = suites.find((s) => s.status === 'active')
 			// Mirror the app's importPublicKey(): walk the X.509 TBSCertificate DER
 			// to the SubjectPublicKeyInfo, then importKey('spki', …) + encrypt.
 			const certBody = suite.certificate
-				.replace(/-----BEGIN CERTIFICATE-----/, '').replace(/-----END CERTIFICATE-----/, '')
+				.replace(/-----BEGIN CERTIFICATE-----/, '')
+				.replace(/-----END CERTIFICATE-----/, '')
 				.replace(/\s/g, '')
 			const certDer = Uint8Array.from(atob(certBody), (c) => c.charCodeAt(0))
 			const readLen = (d, o) => {
@@ -241,8 +308,18 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 			}
 			const spkiIdx = fields[0].tag === 0xa0 ? 6 : 5
 			const spki = certDer.slice(fields[spkiIdx].start, fields[spkiIdx].end)
-			const key = await crypto.subtle.importKey('spki', spki, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt'])
-			await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, key, new TextEncoder().encode('probe'))
+			const key = await crypto.subtle.importKey(
+				'spki',
+				spki,
+				{ name: 'RSA-OAEP', hash: 'SHA-256' },
+				false,
+				['encrypt'],
+			)
+			await crypto.subtle.encrypt(
+				{ name: 'RSA-OAEP' },
+				key,
+				new TextEncoder().encode('probe'),
+			)
 			return true
 		}, REQ_TOKEN)
 		expect(ok).toBe(true)
@@ -255,7 +332,9 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	 * plaintext) → open in the UI → reveal/decrypt → assert plaintext matches →
 	 * edit the value → assert the new value round-trips → delete → assert gone.
 	 */
-	test('zero-knowledge round-trip via the UI: create → encrypt → persist → retrieve → edit → delete', async ({ page }) => {
+	test('zero-knowledge round-trip via the UI: create → encrypt → persist → retrieve → edit → delete', async ({
+		page,
+	}) => {
 		// @e2e secrets-write-ui::create-a-secret-with-required-fields
 		//   name + value entered in the "New secret" dialog, the stored `key` is
 		//   a >100-char blob that does not contain the plaintext, the secret
@@ -271,11 +350,21 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		await openVault(page)
 
 		// --- CREATE via the dialog (browser-side RSA encryption) ---
-		await nativeClickByText(page, '.secret-list-view .cn-actions-bar button', 'New secret')
+		await nativeClickByText(
+			page,
+			'.secret-list-view .cn-actions-bar button',
+			'New secret',
+		)
 		const createDialog = page.locator('.secret-form')
 		await expect(createDialog).toBeVisible({ timeout: 10_000 })
-		await page.locator('.secret-form input[type="text"]').first().fill(NAME, { force: true })
-		await page.locator('.secret-form input[type="password"]').first().fill(VALUE, { force: true })
+		await page
+			.locator('.secret-form input[type="text"]')
+			.first()
+			.fill(NAME, { force: true })
+		await page
+			.locator('.secret-form input[type="password"]')
+			.first()
+			.fill(VALUE, { force: true })
 		await page.waitForTimeout(300)
 		await nativeClickByText(page, 'body button', 'Create secret')
 
@@ -292,13 +381,21 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		const row = page.locator('.secret-list-item', { hasText: NAME })
 		await expect(row).toBeVisible({ timeout: 15_000 })
 		await page.evaluate((name) => {
-			const r = Array.from(document.querySelectorAll('.secret-list-item'))
-				.find((i) => (i.querySelector('.secret-list-item__name')?.textContent || '').trim() === name)
+			const r = Array.from(
+				document.querySelectorAll('.secret-list-item'),
+			).find(
+				(i) =>
+					(
+						i.querySelector('.secret-list-item__name')?.textContent || ''
+					).trim() === name,
+			)
 			if (r) {
-				(r as HTMLElement).click()
+				;(r as HTMLElement).click()
 			}
 		}, NAME)
-		await expect(page.locator('.secret-detail__card')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('.secret-detail__card')).toBeVisible({
+			timeout: 20_000,
+		})
 		await expect(page.locator('.secret-detail__title')).toHaveText(NAME)
 		await nativeClickByLabel(page, 'Show')
 		await expect(
@@ -308,12 +405,19 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		// --- EDIT the value via the Edit dialog ---
 		await nativeClickByText(page, '.secret-detail__actions button', 'Edit')
 		await expect(page.locator('.secret-form')).toBeVisible({ timeout: 10_000 })
-		await page.locator('.secret-form input[type="password"]').first().fill(NEW_VALUE, { force: true })
+		await page
+			.locator('.secret-form input[type="password"]')
+			.first()
+			.fill(NEW_VALUE, { force: true })
 		await page.waitForTimeout(300)
 		await nativeClickByText(page, 'body button', 'Save')
-		await expect(page.locator('.secret-form')).toHaveCount(0, { timeout: 15_000 })
+		await expect(page.locator('.secret-form')).toHaveCount(0, {
+			timeout: 15_000,
+		})
 
-		await expect(page.locator('.secret-detail__card')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('.secret-detail__card')).toBeVisible({
+			timeout: 20_000,
+		})
 		await nativeClickByLabel(page, 'Show')
 		await expect(
 			page.locator('.secret-detail .doriath-password-field input'),
@@ -332,20 +436,24 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 	 * The actual decrypt round-trip is proven at the crypto layer (see the PHP
 	 * EncryptService/DecryptService unit tests and the vault-unlock e2e).
 	 */
-	test('stored secret value is encrypted at rest (response holds no plaintext)', async ({ page }) => {
+	test('stored secret value is encrypted at rest (response holds no plaintext)', async ({
+		page,
+	}) => {
 		await gotoLockSettled(page)
 		const probe = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			const res = await fetch('/index.php/apps/doriath/api/v1/secrets', {
-				credentials: 'include', headers: { requesttoken: token },
+				credentials: 'include',
+				headers: { requesttoken: token },
 			})
 			const body = await res.json()
 			const gh = (body.items || []).find((s) => s.name === 'GitHub')
 			return {
 				hasGitHub: !!gh,
 				keyIsBlob: !!gh && typeof gh.key === 'string' && gh.key.length > 100,
-				leaksPlaintext: !!gh && (gh.key || '').includes('gh_dev_P@ssw0rd!2024'),
+				leaksPlaintext:
+					!!gh && (gh.key || '').includes('gh_dev_P@ssw0rd!2024'),
 			}
 		}, REQ_TOKEN)
 		expect(probe.hasGitHub).toBe(true)

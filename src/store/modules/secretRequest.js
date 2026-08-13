@@ -41,7 +41,8 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {object} state The store state.
 		 * @return {number}
 		 */
-		pendingCount: (state) => state.secretRequests.filter((r) => r.status === 'pending').length,
+		pendingCount: (state) =>
+			state.secretRequests.filter((r) => r.status === 'pending').length,
 	},
 
 	actions: {
@@ -59,7 +60,10 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				)
 				this.secretRequests = response.data || []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load requests'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load requests'
 				throw e
 			} finally {
 				this.loading = false
@@ -94,7 +98,10 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				this.secretRequests.unshift(response.data)
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to create request'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to create request'
 				throw e
 			} finally {
 				this.loading = false
@@ -110,7 +117,12 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string|null}   [expiresAt]  Optional ISO-8601 expiry.
 		 * @return {Promise<object>}
 		 */
-		async createReRequest(secretId, encryptionSuiteId, requestedFields, expiresAt = null) {
+		async createReRequest(
+			secretId,
+			encryptionSuiteId,
+			requestedFields,
+			expiresAt = null,
+		) {
 			return this.createRequest({
 				secretId,
 				encryptionSuiteId,
@@ -133,9 +145,14 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				await axios.delete(
 					generateUrl(`/apps/doriath/api/v1/secret-requests/${requestId}`),
 				)
-				this.secretRequests = this.secretRequests.filter((r) => r.id !== requestId)
+				this.secretRequests = this.secretRequests.filter(
+					(r) => r.id !== requestId,
+				)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to revoke request'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to revoke request'
 				throw e
 			} finally {
 				this.loading = false
@@ -156,12 +173,17 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/public/secret-requests/${token}`),
+					generateUrl(
+						`/apps/doriath/api/v1/public/secret-requests/${token}`,
+					),
 				)
 				this.publicRequest = response.data
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load request'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load request'
 				throw e
 			} finally {
 				this.loading = false
@@ -199,7 +221,9 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			}
 
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/public/secret-requests/${token}/fill`),
+				generateUrl(
+					`/apps/doriath/api/v1/public/secret-requests/${token}/fill`,
+				),
 				{ encryptedFields },
 			)
 			return response.data

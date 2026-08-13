@@ -39,12 +39,24 @@ describe('DashboardSettingsView', () => {
 		const wrapper = mount(DashboardSettingsView)
 		await flushPromises()
 
-		expect(wrapper.find('[data-testid="default-view-select"]').element.value).toBe('grid')
-		expect(wrapper.find('[data-testid="sort-field-select"]').element.value).toBe('created_at')
-		expect(wrapper.find('[data-testid="sort-direction-select"]').element.value).toBe('desc')
-		expect(wrapper.find('[data-testid="kpi-toggle"]').element.checked).toBe(false)
-		expect(wrapper.find('[data-testid="recent-toggle"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="migration-toggle"]').element.checked).toBe(false)
+		expect(
+			wrapper.find('[data-testid="default-view-select"]').element.value,
+		).toBe('grid')
+		expect(wrapper.find('[data-testid="sort-field-select"]').element.value).toBe(
+			'created_at',
+		)
+		expect(
+			wrapper.find('[data-testid="sort-direction-select"]').element.value,
+		).toBe('desc')
+		expect(wrapper.find('[data-testid="kpi-toggle"]').element.checked).toBe(
+			false,
+		)
+		expect(wrapper.find('[data-testid="recent-toggle"]').element.checked).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="migration-toggle"]').element.checked,
+		).toBe(false)
 	})
 
 	it('falls back to widget defaults when the server has no preferences stored', async () => {
@@ -54,11 +66,17 @@ describe('DashboardSettingsView', () => {
 		await flushPromises()
 
 		// Empty strings map to "system default".
-		expect(wrapper.find('[data-testid="default-view-select"]').element.value).toBe('')
+		expect(
+			wrapper.find('[data-testid="default-view-select"]').element.value,
+		).toBe('')
 		// Widget toggles default to true.
 		expect(wrapper.find('[data-testid="kpi-toggle"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="recent-toggle"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="migration-toggle"]').element.checked).toBe(true)
+		expect(wrapper.find('[data-testid="recent-toggle"]').element.checked).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="migration-toggle"]').element.checked,
+		).toBe(true)
 	})
 
 	it('PUTs the (cleaned) form on submit', async () => {
@@ -73,7 +91,9 @@ describe('DashboardSettingsView', () => {
 		await wrapper.find('[data-testid="default-view-select"]').setValue('list')
 		await wrapper.find('[data-testid="kpi-toggle"]').setChecked(false)
 
-		await wrapper.find('[data-testid="dashboard-settings-form"]').trigger('submit')
+		await wrapper
+			.find('[data-testid="dashboard-settings-form"]')
+			.trigger('submit')
 		await flushPromises()
 
 		expect(put).toHaveBeenCalledOnce()
@@ -104,7 +124,9 @@ describe('DashboardSettingsView', () => {
 		await flushPromises()
 
 		expect(del).toHaveBeenCalledWith('/apps/doriath/api/v1/dashboard-settings')
-		expect(wrapper.find('[data-testid="default-view-select"]').element.value).toBe('')
+		expect(
+			wrapper.find('[data-testid="default-view-select"]').element.value,
+		).toBe('')
 	})
 
 	it('shows the error message when the API fails', async () => {

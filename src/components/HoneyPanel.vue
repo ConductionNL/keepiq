@@ -19,24 +19,41 @@
 		<!-- v9 renamed `checked` -> `modelValue`. Deliberately NOT v-model: the
 		     handler is async and persists server-side, so the prop stays
 		     one-way and the store remains the source of truth. -->
-		<NcCheckboxRadioSwitch :model-value="flagged"
+		<NcCheckboxRadioSwitch
+			:model-value="flagged"
 			type="switch"
 			data-testid="honey-toggle"
 			@update:model-value="onToggle">
-			{{ t('doriath', 'Honey tripwire — page me when anyone accesses this secret') }}
+			{{
+				t(
+					'doriath',
+					'Honey tripwire — page me when anyone accesses this secret',
+				)
+			}}
 		</NcCheckboxRadioSwitch>
 
 		<template v-if="flagged">
-			<NcTextField v-model="note"
-				:label="t('doriath', 'Placement note (only you and admins see this)')"
+			<NcTextField
+				v-model="note"
+				:label="
+					t('doriath', 'Placement note (only you and admins see this)')
+				"
 				data-testid="honey-note"
 				@blur="saveNote" />
 
 			<p class="honey-panel__hint">
-				{{ t('doriath', 'Every access via the app, machine API, link, or a shared copy raises an alert to you and the admins. The decoy is indistinguishable from a real secret.') }}
+				{{
+					t(
+						'doriath',
+						'Every access via the app, machine API, link, or a shared copy raises an alert to you and the admins. The decoy is indistinguishable from a real secret.',
+					)
+				}}
 			</p>
 
-			<table v-if="secretAlerts.length" class="honey-panel__table" data-testid="honey-alerts">
+			<table
+				v-if="secretAlerts.length"
+				class="honey-panel__table"
+				data-testid="honey-alerts">
 				<thead>
 					<tr>
 						<th scope="col">
@@ -55,7 +72,10 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="alert in secretAlerts" :key="alert.id" :data-testid="`honey-alert-${alert.id}`">
+					<tr
+						v-for="alert in secretAlerts"
+						:key="alert.id"
+						:data-testid="`honey-alert-${alert.id}`">
 						<td>
 							{{ alert.accessorId || t('doriath', 'anonymous') }}
 							<div class="honey-panel__muted">
@@ -66,20 +86,26 @@
 						<td>{{ alert.accessCount }}</td>
 						<td>{{ formatDate(alert.accessedAt) }}</td>
 						<td class="honey-panel__actions">
-							<NcButton v-if="!alert.acknowledgedAt"
+							<NcButton
+								v-if="!alert.acknowledgedAt"
 								variant="tertiary"
 								:data-testid="`honey-ack-${alert.id}`"
 								@click="store.acknowledge(alert.id)">
 								{{ t('doriath', 'Acknowledge') }}
 							</NcButton>
-							<span v-else class="honey-panel__muted">{{ t('doriath', 'handled') }}</span>
-							<NcButton v-if="!isSnoozed(alert)"
+							<span v-else class="honey-panel__muted">{{
+								t('doriath', 'handled')
+							}}</span>
+							<NcButton
+								v-if="!isSnoozed(alert)"
 								variant="tertiary"
 								:data-testid="`honey-snooze-${alert.id}`"
 								@click="store.snooze(alert.id)">
 								{{ t('doriath', 'Snooze 24h') }}
 							</NcButton>
-							<span v-else class="honey-panel__muted">{{ t('doriath', 'snoozed') }}</span>
+							<span v-else class="honey-panel__muted">{{
+								t('doriath', 'snoozed')
+							}}</span>
 						</td>
 					</tr>
 				</tbody>
@@ -92,7 +118,12 @@
 </template>
 
 <script>
-import { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcTextField } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcNoteCard,
+	NcTextField,
+} from '@nextcloud/vue'
 import { useHoneyStore } from '../store/modules/honey.js'
 
 export default {
@@ -125,7 +156,7 @@ export default {
 		},
 
 		secretAlerts() {
-			return this.store.alerts.filter(a => a.secretId === this.secretId)
+			return this.store.alerts.filter((a) => a.secretId === this.secretId)
 		},
 	},
 
@@ -174,7 +205,10 @@ export default {
 		 * @return {boolean}
 		 */
 		isSnoozed(alert) {
-			return !!alert.snoozedUntil && new Date(alert.snoozedUntil).getTime() > Date.now()
+			return (
+				!!alert.snoozedUntil
+				&& new Date(alert.snoozedUntil).getTime() > Date.now()
+			)
 		},
 
 		/**

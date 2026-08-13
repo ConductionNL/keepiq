@@ -5,63 +5,90 @@
 			{{ t('doriath', 'Emergency access') }}
 		</h2>
 		<p class="emergency-access__intro">
-			{{ t('doriath', 'Designate a trusted person who can gain read access to your vault after a wait period — unless you decline. Your vault stays end-to-end encrypted: your key is escrowed only to the contact\'s certificate, never to the server.') }}
+			{{
+				t(
+					'doriath',
+					"Designate a trusted person who can gain read access to your vault after a wait period — unless you decline. Your vault stays end-to-end encrypted: your key is escrowed only to the contact's certificate, never to the server.",
+				)
+			}}
 		</p>
 
 		<!-- Designate a new emergency contact (grantor). -->
-		<section class="emergency-access__panel" data-testid="emergency-access-designate">
+		<section
+			class="emergency-access__panel"
+			data-testid="emergency-access-designate">
 			<h3>{{ t('doriath', 'Designate an emergency contact') }}</h3>
 			<div class="emergency-access__form">
-				<NcTextField v-model="granteeUserId"
+				<NcTextField
+					v-model="granteeUserId"
 					:label="t('doriath', 'Contact Nextcloud user ID')"
 					data-testid="emergency-grantee-input" />
-				<NcSelect v-model="waitPeriod"
+				<NcSelect
+					v-model="waitPeriod"
 					:options="waitOptions"
 					:input-label="t('doriath', 'Wait period')"
-					:reduce="opt => opt.value"
+					:reduce="(opt) => opt.value"
 					label="label"
 					data-testid="emergency-wait-select" />
-				<NcPasswordField v-model="masterPassword"
+				<NcPasswordField
+					v-model="masterPassword"
 					:label="t('doriath', 'Your master password')"
 					data-testid="emergency-master-input" />
-				<NcButton variant="primary"
+				<NcButton
+					variant="primary"
 					:disabled="!canDesignate || busy"
 					data-testid="emergency-designate-submit"
 					@click="designate">
 					{{ t('doriath', 'Designate') }}
 				</NcButton>
 			</div>
-			<p v-if="error" class="emergency-access__error" data-testid="emergency-error">
+			<p
+				v-if="error"
+				class="emergency-access__error"
+				data-testid="emergency-error">
 				{{ error }}
 			</p>
 		</section>
 
 		<!-- Contacts the current user has designated (grantor view). -->
-		<section class="emergency-access__panel" data-testid="emergency-access-contacts">
+		<section
+			class="emergency-access__panel"
+			data-testid="emergency-access-contacts">
 			<h3>{{ t('doriath', 'Your emergency contacts') }}</h3>
-			<NcEmptyContent v-if="store.contacts.length === 0"
+			<NcEmptyContent
+				v-if="store.contacts.length === 0"
 				:name="t('doriath', 'No emergency contacts')" />
 			<ul v-else class="emergency-access__list">
-				<li v-for="c in store.contacts"
+				<li
+					v-for="c in store.contacts"
 					:key="c.id"
 					class="emergency-access__item"
 					data-testid="emergency-contact-item">
-					<span class="emergency-access__grantee">{{ c.granteeUserId }}</span>
-					<span class="emergency-access__state" :data-state="c.state">{{ stateLabel(c.state) }}</span>
-					<span class="emergency-access__wait">{{ t('doriath', '{days}d wait', { days: c.waitPeriodDays }) }}</span>
-					<NcButton v-if="c.state === 'requested'"
+					<span class="emergency-access__grantee">{{
+						c.granteeUserId
+					}}</span>
+					<span class="emergency-access__state" :data-state="c.state">{{
+						stateLabel(c.state)
+					}}</span>
+					<span class="emergency-access__wait">{{
+						t('doriath', '{days}d wait', { days: c.waitPeriodDays })
+					}}</span>
+					<NcButton
+						v-if="c.state === 'requested'"
 						variant="warning"
 						data-testid="emergency-decline"
 						@click="decline(c.id)">
 						{{ t('doriath', 'Decline request') }}
 					</NcButton>
-					<NcButton v-if="c.state === 'invalidated'"
+					<NcButton
+						v-if="c.state === 'invalidated'"
 						variant="secondary"
 						data-testid="emergency-reestablish"
 						@click="scrollToDesignate(c.granteeUserId)">
 						{{ t('doriath', 'Re-establish') }}
 					</NcButton>
-					<NcButton variant="error"
+					<NcButton
+						variant="error"
 						data-testid="emergency-revoke"
 						@click="revoke(c.id)">
 						{{ t('doriath', 'Revoke') }}
@@ -71,24 +98,34 @@
 		</section>
 
 		<!-- Relationships where the current user is the grantee (incoming). -->
-		<section class="emergency-access__panel" data-testid="emergency-access-incoming">
+		<section
+			class="emergency-access__panel"
+			data-testid="emergency-access-incoming">
 			<h3>{{ t('doriath', 'Vaults you can recover') }}</h3>
-			<NcEmptyContent v-if="store.incoming.length === 0"
+			<NcEmptyContent
+				v-if="store.incoming.length === 0"
 				:name="t('doriath', 'No incoming emergency access')" />
 			<ul v-else class="emergency-access__list">
-				<li v-for="c in store.incoming"
+				<li
+					v-for="c in store.incoming"
 					:key="c.id"
 					class="emergency-access__item"
 					data-testid="emergency-incoming-item">
-					<span class="emergency-access__grantee">{{ c.grantorUserId }}</span>
-					<span class="emergency-access__state" :data-state="c.state">{{ stateLabel(c.state) }}</span>
-					<NcButton v-if="c.state === 'granted'"
+					<span class="emergency-access__grantee">{{
+						c.grantorUserId
+					}}</span>
+					<span class="emergency-access__state" :data-state="c.state">{{
+						stateLabel(c.state)
+					}}</span>
+					<NcButton
+						v-if="c.state === 'granted'"
 						variant="primary"
 						data-testid="emergency-request"
 						@click="request(c.id)">
 						{{ t('doriath', 'Request access') }}
 					</NcButton>
-					<NcButton v-if="c.state === 'approved'"
+					<NcButton
+						v-if="c.state === 'approved'"
 						variant="primary"
 						data-testid="emergency-recover"
 						@click="recover(c.id)">
@@ -96,15 +133,29 @@
 					</NcButton>
 				</li>
 			</ul>
-			<p v-if="recovered" class="emergency-access__recovered" data-testid="emergency-recovered">
-				{{ t('doriath', 'Recovered the grantor\'s key in your browser. You can now read their vault.') }}
+			<p
+				v-if="recovered"
+				class="emergency-access__recovered"
+				data-testid="emergency-recovered">
+				{{
+					t(
+						'doriath',
+						"Recovered the grantor's key in your browser. You can now read their vault.",
+					)
+				}}
 			</p>
 		</section>
 	</div>
 </template>
 
 <script>
-import { NcButton, NcTextField, NcPasswordField, NcSelect, NcEmptyContent } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcTextField,
+	NcPasswordField,
+	NcSelect,
+	NcEmptyContent,
+} from '@nextcloud/vue'
 import { useEmergencyAccessStore } from '../store/modules/emergencyAccess.js'
 
 /**
@@ -208,7 +259,10 @@ export default {
 				this.granteeUserId = ''
 				this.masterPassword = ''
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Could not designate the contact')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Could not designate the contact')
 			} finally {
 				this.busy = false
 			}
@@ -260,7 +314,10 @@ export default {
 				await this.store.recover(id)
 				this.recovered = true
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Could not recover access')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Could not recover access')
 			}
 		},
 

@@ -31,7 +31,11 @@ import { decryptPrivateKey } from './aes.js'
  * @return {Promise<boolean>} True if the password decrypts the blob, else false
  */
 export async function verifyMasterPassword(encryptedPrivateKey, masterPassword) {
-	if (!encryptedPrivateKey || typeof masterPassword !== 'string' || masterPassword.length === 0) {
+	if (
+		!encryptedPrivateKey
+		|| typeof masterPassword !== 'string'
+		|| masterPassword.length === 0
+	) {
 		return false
 	}
 	try {

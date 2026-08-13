@@ -50,14 +50,21 @@ export const useSecretStore = defineStore('secret', {
 				const offline = useOfflineStore()
 				if (offline.servedFromCache && offline.vault) {
 					const folderId = options.folderId ?? this.filters.folderId
-					const search = (options.search ?? this.filters.search ?? '').toLowerCase()
+					const search = (
+						options.search
+						?? this.filters.search
+						?? ''
+					).toLowerCase()
 					let items = offline.vault.secrets
 					if (folderId) {
 						items = items.filter((s) => s.folderId === folderId)
 					}
 					if (search) {
-						items = items.filter((s) => (s.name || '').toLowerCase().includes(search)
-							|| (s.url || '').toLowerCase().includes(search))
+						items = items.filter(
+							(s) =>
+								(s.name || '').toLowerCase().includes(search)
+								|| (s.url || '').toLowerCase().includes(search),
+						)
 					}
 					this.secrets = items
 					this.totalCount = items.length
@@ -160,7 +167,12 @@ export const useSecretStore = defineStore('secret', {
 		 * @return {boolean}
 		 */
 		isNetworkError(e) {
-			return !!e && (e.message === 'Network Error' || e.code === 'ERR_NETWORK' || (e.request && !e.response))
+			return (
+				!!e
+				&& (e.message === 'Network Error'
+					|| e.code === 'ERR_NETWORK'
+					|| (e.request && !e.response))
+			)
 		},
 
 		/**
@@ -226,7 +238,10 @@ export const useSecretStore = defineStore('secret', {
 				decrypted.login = await rsaDecrypt(secret.login, session.cryptoKey)
 			}
 			if (secret.additionalFields) {
-				const json = await rsaDecrypt(secret.additionalFields, session.cryptoKey)
+				const json = await rsaDecrypt(
+					secret.additionalFields,
+					session.cryptoKey,
+				)
 				try {
 					decrypted.additionalFields = JSON.parse(json)
 				} catch {
@@ -278,13 +293,18 @@ export const useSecretStore = defineStore('secret', {
 				folderId: data.folderId ?? null,
 				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
 			}
-			if (data.login !== undefined && data.login !== null && data.login !== '') {
+			if (
+				data.login !== undefined
+				&& data.login !== null
+				&& data.login !== ''
+			) {
 				payload.login = await rsaEncrypt(String(data.login), publicKey)
 			}
 			if (data.additionalFields) {
-				const json = typeof data.additionalFields === 'string'
-					? data.additionalFields
-					: JSON.stringify(data.additionalFields)
+				const json =
+					typeof data.additionalFields === 'string'
+						? data.additionalFields
+						: JSON.stringify(data.additionalFields)
 				payload.additionalFields = await rsaEncrypt(json, publicKey)
 			}
 
@@ -314,14 +334,22 @@ export const useSecretStore = defineStore('secret', {
 
 			// Keep the passkey RP-id → url mirror in sync when the credential
 			// changes without an explicit url (passkey-item-type D3).
-			if (data.key !== undefined && data.url === undefined && this.isPasskeyTypeId(data.typeId ?? this.currentSecret?.typeId)) {
+			if (
+				data.key !== undefined
+				&& data.url === undefined
+				&& this.isPasskeyTypeId(data.typeId ?? this.currentSecret?.typeId)
+			) {
 				const rpId = passkeyRpId(String(data.key ?? ''))
 				if (rpId) {
 					payload.url = rpId
 				}
 			}
 
-			if (data.key !== undefined || data.login !== undefined || data.additionalFields !== undefined) {
+			if (
+				data.key !== undefined
+				|| data.login !== undefined
+				|| data.additionalFields !== undefined
+			) {
 				if (!session.certificate) {
 					throw new Error('Vault is locked')
 				}
@@ -335,9 +363,10 @@ export const useSecretStore = defineStore('secret', {
 						: null
 				}
 				if (data.additionalFields !== undefined) {
-					const json = typeof data.additionalFields === 'string'
-						? data.additionalFields
-						: JSON.stringify(data.additionalFields)
+					const json =
+						typeof data.additionalFields === 'string'
+							? data.additionalFields
+							: JSON.stringify(data.additionalFields)
 					payload.additionalFields = await rsaEncrypt(json, publicKey)
 				}
 			}
@@ -354,7 +383,8 @@ export const useSecretStore = defineStore('secret', {
 			// the *just-submitted* value (not the freshly returned
 			// ciphertext); the share store imports each recipient's
 			// public certificate and runs the RSA encryption loop.
-			const sensitiveChanged = data.key !== undefined
+			const sensitiveChanged =
+				data.key !== undefined
 				|| data.login !== undefined
 				|| data.additionalFields !== undefined
 			if (sensitiveChanged === true) {
@@ -370,12 +400,14 @@ export const useSecretStore = defineStore('secret', {
 							login: data.login,
 							additionalFields:
 								data.additionalFields !== undefined
-									? (typeof data.additionalFields === 'string'
+									? typeof data.additionalFields === 'string'
 										? data.additionalFields
-										: JSON.stringify(data.additionalFields))
+										: JSON.stringify(data.additionalFields)
 									: undefined,
 						},
-						response.data?.updatedAt ?? response.data?.updated_at ?? null,
+						response.data?.updatedAt
+							?? response.data?.updated_at
+							?? null,
 					)
 				} catch (e) {
 					// Sync failure should not roll back the owner's
@@ -396,9 +428,9 @@ export const useSecretStore = defineStore('secret', {
 						login: data.login,
 						additionalFields:
 							data.additionalFields !== undefined
-								? (typeof data.additionalFields === 'string'
+								? typeof data.additionalFields === 'string'
 									? data.additionalFields
-									: JSON.stringify(data.additionalFields))
+									: JSON.stringify(data.additionalFields)
 								: undefined,
 					})
 				} catch (e) {
@@ -417,7 +449,7 @@ export const useSecretStore = defineStore('secret', {
 		 */
 		async deleteSecret(id) {
 			await axios.delete(generateUrl(`/apps/doriath/api/v1/secrets/${id}`))
-			this.secrets = this.secrets.filter(s => s.id !== id)
+			this.secrets = this.secrets.filter((s) => s.id !== id)
 		},
 
 		/**

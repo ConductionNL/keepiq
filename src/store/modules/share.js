@@ -58,7 +58,10 @@ export const useShareStore = defineStore('share', {
 				)
 				this.shares = response.data || []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load shares'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load shares'
 				throw e
 			} finally {
 				this.loading = false
@@ -105,7 +108,12 @@ export const useShareStore = defineStore('share', {
 		 * @param {string|null} groupShareId      Optional group-share linkage.
 		 * @return {Promise<object>}
 		 */
-		async createShare(secretId, targetUserId, recipientSecretId, groupShareId = null) {
+		async createShare(
+			secretId,
+			targetUserId,
+			recipientSecretId,
+			groupShareId = null,
+		) {
 			this.loading = true
 			this.error = null
 			try {
@@ -116,7 +124,8 @@ export const useShareStore = defineStore('share', {
 				this.shares.push(response.data)
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to share'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Failed to share'
 				throw e
 			} finally {
 				this.loading = false
@@ -132,7 +141,9 @@ export const useShareStore = defineStore('share', {
 		 */
 		async fetchWriteContext(secretId) {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/write-context`),
+				generateUrl(
+					`/apps/doriath/api/v1/secrets/${secretId}/write-context`,
+				),
 			)
 			return response.data
 		},
@@ -150,13 +161,18 @@ export const useShareStore = defineStore('share', {
 		 */
 		async syncAsTeamWriter(editedSecretId, plaintext) {
 			const context = await this.fetchWriteContext(editedSecretId)
-			if (context.effectiveGrade !== 'write' || context.sourceSecretId === editedSecretId) {
+			if (
+				context.effectiveGrade !== 'write'
+				|| context.sourceSecretId === editedSecretId
+			) {
 				return { updated: 0 }
 			}
 
 			// Recipient rows of the SOURCE (write grade grants the list).
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/shares`),
+				generateUrl(
+					`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/shares`,
+				),
 			)
 			const shares = response.data || []
 
@@ -164,7 +180,10 @@ export const useShareStore = defineStore('share', {
 			// The owner's SOURCE row itself, re-encrypted under the
 			// owner's certificate.
 			if (context.ownerCertificate) {
-				const ownerBlob = await this.encryptForRecipient(plaintext, context.ownerCertificate)
+				const ownerBlob = await this.encryptForRecipient(
+					plaintext,
+					context.ownerCertificate,
+				)
 				updates.push({
 					secretId: context.sourceSecretId,
 					key: ownerBlob.key ?? null,
@@ -174,7 +193,11 @@ export const useShareStore = defineStore('share', {
 			}
 			for (const share of shares) {
 				const certificate = share.recipientCertificate || share.certificate
-				if (certificate == null || certificate === '' || share.secretId === editedSecretId) {
+				if (
+					certificate == null
+					|| certificate === ''
+					|| share.secretId === editedSecretId
+				) {
 					// The writer's own copy was already updated by the
 					// regular edit; suite-less recipients are skipped.
 					continue
@@ -194,7 +217,9 @@ export const useShareStore = defineStore('share', {
 			}
 
 			const syncResponse = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/sync`),
+				generateUrl(
+					`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/sync`,
+				),
 				{
 					expectedUpdatedAt: context.sourceUpdatedAt ?? '',
 					updates,
@@ -214,10 +239,15 @@ export const useShareStore = defineStore('share', {
 			this.loading = true
 			this.error = null
 			try {
-				await axios.delete(generateUrl(`/apps/doriath/api/v1/shares/${shareId}`))
+				await axios.delete(
+					generateUrl(`/apps/doriath/api/v1/shares/${shareId}`),
+				)
 				this.shares = this.shares.filter((s) => s.id !== shareId)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to revoke share'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to revoke share'
 				throw e
 			} finally {
 				this.loading = false
@@ -300,7 +330,8 @@ export const useShareStore = defineStore('share', {
 				// EncryptionSuite of the recipient).
 				const updates = []
 				for (const share of this.shares) {
-					const certificate = share.recipientCertificate || share.certificate
+					const certificate =
+						share.recipientCertificate || share.certificate
 					if (certificate == null || certificate === '') {
 						// Skip recipients whose suite was revoked while the
 						// owner edited; the server-side cascade has already
@@ -308,7 +339,10 @@ export const useShareStore = defineStore('share', {
 						continue
 					}
 					// eslint-disable-next-line no-await-in-loop
-					const blob = await this.encryptForRecipient(plaintext, certificate)
+					const blob = await this.encryptForRecipient(
+						plaintext,
+						certificate,
+					)
 					updates.push({
 						secretId: share.secretId,
 						encryptedKey: blob.key ?? null,
@@ -330,7 +364,10 @@ export const useShareStore = defineStore('share', {
 				)
 				return response.data ?? { updated: updates.length }
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to sync update'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to sync update'
 				throw e
 			} finally {
 				this.loading = false

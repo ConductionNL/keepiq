@@ -11,15 +11,49 @@
 			</div>
 
 			<template v-if="caStatus && caStatus.root">
-				<p>{{ t('doriath', 'Root expires') }}: {{ caStatus.root.expiresAt }}</p>
-				<p>{{ t('doriath', 'Intermediate expires') }}: {{ caStatus.intermediate?.expiresAt }}</p>
+				<p>
+					{{ t('doriath', 'Root expires') }}: {{ caStatus.root.expiresAt }}
+				</p>
+				<p>
+					{{ t('doriath', 'Intermediate expires') }}:
+					{{ caStatus.intermediate?.expiresAt }}
+				</p>
 			</template>
 
-			<ul v-if="caStatus?.issued" class="ca-health__issued" data-testid="ca-issued-counts">
-				<li>{{ t('doriath', 'Active user vault certificates: {n}', { n: caStatus.issued.activeUserSuites }) }}</li>
-				<li>{{ t('doriath', 'Active application certificates: {n}', { n: caStatus.issued.activeApplicationSuites }) }}</li>
-				<li>{{ t('doriath', 'Stored certificate secrets: {n}', { n: caStatus.issued.storedCertificates }) }}</li>
-				<li>{{ t('doriath', 'Stored certificates expiring within 30 days: {n}', { n: caStatus.issued.storedExpiringSoon }) }}</li>
+			<ul
+				v-if="caStatus?.issued"
+				class="ca-health__issued"
+				data-testid="ca-issued-counts">
+				<li>
+					{{
+						t('doriath', 'Active user vault certificates: {n}', {
+							n: caStatus.issued.activeUserSuites,
+						})
+					}}
+				</li>
+				<li>
+					{{
+						t('doriath', 'Active application certificates: {n}', {
+							n: caStatus.issued.activeApplicationSuites,
+						})
+					}}
+				</li>
+				<li>
+					{{
+						t('doriath', 'Stored certificate secrets: {n}', {
+							n: caStatus.issued.storedCertificates,
+						})
+					}}
+				</li>
+				<li>
+					{{
+						t(
+							'doriath',
+							'Stored certificates expiring within 30 days: {n}',
+							{ n: caStatus.issued.storedExpiringSoon },
+						)
+					}}
+				</li>
 			</ul>
 
 			<NcButton
@@ -31,7 +65,10 @@
 			</NcButton>
 
 			<NcButton
-				v-if="caStatus?.status === 'healthy' || caStatus?.status === 'expiring_soon'"
+				v-if="
+					caStatus?.status === 'healthy'
+					|| caStatus?.status === 'expiring_soon'
+				"
 				variant="secondary"
 				:disabled="loading"
 				@click="forceRenewIntermediate">
@@ -102,7 +139,9 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
 		 */
 		async fetchStatus() {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/ca/status'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/ca/status'),
+			)
 			this.caStatus = response.data
 		},
 		/**
@@ -123,7 +162,9 @@ export default {
 		 */
 		async forceRenewIntermediate() {
 			this.loading = true
-			await axios.post(generateUrl('/apps/doriath/api/v1/ca/renew-intermediate'))
+			await axios.post(
+				generateUrl('/apps/doriath/api/v1/ca/renew-intermediate'),
+			)
 			await this.fetchStatus()
 			this.loading = false
 		},
@@ -146,11 +187,19 @@ export default {
 	display: inline-block;
 }
 
-.ca-health__indicator--green { background: var(--color-success); }
+.ca-health__indicator--green {
+	background: var(--color-success);
+}
 
-.ca-health__indicator--yellow { background: var(--color-warning); }
+.ca-health__indicator--yellow {
+	background: var(--color-warning);
+}
 
-.ca-health__indicator--red { background: var(--color-error); }
+.ca-health__indicator--red {
+	background: var(--color-error);
+}
 
-.ca-health__indicator--grey { background: var(--color-text-lighter); }
+.ca-health__indicator--grey {
+	background: var(--color-text-lighter);
+}
 </style>

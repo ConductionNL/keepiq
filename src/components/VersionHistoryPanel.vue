@@ -16,21 +16,35 @@
 			{{ store.error }}
 		</NcNoteCard>
 
-		<ul v-if="store.versions.length" class="version-history__list" data-testid="version-list">
-			<li v-for="version in store.versions" :key="version.id" class="version-history__row">
+		<ul
+			v-if="store.versions.length"
+			class="version-history__list"
+			data-testid="version-list">
+			<li
+				v-for="version in store.versions"
+				:key="version.id"
+				class="version-history__row">
 				<History :size="16" />
-				<span class="version-history__label" :data-testid="`version-${version.versionNumber}`">
-					{{ t('doriath', 'Version {number}', { number: version.versionNumber }) }}
+				<span
+					class="version-history__label"
+					:data-testid="`version-${version.versionNumber}`">
+					{{
+						t('doriath', 'Version {number}', {
+							number: version.versionNumber,
+						})
+					}}
 					<span class="version-history__meta">
 						{{ version.actorId }} · {{ formatDate(version.createdAt) }}
 					</span>
 				</span>
-				<NcButton variant="tertiary"
+				<NcButton
+					variant="tertiary"
 					:data-testid="`version-view-${version.versionNumber}`"
 					@click="onView(version)">
 					{{ t('doriath', 'View') }}
 				</NcButton>
-				<NcButton v-if="canManage"
+				<NcButton
+					v-if="canManage"
 					variant="tertiary"
 					:data-testid="`version-restore-${version.versionNumber}`"
 					@click="confirmVersion = version">
@@ -46,7 +60,8 @@
 		<VersionDetailsDialog :version="viewed" @close="viewed = null" />
 
 		<!-- Restore confirmation. -->
-		<VersionRestoreDialog :version="confirmVersion"
+		<VersionRestoreDialog
+			:version="confirmVersion"
 			@close="confirmVersion = null"
 			@confirm="onRestore" />
 	</div>
@@ -145,7 +160,9 @@ export default {
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed) ? (iso ?? '') : new Date(parsed).toLocaleString()
+			return Number.isNaN(parsed)
+				? (iso ?? '')
+				: new Date(parsed).toLocaleString()
 		},
 	},
 }

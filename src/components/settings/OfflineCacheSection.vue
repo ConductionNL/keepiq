@@ -12,7 +12,12 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Offline read-only cache')"
-		:description="t('doriath', 'Let users read their vault offline from an encrypted local snapshot refreshed on each unlock.')">
+		:description="
+			t(
+				'doriath',
+				'Let users read their vault offline from an encrypted local snapshot refreshed on each unlock.',
+			)
+		">
 		<div class="offline-cache">
 			<label class="offline-cache__toggle" for="offline-cache-enabled">
 				<input
@@ -20,11 +25,16 @@
 					v-model="enabled"
 					type="checkbox"
 					data-testid="offline-cache-enabled"
-					@change="save">
+					@change="save" />
 				{{ t('doriath', 'Enable offline caching for this instance') }}
 			</label>
 			<p class="offline-cache__disclosure">
-				{{ t('doriath', 'The offline snapshot stores secret ciphertext (openable only with the user\'s master-password-derived key, exactly as on the server) and encrypts secret names, URLs and folder names at rest. Offline access is strictly read-only. Disable this for endpoints that must never cache credentials; disabling purges existing caches on next load.') }}
+				{{
+					t(
+						'doriath',
+						"The offline snapshot stores secret ciphertext (openable only with the user's master-password-derived key, exactly as on the server) and encrypts secret names, URLs and folder names at rest. Offline access is strictly read-only. Disable this for endpoints that must never cache credentials; disabling purges existing caches on next load.",
+					)
+				}}
 			</p>
 		</div>
 	</CnSettingsSection>
@@ -52,8 +62,12 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
-			this.enabled = response.data?.offline_cache_enabled !== false && response.data?.offline_cache_enabled !== '0'
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings/admin'),
+			)
+			this.enabled =
+				response.data?.offline_cache_enabled !== false
+				&& response.data?.offline_cache_enabled !== '0'
 		} catch (e) {
 			console.warn('Doriath: failed to load offline-cache switch', e)
 		}

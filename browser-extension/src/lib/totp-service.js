@@ -30,9 +30,20 @@ export async function computeTotp(seed, now = undefined) {
 	}
 	try {
 		const epoch = now === undefined ? undefined : now
-		const code = epoch === undefined ? await generateTotp(params) : await generateTotp(params, epoch)
-		const remaining = epoch === undefined ? secondsRemaining(params.period) : secondsRemaining(params.period, epoch)
-		return { valid: true, code, secondsRemaining: remaining, period: params.period }
+		const code =
+			epoch === undefined
+				? await generateTotp(params)
+				: await generateTotp(params, epoch)
+		const remaining =
+			epoch === undefined
+				? secondsRemaining(params.period)
+				: secondsRemaining(params.period, epoch)
+		return {
+			valid: true,
+			code,
+			secondsRemaining: remaining,
+			period: params.period,
+		}
 	} catch {
 		return { valid: false }
 	}

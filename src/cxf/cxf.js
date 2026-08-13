@@ -109,100 +109,151 @@ function credentialToRow(credential, item, folder, sourceRow) {
 	const type = String(credential?.type ?? '')
 
 	switch (type) {
-	case 'basic-auth':
-	case 'password':
-	case 'login': {
-		const urls = Array.isArray(credential.urls) ? credential.urls.map(fieldValue) : []
-		return validateRow(makeRow({
-			name: title,
-			url: urls[0] ?? null,
-			login: fieldValue(credential.username) || null,
-			password: fieldValue(credential.password),
-			folder,
-			type: 'login',
-			additionalFields: fieldValue(credential.notes) ? { notes: fieldValue(credential.notes) } : null,
-		}, sourceRow))
-	}
-	case 'passkey': {
-		const json = serializePasskey({
-			credentialId: fieldValue(credential.credentialId),
-			rpId: fieldValue(credential.rpId),
-			rpName: fieldValue(credential.rpName),
-			userName: fieldValue(credential.userName),
-			userDisplayName: fieldValue(credential.userDisplayName),
-			userHandle: fieldValue(credential.userHandle),
-			privateKey: fieldValue(credential.key),
-		})
-		const row = makeRow({
-			name: title !== '' ? `${title} (passkey)` : 'Passkey',
-			url: fieldValue(credential.rpId) || null,
-			password: json ?? '',
-			folder,
-			type: 'passkey',
-		}, sourceRow)
-		if (json === null) {
-			return rejectRow(row, 'Incomplete CXF passkey (needs credentialId, rpId, and key material)')
+		case 'basic-auth':
+		case 'password':
+		case 'login': {
+			const urls = Array.isArray(credential.urls)
+				? credential.urls.map(fieldValue)
+				: []
+			return validateRow(
+				makeRow(
+					{
+						name: title,
+						url: urls[0] ?? null,
+						login: fieldValue(credential.username) || null,
+						password: fieldValue(credential.password),
+						folder,
+						type: 'login',
+						additionalFields: fieldValue(credential.notes)
+							? { notes: fieldValue(credential.notes) }
+							: null,
+					},
+					sourceRow,
+				),
+			)
 		}
-		return validateRow(row)
-	}
-	case 'totp': {
-		const seed = fieldValue(credential.url) || fieldValue(credential.secret)
-		const row = makeRow({
-			name: title !== '' ? `${title} (TOTP)` : 'TOTP',
-			url: null,
-			password: seed,
-			folder,
-			type: 'totp',
-		}, sourceRow)
-		if (seed === '') {
-			return rejectRow(row, 'CXF TOTP entry without a seed')
+		case 'passkey': {
+			const json = serializePasskey({
+				credentialId: fieldValue(credential.credentialId),
+				rpId: fieldValue(credential.rpId),
+				rpName: fieldValue(credential.rpName),
+				userName: fieldValue(credential.userName),
+				userDisplayName: fieldValue(credential.userDisplayName),
+				userHandle: fieldValue(credential.userHandle),
+				privateKey: fieldValue(credential.key),
+			})
+			const row = makeRow(
+				{
+					name: title !== '' ? `${title} (passkey)` : 'Passkey',
+					url: fieldValue(credential.rpId) || null,
+					password: json ?? '',
+					folder,
+					type: 'passkey',
+				},
+				sourceRow,
+			)
+			if (json === null) {
+				return rejectRow(
+					row,
+					'Incomplete CXF passkey (needs credentialId, rpId, and key material)',
+				)
+			}
+			return validateRow(row)
 		}
-		return validateRow(row)
-	}
-	case 'note':
-		return validateRow(makeRow({
-			name: title !== '' ? title : 'Note',
-			password: fieldValue(credential.content),
-			folder,
-			type: 'note',
-		}, sourceRow))
-	case 'api-key':
-		return validateRow(makeRow({
-			name: title !== '' ? title : 'API key',
-			login: fieldValue(credential.username) || null,
-			password: fieldValue(credential.key),
-			folder,
-			type: 'api_key',
-		}, sourceRow))
-	case 'ssh-key':
-		return validateRow(makeRow({
-			name: title !== '' ? title : 'SSH key',
-			password: fieldValue(credential.privateKey),
-			folder,
-			type: 'ssh_key',
-			additionalFields: fieldValue(credential.publicKey)
-				? { publicKey: fieldValue(credential.publicKey) }
-				: null,
-		}, sourceRow))
-	case 'wifi': {
-		// No dedicated Doriath type — map to `note` with the SSID and
-		// security type as additional fields (design decision).
-		const ssid = fieldValue(credential.ssid)
-		return validateRow(makeRow({
-			name: title !== '' ? title : (ssid !== '' ? `Wi-Fi ${ssid}` : 'Wi-Fi'),
-			password: fieldValue(credential.passphrase),
-			folder,
-			type: 'note',
-			additionalFields: {
-				...(ssid !== '' ? { ssid } : {}),
-				...(fieldValue(credential.security) !== '' ? { security: fieldValue(credential.security) } : {}),
-			},
-		}, sourceRow))
-	}
-	default: {
-		const row = makeRow({ name: title !== '' ? title : 'Unknown credential', folder }, sourceRow)
-		return rejectRow(row, `Unsupported CXF credential type "${type || 'unknown'}"`)
-	}
+		case 'totp': {
+			const seed = fieldValue(credential.url) || fieldValue(credential.secret)
+			const row = makeRow(
+				{
+					name: title !== '' ? `${title} (TOTP)` : 'TOTP',
+					url: null,
+					password: seed,
+					folder,
+					type: 'totp',
+				},
+				sourceRow,
+			)
+			if (seed === '') {
+				return rejectRow(row, 'CXF TOTP entry without a seed')
+			}
+			return validateRow(row)
+		}
+		case 'note':
+			return validateRow(
+				makeRow(
+					{
+						name: title !== '' ? title : 'Note',
+						password: fieldValue(credential.content),
+						folder,
+						type: 'note',
+					},
+					sourceRow,
+				),
+			)
+		case 'api-key':
+			return validateRow(
+				makeRow(
+					{
+						name: title !== '' ? title : 'API key',
+						login: fieldValue(credential.username) || null,
+						password: fieldValue(credential.key),
+						folder,
+						type: 'api_key',
+					},
+					sourceRow,
+				),
+			)
+		case 'ssh-key':
+			return validateRow(
+				makeRow(
+					{
+						name: title !== '' ? title : 'SSH key',
+						password: fieldValue(credential.privateKey),
+						folder,
+						type: 'ssh_key',
+						additionalFields: fieldValue(credential.publicKey)
+							? { publicKey: fieldValue(credential.publicKey) }
+							: null,
+					},
+					sourceRow,
+				),
+			)
+		case 'wifi': {
+			// No dedicated Doriath type — map to `note` with the SSID and
+			// security type as additional fields (design decision).
+			const ssid = fieldValue(credential.ssid)
+			return validateRow(
+				makeRow(
+					{
+						name:
+							title !== ''
+								? title
+								: ssid !== ''
+									? `Wi-Fi ${ssid}`
+									: 'Wi-Fi',
+						password: fieldValue(credential.passphrase),
+						folder,
+						type: 'note',
+						additionalFields: {
+							...(ssid !== '' ? { ssid } : {}),
+							...(fieldValue(credential.security) !== ''
+								? { security: fieldValue(credential.security) }
+								: {}),
+						},
+					},
+					sourceRow,
+				),
+			)
+		}
+		default: {
+			const row = makeRow(
+				{ name: title !== '' ? title : 'Unknown credential', folder },
+				sourceRow,
+			)
+			return rejectRow(
+				row,
+				`Unsupported CXF credential type "${type || 'unknown'}"`,
+			)
+		}
 	}
 }
 
@@ -218,13 +269,17 @@ export function cxfToRows(doc) {
 	for (const account of doc.accounts) {
 		for (const item of account.items) {
 			const folder = collectionOf(account, item.id)
-			const credentials = Array.isArray(item.credentials) ? item.credentials : []
+			const credentials = Array.isArray(item.credentials)
+				? item.credentials
+				: []
 			if (credentials.length === 0) {
 				sourceRow += 1
-				rows.push(rejectRow(
-					makeRow({ name: item.title ?? '', folder }, sourceRow),
-					'CXF item carries no credentials',
-				))
+				rows.push(
+					rejectRow(
+						makeRow({ name: item.title ?? '', folder }, sourceRow),
+						'CXF item carries no credentials',
+					),
+				)
 				continue
 			}
 			for (const credential of credentials) {
@@ -250,63 +305,79 @@ export function cxfToRows(doc) {
  */
 function rowToCredential(row, typeName, unmapped) {
 	switch (typeName) {
-	case 'login':
-	case 'database':
-		return {
-			type: 'basic-auth',
-			urls: row.url ? [row.url] : [],
-			username: { fieldType: 'string', value: row.login ?? '' },
-			password: { fieldType: 'concealed-string', value: row.password ?? '' },
+		case 'login':
+		case 'database':
+			return {
+				type: 'basic-auth',
+				urls: row.url ? [row.url] : [],
+				username: { fieldType: 'string', value: row.login ?? '' },
+				password: {
+					fieldType: 'concealed-string',
+					value: row.password ?? '',
+				},
+			}
+		case 'passkey': {
+			const credential = parsePasskey(row.password ?? '')
+			if (credential === null) {
+				unmapped.push(
+					`${row.name}: stored passkey credential is not valid canonical JSON`,
+				)
+				return null
+			}
+			// `counter`/`transports`/`createdAt` are Doriath extensions with no
+			// CXF-core home — dropped on export, reported (design D4).
+			if (credential.counter !== 0 || credential.transports.length > 0) {
+				unmapped.push(
+					`${row.name}: passkey counter/transports are Doriath extensions and do not survive CXF export`,
+				)
+			}
+			return {
+				type: 'passkey',
+				credentialId: credential.credentialId,
+				rpId: credential.rpId,
+				rpName: credential.rpName,
+				userName: credential.userName,
+				userDisplayName: credential.userDisplayName,
+				userHandle: credential.userHandle,
+				key: credential.privateKey,
+			}
 		}
-	case 'passkey': {
-		const credential = parsePasskey(row.password ?? '')
-		if (credential === null) {
-			unmapped.push(`${row.name}: stored passkey credential is not valid canonical JSON`)
+		case 'totp':
+			return { type: 'totp', url: row.password ?? '' }
+		case 'note':
+			return { type: 'note', content: row.password ?? '' }
+		case 'api_key':
+			return {
+				type: 'api-key',
+				username: { fieldType: 'string', value: row.login ?? '' },
+				key: { fieldType: 'concealed-string', value: row.password ?? '' },
+			}
+		case 'ssh_key':
+			return {
+				type: 'ssh-key',
+				privateKey: {
+					fieldType: 'concealed-string',
+					value: row.password ?? '',
+				},
+				publicKey: {
+					fieldType: 'string',
+					value:
+						row.additionalFields
+						&& typeof row.additionalFields === 'object'
+							? (row.additionalFields.publicKey ?? '')
+							: '',
+				},
+			}
+		case 'certificate':
+			unmapped.push(
+				`${row.name}: certificate secrets have no CXF entity — not exported`,
+			)
 			return null
-		}
-		// `counter`/`transports`/`createdAt` are Doriath extensions with no
-		// CXF-core home — dropped on export, reported (design D4).
-		if (credential.counter !== 0 || credential.transports.length > 0) {
-			unmapped.push(`${row.name}: passkey counter/transports are Doriath extensions and do not survive CXF export`)
-		}
-		return {
-			type: 'passkey',
-			credentialId: credential.credentialId,
-			rpId: credential.rpId,
-			rpName: credential.rpName,
-			userName: credential.userName,
-			userDisplayName: credential.userDisplayName,
-			userHandle: credential.userHandle,
-			key: credential.privateKey,
-		}
-	}
-	case 'totp':
-		return { type: 'totp', url: row.password ?? '' }
-	case 'note':
-		return { type: 'note', content: row.password ?? '' }
-	case 'api_key':
-		return {
-			type: 'api-key',
-			username: { fieldType: 'string', value: row.login ?? '' },
-			key: { fieldType: 'concealed-string', value: row.password ?? '' },
-		}
-	case 'ssh_key':
-		return {
-			type: 'ssh-key',
-			privateKey: { fieldType: 'concealed-string', value: row.password ?? '' },
-			publicKey: {
-				fieldType: 'string',
-				value: (row.additionalFields && typeof row.additionalFields === 'object'
-					? (row.additionalFields.publicKey ?? '')
-					: ''),
-			},
-		}
-	case 'certificate':
-		unmapped.push(`${row.name}: certificate secrets have no CXF entity — not exported`)
-		return null
-	default:
-		unmapped.push(`${row.name}: type "${typeName}" has no CXF entity — not exported`)
-		return null
+		default:
+			unmapped.push(
+				`${row.name}: type "${typeName}" has no CXF entity — not exported`,
+			)
+			return null
 	}
 }
 
@@ -324,14 +395,24 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 	const unmapped = []
 	const items = []
 	const collections = new Map()
-	const typeNames = new Set(['login', 'api_key', 'ssh_key', 'certificate', 'note', 'database', 'totp', 'passkey'])
+	const typeNames = new Set([
+		'login',
+		'api_key',
+		'ssh_key',
+		'certificate',
+		'note',
+		'database',
+		'totp',
+		'passkey',
+	])
 
 	for (const [index, row] of serializedSecrets.entries()) {
 		let typeName = String(row.type ?? 'login')
 		if (!typeNames.has(typeName)) {
-			const mapped = options.typeNamesById instanceof Map
-				? options.typeNamesById.get(typeName)
-				: (options.typeNamesById || {})[typeName]
+			const mapped =
+				options.typeNamesById instanceof Map
+					? options.typeNamesById.get(typeName)
+					: (options.typeNamesById || {})[typeName]
 			typeName = mapped ?? typeName
 		}
 
@@ -350,7 +431,11 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 		const folder = row.folder != null ? String(row.folder) : ''
 		if (folder !== '') {
 			if (!collections.has(folder)) {
-				collections.set(folder, { id: `collection-${collections.size + 1}`, title: folder, items: [] })
+				collections.set(folder, {
+					id: `collection-${collections.size + 1}`,
+					title: folder,
+					items: [],
+				})
 			}
 			collections.get(folder).items.push(itemId)
 		}
@@ -361,13 +446,15 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 			version: CXF_VERSION,
 			exporter: 'doriath',
 			timestamp: Math.floor(Date.now() / 1000),
-			accounts: [{
-				id: 'account-1',
-				userName: options.accountUserName ?? '',
-				email: '',
-				items,
-				collections: [...collections.values()],
-			}],
+			accounts: [
+				{
+					id: 'account-1',
+					userName: options.accountUserName ?? '',
+					email: '',
+					items,
+					collections: [...collections.values()],
+				},
+			],
 		},
 		unmapped,
 		itemCount: items.length,
