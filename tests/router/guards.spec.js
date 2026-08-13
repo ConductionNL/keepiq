@@ -52,6 +52,15 @@ function route(name, fullPath = `/${name.toLowerCase()}`, meta = {}) {
 // The 'stays in step with src/manifest.json' test below is what makes
 // that true — without it this comment would describe a drift check that
 // does not exist.
+//
+// Scope: the BUNDLED manifest only. main.js builds the router from
+// buildManifest(bundledManifest, fragments, menuLayout), where fragments is
+// require.context('./manifest.d/', ...) — a webpack-only API with no vitest
+// equivalent, so a page delivered as a fragment gets a route that this check
+// cannot see. That is inert today (src/manifest.d/ ships only an empty
+// placeholder) and the guard denies unknown routes structurally, so such a
+// page would be gated, just untested. Revisit if manifest.d/ ever carries
+// real pages.
 const PROTECTED_ROUTES = [
 	'Dashboard',
 	'FeaturesRoadmap',
@@ -325,6 +334,27 @@ describe('handleLockTransition', () => {
 		expect(router.replace).toHaveBeenCalledWith({
 			name: LOCK_ROUTE_NAME,
 			query: { returnUrl: undefined },
+		})
+	})
+
+	// The mirror of createVaultGuard's `store?.isLocked !== false`: only an
+	// explicit `false` means unlocked. A truthy-but-not-`true` or absent value
+	// must still evict, because nothing else will — beforeEach does not fire
+	// without a navigation, which is the whole reason this function exists.
+	it.each([
+		['undefined', undefined],
+		['null', null],
+		['a truthy non-boolean', 'yes'],
+		['0', 0],
+	])('evicts on a non-boolean locked value (%s)', (_label, locked) => {
+		const router = { replace: vi.fn() }
+
+		expect(
+			handleLockTransition(locked, route('SecretList', '/secrets'), router),
+		).toBe(true)
+		expect(router.replace).toHaveBeenCalledWith({
+			name: LOCK_ROUTE_NAME,
+			query: { returnUrl: '/secrets' },
 		})
 	})
 })

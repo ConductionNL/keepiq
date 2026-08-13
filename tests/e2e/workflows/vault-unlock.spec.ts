@@ -131,12 +131,27 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 		 * is a leak unless it is something the LOCK SCREEN itself legitimately
 		 * needs. Adding an endpoint to this list is then a deliberate act with a
 		 * reason, which is the property we want.
+		 *
+		 * Each entry below must name traffic that actually fires while locked —
+		 * an entry that cannot fire is pure masking surface, since it would
+		 * silently swallow an unexpected request to that family. The
+		 * recipient-facing `/api/v1/public/` prefix was one such entry: the hash
+		 * loop below excludes every public route, so nothing under it is
+		 * reachable here and a request to it would be worth failing on.
 		 */
 		const LOCK_SCREEN_LEGITIMATE = [
 			/\/api\/v1\/suites\b/, // suite state: setup vs unlock mode
 			/\/api\/v1\/migrations\/status\b/, // resume banner
-			/\/api\/settings\/user\b/, // session timeout preference
-			/\/api\/v1\/public\//, // recipient-facing token routes
+			// App.vue's created() calls initializeStores() unconditionally,
+			// before any route resolves and regardless of lock state, and
+			// settingsStore.fetchSettings() requests the BARE /api/settings
+			// path. A `/api/settings/user\b` pattern does not cover it — the
+			// `/user` segment has to be optional.
+			/\/api\/settings(\/user)?(\/|$|\?)/,
+			// LockScreen's own created() offers passkey unlock whenever
+			// online, which is true in headless Chromium over the instance's
+			// HTTPS origin.
+			/\/api\/v1\/passkeys\/login-options\b/,
 		]
 
 		page.on('request', (req) => {

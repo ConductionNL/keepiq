@@ -106,6 +106,15 @@ export function isPublicRoute(route) {
  * therefore never caught, and this is the same shape — so it is asserted
  * rather than described.
  *
+ * Fail closed on the same terms as createVaultGuard: ONLY an explicit `false`
+ * counts as unlocked. Read as `if (locked !== true) return false` this would
+ * do NOTHING when `locked` is absent or non-boolean, leaving the user sitting
+ * on a rendered secret page — and `beforeEach` cannot rescue them, because the
+ * no-navigation case is precisely what this function exists for. In the
+ * shipped wiring `isLocked` is `cryptoKey === null` and always boolean, so
+ * this is hardening rather than a live defect; the point is that the two
+ * halves of one invariant must not disagree about which way is safe.
+ *
  * @param {boolean} locked Whether the vault is now locked.
  * @param {object|null} route The current route ($route).
  * @param {object} router The router ($router), needing `.replace()`.
@@ -113,7 +122,7 @@ export function isPublicRoute(route) {
  * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
  */
 export function handleLockTransition(locked, route, router) {
-	if (locked !== true) {
+	if (locked === false) {
 		return false
 	}
 
