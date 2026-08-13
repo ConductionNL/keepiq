@@ -35,7 +35,12 @@ describe('AdminApplicationsView', () => {
 	it('renders one row per pending application', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: [
-				{ id: 'a1', name: 'CI Bot', description: 'GitLab', registered_by: 'alice' },
+				{
+					id: 'a1',
+					name: 'CI Bot',
+					description: 'GitLab',
+					registered_by: 'alice',
+				},
 				{ id: 'a2', name: 'Monitor', registered_by: 'bob' },
 			],
 		})
@@ -98,9 +103,12 @@ describe('AdminApplicationsView', () => {
 		store.oneTimePrivateKeyAppId = 'app-1'
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('[data-testid="private-key-dialog"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="private-key-text"]').element.value)
-			.toContain('BEGIN PRIVATE KEY')
+		expect(wrapper.find('[data-testid="private-key-dialog"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="private-key-text"]').element.value,
+		).toContain('BEGIN PRIVATE KEY')
 	})
 
 	it('keeps the dismiss button disabled until the acknowledgment checkbox is ticked', async () => {

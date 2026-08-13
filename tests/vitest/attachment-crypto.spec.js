@@ -43,7 +43,9 @@ describe('attachment store crypto', () => {
 		})
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 
-		const file = new File([new TextEncoder().encode(PLAINTEXT)], FILENAME, { type: 'application/pdf' })
+		const file = new File([new TextEncoder().encode(PLAINTEXT)], FILENAME, {
+			type: 'application/pdf',
+		})
 		const store = useAttachmentStore()
 		await store.upload('sec-1', file)
 
@@ -67,7 +69,9 @@ describe('attachment store crypto', () => {
 		getSpy.mockResolvedValue({ data: [] })
 
 		const store = useAttachmentStore()
-		const file = new File([new TextEncoder().encode(PLAINTEXT)], FILENAME, { type: 'application/pdf' })
+		const file = new File([new TextEncoder().encode(PLAINTEXT)], FILENAME, {
+			type: 'application/pdf',
+		})
 		await store.upload('sec-1', file)
 
 		// Serve the uploaded ciphertext back as the server would.
@@ -76,13 +80,15 @@ describe('attachment store crypto', () => {
 				return { data: { blob: uploaded.blob } }
 			}
 			return {
-				data: [{
-					id: 'att-1',
-					sizeBytes: 123,
-					createdAt: null,
-					encryptedMetadata: uploaded.encryptedMetadata,
-					wrappedFileKey: uploaded.wrappedFileKey,
-				}],
+				data: [
+					{
+						id: 'att-1',
+						sizeBytes: 123,
+						createdAt: null,
+						encryptedMetadata: uploaded.encryptedMetadata,
+						wrappedFileKey: uploaded.wrappedFileKey,
+					},
+				],
 			}
 		})
 

@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { decryptSnapshot, encryptSnapshot, generateLinkPassword } from '../../crypto/index.js'
+import {
+	decryptSnapshot,
+	encryptSnapshot,
+	generateLinkPassword,
+} from '../../crypto/index.js'
 
 /**
  * Pinia store for password-protected link shares.
@@ -34,7 +38,9 @@ export const useLinkShareStore = defineStore('linkShare', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/link-shares`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/link-shares`,
+					),
 				)
 				this.linkShares = response.data || []
 			} finally {
@@ -60,10 +66,15 @@ export const useLinkShareStore = defineStore('linkShare', {
 			this.loading = true
 			try {
 				const password = generateLinkPassword()
-				const { blob, salt } = await encryptSnapshot(JSON.stringify(snapshot), password)
+				const { blob, salt } = await encryptSnapshot(
+					JSON.stringify(snapshot),
+					password,
+				)
 
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/link-shares`),
+					generateUrl(
+						`/apps/doriath/api/v1/secrets/${secretId}/link-shares`,
+					),
 					{
 						encryptedSecretSnapshot: blob,
 						argon2idSalt: salt,
@@ -88,7 +99,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 */
 		async deleteLinkShare(id) {
 			await axios.delete(generateUrl(`/apps/doriath/api/v1/link-shares/${id}`))
-			this.linkShares = this.linkShares.filter(share => share.id !== id)
+			this.linkShares = this.linkShares.filter((share) => share.id !== id)
 		},
 
 		/**
@@ -113,7 +124,9 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 */
 		async fetchPublicLinkShare(token, failed = false) {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}`),
+				generateUrl(
+					`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}`,
+				),
 				{ params: failed ? { failed: '1' } : {} },
 			)
 			return response.data
@@ -132,7 +145,9 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 */
 		async confirmPublicLinkShare(token) {
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}/confirm`),
+				generateUrl(
+					`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}/confirm`,
+				),
 				{},
 			)
 			return response.data

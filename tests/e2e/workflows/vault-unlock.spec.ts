@@ -35,40 +35,51 @@
  * @e2e openspec/specs/encryption-suites/spec.md#user-views-lock-screen
  */
 import { test, expect } from '@playwright/test'
-import {
-	gotoLockSettled,
-	lockHeading,
-	unlockVault,
-} from './_workflow-helpers'
+import { gotoLockSettled, lockHeading, unlockVault } from './_workflow-helpers'
 
 test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
-	test('lock screen renders in UNLOCK mode (admin owns a seeded active suite)', async ({ page }) => {
+	test('lock screen renders in UNLOCK mode (admin owns a seeded active suite)', async ({
+		page,
+	}) => {
 		const heading = await gotoLockSettled(page)
 		expect(heading).toMatch(/Unlock Doriath/i)
 		// Unlock mode has exactly one password field (setup mode has two).
-		expect(await page.locator('.lock-screen input[type="password"]').count()).toBe(1)
+		expect(
+			await page.locator('.lock-screen input[type="password"]').count(),
+		).toBe(1)
 		await expect(page.locator('.lock-screen__card')).toBeVisible()
 	})
 
 	test('the Unlock button is gated on a non-empty password', async ({ page }) => {
 		await gotoLockSettled(page)
-		const btn = page.locator('.lock-screen button')
-			.filter({ hasText: /^\s*Unlock\s*$/i }).first()
+		const btn = page
+			.locator('.lock-screen button')
+			.filter({ hasText: /^\s*Unlock\s*$/i })
+			.first()
 		// Disabled with an empty field…
 		await expect(btn).toBeDisabled()
 		// …enabled once the master-password field has a value.
-		await page.locator('.lock-screen input[type="password"]').first().fill('anything', { force: true })
+		await page
+			.locator('.lock-screen input[type="password"]')
+			.first()
+			.fill('anything', { force: true })
 		await expect(btn).toBeEnabled()
 	})
 
-	test('all secret routes redirect to the lock screen while locked (zero-knowledge gate)', async ({ page }) => {
+	test('all secret routes redirect to the lock screen while locked (zero-knowledge gate)', async ({
+		page,
+	}) => {
 		for (const route of ['secrets', 'secrets/some-id', 'folders/some-folder']) {
 			// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud, and this
 			// loop pays the cost three times. The lock heading is the readiness
 			// signal.
-			await page.goto(`/index.php/apps/doriath/${route}`, { waitUntil: 'domcontentloaded' })
+			await page.goto(`/index.php/apps/doriath/${route}`, {
+				waitUntil: 'domcontentloaded',
+			})
 			await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
-			await expect(lockHeading(page)).toHaveText(/Unlock Doriath|Set up your master password/i)
+			await expect(lockHeading(page)).toHaveText(
+				/Unlock Doriath|Set up your master password/i,
+			)
 			// No unlocked content leaks through the guard.
 			await expect(page.locator('.secret-detail__card')).toHaveCount(0)
 		}
@@ -82,7 +93,9 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 * click (the earlier "router push is a no-op" diagnosis was actually the
 	 * swallowed click — the navigation fires correctly).
 	 */
-	test('correct dev master password unlocks the seeded vault', async ({ page }) => {
+	test('correct dev master password unlocks the seeded vault', async ({
+		page,
+	}) => {
 		await unlockVault(page)
 		await expect(page).not.toHaveURL(/\/lock(\?|$)/, { timeout: 15_000 })
 		await expect(page.locator('.lock-screen')).toHaveCount(0)
@@ -94,19 +107,27 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 * ran). With a native click, handleUnlock's catch sets `this.error` and the
 	 * note renders, and the user stays on the lock screen.
 	 */
-	test('wrong master password shows an error note and stays on the lock screen', async ({ page }) => {
+	test('wrong master password shows an error note and stays on the lock screen', async ({
+		page,
+	}) => {
 		await gotoLockSettled(page)
-		await page.locator('.lock-screen input[type="password"]').first().fill('definitely-not-the-master-pw', { force: true })
+		await page
+			.locator('.lock-screen input[type="password"]')
+			.first()
+			.fill('definitely-not-the-master-pw', { force: true })
 		await page.waitForTimeout(300)
 		await page.evaluate(() => {
-			const b = Array.from(document.querySelectorAll('.lock-screen button'))
-				.find((x) => /Unlock/i.test(x.textContent || ''))
+			const b = Array.from(
+				document.querySelectorAll('.lock-screen button'),
+			).find((x) => /Unlock/i.test(x.textContent || ''))
 			if (b) {
-				(b as HTMLElement).click()
+				;(b as HTMLElement).click()
 			}
 		})
 		await expect(
-			page.locator('.lock-screen').getByText(/Wrong master password|decryption failed/i),
+			page
+				.locator('.lock-screen')
+				.getByText(/Wrong master password|decryption failed/i),
 		).toBeVisible({ timeout: 15_000 })
 		await expect(lockHeading(page)).toHaveText(/Unlock Doriath/i)
 	})
@@ -118,7 +139,9 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 * native click the unlock fires, `$router.push(returnUrl)` navigates to the
 	 * Dashboard, and the lock screen unmounts.
 	 */
-	test('successful unlock navigates into the vault (router push fires)', async ({ page }) => {
+	test('successful unlock navigates into the vault (router push fires)', async ({
+		page,
+	}) => {
 		await unlockVault(page)
 		// Hash-mode router: after a successful unlock the router pushes off the
 		// `#/lock` gate to the return route (default `#/` dashboard). Assert the

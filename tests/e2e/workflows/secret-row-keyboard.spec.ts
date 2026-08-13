@@ -27,7 +27,9 @@ import { test, expect } from '@playwright/test'
 import { unlockVault, openVault } from './_workflow-helpers'
 
 test.describe('Workflow: secret rows are keyboard-operable — secrets-write-ui/spec.md', () => {
-	test('Tab + Enter opens a secret from the list without a mouse', async ({ page }) => {
+	test('Tab + Enter opens a secret from the list without a mouse', async ({
+		page,
+	}) => {
 		// @e2e secrets-write-ui::opening-a-secret-row-via-keyboard-only
 		// @e2e secrets-write-ui::focused-row-shows-a-visible-focus-indicator
 		await unlockVault(page)
@@ -68,13 +70,17 @@ test.describe('Workflow: secret rows are keyboard-operable — secrets-write-ui/
 					if (!style || !(rule as CSSStyleRule).selectorText) {
 						continue
 					}
-					if (!/secret-list-item/.test((rule as CSSStyleRule).selectorText)) {
+					if (
+						!/secret-list-item/.test((rule as CSSStyleRule).selectorText)
+					) {
 						continue
 					}
 					if (!/focus-visible/.test((rule as CSSStyleRule).selectorText)) {
 						continue
 					}
-					const v = style.getPropertyValue('outline') || style.getPropertyValue('outline-color')
+					const v =
+						style.getPropertyValue('outline')
+						|| style.getPropertyValue('outline-color')
 					if (v) {
 						declared += v + ';'
 					}
@@ -86,18 +92,20 @@ test.describe('Workflow: secret rows are keyboard-operable — secrets-write-ui/
 		expect(
 			outline.declared,
 			'no :focus-visible outline rule was found for .secret-list-item — '
-			+ 'the focus indicator is not authored where the scenario says it is',
+				+ 'the focus indicator is not authored where the scenario says it is',
 		).not.toBe('')
 		expect(
 			outline.declared,
 			'the focus outline colour is hardcoded rather than an NC custom '
-			+ `property (declared: ${outline.declared})`,
+				+ `property (declared: ${outline.declared})`,
 		).toMatch(/var\(\s*--/)
 
 		await page.keyboard.press('Enter')
 
 		// Enter on the focused row navigates to the secret's detail view.
-		await expect(page.locator('.secret-detail__card')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('.secret-detail__card')).toBeVisible({
+			timeout: 20_000,
+		})
 	})
 
 	test('Space also activates a focused row', async ({ page }) => {
@@ -112,10 +120,15 @@ test.describe('Workflow: secret rows are keyboard-operable — secrets-write-ui/
 		await expect(firstRow).toBeFocused()
 		await page.keyboard.press('Space')
 
-		await expect(page.locator('.secret-detail__card')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('.secret-detail__card')).toBeVisible({
+			timeout: 20_000,
+		})
 	})
 
-	test('the copy-password control is independently focusable and does not open the row', async ({ page, context }) => {
+	test('the copy-password control is independently focusable and does not open the row', async ({
+		page,
+		context,
+	}) => {
 		// @e2e secrets-write-ui::copy-control-does-not-trigger-row-navigation
 		// The scenario has TWO clauses — "MUST copy the password and MUST NOT
 		// also emit the row's open event". Only the second used to be asserted,
@@ -141,9 +154,13 @@ test.describe('Workflow: secret rows are keyboard-operable — secrets-write-ui/
 		// decrypted in the browser, so a non-empty clipboard is the observable.
 		await expect
 			.poll(
-				async () => await page.evaluate(() => navigator.clipboard.readText().catch(() => '')),
+				async () =>
+					await page.evaluate(() =>
+						navigator.clipboard.readText().catch(() => ''),
+					),
 				{
-					message: 'the copy control was activated but the clipboard stayed '
+					message:
+						'the copy control was activated but the clipboard stayed '
 						+ 'empty — the "does not navigate" assertion below would then '
 						+ 'pass for a button that does nothing',
 					timeout: 15_000,

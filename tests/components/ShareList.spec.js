@@ -36,7 +36,9 @@ describe('ShareList', () => {
 				{ id: 's2', target_user_id: 'bob', group_share_id: 'g1' },
 			],
 		})
-		const wrapper = mount(ShareList, { propsData: { secretId: 'sec-1', canRevoke: true } })
+		const wrapper = mount(ShareList, {
+			propsData: { secretId: 'sec-1', canRevoke: true },
+		})
 		await flush()
 		expect(wrapper.findAll('[data-testid="share-row"]')).toHaveLength(2)
 		expect(wrapper.findAll('[data-testid="share-row-revoke"]')).toHaveLength(2)
@@ -46,7 +48,9 @@ describe('ShareList', () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: [{ id: 's1', target_user_id: 'alice' }],
 		})
-		const wrapper = mount(ShareList, { propsData: { secretId: 'sec-1', canRevoke: false } })
+		const wrapper = mount(ShareList, {
+			propsData: { secretId: 'sec-1', canRevoke: false },
+		})
 		await flush()
 		expect(wrapper.find('[data-testid="share-row-revoke"]').exists()).toBe(false)
 	})
@@ -56,7 +60,9 @@ describe('ShareList', () => {
 			data: [{ id: 's1', target_user_id: 'alice' }],
 		})
 		const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
-		const wrapper = mount(ShareList, { propsData: { secretId: 'sec-1', canRevoke: true } })
+		const wrapper = mount(ShareList, {
+			propsData: { secretId: 'sec-1', canRevoke: true },
+		})
 		await flush()
 		await wrapper.find('[data-testid="share-row-revoke"]').trigger('click')
 		await flush()

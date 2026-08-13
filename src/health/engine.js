@@ -204,8 +204,8 @@ export function vaultScore(summary) {
 	if (analysed === 0) {
 		return 100
 	}
-	const weighted
-		= FINDING_WEIGHTS.weak * (summary.weakCount || 0)
+	const weighted =
+		FINDING_WEIGHTS.weak * (summary.weakCount || 0)
 		+ FINDING_WEIGHTS.reused * (summary.reusedCount || 0)
 		+ FINDING_WEIGHTS.stale * (summary.staleCount || 0)
 		+ FINDING_WEIGHTS.breached * (summary.breachedCount || 0)

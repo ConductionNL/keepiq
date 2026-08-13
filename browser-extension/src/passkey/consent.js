@@ -10,10 +10,12 @@ const rp = params.get('rp') || 'this site'
 const op = params.get('op') || 'get'
 const id = params.get('id')
 
-document.getElementById('title').textContent = op === 'create' ? 'Create a passkey?' : 'Sign in with a passkey?'
-document.getElementById('body').textContent = op === 'create'
-	? `Create and store a new passkey for “${rp}” in your Doriath vault?`
-	: `Use a passkey stored in your Doriath vault to sign in to “${rp}”?`
+document.getElementById('title').textContent =
+	op === 'create' ? 'Create a passkey?' : 'Sign in with a passkey?'
+document.getElementById('body').textContent =
+	op === 'create'
+		? `Create and store a new passkey for “${rp}” in your Doriath vault?`
+		: `Use a passkey stored in your Doriath vault to sign in to “${rp}”?`
 
 function respond(allow) {
 	chrome.runtime.sendMessage({ type: 'passkey-consent-result', id, allow })

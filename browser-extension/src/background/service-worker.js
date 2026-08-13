@@ -50,7 +50,11 @@ async function getState() {
 }
 
 async function doPair(payload) {
-	const config = { url: payload.url, user: payload.user, appPassword: payload.appPassword }
+	const config = {
+		url: payload.url,
+		user: payload.user,
+		appPassword: payload.appPassword,
+	}
 	// Verify the credential actually pairs before persisting it.
 	await api.pair(config)
 	await api.saveConfig(config)
@@ -91,7 +95,12 @@ async function doMatch(payload) {
 	const ranked = matchSecrets(rows, payload.host)
 	// Return only index fields to the popup; the blobs stay in the worker cache.
 	blobCache = new Map(ranked.map((r) => [r.id, r]))
-	return ranked.map((r) => ({ id: r.id, name: r.name, url: r.url, typeId: r.typeId }))
+	return ranked.map((r) => ({
+		id: r.id,
+		name: r.name,
+		url: r.url,
+		typeId: r.typeId,
+	}))
 }
 
 // Short-lived cache of the last match's blob rows (cleared on lock).
@@ -103,25 +112,35 @@ let blobCache = new Map()
  */
 async function doFill(payload) {
 	if (!vault.isUnlocked()) throw new Error('vault is locked')
-	const row = blobCache.get(payload.id) || await api.getSecret(await api.loadConfig(), payload.id)
+	const row =
+		blobCache.get(payload.id)
+		|| (await api.getSecret(await api.loadConfig(), payload.id))
 	const { login, secret } = await vault.decryptSecret(row)
 	await touchActivity()
 	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 	if (!tab) return { filled: false }
-	const results = await chrome.tabs.sendMessage(tab.id, {
-		type: 'fill-credential',
-		payload: { login, secret },
-	}).catch(() => ({ filled: false }))
+	const results = await chrome.tabs
+		.sendMessage(tab.id, {
+			type: 'fill-credential',
+			payload: { login, secret },
+		})
+		.catch(() => ({ filled: false }))
 	// Auto-copy a matched TOTP code so it is one paste away on the 2FA prompt
 	// (extension-totp-autofill §3). The popup performs the clipboard write +
 	// scheduled clear (a service worker has no clipboard access).
 	let host = ''
-	try { host = tab.url ? new URL(tab.url).hostname : '' } catch { host = '' }
+	try {
+		host = tab.url ? new URL(tab.url).hostname : ''
+	} catch {
+		host = ''
+	}
 	const totpCode = host ? await totpCodeForHost(host) : null
 	if (totpCode) {
 		// Best-effort: fill a detected OTP field on the page; the popup also
 		// copies the code as the fallback (extension-totp-autofill §4.1).
-		chrome.tabs.sendMessage(tab.id, { type: 'fill-otp', payload: { code: totpCode } }).catch(() => {})
+		chrome.tabs
+			.sendMessage(tab.id, { type: 'fill-otp', payload: { code: totpCode } })
+			.catch(() => {})
 	}
 	return { filled: !!results?.filled, totpCode }
 }
@@ -197,15 +216,23 @@ const handlers = {
 	pair: doPair,
 	unpair: doUnpair,
 	unlock: doUnlock,
-	lock: async () => { vault.lock(); blobCache = new Map(); return { ok: true } },
+	lock: async () => {
+		vault.lock()
+		blobCache = new Map()
+		return { ok: true }
+	},
 	match: doMatch,
 	fill: doFill,
 	'save-capture': doSaveCapture,
 	'totp-for-host': doTotpForHost,
 	'pending-capture': async () => ({ capture: takePendingCapture() }),
 	// WebAuthn ceremonies relayed from the page-context shim (Firefox path).
-	'webauthn-create': async (p) => ({ credential: await passkey.handleCreate(p.options, p.origin) }),
-	'webauthn-get': async (p) => ({ assertion: await passkey.handleGet(p.options, p.origin) }),
+	'webauthn-create': async (p) => ({
+		credential: await passkey.handleCreate(p.options, p.origin),
+	}),
+	'webauthn-get': async (p) => ({
+		assertion: await passkey.handleGet(p.options, p.origin),
+	}),
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

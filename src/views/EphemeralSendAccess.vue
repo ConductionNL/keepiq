@@ -27,38 +27,61 @@
 					it were an account password would be wrong, and on a
 					one-shot send it would also be useless.
 				-->
-				<input v-model="password"
+				<input
+					v-model="password"
 					type="password"
 					autocomplete="off"
 					data-testid="send-access-password"
-					@keyup.enter="onOpen">
+					@keyup.enter="onOpen" />
 			</label>
-			<NcButton variant="primary"
+			<NcButton
+				variant="primary"
 				:disabled="busy || (needsPassword && password === '')"
 				data-testid="send-access-open"
 				@click="onOpen">
 				{{ t('doriath', 'Reveal the message') }}
 			</NcButton>
 			<p class="send-access__hint">
-				{{ t('doriath', 'Revealing counts as a view — the message may burn afterwards.') }}
+				{{
+					t(
+						'doriath',
+						'Revealing counts as a view — the message may burn afterwards.',
+					)
+				}}
 			</p>
 		</template>
 
 		<template v-else-if="payload !== null">
 			<NcNoteCard type="warning" data-testid="send-burn-notice">
-				{{ burned
-					? t('doriath', 'This was the last view — the message has now been destroyed. Save it before leaving this page.')
-					: t('doriath', 'Save this content now — it will not be retrievable once its views run out.') }}
+				{{
+					burned
+						? t(
+								'doriath',
+								'This was the last view — the message has now been destroyed. Save it before leaving this page.',
+							)
+						: t(
+								'doriath',
+								'Save this content now — it will not be retrievable once its views run out.',
+							)
+				}}
 			</NcNoteCard>
-			<pre class="send-access__payload" data-testid="send-access-payload">{{ payload }}</pre>
-			<NcButton variant="secondary" data-testid="send-access-copy" @click="copyPayload">
+			<pre class="send-access__payload" data-testid="send-access-payload">{{
+				payload
+			}}</pre>
+			<NcButton
+				variant="secondary"
+				data-testid="send-access-copy"
+				@click="copyPayload">
 				{{ t('doriath', 'Copy content') }}
 			</NcButton>
 		</template>
 
 		<template v-else>
-			<NcEmptyContent :name="t('doriath', 'This send is gone')"
-				:description="t('doriath', 'It was burned, expired, or never existed.')" />
+			<NcEmptyContent
+				:name="t('doriath', 'This send is gone')"
+				:description="
+					t('doriath', 'It was burned, expired, or never existed.')
+				" />
 		</template>
 	</div>
 </template>
@@ -97,7 +120,9 @@ export default {
 	async mounted() {
 		try {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/public/sends/${encodeURIComponent(this.token)}`),
+				generateUrl(
+					`/apps/doriath/api/v1/public/sends/${encodeURIComponent(this.token)}`,
+				),
 			)
 			this.needsPassword = response.data?.hasPassword === true
 		} catch {
@@ -114,21 +139,35 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				const result = await useEphemeralSendStore().accessSend(this.token, this.fragmentKey, this.password)
+				const result = await useEphemeralSendStore().accessSend(
+					this.token,
+					this.fragmentKey,
+					this.password,
+				)
 				this.payload = result.payload
 				this.burned = result.burned
 			} catch (e) {
 				if (e?.message === 'wrong-password') {
 					this.error = e.burned
-						? this.t('doriath', 'Too many wrong passwords — the message has been destroyed.')
-						: this.t('doriath', 'Wrong password — {count} attempt(s) left before the message is destroyed.', { count: e.attemptsLeft })
+						? this.t(
+								'doriath',
+								'Too many wrong passwords — the message has been destroyed.',
+							)
+						: this.t(
+								'doriath',
+								'Wrong password — {count} attempt(s) left before the message is destroyed.',
+								{ count: e.attemptsLeft },
+							)
 					if (e.burned) {
 						this.gone = true
 					}
 				} else if (e?.response?.status === 404) {
 					this.gone = true
 				} else {
-					this.error = e?.response?.data?.message || e?.message || 'Failed to open the message'
+					this.error =
+						e?.response?.data?.message
+						|| e?.message
+						|| 'Failed to open the message'
 				}
 			} finally {
 				this.busy = false

@@ -19,7 +19,11 @@
 			<header>
 				<h3>
 					{{ t('doriath', 'Pending approval') }}
-					<span v-if="pendingCount > 0" class="doriath-applications-view__badge">{{ pendingCount }}</span>
+					<span
+						v-if="pendingCount > 0"
+						class="doriath-applications-view__badge"
+						>{{ pendingCount }}</span
+					>
 				</h3>
 			</header>
 
@@ -27,7 +31,9 @@
 				{{ t('doriath', 'Loading…') }}
 			</p>
 
-			<p v-else-if="pendingCount === 0" class="doriath-applications-view__empty">
+			<p
+				v-else-if="pendingCount === 0"
+				class="doriath-applications-view__empty">
 				{{ t('doriath', 'No applications are awaiting approval.') }}
 			</p>
 
@@ -39,9 +45,19 @@
 					data-testid="pending-application">
 					<div class="doriath-applications-view__meta">
 						<strong>{{ app.name }}</strong>
-						<span v-if="app.description" class="doriath-applications-view__description">{{ app.description }}</span>
+						<span
+							v-if="app.description"
+							class="doriath-applications-view__description"
+							>{{ app.description }}</span
+						>
 						<small>
-							{{ t('doriath', 'Registered by {user}', { user: app.registered_by || t('doriath', 'anonymous') }) }}
+							{{
+								t('doriath', 'Registered by {user}', {
+									user:
+										app.registered_by
+										|| t('doriath', 'anonymous'),
+								})
+							}}
 						</small>
 					</div>
 					<div class="doriath-applications-view__actions">
@@ -63,10 +79,18 @@
 			</ul>
 		</section>
 
-		<section v-if="hasPrivateKey" class="doriath-applications-view__keydialog" data-testid="private-key-dialog">
+		<section
+			v-if="hasPrivateKey"
+			class="doriath-applications-view__keydialog"
+			data-testid="private-key-dialog">
 			<h3>{{ t('doriath', 'Save the application private key') }}</h3>
 			<p class="doriath-applications-view__warning">
-				{{ t('doriath', 'This is the only time the private key is shown. Save it securely; it cannot be recovered.') }}
+				{{
+					t(
+						'doriath',
+						'This is the only time the private key is shown. Save it securely; it cannot be recovered.',
+					)
+				}}
 			</p>
 			<textarea
 				:value="store.oneTimePrivateKey"
@@ -76,7 +100,10 @@
 				data-testid="private-key-text" />
 			<div class="doriath-applications-view__actions">
 				<label>
-					<input v-model="acknowledged" type="checkbox" data-testid="acknowledge-key">
+					<input
+						v-model="acknowledged"
+						type="checkbox"
+						data-testid="acknowledge-key" />
 					{{ t('doriath', 'I have saved the private key.') }}
 				</label>
 				<button

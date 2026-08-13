@@ -16,24 +16,39 @@
   @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Version details')"
+	<NcDialog
+		:name="t('doriath', 'Version details')"
 		:open="version !== null"
 		size="normal"
 		data-testid="version-details-dialog"
 		@update:open="$emit('close')">
-		<dl v-if="version" class="version-history__details" data-testid="version-details">
-			<div><dt>{{ t('doriath', 'Name') }}</dt><dd>{{ version.name }}</dd></div>
-			<div v-if="version.url"><dt>{{ t('doriath', 'URL') }}</dt><dd>{{ version.url }}</dd></div>
+		<dl
+			v-if="version"
+			class="version-history__details"
+			data-testid="version-details">
+			<div>
+				<dt>{{ t('doriath', 'Name') }}</dt>
+				<dd>{{ version.name }}</dd>
+			</div>
+			<div v-if="version.url">
+				<dt>{{ t('doriath', 'URL') }}</dt>
+				<dd>{{ version.url }}</dd>
+			</div>
 			<div>
 				<dt>{{ t('doriath', 'Value') }}</dt>
 				<dd class="version-history__value">
-					<span data-testid="version-value">{{ revealed ? version.key : '••••••••••' }}</span>
+					<span data-testid="version-value">{{
+						revealed ? version.key : '••••••••••'
+					}}</span>
 					<NcButton variant="tertiary" @click="revealed = !revealed">
 						{{ revealed ? t('doriath', 'Hide') : t('doriath', 'Show') }}
 					</NcButton>
 				</dd>
 			</div>
-			<div v-if="version.login"><dt>{{ t('doriath', 'Login') }}</dt><dd>{{ version.login }}</dd></div>
+			<div v-if="version.login">
+				<dt>{{ t('doriath', 'Login') }}</dt>
+				<dd>{{ version.login }}</dd>
+			</div>
 		</dl>
 	</NcDialog>
 </template>

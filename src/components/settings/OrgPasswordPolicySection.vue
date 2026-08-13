@@ -12,53 +12,76 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Org password policy')"
-		:description="t('doriath', 'Quality floor for secret values: the generator floor is enforced server-side; save-flow checks run in the browser before encryption (the server never sees a value).')">
+		:description="
+			t(
+				'doriath',
+				'Quality floor for secret values: the generator floor is enforced server-side; save-flow checks run in the browser before encryption (the server never sees a value).',
+			)
+		">
 		<div class="org-policy" data-testid="org-policy-section">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
 			<label class="org-policy__check">
-				<input v-model="policy.policy_enabled"
+				<input
+					v-model="policy.policy_enabled"
 					type="checkbox"
 					data-testid="policy-enabled"
-					@change="save">
+					@change="save" />
 				<span>{{ t('doriath', 'Enable the org password policy') }}</span>
 			</label>
 			<label class="org-policy__field">
-				<span>{{ t('doriath', 'Generator minimum length (at least 8)') }}</span>
-				<input v-model.number="policy.generator_min_length"
+				<span>{{
+					t('doriath', 'Generator minimum length (at least 8)')
+				}}</span>
+				<input
+					v-model.number="policy.generator_min_length"
 					type="number"
 					min="8"
 					data-testid="generator-min-length"
-					@change="save">
+					@change="save" />
 			</label>
 			<div class="org-policy__group">
 				<span>{{ t('doriath', 'Generated values must contain') }}</span>
-				<label v-for="cls in classes" :key="cls.key" class="org-policy__check">
-					<input v-model="policy[cls.key]"
+				<label
+					v-for="cls in classes"
+					:key="cls.key"
+					class="org-policy__check">
+					<input
+						v-model="policy[cls.key]"
 						type="checkbox"
 						:data-testid="cls.key"
-						@change="save">
+						@change="save" />
 					<span>{{ cls.label }}</span>
 				</label>
 			</div>
 			<label class="org-policy__field">
-				<span>{{ t('doriath', 'Minimum strength score for manual values (0–4)') }}</span>
-				<input v-model.number="policy.min_zxcvbn_score"
+				<span>{{
+					t('doriath', 'Minimum strength score for manual values (0–4)')
+				}}</span>
+				<input
+					v-model.number="policy.min_zxcvbn_score"
 					type="number"
 					min="0"
 					max="4"
 					data-testid="min-zxcvbn-score"
-					@change="save">
+					@change="save" />
 			</label>
 			<label class="org-policy__check">
-				<input v-model="policy.block_on_hibp_hit"
+				<input
+					v-model="policy.block_on_hibp_hit"
 					type="checkbox"
 					data-testid="block-on-hibp"
-					@change="save">
-				<span>{{ t('doriath', 'Block values found in known breaches (requires the breach check gate)') }}</span>
+					@change="save" />
+				<span>{{
+					t(
+						'doriath',
+						'Block values found in known breaches (requires the breach check gate)',
+					)
+				}}</span>
 			</label>
-			<NcSelect v-model="exemptTypes"
+			<NcSelect
+				v-model="exemptTypes"
 				:options="typeOptions"
 				:input-label="t('doriath', 'Exempt secret types')"
 				multiple
@@ -99,10 +122,22 @@ export default {
 	computed: {
 		classes() {
 			return [
-				{ key: 'generator_require_upper', label: this.t('doriath', 'an uppercase letter') },
-				{ key: 'generator_require_lower', label: this.t('doriath', 'a lowercase letter') },
-				{ key: 'generator_require_digit', label: this.t('doriath', 'a digit') },
-				{ key: 'generator_require_symbol', label: this.t('doriath', 'a symbol') },
+				{
+					key: 'generator_require_upper',
+					label: this.t('doriath', 'an uppercase letter'),
+				},
+				{
+					key: 'generator_require_lower',
+					label: this.t('doriath', 'a lowercase letter'),
+				},
+				{
+					key: 'generator_require_digit',
+					label: this.t('doriath', 'a digit'),
+				},
+				{
+					key: 'generator_require_symbol',
+					label: this.t('doriath', 'a symbol'),
+				},
 			]
 		},
 		typeOptions() {
@@ -119,7 +154,9 @@ export default {
 			if (typeStore.types.length === 0) {
 				await typeStore.fetchTypes()
 			}
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings/admin'),
+			)
 			for (const key of Object.keys(this.policy)) {
 				if (response.data[key] !== undefined) {
 					this.policy[key] = response.data[key]

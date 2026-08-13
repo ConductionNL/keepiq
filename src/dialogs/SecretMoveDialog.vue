@@ -6,7 +6,8 @@
   root). This is a metadata-only change — no re-encryption is needed.
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Move secret')"
+	<NcDialog
+		:name="t('doriath', 'Move secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -38,9 +39,10 @@
 				context the teleported node cannot rise above. Every other
 				NcSelect this app renders inside a dialog has the same problem.
 			-->
-			<NcSelect v-model="folderId"
+			<NcSelect
+				v-model="folderId"
 				:options="folderOptions"
-				:reduce="opt => opt.value"
+				:reduce="(opt) => opt.value"
 				:input-label="t('doriath', 'Destination folder')"
 				:append-to-body="false"
 				:clearable="false" />
@@ -50,9 +52,7 @@
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="primary"
-				:disabled="saving"
-				@click="submit">
+			<NcButton variant="primary" :disabled="saving" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<FolderMove v-else :size="20" />
@@ -64,7 +64,13 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+} from '@nextcloud/vue'
 import FolderMove from 'vue-material-design-icons/FolderMove.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useFolderStore } from '../store/modules/folder.js'
@@ -116,7 +122,7 @@ export default {
 		folderOptions() {
 			const roots = [{ value: null, label: t('doriath', 'Vault root') }]
 			return roots.concat(
-				useFolderStore().folders.map(folder => ({
+				useFolderStore().folders.map((folder) => ({
 					value: folder.id,
 					label: folder.name,
 				})),
@@ -165,7 +171,10 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to move secret')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to move secret')
 			} finally {
 				this.saving = false
 			}

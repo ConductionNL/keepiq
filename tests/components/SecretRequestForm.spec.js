@@ -39,10 +39,18 @@ describe('SecretRequestForm', () => {
 		const wrapper = mount(SecretRequestForm, {
 			propsData: { secretId: 'sec-1', encryptionSuiteId: 'suite-1' },
 		})
-		expect(wrapper.find('[data-testid="secret-request-form-submit"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="secret-request-form-submit"]')
+				.attributes('disabled'),
+		).toBeDefined()
 
 		await wrapper.find('[data-testid="field-key"]').setChecked(true)
-		expect(wrapper.find('[data-testid="secret-request-form-submit"]').attributes('disabled')).toBeUndefined()
+		expect(
+			wrapper
+				.find('[data-testid="secret-request-form-submit"]')
+				.attributes('disabled'),
+		).toBeUndefined()
 	})
 
 	it('POSTs with the selected fields and shows the generated link', async () => {
@@ -59,17 +67,23 @@ describe('SecretRequestForm', () => {
 		const body = post.mock.calls[0][1]
 		expect(body.requestedFields).toEqual(['key'])
 		expect(body.secretId).toBe('sec-1')
-		expect(wrapper.find('[data-testid="secret-request-form-link"]').text()).toContain('tok-1')
+		expect(
+			wrapper.find('[data-testid="secret-request-form-link"]').text(),
+		).toContain('tok-1')
 	})
 
 	it('shows the error message when the request rejects', async () => {
-		vi.spyOn(axios, 'post').mockRejectedValue({ response: { data: { message: 'boom' } } })
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: { data: { message: 'boom' } },
+		})
 		const wrapper = mount(SecretRequestForm, {
 			propsData: { secretId: 'sec-1', encryptionSuiteId: 'suite-1' },
 		})
 		await wrapper.find('[data-testid="field-key"]').setChecked(true)
 		await wrapper.find('form').trigger('submit.prevent')
 		await flush()
-		expect(wrapper.find('[data-testid="secret-request-form-error"]').text()).toContain('boom')
+		expect(
+			wrapper.find('[data-testid="secret-request-form-error"]').text(),
+		).toContain('boom')
 	})
 })

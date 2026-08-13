@@ -11,7 +11,8 @@
   @spec openspec/changes/team-folder-sharing/tasks.md#5.1
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Team folder sharing')"
+	<NcDialog
+		:name="t('doriath', 'Team folder sharing')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -23,9 +24,16 @@
 			<!-- Not shared yet: offer to share the folder. -->
 			<div v-if="!teamFolder" class="team-folder-dialog__share">
 				<p>
-					{{ t('doriath', 'Share the folder "{name}" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.', { name: folderName }) }}
+					{{
+						t(
+							'doriath',
+							'Share the folder "{name}" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.',
+							{ name: folderName },
+						)
+					}}
 				</p>
-				<NcButton variant="primary"
+				<NcButton
+					variant="primary"
 					:disabled="busy"
 					data-testid="team-folder-share"
 					@click="onShareFolder">
@@ -36,22 +44,40 @@
 			<!-- Shared: membership management + fan-out state. -->
 			<div v-else class="team-folder-dialog__members">
 				<h4>{{ t('doriath', 'Members') }}</h4>
-				<ul v-if="members.length" class="team-folder-dialog__member-list" data-testid="team-folder-members">
-					<li v-for="member in members" :key="member.id" class="team-folder-dialog__member">
-						<component :is="member.memberType === 'group' ? 'AccountGroup' : 'Account'" :size="18" />
-						<span class="team-folder-dialog__member-name">{{ member.memberId }}</span>
+				<ul
+					v-if="members.length"
+					class="team-folder-dialog__member-list"
+					data-testid="team-folder-members">
+					<li
+						v-for="member in members"
+						:key="member.id"
+						class="team-folder-dialog__member">
+						<component
+							:is="
+								member.memberType === 'group'
+									? 'AccountGroup'
+									: 'Account'
+							"
+							:size="18" />
+						<span class="team-folder-dialog__member-name">{{
+							member.memberId
+						}}</span>
 						<!-- Permission grade (folder-permission-grades §4.1):
 						     owner-only; a write member may edit folder secrets
 						     and fan the change out to the whole team. -->
-						<select class="team-folder-dialog__grade"
+						<select
+							class="team-folder-dialog__grade"
 							:value="member.grade || 'read'"
 							:disabled="busy"
 							:data-testid="`team-folder-grade-${member.memberId}`"
 							@change="onGradeChange(member, $event.target.value)">
 							<option value="read">{{ t('doriath', 'Read') }}</option>
-							<option value="write">{{ t('doriath', 'Write') }}</option>
+							<option value="write">
+								{{ t('doriath', 'Write') }}
+							</option>
 						</select>
-						<NcButton variant="tertiary"
+						<NcButton
+							variant="tertiary"
 							:aria-label="t('doriath', 'Remove member')"
 							:disabled="busy"
 							:data-testid="`team-folder-remove-${member.memberId}`"
@@ -67,19 +93,26 @@
 				</p>
 
 				<div class="team-folder-dialog__add">
-					<NcSelect v-model="newMemberType"
+					<NcSelect
+						v-model="newMemberType"
 						:options="memberTypeOptions"
-						:reduce="opt => opt.value"
+						:reduce="(opt) => opt.value"
 						:input-label="t('doriath', 'Member type')"
 						:clearable="false" />
 					<label class="team-folder-dialog__id-field">
-						<span>{{ newMemberType === 'group' ? t('doriath', 'Group ID') : t('doriath', 'User ID') }}</span>
-						<input v-model.trim="newMemberId"
+						<span>{{
+							newMemberType === 'group'
+								? t('doriath', 'Group ID')
+								: t('doriath', 'User ID')
+						}}</span>
+						<input
+							v-model.trim="newMemberId"
 							type="text"
 							autocomplete="off"
-							data-testid="team-folder-member-id">
+							data-testid="team-folder-member-id" />
 					</label>
-					<NcButton variant="secondary"
+					<NcButton
+						variant="secondary"
 						:disabled="busy || newMemberId === ''"
 						data-testid="team-folder-add-member"
 						@click="onAddMember">
@@ -88,25 +121,37 @@
 				</div>
 
 				<!-- Fan-out progress (§5.1): chunked, cancellable, resumable. -->
-				<div v-if="fanOut.running || pendingCount > 0" class="team-folder-dialog__fanout">
-					<NcNoteCard v-if="!fanOut.running && pendingCount > 0" type="warning" data-testid="team-folder-needs-reshare">
-						{{ n('doriath',
-							'%n secret copy still needs to be encrypted and shared.',
-							'%n secret copies still need to be encrypted and shared.',
-							pendingCount) }}
+				<div
+					v-if="fanOut.running || pendingCount > 0"
+					class="team-folder-dialog__fanout">
+					<NcNoteCard
+						v-if="!fanOut.running && pendingCount > 0"
+						type="warning"
+						data-testid="team-folder-needs-reshare">
+						{{
+							n(
+								'doriath',
+								'%n secret copy still needs to be encrypted and shared.',
+								'%n secret copies still need to be encrypted and shared.',
+								pendingCount,
+							)
+						}}
 					</NcNoteCard>
-					<NcProgressBar v-if="fanOut.running"
+					<NcProgressBar
+						v-if="fanOut.running"
 						:value="progressPercent"
 						size="medium"
 						data-testid="team-folder-progress" />
 					<div class="team-folder-dialog__fanout-actions">
-						<NcButton v-if="fanOut.running"
+						<NcButton
+							v-if="fanOut.running"
 							variant="tertiary"
 							data-testid="team-folder-cancel-fanout"
 							@click="store.cancelFanOut()">
 							{{ t('doriath', 'Cancel') }}
 						</NcButton>
-						<NcButton v-else
+						<NcButton
+							v-else
 							variant="primary"
 							:disabled="busy"
 							data-testid="team-folder-run-fanout"
@@ -117,7 +162,8 @@
 				</div>
 
 				<div class="team-folder-dialog__danger">
-					<NcButton variant="error"
+					<NcButton
+						variant="error"
 						:disabled="busy"
 						data-testid="team-folder-unshare"
 						@click="onUnshare">
@@ -130,7 +176,13 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcProgressBar, NcSelect } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcNoteCard,
+	NcProgressBar,
+	NcSelect,
+} from '@nextcloud/vue'
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import Close from 'vue-material-design-icons/Close.vue'
@@ -222,7 +274,8 @@ export default {
 					this.pendingCount = (state.missing ?? []).length
 				}
 			} catch (e) {
-				this.error = e?.message || this.t('doriath', 'Failed to load team folder')
+				this.error =
+					e?.message || this.t('doriath', 'Failed to load team folder')
 			}
 		},
 
@@ -242,7 +295,11 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				await this.store.addMember(this.teamFolder.id, this.newMemberType, this.newMemberId)
+				await this.store.addMember(
+					this.teamFolder.id,
+					this.newMemberType,
+					this.newMemberId,
+				)
 				this.newMemberId = ''
 				await this.refresh()
 				// New members mean new missing pairs — run the fan-out now.

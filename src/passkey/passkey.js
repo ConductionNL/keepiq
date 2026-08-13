@@ -48,15 +48,19 @@ export function buildPasskeyCredential(input) {
 		rpId: String(input.rpId),
 		rpName: input.rpName != null ? String(input.rpName) : '',
 		userName: input.userName != null ? String(input.userName) : '',
-		userDisplayName: input.userDisplayName != null ? String(input.userDisplayName) : '',
+		userDisplayName:
+			input.userDisplayName != null ? String(input.userDisplayName) : '',
 		userHandle: input.userHandle != null ? String(input.userHandle) : '',
 		privateKey: String(input.privateKey),
 		algorithm: Number.isInteger(input.algorithm) ? input.algorithm : -7,
 		counter: Number.isInteger(input.counter) ? input.counter : 0,
-		transports: Array.isArray(input.transports) ? input.transports.map(String) : [],
-		createdAt: typeof input.createdAt === 'string' && input.createdAt !== ''
-			? input.createdAt
-			: new Date().toISOString(),
+		transports: Array.isArray(input.transports)
+			? input.transports.map(String)
+			: [],
+		createdAt:
+			typeof input.createdAt === 'string' && input.createdAt !== ''
+				? input.createdAt
+				: new Date().toISOString(),
 	}
 }
 

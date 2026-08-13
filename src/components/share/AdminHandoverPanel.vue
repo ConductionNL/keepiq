@@ -23,21 +23,27 @@
   @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
 -->
 <template>
-	<div v-if="store.isVaultAdmin === true"
+	<div
+		v-if="store.isVaultAdmin === true"
 		class="admin-handover"
 		data-testid="admin-handover-panel">
-		<NcButton variant="secondary"
+		<NcButton
+			variant="secondary"
 			:disabled="store.loading || done"
 			data-testid="admin-handover-button"
 			@click="onHandover">
 			{{ t('doriath', 'Take over as vault administrator') }}
 		</NcButton>
 
-		<p v-if="done" class="admin-handover__done" data-testid="admin-handover-done">
+		<p
+			v-if="done"
+			class="admin-handover__done"
+			data-testid="admin-handover-done">
 			{{ t('doriath', 'Permanent') }}
 		</p>
 
-		<p v-if="failure"
+		<p
+			v-if="failure"
 			class="admin-handover__error"
 			role="alert"
 			data-testid="admin-handover-error">

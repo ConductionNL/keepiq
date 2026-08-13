@@ -1,5 +1,6 @@
 <template>
-	<NcDialog :name="t('doriath', 'Generate key')"
+	<NcDialog
+		:name="t('doriath', 'Generate key')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -8,36 +9,62 @@
 				{{ error }}
 			</NcNoteCard>
 
-			<fieldset :disabled="regex.length > 0" class="key-generator-modal__basic">
-				<NcInputField v-model="lengthInput"
+			<fieldset
+				:disabled="regex.length > 0"
+				class="key-generator-modal__basic">
+				<NcInputField
+					v-model="lengthInput"
 					type="number"
 					:label="t('doriath', 'Length')"
 					:min="minLength"
 					:max="maxLength" />
-				<p v-if="policyFloorActive" class="key-generator-modal__policy-hint" data-testid="policy-floor-hint">
-					{{ t('doriath', 'Locked by org policy: minimum length {min}', { min: minLength }) }}
+				<p
+					v-if="policyFloorActive"
+					class="key-generator-modal__policy-hint"
+					data-testid="policy-floor-hint">
+					{{
+						t('doriath', 'Locked by org policy: minimum length {min}', {
+							min: minLength,
+						})
+					}}
 				</p>
 
-				<NcCheckboxRadioSwitch v-model="includeSpecialCharacters"
+				<NcCheckboxRadioSwitch
+					v-model="includeSpecialCharacters"
 					type="switch"
 					:disabled="symbolLocked">
-					{{ symbolLocked ? t('doriath', 'Include special characters (locked by org policy)') : t('doriath', 'Include special characters') }}
+					{{
+						symbolLocked
+							? t(
+									'doriath',
+									'Include special characters (locked by org policy)',
+								)
+							: t('doriath', 'Include special characters')
+					}}
 				</NcCheckboxRadioSwitch>
 
-				<NcInputField v-model="excludedCharacters"
+				<NcInputField
+					v-model="excludedCharacters"
 					:label="t('doriath', 'Exclude characters')" />
 			</fieldset>
 
 			<details class="key-generator-modal__advanced">
 				<summary>{{ t('doriath', 'Advanced') }}</summary>
-				<NcInputField v-model="regex"
+				<NcInputField
+					v-model="regex"
 					:label="t('doriath', 'Regex pattern')"
-					:helper-text="t('doriath', 'When set, overrides length, special characters and exclusions.')" />
+					:helper-text="
+						t(
+							'doriath',
+							'When set, overrides length, special characters and exclusions.',
+						)
+					" />
 			</details>
 
 			<div v-if="generatedKey" class="key-generator-modal__preview">
 				<!-- v9 models through `modelValue`; `:value` is a dead binding. -->
-				<NcInputField :model-value="generatedKey"
+				<NcInputField
+					:model-value="generatedKey"
 					:label="t('doriath', 'Generated key')"
 					:read-only="true"
 					:show-trailing-button="true"
@@ -178,10 +205,10 @@ export default {
 				const payload = this.regex
 					? { regex: this.regex }
 					: {
-						length: Number(this.lengthInput),
-						includeSpecialCharacters: this.includeSpecialCharacters,
-						excludedCharacters: this.excludedCharacters,
-					}
+							length: Number(this.lengthInput),
+							includeSpecialCharacters: this.includeSpecialCharacters,
+							excludedCharacters: this.excludedCharacters,
+						}
 
 				const response = await axios.post(
 					generateUrl('/apps/doriath/api/v1/generate-key'),
@@ -190,7 +217,8 @@ export default {
 				this.generatedKey = response.data.generatedKey
 			} catch (e) {
 				this.generatedKey = ''
-				this.error = e?.response?.data?.message
+				this.error =
+					e?.response?.data?.message
 					|| t('doriath', 'Failed to generate key')
 			} finally {
 				this.loading = false

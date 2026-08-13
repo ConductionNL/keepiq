@@ -62,7 +62,10 @@ function detectLoginFields() {
 		const pwIndex = inputs.indexOf(password)
 		for (let i = pwIndex - 1; i >= 0; i--) {
 			const t = (inputs[i].type || 'text').toLowerCase()
-			if ((t === 'text' || t === 'email' || t === 'tel') && visible(inputs[i])) {
+			if (
+				(t === 'text' || t === 'email' || t === 'tel')
+				&& visible(inputs[i])
+			) {
 				username = inputs[i]
 				break
 			}
@@ -119,7 +122,11 @@ function fillOtp(code) {
 
 function reportHasLoginForm() {
 	const { username, password } = detectLoginFields()
-	return { hasPassword: !!password, hasUsername: !!username, hasOtp: !!firstVisible(OTP_SELECTORS) }
+	return {
+		hasPassword: !!password,
+		hasUsername: !!username,
+		hasOtp: !!firstVisible(OTP_SELECTORS),
+	}
 }
 
 // --- submit capture (save/update prompt) ---
@@ -127,9 +134,13 @@ function reportHasLoginForm() {
 function attachSubmitCapture() {
 	document.addEventListener('submit', onSubmit, true)
 	// SPA logins often don't fire submit; also capture on password-field blur+enter.
-	document.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter') captureCurrent()
-	}, true)
+	document.addEventListener(
+		'keydown',
+		(e) => {
+			if (e.key === 'Enter') captureCurrent()
+		},
+		true,
+	)
 }
 
 function onSubmit() {
@@ -158,17 +169,17 @@ function captureCurrent() {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	switch (msg?.type) {
-	case 'detect-login':
-		sendResponse(reportHasLoginForm())
-		return true
-	case 'fill-credential':
-		sendResponse({ filled: fillCredential(msg.payload) })
-		return true
-	case 'fill-otp':
-		sendResponse({ filled: fillOtp(msg.payload?.code) })
-		return true
-	default:
-		return false
+		case 'detect-login':
+			sendResponse(reportHasLoginForm())
+			return true
+		case 'fill-credential':
+			sendResponse({ filled: fillCredential(msg.payload) })
+			return true
+		case 'fill-otp':
+			sendResponse({ filled: fillOtp(msg.payload?.code) })
+			return true
+		default:
+			return false
 	}
 })
 
@@ -196,10 +207,23 @@ window.addEventListener('message', async (event) => {
 	if (!data || data.__doriath !== 'request') return
 	const type = data.op === 'create' ? 'webauthn-create' : 'webauthn-get'
 	try {
-		const res = await chrome.runtime.sendMessage({ type, payload: { options: data.options, origin: data.origin } })
-		window.postMessage({ __doriath: 'response', id: data.id, ...(res || { error: 'no-response' }) }, event.origin)
+		const res = await chrome.runtime.sendMessage({
+			type,
+			payload: { options: data.options, origin: data.origin },
+		})
+		window.postMessage(
+			{
+				__doriath: 'response',
+				id: data.id,
+				...(res || { error: 'no-response' }),
+			},
+			event.origin,
+		)
 	} catch (e) {
-		window.postMessage({ __doriath: 'response', id: data.id, error: e.message || String(e) }, event.origin)
+		window.postMessage(
+			{ __doriath: 'response', id: data.id, error: e.message || String(e) },
+			event.origin,
+		)
 	}
 })
 

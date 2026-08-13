@@ -6,7 +6,9 @@
 				:class="`password-strength-meter__fill--${scoreClass}`"
 				:style="{ width: `${(score / 4) * 100}%` }" />
 		</div>
-		<p class="password-strength-meter__feedback" :class="`password-strength-meter__feedback--${scoreClass}`">
+		<p
+			class="password-strength-meter__feedback"
+			:class="`password-strength-meter__feedback--${scoreClass}`">
 			{{ feedbackText }}
 		</p>
 	</div>
@@ -100,7 +102,9 @@ export default {
 		feedbackText() {
 			if (!this.password) return ''
 			if (this.password.length < this.effectiveMinLength) {
-				return t('doriath', 'At least {length} characters required', { length: this.effectiveMinLength })
+				return t('doriath', 'At least {length} characters required', {
+					length: this.effectiveMinLength,
+				})
 			}
 			if (this.feedback?.warning) return this.feedback.warning
 			const labels = [
@@ -114,7 +118,10 @@ export default {
 		},
 
 		isValid() {
-			return this.password.length >= this.effectiveMinLength && this.score >= this.effectiveMinScore
+			return (
+				this.password.length >= this.effectiveMinLength
+				&& this.score >= this.effectiveMinScore
+			)
 		},
 	},
 
@@ -186,7 +193,10 @@ export default {
 			const result = zxcvbn(this.password)
 			this.score = result.score
 			this.feedback = result.feedback
-			this.$emit('strength-change', { isValid: this.isValid, score: this.score })
+			this.$emit('strength-change', {
+				isValid: this.isValid,
+				score: this.score,
+			})
 		},
 	},
 }
@@ -202,7 +212,9 @@ export default {
 
 .password-strength-meter__fill {
 	height: 100%;
-	transition: width 0.3s ease, background 0.3s ease;
+	transition:
+		width 0.3s ease,
+		background 0.3s ease;
 }
 
 /*
@@ -223,20 +235,32 @@ export default {
  * grey track at 4px high reads as an empty bar. The *-text values are the ones
  * the theme keeps legible against the main background in both themes.
  */
-.password-strength-meter__fill--danger { background: var(--color-error-text); }
+.password-strength-meter__fill--danger {
+	background: var(--color-error-text);
+}
 
-.password-strength-meter__fill--warning { background: var(--color-warning-text); }
+.password-strength-meter__fill--warning {
+	background: var(--color-warning-text);
+}
 
-.password-strength-meter__fill--success { background: var(--color-success-text); }
+.password-strength-meter__fill--success {
+	background: var(--color-success-text);
+}
 
 .password-strength-meter__feedback {
 	font-size: 0.85rem;
 	margin: 0.25rem 0 0;
 }
 
-.password-strength-meter__feedback--danger { color: var(--color-error-text); }
+.password-strength-meter__feedback--danger {
+	color: var(--color-error-text);
+}
 
-.password-strength-meter__feedback--warning { color: var(--color-warning-text); }
+.password-strength-meter__feedback--warning {
+	color: var(--color-warning-text);
+}
 
-.password-strength-meter__feedback--success { color: var(--color-success-text); }
+.password-strength-meter__feedback--success {
+	color: var(--color-success-text);
+}
 </style>

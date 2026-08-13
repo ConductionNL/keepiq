@@ -30,7 +30,8 @@ import { useSecretRequestStore } from '../../src/store/modules/secretRequest.js'
 const ncStubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
-		template: '<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
 	},
 }
 
@@ -55,7 +56,7 @@ describe('SecretRequestCreateDialog', () => {
 			global: { stubs: ncStubs },
 		})
 
-		const fields = wrapper.vm.availableFields.map(f => f.key)
+		const fields = wrapper.vm.availableFields.map((f) => f.key)
 		expect(fields).toEqual(['key', 'login', 'totp', 'pin'])
 	})
 
@@ -131,7 +132,9 @@ describe('SecretRequestCreateDialog', () => {
 			['key'],
 			null, // no expiry → null (not empty string)
 		)
-		expect(wrapper.vm.fillUrl).toContain('/apps/doriath/share/request/tok-rerequest')
+		expect(wrapper.vm.fillUrl).toContain(
+			'/apps/doriath/share/request/tok-rerequest',
+		)
 	})
 
 	it('copyUrl(): writes the fillUrl to the clipboard and flips the copied flag', async () => {

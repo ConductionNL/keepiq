@@ -7,9 +7,15 @@
  * self-consistent.
  */
 import { describe, it, expect } from 'vitest'
-import { cborEncode, rawEcdsaToDer } from '../../browser-extension/src/passkey/cbor.js'
+import {
+	cborEncode,
+	rawEcdsaToDer,
+} from '../../browser-extension/src/passkey/cbor.js'
 
-const hex = (u8) => Array.from(u8).map((b) => b.toString(16).padStart(2, '0')).join('')
+const hex = (u8) =>
+	Array.from(u8)
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('')
 
 describe('CBOR encoder (RFC 8949 vectors)', () => {
 	it('encodes small unsigned ints', () => {
@@ -51,7 +57,17 @@ describe('CBOR encoder (RFC 8949 vectors)', () => {
 		att.set('authData', Uint8Array.of(0xaa, 0xbb))
 		const out = hex(cborEncode(att))
 		// map(3) + "fmt":"none" + "attStmt":{} + "authData":h'aabb'
-		expect(out).toBe('a3' + '63666d74' + '646e6f6e65' + '676174745374' + '6d74' + 'a0' + '68617574684461' + '7461' + '42aabb')
+		expect(out).toBe(
+			'a3'
+				+ '63666d74'
+				+ '646e6f6e65'
+				+ '676174745374'
+				+ '6d74'
+				+ 'a0'
+				+ '68617574684461'
+				+ '7461'
+				+ '42aabb',
+		)
 	})
 })
 

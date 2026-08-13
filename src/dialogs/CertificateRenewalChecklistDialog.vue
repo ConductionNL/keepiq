@@ -15,13 +15,21 @@
   @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Renew certificate')"
+	<NcDialog
+		:name="t('doriath', 'Renew certificate')"
 		:open="checklist !== null"
 		size="normal"
 		data-testid="cert-checklist-dialog"
 		@update:open="$emit('close')">
 		<div v-if="checklist" data-testid="cert-checklist">
-			<p>{{ t('doriath', 'This certificate was issued outside Doriath, so it cannot be renewed here. Follow these steps:') }}</p>
+			<p>
+				{{
+					t(
+						'doriath',
+						'This certificate was issued outside Doriath, so it cannot be renewed here. Follow these steps:',
+					)
+				}}
+			</p>
 			<ol>
 				<li v-for="(step, index) in checklist.steps" :key="index">
 					{{ step }}

@@ -48,7 +48,22 @@ const slotChildren = (vm) => [
 
 const passthrough = (name) => ({
 	name,
-	props: ['modelValue', 'value', 'open', 'type', 'variant', 'size', 'disabled', 'inputLabel', 'options', 'reduce', 'clearable', 'ariaLabel', 'name', 'label'],
+	props: [
+		'modelValue',
+		'value',
+		'open',
+		'type',
+		'variant',
+		'size',
+		'disabled',
+		'inputLabel',
+		'options',
+		'reduce',
+		'clearable',
+		'ariaLabel',
+		'name',
+		'label',
+	],
 	emits: ['update:modelValue', 'update:open', 'input'],
 	render() {
 		return h('div', { 'data-stub': name }, slotChildren(this))
@@ -78,10 +93,11 @@ export const NcDialog = {
 	props: ['name', 'open', 'size'],
 	emits: ['update:open', 'closing'],
 	render() {
-		return h('div', { 'data-stub': 'NcDialog', 'data-open': String(!!this.open) }, [
-			this.$slots.default?.(),
-			this.$slots.actions?.(),
-		])
+		return h(
+			'div',
+			{ 'data-stub': 'NcDialog', 'data-open': String(!!this.open) },
+			[this.$slots.default?.(), this.$slots.actions?.()],
+		)
 	},
 }
 

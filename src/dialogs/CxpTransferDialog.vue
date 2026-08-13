@@ -21,7 +21,8 @@
   @spec openspec/changes/cxp-transfer/specs/cxp-transfer/spec.md
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Encrypted transfer (CXP)')"
+	<NcDialog
+		:name="t('doriath', 'Encrypted transfer (CXP)')"
 		:open="open"
 		size="normal"
 		data-testid="cxp-dialog"
@@ -31,11 +32,17 @@
 				{{ error }}
 			</NcNoteCard>
 			<NcNoteCard type="success">
-				{{ t('doriath', 'Credentials travel HPKE-sealed directly between providers. No plaintext file is ever written to disk.') }}
+				{{
+					t(
+						'doriath',
+						'Credentials travel HPKE-sealed directly between providers. No plaintext file is ever written to disk.',
+					)
+				}}
 			</NcNoteCard>
 
 			<div class="cxp-dialog__modes">
-				<NcCheckboxRadioSwitch :model-value="direction"
+				<NcCheckboxRadioSwitch
+					:model-value="direction"
 					value="receive"
 					name="cxp-direction"
 					type="radio"
@@ -43,7 +50,8 @@
 					@update:model-value="direction = $event">
 					{{ t('doriath', 'Receive credentials (import)') }}
 				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch :model-value="direction"
+				<NcCheckboxRadioSwitch
+					:model-value="direction"
 					value="send"
 					name="cxp-direction"
 					type="radio"
@@ -56,9 +64,15 @@
 			<!-- Receive / import -->
 			<div v-if="direction === 'receive'" class="cxp-dialog__panel">
 				<p v-if="!pairingId">
-					{{ t('doriath', 'Start a request; share the pairing code with the sending provider, then wait for the sealed transfer.') }}
+					{{
+						t(
+							'doriath',
+							'Start a request; share the pairing code with the sending provider, then wait for the sealed transfer.',
+						)
+					}}
 				</p>
-				<NcButton v-if="!pairingId"
+				<NcButton
+					v-if="!pairingId"
 					variant="primary"
 					:disabled="busy"
 					data-testid="cxp-start-receive"
@@ -66,8 +80,12 @@
 					{{ t('doriath', 'Start encrypted request') }}
 				</NcButton>
 				<div v-else>
-					<p>{{ t('doriath', 'Pairing code — share with the sender:') }}</p>
-					<code class="cxp-dialog__code" data-testid="cxp-pairing-code">{{ pairingId }}</code>
+					<p>
+						{{ t('doriath', 'Pairing code — share with the sender:') }}
+					</p>
+					<code class="cxp-dialog__code" data-testid="cxp-pairing-code">{{
+						pairingId
+					}}</code>
 					<p v-if="waiting" class="cxp-dialog__status">
 						{{ t('doriath', 'Waiting for the sealed transfer…') }}
 					</p>
@@ -76,26 +94,53 @@
 
 			<!-- Send / export -->
 			<div v-else class="cxp-dialog__panel">
-				<NcTextField v-model="sendPairingId"
+				<NcTextField
+					v-model="sendPairingId"
 					:label="t('doriath', 'Pairing code from the receiving provider')"
 					data-testid="cxp-send-pairing" />
 				<NcNoteCard type="warning">
-					{{ t('doriath', 'Sending requires re-entering your master password, even while unlocked.') }}
+					{{
+						t(
+							'doriath',
+							'Sending requires re-entering your master password, even while unlocked.',
+						)
+					}}
 				</NcNoteCard>
-				<NcPasswordField v-model="masterPassword"
+				<NcPasswordField
+					v-model="masterPassword"
 					:label="t('doriath', 'Re-enter your master password')"
 					data-testid="cxp-master-password" />
-				<NcNoteCard v-if="cxpReport && cxpReport.unmapped.length > 0" type="warning" data-testid="cxp-unmapped-report">
-					{{ n('doriath', '%n item cannot be represented in CXF and will be skipped.', '%n items cannot be represented in CXF and will be skipped.', cxpReport.unmapped.length) }}
+				<NcNoteCard
+					v-if="cxpReport && cxpReport.unmapped.length > 0"
+					type="warning"
+					data-testid="cxp-unmapped-report">
+					{{
+						n(
+							'doriath',
+							'%n item cannot be represented in CXF and will be skipped.',
+							'%n items cannot be represented in CXF and will be skipped.',
+							cxpReport.unmapped.length,
+						)
+					}}
 				</NcNoteCard>
-				<NcButton variant="primary"
+				<NcButton
+					variant="primary"
 					:disabled="busy || !sendPairingId || !masterPassword"
 					data-testid="cxp-do-send"
 					@click="doSend">
-					{{ cxpReport ? t('doriath', 'Confirm and send sealed transfer') : t('doriath', 'Seal and send') }}
+					{{
+						cxpReport
+							? t('doriath', 'Confirm and send sealed transfer')
+							: t('doriath', 'Seal and send')
+					}}
 				</NcButton>
 				<NcNoteCard v-if="sent" type="success" data-testid="cxp-sent">
-					{{ t('doriath', 'Sealed transfer sent. No plaintext file was written.') }}
+					{{
+						t(
+							'doriath',
+							'Sealed transfer sent. No plaintext file was written.',
+						)
+					}}
 				</NcNoteCard>
 			</div>
 		</div>
@@ -109,7 +154,14 @@
 </template>
 
 <script>
-import { NcButton, NcCheckboxRadioSwitch, NcDialog, NcNoteCard, NcPasswordField, NcTextField } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcNoteCard,
+	NcPasswordField,
+	NcTextField,
+} from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { createImportRequest, openEnvelope } from '../crypto/cxp.js'
@@ -188,7 +240,7 @@ export default {
 		/** Type names keyed by id, for the CXF mapping. */
 		typeNamesById() {
 			const map = {}
-			for (const type of (this.typeStore.types || [])) {
+			for (const type of this.typeStore.types || []) {
 				map[type.id] = type.name
 			}
 			return map
@@ -223,7 +275,8 @@ export default {
 				this.pollCount = 0
 				this.pollForEnvelope()
 			} catch (e) {
-				this.error = e.message || this.t('doriath', 'Could not start the transfer')
+				this.error =
+					e.message || this.t('doriath', 'Could not start the transfer')
 			} finally {
 				this.busy = false
 			}
@@ -242,7 +295,9 @@ export default {
 				}
 				this.pollCount += 1
 				try {
-					const res = await axios.get(this.relayUrl('/' + this.pairingId + '/response'))
+					const res = await axios.get(
+						this.relayUrl('/' + this.pairingId + '/response'),
+					)
 					const envelope = JSON.parse(res.data.payload)
 					this.waiting = false
 					const cxfBytes = await openEnvelope(this.session, envelope)
@@ -256,15 +311,27 @@ export default {
 					this.onUpdateOpen(false)
 				} catch (e) {
 					// 404 = not yet delivered; keep polling until the cap.
-					if (e.response && e.response.status === 404 && this.pollCount < POLL_MAX) {
+					if (
+						e.response
+						&& e.response.status === 404
+						&& this.pollCount < POLL_MAX
+					) {
 						this.pollForEnvelope()
 						return
 					}
 					if (this.pollCount >= POLL_MAX) {
 						this.waiting = false
-						this.error = this.t('doriath', 'Timed out waiting for the sealed transfer')
+						this.error = this.t(
+							'doriath',
+							'Timed out waiting for the sealed transfer',
+						)
 					} else {
-						this.error = e.message || this.t('doriath', 'Could not open the sealed transfer')
+						this.error =
+							e.message
+							|| this.t(
+								'doriath',
+								'Could not open the sealed transfer',
+							)
 					}
 				}
 			}, POLL_INTERVAL)
@@ -281,7 +348,10 @@ export default {
 			this.busy = true
 			try {
 				// Fresh master-password re-auth (client-side proof of knowledge).
-				const ok = await verifyMasterPassword(this.sessionStore.encryptedPrivateKey, this.masterPassword)
+				const ok = await verifyMasterPassword(
+					this.sessionStore.encryptedPrivateKey,
+					this.masterPassword,
+				)
 				if (!ok) {
 					this.error = this.t('doriath', 'Incorrect master password')
 					return
@@ -291,7 +361,9 @@ export default {
 				// (dry-run report, then confirm) must reuse the same request rather
 				// than re-fetch it.
 				if (this.fetchedRequest === null) {
-					const reqRes = await axios.get(this.relayUrl('/' + this.sendPairingId + '/request'))
+					const reqRes = await axios.get(
+						this.relayUrl('/' + this.sendPairingId + '/request'),
+					)
 					this.fetchedRequest = JSON.parse(reqRes.data.payload)
 				}
 				const request = this.fetchedRequest
@@ -299,7 +371,10 @@ export default {
 				// First pass surfaces the unmapped-item report before sending.
 				if (this.cxpReport === null) {
 					const report = await this.exportStore.exportCxpSealed(
-						request, this.secrets, this.folders, { mode: 'vault' },
+						request,
+						this.secrets,
+						this.folders,
+						{ mode: 'vault' },
 						{ typeNamesById: this.typeNamesById, dryRun: true },
 					)
 					if (report.unmapped.length > 0) {
@@ -309,7 +384,10 @@ export default {
 				}
 
 				const { envelope } = await this.exportStore.exportCxpSealed(
-					request, this.secrets, this.folders, { mode: 'vault' },
+					request,
+					this.secrets,
+					this.folders,
+					{ mode: 'vault' },
 					{ typeNamesById: this.typeNamesById },
 				)
 				await axios.post(this.relayUrl(), {
@@ -320,7 +398,9 @@ export default {
 				this.sent = true
 				this.masterPassword = ''
 			} catch (e) {
-				this.error = e.message || this.t('doriath', 'Could not send the sealed transfer')
+				this.error =
+					e.message
+					|| this.t('doriath', 'Could not send the sealed transfer')
 			} finally {
 				this.busy = false
 			}

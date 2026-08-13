@@ -23,19 +23,34 @@
 					type="text"
 					required
 					autocomplete="off"
-					data-testid="group-share-form-group">
+					data-testid="group-share-form-group" />
 			</label>
 
-			<p v-if="memberCount > 0" class="doriath-group-share-form__hint" data-testid="group-share-form-hint">
-				{{ t('doriath', 'Will share with {count} member(s) with an active suite.', { count: memberCount }) }}
+			<p
+				v-if="memberCount > 0"
+				class="doriath-group-share-form__hint"
+				data-testid="group-share-form-hint">
+				{{
+					t(
+						'doriath',
+						'Will share with {count} member(s) with an active suite.',
+						{ count: memberCount },
+					)
+				}}
 			</p>
 
-			<p v-if="error" class="doriath-group-share-form__error" data-testid="group-share-form-error">
+			<p
+				v-if="error"
+				class="doriath-group-share-form__error"
+				data-testid="group-share-form-error">
 				{{ error }}
 			</p>
 
 			<div class="doriath-group-share-form__actions">
-				<button type="button" data-testid="group-share-form-cancel" @click="$emit('cancel')">
+				<button
+					type="button"
+					data-testid="group-share-form-cancel"
+					@click="$emit('cancel')">
 					{{ t('doriath', 'Cancel') }}
 				</button>
 				<button
@@ -43,7 +58,11 @@
 					class="primary"
 					data-testid="group-share-form-submit"
 					:disabled="busy || groupId === '' || memberCount === 0">
-					{{ busy ? t('doriath', 'Sharing…') : t('doriath', 'Share with group') }}
+					{{
+						busy
+							? t('doriath', 'Sharing…')
+							: t('doriath', 'Share with group')
+					}}
 				</button>
 			</div>
 		</form>
@@ -116,7 +135,8 @@ export default {
 				}
 				this.$emit('shared', { groupId: this.groupId, recipients })
 			} catch (e) {
-				this.error = e?.message || t('doriath', 'Failed to encrypt for group')
+				this.error =
+					e?.message || t('doriath', 'Failed to encrypt for group')
 			} finally {
 				this.busy = false
 			}

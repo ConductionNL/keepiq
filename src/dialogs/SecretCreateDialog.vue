@@ -7,7 +7,8 @@
   sensitive fields client-side before the POST (zero-knowledge, ADR-003).
 -->
 <template>
-	<NcDialog :name="t('doriath', 'New secret')"
+	<NcDialog
+		:name="t('doriath', 'New secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -19,53 +20,86 @@
 				{{ t('doriath', 'Unlock the vault before creating a secret.') }}
 			</NcNoteCard>
 
-			<NcTextField v-model="name"
+			<NcTextField
+				v-model="name"
 				:label="t('doriath', 'Name')"
 				:required="true" />
 
-			<NcSelect v-model="typeId"
+			<NcSelect
+				v-model="typeId"
 				:options="typeOptions"
-				:reduce="opt => opt.value"
+				:reduce="(opt) => opt.value"
 				:input-label="t('doriath', 'Type')"
 				:clearable="false" />
 
 			<!-- Card / identity composite payloads (card-identity-items §3.1):
 			     per-type field sets serialized to the encrypted key on save. -->
 			<template v-if="isCard">
-				<NcPasswordField v-model="card.number"
+				<NcPasswordField
+					v-model="card.number"
 					:label="t('doriath', 'Card number')"
 					data-testid="card-number" />
-				<NcNoteCard v-if="card.number !== '' && !luhnOk" type="warning" data-testid="card-luhn-hint">
-					{{ t('doriath', 'This number does not pass the card checksum — double-check it (saving is not blocked).') }}
+				<NcNoteCard
+					v-if="card.number !== '' && !luhnOk"
+					type="warning"
+					data-testid="card-luhn-hint">
+					{{
+						t(
+							'doriath',
+							'This number does not pass the card checksum — double-check it (saving is not blocked).',
+						)
+					}}
 				</NcNoteCard>
-				<NcTextField v-model="card.expiry"
+				<NcTextField
+					v-model="card.expiry"
 					:label="t('doriath', 'Expiry (MM/YY)')"
 					data-testid="card-expiry" />
-				<NcPasswordField v-model="card.cvv"
+				<NcPasswordField
+					v-model="card.cvv"
 					:label="t('doriath', 'CVV')"
 					data-testid="card-cvv" />
-				<NcPasswordField v-model="card.pin"
+				<NcPasswordField
+					v-model="card.pin"
 					:label="t('doriath', 'PIN (optional)')"
 					data-testid="card-pin" />
-				<NcTextField v-model="card.cardholder"
+				<NcTextField
+					v-model="card.cardholder"
 					:label="t('doriath', 'Cardholder name')"
 					data-testid="card-cardholder" />
 			</template>
 			<template v-else-if="isIdentity">
-				<NcTextField v-model="identity.firstName" :label="t('doriath', 'First name')" data-testid="identity-first-name" />
-				<NcTextField v-model="identity.lastName" :label="t('doriath', 'Last name')" data-testid="identity-last-name" />
-				<NcTextField v-model="identity.address" :label="t('doriath', 'Address')" data-testid="identity-address" />
-				<NcTextField v-model="identity.phone" :label="t('doriath', 'Phone')" data-testid="identity-phone" />
-				<NcTextField v-model="identity.email" :label="t('doriath', 'Email')" data-testid="identity-email" />
-				<NcPasswordField v-model="identity.bsn"
+				<NcTextField
+					v-model="identity.firstName"
+					:label="t('doriath', 'First name')"
+					data-testid="identity-first-name" />
+				<NcTextField
+					v-model="identity.lastName"
+					:label="t('doriath', 'Last name')"
+					data-testid="identity-last-name" />
+				<NcTextField
+					v-model="identity.address"
+					:label="t('doriath', 'Address')"
+					data-testid="identity-address" />
+				<NcTextField
+					v-model="identity.phone"
+					:label="t('doriath', 'Phone')"
+					data-testid="identity-phone" />
+				<NcTextField
+					v-model="identity.email"
+					:label="t('doriath', 'Email')"
+					data-testid="identity-email" />
+				<NcPasswordField
+					v-model="identity.bsn"
 					:label="t('doriath', 'BSN')"
 					data-testid="identity-bsn" />
 			</template>
 			<div v-else class="secret-form__value-row">
-				<NcPasswordField v-model="value"
+				<NcPasswordField
+					v-model="value"
 					class="secret-form__value-field"
 					:label="valueLabel" />
-				<NcButton variant="tertiary-no-background"
+				<NcButton
+					variant="tertiary-no-background"
 					:title="t('doriath', 'Generate a strong key')"
 					:aria-label="t('doriath', 'Generate a strong key')"
 					@click="openGenerator">
@@ -75,24 +109,27 @@
 				</NcButton>
 			</div>
 
-			<KeyGeneratorModal v-if="generatorOpen"
+			<KeyGeneratorModal
+				v-if="generatorOpen"
 				:open="generatorOpen"
 				@update:open="generatorOpen = $event"
 				@generated="onGenerated" />
 
-			<NcTextField v-model="url"
-				:label="t('doriath', 'URL (optional)')" />
+			<NcTextField v-model="url" :label="t('doriath', 'URL (optional)')" />
 
-			<NcTextField v-model="login"
-				:label="t('doriath', 'Login (optional)')" />
+			<NcTextField v-model="login" :label="t('doriath', 'Login (optional)')" />
 
-			<NcSelect v-model="selectedFolderId"
+			<NcSelect
+				v-model="selectedFolderId"
 				:options="folderOptions"
-				:reduce="opt => opt.value"
+				:reduce="(opt) => opt.value"
 				:input-label="t('doriath', 'Folder')"
 				:clearable="false" />
 
-			<NcNoteCard v-if="!policyVerdict.compliant" type="warning" data-testid="policy-blocked">
+			<NcNoteCard
+				v-if="!policyVerdict.compliant"
+				type="warning"
+				data-testid="policy-blocked">
 				{{ policyVerdict.reason }}
 			</NcNoteCard>
 		</div>
@@ -101,9 +138,7 @@
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="primary"
-				:disabled="!canSubmit"
-				@click="submit">
+			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<Plus v-else :size="20" />
@@ -115,7 +150,15 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSelect, NcTextField } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcPasswordField,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
@@ -179,7 +222,14 @@ export default {
 			error: '',
 			generatorOpen: false,
 			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
-			identity: { firstName: '', lastName: '', address: '', phone: '', email: '', bsn: '' },
+			identity: {
+				firstName: '',
+				lastName: '',
+				address: '',
+				phone: '',
+				email: '',
+				bsn: '',
+			},
 			policy: null,
 		}
 	},
@@ -189,7 +239,7 @@ export default {
 			return useSessionStore().isLocked
 		},
 		typeOptions() {
-			return useSecretTypeStore().types.map(type => ({
+			return useSecretTypeStore().types.map((type) => ({
 				value: type.id,
 				label: type.label || type.name,
 			}))
@@ -197,7 +247,7 @@ export default {
 		folderOptions() {
 			const roots = [{ value: null, label: t('doriath', 'Vault root') }]
 			return roots.concat(
-				useFolderStore().folders.map(folder => ({
+				useFolderStore().folders.map((folder) => ({
 					value: folder.id,
 					label: folder.name,
 				})),
@@ -254,7 +304,7 @@ export default {
 				return this.card.number !== ''
 			}
 			if (this.isIdentity) {
-				return Object.values(this.identity).some(v => v !== '')
+				return Object.values(this.identity).some((v) => v !== '')
 			}
 			return this.value !== '' && this.policyVerdict.compliant
 		},
@@ -267,7 +317,7 @@ export default {
 			await typeStore.fetchTypes()
 		}
 		if (this.typeId === null && typeStore.types.length > 0) {
-			const login = typeStore.types.find(type => type.name === 'login')
+			const login = typeStore.types.find((type) => type.name === 'login')
 			this.typeId = login ? login.id : typeStore.types[0].id
 		}
 		const folderStore = useFolderStore()
@@ -328,7 +378,11 @@ export default {
 				// HIBP block (org-password-policies §4.2): k-anonymity check
 				// BEFORE encryption; only the 5-char prefix leaves the browser.
 				if (!this.isCard && !this.isIdentity) {
-					const hibpReason = await evaluateHibp(this.policy, this.selectedTypeName, this.value)
+					const hibpReason = await evaluateHibp(
+						this.policy,
+						this.selectedTypeName,
+						this.value,
+					)
 					if (hibpReason !== null) {
 						this.error = hibpReason
 						this.saving = false
@@ -349,7 +403,10 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to create secret')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to create secret')
 			} finally {
 				this.saving = false
 			}

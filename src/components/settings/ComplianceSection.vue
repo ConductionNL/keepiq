@@ -14,32 +14,87 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Compliance reporting')"
-		:description="t('doriath', 'BIO2/NIS2-oriented posture snapshots from server-visible metadata only — no secret value, name, or ciphertext is ever read.')">
+		:description="
+			t(
+				'doriath',
+				'BIO2/NIS2-oriented posture snapshots from server-visible metadata only — no secret value, name, or ciphertext is ever read.',
+			)
+		">
 		<div class="compliance" data-testid="compliance-section">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
 
 			<!-- Live posture card (warm cache). -->
-			<div v-if="metrics" class="compliance__card" data-testid="compliance-posture-card">
-				<h4>{{ t('doriath', 'Live posture ({when})', { when: computedAt || t('doriath', 'just computed') }) }}</h4>
+			<div
+				v-if="metrics"
+				class="compliance__card"
+				data-testid="compliance-posture-card">
+				<h4>
+					{{
+						t('doriath', 'Live posture ({when})', {
+							when: computedAt || t('doriath', 'just computed'),
+						})
+					}}
+				</h4>
 				<ul>
-					<li>{{ t('doriath', 'Users with an active vault: {n}', { n: metrics.adoption?.usersWithActiveSuite ?? 0 }) }}</li>
-					<li>{{ t('doriath', 'Total secrets: {n}', { n: metrics.secretsPerUser?.totalSecrets ?? 0 }) }}</li>
-					<li>{{ t('doriath', 'Outstanding shares (user/group/link): {a} / {b} / {c}', { a: metrics.shareHygiene?.userShares ?? 0, b: metrics.shareHygiene?.groupShares ?? 0, c: metrics.shareHygiene?.linkShares ?? 0 }) }}</li>
-					<li>{{ t('doriath', 'Open rotation flags: {n}', { n: openFlagTotal }) }}</li>
-					<li>{{ t('doriath', 'Audit entries retained: {n} ({d} days)', { n: metrics.auditIntegrity?.totalEntries ?? 0, d: metrics.auditIntegrity?.retentionDays ?? 0 }) }}</li>
+					<li>
+						{{
+							t('doriath', 'Users with an active vault: {n}', {
+								n: metrics.adoption?.usersWithActiveSuite ?? 0,
+							})
+						}}
+					</li>
+					<li>
+						{{
+							t('doriath', 'Total secrets: {n}', {
+								n: metrics.secretsPerUser?.totalSecrets ?? 0,
+							})
+						}}
+					</li>
+					<li>
+						{{
+							t(
+								'doriath',
+								'Outstanding shares (user/group/link): {a} / {b} / {c}',
+								{
+									a: metrics.shareHygiene?.userShares ?? 0,
+									b: metrics.shareHygiene?.groupShares ?? 0,
+									c: metrics.shareHygiene?.linkShares ?? 0,
+								},
+							)
+						}}
+					</li>
+					<li>
+						{{
+							t('doriath', 'Open rotation flags: {n}', {
+								n: openFlagTotal,
+							})
+						}}
+					</li>
+					<li>
+						{{
+							t('doriath', 'Audit entries retained: {n} ({d} days)', {
+								n: metrics.auditIntegrity?.totalEntries ?? 0,
+								d: metrics.auditIntegrity?.retentionDays ?? 0,
+							})
+						}}
+					</li>
 				</ul>
 			</div>
 
-			<NcButton variant="primary"
+			<NcButton
+				variant="primary"
 				:disabled="busy"
 				data-testid="compliance-generate"
 				@click="onGenerate">
 				{{ t('doriath', 'Generate snapshot') }}
 			</NcButton>
 
-			<table v-if="reports.length" class="compliance__table" data-testid="compliance-report-list">
+			<table
+				v-if="reports.length"
+				class="compliance__table"
+				data-testid="compliance-report-list">
 				<thead>
 					<tr>
 						<th scope="col">
@@ -60,7 +115,10 @@
 						<td>{{ report.generatedBy }}</td>
 						<td>{{ report.appVersion }}</td>
 						<td>
-							<NcButton variant="tertiary" :data-testid="`compliance-open-${report.id}`" @click="openReport(report.id)">
+							<NcButton
+								variant="tertiary"
+								:data-testid="`compliance-open-${report.id}`"
+								@click="openReport(report.id)">
 								{{ t('doriath', 'View') }}
 							</NcButton>
 						</td>
@@ -135,7 +193,9 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				const response = await axios.post(generateUrl('/apps/doriath/api/v1/compliance/reports'))
+				const response = await axios.post(
+					generateUrl('/apps/doriath/api/v1/compliance/reports'),
+				)
 				this.reports = [response.data, ...this.reports]
 				this.detail = response.data
 			} catch (e) {
@@ -153,7 +213,9 @@ export default {
 		 */
 		async openReport(id) {
 			try {
-				const response = await axios.get(generateUrl(`/apps/doriath/api/v1/compliance/reports/${id}`))
+				const response = await axios.get(
+					generateUrl(`/apps/doriath/api/v1/compliance/reports/${id}`),
+				)
 				this.detail = response.data
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
@@ -173,7 +235,9 @@ export default {
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed) ? (iso ?? '') : new Date(parsed).toLocaleString()
+			return Number.isNaN(parsed)
+				? (iso ?? '')
+				: new Date(parsed).toLocaleString()
 		},
 	},
 }

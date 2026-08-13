@@ -66,7 +66,9 @@ describe('canonical passkey schema', () => {
 		expect(parsePasskey('not-json')).toBeNull()
 		expect(parsePasskey('')).toBeNull()
 		expect(parsePasskey('{"rpId":"example.com"}')).toBeNull()
-		expect(serializePasskey({ credentialId: 'ID', rpId: 'example.com' })).toBeNull()
+		expect(
+			serializePasskey({ credentialId: 'ID', rpId: 'example.com' }),
+		).toBeNull()
 		expect(buildPasskeyCredential(null)).toBeNull()
 	})
 
@@ -133,7 +135,9 @@ describe('Bitwarden fido2Credentials import', () => {
 
 	it('rejects a partial entry with a reason instead of creating a partial passkey', () => {
 		const rows = parseBitwardenJson(bitwardenExport)
-		const rejected = rows.find((row) => row.type === 'passkey' && row.errors.length > 0)
+		const rejected = rows.find(
+			(row) => row.type === 'passkey' && row.errors.length > 0,
+		)
 		expect(rejected).toBeDefined()
 		expect(rejected.errors[0]).toMatch(/Incomplete Bitwarden passkey/)
 	})

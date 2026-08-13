@@ -58,10 +58,20 @@ describe('useSecretRequestStore', () => {
 	describe('createReRequest', () => {
 		it('passes isReRequest=true to createRequest', async () => {
 			const post = vi.spyOn(axios, 'post').mockResolvedValue({
-				data: { id: 'r-rr', token: 't', status: 'pending', isReRequest: true },
+				data: {
+					id: 'r-rr',
+					token: 't',
+					status: 'pending',
+					isReRequest: true,
+				},
 			})
 			const store = useSecretRequestStore()
-			await store.createReRequest('sec-1', 'suite-1', ['key'], '2026-12-31T00:00:00Z')
+			await store.createReRequest(
+				'sec-1',
+				'suite-1',
+				['key'],
+				'2026-12-31T00:00:00Z',
+			)
 			const body = post.mock.calls[0][1]
 			expect(body.isReRequest).toBe(true)
 			expect(body.expiresAt).toBe('2026-12-31T00:00:00Z')
@@ -105,24 +115,36 @@ describe('useSecretRequestStore', () => {
 					public_certificate: 'PEM',
 				},
 			})
-			const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { status: 'fulfilled' } })
+			const post = vi
+				.spyOn(axios, 'post')
+				.mockResolvedValue({ data: { status: 'fulfilled' } })
 			const store = useSecretRequestStore()
-			const result = await store.submitFill('tok-1', { key: 'p4ss', login: 'alice' })
+			const result = await store.submitFill('tok-1', {
+				key: 'p4ss',
+				login: 'alice',
+			})
 			expect(result.status).toBe('fulfilled')
 			const body = post.mock.calls[0][1]
-			expect(body.encryptedFields).toEqual({ key: 'ENC(p4ss)', login: 'ENC(alice)' })
+			expect(body.encryptedFields).toEqual({
+				key: 'ENC(p4ss)',
+				login: 'ENC(alice)',
+			})
 		})
 
 		it('throws when the certificate is missing', async () => {
 			const store = useSecretRequestStore()
 			store.publicRequest = { token: 'tok-x', public_certificate: '' }
-			await expect(store.submitFill('tok-x', { key: 'x' })).rejects.toThrow(/certificate/)
+			await expect(store.submitFill('tok-x', { key: 'x' })).rejects.toThrow(
+				/certificate/,
+			)
 		})
 
 		it('throws when a field is empty (server would have rejected it anyway)', async () => {
 			const store = useSecretRequestStore()
 			store.publicRequest = { token: 'tok-x', public_certificate: 'PEM' }
-			await expect(store.submitFill('tok-x', { key: '' })).rejects.toThrow(/required/)
+			await expect(store.submitFill('tok-x', { key: '' })).rejects.toThrow(
+				/required/,
+			)
 		})
 	})
 })

@@ -85,7 +85,9 @@ async function renderUnlocked() {
 			if (res.error) showError('unlock-error', res.error)
 			$('save-prompt').hidden = true
 		}
-		$('save-no').onclick = () => { $('save-prompt').hidden = true }
+		$('save-no').onclick = () => {
+			$('save-prompt').hidden = true
+		}
 	}
 }
 
@@ -102,7 +104,10 @@ let totpTimer = null
  * @return {Promise<void>}
  */
 async function renderTotp(host) {
-	if (totpTimer) { clearInterval(totpTimer); totpTimer = null }
+	if (totpTimer) {
+		clearInterval(totpTimer)
+		totpTimer = null
+	}
 	const block = $('totp-block')
 	const res = await send('totp-for-host', { host })
 	if (res.none || (!res.valid && res.code === undefined && !res.error)) {
@@ -142,7 +147,9 @@ async function renderTotp(host) {
 async function copyWithAutoClear(code) {
 	try {
 		await navigator.clipboard.writeText(code)
-		setTimeout(() => { navigator.clipboard.writeText('').catch(() => {}) }, TOTP_CLIPBOARD_TTL)
+		setTimeout(() => {
+			navigator.clipboard.writeText('').catch(() => {})
+		}, TOTP_CLIPBOARD_TTL)
 	} catch {
 		// Clipboard may be unavailable (no focus); the code is still shown.
 	}
@@ -174,7 +181,9 @@ function wire() {
 
 	$('unlock-submit').addEventListener('click', async () => {
 		showError('unlock-error', '')
-		const res = await send('unlock', { masterPassword: $('unlock-master').value })
+		const res = await send('unlock', {
+			masterPassword: $('unlock-master').value,
+		})
 		$('unlock-master').value = ''
 		if (res.error) showError('unlock-error', res.error)
 		else await refresh()

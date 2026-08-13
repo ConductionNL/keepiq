@@ -75,7 +75,13 @@ export const useBulkStore = defineStore('bulk', {
 		clearSelection() {
 			this.selectedIds = []
 			this.report = []
-			this.progress = { running: false, done: 0, total: 0, label: '', cancelled: false }
+			this.progress = {
+				running: false,
+				done: 0,
+				total: 0,
+				label: '',
+				cancelled: false,
+			}
 		},
 
 		/**
@@ -104,13 +110,23 @@ export const useBulkStore = defineStore('bulk', {
 		 */
 		async run(ids, perItem, label) {
 			const unique = [...new Set(ids)]
-			this.progress = { running: true, done: 0, total: unique.length, label, cancelled: false }
+			this.progress = {
+				running: true,
+				done: 0,
+				total: unique.length,
+				label,
+				cancelled: false,
+			}
 			this.report = []
 
 			for (let offset = 0; offset < unique.length; offset += CHUNK_SIZE) {
 				if (this.progress.cancelled) {
 					for (const secretId of unique.slice(offset)) {
-						this.report.push({ secretId, status: 'skipped', reason: 'cancelled' })
+						this.report.push({
+							secretId,
+							status: 'skipped',
+							reason: 'cancelled',
+						})
 					}
 					break
 				}
@@ -122,12 +138,16 @@ export const useBulkStore = defineStore('bulk', {
 						// progress feedback predictable.
 						// eslint-disable-next-line no-await-in-loop
 						const result = await perItem(secretId)
-						this.report.push({ secretId, ...(result ?? { status: 'ok' }) })
+						this.report.push({
+							secretId,
+							...(result ?? { status: 'ok' }),
+						})
 					} catch (e) {
 						this.report.push({
 							secretId,
 							status: 'failed',
-							reason: e?.response?.data?.message || e?.message || 'failed',
+							reason:
+								e?.response?.data?.message || e?.message || 'failed',
 						})
 					}
 					this.progress.done++

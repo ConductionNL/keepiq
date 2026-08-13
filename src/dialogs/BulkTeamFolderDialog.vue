@@ -10,19 +10,30 @@
   @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Add {count} secrets to a team folder', { count: bulk.selectionCount })"
+	<NcDialog
+		:name="
+			t('doriath', 'Add {count} secrets to a team folder', {
+				count: bulk.selectionCount,
+			})
+		"
 		:open="open"
 		size="normal"
 		data-testid="bulk-team-folder-dialog"
 		@update:open="$emit('close')">
 		<div class="bulk-tf">
-			<NcSelect v-model="target"
+			<NcSelect
+				v-model="target"
 				:options="teamFolderOptions"
 				:input-label="t('doriath', 'Team folder')"
 				label="label"
 				data-testid="bulk-team-folder-select" />
 			<p v-if="fanOut.running" data-testid="bulk-tf-fanout">
-				{{ t('doriath', 'Fanning out to members — {done} / {total}', { done: fanOut.done, total: fanOut.total }) }}
+				{{
+					t('doriath', 'Fanning out to members — {done} / {total}', {
+						done: fanOut.done,
+						total: fanOut.total,
+					})
+				}}
 			</p>
 			<BulkRunPanel @retry="onRetry" />
 		</div>
@@ -30,7 +41,8 @@
 			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Close') }}
 			</NcButton>
-			<NcButton variant="primary"
+			<NcButton
+				variant="primary"
 				:disabled="!target || bulk.progress.running || fanOut.running"
 				data-testid="bulk-team-folder-run"
 				@click="onRun">
@@ -104,7 +116,9 @@ export default {
 		 * @return {Promise<object>}
 		 */
 		async moveOne(secretId) {
-			await useSecretStore().updateSecret(secretId, { folderId: this.target.folderId })
+			await useSecretStore().updateSecret(secretId, {
+				folderId: this.target.folderId,
+			})
 			return { status: 'ok' }
 		},
 
@@ -136,7 +150,10 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed((id) => this.moveOne(id), this.t('doriath', 'Retrying'))
+			await this.bulk.retryFailed(
+				(id) => this.moveOne(id),
+				this.t('doriath', 'Retrying'),
+			)
 			try {
 				await this.teamFolderStore.runFanOut(this.target.id)
 			} catch {

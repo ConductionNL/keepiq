@@ -12,14 +12,21 @@
  */
 
 import { createApp, h } from 'vue'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import {
+	translate as t,
+	translatePlural as n,
+	loadTranslations,
+} from '@nextcloud/l10n'
 import pinia from './pinia.js'
 import AdminRoot from './views/settings/AdminRoot.vue'
 
 try {
 	const result = loadTranslations('doriath', () => {})
 	if (result && typeof result.then === 'function') {
-		result.then(() => {}, () => {})
+		result.then(
+			() => {},
+			() => {},
+		)
 	}
 } catch {
 	// no-op — English source strings are the fallback.
