@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Deblocați mai întâi seiful, apoi reluați.",
         "Your previous master password": "Parola principală anterioară",
         "Your vault is read-only until it finishes.": "Seiful este doar în citire până când se termină.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotația cheii este neterminată, iar seiful este doar în citire. Deblocați pentru a continua — vi se va cere apoi parola principală anterioară pentru a o relua."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotația cheii este neterminată, iar seiful este doar în citire. Deblocați pentru a continua — vi se va cere apoi parola principală anterioară pentru a o relua.",
+        "Attachment key": "Cheia atașamentului",
+        "Record": "Înregistrare",
+        "Showing {shown} of {total}.": "Se afișează {shown} din {total}.",
+        "Version history entry": "Intrare din istoricul versiunilor"
     },
     "plurals": null
 }

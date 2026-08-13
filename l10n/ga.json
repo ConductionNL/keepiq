@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Díghlasáil do thaisceadán ar dtús, ansin atosaigh.",
         "Your previous master password": "D'fhocal faire máistir roimhe seo",
         "Your vault is read-only until it finishes.": "Tá do thaisceadán inléite amháin go dtí go gcríochnaíonn sé.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Tá an rothlú eochrach neamhchríochnaithe agus tá do thaisceadán inléite amháin. Díghlasáil chun leanúint ar aghaidh — iarrfar do sheanfhocal faire máistir ort ansin chun é a atosú."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Tá an rothlú eochrach neamhchríochnaithe agus tá do thaisceadán inléite amháin. Díghlasáil chun leanúint ar aghaidh — iarrfar do sheanfhocal faire máistir ort ansin chun é a atosú.",
+        "Attachment key": "Eochair ceangaltáin",
+        "Record": "Taifead",
+        "Showing {shown} of {total}.": "{shown} as {total} á thaispeáint.",
+        "Version history entry": "Iontráil staire leaganacha"
     },
     "plurals": null
 }

@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Najpierw odblokuj sejf, a potem wznów.",
         "Your previous master password": "Twoje poprzednie hasło główne",
         "Your vault is read-only until it finishes.": "Twój sejf jest tylko do odczytu, dopóki się nie zakończy.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotacja klucza jest niezakończona, a twój sejf jest tylko do odczytu. Odblokuj, aby kontynuować — zostaniesz następnie poproszony o poprzednie hasło główne, aby ją wznowić."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotacja klucza jest niezakończona, a twój sejf jest tylko do odczytu. Odblokuj, aby kontynuować — zostaniesz następnie poproszony o poprzednie hasło główne, aby ją wznowić.",
+        "Attachment key": "Klucz załącznika",
+        "Record": "Rekord",
+        "Showing {shown} of {total}.": "Wyświetlono {shown} z {total}.",
+        "Version history entry": "Wpis historii wersji"
     },
     "plurals": null
 }

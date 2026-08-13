@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Déverrouillez d'abord votre coffre, puis reprenez.",
         "Your previous master password": "Votre mot de passe maître précédent",
         "Your vault is read-only until it finishes.": "Votre coffre est en lecture seule jusqu'à ce qu'elle soit terminée.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotation de clé est inachevée et votre coffre est en lecture seule. Déverrouillez-le pour continuer — votre mot de passe maître précédent vous sera alors demandé pour la reprendre."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotation de clé est inachevée et votre coffre est en lecture seule. Déverrouillez-le pour continuer — votre mot de passe maître précédent vous sera alors demandé pour la reprendre.",
+        "Attachment key": "Clé de pièce jointe",
+        "Record": "Enregistrement",
+        "Showing {shown} of {total}.": "Affichage de {shown} sur {total}.",
+        "Version history entry": "Entrée d'historique de versions"
     },
     "plurals": null
 }

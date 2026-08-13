@@ -246,18 +246,50 @@ class MigrationControllerTest extends TestCase {
 	}//end testCompleteWithErrors()
 
 	/**
-	 * Test complete returns 400 on failure.
+	 * A missing migration is 404 on complete, as on every sibling endpoint.
+	 *
+	 * It used to fall through to the generic arm and return 400, while getWork
+	 * and all three re-encryption endpoints returned 404 for the same
+	 * condition — so a client could not tell "no such migration" from
+	 * "malformed request" on the one endpoint where that matters most.
 	 *
 	 * @return void
 	 */
-	public function testCompleteReturns400OnFailure(): void {
+	public function testCompleteReturns404WhenTheMigrationIsMissing(): void {
 		$this->migrationService->method('getMigration')
 			->willThrowException(new DoesNotExistException('Migration not found'));
 
 		$response = $this->controller->complete('nonexistent');
 
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-	}//end testCompleteReturns400OnFailure()
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testCompleteReturns404WhenTheMigrationIsMissing()
+
+	/**
+	 * A 409 carries the authoritative acknowledgement number.
+	 *
+	 * The client must echo `requiredAcknowledgement` back rather than counting
+	 * its own failure list: the two count different things (one entry per
+	 * failed record per pass, versus distinct records currently failed), and
+	 * because the server compared with a strict `===`, every acknowledgement
+	 * derived from the client's list was refused — leaving the vault
+	 * write-locked with no reachable way out.
+	 *
+	 * @return void
+	 */
+	public function testCompleteReturnsTheRequiredAcknowledgementOn409(): void {
+		$this->arrangeOwnMigration();
+		$this->migrationService->method('completeMigration')
+			->willThrowException(
+				(new MigrationIncompleteException(message: '3 record(s) could not be decrypted'))
+					->withRequiredAcknowledgement(3)
+			);
+
+		$response = $this->controller->complete('migr-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('migration_incomplete', $response->getData()['error']);
+		$this->assertSame(3, $response->getData()['requiredAcknowledgement']);
+	}//end testCompleteReturnsTheRequiredAcknowledgementOn409()
 
 	/**
 	 * Test an incomplete migration is refused with a distinct 409.

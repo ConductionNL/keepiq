@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Avage kõigepealt oma hoidla ja seejärel jätkake.",
         "Your previous master password": "Teie eelmine ülemparool",
         "Your vault is read-only until it finishes.": "Teie hoidla on kuni lõpetamiseni ainult lugemiseks.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Võtme rotatsioon on lõpetamata ja teie hoidla on ainult lugemiseks. Avage jätkamiseks — seejärel palutakse teil sisestada eelmine ülemparool, et seda jätkata."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Võtme rotatsioon on lõpetamata ja teie hoidla on ainult lugemiseks. Avage jätkamiseks — seejärel palutakse teil sisestada eelmine ülemparool, et seda jätkata.",
+        "Attachment key": "Manuse võti",
+        "Record": "Kirje",
+        "Showing {shown} of {total}.": "Kuvatakse {shown} / {total}.",
+        "Version history entry": "Versiooniajaloo kirje"
     },
     "plurals": null
 }

@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Спочатку розблокуйте сейф, потім продовжіть.",
         "Your previous master password": "Ваш попередній головний пароль",
         "Your vault is read-only until it finishes.": "Ваш сейф доступний лише для читання, доки вона не завершиться.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ротація ключа не завершена, і ваш сейф доступний лише для читання. Розблокуйте, щоб продовжити — потім у вас запитають попередній головний пароль, щоб її продовжити."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ротація ключа не завершена, і ваш сейф доступний лише для читання. Розблокуйте, щоб продовжити — потім у вас запитають попередній головний пароль, щоб її продовжити.",
+        "Attachment key": "Ключ вкладення",
+        "Record": "Запис",
+        "Showing {shown} of {total}.": "Показано {shown} з {total}.",
+        "Version history entry": "Запис історії версій"
     },
     "plurals": null
 }

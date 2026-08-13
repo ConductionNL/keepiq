@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Iftaħ is-sejfa tiegħek l-ewwel, u mbagħad issokta.",
         "Your previous master password": "Il-password prinċipali preċedenti tiegħek",
         "Your vault is read-only until it finishes.": "Is-sejfa tiegħek tinqara biss sakemm tintemm.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ir-rotazzjoni taċ-ċavetta mhijiex mitmuma u s-sejfa tiegħek tinqara biss. Iftaħha biex tkompli — imbagħad tintalab il-password prinċipali preċedenti tiegħek biex tissoktaha."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ir-rotazzjoni taċ-ċavetta mhijiex mitmuma u s-sejfa tiegħek tinqara biss. Iftaħha biex tkompli — imbagħad tintalab il-password prinċipali preċedenti tiegħek biex tissoktaha.",
+        "Attachment key": "Ċavetta tal-anness",
+        "Record": "Rekord",
+        "Showing {shown} of {total}.": "Qed jintwerew {shown} minn {total}.",
+        "Version history entry": "Entrata tal-istorja tal-verżjonijiet"
     },
     "plurals": null
 }

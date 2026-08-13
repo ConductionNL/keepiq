@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Lås opp hvelvet ditt først, og gjenoppta deretter.",
         "Your previous master password": "Ditt forrige hovedpassord",
         "Your vault is read-only until it finishes.": "Hvelvet ditt er skrivebeskyttet til den er ferdig.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Nøkkelrotasjonen er uferdig og hvelvet ditt er skrivebeskyttet. Lås opp for å fortsette — du blir deretter bedt om ditt forrige hovedpassord for å gjenoppta den."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Nøkkelrotasjonen er uferdig og hvelvet ditt er skrivebeskyttet. Lås opp for å fortsette — du blir deretter bedt om ditt forrige hovedpassord for å gjenoppta den.",
+        "Attachment key": "Vedleggsnøkkel",
+        "Record": "Post",
+        "Showing {shown} of {total}.": "Viser {shown} av {total}.",
+        "Version history entry": "Versjonshistorikkpost"
     },
     "plurals": null
 }

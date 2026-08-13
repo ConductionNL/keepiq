@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Прво откључајте свој сеф, а затим наставите.",
         "Your previous master password": "Ваша претходна главна шифра",
         "Your vault is read-only until it finishes.": "Ваш сеф је само за читање док се не заврши.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ротација кључа није завршена и ваш сеф је само за читање. Откључајте да наставите — затим ће вам бити затражена претходна главна шифра да је наставите."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ротација кључа није завршена и ваш сеф је само за читање. Откључајте да наставите — затим ће вам бити затражена претходна главна шифра да је наставите.",
+        "Attachment key": "Кључ прилога",
+        "Record": "Запис",
+        "Showing {shown} of {total}.": "Приказано {shown} од {total}.",
+        "Version history entry": "Унос историје верзија"
     },
     "plurals": null
 }

@@ -77,6 +77,15 @@ class MigrationServiceTest extends TestCase {
 		$this->migrationMapper->method('findById')->willReturn($migration);
 		$this->migrationMapper->expects($this->once())->method('update');
 
+		// The owner has to resolve for the safety gates to be evaluable at all;
+		// an unresolvable owner is now a refusal, covered by its own test.
+		$suite = new EncryptionSuite();
+		$suite->setId('old-suite');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$this->suiteMapper->method('findById')->willReturn($suite);
+		$this->stubNothingOutstanding();
+
 		// The old suite is marked compromised through EncryptionSuiteService
 		// (mocked here), never by writing the suite mapper directly.
 		$this->suiteMapper->expects($this->never())->method('update');
@@ -88,16 +97,79 @@ class MigrationServiceTest extends TestCase {
 	}//end testCompleteMigrationSetsMigrationCompleted()
 
 	public function testCompleteMigrationWithErrors(): void {
-		$migration = new SuiteMigration();
-		$migration->setId('migration-1');
-		$migration->setOldSuiteId('old-suite');
-
-		$this->migrationMapper->method('findById')->willReturn($migration);
+		// The owner must be arranged: an unresolvable owner is now a refusal
+		// rather than a silent skip of every safety gate, so a migration with
+		// no resolvable suite owner never reaches a terminal status.
+		$this->arrangeOwnedMigration();
+		$this->stubNothingOutstanding();
 
 		$result = $this->service->completeMigration('migration-1', true);
 
 		$this->assertEquals('completed_with_errors', $result['status']);
 	}//end testCompleteMigrationWithErrors()
+
+	/**
+	 * An unresolvable owner refuses termination instead of failing open.
+	 *
+	 * The gate used to return [0, []] when resolveOwnerId() came back null,
+	 * which skipped dropVersionsBeyondWindow, assertNothingUnaccountedFor AND
+	 * assertLossAcknowledged, drove the migration to `completed`, and called
+	 * markCompromised on a suite that may still have held every secret. An
+	 * unresolvable owner means the gate cannot be evaluated, which is not the
+	 * same as the gate passing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+	 */
+	public function testUnresolvableOwnerRefusesTerminationRatherThanFailingOpen(): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId('old-suite');
+		$migration->setNewSuiteId('new-suite');
+		$migration->setStatus('in_progress');
+
+		$this->migrationMapper->method('findById')->willReturn($migration);
+		// No suite arranged, so resolveOwnerId() yields null.
+
+		$this->suiteService->expects($this->never())->method('markCompromised');
+		$this->migrationMapper->expects($this->never())->method('update');
+
+		$this->expectException(MigrationIncompleteException::class);
+
+		$this->service->completeMigration('migration-1');
+	}//end testUnresolvableOwnerRefusesTerminationRatherThanFailingOpen()
+
+	/**
+	 * Completion is idempotent: the destructive cascade is not replayable.
+	 *
+	 * Replaying complete() with a retained migration id used to re-run
+	 * markCompromised (overwriting audit fields), delete every link share and
+	 * passkey created AFTER the rotation, and re-dispatch the completion event.
+	 * An ordinary client retry of a timed-out POST was enough.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+	 */
+	public function testCompletingAnAlreadyCompletedMigrationIsANoOp(): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId('old-suite');
+		$migration->setNewSuiteId('new-suite');
+		$migration->setStatus('completed');
+
+		$this->migrationMapper->method('findById')->willReturn($migration);
+
+		$this->suiteService->expects($this->never())->method('markCompromised');
+		$this->migrationMapper->expects($this->never())->method('update');
+		$this->workService->expects($this->never())->method('dropVersionsBeyondWindow');
+
+		$result = $this->service->completeMigration('migration-1');
+
+		$this->assertSame('completed', $result['status']);
+		$this->assertTrue($result['alreadyCompleted']);
+	}//end testCompletingAnAlreadyCompletedMigrationIsANoOp()
 
 	public function testIsWriteLockedWhenMigrationInProgress(): void {
 		// Delegated to WriteLockService so there is one implementation; the
@@ -199,6 +271,12 @@ class MigrationServiceTest extends TestCase {
 		}
 
 		$this->workService->method('listUnrecoverable')->willReturn($rows);
+
+		// The acknowledgement threshold now comes from a COUNT over the failure
+		// table, not from the size of the (capped) display list above. With more
+		// failures than the display cap those two numbers differ, and only the
+		// count can be satisfied.
+		$this->workService->method('countUnrecoverable')->willReturn($failedSecrets);
 	}//end stubFailedOnly()
 
 	/**
@@ -209,6 +287,7 @@ class MigrationServiceTest extends TestCase {
 	private function stubNothingOutstanding(): void {
 		$this->stubUnattempted(secrets: 0, versions: 0, grants: 0);
 		$this->workService->method('listUnrecoverable')->willReturn([]);
+		$this->workService->method('countUnrecoverable')->willReturn(0);
 	}//end stubNothingOutstanding()
 
 	/**

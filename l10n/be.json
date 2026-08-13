@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Спачатку разблакуйце сховішча, потым аднавіце.",
         "Your previous master password": "Ваш папярэдні галоўны пароль",
         "Your vault is read-only until it finishes.": "Ваша сховішча даступнае толькі для чытання, пакуль яна не завершыцца.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ратацыя ключа не завершана і ваша сховішча даступнае толькі для чытання. Разблакуйце, каб працягнуць — потым вас папросяць увесці папярэдні галоўны пароль, каб аднавіць яе."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Ратацыя ключа не завершана і ваша сховішча даступнае толькі для чытання. Разблакуйце, каб працягнуць — потым вас папросяць увесці папярэдні галоўны пароль, каб аднавіць яе.",
+        "Attachment key": "Ключ укладання",
+        "Record": "Запіс",
+        "Showing {shown} of {total}.": "Паказана {shown} з {total}.",
+        "Version history entry": "Запіс гісторыі версій"
     },
     "plurals": null
 }

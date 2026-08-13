@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Najprej odklenite svoj sef in nato nadaljujte.",
         "Your previous master password": "Vaše prejšnje glavno geslo",
         "Your vault is read-only until it finishes.": "Vaš sef je samo za branje, dokler se ne zaključi.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotacija ključa ni zaključena in vaš sef je samo za branje. Odklenite ga za nadaljevanje — nato boste zaprošeni za prejšnje glavno geslo, da jo nadaljujete."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotacija ključa ni zaključena in vaš sef je samo za branje. Odklenite ga za nadaljevanje — nato boste zaprošeni za prejšnje glavno geslo, da jo nadaljujete.",
+        "Attachment key": "Ključ priloge",
+        "Record": "Zapis",
+        "Showing {shown} of {total}.": "Prikazano {shown} od {total}.",
+        "Version history entry": "Vnos zgodovine različic"
     },
     "plurals": null
 }

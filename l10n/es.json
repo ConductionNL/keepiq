@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Desbloquee primero su caja fuerte y luego reanude.",
         "Your previous master password": "Su contraseña maestra anterior",
         "Your vault is read-only until it finishes.": "Su caja fuerte será de solo lectura hasta que termine.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotación de clave está sin finalizar y su caja fuerte es de solo lectura. Desbloquéela para continuar: después se le pedirá su contraseña maestra anterior para reanudarla."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotación de clave está sin finalizar y su caja fuerte es de solo lectura. Desbloquéela para continuar: después se le pedirá su contraseña maestra anterior para reanudarla.",
+        "Attachment key": "Clave del adjunto",
+        "Record": "Registro",
+        "Showing {shown} of {total}.": "Mostrando {shown} de {total}.",
+        "Version history entry": "Entrada del historial de versiones"
     },
     "plurals": null
 }

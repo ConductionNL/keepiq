@@ -175,7 +175,7 @@ describe('CompromiseRecoveryForm', () => {
 		expect(text).toContain('Try these again')
 	})
 
-	it('accepts losses only with the observed count, via an explicit action', async () => {
+	it("sends the SERVER's acknowledgement number, never its own list length", async () => {
 		const store = useEncryptionSuiteStore()
 		store.migrationStatus = { id: 'migration-1' }
 		store.migrationNeedsAcknowledgement = true
@@ -187,13 +187,55 @@ describe('CompromiseRecoveryForm', () => {
 				error: 'secrets: could not decrypt',
 			},
 		]
+		// The server said 4 — one head plus three of its versions, say — while
+		// the client's own list holds 1 entry. Sending the list length was the
+		// third blocker: the server compares with a strict `===`, so every
+		// click was refused and the vault stayed write-locked with no way out.
+		store.migrationRequiredAcknowledgement = 4
+
 		const accept = vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({})
 
 		const wrapper = mountForm()
 		await wrapper.vm.handleAcceptLosses()
 
-		expect(accept).toHaveBeenCalledWith('migration-1', 1)
+		// Called with the id alone: the action reads the authoritative number
+		// from the store rather than being handed a count derived here.
+		expect(accept).toHaveBeenCalledWith('migration-1')
 		expect(wrapper.vm.phase).toBe('terminal')
+	})
+
+	it("shows the server's loss count even when the display list is capped", async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 512
+		store.migrationFailures = [
+			{ store: 'secrets', id: 'secret-1', name: 'router-admin', error: 'x' },
+		]
+
+		const wrapper = mountForm()
+
+		// The count the user is asked to accept is the real one, not the
+		// length of a list that the server caps for display.
+		expect(wrapper.vm.lossCount).toBe(512)
+		expect(wrapper.vm.lossListTruncated).toBe(true)
+	})
+
+	it('labels a version failure instead of rendering a blank row', () => {
+		const wrapper = mountForm()
+
+		// Version and grant failures carry no secret name; the list used to
+		// render an empty bullet directly above the "losing access" button.
+		expect(
+			wrapper.vm.describeRecord({ id: 'v-1', name: null, store: 'versions' }),
+		).toContain('v-1')
+		expect(
+			wrapper.vm.describeRecord({
+				id: 's-1',
+				name: 'router-admin',
+				store: 'secrets',
+			}),
+		).toBe('router-admin')
 	})
 
 	it('surfaces a halted run as an error and returns to the form', async () => {

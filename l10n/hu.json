@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Először oldja fel a széfjét, majd folytassa.",
         "Your previous master password": "Az előző mesterjelszava",
         "Your vault is read-only until it finishes.": "A széfje csak olvasható, amíg be nem fejeződik.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "A kulcsrotáció befejezetlen, és a széfje csak olvasható. A folytatáshoz oldja fel — ezután megkérjük az előző mesterjelszavára a folytatáshoz."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "A kulcsrotáció befejezetlen, és a széfje csak olvasható. A folytatáshoz oldja fel — ezután megkérjük az előző mesterjelszavára a folytatáshoz.",
+        "Attachment key": "Melléklet kulcsa",
+        "Record": "Rekord",
+        "Showing {shown} of {total}.": "{shown} / {total} megjelenítve.",
+        "Version history entry": "Verziótörténeti bejegyzés"
     },
     "plurals": null
 }

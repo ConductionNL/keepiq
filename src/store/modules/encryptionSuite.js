@@ -41,6 +41,21 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		migrationRemaining: null,
 		/** @type {boolean} Server wants the loss acknowledged before finalising */
 		migrationNeedsAcknowledgement: false,
+		/**
+		 * The number the server will accept as the acknowledgement.
+		 *
+		 * NEVER derived from `migrationFailures.length`. That list holds one
+		 * entry per failed RECORD accumulated across every pass of the loop,
+		 * while the server counts the distinct records currently recorded as
+		 * failed — and it compares with a strict `===`. The two agreed only
+		 * when every failure was exactly one secret head failing exactly once,
+		 * so any run where a secret failed alongside its own version, or the
+		 * same record failed twice, made "Finish anyway" permanently
+		 * unsatisfiable and left the vault write-locked.
+		 *
+		 * @type {number|null}
+		 */
+		migrationRequiredAcknowledgement: null,
 		/** @type {string|null} Why the server refused to finalise */
 		migrationBlockedMessage: null,
 		/** @type {object|null} The active runner, so vault lock can dispose it */
@@ -199,6 +214,23 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			this.migrationStatus = response.data.migration
 			this.currentSuite = response.data.newSuite
 
+			// Rebind the session to the NEW suite, the way createSuite does.
+			// Without this the session still names the old suite, and
+			// resumeMigration's "is this session unlocked against the
+			// migration's new suite?" check refused — so "Try these again", the
+			// only in-dialog escape from a partly-failed run, raised an error
+			// every time and pushed the user at "Finish anyway" instead.
+			//
+			// The key material is the pair generated above, so this is the same
+			// binding createSuite performs on first-time setup, not a
+			// re-derivation from anything the server sent.
+			const session = useSessionStore()
+			session.cryptoKey = await importPrivateKey(newPrivateKeyPem)
+			session.encryptedPrivateKey = newEncryptedPk
+			session.certificate = response.data.newSuite?.certificate ?? null
+			session.suiteId = response.data.newSuite?.id ?? session.suiteId
+			session.lastActivity = Date.now()
+
 			// Suite rotation invalidates every cached ciphertext (encrypted to
 			// the now-dead key) — evict the offline snapshot (offline-readonly-
 			// cache §D4). Lazy import avoids a static store cycle.
@@ -291,9 +323,24 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 						break
 					}
 
+					// `totalRemaining` counts EVERY row still on the old suite,
+					// including the version rows outside the retention window.
+					// Those are reported as dropCandidates and never dispatched
+					// as jobs — the server deletes them at completion — so using
+					// the raw number as the denominator left the bar short of
+					// 100% and then jumping to the terminal panel, which reads as
+					// a hang during an already-anxious operation.
+					const denominator =
+						migrated
+						+ Math.max(
+							0,
+							data.totalRemaining
+								- (data.versions?.dropCandidates || 0),
+						)
+
 					this.migrationProgress = {
 						done: migrated,
-						total: migrated + data.totalRemaining,
+						total: denominator,
 						phase: 'migrating',
 					}
 
@@ -310,7 +357,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 					this.migrationProgress = {
 						done: migrated,
-						total: migrated + data.totalRemaining,
+						total: denominator,
 						phase: 'migrating',
 					}
 
@@ -629,11 +676,22 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					// Expected, not exceptional: either work remains (resume) or a
 					// loss needs acknowledging (the dialog asks). Either way the
 					// migration is intact.
-					this.migrationNeedsAcknowledgement = outcome.failed > 0
+					//
+					// `requiredAcknowledgement` is present only in the
+					// acknowledgement case, and it is the ONLY number that will
+					// satisfy the server. Absent means rows nobody has attempted
+					// yet, which resuming fixes rather than acknowledging.
+					const required =
+						e?.response?.data?.requiredAcknowledgement ?? null
+					this.migrationRequiredAcknowledgement = required
+
+					const needsAcknowledgement = required !== null
+					this.migrationNeedsAcknowledgement = needsAcknowledgement
 					this.migrationBlockedMessage = message
 					return {
 						finalised: false,
-						needsAcknowledgement: outcome.failed > 0,
+						needsAcknowledgement,
+						requiredAcknowledgement: required,
 						message,
 					}
 				}
@@ -653,13 +711,22 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @return {Promise<object>} The completion response.
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
 		 */
-		async acceptMigrationLosses(migrationId, acceptUnrecoverable) {
-			const data = await this.completeMigration(
-				migrationId,
-				true,
-				acceptUnrecoverable,
-			)
+		async acceptMigrationLosses(migrationId, acceptUnrecoverable = null) {
+			// Defaults to the server's own number. A caller may still pass one
+			// explicitly, but the stored value is what the server asked for and
+			// is therefore what it will accept.
+			const accepted =
+				acceptUnrecoverable ?? this.migrationRequiredAcknowledgement
+
+			if (accepted === null) {
+				throw new Error(
+					'Cannot accept losses before the server has stated how many there are.',
+				)
+			}
+
+			const data = await this.completeMigration(migrationId, true, accepted)
 			this.migrationNeedsAcknowledgement = false
+			this.migrationRequiredAcknowledgement = null
 			this.migrationBlockedMessage = null
 			return data
 		},
@@ -827,6 +894,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			this.migrationDroppedVersions = 0
 			this.migrationUnrecoverable = []
 			this.migrationNeedsAcknowledgement = false
+			this.migrationRequiredAcknowledgement = null
 			this.migrationBlockedMessage = null
 			if (this.migrationRunner) {
 				this.migrationRunner.dispose()

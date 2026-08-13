@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Primer desbloqueu la caixa forta i després reprengueu.",
         "Your previous master password": "La vostra contrasenya mestra anterior",
         "Your vault is read-only until it finishes.": "La caixa forta serà només de lectura fins que acabi.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotació de claus està inacabada i la caixa forta és només de lectura. Desbloqueu-la per continuar: després se us demanarà la contrasenya mestra anterior per reprendre-la."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotació de claus està inacabada i la caixa forta és només de lectura. Desbloqueu-la per continuar: després se us demanarà la contrasenya mestra anterior per reprendre-la.",
+        "Attachment key": "Clau de l'adjunt",
+        "Record": "Registre",
+        "Showing {shown} of {total}.": "Es mostren {shown} de {total}.",
+        "Version history entry": "Entrada de l'historial de versions"
     },
     "plurals": null
 }

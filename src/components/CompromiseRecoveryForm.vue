@@ -69,7 +69,7 @@
 							'doriath',
 							'%n secret could not be decrypted with your old key, so it did not migrate.',
 							'%n secrets could not be decrypted with your old key, so they did not migrate.',
-							unrecoverable.length,
+							lossCount,
 						)
 					}}
 				</p>
@@ -83,10 +83,28 @@
 				</p>
 			</NcNoteCard>
 
+			<p
+				v-if="lossListTruncated"
+				class="compromise-recovery-form__list-detail">
+				{{
+					t('doriath', 'Showing {shown} of {total}.', {
+						shown: unrecoverable.length,
+						total: lossCount,
+					})
+				}}
+			</p>
+
 			<ul class="compromise-recovery-form__list">
 				<li v-for="item in unrecoverable" :key="item.id">
+					<!--
+						Falls back to the record id, and names the store. Version
+						and attachment-grant failures carry no secret name, so
+						this list rendered blank rows directly above a "losing
+						access to N secrets" button — for exactly the record
+						types the accounting blockers were about.
+					-->
 					<span class="compromise-recovery-form__list-name">{{
-						item.name
+						describeRecord(item)
 					}}</span>
 					<span class="compromise-recovery-form__list-detail">{{
 						item.error
@@ -107,7 +125,7 @@
 							'doriath',
 							'Finish anyway, losing access to %n secret',
 							'Finish anyway, losing access to %n secrets',
-							unrecoverable.length,
+							lossCount,
 						)
 					}}
 				</NcButton>
@@ -233,6 +251,35 @@ export default {
 				&& this.newPassword === this.confirmPassword
 				&& this.strengthValid
 			)
+		},
+
+		/**
+		 * How many records will actually lose access.
+		 *
+		 * The server's number when it has stated one, because the failure LIST
+		 * it returns is capped for display: on a run where the new key material
+		 * is wrong — exactly the run that produces thousands of failures — the
+		 * list stops at the cap while the real loss is larger. Showing the list
+		 * length would under-report the loss the user is being asked to accept.
+		 *
+		 * @return {number} The count to show and to acknowledge.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+		 */
+		lossCount() {
+			return (
+				useEncryptionSuiteStore().migrationRequiredAcknowledgement
+				?? this.unrecoverable.length
+			)
+		},
+
+		/**
+		 * Whether the named list is shorter than the real loss.
+		 *
+		 * @return {boolean} True when records are lost but unnamed.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+		 */
+		lossListTruncated() {
+			return this.lossCount > this.unrecoverable.length
 		},
 
 		/**
@@ -392,6 +439,33 @@ export default {
 		},
 
 		/**
+		 * A human label for one failed record.
+		 *
+		 * A secret head carries its name; a version or attachment grant does
+		 * not, so it is identified by store plus record id instead of
+		 * rendering an empty bullet.
+		 *
+		 * @param {{name: string|null, id: string, store: string|undefined}} item The failure.
+		 * @return {string} A non-empty label.
+		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+		 */
+		describeRecord(item) {
+			if (item.name) {
+				return item.name
+			}
+
+			const labels = {
+				secrets: t('doriath', 'Secret'),
+				versions: t('doriath', 'Version history entry'),
+				attachmentGrants: t('doriath', 'Attachment key'),
+			}
+
+			const kind = labels[item.store] ?? t('doriath', 'Record')
+
+			return `${kind} ${item.id}`
+		},
+
+		/**
 		 * Finish the rotation, accepting that the listed secrets lose access.
 		 *
 		 * Locks the old key. Only reachable from an explicit click on a button
@@ -405,11 +479,12 @@ export default {
 
 			try {
 				const store = useEncryptionSuiteStore()
-				const accepted = this.unrecoverable.length
-				await store.acceptMigrationLosses(
-					store.migrationStatus?.id,
-					accepted,
-				)
+				// The server's own number, not this list's length. The list
+				// holds one entry per failed RECORD across every pass; the
+				// server counts distinct records currently failed and compares
+				// with a strict `===`. Sending the list length made every click
+				// refused and left the vault write-locked with no way out.
+				await store.acceptMigrationLosses(store.migrationStatus?.id)
 				this.result = {
 					...(this.result ?? { migrated: 0, droppedVersions: 0 }),
 					failures: this.unrecoverable,

@@ -32,6 +32,8 @@ namespace OCA\Doriath\Tests\Unit\Service;
 use DateTime;
 use OCA\Doriath\Db\AttachmentGrant;
 use OCA\Doriath\Db\AttachmentGrantMapper;
+use OCA\Doriath\Db\MigrationFailure;
+use OCA\Doriath\Db\MigrationFailureMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretVersion;
@@ -69,6 +71,13 @@ class MigrationWorkServiceTest extends TestCase {
 	private AttachmentGrantMapper&MockObject $grantMapper;
 
 	/**
+	 * Per-record failure accounting.
+	 *
+	 * @var MigrationFailureMapper&MockObject
+	 */
+	private MigrationFailureMapper&MockObject $failureMapper;
+
+	/**
 	 * Set up test fixtures.
 	 *
 	 * @return void
@@ -85,10 +94,13 @@ class MigrationWorkServiceTest extends TestCase {
 			static fn (string $app, string $key, int $default = 0): int => $default
 		);
 
+		$this->failureMapper = $this->createMock(MigrationFailureMapper::class);
+
 		$this->service = new MigrationWorkService(
 			secretMapper: $this->secretMapper,
 			versionMapper: $this->versionMapper,
 			grantMapper: $this->grantMapper,
+			failureMapper: $this->failureMapper,
 			db: $this->createMock(IDBConnection::class),
 			appConfig: $appConfig,
 			logger: $this->createMock(LoggerInterface::class)
@@ -227,8 +239,48 @@ class MigrationWorkServiceTest extends TestCase {
 		$this->assertNull($result->getAdditionalFields());
 		$this->assertSame('new-suite', $result->getEncryptionSuiteId());
 		$this->assertNotNull($result->getPossiblyCompromisedAt());
-		$this->assertNull($result->getMigrationError());
 	}//end testCommitSecretRepointsAndFlags()
+
+	/**
+	 * Committing a record clears ONLY that record's failure.
+	 *
+	 * The second blocker on #219: commitSecret blanket-nulled
+	 * `secrets.migration_error`, and commitVersion / commitAttachmentGrant
+	 * cleared the same column on the owning secret. Because one secret owns its
+	 * head plus N versions plus M grants, whichever record was written last
+	 * won — so committing a sibling erased a failure that had already been
+	 * recorded, reclassifying a genuinely failed record as "not yet attempted".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function testCommittingAVersionDoesNotClearASiblingsFailure(): void {
+		$version = new SecretVersion();
+		$version->setId('version-2');
+		$version->setSecretId('secret-1');
+		$version->setEncryptionSuiteId('old-suite');
+		$version->setKey('OLD');
+
+		$this->versionMapper->method('findById')->willReturn($version);
+		$this->versionMapper->method('update')->willReturnArgument(0);
+		$this->secretMapper->method('findById')->willReturn($this->makeSecret());
+
+		// Scoped to (migration, versions, version-2) and nothing else. A call
+		// naming the secret head or another version would be the old bug.
+		$this->failureMapper->expects($this->once())
+			->method('clearRecord')
+			->with('migration-1', 'versions', 'version-2');
+
+		$this->service->commitVersion(
+			migration: $this->makeMigration(),
+			ownerId: 'alice',
+			versionId: 'version-2',
+			key: 'NEW',
+			login: null,
+			additionalFields: null
+		);
+	}//end testCommittingAVersionDoesNotClearASiblingsFailure()
 
 	/**
 	 * Test the migration does not reset the ciphertext-age clock.
@@ -296,6 +348,7 @@ class MigrationWorkServiceTest extends TestCase {
 
 		$this->secretMapper->method('findById')->willReturn($secret);
 		$this->secretMapper->method('update')->willReturnArgument(0);
+		$this->failureMapper->method('record')->willReturn(new MigrationFailure());
 
 		$this->service->recordFailure(
 			migration: $this->makeMigration(),
@@ -306,7 +359,6 @@ class MigrationWorkServiceTest extends TestCase {
 		);
 
 		$this->assertNull($secret->getPossiblyCompromisedAt());
-		$this->assertStringStartsWith('secrets: ', $secret->getMigrationError());
 	}//end testFailedRecordIsNotFlagged()
 
 	/**
@@ -317,7 +369,7 @@ class MigrationWorkServiceTest extends TestCase {
 	 *
 	 * @return void
 	 */
-	public function testVersionFailureRecordsOnOwningSecret(): void {
+	public function testVersionFailureIsRecordedAgainstTheVersion(): void {
 		$version = new SecretVersion();
 		$version->setId('version-1');
 		$version->setSecretId('secret-1');
@@ -329,6 +381,21 @@ class MigrationWorkServiceTest extends TestCase {
 		$this->secretMapper->method('findById')->willReturn($secret);
 		$this->secretMapper->method('update')->willReturnArgument(0);
 
+		// The failing VERSION is the unit of accounting; the owning secret is
+		// carried only so the acknowledgement list can name it. Recording
+		// against the secret is the first blocker: once its head had migrated,
+		// the version was invisible to both completion gates.
+		$this->failureMapper->expects($this->once())
+			->method('record')
+			->with(
+				'migration-1',
+				'versions',
+				'version-1',
+				'secret-1',
+				'round-trip mismatch'
+			)
+			->willReturn(new MigrationFailure());
+
 		$secretId = $this->service->recordFailure(
 			migration: $this->makeMigration(),
 			ownerId: 'alice',
@@ -338,8 +405,7 @@ class MigrationWorkServiceTest extends TestCase {
 		);
 
 		$this->assertSame('secret-1', $secretId);
-		$this->assertSame('versions: round-trip mismatch', $secret->getMigrationError());
-	}//end testVersionFailureRecordsOnOwningSecret()
+	}//end testVersionFailureIsRecordedAgainstTheVersion()
 
 	/**
 	 * Test a version whose owning secret belongs to someone else is refused.

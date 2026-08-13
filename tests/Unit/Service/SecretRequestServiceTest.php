@@ -27,6 +27,7 @@ use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Service\NotificationService;
 use OCA\Doriath\Service\SecretRequestOutbox;
 use OCA\Doriath\Service\SecretRequestPolicy;
@@ -598,6 +599,96 @@ class SecretRequestServiceTest extends TestCase {
 
 		return $entity;
 	}//end buildPending()
+
+	/**
+	 * The write lock covers ALL THREE creation paths, not only create().
+	 *
+	 * The review on #219 read createForApplication() and createReRequest() as
+	 * unguarded, since neither calls assertNotWriteLocked itself. They inherit
+	 * it by delegating to create() — but "inherits it today" is exactly the
+	 * kind of claim that a later refactor breaks silently, and inconsistent
+	 * enforcement of a lock is close to no lock. So it is pinned here rather
+	 * than argued.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function testCreateForApplicationIsRefusedWhileWriteLocked(): void {
+		$mapper = $this->createMock(SecretRequestMapper::class);
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+
+		$writeLock = $this->createMock(WriteLockService::class);
+		$writeLock->expects($this->once())
+			->method('assertNotWriteLocked')
+			->willThrowException(new ForbiddenException(message: 'migration in progress'));
+
+		// The refusal must land BEFORE anything is written.
+		$mapper->expects($this->never())->method('insert');
+
+		$service = new SecretRequestService(
+			mapper: $mapper,
+			policy: new SecretRequestPolicy(mapper: $mapper, suiteMapper: $suiteMapper),
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $writeLock,
+		);
+
+		$this->expectException(ForbiddenException::class);
+
+		$service->createForApplication(
+			secretId: 'sec-1',
+			applicationId: 'app-1',
+			requestedFields: ['key'],
+			expiresAt: null,
+			userId: 'requester',
+		);
+	}//end testCreateForApplicationIsRefusedWhileWriteLocked()
+
+	/**
+	 * The same for a re-request, which is the path a user hits mid-migration.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function testCreateReRequestIsRefusedWhileWriteLocked(): void {
+		$mapper = $this->createMock(SecretRequestMapper::class);
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$secret->setEncryptionSuiteId('suite-1');
+
+		$writeLock = $this->createMock(WriteLockService::class);
+		$writeLock->expects($this->once())
+			->method('assertNotWriteLocked')
+			->willThrowException(new ForbiddenException(message: 'migration in progress'));
+
+		$mapper->expects($this->never())->method('insert');
+
+		$policy = $this->createMock(SecretRequestPolicy::class);
+		$policy->method('requireReRequestableSecret')->willReturn($secret);
+
+		$service = new SecretRequestService(
+			mapper: $mapper,
+			policy: $policy,
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $writeLock,
+		);
+
+		$this->expectException(ForbiddenException::class);
+
+		$service->createReRequest(
+			secretId: 'sec-1',
+			requestedFields: ['key'],
+			expiresAt: null,
+			userId: 'requester',
+		);
+	}//end testCreateReRequestIsRefusedWhileWriteLocked()
 
 	/**
 	 * createForApplication resolves the application's active suite and persists the row.

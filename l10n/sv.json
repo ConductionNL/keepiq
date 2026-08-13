@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Lås först upp ditt valv och återuppta sedan.",
         "Your previous master password": "Ditt tidigare huvudlösenord",
         "Your vault is read-only until it finishes.": "Ditt valv är skrivskyddat till den är klar.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Nyckelrotationen är oavslutad och ditt valv är skrivskyddat. Lås upp för att fortsätta — du blir sedan ombedd att ange ditt tidigare huvudlösenord för att återuppta den."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Nyckelrotationen är oavslutad och ditt valv är skrivskyddat. Lås upp för att fortsätta — du blir sedan ombedd att ange ditt tidigare huvudlösenord för att återuppta den.",
+        "Attachment key": "Bilagenyckel",
+        "Record": "Post",
+        "Showing {shown} of {total}.": "Visar {shown} av {total}.",
+        "Version history entry": "Versionshistorikpost"
     },
     "plurals": null
 }

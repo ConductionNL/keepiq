@@ -130,6 +130,29 @@ class MigrationService {
 	): array {
 		$migration = $this->mapper->findById($migrationId);
 
+		// Idempotent by status. Without this, replaying the endpoint with a
+		// retained migration id re-runs the whole destructive cascade:
+		// markCompromised overwrites the audit fields, and
+		// LinkShareService::deleteByUserId plus
+		// PasskeyService::deleteAllOnRotation delete every link share and
+		// passkey created AFTER the rotation finished, with
+		// SuiteMigrationCompletedEvent re-dispatched to its listeners. An
+		// ordinary client retry of a POST that timed out is enough to trigger
+		// it. MigrationController::commitRecord already guards this way.
+		if ($migration->getStatus() !== 'in_progress') {
+			$this->logger->info(
+				'Doriath: completeMigration called on an already-terminated migration; ignoring',
+				['migrationId' => $migrationId, 'status' => $migration->getStatus()]
+			);
+
+			return [
+				'status' => $migration->getStatus(),
+				'droppedVersions' => 0,
+				'unrecoverable' => [],
+				'alreadyCompleted' => true,
+			];
+		}
+
 		// Terminal work, moved here from EncryptionSuiteController::compromiseRecovery.
 		// It used to run at the START of recovery, which marked the old suite
 		// compromised before anything had been migrated — every read then threw
@@ -167,6 +190,11 @@ class MigrationService {
 		);
 
 		$this->revokeOwnerKeyMaterial(migration: $migration, ownerId: $ownerId);
+
+		// The failure rows are in-flight accounting, not history. Dropping them
+		// with the run keeps a later migration for the same owner from
+		// inheriting a stale acknowledgement threshold.
+		$this->workService->clearFailureAccounting(migration: $migration);
 
 		// NOT re-implemented here: pending SecretRequests are unlocked and
 		// re-pointed by SuiteMigrationCompletedListener, and emergency-access
@@ -237,7 +265,28 @@ class MigrationService {
 		?int $acceptUnrecoverable,
 	): array {
 		if ($ownerId === null) {
-			return [0, []];
+			// Refuse rather than skip. Returning [0, []] here turned every
+			// safety gate off in exactly the state where it is least safe to
+			// proceed: dropVersionsBeyondWindow, assertNothingUnaccountedFor
+			// and assertLossAcknowledged were all bypassed, the migration went
+			// to `completed`, and markCompromised locked a suite that may still
+			// have held every secret. An unresolvable owner means the gate
+			// cannot be EVALUATED, which is not the same as the gate passing.
+			// revokeOwnerKeyMaterial already refuses to guess in this
+			// situation; this now matches it.
+			$this->logger->error(
+				'Doriath: refusing to terminate a migration whose owner cannot be resolved',
+				[
+					'migrationId' => $migration->getId(),
+					'oldSuiteId' => $migration->getOldSuiteId(),
+				]
+			);
+
+			throw new MigrationIncompleteException(
+				message: 'The owner of this migration could not be resolved, so it cannot be '
+					. 'verified as complete. The old suite has been left active and nothing has '
+					. 'been locked. This needs manual review.'
+			);
 		}
 
 		$droppedVersions = $this->workService->dropVersionsBeyondWindow(
@@ -247,14 +296,10 @@ class MigrationService {
 
 		$this->assertNothingUnaccountedFor(migration: $migration, ownerId: $ownerId);
 
-		$unrecoverable = $this->workService->listUnrecoverable(
-			migration: $migration,
-			ownerId: $ownerId
-		);
+		$unrecoverable = $this->workService->listUnrecoverable(migration: $migration);
 
 		$this->assertLossAcknowledged(
 			migration: $migration,
-			unrecoverable: $unrecoverable,
 			acceptUnrecoverable: $acceptUnrecoverable
 		);
 
@@ -367,7 +412,6 @@ class MigrationService {
 	 * to match what the server can see.
 	 *
 	 * @param SuiteMigration $migration The migration being completed
-	 * @param array<int,array<string,mixed>> $unrecoverable The rows that will lose access
 	 * @param int|null $acceptUnrecoverable The client's acknowledged count
 	 *
 	 * @return void
@@ -378,10 +422,13 @@ class MigrationService {
 	 */
 	private function assertLossAcknowledged(
 		SuiteMigration $migration,
-		array $unrecoverable,
 		?int $acceptUnrecoverable,
 	): void {
-		$count = count($unrecoverable);
+		// The authoritative count, NOT count($unrecoverable): that list is
+		// capped for display, so deriving the threshold from it would both
+		// under-report the loss and make the acknowledgement unsatisfiable once
+		// the real number exceeded the cap.
+		$count = $this->workService->countUnrecoverable(migration: $migration);
 		if ($count === 0) {
 			return;
 		}
@@ -398,15 +445,19 @@ class MigrationService {
 			return;
 		}
 
-		throw new MigrationIncompleteException(
+		// The number goes back in the response so the client can echo it
+		// verbatim instead of counting its own list, which counts a different
+		// thing (one entry per failed record per pass, versus distinct records
+		// currently failed).
+		throw (new MigrationIncompleteException(
 			message: sprintf(
-				'%d secret(s) could not be decrypted with the old key and will lose access when this '
+				'%d record(s) could not be decrypted with the old key and will lose access when this '
 				. 'migration is finalised. Confirm by completing with acceptUnrecoverable=%d. '
 				. 'Their stored ciphertext is retained either way.',
 				$count,
 				$count
 			)
-		);
+		))->withRequiredAcknowledgement($count);
 	}//end assertLossAcknowledged()
 
 	/**

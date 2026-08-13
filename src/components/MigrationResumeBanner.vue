@@ -169,6 +169,18 @@ export default {
 	 */
 	async mounted() {
 		const store = useEncryptionSuiteStore()
+
+		// Arm the teardown. `registerLockReset` existed but nothing called it,
+		// so src/migration/worker.js's claim — "the store terminates this
+		// worker on vault lock, so no key reference survives a locked vault" —
+		// was false: a migration worker holding the structured-cloned
+		// oldPrivateKey / newPrivateKey / newPublicKey kept running after a
+		// session timeout or an explicit "Lock vault". A defined-but-uncalled
+		// teardown is identical to having none. This banner mounts with the
+		// shell, which makes it the one place guaranteed to be present whenever
+		// a migration could be running.
+		store.registerLockReset()
+
 		await store.fetchMigrationStatus()
 		await store.fetchMigrationRemaining()
 	},

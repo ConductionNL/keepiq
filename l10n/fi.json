@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Avaa ensin holvisi ja jatka sitten.",
         "Your previous master password": "Aiempi pääsalasanasi",
         "Your vault is read-only until it finishes.": "Holvisi on vain luku -tilassa, kunnes se on valmis.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Avaimen kierto on kesken ja holvisi on vain luku -tilassa. Avaa jatkaaksesi — sinulta kysytään sitten aiempaa pääsalasanaasi kierron jatkamiseksi."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Avaimen kierto on kesken ja holvisi on vain luku -tilassa. Avaa jatkaaksesi — sinulta kysytään sitten aiempaa pääsalasanaasi kierron jatkamiseksi.",
+        "Attachment key": "Liitteen avain",
+        "Record": "Tietue",
+        "Showing {shown} of {total}.": "Näytetään {shown} / {total}.",
+        "Version history entry": "Versiohistorian tietue"
     },
     "plurals": null
 }

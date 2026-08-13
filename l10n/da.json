@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Lås først din boks op, og genoptag derefter.",
         "Your previous master password": "Din tidligere hovedadgangskode",
         "Your vault is read-only until it finishes.": "Din boks er skrivebeskyttet, indtil den er færdig.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Nøglerotationen er ikke afsluttet, og din boks er skrivebeskyttet. Lås op for at fortsætte — du bliver derefter bedt om din tidligere hovedadgangskode for at genoptage den."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Nøglerotationen er ikke afsluttet, og din boks er skrivebeskyttet. Lås op for at fortsætte — du bliver derefter bedt om din tidligere hovedadgangskode for at genoptage den.",
+        "Attachment key": "Vedhæftningsnøgle",
+        "Record": "Post",
+        "Showing {shown} of {total}.": "Viser {shown} af {total}.",
+        "Version history entry": "Versionshistorikpost"
     },
     "plurals": null
 }

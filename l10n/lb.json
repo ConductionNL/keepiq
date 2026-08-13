@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Maacht fir d'éischt Ären Safe op an féiert dann weider.",
         "Your previous master password": "Ärt virege Master-Passwuert",
         "Your vault is read-only until it finishes.": "Ären Safe ass nëmme liesbar, bis si ofgeschloss ass.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "D'Schlësselrotatioun ass net ofgeschloss an Ären Safe ass nëmme liesbar. Maacht op fir weiderzemaachen — Dir gëtt dann no Ärem viregen Master-Passwuert gefrot, fir si weiderzeféieren."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "D'Schlësselrotatioun ass net ofgeschloss an Ären Safe ass nëmme liesbar. Maacht op fir weiderzemaachen — Dir gëtt dann no Ärem viregen Master-Passwuert gefrot, fir si weiderzeféieren.",
+        "Attachment key": "Uschlossschlëssel",
+        "Record": "Datesatz",
+        "Showing {shown} of {total}.": "{shown} vun {total} ginn ugewisen.",
+        "Version history entry": "Versiounsgeschicht-Entrée"
     },
     "plurals": null
 }

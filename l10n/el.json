@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Ξεκλειδώστε πρώτα το χρηματοκιβώτιό σας και έπειτα συνεχίστε.",
         "Your previous master password": "Ο προηγούμενος κύριος κωδικός πρόσβασής σας",
         "Your vault is read-only until it finishes.": "Το χρηματοκιβώτιό σας είναι μόνο για ανάγνωση μέχρι να ολοκληρωθεί.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Η εναλλαγή κλειδιού είναι ημιτελής και το χρηματοκιβώτιό σας είναι μόνο για ανάγνωση. Ξεκλειδώστε για να συνεχίσετε — έπειτα θα σας ζητηθεί ο προηγούμενος κύριος κωδικός πρόσβασης για να τη συνεχίσετε."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Η εναλλαγή κλειδιού είναι ημιτελής και το χρηματοκιβώτιό σας είναι μόνο για ανάγνωση. Ξεκλειδώστε για να συνεχίσετε — έπειτα θα σας ζητηθεί ο προηγούμενος κύριος κωδικός πρόσβασης για να τη συνεχίσετε.",
+        "Attachment key": "Κλειδί συνημμένου",
+        "Record": "Εγγραφή",
+        "Showing {shown} of {total}.": "Εμφάνιση {shown} από {total}.",
+        "Version history entry": "Καταχώρηση ιστορικού εκδόσεων"
     },
     "plurals": null
 }

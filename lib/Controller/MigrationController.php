@@ -137,12 +137,32 @@ class MigrationController extends OCSController {
 			// Distinct from a generic fault: the migration is intact, still
 			// in progress, and resumable. The client must not treat this as
 			// "rotation finished".
+			//
+			// `requiredAcknowledgement` is the authoritative number of
+			// unrecoverable records. The client echoes it back rather than
+			// counting its own failure list, which counts a different thing —
+			// one entry per failed record per pass, versus distinct records
+			// currently failed. Null when the refusal is about rows nobody has
+			// attempted yet, which resuming fixes rather than acknowledging.
+			$body = [
+				'error' => 'migration_incomplete',
+				'message' => $e->getMessage(),
+			];
+
+			$required = $e->getRequiredAcknowledgement();
+			if ($required !== null) {
+				$body['requiredAcknowledgement'] = $required;
+			}
+
+			return new JSONResponse(data: $body, statusCode: Http::STATUS_CONFLICT);
+		} catch (NotFoundException $e) {
+			// Was falling through to the generic arm and returning 400, while
+			// getWork and all three re-encryption endpoints return 404 for the
+			// same condition. A client could not tell "no such migration" from
+			// "malformed request" on the one endpoint where it matters most.
 			return new JSONResponse(
-				data: [
-					'error' => 'migration_incomplete',
-					'message' => $e->getMessage(),
-				],
-				statusCode: Http::STATUS_CONFLICT
+				data: ['message' => $e->getMessage()],
+				statusCode: Http::STATUS_NOT_FOUND
 			);
 		} catch (Exception $e) {
 			return new JSONResponse(

@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Pirmiausia atrakinkite savo seifą, tada pratęskite.",
         "Your previous master password": "Jūsų ankstesnis pagrindinis slaptažodis",
         "Your vault is read-only until it finishes.": "Jūsų seifas yra tik skaitymo režimu, kol ji nebus užbaigta.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rakto rotacija nebaigta ir jūsų seifas yra tik skaitymo režimu. Atrakinkite, kad tęstumėte — tada būsite paprašyti ankstesnio pagrindinio slaptažodžio, kad ją pratęstumėte."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rakto rotacija nebaigta ir jūsų seifas yra tik skaitymo režimu. Atrakinkite, kad tęstumėte — tada būsite paprašyti ankstesnio pagrindinio slaptažodžio, kad ją pratęstumėte.",
+        "Attachment key": "Priedo raktas",
+        "Record": "Įrašas",
+        "Showing {shown} of {total}.": "Rodoma {shown} iš {total}.",
+        "Version history entry": "Versijų istorijos įrašas"
     },
     "plurals": null
 }

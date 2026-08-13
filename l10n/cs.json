@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Nejprve odemkněte trezor a poté pokračujte.",
         "Your previous master password": "Vaše předchozí hlavní heslo",
         "Your vault is read-only until it finishes.": "Váš trezor je až do dokončení jen pro čtení.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotace klíče není dokončena a váš trezor je jen pro čtení. Odemkněte jej pro pokračování — poté budete požádáni o předchozí hlavní heslo, abyste ji obnovili."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rotace klíče není dokončena a váš trezor je jen pro čtení. Odemkněte jej pro pokračování — poté budete požádáni o předchozí hlavní heslo, abyste ji obnovili.",
+        "Attachment key": "Klíč přílohy",
+        "Record": "Záznam",
+        "Showing {shown} of {total}.": "Zobrazeno {shown} z {total}.",
+        "Version history entry": "Záznam historie verzí"
     },
     "plurals": null
 }

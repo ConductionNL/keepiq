@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Debloccescha l'emprim tia cassaforta e cuntinuescha lura.",
         "Your previous master password": "Tia pled-clav principala precedenta",
         "Your vault is read-only until it finishes.": "Tia cassaforta è mo per leger fin ch'ella è terminada.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotaziun da la clav n'è betg terminada e tia cassaforta è mo per leger. Debloccescha per cuntinuar — lura vegns ti dumandà per tia pled-clav principala precedenta per la cuntinuar."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotaziun da la clav n'è betg terminada e tia cassaforta è mo per leger. Debloccescha per cuntinuar — lura vegns ti dumandà per tia pled-clav principala precedenta per la cuntinuar.",
+        "Attachment key": "Clav da l'agiunta",
+        "Record": "Registraziun",
+        "Showing {shown} of {total}.": "{shown} da {total} vegnan mussads.",
+        "Version history entry": "Endataziun da la cronologia da versiuns"
     },
     "plurals": null
 }

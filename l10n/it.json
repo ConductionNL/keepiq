@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Sblocca prima la tua cassaforte, poi riprendi.",
         "Your previous master password": "La tua password principale precedente",
         "Your vault is read-only until it finishes.": "La tua cassaforte è in sola lettura finché non termina.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotazione della chiave è incompleta e la tua cassaforte è in sola lettura. Sbloccala per continuare: ti verrà poi chiesta la tua password principale precedente per riprenderla."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "La rotazione della chiave è incompleta e la tua cassaforte è in sola lettura. Sbloccala per continuare: ti verrà poi chiesta la tua password principale precedente per riprenderla.",
+        "Attachment key": "Chiave dell'allegato",
+        "Record": "Record",
+        "Showing {shown} of {total}.": "Visualizzati {shown} di {total}.",
+        "Version history entry": "Voce della cronologia versioni"
     },
     "plurals": null
 }

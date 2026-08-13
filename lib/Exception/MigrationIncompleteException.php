@@ -31,4 +31,44 @@ use RuntimeException;
  * Thrown when a migration cannot yet be terminated.
  */
 class MigrationIncompleteException extends RuntimeException {
+	/**
+	 * How many unrecoverable records the caller must acknowledge, when that is
+	 * the reason for the refusal.
+	 *
+	 * The client MUST echo this number back rather than counting its own
+	 * failure list. Those are different quantities: the client accumulates one
+	 * entry per failed RECORD across every pass of the loop, while the
+	 * authoritative number is the distinct records currently recorded as
+	 * failed. They diverged whenever a secret failed alongside its own version
+	 * or grant, or the same record failed on two passes — and because the
+	 * server compared with a strict `===`, every acknowledgement was refused
+	 * and the vault stayed write-locked with no way out.
+	 *
+	 * Null when the refusal is not about acknowledgement (rows nobody has
+	 * attempted yet, which resuming fixes).
+	 *
+	 * @var integer|null
+	 */
+	private ?int $requiredAck = null;
+
+	/**
+	 * Set the acknowledgement the caller must send back.
+	 *
+	 * @param integer $required The number of unrecoverable records
+	 *
+	 * @return self
+	 */
+	public function withRequiredAcknowledgement(int $required): self {
+		$this->requiredAck = $required;
+		return $this;
+	}//end withRequiredAcknowledgement()
+
+	/**
+	 * The acknowledgement the caller must send back, if any.
+	 *
+	 * @return integer|null
+	 */
+	public function getRequiredAcknowledgement(): ?int {
+		return $this->requiredAck;
+	}//end getRequiredAcknowledgement()
 }//end class

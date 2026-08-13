@@ -533,7 +533,11 @@
         "Unlock your vault first, then resume.": "Ontgrendel eerst je kluis en hervat daarna.",
         "Could not resume the rotation.": "Kon de rotatie niet hervatten.",
         "Some secrets could not be migrated. Open key rotation to decide what to do with them.": "Sommige geheimen konden niet worden gemigreerd. Open sleutelrotatie om te bepalen wat ermee moet gebeuren.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Sleutelrotatie is niet afgerond en je kluis is alleen-lezen. Ontgrendel om verder te gaan — daarna wordt je vorige hoofdwachtwoord gevraagd om de rotatie te hervatten."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Sleutelrotatie is niet afgerond en je kluis is alleen-lezen. Ontgrendel om verder te gaan — daarna wordt je vorige hoofdwachtwoord gevraagd om de rotatie te hervatten.",
+        "Attachment key": "Bijlagesleutel",
+        "Record": "Record",
+        "Showing {shown} of {total}.": "{shown} van {total} weergegeven.",
+        "Version history entry": "Versiegeschiedenis-item"
     },
     "plurals": null
 }

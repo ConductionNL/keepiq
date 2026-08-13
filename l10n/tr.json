@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Önce kasanızın kilidini açın, sonra sürdürün.",
         "Your previous master password": "Önceki ana parolanız",
         "Your vault is read-only until it finishes.": "Kasanız bitene kadar salt okunurdur.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Anahtar döndürme tamamlanmadı ve kasanız salt okunur. Devam etmek için kilidi açın — ardından onu sürdürmek için önceki ana parolanız istenecek."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Anahtar döndürme tamamlanmadı ve kasanız salt okunur. Devam etmek için kilidi açın — ardından onu sürdürmek için önceki ana parolanız istenecek.",
+        "Attachment key": "Ek anahtarı",
+        "Record": "Kayıt",
+        "Showing {shown} of {total}.": "{total} kaydın {shown} tanesi gösteriliyor.",
+        "Version history entry": "Sürüm geçmişi kaydı"
     },
     "plurals": null
 }

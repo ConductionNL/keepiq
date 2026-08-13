@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Së pari shkyçni kasafortën tuaj, më pas vazhdoni.",
         "Your previous master password": "Fjalëkalimi juaj kryesor i mëparshëm",
         "Your vault is read-only until it finishes.": "Kasaforta juaj është vetëm për lexim derisa ai të përfundojë.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rrotullimi i kyçit është i papërfunduar dhe kasaforta juaj është vetëm për lexim. Shkyçni për të vazhduar — më pas do t'ju kërkohet fjalëkalimi juaj kryesor i mëparshëm për ta vazhduar."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Rrotullimi i kyçit është i papërfunduar dhe kasaforta juaj është vetëm për lexim. Shkyçni për të vazhduar — më pas do t'ju kërkohet fjalëkalimi juaj kryesor i mëparshëm për ta vazhduar.",
+        "Attachment key": "Kyçi i bashkëngjitjes",
+        "Record": "Regjistrim",
+        "Showing {shown} of {total}.": "Po shfaqen {shown} nga {total}.",
+        "Version history entry": "Zë i historikut të versioneve"
     },
     "plurals": null
 }

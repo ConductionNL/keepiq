@@ -30,6 +30,7 @@ use DateTime;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\AttachmentGrant;
 use OCA\Doriath\Db\AttachmentGrantMapper;
+use OCA\Doriath\Db\MigrationFailureMapper;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretVersion;
@@ -52,6 +53,11 @@ use Throwable;
  *   guard exceptions. Splitting it per store would give each store its own copy
  *   of the two-part authorization guard — which is exactly the drift this class
  *   prevents.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) Eleven, and the shape is
+ *   forced: three stores x (list + commit) plus the migration-wide
+ *   accounting (count, list, clear) and the version window. Splitting per
+ *   store is the option this class exists to reject, because each copy would
+ *   carry its own two-part authorization guard and drift.
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The complexity is three
  *   near-parallel guard/commit pairs, not tangled logic. Collapsing them behind
  *   one generic entry point would mean passing the store as a parameter on a
@@ -71,11 +77,31 @@ class MigrationWorkService {
 	public const DEFAULT_VERSION_WINDOW = 5;
 
 	/**
+	 * Store keys. These are the values persisted in
+	 * `doriath_migration_failures.store` and the keys the client sends, so
+	 * they are declared once rather than spelled inline.
+	 *
+	 * @var string
+	 */
+	public const STORE_SECRETS = 'secrets';
+
+	/**
+	 * @var string
+	 */
+	public const STORE_VERSIONS = 'versions';
+
+	/**
+	 * @var string
+	 */
+	public const STORE_ATTACHMENT_GRANTS = 'attachmentGrants';
+
+	/**
 	 * Constructor for MigrationWorkService.
 	 *
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param SecretVersionMapper $versionMapper The secret version mapper
 	 * @param AttachmentGrantMapper $grantMapper The attachment grant mapper
+	 * @param MigrationFailureMapper $failureMapper Per-record failure accounting
 	 * @param IDBConnection $db The database connection (per-record transactions)
 	 * @param IAppConfig $appConfig The app config (version window override)
 	 * @param LoggerInterface $logger The logger interface
@@ -86,6 +112,7 @@ class MigrationWorkService {
 		private SecretMapper $secretMapper,
 		private SecretVersionMapper $versionMapper,
 		private AttachmentGrantMapper $grantMapper,
+		private MigrationFailureMapper $failureMapper,
 		private IDBConnection $db,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
@@ -163,23 +190,41 @@ class MigrationWorkService {
 			recipientId: $ownerId
 		);
 
-		$unaccountedSecrets = $this->secretMapper->countUnaccountedBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId
+		// "Unaccounted" is what is left on the old suite MINUS what has been
+		// attempted and recorded as failed, computed per store from the
+		// failure table.
+		//
+		// It used to be computed by joining each store to its owning secret and
+		// treating `secrets.migration_error IS NOT NULL` as "accounted for".
+		// That join is the first blocker: a version whose secret head had
+		// already migrated was excluded from the version count (its secret
+		// carried an error) while the secret itself was not returned as failed
+		// (it now sat on the NEW suite), so the row was invisible to both
+		// gates and the migration terminated over it.
+		//
+		// Success clears a record's failure row, so every surviving failure row
+		// belongs to a record still bound to the old suite — which is what
+		// makes the subtraction sound. Clamped at zero so a record deleted
+		// after failing (a version dropped beyond the retention window) cannot
+		// drive the count negative.
+		$migrationId = $migration->getId();
+
+		$failedSecrets = $this->failureMapper->countByMigrationAndStore(
+			migrationId: $migrationId,
+			store: self::STORE_SECRETS
+		);
+		$failedVersions = $this->failureMapper->countByMigrationAndStore(
+			migrationId: $migrationId,
+			store: self::STORE_VERSIONS
+		);
+		$failedGrants = $this->failureMapper->countByMigrationAndStore(
+			migrationId: $migrationId,
+			store: self::STORE_ATTACHMENT_GRANTS
 		);
 
-		$unaccountedVersions = $this->versionMapper->countUnaccountedBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId
-		);
-
-		$unaccountedGrants = $this->grantMapper->countUnaccountedBySuiteForRecipient(
-			encryptionSuiteId: $oldSuiteId,
-			recipientType: 'user',
-			recipientId: $ownerId
-		);
+		$unaccountedSecrets = max(0, ($secrets - $failedSecrets));
+		$unaccountedVersions = max(0, ($versions - $failedVersions));
+		$unaccountedGrants = max(0, ($grants - $failedGrants));
 
 		$unaccountedTotal = ($unaccountedSecrets + $unaccountedVersions + $unaccountedGrants);
 		$total = ($secrets + $versions + $grants);
@@ -193,8 +238,10 @@ class MigrationWorkService {
 			'unaccountedVersions' => $unaccountedVersions,
 			'unaccountedGrants' => $unaccountedGrants,
 			'unaccountedTotal' => $unaccountedTotal,
-			// Attempted and reported unrecoverable.
-			'failedTotal' => ($total - $unaccountedTotal),
+			// Attempted and reported unrecoverable. Taken from the failure
+			// table rather than derived as (total - unaccounted), so it stays
+			// correct even when a failed record has since been deleted.
+			'failedTotal' => ($failedSecrets + $failedVersions + $failedGrants),
 		];
 	}//end countOutstanding()
 
@@ -205,31 +252,88 @@ class MigrationWorkService {
 	 * client can name them in the acknowledgement prompt instead of asking the
 	 * user to accept an abstract count.
 	 *
+	 * Failures are already scoped to the migration, and the caller has proven
+	 * ownership of it before getting here, so no owner argument is needed.
+	 *
 	 * @param SuiteMigration $migration The migration
-	 * @param string $ownerId The migration owner's user ID
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
 	 */
-	public function listUnrecoverable(SuiteMigration $migration, string $ownerId): array {
-		$failed = $this->secretMapper->findFailedBySuiteForOwner(
-			encryptionSuiteId: $migration->getOldSuiteId(),
-			ownerType: 'user',
-			ownerId: $ownerId
-		);
+	public function listUnrecoverable(SuiteMigration $migration): array {
+		// Enumerates the failing RECORDS, not their owning secrets. Listing
+		// owners collapsed a secret failing alongside two of its versions into
+		// one entry, which is how the client's per-record count and the
+		// server's per-secret count came to disagree — and it filtered on
+		// `encryption_suite_id = old`, so a failed version whose secret head
+		// had migrated was not listed at all.
+		$failures = $this->failureMapper->findByMigration(migrationId: $migration->getId());
 
+		// Names are resolved per owning secret, cached because several failing
+		// records commonly share one.
+		$names = [];
 		$rows = [];
-		foreach ($failed as $secret) {
+
+		foreach ($failures as $failure) {
+			$secretId = $failure->getSecretId();
+
+			if (array_key_exists($secretId, $names) === false) {
+				try {
+					$names[$secretId] = $this->secretMapper->findById($secretId)->getName();
+				} catch (DoesNotExistException) {
+					$names[$secretId] = null;
+				}
+			}
+
 			$rows[] = [
-				'id' => $secret->getId(),
-				'name' => $secret->getName(),
-				'error' => $secret->getMigrationError(),
+				// The RECORD's id, so the client can retry exactly this one.
+				'id' => $failure->getRecordId(),
+				'store' => $failure->getStore(),
+				'secretId' => $secretId,
+				'name' => $names[$secretId],
+				'error' => $failure->getMessage(),
 			];
 		}
 
 		return $rows;
 	}//end listUnrecoverable()
+
+	/**
+	 * How many records this migration has recorded as unrecoverable.
+	 *
+	 * The acknowledgement threshold, and deliberately a COUNT rather than
+	 * `count(listUnrecoverable(...))`: the display list is capped, and deriving
+	 * the threshold from a capped list would both under-report the loss and
+	 * make the acknowledgement unsatisfiable once the real number exceeded the
+	 * cap (the client's own count is uncapped).
+	 *
+	 * @param SuiteMigration $migration The migration
+	 *
+	 * @return integer
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+	 */
+	public function countUnrecoverable(SuiteMigration $migration): int {
+		return $this->failureMapper->countByMigration(migrationId: $migration->getId());
+	}//end countUnrecoverable()
+
+	/**
+	 * Drop this migration's failure accounting.
+	 *
+	 * The table holds in-flight state, not history: once the migration has
+	 * terminated the rows have no consumer, and leaving them would make a
+	 * later migration for the same owner inherit a stale threshold.
+	 *
+	 * @param SuiteMigration $migration The migration
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+	 */
+	public function clearFailureAccounting(SuiteMigration $migration): void {
+		$this->failureMapper->deleteByMigration(migrationId: $migration->getId());
+	}//end clearFailureAccounting()
 
 	/**
 	 * List the outstanding work for a migration, paged per store.
@@ -445,9 +549,17 @@ class MigrationWorkService {
 			// health surface these passwords were just rotated, which is the
 			// opposite of what possiblyCompromisedAt is about to say.
 			$this->raisePossiblyCompromised(secret: $secret);
-			$secret->setMigrationError(null);
 
 			$updated = $this->secretMapper->update($secret);
+
+			// Clears THIS head's failure only. A blanket null here would also
+			// have retired the recorded failures of every version and grant the
+			// secret owns.
+			$this->clearRecordFailure(
+				migration: $migration,
+				store: self::STORE_SECRETS,
+				recordId: $secret->getId()
+			);
 
 			$this->db->commit();
 		} catch (Throwable $exception) {
@@ -498,10 +610,13 @@ class MigrationWorkService {
 
 			$updated = $this->versionMapper->update($version);
 
-			// A version is an immutable snapshot and carries no flag columns
-			// of its own; clearing the owning secret's migration_error is what
-			// makes a retried version failure disappear from the failure list.
-			$this->clearMigrationError(secretId: $version->getSecretId());
+			// Scoped to this version. It previously cleared the owning
+			// secret's shared column, which is what erased sibling failures.
+			$this->clearRecordFailure(
+				migration: $migration,
+				store: self::STORE_VERSIONS,
+				recordId: $version->getId()
+			);
 
 			$this->db->commit();
 		} catch (Throwable $exception) {
@@ -546,7 +661,26 @@ class MigrationWorkService {
 
 			$updated = $this->grantMapper->update($grant);
 
-			$this->clearMigrationError(secretId: $grant->getSecretId());
+			$this->clearRecordFailure(
+				migration: $migration,
+				store: self::STORE_ATTACHMENT_GRANTS,
+				recordId: $grant->getId()
+			);
+
+			// An attachment whose file key was wrapped under the compromised
+			// suite is exposed material, so the owning secret carries the
+			// warning even when its head migrated in an earlier pass and was
+			// therefore not flagged then. Idempotent, so an existing timestamp
+			// is not pushed forward.
+			try {
+				$owningSecret = $this->secretMapper->findById($grant->getSecretId());
+				if ($owningSecret->getPossiblyCompromisedAt() === null) {
+					$this->raisePossiblyCompromised(secret: $owningSecret);
+					$this->secretMapper->update($owningSecret);
+				}
+			} catch (DoesNotExistException) {
+				// The grant outlived its secret; nothing to flag.
+			}
 
 			$this->db->commit();
 		} catch (Throwable $exception) {
@@ -594,17 +728,27 @@ class MigrationWorkService {
 			recordId: $recordId
 		);
 
-		try {
-			$secret = $this->secretMapper->findById($secretId);
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Secret not found: ' . $secretId);
-		}
-
-		// Bound the stored text: it is echoed back to the user and the column
-		// is not a log sink. The prefix is what the failure list groups on.
-		$prefixed = $store . ': ' . $message;
-		$secret->setMigrationError(mb_substr($prefixed, 0, 1000));
-		$this->secretMapper->update($secret);
+		// Recorded against the RECORD, not against its owning secret. One
+		// secret owns its head plus N versions plus M attachment grants, so a
+		// single column on the secret could only ever hold one of up to
+		// 1 + N + M independent verdicts — whichever was written last. That is
+		// what let a sibling's success erase a recorded failure, and what made
+		// a failed version invisible to the completion gates once its secret
+		// head had migrated.
+		//
+		// Idempotent by (migration, store, record): a retry that fails again
+		// replaces its message instead of adding a second row, so the
+		// acknowledgement threshold stays equal to the number of records
+		// actually lost.
+		$this->failureMapper->record(
+			migrationId: $migration->getId(),
+			store: $store,
+			recordId: $recordId,
+			secretId: $secretId,
+			// Bound the stored text: it is echoed back to the user and the
+			// column is not a log sink.
+			message: mb_substr($message, 0, 1000)
+		);
 
 		$this->logger->warning(
 			'Doriath: migration record failed',
@@ -716,28 +860,30 @@ class MigrationWorkService {
 	}//end raisePossiblyCompromised()
 
 	/**
-	 * Clear a secret's migration error, if it has one.
+	 * Clear the failure for exactly the record just committed.
 	 *
-	 * @param string $secretId The owning secret's ID
+	 * Scoped to (migration, store, record). The previous implementation nulled
+	 * a column on the OWNING SECRET, which was shared by the secret head and
+	 * every one of its versions and grants — so committing any one of them
+	 * erased a sibling's recorded failure, reclassifying a genuinely failed
+	 * record as "not yet attempted" and holding the vault write-locked with no
+	 * route to completion.
+	 *
+	 * @param SuiteMigration $migration The migration
+	 * @param string $store The store the committed record lives in
+	 * @param string $recordId The committed record's ID
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
-	private function clearMigrationError(string $secretId): void {
-		try {
-			$secret = $this->secretMapper->findById($secretId);
-		} catch (DoesNotExistException) {
-			return;
-		}
-
-		if ($secret->getMigrationError() === null) {
-			return;
-		}
-
-		$secret->setMigrationError(null);
-		$this->secretMapper->update($secret);
-	}//end clearMigrationError()
+	private function clearRecordFailure(SuiteMigration $migration, string $store, string $recordId): void {
+		$this->failureMapper->clearRecord(
+			migrationId: $migration->getId(),
+			store: $store,
+			recordId: $recordId
+		);
+	}//end clearRecordFailure()
 
 	/**
 	 * Resolve which secret a failure should be recorded against.

@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Entsperren Sie zuerst Ihren Tresor und setzen Sie dann fort.",
         "Your previous master password": "Ihr vorheriges Master-Passwort",
         "Your vault is read-only until it finishes.": "Ihr Tresor ist bis zum Abschluss schreibgeschützt.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Die Schlüsselrotation ist nicht abgeschlossen und Ihr Tresor ist schreibgeschützt. Entsperren Sie ihn, um fortzufahren – Sie werden dann nach Ihrem vorherigen Master-Passwort gefragt, um sie fortzusetzen."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Die Schlüsselrotation ist nicht abgeschlossen und Ihr Tresor ist schreibgeschützt. Entsperren Sie ihn, um fortzufahren – Sie werden dann nach Ihrem vorherigen Master-Passwort gefragt, um sie fortzusetzen.",
+        "Attachment key": "Anhangsschlüssel",
+        "Record": "Datensatz",
+        "Showing {shown} of {total}.": "{shown} von {total} werden angezeigt.",
+        "Version history entry": "Versionsverlaufseintrag"
     },
     "plurals": null
 }

@@ -220,3 +220,53 @@ describe('migration driver loop — termination', () => {
 		expect(outcome.failed).toBe(0)
 	})
 })
+
+describe('vault lock teardown', () => {
+	/*
+	 * src/migration/worker.js states "the store terminates this worker on vault
+	 * lock, so no key reference survives a locked vault". `registerLockReset`
+	 * implemented that, but nothing called it — so the claim was false and a
+	 * worker holding structured-cloned CryptoKeys kept running through a session
+	 * timeout or an explicit "Lock vault". A defined-but-uncalled teardown is
+	 * identical to having none, so the wiring is asserted here.
+	 */
+	it('disposes the migration runner and clears state when the vault locks', () => {
+		const store = useEncryptionSuiteStore()
+		const dispose = vi.fn()
+
+		store.migrationRunner = { dispose }
+		store.migrationProgress = { done: 3, total: 9 }
+		store.migrationFailures = [{ store: 'secrets', id: 's-1', error: 'x' }]
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 2
+
+		store.resetMigrationState()
+
+		expect(dispose).toHaveBeenCalledTimes(1)
+		expect(store.migrationRunner).toBeNull()
+		expect(store.migrationProgress).toBeNull()
+		expect(store.migrationFailures).toEqual([])
+		expect(store.migrationNeedsAcknowledgement).toBe(false)
+		expect(store.migrationRequiredAcknowledgement).toBeNull()
+	})
+
+	it('tears the worker down when the vault actually locks', async () => {
+		const { useSessionStore } =
+			await import('../../src/store/modules/session.js')
+		const store = useEncryptionSuiteStore()
+		const session = useSessionStore()
+		const dispose = vi.fn()
+
+		// Armed the way MigrationResumeBanner arms it on mount.
+		store.registerLockReset()
+		store.migrationRunner = { dispose }
+
+		// A real lock, not a direct call to resetMigrationState: what the
+		// concern was about is the wiring between the two, so the wiring is
+		// what gets exercised.
+		session.lock()
+
+		expect(dispose).toHaveBeenCalledTimes(1)
+		expect(store.migrationRunner).toBeNull()
+	})
+})

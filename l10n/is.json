@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Opnaðu hólfið þitt fyrst og haltu svo áfram.",
         "Your previous master password": "Fyrra höfuðlykilorðið þitt",
         "Your vault is read-only until it finishes.": "Hólfið þitt er aðeins til lestrar þar til því lýkur.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Lyklasnúningi er ólokið og hólfið þitt er aðeins til lestrar. Opnaðu til að halda áfram — þá verður beðið um fyrra höfuðlykilorðið þitt til að halda honum áfram."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Lyklasnúningi er ólokið og hólfið þitt er aðeins til lestrar. Opnaðu til að halda áfram — þá verður beðið um fyrra höfuðlykilorðið þitt til að halda honum áfram.",
+        "Attachment key": "Viðhengislykill",
+        "Record": "Færsla",
+        "Showing {shown} of {total}.": "Sýnir {shown} af {total}.",
+        "Version history entry": "Færsla í útgáfusögu"
     },
     "plurals": null
 }

@@ -374,7 +374,11 @@
         "Unlock your vault first, then resume.": "Vispirms atslēdziet savu seifu un pēc tam atsāciet.",
         "Your previous master password": "Jūsu iepriekšējā galvenā parole",
         "Your vault is read-only until it finishes.": "Jūsu seifs ir tikai lasāms, līdz tā ir pabeigta.",
-        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Atslēgas rotācija nav pabeigta un jūsu seifs ir tikai lasāms. Atslēdziet to, lai turpinātu — pēc tam jums prasīs iepriekšējo galveno paroli, lai to atsāktu."
+        "Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.": "Atslēgas rotācija nav pabeigta un jūsu seifs ir tikai lasāms. Atslēdziet to, lai turpinātu — pēc tam jums prasīs iepriekšējo galveno paroli, lai to atsāktu.",
+        "Attachment key": "Piesaistnes atslēga",
+        "Record": "Ieraksts",
+        "Showing {shown} of {total}.": "Rāda {shown} no {total}.",
+        "Version history entry": "Versiju vēstures ieraksts"
     },
     "plurals": null
 }
