@@ -21,10 +21,24 @@
  * awaited settings request (as the previous App.vue boot redirect did)
  * reopens exactly the window it is meant to close.
  *
- * Metadata itself is NOT protected by this guard, and that is by design —
- * secret names and URLs are plaintext and searchable for their owner. What
- * the guard protects is the application surface: no Doriath screen renders
- * until the master password has been entered.
+ * WHAT THIS IS AND IS NOT.
+ *
+ * This is a UI gate, not an authorisation check. Secret `name`, `url` and
+ * `folderId` are stored server-side in plaintext by design (searchable for
+ * their owner) and `SecretController::index()` authorises on the Nextcloud
+ * session alone. There is no server-side notion of "locked" — the master
+ * password never leaves the browser and `isLocked` is purely
+ * `cryptoKey === null` — so `curl` with a valid session cookie, or a
+ * Nextcloud app password, returns the full inventory whether or not any tab
+ * has the vault unlocked.
+ *
+ * What this guard removes is the browser rendering and fetching that
+ * inventory: the restored-tab and deep-link cases, where the app itself put
+ * the vault on screen before the lock screen replaced it. It adds nothing
+ * against a shared session, a stolen cookie or a hostile extension. Gating
+ * inventory reads on the master password would need a separate server-side
+ * control — e.g. binding them to a short-lived token minted at unlock — and
+ * that is not what this is.
  *
  * vue-router 4 note: the `(to, from, next)` signature is still fully
  * supported. It is kept over the newer "return a route location" idiom so
@@ -52,7 +66,11 @@ export const LOCK_ROUTE_NAME = 'Lock'
  * @type {string[]}
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-9.2
  */
-export const PUBLIC_ROUTE_NAMES = ['SecretRequestFill', 'LinkShareAccess', 'EphemeralSendAccess']
+export const PUBLIC_ROUTE_NAMES = [
+	'SecretRequestFill',
+	'LinkShareAccess',
+	'EphemeralSendAccess',
+]
 
 /**
  * Whether a vue-router route lives outside the locked-vault guard.
@@ -72,6 +90,45 @@ export function isPublicRoute(route) {
 		return true
 	}
 	return PUBLIC_ROUTE_NAMES.includes(route.name)
+}
+
+/**
+ * Redirect to the lock screen when the vault locks mid-session.
+ *
+ * `beforeEach` only fires on navigation, so it cannot see the vault locking
+ * while the user sits still on an already-resolved route — a session timeout
+ * or the "Lock vault" menu entry. That path is this function's; the guard
+ * owns the entry path.
+ *
+ * Extracted from App.vue's `isLocked` watcher so the decision is testable
+ * without mounting the shell. The bug this whole change fixes was a
+ * lifecycle-driven redirect that worked in the eventual state and was
+ * therefore never caught, and this is the same shape — so it is asserted
+ * rather than described.
+ *
+ * @param {boolean} locked Whether the vault is now locked.
+ * @param {object|null} route The current route ($route).
+ * @param {object} router The router ($router), needing `.replace()`.
+ * @return {boolean} True when a redirect was issued.
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
+ */
+export function handleLockTransition(locked, route, router) {
+	if (locked !== true) {
+		return false
+	}
+
+	// Already on the lock screen, or on a recipient-facing token route that
+	// never required an unlocked vault.
+	if (route?.name === LOCK_ROUTE_NAME || isPublicRoute(route)) {
+		return false
+	}
+
+	router.replace({
+		name: LOCK_ROUTE_NAME,
+		query: { returnUrl: route?.fullPath },
+	})
+
+	return true
 }
 
 /**
@@ -95,7 +152,20 @@ export function createVaultGuard(getSessionStore) {
 			return
 		}
 
-		if (getSessionStore().isLocked) {
+		// Fail closed: ONLY an explicit `false` is treated as unlocked. Read as
+		// `if (isLocked)` this would allow navigation whenever the property is
+		// absent or non-boolean, which puts the safe default in the store's
+		// hands rather than the guard's. In the shipped wiring `isLocked` is
+		// always a boolean starting `true`, so this is hardening, not a live
+		// defect — but the guard should not depend on that to be safe.
+		//
+		// Deliberately NO try/catch: if the store factory throws, the
+		// exception propagates and vue-router aborts the navigation, which is
+		// the fail-closed outcome. Wrapping it would turn a hard failure into
+		// a silent allow.
+		const store = getSessionStore()
+
+		if (store?.isLocked !== false) {
 			next({
 				name: LOCK_ROUTE_NAME,
 				query: { returnUrl: to.fullPath },

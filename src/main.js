@@ -18,7 +18,11 @@
 
 import { createApp, h } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
+import {
+	translate as t,
+	translatePlural as n,
+	loadTranslations,
+} from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	// eslint-disable-next-line import/named
@@ -75,7 +79,10 @@ function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('doriath', () => {})
 		if (result && typeof result.then === 'function') {
-			result.then(() => {}, () => {})
+			result.then(
+				() => {},
+				() => {},
+			)
 		}
 	} catch {
 		// no-op
@@ -90,7 +97,10 @@ function tryLoadTranslations() {
 const RoutePageRenderer = { ...CnPageRenderer }
 
 const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
-const fragments = fragmentCtx.keys().sort().map((key) => fragmentCtx(key))
+const fragments = fragmentCtx
+	.keys()
+	.sort()
+	.map((key) => fragmentCtx(key))
 const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
 
 /**
@@ -121,13 +131,23 @@ const router = createRouter({
 	routes: routesFromManifest(mergedManifest),
 })
 
-// Keep every application screen behind the master password. This must be a
-// router guard rather than an App.vue lifecycle redirect: `beforeEach` runs
-// before the route resolves, so a locked vault never instantiates a page
+// Keep every ROUTED application screen behind the master password. This must
+// be a router guard rather than an App.vue lifecycle redirect: `beforeEach`
+// runs before the route resolves, so a locked vault never instantiates a page
 // component and never issues its `mounted()` fetches. The store is passed as
 // a lazy factory because the guard is registered before `app.use(pinia)`;
 // `pinia` is passed explicitly so the guard never depends on an active-Pinia
 // context.
+//
+// "Routed" is the exact scope. Every manifest page gets
+// `component: RoutePageRenderer` above and CnAppRoot renders them through a
+// single `<router-view>`, so no manifest-driven page mounts outside route
+// resolution. Shell-level SIBLINGS of that `<router-view>` are outside this
+// guard by construction — today that is `CnAiCompanion` (mounted by
+// CnAppRoot when App.vue passes `:ai-companion`, and it issues its own
+// health request on created()) and App.vue's offline banner. Neither is
+// secret-bearing and neither holds a key, but anything added there needs its
+// own gating: this guard will not cover it.
 router.beforeEach(createVaultGuard(() => useSessionStore(pinia)))
 
 tryLoadTranslations()
@@ -152,12 +172,13 @@ const customComponentsProp = Object.fromEntries(
 
 // Create and mount the app immediately so the shell renders.
 const app = createApp({
-	render: () => h(App, {
-		manifest: mergedManifest,
-		customComponents: customComponentsProp,
-		pageTypes: pageTypesProp,
-		registry: registryProp,
-	}),
+	render: () =>
+		h(App, {
+			manifest: mergedManifest,
+			customComponents: customComponentsProp,
+			pageTypes: pageTypesProp,
+			registry: registryProp,
+		}),
 })
 
 // `t` / `n` were provided by a global `Vue.mixin` under Vue 2. An app-level
