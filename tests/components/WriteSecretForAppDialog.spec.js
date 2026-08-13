@@ -31,27 +31,33 @@ import { useApplicationStore } from '../../src/store/modules/application.js'
 const ncStubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
-		template: '<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['type', 'disabled'],
-		template: '<button :disabled="disabled" :data-testid="$attrs[\'data-testid\']" @click="$emit(\'click\', $event)"><slot /></button>',
+		template:
+			'<button :disabled="disabled" :data-testid="$attrs[\'data-testid\']" @click="$emit(\'click\', $event)"><slot /></button>',
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div class="nc-note-card-stub" :data-type="type" :data-testid="$attrs[\'data-testid\']"><slot /></div>',
+		template:
+			'<div class="nc-note-card-stub" :data-type="type" :data-testid="$attrs[\'data-testid\']"><slot /></div>',
 	},
 	NcTextField: {
 		props: ['value', 'label', 'required'],
-		template: '<input class="nc-text-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
+		template:
+			'<input class="nc-text-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
 	},
 	NcPasswordField: {
 		props: ['value', 'label', 'required'],
-		template: '<input type="password" class="nc-password-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
+		template:
+			'<input type="password" class="nc-password-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
 	},
 	NcTextArea: {
 		props: ['value', 'label', 'rows'],
-		template: '<textarea class="nc-text-area-stub" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
+		template:
+			'<textarea class="nc-text-area-stub" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
 	},
 }
 
@@ -132,7 +138,9 @@ describe('WriteSecretForAppDialog', () => {
 	it('submit: surfaces a store error on the NcNoteCard without flipping success', async () => {
 		const store = useApplicationStore()
 		store.writeSecretForApplication = vi.fn().mockRejectedValue({
-			response: { data: { message: 'Application has no active EncryptionSuite' } },
+			response: {
+				data: { message: 'Application has no active EncryptionSuite' },
+			},
 		})
 
 		const wrapper = mount(WriteSecretForAppDialog, {
@@ -174,7 +182,10 @@ describe('WriteSecretForAppDialog', () => {
 		await wrapper.vm.submit()
 
 		const [, payload] = store.writeSecretForApplication.mock.calls[0]
-		expect(payload.additionalFields).toEqual({ region: 'eu-west-1', note: 'prod' })
+		expect(payload.additionalFields).toEqual({
+			region: 'eu-west-1',
+			note: 'prod',
+		})
 	})
 
 	it('onUpdateOpen(false): resets every plaintext field and emits close', async () => {

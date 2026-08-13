@@ -16,7 +16,7 @@
 
 /* eslint-disable no-restricted-globals */
 /* global appVersion */
-const CACHE_VERSION = (typeof appVersion !== 'undefined' ? appVersion : 'dev')
+const CACHE_VERSION = typeof appVersion !== 'undefined' ? appVersion : 'dev'
 const CACHE_NAME = 'doriath-shell-' + CACHE_VERSION
 
 /**
@@ -59,8 +59,10 @@ function isShellAsset(request) {
 	if (url.pathname.includes('/apps/doriath/api/')) {
 		return false
 	}
-	return /\/apps\/doriath\//.test(url.pathname)
+	return (
+		/\/apps\/doriath\//.test(url.pathname)
 		|| /\.(js|css|woff2?|ttf|png|svg|jpg|jpeg|gif|ico)$/.test(url.pathname)
+	)
 }
 
 /**
@@ -91,22 +93,27 @@ async function precacheShell() {
 		let match = pattern.exec(html)
 		while (match !== null) {
 			const href = match[1].replace(/&amp;/g, '&')
-			if (href.includes('/apps/doriath/') && !href.includes('/apps/doriath/api/')) {
+			if (
+				href.includes('/apps/doriath/')
+				&& !href.includes('/apps/doriath/api/')
+			) {
 				assets.add(new URL(href, SHELL_URL).toString())
 			}
 			match = pattern.exec(html)
 		}
 
-		await Promise.all([...assets].map(async (url) => {
-			try {
-				const asset = await fetch(url, { credentials: 'same-origin' })
-				if (asset && asset.ok) {
-					await cache.put(url, asset)
+		await Promise.all(
+			[...assets].map(async (url) => {
+				try {
+					const asset = await fetch(url, { credentials: 'same-origin' })
+					if (asset && asset.ok) {
+						await cache.put(url, asset)
+					}
+				} catch (e) {
+					// One missing asset must not abort the rest of the precache.
 				}
-			} catch (e) {
-				// One missing asset must not abort the rest of the precache.
-			}
-		}))
+			}),
+		)
 	} catch (e) {
 		// Offline at install time — nothing to precache yet.
 	}
@@ -123,14 +130,19 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('activate', (event) => {
-	event.waitUntil((async () => {
-		const names = await caches.keys()
-		await Promise.all(
-			names.filter((n) => n.startsWith('doriath-shell-') && n !== CACHE_NAME)
-				.map((n) => caches.delete(n)),
-		)
-		await self.clients.claim()
-	})())
+	event.waitUntil(
+		(async () => {
+			const names = await caches.keys()
+			await Promise.all(
+				names
+					.filter(
+						(n) => n.startsWith('doriath-shell-') && n !== CACHE_NAME,
+					)
+					.map((n) => caches.delete(n)),
+			)
+			await self.clients.claim()
+		})(),
+	)
 })
 
 self.addEventListener('fetch', (event) => {
@@ -182,25 +194,27 @@ self.addEventListener('fetch', (event) => {
 		return
 	}
 
-	event.respondWith((async () => {
-		try {
-			const cached = await caches.match(request)
-			if (cached) {
-				return cached
-			}
-			if (isNavigation(request)) {
-				// Any in-app route resolves to the one precached shell document;
-				// the SPA router takes it from there.
-				const shell = await caches.match(SHELL_URL)
-				if (shell) {
-					return shell
+	event.respondWith(
+		(async () => {
+			try {
+				const cached = await caches.match(request)
+				if (cached) {
+					return cached
 				}
+				if (isNavigation(request)) {
+					// Any in-app route resolves to the one precached shell document;
+					// the SPA router takes it from there.
+					const shell = await caches.match(SHELL_URL)
+					if (shell) {
+						return shell
+					}
+				}
+			} catch (e) {
+				// A cache failure must never be worse than not having a worker.
 			}
-		} catch (e) {
-			// A cache failure must never be worse than not having a worker.
-		}
-		// Nothing cached — try the network anyway; `navigator.onLine` is a hint,
-		// not a guarantee.
-		return fetch(request)
-	})())
+			// Nothing cached — try the network anyway; `navigator.onLine` is a hint,
+			// not a guarantee.
+			return fetch(request)
+		})(),
+	)
 })

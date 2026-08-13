@@ -65,7 +65,9 @@ describe('parseOtpauth', () => {
 	})
 
 	it('parses a full otpauth URI with issuer/account/algorithm/digits/period', () => {
-		const uri = 'otpauth://totp/ACME%20Co:alice@acme.com?secret=' + SHA1_SECRET_BASE32
+		const uri =
+			'otpauth://totp/ACME%20Co:alice@acme.com?secret='
+			+ SHA1_SECRET_BASE32
 			+ '&issuer=ACME%20Co&algorithm=SHA256&digits=8&period=60'
 		const params = parseOtpauth(uri)
 		expect(params.secret).toBe(SHA1_SECRET_BASE32)
@@ -77,14 +79,20 @@ describe('parseOtpauth', () => {
 	})
 
 	it('applies defaults for omitted URI params', () => {
-		const params = parseOtpauth('otpauth://totp/Example?secret=' + SHA1_SECRET_BASE32)
+		const params = parseOtpauth(
+			'otpauth://totp/Example?secret=' + SHA1_SECRET_BASE32,
+		)
 		expect(params.algorithm).toBe('SHA1')
 		expect(params.digits).toBe(6)
 		expect(params.period).toBe(30)
 	})
 
 	it('rejects a non-totp otpauth URI (e.g. HOTP)', () => {
-		expect(() => parseOtpauth('otpauth://hotp/Example?secret=' + SHA1_SECRET_BASE32 + '&counter=1')).toThrow()
+		expect(() =>
+			parseOtpauth(
+				'otpauth://hotp/Example?secret=' + SHA1_SECRET_BASE32 + '&counter=1',
+			),
+		).toThrow()
 	})
 
 	it('rejects an otpauth URI with no secret', () => {
@@ -140,7 +148,9 @@ describe('no-leak contract', () => {
 		const xhrSpy = vi.fn()
 		globalThis.fetch = fetchSpy
 		if (typeof globalThis.XMLHttpRequest === 'function') {
-			vi.spyOn(globalThis.XMLHttpRequest.prototype, 'open').mockImplementation(xhrSpy)
+			vi.spyOn(globalThis.XMLHttpRequest.prototype, 'open').mockImplementation(
+				xhrSpy,
+			)
 		}
 		const setItem = vi.fn()
 		const store = { setItem, getItem: () => null, removeItem: () => {} }
@@ -148,7 +158,9 @@ describe('no-leak contract', () => {
 		globalThis.sessionStorage = store
 
 		try {
-			const params = parseOtpauth('otpauth://totp/ACME:alice?secret=' + SHA1_SECRET_BASE32)
+			const params = parseOtpauth(
+				'otpauth://totp/ACME:alice?secret=' + SHA1_SECRET_BASE32,
+			)
 			const code = await generateTotp(params, 59 * 1000)
 
 			expect(code).toBeTruthy()

@@ -85,7 +85,12 @@ describe('SecretListItem', () => {
 		// returns null and the <img> branch is skipped.
 		const wrapper = mount(SecretListItem, {
 			propsData: {
-				secret: { id: 's-1', name: 'X', url: 'https://github.com', typeId: 'type-api' },
+				secret: {
+					id: 's-1',
+					name: 'X',
+					url: 'https://github.com',
+					typeId: 'type-api',
+				},
 			},
 		})
 
@@ -139,7 +144,12 @@ describe('SecretListItem', () => {
 	it('exposes an interactive role, tabindex and accessible name on the row', () => {
 		const wrapper = mount(SecretListItem, {
 			propsData: {
-				secret: { id: 's-1', name: 'GitHub PAT', url: null, typeId: 'type-api' },
+				secret: {
+					id: 's-1',
+					name: 'GitHub PAT',
+					url: null,
+					typeId: 'type-api',
+				},
 			},
 		})
 
@@ -184,7 +194,9 @@ describe('SecretListItem', () => {
 
 	it('keyboard activation inside the copy control does NOT bubble as `open`', async () => {
 		const secretStore = useSecretStore()
-		secretStore.fetchSecret = vi.fn().mockResolvedValue({ id: 's-1', name: 'X', key: 'k' })
+		secretStore.fetchSecret = vi
+			.fn()
+			.mockResolvedValue({ id: 's-1', name: 'X', key: 'k' })
 
 		const wrapper = mount(SecretListItem, {
 			propsData: {

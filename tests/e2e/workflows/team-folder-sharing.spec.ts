@@ -48,7 +48,10 @@ import {
 const API = `${APP_BASE.replace('/apps/doriath', '')}/apps/doriath/api/v1`
 
 test.describe('team folder sharing', () => {
-	test('owner shares a folder, fans out to a user, and revokes', async ({ page, request }) => {
+	test('owner shares a folder, fans out to a user, and revokes', async ({
+		page,
+		request,
+	}) => {
 		await gotoLockSettled(page)
 		await unlockVault(page)
 		await openVault(page)
@@ -87,10 +90,14 @@ test.describe('team folder sharing', () => {
 		expect((await repeatResponse.json()).id).toBe(teamFolder.id)
 
 		// The owned list contains the folder; the members list is empty.
-		const listResponse = await page.request.get(`${API}/team-folders`, { headers })
+		const listResponse = await page.request.get(`${API}/team-folders`, {
+			headers,
+		})
 		expect(listResponse.ok()).toBeTruthy()
 		const list = await listResponse.json()
-		expect(list.owned.some((tf: { id: string }) => tf.id === teamFolder.id)).toBeTruthy()
+		expect(
+			list.owned.some((tf: { id: string }) => tf.id === teamFolder.id),
+		).toBeTruthy()
 
 		// The reconcile pass reports no members and no missing pairs yet.
 		const reconcileResponse = await page.request.get(
@@ -108,8 +115,12 @@ test.describe('team folder sharing', () => {
 		)
 		expect(destroyResponse.ok()).toBeTruthy()
 
-		const afterList = await (await page.request.get(`${API}/team-folders`, { headers })).json()
-		expect(afterList.owned.some((tf: { id: string }) => tf.id === teamFolder.id)).toBeFalsy()
+		const afterList = await (
+			await page.request.get(`${API}/team-folders`, { headers })
+		).json()
+		expect(
+			afterList.owned.some((tf: { id: string }) => tf.id === teamFolder.id),
+		).toBeFalsy()
 	})
 
 	test('team sharing button appears for a selected folder', async ({ page }) => {
@@ -132,10 +143,16 @@ test.describe('team folder sharing', () => {
 				|| (window.OC && window.OC.requestToken) || '';
 		})()`)
 
-		const offboardResponse = await page.request.post(`${API}/team-folders/offboard`, {
-			headers: { requesttoken: token as string },
-			data: { leavingUserId: 'nobody-real', successorUserId: 'also-nobody' },
-		})
+		const offboardResponse = await page.request.post(
+			`${API}/team-folders/offboard`,
+			{
+				headers: { requesttoken: token as string },
+				data: {
+					leavingUserId: 'nobody-real',
+					successorUserId: 'also-nobody',
+				},
+			},
+		)
 		// The e2e user is the dev admin, so a 403 asserts the guard only
 		// when running as a non-admin; accept either the guard rejection
 		// or a summary for the admin user — both prove the route is live.

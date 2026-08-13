@@ -16,7 +16,8 @@
   @spec openspec/changes/secret-import/specs/secret-import/spec.md
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Import secrets')"
+	<NcDialog
+		:name="t('doriath', 'Import secrets')"
 		:open="open"
 		size="large"
 		@update:open="onUpdateOpen">
@@ -31,32 +32,48 @@
 
 			<!-- Step: file pick + format select -->
 			<div v-if="!locked && store.step === 'pick'" class="import-wizard__pick">
-				<NcSelect v-model="format"
+				<NcSelect
+					v-model="format"
 					:input-label="t('doriath', 'Source format')"
 					:options="formatOptions"
-					:reduce="opt => opt.value"
+					:reduce="(opt) => opt.value"
 					:clearable="false" />
 
-				<NcPasswordField v-if="requiresPassphrase"
+				<NcPasswordField
+					v-if="requiresPassphrase"
 					v-model="passphrase"
 					:label="t('doriath', 'Backup passphrase')" />
 
 				<label class="import-wizard__file">
 					<span>{{ t('doriath', 'Choose a file to import') }}</span>
-					<input ref="fileInput"
+					<input
+						ref="fileInput"
 						type="file"
 						data-testid="import-file"
-						@change="onFilePicked">
+						@change="onFilePicked" />
 				</label>
 
 				<NcNoteCard v-if="kdbxDetected" type="error">
-					{{ t('doriath', 'KDBX files are not supported. In KeePass, choose File → Export → KeePass XML (2.x) and import the resulting XML file instead.') }}
+					{{
+						t(
+							'doriath',
+							'KDBX files are not supported. In KeePass, choose File → Export → KeePass XML (2.x) and import the resulting XML file instead.',
+						)
+					}}
 				</NcNoteCard>
 			</div>
 
 			<!-- Step: mapping preview -->
 			<div v-else-if="store.step === 'mapping'" class="import-wizard__mapping">
-				<p>{{ t('doriath', '{count} rows parsed. Review the field mapping before importing.', { count: store.rows.length }) }}</p>
+				<p>
+					{{
+						t(
+							'doriath',
+							'{count} rows parsed. Review the field mapping before importing.',
+							{ count: store.rows.length },
+						)
+					}}
+				</p>
 
 				<table class="import-wizard__preview">
 					<thead>
@@ -83,32 +100,54 @@
 							<td>{{ row.name }}</td>
 							<td>{{ row.url }}</td>
 							<td>{{ mask(row.login, row.sourceRow + '-login') }}</td>
-							<td>{{ mask(row.password, row.sourceRow + '-pass') }}</td>
+							<td>
+								{{ mask(row.password, row.sourceRow + '-pass') }}
+							</td>
 							<td>{{ row.folder }}</td>
 						</tr>
 					</tbody>
 				</table>
 
 				<NcNoteCard v-if="store.rejected.length" type="warning">
-					{{ t('doriath', '{count} rows were rejected and will be listed in the summary.', { count: store.rejected.length }) }}
+					{{
+						t(
+							'doriath',
+							'{count} rows were rejected and will be listed in the summary.',
+							{ count: store.rejected.length },
+						)
+					}}
 				</NcNoteCard>
 			</div>
 
 			<!-- Step: folder mapping -->
 			<div v-else-if="store.step === 'folders'" class="import-wizard__folders">
-				<NcCheckboxRadioSwitch :model-value="underOneFolder"
+				<NcCheckboxRadioSwitch
+					:model-value="underOneFolder"
 					@update:model-value="underOneFolder = $event">
 					{{ t('doriath', 'Import everything under one new folder') }}
 				</NcCheckboxRadioSwitch>
 				<p class="import-wizard__hint">
-					{{ t('doriath', 'Source folders are created beneath your vault, preserving their hierarchy. Existing folders with the same name are reused.') }}
+					{{
+						t(
+							'doriath',
+							'Source folders are created beneath your vault, preserving their hierarchy. Existing folders with the same name are reused.',
+						)
+					}}
 				</p>
 			</div>
 
 			<!-- Step: duplicates -->
-			<div v-else-if="store.step === 'duplicates'" class="import-wizard__duplicates">
+			<div
+				v-else-if="store.step === 'duplicates'"
+				class="import-wizard__duplicates">
 				<template v-if="store.duplicates.length">
-					<p>{{ t('doriath', '{count} rows match an existing secret.', { count: store.duplicates.length }) }}</p>
+					<p>
+						{{
+							t('doriath', '{count} rows match an existing secret.', {
+								count: store.duplicates.length,
+							})
+						}}
+					</p>
 					<div class="import-wizard__bulk">
 						<NcButton @click="store.resolveAllDuplicates('skip')">
 							{{ t('doriath', 'Skip all') }}
@@ -136,12 +175,20 @@
 								<td>{{ dup.name }}</td>
 								<td>{{ dup.url }}</td>
 								<td>
-									<NcSelect :model-value="store.duplicateResolutions[dup.sourceRow]"
+									<NcSelect
+										:model-value="
+											store.duplicateResolutions[dup.sourceRow]
+										"
 										:input-label="t('doriath', 'Resolution')"
 										:options="resolutionOptions"
-										:reduce="opt => opt.value"
+										:reduce="(opt) => opt.value"
 										:clearable="false"
-										@update:model-value="store.resolveDuplicate(dup.sourceRow, $event)" />
+										@update:model-value="
+											store.resolveDuplicate(
+												dup.sourceRow,
+												$event,
+											)
+										" />
 								</td>
 							</tr>
 						</tbody>
@@ -153,16 +200,51 @@
 			<!-- Step: commit progress -->
 			<div v-else-if="store.step === 'commit'" class="import-wizard__commit">
 				<NcLoadingIcon :size="32" />
-				<p>{{ t('doriath', 'Encrypting and importing… {done} of {total} batches.', { done: store.committedChunks, total: store.totalChunks }) }}</p>
+				<p>
+					{{
+						t(
+							'doriath',
+							'Encrypting and importing… {done} of {total} batches.',
+							{
+								done: store.committedChunks,
+								total: store.totalChunks,
+							},
+						)
+					}}
+				</p>
 			</div>
 
 			<!-- Step: summary -->
 			<div v-else-if="store.step === 'summary'" class="import-wizard__summary">
 				<ul>
-					<li>{{ t('doriath', 'Imported: {n}', { n: store.summary.imported }) }}</li>
-					<li>{{ t('doriath', 'Skipped duplicates: {n}', { n: store.summary.skippedDuplicates }) }}</li>
-					<li>{{ t('doriath', 'Rejected: {n}', { n: store.summary.rejected }) }}</li>
-					<li>{{ t('doriath', 'Folders created: {n}', { n: store.summary.foldersCreated }) }}</li>
+					<li>
+						{{
+							t('doriath', 'Imported: {n}', {
+								n: store.summary.imported,
+							})
+						}}
+					</li>
+					<li>
+						{{
+							t('doriath', 'Skipped duplicates: {n}', {
+								n: store.summary.skippedDuplicates,
+							})
+						}}
+					</li>
+					<li>
+						{{
+							t('doriath', 'Rejected: {n}', {
+								n: store.summary.rejected,
+							})
+						}}
+					</li>
+					<li>
+						{{
+							t('doriath', 'Folders created: {n}', {
+								n: store.summary.foldersCreated,
+							})
+						}}
+					</li>
 				</ul>
 				<template v-if="store.summary.rejectedRows.length">
 					<h4>{{ t('doriath', 'Rejected rows') }}</h4>
@@ -181,7 +263,9 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="r in store.summary.rejectedRows" :key="r.sourceRow + '-' + r.reason">
+							<tr
+								v-for="r in store.summary.rejectedRows"
+								:key="r.sourceRow + '-' + r.reason">
 								<td>{{ r.sourceRow }}</td>
 								<td>{{ r.name }}</td>
 								<td>{{ r.reason }}</td>
@@ -197,14 +281,17 @@
 
 		<template #actions>
 			<NcButton @click="onUpdateOpen(false)">
-				{{ store.step === 'summary' ? t('doriath', 'Close') : t('doriath', 'Cancel') }}
+				{{
+					store.step === 'summary'
+						? t('doriath', 'Close')
+						: t('doriath', 'Cancel')
+				}}
 			</NcButton>
-			<NcButton v-if="canGoBack"
-				:disabled="store.loading"
-				@click="back">
+			<NcButton v-if="canGoBack" :disabled="store.loading" @click="back">
 				{{ t('doriath', 'Back') }}
 			</NcButton>
-			<NcButton v-if="store.step !== 'commit' && store.step !== 'summary'"
+			<NcButton
+				v-if="store.step !== 'commit' && store.step !== 'summary'"
 				variant="primary"
 				:disabled="!canProceed || store.loading"
 				@click="next">
@@ -215,7 +302,16 @@
 </template>
 
 <script>
-import { NcButton, NcCheckboxRadioSwitch, NcDialog, NcEmptyContent, NcLoadingIcon, NcNoteCard, NcPasswordField, NcSelect } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcEmptyContent,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcPasswordField,
+	NcSelect,
+} from '@nextcloud/vue'
 import { useImportStore } from '../store/modules/import.js'
 import { useSessionStore } from '../store/modules/session.js'
 import { listParsers } from '../import/parserRegistry.js'
@@ -280,7 +376,7 @@ export default {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		formatOptions() {
-			return listParsers().map(p => ({ value: p.id, label: p.label }))
+			return listParsers().map((p) => ({ value: p.id, label: p.label }))
 		},
 
 		/**
@@ -290,7 +386,7 @@ export default {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		requiresPassphrase() {
-			const parser = listParsers().find(p => p.id === this.format)
+			const parser = listParsers().find((p) => p.id === this.format)
 			return !!(parser && parser.requiresPassphrase)
 		},
 
@@ -347,7 +443,9 @@ export default {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		nextLabel() {
-			return this.store.step === 'duplicates' ? t('doriath', 'Import') : t('doriath', 'Next')
+			return this.store.step === 'duplicates'
+				? t('doriath', 'Import')
+				: t('doriath', 'Next')
 		},
 	},
 
@@ -394,7 +492,9 @@ export default {
 			}
 			const text = await file.text()
 			try {
-				await this.store.parseFile(text, this.format, { passphrase: this.passphrase })
+				await this.store.parseFile(text, this.format, {
+					passphrase: this.passphrase,
+				})
 				this.store.goToStep('mapping')
 			} catch {
 				// store.error is already populated; stay on the pick step.
@@ -493,7 +593,8 @@ export default {
 		width: 100%;
 		border-collapse: collapse;
 
-		th, td {
+		th,
+		td {
 			text-align: start;
 			padding: 4px 8px;
 			border-bottom: 1px solid var(--color-border);

@@ -6,10 +6,14 @@
  * PublicKeyCredential-shaped result. On decline/no-match it re-invokes the
  * ORIGINAL implementation so the platform authenticator still works.
  */
-(function() {
+;(function () {
 	const original = {
-		create: navigator.credentials && navigator.credentials.create.bind(navigator.credentials),
-		get: navigator.credentials && navigator.credentials.get.bind(navigator.credentials),
+		create:
+			navigator.credentials
+			&& navigator.credentials.create.bind(navigator.credentials),
+		get:
+			navigator.credentials
+			&& navigator.credentials.get.bind(navigator.credentials),
 	}
 	if (!original.create) return
 
@@ -30,13 +34,16 @@
 		return new Promise((resolve) => {
 			const id = ++seq
 			pending.set(id, resolve)
-			window.postMessage({
-				__doriath: 'request',
-				id,
-				op,
-				origin: location.origin,
-				options: serializeOptions(publicKey),
-			}, location.origin)
+			window.postMessage(
+				{
+					__doriath: 'request',
+					id,
+					op,
+					origin: location.origin,
+					options: serializeOptions(publicKey),
+				},
+				location.origin,
+			)
 		})
 	}
 
@@ -54,8 +61,16 @@
 		const out = { ...pk }
 		if (pk.challenge) out.challenge = b64url(pk.challenge)
 		if (pk.user && pk.user.id) out.user = { ...pk.user, id: b64url(pk.user.id) }
-		if (pk.allowCredentials) out.allowCredentials = pk.allowCredentials.map((c) => ({ ...c, id: b64url(c.id) }))
-		if (pk.excludeCredentials) out.excludeCredentials = pk.excludeCredentials.map((c) => ({ ...c, id: b64url(c.id) }))
+		if (pk.allowCredentials)
+			out.allowCredentials = pk.allowCredentials.map((c) => ({
+				...c,
+				id: b64url(c.id),
+			}))
+		if (pk.excludeCredentials)
+			out.excludeCredentials = pk.excludeCredentials.map((c) => ({
+				...c,
+				id: b64url(c.id),
+			}))
 		return out
 	}
 
@@ -83,14 +98,14 @@
 		}
 	}
 
-	navigator.credentials.create = async function(options) {
+	navigator.credentials.create = async function (options) {
 		if (!options || !options.publicKey) return original.create(options)
 		const res = await ask('create', options, options.publicKey)
 		if (res.error || !res.credential) return original.create(options) // fall-through
 		return toCredential(res.credential)
 	}
 
-	navigator.credentials.get = async function(options) {
+	navigator.credentials.get = async function (options) {
 		if (!options || !options.publicKey) return original.get(options)
 		const res = await ask('get', options, options.publicKey)
 		if (res.error || !res.assertion) return original.get(options) // fall-through

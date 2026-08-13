@@ -10,7 +10,13 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { analyse, vaultScore, ageInDays, staleCutoffDays, WEAK_SCORE_THRESHOLD } from '../../src/health/engine.js'
+import {
+	analyse,
+	vaultScore,
+	ageInDays,
+	staleCutoffDays,
+	WEAK_SCORE_THRESHOLD,
+} from '../../src/health/engine.js'
 
 const DAY = 86400000
 
@@ -29,8 +35,16 @@ describe('engine: strength scoring', () => {
 	})
 
 	it('does NOT strength-score key material (PEM)', async () => {
-		const rows = [{ id: 'k', name: 'Key', value: '-----BEGIN PRIVATE KEY-----\n' + 'a'.repeat(80) }]
-		const { findings, summary } = await analyse(rows, { stalenessThreshold: 'never' })
+		const rows = [
+			{
+				id: 'k',
+				name: 'Key',
+				value: '-----BEGIN PRIVATE KEY-----\n' + 'a'.repeat(80),
+			},
+		]
+		const { findings, summary } = await analyse(rows, {
+			stalenessThreshold: 'never',
+		})
 		const f = findings.find((x) => x.id === 'k')
 		// either excluded entirely (no flags + null score) -> no weak finding
 		expect(summary.weakCount).toBe(0)
@@ -47,25 +61,35 @@ describe('engine: reuse detection', () => {
 			{ id: 'b', name: 'B', value: 'Summer2024!' },
 			{ id: 'c', name: 'C', value: 'Unique-One-9' },
 		]
-		const { findings, summary } = await analyse(rows, { stalenessThreshold: 'never' })
+		const { findings, summary } = await analyse(rows, {
+			stalenessThreshold: 'never',
+		})
 		expect(summary.reusedCount).toBe(2)
 		expect(findings.find((f) => f.id === 'a').flags).toContain('reused')
 		expect(findings.find((f) => f.id === 'b').flags).toContain('reused')
 		expect(findings.find((f) => f.id === 'a').shareCount).toBe(2)
-		expect((findings.find((f) => f.id === 'c') || { flags: [] }).flags).not.toContain('reused')
+		expect(
+			(findings.find((f) => f.id === 'c') || { flags: [] }).flags,
+		).not.toContain('reused')
 	})
 
 	it('clears the reuse flag once one of the pair changes', async () => {
-		const before = await analyse([
-			{ id: 'a', name: 'A', value: 'same-value-1' },
-			{ id: 'b', name: 'B', value: 'same-value-1' },
-		], { stalenessThreshold: 'never' })
+		const before = await analyse(
+			[
+				{ id: 'a', name: 'A', value: 'same-value-1' },
+				{ id: 'b', name: 'B', value: 'same-value-1' },
+			],
+			{ stalenessThreshold: 'never' },
+		)
 		expect(before.summary.reusedCount).toBe(2)
 
-		const after = await analyse([
-			{ id: 'a', name: 'A', value: 'same-value-1' },
-			{ id: 'b', name: 'B', value: 'changed-value-2' },
-		], { stalenessThreshold: 'never' })
+		const after = await analyse(
+			[
+				{ id: 'a', name: 'A', value: 'same-value-1' },
+				{ id: 'b', name: 'B', value: 'changed-value-2' },
+			],
+			{ stalenessThreshold: 'never' },
+		)
 		expect(after.summary.reusedCount).toBe(0)
 	})
 
@@ -85,7 +109,9 @@ describe('engine: staleness', () => {
 
 	it('flags a key older than the threshold', async () => {
 		const old = new Date(now - 400 * DAY).toISOString()
-		const rows = [{ id: 'a', name: 'Old', value: 'Whatever-Strong-12', keyUpdatedAt: old }]
+		const rows = [
+			{ id: 'a', name: 'Old', value: 'Whatever-Strong-12', keyUpdatedAt: old },
+		]
 		const { summary } = await analyse(rows, { stalenessThreshold: '365', now })
 		expect(summary.staleCount).toBe(1)
 	})
@@ -107,14 +133,30 @@ describe('engine: staleness', () => {
 
 describe('engine: possibly-compromised + weighted score', () => {
 	it('counts possibly-compromised secrets', async () => {
-		const rows = [{ id: 'a', name: 'C', value: 'Strong-Pass-99x', possiblyCompromisedAt: '2026-01-01T00:00:00Z' }]
+		const rows = [
+			{
+				id: 'a',
+				name: 'C',
+				value: 'Strong-Pass-99x',
+				possiblyCompromisedAt: '2026-01-01T00:00:00Z',
+			},
+		]
 		const { summary } = await analyse(rows, { stalenessThreshold: 'never' })
 		expect(summary.compromisedCount).toBe(1)
 	})
 
 	it('vaultScore is 100 for an empty / clean vault and drops with findings', () => {
 		expect(vaultScore({ analysedCount: 0 })).toBe(100)
-		expect(vaultScore({ analysedCount: 10, weakCount: 0, reusedCount: 0, staleCount: 0, breachedCount: 0, compromisedCount: 0 })).toBe(100)
+		expect(
+			vaultScore({
+				analysedCount: 10,
+				weakCount: 0,
+				reusedCount: 0,
+				staleCount: 0,
+				breachedCount: 0,
+				compromisedCount: 0,
+			}),
+		).toBe(100)
 		// 1 breached out of 10 -> 100 * (1 - 1.0/10) = 90
 		expect(vaultScore({ analysedCount: 10, breachedCount: 1 })).toBe(90)
 		// clamps at 0

@@ -31,11 +31,18 @@
 			<div v-if="payload.bsn">
 				<dt>{{ t('doriath', 'BSN') }}</dt>
 				<dd class="identity-display__masked">
-					<span data-testid="identity-bsn-value">{{ revealed ? payload.bsn : '•••••••••' }}</span>
-					<NcButton variant="tertiary" data-testid="identity-reveal-bsn" @click="revealed = !revealed">
+					<span data-testid="identity-bsn-value">{{
+						revealed ? payload.bsn : '•••••••••'
+					}}</span>
+					<NcButton
+						variant="tertiary"
+						data-testid="identity-reveal-bsn"
+						@click="revealed = !revealed">
 						{{ revealed ? t('doriath', 'Hide') : t('doriath', 'Show') }}
 					</NcButton>
-					<CopyButton :value="payload.bsn" :label="t('doriath', 'Copy BSN')" />
+					<CopyButton
+						:value="payload.bsn"
+						:label="t('doriath', 'Copy BSN')" />
 				</dd>
 			</div>
 		</dl>
@@ -67,7 +74,9 @@ export default {
 			return parsePayload(this.payloadJson)
 		},
 		fullName() {
-			return [this.payload?.firstName, this.payload?.lastName].filter(Boolean).join(' ')
+			return [this.payload?.firstName, this.payload?.lastName]
+				.filter(Boolean)
+				.join(' ')
 		},
 	},
 }

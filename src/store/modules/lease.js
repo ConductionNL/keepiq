@@ -33,7 +33,9 @@ export const useLeaseStore = defineStore('lease', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/applications/${applicationId}/leases`),
+					generateUrl(
+						`/apps/doriath/api/v1/applications/${applicationId}/leases`,
+					),
 				)
 				this.leases = response.data || []
 			} finally {
@@ -48,8 +50,12 @@ export const useLeaseStore = defineStore('lease', {
 		 * @return {Promise<void>}
 		 */
 		async revoke(leaseId) {
-			const response = await axios.delete(generateUrl(`/apps/doriath/api/v1/leases/${leaseId}`))
-			this.leases = this.leases.map((lease) => (lease.id === leaseId ? response.data : lease))
+			const response = await axios.delete(
+				generateUrl(`/apps/doriath/api/v1/leases/${leaseId}`),
+			)
+			this.leases = this.leases.map((lease) =>
+				lease.id === leaseId ? response.data : lease,
+			)
 		},
 	},
 })

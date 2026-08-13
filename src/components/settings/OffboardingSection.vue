@@ -14,42 +14,59 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Team offboarding')"
-		:description="t('doriath', 'Revoke a leaving employee\'s team-folder access and transfer their owned team secrets to a successor.')">
+		:description="
+			t(
+				'doriath',
+				'Revoke a leaving employee\'s team-folder access and transfer their owned team secrets to a successor.',
+			)
+		">
 		<div class="offboarding" data-testid="offboarding-section">
 			<NcNoteCard v-if="error" type="error" data-testid="offboarding-error">
 				{{ error }}
 			</NcNoteCard>
-			<NcNoteCard v-if="summary" :type="summary.skipped.length ? 'warning' : 'success'" data-testid="offboarding-summary">
+			<NcNoteCard
+				v-if="summary"
+				:type="summary.skipped.length ? 'warning' : 'success'"
+				data-testid="offboarding-summary">
 				{{ summaryText }}
 			</NcNoteCard>
 
 			<div class="offboarding__fields">
 				<label class="offboarding__field">
 					<span>{{ t('doriath', 'Leaving user ID') }}</span>
-					<input v-model.trim="leavingUserId"
+					<input
+						v-model.trim="leavingUserId"
 						type="text"
 						autocomplete="off"
-						data-testid="offboarding-leaving">
+						data-testid="offboarding-leaving" />
 				</label>
 				<label class="offboarding__field">
 					<span>{{ t('doriath', 'Successor user ID') }}</span>
-					<input v-model.trim="successorUserId"
+					<input
+						v-model.trim="successorUserId"
 						type="text"
 						autocomplete="off"
-						data-testid="offboarding-successor">
+						data-testid="offboarding-successor" />
 				</label>
 			</div>
 
 			<div class="offboarding__actions">
-				<NcButton variant="error"
-					:disabled="busy || leavingUserId === '' || successorUserId === '' || leavingUserId === successorUserId"
+				<NcButton
+					variant="error"
+					:disabled="
+						busy
+						|| leavingUserId === ''
+						|| successorUserId === ''
+						|| leavingUserId === successorUserId
+					"
 					data-testid="offboarding-run"
 					@click="confirmOpen = true">
 					{{ t('doriath', 'Offboard user') }}
 				</NcButton>
 			</div>
 
-			<OffboardingConfirmDialog :open="confirmOpen"
+			<OffboardingConfirmDialog
+				:open="confirmOpen"
 				:leaving-user-id="leavingUserId"
 				:successor-user-id="successorUserId"
 				@update:open="confirmOpen = $event"
@@ -92,16 +109,23 @@ export default {
 			const base = this.t(
 				'doriath',
 				'Revoked {revoked} shares, transferred {transferred} secrets.',
-				{ revoked: this.summary.revoked, transferred: this.summary.transferred },
+				{
+					revoked: this.summary.revoked,
+					transferred: this.summary.transferred,
+				},
 			)
 			if (this.summary.skipped.length === 0) {
 				return base
 			}
-			return base + ' ' + this.n(
-				'doriath',
-				'%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
-				'%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
-				this.summary.skipped.length,
+			return (
+				base
+				+ ' '
+				+ this.n(
+					'doriath',
+					'%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
+					'%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
+					this.summary.skipped.length,
+				)
 			)
 		},
 	},

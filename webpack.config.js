@@ -58,13 +58,15 @@ const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
 const localLibPkg = path.resolve(__dirname, '../nextcloud-vue/package.json')
 let useLocalLib = process.env.USE_LOCAL_LIB !== 'false' && fs.existsSync(localLib)
 if (useLocalLib && fs.existsSync(localLibPkg)) {
-	const localVersion = String(JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '')
+	const localVersion = String(
+		JSON.parse(fs.readFileSync(localLibPkg, 'utf8')).version || '',
+	)
 	const localMajor = parseInt(localVersion, 10)
 	if (!Number.isNaN(localMajor) && localMajor < 2) {
 		// eslint-disable-next-line no-console
 		console.warn(
 			`[doriath] IGNORING sibling @conduction/nextcloud-vue@${localVersion} — `
-			+ 'that is the Vue 2 line and this app is Vue 3. Building against the npm dist.',
+				+ 'that is the Vue 2 line and this app is Vue 3. Building against the npm dist.',
 		)
 		useLocalLib = false
 	}
@@ -90,7 +92,10 @@ webpackConfig.resolve = {
 		// that does not exist — every import fails with
 		// "Can't resolve '@nextcloud/vue'". Alias to the absolute FILE. The
 		// exact-match (`$`) form keeps deep imports going through the map.
-		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue/dist/index.mjs'),
+		'@nextcloud/vue$': path.resolve(
+			__dirname,
+			'node_modules/@nextcloud/vue/dist/index.mjs',
+		),
 		// @nextcloud/vue@9 hard-depends on vue-router ^5.1.0 while this app is
 		// on vue-router 4, so npm installs a SECOND nested copy under
 		// node_modules/@nextcloud/vue/node_modules/vue-router. Two router
@@ -98,7 +103,10 @@ webpackConfig.resolve = {
 		// RouterLink would look up a router this app never provided and
 		// navigation dies with no console error. Force every `vue-router`
 		// specifier onto this app's single copy.
-		'vue-router$': path.resolve(__dirname, 'node_modules/vue-router/dist/vue-router.mjs'),
+		'vue-router$': path.resolve(
+			__dirname,
+			'node_modules/vue-router/dist/vue-router.mjs',
+		),
 	},
 }
 
@@ -132,22 +140,32 @@ webpackConfig.module = {
 }
 
 // Replace VueLoaderPlugin (don't push — duplicates break templates when using local package)
-const otherPlugins = (webpackConfig.plugins || []).filter((p) => p.constructor.name !== 'VueLoaderPlugin')
+const otherPlugins = (webpackConfig.plugins || []).filter(
+	(p) => p.constructor.name !== 'VueLoaderPlugin',
+)
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
 	...otherPlugins,
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
-	new webpack.DefinePlugin({ appVersion: JSON.stringify(process.env.npm_package_version) }),
+	new webpack.DefinePlugin({
+		appVersion: JSON.stringify(process.env.npm_package_version),
+	}),
 ]
 
 // Force @nextcloud/dialogs to resolve from this app's node_modules, preventing
 // a nested copy from leaking in. Register the exact-match style.css alias
 // BEFORE the package alias: enhanced-resolve applies the first matching entry.
 // dialogs v7 ships the stylesheet at dist/style.css behind its "exports" map.
-webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/style.css')
+webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(
+	__dirname,
+	'node_modules/@nextcloud/dialogs/dist/style.css',
+)
 // v7 is exports-map-only (no main, no module) — the bare DIRECTORY alias that
 // worked against v6 resolves to nothing. Alias the absolute file, exact-match.
-webpackConfig.resolve.alias['@nextcloud/dialogs$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/index.mjs')
+webpackConfig.resolve.alias['@nextcloud/dialogs$'] = path.resolve(
+	__dirname,
+	'node_modules/@nextcloud/dialogs/dist/index.mjs',
+)
 
 // The dialogs FilePicker chunk imports node's `path`, and webpack 5 no longer
 // auto-polyfills node core modules. `path-browserify` is also an undeclared

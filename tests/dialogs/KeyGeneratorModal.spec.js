@@ -31,18 +31,30 @@ import KeyGeneratorModal from '../../src/dialogs/KeyGeneratorModal.vue'
 const ncStubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
-		template: '<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['type', 'disabled'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
 	},
 	NcCheckboxRadioSwitch: {
 		props: ['checked', 'type'],
 		template: '<label class="nc-checkbox-stub"><slot /></label>',
 	},
 	NcInputField: {
-		props: ['value', 'label', 'min', 'max', 'type', 'helperText', 'readOnly', 'showTrailingButton', 'trailingButtonLabel'],
+		props: [
+			'value',
+			'label',
+			'min',
+			'max',
+			'type',
+			'helperText',
+			'readOnly',
+			'showTrailingButton',
+			'trailingButtonLabel',
+		],
 		template: '<div class="nc-input-stub" :data-label="label">{{ value }}</div>',
 	},
 	NcLoadingIcon: { template: '<span class="nc-loading-stub" />' },

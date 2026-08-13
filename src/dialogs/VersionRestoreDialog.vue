@@ -17,19 +17,29 @@
   @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Restore version')"
+	<NcDialog
+		:name="t('doriath', 'Restore version')"
 		:open="version !== null"
 		size="small"
 		data-testid="version-restore-dialog"
 		@update:open="$emit('close')">
 		<p class="version-history__confirm">
-			{{ t('doriath', 'Restore version {number}? The current value is kept as a new version, and shared recipients receive the restored value.', { number: version ? version.versionNumber : 0 }) }}
+			{{
+				t(
+					'doriath',
+					'Restore version {number}? The current value is kept as a new version, and shared recipients receive the restored value.',
+					{ number: version ? version.versionNumber : 0 },
+				)
+			}}
 		</p>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="primary" data-testid="version-restore-confirm" @click="$emit('confirm')">
+			<NcButton
+				variant="primary"
+				data-testid="version-restore-confirm"
+				@click="$emit('confirm')">
 				{{ t('doriath', 'Restore') }}
 			</NcButton>
 		</template>

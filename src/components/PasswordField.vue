@@ -6,11 +6,13 @@
 		     "Cannot read properties of undefined (reading 'toString')", and the
 		     <input> never renders — the wrapper div is still there, so it looks
 		     present. No lint rule catches this. -->
-		<NcInputField :model-value="displayValue"
+		<NcInputField
+			:model-value="displayValue"
 			:label="label"
 			:type="revealed ? 'text' : 'password'"
 			:read-only="true" />
-		<NcButton variant="tertiary"
+		<NcButton
+			variant="tertiary"
 			:aria-label="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
 			:title="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
 			@click="toggle">

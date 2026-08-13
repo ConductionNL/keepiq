@@ -24,7 +24,4 @@ export {
 	rsaDecrypt,
 } from '../../../src/crypto/rsa.js'
 
-export {
-	encodeEnvelope,
-	decodeEnvelope,
-} from '../../../src/crypto/envelope.js'
+export { encodeEnvelope, decodeEnvelope } from '../../../src/crypto/envelope.js'

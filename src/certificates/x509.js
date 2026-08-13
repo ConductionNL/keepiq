@@ -33,7 +33,10 @@ const DN_OIDS = {
  * @return {Uint8Array|null} DER bytes, or null when no certificate block exists.
  */
 function pemToDer(pem) {
-	const match = /-----BEGIN CERTIFICATE-----([\s\S]+?)-----END CERTIFICATE-----/.exec(pem || '')
+	const match =
+		/-----BEGIN CERTIFICATE-----([\s\S]+?)-----END CERTIFICATE-----/.exec(
+			pem || '',
+		)
 	if (!match) {
 		return null
 	}
@@ -67,7 +70,7 @@ function readTlv(bytes, offset) {
 		const lengthBytes = length & 0x7f
 		length = 0
 		for (let i = 0; i < lengthBytes; i++) {
-			length = (length * 256) + bytes[cursor]
+			length = length * 256 + bytes[cursor]
 			cursor += 1
 		}
 	}
@@ -103,7 +106,7 @@ function decodeOid(bytes, tlv) {
 	const parts = []
 	let value = 0
 	for (let i = tlv.start; i < tlv.end; i++) {
-		value = (value * 128) + (bytes[i] & 0x7f)
+		value = value * 128 + (bytes[i] & 0x7f)
 		if ((bytes[i] & 0x80) === 0) {
 			if (parts.length === 0) {
 				parts.push(Math.floor(value / 40), value % 40)

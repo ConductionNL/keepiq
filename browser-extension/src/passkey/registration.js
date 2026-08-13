@@ -21,7 +21,8 @@ function fallThroughError(message) {
  * @return {void}
  */
 export function registerWebAuthnProxy(orchestrator) {
-	const proxy = (typeof chrome !== 'undefined') ? chrome.webAuthenticationProxy : undefined
+	const proxy =
+		typeof chrome !== 'undefined' ? chrome.webAuthenticationProxy : undefined
 	if (!proxy || !proxy.onCreateRequest) {
 		return // no native proxy — the page-context shim path handles it
 	}
@@ -34,21 +35,43 @@ export function registerWebAuthnProxy(orchestrator) {
 
 	proxy.onCreateRequest.addListener(async (details) => {
 		try {
-			const options = JSON.parse(details.requestDetailsJson).publicKey || JSON.parse(details.requestDetailsJson)
-			const credential = await orchestrator.handleCreate(options, originOf(details))
-			proxy.completeCreateRequest({ requestId: details.requestId, responseJson: JSON.stringify(credential) })
+			const options =
+				JSON.parse(details.requestDetailsJson).publicKey
+				|| JSON.parse(details.requestDetailsJson)
+			const credential = await orchestrator.handleCreate(
+				options,
+				originOf(details),
+			)
+			proxy.completeCreateRequest({
+				requestId: details.requestId,
+				responseJson: JSON.stringify(credential),
+			})
 		} catch (e) {
-			proxy.completeCreateRequest({ requestId: details.requestId, error: fallThroughError(e.message || String(e)) })
+			proxy.completeCreateRequest({
+				requestId: details.requestId,
+				error: fallThroughError(e.message || String(e)),
+			})
 		}
 	})
 
 	proxy.onGetRequest.addListener(async (details) => {
 		try {
-			const options = JSON.parse(details.requestDetailsJson).publicKey || JSON.parse(details.requestDetailsJson)
-			const assertion = await orchestrator.handleGet(options, originOf(details))
-			proxy.completeGetRequest({ requestId: details.requestId, responseJson: JSON.stringify(assertion) })
+			const options =
+				JSON.parse(details.requestDetailsJson).publicKey
+				|| JSON.parse(details.requestDetailsJson)
+			const assertion = await orchestrator.handleGet(
+				options,
+				originOf(details),
+			)
+			proxy.completeGetRequest({
+				requestId: details.requestId,
+				responseJson: JSON.stringify(assertion),
+			})
 		} catch (e) {
-			proxy.completeGetRequest({ requestId: details.requestId, error: fallThroughError(e.message || String(e)) })
+			proxy.completeGetRequest({
+				requestId: details.requestId,
+				error: fallThroughError(e.message || String(e)),
+			})
 		}
 	})
 }
@@ -59,7 +82,8 @@ function originOf(details) {
 	if (details.origin) return details.origin
 	try {
 		const rp = JSON.parse(details.requestDetailsJson)
-		const rpId = rp.publicKey?.rp?.id || rp.publicKey?.rpId || rp.rp?.id || rp.rpId
+		const rpId =
+			rp.publicKey?.rp?.id || rp.publicKey?.rpId || rp.rp?.id || rp.rpId
 		return rpId ? 'https://' + rpId : ''
 	} catch {
 		return ''

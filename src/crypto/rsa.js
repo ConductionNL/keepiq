@@ -28,8 +28,11 @@ export async function generateKeyPair() {
 
 	// Export public key as SPKI PEM.
 	const spki = await crypto.subtle.exportKey('spki', keyPair.publicKey)
-	const publicKeyPem = '-----BEGIN PUBLIC KEY-----\n'
-		+ btoa(String.fromCharCode(...new Uint8Array(spki))).match(/.{1,64}/g).join('\n')
+	const publicKeyPem =
+		'-----BEGIN PUBLIC KEY-----\n'
+		+ btoa(String.fromCharCode(...new Uint8Array(spki)))
+			.match(/.{1,64}/g)
+			.join('\n')
 		+ '\n-----END PUBLIC KEY-----'
 
 	return {
@@ -53,7 +56,7 @@ export async function importPrivateKey(pem) {
 		.replace(/-----END RSA PRIVATE KEY-----/, '')
 		.replace(/\s/g, '')
 
-	const binary = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0))
+	const binary = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
 
 	return crypto.subtle.importKey(
 		'pkcs8',
@@ -173,7 +176,7 @@ export async function importPublicKey(pem) {
 		.replace(/-----END CERTIFICATE-----/, '')
 		.replace(/\s/g, '')
 
-	let spki = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0))
+	let spki = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
 	if (isCertificate === true) {
 		spki = extractSpkiFromCertificate(spki)
 	}
@@ -212,11 +215,7 @@ export async function rsaEncrypt(plaintext, publicKey) {
 
 	for (let i = 0; i < chunks.length; i++) {
 		const encrypted = new Uint8Array(
-			await crypto.subtle.encrypt(
-				{ name: 'RSA-OAEP' },
-				publicKey,
-				chunks[i],
-			),
+			await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, chunks[i]),
 		)
 		result.set(encrypted, 4 + i * RSA_BLOCK_SIZE)
 	}
@@ -232,7 +231,7 @@ export async function rsaEncrypt(plaintext, publicKey) {
  * @return {Promise<string>} Decrypted plaintext
  */
 export async function rsaDecrypt(ciphertext, privateKey) {
-	const raw = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0))
+	const raw = Uint8Array.from(atob(ciphertext), (c) => c.charCodeAt(0))
 	const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength)
 	const chunkCount = view.getUint32(0, false)
 

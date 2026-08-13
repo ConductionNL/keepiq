@@ -37,36 +37,72 @@ import { h } from 'vue'
  */
 const CnIndexPage = {
 	name: 'CnIndexPage',
-	props: ['objects', 'schema', 'listConfig', 'loading', 'pagination', 'viewMode', 'availableViewModes', 'selectable', 'addLabel', 'addIcon', 'inlineSearch', 'searchValue', 'searchPlaceholder', 'showSortSelect', 'sortSelectOptions', 'sortSelectValue', 'listLabel', 'rowKey', 'emptyText'],
+	props: [
+		'objects',
+		'schema',
+		'listConfig',
+		'loading',
+		'pagination',
+		'viewMode',
+		'availableViewModes',
+		'selectable',
+		'addLabel',
+		'addIcon',
+		'inlineSearch',
+		'searchValue',
+		'searchPlaceholder',
+		'showSortSelect',
+		'sortSelectOptions',
+		'sortSelectValue',
+		'listLabel',
+		'rowKey',
+		'emptyText',
+	],
 	emits: ['add', 'row-click'],
 	render() {
 		const objects = this.objects || []
 		const children = [
-			h('button', {
-				'data-testid': 'cn-cta-primary',
-				type: 'button',
-				onClick: () => this.$emit('add'),
-			}, this.addLabel),
+			h(
+				'button',
+				{
+					'data-testid': 'cn-cta-primary',
+					type: 'button',
+					onClick: () => this.$emit('add'),
+				},
+				this.addLabel,
+			),
 		]
 
 		if (objects.length === 0) {
-			children.push(h('div', { class: 'cn-index-page__empty' }, this.emptyText))
+			children.push(
+				h('div', { class: 'cn-index-page__empty' }, this.emptyText),
+			)
 		} else {
 			const rows = objects.map((object) => {
 				const listItem = this.$slots['list-item']
 				if (listItem) {
-					return h('div', { class: 'cn-index-page__item' }, [listItem({ object })])
+					return h('div', { class: 'cn-index-page__item' }, [
+						listItem({ object }),
+					])
 				}
 				const badges = this.$slots['row-badges']
-				return h('div', {
-					class: 'cn-object-row',
-					onClick: () => this.$emit('row-click', object),
-				}, badges ? [badges({ object })] : [])
+				return h(
+					'div',
+					{
+						class: 'cn-object-row',
+						onClick: () => this.$emit('row-click', object),
+					},
+					badges ? [badges({ object })] : [],
+				)
 			})
 			children.push(h('div', { class: 'cn-index-page__rows' }, rows))
 		}
 
-		return h('div', { class: 'cn-index-page', 'data-testid': 'cn-index-page' }, children)
+		return h(
+			'div',
+			{ class: 'cn-index-page', 'data-testid': 'cn-index-page' },
+			children,
+		)
 	},
 }
 
@@ -76,20 +112,40 @@ const CnIndexPage = {
  */
 const CnFolderSidebar = {
 	name: 'CnFolderSidebar',
-	props: ['folders', 'selectedId', 'allLabel', 'allowCreate', 'createLabel', 'source', 'objects', 'groupBy'],
+	props: [
+		'folders',
+		'selectedId',
+		'allLabel',
+		'allowCreate',
+		'createLabel',
+		'source',
+		'objects',
+		'groupBy',
+	],
 	emits: ['select', 'create'],
 	render() {
 		const children = [
-			h('button', {
-				class: 'cn-folder-sidebar__all',
-				onClick: () => this.$emit('select', null),
-			}, this.allLabel),
+			h(
+				'button',
+				{
+					class: 'cn-folder-sidebar__all',
+					onClick: () => this.$emit('select', null),
+				},
+				this.allLabel,
+			),
 		]
 		if (this.allowCreate) {
-			children.push(h('button', {
-				class: 'cn-folder-sidebar__new',
-				onClick: () => this.$emit('create', { parentId: this.selectedId }),
-			}, this.createLabel))
+			children.push(
+				h(
+					'button',
+					{
+						class: 'cn-folder-sidebar__new',
+						onClick: () =>
+							this.$emit('create', { parentId: this.selectedId }),
+					},
+					this.createLabel,
+				),
+			)
 		}
 		return h('div', { class: 'cn-folder-sidebar' }, children)
 	},
@@ -100,7 +156,11 @@ const CnStatusBadge = {
 	name: 'CnStatusBadge',
 	props: ['label', 'variant', 'size', 'solid', 'colorMap'],
 	render() {
-		return h('span', { class: 'cn-status-badge', 'data-variant': this.variant }, this.label)
+		return h(
+			'span',
+			{ class: 'cn-status-badge', 'data-variant': this.variant },
+			this.label,
+		)
 	},
 }
 

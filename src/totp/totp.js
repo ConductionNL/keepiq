@@ -39,7 +39,10 @@ const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
  * @throws {Error} When the input contains a non-base32 character or is empty.
  */
 export function base32Decode(input) {
-	const clean = String(input ?? '').toUpperCase().replace(/=+$/, '').replace(/\s+/g, '')
+	const clean = String(input ?? '')
+		.toUpperCase()
+		.replace(/=+$/, '')
+		.replace(/\s+/g, '')
 	if (clean === '') {
 		throw new Error('Empty base32 secret')
 	}
@@ -222,12 +225,13 @@ export async function generateTotp(params, epochMs = Date.now()) {
 
 	// RFC 4226 dynamic truncation.
 	const offset = hmac[hmac.length - 1] & 0x0f
-	const binary = ((hmac[offset] & 0x7f) << 24)
+	const binary =
+		((hmac[offset] & 0x7f) << 24)
 		| ((hmac[offset + 1] & 0xff) << 16)
 		| ((hmac[offset + 2] & 0xff) << 8)
 		| (hmac[offset + 3] & 0xff)
 
-	const code = binary % (10 ** digits)
+	const code = binary % 10 ** digits
 	return String(code).padStart(digits, '0')
 }
 

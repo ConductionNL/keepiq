@@ -28,24 +28,28 @@ import { encryptMetadata, decryptMetadata } from '../crypto/metadata.js'
  * @return {Promise<object>} The at-rest snapshot.
  */
 export async function encryptSnapshot(aesKey, manifest) {
-	const secrets = await Promise.all((manifest.secrets || []).map(async (s) => ({
-		id: s.id,
-		folderId: s.folderId,
-		typeId: s.typeId,
-		key: s.key,
-		login: s.login,
-		additionalFields: s.additionalFields,
-		encryptionSuiteId: s.encryptionSuiteId,
-		expiresAt: s.expiresAt,
-		// Plaintext metadata encrypted at rest (never stored in the clear).
-		meta: await encryptMetadata(aesKey, { name: s.name, url: s.url }),
-	})))
+	const secrets = await Promise.all(
+		(manifest.secrets || []).map(async (s) => ({
+			id: s.id,
+			folderId: s.folderId,
+			typeId: s.typeId,
+			key: s.key,
+			login: s.login,
+			additionalFields: s.additionalFields,
+			encryptionSuiteId: s.encryptionSuiteId,
+			expiresAt: s.expiresAt,
+			// Plaintext metadata encrypted at rest (never stored in the clear).
+			meta: await encryptMetadata(aesKey, { name: s.name, url: s.url }),
+		})),
+	)
 
-	const folders = await Promise.all((manifest.folders || []).map(async (f) => ({
-		id: f.id,
-		parentId: f.parentId,
-		meta: await encryptMetadata(aesKey, { name: f.name }),
-	})))
+	const folders = await Promise.all(
+		(manifest.folders || []).map(async (f) => ({
+			id: f.id,
+			parentId: f.parentId,
+			meta: await encryptMetadata(aesKey, { name: f.name }),
+		})),
+	)
 
 	return {
 		suite: {
@@ -73,26 +77,36 @@ export async function encryptSnapshot(aesKey, manifest) {
  * @return {Promise<object>} {suite, secrets, folders, syncedAt} decrypted for display.
  */
 export async function decryptSnapshot(aesKey, snapshot) {
-	const secrets = await Promise.all((snapshot.secrets || []).map(async (s) => {
-		const meta = await decryptMetadata(aesKey, s.meta)
-		return {
-			id: s.id,
-			name: meta.name,
-			url: meta.url,
-			folderId: s.folderId,
-			typeId: s.typeId,
-			key: s.key,
-			login: s.login,
-			additionalFields: s.additionalFields,
-			encryptionSuiteId: s.encryptionSuiteId,
-			expiresAt: s.expiresAt,
-		}
-	}))
+	const secrets = await Promise.all(
+		(snapshot.secrets || []).map(async (s) => {
+			const meta = await decryptMetadata(aesKey, s.meta)
+			return {
+				id: s.id,
+				name: meta.name,
+				url: meta.url,
+				folderId: s.folderId,
+				typeId: s.typeId,
+				key: s.key,
+				login: s.login,
+				additionalFields: s.additionalFields,
+				encryptionSuiteId: s.encryptionSuiteId,
+				expiresAt: s.expiresAt,
+			}
+		}),
+	)
 
-	const folders = await Promise.all((snapshot.folders || []).map(async (f) => {
-		const meta = await decryptMetadata(aesKey, f.meta)
-		return { id: f.id, parentId: f.parentId, name: meta.name }
-	}))
+	const folders = await Promise.all(
+		(snapshot.folders || []).map(async (f) => {
+			const meta = await decryptMetadata(aesKey, f.meta)
+			return { id: f.id, parentId: f.parentId, name: meta.name }
+		}),
+	)
 
-	return { suite: snapshot.suite, secrets, folders, types: snapshot.types || [], syncedAt: snapshot.syncedAt }
+	return {
+		suite: snapshot.suite,
+		secrets,
+		folders,
+		types: snapshot.types || [],
+		syncedAt: snapshot.syncedAt,
+	}
 }

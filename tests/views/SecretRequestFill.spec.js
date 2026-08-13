@@ -54,8 +54,12 @@ describe('SecretRequestFill', () => {
 		})
 		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
 		await flush()
-		expect(wrapper.find('[data-testid="fill-field-password"]').attributes('type')).toBe('password')
-		expect(wrapper.find('[data-testid="fill-field-url"]').attributes('type')).toBe('text')
+		expect(
+			wrapper.find('[data-testid="fill-field-password"]').attributes('type'),
+		).toBe('password')
+		expect(
+			wrapper.find('[data-testid="fill-field-url"]').attributes('type'),
+		).toBe('text')
 	})
 
 	it('renders the "unavailable" message when the request is locked', async () => {
@@ -69,7 +73,9 @@ describe('SecretRequestFill', () => {
 		})
 		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
 		await flush()
-		expect(wrapper.find('[data-testid="fill-unavailable"]').text()).toContain('temporarily unavailable')
+		expect(wrapper.find('[data-testid="fill-unavailable"]').text()).toContain(
+			'temporarily unavailable',
+		)
 	})
 
 	it('encrypts on submit and shows the success message', async () => {
@@ -81,7 +87,9 @@ describe('SecretRequestFill', () => {
 				public_certificate: 'PEM',
 			},
 		})
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { status: 'fulfilled' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { status: 'fulfilled' } })
 		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
 		await flush()
 		await wrapper.find('[data-testid="fill-field-key"]').setValue('p4ss')
@@ -94,9 +102,13 @@ describe('SecretRequestFill', () => {
 	})
 
 	it('renders the load-error block when the token resolution rejects', async () => {
-		vi.spyOn(axios, 'get').mockRejectedValue({ response: { data: { message: 'not found' } } })
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'not found' } },
+		})
 		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
 		await flush()
-		expect(wrapper.find('[data-testid="fill-load-error"]').text()).toContain('not found')
+		expect(wrapper.find('[data-testid="fill-load-error"]').text()).toContain(
+			'not found',
+		)
 	})
 })

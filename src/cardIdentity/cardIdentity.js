@@ -23,7 +23,14 @@ export const IDENTITY_TYPE_NAME = 'identity'
 export const CARD_FIELDS = ['number', 'expiry', 'cvv', 'pin', 'cardholder']
 
 /** Ordered identity payload fields (all optional). */
-export const IDENTITY_FIELDS = ['firstName', 'lastName', 'address', 'phone', 'email', 'bsn']
+export const IDENTITY_FIELDS = [
+	'firstName',
+	'lastName',
+	'address',
+	'phone',
+	'email',
+	'bsn',
+]
 
 /**
  * Serialize a card payload for the encrypted `key` field.

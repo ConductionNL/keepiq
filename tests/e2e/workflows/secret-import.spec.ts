@@ -23,13 +23,21 @@
  * master password.
  */
 import { test, expect } from '@playwright/test'
-import { DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } from './_workflow-helpers'
+import {
+	DEV_MASTER_PASSWORD,
+	gotoLockSettled,
+	gotoVaultRoute,
+	unlockVault,
+} from './_workflow-helpers'
 
-const CSV = 'name,url,username,password,folder\n'
+const CSV =
+	'name,url,username,password,folder\n'
 	+ 'E2E Import Sample,https://e2e-import.test,e2euser,e2epass,E2E Imports\n'
 
 test.describe('secret import', () => {
-	test('imports a generic CSV and the secret appears in the vault', async ({ page }) => {
+	test('imports a generic CSV and the secret appears in the vault', async ({
+		page,
+	}) => {
 		// @e2e secret-import::csv-columns-adjusted-before-commit
 		// @e2e secret-import::summary-after-a-mixed-import
 		await gotoLockSettled(page)
@@ -38,7 +46,9 @@ test.describe('secret import', () => {
 
 		// The themed NcButton swallows Playwright's synthetic click, so fire a
 		// native HTMLButtonElement.click() to open the import wizard.
-		await page.getByTestId('import-secrets').evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('import-secrets')
+			.evaluate((el: HTMLElement) => el.click())
 
 		// Upload the CSV via the file input (read entirely client-side).
 		await page.getByTestId('import-file').setInputFiles({
@@ -55,15 +65,21 @@ test.describe('secret import', () => {
 		await wizard.getByRole('button', { name: /^Next$/ }).click() // folders -> duplicates
 		await wizard.getByRole('button', { name: /^Import$/ }).click() // duplicates -> commit
 
-		await expect(page.getByText(/Imported:\s*1/)).toBeVisible({ timeout: 30_000 })
+		await expect(page.getByText(/Imported:\s*1/)).toBeVisible({
+			timeout: 30_000,
+		})
 		// Several "Close" affordances exist (the modal X icon + footer button);
 		// the modal X reliably dismisses the wizard.
 		await wizard.locator('.modal-container__close').first().click()
 
-		await expect(page.getByText('E2E Import Sample')).toBeVisible({ timeout: 20_000 })
+		await expect(page.getByText('E2E Import Sample')).toBeVisible({
+			timeout: 20_000,
+		})
 	})
 
-	test('re-importing the same file flags duplicates and skip-all leaves the vault unchanged', async ({ page }) => {
+	test('re-importing the same file flags duplicates and skip-all leaves the vault unchanged', async ({
+		page,
+	}) => {
 		// @e2e secret-import::re-import-of-the-same-file
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
@@ -71,7 +87,9 @@ test.describe('secret import', () => {
 
 		// The themed NcButton swallows Playwright's synthetic click, so fire a
 		// native HTMLButtonElement.click() to open the import wizard.
-		await page.getByTestId('import-secrets').evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('import-secrets')
+			.evaluate((el: HTMLElement) => el.click())
 		await page.getByTestId('import-file').setInputFiles({
 			name: 'sample.csv',
 			mimeType: 'text/csv',
@@ -83,10 +101,14 @@ test.describe('secret import', () => {
 		await wizard.getByRole('button', { name: /^Next$/ }).click()
 
 		// Duplicates step: the previously-imported row is listed; skip is default.
-		await expect(page.getByText(/match an existing secret/i)).toBeVisible({ timeout: 20_000 })
+		await expect(page.getByText(/match an existing secret/i)).toBeVisible({
+			timeout: 20_000,
+		})
 		await wizard.getByRole('button', { name: /^Import$/ }).click()
 
-		await expect(page.getByText(/Skipped duplicates:\s*1/)).toBeVisible({ timeout: 30_000 })
+		await expect(page.getByText(/Skipped duplicates:\s*1/)).toBeVisible({
+			timeout: 30_000,
+		})
 		await expect(page.getByText(/Imported:\s*0/)).toBeVisible()
 	})
 })

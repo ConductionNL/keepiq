@@ -30,16 +30,34 @@ import { useSessionStore } from '../../src/store/modules/session.js'
 import * as reauth from '../../src/crypto/reauth.js'
 
 const ncStubs = {
-	NcDialog: { props: ['name', 'open', 'size'], template: '<div><slot /><slot name="actions" /></div>' },
-	NcButton: { props: ['type', 'disabled'], template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>' },
+	NcDialog: {
+		props: ['name', 'open', 'size'],
+		template: '<div><slot /><slot name="actions" /></div>',
+	},
+	NcButton: {
+		props: ['type', 'disabled'],
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
-	NcSelect: { props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'], template: '<div />' },
+	NcSelect: {
+		props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'],
+		template: '<div />',
+	},
 	NcTextField: { props: ['value', 'label'], template: '<input />' },
-	NcPasswordField: { props: ['value', 'label'], template: '<input type="password" />' },
-	NcCheckboxRadioSwitch: { props: ['modelValue', 'value', 'name', 'type'], template: '<label><slot /></label>' },
+	NcPasswordField: {
+		props: ['value', 'label'],
+		template: '<input type="password" />',
+	},
+	NcCheckboxRadioSwitch: {
+		props: ['modelValue', 'value', 'name', 'type'],
+		template: '<label><slot /></label>',
+	},
 }
 
-const mountOpts = { global: { stubs: ncStubs, mocks: { t: (app, s, vars) => (vars ? s : s) } } }
+const mountOpts = {
+	global: { stubs: ncStubs, mocks: { t: (app, s, vars) => (vars ? s : s) } },
+}
 
 describe('ExportDialog', () => {
 	beforeEach(() => {
@@ -47,7 +65,10 @@ describe('ExportDialog', () => {
 	})
 
 	it('blocks backup submit below the passphrase floor and enables it above', async () => {
-		const wrapper = mount(ExportDialog, { propsData: { open: true, secrets: [], folders: [] }, ...mountOpts })
+		const wrapper = mount(ExportDialog, {
+			propsData: { open: true, secrets: [], folders: [] },
+			...mountOpts,
+		})
 		wrapper.vm.mode = 'encrypted-backup'
 		wrapper.vm.passphrase = 'pw'
 		wrapper.vm.passphraseScore = 1
@@ -61,7 +82,10 @@ describe('ExportDialog', () => {
 	})
 
 	it('plaintext CSV requires warning ack + password and rejects a wrong password', async () => {
-		const wrapper = mount(ExportDialog, { propsData: { open: true, secrets: [], folders: [] }, ...mountOpts })
+		const wrapper = mount(ExportDialog, {
+			propsData: { open: true, secrets: [], folders: [] },
+			...mountOpts,
+		})
 		wrapper.vm.mode = 'plaintext-csv'
 		await wrapper.vm.$nextTick()
 		// No acknowledgement, no password yet.
@@ -90,7 +114,10 @@ describe('AccountDeletionDialog', () => {
 	})
 
 	it('blocks submit until both password and the exact phrase are present', async () => {
-		const wrapper = mount(AccountDeletionDialog, { propsData: { open: true }, ...mountOpts })
+		const wrapper = mount(AccountDeletionDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
 		expect(wrapper.vm.canSubmit).toBe(false)
 
 		wrapper.vm.masterPassword = 'secret'
