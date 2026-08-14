@@ -28,8 +28,12 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -38,6 +42,16 @@ use Ramsey\Uuid\Uuid;
  */
 class SecretRequestService {
 	/**
+	 * The Secret columns a filled field can be written to.
+	 *
+	 * `requested_fields` is free-form JSON in the schema, so a request can name
+	 * anything; only these three have somewhere to live on the Secret.
+	 *
+	 * @var array<int,string>
+	 */
+	private const FILLABLE_FIELDS = ['key', 'login', 'additionalFields'];
+
+	/**
 	 * Constructor for SecretRequestService.
 	 *
 	 * @param SecretRequestMapper $mapper The mapper
@@ -45,6 +59,8 @@ class SecretRequestService {
 	 * @param SecretRequestOutbox $outbox The audit + notification outbox
 	 * @param LoggerInterface $logger The logger
 	 * @param WriteLockService $writeLockService The compromise-recovery write lock
+	 * @param SecretMapper $secretMapper Reads the Secret a request writes to
+	 * @param ContainerInterface $container Resolves SecretService lazily (see fill)
 	 *
 	 * @return void
 	 */
@@ -54,6 +70,8 @@ class SecretRequestService {
 		private SecretRequestOutbox $outbox,
 		private LoggerInterface $logger,
 		private WriteLockService $writeLockService,
+		private SecretMapper $secretMapper,
+		private ContainerInterface $container,
 	) {
 	}//end __construct()
 
@@ -82,20 +100,20 @@ class SecretRequestService {
 	 * Validates the lifecycle / expiry / requested-fields invariants, atomically
 	 * flips status to fulfilled, and announces it to the original requester.
 	 *
-	 * ⚠️ `$encryptedFields` IS NOT PERSISTED ANYWHERE. This docblock used to say
-	 * the calling controller was responsible for writing the blobs to the linked
-	 * Secret row; no caller does. SecretRequestFillController::fill() invokes
-	 * this method and returns the status, so a fill-in silently discards the
-	 * value the recipient submitted and the request is marked fulfilled anyway.
+	 * `$encryptedFields` IS persisted onto the linked Secret, which the spec
+	 * requires ("store them in the linked Secret" — Fill In via Link). It used
+	 * not to be: this method validated the blobs, flipped the status to
+	 * fulfilled and discarded them, so a recipient's submission was silently
+	 * lost and the request was marked fulfilled with nothing to show for it.
 	 *
-	 * Two consequences worth knowing before relying on this method:
-	 *   - the requested value never reaches the vault, so the request is
-	 *     "fulfilled" with nothing to show for it;
-	 *   - a secret carrying `possibly_compromised_at` cannot be cleared this way,
-	 *     because clearing is bound to an actual `key` write (see the
-	 *     possibly-compromised-flag lifecycle requirement). Whoever wires the
-	 *     write MUST route it through SecretService::update so the flag clears
-	 *     and version history snapshots, rather than touching the mapper.
+	 * The write goes through SecretService rather than the mapper, so it
+	 * inherits that path's guarantees: a version-history snapshot, and
+	 * `possibly_compromised_at` clearing, which is bound to an actual `key`
+	 * write. Writing via the mapper would silently skip both.
+	 *
+	 * Order matters. Values are persisted BEFORE the status flip, so a failed
+	 * write leaves the request `pending` and retryable rather than fulfilled
+	 * and empty.
 	 *
 	 * @param string $token The access token
 	 * @param array<string,mixed> $encryptedFields A map of fieldName => encryptedValue
@@ -114,6 +132,11 @@ class SecretRequestService {
 		// fill that may have raced us between the token lookup and here.
 		$current = $this->policy->requirePendingById(requestId: $entity->getId());
 
+		// BEFORE the flip: a throw here leaves the request pending, which is
+		// the recoverable failure. Flipping first would mark it fulfilled with
+		// the value lost — the defect this method used to have.
+		$this->persistFilledValues(request: $current, encryptedFields: $encryptedFields);
+
 		$current->setStatus(SecretRequest::STATUS_FULFILLED);
 		$current->setFulfilledAt(new DateTime());
 		$persisted = $this->mapper->update($current);
@@ -127,6 +150,84 @@ class SecretRequestService {
 
 		return $persisted;
 	}//end fill()
+
+	/**
+	 * Write the submitted ciphertext onto the Secret the request points at.
+	 *
+	 * The blobs arrive already encrypted to the REQUESTER's suite certificate
+	 * (the public fill endpoint hands the recipient that certificate), so they
+	 * are stored verbatim — the server neither encrypts nor decrypts here
+	 * (ADR-003).
+	 *
+	 * Routed by owner type because the two write paths enforce different
+	 * scoping: `update()` requires `ownerType === 'user'` and matches on the
+	 * user id, while `updateByApplication()` requires `ownerType ===
+	 * 'application'`. An application-owned request — the whole point of
+	 * application-initiated requests — cannot go through the user path at all.
+	 *
+	 * SecretService is resolved from the container rather than injected: it
+	 * already declares an optional `SecretRequestService` of its own, so a
+	 * constructor dependency here would close an autowiring cycle whose
+	 * resolution depends on construction order. Resolving at call time has no
+	 * such ordering.
+	 *
+	 * @param SecretRequest $request The request being fulfilled
+	 * @param array<string,mixed> $encryptedFields fieldName => ciphertext
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a field name has nowhere to be stored
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	private function persistFilledValues(SecretRequest $request, array $encryptedFields): void {
+		$data = [];
+
+		foreach ($encryptedFields as $field => $value) {
+			// Only the Secret's three value columns can receive a blob. An
+			// unrecognised name previously went nowhere at all; refusing is the
+			// point of this method, so it must not silently drop one either.
+			if (in_array($field, self::FILLABLE_FIELDS, true) === false) {
+				throw new InvalidArgumentException(
+					message: 'Field cannot be stored on a secret: ' . $field,
+					code: 400
+				);
+			}
+
+			$data[$field] = $value;
+		}
+
+		if ($data === []) {
+			return;
+		}
+
+		try {
+			$secret = $this->secretMapper->findById($request->getSecretId());
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			throw new InvalidArgumentException(
+				message: 'The secret this request writes to no longer exists',
+				code: 404
+			);
+		}
+
+		$secretService = $this->container->get(SecretService::class);
+
+		if ($secret->getOwnerType() === 'application') {
+			$secretService->updateByApplication(
+				id: $secret->getId(),
+				data: $data,
+				applicationId: $secret->getOwnerId()
+			);
+
+			return;
+		}
+
+		$secretService->update(
+			id: $secret->getId(),
+			data: $data,
+			userId: $secret->getOwnerId()
+		);
+	}//end persistFilledValues()
 
 	/**
 	 * Create a new pending secret request.

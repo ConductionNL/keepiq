@@ -35,7 +35,10 @@ use OCA\Doriath\Service\SecretRequestService;
 use OCA\Doriath\Service\SecretRequestSuiteLockService;
 use OCA\Doriath\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use OCA\Doriath\Service\SecretService;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -70,7 +73,37 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Reads the Secret a filled request writes to.
+	 *
+	 * @var SecretMapper&MockObject
+	 */
+	private SecretMapper&MockObject $secretMapper;
+
+	/**
+	 * Hands out the SecretService double.
+	 *
+	 * SecretService is resolved from the container at call time rather than
+	 * injected, because it declares an optional SecretRequestService of its own
+	 * and a constructor dependency would close an autowiring cycle.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
+
+	/**
+	 * The write path a fill is expected to go through.
+	 *
+	 * @var SecretService&MockObject
+	 */
+	private SecretService&MockObject $secretService;
+
 	protected function setUp(): void {
+		$this->secretMapper = $this->createMock(SecretMapper::class);
+		$this->secretService = $this->createMock(SecretService::class);
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->container->method('get')->willReturn($this->secretService);
+
 		$this->mapper = $this->createMock(originalClassName: SecretRequestMapper::class);
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$this->service = new SecretRequestService(
@@ -79,6 +112,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->suiteLockService = new SecretRequestSuiteLockService(
@@ -395,7 +430,29 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(notificationService: $notifier),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
+
+		// The linked Secret, user-owned.
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		// The point of the fix: the submitted ciphertext reaches the Secret,
+		// through SecretService so the version snapshot and the
+		// possibly-compromised clearing both happen. It previously went nowhere
+		// and the request was marked fulfilled regardless.
+		$this->secretService->expects($this->once())
+			->method('update')
+			->with(
+				'sec-1',
+				['key' => 'CIPHER_KEY', 'login' => 'CIPHER_LOGIN'],
+				'requester'
+			)
+			->willReturn($secret);
 
 		$result = $service->fill(
 			token: 'tok-good',
@@ -405,6 +462,139 @@ class SecretRequestServiceTest extends TestCase {
 		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
 		$this->assertNotNull($result->getFulfilledAt());
 	}//end testFillMarksFulfilledAndNotifies()
+
+	/**
+	 * An application-owned secret goes through the application write path.
+	 *
+	 * SecretService::update() hard-requires `ownerType === 'user'`, so an
+	 * application-owned request — the entire point of application-initiated
+	 * requests — cannot use it. Routing by owner type is what keeps that case
+	 * working rather than throwing a Forbidden the recipient cannot act on.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testFillOnAnApplicationOwnedSecretUsesTheApplicationPath(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('application');
+		$secret->setOwnerId('app-1');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->once())
+			->method('updateByApplication')
+			->with('sec-1', ['key' => 'CIPHER'], 'app-1')
+			->willReturn($secret);
+		$this->secretService->expects($this->never())->method('update');
+
+		$service = new SecretRequestService(
+			mapper: $this->mapper,
+			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+		);
+
+		$result = $service->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testFillOnAnApplicationOwnedSecretUsesTheApplicationPath()
+
+	/**
+	 * A field with nowhere to be stored is refused, not silently dropped.
+	 *
+	 * `requested_fields` is free-form JSON, so a request can name anything.
+	 * Accepting such a name and storing it nowhere is the defect being fixed;
+	 * refusing keeps the request fillable once the caller corrects it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testFillRefusesAFieldThatCannotBeStored(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['api-key']));
+
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+
+		// Neither the status nor the secret may move.
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretService->expects($this->never())->method('update');
+
+		$service = new SecretRequestService(
+			mapper: $this->mapper,
+			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+		);
+
+		$this->expectException(InvalidArgumentException::class);
+
+		$service->fill(token: 'tok-good', encryptedFields: ['api-key' => 'CIPHER']);
+	}//end testFillRefusesAFieldThatCannotBeStored()
+
+	/**
+	 * A failed write leaves the request pending, not fulfilled and empty.
+	 *
+	 * Ordering is the guarantee: values are persisted before the status flip,
+	 * so a throw from the write path cannot leave a request reporting success
+	 * with nothing stored — which is precisely the state the old code produced
+	 * on every single fill.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testFillLeavesTheRequestPendingWhenTheWriteFails(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key']));
+
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->method('update')
+			->willThrowException(new InvalidArgumentException(message: 'vault is write-locked'));
+
+		$service = new SecretRequestService(
+			mapper: $this->mapper,
+			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+		);
+
+		try {
+			$service->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
+			$this->fail('Expected the write failure to propagate');
+		} catch (InvalidArgumentException) {
+			// The request must still be usable.
+			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
+			$this->assertNull($entity->getFulfilledAt());
+		}
+	}//end testFillLeavesTheRequestPendingWhenTheWriteFails()
 
 	/**
 	 * fill rejects payloads that omit a required field.
@@ -513,6 +703,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
@@ -541,6 +733,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -565,6 +759,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -632,6 +828,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $writeLock,
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -678,6 +876,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $writeLock,
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -726,6 +926,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$result = $service->createForApplication(
@@ -764,6 +966,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -821,6 +1025,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$result = $service->createReRequest(
@@ -861,6 +1067,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -907,6 +1115,8 @@ class SecretRequestServiceTest extends TestCase {
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
 		);
 
 		$this->expectException(InvalidArgumentException::class);

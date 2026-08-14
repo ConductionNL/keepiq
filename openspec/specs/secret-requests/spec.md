@@ -67,6 +67,20 @@ Anyone with the fill-in link MUST be able to submit values for the requested fie
 - AND store them in the linked Secret
 - AND set the SecretRequest status to `fulfilled`
 
+#### Scenario: Requested field names are limited to the Secret's value fields
+
+- GIVEN `requested_fields` is free-form JSON and can therefore name anything
+- WHEN a submitted field name is not one of `key`, `login` or `additionalFields`
+- THEN the system MUST refuse the submission rather than storing it nowhere
+- AND the SecretRequest MUST remain `pending`
+
+#### Scenario: A failed write leaves the request fillable
+
+- GIVEN values have been submitted for a pending request
+- WHEN storing them on the linked Secret fails
+- THEN the SecretRequest MUST remain `pending` so the link can be used again
+- AND it MUST NOT be reported as `fulfilled`
+
 #### Scenario: Requester cannot read after submission
 - GIVEN a SecretRequest has been fulfilled
 - WHEN the requester retrieves the linked Secret
