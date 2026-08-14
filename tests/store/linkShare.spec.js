@@ -26,15 +26,54 @@
  * @spec openspec/changes/implement-link-sharing/tasks.md#13.2
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import axios from '@nextcloud/axios'
 
 import { useLinkShareStore } from '../../src/store/modules/linkShare.js'
 
+/**
+ * A Storage-shaped stub that records every write.
+ *
+ * The no-persistence test used to read `window.localStorage` directly. Nothing
+ * in this environment provides it: vitest's jsdom environment does not put
+ * `localStorage` on the global, so the lookup fell through to Node's own
+ * flag-gated `localStorage` (hence the "--localstorage-file was not provided"
+ * warning) and evaluated to `undefined`. `Object.keys(undefined)` then threw
+ * "Cannot convert undefined or null to object", so the assertion never ran and
+ * the invariant it names was never actually checked.
+ *
+ * Stubbing also proves the stronger claim. "Storage ended up empty" can hold
+ * because a write went somewhere else, or because the write threw on an absent
+ * Storage. "setItem was never called" is the invariant the header describes.
+ *
+ * @return {object} A Storage-shaped stub whose mutators are vi mocks.
+ */
+function recordingStorage() {
+	const entries = new Map()
+
+	return {
+		entries,
+		getItem: vi.fn((key) =>
+			entries.has(String(key)) ? entries.get(String(key)) : null,
+		),
+		setItem: vi.fn((key, value) => entries.set(String(key), String(value))),
+		removeItem: vi.fn((key) => entries.delete(String(key))),
+		clear: vi.fn(() => entries.clear()),
+		key: vi.fn((index) => Array.from(entries.keys())[index] ?? null),
+		get length() {
+			return entries.size
+		},
+	}
+}
+
 describe('useLinkShareStore', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
+	})
+
+	afterEach(() => {
+		vi.unstubAllGlobals()
 	})
 
 	describe('createLinkShare', () => {
@@ -116,14 +155,30 @@ describe('useLinkShareStore', () => {
 				data: { id: 'ls-003', token: 't', linkUrl: '/u' },
 			})
 
+			// Installed BEFORE the call, so a write during it is recorded rather
+			// than throwing on an absent Storage. `window === globalThis` here, so
+			// stubbing the global covers both `localStorage` and
+			// `window.localStorage`.
+			const local = recordingStorage()
+			const session = recordingStorage()
+			vi.stubGlobal('localStorage', local)
+			vi.stubGlobal('sessionStorage', session)
+
 			const store = useLinkShareStore()
 			await store.createLinkShare('secret-1', { key: 'x' }, 1, null)
 
 			// The dialog flow MUST be the only place the password ever lives.
 			// A write to localStorage / sessionStorage would survive a tab
 			// close and defeat the one-time-display invariant.
-			expect(Object.keys(window.localStorage).length).toBe(0)
-			expect(Object.keys(window.sessionStorage).length).toBe(0)
+			expect(local.setItem).not.toHaveBeenCalled()
+			expect(session.setItem).not.toHaveBeenCalled()
+			expect(local.length).toBe(0)
+			expect(session.length).toBe(0)
+
+			// And the password really was produced, so the assertions above are
+			// about a run that had something to leak.
+			expect(typeof store.createdPassword).toBe('string')
+			expect(store.createdPassword).toHaveLength(20)
 		})
 	})
 

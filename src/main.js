@@ -131,13 +131,23 @@ const router = createRouter({
 	routes: routesFromManifest(mergedManifest),
 })
 
-// Keep every application screen behind the master password. This must be a
-// router guard rather than an App.vue lifecycle redirect: `beforeEach` runs
-// before the route resolves, so a locked vault never instantiates a page
+// Keep every ROUTED application screen behind the master password. This must
+// be a router guard rather than an App.vue lifecycle redirect: `beforeEach`
+// runs before the route resolves, so a locked vault never instantiates a page
 // component and never issues its `mounted()` fetches. The store is passed as
 // a lazy factory because the guard is registered before `app.use(pinia)`;
 // `pinia` is passed explicitly so the guard never depends on an active-Pinia
 // context.
+//
+// "Routed" is the exact scope. Every manifest page gets
+// `component: RoutePageRenderer` above and CnAppRoot renders them through a
+// single `<router-view>`, so no manifest-driven page mounts outside route
+// resolution. Shell-level SIBLINGS of that `<router-view>` are outside this
+// guard by construction — today that is `CnAiCompanion` (mounted by
+// CnAppRoot when App.vue passes `:ai-companion`, and it issues its own
+// health request on created()) and App.vue's offline banner. Neither is
+// secret-bearing and neither holds a key, but anything added there needs its
+// own gating: this guard will not cover it.
 router.beforeEach(createVaultGuard(() => useSessionStore(pinia)))
 
 tryLoadTranslations()

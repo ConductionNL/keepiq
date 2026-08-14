@@ -278,7 +278,7 @@ import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
-import { isPublicRoute } from './router/guards.js'
+import { handleLockTransition } from './router/guards.js'
 
 export default {
 	name: 'App',
@@ -430,16 +430,9 @@ export default {
 		 * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 		 */
 		isLocked(locked) {
-			if (
-				locked
-				&& this.$route?.name !== 'Lock'
-				&& !isPublicRoute(this.$route)
-			) {
-				this.$router.replace({
-					name: 'Lock',
-					query: { returnUrl: this.$route?.fullPath },
-				})
-			}
+			// The decision lives in guards.js so it can be unit-tested without
+			// mounting the shell — see handleLockTransition.
+			handleLockTransition(locked, this.$route, this.$router)
 			// Write-through the encrypted offline snapshot on each ONLINE unlock
 			// (offline-readonly-cache §2.3). Fail-soft — never blocks the session.
 			if (
@@ -643,7 +636,18 @@ export default {
 	padding: 6px 16px;
 	text-align: center;
 	font-weight: bold;
-	color: var(--color-primary-element-text, #fff);
-	background-color: var(--color-warning, #b07100);
+	/*
+	 * --color-warning is the pale tint (#FFEEC5 in light), so the primary
+	 * element foreground — white for the default primary — landed at roughly
+	 * 1.3:1 on it. Dark mode was fine (#3D3010), making this the same
+	 * one-theme failure as the rest of this change. The paired *-text value is
+	 * the one the theme flips alongside the tint.
+	 *
+	 * This banner is sticky at z-index 2000 and is the app's only signal that
+	 * the data on screen is stale and read-only, so it is the last thing that
+	 * should be invisible.
+	 */
+	color: var(--color-warning-text);
+	background-color: var(--color-warning);
 }
 </style>

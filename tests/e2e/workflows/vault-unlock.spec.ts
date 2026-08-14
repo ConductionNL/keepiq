@@ -41,6 +41,7 @@ import {
 	lockHeading,
 	unlockVault,
 } from './_workflow-helpers'
+import manifest from '../../../src/manifest.json'
 
 test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	test('lock screen renders in UNLOCK mode (admin owns a seeded active suite)', async ({
@@ -110,33 +111,81 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 *
 	 * @e2e openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 	 */
-	test('a locked vault issues no secret-bearing request at any point', async ({
+	test("a locked vault issues no Doriath API request beyond the lock screen's own", async ({
 		page,
 	}) => {
 		const leaked: string[] = []
-		// The lock screen legitimately reads suite + migration state; those are
-		// key-management endpoints and carry no secret metadata.
-		const ALLOWED = /\/api\/v1\/(suites|migrations)\b/
-		const SECRET_BEARING =
-			/\/api\/(v1\/(secrets|folders|shares|group-shares|link-shares)\b|dashboard\/summary)/
+
+		/*
+		 * An ALLOWLIST, not a denylist. A denylist of secret-bearing endpoints
+		 * only ever covers the families someone thought to name: the earlier
+		 * form matched secrets/folders/shares/group-shares/link-shares and
+		 * dashboard/summary, leaving applications, certificates,
+		 * emergency-access, secret-requests, sends, honey/alerts, secret-types,
+		 * delegations, versions, attachments, audit, leases, team-folders,
+		 * export, gdpr and offline/manifest — the last being a full inventory
+		 * snapshot — entirely unwatched. A new page shipping a `mounted()` fetch
+		 * would have been invisible to it.
+		 *
+		 * Inverted, the assertion fails closed: every request to the app's API
+		 * is a leak unless it is something the LOCK SCREEN itself legitimately
+		 * needs. Adding an endpoint to this list is then a deliberate act with a
+		 * reason, which is the property we want.
+		 *
+		 * Each entry below must name traffic that actually fires while locked —
+		 * an entry that cannot fire is pure masking surface, since it would
+		 * silently swallow an unexpected request to that family. The
+		 * recipient-facing `/api/v1/public/` prefix was one such entry: the hash
+		 * loop below excludes every public route, so nothing under it is
+		 * reachable here and a request to it would be worth failing on.
+		 */
+		const LOCK_SCREEN_LEGITIMATE = [
+			/\/api\/v1\/suites\b/, // suite state: setup vs unlock mode
+			/\/api\/v1\/migrations\/status\b/, // resume banner
+			// App.vue's created() calls initializeStores() unconditionally,
+			// before any route resolves and regardless of lock state, and
+			// settingsStore.fetchSettings() requests the BARE /api/settings
+			// path. A `/api/settings/user\b` pattern does not cover it — the
+			// `/user` segment has to be optional.
+			/\/api\/settings(\/user)?(\/|$|\?)/,
+			// LockScreen's own created() offers passkey unlock whenever
+			// online, which is true in headless Chromium over the instance's
+			// HTTPS origin.
+			/\/api\/v1\/passkeys\/login-options\b/,
+		]
 
 		page.on('request', (req) => {
 			const url = req.url()
-			if (SECRET_BEARING.test(url) && !ALLOWED.test(url)) {
-				leaked.push(`${req.method()} ${url}`)
+			if (!/\/apps\/doriath\/api\//.test(url)) {
+				return
 			}
+			if (LOCK_SCREEN_LEGITIMATE.some((re) => re.test(url))) {
+				return
+			}
+			leaked.push(`${req.method()} ${url}`)
 		})
 
-		// Hash-mode deep links — the real attack shape. `#/secrets/some-id`
-		// names the route directly, where the bare path form used by the test
-		// above only ever lands on the Dashboard route.
-		for (const hash of [
-			'#/secrets',
-			'#/secrets/some-id',
-			'#/folders/some-folder',
-			'#/password-health',
-			'#/',
-		]) {
+		/*
+		 * Routes derived from the manifest rather than hand-listed, so a page
+		 * added later is covered without anyone remembering to extend this test.
+		 * Public (recipient-facing) routes and the lock screen itself are
+		 * excluded — they are reachable while locked by design.
+		 */
+		const publicRoutes = [
+			'SecretRequestFill',
+			'LinkShareAccess',
+			'EphemeralSendAccess',
+			'Lock',
+		]
+		const hashes = (manifest.pages as Array<{ id: string; route: string }>)
+			.filter((pg) => !publicRoutes.includes(pg.id))
+			// Give any `:param` segment a concrete value; a deep link naming the
+			// route directly is the real attack shape.
+			.map((pg) => `#${pg.route.replace(/:[^/]+/g, 'some-id')}`)
+
+		expect(hashes.length).toBeGreaterThan(5)
+
+		for (const hash of hashes) {
 			// ADR-074 rule 4, and the note above: `networkidle` never settles on
 			// Nextcloud, and it was never what caught this bug — the `request`
 			// listener above is attached before navigation and records every
@@ -145,9 +194,13 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
 		}
 
+		// A leak firing just after the last lock heading painted would otherwise
+		// be missed on the final iteration, since the assertion ran immediately.
+		await page.waitForTimeout(1500)
+
 		expect(
 			leaked,
-			`locked vault requested secret-bearing endpoints:\n${leaked.join('\n')}`,
+			`locked vault requested Doriath API endpoints:\n${leaked.join('\n')}`,
 		).toEqual([])
 	})
 
