@@ -36,6 +36,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 /**
  * Business logic for the SecretRequest lifecycle.
@@ -379,6 +380,194 @@ class SecretRequestService {
 			userId: $userId,
 		);
 	}//end createForApplication()
+
+	/**
+	 * Create a request in an application's OWN vault, with no user session.
+	 *
+	 * The session-bound siblings (`create`, `createForApplication`) both require
+	 * a `userId`, which an unattended application does not have — that is the
+	 * gap this closes. Authority comes from the caller having already proven the
+	 * application's identity (JWT-Bearer on the machine route, or a verified
+	 * signed proof on the DI seam); this method takes the application id as
+	 * established fact and never accepts a user.
+	 *
+	 * The Secret shell is created here rather than demanded from the caller,
+	 * because an application has nothing to point at yet. Shell and request are
+	 * created together, and a failure after the shell is written removes it: an
+	 * empty orphan Secret in an application's vault is indistinguishable from a
+	 * real unfilled credential, so it must not survive a failed creation.
+	 *
+	 * @param string $applicationId The application whose vault receives the request
+	 * @param array<int,string> $requestedFields Field names being asked for
+	 * @param string|null $name Optional secret name
+	 * @param string|null $folderId Optional folder placement
+	 * @param DateTime|null $expiresAt Optional fill-link expiry
+	 *
+	 * @return SecretRequest
+	 *
+	 * @throws InvalidArgumentException When the application has no usable suite
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	public function createForApplicationVault(
+		string $applicationId,
+		array $requestedFields,
+		?string $name = null,
+		?string $folderId = null,
+		?DateTime $expiresAt = null,
+	): SecretRequest {
+		if ($requestedFields === []) {
+			throw new InvalidArgumentException(message: 'requestedFields is required', code: 400);
+		}
+
+		// Guard parity with token issuance: refuses a pending/rejected/deleted
+		// application and a revoked/compromised suite, and yields the suite the
+		// submitted values will be encrypted under.
+		$suiteId = $this->policy->requireApplicationSuiteId(applicationId: $applicationId);
+
+		// The application's own lock, not a user's: a rotation in the
+		// application's vault must refuse new pending requests for the same
+		// reason it refuses them for a user.
+		$this->writeLockService->assertNotWriteLocked(
+			ownerId: $applicationId,
+			ownerType: 'application'
+		);
+
+		$secretService = $this->container->get(SecretService::class);
+
+		$shell = $secretService->createByApplication(
+			data: [
+				'name' => ($name ?? 'Unfilled request'),
+				'folderId' => $folderId,
+				// An unfilled shell: the recipient supplies the value, and the
+				// server never holds a plaintext one (ADR-003).
+				'key' => '',
+			],
+			applicationId: $applicationId
+		);
+
+		try {
+			return $this->createInApplicationVault(
+				secretId: $shell->getId(),
+				applicationId: $applicationId,
+				encryptionSuiteId: $suiteId,
+				requestedFields: $requestedFields,
+				expiresAt: $expiresAt
+			);
+		} catch (Throwable $exception) {
+			// No orphan shell: it exists only to receive this request.
+			try {
+				$secretService->deleteByApplication(
+					secretId: $shell->getId(),
+					applicationId: $applicationId
+				);
+			} catch (Throwable $cleanupFailure) {
+				$this->logger->error(
+					'Doriath: failed to remove the shell of a failed application request',
+					[
+						'secretId' => $shell->getId(),
+						'applicationId' => $applicationId,
+						'exception' => $cleanupFailure,
+					]
+				);
+			}
+
+			throw $exception;
+		}//end try
+	}//end createForApplicationVault()
+
+	/**
+	 * Persist an application-owned request row.
+	 *
+	 * Split from the shell creation so the rollback above has exactly one
+	 * failure point to guard, and kept separate from `create()` because that
+	 * method's contract is user-session bound: it takes a `userId`, locks
+	 * against a user's vault and records that user as the creator.
+	 *
+	 * @param string $secretId The shell Secret
+	 * @param string $applicationId The owning application
+	 * @param string $encryptionSuiteId The suite values will be encrypted under
+	 * @param array<int,string> $requestedFields Field names being asked for
+	 * @param DateTime|null $expiresAt Optional fill-link expiry
+	 *
+	 * @return SecretRequest
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	private function createInApplicationVault(
+		string $secretId,
+		string $applicationId,
+		string $encryptionSuiteId,
+		array $requestedFields,
+		?DateTime $expiresAt,
+	): SecretRequest {
+		$entity = new SecretRequest();
+		$entity->setId(Uuid::uuid4()->toString());
+		$entity->setSecretId($secretId);
+		$entity->setEncryptionSuiteId($encryptionSuiteId);
+		$entity->setRequestedFields((string)json_encode(array_values($requestedFields)));
+		$entity->setStatus(SecretRequest::STATUS_PENDING);
+		$entity->setIsReRequest(false);
+		$entity->setExpiresAt($expiresAt);
+		// The actor is the application, not a user. `created_by` is a plain
+		// string column, so the prefix keeps an application id from being read
+		// as a Nextcloud user id by anything that consumes this field.
+		$entity->setCreatedBy('application:' . $applicationId);
+		$entity->setCreatedAt(new DateTime());
+		$entity->setToken(bin2hex(random_bytes(16)));
+
+		$persisted = $this->mapper->insert($entity);
+
+		$this->logger->info(
+			'Created application-initiated secret request ' . $persisted->getId(),
+			['app' => 'doriath', 'applicationId' => $applicationId]
+		);
+
+		return $persisted;
+	}//end createInApplicationVault()
+
+	/**
+	 * The pending requests an application itself created.
+	 *
+	 * Exists so a fill-link is retrievable after creation: the token is returned
+	 * once at creation, and an application that lost the response has no other
+	 * way back to it.
+	 *
+	 * Scoping is structural rather than filtered-after-the-fact. Rows are keyed
+	 * on `created_by = "application:<id>"`, a value only this service writes —
+	 * no request body can influence it, so one application cannot enumerate
+	 * another's. Requests a USER created against this application's vault are
+	 * deliberately not listed: they are the user's to manage, and surfacing them
+	 * here would widen what a machine token can see.
+	 *
+	 * @param string $applicationId The calling application
+	 *
+	 * @return array<int,SecretRequest> Pending requests, newest first
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	public function listPendingForApplicationVault(string $applicationId): array {
+		if ($applicationId === '') {
+			throw new InvalidArgumentException(message: 'applicationId is required', code: 400);
+		}
+
+		$rows = $this->mapper->findByCreatedBy('application:' . $applicationId);
+
+		$pending = array_values(
+			array_filter(
+				$rows,
+				static fn (SecretRequest $row): bool => $row->getStatus() === SecretRequest::STATUS_PENDING
+			)
+		);
+
+		usort(
+			$pending,
+			static fn (SecretRequest $a, SecretRequest $b): int => ($b->getCreatedAt()?->getTimestamp() ?? 0)
+				<=> ($a->getCreatedAt()?->getTimestamp() ?? 0)
+		);
+
+		return $pending;
+	}//end listPendingForApplicationVault()
 
 	/**
 	 * Create a re-request for an existing secret.

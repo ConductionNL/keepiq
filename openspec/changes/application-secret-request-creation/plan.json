@@ -11,25 +11,25 @@
       "id": "1.1",
       "title": "Register `POST /api/v1/app/secret-requests` and `GET /api/v1/app/secret-requests` in `appinfo/routes.php`.",
       "section": "1. Machine HTTP route + controller",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "1.2",
       "title": "Add an `ApplicationSecretRequests` controller extending `ApplicationApiController` (`#[PublicPage]`, `JwtAuthMiddleware`), resolving the principal via `getApplication()`; create returns `201` with `token` + `fillLinkUrl`, index returns the caller's pending requests.",
       "section": "1. Machine HTTP route + controller",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "2.1",
       "title": "Add a `SecretRequestService` operation that creates a request keyed to an application id (no `userId`), auto-creating the application-owned Secret shell via `SecretService::createByApplication` and minting the token through the existing `create()` path (atomic — no orphan shell on failure).",
       "section": "2. Service — app-scoped creation without userId",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "2.2",
       "title": "Add an own-vault pending-request list for an application (each row carrying `token` + derived fill-link URL), mirroring the owner-keyed `getByNameForApplication` scoping.",
       "section": "2. Service — app-scoped creation without userId",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "3.1",

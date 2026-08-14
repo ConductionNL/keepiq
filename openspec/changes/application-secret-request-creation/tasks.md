@@ -1,12 +1,12 @@
 ## 1. Machine HTTP route + controller
 
-- [ ] 1.1 Register `POST /api/v1/app/secret-requests` and `GET /api/v1/app/secret-requests` in `appinfo/routes.php`.
-- [ ] 1.2 Add an `ApplicationSecretRequests` controller extending `ApplicationApiController` (`#[PublicPage]`, `JwtAuthMiddleware`), resolving the principal via `getApplication()`; create returns `201` with `token` + `fillLinkUrl`, index returns the caller's pending requests.
+- [x] 1.1 Register `POST /api/v1/app/secret-requests` and `GET /api/v1/app/secret-requests` in `appinfo/routes.php`.
+- [x] 1.2 Add an `ApplicationSecretRequests` controller extending `ApplicationApiController` (`#[PublicPage]`, `JwtAuthMiddleware`), resolving the principal via `getApplication()`; create returns `201` with `token` + `fillLinkUrl`, index returns the caller's pending requests.
 
 ## 2. Service — app-scoped creation without userId
 
-- [ ] 2.1 Add a `SecretRequestService` operation that creates a request keyed to an application id (no `userId`), auto-creating the application-owned Secret shell via `SecretService::createByApplication` and minting the token through the existing `create()` path (atomic — no orphan shell on failure).
-- [ ] 2.2 Add an own-vault pending-request list for an application (each row carrying `token` + derived fill-link URL), mirroring the owner-keyed `getByNameForApplication` scoping.
+- [x] 2.1 Add a `SecretRequestService` operation that creates a request keyed to an application id (no `userId`), auto-creating the application-owned Secret shell via `SecretService::createByApplication` and minting the token through the existing `create()` path (atomic — no orphan shell on failure).
+- [x] 2.2 Add an own-vault pending-request list for an application (each row carrying `token` + derived fill-link URL), mirroring the owner-keyed `getByNameForApplication` scoping.
 
 ## 3. DI seam — signed-proof authentication
 
