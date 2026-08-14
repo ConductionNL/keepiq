@@ -17,9 +17,9 @@
  * @spec openspec/changes/implement-user-sharing/tasks.md#task-11.1
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 
 export const useShareStore = defineStore('share', {
@@ -202,7 +202,7 @@ export const useShareStore = defineStore('share', {
 					// regular edit; suite-less recipients are skipped.
 					continue
 				}
-				// eslint-disable-next-line no-await-in-loop
+
 				const blob = await this.encryptForRecipient(plaintext, certificate)
 				updates.push({
 					secretId: share.secretId,
@@ -272,7 +272,7 @@ export const useShareStore = defineStore('share', {
 				// Sequential POST keeps the UI feedback predictable on slow
 				// networks; total recipient count for a group is bounded by
 				// the Nextcloud group size which is small in practice.
-				// eslint-disable-next-line no-await-in-loop
+
 				const row = await this.createShare(
 					secretId,
 					r.targetUserId,
@@ -338,7 +338,7 @@ export const useShareStore = defineStore('share', {
 						// cleaned them up but the UI list may be stale.
 						continue
 					}
-					// eslint-disable-next-line no-await-in-loop
+
 					const blob = await this.encryptForRecipient(
 						plaintext,
 						certificate,

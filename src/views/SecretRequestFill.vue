@@ -98,6 +98,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			values: {},
@@ -108,6 +109,7 @@ export default {
 			store: useSecretRequestStore(),
 		}
 	},
+
 	computed: {
 		unavailableMessage() {
 			const status = this.store.publicRequest?.status
@@ -128,6 +130,7 @@ export default {
 			}
 		},
 	},
+
 	async mounted() {
 		this.loadError = null
 		try {
@@ -139,6 +142,7 @@ export default {
 				|| t('doriath', 'Request not found')
 		}
 	},
+
 	methods: {
 		inputType(field) {
 			const name = String(field || '').toLowerCase()
@@ -151,6 +155,7 @@ export default {
 			}
 			return 'text'
 		},
+
 		async onSubmit() {
 			this.submitError = null
 			this.busy = true

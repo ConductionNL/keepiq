@@ -15,8 +15,8 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
-import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Check from 'vue-material-design-icons/Check.vue'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
 /**
  * A copy-to-clipboard button with a transient confirmation and an
@@ -39,11 +39,13 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/** An async resolver that returns the value to copy. */
 		resolve: {
 			type: Function,
 			default: null,
 		},
+
 		/** The accessible label for the button. */
 		label: {
 			type: String,
@@ -51,11 +53,13 @@ export default {
 				return t('doriath', 'Copy to clipboard')
 			},
 		},
+
 		/** The NcButton type. */
 		buttonType: {
 			type: String,
 			default: 'tertiary',
 		},
+
 		/** Seconds after which the clipboard is cleared (0 disables clearing). */
 		clearAfter: {
 			type: Number,

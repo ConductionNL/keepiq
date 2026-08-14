@@ -62,11 +62,13 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/** UID of the user being offboarded. */
 		leavingUserId: {
 			type: String,
 			required: true,
 		},
+
 		/** UID of the successor receiving their team secrets. */
 		successorUserId: {
 			type: String,

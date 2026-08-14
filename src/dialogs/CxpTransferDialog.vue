@@ -42,21 +42,21 @@
 
 			<div class="cxp-dialog__modes">
 				<NcCheckboxRadioSwitch
-					:model-value="direction"
+					:modelValue="direction"
 					value="receive"
 					name="cxp-direction"
 					type="radio"
 					data-testid="cxp-direction-receive"
-					@update:model-value="direction = $event">
+					@update:modelValue="direction = $event">
 					{{ t('doriath', 'Receive credentials (import)') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
-					:model-value="direction"
+					:modelValue="direction"
 					value="send"
 					name="cxp-direction"
 					type="radio"
 					data-testid="cxp-direction-send"
-					@update:model-value="direction = $event">
+					@update:modelValue="direction = $event">
 					{{ t('doriath', 'Send credentials (export)') }}
 				</NcCheckboxRadioSwitch>
 			</div>
@@ -154,6 +154,8 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -162,14 +164,12 @@ import {
 	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { createImportRequest, openEnvelope } from '../crypto/cxp.js'
 import { verifyMasterPassword } from '../crypto/reauth.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useImportStore } from '../store/modules/import.js'
-import { useSessionStore } from '../store/modules/session.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 /** Poll interval (ms) while waiting for the sealed envelope. */
 const POLL_INTERVAL = 2000
@@ -186,23 +186,27 @@ export default {
 		NcPasswordField,
 		NcCheckboxRadioSwitch,
 	},
+
 	props: {
 		/** Whether the dialog is open. */
 		open: {
 			type: Boolean,
 			default: false,
 		},
+
 		/** Already-decrypted secrets to send. */
 		secrets: {
 			type: Array,
 			default: () => [],
 		},
+
 		/** Folder rows ({ id, name, parentId }). */
 		folders: {
 			type: Array,
 			default: () => [],
 		},
 	},
+
 	emits: ['update:open', 'open-import'],
 	/**
 	 * Provide the export/import/session/type stores.
@@ -217,6 +221,7 @@ export default {
 			typeStore: useSecretTypeStore(),
 		}
 	},
+
 	data() {
 		return {
 			direction: 'receive',
@@ -236,6 +241,7 @@ export default {
 			sent: false,
 		}
 	},
+
 	computed: {
 		/** Type names keyed by id, for the CXF mapping. */
 		typeNamesById() {
@@ -246,9 +252,11 @@ export default {
 			return map
 		},
 	},
+
 	methods: {
 		/**
 		 * Absolute relay URL.
+		 *
 		 * @param path
 		 */
 		relayUrl(path = '') {

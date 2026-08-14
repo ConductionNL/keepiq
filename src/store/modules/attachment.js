@@ -17,10 +17,10 @@
  * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { importPublicKey, rsaEncrypt, rsaDecrypt } from '../../crypto/index.js'
+import { defineStore } from 'pinia'
+import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
 import { useSessionStore } from './session.js'
 
 /** AES-GCM IV length in bytes. */
@@ -134,9 +134,8 @@ export const useAttachmentStore = defineStore('attachment', {
 				for (const row of response.data || []) {
 					let meta = { filename: null, contentType: null }
 					try {
-						// eslint-disable-next-line no-await-in-loop
 						const key = await this.unwrapFileKey(row.wrappedFileKey)
-						// eslint-disable-next-line no-await-in-loop
+
 						const metaBytes = await aesDecryptBytes(
 							key,
 							fromBase64(row.encryptedMetadata),
@@ -316,14 +315,13 @@ export const useAttachmentStore = defineStore('attachment', {
 			const recipientKey = await importPublicKey(recipientCertificate)
 			let created = 0
 			for (const row of response.data || []) {
-				// eslint-disable-next-line no-await-in-loop
 				const rawBase64 = await rsaDecrypt(
 					row.wrappedFileKey,
 					session.cryptoKey,
 				)
-				// eslint-disable-next-line no-await-in-loop
+
 				const rewrapped = await rsaEncrypt(rawBase64, recipientKey)
-				// eslint-disable-next-line no-await-in-loop
+
 				await axios.post(
 					generateUrl(`/apps/doriath/api/v1/attachments/${row.id}/grants`),
 					{

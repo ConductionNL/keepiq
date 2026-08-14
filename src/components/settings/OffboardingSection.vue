@@ -67,8 +67,8 @@
 
 			<OffboardingConfirmDialog
 				:open="confirmOpen"
-				:leaving-user-id="leavingUserId"
-				:successor-user-id="successorUserId"
+				:leavingUserId="leavingUserId"
+				:successorUserId="successorUserId"
 				@update:open="confirmOpen = $event"
 				@confirm="run" />
 		</div>

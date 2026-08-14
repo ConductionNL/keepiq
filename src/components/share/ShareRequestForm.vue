@@ -84,6 +84,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		secretId: {
 			type: String,
 			required: true,

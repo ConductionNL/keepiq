@@ -89,6 +89,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		applicationActive: {
 			type: Boolean,
 			default: false,

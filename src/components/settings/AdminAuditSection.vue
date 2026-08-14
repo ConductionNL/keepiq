@@ -47,10 +47,10 @@
 					class="audit-admin__filter"
 					:options="eventOptions"
 					label="label"
-					:input-label="t('doriath', 'Event type')"
+					:inputLabel="t('doriath', 'Event type')"
 					:placeholder="t('doriath', 'All event types')"
 					data-testid="audit-filter-eventtype"
-					@update:model-value="onFilterChange" />
+					@update:modelValue="onFilterChange" />
 
 				<div class="audit-admin__filter">
 					<label for="audit-filter-actor">{{
@@ -156,10 +156,10 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
-import History from 'vue-material-design-icons/History.vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
+import History from 'vue-material-design-icons/History.vue'
 import { useAuditStore } from '../../store/modules/audit.js'
 import {
 	auditActorLabel,
@@ -207,6 +207,7 @@ export default {
 		entries() {
 			return useAuditStore().adminEntries
 		},
+
 		/**
 		 * Whether the audit store is loading.
 		 *
@@ -216,6 +217,7 @@ export default {
 		loading() {
 			return useAuditStore().loading
 		},
+
 		/**
 		 * The current 1-based admin page number.
 		 *
@@ -225,6 +227,7 @@ export default {
 		page() {
 			return useAuditStore().adminPage
 		},
+
 		/**
 		 * The total number of admin pages.
 		 *
@@ -258,6 +261,7 @@ export default {
 		label(eventType) {
 			return auditEventLabel(eventType)
 		},
+
 		/**
 		 * Resolve a human-readable actor label for an entry.
 		 *
@@ -268,6 +272,7 @@ export default {
 		actor(entry) {
 			return auditActorLabel(entry)
 		},
+
 		/**
 		 * Format an ISO timestamp as a localized date-time.
 		 *

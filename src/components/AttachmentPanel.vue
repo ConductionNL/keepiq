@@ -86,9 +86,9 @@
 
 <script>
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
-import Paperclip from 'vue-material-design-icons/Paperclip.vue'
-import Download from 'vue-material-design-icons/Download.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import Download from 'vue-material-design-icons/Download.vue'
+import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import { useAttachmentStore } from '../store/modules/attachment.js'
 
 export default {
@@ -100,22 +100,26 @@ export default {
 		Download,
 		Delete,
 	},
+
 	props: {
 		secretId: {
 			type: String,
 			required: true,
 		},
+
 		/** Whether the viewer may upload/delete (the secret's owner). */
 		canManage: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	computed: {
 		store() {
 			return useAttachmentStore()
 		},
 	},
+
 	async mounted() {
 		try {
 			await this.store.fetchAttachments(this.secretId)
@@ -123,9 +127,11 @@ export default {
 			// Error surfaced via store state.
 		}
 	},
+
 	unmounted() {
 		this.store.reset()
 	},
+
 	methods: {
 		/**
 		 * Encrypt-and-upload the picked file, then clear the input.

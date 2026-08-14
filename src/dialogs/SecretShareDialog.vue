@@ -68,7 +68,7 @@
 					v-model="usageLimit"
 					:options="usageOptions"
 					:reduce="(opt) => opt.value"
-					:input-label="t('doriath', 'Usage limit')"
+					:inputLabel="t('doriath', 'Usage limit')"
 					:clearable="false" />
 			</div>
 
@@ -140,12 +140,12 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import AccountPlus from 'vue-material-design-icons/AccountPlus.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import CopyButton from '../components/CopyButton.vue'
-import { useSecretStore } from '../store/modules/secret.js'
 import { useLinkShareStore } from '../store/modules/linkShare.js'
+import { useSecretStore } from '../store/modules/secret.js'
 
 /**
  * Create + manage password-protected public link shares for a secret. Emits
@@ -191,6 +191,7 @@ export default {
 		linkShares() {
 			return useLinkShareStore().linkShares
 		},
+
 		usageOptions() {
 			return Array.from({ length: 10 }, (_, i) => ({
 				value: i + 1,

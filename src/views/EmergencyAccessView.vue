@@ -26,7 +26,7 @@
 				<NcSelect
 					v-model="waitPeriod"
 					:options="waitOptions"
-					:input-label="t('doriath', 'Wait period')"
+					:inputLabel="t('doriath', 'Wait period')"
 					:reduce="(opt) => opt.value"
 					label="label"
 					data-testid="emergency-wait-select" />
@@ -151,10 +151,10 @@
 <script>
 import {
 	NcButton,
-	NcTextField,
+	NcEmptyContent,
 	NcPasswordField,
 	NcSelect,
-	NcEmptyContent,
+	NcTextField,
 } from '@nextcloud/vue'
 import { useEmergencyAccessStore } from '../store/modules/emergencyAccess.js'
 
@@ -205,6 +205,7 @@ export default {
 				{ value: 30, label: t('doriath', '30 days') },
 			]
 		},
+
 		/**
 		 * Whether the designate form is complete.
 		 *

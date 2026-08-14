@@ -121,11 +121,11 @@
 			</section>
 
 			<ApplicationSecretsPanel
-				:application-id="application.id"
-				:application-active="application.status === 'active'"
-				@write-secret="openWriteDialog" />
+				:applicationId="application.id"
+				:applicationActive="application.status === 'active'"
+				@writeSecret="openWriteDialog" />
 
-			<ApplicationLeasesPanel :application-id="application.id" />
+			<ApplicationLeasesPanel :applicationId="application.id" />
 
 			<section v-if="canDelete" class="application-detail__actions">
 				<NcButton
@@ -140,8 +140,8 @@
 		<WriteSecretForAppDialog
 			v-if="writeDialogOpen"
 			:open="writeDialogOpen"
-			:application-id="application?.id"
-			:application-name="application?.name"
+			:applicationId="application?.id"
+			:applicationName="application?.name"
 			@close="closeWriteDialog"
 			@written="onSecretWritten" />
 
@@ -155,13 +155,13 @@
 
 <script>
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
-import { useApplicationStore } from '../store/modules/application.js'
-import ApplicationSecretsPanel from '../components/application/ApplicationSecretsPanel.vue'
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import ApplicationLeasesPanel from '../components/application/ApplicationLeasesPanel.vue'
-import WriteSecretForAppDialog from '../dialogs/WriteSecretForAppDialog.vue'
+import ApplicationSecretsPanel from '../components/application/ApplicationSecretsPanel.vue'
 import ApplicationDeleteDialog from '../dialogs/ApplicationDeleteDialog.vue'
+import WriteSecretForAppDialog from '../dialogs/WriteSecretForAppDialog.vue'
+import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
 	name: 'ApplicationDetail',
@@ -201,9 +201,11 @@ export default {
 		store() {
 			return useApplicationStore()
 		},
+
 		application() {
 			return this.store.currentApplication
 		},
+
 		statusLabel() {
 			switch (this.application?.status) {
 				case 'active':
@@ -214,11 +216,13 @@ export default {
 					return this.application?.status || ''
 			}
 		},
+
 		canDelete() {
 			// Server enforces admin-only delete; the button is only
 			// rendered when the row is visible to the current user.
 			return this.application?.status !== undefined
 		},
+
 		routeId() {
 			return this.id || this.$route?.params?.id || ''
 		},

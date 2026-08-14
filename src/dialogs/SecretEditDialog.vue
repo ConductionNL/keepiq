@@ -29,7 +29,7 @@
 				v-model="typeId"
 				:options="typeOptions"
 				:reduce="(opt) => opt.value"
-				:input-label="t('doriath', 'Type')"
+				:inputLabel="t('doriath', 'Type')"
 				:clearable="false" />
 
 			<!-- Card / identity composite payloads (card-identity-items §3.1). -->
@@ -143,18 +143,18 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
-import { useSecretStore } from '../store/modules/secret.js'
-import { useSecretTypeStore } from '../store/modules/secretType.js'
 import {
-	CARD_TYPE_NAME,
-	IDENTITY_TYPE_NAME,
 	CARD_FIELDS,
+	CARD_TYPE_NAME,
 	IDENTITY_FIELDS,
+	IDENTITY_TYPE_NAME,
+	parsePayload,
 	serializeCard,
 	serializeIdentity,
-	parsePayload,
 } from '../cardIdentity/cardIdentity.js'
-import { fetchPolicy, evaluateScore, evaluateHibp } from '../policy/policy.js'
+import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { useSecretStore } from '../store/modules/secret.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -183,6 +183,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/** Optional callback fired with the updated secret after success. */
 		onSaved: {
 			type: Function,
@@ -212,6 +213,7 @@ export default {
 				email: '',
 				bsn: '',
 			},
+
 			policy: null,
 		}
 	},
@@ -223,22 +225,27 @@ export default {
 				label: type.label || type.name,
 			}))
 		},
+
 		valueLabel() {
 			const type = useSecretTypeStore().typesById[this.typeId]
 			return type && type.name === 'note'
 				? t('doriath', 'Note')
 				: t('doriath', 'Secret value')
 		},
+
 		/** The selected type's system name (card-identity-items §3.1). */
 		selectedTypeName() {
 			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
 		},
+
 		isCard() {
 			return this.selectedTypeName === CARD_TYPE_NAME
 		},
+
 		isIdentity() {
 			return this.selectedTypeName === IDENTITY_TYPE_NAME
 		},
+
 		/** The value serialized for the encrypted key field. */
 		effectiveValue() {
 			if (this.isCard) {
@@ -249,6 +256,7 @@ export default {
 			}
 			return this.value
 		},
+
 		/**
 		 * Org-policy score gate on a CHANGED manual value (§4.2) — an
 		 * unchanged value is never re-gated.
@@ -265,6 +273,7 @@ export default {
 			}
 			return evaluateScore(this.policy, this.selectedTypeName, this.value)
 		},
+
 		canSubmit() {
 			return (
 				!this.loading

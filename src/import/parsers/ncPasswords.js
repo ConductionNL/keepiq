@@ -17,7 +17,7 @@
  * folder paths, preserving hierarchy.
  */
 
-import { makeRow, validateRow, joinFolderPath } from '../model.js'
+import { joinFolderPath, makeRow, validateRow } from '../model.js'
 
 /** The Passwords app "base" folder id (root); treated as no folder. */
 const ROOT_FOLDER_ID = '00000000-0000-0000-0000-000000000000'

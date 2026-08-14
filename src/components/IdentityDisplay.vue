@@ -64,15 +64,18 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			revealed: false,
 		}
 	},
+
 	computed: {
 		payload() {
 			return parsePayload(this.payloadJson)
 		},
+
 		fullName() {
 			return [this.payload?.firstName, this.payload?.lastName]
 				.filter(Boolean)

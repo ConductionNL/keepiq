@@ -24,7 +24,7 @@
 				v-model="directSecrets"
 				:options="directOptions"
 				:reduce="(opt) => opt.value"
-				:input-label="t('doriath', 'Secrets in this folder')"
+				:inputLabel="t('doriath', 'Secrets in this folder')"
 				:clearable="false" />
 
 			<div
@@ -45,7 +45,7 @@
 						v-model="plan[sub.id]"
 						:options="subfolderOptions"
 						:reduce="(opt) => opt.value"
-						:input-label="t('doriath', 'Action')"
+						:inputLabel="t('doriath', 'Action')"
 						:clearable="false" />
 				</div>
 			</div>
@@ -100,11 +100,13 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/** The folder being deleted. */
 		folderId: {
 			type: String,
 			required: true,
 		},
+
 		/** The children payload from GET /folders/{id}/children. */
 		children: {
 			type: Object,
@@ -128,6 +130,7 @@ export default {
 				{ value: 'delete', label: t('doriath', 'Delete them') },
 			]
 		},
+
 		subfolderOptions() {
 			return [
 				{ value: 'keep', label: t('doriath', 'Keep (move to parent)') },

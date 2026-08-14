@@ -31,6 +31,7 @@ const HPKE_V1 = strToBytes('HPKE-v1')
 
 /**
  * I2OSP(n, len) — big-endian encode n into len bytes.
+ *
  * @param n
  * @param len
  */
@@ -43,10 +44,18 @@ function i2osp(n, len) {
 	return out
 }
 
+/**
+ *
+ * @param s
+ */
 function strToBytes(s) {
 	return new TextEncoder().encode(s)
 }
 
+/**
+ *
+ * @param {...any} chunks
+ */
 function concat(...chunks) {
 	let total = 0
 	for (const c of chunks) total += c.length
@@ -71,6 +80,11 @@ const HPKE_SUITE_ID = concat(
 
 // --- HKDF primitives (RFC 5869) over WebCrypto HMAC ---
 
+/**
+ *
+ * @param key
+ * @param data
+ */
 async function hmacSha256(key, data) {
 	// An empty HMAC key is padded to the block size with zeros; a 32-zero-byte
 	// key hashes identically, so we substitute it when salt is empty (WebCrypto
@@ -88,6 +102,7 @@ async function hmacSha256(key, data) {
 
 /**
  * HKDF-Extract(salt, ikm) = HMAC-SHA256(salt, ikm).
+ *
  * @param salt
  * @param ikm
  */
@@ -97,6 +112,7 @@ function extract(salt, ikm) {
 
 /**
  * HKDF-Expand(prk, info, L) for L <= NH (single block — all CXP outputs fit).
+ *
  * @param prk
  * @param info
  * @param length
@@ -107,10 +123,23 @@ async function expand(prk, info, length) {
 	return t.slice(0, length)
 }
 
+/**
+ *
+ * @param salt
+ * @param label
+ * @param ikm
+ */
 function labeledExtract(salt, label, ikm) {
 	return extract(salt, concat(HPKE_V1, KEM_SUITE_ID, strToBytes(label), ikm))
 }
 
+/**
+ *
+ * @param prk
+ * @param label
+ * @param info
+ * @param length
+ */
 function labeledExpand(prk, label, info, length) {
 	const labeledInfo = concat(
 		i2osp(length, 2),
@@ -123,10 +152,23 @@ function labeledExpand(prk, label, info, length) {
 }
 
 // The HPKE key schedule uses the HPKE suite_id (not the KEM one).
+/**
+ *
+ * @param salt
+ * @param label
+ * @param ikm
+ */
 function labeledExtractHpke(salt, label, ikm) {
 	return extract(salt, concat(HPKE_V1, HPKE_SUITE_ID, strToBytes(label), ikm))
 }
 
+/**
+ *
+ * @param prk
+ * @param label
+ * @param info
+ * @param length
+ */
 function labeledExpandHpke(prk, label, info, length) {
 	const labeledInfo = concat(
 		i2osp(length, 2),
@@ -140,6 +182,11 @@ function labeledExpandHpke(prk, label, info, length) {
 
 // --- DHKEM(X25519, HKDF-SHA256) ---
 
+/**
+ *
+ * @param dh
+ * @param kemContext
+ */
 async function extractAndExpand(dh, kemContext) {
 	const eaePrk = await labeledExtract(new Uint8Array(0), 'eae_prk', dh)
 	return labeledExpand(eaePrk, 'shared_secret', kemContext, NSECRET)
@@ -147,6 +194,7 @@ async function extractAndExpand(dh, kemContext) {
 
 /**
  * Generate an ephemeral X25519 recipient keypair.
+ *
  * @return {Promise<{ publicKey: CryptoKey, privateKey: CryptoKey, publicKeyRaw: Uint8Array }>}
  */
 export async function generateRecipientKeyPair() {
@@ -159,10 +207,19 @@ export async function generateRecipientKeyPair() {
 	return { publicKey: kp.publicKey, privateKey: kp.privateKey, publicKeyRaw }
 }
 
+/**
+ *
+ * @param raw
+ */
 async function importPublicKeyRaw(raw) {
 	return crypto.subtle.importKey('raw', raw, { name: 'X25519' }, true, [])
 }
 
+/**
+ *
+ * @param privateKey
+ * @param publicKey
+ */
 async function dh(privateKey, publicKey) {
 	return new Uint8Array(
 		await crypto.subtle.deriveBits(
@@ -174,6 +231,10 @@ async function dh(privateKey, publicKey) {
 }
 
 // DHKEM.Encap(pkR) -> { sharedSecret, enc }
+/**
+ *
+ * @param pkRraw
+ */
 async function encap(pkRraw) {
 	const eph = await crypto.subtle.generateKey({ name: 'X25519' }, true, [
 		'deriveBits',
@@ -187,6 +248,12 @@ async function encap(pkRraw) {
 }
 
 // DHKEM.Decap(enc, skR, pkRraw) -> sharedSecret
+/**
+ *
+ * @param enc
+ * @param skR
+ * @param pkRraw
+ */
 async function decap(enc, skR, pkRraw) {
 	const pkE = await importPublicKeyRaw(enc)
 	const dhBytes = await dh(skR, pkE)
@@ -196,6 +263,11 @@ async function decap(enc, skR, pkRraw) {
 
 // --- HPKE base-mode key schedule (RFC 9180 §5.1, mode_base = 0x00) ---
 
+/**
+ *
+ * @param sharedSecret
+ * @param info
+ */
 async function keySchedule(sharedSecret, info) {
 	const pskIdHash = await labeledExtractHpke(
 		new Uint8Array(0),
@@ -219,6 +291,10 @@ async function keySchedule(sharedSecret, info) {
 	return { key, baseNonce }
 }
 
+/**
+ *
+ * @param keyBytes
+ */
 async function aeadKey(keyBytes) {
 	return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, [
 		'encrypt',
@@ -278,6 +354,12 @@ export async function open(skR, pkRraw, enc, info, aad, ciphertext) {
 
 // deriveSharedSecret exposes DHKEM's ExtractAndExpand for the RFC 9180 A.1
 // known-answer test (interop anchor): shared_secret = ExtractAndExpand(dh, enc||pkRm).
+/**
+ *
+ * @param dh
+ * @param enc
+ * @param pkRraw
+ */
 async function deriveSharedSecret(dh, enc, pkRraw) {
 	return extractAndExpand(dh, concat(enc, pkRraw))
 }

@@ -34,7 +34,7 @@
 			<div v-if="!locked && store.step === 'pick'" class="import-wizard__pick">
 				<NcSelect
 					v-model="format"
-					:input-label="t('doriath', 'Source format')"
+					:inputLabel="t('doriath', 'Source format')"
 					:options="formatOptions"
 					:reduce="(opt) => opt.value"
 					:clearable="false" />
@@ -122,8 +122,8 @@
 			<!-- Step: folder mapping -->
 			<div v-else-if="store.step === 'folders'" class="import-wizard__folders">
 				<NcCheckboxRadioSwitch
-					:model-value="underOneFolder"
-					@update:model-value="underOneFolder = $event">
+					:modelValue="underOneFolder"
+					@update:modelValue="underOneFolder = $event">
 					{{ t('doriath', 'Import everything under one new folder') }}
 				</NcCheckboxRadioSwitch>
 				<p class="import-wizard__hint">
@@ -176,14 +176,14 @@
 								<td>{{ dup.url }}</td>
 								<td>
 									<NcSelect
-										:model-value="
+										:modelValue="
 											store.duplicateResolutions[dup.sourceRow]
 										"
-										:input-label="t('doriath', 'Resolution')"
+										:inputLabel="t('doriath', 'Resolution')"
 										:options="resolutionOptions"
 										:reduce="(opt) => opt.value"
 										:clearable="false"
-										@update:model-value="
+										@update:modelValue="
 											store.resolveDuplicate(
 												dup.sourceRow,
 												$event,
@@ -312,10 +312,11 @@ import {
 	NcPasswordField,
 	NcSelect,
 } from '@nextcloud/vue'
+import { isKdbx } from '../import/model.js'
+import { listParsers } from '../import/parserRegistry.js'
 import { useImportStore } from '../store/modules/import.js'
 import { useSessionStore } from '../store/modules/session.js'
-import { listParsers } from '../import/parserRegistry.js'
-import { isKdbx } from '../import/model.js'
+
 import '../import/parsers/index.js'
 
 /**

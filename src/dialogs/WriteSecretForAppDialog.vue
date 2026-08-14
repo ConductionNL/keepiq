@@ -109,10 +109,12 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		applicationId: {
 			type: String,
 			default: '',
 		},
+
 		applicationName: {
 			type: String,
 			default: '',
@@ -142,6 +144,7 @@ export default {
 					})
 				: this.t('doriath', 'Write secret')
 		},
+
 		canSubmit() {
 			return (
 				this.applicationId !== ''
@@ -149,6 +152,7 @@ export default {
 				&& this.value !== ''
 			)
 		},
+
 		submitLabel() {
 			return this.busy
 				? this.t('doriath', 'Encrypting…')

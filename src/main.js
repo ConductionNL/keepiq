@@ -16,14 +16,6 @@
  * host element is renamed rather than reasoning about which div wins.
  */
 
-import { createApp, h } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
-import {
-	translate as t,
-	translatePlural as n,
-	loadTranslations,
-} from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import {
 	// eslint-disable-next-line import/named
 	buildManifest,
@@ -32,24 +24,31 @@ import {
 	// eslint-disable-next-line import/named
 	defaultPageTypes,
 	// eslint-disable-next-line import/named
-	registerIcons,
-	// eslint-disable-next-line import/named
 	registerBuiltinDashboardWidgets,
+	// eslint-disable-next-line import/named
+	registerIcons,
 	// eslint-disable-next-line import/named
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-import pinia from './pinia.js'
+import {
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { createApp, h } from 'vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
+import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
+import pinia from './pinia.js'
 import registry from './registry.js'
-import appIcons from './icons.js'
 import { createVaultGuard } from './router/guards.js'
 import { useSessionStore } from './store/modules/session.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-
 // Global (unscoped) app styles
 import './assets/app.css'
 
@@ -75,6 +74,9 @@ try {
 // the JS/CSS allowlist through Apache; /custom_apps/<app>/l10n/<locale>.json
 // may 404. Strings fall back to English source on miss; boot must not
 // depend on this resolving.
+/**
+ *
+ */
 function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('doriath', () => {})

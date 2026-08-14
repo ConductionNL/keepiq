@@ -17,9 +17,9 @@
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-7.1
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 
 export const useSecretRequestStore = defineStore('secretRequest', {
@@ -216,7 +216,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				if (value == null || value === '') {
 					throw new Error(`Field "${name}" is required`)
 				}
-				// eslint-disable-next-line no-await-in-loop
+
 				encryptedFields[name] = await rsaEncrypt(String(value), publicKey)
 			}
 

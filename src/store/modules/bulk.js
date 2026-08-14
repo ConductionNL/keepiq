@@ -136,7 +136,7 @@ export const useBulkStore = defineStore('bulk', {
 					try {
 						// Sequential within the chunk keeps server load and
 						// progress feedback predictable.
-						// eslint-disable-next-line no-await-in-loop
+
 						const result = await perItem(secretId)
 						this.report.push({
 							secretId,
