@@ -271,38 +271,7 @@ import { initializeStores } from './store/store.js'
 import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
-
-/**
- * Route names that are publicly accessible without an unlocked vault
- * (recipient-facing token URLs). Mirrors the manifest's `meta.public`
- * pages so the lock-screen guard can short-circuit.
- *
- * @spec openspec/changes/implement-secret-requests/tasks.md#task-9.2
- */
-const PUBLIC_ROUTE_NAMES = [
-	'SecretRequestFill',
-	'LinkShareAccess',
-	'EphemeralSendAccess',
-]
-
-/**
- * Whether a vue-router route lives outside the locked-vault guard.
- *
- * @param {object|null} route The current $route object.
- * @return {boolean}
- */
-function isPublicRoute(route) {
-	if (route == null) {
-		return false
-	}
-	// Allow either explicit per-route `meta.public:true` (when the
-	// shared manifest schema ships that field) or membership in the
-	// PUBLIC_ROUTE_NAMES allow-list maintained alongside this module.
-	if (route.meta && route.meta.public === true) {
-		return true
-	}
-	return PUBLIC_ROUTE_NAMES.includes(route.name)
-}
+import { handleLockTransition } from './router/guards.js'
 
 export default {
 	name: 'App',
@@ -442,23 +411,20 @@ export default {
 
 	watch: {
 		/**
-		 * Lock-screen gating: whenever the session locks, force the
-		 * user to the Lock route. Mirrors the legacy router guard.
+		 * Eviction path: the vault can lock while the user is sitting
+		 * still on an already-resolved route (session timeout, or the
+		 * "Lock vault" menu entry). No navigation occurs in that case,
+		 * so `createVaultGuard` never runs and this watcher owns the
+		 * redirect. The guard covers the entry path; this covers the
+		 * mid-session path.
 		 *
 		 * @param {boolean} locked New lock state.
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 		 */
 		isLocked(locked) {
-			if (
-				locked
-				&& this.$route?.name !== 'Lock'
-				&& !isPublicRoute(this.$route)
-			) {
-				this.$router.replace({
-					name: 'Lock',
-					query: { returnUrl: this.$route?.fullPath },
-				})
-			}
+			// The decision lives in guards.js so it can be unit-tested without
+			// mounting the shell — see handleLockTransition.
+			handleLockTransition(locked, this.$route, this.$router)
 			// Write-through the encrypted offline snapshot on each ONLINE unlock
 			// (offline-readonly-cache §2.3). Fail-soft — never blocks the session.
 			if (
@@ -493,10 +459,18 @@ export default {
 	},
 
 	/**
-	 * Boot the app shell: initialise stores, redirect to the lock screen
-	 * when already locked, and start the session-timeout poll + listeners.
+	 * Boot the app shell: initialise stores, warm the offline cache, and
+	 * start the session-timeout poll + listeners.
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+	 * The boot-time lock redirect that used to live here is gone. It ran
+	 * after `await initializeStores()` — i.e. after a settings round-trip
+	 * — by which time the routed page had already mounted and fetched, so
+	 * the vault inventory painted before the lock screen replaced it. The
+	 * gate is now `createVaultGuard` in src/router/guards.js, registered
+	 * as a synchronous `beforeEach` so a locked vault never resolves a
+	 * protected route in the first place.
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 	 */
 	async created() {
 		await initializeStores()
@@ -512,22 +486,6 @@ export default {
 		// If we booted already unlocked and online, warm the snapshot.
 		if (!this.sessionStore.isLocked && this.offlineStore.online) {
 			this.offlineStore.syncNow().catch(() => {})
-		}
-
-		// Mirror the legacy App.vue boot: on first paint, if the
-		// session is already locked, push to /lock with the current
-		// path as the return URL. The router-level guard from the
-		// pre-Tier-4 router is gone (vue-router is now built from
-		// the manifest), so the App.vue lifecycle owns the redirect.
-		if (
-			this.sessionStore.isLocked
-			&& this.$route?.name !== 'Lock'
-			&& !isPublicRoute(this.$route)
-		) {
-			this.$router.replace({
-				name: 'Lock',
-				query: { returnUrl: this.$route?.fullPath },
-			})
 		}
 
 		// Poll every 10 s for session-timeout expiry.

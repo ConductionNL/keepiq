@@ -99,6 +99,9 @@ module.exports = {
 		globals: false,
 		include: [
 			'tests/vitest/**/*.spec.{js,ts}',
+			// Pure-logic router guards — no DOM, so they stay on the
+			// default `node` env alongside the crypto specs.
+			'tests/router/**/*.spec.{js,ts}',
 			'tests/components/**/*.spec.{js,ts}',
 			'tests/views/**/*.spec.{js,ts}',
 			'tests/dialogs/**/*.spec.{js,ts}',
