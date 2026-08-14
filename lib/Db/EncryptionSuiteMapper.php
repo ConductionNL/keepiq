@@ -63,33 +63,61 @@ class EncryptionSuiteMapper extends QBMapper {
 	}//end findById()
 
 	/**
-	 * Find all encryption suites for a given owner.
+	 * Find all encryption suites for a given owner, newest first.
+	 *
+	 * The ordering is load-bearing, not cosmetic. Three frontend call sites pick
+	 * the session's suite with `suites.find(s => s.status === 'active')`
+	 * (`src/store/modules/session.js:67` — the unlock path — plus `:128` and
+	 * `src/store/modules/encryptionSuite.js:49`). Compromise recovery leaves the
+	 * old suite `active` until the migration terminates, so during a migration
+	 * two suites are active and an unordered result meant those call sites bound
+	 * the session to whichever row the database returned first — in practice the
+	 * OLDEST. A user resuming after an interrupted migration then logged in
+	 * against the suite they were migrating AWAY from.
 	 *
 	 * @param string $ownerType The owner type
 	 * @param string $ownerId The owner ID
 	 *
 	 * @return EncryptionSuite[]
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function findByOwner(string $ownerType, string $ownerId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
 			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+			->orderBy('created_at', 'DESC')
+			->addOrderBy('id', 'DESC');
 
 		return $this->findEntities(query: $qb);
 	}//end findByOwner()
 
 	/**
-	 * Find the active encryption suite for a given owner.
+	 * Find the owner's active encryption suite, newest first.
+	 *
+	 * Deliberately returns the most recent active suite rather than insisting on
+	 * exactly one. A compromise-recovery migration legitimately has two active
+	 * suites for its whole duration — the old one must stay readable so the
+	 * browser can decrypt what it is migrating — and the newest is always the
+	 * write target. This used to be `findEntity()` over an unbounded match,
+	 * which threw `MultipleObjectsReturnedException` mid-migration;
+	 * `SecretService::getActiveSuiteOrBlock` caught that and reported "No active
+	 * encryption suite", so creating a secret during a migration failed with the
+	 * one diagnosis that was certainly wrong — the user had two.
+	 *
+	 * Callers that need to know about a multi-active state should use
+	 * countActiveByOwner rather than relying on an exception from here.
 	 *
 	 * @param string $ownerType The owner type
 	 * @param string $ownerId The owner ID
 	 *
 	 * @return EncryptionSuite
 	 *
-	 * @throws DoesNotExistException
-	 * @throws MultipleObjectsReturnedException
+	 * @throws DoesNotExistException When the owner has no active suite at all
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function findActiveByOwner(string $ownerType, string $ownerId): EncryptionSuite {
 		$qb = $this->db->getQueryBuilder();
@@ -97,10 +125,43 @@ class EncryptionSuiteMapper extends QBMapper {
 			->from($this->getTableName())
 			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
 			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
-			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter('active')));
+			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter('active')))
+			->orderBy('created_at', 'DESC')
+			->addOrderBy('id', 'DESC')
+			->setMaxResults(1);
 
 		return $this->findEntity(query: $qb);
 	}//end findActiveByOwner()
+
+	/**
+	 * Count an owner's active encryption suites.
+	 *
+	 * More than one is normal for the duration of a compromise-recovery
+	 * migration and abnormal outside it, so this is the signal callers use to
+	 * tell "mid-rotation" from "corrupt state" instead of inferring it from a
+	 * thrown exception.
+	 *
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner ID
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function countActiveByOwner(string $ownerType, string $ownerId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select($qb->func()->count('*', 'cnt'))
+			->from($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter('active')));
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$result->closeCursor();
+
+		return (int)($row['cnt'] ?? 0);
+	}//end countActiveByOwner()
 
 	/**
 	 * Find all active encryption suites.

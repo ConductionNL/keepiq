@@ -155,4 +155,108 @@ class SuiteCompromiseListenerTest extends TestCase {
 
 		$listener->handle($this->createMock(Event::class));
 	}//end testHandleIgnoresUnrelatedEvents()
+
+	/**
+	 * Test one owner gets one notification no matter how many of their secrets
+	 * the migration flagged.
+	 *
+	 * This listener has never fired in production: nothing set
+	 * `possibly_compromised_at`, so it was inert. Compromise-recovery migration
+	 * now sets it on every migrated secret, which switches this code on for the
+	 * first time — and a 500-secret vault must not produce 500 notifications.
+	 *
+	 * @return void
+	 */
+	public function testHandleDeduplicatesNotificationsAcrossALargeMigration(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$listener = new SuiteCompromiseListener(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			notificationService: $notificationService,
+			logger: $this->createMock(LoggerInterface::class)
+		);
+
+		// A large migration: 250 of alice's secrets and 250 of bob's, every one
+		// of them flagged.
+		$flagged = [];
+		foreach (['alice', 'bob'] as $ownerId) {
+			for ($index = 0; $index < 250; $index++) {
+				$secret = new Secret();
+				$secret->setId($ownerId . '-secret-' . $index);
+				$secret->setOwnerType('user');
+				$secret->setOwnerId($ownerId);
+				$secret->setName('thing-' . $index);
+				$secret->setPossiblyCompromisedAt(new DateTime());
+				$flagged[] = $secret;
+			}
+		}
+
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn($flagged);
+		// Not shared copies, so the owner resolves to the secret's own owner.
+		$shareTargetMapper->method('findByRecipientSecret')
+			->willThrowException(new DoesNotExistException('not shared'));
+
+		$notified = [];
+		$notificationService->expects($this->exactly(2))
+			->method('notify')
+			->willReturnCallback(
+				// Must return bool: the listener swallows Throwable, so a
+				// callback returning null would abort the walk after the first
+				// owner and quietly look like de-duplication working.
+				function (string $subject, string $recipientId) use (&$notified): bool {
+					$notified[] = $recipientId;
+					return true;
+				}
+			);
+
+		$listener->handle(
+			new SuiteMigrationCompletedEvent(
+				oldSuiteId: 'old',
+				newSuiteId: 'new',
+				migrationId: 'mig-1'
+			)
+		);
+
+		// One per owner, not one per secret.
+		$this->assertSame(['alice', 'bob'], $notified);
+	}//end testHandleDeduplicatesNotificationsAcrossALargeMigration()
+
+	/**
+	 * Test unflagged secrets never produce a notification.
+	 *
+	 * A record the migration did not touch, or one whose re-encryption failed,
+	 * carries no flag and must stay silent.
+	 *
+	 * @return void
+	 */
+	public function testHandleIgnoresUnflaggedSecrets(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$listener = new SuiteCompromiseListener(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			notificationService: $notificationService,
+			logger: $this->createMock(LoggerInterface::class)
+		);
+
+		$unflagged = new Secret();
+		$unflagged->setId('secret-1');
+		$unflagged->setOwnerType('user');
+		$unflagged->setOwnerId('alice');
+
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn([$unflagged]);
+
+		$notificationService->expects($this->never())->method('notify');
+
+		$listener->handle(
+			new SuiteMigrationCompletedEvent(
+				oldSuiteId: 'old',
+				newSuiteId: 'new',
+				migrationId: 'mig-1'
+			)
+		);
+	}//end testHandleIgnoresUnflaggedSecrets()
 }//end class

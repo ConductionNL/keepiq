@@ -319,6 +319,14 @@ class Secret extends Entity implements JsonSerializable {
 			'ownerId' => $this->ownerId,
 			'blocked' => true,
 			'blockedReason' => $blockedReason,
+			// Plaintext metadata, safe to expose on a blocked row and needed by
+			// the list/table/card surfaces: a secret compromise recovery could
+			// not carry across is precisely the one the user must be warned
+			// about, and withholding these left the warning nothing to render.
+			// migrationError never contains any part of the secret's value.
+			'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
+			'migrationError' => $this->migrationError,
+			'unrecoverable' => ($this->migrationError !== null),
 			'createdAt' => $this->createdAt?->format('c'),
 			'updatedAt' => $this->updatedAt?->format('c'),
 		];

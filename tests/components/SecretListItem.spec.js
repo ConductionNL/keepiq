@@ -120,6 +120,68 @@ describe('SecretListItem', () => {
 		expect(wrapper.find('.secret-list-item__actions').exists()).toBe(false)
 	})
 
+	it('warns on the row when the secret is possibly compromised', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: {
+					id: 's-1',
+					name: 'Router admin',
+					url: 'https://router.local',
+					typeId: 'type-login',
+					possiblyCompromisedAt: '2026-08-11T12:00:00+00:00',
+				},
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(true)
+		expect(wrapper.text()).toContain('Assume this value was exposed')
+		expect(wrapper.text()).toContain('change it at its source')
+	})
+
+	it('shows no compromise warning when the flag is absent', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: {
+					id: 's-1',
+					name: 'Router admin',
+					url: 'https://router.local',
+					typeId: 'type-login',
+					possiblyCompromisedAt: null,
+				},
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(false)
+	})
+
+	it('warns on a BLOCKED row too, where the flag matters most', () => {
+		// A secret that failed migration returns no ciphertext, so the health
+		// pass can never see it. The row-level flag is the only signal left.
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: {
+					id: 's-1',
+					name: 'Unreadable',
+					typeId: 'type-api',
+					blocked: true,
+					unrecoverable: true,
+					possiblyCompromisedAt: '2026-08-11T12:00:00+00:00',
+				},
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(true)
+		// And the lock reason must not blame a revoked suite.
+		expect(wrapper.text()).toContain('Could not be migrated to your new key')
+		expect(wrapper.text()).not.toContain('suite revoked')
+	})
+
 	it('clicking the copy button does NOT bubble as `open` (stop.propagation)', async () => {
 		const secretStore = useSecretStore()
 		secretStore.fetchSecret = vi.fn().mockResolvedValue({

@@ -179,6 +179,43 @@ describe('rsaEncrypt / rsaDecrypt round-trip (RSA-4096, multi-chunk)', () => {
 		expect(recovered).toBe(plaintext)
 	})
 
+	it('round-trips a multi-byte character straddling the 446-byte chunk boundary', async () => {
+		const { publicKey, privateKey } = await sharedKeyPair()
+
+		// Encryption chunks by BYTES, so place a 2-byte character so that its
+		// first byte is the 446th and its second byte the 447th — the first
+		// byte of chunk 2. Decoding each chunk separately tears it into two
+		// U+FFFD replacement characters; decoding once over the joined bytes
+		// recovers it. 445 ASCII bytes + 'é' puts the split exactly there.
+		const plaintext = 'a'.repeat(445) + 'é' + 'b'.repeat(200)
+
+		const encoded = new TextEncoder().encode(plaintext)
+		expect(encoded[445]).toBe(0xc3)
+		expect(encoded[446]).toBe(0xa9)
+
+		const ciphertext = await rsaEncrypt(plaintext, publicKey)
+		const recovered = await rsaDecrypt(ciphertext, privateKey)
+
+		expect(recovered).toBe(plaintext)
+		expect(recovered).not.toContain('�')
+	})
+
+	it('round-trips a long non-ASCII payload across many chunk boundaries', async () => {
+		const { publicKey, privateKey } = await sharedKeyPair()
+
+		// A realistic additionalFields blob: several chunks of mixed-width
+		// characters, so boundaries land mid-character repeatedly rather than
+		// at one hand-placed offset.
+		const plaintext = 'wachtwoord-€-ü-日本語-🔐-'.repeat(120)
+		expect(new TextEncoder().encode(plaintext).length).toBeGreaterThan(446 * 3)
+
+		const ciphertext = await rsaEncrypt(plaintext, publicKey)
+		const recovered = await rsaDecrypt(ciphertext, privateKey)
+
+		expect(recovered).toBe(plaintext)
+		expect(recovered).not.toContain('�')
+	})
+
 	it('generateKeyPair emits a valid SPKI PEM re-importable by importPublicKey', async () => {
 		const { publicKeyPem } = await generateKeyPair()
 		expect(publicKeyPem).toMatch(/^-----BEGIN PUBLIC KEY-----/)
