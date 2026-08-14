@@ -663,6 +663,154 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testAdditionalMembersAreSatisfiedByTheBlobAlone()
 
 	/**
+	 * An application creates a request in its own vault with no user session.
+	 *
+	 * The shell is created here because an application has nothing to point at
+	 * yet, and the actor recorded is the application rather than a user — which
+	 * is also what scopes the listing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	public function testCreateForApplicationVaultCreatesShellAndRequest(): void {
+		$policy = $this->createMock(SecretRequestPolicy::class);
+		$policy->method('requireApplicationSuiteId')->willReturn('suite-app-1');
+
+		$shell = new Secret();
+		$shell->setId('sec-shell');
+		$shell->setOwnerType('application');
+		$shell->setOwnerId('app-1');
+		$this->secretService->expects($this->once())
+			->method('createByApplication')
+			->willReturn($shell);
+
+		$captured = null;
+		$this->mapper->expects($this->once())
+			->method('insert')
+			->willReturnCallback(
+				static function (SecretRequest $entity) use (&$captured) {
+					$captured = $entity;
+					return $entity;
+				}
+			);
+
+		$writeLock = $this->createMock(WriteLockService::class);
+		// The APPLICATION's lock, not a user's.
+		$writeLock->expects($this->once())
+			->method('assertNotWriteLocked')
+			->with('app-1', 'application');
+
+		$service = new SecretRequestService(
+			mapper: $this->mapper,
+			policy: $policy,
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $writeLock,
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+		);
+
+		$result = $service->createForApplicationVault(
+			applicationId: 'app-1',
+			requestedFields: ['key', 'url'],
+		);
+
+		$this->assertSame('sec-shell', $result->getSecretId());
+		$this->assertSame(SecretRequest::STATUS_PENDING, $result->getStatus());
+		$this->assertNotSame('', $result->getToken());
+		// Prefixed so an application id is never read as a Nextcloud user id.
+		$this->assertSame('application:app-1', $captured->getCreatedBy());
+	}//end testCreateForApplicationVaultCreatesShellAndRequest()
+
+	/**
+	 * A failure after the shell is written leaves no orphan Secret.
+	 *
+	 * An empty shell in an application's vault is indistinguishable from a real
+	 * unfilled credential, so it must not survive a failed creation.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	public function testCreateForApplicationVaultRemovesTheShellOnFailure(): void {
+		$policy = $this->createMock(SecretRequestPolicy::class);
+		$policy->method('requireApplicationSuiteId')->willReturn('suite-app-1');
+
+		$shell = new Secret();
+		$shell->setId('sec-shell');
+		$this->secretService->method('createByApplication')->willReturn($shell);
+
+		$this->mapper->method('insert')
+			->willThrowException(new RuntimeException('insert failed'));
+
+		$this->secretService->expects($this->once())
+			->method('deleteByApplication')
+			->with('sec-shell', 'app-1');
+
+		$service = new SecretRequestService(
+			mapper: $this->mapper,
+			policy: $policy,
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+		);
+
+		$this->expectException(RuntimeException::class);
+
+		$service->createForApplicationVault(applicationId: 'app-1', requestedFields: ['key']);
+	}//end testCreateForApplicationVaultRemovesTheShellOnFailure()
+
+	/**
+	 * An empty requestedFields is refused before anything is written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	public function testCreateForApplicationVaultRefusesAnEmptyFieldList(): void {
+		$this->secretService->expects($this->never())->method('createByApplication');
+		$this->mapper->expects($this->never())->method('insert');
+
+		$service = $this->makeFillService();
+
+		$this->expectException(InvalidArgumentException::class);
+
+		$service->createForApplicationVault(applicationId: 'app-1', requestedFields: []);
+	}//end testCreateForApplicationVaultRefusesAnEmptyFieldList()
+
+	/**
+	 * The pending list is scoped by the unforgeable created_by prefix.
+	 *
+	 * Fulfilled rows are excluded, and one application cannot enumerate
+	 * another's because the prefix is a value only this service writes.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	public function testListPendingForApplicationVaultScopesAndFilters(): void {
+		$pending = $this->buildPending();
+		$pending->setCreatedBy('application:app-1');
+
+		$fulfilled = $this->buildPending();
+		$fulfilled->setCreatedBy('application:app-1');
+		$fulfilled->setStatus(SecretRequest::STATUS_FULFILLED);
+
+		$this->mapper->expects($this->once())
+			->method('findByCreatedBy')
+			->with('application:app-1')
+			->willReturn([$pending, $fulfilled]);
+
+		$rows = $this->makeFillService()->listPendingForApplicationVault(applicationId: 'app-1');
+
+		$this->assertCount(1, $rows);
+		$this->assertSame(SecretRequest::STATUS_PENDING, $rows[0]->getStatus());
+	}//end testListPendingForApplicationVaultScopesAndFilters()
+
+	/**
 	 * Build a service wired for the fill tests.
 	 *
 	 * @return SecretRequestService
