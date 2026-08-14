@@ -138,10 +138,8 @@ export async function createMigrationRunner(keys) {
 			async run(jobs) {
 				const results = []
 				for (let i = 0; i < jobs.length; i++) {
-					// eslint-disable-next-line no-await-in-loop
 					results.push(await migrateRecord(jobs[i], keys))
 					if ((i + 1) % INLINE_YIELD_EVERY === 0) {
-						// eslint-disable-next-line no-await-in-loop
 						await yieldToEventLoop()
 					}
 				}

@@ -64,7 +64,7 @@ self.addEventListener('message', async (event) => {
 				// Sequential on purpose: this worker is already off the main
 				// thread and the concurrency that matters (overlapping the
 				// network) is managed by the driver's in-flight window.
-				// eslint-disable-next-line no-await-in-loop
+
 				results.push(await migrateRecord(job, keys))
 			}
 

@@ -10,7 +10,7 @@ import {
 } from '../../crypto/index.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
-import { useSessionStore, onVaultLock } from './session.js'
+import { onVaultLock, useSessionStore } from './session.js'
 
 /**
  * How many re-encryption POSTs are in flight at once. Small on purpose: the
@@ -494,7 +494,6 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			) {
 				const window = results.slice(start, start + MIGRATION_CONCURRENCY)
 
-				// eslint-disable-next-line no-await-in-loop
 				const settled = await Promise.all(
 					window.map(async (result) => {
 						// A round-trip mismatch means the STORED value read back fine

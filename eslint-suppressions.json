@@ -22,11 +22,6 @@
       "count": 1
     }
   },
-  "src/components/CompromiseRecoveryForm.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    }
-  },
   "src/components/MasterPasswordForm.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
       "count": 1
@@ -201,6 +196,24 @@
       "count": 1
     }
   },
+  "src/migration/driver.js": {
+    "no-unused-vars": {
+      "count": 2
+    },
+    "no-use-before-define": {
+      "count": 1
+    }
+  },
+  "src/migration/pipeline.js": {
+    "no-useless-assignment": {
+      "count": 8
+    }
+  },
+  "src/migration/worker.js": {
+    "no-useless-assignment": {
+      "count": 1
+    }
+  },
   "src/offline/service-worker.js": {
     "no-redeclare": {
       "count": 1
@@ -239,7 +252,7 @@
   },
   "src/store/modules/encryptionSuite.js": {
     "no-unused-vars": {
-      "count": 2
+      "count": 3
     }
   },
   "src/store/modules/export.js": {
