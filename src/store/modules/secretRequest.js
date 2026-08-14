@@ -193,13 +193,19 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		/**
 		 * Phase 2 (recipient): encrypt the plaintext field map and submit it.
 		 *
-		 * The server NEVER sees plaintext. Each value is encrypted with
-		 * RSA-OAEP-SHA256 against the recipient's public certificate before
-		 * the POST.
+		 * The server never sees a plaintext SECRET value: `key`, `login` and
+		 * every additional member are encrypted with RSA-OAEP-SHA256 against
+		 * the requester's certificate before the POST.
+		 *
+		 * `url` is the exception, and deliberately so — it is plaintext
+		 * searchable metadata per the secrets spec, so it is submitted in its
+		 * own `plainFields` bucket. Encrypting it would put ciphertext in a
+		 * searchable column.
 		 *
 		 * @param {string}                  token  The opaque request token.
 		 * @param {Record<string,string>}   fields The plaintext field map.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		async submitFill(token, fields) {
 			if (this.publicRequest == null || this.publicRequest.token !== token) {
@@ -211,20 +217,59 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			}
 			const publicKey = await importPublicKey(certificate)
 
+			// The field model (secret-requests spec, Requestable Fields):
+			//   key / login          -> their own ciphertext columns
+			//   url                  -> PLAINTEXT metadata, searchable
+			//   anything else        -> a member of the ONE encrypted
+			//                           additionalFields blob
+			//
+			// `url` must not be encrypted: the column is searchable plaintext,
+			// so ciphertext there breaks search and shows the owner base64.
+			const ENCRYPTED_FIELDS = ['key', 'login']
+			const PLAINTEXT_FIELDS = ['url']
+			const ADDITIONAL_BLOB = 'additionalFields'
+
 			const encryptedFields = {}
+			const plainFields = {}
+			const additionalMembers = {}
+
 			for (const [name, value] of Object.entries(fields)) {
 				if (value == null || value === '') {
 					throw new Error(`Field "${name}" is required`)
 				}
-				// eslint-disable-next-line no-await-in-loop
-				encryptedFields[name] = await rsaEncrypt(String(value), publicKey)
+
+				if (PLAINTEXT_FIELDS.includes(name)) {
+					plainFields[name] = String(value)
+					continue
+				}
+
+				if (ENCRYPTED_FIELDS.includes(name)) {
+					// eslint-disable-next-line no-await-in-loop
+					encryptedFields[name] = await rsaEncrypt(
+						String(value),
+						publicKey,
+					)
+					continue
+				}
+
+				// Collected and encrypted together below: the server stores one
+				// blob and cannot see inside it, so the members are assembled
+				// here rather than sent individually.
+				additionalMembers[name] = String(value)
+			}
+
+			if (Object.keys(additionalMembers).length > 0) {
+				encryptedFields[ADDITIONAL_BLOB] = await rsaEncrypt(
+					JSON.stringify(additionalMembers),
+					publicKey,
+				)
 			}
 
 			const response = await axios.post(
 				generateUrl(
 					`/apps/doriath/api/v1/public/secret-requests/${token}/fill`,
 				),
-				{ encryptedFields },
+				{ encryptedFields, plainFields },
 			)
 			return response.data
 		},
