@@ -141,7 +141,7 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 }
 
 .passkey-display__fields {

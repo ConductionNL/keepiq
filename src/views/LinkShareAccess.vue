@@ -239,7 +239,7 @@ export default {
 }
 
 .doriath-link-share-access__error {
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 }
 
 .doriath-link-share-access__snapshot dt {

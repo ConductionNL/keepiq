@@ -87,19 +87,26 @@ export default {
 	font-size: 0.75rem;
 	font-weight: 600;
 	line-height: 1.4;
-	color: var(--color-primary-text, #fff);
 
+	/* --color-error / --color-warning / --color-success are BACKGROUND tints,
+	   and each theme inverts them: success is #D8F3DA (pale) in light and
+	   #11321A (near-black) in dark. A single shared foreground is therefore
+	   wrong in one theme by construction — the badge used --color-primary-text
+	   for all three, which is why "Very strong" was unreadable. Each tint has a
+	   paired *-text value that Nextcloud flips with it; use that. */
 	&--danger {
-		background-color: var(--color-error, #c0392b);
+		background-color: var(--color-error);
+		color: var(--color-error-text);
 	}
 
 	&--warning {
-		background-color: var(--color-warning, #d49000);
-		color: var(--color-main-text, #000);
+		background-color: var(--color-warning);
+		color: var(--color-warning-text);
 	}
 
 	&--success {
-		background-color: var(--color-success, #2d7b35);
+		background-color: var(--color-success);
+		color: var(--color-success-text);
 	}
 }
 </style>

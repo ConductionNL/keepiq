@@ -183,7 +183,7 @@ export default {
 }
 
 .doriath-share-request-form__error {
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 	margin: 8px 0;
 }
 

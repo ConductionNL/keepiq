@@ -135,12 +135,12 @@ export default {
 }
 
 .admin-handover__error {
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 	margin: 8px 0 0;
 }
 
 .admin-handover__done {
-	color: var(--color-success, #46ba61);
+	color: var(--color-success-text);
 	margin: 8px 0 0;
 }
 </style>

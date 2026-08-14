@@ -232,6 +232,6 @@ export default {
 }
 
 .secret-request-create-dialog__error {
-	color: var(--color-error);
+	color: var(--color-error-text);
 }
 </style>

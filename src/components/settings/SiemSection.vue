@@ -536,11 +536,11 @@ export default {
 	}
 
 	&__status--ok {
-		color: var(--color-success);
+		color: var(--color-success-text);
 	}
 
 	&__status--bad {
-		color: var(--color-error);
+		color: var(--color-error-text);
 	}
 
 	&__form {

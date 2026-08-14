@@ -437,11 +437,11 @@ export default {
 .export-dialog__strength--0,
 .export-dialog__strength--1,
 .export-dialog__strength--2 {
-	color: var(--color-error);
+	color: var(--color-error-text);
 }
 
 .export-dialog__strength--3,
 .export-dialog__strength--4 {
-	color: var(--color-success);
+	color: var(--color-success-text);
 }
 </style>

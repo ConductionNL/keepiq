@@ -177,7 +177,7 @@ export default {
 }
 
 .doriath-share-dialog__error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
 

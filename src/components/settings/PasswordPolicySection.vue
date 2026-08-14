@@ -144,7 +144,7 @@ export default {
 }
 
 .password-policy__error {
-	color: var(--color-error);
+	color: var(--color-error-text);
 	font-size: 0.85rem;
 	margin: 0;
 }

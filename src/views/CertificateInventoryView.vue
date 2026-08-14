@@ -385,12 +385,12 @@ export default {
 	}
 
 	&__expiry--warning {
-		color: var(--color-warning, #b07100);
+		color: var(--color-warning-text);
 		font-weight: bold;
 	}
 
 	&__expiry--critical {
-		color: var(--color-error);
+		color: var(--color-error-text);
 		font-weight: bold;
 	}
 }

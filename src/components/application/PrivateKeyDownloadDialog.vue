@@ -159,8 +159,13 @@ export default {
 }
 
 .doriath-private-key-dialog__warning {
-	background-color: var(--color-error-rest, #f8d7d4);
-	border: 1px solid var(--color-error, #e9322d);
+	/* This is the one-time private-key download warning, so it must be
+	   unmissable in either theme. --color-error-rest does not exist and the pale
+	   pink fallback left near-white dark-mode text unreadable on it; the
+	   --color-error / --color-error-text pairing is guaranteed contrasty. */
+	background-color: var(--color-error);
+	color: var(--color-error-text);
+	border: 1px solid var(--color-error-text);
 	padding: 8px;
 	border-radius: var(--border-radius, 4px);
 	margin-bottom: 8px;

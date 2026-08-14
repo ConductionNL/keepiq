@@ -628,7 +628,18 @@ export default {
 	padding: 6px 16px;
 	text-align: center;
 	font-weight: bold;
-	color: var(--color-primary-element-text, #fff);
-	background-color: var(--color-warning, #b07100);
+	/*
+	 * --color-warning is the pale tint (#FFEEC5 in light), so the primary
+	 * element foreground — white for the default primary — landed at roughly
+	 * 1.3:1 on it. Dark mode was fine (#3D3010), making this the same
+	 * one-theme failure as the rest of this change. The paired *-text value is
+	 * the one the theme flips alongside the tint.
+	 *
+	 * This banner is sticky at z-index 2000 and is the app's only signal that
+	 * the data on screen is stale and read-only, so it is the last thing that
+	 * should be invisible.
+	 */
+	color: var(--color-warning-text);
+	background-color: var(--color-warning);
 }
 </style>

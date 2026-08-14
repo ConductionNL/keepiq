@@ -188,15 +188,15 @@ export default {
 }
 
 .ca-health__indicator--green {
-	background: var(--color-success);
+	background: var(--color-success-text);
 }
 
 .ca-health__indicator--yellow {
-	background: var(--color-warning);
+	background: var(--color-warning-text);
 }
 
 .ca-health__indicator--red {
-	background: var(--color-error);
+	background: var(--color-error-text);
 }
 
 .ca-health__indicator--grey {

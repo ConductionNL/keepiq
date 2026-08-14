@@ -228,16 +228,23 @@ export default {
 	}
 }
 
+/*
+ * The fill sits on a --color-background-dark track, so it needs the CONTRASTY
+ * member of each colour family rather than the background tint. The tints are
+ * near-invisible here: --color-success is #11321A in dark mode, which on a dark
+ * grey track at 4px high reads as an empty bar. The *-text values are the ones
+ * the theme keeps legible against the main background in both themes.
+ */
 .password-strength-meter__fill--danger {
-	background: var(--color-error);
+	background: var(--color-error-text);
 }
 
 .password-strength-meter__fill--warning {
-	background: var(--color-warning);
+	background: var(--color-warning-text);
 }
 
 .password-strength-meter__fill--success {
-	background: var(--color-success);
+	background: var(--color-success-text);
 }
 
 .password-strength-meter__feedback {
@@ -246,14 +253,14 @@ export default {
 }
 
 .password-strength-meter__feedback--danger {
-	color: var(--color-error);
+	color: var(--color-error-text);
 }
 
 .password-strength-meter__feedback--warning {
-	color: var(--color-warning);
+	color: var(--color-warning-text);
 }
 
 .password-strength-meter__feedback--success {
-	color: var(--color-success);
+	color: var(--color-success-text);
 }
 </style>
