@@ -30,6 +30,7 @@ use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Service\JwtAuthService;
 use OCA\Doriath\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -84,6 +85,10 @@ class DiscoveryController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// Discovery document — clients fetch it to learn the endpoints, which is
+	// the point of publishing it. Ceiling only, no counter: nothing here is a
+	// credential.
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function document(): JSONResponse {
 		$tokenEndpoint = $this->urlGenerator->linkToRoute('doriath.applicationToken.exchange');
 		$tokenAbsolute = $this->urlGenerator->getAbsoluteURL($tokenEndpoint);
