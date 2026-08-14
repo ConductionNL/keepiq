@@ -580,4 +580,152 @@ class SecretMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findByEncryptionSuiteId()
+
+	/**
+	 * Count an owner's secrets still bound to a suite.
+	 *
+	 * This is the derived-progress source for compromise-recovery migration:
+	 * a secret still pointing at `old_suite_id` has not been migrated. There
+	 * is deliberately no counter column — a count that can drift from the
+	 * rows it describes would let a migration report itself complete while
+	 * ciphertext is still sealed to the compromised key.
+	 *
+	 * @param string $encryptionSuiteId The suite ID
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner ID
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function countBySuiteForOwner(
+		string $encryptionSuiteId,
+		string $ownerType,
+		string $ownerId,
+	): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select($qb->func()->count('*', 'cnt'))
+			->from($this->getTableName())
+			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$result->closeCursor();
+
+		return (int)($row['cnt'] ?? 0);
+	}//end countBySuiteForOwner()
+
+	/**
+	 * Count an owner's secrets still bound to a suite that carry NO recorded
+	 * migration failure — the rows a migration has not yet accounted for.
+	 *
+	 * This is what the completion gate blocks on. A row with a recorded
+	 * `migration_error` has been attempted and reported as unrecoverable, so it
+	 * is a decision for the user rather than a reason to keep the migration
+	 * open forever. A row with no error has simply not been reached — the
+	 * migration is genuinely unfinished and must be resumed, not finalised,
+	 * because finalising would lock the old suite and take every un-reached
+	 * secret down with it.
+	 *
+	 * @param string $encryptionSuiteId The suite ID
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner ID
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function countUnaccountedBySuiteForOwner(
+		string $encryptionSuiteId,
+		string $ownerType,
+		string $ownerId,
+	): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select($qb->func()->count('*', 'cnt'))
+			->from($this->getTableName())
+			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+			->andWhere($qb->expr()->isNull('migration_error'));
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$result->closeCursor();
+
+		return (int)($row['cnt'] ?? 0);
+	}//end countUnaccountedBySuiteForOwner()
+
+	/**
+	 * List an owner's secrets left on a suite WITH a recorded migration failure.
+	 *
+	 * These are the rows that become unrecoverable when the migration is
+	 * finalised, so the client is shown exactly this list — by name — before it
+	 * acknowledges the loss.
+	 *
+	 * @param string $encryptionSuiteId The suite ID
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner ID
+	 * @param int $limit Maximum rows
+	 *
+	 * @return Secret[]
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function findFailedBySuiteForOwner(
+		string $encryptionSuiteId,
+		string $ownerType,
+		string $ownerId,
+		int $limit = 500,
+	): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+			->andWhere($qb->expr()->isNotNull('migration_error'))
+			->orderBy('name', 'ASC')
+			->setMaxResults(max(1, $limit));
+
+		return $this->findEntities(query: $qb);
+	}//end findFailedBySuiteForOwner()
+
+	/**
+	 * List an owner's secrets still bound to a suite, paged.
+	 *
+	 * Ordered by `id` so paging is stable while the migration re-points rows
+	 * out from under it: a migrated row leaves the result set entirely, so an
+	 * unstable order would let the client skip rows between pages.
+	 *
+	 * @param string $encryptionSuiteId The suite ID
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner ID
+	 * @param int $limit Maximum rows
+	 * @param int $offset Row offset
+	 *
+	 * @return Secret[]
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function findBySuiteForOwner(
+		string $encryptionSuiteId,
+		string $ownerType,
+		string $ownerId,
+		int $limit = 100,
+		int $offset = 0,
+	): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+			->orderBy('id', 'ASC')
+			->setMaxResults(max(1, $limit))
+			->setFirstResult(max(0, $offset));
+
+		return $this->findEntities(query: $qb);
+	}//end findBySuiteForOwner()
 }//end class

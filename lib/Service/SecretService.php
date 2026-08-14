@@ -507,6 +507,10 @@ class SecretService {
 			if ($key !== $secret->getKey()) {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt($now);
+				// Replacing the value answers the possibly-compromised warning;
+				// metadata-only writes leave it standing. See the owner path in
+				// update() for the full reasoning.
+				$secret->setPossiblyCompromisedAt(null);
 				$keyChanged = true;
 			}
 		}
@@ -807,8 +811,19 @@ class SecretService {
 			if ($key !== $secret->getKey()) {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt(new DateTime());
+
+				// The possibly-compromised warning says "this value was exposed,
+				// replace it at its source". Replacing the value is exactly what
+				// just happened, so the warning has been answered and is cleared.
+				// It is cleared HERE and nowhere else in this method on purpose:
+				// a rename, a folder move, a type change or a metadata edit
+				// leaves the exposed value in place and must leave the warning
+				// standing. The same-ciphertext guard above means a client that
+				// resends the unchanged key alongside a rename does not clear it
+				// either.
+				$secret->setPossiblyCompromisedAt(null);
 			}
-		}
+		}//end if
 
 		if (array_key_exists('login', $data) === true) {
 			$secret->setLogin($this->nullableString(value: $data['login']));
@@ -1163,6 +1178,17 @@ class SecretService {
 		}
 
 		if (in_array($suite->getStatus(), self::BLOCKING_STATUSES, true) === true) {
+			// A secret carrying a migration failure on a now-compromised suite is
+			// not merely "behind a blocked suite" — it is a secret compromise
+			// recovery could not carry across, and the user needs to be told
+			// that specifically rather than being shown the generic suite
+			// message. The ciphertext is retained; only access is blocked, so an
+			// older master password could still recover it.
+			if ($secret->getMigrationError() !== null) {
+				return 'Could not be decrypted with the previous key during compromise recovery, '
+					. 'so it did not migrate. The stored value is retained but cannot be opened.';
+			}
+
 			return 'Encryption suite is ' . $suite->getStatus();
 		}
 
