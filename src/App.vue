@@ -41,13 +41,19 @@
 			}}
 		</div>
 
+		<!-- An interrupted compromise recovery leaves the vault write-locked with
+		     nothing else in the UI saying why, so this sits at shell level rather
+		     than inside any one view. It renders nothing when no migration is in
+		     progress. -->
+		<MigrationResumeBanner />
+
 		<CnAppRoot
-			:aiCompanion="true"
+			:ai-companion="true"
 			:manifest="manifest"
-			:customComponents="customComponents"
-			:pageTypes="pageTypes"
+			:custom-components="customComponents"
+			:page-types="pageTypes"
 			:registry="registry"
-			appId="doriath"
+			app-id="doriath"
 			:translate="translateForApp"
 			:permissions="permissions">
 			<!-- User-settings dialog body (opened from the manifest's
@@ -63,7 +69,7 @@
 						<NcSelect
 							v-model="sessionTimeout"
 							:options="timeoutOptions"
-							:inputLabel="t('doriath', 'Session timeout')"
+							:input-label="t('doriath', 'Session timeout')"
 							label="label"
 							:reduce="(opt) => opt.value"
 							@input="saveTimeout" />
@@ -248,10 +254,10 @@
 </template>
 
 <script>
-// eslint-disable-next-line import/named
-import { CnAppRoot } from '@conduction/nextcloud-vue'
 import { translate as ncT } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+// eslint-disable-next-line import/named
+import { CnAppRoot } from '@conduction/nextcloud-vue'
 import {
 	NcAppSettingsSection,
 	NcButton,
@@ -260,18 +266,19 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
+import TimerIcon from 'vue-material-design-icons/Timer.vue'
+import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue'
-import ShieldIcon from 'vue-material-design-icons/Shield.vue'
-import TimerIcon from 'vue-material-design-icons/Timer.vue'
-import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
-import { handleLockTransition } from './router/guards.js'
+import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
+import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
+import { initializeStores } from './store/store.js'
+import { useSessionStore } from './store/modules/session.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
-import { useSessionStore } from './store/modules/session.js'
-import { initializeStores } from './store/store.js'
+import { handleLockTransition } from './router/guards.js'
 
 export default {
 	name: 'App',
@@ -291,6 +298,7 @@ export default {
 		MasterPasswordForm,
 		PasskeyManager,
 		CompromiseRecoveryForm,
+		MigrationResumeBanner,
 	},
 
 	props: {
@@ -303,7 +311,6 @@ export default {
 			type: Object,
 			required: true,
 		},
-
 		/**
 		 * Consumer-injected components used by `type: "custom"` pages
 		 * (page.component). Derived from the `kind:"page"` entries of
@@ -313,7 +320,6 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
-
 		/**
 		 * Page-type registry — `{ index, detail, dashboard, settings, ... }`.
 		 * Wired through to descendant `CnPageRenderer` instances.
@@ -322,7 +328,6 @@ export default {
 			type: Object,
 			default: null,
 		},
-
 		/**
 		 * 5-kind component registry for v2 manifests (hydra ADR-036).
 		 * Map of registry key → `{ kind, component, ...metadata }`.
@@ -373,28 +378,24 @@ export default {
 		securitySettingsUrl() {
 			return generateUrl('/settings/user/security')
 		},
-
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia session store with no domain logic.
 		 */
 		sessionStore() {
 			return useSessionStore()
 		},
-
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia encryption-suite store with no domain logic.
 		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
 		},
-
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia offline store with no domain logic.
 		 */
 		offlineStore() {
 			return useOfflineStore()
 		},
-
 		/**
 		 * Human last-sync label for the stale banner.
 		 *
@@ -405,7 +406,6 @@ export default {
 				? new Date(this.offlineStore.syncedAt).toLocaleString()
 				: ncT('doriath', 'unknown')
 		},
-
 		/**
 		 * Whether the vault is locked (no in-memory CryptoKey).
 		 *
@@ -443,7 +443,6 @@ export default {
 				this.offlineStore.syncNow().catch(() => {})
 			}
 		},
-
 		/**
 		 * Inverse direction: if the user navigates to `/lock` while
 		 * still unlocked (the "Lock vault" footer menu entry), call

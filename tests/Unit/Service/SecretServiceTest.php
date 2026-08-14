@@ -370,6 +370,91 @@ class SecretServiceTest extends TestCase {
 	}//end testUpdateChangedKeyStampsKeyUpdatedAt()
 
 	/**
+	 * Replacing the value clears the possibly-compromised warning.
+	 *
+	 * The warning asks the user to replace the exposed value at its source.
+	 * Doing so is the one thing that answers it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testReplacingTheValueClearsPossiblyCompromised(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+		$old = $this->makeSecret();
+		$old->setKey('OLD-CIPHERTEXT');
+		$old->setPossiblyCompromisedAt(new \DateTime('2026-01-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($old);
+		$this->mapper->expects($this->once())->method('update');
+
+		$secret = $this->service->update(
+			id: 's-1',
+			data: ['key' => 'REPLACED-CIPHERTEXT'],
+			userId: 'alice',
+		);
+
+		$this->assertNull($secret->getPossiblyCompromisedAt());
+	}//end testReplacingTheValueClearsPossiblyCompromised()
+
+	/**
+	 * A metadata edit MUST leave the possibly-compromised warning standing.
+	 *
+	 * Renaming a secret does nothing about the exposed value, so clearing the
+	 * warning here would quietly tell the user they were safe when they are not.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testMetadataEditPreservesPossiblyCompromised(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+		$stamp = new \DateTime('2026-01-01T00:00:00+00:00');
+		$old = $this->makeSecret();
+		$old->setPossiblyCompromisedAt($stamp);
+		$this->mapper->method('findById')->willReturn($old);
+		$this->mapper->expects($this->once())->method('update');
+
+		$secret = $this->service->update(
+			id: 's-1',
+			data: ['name' => 'Renamed', 'url' => 'https://new.example', 'folderId' => 'folder-2'],
+			userId: 'alice',
+		);
+
+		$this->assertSame($stamp->getTimestamp(), $secret->getPossiblyCompromisedAt()->getTimestamp());
+	}//end testMetadataEditPreservesPossiblyCompromised()
+
+	/**
+	 * Re-sending the SAME key alongside a rename MUST leave the warning set.
+	 *
+	 * A client that echoes the whole record back on every save would otherwise
+	 * clear the warning without the value ever having changed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testUnchangedKeyPreservesPossiblyCompromised(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+		$stamp = new \DateTime('2026-01-01T00:00:00+00:00');
+		$old = $this->makeSecret();
+		$old->setKey('SAME-CIPHERTEXT');
+		$old->setPossiblyCompromisedAt($stamp);
+		$this->mapper->method('findById')->willReturn($old);
+		$this->mapper->expects($this->once())->method('update');
+
+		$secret = $this->service->update(
+			id: 's-1',
+			data: ['name' => 'Renamed', 'key' => 'SAME-CIPHERTEXT'],
+			userId: 'alice',
+		);
+
+		$this->assertSame($stamp->getTimestamp(), $secret->getPossiblyCompromisedAt()->getTimestamp());
+	}//end testUnchangedKeyPreservesPossiblyCompromised()
+
+	/**
 	 * Renaming a secret (or any non-key edit) MUST NOT reset keyUpdatedAt.
 	 *
 	 * @return void

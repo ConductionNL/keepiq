@@ -24,7 +24,6 @@ use OCA\Doriath\Controller\EncryptionSuiteController;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\SuiteMigration;
 use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -62,13 +61,6 @@ class EncryptionSuiteControllerTest extends TestCase {
 	private MigrationService&MockObject $migrationService;
 
 	/**
-	 * The mocked link share service.
-	 *
-	 * @var LinkShareService&MockObject
-	 */
-	private LinkShareService&MockObject $linkShareService;
-
-	/**
 	 * The mocked user session.
 	 *
 	 * @var IUserSession&MockObject
@@ -86,7 +78,6 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$request = $this->createMock(originalClassName: IRequest::class);
 		$this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
 		$this->migrationService = $this->createMock(originalClassName: MigrationService::class);
-		$this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
 		$this->userSession = $this->createMock(originalClassName: IUserSession::class);
 
 		$user = $this->createMock(originalClassName: IUser::class);
@@ -97,7 +88,6 @@ class EncryptionSuiteControllerTest extends TestCase {
 			request: $request,
 			suiteService: $this->suiteService,
 			migrationService: $this->migrationService,
-			linkShareService: $this->linkShareService,
 			userSession: $this->userSession,
 		);
 	}//end setUp()
@@ -403,6 +393,34 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testCompromiseRecoverySuccess()
 
 	/**
+	 * Test a second rotation is refused while one is still in progress.
+	 *
+	 * Without this guard, rotation 2 starts B→C while A→B is still open, and
+	 * whatever was still on A becomes unreachable by any resume: resuming only
+	 * ever walks its own migration's suite pair, so nothing will ever ask for
+	 * the master password that opens A. The refusal must happen before any
+	 * suite is created — a third suite is the damage.
+	 *
+	 * @return void
+	 */
+	public function testCompromiseRecoveryRefusedWhileMigrationInProgress(): void {
+		$this->migrationService->method('isWriteLocked')
+			->with('user', 'testuser')
+			->willReturn(true);
+
+		// Nothing may be created and no migration started.
+		$this->suiteService->expects($this->never())->method('createSuite');
+		$this->migrationService->expects($this->never())->method('initiateCompromiseRecovery');
+
+		$response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
+		// The message must point the user at the way out, not just say "no".
+		$this->assertStringContainsString('Resume or abort', $response->getData()['message']);
+	}//end testCompromiseRecoveryRefusedWhileMigrationInProgress()
+
+	/**
 	 * Test compromiseRecovery returns 500 on failure.
 	 *
 	 * @return void
@@ -417,7 +435,53 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testCompromiseRecoveryReturns500OnFailure()
 
 	/**
-	 * Test compromiseRecovery cascades to LinkShareService.deleteByUserId.
+	 * Test a certificate that does not carry the submitted key aborts with a
+	 * DISTINCT error, not a generic fault.
+	 *
+	 * The distinction is the point: nothing was written, so the user's vault is
+	 * provably untouched and retrying is safe — whereas a 500 tells them nothing
+	 * and invites a support ticket. If this ever regressed to a generic error the
+	 * user would be told their vault might be damaged when it is not.
+	 *
+	 * This also pins a coupling that is easy to break from a distance. The
+	 * controller recognises the condition by matching a SUBSTRING of the message
+	 * CertificateIssuanceService throws. Rewording that message upstream — which
+	 * has already happened once, when the signing body was extracted out of
+	 * CertificateAuthorityService — silently downgrades this to a 500 with no
+	 * test failing anywhere. Asserting it here makes that rewording loud.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-refuses-to-start-on-an-unusable-new-suite
+	 */
+	public function testCompromiseRecoveryReportsCertificateKeyMismatchDistinctly(): void {
+		$oldSuite = new EncryptionSuite();
+		$oldSuite->setId('old-suite');
+
+		$this->suiteService->method('getActiveSuite')->willReturn($oldSuite);
+
+		// Verbatim from CertificateIssuanceService, which throws when the issued
+		// certificate does not carry the key that was submitted for it.
+		$this->suiteService->method('createSuite')->willThrowException(
+			new \RuntimeException(
+				'Refusing to issue a certificate that does not carry the submitted public key'
+			)
+		);
+
+		// The vault must be left alone: no migration, so no write lock either.
+		$this->migrationService->expects($this->never())->method('initiateCompromiseRecovery');
+
+		$response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+		$data = $response->getData();
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'certificate_key_mismatch', actual: $data['error']);
+		// And the message must tell the user their data is safe to retry.
+		$this->assertStringContainsString('vault is unchanged', $data['message']);
+	}//end testCompromiseRecoveryReportsCertificateKeyMismatchDistinctly()
+
+	/**
+	 * Test compromiseRecovery defers all terminal work to migration completion.
 	 *
 	 * Every outstanding link share signed against the now-compromised public
 	 * key must be invalidated so a holder cannot decrypt the snapshot after
@@ -429,7 +493,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 	 *
 	 * @spec openspec/changes/implement-link-sharing/tasks.md#5.2
 	 */
-	public function testCompromiseRecoveryCascadesLinkShareDeleteByUserId(): void {
+	public function testCompromiseRecoveryLeavesTerminalWorkToCompletion(): void {
 		$oldSuite = new EncryptionSuite();
 		$oldSuite->setId('old-suite');
 		$oldSuite->setPrivateKey('old-encrypted-pk');
@@ -452,12 +516,16 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->migrationService->method('initiateCompromiseRecovery')
 			->willReturn($migration);
 
-		$this->linkShareService->expects($this->once())
-			->method('deleteByUserId')
-			->with('testuser');
+		// The controller must NOT perform any terminal work. Marking the old
+		// suite compromised (or revoking its link shares) before the migration
+		// has run is what locked the user out of their whole vault: every read
+		// then threw SuiteBlockedException, including the reads the migration
+		// itself depends on. All of it now happens in
+		// MigrationService::completeMigration once every store is migrated.
+		$this->suiteService->expects($this->never())->method('markCompromised');
 
 		$response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
 
 		$this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
-	}//end testCompromiseRecoveryCascadesLinkShareDeleteByUserId()
+	}//end testCompromiseRecoveryLeavesTerminalWorkToCompletion()
 }//end class
