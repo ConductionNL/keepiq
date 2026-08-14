@@ -1,7 +1,7 @@
 <template>
 	<CnAdminSettingsShell
-		app-id="doriath"
-		app-name="Doriath"
+		appId="doriath"
+		appName="Doriath"
 		@reimported="onReimported">
 		<Settings v-if="storesReady" />
 	</CnAdminSettingsShell>
@@ -18,11 +18,13 @@ export default {
 		CnAdminSettingsShell,
 		Settings,
 	},
+
 	data() {
 		return {
 			storesReady: false,
 		}
 	},
+
 	/**
 	 * Initialise the Pinia stores backing the admin-settings sections
 	 * before rendering them.
@@ -33,6 +35,7 @@ export default {
 		await initializeStores()
 		this.storesReady = true
 	},
+
 	methods: {
 		/**
 		 * Re-initialise the stores after the shell's Re-import action

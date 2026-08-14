@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import {
 	decryptSnapshot,
 	encryptSnapshot,

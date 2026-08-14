@@ -14,7 +14,6 @@
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
  */
 
-/* eslint-disable no-restricted-globals */
 /* global appVersion */
 const CACHE_VERSION = typeof appVersion !== 'undefined' ? appVersion : 'dev'
 const CACHE_NAME = 'doriath-shell-' + CACHE_VERSION

@@ -104,6 +104,7 @@ export default {
 		EyeOff,
 		CopyButton,
 	},
+
 	props: {
 		/** The decrypted `key` value: canonical passkey credential JSON. */
 		credentialJson: {
@@ -111,21 +112,26 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			revealed: false,
 		}
 	},
+
 	computed: {
 		credential() {
 			return parsePasskey(this.credentialJson)
 		},
+
 		truncatedId() {
 			return truncateCredentialId(this.credential?.credentialId)
 		},
+
 		maskedKey() {
 			return '••••••••••••'
 		},
+
 		createdDisplay() {
 			const parsed = Date.parse(this.credential?.createdAt ?? '')
 			return Number.isNaN(parsed)

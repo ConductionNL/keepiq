@@ -78,22 +78,26 @@ export default {
 		NcButton,
 		NcNoteCard,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
+
 		/** Decrypted secrets (empty/ignored when locked). */
 		secrets: {
 			type: Array,
 			default: () => [],
 		},
+
 		/** Folder rows. */
 		folders: {
 			type: Array,
 			default: () => [],
 		},
 	},
+
 	emits: ['update:open'],
 	/**
 	 * Provide the export + session Pinia stores to the component.
@@ -107,11 +111,13 @@ export default {
 			sessionStore: useSessionStore(),
 		}
 	},
+
 	data() {
 		return {
 			error: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * Whether an export is in flight (from the store).
@@ -122,6 +128,7 @@ export default {
 		loading() {
 			return this.exportStore.loading
 		},
+
 		/**
 		 * Whether the vault is locked (drives the metadata-only vs full variant).
 		 *
@@ -132,6 +139,7 @@ export default {
 			return this.sessionStore.isLocked
 		},
 	},
+
 	methods: {
 		/**
 		 * Produce and download the GDPR package; vault half included only when
@@ -153,6 +161,7 @@ export default {
 					|| this.t('doriath', 'GDPR export failed')
 			}
 		},
+
 		/**
 		 * Handle open-state changes, clearing the error on close.
 		 *

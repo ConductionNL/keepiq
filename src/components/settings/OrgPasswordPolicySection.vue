@@ -83,19 +83,19 @@
 			<NcSelect
 				v-model="exemptTypes"
 				:options="typeOptions"
-				:input-label="t('doriath', 'Exempt secret types')"
+				:inputLabel="t('doriath', 'Exempt secret types')"
 				multiple
 				data-testid="policy-exempt-types"
-				@update:model-value="save" />
+				@update:modelValue="save" />
 		</div>
 	</CnSettingsSection>
 </template>
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcNoteCard, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcNoteCard, NcSelect } from '@nextcloud/vue'
 import { useSecretTypeStore } from '../../store/modules/secretType.js'
 
 export default {
@@ -114,6 +114,7 @@ export default {
 				min_zxcvbn_score: 0,
 				block_on_hibp_hit: false,
 			},
+
 			exemptTypes: [],
 			error: null,
 		}
@@ -140,6 +141,7 @@ export default {
 				},
 			]
 		},
+
 		typeOptions() {
 			return useSecretTypeStore().types.map((type) => type.name)
 		},

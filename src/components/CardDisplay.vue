@@ -26,7 +26,7 @@
 					}}</span>
 					<NcButton
 						variant="tertiary"
-						:data-testid="'card-reveal-number'"
+						data-testid="card-reveal-number"
 						@click="toggle('number')">
 						{{
 							revealed.number
@@ -51,7 +51,7 @@
 					}}</span>
 					<NcButton
 						variant="tertiary"
-						:data-testid="'card-reveal-cvv'"
+						data-testid="card-reveal-cvv"
 						@click="toggle('cvv')">
 						{{
 							revealed.cvv
@@ -72,7 +72,7 @@
 					}}</span>
 					<NcButton
 						variant="tertiary"
-						:data-testid="'card-reveal-pin'"
+						data-testid="card-reveal-pin"
 						@click="toggle('pin')">
 						{{
 							revealed.pin
@@ -96,7 +96,7 @@
 <script>
 import { NcButton } from '@nextcloud/vue'
 import CopyButton from './CopyButton.vue'
-import { parsePayload, cardBrand, cardLast4 } from '../cardIdentity/cardIdentity.js'
+import { cardBrand, cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
 
 export default {
 	name: 'CardDisplay',
@@ -108,22 +108,27 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			revealed: { number: false, cvv: false, pin: false },
 		}
 	},
+
 	computed: {
 		payload() {
 			return parsePayload(this.payloadJson)
 		},
+
 		brand() {
 			return cardBrand(this.payload?.number ?? '')
 		},
+
 		last4() {
 			return cardLast4(this.payload?.number ?? '')
 		},
 	},
+
 	methods: {
 		/**
 		 * Toggle one masked field's reveal state.

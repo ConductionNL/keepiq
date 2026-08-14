@@ -53,7 +53,7 @@
 				<NcInputField
 					v-model="regex"
 					:label="t('doriath', 'Regex pattern')"
-					:helper-text="
+					:helperText="
 						t(
 							'doriath',
 							'When set, overrides length, special characters and exclusions.',
@@ -64,12 +64,12 @@
 			<div v-if="generatedKey" class="key-generator-modal__preview">
 				<!-- v9 models through `modelValue`; `:value` is a dead binding. -->
 				<NcInputField
-					:model-value="generatedKey"
+					:modelValue="generatedKey"
 					:label="t('doriath', 'Generated key')"
-					:read-only="true"
-					:show-trailing-button="true"
-					:trailing-button-label="t('doriath', 'Copy to clipboard')"
-					@trailing-button-click="copyToClipboard">
+					:readOnly="true"
+					:showTrailingButton="true"
+					:trailingButtonLabel="t('doriath', 'Copy to clipboard')"
+					@trailingButtonClick="copyToClipboard">
 					<template #trailing-button-icon>
 						<ContentCopy :size="20" />
 					</template>
@@ -96,6 +96,8 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -104,8 +106,6 @@ import {
 	NcLoadingIcon,
 	NcNoteCard,
 } from '@nextcloud/vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import { fetchPolicy } from '../policy/policy.js'

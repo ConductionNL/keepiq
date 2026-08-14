@@ -91,12 +91,14 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close'],
 	computed: {
 		store() {
 			return useEphemeralSendStore()
 		},
 	},
+
 	async mounted() {
 		try {
 			await this.store.fetchSends()
@@ -104,6 +106,7 @@ export default {
 			// Surfaced via store state.
 		}
 	},
+
 	methods: {
 		/**
 		 * Revoke one send.

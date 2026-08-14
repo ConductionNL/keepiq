@@ -32,28 +32,28 @@
 			<fieldset class="export-dialog__modes">
 				<legend>{{ t('doriath', 'Export format') }}</legend>
 				<NcCheckboxRadioSwitch
-					:model-value="mode"
+					:modelValue="mode"
 					value="encrypted-backup"
 					name="export-mode"
 					type="radio"
-					@update:model-value="mode = $event">
+					@update:modelValue="mode = $event">
 					{{ t('doriath', 'Encrypted backup (recommended)') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
-					:model-value="mode"
+					:modelValue="mode"
 					value="plaintext-csv"
 					name="export-mode"
 					type="radio"
-					@update:model-value="mode = $event">
+					@update:modelValue="mode = $event">
 					{{ t('doriath', 'Plaintext CSV (unencrypted)') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
-					:model-value="mode"
+					:modelValue="mode"
 					value="cxf"
 					name="export-mode"
 					type="radio"
 					data-testid="export-mode-cxf"
-					@update:model-value="mode = $event">
+					@update:modelValue="mode = $event">
 					{{ t('doriath', 'FIDO Credential Exchange (CXF, unencrypted)') }}
 				</NcCheckboxRadioSwitch>
 			</fieldset>
@@ -80,7 +80,7 @@
 
 			<NcSelect
 				v-model="scopeFolder"
-				:input-label="t('doriath', 'Scope')"
+				:inputLabel="t('doriath', 'Scope')"
 				:options="scopeOptions"
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
@@ -90,7 +90,7 @@
 				<NcPasswordField
 					v-model="passphrase"
 					:label="t('doriath', 'Backup passphrase')"
-					@update:model-value="onPassphraseInput" />
+					@update:modelValue="onPassphraseInput" />
 				<p class="export-dialog__hint">
 					{{
 						t(
@@ -118,8 +118,8 @@
 					}}
 				</NcNoteCard>
 				<NcCheckboxRadioSwitch
-					:model-value="warningAcknowledged"
-					@update:model-value="warningAcknowledged = $event">
+					:modelValue="warningAcknowledged"
+					@update:modelValue="warningAcknowledged = $event">
 					{{
 						t(
 							'doriath',
@@ -158,10 +158,10 @@ import {
 	NcSelect,
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
-import { useExportStore } from '../store/modules/export.js'
-import { useSessionStore } from '../store/modules/session.js'
-import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { verifyMasterPassword } from '../crypto/reauth.js'
+import { useExportStore } from '../store/modules/export.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 /** The zxcvbn score floor for a backup passphrase (D1). */
 const PASSPHRASE_FLOOR = 3
@@ -176,23 +176,27 @@ export default {
 		NcPasswordField,
 		NcCheckboxRadioSwitch,
 	},
+
 	props: {
 		/** Whether the dialog is open. */
 		open: {
 			type: Boolean,
 			default: false,
 		},
+
 		/** Already-decrypted secrets to export. */
 		secrets: {
 			type: Array,
 			default: () => [],
 		},
+
 		/** Folder rows ({ id, name, parentId }). */
 		folders: {
 			type: Array,
 			default: () => [],
 		},
 	},
+
 	emits: ['update:open'],
 	/**
 	 * Provide the export + session Pinia stores to the component.
@@ -206,6 +210,7 @@ export default {
 			sessionStore: useSessionStore(),
 		}
 	},
+
 	data() {
 		return {
 			mode: 'encrypted-backup',
@@ -219,6 +224,7 @@ export default {
 			cxfReport: null,
 		}
 	},
+
 	computed: {
 		/** typeId → type-name map for the CXF export mapping. */
 		typeNamesById() {
@@ -226,6 +232,7 @@ export default {
 				useSecretTypeStore().types.map((type) => [type.id, type.name]),
 			)
 		},
+
 		/**
 		 * Whether an export is in flight (from the store).
 		 *
@@ -235,6 +242,7 @@ export default {
 		loading() {
 			return this.exportStore.loading
 		},
+
 		/**
 		 * The scope selector options: the whole vault plus each folder.
 		 *
@@ -250,6 +258,7 @@ export default {
 			}
 			return opts
 		},
+
 		/**
 		 * The live passphrase-strength feedback label.
 		 *
@@ -265,6 +274,7 @@ export default {
 				'Passphrase too weak — choose a longer, less predictable passphrase',
 			)
 		},
+
 		/**
 		 * Whether the export may be submitted: backup needs a passphrase at/above
 		 * the strength floor; plaintext CSV needs the warning acknowledged and a
@@ -284,12 +294,14 @@ export default {
 			return this.warningAcknowledged && this.masterPassword.length > 0
 		},
 	},
+
 	watch: {
 		mode() {
 			// A mode switch invalidates the CXF pre-download report.
 			this.cxfReport = null
 		},
 	},
+
 	methods: {
 		/**
 		 * Recompute the live zxcvbn passphrase score on each keystroke.
@@ -302,6 +314,7 @@ export default {
 				? zxcvbn(this.passphrase).score
 				: 0
 		},
+
 		/**
 		 * Build the scope selector for the store action.
 		 *
@@ -314,6 +327,7 @@ export default {
 			}
 			return { mode: 'folders', folderIds: [this.scopeFolder] }
 		},
+
 		/**
 		 * Run the chosen export. Plaintext CSV is gated by a client-side
 		 * master-password re-auth before the store action runs.
@@ -381,6 +395,7 @@ export default {
 					|| this.t('doriath', 'Export failed')
 			}
 		},
+
 		/**
 		 * Reset the dialog to its initial state (no plaintext retained).
 		 *
@@ -397,6 +412,7 @@ export default {
 			this.error = null
 			this.cxfReport = null
 		},
+
 		/**
 		 * Handle open-state changes, clearing transient secrets on close.
 		 *

@@ -1,3 +1,5 @@
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 /**
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -9,19 +11,17 @@
  * output, or the plaintext unlock key.
  */
 import { defineStore } from 'pinia'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { useSessionStore } from './session.js'
 import { deriveUnlockKeyRaw } from '../../crypto/aes.js'
 import { decodeEnvelope } from '../../crypto/envelope.js'
 import {
-	isPrfSupported,
 	deriveKekFromPrf,
-	wrapUnlockKey,
-	unwrapUnlockKey,
-	toBase64Url,
 	fromBase64Url,
+	isPrfSupported,
+	toBase64Url,
+	unwrapUnlockKey,
+	wrapUnlockKey,
 } from '../../crypto/passkey.js'
+import { useSessionStore } from './session.js'
 
 const RP_ID = window.location.hostname
 

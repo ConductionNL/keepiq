@@ -27,12 +27,12 @@
 			<div class="health-report__controls">
 				<NcSelect
 					v-model="stalenessOption"
-					:input-label="t('doriath', 'Flag passwords older than')"
+					:inputLabel="t('doriath', 'Flag passwords older than')"
 					:options="stalenessOptions"
 					:clearable="false"
 					label="label"
 					data-testid="staleness-select"
-					@update:model-value="reanalyse" />
+					@update:modelValue="reanalyse" />
 
 				<label
 					v-if="breachGateOn"
@@ -169,14 +169,14 @@
 </template>
 
 <script>
-import { NcButton, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
-import { useHealthStore } from '../store/modules/health.js'
-import { useSessionStore } from '../store/modules/session.js'
-import { useRotationStore } from '../store/modules/rotation.js'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcSelect } from '@nextcloud/vue'
 import HealthCategory from '../components/HealthCategory.vue'
+import { useHealthStore } from '../store/modules/health.js'
+import { useRotationStore } from '../store/modules/rotation.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'HealthReportView',
@@ -203,6 +203,7 @@ export default {
 		locked() {
 			return this.session.isLocked
 		},
+
 		/**
 		 * Whether breach checking is active (both gates on).
 		 *
@@ -212,6 +213,7 @@ export default {
 		breachActive() {
 			return this.breachGateOn && this.breachOptIn
 		},
+
 		/**
 		 * Staleness threshold options for the select.
 		 *
@@ -226,6 +228,7 @@ export default {
 				{ value: 'never', label: t('doriath', 'Never') },
 			]
 		},
+
 		/**
 		 * Open rotation flags as health findings (deep-link to secret).
 		 *
@@ -237,6 +240,18 @@ export default {
 				id: flag.secretId,
 				name: flag.secretName || flag.secretId,
 			}))
+		},
+	},
+
+	watch: {
+		/**
+		 * Persist the staleness threshold whenever the select changes.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+		 */
+		stalenessOption() {
+			this.persistStaleness()
 		},
 	},
 
@@ -361,18 +376,6 @@ export default {
 			this.$router
 				.push({ name: 'SecretDetail', params: { id: secretId } })
 				.catch(() => {})
-		},
-	},
-
-	watch: {
-		/**
-		 * Persist the staleness threshold whenever the select changes.
-		 *
-		 * @return {void}
-		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
-		 */
-		stalenessOption() {
-			this.persistStaleness()
 		},
 	},
 }

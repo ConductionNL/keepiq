@@ -11,7 +11,7 @@
  * standard duplicate-detection step is applied downstream by the wizard.
  */
 
-import { decryptBackup, BACKUP_FORMAT } from '../export/backup.js'
+import { BACKUP_FORMAT, decryptBackup } from '../export/backup.js'
 import { registerParser } from './parserRegistry.js'
 
 /**

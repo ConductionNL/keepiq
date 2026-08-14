@@ -135,8 +135,8 @@
 
 <script>
 import {
-	useDashboardSettingsStore,
 	ALLOWED_DASHBOARD_KEYS,
+	useDashboardSettingsStore,
 } from '../store/modules/dashboardSettings.js'
 
 /**

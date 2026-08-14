@@ -12,7 +12,7 @@
 			<img
 				v-if="faviconUrl && !faviconFailed"
 				:src="faviconUrl"
-				:alt="''"
+				alt=""
 				width="24"
 				height="24"
 				@error="faviconFailed = true" />
@@ -22,7 +22,7 @@
 		<span class="secret-list-item__main">
 			<span class="secret-list-item__name">
 				{{ secret.name }}
-				<StrengthBadge v-if="!secret.blocked" :secret-id="secret.id" />
+				<StrengthBadge v-if="!secret.blocked" :secretId="secret.id" />
 			</span>
 			<span v-if="secret.url" class="secret-list-item__url">{{
 				secret.url
@@ -52,18 +52,18 @@
 </template>
 
 <script>
-import Lock from 'vue-material-design-icons/Lock.vue'
-import Key from 'vue-material-design-icons/Key.vue'
 import CodeTags from 'vue-material-design-icons/CodeTags.vue'
 import Console from 'vue-material-design-icons/Console.vue'
-import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
-import NoteText from 'vue-material-design-icons/NoteText.vue'
 import Database from 'vue-material-design-icons/Database.vue'
+import Key from 'vue-material-design-icons/Key.vue'
+import Lock from 'vue-material-design-icons/Lock.vue'
+import NoteText from 'vue-material-design-icons/NoteText.vue'
+import ShieldCheck from 'vue-material-design-icons/ShieldCheck.vue'
 import CopyButton from './CopyButton.vue'
 import StrengthBadge from './StrengthBadge.vue'
-import { resolveFaviconUrl, typeIconName } from '../utils/favicon.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { resolveFaviconUrl, typeIconName } from '../utils/favicon.js'
 
 /**
  * A single secret row: favicon (or type icon), name, url, and a copy button.
@@ -102,6 +102,7 @@ export default {
 		faviconUrl() {
 			return resolveFaviconUrl(this.secret.url)
 		},
+
 		iconComponent() {
 			const typeStore = useSecretTypeStore()
 			const type = typeStore.typesById[this.secret.typeId]

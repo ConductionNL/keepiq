@@ -5,10 +5,10 @@
 		<div class="secret-list-view__sidebar">
 			<CnFolderSidebar
 				:folders="folders"
-				:selected-id="selectedFolderId"
-				:all-label="t('doriath', 'All secrets')"
-				allow-create
-				:create-label="t('doriath', 'New folder')"
+				:selectedId="selectedFolderId"
+				:allLabel="t('doriath', 'All secrets')"
+				allowCreate
+				:createLabel="t('doriath', 'New folder')"
 				@select="selectFolder"
 				@create="openCreateFolder" />
 		</div>
@@ -63,18 +63,18 @@
 				     and selecting a type never filtered. -->
 				<NcSelect
 					class="secret-list-view__type-filter"
-					:model-value="typeFilterOption"
+					:modelValue="typeFilterOption"
 					:options="typeFilterOptions"
-					:input-label="t('doriath', 'Type')"
+					:inputLabel="t('doriath', 'Type')"
 					:clearable="true"
 					:placeholder="t('doriath', 'All types')"
 					data-testid="secret-type-filter"
-					@update:model-value="
+					@update:modelValue="
 						onTypeFilter($event ? $event.value : null)
 					" />
 
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
-				<NcActions :menu-name="t('doriath', 'My data')">
+				<NcActions :menuName="t('doriath', 'My data')">
 					<NcActionButton
 						data-testid="open-new-send"
 						@click="newSendOpen = true">
@@ -113,7 +113,7 @@
 				:secrets="decryptedSecrets"
 				:folders="folders"
 				@update:open="cxpOpen = $event"
-				@open-import="importOpen = true" />
+				@openImport="importOpen = true" />
 			<GdprExportDialog
 				:open="gdprOpen"
 				:secrets="decryptedSecrets"
@@ -122,15 +122,15 @@
 			<AccountDeletionDialog
 				:open="deletionOpen"
 				@update:open="deletionOpen = $event"
-				@export-first="onExportFirst" />
+				@exportFirst="onExportFirst" />
 			<ImportWizardDialog
 				:open="importOpen"
 				@update:open="importOpen = $event"
 				@imported="onImported" />
 			<TeamFolderDialog
 				:open="teamFolderOpen"
-				:folder-id="selectedFolderId"
-				:folder-name="selectedFolderName"
+				:folderId="selectedFolderId"
+				:folderName="selectedFolderName"
 				@update:open="teamFolderOpen = $event" />
 
 			<!-- Ephemeral send (ephemeral-send §5). -->
@@ -211,28 +211,28 @@
 			</div>
 
 			<CnIndexPage
-				view-mode="list"
-				:available-view-modes="['list', 'cards', 'table']"
-				list-label="List"
+				viewMode="list"
+				:availableViewModes="['list', 'cards', 'table']"
+				listLabel="List"
 				:selectable="false"
 				:objects="secrets"
 				:schema="listSchema"
 				:loading="loading"
 				:pagination="pagination"
-				:add-label="offlineReadOnly ? '' : t('doriath', 'New secret')"
-				add-icon="Plus"
-				inline-search
-				:search-value="searchTerm"
-				:search-placeholder="t('doriath', 'Search secrets')"
-				show-sort-select
-				:sort-select-options="sortOptions"
-				:sort-select-value="sortField"
-				row-key="id"
-				:empty-text="t('doriath', 'No secrets yet')"
+				:addLabel="offlineReadOnly ? '' : t('doriath', 'New secret')"
+				addIcon="Plus"
+				inlineSearch
+				:searchValue="searchTerm"
+				:searchPlaceholder="t('doriath', 'Search secrets')"
+				showSortSelect
+				:sortSelectOptions="sortOptions"
+				:sortSelectValue="sortField"
+				rowKey="id"
+				:emptyText="t('doriath', 'No secrets yet')"
 				@add="openCreateSecret"
 				@search="onSearch"
-				@sort-change="onSort"
-				@page-changed="goToPage">
+				@sortChange="onSort"
+				@pageChanged="goToPage">
 				<template #list-item="{ object }">
 					<div class="secret-list-view__row">
 						<!-- Per-row selection (bulk-actions §1.1): click
@@ -272,31 +272,31 @@
 
 <script>
 // eslint-disable-next-line import/named
-import { CnIndexPage, CnFolderSidebar } from '@conduction/nextcloud-vue'
+import { CnFolderSidebar, CnIndexPage } from '@conduction/nextcloud-vue'
 import { NcActionButton, NcActions, NcButton, NcSelect } from '@nextcloud/vue'
+import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
-import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import SecretListItem from '../components/SecretListItem.vue'
-import ExportDialog from '../dialogs/ExportDialog.vue'
-import CxpTransferDialog from '../dialogs/CxpTransferDialog.vue'
-import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
-import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
-import TeamFolderDialog from '../modals/TeamFolderDialog.vue'
-import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
+import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
 import BulkShareDialog from '../dialogs/BulkShareDialog.vue'
 import BulkTeamFolderDialog from '../dialogs/BulkTeamFolderDialog.vue'
-import NewSendDialog from '../modals/NewSendDialog.vue'
+import CxpTransferDialog from '../dialogs/CxpTransferDialog.vue'
+import ExportDialog from '../dialogs/ExportDialog.vue'
+import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
+import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
 import MySendsDialog from '../modals/MySendsDialog.vue'
+import NewSendDialog from '../modals/NewSendDialog.vue'
+import TeamFolderDialog from '../modals/TeamFolderDialog.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
-import { useSecretStore } from '../store/modules/secret.js'
-import { useHealthStore } from '../store/modules/health.js'
-import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useFolderStore } from '../store/modules/folder.js'
-import { useSessionStore } from '../store/modules/session.js'
+import { useHealthStore } from '../store/modules/health.js'
 import { useOfflineStore } from '../store/modules/offline.js'
+import { useSecretStore } from '../store/modules/secret.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 const PAGE_SIZE = 50
 
@@ -366,15 +366,19 @@ export default {
 		secretStore() {
 			return useSecretStore()
 		},
+
 		folderStore() {
 			return useFolderStore()
 		},
+
 		secrets() {
 			return this.secretStore.secrets
 		},
+
 		loading() {
 			return this.secretStore.loading
 		},
+
 		/**
 		 * The flat folder list, used to feed the folder sidebar, populate the
 		 * export scope selector, and resolve relative folder paths in the
@@ -386,6 +390,7 @@ export default {
 		folders() {
 			return this.folderStore.folders
 		},
+
 		/**
 		 * Whether the vault is locked — the Import action is disabled while
 		 * locked (import requires the session CryptoKey to encrypt rows).
@@ -396,6 +401,7 @@ export default {
 		vaultLocked() {
 			return useSessionStore().isLocked
 		},
+
 		/**
 		 * Whether the vault is being served from the offline cache and is
 		 * therefore read-only (offline-readonly-cache §4.2). All write controls
@@ -406,14 +412,17 @@ export default {
 		offlineReadOnly() {
 			return useOfflineStore().readOnly
 		},
+
 		selectedFolderId() {
 			return this.$route.params.folderId || null
 		},
+
 		/** Display name of the selected folder for the team-sharing dialog. */
 		selectedFolderName() {
 			const folder = this.folders.find((f) => f.id === this.selectedFolderId)
 			return folder?.name ?? ''
 		},
+
 		pagination() {
 			return {
 				page: this.secretStore.page,
@@ -421,10 +430,12 @@ export default {
 					1,
 					Math.ceil(this.secretStore.totalCount / PAGE_SIZE),
 				),
+
 				total: this.secretStore.totalCount,
 				limit: PAGE_SIZE,
 			}
 		},
+
 		/** Minimal schema so CnIndexPage can offer cards/table fallbacks. */
 		listSchema() {
 			return {
@@ -432,12 +443,14 @@ export default {
 					name: { title: t('doriath', 'Name'), type: 'string' },
 					url: { title: t('doriath', 'URL'), type: 'string' },
 				},
+
 				configuration: {
 					objectNameField: 'name',
 					objectDescriptionField: 'url',
 				},
 			}
 		},
+
 		sortOptions() {
 			return [
 				{ value: 'name', label: t('doriath', 'Name') },
@@ -446,6 +459,7 @@ export default {
 				{ value: 'updated_at', label: t('doriath', 'Updated') },
 			]
 		},
+
 		/** Options for the secret-type filter (passkey-item-type §3.3). */
 		typeFilterOptions() {
 			return useSecretTypeStore().types.map((type) => ({
@@ -453,6 +467,7 @@ export default {
 				label: type.label || type.name,
 			}))
 		},
+
 		/** The currently selected type-filter option object (or null). */
 		typeFilterOption() {
 			return (
@@ -460,10 +475,12 @@ export default {
 				?? null
 			)
 		},
+
 		/** Bulk selection store (bulk-actions §1). */
 		bulkStore() {
 			return useBulkStore()
 		},
+
 		/** Whether every secret in the current view is selected. */
 		allCurrentSelected() {
 			return (

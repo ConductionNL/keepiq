@@ -97,7 +97,7 @@
 						v-model="newMemberType"
 						:options="memberTypeOptions"
 						:reduce="(opt) => opt.value"
-						:input-label="t('doriath', 'Member type')"
+						:inputLabel="t('doriath', 'Member type')"
 						:clearable="false" />
 					<label class="team-folder-dialog__id-field">
 						<span>{{
@@ -200,20 +200,24 @@ export default {
 		AccountGroup,
 		Close,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
+
 		folderId: {
 			type: String,
 			default: null,
 		},
+
 		folderName: {
 			type: String,
 			default: '',
 		},
 	},
+
 	emits: ['update:open'],
 	data() {
 		return {
@@ -224,25 +228,31 @@ export default {
 			pendingCount: 0,
 		}
 	},
+
 	computed: {
 		store() {
 			return useTeamFolderStore()
 		},
+
 		teamFolder() {
 			return this.folderId ? this.store.byFolderId(this.folderId) : null
 		},
+
 		members() {
 			return this.teamFolder?.members ?? []
 		},
+
 		fanOut() {
 			return this.store.fanOut
 		},
+
 		progressPercent() {
 			if (this.fanOut.total === 0) {
 				return 0
 			}
 			return Math.round((this.fanOut.done / this.fanOut.total) * 100)
 		},
+
 		memberTypeOptions() {
 			return [
 				{ label: this.t('doriath', 'User'), value: 'user' },
@@ -250,6 +260,7 @@ export default {
 			]
 		},
 	},
+
 	watch: {
 		open(isOpen) {
 			if (isOpen) {
@@ -258,6 +269,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		onUpdateOpen(value) {
 			this.$emit('update:open', value)

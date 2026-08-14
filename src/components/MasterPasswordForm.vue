@@ -15,7 +15,7 @@
 		<PasswordStrengthMeter
 			v-if="newPassword"
 			:password="newPassword"
-			@strength-change="onStrengthChange" />
+			@strengthChange="onStrengthChange" />
 
 		<NcPasswordField
 			v-model="confirmPassword"
@@ -51,8 +51,8 @@
 
 <script>
 import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
-import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 
 export default {
 	name: 'MasterPasswordForm',

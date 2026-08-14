@@ -19,7 +19,7 @@
  *  - A document without a KeePass root element is a hard parse failure.
  */
 
-import { makeRow, validateRow, joinFolderPath } from '../model.js'
+import { joinFolderPath, makeRow, validateRow } from '../model.js'
 
 /** Standard KeePass string keys that map onto top-level row fields. */
 const STANDARD_KEYS = {

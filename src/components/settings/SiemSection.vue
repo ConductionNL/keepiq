@@ -136,7 +136,7 @@
 					v-model="form.type"
 					:options="['syslog', 'webhook']"
 					:clearable="false"
-					:input-label="t('doriath', 'Type')"
+					:inputLabel="t('doriath', 'Type')"
 					data-testid="siem-form-type" />
 				<NcTextField
 					v-model="form.endpoint"
@@ -173,7 +173,7 @@
 					v-model="form.categoryFilter"
 					:options="categoryOptions"
 					multiple
-					:input-label="
+					:inputLabel="
 						t('doriath', 'Category filter (empty = all events)')
 					"
 					data-testid="siem-form-categories" />
@@ -215,6 +215,8 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -222,8 +224,6 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 
 /**
  * Audit-event category slugs (prefix before the first dot of an event
@@ -248,16 +248,21 @@ const CATEGORY_OPTIONS = [
 	'siem',
 ]
 
-const EMPTY_FORM = () => ({
-	name: '',
-	type: 'webhook',
-	endpoint: '',
-	tls: true,
-	hmacSecret: '',
-	categoryFilter: [],
-	queueCap: 1000,
-	enabled: true,
-})
+/**
+ *
+ */
+function EMPTY_FORM() {
+	return {
+		name: '',
+		type: 'webhook',
+		endpoint: '',
+		tls: true,
+		hmacSecret: '',
+		categoryFilter: [],
+		queueCap: 1000,
+		enabled: true,
+	}
+}
 
 export default {
 	name: 'SiemSection',

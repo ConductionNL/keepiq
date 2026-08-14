@@ -102,7 +102,7 @@ export async function analyse(rows, options = {}) {
 		if (typeof row.value !== 'string' || row.value.length === 0) {
 			continue
 		}
-		// eslint-disable-next-line no-await-in-loop
+
 		const d = await digest(row.value)
 		digestById.set(row.id, d)
 		if (!byDigest.has(d)) {

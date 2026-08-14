@@ -101,9 +101,9 @@ import {
 	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
+import { verifyMasterPassword } from '../crypto/reauth.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
-import { verifyMasterPassword } from '../crypto/reauth.js'
 
 /** The exact phrase the user must type (mirrors GdprController). */
 const CONFIRMATION_PHRASE = 'DELETE MY DORIATH DATA'
@@ -117,12 +117,14 @@ export default {
 		NcTextField,
 		NcPasswordField,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['update:open', 'export-first'],
 	/**
 	 * Provide the export + session Pinia stores to the component.
@@ -136,6 +138,7 @@ export default {
 			sessionStore: useSessionStore(),
 		}
 	},
+
 	data() {
 		return {
 			masterPassword: '',
@@ -144,6 +147,7 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * Whether a deletion is in flight (from the store).
@@ -154,6 +158,7 @@ export default {
 		loading() {
 			return this.exportStore.loading
 		},
+
 		/**
 		 * The confirmation-field label including the exact required phrase.
 		 *
@@ -165,6 +170,7 @@ export default {
 				phrase: CONFIRMATION_PHRASE,
 			})
 		},
+
 		/**
 		 * Whether deletion may be submitted: BOTH a master password and the exact
 		 * confirmation phrase must be present (double-gated).
@@ -179,6 +185,7 @@ export default {
 			)
 		},
 	},
+
 	methods: {
 		/**
 		 * Verify the master password client-side, then run the deletion cascade
@@ -210,6 +217,7 @@ export default {
 					|| this.t('doriath', 'Deletion failed')
 			}
 		},
+
 		/**
 		 * Reset the dialog state (no master password retained).
 		 *
@@ -222,6 +230,7 @@ export default {
 			this.report = null
 			this.error = null
 		},
+
 		/**
 		 * Handle open-state changes, clearing state on close.
 		 *

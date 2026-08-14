@@ -90,6 +90,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		canReclaim: {
 			type: Boolean,
 			default: false,

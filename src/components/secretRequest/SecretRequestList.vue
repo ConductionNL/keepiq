@@ -85,11 +85,13 @@ export default {
 			default: null,
 		},
 	},
+
 	data() {
 		return {
 			store: useSecretRequestStore(),
 		}
 	},
+
 	computed: {
 		rows() {
 			if (this.secretId == null || this.secretId === '') {
@@ -101,9 +103,11 @@ export default {
 			})
 		},
 	},
+
 	mounted() {
 		this.store.fetchRequests().catch(() => {})
 	},
+
 	methods: {
 		truncateToken(token) {
 			if (token == null || token === '') {
@@ -111,12 +115,14 @@ export default {
 			}
 			return token.length <= 12 ? token : `${token.slice(0, 8)}…`
 		},
+
 		formatFields(fields) {
 			if (Array.isArray(fields) === false) {
 				return ''
 			}
 			return fields.join(', ')
 		},
+
 		statusLabel(status) {
 			switch (status) {
 				case 'pending':
@@ -133,6 +139,7 @@ export default {
 					return status
 			}
 		},
+
 		onRevoke(id) {
 			this.store.revokeRequest(id).catch(() => {})
 		},

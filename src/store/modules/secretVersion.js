@@ -13,12 +13,12 @@
  * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
-import { useSessionStore } from './session.js'
 import { useSecretStore } from './secret.js'
+import { useSessionStore } from './session.js'
 import { useShareStore } from './share.js'
 
 export const useSecretVersionStore = defineStore('secretVersion', {

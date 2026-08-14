@@ -15,7 +15,7 @@
  * receives a usable key (ADR-003 zero-knowledge).
  */
 
-import { importPublicKey, rsaEncrypt, rsaDecrypt } from './index.js'
+import { importPublicKey, rsaDecrypt, rsaEncrypt } from './index.js'
 
 /** The envelope format version + algorithm tag. */
 export const ENVELOPE_VERSION = 1

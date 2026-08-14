@@ -57,10 +57,9 @@
 
 <script>
 import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
+import BulkRunPanel from '../components/BulkRunPanel.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useSecretStore } from '../store/modules/secret.js'
-
-import BulkRunPanel from '../components/BulkRunPanel.vue'
 
 const TYPED_CONFIRMATION_THRESHOLD = 10
 
@@ -72,28 +71,34 @@ export default {
 		NcNoteCard,
 		BulkRunPanel,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['close', 'done'],
 	data() {
 		return {
 			typed: '',
 		}
 	},
+
 	computed: {
 		bulk() {
 			return useBulkStore()
 		},
+
 		needsTypedConfirmation() {
 			return this.bulk.selectionCount > TYPED_CONFIRMATION_THRESHOLD
 		},
+
 		confirmWord() {
 			return `DELETE ${this.bulk.selectionCount}`
 		},
+
 		confirmed() {
 			if (!this.needsTypedConfirmation) {
 				return true
@@ -101,6 +106,7 @@ export default {
 			return this.typed === this.confirmWord
 		},
 	},
+
 	methods: {
 		/**
 		 * The per-item hard delete; a 404 (already gone) is skipped,

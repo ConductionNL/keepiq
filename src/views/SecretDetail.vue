@@ -69,7 +69,7 @@
 					t('doriath', 'Passkey')
 				}}</span>
 				<PasskeyDisplay
-					:credential-json="secret.key || ''"
+					:credentialJson="secret.key || ''"
 					data-testid="secret-detail-passkey" />
 			</div>
 
@@ -80,7 +80,7 @@
 					t('doriath', 'Payment card')
 				}}</span>
 				<CardDisplay
-					:payload-json="secret.key || ''"
+					:payloadJson="secret.key || ''"
 					data-testid="secret-detail-card" />
 			</div>
 
@@ -91,7 +91,7 @@
 					t('doriath', 'Identity')
 				}}</span>
 				<IdentityDisplay
-					:payload-json="secret.key || ''"
+					:payloadJson="secret.key || ''"
 					data-testid="secret-detail-identity" />
 			</div>
 
@@ -99,7 +99,7 @@
 				<span class="secret-detail__label">{{
 					t('doriath', 'Attachments')
 				}}</span>
-				<AttachmentPanel :secret-id="secretId" :can-manage="isOwner" />
+				<AttachmentPanel :secretId="secretId" :canManage="isOwner" />
 			</div>
 
 			<div
@@ -109,8 +109,8 @@
 					t('doriath', 'Version history')
 				}}</span>
 				<VersionHistoryPanel
-					:secret-id="secretId"
-					:can-manage="isOwner"
+					:secretId="secretId"
+					:canManage="isOwner"
 					@restored="load" />
 			</div>
 
@@ -120,7 +120,7 @@
 				<span class="secret-detail__label">{{
 					t('doriath', 'Rotation & expiry')
 				}}</span>
-				<RotationPanel :secret-id="secretId" :can-manage="isOwner" />
+				<RotationPanel :secretId="secretId" :canManage="isOwner" />
 			</div>
 
 			<div
@@ -129,7 +129,7 @@
 				<span class="secret-detail__label">{{
 					t('doriath', 'Honey tripwire')
 				}}</span>
-				<HoneyPanel :secret-id="secretId" />
+				<HoneyPanel :secretId="secretId" />
 			</div>
 
 			<div
@@ -209,19 +209,19 @@
 
 				<ShareList
 					v-if="isOwner"
-					:secret-id="secretId"
+					:secretId="secretId"
 					data-testid="secret-detail-share-list" />
 
 				<DelegationManager
 					v-if="isOwner"
-					:secret-id="secretId"
-					:can-reclaim="true"
+					:secretId="secretId"
+					:canReclaim="true"
 					data-testid="secret-detail-delegation-manager"
 					@reclaimed="onReclaimed" />
 
 				<ShareRequestForm
 					v-if="isRecipient && !isOwner"
-					:secret-id="secretId"
+					:secretId="secretId"
 					data-testid="secret-detail-share-request" />
 
 				<!--
@@ -234,7 +234,7 @@
 				-->
 				<AdminHandoverPanel
 					v-if="!isOwner"
-					:secret-id="secretId"
+					:secretId="secretId"
 					data-testid="secret-detail-admin-handover" />
 			</section>
 
@@ -259,7 +259,7 @@
 				</div>
 
 				<SecretRequestList
-					:secret-id="secretId"
+					:secretId="secretId"
 					data-testid="secret-detail-request-list" />
 
 				<SecretRequestCreateDialog
@@ -277,7 +277,7 @@
 			-->
 			<SecretActivityTab
 				v-if="isOwner"
-				:secret-id="secretId"
+				:secretId="secretId"
 				data-testid="secret-detail-activity" />
 		</div>
 	</div>
@@ -287,30 +287,30 @@
 import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import FolderMove from 'vue-material-design-icons/FolderMove.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import FolderMove from 'vue-material-design-icons/FolderMove.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
-import CopyButton from '../components/CopyButton.vue'
-import PasswordField from '../components/PasswordField.vue'
-import TotpDisplay from '../components/TotpDisplay.vue'
-import PasskeyDisplay from '../components/PasskeyDisplay.vue'
 import AttachmentPanel from '../components/AttachmentPanel.vue'
-import VersionHistoryPanel from '../components/VersionHistoryPanel.vue'
-import RotationPanel from '../components/RotationPanel.vue'
-import HoneyPanel from '../components/HoneyPanel.vue'
 import CardDisplay from '../components/CardDisplay.vue'
+import CopyButton from '../components/CopyButton.vue'
+import HoneyPanel from '../components/HoneyPanel.vue'
 import IdentityDisplay from '../components/IdentityDisplay.vue'
+import PasskeyDisplay from '../components/PasskeyDisplay.vue'
+import PasswordField from '../components/PasswordField.vue'
+import RotationPanel from '../components/RotationPanel.vue'
+import SecretActivityTab from '../components/SecretActivityTab.vue'
+import SecretRequestList from '../components/secretRequest/SecretRequestList.vue'
 import AdminHandoverPanel from '../components/share/AdminHandoverPanel.vue'
 import DelegationManager from '../components/share/DelegationManager.vue'
 import ShareList from '../components/share/ShareList.vue'
 import ShareRequestForm from '../components/share/ShareRequestForm.vue'
+import TotpDisplay from '../components/TotpDisplay.vue'
+import VersionHistoryPanel from '../components/VersionHistoryPanel.vue'
 import SecretRequestCreateDialog from '../dialogs/SecretRequestCreateDialog.vue'
-import SecretRequestList from '../components/secretRequest/SecretRequestList.vue'
-import SecretActivityTab from '../components/SecretActivityTab.vue'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
-import { useOfflineStore } from '../store/modules/offline.js'
 
 /**
  * The secret detail view. Encrypted fields are decrypted client-side on load
@@ -370,6 +370,7 @@ export default {
 		secretId() {
 			return this.$route.params.id
 		},
+
 		hasAdditionalFields() {
 			return (
 				this.secret
@@ -377,6 +378,7 @@ export default {
 				&& typeof this.secret.additionalFields === 'object'
 			)
 		},
+
 		keyLabel() {
 			const typeStore = useSecretTypeStore()
 			const type = this.secret ? typeStore.typesById[this.secret.typeId] : null

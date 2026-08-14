@@ -1,10 +1,10 @@
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import {
-	generateKeyPair,
-	encryptPrivateKey,
 	decryptPrivateKey,
+	encryptPrivateKey,
+	generateKeyPair,
 	importPrivateKey,
 } from '../../crypto/index.js'
 import { useSessionStore } from './session.js'
