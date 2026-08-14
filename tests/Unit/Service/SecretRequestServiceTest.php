@@ -523,7 +523,9 @@ class SecretRequestServiceTest extends TestCase {
 	 */
 	public function testFillRefusesAFieldThatCannotBeStored(): void {
 		$entity = $this->buildPending();
-		$entity->setRequestedFields(json_encode(['api-key']));
+		// A name that is neither reserved nor deliverable as an additional
+		// member, because it was sent as its own top-level ciphertext key.
+		$entity->setRequestedFields(json_encode(['additionalFields']));
 
 		$this->mapper->method('findByToken')->willReturn($entity);
 		$this->mapper->method('findById')->willReturn($entity);
@@ -546,6 +548,136 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service->fill(token: 'tok-good', encryptedFields: ['api-key' => 'CIPHER']);
 	}//end testFillRefusesAFieldThatCannotBeStored()
+
+	/**
+	 * Every field a Secret supports is requestable, each in its own bucket.
+	 *
+	 * `key` is ciphertext, `url` is plaintext metadata the owner searches on,
+	 * and any other requested name is a member of the single encrypted
+	 * additionalFields blob. Encrypting `url` would put ciphertext in a
+	 * searchable column.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillStoresCiphertextPlaintextAndTheAdditionalBlob(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key', 'url', 'api-interface-id']));
+
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->once())
+			->method('update')
+			->with(
+				'sec-1',
+				[
+					'key' => 'CIPHER_KEY',
+					'additionalFields' => 'CIPHER_BLOB',
+					// Stored as given: plaintext, so it stays searchable.
+					'url' => 'https://example.test/api',
+				],
+				'requester'
+			)
+			->willReturn($secret);
+
+		$service = $this->makeFillService();
+
+		$result = $service->fill(
+			token: 'tok-good',
+			encryptedFields: ['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB'],
+			plainFields: ['url' => 'https://example.test/api'],
+		);
+
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testFillStoresCiphertextPlaintextAndTheAdditionalBlob()
+
+	/**
+	 * A plaintext metadata field sent as ciphertext is refused.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillRefusesPlaintextMetadataSentAsCiphertext(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['url']));
+
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretService->expects($this->never())->method('update');
+
+		$service = $this->makeFillService();
+
+		$this->expectException(InvalidArgumentException::class);
+
+		// Encrypted, which would land ciphertext in a searchable column.
+		$service->fill(token: 'tok-good', encryptedFields: ['url' => 'CIPHER_URL']);
+	}//end testFillRefusesPlaintextMetadataSentAsCiphertext()
+
+	/**
+	 * An additional member is satisfied by the blob arriving, and no more.
+	 *
+	 * The server never decrypts (ADR-003), so it cannot confirm a named member
+	 * is inside. The spec states that limitation rather than implying a
+	 * guarantee; this pins the behaviour so nobody later "fixes" it by
+	 * inspecting the blob.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testAdditionalMembersAreSatisfiedByTheBlobAlone(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['api-key', 'api-interface-id']));
+
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretService->method('update')->willReturn($secret);
+
+		$service = $this->makeFillService();
+
+		// Two members requested, one blob submitted — accepted.
+		$result = $service->fill(
+			token: 'tok-good',
+			encryptedFields: ['additionalFields' => 'CIPHER_BLOB'],
+		);
+
+		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
+	}//end testAdditionalMembersAreSatisfiedByTheBlobAlone()
+
+	/**
+	 * Build a service wired for the fill tests.
+	 *
+	 * @return SecretRequestService
+	 */
+	private function makeFillService(): SecretRequestService {
+		return new SecretRequestService(
+			mapper: $this->mapper,
+			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+		);
+	}//end makeFillService()
 
 	/**
 	 * A failed write leaves the request pending, not fulfilled and empty.

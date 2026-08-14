@@ -139,6 +139,7 @@ class SecretRequestFillController extends OCSController {
 	 *
 	 * @param string $token The opaque request token
 	 * @param array<string, string> $encryptedFields The encrypted field map
+	 * @param array|null $plainFields Plaintext metadata (url); unencrypted by design
 	 *
 	 * @return JSONResponse
 	 *
@@ -147,7 +148,11 @@ class SecretRequestFillController extends OCSController {
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 20, period: 60)]
-	public function fill(string $token, ?array $encryptedFields = null): JSONResponse {
+	public function fill(
+		string $token,
+		?array $encryptedFields = null,
+		?array $plainFields = null,
+	): JSONResponse {
 		// A missing field body is a client validation error, not a 500. Without
 		// a nullable default, NC's dispatcher passes null for an omitted
 		// `encryptedFields` and PHP raises a TypeError before the body runs.
@@ -159,7 +164,13 @@ class SecretRequestFillController extends OCSController {
 		}
 
 		try {
-			$entity = $this->secretRequestService->fill(token: $token, encryptedFields: $encryptedFields);
+			$entity = $this->secretRequestService->fill(
+				token: $token,
+				encryptedFields: $encryptedFields,
+				// Plaintext metadata (url) by design: encrypting it would put
+				// ciphertext in a searchable column.
+				plainFields: ($plainFields ?? [])
+			);
 		} catch (InvalidArgumentException $e) {
 			$status = $e->getCode();
 			if ($status < 400) {

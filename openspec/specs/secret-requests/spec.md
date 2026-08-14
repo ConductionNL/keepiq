@@ -57,6 +57,42 @@ The system MUST allow an authenticated user or application to create a SecretReq
 - WHEN the request is submitted
 - THEN the system MUST return an authorization error
 
+### Requirement: Requestable Fields
+
+A `SecretRequest` MUST be able to request every field a Secret supports, and for the encrypted extras it MUST be able to name which ones it wants.
+
+`requested_fields` entries are field names. Three are reserved and map to the Secret's own columns; every other name is an **additional field**, carried inside the single encrypted `additional_fields` blob:
+
+| Requested name | Stored in | Nature |
+|---|---|---|
+| `key` | `key` | RSA ciphertext |
+| `login` | `login` | RSA ciphertext |
+| `url` | `url` | **plaintext metadata** (searchable, per the secrets spec) |
+| any other name | a member of the `additional_fields` JSON object | RSA ciphertext (whole blob) |
+
+Because `url` is plaintext by design and the rest is ciphertext, a fill submission MUST carry them separately: encrypted values under `encryptedFields` and plaintext metadata under `plainFields`. A client MUST NOT encrypt a plaintext metadata field — storing ciphertext in a searchable column would break search and render the value unusable — and the system MUST refuse a field submitted in the wrong one.
+
+`additional_fields` remains ONE encrypted blob. The requested member names live on the request, which is plaintext non-sensitive metadata; the member names are NOT stored on the Secret. This deliberately keeps the encryption boundary where the secrets, secret-import and cxf-import-export specs put it: only `name`, `url`, type and folder path may be plaintext on a Secret.
+
+The consequence MUST be stated rather than implied: the system CANNOT verify that the requested additional members were actually filled, because it never decrypts the blob (ADR-003). It can only confirm that a blob arrived. Per-member completeness is a client-side concern.
+
+#### Scenario: A request names top-level and additional fields together
+- **GIVEN** a requester creates a request for `key`, `url` and `api-interface-id`
+- **WHEN** the fill-in link is opened
+- **THEN** the recipient MUST be prompted for all three
+- **AND** `key` MUST be submitted as ciphertext, `url` as plaintext metadata, and `api-interface-id` as a member of the encrypted `additional_fields` blob
+
+#### Scenario: A plaintext metadata field is submitted as ciphertext
+- **GIVEN** a request asking for `url`
+- **WHEN** the submission carries `url` under `encryptedFields` instead of `plainFields`
+- **THEN** the system MUST refuse it rather than storing ciphertext in a searchable column
+
+#### Scenario: Additional members cannot be verified server-side
+- **GIVEN** a request asking for the additional members `api-key` and `api-interface-id`
+- **WHEN** an encrypted `additional_fields` blob is submitted
+- **THEN** the system MUST accept the blob as satisfying both
+- **AND** MUST NOT claim to have verified their presence, which would require decrypting it
+
 ### Requirement: Fill In via Link
 Anyone with the fill-in link MUST be able to submit values for the requested fields without authentication.
 

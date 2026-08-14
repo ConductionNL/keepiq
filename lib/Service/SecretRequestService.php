@@ -41,15 +41,12 @@ use Ramsey\Uuid\Uuid;
  * Business logic for the SecretRequest lifecycle.
  */
 class SecretRequestService {
-	/**
-	 * The Secret columns a filled field can be written to.
-	 *
-	 * `requested_fields` is free-form JSON in the schema, so a request can name
-	 * anything; only these three have somewhere to live on the Secret.
-	 *
-	 * @var array<int,string>
+	/*
+	 * The field model lives on SecretRequestPolicy so validation and persistence
+	 * cannot drift apart: the validator decides which bucket a requested name
+	 * must arrive in, and this class decides which column it lands on. Two
+	 * copies of that mapping would eventually disagree.
 	 */
-	private const FILLABLE_FIELDS = ['key', 'login', 'additionalFields'];
 
 	/**
 	 * Constructor for SecretRequestService.
@@ -117,6 +114,7 @@ class SecretRequestService {
 	 *
 	 * @param string $token The access token
 	 * @param array<string,mixed> $encryptedFields A map of fieldName => encryptedValue
+	 * @param array<string,mixed> $plainFields Plaintext metadata (url), unencrypted by design
 	 *
 	 * @return SecretRequest
 	 *
@@ -124,9 +122,13 @@ class SecretRequestService {
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
 	 */
-	public function fill(string $token, array $encryptedFields): SecretRequest {
+	public function fill(string $token, array $encryptedFields, array $plainFields = []): SecretRequest {
 		$entity = $this->policy->requireOpenByToken(token: $token);
-		$this->policy->requireAllRequestedFields(entity: $entity, encryptedFields: $encryptedFields);
+		$this->policy->requireAllRequestedFields(
+			entity: $entity,
+			encryptedFields: $encryptedFields,
+			plainFields: $plainFields
+		);
 
 		// Atomic transition: re-load + flip to defend against a parallel
 		// fill that may have raced us between the token lookup and here.
@@ -135,7 +137,11 @@ class SecretRequestService {
 		// BEFORE the flip: a throw here leaves the request pending, which is
 		// the recoverable failure. Flipping first would mark it fulfilled with
 		// the value lost — the defect this method used to have.
-		$this->persistFilledValues(request: $current, encryptedFields: $encryptedFields);
+		$this->persistFilledValues(
+			request: $current,
+			encryptedFields: $encryptedFields,
+			plainFields: $plainFields
+		);
 
 		$current->setStatus(SecretRequest::STATUS_FULFILLED);
 		$current->setFulfilledAt(new DateTime());
@@ -173,6 +179,7 @@ class SecretRequestService {
 	 *
 	 * @param SecretRequest $request The request being fulfilled
 	 * @param array<string,mixed> $encryptedFields fieldName => ciphertext
+	 * @param array<string,mixed> $plainFields fieldName => plaintext metadata
 	 *
 	 * @return void
 	 *
@@ -180,16 +187,48 @@ class SecretRequestService {
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 	 */
-	private function persistFilledValues(SecretRequest $request, array $encryptedFields): void {
+	private function persistFilledValues(
+		SecretRequest $request,
+		array $encryptedFields,
+		array $plainFields,
+	): void {
 		$data = [];
 
+		// Encrypted bucket: the Secret's two ciphertext value columns, plus the
+		// one blob that carries every additional member.
 		foreach ($encryptedFields as $field => $value) {
-			// Only the Secret's three value columns can receive a blob. An
-			// unrecognised name previously went nowhere at all; refusing is the
-			// point of this method, so it must not silently drop one either.
-			if (in_array($field, self::FILLABLE_FIELDS, true) === false) {
+			$allowed = array_merge(SecretRequestPolicy::ENCRYPTED_FIELDS, [SecretRequestPolicy::ADDITIONAL_BLOB]);
+
+			if (in_array($field, SecretRequestPolicy::PLAINTEXT_FIELDS, true) === true) {
+				// Refused rather than stored: this column is searchable
+				// plaintext, so a ciphertext here would break search and render
+				// the value unreadable to its owner.
 				throw new InvalidArgumentException(
-					message: 'Field cannot be stored on a secret: ' . $field,
+					message: sprintf('Field "%s" is plaintext metadata and must be sent in plainFields', $field),
+					code: 400
+				);
+			}
+
+			if (in_array($field, $allowed, true) === false) {
+				throw new InvalidArgumentException(
+					message: sprintf(
+						'Field "%s" cannot be stored on a secret. Additional members belong inside the '
+						. '"%s" blob, keyed by their own names.',
+						$field,
+						SecretRequestPolicy::ADDITIONAL_BLOB
+					),
+					code: 400
+				);
+			}
+
+			$data[$field] = $value;
+		}
+
+		// Plaintext bucket: metadata the owner searches on.
+		foreach ($plainFields as $field => $value) {
+			if (in_array($field, SecretRequestPolicy::PLAINTEXT_FIELDS, true) === false) {
+				throw new InvalidArgumentException(
+					message: sprintf('Field "%s" is not plaintext metadata and must be encrypted', $field),
 					code: 400
 				);
 			}

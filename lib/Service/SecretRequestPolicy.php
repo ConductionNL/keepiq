@@ -43,6 +43,27 @@ use RuntimeException;
  */
 class SecretRequestPolicy {
 	/**
+	 * Requested names mapping to an encrypted Secret column.
+	 *
+	 * @var array<int,string>
+	 */
+	public const ENCRYPTED_FIELDS = ['key', 'login'];
+
+	/**
+	 * Requested names mapping to a plaintext (searchable) Secret column.
+	 *
+	 * @var array<int,string>
+	 */
+	public const PLAINTEXT_FIELDS = ['url'];
+
+	/**
+	 * The single encrypted blob carrying every additional member.
+	 *
+	 * @var string
+	 */
+	public const ADDITIONAL_BLOB = 'additionalFields';
+
+	/**
 	 * Constructor for SecretRequestPolicy.
 	 *
 	 * @param SecretRequestMapper $mapper The request mapper
@@ -135,6 +156,7 @@ class SecretRequestPolicy {
 	 *
 	 * @param SecretRequest $entity The request being filled
 	 * @param array<string,mixed> $encryptedFields The client-encrypted values
+	 * @param array<string,mixed> $plainFields Plaintext metadata bucket (url)
 	 *
 	 * @return void
 	 *
@@ -142,18 +164,38 @@ class SecretRequestPolicy {
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-field-validation
 	 */
-	public function requireAllRequestedFields(SecretRequest $entity, array $encryptedFields): void {
+	public function requireAllRequestedFields(
+		SecretRequest $entity,
+		array $encryptedFields,
+		array $plainFields = [],
+	): void {
 		$requested = json_decode(json: $entity->getRequestedFields(), associative: true);
 		if (is_array($requested) === false) {
 			return;
 		}
 
 		foreach ($requested as $field) {
-			if (array_key_exists($field, $encryptedFields) === false) {
+			// `url` is plaintext metadata and arrives in its own bucket; the two
+			// ciphertext columns arrive in the encrypted one. Anything else is an
+			// additional member, which lives INSIDE the single encrypted blob —
+			// so the most that can be checked is that the blob arrived. Looking
+			// for the member by name would require decrypting it, which the
+			// server never does (ADR-003), so per-member completeness is a
+			// client-side concern and is documented as such in the spec.
+			$bucket = $encryptedFields;
+			$lookFor = $field;
+
+			if (in_array($field, self::PLAINTEXT_FIELDS, true) === true) {
+				$bucket = $plainFields;
+			} elseif (in_array($field, self::ENCRYPTED_FIELDS, true) === false) {
+				$lookFor = self::ADDITIONAL_BLOB;
+			}
+
+			if (array_key_exists($lookFor, $bucket) === false) {
 				throw new InvalidArgumentException(message: 'Missing required field: ' . $field, code: 400);
 			}
 
-			$value = $encryptedFields[$field];
+			$value = $bucket[$lookFor];
 			if (is_string($value) === false || $value === '') {
 				throw new InvalidArgumentException(message: 'Empty value for field: ' . $field, code: 400);
 			}
