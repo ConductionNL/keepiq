@@ -33,6 +33,7 @@ use OCA\Doriath\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -70,6 +71,8 @@ class ServiceWorkerController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	// PWA service worker — the browser refetches it on every update check.
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function script(): DataDisplayResponse {
 		$path = $this->appManager->getAppPath(Application::APP_ID) . '/js/' . Application::APP_ID . '-service-worker.js';
 		$script = false;
