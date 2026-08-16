@@ -16,18 +16,15 @@
  * host element is renamed rather than reasoning about which div wins.
  */
 
+// No per-name `eslint-disable` for `import/named`: the flat config does not
+// register that rule, so each comment was ITSELF an error ("Definition for
+// rule 'import/named' was not found") — six of them in this one block.
 import {
-	// eslint-disable-next-line import/named
 	buildManifest,
-	// eslint-disable-next-line import/named
 	CnPageRenderer,
-	// eslint-disable-next-line import/named
 	defaultPageTypes,
-	// eslint-disable-next-line import/named
 	registerBuiltinDashboardWidgets,
-	// eslint-disable-next-line import/named
 	registerIcons,
-	// eslint-disable-next-line import/named
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
 import {
@@ -98,6 +95,12 @@ function tryLoadTranslations() {
 // lib's internals.
 const RoutePageRenderer = { ...CnPageRenderer }
 
+// `require.context` is a WEBPACK build-time API, not CommonJS `require`: the
+// bundler rewrites this call at compile time and no `require` exists at
+// runtime. eslint's browser globals therefore report `no-undef` correctly —
+// the code is right and the linter is right. Scoped to this one identifier so
+// a genuinely undefined name elsewhere in the file still fails.
+/* global require */
 const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
 const fragments = fragmentCtx
 	.keys()
