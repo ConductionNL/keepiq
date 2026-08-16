@@ -52,7 +52,7 @@
 					<PasswordStrengthMeter
 						v-if="masterPassword"
 						:password="masterPassword"
-						@strength-change="onStrengthChange" />
+						@strengthChange="onStrengthChange" />
 					<NcPasswordField
 						v-model="confirmPassword"
 						:label="t('doriath', 'Confirm master password')"
@@ -118,13 +118,13 @@
 
 <script>
 import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
-import LockIcon from 'vue-material-design-icons/Lock.vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
+import LockIcon from 'vue-material-design-icons/Lock.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
-import { useSessionStore } from '../store/modules/session.js'
-import { useOfflineStore } from '../store/modules/offline.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { usePasskeyStore } from '../store/modules/passkey.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'LockScreen',
@@ -155,27 +155,33 @@ export default {
 		offlineStore() {
 			return useOfflineStore()
 		},
+
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia session store with no domain logic.
 		 */
 		sessionStore() {
 			return useSessionStore()
 		},
+
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia encryption-suite store with no domain logic.
 		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
 		},
+
 		isFirstSetup() {
 			return !this.suiteStore.currentSuite
 		},
+
 		hasPausedMigration() {
 			return this.suiteStore.migrationStatus?.status === 'in_progress'
 		},
+
 		isSecureContext() {
 			return window.isSecureContext
 		},
+
 		/**
 		 * Gate the first-time setup submit on matching, strength-valid passwords.
 		 *

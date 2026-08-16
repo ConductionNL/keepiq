@@ -19,7 +19,7 @@
 			<NcSelect
 				v-model="targetFolder"
 				:options="folderOptions"
-				:input-label="t('doriath', 'Target folder')"
+				:inputLabel="t('doriath', 'Target folder')"
 				label="label"
 				data-testid="bulk-move-folder" />
 			<BulkRunPanel @retry="onRetry" />
@@ -41,10 +41,10 @@
 
 <script>
 import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
-import { useBulkStore } from '../store/modules/bulk.js'
-import { useSecretStore } from '../store/modules/secret.js'
-import { useFolderStore } from '../store/modules/folder.js'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
+import { useBulkStore } from '../store/modules/bulk.js'
+import { useFolderStore } from '../store/modules/folder.js'
+import { useSecretStore } from '../store/modules/secret.js'
 
 export default {
 	name: 'BulkMoveDialog',
@@ -54,22 +54,26 @@ export default {
 		NcSelect,
 		BulkRunPanel,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['close', 'done'],
 	data() {
 		return {
 			targetFolder: null,
 		}
 	},
+
 	computed: {
 		bulk() {
 			return useBulkStore()
 		},
+
 		folderOptions() {
 			const options = [{ id: null, label: this.t('doriath', 'Vault root') }]
 			for (const folder of useFolderStore().folders) {
@@ -78,6 +82,7 @@ export default {
 			return options
 		},
 	},
+
 	methods: {
 		/**
 		 * The per-item move: metadata-only folderId update.

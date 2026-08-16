@@ -219,6 +219,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 30, period: 60)]
 	public function byName(string $name): JSONResponse {
 		$application = $this->getApplication();
 		if ($application === null) {
@@ -278,6 +279,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 30, period: 60)]
 	public function create(): JSONResponse {
 		$application = $this->getApplication();
 		if ($application === null) {
@@ -323,6 +325,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 30, period: 60)]
 	public function update(string $id): JSONResponse {
 		$application = $this->getApplication();
 		if ($application === null) {

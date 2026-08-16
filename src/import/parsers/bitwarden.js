@@ -17,9 +17,9 @@
  * All parsing is in-browser; plaintext never leaves the page.
  */
 
-import { makeRow, validateRow, rejectRow, joinFolderPath } from '../model.js'
-import { serializePasskey } from '../../passkey/passkey.js'
 import { serializeCard, serializeIdentity } from '../../cardIdentity/cardIdentity.js'
+import { serializePasskey } from '../../passkey/passkey.js'
+import { joinFolderPath, makeRow, rejectRow, validateRow } from '../model.js'
 import { parseCsvImport } from './csv.js'
 
 /** Bitwarden CSV column → target-field mapping (fixed). */

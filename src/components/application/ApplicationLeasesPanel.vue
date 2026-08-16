@@ -61,10 +61,8 @@
 					<td>{{ lease.renewedCount }}</td>
 					<td>
 						<span
-							:class="[
-								'app-leases__status',
-								`app-leases__status--${lease.status}`,
-							]">
+							class="app-leases__status"
+							:class="[`app-leases__status--${lease.status}`]">
 							{{ lease.status }}
 						</span>
 					</td>
@@ -93,25 +91,30 @@ export default {
 		NcButton,
 		NcNoteCard,
 	},
+
 	props: {
 		applicationId: {
 			type: String,
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			error: null,
 		}
 	},
+
 	computed: {
 		store() {
 			return useLeaseStore()
 		},
+
 		leases() {
 			return this.store.leases
 		},
 	},
+
 	async mounted() {
 		try {
 			await this.store.fetchForApplication(this.applicationId)
@@ -127,6 +130,7 @@ export default {
 			}
 		}
 	},
+
 	methods: {
 		/**
 		 * Revoke one lease (admin/registrant surface).

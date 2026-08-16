@@ -115,6 +115,7 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close', 'registered'],
 	data() {
 		return {
@@ -124,10 +125,12 @@ export default {
 				type: 'internal',
 				csr: '',
 			},
+
 			busy: false,
 			error: null,
 		}
 	},
+
 	watch: {
 		open(val) {
 			if (val === false) {
@@ -137,6 +140,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		async onSubmit() {
 			this.error = null
@@ -163,6 +167,7 @@ export default {
 				this.busy = false
 			}
 		},
+
 		onCsrUpload(event) {
 			const file = event.target.files && event.target.files[0]
 			if (!file) {

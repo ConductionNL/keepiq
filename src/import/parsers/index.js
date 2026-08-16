@@ -11,14 +11,14 @@
  * backup-restore parser registers itself on import of backupParser.js.
  */
 
-import { registerParser } from '../parserRegistry.js'
-import { csvParser } from './csv.js'
-import { bitwardenParser } from './bitwarden.js'
-import { keepassXmlParser } from './keepassXml.js'
-import { ncPasswordsParser } from './ncPasswords.js'
-import { cxfParser } from './cxf.js'
 // Importing the backup parser registers the `.doriath-backup` restore path.
 import { backupParser } from '../backupParser.js'
+import { registerParser } from '../parserRegistry.js'
+import { bitwardenParser } from './bitwarden.js'
+import { csvParser } from './csv.js'
+import { cxfParser } from './cxf.js'
+import { keepassXmlParser } from './keepassXml.js'
+import { ncPasswordsParser } from './ncPasswords.js'
 
 registerParser(csvParser)
 registerParser(bitwardenParser)
@@ -27,10 +27,10 @@ registerParser(ncPasswordsParser)
 registerParser(cxfParser)
 
 export {
-	csvParser,
+	backupParser,
 	bitwardenParser,
+	csvParser,
+	cxfParser,
 	keepassXmlParser,
 	ncPasswordsParser,
-	cxfParser,
-	backupParser,
 }

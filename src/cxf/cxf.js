@@ -23,8 +23,8 @@
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
  */
 
-import { makeRow, validateRow, rejectRow } from '../import/model.js'
-import { serializePasskey, parsePasskey } from '../passkey/passkey.js'
+import { makeRow, rejectRow, validateRow } from '../import/model.js'
+import { parsePasskey, serializePasskey } from '../passkey/passkey.js'
 
 /** The CXF version this module targets (Proposed Standard, Aug 2025 line). */
 export const CXF_VERSION = { major: 1, minor: 0 }

@@ -15,15 +15,15 @@
  * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-client-side-recovery-envelope-escrow
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { useSessionStore } from './session.js'
-import { decryptPrivateKey } from '../../crypto/index.js'
+import { defineStore } from 'pinia'
 import {
 	buildRecoveryEnvelope,
 	openRecoveryEnvelope,
 } from '../../crypto/emergencyEnvelope.js'
+import { decryptPrivateKey } from '../../crypto/index.js'
+import { useSessionStore } from './session.js'
 
 export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 	state: () => ({
@@ -38,10 +38,16 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 	}),
 
 	getters: {
-		/** @return {Array<object>} Incoming relationships pending grantor decline. */
+		/**
+		 * @param state
+		 * @return {Array<object>} Incoming relationships pending grantor decline.
+		 */
 		pendingRequests: (state) =>
 			state.contacts.filter((c) => c.state === 'requested'),
-		/** @return {Array<object>} Relationships that need re-establishing after a key change. */
+		/**
+		 * @param state
+		 * @return {Array<object>} Relationships that need re-establishing after a key change.
+		 */
 		invalidatedContacts: (state) =>
 			state.contacts.filter((c) => c.state === 'invalidated'),
 	},

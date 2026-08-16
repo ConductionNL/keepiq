@@ -14,9 +14,9 @@
  * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-proven-mark-rotated-flow
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 
 export const useRotationStore = defineStore('rotation', {
 	state: () => ({

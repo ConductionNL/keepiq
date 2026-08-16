@@ -48,10 +48,8 @@
 						</td>
 						<td>
 							<span
-								:class="[
-									'bulk-run__status',
-									`bulk-run__status--${row.status}`,
-								]">
+								class="bulk-run__status"
+								:class="[`bulk-run__status--${row.status}`]">
 								{{ row.status }}
 							</span>
 						</td>
@@ -83,16 +81,20 @@ export default {
 		store() {
 			return useBulkStore()
 		},
+
 		progress() {
 			return this.store.progress
 		},
+
 		report() {
 			return this.store.report
 		},
+
 		failedCount() {
 			return this.store.failedItems.length
 		},
 	},
+
 	methods: {
 		/**
 		 * Resolve a secret id to its (plaintext) name for the report.

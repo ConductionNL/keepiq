@@ -22,7 +22,7 @@
  * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-re-encrypted-ciphertext-is-verified-before-the-original-is-discarded
  */
 
-import { rsaEncrypt, rsaDecrypt } from '../crypto/rsa.js'
+import { rsaDecrypt, rsaEncrypt } from '../crypto/rsa.js'
 
 /**
  * The three stores that carry their own ciphertext and are re-encrypted here.

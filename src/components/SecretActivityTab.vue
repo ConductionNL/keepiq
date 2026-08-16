@@ -74,6 +74,7 @@ export default {
 		entries() {
 			return useAuditStore().secretEntries
 		},
+
 		/**
 		 * Whether the audit store is loading.
 		 *
@@ -113,6 +114,7 @@ export default {
 		label(eventType) {
 			return auditEventLabel(eventType)
 		},
+
 		/**
 		 * Resolve a human-readable actor label for an entry.
 		 *
@@ -123,6 +125,7 @@ export default {
 		actor(entry) {
 			return auditActorLabel(entry)
 		},
+
 		/**
 		 * Format an ISO timestamp as a localized relative time.
 		 *

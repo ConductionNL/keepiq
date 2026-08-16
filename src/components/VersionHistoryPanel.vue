@@ -83,28 +83,33 @@ export default {
 		VersionDetailsDialog,
 		VersionRestoreDialog,
 	},
+
 	props: {
 		secretId: {
 			type: String,
 			required: true,
 		},
+
 		/** Whether the viewer may restore (the secret's owner). */
 		canManage: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	data() {
 		return {
 			viewed: null,
 			confirmVersion: null,
 		}
 	},
+
 	computed: {
 		store() {
 			return useSecretVersionStore()
 		},
 	},
+
 	async mounted() {
 		try {
 			await this.store.fetchVersions(this.secretId)
@@ -112,9 +117,11 @@ export default {
 			// Surfaced via store state.
 		}
 	},
+
 	unmounted() {
 		this.store.reset()
 	},
+
 	methods: {
 		/**
 		 * Decrypt and show one version read-only.

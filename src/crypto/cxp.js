@@ -12,12 +12,12 @@
  */
 
 import {
-	seal,
-	open,
-	generateRecipientKeyPair,
-	KEM_ID,
-	KDF_ID,
 	AEAD_ID,
+	generateRecipientKeyPair,
+	KDF_ID,
+	KEM_ID,
+	open,
+	seal,
 } from './hpke.js'
 
 /** Pinned CXP transport version, validated at open time (fail-fast on mismatch). */
@@ -28,6 +28,10 @@ const PINNED_SUITE = { kem: KEM_ID, kdf: KDF_ID, aead: AEAD_ID }
 
 // --- byte/base64 helpers (chunked so large CXF payloads don't overflow the stack) ---
 
+/**
+ *
+ * @param bytes
+ */
 function bytesToB64(bytes) {
 	let s = ''
 	const CHUNK = 0x8000
@@ -37,10 +41,18 @@ function bytesToB64(bytes) {
 	return btoa(s)
 }
 
+/**
+ *
+ * @param b64
+ */
 function b64ToBytes(b64) {
 	return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
 }
 
+/**
+ *
+ * @param bytes
+ */
 async function fingerprint(bytes) {
 	const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
 	return Array.from(digest)
@@ -48,6 +60,9 @@ async function fingerprint(bytes) {
 		.join('')
 }
 
+/**
+ *
+ */
 function randomNonce() {
 	return crypto.getRandomValues(new Uint8Array(16))
 }
@@ -55,6 +70,10 @@ function randomNonce() {
 // The HPKE `info` binds the ciphertext to the CXP version + request nonce, so an
 // envelope produced for one request cannot open under another (design: bind a
 // sealed envelope to the request nonce/public-key that produced it).
+/**
+ *
+ * @param nonceBytes
+ */
 function bindingInfo(nonceBytes) {
 	const version = new TextEncoder().encode(CXP_VERSION + ':')
 	const out = new Uint8Array(version.length + nonceBytes.length)
@@ -65,6 +84,10 @@ function bindingInfo(nonceBytes) {
 
 // AEAD additional data = the pinned suite triple, so a suite downgrade in the
 // envelope header fails the AEAD tag rather than silently mis-decrypting.
+/**
+ *
+ * @param suite
+ */
 function suiteAad(suite) {
 	return new TextEncoder().encode(`${suite.kem}.${suite.kdf}.${suite.aead}`)
 }
@@ -127,6 +150,10 @@ export async function sealForRequest(request, cxfBytes) {
 	}
 }
 
+/**
+ *
+ * @param suite
+ */
 function assertPinnedSuite(suite) {
 	if (
 		!suite

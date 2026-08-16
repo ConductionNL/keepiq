@@ -104,23 +104,28 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		encryptionSuiteId: {
 			type: String,
 			required: true,
 		},
+
 		availableFields: {
 			type: Array,
 			default: () => ['key', 'login', 'url'],
 		},
+
 		canReRequest: {
 			type: Boolean,
 			default: false,
 		},
+
 		linkBaseUrl: {
 			type: String,
 			default: '/share/request',
 		},
 	},
+
 	emits: ['cancel', 'created'],
 	data() {
 		return {
@@ -132,6 +137,7 @@ export default {
 			createdLink: null,
 		}
 	},
+
 	methods: {
 		async onSubmit() {
 			this.error = null

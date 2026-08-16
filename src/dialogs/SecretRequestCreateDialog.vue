@@ -75,8 +75,8 @@
 </template>
 
 <script>
-import { NcDialog } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import { NcDialog } from '@nextcloud/vue'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 
 export default {

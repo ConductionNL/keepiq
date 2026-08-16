@@ -82,15 +82,18 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		privateKey: {
 			type: String,
 			default: '',
 		},
+
 		filename: {
 			type: String,
 			default: 'doriath-application.pem',
 		},
 	},
+
 	emits: ['close'],
 	data() {
 		return {
@@ -98,6 +101,7 @@ export default {
 			copied: false,
 		}
 	},
+
 	computed: {
 		copyLabel() {
 			return this.copied
@@ -105,6 +109,7 @@ export default {
 				: t('doriath', 'Copy to clipboard')
 		},
 	},
+
 	watch: {
 		open(val) {
 			if (val === false) {
@@ -113,6 +118,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		async onCopy() {
 			try {
@@ -127,6 +133,7 @@ export default {
 				// Silently ignore — the user can still copy from the textarea.
 			}
 		},
+
 		onDownload() {
 			try {
 				const blob = new Blob([this.privateKey], {

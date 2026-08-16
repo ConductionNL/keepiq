@@ -110,9 +110,9 @@
 </template>
 
 <script>
-import { NcButton, NcDialog } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog } from '@nextcloud/vue'
 
 export default {
 	name: 'ComplianceSnapshotDialog',
@@ -239,6 +239,7 @@ export default {
 					'doriath',
 					'Rotation posture (ciphertext-age, not strength)',
 				),
+
 				auditIntegrity: this.t('doriath', 'Audit-trail integrity'),
 				emergencyAccess: this.t('doriath', 'Emergency-access coverage'),
 			}

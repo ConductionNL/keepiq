@@ -17,15 +17,16 @@
  * sees plaintext (ADR-003 / encryption-suites E2E guarantee).
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
-import { useSessionStore } from './session.js'
-import { useSecretStore } from './secret.js'
-import { useSecretTypeStore } from './secretType.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
+import { useSecretStore } from './secret.js'
+import { useSecretTypeStore } from './secretType.js'
+import { useSessionStore } from './session.js'
+
 // Importing the parsers module registers every format parser on the registry.
 import '../../import/parsers/index.js'
 
@@ -241,6 +242,8 @@ export const useImportStore = defineStore('import', {
 		 * @param {boolean} asCopy Whether to apply the "(imported)" copy suffix.
 		 * @param {string|null} totpTypeId The resolved `totp` type id, stamped on
 		 *   `totp` rows so an imported seed lands as an Authenticator secret.
+		 * @param passkeyTypeId
+		 * @param typedIds
 		 * @return {Promise<object>} The ciphertext-only item.
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types

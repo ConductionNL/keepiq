@@ -134,9 +134,9 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import ComplianceSnapshotDialog from '../../dialogs/ComplianceSnapshotDialog.vue'
 
 export default {

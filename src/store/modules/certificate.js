@@ -1,3 +1,5 @@
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 /**
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -8,8 +10,6 @@
  * non-secret display fields are submitted.
  */
 import { defineStore } from 'pinia'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { parseCertificatePem } from '../../certificates/x509.js'
 import { useSecretStore } from './secret.js'
 

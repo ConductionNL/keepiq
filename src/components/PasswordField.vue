@@ -7,10 +7,10 @@
 		     <input> never renders — the wrapper div is still there, so it looks
 		     present. No lint rule catches this. -->
 		<NcInputField
-			:model-value="displayValue"
+			:modelValue="displayValue"
 			:label="label"
 			:type="revealed ? 'text' : 'password'"
-			:read-only="true" />
+			:readOnly="true" />
 		<NcButton
 			variant="tertiary"
 			:aria-label="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
@@ -57,6 +57,7 @@ export default {
 				return t('doriath', 'Password')
 			},
 		},
+
 		/** An async resolver that returns the plaintext value (e.g. decrypt). */
 		resolve: {
 			type: Function,
