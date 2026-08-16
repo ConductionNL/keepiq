@@ -254,7 +254,6 @@
 </template>
 
 <script>
-// eslint-disable-next-line import/named
 import { CnAppRoot } from '@conduction/nextcloud-vue'
 import { translate as ncT } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'

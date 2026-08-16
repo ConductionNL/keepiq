@@ -66,7 +66,6 @@
 </template>
 
 <script>
-// eslint-disable-next-line import/named
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import ApplicationRegisterDialog from '../components/application/ApplicationRegisterDialog.vue'
 import PrivateKeyDownloadDialog from '../components/application/PrivateKeyDownloadDialog.vue'
