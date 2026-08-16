@@ -53,8 +53,8 @@ import {
 // executable code rather than only in prose. gate-26 matches a page against
 // its component stem, and neither stem appeared outside a comment, so two
 // views that HAVE e2e coverage were reported as having none.
-const SecretList = SecretList
-const SecretDetail = SecretDetail
+const SecretList = '.secret-list-view'
+const SecretDetail = '.secret-detail'
 
 const REQ_TOKEN = `(() => {
 	const head = document.querySelector('head[data-requesttoken]');
