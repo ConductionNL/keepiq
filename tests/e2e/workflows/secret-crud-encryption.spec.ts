@@ -149,9 +149,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		await expect(lockHeading(page)).toHaveText(
 			/Unlock Doriath|Set up your master password/i,
 		)
-		await expect(
-			page.locator(`${SecretList} .secret-list-item`),
-		).toHaveCount(0)
+		await expect(page.locator(`${SecretList} .secret-list-item`)).toHaveCount(0)
 	})
 
 	test('the secrets list API returns a clean, well-formed (empty) vault', async ({
