@@ -62,6 +62,15 @@ class PublicShellController extends Controller {
 	 * @return TemplateResponse
 	 *
 	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+	 *
+	 * @contract exclude renders a TemplateResponse, not an API response. This
+	 * endpoint serves the HTML shell that boots the zero-knowledge recipient
+	 * UI; it has no request body, no JSON schema and no status contract beyond
+	 * "200 with the shell". gate-25 is the API-layer companion to gate-19, and
+	 * a Newman assertion here could only restate that a page renders — which
+	 * the e2e suite already does through the shell it boots. The endpoints that
+	 * DO carry a contract are the fill/access ones behind this shell, and they
+	 * are tested there.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
