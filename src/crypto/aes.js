@@ -5,11 +5,11 @@
  */
 
 import {
-	encodeEnvelope,
 	decodeEnvelope,
+	encodeEnvelope,
 	ENVELOPE_VERSION,
-	SALT_LENGTH,
 	IV_LENGTH,
+	SALT_LENGTH,
 } from './envelope.js'
 
 const PBKDF2_ITERATIONS = 600000

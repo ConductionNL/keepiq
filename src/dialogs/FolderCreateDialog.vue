@@ -25,7 +25,7 @@
 				v-model="selectedParentId"
 				:options="parentOptions"
 				:reduce="(opt) => opt.value"
-				:input-label="t('doriath', 'Parent folder')"
+				:inputLabel="t('doriath', 'Parent folder')"
 				:clearable="false" />
 		</div>
 
@@ -79,6 +79,7 @@ export default {
 			type: String,
 			default: null,
 		},
+
 		/** Optional callback fired with the created folder after success. */
 		onSaved: {
 			type: Function,
@@ -106,6 +107,7 @@ export default {
 				})),
 			)
 		},
+
 		canSubmit() {
 			return !this.saving && this.name.trim() !== ''
 		},

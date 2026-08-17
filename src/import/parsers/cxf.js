@@ -16,7 +16,7 @@
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-client-side-cxf-import
  */
 
-import { parseCxfDocument, cxfToRows } from '../../cxf/cxf.js'
+import { cxfToRows, parseCxfDocument } from '../../cxf/cxf.js'
 
 /**
  * Parse a CXF export into normalized rows.

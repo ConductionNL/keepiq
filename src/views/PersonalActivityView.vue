@@ -81,6 +81,7 @@ export default {
 		entries() {
 			return useAuditStore().personalEntries
 		},
+
 		/**
 		 * Whether the audit store is loading.
 		 *
@@ -112,6 +113,7 @@ export default {
 		label(eventType) {
 			return auditEventLabel(eventType)
 		},
+
 		/**
 		 * Format an ISO timestamp as a localized date-time.
 		 *

@@ -20,10 +20,10 @@
 		     handler is async and persists server-side, so the prop stays
 		     one-way and the store remains the source of truth. -->
 		<NcCheckboxRadioSwitch
-			:model-value="flagged"
+			:modelValue="flagged"
 			type="switch"
 			data-testid="honey-toggle"
-			@update:model-value="onToggle">
+			@update:modelValue="onToggle">
 			{{
 				t(
 					'doriath',

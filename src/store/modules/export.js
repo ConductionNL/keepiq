@@ -16,15 +16,15 @@
  * scope, and secret count — never secret material or the passphrase.
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { serializeVault } from '../../export/serializer.js'
+import { defineStore } from 'pinia'
+import { sealForRequest } from '../../crypto/cxp.js'
+import { buildCxfDocument } from '../../cxf/cxf.js'
 import { encryptBackup } from '../../export/backup.js'
 import { generateCsv } from '../../export/csv.js'
-import { buildCxfDocument } from '../../cxf/cxf.js'
-import { sealForRequest } from '../../crypto/cxp.js'
 import { assembleGdprPackage } from '../../export/gdprPackage.js'
+import { serializeVault } from '../../export/serializer.js'
 
 /**
  * Trigger a local file download from a string blob. No network involved.

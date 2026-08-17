@@ -1,3 +1,5 @@
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 /**
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -12,16 +14,14 @@
  * encrypted at rest under the vault unlock key.
  */
 import { defineStore } from 'pinia'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { useSessionStore, onVaultLock } from './session.js'
-import { encryptSnapshot, decryptSnapshot } from '../../offline/snapshot.js'
 import {
-	writeSnapshot,
-	readSnapshot,
-	purge,
 	isCacheAvailable,
+	purge,
+	readSnapshot,
+	writeSnapshot,
 } from '../../offline/cache.js'
+import { decryptSnapshot, encryptSnapshot } from '../../offline/snapshot.js'
+import { onVaultLock, useSessionStore } from './session.js'
 
 let lockHookRegistered = false
 
@@ -42,6 +42,7 @@ export const useOfflineStore = defineStore('offline', {
 	getters: {
 		/**
 		 * Read-only whenever data is served from the offline cache.
+		 *
 		 * @param state
 		 */
 		readOnly: (state) => state.servedFromCache,

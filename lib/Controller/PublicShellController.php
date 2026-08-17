@@ -29,6 +29,7 @@ namespace OCA\Doriath\Controller;
 
 use OCA\Doriath\AppInfo\Application;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -58,12 +59,28 @@ class PublicShellController extends Controller {
 	 * password-protected flows, and the health worker allowance is
 	 * harmless here.
 	 *
+	 * Rate-limit rationale: this is the public shell — one of only four rendered
+	 * public pages in the fleet (ADR-081). It serves the zero-knowledge
+	 * secret-request UI, so the ceiling is generous: a recipient reloading the
+	 * page must never be what trips it. The token check lives on the fill/access
+	 * endpoints behind it, which are already rate-limited.
+	 *
 	 * @return TemplateResponse
 	 *
 	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+	 *
+	 * @contract exclude renders a TemplateResponse, not an API response. This
+	 * endpoint serves the HTML shell that boots the zero-knowledge recipient
+	 * UI; it has no request body, no JSON schema and no status contract beyond
+	 * "200 with the shell". gate-25 is the API-layer companion to gate-19, and
+	 * a Newman assertion here could only restate that a page renders — which
+	 * the e2e suite already does through the shell it boots. The endpoints that
+	 * DO carry a contract are the fill/access ones behind this shell, and they
+	 * are tested there.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function page(): TemplateResponse {
 		$response = new TemplateResponse(
 			appName: Application::APP_ID,

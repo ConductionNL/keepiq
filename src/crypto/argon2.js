@@ -97,7 +97,6 @@ export async function deriveAesKeyArgon2id(password, salt) {
 		|| (typeof window !== 'undefined' && window)
 		|| null
 	if (globalScope && !globalScope.loadArgon2WasmBinary) {
-		// eslint-disable-next-line import/no-unresolved
 		const wasmUrl = (await import('argon2-browser/dist/argon2.wasm')).default
 		globalScope.loadArgon2WasmBinary = () =>
 			fetch(wasmUrl)
@@ -108,7 +107,6 @@ export async function deriveAesKeyArgon2id(password, salt) {
 	// Lazy-load the WASM KDF so it is excluded from the initial vault bundle.
 	// argon2-browser is installed with the secrets-feature wiring (tasks.md §6.1);
 	// the import is intentionally lazy and dynamic.
-	// eslint-disable-next-line import/no-unresolved
 	const argon2 = await import('argon2-browser')
 
 	const result = await argon2.hash({

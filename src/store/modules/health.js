@@ -16,15 +16,15 @@
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { useSessionStore, onVaultLock } from './session.js'
-import { useSecretTypeStore } from './secretType.js'
+import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
-import { analyse, sha256Hex } from '../../health/engine.js'
 import { isPasswordBearing } from '../../health/classify.js'
+import { analyse, sha256Hex } from '../../health/engine.js'
 import { checkValue } from '../../health/hibp.js'
+import { useSecretTypeStore } from './secretType.js'
+import { onVaultLock, useSessionStore } from './session.js'
 
 export const useHealthStore = defineStore('health', {
 	state: () => ({
@@ -45,19 +45,34 @@ export const useHealthStore = defineStore('health', {
 	}),
 
 	getters: {
-		/** @return {Array<object>} Weak findings. */
+		/**
+		 * @param state
+		 * @return {Array<object>} Weak findings.
+		 */
 		weakFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('weak')),
-		/** @return {Array<object>} Reused findings. */
+		/**
+		 * @param state
+		 * @return {Array<object>} Reused findings.
+		 */
 		reusedFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('reused')),
-		/** @return {Array<object>} Stale findings. */
+		/**
+		 * @param state
+		 * @return {Array<object>} Stale findings.
+		 */
 		staleFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('stale')),
-		/** @return {Array<object>} Breached findings. */
+		/**
+		 * @param state
+		 * @return {Array<object>} Breached findings.
+		 */
 		breachedFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('breached')),
-		/** @return {Array<object>} Possibly-compromised findings. */
+		/**
+		 * @param state
+		 * @return {Array<object>} Possibly-compromised findings.
+		 */
 		compromisedFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('compromised')),
 		/**
@@ -184,7 +199,6 @@ export const useHealthStore = defineStore('health', {
 				}
 				let value = ''
 				try {
-					// eslint-disable-next-line no-await-in-loop
 					value = await rsaDecrypt(secret.key, session.cryptoKey)
 				} catch {
 					continue
@@ -219,12 +233,12 @@ export const useHealthStore = defineStore('health', {
 				if (!isPasswordBearing(row.value)) {
 					continue
 				}
-				// eslint-disable-next-line no-await-in-loop
+
 				const digest = await sha256Hex(row.value)
 				if (results.has(digest)) {
 					continue
 				}
-				// eslint-disable-next-line no-await-in-loop
+
 				const verdict = await checkValue(row.value)
 				if (verdict.status === 'unavailable') {
 					anyUnavailable = true

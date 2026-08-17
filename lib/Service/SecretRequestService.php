@@ -40,13 +40,14 @@ use Ramsey\Uuid\Uuid;
 /**
  * Business logic for the SecretRequest lifecycle.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Fourteen against a limit of
- *   thirteen, and inherent rather than incidental: a request touches its own
- *   mapper, policy and outbox, the write lock, and — since fills now persist
- *   what the recipient submitted — the Secret it writes to plus the two
- *   not-found exceptions that read can raise. SecretService is reached through
- *   the container precisely to avoid a hard dependency, so the count is already
- *   the reduced form.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 14 against a threshold of 13,
+ * and one of the fourteen cannot be removed: SecretService takes a nullable
+ * SecretRequestService and this class reaches SecretService through the
+ * container, which is how the cycle between them is broken. Injecting
+ * SecretService directly to drop ContainerInterface would trade one coupling
+ * for a construction-time circular dependency. The remainder are two mappers,
+ * two Db entities, two lookup exceptions and the value types (DateTime, Uuid) —
+ * none of them indirection worth adding a class to hide.
  */
 class SecretRequestService {
 	/*

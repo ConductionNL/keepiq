@@ -57,7 +57,8 @@
 		<div class="rotation-panel__expiry">
 			<span
 				v-if="effectiveExpiry"
-				:class="['rotation-panel__chip', expiryChipClass]"
+				class="rotation-panel__chip"
+				:class="[expiryChipClass]"
 				data-testid="expiry-chip">
 				{{ expiryLabel }}
 			</span>
@@ -107,17 +108,20 @@ export default {
 		NcButton,
 		NcNoteCard,
 	},
+
 	props: {
 		secretId: {
 			type: String,
 			required: true,
 		},
+
 		/** Whether the viewer may edit expiry / resolve flags (the owner). */
 		canManage: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	data() {
 		return {
 			expiresAt: null,
@@ -127,13 +131,16 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		store() {
 			return useRotationStore()
 		},
+
 		openFlag() {
 			return this.store.flagsBySecretId[this.secretId] || null
 		},
+
 		flagLabel() {
 			const reasons = {
 				user_flagged: this.t('doriath', 'Rotation requested'),
@@ -147,6 +154,7 @@ export default {
 				reasons[this.openFlag?.reason] || this.t('doriath', 'Rotation due')
 			)
 		},
+
 		daysLeft() {
 			if (!this.effectiveExpiry) {
 				return null
@@ -155,6 +163,7 @@ export default {
 				(Date.parse(this.effectiveExpiry) - Date.now()) / 86400000,
 			)
 		},
+
 		expiryChipClass() {
 			if (this.daysLeft === null) {
 				return ''
@@ -167,6 +176,7 @@ export default {
 			}
 			return 'rotation-panel__chip--ok'
 		},
+
 		expiryLabel() {
 			const date = new Date(
 				Date.parse(this.effectiveExpiry),
@@ -177,9 +187,11 @@ export default {
 			return this.t('doriath', 'Expires {date}', { date })
 		},
 	},
+
 	async mounted() {
 		await this.load()
 	},
+
 	methods: {
 		/**
 		 * Load the expiry pair and the caller's open flags.

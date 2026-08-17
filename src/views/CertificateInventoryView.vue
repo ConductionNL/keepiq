@@ -217,8 +217,8 @@
 </template>
 
 <script>
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import { showSuccess, showError } from '@nextcloud/dialogs'
 import CertificateRenewalChecklistDialog from '../dialogs/CertificateRenewalChecklistDialog.vue'
 import { useCertificateStore } from '../store/modules/certificate.js'
 import { useSessionStore } from '../store/modules/session.js'

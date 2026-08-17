@@ -152,6 +152,18 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// online, which is true in headless Chromium over the instance's
 			// HTTPS origin.
 			/\/api\/v1\/passkeys\/login-options\b/,
+			// CnAppRoot's setup() calls useSupportDialog(appId, { persistence:
+			// 'server' }) unconditionally — same shell layer, and for the same
+			// reason, as the /api/settings entry above: it runs before any route
+			// resolves and therefore regardless of lock state. The endpoint is
+			// OpenRegister's AppHost GenericPreferencesController, which reads a
+			// single `pref_`-namespaced UI flag for the SESSION user only (no id
+			// or userId input, 401 when anonymous) and returns `{value}`. It
+			// carries no vault material, so it is chrome, not a leak — which is
+			// the distinction this allowlist exists to draw. Opting out with
+			// `:support-dialog="false"` would silence it by removing a feature
+			// rather than by judging the traffic.
+			/\/api\/preferences\/support-dialog-seen\b/,
 		]
 
 		page.on('request', (req) => {

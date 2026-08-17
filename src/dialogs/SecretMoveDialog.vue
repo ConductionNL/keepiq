@@ -43,8 +43,8 @@
 				v-model="folderId"
 				:options="folderOptions"
 				:reduce="(opt) => opt.value"
-				:input-label="t('doriath', 'Destination folder')"
-				:append-to-body="false"
+				:inputLabel="t('doriath', 'Destination folder')"
+				:appendToBody="false"
 				:clearable="false" />
 		</div>
 
@@ -72,8 +72,8 @@ import {
 	NcSelect,
 } from '@nextcloud/vue'
 import FolderMove from 'vue-material-design-icons/FolderMove.vue'
-import { useSecretStore } from '../store/modules/secret.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { useSecretStore } from '../store/modules/secret.js'
 
 /**
  * Move a secret into a folder (or to the vault root) via the secret store.
@@ -97,11 +97,13 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/** The secret's current folder ID (preselected). */
 		currentFolderId: {
 			type: String,
 			default: null,
 		},
+
 		/** Optional callback fired with the updated secret after success. */
 		onSaved: {
 			type: Function,

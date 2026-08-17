@@ -64,4 +64,4 @@ export function decodeEnvelope(base64) {
 	return { version, salt, iv, ciphertextWithTag }
 }
 
-export { ENVELOPE_VERSION, SALT_LENGTH, IV_LENGTH, TAG_LENGTH }
+export { ENVELOPE_VERSION, IV_LENGTH, SALT_LENGTH, TAG_LENGTH }

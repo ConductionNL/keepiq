@@ -73,14 +73,17 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		description: {
 			type: String,
 			default: '',
 		},
+
 		findings: {
 			type: Array,
 			default: () => [],
 		},
+
 		testid: {
 			type: String,
 			default: 'health-category',

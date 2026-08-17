@@ -18,26 +18,26 @@
 		class="doriath-application-register-view"
 		data-testid="application-register-view">
 		<CnIndexPage
-			view-mode="list"
-			:available-view-modes="['list', 'cards', 'table']"
-			list-label="List"
+			viewMode="list"
+			:availableViewModes="['list', 'cards', 'table']"
+			listLabel="List"
 			:selectable="false"
 			:objects="rows"
 			:schema="listSchema"
-			:list-config="listConfig"
+			:listConfig="listConfig"
 			:loading="store.loading"
-			:add-label="t('doriath', 'Register application')"
-			add-icon="Plus"
-			inline-search
-			:search-value="searchTerm"
-			:search-placeholder="t('doriath', 'Search applications')"
-			row-key="id"
-			:empty-text="
+			:addLabel="t('doriath', 'Register application')"
+			addIcon="Plus"
+			inlineSearch
+			:searchValue="searchTerm"
+			:searchPlaceholder="t('doriath', 'Search applications')"
+			rowKey="id"
+			:emptyText="
 				t('doriath', 'You have not registered any applications yet.')
 			"
 			@add="dialogOpen = true"
 			@search="onSearch"
-			@row-click="openApplication">
+			@rowClick="openApplication">
 			<template #row-badges="{ object }">
 				<CnStatusBadge
 					:label="statusLabel(object.status)"
@@ -60,17 +60,16 @@
 			:open="
 				store.oneTimePrivateKey !== null && store.oneTimePrivateKey !== ''
 			"
-			:private-key="store.oneTimePrivateKey || ''"
+			:privateKey="store.oneTimePrivateKey || ''"
 			@close="onAcknowledgeKey" />
 	</div>
 </template>
 
 <script>
-// eslint-disable-next-line import/named
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
-import { useApplicationStore } from '../store/modules/application.js'
 import ApplicationRegisterDialog from '../components/application/ApplicationRegisterDialog.vue'
 import PrivateKeyDownloadDialog from '../components/application/PrivateKeyDownloadDialog.vue'
+import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
 	name: 'ApplicationRegisterView',
@@ -97,6 +96,7 @@ export default {
 			if (!term) return all
 			return all.filter((a) => (a.name || '').toLowerCase().includes(term))
 		},
+
 		listSchema() {
 			return {
 				properties: {
@@ -106,12 +106,14 @@ export default {
 						type: 'string',
 					},
 				},
+
 				configuration: {
 					objectNameField: 'name',
 					objectDescriptionField: 'description',
 				},
 			}
 		},
+
 		listConfig() {
 			return { titleField: 'name', subtitleField: 'description' }
 		},

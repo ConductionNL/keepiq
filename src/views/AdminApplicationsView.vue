@@ -145,9 +145,11 @@ export default {
 		pending() {
 			return this.store.pendingApplications
 		},
+
 		pendingCount() {
 			return this.store.pendingCount
 		},
+
 		hasPrivateKey() {
 			return !!this.store.oneTimePrivateKey
 		},
@@ -168,6 +170,7 @@ export default {
 		async approve(id) {
 			await this.store.approveApplication(id)
 		},
+
 		/**
 		 * Reject (hard-delete) a pending application.
 		 *
@@ -177,6 +180,7 @@ export default {
 		async reject(id) {
 			await this.store.rejectApplication(id)
 		},
+
 		/**
 		 * Clear the one-time private-key dialog state after the admin
 		 * has acknowledged saving it.

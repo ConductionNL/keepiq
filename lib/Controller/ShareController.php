@@ -282,6 +282,13 @@ class ShareController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @no-admin-idor-exempt public-key distribution. The only thing returned is
+	 * EncryptionSuite::getCertificate() — the PUBLIC half of the recipient's
+	 * suite, and never any private material. Any authenticated user must be
+	 * able to fetch any recipient's certificate, because that certificate is
+	 * precisely what the browser needs in order to encrypt a secret TO them;
+	 * withholding it would not protect anything and would break sharing.
 	 */
 	#[NoAdminRequired]
 	public function recipientCertificate(string $userId): JSONResponse {

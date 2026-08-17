@@ -79,10 +79,12 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		plaintextSnapshot: {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Eligible members for the picked group. Each entry must include
 		 * `userId` and `publicCertificate`; members without an active suite
@@ -93,6 +95,7 @@ export default {
 			default: () => [],
 		},
 	},
+
 	emits: ['cancel', 'shared'],
 	data() {
 		return {
@@ -101,11 +104,13 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		memberCount() {
 			return this.members.length
 		},
 	},
+
 	methods: {
 		async onSubmit() {
 			this.error = null
@@ -123,7 +128,6 @@ export default {
 			try {
 				const recipients = []
 				for (const member of this.members) {
-					// eslint-disable-next-line no-await-in-loop
 					const encryptedFields = await store.encryptForRecipient(
 						this.plaintextSnapshot,
 						member.publicCertificate,

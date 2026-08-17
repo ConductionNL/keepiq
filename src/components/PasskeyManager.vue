@@ -116,8 +116,8 @@
 </template>
 
 <script>
-import { NcButton, NcNoteCard, NcPasswordField, NcTextField } from '@nextcloud/vue'
 import { showSuccess } from '@nextcloud/dialogs'
+import { NcButton, NcNoteCard, NcPasswordField, NcTextField } from '@nextcloud/vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import { usePasskeyStore } from '../store/modules/passkey.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -147,6 +147,7 @@ export default {
 		vaultLocked() {
 			return useSessionStore().isLocked
 		},
+
 		hasStale() {
 			return this.store.credentials.some((c) => c.status === 'stale')
 		},

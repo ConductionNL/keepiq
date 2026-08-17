@@ -76,19 +76,23 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		secretId: {
 			type: String,
 			required: true,
 		},
+
 		plaintextSnapshot: {
 			type: Object,
 			default: () => ({}),
 		},
+
 		recipientCertificate: {
 			type: String,
 			default: '',
 		},
 	},
+
 	emits: ['close', 'shared'],
 	data() {
 		return {
@@ -97,6 +101,7 @@ export default {
 			error: null,
 		}
 	},
+
 	watch: {
 		open(val) {
 			if (val === false) {
@@ -106,6 +111,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		async onSubmit() {
 			this.error = null

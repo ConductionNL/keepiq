@@ -12,9 +12,9 @@
  * @spec openspec/changes/implement-user-sharing/tasks.md#11.2
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 
 export const useDelegationStore = defineStore('delegation', {
 	state: () => ({

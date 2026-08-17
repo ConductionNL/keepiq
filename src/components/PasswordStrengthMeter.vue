@@ -30,6 +30,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Explicit score floor. `null` (the default) means "use the
 		 * administrator's master-password policy"; no caller in the app
@@ -40,6 +41,7 @@ export default {
 			type: Number,
 			default: null,
 		},
+
 		/** Explicit length floor; `null` defers to the admin policy. */
 		minLength: {
 			type: Number,

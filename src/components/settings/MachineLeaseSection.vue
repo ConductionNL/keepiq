@@ -67,9 +67,9 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcNoteCard } from '@nextcloud/vue'
 
 export default {
 	name: 'MachineLeaseSection',

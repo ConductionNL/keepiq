@@ -30,6 +30,7 @@ namespace OCA\Doriath\Controller;
 use OCA\Doriath\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -68,6 +69,7 @@ class WebManifestController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function manifest(): DataDisplayResponse {
 		$vaultUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page') . '#/secrets';
 		$startUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page');

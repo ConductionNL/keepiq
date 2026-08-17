@@ -59,8 +59,8 @@
 import { NcLoadingIcon } from '@nextcloud/vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import CopyButton from './CopyButton.vue'
-import { parseOtpauth, generateTotp, secondsRemaining } from '../totp/totp.js'
-import { useSessionStore, onVaultLock } from '../store/modules/session.js'
+import { onVaultLock, useSessionStore } from '../store/modules/session.js'
+import { generateTotp, parseOtpauth, secondsRemaining } from '../totp/totp.js'
 
 /**
  * Renders the live RFC 6238 one-time code for a `totp` secret, computed
@@ -123,6 +123,7 @@ export default {
 			const mid = Math.ceil(this.code.length / 2)
 			return `${this.code.slice(0, mid)} ${this.code.slice(mid)}`
 		},
+
 		/**
 		 * The issuer for display.
 		 *
@@ -132,6 +133,7 @@ export default {
 		issuer() {
 			return this.params ? this.params.issuer : null
 		},
+
 		/**
 		 * The account name for display.
 		 *
@@ -141,6 +143,7 @@ export default {
 		account() {
 			return this.params ? this.params.account : null
 		},
+
 		/**
 		 * The SVG ring circumference (r=16).
 		 *
@@ -150,6 +153,7 @@ export default {
 		ringCircumference() {
 			return 2 * Math.PI * 16
 		},
+
 		/**
 		 * The stroke offset representing time elapsed in the current window.
 		 *
@@ -163,6 +167,7 @@ export default {
 			const fraction = this.remaining / this.params.period
 			return this.ringCircumference * (1 - fraction)
 		},
+
 		/**
 		 * The accessible countdown label.
 		 *

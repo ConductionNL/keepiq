@@ -24,7 +24,7 @@
 			<NcSelect
 				v-model="target"
 				:options="teamFolderOptions"
-				:input-label="t('doriath', 'Team folder')"
+				:inputLabel="t('doriath', 'Team folder')"
 				label="label"
 				data-testid="bulk-team-folder-select" />
 			<p v-if="fanOut.running" data-testid="bulk-tf-fanout">
@@ -54,11 +54,11 @@
 
 <script>
 import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
-import { useBulkStore } from '../store/modules/bulk.js'
-import { useSecretStore } from '../store/modules/secret.js'
-import { useFolderStore } from '../store/modules/folder.js'
-import { useTeamFolderStore } from '../store/modules/teamFolder.js'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
+import { useBulkStore } from '../store/modules/bulk.js'
+import { useFolderStore } from '../store/modules/folder.js'
+import { useSecretStore } from '../store/modules/secret.js'
+import { useTeamFolderStore } from '../store/modules/teamFolder.js'
 
 export default {
 	name: 'BulkTeamFolderDialog',
@@ -68,28 +68,34 @@ export default {
 		NcSelect,
 		BulkRunPanel,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['close', 'done'],
 	data() {
 		return {
 			target: null,
 		}
 	},
+
 	computed: {
 		bulk() {
 			return useBulkStore()
 		},
+
 		teamFolderStore() {
 			return useTeamFolderStore()
 		},
+
 		fanOut() {
 			return this.teamFolderStore.fanOut
 		},
+
 		teamFolderOptions() {
 			const folderNames = Object.fromEntries(
 				useFolderStore().folders.map((f) => [f.id, f.name]),
@@ -101,6 +107,7 @@ export default {
 			}))
 		},
 	},
+
 	async mounted() {
 		try {
 			await this.teamFolderStore.fetchTeamFolders()
@@ -108,6 +115,7 @@ export default {
 			// Surfaced via store state.
 		}
 	},
+
 	methods: {
 		/**
 		 * The per-item step: metadata-only move into the team folder.

@@ -16,40 +16,36 @@
  * host element is renamed rather than reasoning about which div wins.
  */
 
-import { createApp, h } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
+// No per-name `eslint-disable` for `import/named`: the flat config does not
+// register that rule, so each comment was ITSELF an error ("Definition for
+// rule 'import/named' was not found") — six of them in this one block.
 import {
-	translate as t,
-	translatePlural as n,
-	loadTranslations,
-} from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
-import {
-	// eslint-disable-next-line import/named
 	buildManifest,
-	// eslint-disable-next-line import/named
 	CnPageRenderer,
-	// eslint-disable-next-line import/named
 	defaultPageTypes,
-	// eslint-disable-next-line import/named
-	registerIcons,
-	// eslint-disable-next-line import/named
 	registerBuiltinDashboardWidgets,
-	// eslint-disable-next-line import/named
+	registerIcons,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-import pinia from './pinia.js'
+import {
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { createApp, h } from 'vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
+import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
+import pinia from './pinia.js'
 import registry from './registry.js'
-import appIcons from './icons.js'
 import { createVaultGuard } from './router/guards.js'
 import { useSessionStore } from './store/modules/session.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-
 // Global (unscoped) app styles
 import './assets/app.css'
 
@@ -75,6 +71,9 @@ try {
 // the JS/CSS allowlist through Apache; /custom_apps/<app>/l10n/<locale>.json
 // may 404. Strings fall back to English source on miss; boot must not
 // depend on this resolving.
+/**
+ *
+ */
 function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('doriath', () => {})
@@ -96,6 +95,12 @@ function tryLoadTranslations() {
 // lib's internals.
 const RoutePageRenderer = { ...CnPageRenderer }
 
+// `require.context` is a WEBPACK build-time API, not CommonJS `require`: the
+// bundler rewrites this call at compile time and no `require` exists at
+// runtime. eslint's browser globals therefore report `no-undef` correctly —
+// the code is right and the linter is right. Scoped to this one identifier so
+// a genuinely undefined name elsewhere in the file still fails.
+/* global require */
 const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
 const fragments = fragmentCtx
 	.keys()

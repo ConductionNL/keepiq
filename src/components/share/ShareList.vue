@@ -79,16 +79,19 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		canRevoke: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	data() {
 		return {
 			store: useShareStore(),
 		}
 	},
+
 	watch: {
 		secretId(id) {
 			if (id) {
@@ -96,11 +99,13 @@ export default {
 			}
 		},
 	},
+
 	async created() {
 		if (this.secretId) {
 			await this.store.fetchShares(this.secretId).catch(() => {})
 		}
 	},
+
 	methods: {
 		onRevoke(shareId) {
 			this.store.revokeShare(shareId).catch(() => {})

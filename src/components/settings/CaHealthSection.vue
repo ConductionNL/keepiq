@@ -79,10 +79,10 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'CaHealthSection',
@@ -111,6 +111,7 @@ export default {
 			}
 			return map[this.caStatus?.status] || 'grey'
 		},
+
 		/**
 		 * Map CA status to a translated, human-readable label.
 		 *
@@ -144,6 +145,7 @@ export default {
 			)
 			this.caStatus = response.data
 		},
+
 		/**
 		 * Admin action: retry a failed CA bootstrap, then refresh status.
 		 *
@@ -155,6 +157,7 @@ export default {
 			await this.fetchStatus()
 			this.loading = false
 		},
+
 		/**
 		 * Admin action: force-renew the intermediate certificate, then refresh status.
 		 *

@@ -17,7 +17,7 @@
  *
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
  */
-import { encryptMetadata, decryptMetadata } from '../crypto/metadata.js'
+import { decryptMetadata, encryptMetadata } from '../crypto/metadata.js'
 
 /**
  * Build the at-rest snapshot from a server manifest, encrypting plaintext

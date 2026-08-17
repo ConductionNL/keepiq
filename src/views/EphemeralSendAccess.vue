@@ -87,9 +87,9 @@
 </template>
 
 <script>
-import { NcButton, NcEmptyContent, NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcEmptyContent, NcNoteCard } from '@nextcloud/vue'
 import { useEphemeralSendStore } from '../store/modules/ephemeralSend.js'
 
 export default {
@@ -106,14 +106,17 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		token() {
 			return this.$route.params.token || ''
 		},
+
 		fragmentKey() {
 			return this.$route.query.k || ''
 		},
 	},
+
 	/**
 	 * Peek the send so the page knows whether to prompt for a password.
 	 */
@@ -129,6 +132,7 @@ export default {
 			this.gone = true
 		}
 	},
+
 	methods: {
 		/**
 		 * Fetch, decrypt, and confirm the view.

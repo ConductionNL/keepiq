@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { rsaEncrypt, rsaDecrypt, importPublicKey } from '../../crypto/index.js'
-import { passkeyRpId, PASSKEY_TYPE_NAME } from '../../passkey/passkey.js'
-import { useSessionStore } from './session.js'
-import { useSecretTypeStore } from './secretType.js'
+import { defineStore } from 'pinia'
+import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
+import { PASSKEY_TYPE_NAME, passkeyRpId } from '../../passkey/passkey.js'
 import { useOfflineStore } from './offline.js'
+import { useSecretTypeStore } from './secretType.js'
+import { useSessionStore } from './session.js'
 
 /**
  * Pinia store for secrets.

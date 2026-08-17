@@ -47,13 +47,13 @@
 </template>
 
 <script>
-import { NcButton, NcDialog } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog } from '@nextcloud/vue'
+import BulkRunPanel from '../components/BulkRunPanel.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useShareStore } from '../store/modules/share.js'
-import BulkRunPanel from '../components/BulkRunPanel.vue'
 
 export default {
 	name: 'BulkShareDialog',
@@ -62,12 +62,14 @@ export default {
 		NcDialog,
 		BulkRunPanel,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['close', 'done'],
 	data() {
 		return {
@@ -76,11 +78,13 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		bulk() {
 			return useBulkStore()
 		},
 	},
+
 	methods: {
 		/**
 		 * The per-item fan-out: decrypt the owner's copy in-browser,

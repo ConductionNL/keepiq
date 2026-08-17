@@ -30,6 +30,7 @@ use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Service\JwtAuthService;
 use OCA\Doriath\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -78,12 +79,17 @@ class DiscoveryController extends Controller {
 	 * audiences (the default audience string remains the value documented
 	 * in the consumption recipe).
 	 *
+	 * Rate-limit rationale: this is a discovery document — clients fetch it to
+	 * learn the endpoints, which is the point of publishing it. The limit is a
+	 * ceiling only, no counter: nothing here is a credential.
+	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function document(): JSONResponse {
 		$tokenEndpoint = $this->urlGenerator->linkToRoute('doriath.applicationToken.exchange');
 		$tokenAbsolute = $this->urlGenerator->getAbsoluteURL($tokenEndpoint);

@@ -31,7 +31,7 @@
 				<NcSelect
 					v-model="payloadType"
 					:options="['text', 'credential']"
-					:input-label="t('doriath', 'Type')"
+					:inputLabel="t('doriath', 'Type')"
 					:clearable="false"
 					data-testid="send-type" />
 				<label class="new-send__field">
@@ -140,12 +140,14 @@ export default {
 		NcNoteCard,
 		NcSelect,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['close'],
 	data() {
 		return {
@@ -159,6 +161,7 @@ export default {
 			error: null,
 		}
 	},
+
 	methods: {
 		/**
 		 * Encrypt + create, then show the link once.
