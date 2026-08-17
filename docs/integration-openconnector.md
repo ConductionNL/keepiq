@@ -216,19 +216,31 @@ never resolve into another vault.
   "status": "pending",
   "requestedFields": ["url", "api-key", "api-interface-id"],
   "token": "…",
-  "fillLinkUrl": "https://<host>/index.php/apps/doriath/api/v1/public/secret-requests/<token>",
+  "fillLinkUrl": "https://<host>/index.php/apps/doriath/public#/share/request/<token>",
+  "fillApiUrl": "https://<host>/index.php/apps/doriath/api/v1/public/secret-requests/<token>",
   "expiresAt": "2026-12-31T00:00:00+00:00"
 }
 ```
 
-Send `fillLinkUrl` to the human. There is no need to create the Secret first —
+Send `fillLinkUrl` to the human — it is the anonymous page they can open
+without a Nextcloud account. `fillApiUrl` is the JSON endpoint behind it, for
+polling from code; do not send that one to a person.
+
+> **Known limitation (verified 2026-08-17).** The anonymous page currently
+> renders blank in a headless browser. This is not specific to secret requests:
+> every route on the `/public` shell — link shares and ephemeral sends included —
+> renders empty for an anonymous visitor, and it reproduces on a freshly built
+> bundle. The API surface documented here is unaffected and fully working; the
+> human hand-off leg is not, and is tracked separately.
+
+There is no need to create the Secret first —
 the shell is created for you, owned by the calling application, and removed again
 if the request itself fails.
 
 Lost the response? The fill-link is retrievable:
 
 - `GET /apps/doriath/api/v1/app/secret-requests` — the caller's own PENDING
-  requests, each with its `token` and `fillLinkUrl`.
+  requests, each with its `token`, `fillLinkUrl` and `fillApiUrl`.
 
 Requests created by a **user** against the application's vault are deliberately
 not listed here: they are the user's to manage.

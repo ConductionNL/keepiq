@@ -142,7 +142,13 @@ class ApplicationSecretRequestService {
 				// server never holds a plaintext one (ADR-003).
 				'key' => '',
 			],
-			applicationId: $applicationId
+			applicationId: $applicationId,
+			// Without this the create fails with "A secret requires a name and a
+			// key" and the whole machine surface is dead on the happy path. It
+			// was invisible to every controller/service unit test because they
+			// mock SecretService and so never reach its validation; a live
+			// probe of POST /api/v1/app/secret-requests found it immediately.
+			allowUnfilled: true
 		);
 
 		try {

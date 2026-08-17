@@ -339,7 +339,23 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 			'status' => $request->getStatus(),
 			'requestedFields' => $requestedFields,
 			'token' => $request->getToken(),
+			// The HUMAN-facing page, not the JSON endpoint. This previously
+			// pointed at `secretRequestFill.show`
+			// (/api/v1/public/secret-requests/{token}), so an application that
+			// did what the field name says — hand the link to a person — sent
+			// them raw JSON including the vault's public certificate.
+			//
+			// The recipient has no Nextcloud account, so the URL must be the
+			// ANONYMOUS SPA shell (`publicShell.page`) carrying the router's
+			// hash route. Verified live: this form answers 200 while
+			// /apps/doriath/share/request/{token} answers 401.
 			'fillLinkUrl' => $this->urlGenerator->getAbsoluteURL(
+				$this->urlGenerator->linkToRoute(DoriathApp::APP_ID . '.publicShell.page')
+				. '#/share/request/' . $request->getToken()
+			),
+			// Kept alongside it so a machine polling for fulfilment does not
+			// have to parse the human URL.
+			'fillApiUrl' => $this->urlGenerator->getAbsoluteURL(
 				$this->urlGenerator->linkToRoute(
 					DoriathApp::APP_ID . '.secretRequestFill.show',
 					['token' => $request->getToken()]

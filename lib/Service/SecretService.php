@@ -361,6 +361,10 @@ class SecretService {
 	 *
 	 * @param array<string,mixed> $data The submitted fields (ciphertext + metadata)
 	 * @param string $applicationId The owning application ID
+	 * @param bool $allowUnfilled Permit an empty `key` because this is a
+	 *                            secret-request shell awaiting a human fill.
+	 *                            Defaults to false, so an ordinary write-back
+	 *                            still cannot store a valueless secret.
 	 *
 	 * @return Secret
 	 *
@@ -369,14 +373,30 @@ class SecretService {
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
-	public function createByApplication(array $data, string $applicationId): Secret {
+	public function createByApplication(
+		array $data,
+		string $applicationId,
+		bool $allowUnfilled = false,
+	): Secret {
 		if ($applicationId === '') {
 			throw new InvalidArgumentException('applicationId is required');
 		}
 
 		$name = trim((string)($data['name'] ?? ''));
 		$key = (string)($data['key'] ?? '');
-		if ($name === '' || $key === '') {
+
+		// `$allowUnfilled` exists for ONE caller: the secret-request shell, which
+		// is created before anyone has supplied a value. On the user side the
+		// client encrypts a placeholder, so `key` is ciphertext and never empty;
+		// an application has no plaintext to encrypt and must not be handed one
+		// (ADR-003), so its shell is genuinely keyless until the fill arrives.
+		//
+		// It is an explicit opt-in rather than a relaxed check because dropping
+		// the key requirement for every application write would let an ordinary
+		// write-back silently store a valueless secret. A missing NAME stays an
+		// error in both modes, and the message is unchanged so existing callers
+		// and their assertions see exactly what they saw before.
+		if ($name === '' || ($key === '' && $allowUnfilled === false)) {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 

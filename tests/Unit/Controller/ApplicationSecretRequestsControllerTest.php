@@ -89,8 +89,18 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 		);
 
 		$urlGenerator = $this->createMock(IURLGenerator::class);
+		// Route-aware on purpose. The previous stub returned the API path for
+		// EVERY route name, so it could not tell the human fill page from the
+		// JSON endpoint — which is exactly the confusion that shipped a
+		// fillLinkUrl pointing at raw JSON.
 		$urlGenerator->method('linkToRoute')->willReturnCallback(
-			static fn (string $route, array $args = []): string => '/index.php/apps/doriath/api/v1/public/secret-requests/' . ($args['token'] ?? '')
+			static function (string $route, array $args = []): string {
+				if (str_ends_with($route, '.publicShell.page') === true) {
+					return '/index.php/apps/doriath/public';
+				}
+
+				return '/index.php/apps/doriath/api/v1/public/secret-requests/' . ($args['token'] ?? '');
+			}
 		);
 		$urlGenerator->method('getAbsoluteURL')->willReturnCallback(
 			static fn (string $path): string => 'https://nc.example' . $path
@@ -150,9 +160,18 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
 		$data = $response->getData();
 		$this->assertSame('tok-abc', $data['token']);
+		// fillLinkUrl is what an application hands to a PERSON, so it must be the
+		// anonymous SPA shell carrying the router hash route. It previously
+		// resolved to the JSON endpoint, which would have sent the recipient a
+		// blob of JSON including the vault's public certificate.
+		$this->assertSame(
+			'https://nc.example/index.php/apps/doriath/public#/share/request/tok-abc',
+			$data['fillLinkUrl']
+		);
+		// The machine-readable endpoint stays available for polling.
 		$this->assertSame(
 			'https://nc.example/index.php/apps/doriath/api/v1/public/secret-requests/tok-abc',
-			$data['fillLinkUrl']
+			$data['fillApiUrl']
 		);
 		$this->assertSame(['key', 'url'], $data['requestedFields']);
 	}//end testCreateReturnsTokenAndFillLink()
@@ -252,7 +271,18 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 	 *
 	 * @spec openspec/changes/application-secret-request-creation/specs/secret-store-api/spec.md#requirement-machine-request-creation-hardening-and-audit
 	 */
-	public function testCreationRefusedForRevokedSuiteOrNonApprovedApplication(): void {
+	/**
+	 * A guard refusal from the service becomes 422, not 500.
+	 *
+	 * Named for the revoked-suite case ONLY, which is what it asserts. The
+	 * previous name also claimed the non-approved-application case, which this
+	 * body never exercised and cannot: a pending, rejected or deleted
+	 * application is refused at AUTHENTICATION (JwtAuthService::loadActiveIssuer
+	 * allow-lists STATUS_ACTIVE), so it never obtains a token and never reaches
+	 * this controller. That half is covered by
+	 * JwtAuthServiceTest::testInactiveApplicationRejected.
+	 */
+	public function testCreationRefusedForRevokedSuite(): void {
 		$this->params = ['requestedFields' => ['key']];
 
 		$this->service->method('createForApplicationVault')
@@ -261,7 +291,7 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 		$response = $this->controller->create();
 
 		$this->assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
-	}//end testCreationRefusedForRevokedSuiteOrNonApprovedApplication()
+	}//end testCreationRefusedForRevokedSuite()
 
 	/**
 	 * An unknown folderPath is refused rather than silently filed at the root.

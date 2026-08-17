@@ -141,8 +141,23 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 		$shell->setId('sec-shell');
 		$shell->setOwnerType('application');
 		$shell->setOwnerId('app-1');
+		// Assert the ARGUMENTS, not just the call. The shell is keyless by
+		// design, so `allowUnfilled` must be true or SecretService refuses it and
+		// the whole surface 400s — which is precisely what happened in a live
+		// instance while this test passed against a bare willReturn().
 		$this->secretService->expects($this->once())
 			->method('createByApplication')
+			->with(
+				$this->callback(
+					// No name was supplied, so the shell falls back to its label;
+					// the point of the assertion is the EMPTY key travelling with
+					// allowUnfilled below.
+					static fn (array $data): bool => $data['name'] === 'Unfilled request'
+						&& $data['key'] === ''
+				),
+				'app-1',
+				true
+			)
 			->willReturn($shell);
 
 		$captured = null;
