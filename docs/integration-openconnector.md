@@ -81,6 +81,34 @@ breaks every config that points at it (the failure is an immediate, explicit
 4. **Decrypt locally** with the application private key (see below). Use the
    value **in memory only**.
 
+### Fetching in-process instead of over HTTP
+
+A same-instance PHP caller can resolve a secret without the loopback request or
+a bearer token:
+
+```php
+$secret = $secretService->getByNameForApplication(
+    name: 'ZGW source credentials',
+    applicationId: $applicationId,
+);
+```
+
+It returns the entity with the ciphertext intact — the server decrypts nothing
+(ADR-003), so the caller still decrypts `key` / `login` / `additionalFields`
+with its own private key. Scoping matches the HTTP route: the query is keyed by
+the application id, and a name belonging to another vault is indistinguishable
+from one that does not exist. Both return `null`, which is deliberate — a
+distinguishable "exists but not yours" would be an existence oracle.
+
+A hit dispatches exactly one `application.secret_retrieved` audit event with the
+application as actor, the same as the HTTP full read. A `null` dispatches
+nothing, so probing for names leaves no audit trail to mine.
+
+Note the asymmetry with the create seam below: this method takes an application
+id, because the CALLER has already been authenticated by whatever put it in the
+process. Creating a request takes a signed assertion instead, because a mutation
+should not be reachable from an id alone.
+
 ## The `doriath-machine-secret-v1` envelope
 
 ```json
@@ -147,6 +175,113 @@ its **own** public certificate. **There is no delete on the machine surface** �
 deletion is a human / administrative operation (a compromised 5-minute bearer
 token must not be able to destroy credentials; an overwrite is at least visible
 via `updatedAt` and the audit trail).
+
+## Asking a human to fill in a credential
+
+A connector importing a source usually knows *which* credentials it needs and
+not *what they are* — an API key belongs to whoever operates the far end. A
+secret request turns that into a link: the connector creates the request, a human
+opens the link and submits the values, and the connector reads them back
+afterwards. The connector never handles the plaintext, and neither does the
+server.
+
+Create one in the application's **own** vault:
+
+- `POST /apps/doriath/api/v1/app/secret-requests`
+
+```json
+{
+  "requestedFields": [
+    { "field": "url",              "visibility": "public" },
+    { "field": "api-key",          "visibility": "secret" },
+    { "field": "api-interface-id", "visibility": "additional" }
+  ],
+  "name": "ZGW source credentials",
+  "folderPath": "infra/zgw",
+  "expiresAt": "2026-12-31T00:00:00+00:00"
+}
+```
+
+`requestedFields` also accepts a bare list of names. `name`, `folderPath` and
+`expiresAt` are optional; an unknown `folderPath` is refused rather than filed at
+the vault root, and it is walked through the **caller's own** folders so it can
+never resolve into another vault.
+
+`201` returns the request with the two things worth keeping:
+
+```json
+{
+  "id": "…",
+  "secretId": "…",
+  "status": "pending",
+  "requestedFields": ["url", "api-key", "api-interface-id"],
+  "token": "…",
+  "fillLinkUrl": "https://<host>/index.php/apps/doriath/api/v1/public/secret-requests/<token>",
+  "expiresAt": "2026-12-31T00:00:00+00:00"
+}
+```
+
+Send `fillLinkUrl` to the human. There is no need to create the Secret first —
+the shell is created for you, owned by the calling application, and removed again
+if the request itself fails.
+
+Lost the response? The fill-link is retrievable:
+
+- `GET /apps/doriath/api/v1/app/secret-requests` — the caller's own PENDING
+  requests, each with its `token` and `fillLinkUrl`.
+
+Requests created by a **user** against the application's vault are deliberately
+not listed here: they are the user's to manage.
+
+### Which field names to ask for
+
+A request may name any field a secret supports, and the name decides where the
+submitted value lands:
+
+| Requested name | Ends up in | Encrypted |
+|---|---|---|
+| `key` | the secret's `key` | yes |
+| `login` | the secret's `login` | yes |
+| `url` | the secret's `url` | **no** — plaintext searchable metadata |
+| anything else | a member of the encrypted `additionalFields` blob | yes |
+
+So `api-key` and `api-interface-id` above are not columns; they are members
+inside one encrypted blob, and their names live on the request rather than on the
+secret. Read them back the way you read any other field — through the envelope,
+decrypting `additionalFields` with your own private key and taking the members
+out of the resulting JSON object.
+
+One limitation stated plainly: the server cannot verify that a named additional
+member was actually filled, because it never decrypts the blob (ADR-003). It can
+confirm only that a blob arrived. If a connector needs per-member certainty, it
+must check after decrypting.
+
+### In-process instead of HTTP
+
+Same-instance PHP callers can skip the loopback request:
+
+```php
+$requestService->createForApplicationBySignedProof(
+    assertion: $jwtAssertion,   // the same RS256 assertion the token route takes
+    requestedFields: ['api-key'],
+);
+```
+
+The seam takes a **signed assertion**, not an application id. An id is a public
+identifier, so accepting one would let any code in the process create requests in
+any application's vault. Verification runs through the same path as the Bearer
+token — signature against the registered certificate, `jti` replay refusal, the
+≤300 s assertion lifetime, and issuer-must-be-active — and the vault is taken
+from the verified `iss`.
+
+### Refusals
+
+Creation is refused, with nothing written and no shell left behind, when the
+application is pending, rejected or deleted, when its EncryptionSuite is revoked
+or compromised, and while a compromise-recovery rotation is in progress in that
+vault. Each successful creation emits one `application.secret_request_created`
+audit event with the application as actor; its metadata records how many fields
+were asked for, never their names.
 
 ## Key custody and recovery
 
