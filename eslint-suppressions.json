@@ -2,9 +2,6 @@
   "src/App.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
       "count": 1
-    },
-    "import/named": {
-      "count": 1
     }
   },
   "src/cardIdentity/cardIdentity.js": {
@@ -110,11 +107,6 @@
       "count": 1
     }
   },
-  "src/crypto/argon2.js": {
-    "import/no-unresolved": {
-      "count": 2
-    }
-  },
   "src/cxf/cxf.js": {
     "eqeqeq": {
       "count": 6
@@ -188,14 +180,6 @@
       "count": 4
     }
   },
-  "src/main.js": {
-    "import/named": {
-      "count": 6
-    },
-    "no-undef": {
-      "count": 1
-    }
-  },
   "src/migration/driver.js": {
     "no-unused-vars": {
       "count": 2
@@ -215,9 +199,6 @@
     }
   },
   "src/offline/service-worker.js": {
-    "no-redeclare": {
-      "count": 1
-    },
     "no-unused-vars": {
       "count": 3
     }
@@ -308,11 +289,6 @@
       "count": 1
     }
   },
-  "src/views/ApplicationRegisterView.vue": {
-    "import/named": {
-      "count": 1
-    }
-  },
   "src/views/DashboardSettingsView.vue": {
     "@typescript-eslint/no-unused-vars": {
       "count": 1
@@ -341,11 +317,6 @@
   },
   "src/views/PersonalActivityView.vue": {
     "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    }
-  },
-  "src/views/SecretList.vue": {
-    "import/named": {
       "count": 1
     }
   },

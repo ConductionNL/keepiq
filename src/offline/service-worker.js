@@ -14,7 +14,10 @@
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
  */
 
-/* global appVersion */
+// No `/* global appVersion */`: eslint's browser globals already define
+// `appVersion`, so declaring it again is a `no-redeclare` error. The
+// `typeof` guard below is what actually makes this safe — it works whether or
+// not the build injected a value.
 const CACHE_VERSION = typeof appVersion !== 'undefined' ? appVersion : 'dev'
 const CACHE_NAME = 'doriath-shell-' + CACHE_VERSION
 

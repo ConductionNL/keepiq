@@ -87,6 +87,12 @@ class ExportController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+	 *
+	 * @no-admin-idor-exempt no object is addressed. The three parameters are an
+	 * export mode, a scope and a count, each validated against a fixed
+	 * allow-list; nothing is loaded by id. The audit event it dispatches is
+	 * stamped with $user->getUID() from the session, not from the request, so a
+	 * caller cannot record an export against another user.
 	 */
 	#[NoAdminRequired]
 	public function events(): JSONResponse {

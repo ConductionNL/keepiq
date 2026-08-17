@@ -271,7 +271,6 @@
 </template>
 
 <script>
-// eslint-disable-next-line import/named
 import { CnFolderSidebar, CnIndexPage } from '@conduction/nextcloud-vue'
 import { NcActionButton, NcActions, NcButton, NcSelect } from '@nextcloud/vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
