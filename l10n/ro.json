@@ -378,7 +378,13 @@
         "Attachment key": "Cheia atașamentului",
         "Record": "Înregistrare",
         "Showing {shown} of {total}.": "Se afișează {shown} din {total}.",
-        "Version history entry": "Intrare din istoricul versiunilor"
+        "Version history entry": "Intrare din istoricul versiunilor",
+        "Add": "Adaugă",
+        "Also ask for another field": "Solicitați și un alt câmp",
+        "e.g. client-id": "de ex. client-id",
+        "That field is already listed.": "Acest câmp este deja în listă.",
+        "That is a built-in field — tick it in the list above instead.": "Acesta este un câmp integrat — bifați-l în lista de mai sus.",
+        "URL (stored unencrypted)": "URL (stocat necriptat)"
     },
     "plurals": null
 }

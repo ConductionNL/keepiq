@@ -378,7 +378,13 @@
         "Attachment key": "Melléklet kulcsa",
         "Record": "Rekord",
         "Showing {shown} of {total}.": "{shown} / {total} megjelenítve.",
-        "Version history entry": "Verziótörténeti bejegyzés"
+        "Version history entry": "Verziótörténeti bejegyzés",
+        "Add": "Hozzáadás",
+        "Also ask for another field": "Kérjen másik mezőt is",
+        "e.g. client-id": "pl. client-id",
+        "That field is already listed.": "Ez a mező már szerepel a listában.",
+        "That is a built-in field — tick it in the list above instead.": "Ez egy beépített mező — jelölje be a fenti listában.",
+        "URL (stored unencrypted)": "URL (titkosítás nélkül tárolva)"
     },
     "plurals": null
 }

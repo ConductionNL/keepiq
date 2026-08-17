@@ -378,7 +378,13 @@
         "Attachment key": "Ключ вкладення",
         "Record": "Запис",
         "Showing {shown} of {total}.": "Показано {shown} з {total}.",
-        "Version history entry": "Запис історії версій"
+        "Version history entry": "Запис історії версій",
+        "Add": "Додати",
+        "Also ask for another field": "Запросити також інше поле",
+        "e.g. client-id": "напр., client-id",
+        "That field is already listed.": "Це поле вже є у списку.",
+        "That is a built-in field — tick it in the list above instead.": "Це вбудоване поле — позначте його у списку вище.",
+        "URL (stored unencrypted)": "URL (зберігається без шифрування)"
     },
     "plurals": null
 }

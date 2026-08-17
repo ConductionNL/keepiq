@@ -378,7 +378,13 @@
         "Attachment key": "Ċavetta tal-anness",
         "Record": "Rekord",
         "Showing {shown} of {total}.": "Qed jintwerew {shown} minn {total}.",
-        "Version history entry": "Entrata tal-istorja tal-verżjonijiet"
+        "Version history entry": "Entrata tal-istorja tal-verżjonijiet",
+        "Add": "Żid",
+        "Also ask for another field": "Itlob ukoll qasam ieħor",
+        "e.g. client-id": "e.ż. client-id",
+        "That field is already listed.": "Dan il-qasam diġà jinsab fil-lista.",
+        "That is a built-in field — tick it in the list above instead.": "Dan huwa qasam integrat — immarkah fil-lista ta’ fuq.",
+        "URL (stored unencrypted)": "URL (maħżun mhux ikkriptat)"
     },
     "plurals": null
 }

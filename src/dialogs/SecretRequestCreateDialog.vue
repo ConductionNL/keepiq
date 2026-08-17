@@ -22,6 +22,28 @@
 						:value="field.key" />
 					{{ field.label }}
 				</label>
+
+				<div class="secret-request-create-dialog__custom">
+					<label for="custom-field-input">{{
+						t('doriath', 'Also ask for another field')
+					}}</label>
+					<div class="secret-request-create-dialog__custom-row">
+						<input
+							id="custom-field-input"
+							v-model="customFieldInput"
+							type="text"
+							:placeholder="t('doriath', 'e.g. client-id')"
+							@keyup.enter="addCustomField" />
+						<button type="button" @click="addCustomField">
+							{{ t('doriath', 'Add') }}
+						</button>
+					</div>
+					<p
+						v-if="customFieldError"
+						class="secret-request-create-dialog__custom-error">
+						{{ customFieldError }}
+					</p>
+				</div>
 			</fieldset>
 
 			<div class="secret-request-create-dialog__expiry">
@@ -53,7 +75,7 @@
 		</div>
 
 		<template #actions>
-			<button @click="onClose(false)">
+			<button @click="onClose">
 				{{ t('doriath', 'Cancel') }}
 			</button>
 			<button
@@ -67,7 +89,7 @@
 						: t('doriath', 'Create request')
 				}}
 			</button>
-			<button v-else class="primary" @click="onClose(true)">
+			<button v-else class="primary" @click="onClose">
 				{{ t('doriath', 'Done') }}
 			</button>
 		</template>
@@ -94,6 +116,12 @@ export default {
 	data() {
 		return {
 			requestedFields: ['key'],
+			// Additional-field names typed here for fields the secret does not
+			// carry yet. Kept separate from `requestedFields` so unticking a name
+			// does not delete it from the list.
+			customFields: [],
+			customFieldInput: '',
+			customFieldError: '',
 			expiresAt: '',
 			fillUrl: '',
 			error: '',
@@ -109,15 +137,48 @@ export default {
 				: t('doriath', 'Request secret fill-in')
 		},
 
+		/**
+		 * Every field a secret can hold, so the dialog matches what the backend
+		 * accepts (SecretRequestPolicy: `key`/`login` encrypted, `url` plaintext,
+		 * anything else a member of the encrypted additionalFields blob).
+		 *
+		 * `url` used to be missing here even though the backend has always stored
+		 * it, and additional fields could only be requested when the secret
+		 * ALREADY carried that key — so a fresh or unfilled secret could not ask
+		 * for a named extra at all, while the machine API accepted any name. The
+		 * custom names below close that gap.
+		 *
+		 * @return {Array<{key: string, label: string, plaintext?: boolean}>} Field options.
+		 */
 		availableFields() {
 			const fields = [
 				{ key: 'key', label: t('doriath', 'Key / password') },
 				{ key: 'login', label: t('doriath', 'Login') },
+				// Flagged plaintext because it is genuinely different: `url` is
+				// stored searchable, not encrypted, and the recipient deserves to
+				// know that before typing something sensitive into it.
+				{
+					key: 'url',
+					label: t('doriath', 'URL (stored unencrypted)'),
+					plaintext: true,
+				},
 			]
-			const additional = this.secret?.additional_fields_keys || []
-			for (const key of additional) {
-				fields.push({ key, label: key })
+
+			const seen = new Set(fields.map((f) => f.key))
+			for (const key of this.secret?.additional_fields_keys || []) {
+				if (seen.has(key) === false) {
+					seen.add(key)
+					fields.push({ key, label: key })
+				}
 			}
+			// Names typed in this dialog for fields the secret does not have yet.
+			for (const key of this.customFields) {
+				if (seen.has(key) === false) {
+					seen.add(key)
+					fields.push({ key, label: key })
+				}
+			}
+
 			return fields
 		},
 	},
@@ -154,11 +215,15 @@ export default {
 					: await store.createRequest(payload)
 
 				if (request && request.token) {
-					this.fillUrl = generateUrl(
-						`/apps/doriath/share/request/${request.token}`,
-						{},
-						{ absolute: true },
-					)
+					// The recipient has no Nextcloud account, so this must point at
+					// the ANONYMOUS shell (`publicShell#page`) carrying the router's
+					// hash route. The plain `/apps/doriath/share/request/<token>`
+					// form this used to build answers 401 for exactly the person it
+					// is meant for — the link was unusable by any external
+					// recipient, which is the whole purpose of a fill link.
+					this.fillUrl =
+						generateUrl('/apps/doriath/public', {}, { absolute: true })
+						+ `#/share/request/${request.token}`
 				}
 
 				this.$emit('created', request)
@@ -170,6 +235,44 @@ export default {
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * Add a named additional field and tick it.
+		 *
+		 * Reserved names are refused rather than silently accepted: typing "key"
+		 * here would look like a second field but the backend routes it to the
+		 * ciphertext column, so the user would be requesting something other than
+		 * what they typed.
+		 *
+		 * @return {void}
+		 */
+		addCustomField() {
+			const name = (this.customFieldInput || '').trim()
+			this.customFieldError = ''
+
+			if (name === '') {
+				return
+			}
+
+			if (['key', 'login', 'url'].includes(name) === true) {
+				this.customFieldError = t(
+					'doriath',
+					'That is a built-in field — tick it in the list above instead.',
+				)
+				return
+			}
+
+			if (this.availableFields.some((f) => f.key === name) === true) {
+				this.customFieldError = t('doriath', 'That field is already listed.')
+				return
+			}
+
+			this.customFields.push(name)
+			if (this.requestedFields.includes(name) === false) {
+				this.requestedFields.push(name)
+			}
+			this.customFieldInput = ''
 		},
 
 		async copyUrl() {
@@ -184,15 +287,34 @@ export default {
 			}
 		},
 
-		onClose(emitDone = false) {
+		/**
+		 * Close the dialog, always leaving a clean form behind.
+		 *
+		 * The reset used to be conditional on `emitDone`, so cancelling kept
+		 * everything — including `fillUrl`. Create a request, press Cancel, then
+		 * reopen the dialog on a DIFFERENT secret and you were shown the previous
+		 * secret's fill link, ready to copy and send to the wrong person. A
+		 * dialog that reopens holding another secret's credential link is worse
+		 * than one that forgets a few ticked checkboxes, so the reset is now
+		 * unconditional.
+		 *
+		 * With the reset unconditional the old `emitDone` argument controlled
+		 * nothing, so it is gone rather than left as a dead parameter implying a
+		 * difference that does not exist. Parents already learn about a successful
+		 * creation from the `created` event.
+		 *
+		 * @return {void}
+		 */
+		onClose() {
 			this.$emit('update:open', false)
-			if (emitDone) {
-				// reset form for re-use
-				this.requestedFields = ['key']
-				this.expiresAt = ''
-				this.fillUrl = ''
-				this.error = ''
-			}
+
+			this.requestedFields = ['key']
+			this.customFields = []
+			this.customFieldInput = ''
+			this.customFieldError = ''
+			this.expiresAt = ''
+			this.fillUrl = ''
+			this.error = ''
 		},
 	},
 }

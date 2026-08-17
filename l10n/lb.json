@@ -378,7 +378,13 @@
         "Attachment key": "Uschlossschlëssel",
         "Record": "Datesatz",
         "Showing {shown} of {total}.": "{shown} vun {total} ginn ugewisen.",
-        "Version history entry": "Versiounsgeschicht-Entrée"
+        "Version history entry": "Versiounsgeschicht-Entrée",
+        "Add": "Dobäisetzen",
+        "Also ask for another field": "Frot och no engem anere Feld",
+        "e.g. client-id": "z. B. client-id",
+        "That field is already listed.": "Dëst Feld ass schonn op der Lëscht.",
+        "That is a built-in field — tick it in the list above instead.": "Dat ass en integréiert Feld — kräizt et amplaz an der Lëscht hei driwwer un.",
+        "URL (stored unencrypted)": "URL (onverschlësselt gespäichert)"
     },
     "plurals": null
 }

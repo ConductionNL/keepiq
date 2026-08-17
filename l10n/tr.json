@@ -378,7 +378,13 @@
         "Attachment key": "Ek anahtarı",
         "Record": "Kayıt",
         "Showing {shown} of {total}.": "{total} kaydın {shown} tanesi gösteriliyor.",
-        "Version history entry": "Sürüm geçmişi kaydı"
+        "Version history entry": "Sürüm geçmişi kaydı",
+        "Add": "Ekle",
+        "Also ask for another field": "Başka bir alan da isteyin",
+        "e.g. client-id": "örn. client-id",
+        "That field is already listed.": "Bu alan listede zaten var.",
+        "That is a built-in field — tick it in the list above instead.": "Bu yerleşik bir alan — bunun yerine yukarıdaki listeden işaretleyin.",
+        "URL (stored unencrypted)": "URL (şifrelenmeden saklanır)"
     },
     "plurals": null
 }

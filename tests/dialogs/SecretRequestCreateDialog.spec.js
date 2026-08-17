@@ -57,7 +57,9 @@ describe('SecretRequestCreateDialog', () => {
 		})
 
 		const fields = wrapper.vm.availableFields.map((f) => f.key)
-		expect(fields).toEqual(['key', 'login', 'totp', 'pin'])
+		// 'url' is part of the baseline set now — the backend has always
+		// stored it, the dialog simply never offered it.
+		expect(fields).toEqual(['key', 'login', 'url', 'totp', 'pin'])
 	})
 
 	it('submit(): delegates to createRequest with selected fields + ISO expiry', async () => {
@@ -91,7 +93,12 @@ describe('SecretRequestCreateDialog', () => {
 		expect(payload.expires_at.endsWith('Z')).toBe(true)
 
 		// fillUrl is populated from the response token.
-		expect(wrapper.vm.fillUrl).toContain('/apps/doriath/share/request/tok-abc')
+		// The anonymous shell, NOT /apps/doriath/share/request/<token>: the
+		// recipient has no account, and that form answers 401 for them.
+		expect(wrapper.vm.fillUrl).toContain(
+			'/apps/doriath/public#/share/request/tok-abc',
+		)
+		expect(wrapper.vm.fillUrl).not.toContain('/apps/doriath/share/request/')
 
 		// `created` event is emitted with the store response.
 		const events = wrapper.emitted('created')
@@ -133,7 +140,7 @@ describe('SecretRequestCreateDialog', () => {
 			null, // no expiry → null (not empty string)
 		)
 		expect(wrapper.vm.fillUrl).toContain(
-			'/apps/doriath/share/request/tok-rerequest',
+			'/apps/doriath/public#/share/request/tok-rerequest',
 		)
 	})
 
@@ -146,11 +153,12 @@ describe('SecretRequestCreateDialog', () => {
 			global: { stubs: ncStubs },
 		})
 
-		wrapper.vm.fillUrl = 'http://nc.test/apps/doriath/share/request/tok-1'
+		wrapper.vm.fillUrl =
+			'http://nc.test/apps/doriath/public#/share/request/tok-1'
 		await wrapper.vm.copyUrl()
 
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-			'http://nc.test/apps/doriath/share/request/tok-1',
+			'http://nc.test/apps/doriath/public#/share/request/tok-1',
 		)
 		expect(wrapper.vm.copied).toBe(true)
 	})
@@ -175,5 +183,95 @@ describe('SecretRequestCreateDialog', () => {
 		expect(wrapper.vm.submitting).toBe(false)
 		expect(wrapper.vm.fillUrl).toBe('')
 		expect(wrapper.emitted('created')).toBeFalsy()
+	})
+	it('offers every field a secret supports, including url', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: { id: 'secret-1', additional_fields_keys: ['api-token'] },
+			},
+			global: { stubs: ncStubs },
+		})
+
+		const keys = wrapper.vm.availableFields.map((f) => f.key)
+		// `url` was absent before, so a user could not request it at all even
+		// though the backend stores it.
+		expect(keys).toEqual(['key', 'login', 'url', 'api-token'])
+		// It must be marked plaintext — it is stored searchable, not encrypted.
+		expect(
+			wrapper.vm.availableFields.find((f) => f.key === 'url').plaintext,
+		).toBe(true)
+	})
+
+	it('addCustomField(): names a field the secret does not have yet and ticks it', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 'secret-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.customFieldInput = '  zgw-client-id  '
+		wrapper.vm.addCustomField()
+
+		// Trimmed, listed, ticked, and the input cleared for the next one.
+		expect(wrapper.vm.availableFields.map((f) => f.key)).toContain(
+			'zgw-client-id',
+		)
+		expect(wrapper.vm.requestedFields).toContain('zgw-client-id')
+		expect(wrapper.vm.customFieldInput).toBe('')
+		expect(wrapper.vm.customFieldError).toBe('')
+	})
+
+	it('addCustomField(): refuses built-in names instead of silently misrouting them', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 'secret-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		for (const reserved of ['key', 'login', 'url']) {
+			wrapper.vm.customFieldInput = reserved
+			wrapper.vm.addCustomField()
+
+			expect(wrapper.vm.customFieldError).not.toBe('')
+			expect(wrapper.vm.customFields).not.toContain(reserved)
+		}
+	})
+
+	it('addCustomField(): refuses a duplicate and an empty name', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: { id: 'secret-1', additional_fields_keys: ['api-token'] },
+			},
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.customFieldInput = 'api-token'
+		wrapper.vm.addCustomField()
+		expect(wrapper.vm.customFieldError).not.toBe('')
+		expect(wrapper.vm.customFields).toHaveLength(0)
+
+		wrapper.vm.customFieldInput = '   '
+		wrapper.vm.customFieldError = ''
+		wrapper.vm.addCustomField()
+		// Empty input is a no-op, not an error message.
+		expect(wrapper.vm.customFieldError).toBe('')
+		expect(wrapper.vm.customFields).toHaveLength(0)
+	})
+
+	it('closing resets the custom field state', async () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 'secret-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.customFieldInput = 'extra'
+		wrapper.vm.addCustomField()
+		expect(wrapper.vm.customFields).toHaveLength(1)
+
+		await wrapper.vm.onClose()
+
+		expect(wrapper.vm.customFields).toEqual([])
+		expect(wrapper.vm.customFieldInput).toBe('')
+		expect(wrapper.vm.requestedFields).toEqual(['key'])
 	})
 })

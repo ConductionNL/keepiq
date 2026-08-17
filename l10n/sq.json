@@ -378,7 +378,13 @@
         "Attachment key": "Kyçi i bashkëngjitjes",
         "Record": "Regjistrim",
         "Showing {shown} of {total}.": "Po shfaqen {shown} nga {total}.",
-        "Version history entry": "Zë i historikut të versioneve"
+        "Version history entry": "Zë i historikut të versioneve",
+        "Add": "Shto",
+        "Also ask for another field": "Kërko edhe një fushë tjetër",
+        "e.g. client-id": "p.sh. client-id",
+        "That field is already listed.": "Kjo fushë është tashmë në listë.",
+        "That is a built-in field — tick it in the list above instead.": "Kjo është një fushë e integruar — shënojeni në listën më sipër.",
+        "URL (stored unencrypted)": "URL (ruajtur i pakriptuar)"
     },
     "plurals": null
 }

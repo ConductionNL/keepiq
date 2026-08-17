@@ -537,7 +537,13 @@
         "Attachment key": "Bijlagesleutel",
         "Record": "Record",
         "Showing {shown} of {total}.": "{shown} van {total} weergegeven.",
-        "Version history entry": "Versiegeschiedenis-item"
+        "Version history entry": "Versiegeschiedenis-item",
+        "Add": "Toevoegen",
+        "Also ask for another field": "Vraag ook om een ander veld",
+        "That field is already listed.": "Dat veld staat al in de lijst.",
+        "That is a built-in field — tick it in the list above instead.": "Dat is een ingebouwd veld — vink het hierboven in de lijst aan.",
+        "URL (stored unencrypted)": "URL (onversleuteld opgeslagen)",
+        "e.g. client-id": "bijv. client-id"
     },
     "plurals": null
 }

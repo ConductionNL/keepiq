@@ -378,7 +378,13 @@
         "Attachment key": "Clave del adjunto",
         "Record": "Registro",
         "Showing {shown} of {total}.": "Mostrando {shown} de {total}.",
-        "Version history entry": "Entrada del historial de versiones"
+        "Version history entry": "Entrada del historial de versiones",
+        "Add": "Añadir",
+        "Also ask for another field": "Solicitar también otro campo",
+        "e.g. client-id": "p. ej. client-id",
+        "That field is already listed.": "Ese campo ya está en la lista.",
+        "That is a built-in field — tick it in the list above instead.": "Ese es un campo integrado: márcalo en la lista de arriba.",
+        "URL (stored unencrypted)": "URL (almacenada sin cifrar)"
     },
     "plurals": null
 }

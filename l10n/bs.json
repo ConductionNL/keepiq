@@ -378,7 +378,13 @@
         "Attachment key": "Ključ priloga",
         "Record": "Zapis",
         "Showing {shown} of {total}.": "Prikazano {shown} od {total}.",
-        "Version history entry": "Unos historije verzija"
+        "Version history entry": "Unos historije verzija",
+        "Add": "Dodaj",
+        "Also ask for another field": "Zatraži i drugo polje",
+        "e.g. client-id": "npr. client-id",
+        "That field is already listed.": "To polje je već na listi.",
+        "That is a built-in field — tick it in the list above instead.": "To je ugrađeno polje — označite ga na listi iznad.",
+        "URL (stored unencrypted)": "URL (sačuvan nešifrovan)"
     },
     "plurals": null
 }

@@ -378,7 +378,13 @@
         "Attachment key": "Viðhengislykill",
         "Record": "Færsla",
         "Showing {shown} of {total}.": "Sýnir {shown} af {total}.",
-        "Version history entry": "Færsla í útgáfusögu"
+        "Version history entry": "Færsla í útgáfusögu",
+        "Add": "Bæta við",
+        "Also ask for another field": "Biðja einnig um annað svæði",
+        "e.g. client-id": "t.d. client-id",
+        "That field is already listed.": "Þetta svæði er þegar á listanum.",
+        "That is a built-in field — tick it in the list above instead.": "Þetta er innbyggt svæði — hakaðu við það á listanum fyrir ofan í staðinn.",
+        "URL (stored unencrypted)": "URL (vistað ókóðað)"
     },
     "plurals": null
 }

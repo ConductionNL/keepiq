@@ -378,7 +378,13 @@
         "Attachment key": "Eochair ceangaltáin",
         "Record": "Taifead",
         "Showing {shown} of {total}.": "{shown} as {total} á thaispeáint.",
-        "Version history entry": "Iontráil staire leaganacha"
+        "Version history entry": "Iontráil staire leaganacha",
+        "Add": "Cuir leis",
+        "Also ask for another field": "Iarr réimse eile freisin",
+        "e.g. client-id": "m.sh. client-id",
+        "That field is already listed.": "Tá an réimse sin ar an liosta cheana féin.",
+        "That is a built-in field — tick it in the list above instead.": "Is réimse ionsuite é sin — ticeáil é sa liosta thuas ina ionad.",
+        "URL (stored unencrypted)": "URL (stóráilte gan chriptiú)"
     },
     "plurals": null
 }

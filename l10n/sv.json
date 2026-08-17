@@ -378,7 +378,13 @@
         "Attachment key": "Bilagenyckel",
         "Record": "Post",
         "Showing {shown} of {total}.": "Visar {shown} av {total}.",
-        "Version history entry": "Versionshistorikpost"
+        "Version history entry": "Versionshistorikpost",
+        "Add": "Lägg till",
+        "Also ask for another field": "Fråga även efter ett annat fält",
+        "e.g. client-id": "t.ex. client-id",
+        "That field is already listed.": "Det fältet finns redan i listan.",
+        "That is a built-in field — tick it in the list above instead.": "Det är ett inbyggt fält — markera det i listan ovan i stället.",
+        "URL (stored unencrypted)": "URL (lagras okrypterad)"
     },
     "plurals": null
 }
