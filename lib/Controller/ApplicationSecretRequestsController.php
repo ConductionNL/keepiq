@@ -41,7 +41,7 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application as DoriathApp;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Doriath\Service\ApplicationSecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -58,7 +58,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request
-	 * @param SecretRequestService $secretRequestService The request service
+	 * @param ApplicationSecretRequestService $secretRequestService The machine request service
 	 * @param FolderMapper $folderMapper Resolves an optional folder path
 	 * @param IURLGenerator $urlGenerator Builds the absolute fill-link URL
 	 *
@@ -66,7 +66,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretRequestService $secretRequestService,
+		private ApplicationSecretRequestService $secretRequestService,
 		private FolderMapper $folderMapper,
 		private IURLGenerator $urlGenerator,
 	) {

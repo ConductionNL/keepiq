@@ -35,25 +35,25 @@
       "id": "3.1",
       "title": "Add the signed-proof-authenticated create seam that verifies the assertion through the `JwtAuthService` path (signature vs registered cert, `jti` replay, ≤300 s lifetime), derives `applicationId` from the verified `iss`, and rejects `userId` / appId-only / invalid-signature / replayed-jti / wrong-cert.",
       "section": "3. DI seam — signed-proof authentication",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "4.1",
       "title": "Enforce token-issuance-parity guards (refuse pending/rejected/deleted applications and revoked/compromised suites) and preserve no-existence-oracle semantics on both entrypoints.",
       "section": "4. Guards + audit",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "4.2",
       "title": "Emit an application-actor audit event on creation via `AuditEvent::forApplication`, wiring the event type in `AuditEventTypes`.",
       "section": "4. Guards + audit",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "5.1",
       "title": "Add unit tests covering the machine route (create → token + fill-link; index lists own pending), the DI seam (valid proof; rejects appId-only / invalid-signature / replayed-jti / wrong-cert), cross-vault refusal, revoked-suite / non-approved refusal, and that a created request is fillable via the existing public fill flow.",
       "section": "5. Tests",
-      "status": "pending"
+      "status": "done"
     }
   ]
 }

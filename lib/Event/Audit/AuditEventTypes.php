@@ -72,6 +72,18 @@ final class AuditEventTypes {
 	public const APPLICATION_TOKEN_ISSUED = 'application.token_issued';
 	public const APPLICATION_SECRET_RETRIEVED = 'application.secret_retrieved';
 
+	/**
+	 * An application created a secret request in its own vault, session-lessly.
+	 *
+	 * A distinct type rather than REQUEST_CREATED with an application actor:
+	 * `application.*` events are what an operator filters on to see everything a
+	 * machine identity did, and folding this into the user-facing request type
+	 * would hide it from that view.
+	 *
+	 * @var string
+	 */
+	public const APPLICATION_SECRET_REQUEST_CREATED = 'application.secret_request_created';
+
 	// Emergency access (break-glass lifecycle — add-emergency-access).
 	public const EMERGENCY_ACCESS_GRANTED = 'emergency_access.granted';
 	public const EMERGENCY_ACCESS_REQUESTED = 'emergency_access.requested';
@@ -200,6 +212,7 @@ final class AuditEventTypes {
 		self::APPLICATION_DELETED => [],
 		self::APPLICATION_TOKEN_ISSUED => [],
 		self::APPLICATION_SECRET_RETRIEVED => [],
+		self::APPLICATION_SECRET_REQUEST_CREATED => ['secretId', 'requestedFieldCount'],
 		self::VAULT_EXPORTED => ['mode', 'scope', 'secretCount'],
 		self::VAULT_GDPR_EXPORTED => ['mode', 'scope', 'secretCount'],
 		self::VAULT_ACCOUNT_DELETED => ['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'],

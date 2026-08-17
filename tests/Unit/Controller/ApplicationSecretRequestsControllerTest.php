@@ -37,7 +37,7 @@ use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\Folder;
 use OCA\Doriath\Db\FolderMapper;
 use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Doriath\Service\ApplicationSecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -55,9 +55,9 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 	private IRequest&MockObject $request;
 
 	/**
-	 * @var SecretRequestService&MockObject
+	 * @var ApplicationSecretRequestService&MockObject
 	 */
-	private SecretRequestService&MockObject $service;
+	private ApplicationSecretRequestService&MockObject $service;
 
 	/**
 	 * @var FolderMapper&MockObject
@@ -81,7 +81,7 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
-		$this->service = $this->createMock(SecretRequestService::class);
+		$this->service = $this->createMock(ApplicationSecretRequestService::class);
 		$this->folderMapper = $this->createMock(FolderMapper::class);
 
 		$this->request->method('getParam')->willReturnCallback(

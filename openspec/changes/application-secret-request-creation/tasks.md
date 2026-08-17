@@ -10,16 +10,16 @@
 
 ## 3. DI seam — signed-proof authentication
 
-- [ ] 3.1 Add the signed-proof-authenticated create seam that verifies the assertion through the `JwtAuthService` path (signature vs registered cert, `jti` replay, ≤300 s lifetime), derives `applicationId` from the verified `iss`, and rejects `userId` / appId-only / invalid-signature / replayed-jti / wrong-cert.
+- [x] 3.1 Add the signed-proof-authenticated create seam that verifies the assertion through the `JwtAuthService` path (signature vs registered cert, `jti` replay, ≤300 s lifetime), derives `applicationId` from the verified `iss`, and rejects `userId` / appId-only / invalid-signature / replayed-jti / wrong-cert.
 
 ## 4. Guards + audit
 
-- [ ] 4.1 Enforce token-issuance-parity guards (refuse pending/rejected/deleted applications and revoked/compromised suites) and preserve no-existence-oracle semantics on both entrypoints.
-- [ ] 4.2 Emit an application-actor audit event on creation via `AuditEvent::forApplication`, wiring the event type in `AuditEventTypes`.
+- [x] 4.1 Enforce token-issuance-parity guards (refuse pending/rejected/deleted applications and revoked/compromised suites) and preserve no-existence-oracle semantics on both entrypoints.
+- [x] 4.2 Emit an application-actor audit event on creation via `AuditEvent::forApplication`, wiring the event type in `AuditEventTypes`.
 
 ## 5. Tests
 
-- [ ] 5.1 Add unit tests covering the machine route (create → token + fill-link; index lists own pending), the DI seam (valid proof; rejects appId-only / invalid-signature / replayed-jti / wrong-cert), cross-vault refusal, revoked-suite / non-approved refusal, and that a created request is fillable via the existing public fill flow.
+- [x] 5.1 Add unit tests covering the machine route (create → token + fill-link; index lists own pending), the DI seam (valid proof; rejects appId-only / invalid-signature / replayed-jti / wrong-cert), cross-vault refusal, revoked-suite / non-approved refusal, and that a created request is fillable via the existing public fill flow.
 
 ## Acceptance Criteria
 
