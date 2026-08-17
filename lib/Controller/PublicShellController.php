@@ -59,6 +59,12 @@ class PublicShellController extends Controller {
 	 * password-protected flows, and the health worker allowance is
 	 * harmless here.
 	 *
+	 * Rate-limit rationale: this is the public shell — one of only four rendered
+	 * public pages in the fleet (ADR-081). It serves the zero-knowledge
+	 * secret-request UI, so the ceiling is generous: a recipient reloading the
+	 * page must never be what trips it. The token check lives on the fill/access
+	 * endpoints behind it, which are already rate-limited.
+	 *
 	 * @return TemplateResponse
 	 *
 	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
@@ -74,11 +80,6 @@ class PublicShellController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// The public shell — one of only four rendered public pages in the fleet
-	// (ADR-081). It serves the zero-knowledge secret-request UI, so the ceiling
-	// is generous: a recipient reloading the page must never be what trips it.
-	// The token check lives on the fill/access endpoints behind it, which are
-	// already rate-limited.
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function page(): TemplateResponse {
 		$response = new TemplateResponse(

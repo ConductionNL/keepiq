@@ -62,6 +62,9 @@ class ServiceWorkerController extends Controller {
 	 * Return the built service-worker script as JavaScript with the
 	 * scope-widening header.
 	 *
+	 * Rate-limit rationale: this is the PWA service worker — the browser
+	 * refetches it on every update check, so the limit is set generously.
+	 *
 	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
@@ -71,7 +74,6 @@ class ServiceWorkerController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	// PWA service worker — the browser refetches it on every update check.
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function script(): DataDisplayResponse {
 		$path = $this->appManager->getAppPath(Application::APP_ID) . '/js/' . Application::APP_ID . '-service-worker.js';
