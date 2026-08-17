@@ -208,6 +208,16 @@ class ApplicationSecretRequestService {
 	 *                          signed by a key that is not the application's
 	 * @throws InvalidArgumentException When the field list is empty
 	 *
+	 * @orphaned-write-capability exclude The consumer is another app in another
+	 *   repository. This seam exists so OpenConnector can create a request
+	 *   in-process instead of over loopback HTTP (see the proposal's DI-seam
+	 *   decision), so it has no in-repo caller by construction and will not
+	 *   acquire one. Note the risk the gate is right about: an uncalled write
+	 *   path is indistinguishable from dead code, and this session already found
+	 *   one such method whose documented guarantee was false. What stands in for
+	 *   a caller here is ApplicationSecretRequestServiceTest, which drives the
+	 *   seam directly including every verification failure, plus
+	 *   docs/integration-openconnector.md showing the exact call.
 	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
 	 */
 	public function createForApplicationBySignedProof(
