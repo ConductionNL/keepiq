@@ -89,6 +89,7 @@ module.exports = {
 		// Default to node so the existing pure-crypto specs keep running fast.
 		environment: 'node',
 		environmentMatchGlobs: [
+			['tests/bootstrap/**', 'jsdom'],
 			['tests/components/**', 'jsdom'],
 			['tests/views/**', 'jsdom'],
 			['tests/dialogs/**', 'jsdom'],
@@ -102,6 +103,8 @@ module.exports = {
 			// Pure-logic router guards — no DOM, so they stay on the
 			// default `node` env alongside the crypto specs.
 			'tests/router/**/*.spec.{js,ts}',
+			// Bootstrap helpers that touch the document before mount.
+			'tests/bootstrap/**/*.spec.{js,ts}',
 			'tests/components/**/*.spec.{js,ts}',
 			'tests/views/**/*.spec.{js,ts}',
 			'tests/dialogs/**/*.spec.{js,ts}',
