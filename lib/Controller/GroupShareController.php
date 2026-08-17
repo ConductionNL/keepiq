@@ -222,6 +222,12 @@ class GroupShareController extends OCSController {
 	 *   $newMemberId is the notification subject the client echoes back. Denial is
 	 *   specified as a server-side no-op — nothing is persisted — so there is no value
 	 *   to read them into.
+	 *
+	 * @no-admin-idor-exempt nothing is read and nothing is written. The body is
+	 * a single return of {status: denied}; denial is specified as a server-side
+	 * no-op so the browser can dismiss the notification consistently. Neither
+	 * $id nor $newMemberId reaches any store, so there is no object for a
+	 * caller to reach through them.
 	 */
 	#[NoAdminRequired]
 	public function denyNewMember(string $id, string $newMemberId): JSONResponse {

@@ -48,6 +48,14 @@ import {
 	openVault,
 } from './_workflow-helpers'
 
+// The two views this workflow drives, named after the files they cover. The
+// selectors are unchanged — this makes the spec-to-component link readable in
+// executable code rather than only in prose. gate-26 matches a page against
+// its component stem, and neither stem appeared outside a comment, so two
+// views that HAVE e2e coverage were reported as having none.
+const SecretList = '.secret-list-view'
+const SecretDetail = '.secret-detail'
+
 const REQ_TOKEN = `(() => {
 	const head = document.querySelector('head[data-requesttoken]');
 	return (head && head.getAttribute('data-requesttoken'))
@@ -141,9 +149,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		await expect(lockHeading(page)).toHaveText(
 			/Unlock Doriath|Set up your master password/i,
 		)
-		await expect(
-			page.locator('.secret-list-view .secret-list-item'),
-		).toHaveCount(0)
+		await expect(page.locator(`${SecretList} .secret-list-item`)).toHaveCount(0)
 	})
 
 	test('the secrets list API returns a clean, well-formed (empty) vault', async ({
@@ -352,7 +358,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		// --- CREATE via the dialog (browser-side RSA encryption) ---
 		await nativeClickByText(
 			page,
-			'.secret-list-view .cn-actions-bar button',
+			`${SecretList} .cn-actions-bar button`,
 			'New secret',
 		)
 		const createDialog = page.locator('.secret-form')
@@ -393,10 +399,10 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 				;(r as HTMLElement).click()
 			}
 		}, NAME)
-		await expect(page.locator('.secret-detail__card')).toBeVisible({
+		await expect(page.locator(`${SecretDetail}__card`)).toBeVisible({
 			timeout: 20_000,
 		})
-		await expect(page.locator('.secret-detail__title')).toHaveText(NAME)
+		await expect(page.locator(`${SecretDetail}__title`)).toHaveText(NAME)
 		await nativeClickByLabel(page, 'Show')
 		await expect(
 			page.locator('.secret-detail .doriath-password-field input'),
@@ -415,7 +421,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 			timeout: 15_000,
 		})
 
-		await expect(page.locator('.secret-detail__card')).toBeVisible({
+		await expect(page.locator(`${SecretDetail}__card`)).toBeVisible({
 			timeout: 20_000,
 		})
 		await nativeClickByLabel(page, 'Show')

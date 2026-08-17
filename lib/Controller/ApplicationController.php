@@ -373,6 +373,12 @@ class ApplicationController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
+	 *
+	 * @no-admin-idor-exempt public-key distribution, same shape as
+	 * ShareController::recipientCertificate(). Returns the application's
+	 * certificate — the PUBLIC half of its EncryptionSuite — and no private
+	 * material. A caller needs it to encrypt to that application, so it is
+	 * meant to be readable by any authenticated user.
 	 */
 	#[NoAdminRequired]
 	public function certificate(string $id): JSONResponse {
