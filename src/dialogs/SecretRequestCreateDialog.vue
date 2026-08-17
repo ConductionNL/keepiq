@@ -149,6 +149,8 @@ export default {
 		 * custom names below close that gap.
 		 *
 		 * @return {Array<{key: string, label: string, plaintext?: boolean}>} Field options.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		availableFields() {
 			const fields = [
@@ -246,6 +248,8 @@ export default {
 		 * what they typed.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		addCustomField() {
 			const name = (this.customFieldInput || '').trim()
@@ -304,6 +308,11 @@ export default {
 		 * creation from the `created` event.
 		 *
 		 * @return {void}
+		 *
+		 * @spec exclude Dialog state lifecycle. No requirement describes when the
+		 *   form resets; the specs cover what a request contains and who may fill
+		 *   it, not the local widget state. The behaviour is pinned by
+		 *   SecretRequestCreateDialog.spec.js instead.
 		 */
 		onClose() {
 			this.$emit('update:open', false)
