@@ -1,14 +1,7 @@
 # secrets-write-ui Specification
 
-**Status**: in-progress
-
-**OpenSpec changes:**
-- `implement-secrets-write-ui` (2026-06-11) — Original write UI: create/edit dialogs, folder create + move, public-link share, modal isolation, keyboard-operable rows
-- `owner-editable-additional-fields` (2026-08-18) — An owner could SEE additional fields but never write one: the whole stack supports them (controller, service, store encrypt/decrypt, SecretDetail renders them) except SecretCreateDialog and SecretEditDialog, which reference them nowhere. The only writers were the write-for-application dialog, import, and an external recipient filling a secret request — so obtaining one on your own secret meant asking a stranger to submit it. Both requirements below enumerated the collectable fields and omitted this one, which is how it shipped
-
 ## Purpose
 TBD - created by archiving change implement-secrets-write-ui. Update Purpose after archive.
-
 ## Requirements
 ### Requirement: Create a Secret from the UI
 The system MUST provide a dialog reachable from the vault view that lets the user
