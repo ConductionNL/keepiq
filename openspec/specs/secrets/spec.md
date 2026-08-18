@@ -5,6 +5,7 @@
 **OpenSpec changes:**
 - `implement-secrets` (2026-03-31) — Full implementation: Secret/Folder/SecretType CRUD, search, unified search, list/pagination, favicon, clipboard
 - `application-secret-delete` (2026-07-06) — In-process-only application-vault seam for same-instance trusted consumers (OpenRegister `credential-doriath-leaf`): `SecretService::deleteByApplication` (own-vault scoped, idempotent silent no-op, `secret.deleted` audit with application actor) + `SecretService::getByNameForApplication` (own-vault read-by-name, ciphertext intact, null on absent/cross-vault/ambiguous with no existence oracle, `application.secret_retrieved` audit parity with the machine read path); machine HTTP surface keeps its no-DELETE stance (canonical home is this spec, not `secret-store-api`, because it owns the SecretService lifecycle while store-api owns only the HTTP contract)
+- `request-first-secret-requests` (2026-08-18) — States the keyless exception the secret-requests capability depends on: a Secret MAY have an empty `key` ONLY while a pending SecretRequest targets it, as an explicit creation-time opt-in that is never the default, so the placeholder that spec mandates stops contradicting the key requirement here
 
 ## Purpose
 
