@@ -116,7 +116,7 @@ export const PUBLIC_HASH_PREFIXES = ['#/share/request/', '#/share/link/', '#/sen
  *
  * @param {{pathname?: string, hash?: string}} location A Location-like object.
  * @return {boolean} True when the URL is a public recipient surface.
- * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fill-in-via-link
+ * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
  */
 export function isPublicSurface(location = {}) {
 	const path = location.pathname || ''

@@ -1576,4 +1576,224 @@ class SecretRequestServiceTest extends TestCase {
 		}
 	}//end testExpireRefusesANonPendingRequest()
 
+	/**
+	 * A missing userId is refused before any Secret is created.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestRefusesAnEmptyUserId(): void {
+		$this->secretService->expects($this->never())->method('create');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createForUserVault(userId: '', requestedFields: ['key']);
+	}//end testFreshRequestRefusesAnEmptyUserId()
+
+	/**
+	 * A rollback that itself fails must not mask the original error.
+	 *
+	 * This path decides whether a failed request leaves an orphan placeholder
+	 * behind. If the cleanup throws and that throw escapes, the caller sees a
+	 * confusing "could not delete" instead of the real reason the request failed,
+	 * and the orphan is still there either way.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testAFailingRollbackDoesNotMaskTheOriginalError(): void {
+		$shell = new Secret();
+		$shell->setId('sec-doomed');
+		$shell->setEncryptionSuiteId('suite-9');
+		$this->secretService->method('create')->willReturn($shell);
+		$this->mapper->method('insert')->willThrowException(new RuntimeException('db down'));
+		$this->secretService->method('delete')
+			->willThrowException(new RuntimeException('cleanup also failed'));
+
+		try {
+			$this->service->createForUserVault(
+				userId: 'alice',
+				requestedFields: ['key'],
+				name: 'doomed',
+			);
+			$this->fail('the original failure must surface');
+		} catch (RuntimeException $e) {
+			$this->assertSame('db down', $e->getMessage(), 'the ORIGINAL error must survive');
+		}
+	}//end testAFailingRollbackDoesNotMaskTheOriginalError()
+
+	/**
+	 * Revoking when the linked Secret is already gone is not an error.
+	 *
+	 * The request is still revoked; there is simply nothing left to clean up.
+	 * Throwing here would turn a successful revoke into a failure the user has to
+	 * retry against a Secret that no longer exists.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeSurvivesAMissingSecret(): void {
+		$entity = $this->makePending('req-gone', 'sec-vanished');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->secretMapper->method('findById')
+			->willThrowException(new DoesNotExistException('gone'));
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->assertSame(
+			SecretRequest::STATUS_DECLINED,
+			$this->service->decline(requestId: 'req-gone', userId: 'alice')->getStatus()
+		);
+	}//end testRevokeSurvivesAMissingSecret()
+
+	/**
+	 * A failing placeholder delete must not fail the revoke.
+	 *
+	 * An orphan empty Secret is untidy; a revoke the user believes did not work is
+	 * worse, because they will try again on a request that is already declined.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeSurvivesAFailingPlaceholderDelete(): void {
+		$entity = $this->makePending('req-stubborn', 'sec-empty');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$empty = new Secret();
+		$empty->setId('sec-empty');
+		$empty->setKey('');
+		$empty->setOwnerType('user');
+		$empty->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($empty);
+		$this->secretService->method('delete')
+			->willThrowException(new RuntimeException('locked'));
+
+		$this->assertSame(
+			SecretRequest::STATUS_DECLINED,
+			$this->service->decline(requestId: 'req-stubborn', userId: 'alice')->getStatus()
+		);
+	}//end testRevokeSurvivesAFailingPlaceholderDelete()
+
+	/**
+	 * Build a keyless but genuinely filled Secret owned by alice.
+	 *
+	 * @param string $id The secret id
+	 *
+	 * @return Secret
+	 */
+	private function keylessSecret(string $id): Secret {
+		$secret = new Secret();
+		$secret->setId($id);
+		$secret->setKey('');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('alice');
+
+		return $secret;
+	}//end keylessSecret()
+
+	/**
+	 * A Secret holding only a login must survive a revoke.
+	 *
+	 * `key` is not a mandatory member of `requestedFields`, so a requester can ask
+	 * for a login alone. Filling that request writes `login` and leaves `key`
+	 * empty, which an emptiness test keyed on `key` alone reads as "never filled".
+	 * The delete is hard and takes the version history with it, so getting this
+	 * wrong destroys the very credential the request existed to collect.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeNeverDeletesASecretHoldingOnlyALogin(): void {
+		$entity = $this->makePending('req-login', 'sec-login');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = $this->keylessSecret('sec-login');
+		$secret->setLogin('CIPHERTEXT-LOGIN');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->service->decline(requestId: 'req-login', userId: 'alice');
+	}//end testRevokeNeverDeletesASecretHoldingOnlyALogin()
+
+	/**
+	 * A Secret holding only additional fields must survive a revoke.
+	 *
+	 * Custom members are one encrypted blob (ADR-003), so this is the case where a
+	 * requester asked for something the schema does not name at all — and where
+	 * the deleted ciphertext could hold any number of credentials.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeNeverDeletesASecretHoldingOnlyAdditionalFields(): void {
+		$entity = $this->makePending('req-extra', 'sec-extra');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = $this->keylessSecret('sec-extra');
+		$secret->setAdditionalFields('CIPHERTEXT-BLOB');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->service->decline(requestId: 'req-extra', userId: 'alice');
+	}//end testRevokeNeverDeletesASecretHoldingOnlyAdditionalFields()
+
+	/**
+	 * A Secret holding only a url must survive a revoke.
+	 *
+	 * `url` is plaintext and requestable (SecretRequestPolicy::PLAINTEXT_FIELDS),
+	 * and `createForUserVault()` never sets it, so a real fresh placeholder always
+	 * has it null. A url present therefore means somebody put it there.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeNeverDeletesASecretHoldingOnlyAUrl(): void {
+		$entity = $this->makePending('req-url', 'sec-url');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = $this->keylessSecret('sec-url');
+		$secret->setUrl('https://vault.example.org/login');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->service->decline(requestId: 'req-url', userId: 'alice');
+	}//end testRevokeNeverDeletesASecretHoldingOnlyAUrl()
+
+	/**
+	 * A truly empty placeholder is still deleted.
+	 *
+	 * The counterpart to the three tests above: widening the emptiness test must
+	 * not disable the cleanup it guards.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeStillDeletesATrulyEmptyPlaceholder(): void {
+		$entity = $this->makePending('req-empty', 'sec-empty-2');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->secretMapper->method('findById')->willReturn($this->keylessSecret('sec-empty-2'));
+
+		$this->secretService->expects($this->once())
+			->method('delete')
+			->with('sec-empty-2', 'alice');
+
+		$this->service->decline(requestId: 'req-empty', userId: 'alice');
+	}//end testRevokeStillDeletesATrulyEmptyPlaceholder()
+
 }//end class
