@@ -17,12 +17,16 @@ Two facts from the existing spec shape the design more than anything else:
 - Re-request remains the only flow that targets an existing Secret.
 - A fresh request does not default to asking for values that already exist.
 - Keylessness stays an exception with a stated boundary, not a general relaxation.
+- An expiry is both set by default and acted on, so placeholders do not accumulate forever.
+- A pending request is visible in the vault, so a placeholder never reads as a broken Secret.
 
 **Non-Goals:**
 - Redesigning the fill screen itself. Its field rendering is unchanged; this change alters what ends up in `requested_fields`, not how the recipient sees them.
 - Touching the machine surface. `/api/v1/app/secret-requests` is already compliant.
 - Changing the encryption boundary. Values remain client-encrypted under the requester's certificate (ADR-003); a placeholder is keyless, not plaintext.
-- Reworking notifications, expiry semantics, or the `is_re_request` wire field.
+- Reworking notifications or the `is_re_request` wire field.
+- An admin-configurable instance-wide default request expiry. The client-side default here is deliberately the lighter half; the policy version belongs in the `rotation-expiry-policies` shape as its own change.
+- Deciding what happens to requests that are already pending with no expiry. They stay manual-only, exactly as Optional Expiry says; no backfill is attempted.
 - Retroactively repairing Secrets that users created with a dummy key as a workaround. They are indistinguishable from real secrets; migrating them would be guesswork.
 
 ## Decisions
@@ -40,7 +44,32 @@ Enforcement is asymmetric on purpose, and the reason is worth recording:
 
 The invariant's other half is cleanup, which the spec already mandates: `:189` requires revoke to delete the placeholder. That stops being theoretical once the human path creates placeholders, so it needs a test rather than new code.
 
-**Known hole, deliberately left open:** an *expired* request stays `pending` (`:126` only stops submissions; it does not revoke), so its placeholder legitimately persists as a permanently empty Secret until someone revokes it. Closing that means deciding whether expiry should auto-revoke — a semantic change to Optional Expiry that belongs in its own change, not smuggled in here. It is called out in tasks as a documented limitation.
+### Expiry becomes something that is set, and something that acts
+
+The placeholder-litter problem needed tracing before it could be fixed. `expires_at` has exactly one source: the requester typing into an optional `datetime-local` input that defaults to empty. The service never defaults it, the machine surface leaves it null when omitted, and the spec only says the requester MAY set one. So in practice almost every request has no expiry — which means a job that only sweeps expired requests would be very nearly inert, and the litter would sit in the population the job must not touch.
+
+Two separable gaps, both closed here:
+
+**Nothing sets an expiry.** The create surface pre-fills a suggested expiry that the requester can change or clear. This is a client-side default, not a policy: it changes no server semantics, needs no admin setting and no migration, and stays spec-legal because the requester is still the one setting it. An optional field nobody fills is a UX failure rather than a user failure. `rotation-expiry-policies` establishes the heavier pattern for later — "an instance-wide admin default (shipped disabled) … and a per-user override" — and an admin-configurable default request expiry belongs in that shape, as its own change, overriding the client default when present.
+
+**Nothing acts on an expiry.** A `TimedJob` transitions lapsed `pending` requests to a terminal `expired`, invalidating the token and deleting the placeholder — the same cleanup a revoke performs, because the keyless invariant does not care why the request ended. `ExpireMachineLeasesJob` (hourly `setInterval(seconds: 3600)`) and `EphemeralSendPurgeJob` are the precedents; this follows their shape. Requests with no `expires_at` are never touched: they remain open until fulfilled or manually revoked, which is what Optional Expiry already says.
+
+### A terminal `expired` status, not a silent revoke
+
+Statuses today are `pending`, `fulfilled`, `declined`, `locked`. Expiry is derived from `expires_at` at read time and never stored, so "the cron revokes it" would leave nothing to distinguish a lapse from a cancellation — and a vault row would vanish with no explanation. `expired` is added as a terminal status: the token dies, the placeholder dies, the request row survives as the record. `status` is already a string column, so no migration. The audit actor is the system, not the requester, who took no action.
+
+### The access check evaluates expiry independently of status
+
+The fill gate already checks expiry — `SecretRequestPolicy::requireOpenByToken()` calls `isExpired()` — but it does so INSIDE `case SecretRequest::STATUS_PENDING`, making expiry a property of that one branch rather than an independent gate. Two consequences:
+
+- The job runs hourly, so a request that lapsed a minute ago still reads `pending`. The gate must refuse it on `expires_at` alone. The job is cleanup; it is never the enforcement mechanism.
+- The switch ends in `default: throw ... 'Request is in an unknown state', code: 500`. Adding `STATUS_EXPIRED` without its own case would answer every expired link with a **500** instead of telling the recipient it expired — a regression introduced by this very change.
+
+So the expiry evaluation is hoisted above the switch, and `expired` gets an explicit arm in the same family as `fulfilled` and `declined` (410).
+
+### An outstanding-request indicator is required, not optional polish
+
+Once asking for a credential normally produces an empty placeholder, an unmarked vault gains rows that read as broken secrets. The listing marks a Secret awaiting its first fill distinctly from a filled Secret with a re-request outstanding, because the consequences differ: the first cannot be used yet, the second works until new values arrive. The marking never carries the fill token — a credential-bearing URL in a list row travels into screenshots and over shoulders for no benefit, and anyone entitled to it can retrieve it from the request itself.
 
 ### The placeholder is created by the request service, not the controller or the UI
 

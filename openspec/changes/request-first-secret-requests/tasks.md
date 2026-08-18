@@ -10,40 +10,46 @@
   - An ordinary `create()` with an empty `key` still throws `A secret requires a name and a key`
   - An empty name is still refused in both modes
 - [ ] 1.2 Create the placeholder in `SecretRequestService` for a fresh request — owner = requester, linked to their active suite, optional name/folder — and roll it back if request creation fails, mirroring `createForApplicationVault()`.
-  - No orphan Secret remains after a failed request creation
-  - A fresh request derives `secret_id` from the Secret it created
-- [ ] 1.3 Make `secret_id` optional for a fresh request and mandatory for a re-request in `SecretRequestController`, refusing a re-request without one.
-  - The two flows are distinguishable by their required input, not only by `is_re_request`
-- [ ] 1.4 Ensure revoking a request deletes the placeholder it created, and does NOT delete the target Secret of a re-request.
+  - No orphan Secret remains after a failed request creation; a fresh request derives `secret_id` from the Secret it created
+- [ ] 1.3 Enforce the fresh/re-request distinction on both ends: `secret_id` optional for a fresh request and mandatory for a re-request in `SecretRequestController`, and revoke deletes a fresh request's placeholder while preserving a re-request's target Secret.
+  - The two flows differ by required input, not only by the `is_re_request` boolean
 
-## 2. Frontend — asking without owning a Secret
+## 2. Backend — the expiry lifecycle
 
-- [ ] 2.1 Make `SecretRequestCreateDialog`'s `secret` prop optional, showing name and folder inputs when there is no target Secret.
-  - The dialog opens and submits with no `secret` prop
-  - A name is required before submit when no target Secret exists
-- [ ] 2.2 Untick already-filled fields on a fresh request and label them as already holding a value; leave re-request selection as it is today.
-  - Determined client-side from `key`/`login`/`url` and the decrypted `additionalFields`, per spec `:77`
-  - The fields stay tickable — the requester can still choose to replace a value
-- [ ] 2.3 Add the vault-level "Ask someone for a credential" entry point to `SecretList.vue`, reachable with an empty vault.
-- [ ] 2.4 Relabel the `SecretDetail.vue` action as a re-request against that Secret.
-- [ ] 2.5 Mark pending-request placeholders in the secret list so an unfilled Secret does not read as a broken one.
-  - Design flags this as the main new UX surface; expect iteration on the visual treatment
+- [ ] 2.1 Add the terminal `STATUS_EXPIRED` and an expire transition: invalidate the token, delete the placeholder for a fresh request, preserve the Secret for a re-request, and record the audit event with the SYSTEM as actor rather than the requester.
+  - `status` is already a string column, so no migration is required
+- [ ] 2.2 Add a `TimedJob` that expires lapsed requests, following `ExpireMachineLeasesJob` (hourly), and register it.
+  - Only `pending` requests whose `expires_at` has passed are touched
+  - A request with no `expires_at` is never touched — it stays open until fulfilled or manually revoked
+  - The job body must do real work; an empty `run()` trips the stub-scan gate
+- [ ] 2.3 Hoist the expiry evaluation in `SecretRequestPolicy::requireOpenByToken()` above the status switch so it applies to any status, and give `expired` an explicit arm alongside `fulfilled`/`declined`.
+  - A request that lapsed since the last sweep is refused on `expires_at` alone — the job is cleanup, never enforcement
+  - An `expired` request reports itself as expired; it must NOT fall through to the `default` arm, which answers 500 `Request is in an unknown state`
 
-## 3. Tests
+## 3. Frontend
 
-- [ ] 3.1 PHPUnit for `SecretService::create()`: refuses an empty key by default, accepts it with `allowUnfilled`, still requires a name in both modes.
-- [ ] 3.2 PHPUnit for `SecretRequestService`: a fresh request creates its own placeholder, two fresh requests do not share one, a re-request creates none, and a failed request leaves no orphan.
-- [ ] 3.3 PHPUnit for revoke: the placeholder is deleted for a fresh request and the target Secret survives a revoked re-request.
-- [ ] 3.4 Vitest for the dialog: submits without a `secret` prop, unticks filled fields on a fresh request, keeps them selectable on a re-request.
-- [ ] 3.5 Verify each new/modified spec scenario is either driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change rather than skipping it.
-  - Includes the "filled-ness is never disclosed to the recipient" scenario, which is an assertion about the fill response payload
+- [ ] 3.1 Make `SecretRequestCreateDialog`'s `secret` prop optional, showing name and folder inputs when there is no target Secret; a name is required before submit in that mode.
+- [ ] 3.2 Untick already-filled fields on a fresh request and label them as already holding a value; leave re-request selection as it is today.
+  - Determined client-side from `key`/`login`/`url` and the decrypted `additionalFields`, per spec `:77`; the fields stay tickable
+- [ ] 3.3 Pre-fill the expiry field with a suggested value the requester can change or clear, so requests carry an expiry by default and the job has something to act on.
+- [ ] 3.4 Split the two entry points: add "Ask someone for a credential" to `SecretList.vue`, reachable with an empty vault, and relabel the `SecretDetail.vue` action as a re-request against that Secret.
+- [ ] 3.5 Mark secrets with an outstanding request in the list, distinguishing "awaiting first fill" from "re-request outstanding", clearing when the request ends, and never rendering the fill token.
 
-## 4. Quality
+## 4. Tests
 
-- [ ] 4.1 Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green.
-  - `node tests/l10n/check-l10n.js` and `check-l10n-parity.js` both exit 0
-- [ ] 4.2 Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm `@spec` anchors on every changed method.
-- [ ] 4.3 Update `docs/integration-openconnector.md` only if the user-side change alters anything a machine consumer sees; state explicitly if it does not.
+- [ ] 4.1 PHPUnit for `SecretService::create()`: refuses an empty key by default, accepts it with `allowUnfilled`, still requires a name in both modes.
+- [ ] 4.2 PHPUnit for `SecretRequestService`: a fresh request creates its own placeholder, two fresh requests do not share one, a re-request creates none, and a failed request leaves no orphan.
+- [ ] 4.3 PHPUnit for revoke and expire: placeholder deleted, re-request target preserved, `expired` is terminal, the job ignores requests with no expiry, and the audit actor is the system.
+- [ ] 4.4 PHPUnit for the access gate: a lapsed-but-unswept request is refused, an `expired` request reports expiry rather than a 500, and each other status keeps its current code.
+- [ ] 4.5 Vitest for the dialog and list: submits with no `secret` prop, filled fields unticked on a fresh request and selectable on a re-request, expiry pre-filled and clearable, and the outstanding-request indicator renders without a token.
+- [ ] 4.6 Verify each new/modified spec scenario is driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change rather than skipping it.
+
+## 5. Quality
+
+- [ ] 5.1 Run the full quality sweep and leave it green.
+  - Every new UI string translated into all 36 locales; `check-l10n.js` and `check-l10n-parity.js` both exit 0
+  - hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` all pass
+  - `@spec` anchor or reason-bearing exclude on every changed method
 
 ## Acceptance criteria
 
@@ -51,8 +57,8 @@
 - A fresh request creates its own unfilled Secret; a re-request creates none
 - An ordinary Secret still cannot be created without a key
 - A fresh request does not pre-select fields that already hold values, and the fill response never reveals which fields those were
-- Revoking a fresh request leaves no keyless Secret behind
-
-## Documented limitation
-
-An expired request stays `pending`, so its placeholder persists as a permanently empty Secret until revoked. Whether expiry should auto-revoke is a change to the Optional Expiry requirement and is deliberately out of scope — see design.md.
+- A secret with an outstanding request is visibly marked as such, and the marking never carries the fill token
+- A request created through the UI carries an expiry unless the requester clears it
+- A lapsed request is refused on `expires_at` alone, before any job has run
+- The expiry job removes lapsed placeholders and leaves requests without an expiry untouched
+- An expiry is distinguishable from a cancellation after the fact
