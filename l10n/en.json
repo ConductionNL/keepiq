@@ -971,7 +971,9 @@
         "Waiting for someone to fill this in": "Waiting for someone to fill this in",
         "What are you asking for?": "What are you asking for?",
         "Copy fill link": "Copy fill link",
-        "Link copied": "Link copied"
+        "Link copied": "Link copied",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent."
     },
     "plurals": ""
 }

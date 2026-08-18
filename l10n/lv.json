@@ -399,7 +399,9 @@
         "What are you asking for?": "Ko jūs pieprasāt?",
         "e.g. Supplier API key": "piem., piegādātāja API atslēga",
         "Copy fill link": "Kopēt aizpildīšanas saiti",
-        "Link copied": "Saite nokopēta"
+        "Link copied": "Saite nokopēta",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Šai lapai nepieciešams drošs (https://) savienojums, jo jūsu vērtība tiek šifrēta pārlūkā pirms nosūtīšanas.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Atveriet to pašu saiti, kas sākas ar https://. Ja joprojām nedarbojas, pajautājiet sūtītājam."
     },
     "plurals": null
 }

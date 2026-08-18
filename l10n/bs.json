@@ -399,7 +399,9 @@
         "What are you asking for?": "Šta tražite?",
         "e.g. Supplier API key": "npr. API ključ dobavljača",
         "Copy fill link": "Kopiraj link za ispunjavanje",
-        "Link copied": "Link kopiran"
+        "Link copied": "Link kopiran",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ova stranica zahtijeva sigurnu (https://) vezu jer se vaša vrijednost šifruje u pregledniku prije slanja.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otvorite isti link koji počinje sa https://. Ako još ne radi, pitajte osobu koja ga je poslala."
     },
     "plurals": null
 }

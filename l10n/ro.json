@@ -399,7 +399,9 @@
         "What are you asking for?": "Ce solicitați?",
         "e.g. Supplier API key": "de ex. cheia API a furnizorului",
         "Copy fill link": "Copiați linkul de completare",
-        "Link copied": "Link copiat"
+        "Link copied": "Link copiat",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Această pagină necesită o conexiune securizată (https://), deoarece valoarea este criptată în browser înainte de trimitere.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Deschideți același link începând cu https://. Dacă tot nu funcționează, întrebați persoana care l-a trimis."
     },
     "plurals": null
 }

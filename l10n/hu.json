@@ -399,7 +399,9 @@
         "What are you asking for?": "Mit kér?",
         "e.g. Supplier API key": "pl. szállítói API-kulcs",
         "Copy fill link": "Kitöltési hivatkozás másolása",
-        "Link copied": "Hivatkozás másolva"
+        "Link copied": "Hivatkozás másolva",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ehhez az oldalhoz biztonságos (https://) kapcsolat kell, mert az értéket a böngésző titkosítja elküldés előtt.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Nyissa meg ugyanazt a hivatkozást https:// kezdettel. Ha még így sem működik, kérdezze meg a feladót."
     },
     "plurals": null
 }

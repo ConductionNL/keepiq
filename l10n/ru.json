@@ -399,7 +399,9 @@
         "What are you asking for?": "Что вы запрашиваете?",
         "e.g. Supplier API key": "например, API-ключ поставщика",
         "Copy fill link": "Копировать ссылку для заполнения",
-        "Link copied": "Ссылка скопирована"
+        "Link copied": "Ссылка скопирована",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Эта страница требует защищённого (https://) соединения, потому что ваше значение шифруется в браузере перед отправкой.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Откройте ту же ссылку, начинающуюся с https://. Если всё равно не работает, спросите отправителя."
     },
     "plurals": null
 }

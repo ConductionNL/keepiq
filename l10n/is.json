@@ -399,7 +399,9 @@
         "What are you asking for?": "Um hvað ertu að biðja?",
         "e.g. Supplier API key": "t.d. API-lykill söluaðila",
         "Copy fill link": "Afrita útfyllingartengil",
-        "Link copied": "Tengill afritaður"
+        "Link copied": "Tengill afritaður",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Þessi síða þarf öruggja (https://) tengingu, því gildið þitt er kóðað í vafranum áður en það er sent.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Opnaðu sama tengil með https:// í byrjun. Ef það virkar enn ekki, spurðu þann sem sendi hann."
     },
     "plurals": null
 }

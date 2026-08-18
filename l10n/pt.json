@@ -399,7 +399,9 @@
         "What are you asking for?": "O que está a pedir?",
         "e.g. Supplier API key": "p. ex. chave de API do fornecedor",
         "Copy fill link": "Copiar link de preenchimento",
-        "Link copied": "Link copiado"
+        "Link copied": "Link copiado",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Esta página necessita de uma ligação segura (https://), porque o seu valor é cifrado no navegador antes de ser enviado.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Abra o mesmo link começando por https://. Se ainda não funcionar, pergunte a quem o enviou."
     },
     "plurals": null
 }

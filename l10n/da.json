@@ -399,7 +399,9 @@
         "What are you asking for?": "Hvad beder du om?",
         "e.g. Supplier API key": "f.eks. leverandør-API-nøgle",
         "Copy fill link": "Kopiér udfyldningslink",
-        "Link copied": "Link kopieret"
+        "Link copied": "Link kopieret",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Denne side kræver en sikker (https://) forbindelse, fordi din værdi krypteres i browseren, før den sendes.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Åbn det samme link med https:// i starten. Virker det stadig ikke, spørg personen, der sendte det."
     },
     "plurals": null
 }

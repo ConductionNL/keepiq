@@ -558,7 +558,9 @@
         "What are you asking for?": "Waar vraag je om?",
         "e.g. Supplier API key": "bijv. API-sleutel leverancier",
         "Copy fill link": "Kopieer invullink",
-        "Link copied": "Link gekopieerd"
+        "Link copied": "Link gekopieerd",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Deze pagina heeft een veilige (https://) verbinding nodig, omdat je waarde in je browser wordt versleuteld voordat deze wordt verzonden.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Open dezelfde link met https:// ervoor. Werkt het dan nog niet, vraag het dan aan de afzender."
     },
     "plurals": null
 }

@@ -399,7 +399,9 @@
         "What are you asking for?": "Què demanes?",
         "e.g. Supplier API key": "p. ex. clau API del proveïdor",
         "Copy fill link": "Copia l'enllaç d'emplenament",
-        "Link copied": "Enllaç copiat"
+        "Link copied": "Enllaç copiat",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Aquesta pàgina necessita una connexió segura (https://), perquè el teu valor es xifra al navegador abans d’enviar-se.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Obre el mateix enllaç començant per https://. Si encara no funciona, pregunta-ho a qui te l’ha enviat."
     },
     "plurals": null
 }
