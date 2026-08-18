@@ -1796,4 +1796,35 @@ class SecretRequestServiceTest extends TestCase {
 		$this->service->decline(requestId: 'req-empty', userId: 'alice');
 	}//end testRevokeStillDeletesATrulyEmptyPlaceholder()
 
+	/**
+	 * Expiry never deletes a Secret that holds a value under another field.
+	 *
+	 * expire() and decline() share deletePlaceholderIfUnfilled(), so today this is
+	 * covered by the revoke-side tests. It is pinned separately anyway because the
+	 * expiry caller is the dangerous one: ExpireSecretRequestsJob runs unattended,
+	 * 500 requests to a batch, with nobody watching the result. If someone later
+	 * gives expiry its own emptiness test, this fails rather than the loss being
+	 * discovered from a user's missing credential.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireNeverDeletesASecretHoldingOnlyALogin(): void {
+		$entity = $this->makePending('req-exp-login', 'sec-exp-login');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = $this->keylessSecret('sec-exp-login');
+		$secret->setLogin('CIPHERTEXT-LOGIN');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->assertSame(
+			SecretRequest::STATUS_EXPIRED,
+			$this->service->expire(request: $entity)->getStatus()
+		);
+	}//end testExpireNeverDeletesASecretHoldingOnlyALogin()
+
 }//end class
