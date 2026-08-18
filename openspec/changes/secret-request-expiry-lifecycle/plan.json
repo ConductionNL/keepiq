@@ -59,7 +59,7 @@
       "title": "Hoist the expiry evaluation in `SecretRequestPolicy::requireOpenByToken()` above the status switch so it applies to any status.",
       "status": "done",
       "acceptance_criteria": [
-        "A request that lapsed since the last sweep is refused on `expires_at` alone — the job is cleanup, never enforcement"
+        "A request that lapsed since the last sweep is refused on `expires_at` alone \u2014 the job is cleanup, never enforcement"
       ]
     },
     {
@@ -69,7 +69,7 @@
       "title": "Give `expired` an explicit arm in that switch, in the 410 family alongside `fulfilled` and `declined`.",
       "status": "done",
       "acceptance_criteria": [
-        "Without it the new status falls into `default: … 'Request is in an unknown state', code: 500`, answering every expired link with a server error"
+        "Without it the new status falls into `default: \u2026 'Request is in an unknown state', code: 500`, answering every expired link with a server error"
       ]
     },
     {
@@ -125,15 +125,15 @@
       "number": "5.1",
       "section": "Quality",
       "title": "Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
       "id": 14,
       "number": "5.2",
       "section": "Quality",
-      "title": "Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm a `@spec` anchor or reason-bearing exclude on every changed method.",
-      "status": "pending",
+      "title": "Run the full sweep \u2014 hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` \u2014 and confirm a `@spec` anchor or reason-bearing exclude on every changed method.",
+      "status": "done",
       "acceptance_criteria": []
     }
   ]

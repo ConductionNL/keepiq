@@ -127,10 +127,10 @@ class SecretRequestPolicy {
 				throw new InvalidArgumentException(message: 'Request was already fulfilled', code: 410);
 			case SecretRequest::STATUS_DECLINED:
 				throw new InvalidArgumentException(message: 'Request was declined', code: 410);
-			// Its own arm, in the same family as fulfilled and declined. Without
-			// it a legitimately expired link would fall to `default` and answer
-			// 500 'unknown state' — telling the recipient nothing and reporting a
-			// server fault for a request that simply ran out.
+				// Its own arm, in the same family as fulfilled and declined. Without
+				// it a legitimately expired link would fall to `default` and answer
+				// 500 'unknown state' — telling the recipient nothing and reporting a
+				// server fault for a request that simply ran out.
 			case SecretRequest::STATUS_EXPIRED:
 				throw new InvalidArgumentException(message: 'Request has expired', code: 410);
 			case SecretRequest::STATUS_PENDING:

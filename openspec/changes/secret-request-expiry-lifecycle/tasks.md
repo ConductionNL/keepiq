@@ -33,8 +33,8 @@
 
 ## 5. Quality
 
-- [ ] 5.1 Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).
-- [ ] 5.2 Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm a `@spec` anchor or reason-bearing exclude on every changed method.
+- [x] 5.1 Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).
+- [x] 5.2 Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm a `@spec` anchor or reason-bearing exclude on every changed method.
 
 ## Acceptance criteria
 
