@@ -15,27 +15,27 @@
   - The two flows differ by required input, not only by the `is_re_request` boolean
 - [ ] 1.4 Ensure revoking deletes the placeholder of a fresh request and preserves the target Secret of a re-request.
 
-## 3. Frontend
+## 2. Frontend
 
-- [ ] 3.1 Make `SecretRequestCreateDialog`'s `secret` prop optional, showing name and folder inputs when there is no target Secret; a name is required before submit in that mode.
-- [ ] 3.2 Untick already-filled fields on a fresh request and label them as already holding a value; leave re-request selection as it is today.
+- [ ] 2.1 Make `SecretRequestCreateDialog`'s `secret` prop optional, showing name and folder inputs when there is no target Secret; a name is required before submit in that mode.
+- [ ] 2.2 Untick already-filled fields on a fresh request and label them as already holding a value; leave re-request selection as it is today.
   - Determined client-side from `key`/`login`/`url` and the decrypted `additionalFields`, per spec `:77`; the fields stay tickable
-- [ ] 3.4 Add the vault-level "Ask someone for a credential" entry point to `SecretList.vue`, reachable with an empty vault.
-- [ ] 3.5 Relabel the `SecretDetail.vue` action as a re-request against that Secret.
-- [ ] 3.6 Mark secrets with an outstanding request in the list, distinguishing "awaiting first fill" from "re-request outstanding", clearing when the request ends, and never rendering the fill token.
+- [ ] 2.3 Add the vault-level "Ask someone for a credential" entry point to `SecretList.vue`, reachable with an empty vault.
+- [ ] 2.4 Relabel the `SecretDetail.vue` action as a re-request against that Secret.
+- [ ] 2.5 Mark secrets with an outstanding request in the list, distinguishing "awaiting first fill" from "re-request outstanding", clearing when the request ends, and never rendering the fill token.
 
-## 4. Tests
+## 3. Tests
 
-- [ ] 4.1 PHPUnit for `SecretService::create()`: refuses an empty key by default, accepts it with `allowUnfilled`, still requires a name in both modes.
-- [ ] 4.2 PHPUnit for `SecretRequestService`: a fresh request creates its own placeholder, two fresh requests do not share one, a re-request creates none, and a failed request leaves no orphan.
-- [ ] 4.3 PHPUnit for revoke: the placeholder of a fresh request is deleted and a re-request's target Secret and values survive.
-- [ ] 4.5 Vitest for the dialog and list: submits with no `secret` prop, filled fields unticked on a fresh request and selectable on a re-request, and the outstanding-request indicator renders without a token.
-- [ ] 4.6 Verify each new/modified spec scenario is driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change rather than skipping it.
+- [ ] 3.1 PHPUnit for `SecretService::create()`: refuses an empty key by default, accepts it with `allowUnfilled`, still requires a name in both modes.
+- [ ] 3.2 PHPUnit for `SecretRequestService`: a fresh request creates its own placeholder, two fresh requests do not share one, a re-request creates none, and a failed request leaves no orphan.
+- [ ] 3.3 PHPUnit for revoke: the placeholder of a fresh request is deleted and a re-request's target Secret and values survive.
+- [ ] 3.4 Vitest for the dialog and list: submits with no `secret` prop, filled fields unticked on a fresh request and selectable on a re-request, and the outstanding-request indicator renders without a token.
+- [ ] 3.5 Verify each new/modified spec scenario is driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change rather than skipping it.
 
-## 5. Quality
+## 4. Quality
 
-- [ ] 5.1 Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).
-- [ ] 5.2 Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm `@spec` anchors on every changed method.
+- [ ] 4.1 Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).
+- [ ] 4.2 Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm `@spec` anchors on every changed method.
 
 ## Acceptance criteria
 
