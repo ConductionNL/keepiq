@@ -28,6 +28,7 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
@@ -642,8 +643,9 @@ class SecretRequestService {
 			return;
 		}
 
-		if ((string)$secret->getKey() !== '') {
-			// Holds a value: a re-request target or a plain request's own Secret.
+		if ($this->holdsNoValues(secret: $secret) === false) {
+			// Holds a value: a re-request target, a plain request's own Secret, or a
+			// placeholder that has since been filled.
 			return;
 		}
 
@@ -663,6 +665,36 @@ class SecretRequestService {
 			);
 		}
 	}//end deletePlaceholderIfUnfilled()
+
+	/**
+	 * Whether a Secret holds no value in any of its value columns.
+	 *
+	 * Deliberately wider than `SecretService::hadNoValues()`, which asks the same
+	 * question for a different decision. That one guards whether to write a version
+	 * row: too eager and you get a junk row. This one guards a HARD delete that
+	 * takes the version history with it: too eager and you destroy a credential.
+	 * The costs are not symmetric, so the predicates stay separate and this one
+	 * errs toward keeping the Secret. Residue is exactly the orphan-placeholder
+	 * tidiness the expiry cleanup handles.
+	 *
+	 * `key` alone is not enough. Nothing requires `key` among `requestedFields`, so
+	 * a requester can ask for a login or a custom member on its own; filling that
+	 * leaves `key` empty on a Secret that now holds ciphertext. `url` is included
+	 * because it is requestable plaintext and `createForUserVault()` never sets it,
+	 * so a genuine fresh placeholder always has it null.
+	 *
+	 * @param Secret $secret The Secret linked to the revoked request
+	 *
+	 * @return bool True when every value column is empty
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	private function holdsNoValues(Secret $secret): bool {
+		return (string)$secret->getKey() === ''
+			&& (string)$secret->getLogin() === ''
+			&& (string)$secret->getAdditionalFields() === ''
+			&& (string)$secret->getUrl() === '';
+	}//end holdsNoValues()
 
 	/**
 	 * List secret requests created by a given user.
