@@ -23,6 +23,9 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Db\Application;
+use OCA\Doriath\Service\JwtAuthService;
+use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
@@ -34,6 +37,7 @@ use OCA\Doriath\Service\SecretRequestPolicy;
 use OCA\Doriath\Service\SecretRequestService;
 use OCA\Doriath\Service\SecretRequestSuiteLockService;
 use OCA\Doriath\Service\WriteLockService;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -661,6 +665,17 @@ class SecretRequestServiceTest extends TestCase {
 
 		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
 	}//end testAdditionalMembersAreSatisfiedByTheBlobAlone()
+
+
+
+
+
+
+
+
+
+
+
 
 	/**
 	 * Build a service wired for the fill tests.

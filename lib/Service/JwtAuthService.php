@@ -139,6 +139,44 @@ class JwtAuthService {
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
 	 */
 	public function exchangeAssertion(string $assertion): array {
+		return $this->issueAccessToken(
+			application: $this->verifyAssertion(assertion: $assertion)
+		);
+	}//end exchangeAssertion()
+
+	/**
+	 * Verify a bearer assertion and return the application that signed it.
+	 *
+	 * Extracted from `exchangeAssertion()` so a caller that needs the PROVEN
+	 * IDENTITY without a token can have it — the in-process secret-request seam
+	 * authenticates an application by signed proof and has no use for an access
+	 * token. Both callers therefore share one implementation of the four guards
+	 * below, rather than a second copy that could drift:
+	 *
+	 *   - claim acceptability (aud, exp, iat within CLOCK_SKEW, jti present),
+	 *     which bounds the assertion lifetime
+	 *   - jti replay refusal within that lifetime
+	 *   - issuer resolution to an ACTIVE registered application, so a pending,
+	 *     rejected or deleted application is refused (isActive() is an
+	 *     allow-list on STATUS_ACTIVE, so a new status fails closed)
+	 *   - signature verification against the application's REGISTERED key, so a
+	 *     proof signed by any other key is refused
+	 *
+	 * The jti is consumed here, which is the point: verification is not
+	 * idempotent, and a caller must not be able to replay one proof twice by
+	 * calling a different entrypoint.
+	 *
+	 * @param string $assertion The JWS compact serialization
+	 *
+	 * @return Application The application that signed the assertion
+	 *
+	 * @throws RuntimeException When the assertion is empty, malformed, has
+	 *                          unacceptable claims, replays a jti, names an
+	 *                          inactive issuer, or fails signature verification.
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
+	 */
+	public function verifyAssertion(string $assertion): Application {
 		if ($assertion === '') {
 			throw new RuntimeException(message: 'Assertion is empty');
 		}
@@ -161,8 +199,8 @@ class JwtAuthService {
 		// Store jti to prevent replay during max assertion lifetime.
 		$jtiCache->set($jti, true, self::ACCESS_TOKEN_TTL);
 
-		return $this->issueAccessToken(application: $application);
-	}//end exchangeAssertion()
+		return $application;
+	}//end verifyAssertion()
 
 	/**
 	 * Resolve the `iss` claim to an active registered application.
