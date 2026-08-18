@@ -4,6 +4,7 @@
 
 **OpenSpec changes:**
 - `implement-application-mgmt` (2026-04-01) — Full implementation: registration, CSR/generated key pair, approval queue, JWT auth, write-without-read, cascade deletion
+- `admin-application-request-visibility` (2026-08-18) — An application can ask humans for credentials that no person can see: `created_by` is `application:<id>` and the user listing matches the acting user's id, the target Secrets are application-owned so they appear in no vault, and the only lister is the application's own Bearer endpoint (6 such requests measured on development). Adds an admin-scoped listing and revoke on the application's detail page, leaving the user-side listing untouched
 
 ## Purpose
 
