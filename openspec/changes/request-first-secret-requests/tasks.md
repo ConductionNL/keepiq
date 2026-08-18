@@ -1,19 +1,19 @@
 ## 0. Precondition
 
-- [ ] 0.1 Confirm PR #265 is merged so `Version000033` (empty-string default on `doriath_secrets.key`) is present; if it is not, add that migration to this change instead.
+- [x] 0.1 Confirm PR #265 is merged so `Version000033` (empty-string default on `doriath_secrets.key`) is present; if it is not, add that migration to this change instead.
   - `git log origin/development --oneline -- lib/Migration/Version000033Date20260817120000.php` returns a commit, OR this change carries an equivalent migration
   - Rationale: without the column default, a keyless insert fails the NOT NULL constraint — the Nextcloud Entity setter never marks an unchanged field dirty, so QBMapper omits the column entirely
 
 ## 1. Backend — the placeholder
 
-- [ ] 1.1 Add an explicit `allowUnfilled` opt-in to `SecretService::create()`, defaulting to `false`, permitting an empty `key` only when asserted. Mirror `createByApplication()`; keep the error message unchanged for existing callers.
+- [x] 1.1 Add an explicit `allowUnfilled` opt-in to `SecretService::create()`, defaulting to `false`, permitting an empty `key` only when asserted. Mirror `createByApplication()`; keep the error message unchanged for existing callers.
   - An ordinary `create()` with an empty `key` still throws `A secret requires a name and a key`
   - An empty name is still refused in both modes
-- [ ] 1.2 Create the placeholder in `SecretRequestService` for a fresh request — owner = requester, linked to their active suite, optional name/folder — and roll it back if request creation fails, mirroring `createForApplicationVault()`.
+- [x] 1.2 Create the placeholder in `SecretRequestService` for a fresh request — owner = requester, linked to their active suite, optional name/folder — and roll it back if request creation fails, mirroring `createForApplicationVault()`.
   - No orphan Secret remains after a failed request creation; a fresh request derives `secret_id` from the Secret it created
-- [ ] 1.3 Make `secret_id` optional for a fresh request and mandatory for a re-request in `SecretRequestController`, refusing a re-request without one.
+- [x] 1.3 Make `secret_id` optional for a fresh request and mandatory for a re-request in `SecretRequestController`, refusing a re-request without one.
   - The two flows differ by required input, not only by the `is_re_request` boolean
-- [ ] 1.4 Ensure revoking deletes the placeholder of a fresh request and preserves the target Secret of a re-request.
+- [x] 1.4 Ensure revoking deletes the placeholder of a fresh request and preserves the target Secret of a re-request.
 
 ## 2. Frontend
 

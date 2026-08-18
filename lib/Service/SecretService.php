@@ -215,6 +215,10 @@ class SecretService {
 	 *
 	 * @param array<string,mixed> $data The submitted fields (encrypted blobs + metadata)
 	 * @param string $userId The owning Nextcloud user ID
+	 * @param bool $allowUnfilled Permit an empty `key` because this Secret is the
+	 *                            placeholder a secret request will write into.
+	 *                            Defaults to false, so an ordinary user create
+	 *                            still cannot store a valueless secret.
 	 *
 	 * @return Secret
 	 *
@@ -222,14 +226,27 @@ class SecretService {
 	 * @throws SuiteBlockedException When the user has no active suite
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 *
-	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) - `$allowUnfilled` is an explicit
+	 * opt-in for a single caller (the secret-request placeholder), not a mode
+	 * switch. Same adjudication as `createByApplication()` (#266): splitting it
+	 * into two public methods would duplicate the write-lock, validation, type
+	 * resolution and suite checks below, while relaxing the key requirement for
+	 * every user write would let an ordinary create silently store a valueless
+	 * secret — the failure this flag exists to prevent.
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
-	public function create(array $data, string $userId): Secret {
+	public function create(array $data, string $userId, bool $allowUnfilled = false): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
 		$name = trim((string)($data['name'] ?? ''));
 		$key = (string)($data['key'] ?? '');
-		if ($name === '' || $key === '') {
+
+		// A NAME is required in both modes: a nameless empty Secret cannot be
+		// identified in a vault. The key requirement is what the placeholder
+		// exception relaxes, and only when the caller asks for it — a Secret may
+		// be keyless ONLY while a pending request targets it.
+		if ($name === '' || ($key === '' && $allowUnfilled === false)) {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 
