@@ -745,7 +745,10 @@ export default {
 		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		async onCredentialRequested() {
-			this.credentialRequestOpen = false
+			// Deliberately NOT closing: the dialog has just computed the fill link
+			// and is showing it with a Copy button and its own Done action. Closing
+			// here unmounts it one tick later and destroys the only copy of the URL
+			// the requester will ever be offered.
 			// Both: the placeholder Secret is new, and its request drives the badge.
 			await Promise.all([
 				this.reload(),

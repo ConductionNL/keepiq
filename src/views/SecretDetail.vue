@@ -695,14 +695,22 @@ export default {
 		},
 
 		/**
-		 * Close the dialog after the new request was created — the
-		 * SecretRequestList re-fetches on its own via the store, so
-		 * no extra refresh is required.
+		 * A request was created against this Secret.
+		 *
+		 * This must NOT close the dialog. The dialog has just built the fill link
+		 * and is showing it with a Copy button and a Done action; closing here
+		 * unmounts it (`v-if`) one tick after `submit()` set `fillUrl`, so the
+		 * requester is never shown the URL the whole feature exists to produce.
+		 * The list re-fetches itself via the store, so there is nothing else to do
+		 * here — the user dismisses the dialog when they have the link.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		onRequestCreated() {
-			this.requestDialogOpen = false
+			// Intentionally empty: see the docblock. Kept as the `created` hook so
+			// a future refresh has an obvious home.
 		},
 	},
 }
