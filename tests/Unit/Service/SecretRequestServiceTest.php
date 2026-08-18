@@ -1499,4 +1499,108 @@ class SecretRequestServiceTest extends TestCase {
 		$this->assertCount(2, array_unique($seen));
 	}//end testTwoFreshRequestsDoNotShareAPlaceholder()
 
+	/**
+	 * A missing userId is refused before any Secret is created.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestRefusesAnEmptyUserId(): void {
+		$this->secretService->expects($this->never())->method('create');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createForUserVault(userId: '', requestedFields: ['key']);
+	}//end testFreshRequestRefusesAnEmptyUserId()
+
+	/**
+	 * A rollback that itself fails must not mask the original error.
+	 *
+	 * This path decides whether a failed request leaves an orphan placeholder
+	 * behind. If the cleanup throws and that throw escapes, the caller sees a
+	 * confusing "could not delete" instead of the real reason the request failed,
+	 * and the orphan is still there either way.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testAFailingRollbackDoesNotMaskTheOriginalError(): void {
+		$shell = new Secret();
+		$shell->setId('sec-doomed');
+		$shell->setEncryptionSuiteId('suite-9');
+		$this->secretService->method('create')->willReturn($shell);
+		$this->mapper->method('insert')->willThrowException(new RuntimeException('db down'));
+		$this->secretService->method('delete')
+			->willThrowException(new RuntimeException('cleanup also failed'));
+
+		try {
+			$this->service->createForUserVault(
+				userId: 'alice',
+				requestedFields: ['key'],
+				name: 'doomed',
+			);
+			$this->fail('the original failure must surface');
+		} catch (RuntimeException $e) {
+			$this->assertSame('db down', $e->getMessage(), 'the ORIGINAL error must survive');
+		}
+	}//end testAFailingRollbackDoesNotMaskTheOriginalError()
+
+	/**
+	 * Revoking when the linked Secret is already gone is not an error.
+	 *
+	 * The request is still revoked; there is simply nothing left to clean up.
+	 * Throwing here would turn a successful revoke into a failure the user has to
+	 * retry against a Secret that no longer exists.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeSurvivesAMissingSecret(): void {
+		$entity = $this->makePending('req-gone', 'sec-vanished');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->secretMapper->method('findById')
+			->willThrowException(new DoesNotExistException('gone'));
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->assertSame(
+			SecretRequest::STATUS_DECLINED,
+			$this->service->decline(requestId: 'req-gone', userId: 'alice')->getStatus()
+		);
+	}//end testRevokeSurvivesAMissingSecret()
+
+	/**
+	 * A failing placeholder delete must not fail the revoke.
+	 *
+	 * An orphan empty Secret is untidy; a revoke the user believes did not work is
+	 * worse, because they will try again on a request that is already declined.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeSurvivesAFailingPlaceholderDelete(): void {
+		$entity = $this->makePending('req-stubborn', 'sec-empty');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$empty = new Secret();
+		$empty->setId('sec-empty');
+		$empty->setKey('');
+		$empty->setOwnerType('user');
+		$empty->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($empty);
+		$this->secretService->method('delete')
+			->willThrowException(new RuntimeException('locked'));
+
+		$this->assertSame(
+			SecretRequest::STATUS_DECLINED,
+			$this->service->decline(requestId: 'req-stubborn', userId: 'alice')->getStatus()
+		);
+	}//end testRevokeSurvivesAFailingPlaceholderDelete()
+
+
 }//end class
