@@ -384,7 +384,20 @@
         "e.g. client-id": "m.sh. client-id",
         "That field is already listed.": "Tá an réimse sin ar an liosta cheana féin.",
         "That is a built-in field — tick it in the list above instead.": "Is réimse ionsuite é sin — ticeáil é sa liosta thuas ina ionad.",
-        "URL (stored unencrypted)": "URL (stóráilte gan chriptiú)"
+        "URL (stored unencrypted)": "URL (stóráilte gan chriptiú)",
+        "— already has a value": "— tá luach ann cheana",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Cruthaítear coimeádán anois a fhanann folamh go dtí go líonann an faighteoir é — ní gá duit luach a cheapadh riamh.",
+        "Ask for a credential": "Iarr dintiúr",
+        "Ask for new values": "Iarr luachanna nua",
+        "Ask someone for a credential": "Iarr dintiúr ar dhuine",
+        "Ask someone to fill this in": "Iarr ar dhuine é seo a líonadh",
+        "Folder (optional)": "Fillteán (roghnach)",
+        "Give the credential a name so you can find it later.": "Tabhair ainm don dintiúr chun é a aimsiú níos déanaí.",
+        "New values requested": "Iarradh luachanna nua",
+        "No folder": "Gan fillteán",
+        "Waiting for someone to fill this in": "Ag fanacht le duine é seo a líonadh",
+        "What are you asking for?": "Cad atá tú a iarraidh?",
+        "e.g. Supplier API key": "m.sh. eochair API an soláthraí"
     },
     "plurals": null
 }

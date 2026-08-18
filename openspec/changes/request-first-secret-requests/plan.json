@@ -108,7 +108,7 @@
       "number": "3.1",
       "section": "Tests",
       "title": "PHPUnit for `SecretService::create()`: refuses an empty key by default, accepts it with `allowUnfilled`, still requires a name in both modes.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -116,7 +116,7 @@
       "number": "3.2",
       "section": "Tests",
       "title": "PHPUnit for `SecretRequestService`: a fresh request creates its own placeholder, two fresh requests do not share one, a re-request creates none, and a failed request leaves no orphan.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -124,7 +124,7 @@
       "number": "3.3",
       "section": "Tests",
       "title": "PHPUnit for revoke: the placeholder of a fresh request is deleted and a re-request's target Secret and values survive.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -132,7 +132,7 @@
       "number": "3.4",
       "section": "Tests",
       "title": "Vitest for the dialog and list: submits with no `secret` prop, filled fields unticked on a fresh request and selectable on a re-request, and the outstanding-request indicator renders without a token.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -140,7 +140,7 @@
       "number": "3.5",
       "section": "Tests",
       "title": "Verify each new/modified spec scenario is driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change rather than skipping it.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -148,7 +148,7 @@
       "number": "4.1",
       "section": "Quality",
       "title": "Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -156,7 +156,7 @@
       "number": "4.2",
       "section": "Quality",
       "title": "Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm `@spec` anchors on every changed method.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     }
   ]

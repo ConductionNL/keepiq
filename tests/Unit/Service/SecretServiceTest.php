@@ -186,6 +186,74 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * An ordinary user create still refuses an empty key.
+	 *
+	 * The placeholder exception must never become the default: a Secret with no
+	 * value and no request justifying it is litter, and this is the failure the
+	 * opt-in exists to keep out.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testCreateStillRefusesAnEmptyKeyByDefault(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('A secret requires a name and a key');
+		$this->service->create(
+			data: ['name' => 'has-a-name', 'key' => ''],
+			userId: 'alice',
+		);
+	}//end testCreateStillRefusesAnEmptyKeyByDefault()
+
+	/**
+	 * `allowUnfilled` permits the keyless secret-request placeholder.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testCreateAllowsAnUnfilledPlaceholder(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->makeSuite());
+		$this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+		$this->mapper->expects($this->once())->method('insert');
+
+		$secret = $this->service->create(
+			data: ['name' => 'Unfilled request', 'key' => ''],
+			userId: 'alice',
+			allowUnfilled: true,
+		);
+
+		$this->assertSame('', $secret->getKey());
+		$this->assertSame('user', $secret->getOwnerType());
+		$this->assertSame('alice', $secret->getOwnerId());
+		$this->assertSame('suite-1', $secret->getEncryptionSuiteId());
+	}//end testCreateAllowsAnUnfilledPlaceholder()
+
+	/**
+	 * A NAME is required in both modes.
+	 *
+	 * A nameless empty Secret cannot be identified in a vault, so the exception
+	 * relaxes the key requirement only.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testUnfilledPlaceholderStillRequiresAName(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->create(
+			data: ['name' => '', 'key' => ''],
+			userId: 'alice',
+			allowUnfilled: true,
+		);
+	}//end testUnfilledPlaceholderStillRequiresAName()
+
 	public function testCreateBlockedWhenNoActiveSuite(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
 		$this->suiteMapper->method('findActiveByOwner')->willThrowException(new DoesNotExistException('none'));

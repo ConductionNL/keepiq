@@ -384,7 +384,20 @@
         "e.g. client-id": "p. ex. client-id",
         "That field is already listed.": "Ce champ est déjà dans la liste.",
         "That is a built-in field — tick it in the list above instead.": "Il s’agit d’un champ intégré — cochez-le plutôt dans la liste ci-dessus.",
-        "URL (stored unencrypted)": "URL (stockée non chiffrée)"
+        "URL (stored unencrypted)": "URL (stockée non chiffrée)",
+        "— already has a value": "— a déjà une valeur",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Un espace réservé est créé maintenant et reste vide jusqu’à ce que le destinataire le remplisse — vous n’avez jamais à inventer de valeur.",
+        "Ask for a credential": "Demander un identifiant",
+        "Ask for new values": "Demander de nouvelles valeurs",
+        "Ask someone for a credential": "Demander un identifiant à quelqu’un",
+        "Ask someone to fill this in": "Demander à quelqu’un de le remplir",
+        "Folder (optional)": "Dossier (facultatif)",
+        "Give the credential a name so you can find it later.": "Donnez un nom à cet identifiant pour le retrouver plus tard.",
+        "New values requested": "Nouvelles valeurs demandées",
+        "No folder": "Aucun dossier",
+        "Waiting for someone to fill this in": "En attente que quelqu’un le remplisse",
+        "What are you asking for?": "Que demandez-vous ?",
+        "e.g. Supplier API key": "p. ex. clé API du fournisseur"
     },
     "plurals": null
 }

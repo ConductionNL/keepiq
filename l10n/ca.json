@@ -384,7 +384,20 @@
         "e.g. client-id": "p. ex. client-id",
         "That field is already listed.": "Aquest camp ja és a la llista.",
         "That is a built-in field — tick it in the list above instead.": "Aquest és un camp integrat: marqueu-lo a la llista de dalt.",
-        "URL (stored unencrypted)": "URL (emmagatzemat sense xifrar)"
+        "URL (stored unencrypted)": "URL (emmagatzemat sense xifrar)",
+        "— already has a value": "— ja té un valor",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Ara es crea un marcador que queda buit fins que el destinatari l’ompli: no has d’inventar mai cap valor.",
+        "Ask for a credential": "Demana una credencial",
+        "Ask for new values": "Demana valors nous",
+        "Ask someone for a credential": "Demana una credencial a algú",
+        "Ask someone to fill this in": "Demana a algú que ho ompli",
+        "Folder (optional)": "Carpeta (opcional)",
+        "Give the credential a name so you can find it later.": "Posa un nom a la credencial per trobar-la més tard.",
+        "New values requested": "Valors nous demanats",
+        "No folder": "Cap carpeta",
+        "Waiting for someone to fill this in": "Esperant que algú ho ompli",
+        "What are you asking for?": "Què demanes?",
+        "e.g. Supplier API key": "p. ex. clau API del proveïdor"
     },
     "plurals": null
 }

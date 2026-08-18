@@ -384,7 +384,20 @@
         "e.g. client-id": "t.d. client-id",
         "That field is already listed.": "Þetta svæði er þegar á listanum.",
         "That is a built-in field — tick it in the list above instead.": "Þetta er innbyggt svæði — hakaðu við það á listanum fyrir ofan í staðinn.",
-        "URL (stored unencrypted)": "URL (vistað ókóðað)"
+        "URL (stored unencrypted)": "URL (vistað ókóðað)",
+        "— already has a value": "— hefur þegar gildi",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Nú er búinn til frátekinn staður sem er tómur þar til viðtakandinn fyllir hann út — þú þarft aldrei að finna upp gildi.",
+        "Ask for a credential": "Biðja um skilríki",
+        "Ask for new values": "Biðja um ný gildi",
+        "Ask someone for a credential": "Biðja einhvern um skilríki",
+        "Ask someone to fill this in": "Biðja einhvern um að fylla þetta út",
+        "Folder (optional)": "Mappa (valkvætt)",
+        "Give the credential a name so you can find it later.": "Gefðu skilríkinu nafn svo þú finnir það síðar.",
+        "New values requested": "Ný gildi umbeðin",
+        "No folder": "Engin mappa",
+        "Waiting for someone to fill this in": "Bíður þess að einhver fylli þetta út",
+        "What are you asking for?": "Um hvað ertu að biðja?",
+        "e.g. Supplier API key": "t.d. API-lykill söluaðila"
     },
     "plurals": null
 }

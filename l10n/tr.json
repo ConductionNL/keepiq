@@ -384,7 +384,20 @@
         "e.g. client-id": "örn. client-id",
         "That field is already listed.": "Bu alan listede zaten var.",
         "That is a built-in field — tick it in the list above instead.": "Bu yerleşik bir alan — bunun yerine yukarıdaki listeden işaretleyin.",
-        "URL (stored unencrypted)": "URL (şifrelenmeden saklanır)"
+        "URL (stored unencrypted)": "URL (şifrelenmeden saklanır)",
+        "— already has a value": "— zaten bir değeri var",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Şimdi bir yer tutucu oluşturulur ve alıcı doldurana kadar boş kalır — asla bir değer uydurmanız gerekmez.",
+        "Ask for a credential": "Kimlik bilgisi isteyin",
+        "Ask for new values": "Yeni değerler isteyin",
+        "Ask someone for a credential": "Birinden kimlik bilgisi isteyin",
+        "Ask someone to fill this in": "Birinden bunu doldurmasını isteyin",
+        "Folder (optional)": "Klasör (isteğe bağlı)",
+        "Give the credential a name so you can find it later.": "Daha sonra bulabilmek için kimlik bilgisine bir ad verin.",
+        "New values requested": "Yeni değerler istendi",
+        "No folder": "Klasör yok",
+        "Waiting for someone to fill this in": "Birinin bunu doldurması bekleniyor",
+        "What are you asking for?": "Ne istiyorsunuz?",
+        "e.g. Supplier API key": "örn. tedarikçi API anahtarı"
     },
     "plurals": null
 }

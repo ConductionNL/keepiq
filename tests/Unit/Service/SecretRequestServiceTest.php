@@ -1276,4 +1276,227 @@ class SecretRequestServiceTest extends TestCase {
 			userId: 'alice',
 		);
 	}//end testCreateReRequestRejectsExistingPending()
+	/**
+	 * A FRESH request creates its own unfilled Secret and links to it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestCreatesItsOwnPlaceholder(): void {
+		$shell = new Secret();
+		$shell->setId('sec-placeholder');
+		$shell->setEncryptionSuiteId('suite-9');
+		$shell->setOwnerType('user');
+		$shell->setOwnerId('alice');
+
+		// The placeholder must be created keyless, and ONLY with the explicit
+		// opt-in — the whole point is that the requester supplies no value.
+		$this->secretService->expects($this->once())
+			->method('create')
+			->with(
+				$this->callback(
+					static fn (array $data): bool => $data['key'] === ''
+						&& $data['name'] === 'Supplier API key'
+				),
+				'alice',
+				true
+			)
+			->willReturn($shell);
+
+		$captured = null;
+		$this->mapper->expects($this->once())
+			->method('insert')
+			->willReturnCallback(
+				static function (SecretRequest $entity) use (&$captured) {
+					$captured = $entity;
+					return $entity;
+				}
+			);
+
+		$request = $this->service->createForUserVault(
+			userId: 'alice',
+			requestedFields: ['key', 'url'],
+			name: 'Supplier API key',
+		);
+
+		$this->assertSame('sec-placeholder', $captured->getSecretId());
+		// Read off the created Secret, never from a caller parameter.
+		$this->assertSame('suite-9', $captured->getEncryptionSuiteId());
+		$this->assertFalse($captured->getIsReRequest());
+		$this->assertSame(SecretRequest::STATUS_PENDING, $captured->getStatus());
+		$this->assertNotSame('', (string)$request->getToken());
+	}//end testFreshRequestCreatesItsOwnPlaceholder()
+
+	/**
+	 * A failed request creation leaves no orphan placeholder behind.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestRollsBackThePlaceholderOnFailure(): void {
+		$shell = new Secret();
+		$shell->setId('sec-doomed');
+		$shell->setEncryptionSuiteId('suite-9');
+		$this->secretService->method('create')->willReturn($shell);
+
+		$this->mapper->method('insert')->willThrowException(new RuntimeException('db down'));
+
+		// The shell exists only to receive this request, so it must not survive.
+		$this->secretService->expects($this->once())
+			->method('delete')
+			->with('sec-doomed', 'alice');
+
+		$this->expectException(RuntimeException::class);
+		$this->service->createForUserVault(
+			userId: 'alice',
+			requestedFields: ['key'],
+			name: 'doomed',
+		);
+	}//end testFreshRequestRollsBackThePlaceholderOnFailure()
+
+	/**
+	 * An empty field list is refused before any Secret is created.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testFreshRequestRefusesAnEmptyFieldList(): void {
+		$this->secretService->expects($this->never())->method('create');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createForUserVault(userId: 'alice', requestedFields: []);
+	}//end testFreshRequestRefusesAnEmptyFieldList()
+
+	/**
+	 * Revoking a fresh request deletes the placeholder it created.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeDeletesTheUnfilledPlaceholder(): void {
+		$entity = $this->makePending('req-1', 'sec-empty');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$empty = new Secret();
+		$empty->setId('sec-empty');
+		$empty->setKey('');
+		$empty->setOwnerType('user');
+		$empty->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($empty);
+
+		$this->secretService->expects($this->once())
+			->method('delete')
+			->with('sec-empty', 'alice');
+
+		$this->service->decline(requestId: 'req-1', userId: 'alice');
+	}//end testRevokeDeletesTheUnfilledPlaceholder()
+
+	/**
+	 * Revoking must NEVER delete a Secret that holds a value.
+	 *
+	 * This is the hazard the emptiness discriminator exists for: a plain request
+	 * also carries `isReRequest === false` while targeting a Secret the USER
+	 * chose, so keying the delete on that flag would destroy real credentials.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeNeverDeletesAFilledSecret(): void {
+		$entity = $this->makePending('req-2', 'sec-filled');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$filled = new Secret();
+		$filled->setId('sec-filled');
+		$filled->setKey('CIPHERTEXT');
+		$filled->setOwnerType('user');
+		$filled->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($filled);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->service->decline(requestId: 'req-2', userId: 'alice');
+	}//end testRevokeNeverDeletesAFilledSecret()
+
+	/**
+	 * A placeholder in someone else's vault is never touched by this path.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testRevokeDoesNotReachAcrossAnOwnershipBoundary(): void {
+		$entity = $this->makePending('req-3', 'sec-app');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$appOwned = new Secret();
+		$appOwned->setId('sec-app');
+		$appOwned->setKey('');
+		$appOwned->setOwnerType('application');
+		$appOwned->setOwnerId('app-1');
+		$this->secretMapper->method('findById')->willReturn($appOwned);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->service->decline(requestId: 'req-3', userId: 'alice');
+	}//end testRevokeDoesNotReachAcrossAnOwnershipBoundary()
+
+	/**
+	 * Build a pending request owned by alice.
+	 *
+	 * @param string $id The request id
+	 * @param string $secretId The linked Secret id
+	 *
+	 * @return SecretRequest
+	 */
+	private function makePending(string $id, string $secretId): SecretRequest {
+		$entity = new SecretRequest();
+		$entity->setId($id);
+		$entity->setSecretId($secretId);
+		$entity->setStatus(SecretRequest::STATUS_PENDING);
+		$entity->setCreatedBy('alice');
+		$entity->setToken('tok-' . $id);
+
+		return $entity;
+	}//end makePending()
+
+	/**
+	 * Two fresh requests each get their own Secret.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testTwoFreshRequestsDoNotShareAPlaceholder(): void {
+		$first = new Secret();
+		$first->setId('sec-a');
+		$first->setEncryptionSuiteId('suite-9');
+		$second = new Secret();
+		$second->setId('sec-b');
+		$second->setEncryptionSuiteId('suite-9');
+
+		$this->secretService->method('create')->willReturnOnConsecutiveCalls($first, $second);
+
+		$seen = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			static function (SecretRequest $entity) use (&$seen) {
+				$seen[] = $entity->getSecretId();
+				return $entity;
+			}
+		);
+
+		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'one');
+		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'two');
+
+		$this->assertSame(['sec-a', 'sec-b'], $seen);
+		$this->assertCount(2, array_unique($seen));
+	}//end testTwoFreshRequestsDoNotShareAPlaceholder()
+
 }//end class

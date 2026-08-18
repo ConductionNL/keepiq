@@ -416,6 +416,8 @@ export default {
 		 * an overwrite, so it must not be labelled or treated as one.
 		 *
 		 * @return {boolean} True when a value is present.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		secretHasValue() {
 			return String(this.secret?.key || '') !== ''

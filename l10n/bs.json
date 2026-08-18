@@ -384,7 +384,20 @@
         "e.g. client-id": "npr. client-id",
         "That field is already listed.": "To polje je već na listi.",
         "That is a built-in field — tick it in the list above instead.": "To je ugrađeno polje — označite ga na listi iznad.",
-        "URL (stored unencrypted)": "URL (sačuvan nešifrovan)"
+        "URL (stored unencrypted)": "URL (sačuvan nešifrovan)",
+        "— already has a value": "— već ima vrijednost",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Sada se kreira rezervirano mjesto koje ostaje prazno dok ga primalac ne ispuni — nikada ne morate izmišljati vrijednost.",
+        "Ask for a credential": "Zatraži vjerodajnicu",
+        "Ask for new values": "Zatraži nove vrijednosti",
+        "Ask someone for a credential": "Zamoli nekoga za vjerodajnicu",
+        "Ask someone to fill this in": "Zamoli nekoga da ovo ispuni",
+        "Folder (optional)": "Folder (opcionalno)",
+        "Give the credential a name so you can find it later.": "Dajte vjerodajnici naziv da je kasnije nađete.",
+        "New values requested": "Zatražene nove vrijednosti",
+        "No folder": "Bez foldera",
+        "Waiting for someone to fill this in": "Čeka se da neko ovo ispuni",
+        "What are you asking for?": "Šta tražite?",
+        "e.g. Supplier API key": "npr. API ključ dobavljača"
     },
     "plurals": null
 }

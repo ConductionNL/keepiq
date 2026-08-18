@@ -384,7 +384,20 @@
         "e.g. client-id": "t.ex. client-id",
         "That field is already listed.": "Det fältet finns redan i listan.",
         "That is a built-in field — tick it in the list above instead.": "Det är ett inbyggt fält — markera det i listan ovan i stället.",
-        "URL (stored unencrypted)": "URL (lagras okrypterad)"
+        "URL (stored unencrypted)": "URL (lagras okrypterad)",
+        "— already has a value": "— har redan ett värde",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "En platshållare skapas nu och förblir tom tills mottagaren fyller i den — du behöver aldrig hitta på ett värde.",
+        "Ask for a credential": "Begär en inloggningsuppgift",
+        "Ask for new values": "Begär nya värden",
+        "Ask someone for a credential": "Be någon om en inloggningsuppgift",
+        "Ask someone to fill this in": "Be någon fylla i detta",
+        "Folder (optional)": "Mapp (valfritt)",
+        "Give the credential a name so you can find it later.": "Ge inloggningsuppgiften ett namn så att du hittar den senare.",
+        "New values requested": "Nya värden begärda",
+        "No folder": "Ingen mapp",
+        "Waiting for someone to fill this in": "Väntar på att någon fyller i detta",
+        "What are you asking for?": "Vad begär du?",
+        "e.g. Supplier API key": "t.ex. leverantörens API-nyckel"
     },
     "plurals": null
 }

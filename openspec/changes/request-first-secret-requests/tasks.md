@@ -26,16 +26,25 @@
 
 ## 3. Tests
 
-- [ ] 3.1 PHPUnit for `SecretService::create()`: refuses an empty key by default, accepts it with `allowUnfilled`, still requires a name in both modes.
-- [ ] 3.2 PHPUnit for `SecretRequestService`: a fresh request creates its own placeholder, two fresh requests do not share one, a re-request creates none, and a failed request leaves no orphan.
-- [ ] 3.3 PHPUnit for revoke: the placeholder of a fresh request is deleted and a re-request's target Secret and values survive.
-- [ ] 3.4 Vitest for the dialog and list: submits with no `secret` prop, filled fields unticked on a fresh request and selectable on a re-request, and the outstanding-request indicator renders without a token.
-- [ ] 3.5 Verify each new/modified spec scenario is driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change rather than skipping it.
+- [x] 3.1 PHPUnit for `SecretService::create()`: refuses an empty key by default, accepts it with `allowUnfilled`, still requires a name in both modes.
+- [x] 3.2 PHPUnit for `SecretRequestService`: a fresh request creates its own placeholder, two fresh requests do not share one, a re-request creates none, and a failed request leaves no orphan.
+- [x] 3.3 PHPUnit for revoke: the placeholder of a fresh request is deleted and a re-request's target Secret and values survive.
+- [x] 3.4 Vitest for the dialog and list: submits with no `secret` prop, filled fields unticked on a fresh request and selectable on a re-request, and the outstanding-request indicator renders without a token.
+- [x] 3.5 Verify each new/modified spec scenario is driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change rather than skipping it.
 
 ## 4. Quality
 
-- [ ] 4.1 Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).
-- [ ] 4.2 Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm `@spec` anchors on every changed method.
+- [x] 4.1 Translate every new UI string into all 36 locales so the no-regression parity ratchet stays green (`check-l10n.js` and `check-l10n-parity.js` both exit 0).
+- [x] 4.2 Run the full sweep — hydra gates, PHPUnit, vitest, phpcs, php-cs-fixer, `openspec validate --strict` — and confirm `@spec` anchors on every changed method.
+
+## Sync-time action
+
+`openspec/specs/secret-requests/spec.md:9` carries a FILE-LEVEL `@e2e exclude`
+justified as "No secret-request UI is built in v0.1". This change builds that UI
+(vault entry point, outstanding-request indicator, request-first dialog), so the
+justification becomes false on sync. Replace it then — the delta's scenarios each
+carry their own reason-bearing exclusion, which is the right granularity, and a
+stale blanket exclusion would silently cover scenarios nobody assessed.
 
 ## Acceptance criteria
 

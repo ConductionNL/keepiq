@@ -394,6 +394,8 @@ export default {
 		 * Secret id -> its pending request, for the row indicator.
 		 *
 		 * @return {object} Map of secretId to the pending request.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		pendingRequestsBySecret() {
 			const map = {}
@@ -710,15 +712,6 @@ export default {
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		/**
-		 * A credential was requested from the vault level.
-		 *
-		 * The request created its own placeholder Secret, so the list must refetch
-		 * to show it — otherwise the row only appears after a manual reload and
-		 * the user cannot see what they just asked for.
-		 *
-		 * @return {Promise<void>}
-		 */
-		/**
 		 * The outstanding-request state for a row, or null.
 		 *
 		 * Distinguishes a Secret that cannot be used yet from one that works until
@@ -729,6 +722,8 @@ export default {
 		 * @param {object} secret The row's secret.
 		 *
 		 * @return {string|null} 'awaiting-fill', 're-request' or null.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		requestStateFor(secret) {
 			if (!secret || !this.pendingRequestsBySecret[secret.id]) {
@@ -738,6 +733,17 @@ export default {
 			return String(secret.key || '') === '' ? 'awaiting-fill' : 're-request'
 		},
 
+		/**
+		 * A credential was requested from the vault level.
+		 *
+		 * The request created its own placeholder Secret, so the list must refetch
+		 * to show it — otherwise the row only appears after a manual reload and
+		 * the user cannot see what they just asked for.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 */
 		async onCredentialRequested() {
 			this.credentialRequestOpen = false
 			// Both: the placeholder Secret is new, and its request drives the badge.

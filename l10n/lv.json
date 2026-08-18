@@ -384,7 +384,20 @@
         "e.g. client-id": "piem., client-id",
         "That field is already listed.": "Šis lauks jau ir sarakstā.",
         "That is a built-in field — tick it in the list above instead.": "Šis ir iebūvēts lauks — atzīmējiet to augstāk esošajā sarakstā.",
-        "URL (stored unencrypted)": "URL (glabāts nešifrēts)"
+        "URL (stored unencrypted)": "URL (glabāts nešifrēts)",
+        "— already has a value": "— jau ir vērtība",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Tagad tiek izveidota vietturis, kas paliek tukšs, līdz saņēmējs to aizpilda — jums nekad nav jāizdomā vērtība.",
+        "Ask for a credential": "Pieprasīt akreditācijas datus",
+        "Ask for new values": "Pieprasīt jaunas vērtības",
+        "Ask someone for a credential": "Palūgt kādam akreditācijas datus",
+        "Ask someone to fill this in": "Palūgt kādam to aizpildīt",
+        "Folder (optional)": "Mape (neobligāti)",
+        "Give the credential a name so you can find it later.": "Piešķiriet akreditācijas datiem nosaukumu, lai vēlāk tos atrastu.",
+        "New values requested": "Pieprasītas jaunas vērtības",
+        "No folder": "Bez mapes",
+        "Waiting for someone to fill this in": "Gaida, kamēr kāds to aizpildīs",
+        "What are you asking for?": "Ko jūs pieprasāt?",
+        "e.g. Supplier API key": "piem., piegādātāja API atslēga"
     },
     "plurals": null
 }

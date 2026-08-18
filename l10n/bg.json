@@ -384,7 +384,20 @@
         "e.g. client-id": "напр. client-id",
         "That field is already listed.": "Това поле вече е в списъка.",
         "That is a built-in field — tick it in the list above instead.": "Това е вградено поле — отбележете го в списъка по-горе.",
-        "URL (stored unencrypted)": "URL (съхранява се нешифриран)"
+        "URL (stored unencrypted)": "URL (съхранява се нешифриран)",
+        "— already has a value": "— вече има стойност",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Сега се създава запазено място, което остава празно, докато получателят не го попълни — никога не се налага да измисляте стойност.",
+        "Ask for a credential": "Заявяване на идентификационни данни",
+        "Ask for new values": "Заявяване на нови стойности",
+        "Ask someone for a credential": "Помолете някого за идентификационни данни",
+        "Ask someone to fill this in": "Помолете някого да попълни това",
+        "Folder (optional)": "Папка (по избор)",
+        "Give the credential a name so you can find it later.": "Дайте име на идентификационните данни, за да ги намерите по-късно.",
+        "New values requested": "Заявени нови стойности",
+        "No folder": "Без папка",
+        "Waiting for someone to fill this in": "Изчаква се някой да попълни това",
+        "What are you asking for?": "Какво заявявате?",
+        "e.g. Supplier API key": "напр. API ключ на доставчика"
     },
     "plurals": null
 }

@@ -384,7 +384,20 @@
         "e.g. client-id": "e.ż. client-id",
         "That field is already listed.": "Dan il-qasam diġà jinsab fil-lista.",
         "That is a built-in field — tick it in the list above instead.": "Dan huwa qasam integrat — immarkah fil-lista ta’ fuq.",
-        "URL (stored unencrypted)": "URL (maħżun mhux ikkriptat)"
+        "URL (stored unencrypted)": "URL (maħżun mhux ikkriptat)",
+        "— already has a value": "— diġà għandu valur",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Jinħoloq issa post żammiem li jibqa' vojt sakemm ir-riċevitur jimlih — qatt ma trid tivvinta valur.",
+        "Ask for a credential": "Itlob kredenzjal",
+        "Ask for new values": "Itlob valuri ġodda",
+        "Ask someone for a credential": "Itlob kredenzjal mingħand xi ħadd",
+        "Ask someone to fill this in": "Itlob lil xi ħadd jimla dan",
+        "Folder (optional)": "Kartella (mhux obbligatorju)",
+        "Give the credential a name so you can find it later.": "Agħti isem lill-kredenzjal biex tarah aktar tard.",
+        "New values requested": "Intalbu valuri ġodda",
+        "No folder": "Bla kartella",
+        "Waiting for someone to fill this in": "Qed nistennew li xi ħadd jimla dan",
+        "What are you asking for?": "X'qed titlob?",
+        "e.g. Supplier API key": "eż. ċavetta API tal-fornitur"
     },
     "plurals": null
 }

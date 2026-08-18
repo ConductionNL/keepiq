@@ -384,7 +384,20 @@
         "e.g. client-id": "напр., client-id",
         "That field is already listed.": "Це поле вже є у списку.",
         "That is a built-in field — tick it in the list above instead.": "Це вбудоване поле — позначте його у списку вище.",
-        "URL (stored unencrypted)": "URL (зберігається без шифрування)"
+        "URL (stored unencrypted)": "URL (зберігається без шифрування)",
+        "— already has a value": "— уже містить значення",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Зараз створюється заготовка, яка залишається порожньою, доки отримувач її не заповнить — вам ніколи не потрібно вигадувати значення.",
+        "Ask for a credential": "Запросити облікові дані",
+        "Ask for new values": "Запросити нові значення",
+        "Ask someone for a credential": "Попросити в когось облікові дані",
+        "Ask someone to fill this in": "Попросити когось заповнити це",
+        "Folder (optional)": "Тека (необов’язково)",
+        "Give the credential a name so you can find it later.": "Дайте обліковим даним назву, щоб знайти їх пізніше.",
+        "New values requested": "Запрошено нові значення",
+        "No folder": "Без теки",
+        "Waiting for someone to fill this in": "Очікування, поки хтось це заповнить",
+        "What are you asking for?": "Що ви запитуєте?",
+        "e.g. Supplier API key": "напр., API-ключ постачальника"
     },
     "plurals": null
 }

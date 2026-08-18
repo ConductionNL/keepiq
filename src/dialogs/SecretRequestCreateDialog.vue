@@ -206,6 +206,8 @@ export default {
 		 * Folders the requester can file a fresh request's Secret under.
 		 *
 		 * @return {Array<object>} The user's folders.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		folderOptions() {
 			return useFolderStore().folders || []
@@ -352,23 +354,13 @@ export default {
 		},
 
 		/**
-		 * Add a named additional field and tick it.
-		 *
-		 * Reserved names are refused rather than silently accepted: typing "key"
-		 * here would look like a second field but the backend routes it to the
-		 * ciphertext column, so the user would be requesting something other than
-		 * what they typed.
-		 *
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
-		 */
-		/**
 		 * Whether the target Secret already holds a value for this field.
 		 *
 		 * @param {string} key The field name.
 		 *
 		 * @return {boolean} True when a value is already present.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 		 */
 		isFieldFilled(key) {
 			if (!this.secret) {
@@ -399,6 +391,8 @@ export default {
 		 * existing values is that flow's entire purpose.
 		 *
 		 * @return {Array<string>} Field names to tick initially.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 		 */
 		defaultSelection() {
 			if (this.isReRequest) {
@@ -408,6 +402,18 @@ export default {
 			return this.isFieldFilled('key') ? [] : ['key']
 		},
 
+		/**
+		 * Add a named additional field and tick it.
+		 *
+		 * Reserved names are refused rather than silently accepted: typing "key"
+		 * here would look like a second field but the backend routes it to the
+		 * ciphertext column, so the user would be requesting something other than
+		 * what they typed.
+		 *
+		 * @return {void}
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
 		addCustomField() {
 			const name = (this.customFieldInput || '').trim()
 			this.customFieldError = ''
@@ -436,6 +442,15 @@ export default {
 			this.customFieldInput = ''
 		},
 
+		/**
+		 * Copy the fill link to the clipboard.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec exclude Clipboard convenience. No requirement describes how the
+		 *   link travels to the recipient, only that the requester is handed it.
+		 *   Pinned by the dialog spec's copyUrl test instead.
+		 */
 		async copyUrl() {
 			try {
 				await navigator.clipboard.writeText(this.fillUrl)

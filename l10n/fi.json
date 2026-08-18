@@ -384,7 +384,20 @@
         "e.g. client-id": "esim. client-id",
         "That field is already listed.": "Kenttä on jo luettelossa.",
         "That is a built-in field — tick it in the list above instead.": "Tämä on sisäänrakennettu kenttä — valitse se sen sijaan yllä olevasta luettelosta.",
-        "URL (stored unencrypted)": "URL (tallennetaan salaamattomana)"
+        "URL (stored unencrypted)": "URL (tallennetaan salaamattomana)",
+        "— already has a value": "— sisältää jo arvon",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Nyt luodaan paikanvaraaja, joka pysyy tyhjänä kunnes vastaanottaja täyttää sen — sinun ei tarvitse koskaan keksiä arvoa.",
+        "Ask for a credential": "Pyydä tunnistetietoa",
+        "Ask for new values": "Pyydä uusia arvoja",
+        "Ask someone for a credential": "Pyydä tunnistetietoa joltakulta",
+        "Ask someone to fill this in": "Pyydä jotakuta täyttämään tämä",
+        "Folder (optional)": "Kansio (valinnainen)",
+        "Give the credential a name so you can find it later.": "Anna tunnistetiedolle nimi, jotta löydät sen myöhemmin.",
+        "New values requested": "Uusia arvoja pyydetty",
+        "No folder": "Ei kansiota",
+        "Waiting for someone to fill this in": "Odotetaan, että joku täyttää tämän",
+        "What are you asking for?": "Mitä pyydät?",
+        "e.g. Supplier API key": "esim. toimittajan API-avain"
     },
     "plurals": null
 }
