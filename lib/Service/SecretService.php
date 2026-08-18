@@ -371,6 +371,14 @@ class SecretService {
 	 * @throws InvalidArgumentException When required fields are missing
 	 * @throws SuiteBlockedException When the application has no active suite
 	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) - `$allowUnfilled` is an explicit
+	 * opt-in for a single caller (the secret-request shell), not a mode switch.
+	 * Splitting it into two public methods would duplicate the validation and
+	 * suite checks below, and relaxing the key requirement for every application
+	 * write instead would let an ordinary write-back silently store a valueless
+	 * secret — the failure this flag exists to prevent. See the comment on the
+	 * check itself.
+	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
 	public function createByApplication(
