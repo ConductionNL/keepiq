@@ -622,6 +622,52 @@ class SecretRequestService {
 	}//end decline()
 
 	/**
+	 * Transition a lapsed request to the terminal `expired` status.
+	 *
+	 * Called by the sweeper, never by a person, so there is no ownership check to
+	 * make here — the caller has already selected rows by `expires_at`. What this
+	 * does enforce is that only a PENDING request can lapse: a fulfilled or
+	 * declined request has already reached its end state, and re-terminating it
+	 * would rewrite history.
+	 *
+	 * Cleanup matches revoke exactly, because the keyless-placeholder invariant
+	 * does not care why the request ended: an unfilled placeholder goes, a
+	 * re-request's Secret and its values stay. Reusing the same helper is what
+	 * keeps the two paths from drifting.
+	 *
+	 * @param SecretRequest $request The lapsed request
+	 *
+	 * @return SecretRequest|null The updated request, or null when it was not pending
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function expire(SecretRequest $request): ?SecretRequest {
+		if ($request->getStatus() !== SecretRequest::STATUS_PENDING) {
+			return null;
+		}
+
+		$request->setStatus(SecretRequest::STATUS_EXPIRED);
+		$updated = $this->mapper->update($request);
+
+		// The owner id comes off the Secret rather than the request's creator: an
+		// application-created request has `created_by = 'application:<id>'`, which
+		// is not a user id, and the placeholder deletion is scoped by ownership.
+		$this->deletePlaceholderIfUnfilled(
+			request: $updated,
+			userId: (string)$updated->getCreatedBy()
+		);
+
+		$this->outbox->recordExpired(requestId: $updated->getId());
+
+		$this->logger->info(
+			'Expired secret request ' . $updated->getId(),
+			['app' => 'doriath']
+		);
+
+		return $updated;
+	}//end expire()
+
+	/**
 	 * Delete the linked Secret when it never held a value.
 	 *
 	 * Fail-soft: a placeholder that outlives its request is untidy, but it must

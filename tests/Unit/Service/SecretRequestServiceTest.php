@@ -1499,4 +1499,81 @@ class SecretRequestServiceTest extends TestCase {
 		$this->assertCount(2, array_unique($seen));
 	}//end testTwoFreshRequestsDoNotShareAPlaceholder()
 
+	/**
+	 * Expiring a fresh request deletes its placeholder and records the SYSTEM.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireDeletesThePlaceholderAndAttributesTheSystem(): void {
+		$entity = $this->makePending('req-exp', 'sec-empty');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$empty = new Secret();
+		$empty->setId('sec-empty');
+		$empty->setKey('');
+		$empty->setOwnerType('user');
+		$empty->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($empty);
+
+		$this->secretService->expects($this->once())->method('delete')->with('sec-empty', 'alice');
+
+		$updated = $this->service->expire(request: $entity);
+
+		$this->assertNotNull($updated);
+		$this->assertSame(SecretRequest::STATUS_EXPIRED, $updated->getStatus());
+	}//end testExpireDeletesThePlaceholderAndAttributesTheSystem()
+
+	/**
+	 * Expiring a re-request preserves the Secret and its values.
+	 *
+	 * A request lapsing must never cost the owner a working credential.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireNeverDeletesAFilledSecret(): void {
+		$entity = $this->makePending('req-exp2', 'sec-filled');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$filled = new Secret();
+		$filled->setId('sec-filled');
+		$filled->setKey('CIPHERTEXT');
+		$filled->setOwnerType('user');
+		$filled->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($filled);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->assertSame(
+			SecretRequest::STATUS_EXPIRED,
+			$this->service->expire(request: $entity)->getStatus()
+		);
+	}//end testExpireNeverDeletesAFilledSecret()
+
+	/**
+	 * Only a PENDING request can lapse.
+	 *
+	 * Re-terminating a fulfilled or declined request would rewrite history, so the
+	 * transition refuses rather than overwrites.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireRefusesANonPendingRequest(): void {
+		foreach ([SecretRequest::STATUS_FULFILLED, SecretRequest::STATUS_DECLINED] as $status) {
+			$entity = $this->makePending('req-' . $status, 'sec-x');
+			$entity->setStatus($status);
+
+			$this->mapper->expects($this->never())->method('update');
+
+			$this->assertNull($this->service->expire(request: $entity), $status);
+		}
+	}//end testExpireRefusesANonPendingRequest()
+
 }//end class

@@ -107,6 +107,19 @@ class SecretRequestPolicy {
 			throw new InvalidArgumentException(message: 'Request not found', code: 404);
 		}
 
+		// Expiry is evaluated FIRST, independently of the stored status. Being
+		// precise about what this buys: a lapsed PENDING request was already
+		// refused before this was hoisted, because the pending branch checked
+		// expiry itself. Hoisting changes PRECEDENCE for every other status — a
+		// locked request whose expiry passed now reports "expired" instead of
+		// "temporarily unavailable", which is the truer answer, since locked
+		// invites the recipient to retry and an expired request never can be
+		// filled. It also means a status added later cannot bypass expiry by
+		// omission. The sweeper remains cleanup; enforcement is here.
+		if ($entity->isExpired() === true) {
+			throw new InvalidArgumentException(message: 'Request has expired', code: 408);
+		}
+
 		switch ($entity->getStatus()) {
 			case SecretRequest::STATUS_LOCKED:
 				throw new InvalidArgumentException(message: 'Request is temporarily unavailable', code: 423);
@@ -114,10 +127,13 @@ class SecretRequestPolicy {
 				throw new InvalidArgumentException(message: 'Request was already fulfilled', code: 410);
 			case SecretRequest::STATUS_DECLINED:
 				throw new InvalidArgumentException(message: 'Request was declined', code: 410);
+			// Its own arm, in the same family as fulfilled and declined. Without
+			// it a legitimately expired link would fall to `default` and answer
+			// 500 'unknown state' — telling the recipient nothing and reporting a
+			// server fault for a request that simply ran out.
+			case SecretRequest::STATUS_EXPIRED:
+				throw new InvalidArgumentException(message: 'Request has expired', code: 410);
 			case SecretRequest::STATUS_PENDING:
-				if ($entity->isExpired() === true) {
-					throw new InvalidArgumentException(message: 'Request has expired', code: 408);
-				}
 				return $entity;
 			default:
 				throw new InvalidArgumentException(message: 'Request is in an unknown state', code: 500);

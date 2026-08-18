@@ -15,7 +15,7 @@
       "number": "1.1",
       "section": "Set an expiry",
       "title": "Pre-fill the expiry field in `SecretRequestCreateDialog.vue` with a suggested value the requester can change or clear.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": [
         "Confirm the interval with the product owner before implementing; the spec asserts only that it is suggested and clearable",
         "Clearing it MUST produce a request with `expires_at` null, so a perpetual link stays available in one action",
@@ -27,7 +27,7 @@
       "number": "2.1",
       "section": "Act on an expiry",
       "title": "Add the terminal `STATUS_EXPIRED` to `SecretRequest`.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": [
         "`status` is already a string column, so no migration is required"
       ]
@@ -37,7 +37,7 @@
       "number": "2.2",
       "section": "Act on an expiry",
       "title": "Add the expire transition to `SecretRequestService`: invalidate the token, delete the placeholder for a fresh request, preserve the Secret and its values for a re-request, and dispatch the audit event with the SYSTEM as actor rather than the requester.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -45,7 +45,7 @@
       "number": "2.3",
       "section": "Act on an expiry",
       "title": "Add a `TimedJob` that sweeps lapsed requests and register it in `appinfo/info.xml`, following `ExpireMachineLeasesJob` (hourly).",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": [
         "Query is narrow: `status = pending` AND `expires_at IS NOT NULL` AND `expires_at < now`",
         "A request with no `expires_at` is never touched",
@@ -57,7 +57,7 @@
       "number": "3.1",
       "section": "Enforce it independently of the sweeper",
       "title": "Hoist the expiry evaluation in `SecretRequestPolicy::requireOpenByToken()` above the status switch so it applies to any status.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": [
         "A request that lapsed since the last sweep is refused on `expires_at` alone — the job is cleanup, never enforcement"
       ]
@@ -67,7 +67,7 @@
       "number": "3.2",
       "section": "Enforce it independently of the sweeper",
       "title": "Give `expired` an explicit arm in that switch, in the 410 family alongside `fulfilled` and `declined`.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": [
         "Without it the new status falls into `default: … 'Request is in an unknown state', code: 500`, answering every expired link with a server error"
       ]
@@ -77,7 +77,7 @@
       "number": "3.3",
       "section": "Enforce it independently of the sweeper",
       "title": "Render the expired state in `SecretRequestFill.vue` as an expiry message rather than an unexpected error.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -85,7 +85,7 @@
       "number": "4.1",
       "section": "Tests",
       "title": "PHPUnit for the expire transition: placeholder deleted for a fresh request, Secret and values preserved for a re-request, `expired` is terminal, and the audit actor is the system.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -93,7 +93,7 @@
       "number": "4.2",
       "section": "Tests",
       "title": "PHPUnit for the job: sweeps only lapsed pending requests, never touches a request with no `expires_at`, and is idempotent across consecutive runs.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -101,7 +101,7 @@
       "number": "4.3",
       "section": "Tests",
       "title": "PHPUnit for the access gate: a lapsed-but-unswept request is refused on `expires_at` alone, an `expired` request reports expiry rather than a 500, and every other status keeps the code it returns today.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -109,7 +109,7 @@
       "number": "4.4",
       "section": "Tests",
       "title": "Vitest for the dialog and fill view: expiry pre-filled, clearable to null, and the expired state renders as an expiry message.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -117,7 +117,7 @@
       "number": "4.5",
       "section": "Tests",
       "title": "Verify each new/modified spec scenario is driven by a test or carries a reason-bearing `@e2e exclude`, so gate-19 measures this change.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
