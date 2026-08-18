@@ -397,7 +397,9 @@
         "No folder": "Nagin ordinatur",
         "Waiting for someone to fill this in": "Spetgar ch'insatgi emplenescha quai",
         "What are you asking for?": "Tge dumondas ti?",
-        "e.g. Supplier API key": "p.ex. clav API dal furnitur"
+        "e.g. Supplier API key": "p.ex. clav API dal furnitur",
+        "Copy fill link": "Copiar il link d'emplenida",
+        "Link copied": "Link copià"
     },
     "plurals": null
 }

@@ -397,7 +397,9 @@
         "No folder": "Bez mapes",
         "Waiting for someone to fill this in": "Gaida, kamēr kāds to aizpildīs",
         "What are you asking for?": "Ko jūs pieprasāt?",
-        "e.g. Supplier API key": "piem., piegādātāja API atslēga"
+        "e.g. Supplier API key": "piem., piegādātāja API atslēga",
+        "Copy fill link": "Kopēt aizpildīšanas saiti",
+        "Link copied": "Saite nokopēta"
     },
     "plurals": null
 }

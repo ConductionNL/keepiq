@@ -31,6 +31,7 @@ use OCA\Doriath\Exception\WriteLockedException;
 use OCA\Doriath\Service\LinkShareService;
 use OCA\Doriath\Service\MigrationService;
 use OCA\Doriath\Service\SecretService;
+use OCA\Doriath\Service\SecretVersionService;
 use OCA\Doriath\Service\SecretTypeService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
@@ -253,6 +254,104 @@ class SecretServiceTest extends TestCase {
 			allowUnfilled: true,
 		);
 	}//end testUnfilledPlaceholderStillRequiresAName()
+
+	/**
+	 * Filling a placeholder does not snapshot its empty prior state.
+	 *
+	 * Regression guard for a 500 that reached a live instance. `update()` snapshots
+	 * the PRE-update row; for a placeholder that row has an empty `key`, and
+	 * SecretVersion::$key defaults to '' — so the Entity setter never marked it
+	 * dirty, QBMapper omitted the column, and the NOT NULL constraint on
+	 * doriath_secret_versions.key rejected the insert. The recipient saw
+	 * "Unable to fulfil request".
+	 *
+	 * Skipping is also right on its own terms: a first fill has no earlier value to
+	 * return to, so the version row would say "nothing".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testFillingAPlaceholderDoesNotSnapshotItsEmptyState(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+
+		$placeholder = new Secret();
+		$placeholder->setId('sec-placeholder');
+		$placeholder->setName('Unfilled request');
+		$placeholder->setKey('');
+		$placeholder->setOwnerType('user');
+		$placeholder->setOwnerId('alice');
+		$placeholder->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($placeholder);
+		$this->mapper->expects($this->once())->method('update');
+
+		// versionService is not wired in setUp (it is an optional dependency), so
+		// the snapshot branch would be dead here without an explicit instance.
+		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService->expects($this->never())->method('snapshot');
+		$service = $this->serviceWithVersions($versionService);
+
+		$secret = $service->update(
+			id: 'sec-placeholder',
+			data: ['key' => 'CIPHERTEXT', 'url' => 'https://example.test'],
+			userId: 'alice',
+		);
+
+		$this->assertSame('CIPHERTEXT', $secret->getKey());
+	}//end testFillingAPlaceholderDoesNotSnapshotItsEmptyState()
+
+	/**
+	 * Updating a secret that HELD a value still snapshots it.
+	 *
+	 * The skip above must be narrow: losing version history on a real credential
+	 * change would be a worse bug than the one it fixes.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function testUpdatingAFilledSecretStillSnapshots(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+
+		$filled = new Secret();
+		$filled->setId('sec-filled');
+		$filled->setName('GitHub');
+		$filled->setKey('OLD-CIPHERTEXT');
+		$filled->setOwnerType('user');
+		$filled->setOwnerId('alice');
+		$filled->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($filled);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService->expects($this->once())->method('snapshot');
+		$service = $this->serviceWithVersions($versionService);
+
+		$service->update(
+			id: 'sec-filled',
+			data: ['key' => 'NEW-CIPHERTEXT'],
+			userId: 'alice',
+		);
+	}//end testUpdatingAFilledSecretStillSnapshots()
+
+	/**
+	 * A SecretService with the version-history dependency wired.
+	 *
+	 * @param SecretVersionService $versionService The snapshot recorder
+	 *
+	 * @return SecretService
+	 */
+	private function serviceWithVersions(SecretVersionService $versionService): SecretService {
+		return new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			versionService: $versionService,
+		);
+	}//end serviceWithVersions()
 
 	public function testCreateBlockedWhenNoActiveSuite(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);

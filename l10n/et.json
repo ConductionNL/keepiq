@@ -397,7 +397,9 @@
         "No folder": "Kaust puudub",
         "Waiting for someone to fill this in": "Ootab, kuni keegi selle täidab",
         "What are you asking for?": "Mida sa küsid?",
-        "e.g. Supplier API key": "nt tarnija API-võti"
+        "e.g. Supplier API key": "nt tarnija API-võti",
+        "Copy fill link": "Kopeeri täitmislink",
+        "Link copied": "Link kopeeritud"
     },
     "plurals": null
 }

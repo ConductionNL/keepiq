@@ -397,7 +397,9 @@
         "No folder": "Без фасцикле",
         "Waiting for someone to fill this in": "Чека се да неко ово испуни",
         "What are you asking for?": "Шта тражите?",
-        "e.g. Supplier API key": "нпр. API кључ добављача"
+        "e.g. Supplier API key": "нпр. API кључ добављача",
+        "Copy fill link": "Копирај везу за попуњавање",
+        "Link copied": "Веза копирана"
     },
     "plurals": null
 }

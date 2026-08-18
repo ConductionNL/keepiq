@@ -397,7 +397,9 @@
         "No folder": "Keen Dossier",
         "Waiting for someone to fill this in": "Waarden bis een dat ausfëllt",
         "What are you asking for?": "Wourëms frot Dir?",
-        "e.g. Supplier API key": "z. B. Lieferant-API-Schlëssel"
+        "e.g. Supplier API key": "z. B. Lieferant-API-Schlëssel",
+        "Copy fill link": "Ausfëll-Link kopéieren",
+        "Link copied": "Link kopéiert"
     },
     "plurals": null
 }

@@ -397,7 +397,9 @@
         "No folder": "Pa dosje",
         "Waiting for someone to fill this in": "Në pritje që dikush ta plotësojë",
         "What are you asking for?": "Çfarë po kërkon?",
-        "e.g. Supplier API key": "p.sh. çelësi API i furnitorit"
+        "e.g. Supplier API key": "p.sh. çelësi API i furnitorit",
+        "Copy fill link": "Kopjo lidhjen e plotësimit",
+        "Link copied": "Lidhja u kopjua"
     },
     "plurals": null
 }

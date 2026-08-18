@@ -397,7 +397,9 @@
         "No folder": "Bla kartella",
         "Waiting for someone to fill this in": "Qed nistennew li xi ħadd jimla dan",
         "What are you asking for?": "X'qed titlob?",
-        "e.g. Supplier API key": "eż. ċavetta API tal-fornitur"
+        "e.g. Supplier API key": "eż. ċavetta API tal-fornitur",
+        "Copy fill link": "Ikkopja l-link tal-mili",
+        "Link copied": "Il-link ġie kkupjat"
     },
     "plurals": null
 }

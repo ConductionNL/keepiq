@@ -397,7 +397,9 @@
         "No folder": "Kein Ordner",
         "Waiting for someone to fill this in": "Warten darauf, dass jemand dies ausfüllt",
         "What are you asking for?": "Worum bitten Sie?",
-        "e.g. Supplier API key": "z. B. Lieferanten-API-Schlüssel"
+        "e.g. Supplier API key": "z. B. Lieferanten-API-Schlüssel",
+        "Copy fill link": "Ausfülllink kopieren",
+        "Link copied": "Link kopiert"
     },
     "plurals": null
 }

@@ -397,7 +397,9 @@
         "No folder": "Be aplanko",
         "Waiting for someone to fill this in": "Laukiama, kol kas nors tai užpildys",
         "What are you asking for?": "Ko prašote?",
-        "e.g. Supplier API key": "pvz., tiekėjo API kliucas"
+        "e.g. Supplier API key": "pvz., tiekėjo API kliucas",
+        "Copy fill link": "Kopijuoti užpildymo nuorodą",
+        "Link copied": "Nuoroda nukopijuota"
     },
     "plurals": null
 }

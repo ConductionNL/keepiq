@@ -397,7 +397,9 @@
         "No folder": "Без тэчкі",
         "Waiting for someone to fill this in": "Чаканне, пакуль хтосьці гэта запоўніць",
         "What are you asking for?": "Што вы запытваеце?",
-        "e.g. Supplier API key": "напр., API-ключ пастаўшчыка"
+        "e.g. Supplier API key": "напр., API-ключ пастаўшчыка",
+        "Copy fill link": "Скапіяваць пасылку для запаўнення",
+        "Link copied": "Пасылка скапіявана"
     },
     "plurals": null
 }

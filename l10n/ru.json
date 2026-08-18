@@ -397,7 +397,9 @@
         "No folder": "Без папки",
         "Waiting for someone to fill this in": "Ожидание, пока кто-то это заполнит",
         "What are you asking for?": "Что вы запрашиваете?",
-        "e.g. Supplier API key": "например, API-ключ поставщика"
+        "e.g. Supplier API key": "например, API-ключ поставщика",
+        "Copy fill link": "Копировать ссылку для заполнения",
+        "Link copied": "Ссылка скопирована"
     },
     "plurals": null
 }

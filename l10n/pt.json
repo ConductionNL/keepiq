@@ -397,7 +397,9 @@
         "No folder": "Sem pasta",
         "Waiting for someone to fill this in": "À espera que alguém preencha isto",
         "What are you asking for?": "O que está a pedir?",
-        "e.g. Supplier API key": "p. ex. chave de API do fornecedor"
+        "e.g. Supplier API key": "p. ex. chave de API do fornecedor",
+        "Copy fill link": "Copiar link de preenchimento",
+        "Link copied": "Link copiado"
     },
     "plurals": null
 }

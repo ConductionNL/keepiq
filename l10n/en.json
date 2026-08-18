@@ -969,7 +969,9 @@
         "New values requested": "New values requested",
         "No folder": "No folder",
         "Waiting for someone to fill this in": "Waiting for someone to fill this in",
-        "What are you asking for?": "What are you asking for?"
+        "What are you asking for?": "What are you asking for?",
+        "Copy fill link": "Copy fill link",
+        "Link copied": "Link copied"
     },
     "plurals": ""
 }

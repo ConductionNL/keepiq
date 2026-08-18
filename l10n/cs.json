@@ -397,7 +397,9 @@
         "No folder": "Žádná složka",
         "Waiting for someone to fill this in": "Čeká se, až to někdo vyplní",
         "What are you asking for?": "O co žádáte?",
-        "e.g. Supplier API key": "např. API klíč dodavatele"
+        "e.g. Supplier API key": "např. API klíč dodavatele",
+        "Copy fill link": "Kopírovat odkaz pro vyplnění",
+        "Link copied": "Odkaz zkopírován"
     },
     "plurals": null
 }

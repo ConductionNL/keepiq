@@ -397,7 +397,9 @@
         "No folder": "Gan fillteán",
         "Waiting for someone to fill this in": "Ag fanacht le duine é seo a líonadh",
         "What are you asking for?": "Cad atá tú a iarraidh?",
-        "e.g. Supplier API key": "m.sh. eochair API an soláthraí"
+        "e.g. Supplier API key": "m.sh. eochair API an soláthraí",
+        "Copy fill link": "Cóipeáil an nasc líonta",
+        "Link copied": "Nasc cóipeáilte"
     },
     "plurals": null
 }

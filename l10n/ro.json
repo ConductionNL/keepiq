@@ -397,7 +397,9 @@
         "No folder": "Fără dosar",
         "Waiting for someone to fill this in": "Se așteaptă ca cineva să completeze",
         "What are you asking for?": "Ce solicitați?",
-        "e.g. Supplier API key": "de ex. cheia API a furnizorului"
+        "e.g. Supplier API key": "de ex. cheia API a furnizorului",
+        "Copy fill link": "Copiați linkul de completare",
+        "Link copied": "Link copiat"
     },
     "plurals": null
 }

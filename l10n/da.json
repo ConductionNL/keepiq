@@ -397,7 +397,9 @@
         "No folder": "Ingen mappe",
         "Waiting for someone to fill this in": "Venter på, at nogen udfylder dette",
         "What are you asking for?": "Hvad beder du om?",
-        "e.g. Supplier API key": "f.eks. leverandør-API-nøgle"
+        "e.g. Supplier API key": "f.eks. leverandør-API-nøgle",
+        "Copy fill link": "Kopiér udfyldningslink",
+        "Link copied": "Link kopieret"
     },
     "plurals": null
 }

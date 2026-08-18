@@ -397,7 +397,9 @@
         "No folder": "Bez foldera",
         "Waiting for someone to fill this in": "Čeka se da neko ovo ispuni",
         "What are you asking for?": "Šta tražite?",
-        "e.g. Supplier API key": "npr. API ključ dobavljača"
+        "e.g. Supplier API key": "npr. API ključ dobavljača",
+        "Copy fill link": "Kopiraj link za ispunjavanje",
+        "Link copied": "Link kopiran"
     },
     "plurals": null
 }

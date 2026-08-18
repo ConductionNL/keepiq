@@ -132,10 +132,10 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import { NcDialog } from '@nextcloud/vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
+import { fillLinkFor } from '../utils/fillLink.js'
 
 export default {
 	name: 'SecretRequestCreateDialog',
@@ -337,9 +337,7 @@ export default {
 					// form this used to build answers 401 for exactly the person it
 					// is meant for — the link was unusable by any external
 					// recipient, which is the whole purpose of a fill link.
-					this.fillUrl =
-						generateUrl('/apps/doriath/public', {}, { absolute: true })
-						+ `#/share/request/${request.token}`
+					this.fillUrl = fillLinkFor(request.token)
 				}
 
 				this.$emit('created', request)

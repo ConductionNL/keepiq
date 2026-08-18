@@ -556,7 +556,9 @@
         "No folder": "Geen map",
         "Waiting for someone to fill this in": "Wacht tot iemand dit invult",
         "What are you asking for?": "Waar vraag je om?",
-        "e.g. Supplier API key": "bijv. API-sleutel leverancier"
+        "e.g. Supplier API key": "bijv. API-sleutel leverancier",
+        "Copy fill link": "Kopieer invullink",
+        "Link copied": "Link gekopieerd"
     },
     "plurals": null
 }

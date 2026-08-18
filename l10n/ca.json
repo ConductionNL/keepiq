@@ -397,7 +397,9 @@
         "No folder": "Cap carpeta",
         "Waiting for someone to fill this in": "Esperant que algú ho ompli",
         "What are you asking for?": "Què demanes?",
-        "e.g. Supplier API key": "p. ex. clau API del proveïdor"
+        "e.g. Supplier API key": "p. ex. clau API del proveïdor",
+        "Copy fill link": "Copia l'enllaç d'emplenament",
+        "Link copied": "Enllaç copiat"
     },
     "plurals": null
 }

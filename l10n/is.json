@@ -397,7 +397,9 @@
         "No folder": "Engin mappa",
         "Waiting for someone to fill this in": "Bíður þess að einhver fylli þetta út",
         "What are you asking for?": "Um hvað ertu að biðja?",
-        "e.g. Supplier API key": "t.d. API-lykill söluaðila"
+        "e.g. Supplier API key": "t.d. API-lykill söluaðila",
+        "Copy fill link": "Afrita útfyllingartengil",
+        "Link copied": "Tengill afritaður"
     },
     "plurals": null
 }

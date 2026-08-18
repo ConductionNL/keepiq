@@ -397,7 +397,9 @@
         "No folder": "Χωρίς φάκελο",
         "Waiting for someone to fill this in": "Αναμονή να το συμπληρώσει κάποιος",
         "What are you asking for?": "Τι ζητάτε;",
-        "e.g. Supplier API key": "π.χ. κλειδί API προμηθευτή"
+        "e.g. Supplier API key": "π.χ. κλειδί API προμηθευτή",
+        "Copy fill link": "Αντιγραφή συνδέσμου συμπλήρωσης",
+        "Link copied": "Ο σύνδεσμος αντιγράφηκε"
     },
     "plurals": null
 }

@@ -397,7 +397,9 @@
         "No folder": "Klasör yok",
         "Waiting for someone to fill this in": "Birinin bunu doldurması bekleniyor",
         "What are you asking for?": "Ne istiyorsunuz?",
-        "e.g. Supplier API key": "örn. tedarikçi API anahtarı"
+        "e.g. Supplier API key": "örn. tedarikçi API anahtarı",
+        "Copy fill link": "Doldurma bağlantısını kopyala",
+        "Link copied": "Bağlantı kopyalandı"
     },
     "plurals": null
 }

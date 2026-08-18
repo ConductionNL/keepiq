@@ -397,7 +397,9 @@
         "No folder": "Без папка",
         "Waiting for someone to fill this in": "Се чека некој да го пополни ова",
         "What are you asking for?": "Што барате?",
-        "e.g. Supplier API key": "напр. API клуч на добавувачот"
+        "e.g. Supplier API key": "напр. API клуч на добавувачот",
+        "Copy fill link": "Копирај врска за пополнување",
+        "Link copied": "Врската е копирана"
     },
     "plurals": null
 }

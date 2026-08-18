@@ -112,3 +112,30 @@ The indicator MUST NOT expose the fill token. Anyone who can see the vault listi
 @e2e exclude Structural: the row component takes a STATE, never the request, so a token has no path into it. Driven by SecretListItem.spec.js "never renders a fill token in the row", which asserts no 32-hex string appears in the rendered HTML.
 - **WHEN** a Secret with a pending request is listed
 - **THEN** the response MUST NOT include the request's fill token
+
+### Requirement: Fill Link Recovery
+
+The requester MUST be able to recover the fill link of any request whose link is still usable, without re-creating the request.
+
+The link is shown once, when the request is created. If that is the only chance to capture it, closing the dialog strands the request: the token is displayed truncated in the request list precisely so it cannot be read off a screen, so there is no way back to a working URL and the only remedy is to revoke and start again. The machine surface already recognises this need — `Machine Pending-Request Listing` exists "so a fill-link is retrievable after creation" — and a person needs it at least as much as an application does.
+
+Recovery MUST be offered only where the link would actually work. A fulfilled, declined or lapsed request no longer accepts a submission, and handing someone a dead URL is worse than offering nothing. Expiry MUST be evaluated against `expires_at` rather than trusting the stored status, because a lapsed request continues to read as `pending` until a sweeper transitions it.
+
+Recovery MUST NOT widen who can see the token: it is offered to the requester on their own request, and the listing itself still MUST NOT render the token in full.
+
+#### Scenario: Recovering the link after the dialog is closed
+@e2e exclude Clipboard interaction in a component; driven by SecretRequestList.spec.js "copies the fill link for a pending request".
+- **GIVEN** a pending request whose creation dialog was closed without copying the link
+- **WHEN** the requester asks for the link again from the request list
+- **THEN** the system MUST provide the same anonymous fill URL the dialog offered
+
+#### Scenario: No recovery offered for a request that cannot be filled
+@e2e exclude Row-level affordance; driven by SecretRequestList.spec.js "offers no link for a fulfilled or lapsed request".
+- **GIVEN** a request that is fulfilled, declined, or whose `expires_at` has passed
+- **WHEN** the requester views it in the list
+- **THEN** no fill link MUST be offered for it
+
+#### Scenario: The full token is still never rendered
+@e2e exclude Assertion about rendered output; driven by SecretRequestList.spec.js "never renders the full token".
+- **WHEN** a request is listed with link recovery available
+- **THEN** the row MUST still show the token truncated, and the full token MUST reach the clipboard only on an explicit request
