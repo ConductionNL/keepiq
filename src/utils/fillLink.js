@@ -29,6 +29,8 @@ import { generateUrl } from '@nextcloud/router'
  * @param {string} token The request's fill token.
  *
  * @return {string} The absolute URL, or '' when there is no token.
+ *
+ * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fill-link-recovery
  */
 export function fillLinkFor(token) {
 	if (!token) {
