@@ -4,6 +4,7 @@
 
 **OpenSpec changes:**
 - `implement-secret-requests` (2026-03-31) — Full implementation: fill-in links, write-without-read, re-requests, expiry, revocation, notifications
+- `request-first-secret-requests` (2026-08-18) — Brings the human flow into line with a MUST it was violating: a fresh request creates its OWN unfilled Secret instead of requiring a pre-existing one with an invented key; re-request stays the only path targeting an existing Secret; a fresh request no longer pre-selects fields that already hold values, decided client-side at creation and never disclosed to the fill recipient
 
 ## Purpose
 
