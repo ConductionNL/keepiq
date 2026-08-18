@@ -88,11 +88,16 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				const response = await axios.post(
 					generateUrl('/apps/doriath/api/v1/secret-requests'),
 					{
-						secretId: payload.secretId,
-						encryptionSuiteId: payload.encryptionSuiteId,
+						// A FRESH request omits secretId and encryptionSuiteId: the
+						// server creates the placeholder Secret and derives the suite
+						// from it, so the client has nothing to point at or look up.
+						secretId: payload.secretId || '',
+						encryptionSuiteId: payload.encryptionSuiteId || '',
 						requestedFields: payload.requestedFields,
 						isReRequest: payload.isReRequest === true,
 						expiresAt: payload.expiresAt || null,
+						name: payload.name || null,
+						folderId: payload.folderId || null,
 					},
 				)
 				this.secretRequests.unshift(response.data)

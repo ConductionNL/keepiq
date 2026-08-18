@@ -10,6 +10,36 @@
 				}}
 			</p>
 
+			<div v-if="isFreshRequest" class="secret-request-create-dialog__new">
+				<label for="new-secret-name">{{
+					t('doriath', 'What are you asking for?')
+				}}</label>
+				<input
+					id="new-secret-name"
+					v-model="newName"
+					type="text"
+					:placeholder="t('doriath', 'e.g. Supplier API key')" />
+				<label for="new-secret-folder">{{
+					t('doriath', 'Folder (optional)')
+				}}</label>
+				<select id="new-secret-folder" v-model="newFolderId">
+					<option value="">
+						{{ t('doriath', 'No folder') }}
+					</option>
+					<option v-for="f in folderOptions" :key="f.id" :value="f.id">
+						{{ f.name }}
+					</option>
+				</select>
+				<p class="secret-request-create-dialog__hint">
+					{{
+						t(
+							'doriath',
+							'A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.',
+						)
+					}}
+				</p>
+			</div>
+
 			<fieldset class="secret-request-create-dialog__fields">
 				<legend>{{ t('doriath', 'Requested fields') }}</legend>
 				<label
@@ -21,6 +51,11 @@
 						type="checkbox"
 						:value="field.key" />
 					{{ field.label }}
+					<span
+						v-if="field.filled && !isReRequest"
+						class="secret-request-create-dialog__filled">
+						{{ t('doriath', '— already has a value') }}
+					</span>
 				</label>
 
 				<div class="secret-request-create-dialog__custom">
@@ -99,6 +134,7 @@
 <script>
 import { generateUrl } from '@nextcloud/router'
 import { NcDialog } from '@nextcloud/vue'
+import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 
 export default {
@@ -107,7 +143,9 @@ export default {
 
 	props: {
 		open: { type: Boolean, default: false },
-		secret: { type: Object, required: true },
+		// Optional: a FRESH request has no Secret to point at — the system
+		// creates the placeholder. Only a re-request needs an existing one.
+		secret: { type: Object, default: null },
 		isReRequest: { type: Boolean, default: false },
 	},
 
@@ -115,13 +153,15 @@ export default {
 
 	data() {
 		return {
-			requestedFields: ['key'],
+			requestedFields: [],
 			// Additional-field names typed here for fields the secret does not
 			// carry yet. Kept separate from `requestedFields` so unticking a name
 			// does not delete it from the list.
 			customFields: [],
 			customFieldInput: '',
 			customFieldError: '',
+			newName: '',
+			newFolderId: '',
 			expiresAt: '',
 			fillUrl: '',
 			error: '',
@@ -131,10 +171,44 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The dialog heading, naming which of the three things this is.
+		 *
+		 * Asking for a credential you do not have yet, asking someone to fill an
+		 * existing empty Secret, and asking for replacement values are different
+		 * acts with different consequences; one heading for all three is how the
+		 * flow came to read as "create a secret, then request into it".
+		 *
+		 * @return {string} The translated heading.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+		 */
 		title() {
-			return this.isReRequest
-				? t('doriath', 'Re-request secret values')
+			if (this.isReRequest) {
+				return t('doriath', 'Re-request secret values')
+			}
+
+			return this.isFreshRequest
+				? t('doriath', 'Ask someone for a credential')
 				: t('doriath', 'Request secret fill-in')
+		},
+
+		/**
+		 * True when this dialog must create the Secret itself.
+		 *
+		 * @return {boolean} Whether no target Secret was supplied.
+		 */
+		isFreshRequest() {
+			return !this.secret
+		},
+
+		/**
+		 * Folders the requester can file a fresh request's Secret under.
+		 *
+		 * @return {Array<object>} The user's folders.
+		 */
+		folderOptions() {
+			return useFolderStore().folders || []
 		},
 
 		/**
@@ -167,7 +241,12 @@ export default {
 			]
 
 			const seen = new Set(fields.map((f) => f.key))
-			for (const key of this.secret?.additional_fields_keys || []) {
+			// Member names come from the explicit key list when the server sent
+			// one, otherwise from the decrypted blob's own keys.
+			const members =
+				this.secret?.additional_fields_keys
+				|| Object.keys(this.secret?.additionalFields || {})
+			for (const key of members) {
 				if (seen.has(key) === false) {
 					seen.add(key)
 					fields.push({ key, label: key })
@@ -181,8 +260,17 @@ export default {
 				}
 			}
 
-			return fields
+			// Filled-ness is decided HERE, by the requester's client, and never
+			// travels to the fill recipient: telling an anonymous party which
+			// fields already hold a value is vault metadata about a credential.
+			// The server could not do it anyway — it never decrypts the
+			// additionalFields blob (ADR-003), so only this side can see members.
+			return fields.map((f) => ({ ...f, filled: this.isFieldFilled(f.key) }))
 		},
+	},
+
+	created() {
+		this.requestedFields = this.defaultSelection()
 	},
 
 	methods: {
@@ -193,6 +281,15 @@ export default {
 		 */
 		async submit() {
 			this.error = ''
+
+			if (this.isFreshRequest && this.newName.trim() === '') {
+				this.error = t(
+					'doriath',
+					'Give the credential a name so you can find it later.',
+				)
+				return
+			}
+
 			this.submitting = true
 			try {
 				const store = useSecretRequestStore()
@@ -200,11 +297,26 @@ export default {
 					? new Date(this.expiresAt).toISOString()
 					: null
 
+				// camelCase, because that is what the store forwards and what the
+				// Nextcloud router binds by parameter name. This used to send
+				// snake_case, which the store read as `undefined` across the board:
+				// the POST went out empty and the endpoint answered 400
+				// "requestedFields cannot be empty". A mocked store in the unit
+				// test hid it, so the plain create path never worked from the UI.
 				const payload = {
-					secret_id: this.secret.id,
-					requested_fields: this.requestedFields,
-					expires_at: expires,
-					is_re_request: this.isReRequest,
+					requestedFields: this.requestedFields,
+					expiresAt: expires,
+					isReRequest: this.isReRequest,
+				}
+
+				if (this.isFreshRequest) {
+					// No secretId: the server creates the placeholder and derives
+					// the suite from it, so the client never supplies either.
+					payload.name = this.newName.trim()
+					payload.folderId = this.newFolderId || null
+				} else {
+					payload.secretId = this.secret.id
+					payload.encryptionSuiteId = this.secret.encryption_suite_id
 				}
 
 				const request = this.isReRequest
@@ -251,6 +363,51 @@ export default {
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
+		/**
+		 * Whether the target Secret already holds a value for this field.
+		 *
+		 * @param {string} key The field name.
+		 *
+		 * @return {boolean} True when a value is already present.
+		 */
+		isFieldFilled(key) {
+			if (!this.secret) {
+				return false
+			}
+
+			if (key === 'key' || key === 'login' || key === 'url') {
+				return String(this.secret[key] || '') !== ''
+			}
+
+			const members = this.secret.additionalFields
+			if (members && typeof members === 'object') {
+				return String(members[key] || '') !== ''
+			}
+
+			// The blob is present but not decrypted in this context, so member
+			// completeness is unknowable — treat as unfilled rather than guess.
+			return false
+		},
+
+		/**
+		 * The fields ticked when the dialog opens.
+		 *
+		 * A fresh or plain request MUST NOT pre-select a field that already holds
+		 * a value: the recipient cannot decline one (every requested field must be
+		 * submitted non-empty), so a filled field carried in compels an overwrite
+		 * rather than merely inviting one. A re-request is exempt — replacing
+		 * existing values is that flow's entire purpose.
+		 *
+		 * @return {Array<string>} Field names to tick initially.
+		 */
+		defaultSelection() {
+			if (this.isReRequest) {
+				return ['key']
+			}
+
+			return this.isFieldFilled('key') ? [] : ['key']
+		},
+
 		addCustomField() {
 			const name = (this.customFieldInput || '').trim()
 			this.customFieldError = ''
@@ -317,10 +474,12 @@ export default {
 		onClose() {
 			this.$emit('update:open', false)
 
-			this.requestedFields = ['key']
+			this.requestedFields = this.defaultSelection()
 			this.customFields = []
 			this.customFieldInput = ''
 			this.customFieldError = ''
+			this.newName = ''
+			this.newFolderId = ''
 			this.expiresAt = ''
 			this.fillUrl = ''
 			this.error = ''

@@ -17,12 +17,12 @@
 
 ## 2. Frontend
 
-- [ ] 2.1 Make `SecretRequestCreateDialog`'s `secret` prop optional, showing name and folder inputs when there is no target Secret; a name is required before submit in that mode.
-- [ ] 2.2 Untick already-filled fields on a fresh request and label them as already holding a value; leave re-request selection as it is today.
+- [x] 2.1 Make `SecretRequestCreateDialog`'s `secret` prop optional, showing name and folder inputs when there is no target Secret; a name is required before submit in that mode.
+- [x] 2.2 Untick already-filled fields on a fresh request and label them as already holding a value; leave re-request selection as it is today.
   - Determined client-side from `key`/`login`/`url` and the decrypted `additionalFields`, per spec `:77`; the fields stay tickable
-- [ ] 2.3 Add the vault-level "Ask someone for a credential" entry point to `SecretList.vue`, reachable with an empty vault.
-- [ ] 2.4 Relabel the `SecretDetail.vue` action as a re-request against that Secret.
-- [ ] 2.5 Mark secrets with an outstanding request in the list, distinguishing "awaiting first fill" from "re-request outstanding", clearing when the request ends, and never rendering the fill token.
+- [x] 2.3 Add the vault-level "Ask someone for a credential" entry point to `SecretList.vue`, reachable with an empty vault.
+- [x] 2.4 Relabel the `SecretDetail.vue` action as a re-request against that Secret.
+- [x] 2.5 Mark secrets with an outstanding request in the list, distinguishing "awaiting first fill" from "re-request outstanding", clearing when the request ends, and never rendering the fill token.
 
 ## 3. Tests
 

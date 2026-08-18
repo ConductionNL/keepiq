@@ -84,13 +84,18 @@ describe('SecretRequestCreateDialog', () => {
 
 		expect(store.createRequest).toHaveBeenCalledTimes(1)
 		const payload = store.createRequest.mock.calls[0][0]
+		// camelCase, matching what the store forwards and what the Nextcloud
+		// router binds. This assertion used to demand snake_case, which the store
+		// read as `undefined` — so the test passed against a mocked store while
+		// the real POST went out empty and the endpoint answered 400.
 		expect(payload).toMatchObject({
-			secret_id: 'secret-1',
-			requested_fields: ['key', 'login'],
-			is_re_request: false,
+			secretId: 'secret-1',
+			requestedFields: ['key', 'login'],
+			isReRequest: false,
 		})
-		expect(typeof payload.expires_at).toBe('string')
-		expect(payload.expires_at.endsWith('Z')).toBe(true)
+		expect(payload).not.toHaveProperty('secret_id')
+		expect(typeof payload.expiresAt).toBe('string')
+		expect(payload.expiresAt.endsWith('Z')).toBe(true)
 
 		// fillUrl is populated from the response token.
 		// The anonymous shell, NOT /apps/doriath/share/request/<token>: the

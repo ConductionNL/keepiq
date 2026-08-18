@@ -66,7 +66,7 @@
       "number": "2.1",
       "section": "Frontend",
       "title": "Make `SecretRequestCreateDialog`'s `secret` prop optional, showing name and folder inputs when there is no target Secret; a name is required before submit in that mode.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -74,7 +74,7 @@
       "number": "2.2",
       "section": "Frontend",
       "title": "Untick already-filled fields on a fresh request and label them as already holding a value; leave re-request selection as it is today.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": [
         "Determined client-side from `key`/`login`/`url` and the decrypted `additionalFields`, per spec `:77`; the fields stay tickable"
       ]
@@ -84,7 +84,7 @@
       "number": "2.3",
       "section": "Frontend",
       "title": "Add the vault-level \"Ask someone for a credential\" entry point to `SecretList.vue`, reachable with an empty vault.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -92,7 +92,7 @@
       "number": "2.4",
       "section": "Frontend",
       "title": "Relabel the `SecretDetail.vue` action as a re-request against that Secret.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
@@ -100,7 +100,7 @@
       "number": "2.5",
       "section": "Frontend",
       "title": "Mark secrets with an outstanding request in the list, distinguishing \"awaiting first fill\" from \"re-request outstanding\", clearing when the request ends, and never rendering the fill token.",
-      "status": "pending",
+      "status": "done",
       "acceptance_criteria": []
     },
     {
