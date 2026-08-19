@@ -1,0 +1,33 @@
+## Why
+
+The product line's direction is that every app exposes its actions as MCP tools so any action can in principle be automated by AI, governed per agent by Hermiq's scope (`read/create/update/delete`) × reach (`self/user/instance/external`) grants, default-deny writes, human approval gates and an audit trail — and that chat is a command surface for the app even before automation. Doriath is the fleet's hardest case for that direction, and it must answer it explicitly rather than by omission: today it has **no** MCP surface at all (verified: no `IMcpToolProvider`, no `IMcpScannableServices`, no `x-openregister-mcp` block; the register holds only the placeholder `example` schema), so a fleet sweep reads it as "not adopted" with no record of *why*, and the next well-meaning adoption could hand an agent the vault.
+
+The zero-knowledge premise (ADR-003, encryption-suites spec) makes the boundary crisp: secret values (`key`, `login`, `additional_fields`) are ciphertext the server cannot decrypt, so **no server-side tool can ever return a secret value** — not because it declines to, but because it cannot; and the app MUST NOT build a path that changes that (an agent-driven decrypt would require moving key material into an agent-reachable process, which is the one architectural line Doriath exists to hold). What the server *does* hold in plaintext is vault-structure metadata: entry names, URLs, folder ids, types, expiry dates (`Secret::expiresAt`, `keyUpdatedAt`), certificate identity (`CertificateMetadata`: subject, issuer, serial, `notAfter`), and rotation state (`RotationFlag`). That metadata is exactly what the app's own read surfaces already serve under the vault's ACL — `Secret::jsonSerializeBlocked()` (the metadata-only list shape), `CertificateLifecycleService::inventory()`, `RotationFlagService::openFlags()`, `DashboardSummaryService::fetchSummary()` — and it is what a user genuinely wants to ask an assistant: "which certificates expire this month?", "what's overdue for rotation?", "do I have an entry for the staging database?" (name lookup, no value).
+
+So the honest surface is deliberately minimal and read-only: three metadata tools, owner-session-scoped, results stripped by an allow-list rather than a deny-list, plus one hard requirement that no tool SHALL ever return secret material or a path to it — stated in the spec so it binds every future change.
+
+## What Changes
+
+- Add `lib/Mcp/DoriathScannableServices.php` implementing `OCA\OpenRegister\Mcp\IMcpScannableServices` (fleet pattern: DocuDesk `DocudeskScannableServices`), listing exactly the classes carrying `#[McpTool]` methods below. No `IMcpToolProvider`, no `x-openregister-mcp` dialect (there is no domain schema to derive from — the register is a placeholder by design, and mirroring vault rows into OR is forbidden by the `integration-boundary` capability).
+- Three curated **read-only** tools, all `scope: 'read'`, `readOnlyHint: true`, invoking principal = the session user, results built from an explicit **metadata allow-list**:
+  - `doriath.listEntries(folderId?, typeId?, query?)` — the entries the caller can access, as `id`, `name`, `url`, `typeId`, `folderId`, `expiresAt`, `keyUpdatedAt`, `possiblyCompromisedAt`. Never `key`, `login`, `additionalFields`, `encryptionSuiteId`, nor any suite/private-key material.
+  - `doriath.expiryReport(withinDays = 30)` — certificates and secrets expiring within the window: entry `id`/`name`, certificate `subject`/`issuer`/`serial`/`notAfter`, secret `expiresAt`, days remaining. Answers "which certificates expire this month?".
+  - `doriath.rotationStatus()` — the caller's open rotation flags: entry `id`/`name`, `reason`, `status`, `flaggedAt`, `keyUpdatedAtAtFlag`; plus overdue counts. Answers "what's overdue for rotation?".
+- **Hard requirement: no tool SHALL ever return secret material** — no ciphertext, no plaintext value, no key/suite material, no attachment content, no share/link token, no export artifact — and no tool SHALL trigger a decrypt, an export, a share, a link, or a lease. Enforced by an allow-list serializer + a PHPUnit assertion that every tool result key is in the allow-list, and by a scanner assertion that no `#[McpTool]` exists on any class outside the scannable list.
+- **No write tools.** Every Doriath write (create/update/delete secret, share, delegate, rotate, lease, import/export, emergency access) is either cryptographically client-side or an act with security consequence; none is offered, gated or not. Rotation *marking* (`RotationFlagService::markRotated`) was the closest candidate and is refused: marking rotated without rotating is a false audit signal, and rotating requires client-side re-encryption the server cannot perform.
+- CHANGELOG entry; `docs/FEATURES.md` gets one line ("AI/MCP: metadata-only read tools; secret values are never agent-reachable").
+
+## Capabilities
+
+### New Capabilities
+- `mcp-metadata-surface`: Doriath's agent-facing MCP surface — three metadata-only read tools through the scannable-services opt-in, the allow-list result contract, and the standing refusals (no secret material ever, no writes, no dialect on a placeholder register).
+
+### Modified Capabilities
+_(none — encryption-suites, rotation-expiry-policies, certificate-lifecycle and secret-audit-trail are consumed as-is; the `integration-boundary` capability from the sibling `leaf-integrations` change is referenced as the reason no OR objects are involved)_
+
+## Impact
+
+- **Code**: new `lib/Mcp/DoriathScannableServices.php`; `#[McpTool]` on three thin read methods (on `SecretService`, `CertificateLifecycleService`, `RotationFlagService` or dedicated `lib/Mcp/*Tools.php` facades — see design.md D2) that build allow-listed arrays; DI alias registration in `Application.php`. No routes, no migrations, no frontend.
+- **Governance**: OR's tool-grant whitelist (default-deny per agent) governs visibility; all three tools are reads so Hermiq's approval gate is not involved; reach is `self` (the caller's own vault view; admins see the same as their own principal, never another user's vault — the vault cannot decrypt for anyone anyway). Every invocation is audited through the existing `AuditService` with an `mcp` actor attribution.
+- **Security**: the surface strictly narrows what the app already exposes over its own authenticated API; the allow-list means the tools cannot leak a *new* field added to `Secret` later without an explicit spec change.
+- **Cross-app**: depends on OpenRegister's `AttributeToolScanner` / `IMcpScannableServices` (present at origin/development; DocuDesk runs them). Inert if OpenRegister is absent (`OpenRegisterAutoloader` already guards the prefix).
