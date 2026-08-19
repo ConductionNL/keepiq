@@ -308,7 +308,13 @@ export default {
 		/**
 		 * Load + decrypt the secret and seed the form fields.
 		 *
+		 * Seeding the additional fields from the CURRENT decrypted copy is what bounds
+		 * the last-writer-wins window: a save rewrites the whole blob, so starting
+		 * from a stale copy would drop members another session added.
+		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		async load() {
 			this.loading = true
@@ -392,6 +398,8 @@ export default {
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		async submit() {
 			if (!this.canSubmit) {

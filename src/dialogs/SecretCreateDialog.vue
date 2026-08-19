@@ -387,7 +387,13 @@ export default {
 		/**
 		 * Encrypt (in the store) and create the secret.
 		 *
+		 * Additional fields travel as a plain name/value object; the store turns them
+		 * into the single encrypted blob, which is the only place that knows the blob
+		 * is the storage unit.
+		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		async submit() {
 			if (!this.canSubmit) {

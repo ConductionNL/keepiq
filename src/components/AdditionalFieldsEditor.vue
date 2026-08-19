@@ -146,6 +146,8 @@ export default {
 		 * @param {Array<object>} members The next member list.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		emitMembers(members) {
 			this.$emit('update:members', members)

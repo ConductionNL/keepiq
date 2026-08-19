@@ -427,11 +427,32 @@ export default {
 			return this.$route.params.id
 		},
 
+		/**
+		 * Whether this secret has at least one additional field to show.
+		 *
+		 * The count matters, not just the presence of an object. `{}` is truthy AND
+		 * an object, so a guard testing only those two rendered the "Additional
+		 * fields" heading with nothing beneath it. That state only became reachable
+		 * when owners could edit members: removing the last one now sends an empty
+		 * blob (deliberately, so "none" stays distinguishable from "not loaded"),
+		 * and the spec says re-opening the secret must then show NO additional
+		 * fields — not an empty section.
+		 *
+		 * Returns a real boolean rather than the last truthy operand, so callers and
+		 * tests get `false` instead of `null` or `undefined`.
+		 *
+		 * @return {boolean} True when there is at least one member to render.
+		 *
+		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
 		hasAdditionalFields() {
+			const blob = this.secret?.additionalFields
+
 			return (
-				this.secret
-				&& this.secret.additionalFields
-				&& typeof this.secret.additionalFields === 'object'
+				blob !== null
+				&& blob !== undefined
+				&& typeof blob === 'object'
+				&& Object.keys(blob).length > 0
 			)
 		},
 

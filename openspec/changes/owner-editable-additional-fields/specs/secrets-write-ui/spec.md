@@ -83,7 +83,7 @@ your own secret meant asking a stranger to submit it.
 - **AND** changing either and saving MUST round-trip through decryption
 
 #### Scenario: Remove the last additional field
-@e2e exclude Driven at both layers, because the distinction is a JavaScript trap rather than a UI one: SecretEditDialog.additionalFields "sends an EMPTY object when the last member is removed" and secret-additional-fields "sends an EMPTY blob, not null" plus "leaves the stored blob alone when the caller sends nothing" — the pair is what makes empty-versus-absent meaningful.
+@e2e exclude Driven at three layers, because the distinction is a JavaScript trap rather than a UI one. The write half: SecretEditDialog.additionalFields "sends an EMPTY object when the last member is removed", plus secret-additional-fields "sends an EMPTY blob, not null" and "leaves the stored blob alone when the caller sends nothing" — that pair is what makes empty-versus-absent meaningful. The read half ("re-opening MUST show no additional fields"): SecretDetail.additionalFields "shows NO additional-fields section for an empty blob", added after /opsx-verify found the view rendered the heading over an empty list, since `{}` is truthy AND an object. That state was unreachable before owners could remove a member.
 - **WHEN** the user removes the only remaining member and saves
 - **THEN** the stored blob MUST be empty rather than null
 - **AND** re-opening the secret MUST show no additional fields and no error

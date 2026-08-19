@@ -228,7 +228,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| 'Failed to load the application\'s requests'
+					|| "Failed to load the application's requests"
 				throw e
 			} finally {
 				this.loading = false
