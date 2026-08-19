@@ -18,9 +18,8 @@
 
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-import registry from '../../src/registry.js'
 import SecretList from '../../src/views/SecretList.vue'
+import registry from '../../src/registry.js'
 
 describe('SecretList — registry dispatch', () => {
 	beforeEach(() => {

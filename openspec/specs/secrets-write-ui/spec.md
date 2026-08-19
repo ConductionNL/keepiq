@@ -23,10 +23,12 @@ The dialog MUST be blocked (disabled) while the vault is locked.
 - **THEN** the new secret MUST appear in the vault list and its value MUST round-trip: opening it and decrypting MUST return the exact value entered
 
 #### Scenario: Create a secret inside the current folder
+@e2e exclude Had NO coverage of any kind until now — carried across PR #270 and #282 as a known gap rather than waived. Driven by SecretCreateDialog.requiredFields "defaults the folder to the one being viewed, and persists it", plus "sends a null folder when created at the vault root" for the other half.
 - **WHEN** the user is viewing a folder and creates a secret
 - **THEN** the dialog's folder field MUST default to that folder and the created secret MUST persist that `folderId`
 
 #### Scenario: Name and value are required
+@e2e exclude Also previously uncovered, and from the same gap. Driven by SecretCreateDialog.requiredFields "requires a name AND a value before anything is sent", which walks every partial state including whitespace-only and asserts no request is made, plus "stays blocked while the vault is locked, however complete the form is" — the requirement enforces that at the dialog rather than by disabling each field.
 - **WHEN** the user submits with an empty name or empty value
 - **THEN** the submit control MUST be disabled and no request MUST be sent
 
@@ -44,6 +46,7 @@ re-encryption.
 - **THEN** re-opening the secret and decrypting MUST return the updated value
 
 #### Scenario: Edit metadata only
+@e2e exclude Previously uncovered. Driven by SecretEditDialog.metadataOnly: only the name is sent when only the name changed, nothing is sent when nothing changed, and the counterpart — the value IS re-encrypted when it actually changes, since the rule is "only CHANGED sensitive fields", not "never".
 - **WHEN** the user changes only the name and saves
 - **THEN** the system MUST persist the new name and MUST NOT alter the stored ciphertext
 
