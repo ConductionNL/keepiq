@@ -58,7 +58,7 @@ class SecretRequestMapper extends QBMapper {
 	 *
 	 * @return array<int,SecretRequest> Every request that application created
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function findByApplication(string $applicationId): array {
 		return $this->findByCreatedBy(
@@ -161,7 +161,7 @@ class SecretRequestMapper extends QBMapper {
 	 *
 	 * @return SecretRequest[]
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function findLapsedPending(DateTime $now, int $limit = 500): array {
 		$qb = $this->db->getQueryBuilder();

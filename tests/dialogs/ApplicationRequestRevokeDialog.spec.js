@@ -11,7 +11,7 @@
  * the requested fields — "revoke request" tells an administrator nothing about
  * what they are interrupting.
  *
- * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+ * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
  */
 
 import { mount } from '@vue/test-utils'

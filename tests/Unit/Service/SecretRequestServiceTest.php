@@ -1490,7 +1490,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testExpireDeletesThePlaceholderAndAttributesTheSystem(): void {
 		$entity = $this->makePending('req-exp', 'sec-empty');
@@ -1519,7 +1519,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testExpireNeverDeletesAFilledSecret(): void {
 		$entity = $this->makePending('req-exp2', 'sec-filled');
@@ -1549,7 +1549,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testExpireRefusesANonPendingRequest(): void {
 		foreach ([SecretRequest::STATUS_FULFILLED, SecretRequest::STATUS_DECLINED] as $status) {
@@ -1794,7 +1794,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testExpireNeverDeletesASecretHoldingOnlyALogin(): void {
 		$entity = $this->makePending('req-exp-login', 'sec-exp-login');
@@ -1823,7 +1823,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testListByUserStillQueriesTheRawUid(): void {
 		$this->mapper->expects($this->once())
@@ -1839,7 +1839,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testTheApplicationActorStringCannotCollideWithAUid(): void {
 		$this->assertSame('application:app-1', SecretRequest::actorForApplication('app-1'));

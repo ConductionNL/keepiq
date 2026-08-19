@@ -150,6 +150,8 @@ export default {
 		 * Whether this list is showing an application's requests.
 		 *
 		 * @return {boolean} True in the administrator's application-scoped view.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		isApplicationScope() {
 			return typeof this.applicationId === 'string' && this.applicationId !== ''
@@ -160,7 +162,7 @@ export default {
 		 *
 		 * @return {Array<object>} The request rows.
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		rows() {
 			// Two collections, not one filtered array: `secretRequests` means
@@ -191,7 +193,7 @@ export default {
 	 *
 	 * @return {void}
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	mounted() {
 		if (this.isApplicationScope) {
@@ -205,6 +207,22 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * The token, shortened for display.
+		 *
+		 * A fill token is a bearer credential: whoever reads it can submit against
+		 * the request, and a list row travels into screenshots and over shoulders.
+		 * So the row shows a stub and the full value reaches the clipboard only
+		 * through an explicit copy action. Required on the administrator's listing
+		 * ("each row MUST show the token truncated") and the same rule the user's
+		 * own listing follows.
+		 *
+		 * @param {string} token The full token.
+		 *
+		 * @return {string} A truncated form safe to display.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
 		truncateToken(token) {
 			if (typeof token !== 'string' || token === '') {
 				return ''
@@ -212,6 +230,19 @@ export default {
 			return token.length <= 12 ? token : `${token.slice(0, 8)}…`
 		},
 
+		/**
+		 * The requested field names, as one readable string.
+		 *
+		 * Field names are plaintext metadata by design: the Requestable Fields
+		 * requirement puts them on the request and deliberately never on the Secret,
+		 * so showing them discloses nothing the audit trail does not already hold.
+		 *
+		 * @param {Array<string>} fields The requested field names.
+		 *
+		 * @return {string} A comma-separated list.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
 		formatFields(fields) {
 			if (Array.isArray(fields) === false) {
 				return ''
@@ -289,7 +320,7 @@ export default {
 		 *
 		 * @return {string} The status to label the row with.
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		effectiveStatus(row) {
 			if (row?.status !== 'pending') {
@@ -317,7 +348,7 @@ export default {
 		 *
 		 * @return {string} A short phrase describing the expiry.
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		expiryLabel(row) {
 			const expiry = row?.expiresAt || row?.expires_at
@@ -344,7 +375,7 @@ export default {
 		 *
 		 * @return {string} A locale-formatted date, or the input unchanged.
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		formatDate(iso) {
 			if (!iso) {
@@ -358,6 +389,18 @@ export default {
 			}
 		},
 
+		/**
+		 * A human label for a request status.
+		 *
+		 * Includes `expired`, the terminal status the sweeper sets — without an arm
+		 * for it the raw string would be shown to an administrator.
+		 *
+		 * @param {string} status The status to label.
+		 *
+		 * @return {string} The translated label.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
 		statusLabel(status) {
 			switch (status) {
 				case 'pending':
@@ -387,7 +430,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		onRevoke(id) {
 			if (this.isApplicationScope) {
@@ -406,7 +449,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		async onRevokeConfirmed() {
 			const target = this.revokeTarget
@@ -429,7 +472,11 @@ export default {
 		/**
 		 * The requested field names of the request awaiting confirmation.
 		 *
+		 * Passed to the confirmation dialog so it can say what is being interrupted.
+		 *
 		 * @return {Array<string>} Field names, or an empty array.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		revokeTargetFields() {
 			const target = this.revokeTarget

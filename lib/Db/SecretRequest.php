@@ -91,7 +91,7 @@ class SecretRequest extends Entity implements JsonSerializable {
 	 *
 	 * @return string The composed actor string
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public static function actorForApplication(string $applicationId): string {
 		return self::ACTOR_APPLICATION_PREFIX . $applicationId;
@@ -226,7 +226,7 @@ class SecretRequest extends Entity implements JsonSerializable {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function setCreatedByApplication(string $applicationId): void {
 		$this->setCreatedBy(self::actorForApplication(applicationId: $applicationId));
@@ -242,7 +242,7 @@ class SecretRequest extends Entity implements JsonSerializable {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function belongsToApplication(string $applicationId): bool {
 		if ($applicationId === '') {

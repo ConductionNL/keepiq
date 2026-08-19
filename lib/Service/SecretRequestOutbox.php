@@ -209,7 +209,7 @@ class SecretRequestOutbox {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function recordExpired(string $requestId): void {
 		$this->eventDispatcher?->dispatchTyped(

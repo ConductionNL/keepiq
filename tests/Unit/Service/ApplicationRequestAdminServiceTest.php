@@ -159,7 +159,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testListForApplicationRefusesANonAdmin(): void {
 		$this->mapper->expects($this->never())->method('findByApplication');
@@ -177,7 +177,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testListForApplicationReturnsThatApplicationsRequestsNewestFirst(): void {
 		$older = $this->appRequest('req-old', 'sec-1', 'app-1');
@@ -203,7 +203,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testRevokeForApplicationRefusesANonAdmin(): void {
 		$this->mapper->expects($this->never())->method('update');
@@ -231,7 +231,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testRevokeForApplicationRefusesARequestOfAnotherActor(): void {
 		$foreign = $this->makePending('req-user', 'sec-user');
@@ -263,7 +263,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testAdminRevokeDeletesTheUnfilledApplicationPlaceholder(): void {
 		$entity = $this->appRequest('req-1', 'sec-empty', 'app-1');
@@ -295,7 +295,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testAdminRevokeNeverDeletesAFilledApplicationSecret(): void {
 		$entity = $this->appRequest('req-2', 'sec-filled', 'app-1');
@@ -328,7 +328,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testAdminRevokeWillNotDeleteAnotherApplicationsSecret(): void {
 		$entity = $this->appRequest('req-3', 'sec-elsewhere', 'app-1');

@@ -211,7 +211,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 *
 		 * @return {Promise<Array<object>>} The application's requests.
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		async fetchApplicationRequests(applicationId) {
 			this.loading = true
@@ -247,7 +247,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		async revokeApplicationRequest(applicationId, requestId) {
 			this.loading = true

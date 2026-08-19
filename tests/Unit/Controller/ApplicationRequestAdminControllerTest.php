@@ -119,7 +119,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testAnAdministratorSeesTheApplicationsRequests(): void {
 		$this->service->expects($this->once())
@@ -141,7 +141,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testANonAdministratorIsRefused(): void {
 		$this->service->expects($this->never())->method('listForApplication');
@@ -159,7 +159,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testAnAnonymousCallerIsRefused(): void {
 		$this->service->expects($this->never())->method('listForApplication');
@@ -179,7 +179,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testARevokeRecordsTheActingAdministrator(): void {
 		$this->service->expects($this->once())
@@ -197,7 +197,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testANonAdministratorCannotRevoke(): void {
 		$this->service->expects($this->never())->method('revokeForApplication');
@@ -217,7 +217,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function testTheServicesRefusalCodeIsPreserved(): void {
 		$this->service->method('revokeForApplication')->willThrowException(

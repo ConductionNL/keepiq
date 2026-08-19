@@ -95,7 +95,7 @@ class ApplicationRequestAdminService {
 	 *
 	 * @throws InvalidArgumentException 403 when the caller is not an administrator
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function listForApplication(string $applicationId, bool $isAdmin): array {
 		if ($isAdmin === false) {
@@ -138,7 +138,7 @@ class ApplicationRequestAdminService {
 	 *
 	 * @throws InvalidArgumentException 403 not an admin, 404 not that application's, 400 not pending
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	public function revokeForApplication(
 		string $requestId,
@@ -201,7 +201,7 @@ class ApplicationRequestAdminService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	private function deletePlaceholderIfUnfilled(SecretRequest $request, string $applicationId): void {
 		try {

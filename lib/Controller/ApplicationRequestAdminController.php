@@ -95,7 +95,7 @@ class ApplicationRequestAdminController extends Controller {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	private function adminUid(): ?string {
 		$user = $this->userSession->getUser();
@@ -162,7 +162,7 @@ class ApplicationRequestAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {
@@ -208,7 +208,7 @@ class ApplicationRequestAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id, string $requestId): JSONResponse {

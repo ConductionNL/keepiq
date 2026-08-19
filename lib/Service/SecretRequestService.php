@@ -657,7 +657,7 @@ class SecretRequestService {
 	 *
 	 * @return SecretRequest|null The updated request, or null when it was not pending
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function expire(SecretRequest $request): ?SecretRequest {
 		if ($request->getStatus() !== SecretRequest::STATUS_PENDING) {

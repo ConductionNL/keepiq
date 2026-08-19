@@ -21,7 +21,7 @@
   in its parent couples presentation to the parent's lifecycle and cannot be
   reused.
 
-  @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+  @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 -->
 <template>
 	<NcDialog
