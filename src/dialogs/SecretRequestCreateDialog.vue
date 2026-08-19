@@ -142,7 +142,9 @@ import { fillLinkFor } from '../utils/fillLink.js'
  *
  * Long enough for a colleague or vendor to act across a weekend or a holiday,
  * short enough that an abandoned request stops being a live credential within a
- * fortnight. Confirmed with the product owner rather than chosen here.
+ * fortnight. Confirmed with the product owner on 2026-08-19, against 7 and 30:
+ * a week lapses on a recipient who was simply away for it, a month leaves a live
+ * fill-link sitting in someone's inbox far longer than the task needs.
  *
  * A pre-fill is what makes expiry meaningful at all: `expires_at` has exactly one
  * source — this field — so while it defaulted to empty almost nothing expired and

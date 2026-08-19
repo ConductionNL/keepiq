@@ -12,9 +12,10 @@
  *
  * This job is CLEANUP, never enforcement. The access gate
  * (`SecretRequestPolicy::requireOpenByToken`) evaluates `expires_at` itself on
- * every open, so a request that lapsed since the last run is already refused.
- * That separation matters: if the gate trusted the stored status instead, this
- * job's interval would silently become part of the security boundary.
+ * every open, so a request that lapsed since the last run is already refused —
+ * which is why an hourly interval is adequate for something as time-sensitive as
+ * an expiry. Read that as a statement about this job's SCOPE, not as a claim that
+ * the gate ever depended on it: the gate checked expiry before this job existed.
  *
  * Requests with NO `expires_at` are never touched. Optional Expiry promises they
  * "remain open until fulfilled or manually revoked", and sweeping them would
