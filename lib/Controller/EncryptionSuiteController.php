@@ -263,8 +263,6 @@ class EncryptionSuiteController extends OCSController
      *
      * @param string $id The suite ID
      *
-     * @AuthorizedAdminSetting(AdminSettings::class)
-     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2

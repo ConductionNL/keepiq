@@ -79,8 +79,6 @@ class SettingsController extends Controller
     /**
      * Update settings with provided data (admin only).
      *
-     * @AuthorizedAdminSetting(AdminSettings::class)
-     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-5
@@ -105,8 +103,6 @@ class SettingsController extends Controller
      * Forces a fresh import regardless of version, auto-configuring
      * all schema and register IDs from the import result.
      *
-     * @AuthorizedAdminSetting(AdminSettings::class)
-     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-5
@@ -122,8 +118,6 @@ class SettingsController extends Controller
     /**
      * Get admin-scoped settings (implement-dashboard-settings §2.2).
      *
-     * @AuthorizedAdminSetting(AdminSettings::class)
-     *
      * @return JSONResponse
      *
      * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
@@ -136,8 +130,6 @@ class SettingsController extends Controller
 
     /**
      * Update admin-scoped settings (implement-dashboard-settings §2.2).
-     *
-     * @AuthorizedAdminSetting(AdminSettings::class)
      *
      * @return JSONResponse
      *

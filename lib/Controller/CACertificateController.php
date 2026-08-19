@@ -55,8 +55,6 @@ class CACertificateController extends OCSController
     /**
      * Get CA health status.
      *
-     * @AuthorizedAdminSetting(AdminSettings::class)
-     *
      * @return JSONResponse
      */
     #[AuthorizedAdminSetting(AdminSettings::class)]
@@ -70,8 +68,6 @@ class CACertificateController extends OCSController
      * §4.2) — the same status payload, published under the lifecycle
      * route. Counts only; no identifiers, PEM, or key material.
      *
-     * @AuthorizedAdminSetting(AdminSettings::class)
-     *
      * @return JSONResponse
      */
     #[AuthorizedAdminSetting(AdminSettings::class)]
@@ -82,8 +78,6 @@ class CACertificateController extends OCSController
 
     /**
      * Retry CA bootstrap.
-     *
-     * @AuthorizedAdminSetting(AdminSettings::class)
      *
      * @return JSONResponse
      *
@@ -105,8 +99,6 @@ class CACertificateController extends OCSController
 
     /**
      * Force renew the intermediate certificate.
-     *
-     * @AuthorizedAdminSetting(AdminSettings::class)
      *
      * @return JSONResponse
      *
@@ -134,8 +126,6 @@ class CACertificateController extends OCSController
 
     /**
      * Trigger root renewal.
-     *
-     * @AuthorizedAdminSetting(AdminSettings::class)
      *
      * @return JSONResponse
      *

@@ -174,8 +174,6 @@ class AuditController extends Controller
      * @param int         $page       1-based page number
      * @param int         $limit      Page size (default 50)
      *
-     * @AuthorizedAdminSetting(AdminSettings::class)
-     *
      * @return JSONResponse
      *
      * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-4.1
