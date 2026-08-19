@@ -27,6 +27,23 @@
 			<span v-if="secret.url" class="secret-list-item__url">{{
 				secret.url
 			}}</span>
+			<!--
+			  Outstanding secret request (request-first-secret-requests). Without
+			  this, a placeholder awaiting its first fill is indistinguishable from
+			  a broken empty Secret — and placeholders are now the normal result of
+			  asking someone for a credential. Never renders the fill token.
+			-->
+			<span
+				v-if="requestState"
+				class="secret-list-item__request"
+				:data-testid="`secret-request-${requestState}`">
+				<AccountQuestion :size="16" />
+				{{
+					requestState === 'awaiting-fill'
+						? t('doriath', 'Waiting for someone to fill this in')
+						: t('doriath', 'New values requested')
+				}}
+			</span>
 			<span v-if="secret.tombstonedAt" class="secret-list-item__tombstone">
 				{{ t('doriath', 'Shared by a deleted account — no longer synced') }}
 			</span>
@@ -73,6 +90,7 @@
 </template>
 
 <script>
+import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import CodeTags from 'vue-material-design-icons/CodeTags.vue'
 import Console from 'vue-material-design-icons/Console.vue'
@@ -95,6 +113,7 @@ export default {
 	name: 'SecretListItem',
 
 	components: {
+		AccountQuestion,
 		Lock,
 		AlertOutline,
 		Key,
@@ -112,6 +131,22 @@ export default {
 		secret: {
 			type: Object,
 			required: true,
+		},
+
+		/**
+		 * Outstanding-request state for this secret, or null when there is none.
+		 *
+		 * `awaiting-fill` — the Secret holds no value yet, so it cannot be used.
+		 * `re-request`    — it holds a value and new ones have been asked for, so
+		 *                   it stays usable until they arrive.
+		 *
+		 * Deliberately a STATE, not the request object: a fill token in a list row
+		 * travels into screenshots and over shoulders, and anyone entitled to it
+		 * can get it from the request itself.
+		 */
+		requestState: {
+			type: String,
+			default: null,
 		},
 	},
 

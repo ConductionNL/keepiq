@@ -93,6 +93,43 @@ export function isPublicRoute(route) {
 }
 
 /**
+ * Hash prefixes of the recipient-facing routes.
+ *
+ * Derived from the same routes as PUBLIC_ROUTE_NAMES, kept as paths because the
+ * check below runs before the router has resolved a name.
+ *
+ * @type {string[]}
+ */
+export const PUBLIC_HASH_PREFIXES = ['#/share/request/', '#/share/link/', '#/send/']
+
+/**
+ * Whether the CURRENT URL is an anonymous recipient surface.
+ *
+ * The route-level `isPublicRoute()` needs a resolved route, and some decisions
+ * are read before the router's first navigation completes — CnAppRoot, for one,
+ * reads `supportDialog` once in `setup()`. This answers the same question from
+ * the URL alone, so it is correct at that moment.
+ *
+ * `/apps/doriath/public` is the anonymous SPA shell, so anything served from it
+ * is a recipient page by definition; the hash prefixes cover the same routes
+ * when reached on the authenticated shell.
+ *
+ * @param {{pathname?: string, hash?: string}} location A Location-like object.
+ * @return {boolean} True when the URL is a public recipient surface.
+ * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+ */
+export function isPublicSurface(location = {}) {
+	const path = location.pathname || ''
+	const hash = location.hash || ''
+
+	if (path.includes('/apps/doriath/public') === true) {
+		return true
+	}
+
+	return PUBLIC_HASH_PREFIXES.some((prefix) => hash.startsWith(prefix))
+}
+
+/**
  * Redirect to the lock screen when the vault locks mid-session.
  *
  * `beforeEach` only fires on navigation, so it cannot see the vault locking
