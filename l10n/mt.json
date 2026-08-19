@@ -402,7 +402,14 @@
         "Link copied": "Il-link ġie kkupjat",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Din il-paġna teħtieġ konnessjoni sigura (https://), għax il-valur tiegħek jiġi kkriptat fil-brawżer qabel jintbagħat.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Iftaħ l-istess link li jibda bi https://. Jekk xorta ma jaħdimx, staqsi lil min bagħtu.",
-        "This request could not be found.": "Din it-talba ma nstabitx."
+        "This request could not be found.": "Din it-talba ma nstabitx.",
+        "Outstanding secret requests": "Talbiet ta’ sigriet pendenti",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Kredenzjali li din l-applikazzjoni talbet lin-nies jimlew. Link pendenti jaħdem għal kull min għandu, għalhekk irrevoka dawk li ma għandhomx jibqgħu jintużaw.",
+        "Revoke this request?": "Tirrevoka din it-talba?",
+        "Revoke the request": "Irrevoka t-talba",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Il-link tal-mili jieqaf jaħdem immedjatament, anke jekk xi ħadd diġà għandu. Jekk l-applikazzjoni qed tistenna din il-kredenzjal, l-integrazzjoni tagħha tista’ tieqaf taħdem.",
+        "This application asked for: {fields}": "Din l-applikazzjoni talbet: {fields}",
+        "Revoking…": "Qed jiġi rrevokat…"
     },
     "plurals": null
 }

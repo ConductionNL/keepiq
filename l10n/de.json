@@ -402,7 +402,14 @@
         "Link copied": "Link kopiert",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Diese Seite benötigt eine sichere (https://) Verbindung, da Ihr Wert im Browser verschlüsselt wird, bevor er gesendet wird.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Öffnen Sie denselben Link mit https:// am Anfang. Funktioniert es dann noch nicht, fragen Sie die Person, die ihn gesendet hat.",
-        "This request could not be found.": "Diese Anfrage konnte nicht gefunden werden."
+        "This request could not be found.": "Diese Anfrage konnte nicht gefunden werden.",
+        "Outstanding secret requests": "Ausstehende Geheimnisanfragen",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Zugangsdaten, um die diese Anwendung Personen gebeten hat. Ein ausstehender Link funktioniert für jeden, der ihn hat — widerrufen Sie daher alle, die nicht mehr nutzbar sein sollen.",
+        "Revoke this request?": "Diese Anfrage widerrufen?",
+        "Revoke the request": "Anfrage widerrufen",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Der Ausfülllink funktioniert sofort nicht mehr, auch wenn jemand ihn bereits hat. Wartet die Anwendung auf diese Zugangsdaten, kann ihre Integration ausfallen.",
+        "This application asked for: {fields}": "Diese Anwendung hat angefragt: {fields}",
+        "Revoking…": "Widerrufen…"
     },
     "plurals": null
 }

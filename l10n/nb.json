@@ -402,7 +402,14 @@
         "Link copied": "Lenke kopiert",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Denne siden krever en sikker (https://) tilkobling, fordi verdien din krypteres i nettleseren før den sendes.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Åpne den samme lenken med https:// først. Hvis det fortsatt ikke virker, spør personen som sendte den.",
-        "This request could not be found.": "Denne forespørselen ble ikke funnet."
+        "This request could not be found.": "Denne forespørselen ble ikke funnet.",
+        "Outstanding secret requests": "Utestående hemmelighetsforespørsler",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Legitimasjon denne applikasjonen har bedt personer om å fylle inn. En ventende lenke fungerer for alle som har den, så trekk tilbake dem som ikke lenger skal kunne brukes.",
+        "Revoke this request?": "Trekke tilbake denne forespørselen?",
+        "Revoke the request": "Trekk tilbake forespørselen",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Utfyllingslenken slutter å virke umiddelbart, også om noen allerede har den. Venter applikasjonen på denne legitimasjonen, kan integrasjonen slutte å virke.",
+        "This application asked for: {fields}": "Denne applikasjonen ba om: {fields}",
+        "Revoking…": "Trekker tilbake…"
     },
     "plurals": null
 }

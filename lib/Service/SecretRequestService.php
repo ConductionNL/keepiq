@@ -732,6 +732,13 @@ class SecretRequestService {
 	/**
 	 * Whether a Secret holds no value in any of its value columns.
 	 *
+	 * The predicate itself lives on the Secret entity, because it is a fact about
+	 * the row and TWO services need the same answer: this one for a user revoking
+	 * their own request, and ApplicationRequestAdminService for an administrator
+	 * revoking an application's. A copy in each would be two predicates answering
+	 * one question, which is how this path came to delete filled secrets in the
+	 * first place.
+	 *
 	 * Deliberately wider than `SecretService::hadNoValues()`, which asks the same
 	 * question for a different decision. That one guards whether to write a version
 	 * row: too eager and you get a junk row. This one guards a HARD delete that
@@ -753,10 +760,7 @@ class SecretRequestService {
 	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	private function holdsNoValues(Secret $secret): bool {
-		return (string)$secret->getKey() === ''
-			&& (string)$secret->getLogin() === ''
-			&& (string)$secret->getAdditionalFields() === ''
-			&& (string)$secret->getUrl() === '';
+		return $secret->holdsNoValues();
 	}//end holdsNoValues()
 
 	/**

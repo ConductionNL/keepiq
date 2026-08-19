@@ -127,6 +127,31 @@
 
 			<ApplicationLeasesPanel :applicationId="application.id" />
 
+			<!-- What this application is asking humans for. Until now nobody could
+			     see it: the requests carry `created_by = application:<id>`, which no
+			     user listing can ever match, and their target Secrets are
+			     application-owned so they appear in no vault. Six such requests
+			     existed on the development instance, invisible to every person on it.
+
+			     Admin-only, and the endpoint enforces that — this section is simply
+			     not rendered for anyone else, so a non-administrator is not shown a
+			     panel that would only ever show them an error. -->
+			<section
+				v-if="isAdmin"
+				class="application-detail__requests"
+				data-testid="application-requests-section">
+				<h3>{{ t('doriath', 'Outstanding secret requests') }}</h3>
+				<p class="application-detail__requests-hint">
+					{{
+						t(
+							'doriath',
+							'Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.',
+						)
+					}}
+				</p>
+				<SecretRequestList :applicationId="application.id" />
+			</section>
+
 			<section v-if="canDelete" class="application-detail__actions">
 				<NcButton
 					variant="error"
@@ -159,24 +184,27 @@ import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import ApplicationLeasesPanel from '../components/application/ApplicationLeasesPanel.vue'
 import ApplicationSecretsPanel from '../components/application/ApplicationSecretsPanel.vue'
+import SecretRequestList from '../components/secretRequest/SecretRequestList.vue'
 import ApplicationDeleteDialog from '../dialogs/ApplicationDeleteDialog.vue'
 import WriteSecretForAppDialog from '../dialogs/WriteSecretForAppDialog.vue'
 import { useApplicationStore } from '../store/modules/application.js'
+import { useSettingsStore } from '../store/modules/settings.js'
 
 export default {
 	name: 'ApplicationDetail',
 
 	components: {
+		AlertCircleOutline,
+		ApplicationDeleteDialog,
+		ApplicationLeasesPanel,
+		ApplicationSecretsPanel,
+		ArrowLeft,
 		NcButton,
 		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
-		ArrowLeft,
-		AlertCircleOutline,
-		ApplicationSecretsPanel,
-		ApplicationLeasesPanel,
+		SecretRequestList,
 		WriteSecretForAppDialog,
-		ApplicationDeleteDialog,
 	},
 
 	props: {
@@ -200,6 +228,25 @@ export default {
 	computed: {
 		store() {
 			return useApplicationStore()
+		},
+
+		/**
+		 * Whether the current user is an administrator.
+		 *
+		 * Gates the outstanding-requests section. This is presentation only — the
+		 * endpoint refuses a non-administrator regardless, and the authority must
+		 * stay there. Hiding the section is about not showing someone a panel that
+		 * could only ever render an error for them.
+		 *
+		 * Read from the settings store, which resolves it from `/api/settings` at
+		 * boot, rather than from the DOM (ADR-004 / gate-10).
+		 *
+		 * @return {boolean} True for an administrator.
+		 *
+		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
+		isAdmin() {
+			return useSettingsStore().isAdmin === true
 		},
 
 		application() {

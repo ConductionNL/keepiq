@@ -85,15 +85,28 @@
 			data-testid="secret-request-list-error">
 			{{ store.error }}
 		</p>
+
+		<ApplicationRequestRevokeDialog
+			v-if="revokeTarget"
+			:open="revokeTarget !== null"
+			:requestedFields="revokeTargetFields()"
+			@close="revokeTarget = null"
+			@confirm="onRevokeConfirmed" />
 	</section>
 </template>
 
 <script>
+import ApplicationRequestRevokeDialog from '../../dialogs/ApplicationRequestRevokeDialog.vue'
 import { useSecretRequestStore } from '../../store/modules/secretRequest.js'
 import { fillLinkFor } from '../../utils/fillLink.js'
 
 export default {
 	name: 'SecretRequestList',
+
+	components: {
+		ApplicationRequestRevokeDialog,
+	},
+
 	props: {
 		/**
 		 * Optional filter by Secret ID. When unset the component renders the
@@ -103,21 +116,54 @@ export default {
 			type: String,
 			default: null,
 		},
+
+		/**
+		 * Render one APPLICATION's requests instead of the current user's.
+		 *
+		 * This prop selects which endpoint is called; it does not grant anything.
+		 * The admin-scoped endpoint refuses a non-administrator with 403, so the
+		 * authority stays on the server. If the scope were a flag this component
+		 * trusted, the component would become the place an access decision is
+		 * accidentally made — the one real risk in reusing it for two authorities.
+		 */
+		applicationId: {
+			type: String,
+			default: null,
+		},
 	},
 
 	data() {
 		return {
 			copiedId: null,
+			revokeTarget: null,
 			store: useSecretRequestStore(),
 		}
 	},
 
 	computed: {
+		/**
+		 * Whether this list is showing an application's requests.
+		 *
+		 * @return {boolean} True in the administrator's application-scoped view.
+		 */
+		isApplicationScope() {
+			return typeof this.applicationId === 'string' && this.applicationId !== ''
+		},
+
 		rows() {
-			if (this.secretId == null || this.secretId === '') {
-				return this.store.secretRequests
+			// Two collections, not one filtered array: `secretRequests` means
+			// "requests I created" and `applicationRequests` means "requests this
+			// application created". Reading the wrong one would render plausible
+			// rows under the wrong authority.
+			const source = this.isApplicationScope
+				? this.store.applicationRequests
+				: this.store.secretRequests
+
+			if (typeof this.secretId !== 'string' || this.secretId === '') {
+				return source
 			}
-			return this.store.secretRequests.filter((r) => {
+
+			return source.filter((r) => {
 				const sid = r.secretId || r.secret_id
 				return sid === this.secretId
 			})
@@ -125,12 +171,19 @@ export default {
 	},
 
 	mounted() {
+		if (this.isApplicationScope) {
+			this.store
+				.fetchApplicationRequests(this.applicationId)
+				.catch(() => {})
+			return
+		}
+
 		this.store.fetchRequests().catch(() => {})
 	},
 
 	methods: {
 		truncateToken(token) {
-			if (token == null || token === '') {
+			if (typeof token !== 'string' || token === '') {
 				return ''
 			}
 			return token.length <= 12 ? token : `${token.slice(0, 8)}…`
@@ -213,8 +266,70 @@ export default {
 			}
 		},
 
+		/**
+		 * Begin a revoke.
+		 *
+		 * A user revoking their own request goes straight through: they created it
+		 * and they know what it was for. An administrator revoking an APPLICATION's
+		 * request is interrupting software they did not write, whose fill link may
+		 * already be in someone's inbox, so that path asks first.
+		 *
+		 * @param {string} id The request id.
+		 *
+		 * @return {void}
+		 *
+		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
 		onRevoke(id) {
+			if (this.isApplicationScope) {
+				this.revokeTarget = this.rows.find((r) => r.id === id) || { id }
+				return
+			}
+
 			this.store.revokeRequest(id).catch(() => {})
+		},
+
+		/**
+		 * Carry out a confirmed application-scoped revoke.
+		 *
+		 * The application id travels with the call so the server can enforce that
+		 * the request really is that application's, rather than trusting an id.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
+		async onRevokeConfirmed() {
+			const target = this.revokeTarget
+			this.revokeTarget = null
+			if (!target) {
+				return
+			}
+
+			try {
+				await this.store.revokeApplicationRequest(
+					this.applicationId,
+					target.id,
+				)
+			} catch {
+				// The store already surfaced the message; the row stays put so the
+				// administrator can see the revoke did not take effect.
+			}
+		},
+
+		/**
+		 * The requested field names of the request awaiting confirmation.
+		 *
+		 * @return {Array<string>} Field names, or an empty array.
+		 */
+		revokeTargetFields() {
+			const target = this.revokeTarget
+			if (!target) {
+				return []
+			}
+
+			const fields = target.requestedFields || target.requested_fields
+			return Array.isArray(fields) ? fields : []
 		},
 	},
 }

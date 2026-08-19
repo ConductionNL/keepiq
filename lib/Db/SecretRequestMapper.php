@@ -43,6 +43,30 @@ use OCP\IDBConnection;
  */
 class SecretRequestMapper extends QBMapper {
 	/**
+	 * Every request an application created, whatever its status.
+	 *
+	 * Deliberately not filtered to pending. An administrator auditing an
+	 * application needs the fulfilled and revoked ones too — "what has this thing
+	 * been asking people for" is the question, and a list of only what is
+	 * outstanding answers a narrower one.
+	 *
+	 * Scoping is structural: `created_by` is set by the service, never by a request
+	 * body, and no Nextcloud user id can take the `application:` form. So this
+	 * cannot be steered into returning another actor's rows.
+	 *
+	 * @param string $applicationId The application whose requests to return
+	 *
+	 * @return array<int,SecretRequest> Every request that application created
+	 *
+	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function findByApplication(string $applicationId): array {
+		return $this->findByCreatedBy(
+			userId: SecretRequest::ACTOR_APPLICATION_PREFIX . $applicationId
+		);
+	}//end findByApplication()
+
+	/**
 	 * Constructor for SecretRequestMapper.
 	 *
 	 * @param IDBConnection $db The database connection

@@ -402,7 +402,14 @@
         "Link copied": "Link kopéiert",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Dës Säit brauch eng sécher (https://) Verbindung, well Äre Wäert am Browser verschlësselt gëtt, ier e geschéckt gëtt.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Maacht dee selwechte Link mat https:// am Ufank op. Wann et dann nach net geet, frot d'Persoun, déi en geschéckt huet.",
-        "This request could not be found.": "Dës Ufro konnt net fonnt ginn."
+        "This request could not be found.": "Dës Ufro konnt net fonnt ginn.",
+        "Outstanding secret requests": "Ausstoend Geheimnisufroen",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Zougangsdaten, ëm déi dës Applikatioun Leit gefrot huet. E waardende Link funktionnéiert fir jeden, deen e huet, also zéi déi zréck, déi net méi benotzbar solle sinn.",
+        "Revoke this request?": "Dës Ufro zrécksetzen?",
+        "Revoke the request": "Ufro zrécksetzen",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "De Ausfëll-Link funktionnéiert direkt net méi, och wann een e schon huet. Wann d’Applikatioun op dës Zougangsdaten waart, kann hir Integratioun ophalen ze funktionnéieren.",
+        "This application asked for: {fields}": "Dës Applikatioun huet gefrot: {fields}",
+        "Revoking…": "Gëtt zréckgesat…"
     },
     "plurals": null
 }

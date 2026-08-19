@@ -402,7 +402,14 @@
         "Link copied": "Посилання скопійовано",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ця сторінка потребує захищеного (https://) з’єднання, бо ваше значення шифрується у браузері перед надсиланням.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Відкрийте те саме посилання, що починається з https://. Якщо все одно не працює, запитайте того, хто його надіслав.",
-        "This request could not be found.": "Цей запит не знайдено."
+        "This request could not be found.": "Цей запит не знайдено.",
+        "Outstanding secret requests": "Очікувані запити секретів",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Облікові дані, які цей застосунок попросив людей заповнити. Посилання в очікуванні працює для кожного, хто його має, тому відкличте ті, які більше не повинні бути придатними.",
+        "Revoke this request?": "Відкликати цей запит?",
+        "Revoke the request": "Відкликати запит",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Посилання для заповнення перестає працювати негайно, навіть якщо воно вже в когось є. Якщо застосунок очікує ці облікові дані, його інтеграція може перестати працювати.",
+        "This application asked for: {fields}": "Цей застосунок запросив: {fields}",
+        "Revoking…": "Відкликання…"
     },
     "plurals": null
 }

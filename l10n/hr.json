@@ -402,7 +402,14 @@
         "Link copied": "Veza kopirana",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ova stranica zahtijeva sigurnu (https://) vezu jer se vaša vrijednost šifrira u pregledniku prije slanja.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otvorite istu vezu koja počinje s https://. Ako još ne radi, pitajte osobu koja ju je poslala.",
-        "This request could not be found.": "Ovaj zahtjev nije pronađen."
+        "This request could not be found.": "Ovaj zahtjev nije pronađen.",
+        "Outstanding secret requests": "Neriješeni zahtjevi za tajnom",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Vjerodajnice koje je ova aplikacija zamolila ljude da ispune. Veza na čekanju radi za svakoga tko je ima, pa povucite one koje više ne bi trebale biti upotrebljive.",
+        "Revoke this request?": "Povući ovaj zahtjev?",
+        "Revoke the request": "Povuci zahtjev",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Veza za ispunjavanje odmah prestaje raditi, čak i ako je netko već ima. Ako aplikacija čeka ovu vjerodajnicu, njezina integracija može prestati raditi.",
+        "This application asked for: {fields}": "Ova aplikacija je zatražila: {fields}",
+        "Revoking…": "Povlačenje…"
     },
     "plurals": null
 }

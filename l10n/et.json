@@ -198,7 +198,7 @@
         "Compromise recovery completed with errors": "Kompromiteerimisjärgne taastamine lõpetati vigadega",
         "Compromise recovery in progress": "Kompromiteerimisjärgne taastamine käib",
         "Copied!": "Kopeeritud!",
-        "Create a password-protected link. Anyone with the link and password can view the secret until the usage limit is reached.": "Loo parooliga kaitstud link. Igaüks, kellel on link ja parool, saab saladust vaadata, kuni kasutuslimiiт on täis.",
+        "Create a password-protected link. Anyone with the link and password can view the secret until the usage limit is reached.": "Loo parooliga kaitstud link. Igaüks, kellel on link ja parool, saab saladust vaadata, kuni kasutuslimiit on täis.",
         "Create folder": "Loo kaust",
         "Create request": "Loo päring",
         "Create secret": "Loo saladus",
@@ -402,7 +402,14 @@
         "Link copied": "Link kopeeritud",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "See leht vajab turvalist (https://) ühendust, sest sinu väärtus krüptitakse brauseris enne saatmist.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Ava sama link, mis algab https://. Kui see ikka ei tööta, küsi saatjalt.",
-        "This request could not be found.": "Seda päringut ei leitud."
+        "This request could not be found.": "Seda päringut ei leitud.",
+        "Outstanding secret requests": "Ootel saladusetaotlused",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Mandaadid, mille täitmist see rakendus on inimestelt palunud. Ootel link toimib kõigile, kellel see on, seega tühista need, mida ei tohi enam kasutada.",
+        "Revoke this request?": "Kas tühistada see taotlus?",
+        "Revoke the request": "Tühista taotlus",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Täitmislink lõpetab kohe töötamise, ka siis kui keegi on selle juba saanud. Kui rakendus ootab seda mandaati, võib selle liidestus katkeda.",
+        "This application asked for: {fields}": "See rakendus palus: {fields}",
+        "Revoking…": "Tühistamine…"
     },
     "plurals": null
 }

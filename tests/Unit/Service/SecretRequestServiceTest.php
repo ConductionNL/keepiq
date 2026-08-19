@@ -1813,4 +1813,40 @@ class SecretRequestServiceTest extends TestCase {
 		);
 	}//end testExpireNeverDeletesASecretHoldingOnlyALogin()
 
+	/**
+	 * The user's own listing is untouched by this change.
+	 *
+	 * Pinned because the cheap alternative was widening `listByUser()`, and the
+	 * whole reason it was not widened is that "mine" must keep meaning mine. The
+	 * uid is passed through with NO application prefix, which is exactly why a user
+	 * listing can never match an application's rows.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testListByUserStillQueriesTheRawUid(): void {
+		$this->mapper->expects($this->once())
+			->method('findByCreatedBy')
+			->with('alice')
+			->willReturn([]);
+
+		$this->service->listByUser('alice');
+	}//end testListByUserStillQueriesTheRawUid()
+
+	/**
+	 * The actor string is composed in one place, and a uid can never collide.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testTheApplicationActorStringCannotCollideWithAUid(): void {
+		$this->assertSame('application:app-1', SecretRequest::actorForApplication('app-1'));
+		$this->assertStringStartsWith(
+			SecretRequest::ACTOR_APPLICATION_PREFIX,
+			SecretRequest::actorForApplication('app-1')
+		);
+	}//end testTheApplicationActorStringCannotCollideWithAUid()
+
 }//end class
