@@ -49,6 +49,7 @@
 
 		<CnAppRoot
 			:aiCompanion="true"
+			:supportDialog="showSupportDialog"
 			:manifest="manifest"
 			:customComponents="customComponents"
 			:pageTypes="pageTypes"
@@ -273,7 +274,11 @@ import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
-import { handleLockTransition } from './router/guards.js'
+import {
+	handleLockTransition,
+	isPublicRoute,
+	isPublicSurface,
+} from './router/guards.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
@@ -361,6 +366,43 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the first-open support note may be shown.
+		 *
+		 * False on every anonymous recipient surface. Those pages are opened by
+		 * people who are not our users at all — someone filling in a credential we
+		 * asked them for, or opening a share — and a donation appeal mid-task is at
+		 * best noise, at worst a phishing tell on a page about to receive a secret.
+		 *
+		 * Decided from the URL rather than from `$route`, and that is not a
+		 * shortcut: CnAppRoot reads this prop ONCE in `setup()`
+		 * (`props.supportDialog === false` selects whether the dialog is wired at
+		 * all), which happens before the router resolves the initial navigation. A
+		 * reactive computed keyed on `$route.name` is therefore still undefined at
+		 * the only moment the value is read — which is exactly why the first attempt
+		 * at this had no effect.
+		 *
+		 * `/apps/doriath/public` is the anonymous shell, so anything served from it
+		 * is a recipient page by definition. The hash prefixes cover the same routes
+		 * reached on the authenticated shell.
+		 *
+		 * The library's own guard is not enough: it opens the note only on a
+		 * DEFINITIVE "not seen" answer, but the preference request 401s for an
+		 * anonymous visitor, and a 401 is not a definitive no.
+		 *
+		 * @return {boolean} False on public recipient pages.
+		 *
+		 * @spec exclude Host-level suppression of a library affordance. No
+		 *   requirement describes the support note; what matters is that the public
+		 *   recipient pages stay task-only, which the view specs assert.
+		 */
+		showSupportDialog() {
+			return (
+				isPublicSurface(window.location) === false
+				&& isPublicRoute(this.$route) === false
+			)
+		},
+
 		/**
 		 * Current Nextcloud user permissions, surfaced to the app shell.
 		 *
