@@ -9,7 +9,7 @@
  * dialog, and the request dialog that asks somebody ELSE to fill a member in — so
  * they are tested once, here, rather than three times through three components.
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
  */
 
 import { describe, expect, it } from 'vitest'

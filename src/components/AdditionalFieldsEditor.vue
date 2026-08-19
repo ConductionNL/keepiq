@@ -20,7 +20,7 @@
   store owns turning that into one encrypted blob, which is the only place that
   knows the blob is the storage unit.
 
-  @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+  @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 -->
 <template>
 	<section
@@ -147,7 +147,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		emitMembers(members) {
 			this.$emit('update:members', members)
@@ -161,7 +161,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		onAdd() {
 			const name = (this.newName || '').trim()
@@ -191,7 +191,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		onRename(index, name) {
 			const others = this.members
@@ -214,7 +214,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		onRevalue(index, value) {
 			const next = this.members.map((member, position) =>
@@ -234,7 +234,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		onRemove(index) {
 			this.nameError = ''

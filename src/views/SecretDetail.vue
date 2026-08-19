@@ -443,7 +443,7 @@ export default {
 		 *
 		 * @return {boolean} True when there is at least one member to render.
 		 *
-		 * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		hasAdditionalFields() {
 			const blob = this.secret?.additionalFields

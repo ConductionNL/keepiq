@@ -16,7 +16,7 @@
  * design, precisely so a server cannot learn that a secret has a `recovery-codes`
  * field — the existence of the field is itself information.
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
  */
 
 import { beforeAll, describe, expect, it } from 'vitest'

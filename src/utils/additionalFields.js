@@ -41,7 +41,7 @@ export const RESERVED_MEMBER_NAMES = ['key', 'login', 'url']
  *
  * @return {string} A translated reason, or '' when the name is acceptable.
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
  */
 export function memberNameError(name, taken = []) {
 	const trimmed = (name || '').trim()
@@ -83,7 +83,7 @@ export function memberNameError(name, taken = []) {
  *
  * @return {object} A plain object of name → value, possibly empty.
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
  */
 export function membersToObject(members = []) {
 	return members.reduce((acc, member) => {
@@ -108,7 +108,7 @@ export function membersToObject(members = []) {
  *
  * @return {Array<{name: string, value: string}>} The editable member list.
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
  */
 export function objectToMembers(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {

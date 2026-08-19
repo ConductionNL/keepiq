@@ -11,7 +11,7 @@
  * an empty object rather than nothing at all, since "nothing" means "leave the
  * stored blob alone".
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
  */
 
 import { mount } from '@vue/test-utils'

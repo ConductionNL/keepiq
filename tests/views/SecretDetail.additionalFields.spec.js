@@ -10,7 +10,7 @@
  * from the UI. Removing the last member now does exactly that, and the spec says
  * re-opening the secret must show no additional fields and no error.
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
  */
 
 import { mount } from '@vue/test-utils'

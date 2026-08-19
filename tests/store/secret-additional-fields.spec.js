@@ -14,7 +14,7 @@
  * was sent", which the update path reads as "leave the stored blob alone". Removing
  * the last member has to mean the former.
  *
- * @spec openspec/changes/owner-editable-additional-fields/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+ * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
  */
 
 import axios from '@nextcloud/axios'
