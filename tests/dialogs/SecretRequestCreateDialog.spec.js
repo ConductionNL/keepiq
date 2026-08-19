@@ -84,13 +84,18 @@ describe('SecretRequestCreateDialog', () => {
 
 		expect(store.createRequest).toHaveBeenCalledTimes(1)
 		const payload = store.createRequest.mock.calls[0][0]
+		// camelCase, matching what the store forwards and what the Nextcloud
+		// router binds. This assertion used to demand snake_case, which the store
+		// read as `undefined` — so the test passed against a mocked store while
+		// the real POST went out empty and the endpoint answered 400.
 		expect(payload).toMatchObject({
-			secret_id: 'secret-1',
-			requested_fields: ['key', 'login'],
-			is_re_request: false,
+			secretId: 'secret-1',
+			requestedFields: ['key', 'login'],
+			isReRequest: false,
 		})
-		expect(typeof payload.expires_at).toBe('string')
-		expect(payload.expires_at.endsWith('Z')).toBe(true)
+		expect(payload).not.toHaveProperty('secret_id')
+		expect(typeof payload.expiresAt).toBe('string')
+		expect(payload.expiresAt.endsWith('Z')).toBe(true)
 
 		// fillUrl is populated from the response token.
 		// The anonymous shell, NOT /apps/doriath/share/request/<token>: the
@@ -273,5 +278,102 @@ describe('SecretRequestCreateDialog', () => {
 		expect(wrapper.vm.customFields).toEqual([])
 		expect(wrapper.vm.customFieldInput).toBe('')
 		expect(wrapper.vm.requestedFields).toEqual(['key'])
+	})
+	it('submits a FRESH request with no secret prop, sending name instead of secretId', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi
+			.fn()
+			.mockResolvedValue({ id: 'req-f', token: 'tok-f' })
+
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.newName = 'Supplier API key'
+		wrapper.vm.requestedFields = ['key', 'url']
+		await wrapper.vm.submit()
+
+		const payload = store.createRequest.mock.calls[0][0]
+		// The server creates the placeholder and derives the suite from it, so the
+		// client sends neither.
+		expect(payload.secretId).toBeUndefined()
+		expect(payload.encryptionSuiteId).toBeUndefined()
+		expect(payload).toMatchObject({
+			name: 'Supplier API key',
+			requestedFields: ['key', 'url'],
+			isReRequest: false,
+		})
+	})
+
+	it('refuses a fresh request with no name instead of creating a nameless placeholder', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn()
+
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.newName = '   '
+		await wrapper.vm.submit()
+
+		expect(store.createRequest).not.toHaveBeenCalled()
+		expect(wrapper.vm.error).not.toBe('')
+	})
+
+	it('does not pre-select a field that already holds a value', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: {
+					id: 's-1',
+					key: 'CIPHER',
+					login: '',
+					additionalFields: {},
+				},
+			},
+			global: { stubs: ncStubs },
+		})
+
+		// `key` is filled, so it must not be ticked: the recipient cannot decline a
+		// requested field, so pre-selecting it would compel an overwrite.
+		expect(wrapper.vm.requestedFields).not.toContain('key')
+		expect(wrapper.vm.availableFields.find((f) => f.key === 'key').filled).toBe(
+			true,
+		)
+	})
+
+	it('detects filled additional-field members from the decrypted blob', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: {
+					id: 's-2',
+					key: '',
+					additionalFields: { 'client-id': 'abc', 'client-secret': '' },
+				},
+			},
+			global: { stubs: ncStubs },
+		})
+
+		const byKey = Object.fromEntries(
+			wrapper.vm.availableFields.map((f) => [f.key, f.filled]),
+		)
+		expect(byKey['client-id']).toBe(true)
+		expect(byKey['client-secret']).toBe(false)
+	})
+
+	it('a re-request still pre-selects the filled key, because replacing is the point', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				isReRequest: true,
+				secret: { id: 's-3', key: 'CIPHER' },
+			},
+			global: { stubs: ncStubs },
+		})
+
+		expect(wrapper.vm.requestedFields).toContain('key')
 	})
 })

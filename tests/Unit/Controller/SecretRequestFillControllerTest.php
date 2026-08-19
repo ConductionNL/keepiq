@@ -237,4 +237,33 @@ class SecretRequestFillControllerTest extends TestCase {
 		$this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
 
 	}//end testFillReturns500OnGenericFailure()
+	/**
+	 * The fill response never tells the recipient which fields already hold values.
+	 *
+	 * "This field already has a value" is a read of the vault handed to an
+	 * unauthenticated party. Filled-ness is decided by the REQUESTER's client at
+	 * creation time, so the payload is asserted as a CLOSED set here rather than
+	 * only for the presence of what the recipient needs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+	 */
+	public function testShowNeverDisclosesWhichFieldsAreAlreadyFilled(): void {
+		$this->secretRequestService->method('getByToken')->willReturn($this->makeRequest());
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$data = $this->controller->show(token: 'tok-1')->getData();
+
+		foreach (['filled', 'filledFields', 'already_filled', 'values', 'key', 'login'] as $leak) {
+			$this->assertArrayNotHasKey(
+				key: $leak,
+				array: $data,
+				message: $leak . ' must not reach the fill recipient'
+			);
+		}
+
+		$this->assertSame(expected: ['key', 'login'], actual: $data['requested_fields']);
+	}//end testShowNeverDisclosesWhichFieldsAreAlreadyFilled()
+
 }//end class

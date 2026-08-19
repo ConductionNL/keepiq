@@ -291,4 +291,54 @@ describe('SecretListItem', () => {
 		expect(secretStore.fetchSecret).toHaveBeenCalledWith('s-1')
 		expect(value).toBe('decrypted-key')
 	})
+	it('marks a placeholder as awaiting its first fill', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-1', name: 'Supplier API key', key: '' },
+				requestState: 'awaiting-fill',
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-request-awaiting-fill"]').exists(),
+		).toBe(true)
+		expect(wrapper.text()).toContain('Waiting for someone to fill this in')
+	})
+
+	it('distinguishes a re-request from an empty placeholder', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-2', name: 'Rotating token', key: 'CIPHER' },
+				requestState: 're-request',
+			},
+		})
+
+		// The consequences differ: this one still works until new values arrive.
+		expect(
+			wrapper.find('[data-testid="secret-request-re-request"]').exists(),
+		).toBe(true)
+		expect(wrapper.text()).toContain('New values requested')
+		expect(wrapper.text()).not.toContain('Waiting for someone')
+	})
+
+	it('shows no indicator when there is no outstanding request', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: { secret: { id: 's-3', name: 'Plain', key: 'CIPHER' } },
+		})
+
+		expect(wrapper.find('.secret-list-item__request').exists()).toBe(false)
+	})
+
+	it('never renders a fill token in the row', () => {
+		// The component takes a STATE, not the request, so a token cannot reach a
+		// list row even if a caller had one to hand.
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-4', name: 'Tokenless', key: '' },
+				requestState: 'awaiting-fill',
+			},
+		})
+
+		expect(wrapper.html()).not.toMatch(/[a-f0-9]{32}/)
+	})
 })
