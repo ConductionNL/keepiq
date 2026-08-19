@@ -378,7 +378,13 @@
         "Attachment key": "Κλειδί συνημμένου",
         "Record": "Εγγραφή",
         "Showing {shown} of {total}.": "Εμφάνιση {shown} από {total}.",
-        "Version history entry": "Καταχώρηση ιστορικού εκδόσεων"
+        "Version history entry": "Καταχώρηση ιστορικού εκδόσεων",
+        "Add": "Προσθήκη",
+        "Also ask for another field": "Ζητήστε και άλλο πεδίο",
+        "e.g. client-id": "π.χ. client-id",
+        "That field is already listed.": "Αυτό το πεδίο υπάρχει ήδη στη λίστα.",
+        "That is a built-in field — tick it in the list above instead.": "Αυτό είναι ενσωματωμένο πεδίο — επιλέξτε το από τη λίστα παραπάνω.",
+        "URL (stored unencrypted)": "URL (αποθηκεύεται μη κρυπτογραφημένο)"
     },
     "plurals": null
 }

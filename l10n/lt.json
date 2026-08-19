@@ -378,7 +378,13 @@
         "Attachment key": "Priedo raktas",
         "Record": "Įrašas",
         "Showing {shown} of {total}.": "Rodoma {shown} iš {total}.",
-        "Version history entry": "Versijų istorijos įrašas"
+        "Version history entry": "Versijų istorijos įrašas",
+        "Add": "Pridėti",
+        "Also ask for another field": "Taip pat prašyti kito lauko",
+        "e.g. client-id": "pvz., client-id",
+        "That field is already listed.": "Šis laukas jau yra sąraše.",
+        "That is a built-in field — tick it in the list above instead.": "Tai integruotas laukas — pažymėkite jį aukščiau esančiame sąraše.",
+        "URL (stored unencrypted)": "URL (saugomas nešifruotas)"
     },
     "plurals": null
 }

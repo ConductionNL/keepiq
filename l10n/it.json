@@ -378,7 +378,13 @@
         "Attachment key": "Chiave dell'allegato",
         "Record": "Record",
         "Showing {shown} of {total}.": "Visualizzati {shown} di {total}.",
-        "Version history entry": "Voce della cronologia versioni"
+        "Version history entry": "Voce della cronologia versioni",
+        "Add": "Aggiungi",
+        "Also ask for another field": "Chiedi anche un altro campo",
+        "e.g. client-id": "ad es. client-id",
+        "That field is already listed.": "Questo campo è già nell’elenco.",
+        "That is a built-in field — tick it in the list above instead.": "Questo è un campo integrato: selezionalo nell’elenco qui sopra.",
+        "URL (stored unencrypted)": "URL (memorizzato non cifrato)"
     },
     "plurals": null
 }

@@ -378,7 +378,13 @@
         "Attachment key": "Клуч на прилогот",
         "Record": "Запис",
         "Showing {shown} of {total}.": "Прикажани {shown} од {total}.",
-        "Version history entry": "Запис во историјата на верзии"
+        "Version history entry": "Запис во историјата на верзии",
+        "Add": "Додај",
+        "Also ask for another field": "Побарај и друго поле",
+        "e.g. client-id": "напр. client-id",
+        "That field is already listed.": "Тоа поле е веќе на списокот.",
+        "That is a built-in field — tick it in the list above instead.": "Тоа е вградено поле — означете го во списокот погоре.",
+        "URL (stored unencrypted)": "URL (зачуван нешифриран)"
     },
     "plurals": null
 }

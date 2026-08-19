@@ -378,7 +378,13 @@
         "Attachment key": "Liitteen avain",
         "Record": "Tietue",
         "Showing {shown} of {total}.": "Näytetään {shown} / {total}.",
-        "Version history entry": "Versiohistorian tietue"
+        "Version history entry": "Versiohistorian tietue",
+        "Add": "Lisää",
+        "Also ask for another field": "Pyydä myös toista kenttää",
+        "e.g. client-id": "esim. client-id",
+        "That field is already listed.": "Kenttä on jo luettelossa.",
+        "That is a built-in field — tick it in the list above instead.": "Tämä on sisäänrakennettu kenttä — valitse se sen sijaan yllä olevasta luettelosta.",
+        "URL (stored unencrypted)": "URL (tallennetaan salaamattomana)"
     },
     "plurals": null
 }

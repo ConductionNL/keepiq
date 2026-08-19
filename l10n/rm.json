@@ -378,7 +378,13 @@
         "Attachment key": "Clav da l'agiunta",
         "Record": "Registraziun",
         "Showing {shown} of {total}.": "{shown} da {total} vegnan mussads.",
-        "Version history entry": "Endataziun da la cronologia da versiuns"
+        "Version history entry": "Endataziun da la cronologia da versiuns",
+        "Add": "Agiuntar",
+        "Also ask for another field": "Dumandar era in auter champ",
+        "e.g. client-id": "p.ex. client-id",
+        "That field is already listed.": "Quest champ è gia sin la glista.",
+        "That is a built-in field — tick it in the list above instead.": "Quai è in champ integrà — marchescha el en la glista survart.",
+        "URL (stored unencrypted)": "URL (memorisà senza criptaziun)"
     },
     "plurals": null
 }

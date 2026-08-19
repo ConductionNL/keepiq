@@ -378,7 +378,13 @@
         "Attachment key": "Klíč přílohy",
         "Record": "Záznam",
         "Showing {shown} of {total}.": "Zobrazeno {shown} z {total}.",
-        "Version history entry": "Záznam historie verzí"
+        "Version history entry": "Záznam historie verzí",
+        "Add": "Přidat",
+        "Also ask for another field": "Požádat také o další pole",
+        "e.g. client-id": "např. client-id",
+        "That field is already listed.": "Toto pole je již v seznamu.",
+        "That is a built-in field — tick it in the list above instead.": "Toto je vestavěné pole — zaškrtněte jej v seznamu výše.",
+        "URL (stored unencrypted)": "URL (uloženo nezašifrovaně)"
     },
     "plurals": null
 }

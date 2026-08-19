@@ -378,7 +378,13 @@
         "Attachment key": "Ключ вложения",
         "Record": "Запись",
         "Showing {shown} of {total}.": "Показано {shown} из {total}.",
-        "Version history entry": "Запись истории версий"
+        "Version history entry": "Запись истории версий",
+        "Add": "Добавить",
+        "Also ask for another field": "Запросить также другое поле",
+        "e.g. client-id": "например, client-id",
+        "That field is already listed.": "Это поле уже есть в списке.",
+        "That is a built-in field — tick it in the list above instead.": "Это встроенное поле — отметьте его в списке выше.",
+        "URL (stored unencrypted)": "URL (хранится без шифрования)"
     },
     "plurals": null
 }

@@ -378,7 +378,13 @@
         "Attachment key": "Vedleggsnøkkel",
         "Record": "Post",
         "Showing {shown} of {total}.": "Viser {shown} av {total}.",
-        "Version history entry": "Versjonshistorikkpost"
+        "Version history entry": "Versjonshistorikkpost",
+        "Add": "Legg til",
+        "Also ask for another field": "Spør også om et annet felt",
+        "e.g. client-id": "f.eks. client-id",
+        "That field is already listed.": "Det feltet er allerede på listen.",
+        "That is a built-in field — tick it in the list above instead.": "Det er et innebygd felt — merk det i listen over i stedet.",
+        "URL (stored unencrypted)": "URL (lagret ukryptert)"
     },
     "plurals": null
 }

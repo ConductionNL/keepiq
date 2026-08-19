@@ -378,7 +378,13 @@
         "Attachment key": "Manuse võti",
         "Record": "Kirje",
         "Showing {shown} of {total}.": "Kuvatakse {shown} / {total}.",
-        "Version history entry": "Versiooniajaloo kirje"
+        "Version history entry": "Versiooniajaloo kirje",
+        "Add": "Lisa",
+        "Also ask for another field": "Küsi ka teist välja",
+        "e.g. client-id": "nt client-id",
+        "That field is already listed.": "See väli on juba loendis.",
+        "That is a built-in field — tick it in the list above instead.": "See on sisseehitatud väli — märgi see hoopis ülalolevas loendis.",
+        "URL (stored unencrypted)": "URL (salvestatakse krüptimata)"
     },
     "plurals": null
 }

@@ -378,7 +378,13 @@
         "Attachment key": "Clé de pièce jointe",
         "Record": "Enregistrement",
         "Showing {shown} of {total}.": "Affichage de {shown} sur {total}.",
-        "Version history entry": "Entrée d'historique de versions"
+        "Version history entry": "Entrée d'historique de versions",
+        "Add": "Ajouter",
+        "Also ask for another field": "Demander également un autre champ",
+        "e.g. client-id": "p. ex. client-id",
+        "That field is already listed.": "Ce champ est déjà dans la liste.",
+        "That is a built-in field — tick it in the list above instead.": "Il s’agit d’un champ intégré — cochez-le plutôt dans la liste ci-dessus.",
+        "URL (stored unencrypted)": "URL (stockée non chiffrée)"
     },
     "plurals": null
 }

@@ -378,7 +378,13 @@
         "Attachment key": "Anhangsschlüssel",
         "Record": "Datensatz",
         "Showing {shown} of {total}.": "{shown} von {total} werden angezeigt.",
-        "Version history entry": "Versionsverlaufseintrag"
+        "Version history entry": "Versionsverlaufseintrag",
+        "Add": "Hinzufügen",
+        "Also ask for another field": "Auch nach einem weiteren Feld fragen",
+        "e.g. client-id": "z. B. client-id",
+        "That field is already listed.": "Dieses Feld steht bereits in der Liste.",
+        "That is a built-in field — tick it in the list above instead.": "Das ist ein integriertes Feld – wählen Sie es stattdessen in der Liste oben aus.",
+        "URL (stored unencrypted)": "URL (unverschlüsselt gespeichert)"
     },
     "plurals": null
 }

@@ -378,7 +378,13 @@
         "Attachment key": "Clau de l'adjunt",
         "Record": "Registre",
         "Showing {shown} of {total}.": "Es mostren {shown} de {total}.",
-        "Version history entry": "Entrada de l'historial de versions"
+        "Version history entry": "Entrada de l'historial de versions",
+        "Add": "Afegeix",
+        "Also ask for another field": "Demana també un altre camp",
+        "e.g. client-id": "p. ex. client-id",
+        "That field is already listed.": "Aquest camp ja és a la llista.",
+        "That is a built-in field — tick it in the list above instead.": "Aquest és un camp integrat: marqueu-lo a la llista de dalt.",
+        "URL (stored unencrypted)": "URL (emmagatzemat sense xifrar)"
     },
     "plurals": null
 }

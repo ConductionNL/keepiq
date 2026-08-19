@@ -378,7 +378,13 @@
         "Attachment key": "Vedhæftningsnøgle",
         "Record": "Post",
         "Showing {shown} of {total}.": "Viser {shown} af {total}.",
-        "Version history entry": "Versionshistorikpost"
+        "Version history entry": "Versionshistorikpost",
+        "Add": "Tilføj",
+        "Also ask for another field": "Bed også om et andet felt",
+        "e.g. client-id": "f.eks. client-id",
+        "That field is already listed.": "Det felt er allerede på listen.",
+        "That is a built-in field — tick it in the list above instead.": "Det er et indbygget felt — marker det i listen ovenfor i stedet.",
+        "URL (stored unencrypted)": "URL (gemt ukrypteret)"
     },
     "plurals": null
 }

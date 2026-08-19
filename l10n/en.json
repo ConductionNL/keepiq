@@ -950,7 +950,13 @@
         "Attachment key": "Attachment key",
         "Record": "Record",
         "Showing {shown} of {total}.": "Showing {shown} of {total}.",
-        "Version history entry": "Version history entry"
+        "Version history entry": "Version history entry",
+        "Add": "Add",
+        "Also ask for another field": "Also ask for another field",
+        "e.g. client-id": "e.g. client-id",
+        "That field is already listed.": "That field is already listed.",
+        "That is a built-in field — tick it in the list above instead.": "That is a built-in field — tick it in the list above instead.",
+        "URL (stored unencrypted)": "URL (stored unencrypted)"
     },
     "plurals": ""
 }
