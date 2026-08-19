@@ -401,7 +401,8 @@
         "Copy fill link": "Kopier utfyllingslenke",
         "Link copied": "Lenke kopiert",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Denne siden krever en sikker (https://) tilkobling, fordi verdien din krypteres i nettleseren før den sendes.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Åpne den samme lenken med https:// først. Hvis det fortsatt ikke virker, spør personen som sendte den."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Åpne den samme lenken med https:// først. Hvis det fortsatt ikke virker, spør personen som sendte den.",
+        "This request could not be found.": "Denne forespørselen ble ikke funnet."
     },
     "plurals": null
 }

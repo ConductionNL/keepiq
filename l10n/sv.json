@@ -401,7 +401,8 @@
         "Copy fill link": "Kopiera ifyllnadslänk",
         "Link copied": "Länk kopierad",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Den här sidan kräver en säker (https://) anslutning, eftersom ditt värde krypteras i webbläsaren innan det skickas.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Öppna samma länk med https:// i början. Fungerar det ändå inte, fråga personen som skickade den."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Öppna samma länk med https:// i början. Fungerar det ändå inte, fråga personen som skickade den.",
+        "This request could not be found.": "Den här förfrågan kunde inte hittas."
     },
     "plurals": null
 }

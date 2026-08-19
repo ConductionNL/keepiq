@@ -147,11 +147,21 @@ class SecretRequestPolicyTest extends TestCase {
 	 * "Request is in an unknown state" — a server error for a request that simply
 	 * ran out, shown to an external recipient.
 	 *
+	 * This fixture leaves `expires_at` null, which is the ONLY way to reach that
+	 * arm: every request the sweeper produces carries a past timestamp, so the
+	 * expiry check above the switch catches it first. Verified against the live
+	 * database — all expired rows had a past `expires_at`, none null. So this test
+	 * pins a FALLBACK, and the code it asserts is 408 for the same reason the
+	 * timestamp path answers 408: one condition, one code. It used to assert 410,
+	 * which described a response no recipient could ever receive.
+	 *
+	 * The reachable path is pinned separately, below.
+	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
-	public function testExpiredStatusReportsExpiryRatherThanAServerError(): void {
+	public function testExpiredStatusWithoutATimestampStillReportsExpiry(): void {
 		$this->mapper->method('findByToken')->willReturn($this->make(SecretRequest::STATUS_EXPIRED));
 
 		try {
@@ -159,10 +169,120 @@ class SecretRequestPolicyTest extends TestCase {
 			$this->fail('an expired request must be refused');
 		} catch (InvalidArgumentException $e) {
 			$this->assertNotSame(500, $e->getCode(), 'must not be reported as an unknown state');
-			$this->assertSame(410, $e->getCode());
+			$this->assertSame(408, $e->getCode());
 			$this->assertStringContainsString('expired', strtolower($e->getMessage()));
 		}
-	}//end testExpiredStatusReportsExpiryRatherThanAServerError()
+	}//end testExpiredStatusWithoutATimestampStillReportsExpiry()
+
+	/**
+	 * A swept request — the shape production actually holds — reports expiry.
+	 *
+	 * `expired` status AND a past `expires_at`, which is what the sweeper leaves
+	 * behind and therefore what every real recipient hits. Nothing tested this
+	 * combination; the browser check on 2026-08-19 was what revealed that the only
+	 * covered path was the unreachable one.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testASweptRequestReportsExpiryWith408(): void {
+		$this->mapper->method('findByToken')->willReturn(
+			$this->make(SecretRequest::STATUS_EXPIRED, new DateTime('-2 days'))
+		);
+
+		try {
+			$this->policy->requireOpenByToken(token: 'tok-1');
+			$this->fail('a swept request must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(408, $e->getCode(), 'the code a real expired link answers with');
+			$this->assertStringContainsString('expired', strtolower($e->getMessage()));
+		}
+	}//end testASweptRequestReportsExpiryWith408()
+
+	/**
+	 * The refusal reason matches what the refusal itself decided.
+	 *
+	 * The point of `refusalReason()` is that the recipient can be told, in their
+	 * own language, which of these happened. If it could disagree with the status
+	 * the request actually refuses on, the page would confidently show the wrong
+	 * explanation — so both go through one classifier, and this asserts they agree
+	 * across every refusable state.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testTheRefusalReasonAgreesWithTheRefusal(): void {
+		$cases = [
+			[SecretRequest::STATUS_EXPIRED, new DateTime('-1 day'), SecretRequestPolicy::REASON_EXPIRED, 408],
+			[SecretRequest::STATUS_PENDING, new DateTime('-1 day'), SecretRequestPolicy::REASON_EXPIRED, 408],
+			[SecretRequest::STATUS_FULFILLED, null, SecretRequestPolicy::REASON_FULFILLED, 410],
+			[SecretRequest::STATUS_DECLINED, null, SecretRequestPolicy::REASON_DECLINED, 410],
+			[SecretRequest::STATUS_LOCKED, null, SecretRequestPolicy::REASON_LOCKED, 423],
+		];
+
+		foreach ($cases as [$status, $expiresAt, $expectedReason, $expectedCode]) {
+			$mapper = $this->createMock(SecretRequestMapper::class);
+			$mapper->method('findByToken')->willReturn($this->make($status, $expiresAt));
+			$policy = new SecretRequestPolicy(mapper: $mapper);
+
+			$this->assertSame(
+				$expectedReason,
+				$policy->refusalReason(token: 'tok-1'),
+				"reason for status $status"
+			);
+
+			try {
+				$policy->requireOpenByToken(token: 'tok-1');
+				$this->fail("status $status must be refused");
+			} catch (InvalidArgumentException $e) {
+				$this->assertSame($expectedCode, $e->getCode(), "code for status $status");
+			}
+		}
+	}//end testTheRefusalReasonAgreesWithTheRefusal()
+
+	/**
+	 * An unknown token reports not-found rather than leaking a guess.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testAnUnknownTokenReportsNotFound(): void {
+		$this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('gone'));
+
+		$this->assertSame(
+			SecretRequestPolicy::REASON_NOT_FOUND,
+			$this->policy->refusalReason(token: 'nope')
+		);
+		$this->assertSame(
+			SecretRequestPolicy::REASON_NOT_FOUND,
+			$this->policy->refusalReason(token: ''),
+			'an empty token must not be treated as a lookup'
+		);
+	}//end testAnUnknownTokenReportsNotFound()
+
+	/**
+	 * An OPEN request yields no reason, so this cannot become a status oracle.
+	 *
+	 * A live fill token is a bearer credential. Someone holding one can already
+	 * open the page; what they must not get is an endpoint that confirms "this
+	 * token is valid and fillable" as a distinct, cheap answer.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testAnOpenRequestReportsNoSpecificReason(): void {
+		$this->mapper->method('findByToken')->willReturn($this->make(SecretRequest::STATUS_PENDING));
+
+		$this->assertSame(
+			SecretRequestPolicy::REASON_UNKNOWN,
+			$this->policy->refusalReason(token: 'tok-1'),
+			'an open request must not be reported as open'
+		);
+	}//end testAnOpenRequestReportsNoSpecificReason()
 
 	/**
 	 * A lapsed request reports EXPIRY even when another status would also refuse.

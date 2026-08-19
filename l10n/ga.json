@@ -401,7 +401,8 @@
         "Copy fill link": "Cóipeáil an nasc líonta",
         "Link copied": "Nasc cóipeáilte",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Teastaíonn ceangal slán (https://) ón leathanach seo, mar déantar do luach a chriptiú sa bhrabhsálaí sula seoltar é.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Oscail an nasc céanna ag tosú le https://. Mura n-oibríonn sé fós, fiafraigh den duine a sheol é."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Oscail an nasc céanna ag tosú le https://. Mura n-oibríonn sé fós, fiafraigh den duine a sheol é.",
+        "This request could not be found.": "Níorbh fhéidir an iarraidh seo a aimsiú."
     },
     "plurals": null
 }

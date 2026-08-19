@@ -111,6 +111,23 @@ class SecretRequestService {
 	}//end getByToken()
 
 	/**
+	 * Why a token cannot be filled, as a machine-readable reason.
+	 *
+	 * Pass-through to the policy, which classifies refusals, so the public fill
+	 * page can render the refusal in the recipient's language instead of the
+	 * English message this server composes. See SecretRequestPolicy::REASONS.
+	 *
+	 * @param string $token The access token
+	 *
+	 * @return string One of SecretRequestPolicy::REASONS
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function refusalReason(string $token): string {
+		return $this->policy->refusalReason(token: $token);
+	}//end refusalReason()
+
+	/**
 	 * Mark a pending request as fulfilled from the public fill endpoint.
 	 *
 	 * Validates the lifecycle / expiry / requested-fields invariants, atomically

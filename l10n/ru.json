@@ -401,7 +401,8 @@
         "Copy fill link": "Копировать ссылку для заполнения",
         "Link copied": "Ссылка скопирована",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Эта страница требует защищённого (https://) соединения, потому что ваше значение шифруется в браузере перед отправкой.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Откройте ту же ссылку, начинающуюся с https://. Если всё равно не работает, спросите отправителя."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Откройте ту же ссылку, начинающуюся с https://. Если всё равно не работает, спросите отправителя.",
+        "This request could not be found.": "Этот запрос не найден."
     },
     "plurals": null
 }

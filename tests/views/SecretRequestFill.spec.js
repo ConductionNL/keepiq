@@ -8,10 +8,10 @@
  * @spec openspec/changes/implement-secret-requests/tasks.md#13.2
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import axios from '@nextcloud/axios'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../src/crypto/index.js', () => ({
 	importPublicKey: vi.fn(async () => 'PUBKEY_HANDLE'),
@@ -111,6 +111,38 @@ describe('SecretRequestFill', () => {
 			'not found',
 		)
 	})
+	it('shows the translatable message for the reason, not the server English', async () => {
+		// Measured in a browser on 2026-08-19: a real expired link rendered
+		// "Request has expired" — the PHP exception string. The translated
+		// "This request has expired." existed in this component and was
+		// unreachable, because the client had only prose to switch on. The
+		// server now sends a `reason`, and this asserts the recipient reads
+		// the translated sentence rather than the server's.
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Request has expired', reason: 'expired' } },
+		})
+		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
+		await flush()
+
+		const text = wrapper.find('[data-testid="fill-load-error"]').text()
+		expect(text).toContain('This request has expired.')
+		expect(text).not.toContain('Request has expired"')
+	})
+
+	it('falls back to the server message when the reason is unknown', async () => {
+		// An older server, or a failure the server could not classify. An
+		// untranslated sentence beats a blank page, so the fallback must survive.
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Something specific went wrong', reason: 'unknown' } },
+		})
+		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
+		await flush()
+
+		expect(wrapper.find('[data-testid="fill-load-error"]').text()).toContain(
+			'Something specific went wrong',
+		)
+	})
+
 	it('refuses to run outside a secure context, with a reason a stranger can act on', async () => {
 		// Reproduces what Robert hit: crypto.subtle is undefined on plain http, so
 		// the page used to die on importKey with "Cannot read properties of

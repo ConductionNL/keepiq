@@ -61,7 +61,7 @@
 			v-else-if="loadError"
 			class="doriath-secret-request-fill__error"
 			data-testid="fill-load-error">
-			<p>{{ loadError }}</p>
+			<p>{{ loadMessage }}</p>
 		</div>
 
 		<div
@@ -136,6 +136,7 @@ export default {
 			submitted: false,
 			submitError: null,
 			loadError: null,
+			loadReason: null,
 			store: useSecretRequestStore(),
 		}
 	},
@@ -167,9 +168,80 @@ export default {
 			)
 		},
 
+		/**
+		 * What a recipient reads when the link cannot be filled.
+		 *
+		 * Prefers the server's machine-readable `reason` over its `message`, and
+		 * that ordering is the whole point. The endpoint REFUSES a non-pending
+		 * request, so the store rejects and `publicRequest` stays null — meaning
+		 * `unavailableMessage` below never fires, and this branch is what the
+		 * recipient actually sees. Measured on a real expired request before this
+		 * existed: the page rendered "Request has expired", the PHP exception
+		 * string, in English, to a recipient whose locale is one of 36.
+		 *
+		 * Falls back to the server message when the reason is `unknown` or absent
+		 * (an older server, or a failure with no response at all) — an untranslated
+		 * sentence beats a blank page.
+		 *
+		 * @return {string|null} The message to render, or null while none applies.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+		 */
+		loadMessage() {
+			return this.messageForReason(this.loadReason) || this.loadError
+		},
+
+		/**
+		 * The message for a request the server returned WITHOUT refusing.
+		 *
+		 * Retained for the case where a non-pending request is served with 200 —
+		 * which the current endpoint never does. Kept rather than deleted because
+		 * it costs one computed and it is the branch that would carry a status the
+		 * server decides to describe instead of refuse.
+		 *
+		 * @return {string|null} The message to render, or null when none applies.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+		 */
 		unavailableMessage() {
-			const status = this.store.publicRequest?.status
-			switch (status) {
+			return this.messageForReason(this.store.publicRequest?.status)
+		},
+	},
+
+	async mounted() {
+		this.loadError = null
+		this.loadReason = null
+		try {
+			await this.store.fetchPublicRequest(this.token)
+		} catch (e) {
+			this.loadReason = e?.response?.data?.reason || null
+			this.loadError =
+				e?.response?.data?.message
+				|| e?.message
+				|| t('doriath', 'Request not found')
+		}
+	},
+
+	methods: {
+		/**
+		 * Translate a refusal reason into a sentence for the recipient.
+		 *
+		 * The reason slugs come from SecretRequestPolicy::REASONS. They are matched
+		 * here rather than in two places so the refused case and the described case
+		 * can never word the same condition differently.
+		 *
+		 * `unknown` deliberately returns null: the server could not explain the
+		 * refusal, so inventing a confident sentence would be worse than showing
+		 * whatever it did say.
+		 *
+		 * @param {string|null|undefined} reason The server's reason slug.
+		 *
+		 * @return {string|null} The translated sentence, or null when there is none.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+		 */
+		messageForReason(reason) {
+			switch (reason) {
 				case 'fulfilled':
 					return t('doriath', 'This request has already been fulfilled.')
 				case 'declined':
@@ -181,25 +253,13 @@ export default {
 					)
 				case 'expired':
 					return t('doriath', 'This request has expired.')
+				case 'not-found':
+					return t('doriath', 'This request could not be found.')
 				default:
 					return null
 			}
 		},
-	},
 
-	async mounted() {
-		this.loadError = null
-		try {
-			await this.store.fetchPublicRequest(this.token)
-		} catch (e) {
-			this.loadError =
-				e?.response?.data?.message
-				|| e?.message
-				|| t('doriath', 'Request not found')
-		}
-	},
-
-	methods: {
 		inputType(field) {
 			const name = String(field || '').toLowerCase()
 			if (

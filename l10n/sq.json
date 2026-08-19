@@ -401,7 +401,8 @@
         "Copy fill link": "Kopjo lidhjen e plotësimit",
         "Link copied": "Lidhja u kopjua",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Kjo faqe kërkon një lidhje të sigurt (https://), sepse vlera juaj kriptohet në shfletues përpara se të dërgohet.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Hapni të njëjtën lidhje duke filluar me https://. Nëse ende nuk funksionon, pyetni personin që e dërgoi."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Hapni të njëjtën lidhje duke filluar me https://. Nëse ende nuk funksionon, pyetni personin që e dërgoi.",
+        "This request could not be found.": "Kjo kërkesë nuk u gjet."
     },
     "plurals": null
 }

@@ -401,7 +401,8 @@
         "Copy fill link": "Kopiraj vezu za ispunjavanje",
         "Link copied": "Veza kopirana",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ova stranica zahtijeva sigurnu (https://) vezu jer se vaša vrijednost šifrira u pregledniku prije slanja.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otvorite istu vezu koja počinje s https://. Ako još ne radi, pitajte osobu koja ju je poslala."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otvorite istu vezu koja počinje s https://. Ako još ne radi, pitajte osobu koja ju je poslala.",
+        "This request could not be found.": "Ovaj zahtjev nije pronađen."
     },
     "plurals": null
 }

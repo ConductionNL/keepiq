@@ -401,7 +401,8 @@
         "Copy fill link": "Копіювати посилання для заповнення",
         "Link copied": "Посилання скопійовано",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ця сторінка потребує захищеного (https://) з’єднання, бо ваше значення шифрується у браузері перед надсиланням.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Відкрийте те саме посилання, що починається з https://. Якщо все одно не працює, запитайте того, хто його надіслав."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Відкрийте те саме посилання, що починається з https://. Якщо все одно не працює, запитайте того, хто його надіслав.",
+        "This request could not be found.": "Цей запит не знайдено."
     },
     "plurals": null
 }

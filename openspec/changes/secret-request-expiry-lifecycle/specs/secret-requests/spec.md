@@ -28,7 +28,7 @@ The gate MUST also handle the terminal `expired` status explicitly. Falling thro
 - THEN the system MUST refuse the submission on the strength of `expires_at` alone
 
 #### Scenario: An expired request reports itself as expired, not as an error
-@e2e exclude Driven by SecretRequestPolicyTest::testExpiredStatusReportsExpiryRatherThanAServerError, which asserts 410 and explicitly NOT 500 — without its own switch arm the new status falls through to the unknown-state error. The message the recipient reads is already covered by SecretRequestFill.vue's existing `expired` case.
+@e2e exclude Driven by SecretRequestPolicyTest::testASweptRequestReportsExpiryWith408 (the shape production holds: expired status AND a past timestamp) and ::testExpiredStatusWithoutATimestampStillReportsExpiry (the fallback arm, which is the only way to reach the switch). Both assert expiry and explicitly NOT the 500 unknown-state error. Corrected after measuring the page in a browser on 2026-08-19: this exclude previously claimed 410 and claimed the recipient's message was covered by SecretRequestFill.vue's `expired` case. Both were wrong — the reachable code is 408, and that case was unreachable, so the recipient read this server's English "Request has expired" rather than the translated string. The message is now driven by the response's `reason` field, covered by SecretRequestFillControllerTest::testShowIncludesAMachineReadableReasonOnRefusal and the view spec "shows the translatable message for the reason, not the server English".
 - GIVEN a SecretRequest already transitioned to `expired`
 - WHEN the fill-in link is opened
 - THEN the recipient MUST be told the request has expired

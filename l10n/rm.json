@@ -401,7 +401,8 @@
         "Copy fill link": "Copiar il link d'emplenida",
         "Link copied": "Link copià",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Questa pagina dovra ina colliaziun segira (https://), perquai che tes valur vegn criptà en il navigatur avant ch'el vegn tramess.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Avra il medem link cun https:// al cumenzament. Sch'i na funcziunescha anc adina betg, dumonda la persuna che ha tramess el."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Avra il medem link cun https:// al cumenzament. Sch'i na funcziunescha anc adina betg, dumonda la persuna che ha tramess el.",
+        "This request could not be found.": "Questa dumonda n'è betg vegnida chattada."
     },
     "plurals": null
 }

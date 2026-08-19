@@ -401,7 +401,8 @@
         "Copy fill link": "Kopeeri täitmislink",
         "Link copied": "Link kopeeritud",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "See leht vajab turvalist (https://) ühendust, sest sinu väärtus krüptitakse brauseris enne saatmist.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Ava sama link, mis algab https://. Kui see ikka ei tööta, küsi saatjalt."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Ava sama link, mis algab https://. Kui see ikka ei tööta, küsi saatjalt.",
+        "This request could not be found.": "Seda päringut ei leitud."
     },
     "plurals": null
 }

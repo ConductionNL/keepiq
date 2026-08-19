@@ -92,8 +92,17 @@ class SecretRequestFillController extends OCSController {
 				$status = Http::STATUS_NOT_FOUND;
 			}
 
+			// `reason` is the only part of this the recipient can be shown in their
+			// own language. `message` is composed server-side in English, and a
+			// browser check on 2026-08-19 confirmed it is what the page rendered —
+			// the translated string the fill view already carried was unreachable,
+			// because the client had nothing but prose to switch on. The message
+			// stays for API callers and logs; the page uses the reason.
 			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
+				data: [
+					'message' => $e->getMessage(),
+					'reason' => $this->secretRequestService->refusalReason(token: $token),
+				],
 				statusCode: $status
 			);
 		} catch (Throwable) {

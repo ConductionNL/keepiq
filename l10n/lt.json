@@ -401,7 +401,8 @@
         "Copy fill link": "Kopijuoti užpildymo nuorodą",
         "Link copied": "Nuoroda nukopijuota",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Šiam puslapiui reikia saugaus (https://) ryšio, nes jūsų reikšmė šifruojama naršyklėje prieš išsiuntimą.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Atidarykite tą pačią nuorodą, kuri pradedama https://. Jei vis tiek neveikia, paklauskite to, kas ją atsiuntė."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Atidarykite tą pačią nuorodą, kuri pradedama https://. Jei vis tiek neveikia, paklauskite to, kas ją atsiuntė.",
+        "This request could not be found.": "Ši užklausa nerasta."
     },
     "plurals": null
 }
