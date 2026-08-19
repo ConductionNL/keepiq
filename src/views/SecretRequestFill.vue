@@ -21,8 +21,38 @@
 			<h1>{{ t('doriath', 'Fill in secret') }}</h1>
 		</header>
 
+		<!--
+		  Checked before anything else, because every path below encrypts in the
+		  browser. Without WebCrypto the page previously died on
+		  `crypto.subtle.importKey` with "Cannot read properties of undefined",
+		  which tells an external recipient nothing and gives them no reason to
+		  suspect the URL's scheme. They cannot fix the instance, but they CAN open
+		  the https:// form of the same link — so say that.
+		-->
+		<div
+			v-if="cryptoUnavailable"
+			class="doriath-secret-request-fill__error"
+			data-testid="fill-insecure-context">
+			<p>
+				{{
+					t(
+						'doriath',
+						'This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.',
+					)
+				}}
+			</p>
+			<p>
+				{{
+					t(
+						'doriath',
+						'Open the same link with https:// at the start. If it still does not work, ask the person who sent it.',
+					)
+				}}
+			</p>
+		</div>
+
 		<p
-			v-if="store.loading && !store.publicRequest"
+			v-else-if="store.loading && !store.publicRequest"
 			class="doriath-secret-request-fill__loading">
 			{{ t('doriath', 'Loading…') }}
 		</p>
@@ -111,6 +141,32 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the browser can encrypt at all.
+		 *
+		 * `crypto.subtle` exists only in a secure context, so plain http on any
+		 * host other than localhost leaves it undefined. Measured: on
+		 * http://nextcloud.local `isSecureContext` is false and `crypto.subtle` is
+		 * undefined; over https both are fine.
+		 *
+		 * Both are checked rather than just one — a browser could in principle
+		 * report a secure context without exposing SubtleCrypto, and the failure
+		 * this prevents is a raw TypeError shown to a stranger.
+		 *
+		 * @return {boolean} True when the fill flow cannot possibly succeed.
+		 *
+		 * @spec exclude Environment precondition, not a spec'd requirement: the
+		 *   specs describe what the fill flow does, and this is the case where the
+		 *   browser cannot run it at all. Pinned by the view's own spec instead.
+		 */
+		cryptoUnavailable() {
+			return (
+				typeof window === 'undefined'
+				|| window.isSecureContext === false
+				|| typeof window.crypto?.subtle === 'undefined'
+			)
+		},
+
 		unavailableMessage() {
 			const status = this.store.publicRequest?.status
 			switch (status) {

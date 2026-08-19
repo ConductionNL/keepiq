@@ -57,7 +57,9 @@ describe('SecretRequestCreateDialog', () => {
 		})
 
 		const fields = wrapper.vm.availableFields.map((f) => f.key)
-		expect(fields).toEqual(['key', 'login', 'totp', 'pin'])
+		// 'url' is part of the baseline set now — the backend has always
+		// stored it, the dialog simply never offered it.
+		expect(fields).toEqual(['key', 'login', 'url', 'totp', 'pin'])
 	})
 
 	it('submit(): delegates to createRequest with selected fields + ISO expiry', async () => {
@@ -82,16 +84,26 @@ describe('SecretRequestCreateDialog', () => {
 
 		expect(store.createRequest).toHaveBeenCalledTimes(1)
 		const payload = store.createRequest.mock.calls[0][0]
+		// camelCase, matching what the store forwards and what the Nextcloud
+		// router binds. This assertion used to demand snake_case, which the store
+		// read as `undefined` — so the test passed against a mocked store while
+		// the real POST went out empty and the endpoint answered 400.
 		expect(payload).toMatchObject({
-			secret_id: 'secret-1',
-			requested_fields: ['key', 'login'],
-			is_re_request: false,
+			secretId: 'secret-1',
+			requestedFields: ['key', 'login'],
+			isReRequest: false,
 		})
-		expect(typeof payload.expires_at).toBe('string')
-		expect(payload.expires_at.endsWith('Z')).toBe(true)
+		expect(payload).not.toHaveProperty('secret_id')
+		expect(typeof payload.expiresAt).toBe('string')
+		expect(payload.expiresAt.endsWith('Z')).toBe(true)
 
 		// fillUrl is populated from the response token.
-		expect(wrapper.vm.fillUrl).toContain('/apps/doriath/share/request/tok-abc')
+		// The anonymous shell, NOT /apps/doriath/share/request/<token>: the
+		// recipient has no account, and that form answers 401 for them.
+		expect(wrapper.vm.fillUrl).toContain(
+			'/apps/doriath/public#/share/request/tok-abc',
+		)
+		expect(wrapper.vm.fillUrl).not.toContain('/apps/doriath/share/request/')
 
 		// `created` event is emitted with the store response.
 		const events = wrapper.emitted('created')
@@ -133,7 +145,7 @@ describe('SecretRequestCreateDialog', () => {
 			null, // no expiry → null (not empty string)
 		)
 		expect(wrapper.vm.fillUrl).toContain(
-			'/apps/doriath/share/request/tok-rerequest',
+			'/apps/doriath/public#/share/request/tok-rerequest',
 		)
 	})
 
@@ -146,11 +158,12 @@ describe('SecretRequestCreateDialog', () => {
 			global: { stubs: ncStubs },
 		})
 
-		wrapper.vm.fillUrl = 'http://nc.test/apps/doriath/share/request/tok-1'
+		wrapper.vm.fillUrl =
+			'http://nc.test/apps/doriath/public#/share/request/tok-1'
 		await wrapper.vm.copyUrl()
 
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-			'http://nc.test/apps/doriath/share/request/tok-1',
+			'http://nc.test/apps/doriath/public#/share/request/tok-1',
 		)
 		expect(wrapper.vm.copied).toBe(true)
 	})
@@ -175,5 +188,192 @@ describe('SecretRequestCreateDialog', () => {
 		expect(wrapper.vm.submitting).toBe(false)
 		expect(wrapper.vm.fillUrl).toBe('')
 		expect(wrapper.emitted('created')).toBeFalsy()
+	})
+	it('offers every field a secret supports, including url', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: { id: 'secret-1', additional_fields_keys: ['api-token'] },
+			},
+			global: { stubs: ncStubs },
+		})
+
+		const keys = wrapper.vm.availableFields.map((f) => f.key)
+		// `url` was absent before, so a user could not request it at all even
+		// though the backend stores it.
+		expect(keys).toEqual(['key', 'login', 'url', 'api-token'])
+		// It must be marked plaintext — it is stored searchable, not encrypted.
+		expect(
+			wrapper.vm.availableFields.find((f) => f.key === 'url').plaintext,
+		).toBe(true)
+	})
+
+	it('addCustomField(): names a field the secret does not have yet and ticks it', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 'secret-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.customFieldInput = '  zgw-client-id  '
+		wrapper.vm.addCustomField()
+
+		// Trimmed, listed, ticked, and the input cleared for the next one.
+		expect(wrapper.vm.availableFields.map((f) => f.key)).toContain(
+			'zgw-client-id',
+		)
+		expect(wrapper.vm.requestedFields).toContain('zgw-client-id')
+		expect(wrapper.vm.customFieldInput).toBe('')
+		expect(wrapper.vm.customFieldError).toBe('')
+	})
+
+	it('addCustomField(): refuses built-in names instead of silently misrouting them', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 'secret-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		for (const reserved of ['key', 'login', 'url']) {
+			wrapper.vm.customFieldInput = reserved
+			wrapper.vm.addCustomField()
+
+			expect(wrapper.vm.customFieldError).not.toBe('')
+			expect(wrapper.vm.customFields).not.toContain(reserved)
+		}
+	})
+
+	it('addCustomField(): refuses a duplicate and an empty name', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: { id: 'secret-1', additional_fields_keys: ['api-token'] },
+			},
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.customFieldInput = 'api-token'
+		wrapper.vm.addCustomField()
+		expect(wrapper.vm.customFieldError).not.toBe('')
+		expect(wrapper.vm.customFields).toHaveLength(0)
+
+		wrapper.vm.customFieldInput = '   '
+		wrapper.vm.customFieldError = ''
+		wrapper.vm.addCustomField()
+		// Empty input is a no-op, not an error message.
+		expect(wrapper.vm.customFieldError).toBe('')
+		expect(wrapper.vm.customFields).toHaveLength(0)
+	})
+
+	it('closing resets the custom field state', async () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 'secret-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.customFieldInput = 'extra'
+		wrapper.vm.addCustomField()
+		expect(wrapper.vm.customFields).toHaveLength(1)
+
+		await wrapper.vm.onClose()
+
+		expect(wrapper.vm.customFields).toEqual([])
+		expect(wrapper.vm.customFieldInput).toBe('')
+		expect(wrapper.vm.requestedFields).toEqual(['key'])
+	})
+	it('submits a FRESH request with no secret prop, sending name instead of secretId', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi
+			.fn()
+			.mockResolvedValue({ id: 'req-f', token: 'tok-f' })
+
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.newName = 'Supplier API key'
+		wrapper.vm.requestedFields = ['key', 'url']
+		await wrapper.vm.submit()
+
+		const payload = store.createRequest.mock.calls[0][0]
+		// The server creates the placeholder and derives the suite from it, so the
+		// client sends neither.
+		expect(payload.secretId).toBeUndefined()
+		expect(payload.encryptionSuiteId).toBeUndefined()
+		expect(payload).toMatchObject({
+			name: 'Supplier API key',
+			requestedFields: ['key', 'url'],
+			isReRequest: false,
+		})
+	})
+
+	it('refuses a fresh request with no name instead of creating a nameless placeholder', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn()
+
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.newName = '   '
+		await wrapper.vm.submit()
+
+		expect(store.createRequest).not.toHaveBeenCalled()
+		expect(wrapper.vm.error).not.toBe('')
+	})
+
+	it('does not pre-select a field that already holds a value', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: {
+					id: 's-1',
+					key: 'CIPHER',
+					login: '',
+					additionalFields: {},
+				},
+			},
+			global: { stubs: ncStubs },
+		})
+
+		// `key` is filled, so it must not be ticked: the recipient cannot decline a
+		// requested field, so pre-selecting it would compel an overwrite.
+		expect(wrapper.vm.requestedFields).not.toContain('key')
+		expect(wrapper.vm.availableFields.find((f) => f.key === 'key').filled).toBe(
+			true,
+		)
+	})
+
+	it('detects filled additional-field members from the decrypted blob', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: {
+					id: 's-2',
+					key: '',
+					additionalFields: { 'client-id': 'abc', 'client-secret': '' },
+				},
+			},
+			global: { stubs: ncStubs },
+		})
+
+		const byKey = Object.fromEntries(
+			wrapper.vm.availableFields.map((f) => [f.key, f.filled]),
+		)
+		expect(byKey['client-id']).toBe(true)
+		expect(byKey['client-secret']).toBe(false)
+	})
+
+	it('a re-request still pre-selects the filled key, because replacing is the point', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				isReRequest: true,
+				secret: { id: 's-3', key: 'CIPHER' },
+			},
+			global: { stubs: ncStubs },
+		})
+
+		expect(wrapper.vm.requestedFields).toContain('key')
 	})
 })
