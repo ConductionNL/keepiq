@@ -95,7 +95,7 @@
         "Note": "Bilješka",
         "Login": "Prijava",
         "Copy login": "Kopiraj prijavu",
-        "Additional fields": "Dodatna polja",
+        "Additional fields": "Додатна поља",
         "Back to vault": "Natrag na trezor",
         "Delete secret": "Izbriši tajnu",
         "Cannot open secret": "Nije moguće otvoriti tajnu",
@@ -412,7 +412,15 @@
         "Revoking…": "Повлачење…",
         "Expired {when}": "Истекло {when}",
         "Expires {when}": "Истиче {when}",
-        "No expiry": "Без истека"
+        "No expiry": "Без истека",
+        "No additional fields yet.": "Још нема додатних поља.",
+        "Field name": "Назив поља",
+        "Value": "Вредност",
+        "Add a field": "Додај поље",
+        "Remove": "Уклони",
+        "Remove this field": "Уклони ово поље",
+        "Give the field a name.": "Дајте полју назив.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ је уграђено поље, а не додатно — одаберите други назив."
     },
     "plurals": null
 }

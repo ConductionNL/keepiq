@@ -95,7 +95,7 @@
         "Note": "Athugasemd",
         "Login": "Innskráning",
         "Copy login": "Afrita innskráningu",
-        "Additional fields": "Viðbótarsvæði",
+        "Additional fields": "Viðbótarsvið",
         "Back to vault": "Til baka í hvelfingu",
         "Delete secret": "Eyða leyndarmáli",
         "Cannot open secret": "Get ekki opnað leyndarmál",
@@ -412,7 +412,15 @@
         "Revoking…": "Afturkalla…",
         "Expired {when}": "Útrunnið {when}",
         "Expires {when}": "Rennur út {when}",
-        "No expiry": "Engin lokadagsetning"
+        "No expiry": "Engin lokadagsetning",
+        "No additional fields yet.": "Engin viðbótarsvið enn.",
+        "Field name": "Nafn sviðs",
+        "Value": "Gildi",
+        "Add a field": "Bæta við sviði",
+        "Remove": "Fjarlægja",
+        "Remove this field": "Fjarlægja þetta svið",
+        "Give the field a name.": "Gefðu sviðinu nafn.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ er innbyggt svið, ekki viðbótarsvið — veldu annað nafn."
     },
     "plurals": null
 }

@@ -95,7 +95,7 @@
         "Note": "Заметка",
         "Login": "Логин",
         "Copy login": "Скопировать логин",
-        "Additional fields": "Дополнительные поля",
+        "Additional fields": "Дадатковыя палі",
         "Back to vault": "Вернуться в хранилище",
         "Delete secret": "Удалить секрет",
         "Cannot open secret": "Невозможно открыть секрет",
@@ -412,7 +412,15 @@
         "Revoking…": "Адкліканне…",
         "Expired {when}": "Скончыўся {when}",
         "Expires {when}": "Сканчаецца {when}",
-        "No expiry": "Без тэрміну дзеяння"
+        "No expiry": "Без тэрміну дзеяння",
+        "No additional fields yet.": "Дадатковых палёў пакуль няма.",
+        "Field name": "Назва поля",
+        "Value": "Значэнне",
+        "Add a field": "Дадаць поле",
+        "Remove": "Выдаліць",
+        "Remove this field": "Выдаліць гэта поле",
+        "Give the field a name.": "Дайце полю назву.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» — убудаванае поле, а не дадатковае: выберыце іншую назву."
     },
     "plurals": null
 }

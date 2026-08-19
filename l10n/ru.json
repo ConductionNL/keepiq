@@ -412,7 +412,15 @@
         "Revoking…": "Отзыв…",
         "Expired {when}": "Истёк {when}",
         "Expires {when}": "Истекает {when}",
-        "No expiry": "Без срока действия"
+        "No expiry": "Без срока действия",
+        "No additional fields yet.": "Дополнительных полей пока нет.",
+        "Field name": "Имя поля",
+        "Value": "Значение",
+        "Add a field": "Добавить поле",
+        "Remove": "Удалить",
+        "Remove this field": "Удалить это поле",
+        "Give the field a name.": "Дайте полю имя.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» — встроенное поле, а не дополнительное: выберите другое имя."
     },
     "plurals": null
 }

@@ -379,7 +379,7 @@
         "Record": "Înregistrare",
         "Showing {shown} of {total}.": "Se afișează {shown} din {total}.",
         "Version history entry": "Intrare din istoricul versiunilor",
-        "Add": "Adaugă",
+        "Add": "Adăugați",
         "Also ask for another field": "Solicitați și un alt câmp",
         "e.g. client-id": "de ex. client-id",
         "That field is already listed.": "Acest câmp este deja în listă.",
@@ -412,7 +412,15 @@
         "Revoking…": "Se revocă…",
         "Expired {when}": "Expirat {when}",
         "Expires {when}": "Expiră {when}",
-        "No expiry": "Fără expirare"
+        "No expiry": "Fără expirare",
+        "No additional fields yet.": "Încă nu există câmpuri suplimentare.",
+        "Field name": "Numele câmpului",
+        "Value": "Valoare",
+        "Add a field": "Adăugați un câmp",
+        "Remove": "Eliminați",
+        "Remove this field": "Eliminați acest câmp",
+        "Give the field a name.": "Dați un nume câmpului.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}” este un câmp integrat, nu suplimentar — alegeți alt nume."
     },
     "plurals": null
 }

@@ -412,7 +412,15 @@
         "Revoking…": "Révocation…",
         "Expired {when}": "Expiré {when}",
         "Expires {when}": "Expire {when}",
-        "No expiry": "Pas d’expiration"
+        "No expiry": "Pas d’expiration",
+        "No additional fields yet.": "Aucun champ supplémentaire pour le moment.",
+        "Field name": "Nom du champ",
+        "Value": "Valeur",
+        "Add a field": "Ajouter un champ",
+        "Remove": "Supprimer",
+        "Remove this field": "Supprimer ce champ",
+        "Give the field a name.": "Donnez un nom au champ.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "« {name} » est un champ intégré, pas un champ supplémentaire — choisissez un autre nom."
     },
     "plurals": null
 }

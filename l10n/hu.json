@@ -412,7 +412,15 @@
         "Revoking…": "Visszavonás…",
         "Expired {when}": "Lejárt {when}",
         "Expires {when}": "Lejár {when}",
-        "No expiry": "Nincs lejárat"
+        "No expiry": "Nincs lejárat",
+        "No additional fields yet.": "Még nincsenek további mezők.",
+        "Field name": "Mező neve",
+        "Value": "Érték",
+        "Add a field": "Mező hozzáadása",
+        "Remove": "Eltávolítás",
+        "Remove this field": "Mező eltávolítása",
+        "Give the field a name.": "Adjon nevet a mezőnek.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "A(z) „{name}” beépített mező, nem további — válasszon másik nevet."
     },
     "plurals": null
 }

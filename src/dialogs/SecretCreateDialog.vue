@@ -119,6 +119,11 @@
 
 			<NcTextField v-model="login" :label="t('doriath', 'Login (optional)')" />
 
+			<AdditionalFieldsEditor
+				:members="additionalFields"
+				:disabled="saving"
+				@update:members="additionalFields = $event" />
+
 			<NcSelect
 				v-model="selectedFolderId"
 				:options="folderOptions"
@@ -161,6 +166,7 @@ import {
 } from '@nextcloud/vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_TYPE_NAME,
@@ -174,6 +180,7 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { membersToObject } from '../utils/additionalFields.js'
 
 /**
  * Create a secret. The value (and optional login) are RSA-encrypted by the
@@ -184,6 +191,9 @@ export default {
 	name: 'SecretCreateDialog',
 
 	components: {
+		AdditionalFieldsEditor,
+		Dice5,
+		KeyGeneratorModal,
 		NcButton,
 		NcDialog,
 		NcLoadingIcon,
@@ -192,8 +202,6 @@ export default {
 		NcSelect,
 		NcTextField,
 		Plus,
-		Dice5,
-		KeyGeneratorModal,
 	},
 
 	props: {
@@ -218,6 +226,7 @@ export default {
 			value: '',
 			url: '',
 			login: '',
+			additionalFields: [],
 			selectedFolderId: this.folderId,
 			saving: false,
 			error: '',
@@ -408,6 +417,16 @@ export default {
 					url: this.url || null,
 					login: this.login || '',
 					key: this.effectiveValue,
+					// Only when there ARE members: the store encrypts whatever it is
+					// handed, so passing {} unconditionally would write an empty
+					// ciphertext blob onto every secret ever created here.
+					...(this.additionalFields.length > 0
+						? {
+								additionalFields: membersToObject(
+									this.additionalFields,
+								),
+							}
+						: {}),
 				})
 				this.$emit('saved', created)
 				if (this.onSaved) {

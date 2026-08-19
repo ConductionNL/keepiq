@@ -95,7 +95,7 @@
         "Note": "Notat",
         "Login": "Innlogging",
         "Copy login": "Kopier innlogging",
-        "Additional fields": "Tilleggsfelt",
+        "Additional fields": "Tilleggsfelter",
         "Back to vault": "Tilbake til hvelvingen",
         "Delete secret": "Slett hemmelighet",
         "Cannot open secret": "Kan ikke åpne hemmelighet",
@@ -412,7 +412,15 @@
         "Revoking…": "Trekker tilbake…",
         "Expired {when}": "Utløpt {when}",
         "Expires {when}": "Utløper {when}",
-        "No expiry": "Ingen utløpsdato"
+        "No expiry": "Ingen utløpsdato",
+        "No additional fields yet.": "Ingen tilleggsfelter ennå.",
+        "Field name": "Feltnavn",
+        "Value": "Verdi",
+        "Add a field": "Legg til et felt",
+        "Remove": "Fjern",
+        "Remove this field": "Fjern dette feltet",
+        "Give the field a name.": "Gi feltet et navn.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» er et innebygd felt, ikke et tilleggsfelt — velg et annet navn."
     },
     "plurals": null
 }

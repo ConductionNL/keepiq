@@ -412,7 +412,15 @@
         "Revoking…": "Qed jiġi rrevokat…",
         "Expired {when}": "Skadiet {when}",
         "Expires {when}": "Tiskadi {when}",
-        "No expiry": "Bla skadenza"
+        "No expiry": "Bla skadenza",
+        "No additional fields yet.": "Għad ma hemmx oqsma addizzjonali.",
+        "Field name": "Isem il-qasam",
+        "Value": "Valur",
+        "Add a field": "Żid qasam",
+        "Remove": "Neħħi",
+        "Remove this field": "Neħħi dan il-qasam",
+        "Give the field a name.": "Agħti isem lill-qasam.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” huwa qasam integrat, mhux addizzjonali — agħżel isem oħra."
     },
     "plurals": null
 }

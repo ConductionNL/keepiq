@@ -412,7 +412,15 @@
         "Revoking…": "Atšaukiama…",
         "Expired {when}": "Baigėsi {when}",
         "Expires {when}": "Baigiasi {when}",
-        "No expiry": "Be galiojimo pabaigos"
+        "No expiry": "Be galiojimo pabaigos",
+        "No additional fields yet.": "Papildomų laukų dar nėra.",
+        "Field name": "Lauko pavadinimas",
+        "Value": "Reikšmė",
+        "Add a field": "Pridėti lauką",
+        "Remove": "Pašalinti",
+        "Remove this field": "Pašalinti šį lauką",
+        "Give the field a name.": "Suteikite laukui pavadinimą.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ yra integruotas laukas, o ne papildomas — pasirinkite kitą pavadinimą."
     },
     "plurals": null
 }

@@ -95,7 +95,7 @@
         "Note": "Σημείωση",
         "Login": "Σύνδεση",
         "Copy login": "Αντιγραφή σύνδεσης",
-        "Additional fields": "Επιπλέον πεδία",
+        "Additional fields": "Πρόσθετα πεδία",
         "Back to vault": "Επιστροφή στο θησαυροφυλάκιο",
         "Delete secret": "Διαγραφή μυστικού",
         "Cannot open secret": "Δεν είναι δυνατό το άνοιγμα του μυστικού",
@@ -412,7 +412,15 @@
         "Revoking…": "Ανάκληση…",
         "Expired {when}": "Έληξε {when}",
         "Expires {when}": "Λήγει {when}",
-        "No expiry": "Χωρίς λήξη"
+        "No expiry": "Χωρίς λήξη",
+        "No additional fields yet.": "Δεν υπάρχουν ακόμη πρόσθετα πεδία.",
+        "Field name": "Όνομα πεδίου",
+        "Value": "Τιμή",
+        "Add a field": "Προσθήκη πεδίου",
+        "Remove": "Αφαίρεση",
+        "Remove this field": "Αφαίρεση αυτού του πεδίου",
+        "Give the field a name.": "Δώστε όνομα στο πεδίο.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "Το «{name}» είναι ενσωματωμένο πεδίο, όχι πρόσθετο — επιλέξτε άλλο όνομα."
     },
     "plurals": null
 }

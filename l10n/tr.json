@@ -412,7 +412,15 @@
         "Revoking…": "İptal ediliyor…",
         "Expired {when}": "Süresi doldu {when}",
         "Expires {when}": "Süresi doluyor {when}",
-        "No expiry": "Süre sınırı yok"
+        "No expiry": "Süre sınırı yok",
+        "No additional fields yet.": "Henüz ek alan yok.",
+        "Field name": "Alan adı",
+        "Value": "Değer",
+        "Add a field": "Alan ekle",
+        "Remove": "Kaldır",
+        "Remove this field": "Bu alanı kaldır",
+        "Give the field a name.": "Alana bir ad verin.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” yerleşik bir alandır, ek alan değil — başka bir ad seçin."
     },
     "plurals": null
 }

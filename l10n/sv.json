@@ -95,7 +95,7 @@
         "Note": "Note",
         "Login": "Log ind",
         "Copy login": "Kopiér login",
-        "Additional fields": "Yderligere felter",
+        "Additional fields": "Ytterligare fält",
         "Back to vault": "Tilbage til boksen",
         "Delete secret": "Slet hemmelighed",
         "Cannot open secret": "Kan ikke åbne hemmelighed",
@@ -412,7 +412,15 @@
         "Revoking…": "Återkallar…",
         "Expired {when}": "Utgången {when}",
         "Expires {when}": "Går ut {when}",
-        "No expiry": "Inget slutdatum"
+        "No expiry": "Inget slutdatum",
+        "No additional fields yet.": "Inga ytterligare fält ännu.",
+        "Field name": "Fältnamn",
+        "Value": "Värde",
+        "Add a field": "Lägg till ett fält",
+        "Remove": "Ta bort",
+        "Remove this field": "Ta bort det här fältet",
+        "Give the field a name.": "Ge fältet ett namn.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "”{name}” är ett inbyggt fält, inte ett ytterligare — välj ett annat namn."
     },
     "plurals": null
 }
