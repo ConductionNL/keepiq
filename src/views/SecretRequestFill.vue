@@ -208,6 +208,17 @@ export default {
 		},
 	},
 
+	/**
+	 * Resolve the token, and capture WHY if it cannot be filled.
+	 *
+	 * Both the reason and the message are kept. The reason is what the page can
+	 * translate; the message is the fallback for a server that sent no reason, and
+	 * for anything that failed before a response existed at all.
+	 *
+	 * @return {Promise<void>}
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
 	async mounted() {
 		this.loadError = null
 		this.loadReason = null
