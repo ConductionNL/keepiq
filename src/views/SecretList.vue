@@ -30,6 +30,20 @@
 					</template>
 					{{ t('doriath', 'New folder') }}
 				</NcButton>
+				<!-- Ask someone for a credential (request-first-secret-requests):
+				     reachable with an EMPTY vault, because a requester has nothing
+				     to point at yet. The Secret is created by the request itself, so
+				     this is not "make a secret then request into it". -->
+				<NcButton
+					variant="secondary"
+					:disabled="vaultLocked || offlineReadOnly"
+					data-testid="open-credential-request"
+					@click="credentialRequestOpen = true">
+					<template #icon>
+						<AccountQuestion :size="20" />
+					</template>
+					{{ t('doriath', 'Ask for a credential') }}
+				</NcButton>
 				<NcButton
 					variant="secondary"
 					:disabled="vaultLocked || offlineReadOnly"
@@ -250,6 +264,7 @@
 						<SecretListItem
 							class="secret-list-view__row-item"
 							:secret="object"
+							:requestState="requestStateFor(object)"
 							@open="openSecret"
 							@copied="onCopied" />
 					</div>
@@ -267,6 +282,13 @@
 				</template>
 			</CnIndexPage>
 		</div>
+		<!-- No `:secret` prop: the dialog creates the placeholder itself. -->
+		<SecretRequestCreateDialog
+			v-if="credentialRequestOpen"
+			:open="credentialRequestOpen"
+			data-testid="credential-request-dialog"
+			@update:open="credentialRequestOpen = $event"
+			@created="onCredentialRequested" />
 	</div>
 </template>
 
@@ -274,6 +296,7 @@
 import { CnFolderSidebar, CnIndexPage } from '@conduction/nextcloud-vue'
 import { NcActionButton, NcActions, NcButton, NcSelect } from '@nextcloud/vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
 import SecretListItem from '../components/SecretListItem.vue'
@@ -286,6 +309,7 @@ import CxpTransferDialog from '../dialogs/CxpTransferDialog.vue'
 import ExportDialog from '../dialogs/ExportDialog.vue'
 import GdprExportDialog from '../dialogs/GdprExportDialog.vue'
 import ImportWizardDialog from '../dialogs/ImportWizardDialog.vue'
+import SecretRequestCreateDialog from '../dialogs/SecretRequestCreateDialog.vue'
 import MySendsDialog from '../modals/MySendsDialog.vue'
 import NewSendDialog from '../modals/NewSendDialog.vue'
 import TeamFolderDialog from '../modals/TeamFolderDialog.vue'
@@ -294,6 +318,7 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useHealthStore } from '../store/modules/health.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
+import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
 
@@ -309,6 +334,8 @@ export default {
 	name: 'SecretList',
 
 	components: {
+		SecretRequestCreateDialog,
+		AccountQuestion,
 		CnIndexPage,
 		CnFolderSidebar,
 		NcActionButton,
@@ -343,6 +370,7 @@ export default {
 
 	data() {
 		return {
+			credentialRequestOpen: false,
 			searchTerm: '',
 			sortField: 'name',
 			searchTimer: null,
@@ -362,6 +390,24 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Secret id -> its pending request, for the row indicator.
+		 *
+		 * @return {object} Map of secretId to the pending request.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 */
+		pendingRequestsBySecret() {
+			const map = {}
+			for (const r of useSecretRequestStore().secretRequests || []) {
+				if (r && r.status === 'pending' && r.secretId) {
+					map[r.secretId] = r
+				}
+			}
+
+			return map
+		},
+
 		secretStore() {
 			return useSecretStore()
 		},
@@ -513,6 +559,9 @@ export default {
 		await Promise.allSettled([
 			useSecretTypeStore().fetchTypes(),
 			this.folderStore.fetchFolders(),
+			// Drives the outstanding-request badge. allSettled, so a failure here
+			// costs the badge and never the list itself.
+			useSecretRequestStore().fetchRequests(),
 		])
 		await this.reload()
 		// Lazily run the client-side password-health pass after the first list
@@ -662,6 +711,51 @@ export default {
 		 * @return {void}
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
+		/**
+		 * The outstanding-request state for a row, or null.
+		 *
+		 * Distinguishes a Secret that cannot be used yet from one that works until
+		 * new values arrive — the consequences differ, so one badge for both would
+		 * be worse than none. Returns null once the request is no longer pending,
+		 * which is what clears the badge on fulfilment, revocation or expiry.
+		 *
+		 * @param {object} secret The row's secret.
+		 *
+		 * @return {string|null} 'awaiting-fill', 're-request' or null.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 */
+		requestStateFor(secret) {
+			if (!secret || !this.pendingRequestsBySecret[secret.id]) {
+				return null
+			}
+
+			return String(secret.key || '') === '' ? 'awaiting-fill' : 're-request'
+		},
+
+		/**
+		 * A credential was requested from the vault level.
+		 *
+		 * The request created its own placeholder Secret, so the list must refetch
+		 * to show it — otherwise the row only appears after a manual reload and
+		 * the user cannot see what they just asked for.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 */
+		async onCredentialRequested() {
+			// Deliberately NOT closing: the dialog has just computed the fill link
+			// and is showing it with a Copy button and its own Done action. Closing
+			// here unmounts it one tick later and destroys the only copy of the URL
+			// the requester will ever be offered.
+			// Both: the placeholder Secret is new, and its request drives the badge.
+			await Promise.all([
+				this.reload(),
+				useSecretRequestStore().fetchRequests(),
+			])
+		},
+
 		openImport() {
 			if (this.vaultLocked) {
 				return

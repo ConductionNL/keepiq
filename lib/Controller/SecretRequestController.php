@@ -61,6 +61,16 @@ class SecretRequestController extends OCSController {
 	private const MODE_APPLICATION = 'application';
 
 	/**
+	 * A FRESH request: no Secret named, so the system creates the unfilled
+	 * placeholder itself. This is what a person doing it for the first time
+	 * takes — they have nothing to point at yet, and requiring them to invent a
+	 * key for the credential they are asking for is the defect this closes.
+	 *
+	 * @var string
+	 */
+	private const MODE_FRESH = 'fresh';
+
+	/**
 	 * Constructor for SecretRequestController.
 	 *
 	 * @param IRequest $request The request object
@@ -141,6 +151,8 @@ class SecretRequestController extends OCSController {
 	 * @param bool $isReRequest Whether this is a re-request
 	 * @param string|null $expiresAt Optional ISO-8601 expiry
 	 * @param string|null $applicationId Optional owning application ID
+	 * @param string|null $name Name for the Secret a FRESH request creates
+	 * @param string|null $folderId Optional folder for that created Secret
 	 *
 	 * @NoAdminRequired
 	 *
@@ -156,12 +168,14 @@ class SecretRequestController extends OCSController {
 	 */
 	#[NoAdminRequired]
 	public function create(
-		string $secretId,
+		string $secretId = '',
 		string $encryptionSuiteId = '',
 		array $requestedFields = [],
 		bool $isReRequest = false,
 		?string $expiresAt = null,
 		?string $applicationId = null,
+		?string $name = null,
+		?string $folderId = null,
 	): JSONResponse {
 		$user = $this->session->getUser();
 		if ($user === null) {
@@ -172,9 +186,22 @@ class SecretRequestController extends OCSController {
 		// dispatcher below is a plain lookup rather than a flag-driven branch.
 		// An applicationId wins over the re-request discriminator, matching
 		// the original precedence.
+		// A re-request overwrites values in an existing Secret, so it cannot be
+		// asked for without naming one. Refused explicitly rather than left to
+		// fail deeper with a generic 'secretId is required', because the two
+		// flows differing by required input is what keeps them distinct.
+		if ($isReRequest === true && $secretId === '') {
+			return new JSONResponse(
+				data: ['message' => 'A re-request requires secretId'],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
 		$mode = match (true) {
 			($applicationId !== null && $applicationId !== '') => self::MODE_APPLICATION,
 			($isReRequest === true) => self::MODE_RE_REQUEST,
+			// No Secret named and not a re-request: the system creates one.
+			($secretId === '') => self::MODE_FRESH,
 			default => self::MODE_PLAIN,
 		};
 
@@ -186,7 +213,9 @@ class SecretRequestController extends OCSController {
 				requestedFields: $requestedFields,
 				expiry: $this->parseExpiry(expiresAt: $expiresAt),
 				applicationId: (string)$applicationId,
-				userId: $user->getUID()
+				userId: $user->getUID(),
+				name: $name,
+				folderId: $folderId
 			);
 		} catch (InvalidArgumentException $e) {
 			$code = $e->getCode();
@@ -237,6 +266,8 @@ class SecretRequestController extends OCSController {
 	 * @param string $applicationId Owning application ID ('' unless
 	 *                              $mode is MODE_APPLICATION)
 	 * @param string $userId The requesting user
+	 * @param string|null $name Name for a FRESH request's created Secret
+	 * @param string|null $folderId Folder for that created Secret
 	 *
 	 * @return \OCA\Doriath\Db\SecretRequest
 	 *
@@ -250,6 +281,8 @@ class SecretRequestController extends OCSController {
 		?DateTime $expiry,
 		string $applicationId,
 		string $userId,
+		?string $name = null,
+		?string $folderId = null,
 	): \OCA\Doriath\Db\SecretRequest {
 		if ($mode === self::MODE_APPLICATION) {
 			return $this->service->createForApplication(
@@ -258,6 +291,16 @@ class SecretRequestController extends OCSController {
 				requestedFields: $requestedFields,
 				expiresAt: $expiry,
 				userId: $userId,
+			);
+		}
+
+		if ($mode === self::MODE_FRESH) {
+			return $this->service->createForUserVault(
+				userId: $userId,
+				requestedFields: $requestedFields,
+				name: $name,
+				folderId: $folderId,
+				expiresAt: $expiry,
 			);
 		}
 
