@@ -164,6 +164,19 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string} requestId The request ID.
 		 * @return {Promise<void>}
 		 */
+		/**
+		 * Revoke one of the CURRENT USER's own requests.
+		 *
+		 * Distinct from `revokeApplicationRequest()` below, which is admin-scoped and
+		 * carries the application in the path. Kept separate so the two authorities
+		 * never share a call site.
+		 *
+		 * @param {string} requestId The request to revoke.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-revoke-request
+		 */
 		async revokeRequest(requestId) {
 			this.loading = true
 			this.error = null

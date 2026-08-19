@@ -39,7 +39,12 @@
 				class="doriath-secret-request-list__row"
 				:data-testid="`secret-request-row-${row.status}`">
 				<div class="doriath-secret-request-list__meta">
-					<strong>{{ statusLabel(row.status) }}</strong>
+					<strong>{{ statusLabel(effectiveStatus(row)) }}</strong>
+					<span
+						class="doriath-secret-request-list__expiry"
+						:data-testid="`secret-request-row-expiry-${row.id}`">{{
+							expiryLabel(row)
+						}}</span>
 					<span class="doriath-secret-request-list__token">{{
 						truncateToken(row.token)
 					}}</span>
@@ -150,6 +155,13 @@ export default {
 			return typeof this.applicationId === 'string' && this.applicationId !== ''
 		},
 
+		/**
+		 * The rows to render, from the collection this list's scope owns.
+		 *
+		 * @return {Array<object>} The request rows.
+		 *
+		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
 		rows() {
 			// Two collections, not one filtered array: `secretRequests` means
 			// "requests I created" and `applicationRequests` means "requests this
@@ -170,6 +182,17 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the requests this list is scoped to.
+	 *
+	 * The endpoint is chosen here, and the server enforces the authority behind it:
+	 * the admin-scoped URL refuses a non-administrator, so nothing about who may
+	 * read what is decided in this component.
+	 *
+	 * @return {void}
+	 *
+	 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
 	mounted() {
 		if (this.isApplicationScope) {
 			this.store
@@ -246,6 +269,92 @@ export default {
 			} catch (e) {
 				// eslint-disable-next-line no-console
 				console.warn('Doriath: clipboard write failed', e)
+			}
+		},
+
+		/**
+		 * The status to SHOW, judged on the expiry timestamp.
+		 *
+		 * A request whose expiry has passed is stored as `pending` until the hourly
+		 * sweeper reaches it, but the access gate already refuses it — a recipient
+		 * opening the link is told it expired. Labelling such a row "Pending" would
+		 * therefore show an administrator a state that no longer exists anywhere the
+		 * link is actually used, and leave the missing copy button unexplained.
+		 *
+		 * The row's `data-testid` deliberately keeps the STORED status: that is a
+		 * fact about the database, and tests asserting stored state should not have
+		 * to reason about the clock.
+		 *
+		 * @param {object} row The request row.
+		 *
+		 * @return {string} The status to label the row with.
+		 *
+		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
+		effectiveStatus(row) {
+			if (row?.status !== 'pending') {
+				return row?.status
+			}
+
+			const expiry = row.expiresAt || row.expires_at
+			if (expiry && new Date(expiry).getTime() <= Date.now()) {
+				return 'expired'
+			}
+
+			return 'pending'
+		},
+
+		/**
+		 * The expiry, as a phrase for the row.
+		 *
+		 * The spec requires the expiry to be listed alongside status and requested
+		 * fields, and for an administrator it is the most consequential column: a
+		 * request with NO expiry is a fill link that works forever, which is exactly
+		 * what someone auditing an application wants to notice. So "No expiry" is
+		 * stated rather than left blank.
+		 *
+		 * @param {object} row The request row.
+		 *
+		 * @return {string} A short phrase describing the expiry.
+		 *
+		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
+		expiryLabel(row) {
+			const expiry = row?.expiresAt || row?.expires_at
+			if (!expiry) {
+				return t('doriath', 'No expiry')
+			}
+
+			const when = this.formatDate(expiry)
+			if (new Date(expiry).getTime() <= Date.now()) {
+				return t('doriath', 'Expired {when}', { when })
+			}
+
+			return t('doriath', 'Expires {when}', { when })
+		},
+
+		/**
+		 * Format an ISO timestamp for display.
+		 *
+		 * Matches ApplicationDetail's helper: the browser's locale formatting, and
+		 * the raw value rather than an empty cell if it cannot be parsed — a
+		 * malformed date is information, a blank is not.
+		 *
+		 * @param {string} iso The ISO timestamp.
+		 *
+		 * @return {string} A locale-formatted date, or the input unchanged.
+		 *
+		 * @spec openspec/changes/admin-application-request-visibility/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
+		formatDate(iso) {
+			if (!iso) {
+				return ''
+			}
+
+			try {
+				return new Date(iso).toLocaleString()
+			} catch {
+				return iso
 			}
 		},
 

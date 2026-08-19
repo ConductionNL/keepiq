@@ -409,7 +409,10 @@
         "Revoke the request": "Повуци захтев",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Веза за попуњавање одмах престаје да ради, чак и ако је неко већ има. Ако апликација чека овај акредитив, њена интеграција може престати да ради.",
         "This application asked for: {fields}": "Ова апликација је затражила: {fields}",
-        "Revoking…": "Повлачење…"
+        "Revoking…": "Повлачење…",
+        "Expired {when}": "Истекло {when}",
+        "Expires {when}": "Истиче {when}",
+        "No expiry": "Без истека"
     },
     "plurals": null
 }

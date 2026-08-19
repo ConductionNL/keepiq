@@ -409,7 +409,10 @@
         "Revoke the request": "Revoca la sol·licitud",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "L’enllaç d’emplenament deixa de funcionar immediatament, encara que algú ja el tingui. Si l’aplicació espera aquesta credencial, la seva integració pot deixar de funcionar.",
         "This application asked for: {fields}": "Aquesta aplicació ha demanat: {fields}",
-        "Revoking…": "S’està revocant…"
+        "Revoking…": "S’està revocant…",
+        "Expired {when}": "Caducat {when}",
+        "Expires {when}": "Caduca {when}",
+        "No expiry": "Sense caducitat"
     },
     "plurals": null
 }

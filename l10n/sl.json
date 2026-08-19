@@ -409,7 +409,10 @@
         "Revoke the request": "Prekliči zahtevo",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Povezava za izpolnjevanje takoj preneha delovati, tudi če jo ima kdo že. Če aplikacija čaka na to poverilnico, lahko njena integracija preneha delovati.",
         "This application asked for: {fields}": "Ta aplikacija je zahtevala: {fields}",
-        "Revoking…": "Preklic…"
+        "Revoking…": "Preklic…",
+        "Expired {when}": "Poteklo {when}",
+        "Expires {when}": "Poteče {when}",
+        "No expiry": "Brez poteka"
     },
     "plurals": null
 }

@@ -409,7 +409,10 @@
         "Revoke the request": "Revocați cererea",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Linkul de completare încetează imediat să funcționeze, chiar dacă cineva îl are deja. Dacă aplicația așteaptă această credențială, integrarea ei se poate opri.",
         "This application asked for: {fields}": "Această aplicație a cerut: {fields}",
-        "Revoking…": "Se revocă…"
+        "Revoking…": "Se revocă…",
+        "Expired {when}": "Expirat {when}",
+        "Expires {when}": "Expiră {when}",
+        "No expiry": "Fără expirare"
     },
     "plurals": null
 }

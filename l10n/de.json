@@ -409,7 +409,10 @@
         "Revoke the request": "Anfrage widerrufen",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Der Ausfülllink funktioniert sofort nicht mehr, auch wenn jemand ihn bereits hat. Wartet die Anwendung auf diese Zugangsdaten, kann ihre Integration ausfallen.",
         "This application asked for: {fields}": "Diese Anwendung hat angefragt: {fields}",
-        "Revoking…": "Widerrufen…"
+        "Revoking…": "Widerrufen…",
+        "Expired {when}": "Abgelaufen {when}",
+        "Expires {when}": "Läuft ab {when}",
+        "No expiry": "Kein Ablauf"
     },
     "plurals": null
 }

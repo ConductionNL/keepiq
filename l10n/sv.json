@@ -409,7 +409,10 @@
         "Revoke the request": "Återkalla förfrågan",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Ifyllningslänken slutar fungera omedelbart, även om någon redan har den. Om applikationen väntar på dessa uppgifter kan dess integration sluta fungera.",
         "This application asked for: {fields}": "Den här applikationen bad om: {fields}",
-        "Revoking…": "Återkallar…"
+        "Revoking…": "Återkallar…",
+        "Expired {when}": "Utgången {when}",
+        "Expires {when}": "Går ut {when}",
+        "No expiry": "Inget slutdatum"
     },
     "plurals": null
 }

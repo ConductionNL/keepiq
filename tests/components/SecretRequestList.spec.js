@@ -7,11 +7,10 @@
  * @spec openspec/changes/implement-secret-requests/tasks.md#13.4
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import axios from '@nextcloud/axios'
-
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretRequestList from '../../src/components/secretRequest/SecretRequestList.vue'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -252,6 +251,26 @@ describe('SecretRequestList', () => {
 			expect(wrapper.text()).not.toContain('FULLTOKEN0123456789abcdef')
 			expect(wrapper.text()).not.toContain('LAPSEDTOKEN0123456789abc')
 			expect(wrapper.text()).toContain('FULLTOKE…')
+		})
+
+		it('lists the expiry, and reads a lapsed row as expired', async () => {
+			// The scenario requires status, requested fields AND expiry. The second
+			// row lapsed in 2020 but is still stored as `pending` — nothing sweeps
+			// within the hour — so labelling it "Pending" would show a state the
+			// access gate no longer honours, and leave the absent copy button
+			// unexplained.
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: appRows })
+			const wrapper = mount(SecretRequestList, {
+				propsData: { applicationId: 'app-1' },
+			})
+			await flush()
+
+			const rows = wrapper.findAll('li')
+			expect(rows[1].text()).toContain('Expired')
+			expect(rows[1].text()).not.toContain('Pending')
+			// A request with no expiry is a link that works forever — say so rather
+			// than leaving the cell blank.
+			expect(rows[0].text()).toContain('No expiry')
 		})
 
 		it('offers copy-link only where the link is still usable', async () => {

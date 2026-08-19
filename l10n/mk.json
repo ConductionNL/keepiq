@@ -409,7 +409,10 @@
         "Revoke the request": "Отповикај го барањето",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Врската за пополнување веднаш престанува да работи, дури и ако некој веќе ја има. Ако апликацијата чека на оваа ингеренција, нејзината интеграција може да престане да работи.",
         "This application asked for: {fields}": "Оваа апликација побара: {fields}",
-        "Revoking…": "Отповикување…"
+        "Revoking…": "Отповикување…",
+        "Expired {when}": "Истече {when}",
+        "Expires {when}": "Истекува {when}",
+        "No expiry": "Без истек"
     },
     "plurals": null
 }

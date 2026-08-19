@@ -409,7 +409,10 @@
         "Revoke the request": "Revocar la dumonda",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Il lien da cumplettar chala immediatamain da funcziunar, era sche insatgi l’ha gia. Sche l’applicaziun spetga questas datas d’access, po sia integraziun chalar da funcziunar.",
         "This application asked for: {fields}": "Questa applicaziun ha dumandà: {fields}",
-        "Revoking…": "Vegn revocà…"
+        "Revoking…": "Vegn revocà…",
+        "Expired {when}": "Scadì {when}",
+        "Expires {when}": "Scada {when}",
+        "No expiry": "Nagina scadenza"
     },
     "plurals": null
 }

@@ -409,7 +409,10 @@
         "Revoke the request": "Tilbagekald anmodningen",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Udfyldningslinket holder øjeblikkeligt op med at virke, også hvis nogen allerede har det. Venter applikationen på denne legitimation, kan integrationen holde op med at virke.",
         "This application asked for: {fields}": "Denne applikation bad om: {fields}",
-        "Revoking…": "Tilbagekalder…"
+        "Revoking…": "Tilbagekalder…",
+        "Expired {when}": "Udløbet {when}",
+        "Expires {when}": "Udløber {when}",
+        "No expiry": "Ingen udløbsdato"
     },
     "plurals": null
 }

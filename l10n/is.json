@@ -409,7 +409,10 @@
         "Revoke the request": "Afturkalla beiðnina",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Útfyllingartengillinn hættir að virka samstundis, jafnvel þótt einhver hafi hann þegar. Ef forritið bíður þessara skilríkja getur samþættingin stöðvast.",
         "This application asked for: {fields}": "Þetta forrit bað um: {fields}",
-        "Revoking…": "Afturkalla…"
+        "Revoking…": "Afturkalla…",
+        "Expired {when}": "Útrunnið {when}",
+        "Expires {when}": "Rennur út {when}",
+        "No expiry": "Engin lokadagsetning"
     },
     "plurals": null
 }

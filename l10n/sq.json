@@ -409,7 +409,10 @@
         "Revoke the request": "Revoko kërkesën",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Lidhja e plotësimit ndalon së funksionuari menjëherë, edhe nëse dikush e ka tashmë. Nëse aplikacioni pret këtë kredencial, integrimi i tij mund të ndalojë.",
         "This application asked for: {fields}": "Ky aplikacion kërkoi: {fields}",
-        "Revoking…": "Po revokohet…"
+        "Revoking…": "Po revokohet…",
+        "Expired {when}": "Skaduar {when}",
+        "Expires {when}": "Skadon {when}",
+        "No expiry": "Pa skadencë"
     },
     "plurals": null
 }

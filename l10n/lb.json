@@ -409,7 +409,10 @@
         "Revoke the request": "Ufro zrécksetzen",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "De Ausfëll-Link funktionnéiert direkt net méi, och wann een e schon huet. Wann d’Applikatioun op dës Zougangsdaten waart, kann hir Integratioun ophalen ze funktionnéieren.",
         "This application asked for: {fields}": "Dës Applikatioun huet gefrot: {fields}",
-        "Revoking…": "Gëtt zréckgesat…"
+        "Revoking…": "Gëtt zréckgesat…",
+        "Expired {when}": "Verfall {when}",
+        "Expires {when}": "Verfällt {when}",
+        "No expiry": "Kee Verfall"
     },
     "plurals": null
 }

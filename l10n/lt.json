@@ -409,7 +409,10 @@
         "Revoke the request": "Atšaukti užklausą",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Užpildymo nuoroda nustoja veikti nedelsiant, net jei kas nors ją jau turi. Jei programa laukia šių duomenų, jos integracija gali nustoti veikti.",
         "This application asked for: {fields}": "Ši programa paprašė: {fields}",
-        "Revoking…": "Atšaukiama…"
+        "Revoking…": "Atšaukiama…",
+        "Expired {when}": "Baigėsi {when}",
+        "Expires {when}": "Baigiasi {when}",
+        "No expiry": "Be galiojimo pabaigos"
     },
     "plurals": null
 }

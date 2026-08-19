@@ -981,7 +981,9 @@
         "Revoke this request?": "Revoke this request?",
         "Revoking…": "Revoking…",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.",
-        "This application asked for: {fields}": "This application asked for: {fields}"
+        "This application asked for: {fields}": "This application asked for: {fields}",
+        "Expired {when}": "Expired {when}",
+        "Expires {when}": "Expires {when}"
     },
     "plurals": ""
 }

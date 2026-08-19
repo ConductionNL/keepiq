@@ -409,7 +409,10 @@
         "Revoke the request": "Адклікаць запыт",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Ссылка для запаўнення перастае працаваць адразу, нават калі яна ў кагосьці ўжо ёсць. Калі дадатак чакае гэтыя дадзеныя, яго інтэграцыя можа перастаць працаваць.",
         "This application asked for: {fields}": "Гэты дадатак запытаў: {fields}",
-        "Revoking…": "Адкліканне…"
+        "Revoking…": "Адкліканне…",
+        "Expired {when}": "Скончыўся {when}",
+        "Expires {when}": "Сканчаецца {when}",
+        "No expiry": "Без тэрміну дзеяння"
     },
     "plurals": null
 }

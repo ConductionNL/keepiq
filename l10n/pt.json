@@ -409,7 +409,10 @@
         "Revoke the request": "Revogar o pedido",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "O link de preenchimento deixa de funcionar imediatamente, mesmo que alguém já o tenha. Se a aplicação estiver à espera desta credencial, a integração pode deixar de funcionar.",
         "This application asked for: {fields}": "Esta aplicação pediu: {fields}",
-        "Revoking…": "A revogar…"
+        "Revoking…": "A revogar…",
+        "Expired {when}": "Expirado {when}",
+        "Expires {when}": "Expira {when}",
+        "No expiry": "Sem expiração"
     },
     "plurals": null
 }

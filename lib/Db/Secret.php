@@ -285,7 +285,7 @@ class Secret extends Entity implements JsonSerializable {
 	 *
 	 * @return bool True when every value column is empty
 	 *
-	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function holdsNoValues(): bool {
 		return (string)$this->key === ''

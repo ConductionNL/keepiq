@@ -409,7 +409,10 @@
         "Revoke the request": "Peru pyyntö",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Täyttölinkki lakkaa toimimasta heti, vaikka joku olisi jo saanut sen. Jos sovellus odottaa näitä tunnistetietoja, sen integraatio voi lakata toimimasta.",
         "This application asked for: {fields}": "Tämä sovellus pyysi: {fields}",
-        "Revoking…": "Perutaan…"
+        "Revoking…": "Perutaan…",
+        "Expired {when}": "Vanhentunut {when}",
+        "Expires {when}": "Vanhenee {when}",
+        "No expiry": "Ei vanhenemista"
     },
     "plurals": null
 }

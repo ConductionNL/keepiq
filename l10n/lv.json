@@ -409,7 +409,10 @@
         "Revoke the request": "Atsaukt pieprasījumu",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Aizpildīšanas saite pārstāj darboties nekavējoties, pat ja kādam tā jau ir. Ja lietotne gaida šos akreditācijas datus, tās integrācija var pārstāt darboties.",
         "This application asked for: {fields}": "Šī lietotne lūdza: {fields}",
-        "Revoking…": "Atsauc…"
+        "Revoking…": "Atsauc…",
+        "Expired {when}": "Beidzies {when}",
+        "Expires {when}": "Beidzas {when}",
+        "No expiry": "Bez termiņa"
     },
     "plurals": null
 }

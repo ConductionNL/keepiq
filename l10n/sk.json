@@ -409,7 +409,10 @@
         "Revoke the request": "Zrušiť žiadosť",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Odkaz na vyplnenie okamžite prestane fungovať, aj keď ho už niekto má. Ak aplikácia na tieto údaje čaká, jej integrácia sa môže zastaviť.",
         "This application asked for: {fields}": "Táto aplikácia požiadala o: {fields}",
-        "Revoking…": "Ruší sa…"
+        "Revoking…": "Ruší sa…",
+        "Expired {when}": "Vypršalo {when}",
+        "Expires {when}": "Vyprší {when}",
+        "No expiry": "Bez vypršania"
     },
     "plurals": null
 }

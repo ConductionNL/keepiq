@@ -409,7 +409,10 @@
         "Revoke the request": "Cúlghairm an iarratas",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Stopann an nasc líonta ag obair láithreach, fiú má tá sé ag duine cheana féin. Má tá an feidhmchlár ag fanacht ar an dintiúr seo, féadfaidh a chomhtháthú stopadh.",
         "This application asked for: {fields}": "D’iarr an feidhmchlár seo: {fields}",
-        "Revoking…": "Á chúlghairm…"
+        "Revoking…": "Á chúlghairm…",
+        "Expired {when}": "As feidhm {when}",
+        "Expires {when}": "Téann as feidhm {when}",
+        "No expiry": "Gan dul as feidhm"
     },
     "plurals": null
 }

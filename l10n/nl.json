@@ -568,7 +568,10 @@
         "Revoke the request": "Verzoek intrekken",
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "De invullink werkt onmiddellijk niet meer, ook als iemand hem al heeft. Als de applicatie op dit inloggegeven wacht, kan de koppeling stoppen met werken.",
         "This application asked for: {fields}": "Deze applicatie vroeg om: {fields}",
-        "Revoking…": "Intrekken…"
+        "Revoking…": "Intrekken…",
+        "Expired {when}": "Verlopen {when}",
+        "Expires {when}": "Verloopt {when}",
+        "No expiry": "Geen vervaldatum"
     },
     "plurals": null
 }
