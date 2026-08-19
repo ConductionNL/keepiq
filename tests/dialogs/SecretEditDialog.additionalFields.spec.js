@@ -176,4 +176,24 @@ describe('SecretEditDialog — additional fields', () => {
 		expect(update).toHaveBeenCalledTimes(1)
 		expect('additionalFields' in update.mock.calls[0][1]).toBe(false)
 	})
+
+	it('alters no ciphertext when only the name changes', async () => {
+		// "Edit metadata only" — a scenario in this requirement that nothing covered,
+		// vitest or Playwright. It is not about additional fields as such, but it is
+		// the same diff logic: a metadata-only save must carry NO sensitive field, or
+		// every rename would re-encrypt the value, the login and the whole member
+		// blob for nothing — and rewriting the blob is exactly what loses a
+		// concurrent session's additions.
+		const wrapper = await mountOver({ tenant: 'acme' })
+		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+
+		wrapper.vm.name = 'Renamed'
+		await wrapper.vm.submit()
+
+		const diff = update.mock.calls[0][1]
+		expect(diff.name).toBe('Renamed')
+		expect('key' in diff).toBe(false)
+		expect('login' in diff).toBe(false)
+		expect('additionalFields' in diff).toBe(false)
+	})
 })
