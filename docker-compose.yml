@@ -1,0 +1,84 @@
+# Local development stack for Doriath.
+#
+# Brings up PostgreSQL + Nextcloud 32 on http://localhost:8080 (admin/admin),
+# with this repo bind-mounted as the `doriath` custom app and the sibling
+# `../openregister` checkout mounted alongside it — Doriath builds on
+# OpenRegister's AppHost engine, so both apps must be enabled:
+#
+#   docker compose up -d
+#   docker exec nextcloud php occ app:enable openregister
+#   docker exec nextcloud php occ app:enable doriath
+#
+# Mirrors openregister/docker-compose.yml (same port, same container name for
+# the `docker exec nextcloud php occ ...` habit) — run only ONE of these app
+# stacks at a time; they all claim port 8080 and the `nextcloud` name.
+#
+# SPDX-License-Identifier: EUPL-1.2
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+
+volumes:
+  nextcloud:
+  db:
+
+networks:
+  default:
+    name: doriath-network
+
+services:
+  db:
+    # pgvector image: the mounted OpenRegister backend uses the vector and
+    # pg_trgm extensions (enabled by the init script below).
+    image: pgvector/pgvector:pg16
+    restart: always
+    container_name: doriath-postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./docker/postgres/init-extensions.sql:/docker-entrypoint-initdb.d/01-init-extensions.sql:ro
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=!ChangeMe!
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud -d nextcloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nextcloud:
+    # NC 32 — within Doriath's info.xml min/max-version window (32–34) and
+    # matches the openregister reference stack.
+    image: nextcloud:32
+    user: root
+    container_name: nextcloud
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - nextcloud:/var/www/html:rw
+      # Mount the whole custom_apps dir from the host BEFORE the subdir
+      # mounts. Without it, Docker creates the intermediate custom_apps
+      # directory inside the named volume as root:root, www-data cannot
+      # write into it, and /settings/apps 500s with "Cannot write into
+      # 'apps' directory" (custom_apps is the image's only writable
+      # apps_paths entry). Host mounts are world-writable, so this also
+      # gives App Store installs a place to land.
+      - ./custom_apps:/var/www/html/custom_apps
+      - .:/var/www/html/custom_apps/doriath
+      - ../openregister:/var/www/html/custom_apps/openregister
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=!ChangeMe!
+      - POSTGRES_HOST=db
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=admin
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost nextcloud
+      - TZ=Europe/Amsterdam
+      - PHP_MEMORY_LIMIT=4G
+      - PHP_UPLOAD_LIMIT=2G
+      - PHP_POST_MAX_SIZE=2G

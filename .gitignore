@@ -15,7 +15,9 @@
 /website/node_modules/
 /website/.docusaurus/
 /js/
-/custom_apps/
+# Host-side apps dir bind-mounted by docker-compose.yml; App Store installs
+# land here. Only the placeholder that keeps the directory is tracked.
+/custom_apps
 /config/
 
 /coverage/
