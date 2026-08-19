@@ -32,9 +32,7 @@ Critically, the requester cannot read the submitted values after they have been 
 | `fulfilled_at` | datetime | No | |
 
 The Secret linked to a SecretRequest starts with all sensitive fields empty. When the fill-in link is used, the submitted values are encrypted with the requester's public certificate and stored in the Secret.
-
 ## Requirements
-
 ### Requirement: Create Secret Request
 The system MUST allow an authenticated user or application to create a SecretRequest, subject to the following ownership rules:
 
