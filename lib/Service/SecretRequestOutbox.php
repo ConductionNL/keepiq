@@ -115,6 +115,48 @@ class SecretRequestOutbox {
 	}//end recordCreated()
 
 	/**
+	 * Record an application creating a request in its own vault.
+	 *
+	 * A distinct event type from the user-facing REQUEST_CREATED: `application.*`
+	 * is what an operator filters on to see everything a machine identity did,
+	 * and folding this in would hide it from that view.
+	 *
+	 * The metadata carries the field COUNT, never the field names. Names are not
+	 * values, so the audit spec's forbidden-key list does not catch them — but a
+	 * name like `aws-secret-access-key` still tells a reader what kind of
+	 * credential this is, which is exactly what the audit trail should not
+	 * accumulate.
+	 *
+	 * @param string $applicationId The application that created it
+	 * @param string $requestId The new request ID
+	 * @param string $secretId The shell Secret the request writes to
+	 * @param integer $requestedFieldCount How many fields were asked for
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/application-secret-request-creation/specs/secret-store-api/spec.md#requirement-machine-request-creation-hardening-and-audit
+	 */
+	public function recordCreatedByApplication(
+		string $applicationId,
+		string $requestId,
+		string $secretId,
+		int $requestedFieldCount,
+	): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forApplication(
+				actorId: $applicationId,
+				eventType: AuditEventTypes::APPLICATION_SECRET_REQUEST_CREATED,
+				objectType: self::OBJECT_TYPE,
+				objectId: $requestId,
+				metadata: [
+					'secretId' => $secretId,
+					'requestedFieldCount' => $requestedFieldCount,
+				],
+			)
+		);
+	}//end recordCreatedByApplication()
+
+	/**
 	 * Record the creation of a re-request.
 	 *
 	 * @param string $userId The Nextcloud user who created it

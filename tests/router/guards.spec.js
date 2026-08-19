@@ -19,6 +19,7 @@ import {
 	createVaultGuard,
 	handleLockTransition,
 	isPublicRoute,
+	isPublicSurface,
 } from '../../src/router/guards.js'
 import manifest from '../../src/manifest.json'
 
@@ -356,5 +357,56 @@ describe('handleLockTransition', () => {
 			name: LOCK_ROUTE_NAME,
 			query: { returnUrl: '/secrets' },
 		})
+	})
+})
+
+describe('isPublicSurface', () => {
+	it('treats the anonymous shell as public whatever the hash is', () => {
+		expect(
+			isPublicSurface({
+				pathname: '/index.php/apps/doriath/public',
+				hash: '',
+			}),
+		).toBe(true)
+		expect(
+			isPublicSurface({
+				pathname: '/index.php/apps/doriath/public',
+				hash: '#/share/request/tok',
+			}),
+		).toBe(true)
+	})
+
+	it('recognises the recipient routes on the authenticated shell', () => {
+		for (const hash of [
+			'#/share/request/tok',
+			'#/share/link/tok',
+			'#/send/tok',
+		]) {
+			expect(
+				isPublicSurface({ pathname: '/index.php/apps/doriath/', hash }),
+			).toBe(true)
+		}
+	})
+
+	it('leaves ordinary vault URLs alone', () => {
+		expect(
+			isPublicSurface({
+				pathname: '/index.php/apps/doriath/',
+				hash: '#/secrets',
+			}),
+		).toBe(false)
+		expect(isPublicSurface({})).toBe(false)
+		expect(isPublicSurface()).toBe(false)
+	})
+
+	it('answers without a resolved route, which is the whole point', () => {
+		// CnAppRoot reads `supportDialog` once in setup(), before the router has
+		// resolved a name — so a route-based check is still undefined there.
+		expect(
+			isPublicSurface({
+				pathname: '/index.php/apps/doriath/public',
+				hash: '#/share/request/tok',
+			}),
+		).toBe(true)
 	})
 })
