@@ -215,6 +215,10 @@ class SecretService {
 	 *
 	 * @param array<string,mixed> $data The submitted fields (encrypted blobs + metadata)
 	 * @param string $userId The owning Nextcloud user ID
+	 * @param bool $allowUnfilled Permit an empty `key` because this Secret is the
+	 *                            placeholder a secret request will write into.
+	 *                            Defaults to false, so an ordinary user create
+	 *                            still cannot store a valueless secret.
 	 *
 	 * @return Secret
 	 *
@@ -222,14 +226,27 @@ class SecretService {
 	 * @throws SuiteBlockedException When the user has no active suite
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 *
-	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) - `$allowUnfilled` is an explicit
+	 * opt-in for a single caller (the secret-request placeholder), not a mode
+	 * switch. Same adjudication as `createByApplication()` (#266): splitting it
+	 * into two public methods would duplicate the write-lock, validation, type
+	 * resolution and suite checks below, while relaxing the key requirement for
+	 * every user write would let an ordinary create silently store a valueless
+	 * secret — the failure this flag exists to prevent.
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
-	public function create(array $data, string $userId): Secret {
+	public function create(array $data, string $userId, bool $allowUnfilled = false): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
 		$name = trim((string)($data['name'] ?? ''));
 		$key = (string)($data['key'] ?? '');
-		if ($name === '' || $key === '') {
+
+		// A NAME is required in both modes: a nameless empty Secret cannot be
+		// identified in a vault. The key requirement is what the placeholder
+		// exception relaxes, and only when the caller asks for it — a Secret may
+		// be keyless ONLY while a pending request targets it.
+		if ($name === '' || ($key === '' && $allowUnfilled === false)) {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 
@@ -861,7 +878,7 @@ class SecretService {
 			$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
 		}
 
-		if ($this->versionService !== null && $this->fieldsChanged(before: $preUpdate, after: $secret) === true) {
+		if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
 			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'user', actorId: $userId);
 		}
 
@@ -1367,6 +1384,52 @@ class SecretService {
 
 		return $secret;
 	}//end setExpiry()
+
+	/**
+	 * Whether this update should be recorded in version history.
+	 *
+	 * A placeholder's FIRST fill is not a revision: there is no earlier value to
+	 * return to, so the snapshot would be a version row saying "nothing" in the
+	 * history panel. `fieldsChanged()` is true in that case (empty -> value),
+	 * which is why emptiness has to be asked separately.
+	 *
+	 * @param Secret $before The pre-update row
+	 * @param Secret $after The row about to be written
+	 *
+	 * @return bool True when a version row is warranted.
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	private function shouldSnapshot(Secret $before, Secret $after): bool {
+		if ($this->versionService === null) {
+			return false;
+		}
+
+		if ($this->hadNoValues(secret: $before) === true) {
+			return false;
+		}
+
+		return $this->fieldsChanged(before: $before, after: $after);
+	}//end shouldSnapshot()
+
+	/**
+	 * Whether this row held no values at all — an unfilled request placeholder.
+	 *
+	 * Used to skip the version snapshot on a placeholder's first fill. Checked on
+	 * the value columns only: `name`, `url`, folder and type are metadata the
+	 * requester set when asking, so a placeholder legitimately has them.
+	 *
+	 * @param Secret $secret The pre-update row
+	 *
+	 * @return bool True when the row carried no value.
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	private function hadNoValues(Secret $secret): bool {
+		return (string)$secret->getKey() === ''
+			&& (string)$secret->getLogin() === ''
+			&& (string)$secret->getAdditionalFields() === '';
+	}//end hadNoValues()
 
 	/**
 	 * Whether any versionable field differs between two states of a
