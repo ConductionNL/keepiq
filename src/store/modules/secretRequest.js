@@ -81,6 +81,18 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string|null} [payload.expiresAt] Optional ISO-8601 expiry.
 		 * @return {Promise<object>}
 		 */
+		/**
+		 * Create a secret request.
+		 *
+		 * A FRESH request omits secretId and encryptionSuiteId: the server creates
+		 * the placeholder Secret and derives the suite from it.
+		 *
+		 * @param {object} payload The request fields.
+		 *
+		 * @return {Promise<object>} The created request.
+		 *
+		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+		 */
 		async createRequest(payload) {
 			this.loading = true
 			this.error = null
@@ -88,11 +100,16 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				const response = await axios.post(
 					generateUrl('/apps/doriath/api/v1/secret-requests'),
 					{
-						secretId: payload.secretId,
-						encryptionSuiteId: payload.encryptionSuiteId,
+						// A FRESH request omits secretId and encryptionSuiteId: the
+						// server creates the placeholder Secret and derives the suite
+						// from it, so the client has nothing to point at or look up.
+						secretId: payload.secretId || '',
+						encryptionSuiteId: payload.encryptionSuiteId || '',
 						requestedFields: payload.requestedFields,
 						isReRequest: payload.isReRequest === true,
 						expiresAt: payload.expiresAt || null,
+						name: payload.name || null,
+						folderId: payload.folderId || null,
 					},
 				)
 				this.secretRequests.unshift(response.data)

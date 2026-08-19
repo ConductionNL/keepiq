@@ -179,4 +179,27 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			false,
 		)
 	})
+	it('keeps the request dialog open after creation, so the fill link survives', async () => {
+		// The dialog computes fillUrl in submit() and THEN emits `created`. This
+		// handler used to close the dialog, which unmounts it (v-if) one tick later
+		// and destroys the only copy of the link the requester is ever offered —
+		// the URL the whole feature exists to produce.
+		const wrapper = await mountDetail({
+			secret: {
+				id: 's-1',
+				name: 'GitHub PAT',
+				ownerId: 'alice',
+				key: 'CIPHER',
+			},
+			currentUser: 'alice',
+		})
+
+		wrapper.vm.requestDialogOpen = true
+		await flush()
+
+		wrapper.vm.onRequestCreated()
+		await flush()
+
+		expect(wrapper.vm.requestDialogOpen).toBe(true)
+	})
 })

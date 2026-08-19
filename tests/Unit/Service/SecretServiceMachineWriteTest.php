@@ -133,6 +133,74 @@ class SecretServiceMachineWriteTest extends TestCase {
 	}//end testCreateByApplicationRequiresFields()
 
 	/**
+	 * An ORDINARY write-back still cannot store a valueless secret.
+	 *
+	 * The `allowUnfilled` opt-in exists for request shells only; if it ever
+	 * became the default, a machine write-back that silently lost its
+	 * ciphertext would persist an empty credential instead of failing.
+	 *
+	 * @return void
+	 */
+	public function testCreateByApplicationStillRefusesAnEmptyKeyByDefault(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('A secret requires a name and a key');
+		$this->service->createByApplication(
+			data: ['name' => 'has-a-name', 'key' => ''],
+			applicationId: 'app-1'
+		);
+	}//end testCreateByApplicationStillRefusesAnEmptyKeyByDefault()
+
+	/**
+	 * `allowUnfilled` permits the keyless secret-request shell.
+	 *
+	 * Regression guard for a defect that reached a live instance: the machine
+	 * secret-request route returned 400 "A secret requires a name and a key" on
+	 * every happy-path call, because the shell it must create carries no value
+	 * until a human fills it in. No unit test could see it — the callers all
+	 * mock SecretService — so this asserts the real validation directly.
+	 *
+	 * @return void
+	 */
+	public function testCreateByApplicationAllowsAnUnfilledShell(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
+
+		$captured = null;
+		$this->mapper->expects($this->once())->method('insert')
+			->willReturnCallback(
+				function (Secret $s) use (&$captured) {
+					$captured = $s;
+					return $s;
+				}
+			);
+
+		$secret = $this->service->createByApplication(
+			data: ['name' => 'Unfilled request', 'key' => ''],
+			applicationId: 'app-1',
+			allowUnfilled: true
+		);
+
+		$this->assertSame('application', $secret->getOwnerType());
+		$this->assertSame('app-1', $secret->getOwnerId());
+		$this->assertSame('', $captured->getKey());
+	}//end testCreateByApplicationAllowsAnUnfilledShell()
+
+	/**
+	 * A missing NAME is refused even for an unfilled shell.
+	 *
+	 * @return void
+	 */
+	public function testUnfilledShellStillRequiresAName(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createByApplication(
+			data: ['name' => '', 'key' => ''],
+			applicationId: 'app-1',
+			allowUnfilled: true
+		);
+	}//end testUnfilledShellStillRequiresAName()
+
+	/**
 	 * updateByApplication on a cross-vault secret raises NotFoundException
 	 * (no existence oracle).
 	 *

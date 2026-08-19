@@ -36,6 +36,7 @@ import { generateUrl } from '@nextcloud/router'
 import { createApp, h } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
+import { ensureSkipActionsTarget } from './bootstrap/skip-actions.js'
 import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
@@ -192,4 +193,12 @@ const app = createApp({
 app.mixin({ methods: { t, n } })
 app.use(pinia)
 app.use(router)
+
+// MUST run before mount. NcContent teleports its skip-link into `#skip-actions`,
+// which only Nextcloud's authenticated layout provides; on the anonymous
+// `/public` shell the target is absent and Vue's null-Teleport error aborted
+// CnAppRoot's mount mid-update, leaving every public route on a permanent
+// loading spinner. See src/bootstrap/skip-actions.js for the full trace.
+ensureSkipActionsTarget()
+
 app.mount('#doriath-app')

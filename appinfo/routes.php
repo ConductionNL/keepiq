@@ -263,6 +263,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
 
     // Machine leases (machine-secret-leases §4). Bearer-authenticated
     // application surface; JwtAuthMiddleware runs before each handler.
+    // Machine secret-request creation (application-secret-request-creation
+    // §1.1). Same JWT-Bearer posture as the sibling /api/v1/app/* routes: the
+    // Application principal comes from JwtAuthMiddleware, never from a session.
+    ['name' => 'applicationSecretRequests#index',  'url' => '/api/v1/app/secret-requests', 'verb' => 'GET'],
+    ['name' => 'applicationSecretRequests#create', 'url' => '/api/v1/app/secret-requests', 'verb' => 'POST'],
+
     ['name' => 'machineLease#index',  'url' => '/api/v1/app/leases',              'verb' => 'GET'],
     ['name' => 'machineLease#renew',  'url' => '/api/v1/app/leases/{id}/renew',   'verb' => 'POST'],
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
