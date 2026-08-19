@@ -111,4 +111,29 @@ describe('SecretRequestFill', () => {
 			'not found',
 		)
 	})
+	it('refuses to run outside a secure context, with a reason a stranger can act on', async () => {
+		// Reproduces what Robert hit: crypto.subtle is undefined on plain http, so
+		// the page used to die on importKey with "Cannot read properties of
+		// undefined" — meaningless to an external recipient.
+		const realSecure = window.isSecureContext
+		Object.defineProperty(window, 'isSecureContext', {
+			value: false,
+			configurable: true,
+		})
+
+		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
+		await flush()
+
+		expect(wrapper.find('[data-testid="fill-insecure-context"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.text()).toContain('https://')
+		// And the form must not be offered: submitting it could not work.
+		expect(wrapper.findAll('input:not([type=hidden])').length).toBe(0)
+
+		Object.defineProperty(window, 'isSecureContext', {
+			value: realSecure,
+			configurable: true,
+		})
+	})
 })

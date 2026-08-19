@@ -384,7 +384,24 @@
         "e.g. client-id": "p. ex. client-id",
         "That field is already listed.": "Aquest camp ja és a la llista.",
         "That is a built-in field — tick it in the list above instead.": "Aquest és un camp integrat: marqueu-lo a la llista de dalt.",
-        "URL (stored unencrypted)": "URL (emmagatzemat sense xifrar)"
+        "URL (stored unencrypted)": "URL (emmagatzemat sense xifrar)",
+        "— already has a value": "— ja té un valor",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Ara es crea un marcador que queda buit fins que el destinatari l’ompli: no has d’inventar mai cap valor.",
+        "Ask for a credential": "Demana una credencial",
+        "Ask for new values": "Demana valors nous",
+        "Ask someone for a credential": "Demana una credencial a algú",
+        "Ask someone to fill this in": "Demana a algú que ho ompli",
+        "Folder (optional)": "Carpeta (opcional)",
+        "Give the credential a name so you can find it later.": "Posa un nom a la credencial per trobar-la més tard.",
+        "New values requested": "Valors nous demanats",
+        "No folder": "Cap carpeta",
+        "Waiting for someone to fill this in": "Esperant que algú ho ompli",
+        "What are you asking for?": "Què demanes?",
+        "e.g. Supplier API key": "p. ex. clau API del proveïdor",
+        "Copy fill link": "Copia l'enllaç d'emplenament",
+        "Link copied": "Enllaç copiat",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Aquesta pàgina necessita una connexió segura (https://), perquè el teu valor es xifra al navegador abans d’enviar-se.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Obre el mateix enllaç començant per https://. Si encara no funciona, pregunta-ho a qui te l’ha enviat."
     },
     "plurals": null
 }

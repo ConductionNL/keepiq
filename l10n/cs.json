@@ -384,7 +384,24 @@
         "e.g. client-id": "např. client-id",
         "That field is already listed.": "Toto pole je již v seznamu.",
         "That is a built-in field — tick it in the list above instead.": "Toto je vestavěné pole — zaškrtněte jej v seznamu výše.",
-        "URL (stored unencrypted)": "URL (uloženo nezašifrovaně)"
+        "URL (stored unencrypted)": "URL (uloženo nezašifrovaně)",
+        "— already has a value": "— již má hodnotu",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Nyní se vytvoří zástupný záznam, který zůstane prázdný, dokud jej příjemce nevyplní — nikdy si nemusíte hodnotu vymýšlet.",
+        "Ask for a credential": "Požádat o přihlašovací údaj",
+        "Ask for new values": "Požádat o nové hodnoty",
+        "Ask someone for a credential": "Požádat někoho o přihlašovací údaj",
+        "Ask someone to fill this in": "Požádat někoho, aby to vyplnil",
+        "Folder (optional)": "Složka (nepovinné)",
+        "Give the credential a name so you can find it later.": "Pojmenujte přihlašovací údaj, abyste jej později našli.",
+        "New values requested": "Požádáno o nové hodnoty",
+        "No folder": "Žádná složka",
+        "Waiting for someone to fill this in": "Čeká se, až to někdo vyplní",
+        "What are you asking for?": "O co žádáte?",
+        "e.g. Supplier API key": "např. API klíč dodavatele",
+        "Copy fill link": "Kopírovat odkaz pro vyplnění",
+        "Link copied": "Odkaz zkopírován",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Tato stránka vyžaduje zabezpečené připojení (https://), protože vaše hodnota se šifruje v prohlížeči před odesláním.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otevřete stejný odkaz začínající na https://. Pokud to stále nefunguje, zeptejte se toho, kdo vám jej poslal."
     },
     "plurals": null
 }

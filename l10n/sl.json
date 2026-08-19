@@ -384,7 +384,24 @@
         "e.g. client-id": "npr. client-id",
         "That field is already listed.": "To polje je že na seznamu.",
         "That is a built-in field — tick it in the list above instead.": "To je vgrajeno polje — označite ga na zgornjem seznamu.",
-        "URL (stored unencrypted)": "URL (shranjen nešifriran)"
+        "URL (stored unencrypted)": "URL (shranjen nešifriran)",
+        "— already has a value": "— že ima vrednost",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Zdaj se ustvari nadomestek, ki ostane prazen, dokler ga prejemnik ne izpolni — vrednosti si nikoli ni treba izmišljati.",
+        "Ask for a credential": "Zahtevaj poverilnico",
+        "Ask for new values": "Zahtevaj nove vrednosti",
+        "Ask someone for a credential": "Nekoga prosi za poverilnico",
+        "Ask someone to fill this in": "Nekoga prosi, naj to izpolni",
+        "Folder (optional)": "Mapa (izbirno)",
+        "Give the credential a name so you can find it later.": "Poimenujte poverilnico, da jo boste pozneje našli.",
+        "New values requested": "Zahtevane nove vrednosti",
+        "No folder": "Brez mape",
+        "Waiting for someone to fill this in": "Čakanje, da nekdo to izpolni",
+        "What are you asking for?": "Kaj zahtevate?",
+        "e.g. Supplier API key": "npr. ponudnikov ključ API",
+        "Copy fill link": "Kopiraj povezavo za izpolnitev",
+        "Link copied": "Povezava kopirana",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ta stran potrebuje varno (https://) povezavo, ker se vaša vrednost šifrira v brskalniku pred pošiljanjem.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Odprite isto povezavo, ki se začne s https://. Če še vedno ne deluje, vprašajte pošiljatelja."
     },
     "plurals": null
 }

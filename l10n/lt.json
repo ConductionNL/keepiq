@@ -384,7 +384,24 @@
         "e.g. client-id": "pvz., client-id",
         "That field is already listed.": "Šis laukas jau yra sąraše.",
         "That is a built-in field — tick it in the list above instead.": "Tai integruotas laukas — pažymėkite jį aukščiau esančiame sąraše.",
-        "URL (stored unencrypted)": "URL (saugomas nešifruotas)"
+        "URL (stored unencrypted)": "URL (saugomas nešifruotas)",
+        "— already has a value": "— jau turi reikšmę",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Dabar sukuriamas rezervuotas įrašas, kuris lieka tuščias, kol gavėjas jo neužpildys — jums niekada nereikia išsigalvoti reikšmės.",
+        "Ask for a credential": "Paprašyti prisijungimo duomenų",
+        "Ask for new values": "Paprašyti naujų reikšmių",
+        "Ask someone for a credential": "Paprašyti kažko prisijungimo duomenų",
+        "Ask someone to fill this in": "Paprašyti kažko tai užpildyti",
+        "Folder (optional)": "Aplankas (nebūtina)",
+        "Give the credential a name so you can find it later.": "Pavadinkite prisijungimo duomenis, kad vėliau juos rastumėte.",
+        "New values requested": "Paprašyta naujų reikšmių",
+        "No folder": "Be aplanko",
+        "Waiting for someone to fill this in": "Laukiama, kol kas nors tai užpildys",
+        "What are you asking for?": "Ko prašote?",
+        "e.g. Supplier API key": "pvz., tiekėjo API kliucas",
+        "Copy fill link": "Kopijuoti užpildymo nuorodą",
+        "Link copied": "Nuoroda nukopijuota",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Šiam puslapiui reikia saugaus (https://) ryšio, nes jūsų reikšmė šifruojama naršyklėje prieš išsiuntimą.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Atidarykite tą pačią nuorodą, kuri pradedama https://. Jei vis tiek neveikia, paklauskite to, kas ją atsiuntė."
     },
     "plurals": null
 }

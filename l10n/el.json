@@ -384,7 +384,24 @@
         "e.g. client-id": "π.χ. client-id",
         "That field is already listed.": "Αυτό το πεδίο υπάρχει ήδη στη λίστα.",
         "That is a built-in field — tick it in the list above instead.": "Αυτό είναι ενσωματωμένο πεδίο — επιλέξτε το από τη λίστα παραπάνω.",
-        "URL (stored unencrypted)": "URL (αποθηκεύεται μη κρυπτογραφημένο)"
+        "URL (stored unencrypted)": "URL (αποθηκεύεται μη κρυπτογραφημένο)",
+        "— already has a value": "— έχει ήδη τιμή",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Δημιουργείται τώρα ένα σύμβολο κράτησης που παραμένει κενό μέχρι να το συμπληρώσει ο παραλήπτης — δεν χρειάζεται ποτέ να επινοήσετε τιμή.",
+        "Ask for a credential": "Ζητήστε διαπιστευτήριο",
+        "Ask for new values": "Ζητήστε νέες τιμές",
+        "Ask someone for a credential": "Ζητήστε διαπιστευτήριο από κάποιον",
+        "Ask someone to fill this in": "Ζητήστε από κάποιον να το συμπληρώσει",
+        "Folder (optional)": "Φάκελος (προαιρετικό)",
+        "Give the credential a name so you can find it later.": "Δώστε όνομα στο διαπιστευτήριο για να το βρείτε αργότερα.",
+        "New values requested": "Ζητήθηκαν νέες τιμές",
+        "No folder": "Χωρίς φάκελο",
+        "Waiting for someone to fill this in": "Αναμονή να το συμπληρώσει κάποιος",
+        "What are you asking for?": "Τι ζητάτε;",
+        "e.g. Supplier API key": "π.χ. κλειδί API προμηθευτή",
+        "Copy fill link": "Αντιγραφή συνδέσμου συμπλήρωσης",
+        "Link copied": "Ο σύνδεσμος αντιγράφηκε",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Αυτή η σελίδα χρειάζεται ασφαλή (https://) σύνδεση, επειδή η τιμή σας κρυπτογραφείται στο πρόγραμμα περιήγησης πριν σταλεί.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Ανοίξτε τον ίδιο σύνδεσμο ξεκινώντας με https://. Αν εξακολουθεί να μην λειτουργεί, ρωτήστε αυτόν που τον έστειλε."
     },
     "plurals": null
 }

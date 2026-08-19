@@ -384,7 +384,24 @@
         "e.g. client-id": "de ex. client-id",
         "That field is already listed.": "Acest câmp este deja în listă.",
         "That is a built-in field — tick it in the list above instead.": "Acesta este un câmp integrat — bifați-l în lista de mai sus.",
-        "URL (stored unencrypted)": "URL (stocat necriptat)"
+        "URL (stored unencrypted)": "URL (stocat necriptat)",
+        "— already has a value": "— are deja o valoare",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Acum se creează un substituent care rămâne gol până când destinatarul îl completează — nu trebuie niciodată să inventați o valoare.",
+        "Ask for a credential": "Solicitați o credențială",
+        "Ask for new values": "Solicitați valori noi",
+        "Ask someone for a credential": "Cereți cuiva o credențială",
+        "Ask someone to fill this in": "Cereți cuiva să completeze acest lucru",
+        "Folder (optional)": "Dosar (opțional)",
+        "Give the credential a name so you can find it later.": "Dați un nume credențialei pentru a o găsi mai târziu.",
+        "New values requested": "Valori noi solicitate",
+        "No folder": "Fără dosar",
+        "Waiting for someone to fill this in": "Se așteaptă ca cineva să completeze",
+        "What are you asking for?": "Ce solicitați?",
+        "e.g. Supplier API key": "de ex. cheia API a furnizorului",
+        "Copy fill link": "Copiați linkul de completare",
+        "Link copied": "Link copiat",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Această pagină necesită o conexiune securizată (https://), deoarece valoarea este criptată în browser înainte de trimitere.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Deschideți același link începând cu https://. Dacă tot nu funcționează, întrebați persoana care l-a trimis."
     },
     "plurals": null
 }

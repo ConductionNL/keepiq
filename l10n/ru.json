@@ -384,7 +384,24 @@
         "e.g. client-id": "например, client-id",
         "That field is already listed.": "Это поле уже есть в списке.",
         "That is a built-in field — tick it in the list above instead.": "Это встроенное поле — отметьте его в списке выше.",
-        "URL (stored unencrypted)": "URL (хранится без шифрования)"
+        "URL (stored unencrypted)": "URL (хранится без шифрования)",
+        "— already has a value": "— уже содержит значение",
+        "A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.": "Сейчас создаётся заготовка, которая остаётся пустой, пока получатель её не заполнит — вам никогда не нужно придумывать значение.",
+        "Ask for a credential": "Запросить учётные данные",
+        "Ask for new values": "Запросить новые значения",
+        "Ask someone for a credential": "Попросить у кого-то учётные данные",
+        "Ask someone to fill this in": "Попросить кого-то заполнить это",
+        "Folder (optional)": "Папка (необязательно)",
+        "Give the credential a name so you can find it later.": "Дайте учётным данным имя, чтобы найти их позже.",
+        "New values requested": "Запрошены новые значения",
+        "No folder": "Без папки",
+        "Waiting for someone to fill this in": "Ожидание, пока кто-то это заполнит",
+        "What are you asking for?": "Что вы запрашиваете?",
+        "e.g. Supplier API key": "например, API-ключ поставщика",
+        "Copy fill link": "Копировать ссылку для заполнения",
+        "Link copied": "Ссылка скопирована",
+        "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Эта страница требует защищённого (https://) соединения, потому что ваше значение шифруется в браузере перед отправкой.",
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Откройте ту же ссылку, начинающуюся с https://. Если всё равно не работает, спросите отправителя."
     },
     "plurals": null
 }
