@@ -62,7 +62,7 @@ class SecretRequestSuiteLockService {
 	 *
 	 * @throws InvalidArgumentException When the suite ID is blank.
 	 *
-	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change--compromise-recovery
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-compromise-recovery
 	 */
 	public function lockByEncryptionSuiteId(string $encryptionSuiteId): int {
 		if ($encryptionSuiteId === '') {

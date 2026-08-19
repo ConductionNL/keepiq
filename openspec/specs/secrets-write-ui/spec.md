@@ -82,6 +82,7 @@ revoke one.
 - **THEN** the share token MUST resolve via the public endpoint `GET /api/v1/public/link-shares/{token}`
 
 #### Scenario: Revoke a link share
+@e2e exclude Coverage existed and was simply never annotated: tests/store/share.spec.js "DELETEs and removes the share from the list" asserts both halves of this scenario — the DELETE is issued and the share leaves the list. Found while clearing the gate-19 debt on this spec, not written for it.
 - **WHEN** the owner revokes an existing link share from the dialog
 - **THEN** the system MUST delete it and it MUST disappear from the list
 
@@ -98,6 +99,7 @@ entry (ADR-036). Affordances MUST open dialogs through the injected
 target secret / folder context as props.
 
 #### Scenario: Modal opened via registry dispatcher
+@e2e exclude Had NO coverage until now, and the gap was invisible by construction: `cnOpenModal` is an inject whose default is a NO-OP so the view still mounts in isolation, so a regression to local dialog state looks identical in every other test while the dialog silently never opens in the real app. Driven by SecretList.registryDispatch — the key and props each affordance dispatches, that those keys exist in src/registry.js as `kind: "modal"`, and that the no-op default does not throw. A one-character key typo fails it; verified by injecting one.
 - **WHEN** the user clicks a write affordance
 - **THEN** the corresponding registry-registered modal MUST mount via `cnOpenModal`
 - **THEN** closing the dialog MUST emit `close` and unmount it

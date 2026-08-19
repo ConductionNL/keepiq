@@ -157,7 +157,7 @@ export default {
 		 *
 		 * @return {boolean} True when the link is still fillable.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fill-link-recovery
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-link-recovery
 		 */
 		canCopyLink(row) {
 			if (!row || row.status !== 'pending' || !row.token) {
@@ -179,7 +179,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fill-link-recovery
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-link-recovery
 		 */
 		async onCopyLink(row) {
 			try {
