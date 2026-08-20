@@ -42,9 +42,9 @@
 					<strong>{{ statusLabel(effectiveStatus(row)) }}</strong>
 					<span
 						class="doriath-secret-request-list__expiry"
-						:data-testid="`secret-request-row-expiry-${row.id}`">{{
-							expiryLabel(row)
-						}}</span>
+						:data-testid="`secret-request-row-expiry-${row.id}`"
+						>{{ expiryLabel(row) }}</span
+					>
 					<span class="doriath-secret-request-list__token">{{
 						truncateToken(row.token)
 					}}</span>
@@ -154,7 +154,9 @@ export default {
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		isApplicationScope() {
-			return typeof this.applicationId === 'string' && this.applicationId !== ''
+			return (
+				typeof this.applicationId === 'string' && this.applicationId !== ''
+			)
 		},
 
 		/**
@@ -197,9 +199,7 @@ export default {
 	 */
 	mounted() {
 		if (this.isApplicationScope) {
-			this.store
-				.fetchApplicationRequests(this.applicationId)
-				.catch(() => {})
+			this.store.fetchApplicationRequests(this.applicationId).catch(() => {})
 			return
 		}
 
