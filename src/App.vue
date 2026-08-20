@@ -27,7 +27,9 @@
     / Encryption sections the previous MainMenu footer item did.
 -->
 <template>
-	<div class="doriath-shell">
+	<div
+		class="doriath-shell"
+		:class="{ 'doriath-shell--locked': isLockScreen }">
 		<!-- Stale-data banner (offline-readonly-cache §4.3): shown whenever the
 		     vault is being served from the offline cache. -->
 		<div
@@ -273,7 +275,7 @@ import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
-import { handleLockTransition } from './router/guards.js'
+import { handleLockTransition, LOCK_ROUTE_NAME } from './router/guards.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
@@ -343,6 +345,13 @@ export default {
 
 	data() {
 		return {
+			/**
+			 * True while the page is unloading (beforeunload fired). The
+			 * lock-redirect watcher skips its redirect in that window so
+			 * leaving Doriath for another app doesn't flash the unlock
+			 * form mid-transition — the key is still cleared.
+			 */
+			unloading: false,
 			storesReady: false,
 			timeoutInterval: null,
 			sessionTimeout: 'session',
@@ -422,6 +431,20 @@ export default {
 		isLocked() {
 			return this.sessionStore.isLocked
 		},
+
+		/**
+		 * Whether the current route is the lock/setup screen. Drives the
+		 * `--locked` shell modifier that hides the app navigation: the
+		 * unlock prompt must be the only interactive surface, and no
+		 * z-index inside NcAppContent can cover a sibling NcAppNavigation
+		 * (each is its own stacking context), so the nav is hidden at the
+		 * shell level instead.
+		 *
+		 * @return {boolean} True on the Lock route.
+		 */
+		isLockScreen() {
+			return this.$route?.name === LOCK_ROUTE_NAME
+		},
 	},
 
 	watch: {
@@ -437,6 +460,14 @@ export default {
 		 * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 		 */
 		isLocked(locked) {
+			// Page is going away (app switch, tab close): the beforeunload
+			// key clear triggered this transition, and redirecting a dying
+			// page only flashes the unlock form over the outgoing view. The
+			// fail-safe in handleBeforeUnload still redirects if the unload
+			// turns out not to happen.
+			if (this.unloading) {
+				return
+			}
 			// The decision lives in guards.js so it can be unit-tested without
 			// mounting the shell — see handleLockTransition.
 			handleLockTransition(locked, this.$route, this.$router)
@@ -556,12 +587,28 @@ export default {
 		},
 
 		/**
-		 * Best-effort clear of the in-memory key when the tab closes.
+		 * Best-effort clear of the in-memory key when the tab closes or the
+		 * user navigates to another app. The key clear is unconditional; the
+		 * `unloading` flag only suppresses the lock-redirect (see the
+		 * isLocked watcher) so the outgoing page doesn't flash the unlock
+		 * form. beforeunload can fire WITHOUT the page actually unloading
+		 * (e.g. a canceled navigation or a download), so a timer re-arms the
+		 * redirect: if the page is still alive shortly after, the normal
+		 * lock transition runs after all and the lock screen appears.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		handleBeforeUnload() {
+			this.unloading = true
 			this.sessionStore.lock()
+			setTimeout(() => {
+				this.unloading = false
+				handleLockTransition(
+					this.sessionStore.isLocked,
+					this.$route,
+					this.$router,
+				)
+			}, 2000)
 		},
 
 		/**
@@ -629,6 +676,23 @@ export default {
 </script>
 
 <style scoped>
+/*
+ * Lock/setup route: the master-password prompt must be the only visible
+ * and interactive surface. LockScreen.vue's fixed overlay covers the
+ * content area, but NcAppNavigation is a SIBLING stacking context that
+ * always paints above it — so the nav (and its floating toggle) are
+ * removed here at the shell level while the Lock route is active.
+ */
+/*
+ * `.app-navigation` is the OUTER container div (@nextcloud/vue 9 wraps
+ * `nav#app-navigation-vue` in it) — hiding only the inner nav leaves the
+ * empty sidebar panel standing, so target the container; the floating
+ * toggle button lives inside it and disappears with it.
+ */
+.doriath-shell--locked :deep(.app-navigation) {
+	display: none;
+}
+
 .user-settings__field {
 	margin-bottom: 1rem;
 }
