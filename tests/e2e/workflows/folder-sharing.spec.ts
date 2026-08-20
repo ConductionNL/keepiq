@@ -119,6 +119,39 @@ async function openFirstSecret(page): Promise<string> {
 	return name
 }
 
+/**
+ * Open a SPECIFIC secret's detail view by clicking the row with that name.
+ *
+ * Prefer this over {@see openFirstSecret} in any test that then asserts on the
+ * secret it opened. "The first row" is ambient state: it belongs to whatever
+ * seeded or mutated the vault earlier in the run, and a spec that adopts it
+ * inherits that spec's failures.
+ */
+async function openSecretByName(page, name: string): Promise<void> {
+	const row = page.locator('.secret-list-item', { hasText: name })
+	await expect(row.first()).toBeVisible({ timeout: 15_000 })
+	await page.evaluate((wanted) => {
+		const rows = Array.from(
+			document.querySelectorAll('.secret-list-item'),
+		) as HTMLElement[]
+		const match = rows.find(
+			(r) =>
+				(
+					r.querySelector('.secret-list-item__name')?.textContent || ''
+				).trim() === wanted,
+		)
+		if (match) {
+			const main = match.querySelector(
+				'.secret-list-item__main',
+			) as HTMLElement | null
+			;(main || match).click()
+		}
+	}, name)
+	await expect(page.locator('.secret-detail__card')).toBeVisible({
+		timeout: 20_000,
+	})
+}
+
 test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 	test('the folder list API returns a well-formed (empty) tree', async ({
 		page,
@@ -212,9 +245,21 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 	}) => {
 		// @e2e secrets-write-ui::move-a-secret-into-a-folder
 		const FOLDER = `__e2e_movefolder_${Date.now()}`
+		const SECRET = `__e2e_movesecret_${Date.now()}`
 		await unlockVault(page)
 		await openVault(page)
 
+		// Seed BOTH the folder and the secret this test moves.
+		//
+		// This used to seed only the folder and then adopt whatever
+		// `openFirstSecret()` returned. That made the test depend on a row it did
+		// not create: `compromise-recovery.spec.ts` runs before this file and
+		// rotates an entire vault, so when that spec failed part-way the vault it
+		// left behind no longer contained the adopted secret, and this test failed
+		// with "moved secret must exist" — reporting a folder-move bug that did not
+		// exist. Playwright runs these with `workers: 1`, so it is not a parallel
+		// race; sequential order is enough for one spec's leftovers to decide
+		// another's verdict.
 		const folder = await page.evaluate(
 			async ({ tokExpr, name }) => {
 				// eslint-disable-next-line no-eval
@@ -234,6 +279,25 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		)
 		expect(folder.id).toBeTruthy()
 
+		const seeded = await page.evaluate(
+			async ({ tokExpr, name }) => {
+				// eslint-disable-next-line no-eval
+				const token = eval(tokExpr)
+				const res = await fetch('/index.php/apps/doriath/api/v1/secrets', {
+					method: 'POST',
+					credentials: 'include',
+					headers: {
+						requesttoken: token,
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ name, key: btoa('opaque-ciphertext') }),
+				})
+				return res.json()
+			},
+			{ tokExpr: REQ_TOKEN, name: SECRET },
+		)
+		expect(seeded.id, 'the test must seed its own secret to move').toBeTruthy()
+
 		// Reload so the new folder is in the move dialog's options.
 		// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud. The reload
 		// drops the in-memory key, so `unlockVault()` below has to wait for the
@@ -242,8 +306,8 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 
-		const secretName = await openFirstSecret(page)
-		expect(secretName).toBeTruthy()
+		const secretName = SECRET
+		await openSecretByName(page, secretName)
 
 		await nativeClickByText(page, '.secret-detail__actions button', 'Move')
 		await expect(page.locator('.move-form')).toBeVisible({ timeout: 10_000 })
@@ -291,6 +355,8 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			`"${secretName}" is not listed under the folder it was moved into`,
 		).toBeVisible({ timeout: 20_000 })
 
+		// Delete what this test created, rather than restoring a borrowed row to
+		// the vault root: both the secret and the folder are ours now.
 		await page.evaluate(
 			async ({ tokExpr, secretApiId, folderId }) => {
 				// eslint-disable-next-line no-eval
@@ -298,13 +364,9 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 				await fetch(
 					`/index.php/apps/doriath/api/v1/secrets/${secretApiId}`,
 					{
-						method: 'PUT',
+						method: 'DELETE',
 						credentials: 'include',
-						headers: {
-							requesttoken: token,
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({ folderId: null }),
+						headers: { requesttoken: token },
 					},
 				)
 				await fetch(`/index.php/apps/doriath/api/v1/folders/${folderId}`, {
