@@ -1,9 +1,4 @@
 {
-  "src/App.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    }
-  },
   "src/cardIdentity/cardIdentity.js": {
     "eqeqeq": {
       "count": 2
@@ -55,11 +50,6 @@
   "src/components/dashboard/RecentSecretsWidget.vue": {
     "no-console": {
       "count": 1
-    }
-  },
-  "src/components/secretRequest/SecretRequestList.vue": {
-    "eqeqeq": {
-      "count": 2
     }
   },
   "src/components/settings/AdminAuditSection.vue": {

@@ -222,10 +222,14 @@ describe('SecretRequestList', () => {
 			await flush()
 
 			const urls = get.mock.calls.map((c) => c[0])
-			expect(urls.some((u) => u.includes('/applications/app-1/secret-requests'))).toBe(true)
+			expect(
+				urls.some((u) => u.includes('/applications/app-1/secret-requests')),
+			).toBe(true)
 			// And NOT the user endpoint — note the admin URL also ends in
 			// '/secret-requests', so the user one has to be matched exactly.
-			expect(urls.some((u) => /\/api\/v1\/secret-requests$/.test(u))).toBe(false)
+			expect(urls.some((u) => /\/api\/v1\/secret-requests$/.test(u))).toBe(
+				false,
+			)
 		})
 
 		it('renders the application rows', async () => {

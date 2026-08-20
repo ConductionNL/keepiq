@@ -18,8 +18,8 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ApplicationRequestRevokeDialog from '../../src/dialogs/ApplicationRequestRevokeDialog.vue'
 
-function mountDialog (props = {}) {
-  return mount(ApplicationRequestRevokeDialog, {
+function mountDialog(props = {}) {
+	return mount(ApplicationRequestRevokeDialog, {
 		propsData: { open: true, ...props },
 		global: {
 			// The shared t() stub returns the key and drops the vars, so `{fields}`
@@ -34,7 +34,8 @@ function mountDialog (props = {}) {
 					methods: {
 						t: (_app, key, vars) =>
 							Object.entries(vars || {}).reduce(
-								(acc, [name, value]) => acc.replace(`{${name}}`, value),
+								(acc, [name, value]) =>
+									acc.replace(`{${name}}`, value),
 								key,
 							),
 					},
@@ -78,7 +79,9 @@ describe('ApplicationRequestRevokeDialog', () => {
 		const wrapper = mountDialog({ requestedFields: [] })
 
 		expect(
-			wrapper.find('[data-testid="application-request-revoke-fields"]').exists(),
+			wrapper
+				.find('[data-testid="application-request-revoke-fields"]')
+				.exists(),
 		).toBe(false)
 	})
 
