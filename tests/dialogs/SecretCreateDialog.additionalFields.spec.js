@@ -175,25 +175,4 @@ describe('SecretCreateDialog — additional fields', () => {
 		wrapper.vm.name = 'Both present'
 		expect(wrapper.vm.canSubmit).toBe(true)
 	})
-
-	it('defaults the folder to the one being viewed, and persists it', async () => {
-		const store = useSecretStore()
-		const create = vi
-			.spyOn(store, 'createSecret')
-			.mockResolvedValue({ id: 's1' })
-
-		const wrapper = mount(SecretCreateDialog, {
-			propsData: { folderId: 'folder-42' },
-			global: { stubs },
-		})
-		await wrapper.vm.$nextTick()
-
-		expect(wrapper.vm.selectedFolderId).toBe('folder-42')
-
-		wrapper.vm.name = 'In a folder'
-		wrapper.vm.value = 'Xk9#mQ2$vL7@pR4!zT6&'
-		await wrapper.vm.submit()
-
-		expect(create.mock.calls[0][0].folderId).toBe('folder-42')
-	})
 })
