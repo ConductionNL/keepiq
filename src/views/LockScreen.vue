@@ -24,9 +24,7 @@
 			  decrypts the local snapshot and can never create anything
 			  server-side.
 			-->
-			<NcNoteCard
-				v-else-if="checkFailed && offlineStore.online"
-				type="error">
+			<NcNoteCard v-else-if="checkFailed && offlineStore.online" type="error">
 				{{
 					t(
 						'doriath',
@@ -140,9 +138,9 @@
 						:title="
 							showMismatch
 								? t(
-									'doriath',
-									'The password does not match. Please try again.',
-								)
+										'doriath',
+										'The password does not match. Please try again.',
+									)
 								: null
 						">
 						<NcButton
@@ -292,6 +290,7 @@ export default {
 
 		/**
 		 * @return {boolean} True while the suite check is in flight.
+		 * @spec exclude Suite-check state-machine accessor — presentation gating only; the fail-closed behaviour is specified on checkSuite.
 		 */
 		checking() {
 			return this.suiteCheck === 'pending'
@@ -299,6 +298,7 @@ export default {
 
 		/**
 		 * @return {boolean} True when the suite check failed.
+		 * @spec exclude Suite-check state-machine accessor — presentation gating only; the fail-closed behaviour is specified on checkSuite.
 		 */
 		checkFailed() {
 			return this.suiteCheck === 'failed'
@@ -317,6 +317,7 @@ export default {
 		 * filled, so the user isn't scolded while still typing the first one.
 		 *
 		 * @return {boolean} True when both fields are filled and differ.
+		 * @spec exclude Inline form-feedback condition — pure presentation; no requirement prescribes the mismatch hint, and submission is guarded by canSubmitSetup.
 		 */
 		passwordsMismatch() {
 			return (
@@ -332,6 +333,7 @@ export default {
 		 * hide it again instantly, so it never nags mid-correction.
 		 *
 		 * @return {boolean} True when the mismatch feedback should render.
+		 * @spec exclude Inline form-feedback timing — pure presentation; no requirement prescribes when the mismatch hint appears.
 		 */
 		showMismatch() {
 			return this.mismatchSettled && this.passwordsMismatch
@@ -344,13 +346,11 @@ export default {
 		 * enabling is the success signal.
 		 *
 		 * @return {string} The helper text ('' when there is nothing to say).
+		 * @spec exclude Inline form-feedback copy selection — pure presentation over states specified elsewhere (checkSuite, handleSetup).
 		 */
 		confirmHelperText() {
 			if (this.showMismatch) {
-				return t(
-					'doriath',
-					'The password does not match. Please try again.',
-				)
+				return t('doriath', 'The password does not match. Please try again.')
 			}
 			return this.error || ''
 		},
@@ -396,6 +396,8 @@ export default {
 		 * Hide the mismatch message while typing and re-arm the pause timer:
 		 * one second of idle counts as "done typing". Leaving a field
 		 * (revealMismatch) short-circuits the wait.
+		 *
+		 * @spec exclude Feedback debounce timing — pure presentation; no requirement prescribes the typing-pause interval.
 		 */
 		restartMismatchDebounce() {
 			this.mismatchSettled = false
@@ -408,6 +410,8 @@ export default {
 		/**
 		 * Blur = done typing: reveal the mismatch feedback immediately
 		 * instead of waiting out the pause timer.
+		 *
+		 * @spec exclude Feedback reveal-on-blur — pure presentation; the late-validation pattern is a UX choice, not a specified requirement.
 		 */
 		revealMismatch() {
 			clearTimeout(this.mismatchTimer)
@@ -425,6 +429,7 @@ export default {
 		 * an answered setup-vs-unlock decision back into the failed state.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 		 */
 		async checkSuite() {
 			this.suiteCheck = 'pending'
@@ -664,6 +669,17 @@ export default {
 
 	to {
 		opacity: 1;
+	}
+}
+
+/* Vestibular safety (gate-45): no motion for users who asked for none. */
+@media (prefers-reduced-motion: reduce) {
+	.lock-screen__confirm :deep(.input-field__input) {
+		transition: none;
+	}
+
+	.lock-screen__confirm :deep(.input-field__helper-text-message) {
+		animation: none;
 	}
 }
 

@@ -40,7 +40,7 @@ for (const file of fs.readdirSync(L10N_DIR)) {
 		continue
 	}
 	const body = Object.entries(translations)
-		.filter(([, value]) => value !== '' && value != null)
+		.filter(([, value]) => value !== '' && value !== null && value !== undefined)
 		.map(([key, value]) => `    ${JSON.stringify(key)} : ${JSON.stringify(value)}`)
 		.join(',\n')
 	const js = 'OC.L10N.register(\n'
