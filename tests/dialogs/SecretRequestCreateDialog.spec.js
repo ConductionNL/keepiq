@@ -376,4 +376,54 @@ describe('SecretRequestCreateDialog', () => {
 
 		expect(wrapper.vm.requestedFields).toContain('key')
 	})
+	it('pre-fills a suggested expiry so requests are not perpetual by default', () => {
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 's-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		// `expires_at` has exactly one source — this field. While it defaulted to
+		// empty, almost nothing expired and the sweeper had nothing to act on.
+		expect(wrapper.vm.expiresAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+
+		const suggested = new Date(wrapper.vm.expiresAt)
+		const days = (suggested.getTime() - Date.now()) / 86400000
+		expect(days).toBeGreaterThan(13)
+		expect(days).toBeLessThan(15)
+	})
+
+	it('formats the suggestion in LOCAL time, not UTC', () => {
+		// datetime-local carries no timezone, so a UTC string would display a time
+		// the user never chose on any instance away from Greenwich.
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: { open: true, secret: { id: 's-1' } },
+			global: { stubs: ncStubs },
+		})
+
+		const expected = new Date()
+		expected.setDate(expected.getDate() + 14)
+		const pad = (n) => String(n).padStart(2, '0')
+		expect(wrapper.vm.expiresAt.slice(0, 10)).toBe(
+			`${expected.getFullYear()}-${pad(expected.getMonth() + 1)}-${pad(expected.getDate())}`,
+		)
+	})
+
+	it('the suggestion can be cleared, so a perpetual request stays one action away', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn().mockResolvedValue({ id: 'r', token: 't' })
+
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: { id: 's-1', encryption_suite_id: 'suite-1' },
+			},
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.expiresAt = ''
+		wrapper.vm.requestedFields = ['key']
+		await wrapper.vm.submit()
+
+		expect(store.createRequest.mock.calls[0][0].expiresAt).toBeNull()
+	})
 })

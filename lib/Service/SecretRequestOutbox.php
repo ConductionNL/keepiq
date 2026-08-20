@@ -197,4 +197,27 @@ class SecretRequestOutbox {
 			)
 		);
 	}//end recordRevoked()
+
+	/**
+	 * Record that a request lapsed, with the SYSTEM as actor.
+	 *
+	 * Not `forUser`: the requester took no action, and attributing an automatic
+	 * transition to them would make the audit trail say something untrue about a
+	 * person. `forSystem` exists for exactly this.
+	 *
+	 * @param string $requestId The request that expired
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function recordExpired(string $requestId): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forSystem(
+				eventType: AuditEventTypes::REQUEST_EXPIRED,
+				objectType: self::OBJECT_TYPE,
+				objectId: $requestId,
+			)
+		);
+	}//end recordExpired()
 }//end class

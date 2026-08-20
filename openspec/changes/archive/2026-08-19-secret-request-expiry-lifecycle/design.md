@@ -47,9 +47,14 @@ The audit actor is the system. Recording the requester as the actor for somethin
 
 ### The sweeper is cleanup; the gate is enforcement
 
-These two must not be confused, and the interval is why. A `TimedJob` runs hourly (matching `ExpireMachineLeasesJob`'s `setInterval(seconds: 3600)`), so a request that lapsed a minute ago still reads `pending` in the database. If the access gate trusted the stored status, that request would accept a submission after the expiry the requester set — the sweeper's schedule would silently become part of the security boundary.
+These two must not be confused, and the interval is why. A `TimedJob` runs hourly (matching `ExpireMachineLeasesJob`'s `setInterval(seconds: 3600)`), so a request that lapsed a minute ago still reads `pending` in the database. Any gate that answered from the stored status alone would accept a submission after the expiry the requester set.
 
-So the expiry evaluation is hoisted above the status switch in `requireOpenByToken()`, applying to any status.
+The expiry evaluation is therefore hoisted above the status switch in `requireOpenByToken()`, applying to any status. What that hoist buys has to be stated precisely, because the weaker claim is the true one and the implementation's own test proved it: the `pending` branch **already** checked expiry, so a lapsed pending request was refused before this change. The hoist is not closing a live hole. It buys two things:
+
+- **Precedence.** A lapsed request now reports EXPIRY even when another status would also refuse it. A locked request whose expiry passed says "expired" rather than "temporarily unavailable" — truer, since locked invites a retry that can never succeed.
+- **Safety against omission.** A status added later cannot bypass expiry by forgetting to check it, because the check no longer lives inside a per-status branch.
+
+Stated this way on purpose. The earlier framing here — that the sweeper's schedule would otherwise become part of the security boundary — overstated the fix by describing a gate this codebase never had.
 
 The same hoist also fixes a defect this change would otherwise introduce. The switch ends in:
 

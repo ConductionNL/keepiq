@@ -21,11 +21,9 @@ namespace OCA\Doriath\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Service\JwtAuthService;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
@@ -36,12 +34,11 @@ use OCA\Doriath\Service\SecretRequestOutbox;
 use OCA\Doriath\Service\SecretRequestPolicy;
 use OCA\Doriath\Service\SecretRequestService;
 use OCA\Doriath\Service\SecretRequestSuiteLockService;
+use OCA\Doriath\Service\SecretService;
 use OCA\Doriath\Service\WriteLockService;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use OCA\Doriath\Service\SecretService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -665,17 +662,6 @@ class SecretRequestServiceTest extends TestCase {
 
 		$this->assertSame(SecretRequest::STATUS_FULFILLED, $result->getStatus());
 	}//end testAdditionalMembersAreSatisfiedByTheBlobAlone()
-
-
-
-
-
-
-
-
-
-
-
 
 	/**
 	 * Build a service wired for the fill tests.
@@ -1500,6 +1486,83 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testTwoFreshRequestsDoNotShareAPlaceholder()
 
 	/**
+	 * Expiring a fresh request deletes its placeholder and records the SYSTEM.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireDeletesThePlaceholderAndAttributesTheSystem(): void {
+		$entity = $this->makePending('req-exp', 'sec-empty');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$empty = new Secret();
+		$empty->setId('sec-empty');
+		$empty->setKey('');
+		$empty->setOwnerType('user');
+		$empty->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($empty);
+
+		$this->secretService->expects($this->once())->method('delete')->with('sec-empty', 'alice');
+
+		$updated = $this->service->expire(request: $entity);
+
+		$this->assertNotNull($updated);
+		$this->assertSame(SecretRequest::STATUS_EXPIRED, $updated->getStatus());
+	}//end testExpireDeletesThePlaceholderAndAttributesTheSystem()
+
+	/**
+	 * Expiring a re-request preserves the Secret and its values.
+	 *
+	 * A request lapsing must never cost the owner a working credential.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireNeverDeletesAFilledSecret(): void {
+		$entity = $this->makePending('req-exp2', 'sec-filled');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$filled = new Secret();
+		$filled->setId('sec-filled');
+		$filled->setKey('CIPHERTEXT');
+		$filled->setOwnerType('user');
+		$filled->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($filled);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->assertSame(
+			SecretRequest::STATUS_EXPIRED,
+			$this->service->expire(request: $entity)->getStatus()
+		);
+	}//end testExpireNeverDeletesAFilledSecret()
+
+	/**
+	 * Only a PENDING request can lapse.
+	 *
+	 * Re-terminating a fulfilled or declined request would rewrite history, so the
+	 * transition refuses rather than overwrites.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireRefusesANonPendingRequest(): void {
+		foreach ([SecretRequest::STATUS_FULFILLED, SecretRequest::STATUS_DECLINED] as $status) {
+			$entity = $this->makePending('req-' . $status, 'sec-x');
+			$entity->setStatus($status);
+
+			$this->mapper->expects($this->never())->method('update');
+
+			$this->assertNull($this->service->expire(request: $entity), $status);
+		}
+	}//end testExpireRefusesANonPendingRequest()
+
+	/**
 	 * A missing userId is refused before any Secret is created.
 	 *
 	 * @return void
@@ -1718,5 +1781,36 @@ class SecretRequestServiceTest extends TestCase {
 
 		$this->service->decline(requestId: 'req-empty', userId: 'alice');
 	}//end testRevokeStillDeletesATrulyEmptyPlaceholder()
+
+	/**
+	 * Expiry never deletes a Secret that holds a value under another field.
+	 *
+	 * expire() and decline() share deletePlaceholderIfUnfilled(), so today this is
+	 * covered by the revoke-side tests. It is pinned separately anyway because the
+	 * expiry caller is the dangerous one: ExpireSecretRequestsJob runs unattended,
+	 * 500 requests to a batch, with nobody watching the result. If someone later
+	 * gives expiry its own emptiness test, this fails rather than the loss being
+	 * discovered from a user's missing credential.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpireNeverDeletesASecretHoldingOnlyALogin(): void {
+		$entity = $this->makePending('req-exp-login', 'sec-exp-login');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = $this->keylessSecret('sec-exp-login');
+		$secret->setLogin('CIPHERTEXT-LOGIN');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->assertSame(
+			SecretRequest::STATUS_EXPIRED,
+			$this->service->expire(request: $entity)->getStatus()
+		);
+	}//end testExpireNeverDeletesASecretHoldingOnlyALogin()
 
 }//end class

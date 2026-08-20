@@ -21,15 +21,25 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Db;
 
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
  * Mapper for SecretRequest entities.
  *
  * @extends QBMapper<SecretRequest>
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ * A mapper's public surface IS its query set, and each of these answers a
+ * different question the domain actually asks: by id, by token, by secret, by
+ * creator, the pending one for a secret, the lapsed ones for the sweeper, plus
+ * the writes. Splitting them across two mappers would put queries over one table
+ * in two places, which is how a scoping rule ends up applied in one and not the
+ * other.
  */
 class SecretRequestMapper extends QBMapper {
 	/**
@@ -112,6 +122,39 @@ class SecretRequestMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findByCreatedBy()
+
+	/**
+	 * Find pending requests whose expiry has passed.
+	 *
+	 * Narrow on purpose. `expires_at IS NOT NULL` is not redundant with the date
+	 * comparison: a request with NO expiry must never be swept, because Optional
+	 * Expiry promises it "remains open until fulfilled or manually revoked".
+	 * Relying on a NULL comparison to exclude it would leave that promise resting
+	 * on SQL three-valued logic rather than on something a reader can see.
+	 *
+	 * @param DateTime $now The cutoff instant
+	 * @param int $limit Maximum rows per sweep
+	 *
+	 * @return SecretRequest[]
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function findLapsedPending(DateTime $now, int $limit = 500): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('status', $qb->createNamedParameter(SecretRequest::STATUS_PENDING)))
+			->andWhere($qb->expr()->isNotNull('expires_at'))
+			->andWhere(
+				$qb->expr()->lt(
+					'expires_at',
+					$qb->createNamedParameter($now, IQueryBuilder::PARAM_DATETIME_MUTABLE)
+				)
+			)
+			->setMaxResults($limit);
+
+		return $this->findEntities(query: $qb);
+	}//end findLapsedPending()
 
 	/**
 	 * Delete all secret requests for a given Secret (cascade on secret delete).

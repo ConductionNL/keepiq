@@ -401,7 +401,9 @@
         "Copy fill link": "Doldurma bağlantısını kopyala",
         "Link copied": "Bağlantı kopyalandı",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Bu sayfa güvenli (https://) bir bağlantı gerektirir, çünkü değeriniz gönderilmeden önce tarayıcınızda şifrelenir.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Aynı bağlantıyı https:// ile başlayacak şekilde açın. Hâlâ çalışmıyorsa, gönderen kişiye sorun."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Aynı bağlantıyı https:// ile başlayacak şekilde açın. Hâlâ çalışmıyorsa, gönderen kişiye sorun.",
+        "This request could not be found.": "Bu istek bulunamadı.",
+        "Revoking…": "İptal ediliyor…"
     },
     "plurals": null
 }

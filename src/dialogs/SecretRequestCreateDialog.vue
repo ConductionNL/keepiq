@@ -137,6 +137,45 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { fillLinkFor } from '../utils/fillLink.js'
 
+/**
+ * Days ahead the expiry field is pre-filled with.
+ *
+ * Long enough for a colleague or vendor to act across a weekend or a holiday,
+ * short enough that an abandoned request stops being a live credential within a
+ * fortnight. Confirmed with the product owner on 2026-08-19, against 7 and 30:
+ * a week lapses on a recipient who was simply away for it, a month leaves a live
+ * fill-link sitting in someone's inbox far longer than the task needs.
+ *
+ * A pre-fill is what makes expiry meaningful at all: `expires_at` has exactly one
+ * source — this field — so while it defaulted to empty almost nothing expired and
+ * the sweeper had nothing to act on.
+ *
+ * @type {number}
+ */
+const SUGGESTED_EXPIRY_DAYS = 14
+
+/**
+ * The pre-filled expiry, formatted for `<input type="datetime-local">`.
+ *
+ * Built from LOCAL date parts, not `toISOString()`: that returns UTC, so on any
+ * instance east or west of Greenwich the field would display a time the user did
+ * not choose — and `datetime-local` has no timezone to correct it with. The value
+ * is converted to UTC on submit, where a timezone is carried explicitly.
+ *
+ * @return {string} `YYYY-MM-DDTHH:mm` in local time.
+ */
+function suggestedExpiry() {
+	const when = new Date()
+	when.setDate(when.getDate() + SUGGESTED_EXPIRY_DAYS)
+
+	const pad = (n) => String(n).padStart(2, '0')
+
+	return (
+		`${when.getFullYear()}-${pad(when.getMonth() + 1)}-${pad(when.getDate())}`
+		+ `T${pad(when.getHours())}:${pad(when.getMinutes())}`
+	)
+}
+
 export default {
 	name: 'SecretRequestCreateDialog',
 	components: { NcDialog },
@@ -162,7 +201,7 @@ export default {
 			customFieldError: '',
 			newName: '',
 			newFolderId: '',
-			expiresAt: '',
+			expiresAt: suggestedExpiry(),
 			fillUrl: '',
 			error: '',
 			submitting: false,
@@ -493,7 +532,7 @@ export default {
 			this.customFieldError = ''
 			this.newName = ''
 			this.newFolderId = ''
-			this.expiresAt = ''
+			this.expiresAt = suggestedExpiry()
 			this.fillUrl = ''
 			this.error = ''
 		},

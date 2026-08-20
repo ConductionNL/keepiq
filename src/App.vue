@@ -27,7 +27,46 @@
     / Encryption sections the previous MainMenu footer item did.
 -->
 <template>
-	<div class="doriath-shell">
+	<!-- Public surface: a recipient with no account, holding a fill link.
+	     Rendered WITHOUT the app shell, because CnAppRoot's CnAppNav lists every
+	     page in the manifest — measured on 2026-08-19, an anonymous recipient was
+	     served "Dashboard, Vault, Password health, Certificates, Emergency access,
+	     Settings…", none of which they can open. That is the app's whole feature
+	     surface disclosed to a stranger, and a row of dead links around the one
+	     task they came to do.
+
+	     CnAppRoot hosts `<router-view>` itself, so skipping it means rendering the
+	     route here. The library documents this as the supported path for a layout
+	     that is not the app shell. `t()` is an app-level mixin from main.js, not a
+	     CnAppRoot injection, so public views keep their translations.
+
+	     The offline banner, migration banner, lock-screen gating and user-settings
+	     dialog are all deliberately absent: every one of them speaks about a vault
+	     the recipient has no account for. -->
+	<div v-if="isPublicPage" class="doriath-public-shell">
+		<!-- Every route's component IS CnPageRenderer (see routesFromManifest in
+		     main.js), and it takes its manifest, component registry, page types and
+		     translator by INJECT — from CnAppRoot. Outside the shell those injections
+		     do not exist, so the renderer mounts and finds no page: the first attempt
+		     at this rendered a blank page and logged "[CnPageRenderer] No page found
+		     for $route.name". Its props take precedence over inject, so they are
+		     supplied here.
+
+		     `v-bind="route.params"` is required with the v-slot form: the route
+		     records set `props: true`, but vue-router only applies that itself when
+		     it owns the rendering. Without it SecretRequestFill gets no `token`. -->
+		<router-view v-slot="{ Component, route }">
+			<component
+				:is="Component"
+				v-bind="route.params"
+				:manifest="manifest"
+				:customComponents="customComponents"
+				:pageTypes="pageTypes"
+				:translate="translateForApp" />
+		</router-view>
+	</div>
+
+	<div v-else class="doriath-shell">
 		<!-- Stale-data banner (offline-readonly-cache §4.3): shown whenever the
 		     vault is being served from the offline cache. -->
 		<div
@@ -152,7 +191,7 @@
 										@click="handleRevoke">
 										{{
 											revoking
-												? t('doriath', 'Revoking...')
+												? t('doriath', 'Revoking…')
 												: t('doriath', 'Confirm revocation')
 										}}
 									</NcButton>
@@ -366,6 +405,28 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether this page is being served to an anonymous recipient.
+		 *
+		 * Selects the shell-free layout. Decided from the URL for the same reason
+		 * `showSupportDialog` is: the value is needed on the very first render, and
+		 * `$route` is not resolved yet at that point — a computed keyed on
+		 * `$route.name` reads undefined exactly when it matters, which is the bug
+		 * the support-note fix already walked into once.
+		 *
+		 * Failing "public" is the safe direction here: an authenticated user
+		 * mis-detected as public would lose their navigation, which is visible and
+		 * reported immediately. The reverse — a stranger served the full app nav —
+		 * is what shipped unnoticed until it was measured in a browser.
+		 *
+		 * @return {boolean} True on the anonymous recipient surfaces.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+		 */
+		isPublicPage() {
+			return isPublicSurface(window.location)
+		},
+
 		/**
 		 * Whether the first-open support note may be shown.
 		 *

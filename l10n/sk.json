@@ -401,7 +401,9 @@
         "Copy fill link": "Kopírovať odkaz na vyplnenie",
         "Link copied": "Odkaz skopírovaný",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Táto stránka vyžaduje zabezpečené pripojenie (https://), pretože vaša hodnota sa šifruje v prehliadači pred odoslaním.",
-        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otvorte rovnaký odkaz začínajúci na https://. Ak to stále nefunguje, zeptajte sa toho, kto vám ho poslal."
+        "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otvorte rovnaký odkaz začínajúci na https://. Ak to stále nefunguje, zeptajte sa toho, kto vám ho poslal.",
+        "This request could not be found.": "Táto žiadosť sa nenašla.",
+        "Revoking…": "Ruší sa…"
     },
     "plurals": null
 }

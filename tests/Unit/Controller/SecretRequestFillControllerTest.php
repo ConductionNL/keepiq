@@ -25,6 +25,7 @@ use OCA\Doriath\Controller\SecretRequestFillController;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Doriath\Service\SecretRequestPolicy;
 use OCA\Doriath\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -149,6 +150,34 @@ class SecretRequestFillControllerTest extends TestCase {
 		$this->assertSame(expected: 'Request expired', actual: $response->getData()['message']);
 
 	}//end testShowReturnsTheCodedErrorForExpiredOrFulfilled()
+
+	/**
+	 * A refusal carries a machine-readable reason, not only English prose.
+	 *
+	 * The recipient is a stranger reading this page in one of 37 locales. `message`
+	 * is composed server-side in English, so it is the wrong thing for the page to
+	 * render — measured in a browser on 2026-08-19: a real expired link showed
+	 * "Request has expired" while the translated string sat unreachable in
+	 * SecretRequestFill.vue. `reason` is what makes the translation reachable.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testShowIncludesAMachineReadableReasonOnRefusal(): void {
+		$this->secretRequestService->method('getByToken')->willThrowException(
+			new InvalidArgumentException(message: 'Request has expired', code: 408)
+		);
+		$this->secretRequestService->expects($this->once())
+			->method('refusalReason')
+			->with('tok-1')
+			->willReturn(SecretRequestPolicy::REASON_EXPIRED);
+
+		$data = $this->controller->show(token: 'tok-1')->getData();
+
+		$this->assertSame(SecretRequestPolicy::REASON_EXPIRED, $data['reason']);
+		$this->assertSame('Request has expired', $data['message'], 'the message stays for API callers');
+	}//end testShowIncludesAMachineReadableReasonOnRefusal()
 
 	/**
 	 * Show falls back to a uniform 404 on any generic throwable.
