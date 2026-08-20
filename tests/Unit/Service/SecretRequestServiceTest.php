@@ -30,6 +30,7 @@ use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Exception\ForbiddenException;
 use OCA\Doriath\Service\NotificationService;
+use OCA\Doriath\Service\SecretPlaceholderCleaner;
 use OCA\Doriath\Service\SecretRequestOutbox;
 use OCA\Doriath\Service\SecretRequestPolicy;
 use OCA\Doriath\Service\SecretRequestService;
@@ -115,6 +116,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->suiteLockService = new SecretRequestSuiteLockService(
@@ -433,6 +435,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		// The linked Secret, user-owned.
@@ -504,6 +507,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$result = $service->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
@@ -543,6 +547,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -664,6 +669,27 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testAdditionalMembersAreSatisfiedByTheBlobAlone()
 
 	/**
+	 * Build the placeholder cleaner the service delegates removal to.
+	 *
+	 * A REAL cleaner over the same mocks, not a stub: the placeholder decisions these
+	 * tests assert on (empty vs filled, which vault's delete path) live in it now, and
+	 * stubbing it would let those assertions pass without exercising anything.
+	 *
+	 * Its logger is its own mock rather than the caller's, so a test that sets
+	 * expectations on the service's logger is not disturbed by the cleaner's
+	 * fail-soft logging.
+	 *
+	 * @return SecretPlaceholderCleaner
+	 */
+	private function makeCleaner(): SecretPlaceholderCleaner {
+		return new SecretPlaceholderCleaner(
+			secretMapper: $this->secretMapper,
+			logger: $this->createMock(LoggerInterface::class),
+			container: $this->container,
+		);
+	}//end makeCleaner()
+
+	/**
 	 * Build a service wired for the fill tests.
 	 *
 	 * @return SecretRequestService
@@ -677,6 +703,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 	}//end makeFillService()
 
@@ -717,6 +744,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		try {
@@ -838,6 +866,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$result = $service->listBySecret(secretId: 'sec-1', userId: 'owner');
@@ -868,6 +897,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -894,6 +924,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -963,6 +994,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $writeLock,
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -1011,6 +1043,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $writeLock,
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(ForbiddenException::class);
@@ -1061,6 +1094,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$result = $service->createForApplication(
@@ -1101,6 +1135,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1160,6 +1195,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$result = $service->createReRequest(
@@ -1202,6 +1238,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1250,6 +1287,7 @@ class SecretRequestServiceTest extends TestCase {
 			writeLockService: $this->createMock(WriteLockService::class),
 			secretMapper: $this->secretMapper,
 			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
 		);
 
 		$this->expectException(InvalidArgumentException::class);
@@ -1495,6 +1533,8 @@ class SecretRequestServiceTest extends TestCase {
 	public function testExpireDeletesThePlaceholderAndAttributesTheSystem(): void {
 		$entity = $this->makePending('req-exp', 'sec-empty');
 		$entity->setExpiresAt(new DateTime('-1 day'));
+		// expire() now transitions conditionally; the DB says it was still pending.
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 		$this->mapper->method('update')->willReturnArgument(0);
 
 		$empty = new Secret();
@@ -1524,6 +1564,8 @@ class SecretRequestServiceTest extends TestCase {
 	public function testExpireNeverDeletesAFilledSecret(): void {
 		$entity = $this->makePending('req-exp2', 'sec-filled');
 		$entity->setExpiresAt(new DateTime('-1 day'));
+		// expire() now transitions conditionally; the DB says it was still pending.
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 		$this->mapper->method('update')->willReturnArgument(0);
 
 		$filled = new Secret();
@@ -1799,6 +1841,8 @@ class SecretRequestServiceTest extends TestCase {
 	public function testExpireNeverDeletesASecretHoldingOnlyALogin(): void {
 		$entity = $this->makePending('req-exp-login', 'sec-exp-login');
 		$entity->setExpiresAt(new DateTime('-1 day'));
+		// expire() now transitions conditionally; the DB says it was still pending.
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 		$this->mapper->method('update')->willReturnArgument(0);
 
 		$secret = $this->keylessSecret('sec-exp-login');
@@ -1812,5 +1856,113 @@ class SecretRequestServiceTest extends TestCase {
 			$this->service->expire(request: $entity)->getStatus()
 		);
 	}//end testExpireNeverDeletesASecretHoldingOnlyALogin()
+
+	/**
+	 * Expiry deletes an APPLICATION-owned placeholder too.
+	 *
+	 * Reported on PR #282. The cleanup was routed through the user-only path, whose
+	 * gate is `owner_type === 'user'`, so an application placeholder could never be
+	 * reached — and `expire()` compounded it by passing the request's `created_by`
+	 * (`application:<id>`, never a user id) as the owner to match against.
+	 *
+	 * This is precisely what the job exists for: its own docblock says abandoned
+	 * application requests "accumulated empty Secrets in application vaults with
+	 * nothing to clean them up". Nothing did.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpiryDeletesAnApplicationOwnedPlaceholder(): void {
+		$entity = $this->makePending('req-app', 'sec-app-empty');
+		$entity->setCreatedBy('application:app-1');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->method('transitionIfPending')->willReturn(true);
+
+		$secret = new Secret();
+		$secret->setId('sec-app-empty');
+		$secret->setKey('');
+		$secret->setOwnerType('application');
+		$secret->setOwnerId('app-1');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->once())
+			->method('deleteByApplication')
+			->with('sec-app-empty', 'app-1');
+		$this->secretService->expects($this->never())->method('delete');
+
+		$this->service->expire(request: $entity);
+	}//end testExpiryDeletesAnApplicationOwnedPlaceholder()
+
+	/**
+	 * A user-owned placeholder still goes through the user path.
+	 *
+	 * The counterpart, so branching on the Secret's owner type cannot fix the
+	 * application case by breaking the one that already worked.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testExpiryStillDeletesAUserOwnedPlaceholder(): void {
+		$entity = $this->makePending('req-user', 'sec-user-empty');
+		$entity->setCreatedBy('alice');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->method('transitionIfPending')->willReturn(true);
+
+		$secret = new Secret();
+		$secret->setId('sec-user-empty');
+		$secret->setKey('');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretService->expects($this->once())
+			->method('delete')
+			->with('sec-user-empty', 'alice');
+		$this->secretService->expects($this->never())->method('deleteByApplication');
+
+		$this->service->expire(request: $entity);
+	}//end testExpiryStillDeletesAUserOwnedPlaceholder()
+
+	/**
+	 * A request filled after the job selected it is NOT overwritten.
+	 *
+	 * Reported on PR #282. `findLapsedPending()` hands the job entities that may sit
+	 * in memory for a whole 500-item batch, and QBMapper::update() writes
+	 * `WHERE id = ?` with no status guard — so a recipient fulfilling in between had
+	 * `fulfilled` replaced by `expired`.
+	 *
+	 * The values themselves survive (fill persists them BEFORE flipping the status),
+	 * which makes the damage subtler rather than smaller: the row ends up expired
+	 * with `fulfilled_at` still set, so the requester is told their request lapsed
+	 * while the credential is sitting in their vault.
+	 *
+	 * The conditional transition reports that it changed nothing, and nothing
+	 * downstream may then run — no placeholder delete, no audit event claiming an
+	 * expiry that did not happen.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function testARequestFilledDuringTheSweepIsNotOverwritten(): void {
+		// The in-memory entity still says pending, exactly as the job would hold it.
+		$entity = $this->makePending('req-raced', 'sec-raced');
+		$entity->setExpiresAt(new DateTime('-1 day'));
+
+		// The database disagrees: somebody filled it in the meantime.
+		$this->mapper->method('transitionIfPending')->willReturn(false);
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretService->expects($this->never())->method('delete');
+		$this->secretService->expects($this->never())->method('deleteByApplication');
+
+		$this->assertNull(
+			$this->service->expire(request: $entity),
+			'a request that did not transition must not be reported as expired'
+		);
+	}//end testARequestFilledDuringTheSweepIsNotOverwritten()
 
 }//end class
