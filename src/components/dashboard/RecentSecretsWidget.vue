@@ -4,17 +4,34 @@
 		<div v-if="loading" class="recent-secrets-widget__row">
 			{{ t('doriath', 'Loading…') }}
 		</div>
-		<div v-else-if="secrets.length === 0" class="recent-secrets-widget__row recent-secrets-widget__row--empty">
+		<div
+			v-else-if="secrets.length === 0"
+			class="recent-secrets-widget__row recent-secrets-widget__row--empty">
 			{{ t('doriath', 'No secrets accessed yet') }}
 		</div>
 		<ul v-else class="recent-secrets-widget__list">
 			<li
 				v-for="secret in secrets"
 				:key="secret.id"
-				class="recent-secrets-widget__item"
-				@click="open(secret)">
-				<span class="recent-secrets-widget__icon" :data-type="secret.type" />
-				<span class="recent-secrets-widget__name">{{ secret.name }}</span>
+				class="recent-secrets-widget__item">
+				<!--
+					The row is a real <button>: a bare @click on the <li> was
+					unreachable by keyboard and announced as a plain list item.
+					Using the element that already carries the role, focus and
+					Enter/Space handling beats bolting role/tabindex/@keydown
+					onto a non-interactive tag.
+				-->
+				<button
+					type="button"
+					class="recent-secrets-widget__button"
+					@click="open(secret)">
+					<span
+						class="recent-secrets-widget__icon"
+						:data-type="secret.type" />
+					<span class="recent-secrets-widget__name">{{
+						secret.name
+					}}</span>
+				</button>
 			</li>
 		</ul>
 	</div>
@@ -41,10 +58,14 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/secrets'), {
-				params: { limit: 5, sort: 'last_accessed_at:desc' },
-			})
-			const list = response.data.secrets || response.data.results || response.data || []
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/secrets'),
+				{
+					params: { limit: 5, sort: 'last_accessed_at:desc' },
+				},
+			)
+			const list =
+				response.data.secrets || response.data.results || response.data || []
 			this.secrets = Array.isArray(list) ? list.slice(0, 5) : []
 		} catch (e) {
 			console.warn('Doriath: failed to load recent secrets', e)
@@ -64,9 +85,14 @@ export default {
 		 */
 		open(secret) {
 			if (this.$router) {
-				this.$router.push({ name: 'secret-detail', params: { id: secret.id } })
+				this.$router.push({
+					name: 'secret-detail',
+					params: { id: secret.id },
+				})
 			} else {
-				window.location.href = generateUrl(`/apps/doriath/secrets/${secret.id}`)
+				window.location.href = generateUrl(
+					`/apps/doriath/secrets/${secret.id}`,
+				)
 			}
 		},
 	},
@@ -80,31 +106,57 @@ export default {
 	border-radius: var(--border-radius-large);
 	padding: 1rem;
 }
+
 .recent-secrets-widget h3 {
 	margin: 0 0 0.5rem 0;
 	font-size: 1rem;
 }
+
 .recent-secrets-widget__list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
+
 .recent-secrets-widget__item {
+	display: block;
+}
+
+/*
+ * The row button carries the layout the <li> used to own, and resets the
+ * default button chrome so the visual result is unchanged from before.
+ */
+.recent-secrets-widget__button {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	padding: 6px 0;
 	cursor: pointer;
+	width: 100%;
+	background: none;
+	border: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-align: left;
 }
-.recent-secrets-widget__item:hover {
+
+.recent-secrets-widget__button:hover {
 	background: var(--color-background-hover);
 }
+
+.recent-secrets-widget__button:focus-visible {
+	outline: 2px solid var(--color-primary-element);
+	outline-offset: -2px;
+}
+
 .recent-secrets-widget__icon {
 	width: 12px;
 	height: 12px;
 	background: var(--color-primary-element);
 	border-radius: 50%;
 }
+
 .recent-secrets-widget__row--empty {
 	color: var(--color-text-lighter);
 }

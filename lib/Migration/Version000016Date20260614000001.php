@@ -41,66 +41,60 @@ use OCP\Migration\SimpleMigrationStep;
  * password-health feature reads it client-side to flag stale credentials; the
  * server never decrypts to maintain it (password-health design D4).
  */
-class Version000016Date20260614000001 extends SimpleMigrationStep
-{
-    /**
-     * Constructor.
-     *
-     * @param IDBConnection $connection The database connection (post-schema backfill)
-     *
-     * @return void
-     */
-    public function __construct(private IDBConnection $connection)
-    {
-    }//end __construct()
+class Version000016Date20260614000001 extends SimpleMigrationStep {
+	/**
+	 * Constructor.
+	 *
+	 * @param IDBConnection $connection The database connection (post-schema backfill)
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private IDBConnection $connection,
+	) {
+	}//end __construct()
 
-    /**
-     * Add the key_updated_at column.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+	/**
+	 * Add the key_updated_at column.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_secrets') === false) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_secrets') === false) {
+			return null;
+		}
 
-        $table = $schema->getTable('doriath_secrets');
-        if ($table->hasColumn('key_updated_at') === true) {
-            return null;
-        }
+		$table = $schema->getTable('doriath_secrets');
+		if ($table->hasColumn('key_updated_at') === true) {
+			return null;
+		}
 
-        $table->addColumn('key_updated_at', Types::DATETIME, ['notnull' => false]);
+		$table->addColumn('key_updated_at', Types::DATETIME, ['notnull' => false]);
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 
-    /**
-     * Backfill key_updated_at from updated_at for existing rows.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
-        $qb = $this->connection->getQueryBuilder();
-        $qb->update('doriath_secrets')
-            ->set('key_updated_at', 'updated_at')
-            ->where($qb->expr()->isNull('key_updated_at'));
-        $qb->executeStatement();
-    }//end postSchemaChange()
+	/**
+	 * Backfill key_updated_at from updated_at for existing rows.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return void
+	 */
+	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
+		$qb = $this->connection->getQueryBuilder();
+		$qb->update('doriath_secrets')
+			->set('key_updated_at', 'updated_at')
+			->where($qb->expr()->isNull('key_updated_at'));
+		$qb->executeStatement();
+	}//end postSchemaChange()
 }//end class

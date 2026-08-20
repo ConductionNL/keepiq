@@ -69,8 +69,17 @@ describe('useAuditStore', () => {
 	describe('fetchAllAdminForExport', () => {
 		it('paginates through every page and accumulates rows', async () => {
 			const spy = vi.spyOn(axios, 'get')
-			spy.mockResolvedValueOnce({ data: { entries: [{ id: 1 }, { id: 2 }], total: 3, page: 1, limit: 2 } })
-			spy.mockResolvedValueOnce({ data: { entries: [{ id: 3 }], total: 3, page: 2, limit: 2 } })
+			spy.mockResolvedValueOnce({
+				data: {
+					entries: [{ id: 1 }, { id: 2 }],
+					total: 3,
+					page: 1,
+					limit: 2,
+				},
+			})
+			spy.mockResolvedValueOnce({
+				data: { entries: [{ id: 3 }], total: 3, page: 2, limit: 2 },
+			})
 
 			const store = useAuditStore()
 			store.adminLimit = 2

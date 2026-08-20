@@ -19,16 +19,23 @@
 -->
 <template>
 	<div class="application-detail" data-testid="application-detail">
-		<NcButton type="tertiary" class="application-detail__back" @click="goBack">
+		<NcButton
+			variant="tertiary"
+			class="application-detail__back"
+			@click="goBack">
 			<template #icon>
 				<ArrowLeft :size="20" />
 			</template>
 			{{ t('doriath', 'Back to applications') }}
 		</NcButton>
 
-		<NcLoadingIcon v-if="loading" :size="32" class="application-detail__loading" />
+		<NcLoadingIcon
+			v-if="loading"
+			:size="32"
+			class="application-detail__loading" />
 
-		<NcEmptyContent v-else-if="error"
+		<NcEmptyContent
+			v-else-if="error"
 			:name="t('doriath', 'Cannot open application')"
 			:description="error">
 			<template #icon>
@@ -40,11 +47,15 @@
 			<header class="application-detail__header">
 				<h2 class="application-detail__title">
 					{{ application.name }}
-					<span class="application-detail__status" :class="`application-detail__status--${application.status}`">
+					<span
+						class="application-detail__status"
+						:class="`application-detail__status--${application.status}`">
 						{{ statusLabel }}
 					</span>
 				</h2>
-				<p v-if="application.description" class="application-detail__description">
+				<p
+					v-if="application.description"
+					class="application-detail__description">
 					{{ application.description }}
 				</p>
 			</header>
@@ -55,7 +66,9 @@
 					<dd>{{ application.type }}</dd>
 
 					<dt>{{ t('doriath', 'Registered by') }}</dt>
-					<dd>{{ application.registered_by || t('doriath', 'anonymous') }}</dd>
+					<dd>
+						{{ application.registered_by || t('doriath', 'anonymous') }}
+					</dd>
 
 					<dt v-if="application.approved_by">
 						{{ t('doriath', 'Approved by') }}
@@ -82,26 +95,41 @@
 					{{ t('doriath', 'Loading certificate…') }}
 				</p>
 				<NcNoteCard v-else-if="!certificate" type="warning">
-					{{ t('doriath', 'No active encryption suite for this application.') }}
+					{{
+						t(
+							'doriath',
+							'No active encryption suite for this application.',
+						)
+					}}
 				</NcNoteCard>
 				<template v-else>
 					<p class="application-detail__suite-status">
-						{{ t('doriath', 'Certificate active. The application decrypts secrets with its private key.') }}
+						{{
+							t(
+								'doriath',
+								'Certificate active. The application decrypts secrets with its private key.',
+							)
+						}}
 					</p>
 					<details class="application-detail__cert">
 						<summary>{{ t('doriath', 'Show certificate') }}</summary>
-						<pre class="application-detail__cert-pem">{{ certificate }}</pre>
+						<pre class="application-detail__cert-pem">{{
+							certificate
+						}}</pre>
 					</details>
 				</template>
 			</section>
 
 			<ApplicationSecretsPanel
-				:application-id="application.id"
-				:application-active="application.status === 'active'"
-				@write-secret="openWriteDialog" />
+				:applicationId="application.id"
+				:applicationActive="application.status === 'active'"
+				@writeSecret="openWriteDialog" />
+
+			<ApplicationLeasesPanel :applicationId="application.id" />
 
 			<section v-if="canDelete" class="application-detail__actions">
-				<NcButton type="error"
+				<NcButton
+					variant="error"
 					data-testid="delete-button"
 					@click="confirmDelete">
 					{{ t('doriath', 'Delete application') }}
@@ -109,25 +137,31 @@
 			</section>
 		</div>
 
-		<WriteSecretForAppDialog v-if="writeDialogOpen"
+		<WriteSecretForAppDialog
+			v-if="writeDialogOpen"
 			:open="writeDialogOpen"
-			:application-id="application?.id"
-			:application-name="application?.name"
+			:applicationId="application?.id"
+			:applicationName="application?.name"
 			@close="closeWriteDialog"
 			@written="onSecretWritten" />
+
+		<ApplicationDeleteDialog
+			v-if="deleteDialogOpen"
+			:open="deleteDialogOpen"
+			@close="deleteDialogOpen = false"
+			@confirm="performDelete" />
 	</div>
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
-import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
-import { useApplicationStore } from '../store/modules/application.js'
+import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
+import ApplicationLeasesPanel from '../components/application/ApplicationLeasesPanel.vue'
 import ApplicationSecretsPanel from '../components/application/ApplicationSecretsPanel.vue'
-import WriteSecretForAppDialog from '../components/application/WriteSecretForAppDialog.vue'
+import ApplicationDeleteDialog from '../dialogs/ApplicationDeleteDialog.vue'
+import WriteSecretForAppDialog from '../dialogs/WriteSecretForAppDialog.vue'
+import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
 	name: 'ApplicationDetail',
@@ -140,7 +174,9 @@ export default {
 		ArrowLeft,
 		AlertCircleOutline,
 		ApplicationSecretsPanel,
+		ApplicationLeasesPanel,
 		WriteSecretForAppDialog,
+		ApplicationDeleteDialog,
 	},
 
 	props: {
@@ -157,6 +193,7 @@ export default {
 			suiteLoading: false,
 			certificate: '',
 			writeDialogOpen: false,
+			deleteDialogOpen: false,
 		}
 	},
 
@@ -164,24 +201,28 @@ export default {
 		store() {
 			return useApplicationStore()
 		},
+
 		application() {
 			return this.store.currentApplication
 		},
+
 		statusLabel() {
 			switch (this.application?.status) {
-			case 'active':
-				return this.t('doriath', 'Active')
-			case 'pending':
-				return this.t('doriath', 'Pending')
-			default:
-				return this.application?.status || ''
+				case 'active':
+					return this.t('doriath', 'Active')
+				case 'pending':
+					return this.t('doriath', 'Pending')
+				default:
+					return this.application?.status || ''
 			}
 		},
+
 		canDelete() {
 			// Server enforces admin-only delete; the button is only
 			// rendered when the row is visible to the current user.
 			return this.application?.status !== undefined
 		},
+
 		routeId() {
 			return this.id || this.$route?.params?.id || ''
 		},
@@ -206,7 +247,10 @@ export default {
 				await this.store.fetchApplication(id)
 				await this.loadCertificate(id)
 			} catch (e) {
-				this.error = e?.response?.data?.message ?? e?.message ?? this.t('doriath', 'Unknown error')
+				this.error =
+					e?.response?.data?.message
+					?? e?.message
+					?? this.t('doriath', 'Unknown error')
 			} finally {
 				this.loading = false
 			}
@@ -256,25 +300,41 @@ export default {
 			this.writeDialogOpen = false
 			// Panel re-fetches its own list via the @written bridge.
 			this.$nextTick(() => {
-				const panel = this.$el?.querySelector('[data-testid="application-secrets-panel"]')
+				const panel = this.$el?.querySelector(
+					'[data-testid="application-secrets-panel"]',
+				)
 				if (panel && typeof panel.refresh === 'function') {
 					panel.refresh()
 				}
 			})
 		},
 
-		async confirmDelete() {
-			// eslint-disable-next-line no-alert
-			if (typeof window !== 'undefined' && !window.confirm(this.t('doriath', 'Delete this application? This cascades to its secrets.'))) {
-				return
-			}
+		/**
+		 * Open the confirmation dialog. The delete itself is performDelete().
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+		 */
+		confirmDelete() {
+			this.deleteDialogOpen = true
+		},
+
+		/**
+		 * Perform the delete once the user has confirmed in the dialog.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+		 */
+		async performDelete() {
+			this.deleteDialogOpen = false
 			try {
 				await this.store.deleteApplication(this.application.id)
 				if (this.$router) {
 					this.$router.push({ name: 'ApplicationRegister' })
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.message ?? e?.message ?? this.t('doriath', 'Delete failed')
+				this.error =
+					e?.response?.data?.message
+					?? e?.message
+					?? this.t('doriath', 'Delete failed')
 			}
 		},
 	},
@@ -312,12 +372,12 @@ export default {
 
 .application-detail__status--active {
 	background: var(--color-success);
-	color: white;
+	color: var(--color-success-text);
 }
 
 .application-detail__status--pending {
 	background: var(--color-warning);
-	color: white;
+	color: var(--color-warning-text);
 }
 
 .application-detail__description {

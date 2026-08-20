@@ -28,6 +28,5 @@ use RuntimeException;
 /**
  * Thrown when an operation conflicts with existing state.
  */
-class ConflictException extends RuntimeException
-{
+class ConflictException extends RuntimeException {
 }//end class

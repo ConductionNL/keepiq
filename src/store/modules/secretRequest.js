@@ -17,9 +17,9 @@
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-7.1
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 
 export const useSecretRequestStore = defineStore('secretRequest', {
@@ -41,7 +41,8 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {object} state The store state.
 		 * @return {number}
 		 */
-		pendingCount: (state) => state.secretRequests.filter((r) => r.status === 'pending').length,
+		pendingCount: (state) =>
+			state.secretRequests.filter((r) => r.status === 'pending').length,
 	},
 
 	actions: {
@@ -59,7 +60,10 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				)
 				this.secretRequests = response.data || []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load requests'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load requests'
 				throw e
 			} finally {
 				this.loading = false
@@ -77,6 +81,18 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string|null} [payload.expiresAt] Optional ISO-8601 expiry.
 		 * @return {Promise<object>}
 		 */
+		/**
+		 * Create a secret request.
+		 *
+		 * A FRESH request omits secretId and encryptionSuiteId: the server creates
+		 * the placeholder Secret and derives the suite from it.
+		 *
+		 * @param {object} payload The request fields.
+		 *
+		 * @return {Promise<object>} The created request.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 */
 		async createRequest(payload) {
 			this.loading = true
 			this.error = null
@@ -84,17 +100,25 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				const response = await axios.post(
 					generateUrl('/apps/doriath/api/v1/secret-requests'),
 					{
-						secretId: payload.secretId,
-						encryptionSuiteId: payload.encryptionSuiteId,
+						// A FRESH request omits secretId and encryptionSuiteId: the
+						// server creates the placeholder Secret and derives the suite
+						// from it, so the client has nothing to point at or look up.
+						secretId: payload.secretId || '',
+						encryptionSuiteId: payload.encryptionSuiteId || '',
 						requestedFields: payload.requestedFields,
 						isReRequest: payload.isReRequest === true,
 						expiresAt: payload.expiresAt || null,
+						name: payload.name || null,
+						folderId: payload.folderId || null,
 					},
 				)
 				this.secretRequests.unshift(response.data)
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to create request'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to create request'
 				throw e
 			} finally {
 				this.loading = false
@@ -110,7 +134,12 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string|null}   [expiresAt]  Optional ISO-8601 expiry.
 		 * @return {Promise<object>}
 		 */
-		async createReRequest(secretId, encryptionSuiteId, requestedFields, expiresAt = null) {
+		async createReRequest(
+			secretId,
+			encryptionSuiteId,
+			requestedFields,
+			expiresAt = null,
+		) {
 			return this.createRequest({
 				secretId,
 				encryptionSuiteId,
@@ -133,9 +162,14 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				await axios.delete(
 					generateUrl(`/apps/doriath/api/v1/secret-requests/${requestId}`),
 				)
-				this.secretRequests = this.secretRequests.filter((r) => r.id !== requestId)
+				this.secretRequests = this.secretRequests.filter(
+					(r) => r.id !== requestId,
+				)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to revoke request'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to revoke request'
 				throw e
 			} finally {
 				this.loading = false
@@ -156,12 +190,17 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/public/secret-requests/${token}`),
+					generateUrl(
+						`/apps/doriath/api/v1/public/secret-requests/${token}`,
+					),
 				)
 				this.publicRequest = response.data
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to load request'
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to load request'
 				throw e
 			} finally {
 				this.loading = false
@@ -171,13 +210,19 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		/**
 		 * Phase 2 (recipient): encrypt the plaintext field map and submit it.
 		 *
-		 * The server NEVER sees plaintext. Each value is encrypted with
-		 * RSA-OAEP-SHA256 against the recipient's public certificate before
-		 * the POST.
+		 * The server never sees a plaintext SECRET value: `key`, `login` and
+		 * every additional member are encrypted with RSA-OAEP-SHA256 against
+		 * the requester's certificate before the POST.
+		 *
+		 * `url` is the exception, and deliberately so — it is plaintext
+		 * searchable metadata per the secrets spec, so it is submitted in its
+		 * own `plainFields` bucket. Encrypting it would put ciphertext in a
+		 * searchable column.
 		 *
 		 * @param {string}                  token  The opaque request token.
 		 * @param {Record<string,string>}   fields The plaintext field map.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		async submitFill(token, fields) {
 			if (this.publicRequest == null || this.publicRequest.token !== token) {
@@ -189,18 +234,59 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			}
 			const publicKey = await importPublicKey(certificate)
 
+			// The field model (secret-requests spec, Requestable Fields):
+			//   key / login          -> their own ciphertext columns
+			//   url                  -> PLAINTEXT metadata, searchable
+			//   anything else        -> a member of the ONE encrypted
+			//                           additionalFields blob
+			//
+			// `url` must not be encrypted: the column is searchable plaintext,
+			// so ciphertext there breaks search and shows the owner base64.
+			const ENCRYPTED_FIELDS = ['key', 'login']
+			const PLAINTEXT_FIELDS = ['url']
+			const ADDITIONAL_BLOB = 'additionalFields'
+
 			const encryptedFields = {}
+			const plainFields = {}
+			const additionalMembers = {}
+
 			for (const [name, value] of Object.entries(fields)) {
 				if (value == null || value === '') {
 					throw new Error(`Field "${name}" is required`)
 				}
-				// eslint-disable-next-line no-await-in-loop
-				encryptedFields[name] = await rsaEncrypt(String(value), publicKey)
+
+				if (PLAINTEXT_FIELDS.includes(name)) {
+					plainFields[name] = String(value)
+					continue
+				}
+
+				if (ENCRYPTED_FIELDS.includes(name)) {
+					// eslint-disable-next-line no-await-in-loop
+					encryptedFields[name] = await rsaEncrypt(
+						String(value),
+						publicKey,
+					)
+					continue
+				}
+
+				// Collected and encrypted together below: the server stores one
+				// blob and cannot see inside it, so the members are assembled
+				// here rather than sent individually.
+				additionalMembers[name] = String(value)
+			}
+
+			if (Object.keys(additionalMembers).length > 0) {
+				encryptedFields[ADDITIONAL_BLOB] = await rsaEncrypt(
+					JSON.stringify(additionalMembers),
+					publicKey,
+				)
 			}
 
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/public/secret-requests/${token}/fill`),
-				{ encryptedFields },
+				generateUrl(
+					`/apps/doriath/api/v1/public/secret-requests/${token}/fill`,
+				),
+				{ encryptedFields, plainFields },
 			)
 			return response.data
 		},

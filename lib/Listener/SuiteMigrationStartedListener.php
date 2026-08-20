@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace OCA\Doriath\Listener;
 
 use OCA\Doriath\Event\SuiteMigrationStartedEvent;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Doriath\Service\SecretRequestSuiteLockService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -37,49 +37,47 @@ use Throwable;
  *
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-6.1
  */
-class SuiteMigrationStartedListener implements IEventListener
-{
-    /**
-     * Constructor.
-     *
-     * @param SecretRequestService $secretRequestService The SecretRequest service
-     * @param LoggerInterface      $logger               The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        private SecretRequestService $secretRequestService,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class SuiteMigrationStartedListener implements IEventListener {
+	/**
+	 * Constructor.
+	 *
+	 * @param SecretRequestSuiteLockService $secretRequestService The SecretRequest suite-lock service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private SecretRequestSuiteLockService $secretRequestService,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle the event.
-     *
-     * @param Event $event The event
-     *
-     * @return void
-     */
-    public function handle(Event $event): void
-    {
-        if (($event instanceof SuiteMigrationStartedEvent) === false) {
-            return;
-        }
+	/**
+	 * Handle the event.
+	 *
+	 * @param Event $event The event
+	 *
+	 * @return void
+	 */
+	public function handle(Event $event): void {
+		if (($event instanceof SuiteMigrationStartedEvent) === false) {
+			return;
+		}
 
-        try {
-            $locked = $this->secretRequestService->lockByEncryptionSuiteId($event->getOldSuiteId());
-            $this->logger->info(
-                'Doriath: locked SecretRequests for compromised suite',
-                [
-                    'oldSuiteId' => $event->getOldSuiteId(),
-                    'locked'     => $locked,
-                ]
-            );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'Doriath: SuiteMigrationStartedListener failed: '.$e->getMessage(),
-                ['exception' => $e]
-            );
-        }
-    }//end handle()
+		try {
+			$locked = $this->secretRequestService->lockByEncryptionSuiteId($event->getOldSuiteId());
+			$this->logger->info(
+				'Doriath: locked SecretRequests for compromised suite',
+				[
+					'oldSuiteId' => $event->getOldSuiteId(),
+					'locked' => $locked,
+				]
+			);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'Doriath: SuiteMigrationStartedListener failed: ' . $e->getMessage(),
+				['exception' => $e]
+			);
+		}
+	}//end handle()
 }//end class

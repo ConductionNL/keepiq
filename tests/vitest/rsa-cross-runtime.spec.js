@@ -37,7 +37,12 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest'
-import { privateDecrypt, constants, createPrivateKey, generateKeyPairSync } from 'node:crypto'
+import {
+	privateDecrypt,
+	constants,
+	createPrivateKey,
+	generateKeyPairSync,
+} from 'node:crypto'
 import { importPublicKey, rsaEncrypt } from '../../src/crypto/rsa.js'
 
 const RSA_BLOCK_SIZE = 512
@@ -75,7 +80,10 @@ function decryptViaOpenssl(ciphertextB64, privateKeyPem) {
 
 	const recovered = []
 	for (let i = 0; i < chunkCount; i++) {
-		const block = raw.subarray(4 + i * RSA_BLOCK_SIZE, 4 + (i + 1) * RSA_BLOCK_SIZE)
+		const block = raw.subarray(
+			4 + i * RSA_BLOCK_SIZE,
+			4 + (i + 1) * RSA_BLOCK_SIZE,
+		)
 		const plain = privateDecrypt(
 			{
 				key,

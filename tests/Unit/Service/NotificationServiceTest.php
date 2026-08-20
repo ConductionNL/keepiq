@@ -29,232 +29,223 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for NotificationService.
  */
-class NotificationServiceTest extends TestCase
-{
-    /**
-     * Mock notification manager.
-     *
-     * @var IManager
-     */
-    private IManager $manager;
+class NotificationServiceTest extends TestCase {
 
-    /**
-     * Mock config.
-     *
-     * @var IConfig
-     */
-    private IConfig $config;
+	/**
+	 * Mock notification manager.
+	 *
+	 * @var IManager
+	 */
+	private IManager $manager;
 
-    /**
-     * Service under test.
-     *
-     * @var NotificationService
-     */
-    private NotificationService $service;
+	/**
+	 * Mock config.
+	 *
+	 * @var IConfig
+	 */
+	private IConfig $config;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->manager = $this->createMock(originalClassName: IManager::class);
-        $this->config  = $this->createMock(originalClassName: IConfig::class);
-        $logger        = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->service = new NotificationService(
-            notificationManager: $this->manager,
-            config: $this->config,
-            logger: $logger,
-        );
-    }
+	/**
+	 * Service under test.
+	 *
+	 * @var NotificationService
+	 */
+	private NotificationService $service;
 
-    /**
-     * notify(): unknown subject returns false without dispatching.
-     *
-     * @return void
-     */
-    public function testNotifyUnknownSubjectReturnsFalse(): void
-    {
-        $this->manager->expects($this->never())->method('createNotification');
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->manager = $this->createMock(originalClassName: IManager::class);
+		$this->config = $this->createMock(originalClassName: IConfig::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$this->service = new NotificationService(
+			notificationManager: $this->manager,
+			config: $this->config,
+			logger: $logger,
+		);
+	}//end setUp()
 
-        $result = $this->service->notify(subject: 'mystery_subject', recipientId: 'alice');
+	/**
+	 * notify(): unknown subject returns false without dispatching.
+	 *
+	 * @return void
+	 */
+	public function testNotifyUnknownSubjectReturnsFalse(): void {
+		$this->manager->expects($this->never())->method('createNotification');
 
-        $this->assertFalse(condition: $result);
-    }
+		$result = $this->service->notify(subject: 'mystery_subject', recipientId: 'alice');
 
-    /**
-     * notify(): empty recipient short-circuits.
-     *
-     * @return void
-     */
-    public function testNotifyEmptyRecipientReturnsFalse(): void
-    {
-        $this->manager->expects($this->never())->method('createNotification');
+		$this->assertFalse(condition: $result);
+	}//end testNotifyUnknownSubjectReturnsFalse()
 
-        $this->assertFalse(condition: $this->service->notify(subject: 'secret_shared', recipientId: ''));
-    }
+	/**
+	 * notify(): empty recipient short-circuits.
+	 *
+	 * @return void
+	 */
+	public function testNotifyEmptyRecipientReturnsFalse(): void {
+		$this->manager->expects($this->never())->method('createNotification');
 
-    /**
-     * notify(): user opt-out suppresses dispatch.
-     *
-     * @return void
-     */
-    public function testNotifyOptedOutReturnsFalse(): void
-    {
-        $this->config
-            ->method('getUserValue')
-            ->with('alice', 'doriath', 'notify_shares', '1')
-            ->willReturn('0');
+		$this->assertFalse(condition: $this->service->notify(subject: 'secret_shared', recipientId: ''));
+	}//end testNotifyEmptyRecipientReturnsFalse()
 
-        $this->manager->expects($this->never())->method('createNotification');
+	/**
+	 * notify(): user opt-out suppresses dispatch.
+	 *
+	 * @return void
+	 */
+	public function testNotifyOptedOutReturnsFalse(): void {
+		$this->config
+			->method('getUserValue')
+			->with('alice', 'doriath', 'notify_shares', '1')
+			->willReturn('0');
 
-        $this->assertFalse(condition: $this->service->notify(subject: 'secret_shared', recipientId: 'alice'));
-    }
+		$this->manager->expects($this->never())->method('createNotification');
 
-    /**
-     * notify(): subjects with a null setting key bypass opt-out.
-     *
-     * @return void
-     */
-    public function testNotifyAppPendingBypassesOptOut(): void
-    {
-        $this->config->expects($this->never())->method('getUserValue');
+		$this->assertFalse(condition: $this->service->notify(subject: 'secret_shared', recipientId: 'alice'));
+	}//end testNotifyOptedOutReturnsFalse()
 
-        $notification = $this->createMock(originalClassName: INotification::class);
-        $notification->method('setApp')->willReturnSelf();
-        $notification->method('setUser')->willReturnSelf();
-        $notification->method('setDateTime')->willReturnSelf();
-        $notification->method('setObject')->willReturnSelf();
-        $notification->method('setSubject')->willReturnSelf();
+	/**
+	 * notify(): subjects with a null setting key bypass opt-out.
+	 *
+	 * @return void
+	 */
+	public function testNotifyAppPendingBypassesOptOut(): void {
+		$this->config->expects($this->never())->method('getUserValue');
 
-        $this->manager->method('createNotification')->willReturn($notification);
-        $this->manager->expects($this->once())->method('notify')->with($notification);
+		$notification = $this->createMock(originalClassName: INotification::class);
+		$notification->method('setApp')->willReturnSelf();
+		$notification->method('setUser')->willReturnSelf();
+		$notification->method('setDateTime')->willReturnSelf();
+		$notification->method('setObject')->willReturnSelf();
+		$notification->method('setSubject')->willReturnSelf();
 
-        $this->assertTrue(
-            condition: $this->service->notify(
-                subject: 'app_pending',
-                recipientId: 'admin',
-                params: ['app_name' => 'Foo', 'registered_by' => 'bar'],
-            )
-        );
-    }
+		$this->manager->method('createNotification')->willReturn($notification);
+		$this->manager->expects($this->once())->method('notify')->with($notification);
 
-    /**
-     * notify(): default opt-in (no stored value) delivers.
-     *
-     * @return void
-     */
-    public function testNotifyDefaultOptInDelivers(): void
-    {
-        $this->config
-            ->method('getUserValue')
-            ->with('alice', 'doriath', 'notify_shares', '1')
-            ->willReturn('1');
+		$this->assertTrue(
+			condition: $this->service->notify(
+				subject: 'app_pending',
+				recipientId: 'admin',
+				params: ['app_name' => 'Foo', 'registered_by' => 'bar'],
+			)
+		);
+	}//end testNotifyAppPendingBypassesOptOut()
 
-        $notification = $this->createMock(originalClassName: INotification::class);
-        $notification->method('setApp')->willReturnSelf();
-        $notification->method('setUser')->willReturnSelf();
-        $notification->method('setDateTime')->willReturnSelf();
-        $notification->method('setObject')->willReturnSelf();
-        $notification->method('setSubject')->willReturnSelf();
+	/**
+	 * notify(): default opt-in (no stored value) delivers.
+	 *
+	 * @return void
+	 */
+	public function testNotifyDefaultOptInDelivers(): void {
+		$this->config
+			->method('getUserValue')
+			->with('alice', 'doriath', 'notify_shares', '1')
+			->willReturn('1');
 
-        $this->manager->method('createNotification')->willReturn($notification);
-        $this->manager->expects($this->once())->method('notify')->with($notification);
+		$notification = $this->createMock(originalClassName: INotification::class);
+		$notification->method('setApp')->willReturnSelf();
+		$notification->method('setUser')->willReturnSelf();
+		$notification->method('setDateTime')->willReturnSelf();
+		$notification->method('setObject')->willReturnSelf();
+		$notification->method('setSubject')->willReturnSelf();
 
-        $this->assertTrue(
-            condition: $this->service->notify(
-                subject: 'secret_shared',
-                recipientId: 'alice',
-                params: ['secret_name' => 'GitHub', 'shared_by' => 'bob', 'secret_id' => 's-1'],
-                objectType: 'secret',
-                objectId: 's-1',
-            )
-        );
-    }
+		$this->manager->method('createNotification')->willReturn($notification);
+		$this->manager->expects($this->once())->method('notify')->with($notification);
 
-    /**
-     * §11.6 — request_fulfilled honours the notify_requests user pref.
-     * Each subject in SUBJECT_SETTING_MAP must consult its mapped pref
-     * key for opt-out; the matrix here locks the request_fulfilled row
-     * specifically (opt-out suppresses, default-opt-in delivers).
-     *
-     * @return void
-     */
-    public function testNotifyRequestFulfilledRespectsUserPreference(): void
-    {
-        // Opt-out path: notify_requests=0 -> dispatch suppressed.
-        $this->config
-            ->method('getUserValue')
-            ->with('alice', 'doriath', 'notify_requests', '1')
-            ->willReturn('0');
+		$this->assertTrue(
+			condition: $this->service->notify(
+				subject: 'secret_shared',
+				recipientId: 'alice',
+				params: ['secret_name' => 'GitHub', 'shared_by' => 'bob', 'secret_id' => 's-1'],
+				objectType: 'secret',
+				objectId: 's-1',
+			)
+		);
+	}//end testNotifyDefaultOptInDelivers()
 
-        $this->manager->expects($this->never())->method('createNotification');
+	/**
+	 * §11.6 — request_fulfilled honours the notify_requests user pref.
+	 * Each subject in SUBJECT_SETTING_MAP must consult its mapped pref
+	 * key for opt-out; the matrix here locks the request_fulfilled row
+	 * specifically (opt-out suppresses, default-opt-in delivers).
+	 *
+	 * @return void
+	 */
+	public function testNotifyRequestFulfilledRespectsUserPreference(): void {
+		// Opt-out path: notify_requests=0 -> dispatch suppressed.
+		$this->config
+			->method('getUserValue')
+			->with('alice', 'doriath', 'notify_requests', '1')
+			->willReturn('0');
 
-        $this->assertFalse(
-            condition: $this->service->notify(
-                subject: 'request_fulfilled',
-                recipientId: 'alice',
-                params: ['secretName' => 'GitHub'],
-                objectType: 'secret_request',
-                objectId: 'req-1',
-            )
-        );
-    }
+		$this->manager->expects($this->never())->method('createNotification');
 
-    /**
-     * §11.6 — request_fulfilled delivers when the pref is opted-in
-     * (default '1' returned when the user has not set the value).
-     *
-     * @return void
-     */
-    public function testNotifyRequestFulfilledDeliversWhenOptedIn(): void
-    {
-        $this->config
-            ->method('getUserValue')
-            ->with('alice', 'doriath', 'notify_requests', '1')
-            ->willReturn('1');
+		$this->assertFalse(
+			condition: $this->service->notify(
+				subject: 'request_fulfilled',
+				recipientId: 'alice',
+				params: ['secretName' => 'GitHub'],
+				objectType: 'secret_request',
+				objectId: 'req-1',
+			)
+		);
+	}//end testNotifyRequestFulfilledRespectsUserPreference()
 
-        $notification = $this->createMock(originalClassName: INotification::class);
-        $notification->method('setApp')->willReturnSelf();
-        $notification->method('setUser')->willReturnSelf();
-        $notification->method('setDateTime')->willReturnSelf();
-        $notification->method('setObject')->willReturnSelf();
-        $notification->method('setSubject')->willReturnSelf();
+	/**
+	 * §11.6 — request_fulfilled delivers when the pref is opted-in
+	 * (default '1' returned when the user has not set the value).
+	 *
+	 * @return void
+	 */
+	public function testNotifyRequestFulfilledDeliversWhenOptedIn(): void {
+		$this->config
+			->method('getUserValue')
+			->with('alice', 'doriath', 'notify_requests', '1')
+			->willReturn('1');
 
-        $this->manager->method('createNotification')->willReturn($notification);
-        $this->manager->expects($this->once())->method('notify')->with($notification);
+		$notification = $this->createMock(originalClassName: INotification::class);
+		$notification->method('setApp')->willReturnSelf();
+		$notification->method('setUser')->willReturnSelf();
+		$notification->method('setDateTime')->willReturnSelf();
+		$notification->method('setObject')->willReturnSelf();
+		$notification->method('setSubject')->willReturnSelf();
 
-        $this->assertTrue(
-            condition: $this->service->notify(
-                subject: 'request_fulfilled',
-                recipientId: 'alice',
-                params: ['secretName' => 'GitHub'],
-                objectType: 'secret_request',
-                objectId: 'req-1',
-            )
-        );
-    }
+		$this->manager->method('createNotification')->willReturn($notification);
+		$this->manager->expects($this->once())->method('notify')->with($notification);
 
-    /**
-     * SUBJECT_SETTING_MAP covers every spec'd subject.
-     *
-     * @return void
-     */
-    public function testSubjectSettingMapCoverage(): void
-    {
-        $expected = [
-            'secret_shared',
-            'share_request',
-            'share_request_result',
-            'group_member_added',
-            'secret_compromised',
-            'request_fulfilled',
-            'app_pending',
-        ];
+		$this->assertTrue(
+			condition: $this->service->notify(
+				subject: 'request_fulfilled',
+				recipientId: 'alice',
+				params: ['secretName' => 'GitHub'],
+				objectType: 'secret_request',
+				objectId: 'req-1',
+			)
+		);
+	}//end testNotifyRequestFulfilledDeliversWhenOptedIn()
 
-        foreach ($expected as $subject) {
-            $this->assertArrayHasKey(key: $subject, array: NotificationService::SUBJECT_SETTING_MAP);
-        }
-    }
-}
+	/**
+	 * SUBJECT_SETTING_MAP covers every spec'd subject.
+	 *
+	 * @return void
+	 */
+	public function testSubjectSettingMapCoverage(): void {
+		$expected = [
+			'secret_shared',
+			'share_request',
+			'share_request_result',
+			'group_member_added',
+			'secret_compromised',
+			'request_fulfilled',
+			'app_pending',
+		];
+
+		foreach ($expected as $subject) {
+			$this->assertArrayHasKey(key: $subject, array: NotificationService::SUBJECT_SETTING_MAP);
+		}
+	}//end testSubjectSettingMapCoverage()
+}//end class

@@ -32,158 +32,150 @@ use RuntimeException;
 /**
  * Tests for LinkShareAccessController.
  */
-class LinkShareAccessControllerTest extends TestCase
-{
-    /**
-     * The controller under test.
-     *
-     * @var LinkShareAccessController
-     */
-    private LinkShareAccessController $controller;
+class LinkShareAccessControllerTest extends TestCase {
 
-    /**
-     * The mocked link share service.
-     *
-     * @var LinkShareService&MockObject
-     */
-    private LinkShareService&MockObject $linkShareService;
+	/**
+	 * The controller under test.
+	 *
+	 * @var LinkShareAccessController
+	 */
+	private LinkShareAccessController $controller;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * The mocked link share service.
+	 *
+	 * @var LinkShareService&MockObject
+	 */
+	private LinkShareService&MockObject $linkShareService;
 
-        $request                = $this->createMock(originalClassName: IRequest::class);
-        $this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->controller = new LinkShareAccessController(
-            request: $request,
-            linkShareService: $this->linkShareService,
-        );
-    }
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
 
-    /**
-     * Build a LinkShare entity for assertions.
-     *
-     * @return LinkShare
-     */
-    private function makeShare(): LinkShare
-    {
-        $share = new LinkShare();
-        $share->setId('ls-1');
-        $share->setSecretId('secret-1');
-        $share->setToken('tok-1');
-        $share->setEncryptedSecretSnapshot('the-blob');
-        $share->setArgon2idSalt('the-salt');
-        $share->setUsageLimit(3);
-        $share->setUsageCount(1);
-        $share->setCreatedBy('alice');
-        $share->setCreatedAt(new DateTime());
+		$this->controller = new LinkShareAccessController(
+			request: $request,
+			linkShareService: $this->linkShareService,
+		);
+	}//end setUp()
 
-        return $share;
-    }
+	/**
+	 * Build a LinkShare entity for assertions.
+	 *
+	 * @return LinkShare
+	 */
+	private function makeShare(): LinkShare {
+		$share = new LinkShare();
+		$share->setId('ls-1');
+		$share->setSecretId('secret-1');
+		$share->setToken('tok-1');
+		$share->setEncryptedSecretSnapshot('the-blob');
+		$share->setArgon2idSalt('the-salt');
+		$share->setUsageLimit(3);
+		$share->setUsageCount(1);
+		$share->setCreatedBy('alice');
+		$share->setCreatedAt(new DateTime());
 
-    /**
-     * Test Phase 1 returns the blob and salt for a valid token.
-     *
-     * @return void
-     */
-    public function testShowReturnsBlobForValidToken(): void
-    {
-        $this->linkShareService->method('getByToken')->with('tok-1')->willReturn($this->makeShare());
+		return $share;
+	}//end makeShare()
 
-        $response = $this->controller->show('tok-1');
-        $data     = $response->getData();
+	/**
+	 * Test Phase 1 returns the blob and salt for a valid token.
+	 *
+	 * @return void
+	 */
+	public function testShowReturnsBlobForValidToken(): void {
+		$this->linkShareService->method('getByToken')->with('tok-1')->willReturn($this->makeShare());
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('the-blob', $data['encryptedSecretSnapshot']);
-        $this->assertSame('the-salt', $data['argon2idSalt']);
-        // Public payload must never leak owner identity.
-        $this->assertArrayNotHasKey('createdBy', $data);
-    }
+		$response = $this->controller->show('tok-1');
+		$data = $response->getData();
 
-    /**
-     * Test Phase 1 returns a uniform 404 for an invalid token.
-     *
-     * @return void
-     */
-    public function testShowReturnsNotFoundForInvalidToken(): void
-    {
-        $this->linkShareService->method('getByToken')
-            ->willThrowException(new RuntimeException('Link not found or expired'));
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('the-blob', $data['encryptedSecretSnapshot']);
+		$this->assertSame('the-salt', $data['argon2idSalt']);
+		// Public payload must never leak owner identity.
+		$this->assertArrayNotHasKey('createdBy', $data);
+	}//end testShowReturnsBlobForValidToken()
 
-        $response = $this->controller->show('missing');
+	/**
+	 * Test Phase 1 returns a uniform 404 for an invalid token.
+	 *
+	 * @return void
+	 */
+	public function testShowReturnsNotFoundForInvalidToken(): void {
+		$this->linkShareService->method('getByToken')
+			->willThrowException(new RuntimeException('Link not found or expired'));
 
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-        $this->assertSame('Link not found or expired', $response->getData()['message']);
-    }
+		$response = $this->controller->show('missing');
 
-    /**
-     * Test Phase 1 records a failed attempt when the browser reports failure.
-     *
-     * @return void
-     */
-    public function testShowRecordsFailedAttemptWhenReported(): void
-    {
-        $this->linkShareService->expects($this->once())
-            ->method('recordFailedAttempt')
-            ->with('tok-1');
-        $this->linkShareService->method('getByToken')->willReturn($this->makeShare());
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame('Link not found or expired', $response->getData()['message']);
+	}//end testShowReturnsNotFoundForInvalidToken()
 
-        $response = $this->controller->show('tok-1', '1');
+	/**
+	 * Test Phase 1 records a failed attempt when the browser reports failure.
+	 *
+	 * @return void
+	 */
+	public function testShowRecordsFailedAttemptWhenReported(): void {
+		$this->linkShareService->expects($this->once())
+			->method('recordFailedAttempt')
+			->with('tok-1');
+		$this->linkShareService->method('getByToken')->willReturn($this->makeShare());
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-    }
+		$response = $this->controller->show('tok-1', '1');
 
-    /**
-     * Test Phase 1 does NOT record a failed attempt on the first request.
-     *
-     * @return void
-     */
-    public function testShowDoesNotRecordFailureOnFirstRequest(): void
-    {
-        $this->linkShareService->expects($this->never())->method('recordFailedAttempt');
-        $this->linkShareService->method('getByToken')->willReturn($this->makeShare());
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testShowRecordsFailedAttemptWhenReported()
 
-        $this->controller->show('tok-1', '0');
-    }
+	/**
+	 * Test Phase 1 does NOT record a failed attempt on the first request.
+	 *
+	 * @return void
+	 */
+	public function testShowDoesNotRecordFailureOnFirstRequest(): void {
+		$this->linkShareService->expects($this->never())->method('recordFailedAttempt');
+		$this->linkShareService->method('getByToken')->willReturn($this->makeShare());
 
-    /**
-     * Test Phase 2 confirm increments usage and returns remaining count.
-     *
-     * @return void
-     */
-    public function testConfirmReturnsUsage(): void
-    {
-        $share = $this->makeShare();
-        $share->setUsageCount(2);
-        $this->linkShareService->method('confirmAccess')->with('tok-1')->willReturn($share);
+		$this->controller->show('tok-1', '0');
+	}//end testShowDoesNotRecordFailureOnFirstRequest()
 
-        $response = $this->controller->confirm('tok-1');
-        $data     = $response->getData();
+	/**
+	 * Test Phase 2 confirm increments usage and returns remaining count.
+	 *
+	 * @return void
+	 */
+	public function testConfirmReturnsUsage(): void {
+		$share = $this->makeShare();
+		$share->setUsageCount(2);
+		$this->linkShareService->method('confirmAccess')->with('tok-1')->willReturn($share);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame(2, $data['usageCount']);
-        $this->assertSame(3, $data['usageLimit']);
-        $this->assertSame(1, $data['remaining']);
-    }
+		$response = $this->controller->confirm('tok-1');
+		$data = $response->getData();
 
-    /**
-     * Test Phase 2 confirm returns 404 when the token is invalid or exhausted.
-     *
-     * @return void
-     */
-    public function testConfirmReturnsNotFound(): void
-    {
-        $this->linkShareService->method('confirmAccess')
-            ->willThrowException(new RuntimeException('Link not found or expired'));
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(2, $data['usageCount']);
+		$this->assertSame(3, $data['usageLimit']);
+		$this->assertSame(1, $data['remaining']);
+	}//end testConfirmReturnsUsage()
 
-        $response = $this->controller->confirm('missing');
+	/**
+	 * Test Phase 2 confirm returns 404 when the token is invalid or exhausted.
+	 *
+	 * @return void
+	 */
+	public function testConfirmReturnsNotFound(): void {
+		$this->linkShareService->method('confirmAccess')
+			->willThrowException(new RuntimeException('Link not found or expired'));
 
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }
-}
+		$response = $this->controller->confirm('missing');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testConfirmReturnsNotFound()
+}//end class

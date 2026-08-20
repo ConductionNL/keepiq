@@ -27,154 +27,301 @@
     / Encryption sections the previous MainMenu footer item did.
 -->
 <template>
-	<CnAppRoot
-		:manifest="manifest"
-		:custom-components="customComponents"
-		:page-types="pageTypes"
-		:registry="registry"
-		app-id="doriath"
-		:translate="translateForApp"
-		:permissions="permissions">
-		<!-- User-settings dialog body (opened from the manifest's
+	<!-- Public surface: a recipient with no account, holding a fill link.
+	     Rendered WITHOUT the app shell, because CnAppRoot's CnAppNav lists every
+	     page in the manifest — measured on 2026-08-19, an anonymous recipient was
+	     served "Dashboard, Vault, Password health, Certificates, Emergency access,
+	     Settings…", none of which they can open. That is the app's whole feature
+	     surface disclosed to a stranger, and a row of dead links around the one
+	     task they came to do.
+
+	     CnAppRoot hosts `<router-view>` itself, so skipping it means rendering the
+	     route here. The library documents this as the supported path for a layout
+	     that is not the app shell. `t()` is an app-level mixin from main.js, not a
+	     CnAppRoot injection, so public views keep their translations.
+
+	     The offline banner, migration banner, lock-screen gating and user-settings
+	     dialog are all deliberately absent: every one of them speaks about a vault
+	     the recipient has no account for. -->
+	<div v-if="isPublicPage" class="doriath-public-shell">
+		<!-- Every route's component IS CnPageRenderer (see routesFromManifest in
+		     main.js), and it takes its manifest, component registry, page types and
+		     translator by INJECT — from CnAppRoot. Outside the shell those injections
+		     do not exist, so the renderer mounts and finds no page: the first attempt
+		     at this rendered a blank page and logged "[CnPageRenderer] No page found
+		     for $route.name". Its props take precedence over inject, so they are
+		     supplied here.
+
+		     `v-bind="route.params"` is required with the v-slot form: the route
+		     records set `props: true`, but vue-router only applies that itself when
+		     it owns the rendering. Without it SecretRequestFill gets no `token`. -->
+		<router-view v-slot="{ Component, route }">
+			<component
+				:is="Component"
+				v-bind="route.params"
+				:manifest="manifest"
+				:customComponents="customComponents"
+				:pageTypes="pageTypes"
+				:translate="translateForApp" />
+		</router-view>
+	</div>
+
+	<div v-else class="doriath-shell">
+		<!-- Stale-data banner (offline-readonly-cache §4.3): shown whenever the
+		     vault is being served from the offline cache. -->
+		<div
+			v-if="offlineStore.servedFromCache"
+			class="doriath-offline-banner"
+			data-testid="offline-stale-banner">
+			{{
+				t('doriath', 'Offline — read-only. Last synced {when}.', {
+					when: syncedLabel,
+				})
+			}}
+		</div>
+
+		<!-- An interrupted compromise recovery leaves the vault write-locked with
+		     nothing else in the UI saying why, so this sits at shell level rather
+		     than inside any one view. It renders nothing when no migration is in
+		     progress. -->
+		<MigrationResumeBanner />
+
+		<CnAppRoot
+			:aiCompanion="true"
+			:supportDialog="showSupportDialog"
+			:manifest="manifest"
+			:customComponents="customComponents"
+			:pageTypes="pageTypes"
+			:registry="registry"
+			appId="doriath"
+			:translate="translateForApp"
+			:permissions="permissions">
+			<!-- User-settings dialog body (opened from the manifest's
 		     `action: "user-settings"` menu entry via CnAppRoot's
 		     cnOpenUserSettings inject). Sections preserve the legacy
 		     UserSettings.vue surface unchanged. -->
-		<template #user-settings>
-			<NcAppSettingsSection
-				id="session"
-				:name="t('doriath', 'Session')">
-				<template #icon>
-					<TimerIcon :size="20" />
-				</template>
-				<div class="user-settings__field">
-					<NcSelect
-						v-model="sessionTimeout"
-						:options="timeoutOptions"
-						:input-label="t('doriath', 'Session timeout')"
-						label="label"
-						:reduce="opt => opt.value"
-						@input="saveTimeout" />
-				</div>
-			</NcAppSettingsSection>
-
-			<NcAppSettingsSection
-				id="security"
-				:name="t('doriath', 'Security')">
-				<template #icon>
-					<ShieldIcon :size="20" />
-				</template>
-				<div class="user-settings__field">
-					<MasterPasswordForm />
-				</div>
-				<div class="user-settings__field">
-					<NcButton type="error" @click="showRecovery = !showRecovery">
-						{{ t('doriath', 'My master password was compromised') }}
-					</NcButton>
-					<CompromiseRecoveryForm v-if="showRecovery" />
-				</div>
-			</NcAppSettingsSection>
-
-			<NcAppSettingsSection
-				id="encryption"
-				:name="t('doriath', 'Encryption')">
-				<template #icon>
-					<KeyIcon :size="20" />
-				</template>
-				<div v-if="suiteStore.currentSuite" class="user-settings__suite-info">
-					<p><strong>{{ t('doriath', 'Status') }}:</strong> {{ suiteStore.currentSuite.status }}</p>
-					<p><strong>{{ t('doriath', 'Created') }}:</strong> {{ suiteStore.currentSuite.createdAt }}</p>
-					<p><strong>{{ t('doriath', 'Suite ID') }}:</strong> {{ suiteStore.currentSuite.id }}</p>
-
-					<template v-if="suiteStore.currentSuite.status === 'active'">
-						<NcNoteCard v-if="revokeConfirm" type="warning">
-							{{ t('doriath', 'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.') }}
-							<div style="margin-top: 0.5rem;">
-								<NcTextField
-									v-model="revokeReason"
-									:label="t('doriath', 'Reason for revocation')"
-									:placeholder="t('doriath', 'e.g. Device lost, key compromised')" />
-							</div>
-							<div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-								<NcButton
-									type="error"
-									:disabled="!revokeReason || revoking"
-									@click="handleRevoke">
-									{{ revoking ? t('doriath', 'Revoking...') : t('doriath', 'Confirm revocation') }}
-								</NcButton>
-								<NcButton type="secondary" @click="revokeConfirm = false">
-									{{ t('doriath', 'Cancel') }}
-								</NcButton>
-							</div>
-						</NcNoteCard>
-						<NcButton
-							v-else
-							type="warning"
-							@click="revokeConfirm = true">
-							{{ t('doriath', 'Revoke encryption suite') }}
-						</NcButton>
-					</template>
-
-					<NcNoteCard v-if="revokeSuccess" type="success">
-						{{ t('doriath', 'Encryption suite revoked. Contact an administrator to reinstate it.') }}
-					</NcNoteCard>
-					<NcNoteCard v-if="revokeError" type="error">
-						{{ revokeError }}
-					</NcNoteCard>
-				</div>
-				<NcEmptyContent
-					v-else
-					:name="t('doriath', 'No encryption suite')"
-					:description="t('doriath', 'Unlock the vault to set up encryption')">
+			<template #user-settings>
+				<NcAppSettingsSection id="session" :name="t('doriath', 'Session')">
 					<template #icon>
-						<KeyIcon :size="64" />
+						<TimerIcon :size="20" />
 					</template>
-				</NcEmptyContent>
-			</NcAppSettingsSection>
-		</template>
-	</CnAppRoot>
+					<div class="user-settings__field">
+						<NcSelect
+							v-model="sessionTimeout"
+							:options="timeoutOptions"
+							:inputLabel="t('doriath', 'Session timeout')"
+							label="label"
+							:reduce="(opt) => opt.value"
+							@input="saveTimeout" />
+					</div>
+				</NcAppSettingsSection>
+
+				<NcAppSettingsSection id="security" :name="t('doriath', 'Security')">
+					<template #icon>
+						<ShieldIcon :size="20" />
+					</template>
+					<div class="user-settings__field">
+						<MasterPasswordForm />
+					</div>
+					<div class="user-settings__field">
+						<PasskeyManager />
+					</div>
+					<div class="user-settings__field">
+						<NcButton
+							variant="error"
+							@click="showRecovery = !showRecovery">
+							{{ t('doriath', 'My master password was compromised') }}
+						</NcButton>
+						<CompromiseRecoveryForm v-if="showRecovery" />
+					</div>
+				</NcAppSettingsSection>
+
+				<NcAppSettingsSection
+					id="encryption"
+					:name="t('doriath', 'Encryption')">
+					<template #icon>
+						<KeyIcon :size="20" />
+					</template>
+					<div
+						v-if="suiteStore.currentSuite"
+						class="user-settings__suite-info">
+						<p>
+							<strong>{{ t('doriath', 'Status') }}:</strong>
+							{{ suiteStore.currentSuite.status }}
+						</p>
+						<p>
+							<strong>{{ t('doriath', 'Created') }}:</strong>
+							{{ suiteStore.currentSuite.createdAt }}
+						</p>
+						<p>
+							<strong>{{ t('doriath', 'Suite ID') }}:</strong>
+							{{ suiteStore.currentSuite.id }}
+						</p>
+
+						<template v-if="suiteStore.currentSuite.status === 'active'">
+							<NcNoteCard v-if="revokeConfirm" type="warning">
+								{{
+									t(
+										'doriath',
+										'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.',
+									)
+								}}
+								<div style="margin-top: 0.5rem">
+									<NcTextField
+										v-model="revokeReason"
+										:label="
+											t('doriath', 'Reason for revocation')
+										"
+										:placeholder="
+											t(
+												'doriath',
+												'e.g. Device lost, key compromised',
+											)
+										" />
+								</div>
+								<div
+									style="
+										display: flex;
+										gap: 0.5rem;
+										margin-top: 0.5rem;
+									">
+									<NcButton
+										variant="error"
+										:disabled="!revokeReason || revoking"
+										@click="handleRevoke">
+										{{
+											revoking
+												? t('doriath', 'Revoking…')
+												: t('doriath', 'Confirm revocation')
+										}}
+									</NcButton>
+									<NcButton
+										variant="secondary"
+										@click="revokeConfirm = false">
+										{{ t('doriath', 'Cancel') }}
+									</NcButton>
+								</div>
+							</NcNoteCard>
+							<NcButton
+								v-else
+								variant="warning"
+								@click="revokeConfirm = true">
+								{{ t('doriath', 'Revoke encryption suite') }}
+							</NcButton>
+						</template>
+
+						<NcNoteCard v-if="revokeSuccess" type="success">
+							{{
+								t(
+									'doriath',
+									'Encryption suite revoked. Contact an administrator to reinstate it.',
+								)
+							}}
+						</NcNoteCard>
+						<NcNoteCard v-if="revokeError" type="error">
+							{{ revokeError }}
+						</NcNoteCard>
+					</div>
+					<NcEmptyContent
+						v-else
+						:name="t('doriath', 'No encryption suite')"
+						:description="
+							t('doriath', 'Unlock the vault to set up encryption')
+						">
+						<template #icon>
+							<KeyIcon :size="64" />
+						</template>
+					</NcEmptyContent>
+				</NcAppSettingsSection>
+
+				<NcAppSettingsSection
+					id="browser-extension"
+					:name="t('doriath', 'Browser extension')">
+					<template #icon>
+						<PuzzleIcon :size="20" />
+					</template>
+					<p>
+						{{
+							t(
+								'doriath',
+								'The Doriath browser extension autofills your logins, provides passkeys, and shows TOTP codes — decrypting everything inside the extension. The server only ever ships encrypted blobs, so your master password and secrets never leave your device.',
+							)
+						}}
+					</p>
+					<ol class="user-settings__steps">
+						<li>
+							{{
+								t(
+									'doriath',
+									'Install the Doriath extension for your browser.',
+								)
+							}}
+						</li>
+						<li>
+							{{
+								t(
+									'doriath',
+									'Create a dedicated app password in Nextcloud security settings (never use your login password).',
+								)
+							}}
+						</li>
+						<li>
+							{{
+								t(
+									'doriath',
+									'In the extension, enter this server URL, your username, and the app password, then unlock with your master password.',
+								)
+							}}
+						</li>
+					</ol>
+					<div class="user-settings__field">
+						<NcButton :href="securitySettingsUrl" variant="secondary">
+							{{ t('doriath', 'Open Nextcloud security settings') }}
+						</NcButton>
+					</div>
+					<p class="user-settings__hint">
+						{{
+							t(
+								'doriath',
+								'Revoke the app password in Nextcloud security settings at any time to disconnect the extension.',
+							)
+						}}
+					</p>
+				</NcAppSettingsSection>
+			</template>
+		</CnAppRoot>
+	</div>
 </template>
 
 <script>
-import { translate as ncT } from '@nextcloud/l10n'
-// eslint-disable-next-line import/named
 import { CnAppRoot } from '@conduction/nextcloud-vue'
-import { NcAppSettingsSection, NcButton, NcEmptyContent, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
-import TimerIcon from 'vue-material-design-icons/Timer.vue'
-import ShieldIcon from 'vue-material-design-icons/Shield.vue'
+import { translate as ncT } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import {
+	NcAppSettingsSection,
+	NcButton,
+	NcEmptyContent,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
-import MasterPasswordForm from './components/MasterPasswordForm.vue'
+import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue'
+import ShieldIcon from 'vue-material-design-icons/Shield.vue'
+import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
-import { initializeStores } from './store/store.js'
-import { useSessionStore } from './store/modules/session.js'
+import MasterPasswordForm from './components/MasterPasswordForm.vue'
+import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
+import PasskeyManager from './components/PasskeyManager.vue'
+import {
+	handleLockTransition,
+	isPublicRoute,
+	isPublicSurface,
+} from './router/guards.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
-
-/**
- * Route names that are publicly accessible without an unlocked vault
- * (recipient-facing token URLs). Mirrors the manifest's `meta.public`
- * pages so the lock-screen guard can short-circuit.
- *
- * @spec openspec/changes/implement-secret-requests/tasks.md#task-9.2
- */
-const PUBLIC_ROUTE_NAMES = ['SecretRequestFill', 'LinkShareAccess']
-
-/**
- * Whether a vue-router route lives outside the locked-vault guard.
- *
- * @param {object|null} route The current $route object.
- * @return {boolean}
- */
-function isPublicRoute(route) {
-	if (route == null) {
-		return false
-	}
-	// Allow either explicit per-route `meta.public:true` (when the
-	// shared manifest schema ships that field) or membership in the
-	// PUBLIC_ROUTE_NAMES allow-list maintained alongside this module.
-	if (route.meta && route.meta.public === true) {
-		return true
-	}
-	return PUBLIC_ROUTE_NAMES.includes(route.name)
-}
+import { useOfflineStore } from './store/modules/offline.js'
+import { useSessionStore } from './store/modules/session.js'
+import { initializeStores } from './store/store.js'
 
 export default {
 	name: 'App',
@@ -190,8 +337,11 @@ export default {
 		TimerIcon,
 		ShieldIcon,
 		KeyIcon,
+		PuzzleIcon,
 		MasterPasswordForm,
+		PasskeyManager,
 		CompromiseRecoveryForm,
+		MigrationResumeBanner,
 	},
 
 	props: {
@@ -204,6 +354,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Consumer-injected components used by `type: "custom"` pages
 		 * (page.component). Derived from the `kind:"page"` entries of
@@ -213,6 +364,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Page-type registry — `{ index, detail, dashboard, settings, ... }`.
 		 * Wired through to descendant `CnPageRenderer` instances.
@@ -221,6 +373,7 @@ export default {
 			type: Object,
 			default: null,
 		},
+
 		/**
 		 * 5-kind component registry for v2 manifests (hydra ADR-036).
 		 * Map of registry key → `{ kind, component, ...metadata }`.
@@ -253,6 +406,65 @@ export default {
 
 	computed: {
 		/**
+		 * Whether this page is being served to an anonymous recipient.
+		 *
+		 * Selects the shell-free layout. Decided from the URL for the same reason
+		 * `showSupportDialog` is: the value is needed on the very first render, and
+		 * `$route` is not resolved yet at that point — a computed keyed on
+		 * `$route.name` reads undefined exactly when it matters, which is the bug
+		 * the support-note fix already walked into once.
+		 *
+		 * Failing "public" is the safe direction here: an authenticated user
+		 * mis-detected as public would lose their navigation, which is visible and
+		 * reported immediately. The reverse — a stranger served the full app nav —
+		 * is what shipped unnoticed until it was measured in a browser.
+		 *
+		 * @return {boolean} True on the anonymous recipient surfaces.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+		 */
+		isPublicPage() {
+			return isPublicSurface(window.location)
+		},
+
+		/**
+		 * Whether the first-open support note may be shown.
+		 *
+		 * False on every anonymous recipient surface. Those pages are opened by
+		 * people who are not our users at all — someone filling in a credential we
+		 * asked them for, or opening a share — and a donation appeal mid-task is at
+		 * best noise, at worst a phishing tell on a page about to receive a secret.
+		 *
+		 * Decided from the URL rather than from `$route`, and that is not a
+		 * shortcut: CnAppRoot reads this prop ONCE in `setup()`
+		 * (`props.supportDialog === false` selects whether the dialog is wired at
+		 * all), which happens before the router resolves the initial navigation. A
+		 * reactive computed keyed on `$route.name` is therefore still undefined at
+		 * the only moment the value is read — which is exactly why the first attempt
+		 * at this had no effect.
+		 *
+		 * `/apps/doriath/public` is the anonymous shell, so anything served from it
+		 * is a recipient page by definition. The hash prefixes cover the same routes
+		 * reached on the authenticated shell.
+		 *
+		 * The library's own guard is not enough: it opens the note only on a
+		 * DEFINITIVE "not seen" answer, but the preference request 401s for an
+		 * anonymous visitor, and a 401 is not a definitive no.
+		 *
+		 * @return {boolean} False on public recipient pages.
+		 *
+		 * @spec exclude Host-level suppression of a library affordance. No
+		 *   requirement describes the support note; what matters is that the public
+		 *   recipient pages stay task-only, which the view specs assert.
+		 */
+		showSupportDialog() {
+			return (
+				isPublicSurface(window.location) === false
+				&& isPublicRoute(this.$route) === false
+			)
+		},
+
+		/**
 		 * Current Nextcloud user permissions, surfaced to the app shell.
 		 *
 		 * @return {Array} Permission list (empty when unauthenticated).
@@ -261,18 +473,49 @@ export default {
 		permissions() {
 			return window.OC?.currentUser?.permissions ?? []
 		},
+
+		/**
+		 * Link to Nextcloud personal security settings, where the extension's
+		 * app password is created and revoked (browser-extension-autofill §5.1).
+		 *
+		 * @return {string}
+		 */
+		securitySettingsUrl() {
+			return generateUrl('/settings/user/security')
+		},
+
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia session store with no domain logic.
 		 */
 		sessionStore() {
 			return useSessionStore()
 		},
+
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia encryption-suite store with no domain logic.
 		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
 		},
+
+		/**
+		 * @spec exclude Store-ref passthrough — returns the Pinia offline store with no domain logic.
+		 */
+		offlineStore() {
+			return useOfflineStore()
+		},
+
+		/**
+		 * Human last-sync label for the stale banner.
+		 *
+		 * @return {string}
+		 */
+		syncedLabel() {
+			return this.offlineStore.syncedAt
+				? new Date(this.offlineStore.syncedAt).toLocaleString()
+				: ncT('doriath', 'unknown')
+		},
+
 		/**
 		 * Whether the vault is locked (no in-memory CryptoKey).
 		 *
@@ -286,20 +529,31 @@ export default {
 
 	watch: {
 		/**
-		 * Lock-screen gating: whenever the session locks, force the
-		 * user to the Lock route. Mirrors the legacy router guard.
+		 * Eviction path: the vault can lock while the user is sitting
+		 * still on an already-resolved route (session timeout, or the
+		 * "Lock vault" menu entry). No navigation occurs in that case,
+		 * so `createVaultGuard` never runs and this watcher owns the
+		 * redirect. The guard covers the entry path; this covers the
+		 * mid-session path.
 		 *
 		 * @param {boolean} locked New lock state.
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 		 */
 		isLocked(locked) {
-			if (locked && this.$route?.name !== 'Lock' && !isPublicRoute(this.$route)) {
-				this.$router.replace({
-					name: 'Lock',
-					query: { returnUrl: this.$route?.fullPath },
-				})
+			// The decision lives in guards.js so it can be unit-tested without
+			// mounting the shell — see handleLockTransition.
+			handleLockTransition(locked, this.$route, this.$router)
+			// Write-through the encrypted offline snapshot on each ONLINE unlock
+			// (offline-readonly-cache §2.3). Fail-soft — never blocks the session.
+			if (
+				!locked
+				&& this.offlineStore.online
+				&& !this.offlineStore.servedFromCache
+			) {
+				this.offlineStore.syncNow().catch(() => {})
 			}
 		},
+
 		/**
 		 * Inverse direction: if the user navigates to `/lock` while
 		 * still unlocked (the "Lock vault" footer menu entry), call
@@ -324,25 +578,33 @@ export default {
 	},
 
 	/**
-	 * Boot the app shell: initialise stores, redirect to the lock screen
-	 * when already locked, and start the session-timeout poll + listeners.
+	 * Boot the app shell: initialise stores, warm the offline cache, and
+	 * start the session-timeout poll + listeners.
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+	 * The boot-time lock redirect that used to live here is gone. It ran
+	 * after `await initializeStores()` — i.e. after a settings round-trip
+	 * — by which time the routed page had already mounted and fetched, so
+	 * the vault inventory painted before the lock screen replaced it. The
+	 * gate is now `createVaultGuard` in src/router/guards.js, registered
+	 * as a synchronous `beforeEach` so a locked vault never resolves a
+	 * protected route in the first place.
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 	 */
 	async created() {
 		await initializeStores()
 		this.storesReady = true
 
-		// Mirror the legacy App.vue boot: on first paint, if the
-		// session is already locked, push to /lock with the current
-		// path as the return URL. The router-level guard from the
-		// pre-Tier-4 router is gone (vue-router is now built from
-		// the manifest), so the App.vue lifecycle owns the redirect.
-		if (this.sessionStore.isLocked && this.$route?.name !== 'Lock' && !isPublicRoute(this.$route)) {
-			this.$router.replace({
-				name: 'Lock',
-				query: { returnUrl: this.$route?.fullPath },
-			})
+		// Offline cache bootstrap (offline-readonly-cache §2.4/§3.2): track
+		// connectivity, arm the lock-time purge hook, and register the app-shell
+		// service worker (feature-detected; a failed registration is a no-op
+		// online-only fallback, never a hard error).
+		this.offlineStore.bindConnectivity()
+		this.offlineStore.ensureLockHook()
+		this.registerServiceWorker()
+		// If we booted already unlocked and online, warm the snapshot.
+		if (!this.sessionStore.isLocked && this.offlineStore.online) {
+			this.offlineStore.syncNow().catch(() => {})
 		}
 
 		// Poll every 10 s for session-timeout expiry.
@@ -362,7 +624,7 @@ export default {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 	 */
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.timeoutInterval) {
 			clearInterval(this.timeoutInterval)
 		}
@@ -433,10 +695,37 @@ export default {
 				this.revokeConfirm = false
 				this.revokeReason = ''
 			} catch (e) {
-				this.revokeError = e.response?.data?.message || e.message || ncT('doriath', 'Failed to revoke suite')
+				this.revokeError =
+					e.response?.data?.message
+					|| e.message
+					|| ncT('doriath', 'Failed to revoke suite')
 			} finally {
 				this.revoking = false
 			}
+		},
+
+		/**
+		 * Register the offline app-shell service worker, feature-detected.
+		 * A registration failure (unsupported context, scope rejected) is a
+		 * no-op online-only fallback — never a hard error.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-app-shell-loads-offline-via-a-service-worker
+		 */
+		registerServiceWorker() {
+			if (
+				typeof navigator === 'undefined'
+				|| !('serviceWorker' in navigator)
+			) {
+				return
+			}
+			// Served by ServiceWorkerController at the app root so the browser
+			// gets the correct JS MIME and the worker's default scope is the
+			// whole SPA (offline-readonly-cache §3.2).
+			const swUrl = generateUrl('/apps/doriath/serviceworker.js')
+			navigator.serviceWorker.register(swUrl).catch(() => {
+				// Online-only fallback; the offline cache is simply absent.
+			})
 		},
 	},
 }
@@ -449,5 +738,27 @@ export default {
 
 .user-settings__suite-info p {
 	margin: 0.25rem 0;
+}
+
+.doriath-offline-banner {
+	position: sticky;
+	top: 0;
+	z-index: 2000;
+	padding: 6px 16px;
+	text-align: center;
+	font-weight: bold;
+	/*
+	 * --color-warning is the pale tint (#FFEEC5 in light), so the primary
+	 * element foreground — white for the default primary — landed at roughly
+	 * 1.3:1 on it. Dark mode was fine (#3D3010), making this the same
+	 * one-theme failure as the rest of this change. The paired *-text value is
+	 * the one the theme flips alongside the tint.
+	 *
+	 * This banner is sticky at z-index 2000 and is the app's only signal that
+	 * the data on screen is stale and read-only, so it is the last thing that
+	 * should be invisible.
+	 */
+	color: var(--color-warning-text);
+	background-color: var(--color-warning);
 }
 </style>

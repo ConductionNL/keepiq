@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 
 /**
  * Allow-listed per-user dashboard preference keys. The server enforces
@@ -97,7 +97,9 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 			if (ALLOWED_DASHBOARD_KEYS.includes(key) === false) {
 				return null
 			}
-			return this.setMany({ [key]: value }).then(() => this.settings[key] ?? null)
+			return this.setMany({ [key]: value }).then(
+				() => this.settings[key] ?? null,
+			)
 		},
 
 		/**

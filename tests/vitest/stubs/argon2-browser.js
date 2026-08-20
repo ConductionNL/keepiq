@@ -37,8 +37,10 @@ export async function hash({ pass, salt, hashLen = 32 }) {
 	// SHA-512 over (password || salt), truncated/wrapped to the requested
 	// length. Deterministic in (pass, salt) — which is what the round-trip
 	// test relies on.
-	const passBytes = typeof pass === 'string' ? new TextEncoder().encode(pass) : pass
-	const saltBytes = typeof salt === 'string' ? new TextEncoder().encode(salt) : salt
+	const passBytes =
+		typeof pass === 'string' ? new TextEncoder().encode(pass) : pass
+	const saltBytes =
+		typeof salt === 'string' ? new TextEncoder().encode(salt) : salt
 	const combined = new Uint8Array(passBytes.length + saltBytes.length)
 	combined.set(passBytes, 0)
 	combined.set(saltBytes, passBytes.length)

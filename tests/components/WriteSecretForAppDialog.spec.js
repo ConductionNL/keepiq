@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Component test for `src/components/application/WriteSecretForAppDialog.vue`.
+ * Component test for `src/dialogs/WriteSecretForAppDialog.vue`.
  *
  * Locks the W30/W31 contract for the "write a secret for an application"
  * flow: the dialog collects plaintext in component state, calls
@@ -25,33 +25,39 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
-import WriteSecretForAppDialog from '../../src/components/application/WriteSecretForAppDialog.vue'
+import WriteSecretForAppDialog from '../../src/dialogs/WriteSecretForAppDialog.vue'
 import { useApplicationStore } from '../../src/store/modules/application.js'
 
 const ncStubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
-		template: '<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['type', 'disabled'],
-		template: '<button :disabled="disabled" :data-testid="$attrs[\'data-testid\']" @click="$emit(\'click\', $event)"><slot /></button>',
+		template:
+			'<button :disabled="disabled" :data-testid="$attrs[\'data-testid\']" @click="$emit(\'click\', $event)"><slot /></button>',
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div class="nc-note-card-stub" :data-type="type" :data-testid="$attrs[\'data-testid\']"><slot /></div>',
+		template:
+			'<div class="nc-note-card-stub" :data-type="type" :data-testid="$attrs[\'data-testid\']"><slot /></div>',
 	},
 	NcTextField: {
 		props: ['value', 'label', 'required'],
-		template: '<input class="nc-text-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
+		template:
+			'<input class="nc-text-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
 	},
 	NcPasswordField: {
 		props: ['value', 'label', 'required'],
-		template: '<input type="password" class="nc-password-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
+		template:
+			'<input type="password" class="nc-password-field-stub" :data-testid="$attrs[\'data-testid\']" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
 	},
 	NcTextArea: {
 		props: ['value', 'label', 'rows'],
-		template: '<textarea class="nc-text-area-stub" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
+		template:
+			'<textarea class="nc-text-area-stub" :value="value" @input="$emit(\'update:value\', $event.target.value)" />',
 	},
 }
 
@@ -68,7 +74,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		const submit = wrapper.find('[data-testid="write-secret-submit"]')
@@ -94,7 +100,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({
@@ -132,7 +138,9 @@ describe('WriteSecretForAppDialog', () => {
 	it('submit: surfaces a store error on the NcNoteCard without flipping success', async () => {
 		const store = useApplicationStore()
 		store.writeSecretForApplication = vi.fn().mockRejectedValue({
-			response: { data: { message: 'Application has no active EncryptionSuite' } },
+			response: {
+				data: { message: 'Application has no active EncryptionSuite' },
+			},
 		})
 
 		const wrapper = mount(WriteSecretForAppDialog, {
@@ -141,7 +149,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({ name: 'GitHub PAT', value: 'ghp_AAA' })
@@ -162,7 +170,7 @@ describe('WriteSecretForAppDialog', () => {
 				open: true,
 				applicationId: 'app-1',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({
@@ -174,7 +182,10 @@ describe('WriteSecretForAppDialog', () => {
 		await wrapper.vm.submit()
 
 		const [, payload] = store.writeSecretForApplication.mock.calls[0]
-		expect(payload.additionalFields).toEqual({ region: 'eu-west-1', note: 'prod' })
+		expect(payload.additionalFields).toEqual({
+			region: 'eu-west-1',
+			note: 'prod',
+		})
 	})
 
 	it('onUpdateOpen(false): resets every plaintext field and emits close', async () => {
@@ -184,7 +195,7 @@ describe('WriteSecretForAppDialog', () => {
 				applicationId: 'app-1',
 				applicationName: 'Test App',
 			},
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.setData({

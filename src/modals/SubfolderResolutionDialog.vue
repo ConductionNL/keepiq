@@ -1,5 +1,6 @@
 <template>
-	<NcDialog :name="t('doriath', 'Delete folder')"
+	<NcDialog
+		:name="t('doriath', 'Delete folder')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -9,39 +10,52 @@
 			</NcNoteCard>
 
 			<p class="resolution-dialog__intro">
-				{{ n('doriath',
-					'This folder contains %n secret directly.',
-					'This folder contains %n secrets directly.',
-					children.directSecretCount) }}
+				{{
+					n(
+						'doriath',
+						'This folder contains %n secret directly.',
+						'This folder contains %n secrets directly.',
+						children.directSecretCount,
+					)
+				}}
 			</p>
 
-			<NcSelect v-model="directSecrets"
+			<NcSelect
+				v-model="directSecrets"
 				:options="directOptions"
-				:reduce="opt => opt.value"
-				:input-label="t('doriath', 'Secrets in this folder')"
+				:reduce="(opt) => opt.value"
+				:inputLabel="t('doriath', 'Secrets in this folder')"
 				:clearable="false" />
 
-			<div v-if="children.subfolders && children.subfolders.length" class="resolution-dialog__subfolders">
+			<div
+				v-if="children.subfolders && children.subfolders.length"
+				class="resolution-dialog__subfolders">
 				<p>{{ t('doriath', 'Choose what happens to each subfolder:') }}</p>
-				<div v-for="sub in children.subfolders" :key="sub.id" class="resolution-dialog__row">
+				<div
+					v-for="sub in children.subfolders"
+					:key="sub.id"
+					class="resolution-dialog__row">
 					<span class="resolution-dialog__name">{{ sub.name }}</span>
 					<span class="resolution-dialog__count">
-						{{ n('doriath', '%n secret', '%n secrets', sub.secretCount) }}
+						{{
+							n('doriath', '%n secret', '%n secrets', sub.secretCount)
+						}}
 					</span>
-					<NcSelect v-model="plan[sub.id]"
+					<NcSelect
+						v-model="plan[sub.id]"
 						:options="subfolderOptions"
-						:reduce="opt => opt.value"
-						:input-label="t('doriath', 'Action')"
+						:reduce="(opt) => opt.value"
+						:inputLabel="t('doriath', 'Action')"
 						:clearable="false" />
 				</div>
 			</div>
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="error" :disabled="loading" @click="submit">
+			<NcButton variant="error" :disabled="loading" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Delete v-else :size="20" />
@@ -53,7 +67,13 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+} from '@nextcloud/vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 
@@ -80,11 +100,13 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		/** The folder being deleted. */
 		folderId: {
 			type: String,
 			required: true,
 		},
+
 		/** The children payload from GET /folders/{id}/children. */
 		children: {
 			type: Object,
@@ -108,6 +130,7 @@ export default {
 				{ value: 'delete', label: t('doriath', 'Delete them') },
 			]
 		},
+
 		subfolderOptions() {
 			return [
 				{ value: 'keep', label: t('doriath', 'Keep (move to parent)') },
@@ -160,7 +183,9 @@ export default {
 				this.$emit('deleted', this.folderId)
 				this.onUpdateOpen(false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || t('doriath', 'Failed to delete folder')
+				this.error =
+					e?.response?.data?.message
+					|| t('doriath', 'Failed to delete folder')
 			} finally {
 				this.loading = false
 			}

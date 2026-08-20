@@ -37,7 +37,9 @@ const stubAll = {
 	DelegationManager: { template: '<div data-testid="stub-delegation-manager" />' },
 	ShareRequestForm: { template: '<div data-testid="stub-share-request-form" />' },
 	SecretRequestList: { template: '<div data-testid="stub-request-list" />' },
-	SecretRequestCreateDialog: { template: '<div data-testid="stub-request-dialog" />' },
+	SecretRequestCreateDialog: {
+		template: '<div data-testid="stub-request-dialog" />',
+	},
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -52,12 +54,17 @@ const mountDetail = async ({ secret, currentUser }) => {
 	const typeStore = useSecretTypeStore()
 	typeStore.fetchTypes = vi.fn().mockResolvedValue([])
 
+	// VTU v2 moved `stubs` and `mocks` under `global`. At the top level they
+	// are SILENTLY IGNORED — the component would render its real children and
+	// `$route` would be undefined, so this must stay nested.
 	const wrapper = mount(SecretDetail, {
 		propsData: {},
-		stubs: stubAll,
-		mocks: {
-			$route: { params: { id: secret?.id ?? 's-1' } },
-			$router: { push: vi.fn() },
+		global: {
+			stubs: stubAll,
+			mocks: {
+				$route: { params: { id: secret?.id ?? 's-1' } },
+				$router: { push: vi.fn() },
+			},
 		},
 	})
 	await flush()
@@ -83,10 +90,20 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-share-list"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-delegation-manager"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-share-request"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper
+				.find('[data-testid="secret-detail-delegation-manager"]')
+				.exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
+		).toBe(false)
 	})
 
 	it('renders the share-request form for a non-owner recipient', async () => {
@@ -95,10 +112,20 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'bob',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-share-list"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="secret-detail-delegation-manager"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="secret-detail-share-request"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper
+				.find('[data-testid="secret-detail-delegation-manager"]')
+				.exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
+		).toBe(true)
 	})
 
 	it('hides the entire sharing section when no secret is loaded', async () => {
@@ -108,7 +135,9 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 		// renders.
 		const wrapper = await mountDetail({ secret: null, currentUser: 'alice' })
 
-		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-sharing"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('falls back to legacy owner_id field when ownerId is absent', async () => {
@@ -117,7 +146,9 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-share-list"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(true)
 	})
 
 	it('renders the Requests section + SecretRequestList for the owner', async () => {
@@ -126,10 +157,16 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-detail-request-list"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="secret-detail-request-list"]').exists(),
+		).toBe(true)
 		// The dialog is mounted lazily; not visible until the create button fires.
-		expect(wrapper.find('[data-testid="secret-detail-request-dialog"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-detail-request-dialog"]').exists(),
+		).toBe(false)
 	})
 
 	it('hides the Requests section from non-owner recipients', async () => {
@@ -138,6 +175,31 @@ describe('SecretDetail sharing sidebar (§12.6)', () => {
 			currentUser: 'bob',
 		})
 
-		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-requests"]').exists()).toBe(
+			false,
+		)
+	})
+	it('keeps the request dialog open after creation, so the fill link survives', async () => {
+		// The dialog computes fillUrl in submit() and THEN emits `created`. This
+		// handler used to close the dialog, which unmounts it (v-if) one tick later
+		// and destroys the only copy of the link the requester is ever offered —
+		// the URL the whole feature exists to produce.
+		const wrapper = await mountDetail({
+			secret: {
+				id: 's-1',
+				name: 'GitHub PAT',
+				ownerId: 'alice',
+				key: 'CIPHER',
+			},
+			currentUser: 'alice',
+		})
+
+		wrapper.vm.requestDialogOpen = true
+		await flush()
+
+		wrapper.vm.onRequestCreated()
+		await flush()
+
+		expect(wrapper.vm.requestDialogOpen).toBe(true)
 	})
 })

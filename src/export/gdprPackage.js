@@ -22,8 +22,8 @@ export const GDPR_PACKAGE_FORMAT = 'doriath-gdpr-export'
 export const GDPR_PACKAGE_VERSION = 1
 
 /** The explicit vault-unavailable explanation (honest Art. 15 posture). */
-export const VAULT_UNAVAILABLE_REASON
-	= 'vault is end-to-end encrypted and the data subject did not unlock it'
+export const VAULT_UNAVAILABLE_REASON =
+	'vault is end-to-end encrypted and the data subject did not unlock it'
 
 /**
  * Assemble the full or metadata-only GDPR export package.
@@ -38,14 +38,14 @@ export function assembleGdprPackage(metadata, vaultPayload) {
 
 	const vaultSection = includesVault
 		? {
-			available: true,
-			secrets: vaultPayload.secrets || [],
-			folders: vaultPayload.folders || [],
-		}
+				available: true,
+				secrets: vaultPayload.secrets || [],
+				folders: vaultPayload.folders || [],
+			}
 		: {
-			available: false,
-			unavailable: VAULT_UNAVAILABLE_REASON,
-		}
+				available: false,
+				unavailable: VAULT_UNAVAILABLE_REASON,
+			}
 
 	return {
 		format: GDPR_PACKAGE_FORMAT,
@@ -56,7 +56,8 @@ export function assembleGdprPackage(metadata, vaultPayload) {
 			article: 'GDPR Article 15 (right of access)',
 			metadata: 'Server-readable personal data Doriath stores about you.',
 			vault: 'Your decrypted secrets, assembled in the browser; only present when you unlocked the vault.',
-			privateKeyExcluded: 'Encrypted private-key blobs are excluded from suite records — they are unreadable without your master password and shipping them widens the attack surface.',
+			privateKeyExcluded:
+				'Encrypted private-key blobs are excluded from suite records — they are unreadable without your master password and shipping them widens the attack surface.',
 		},
 		metadata,
 		vault: vaultSection,

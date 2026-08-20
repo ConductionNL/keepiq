@@ -14,14 +14,19 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.3
 -->
 <template>
-	<section v-if="open"
+	<section
+		v-if="open"
 		class="doriath-app-register-dialog"
 		role="dialog"
 		data-testid="application-register-dialog">
 		<header class="doriath-app-register-dialog__header">
 			<h3>{{ t('doriath', 'Register application') }}</h3>
-			<button type="button" data-testid="application-register-close" @click="$emit('close')">
-				×
+			<button
+				type="button"
+				data-testid="application-register-close"
+				:aria-label="t('doriath', 'Close')"
+				@click="$emit('close')">
+				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 
@@ -33,7 +38,7 @@
 					type="text"
 					required
 					maxlength="120"
-					data-testid="application-register-name">
+					data-testid="application-register-name" />
 			</label>
 
 			<label class="doriath-app-register-dialog__field">
@@ -48,8 +53,12 @@
 			<label class="doriath-app-register-dialog__field">
 				<span>{{ t('doriath', 'Type') }}</span>
 				<select v-model="form.type" data-testid="application-register-type">
-					<option value="internal">{{ t('doriath', 'Internal (Nextcloud app)') }}</option>
-					<option value="external">{{ t('doriath', 'External (offsite service)') }}</option>
+					<option value="internal">
+						{{ t('doriath', 'Internal (Nextcloud app)') }}
+					</option>
+					<option value="external">
+						{{ t('doriath', 'External (offsite service)') }}
+					</option>
 				</select>
 			</label>
 
@@ -64,15 +73,21 @@
 					type="file"
 					accept=".csr,.pem,text/plain"
 					data-testid="application-register-csr-upload"
-					@change="onCsrUpload">
+					@change="onCsrUpload" />
 			</label>
 
-			<p v-if="error" class="doriath-app-register-dialog__error" data-testid="application-register-error">
+			<p
+				v-if="error"
+				class="doriath-app-register-dialog__error"
+				data-testid="application-register-error">
 				{{ error }}
 			</p>
 
 			<div class="doriath-app-register-dialog__actions">
-				<button type="button" data-testid="application-register-cancel" @click="$emit('close')">
+				<button
+					type="button"
+					data-testid="application-register-cancel"
+					@click="$emit('close')">
 					{{ t('doriath', 'Cancel') }}
 				</button>
 				<button
@@ -80,7 +95,9 @@
 					class="primary"
 					data-testid="application-register-submit"
 					:disabled="busy || form.name === ''">
-					{{ busy ? t('doriath', 'Submitting…') : t('doriath', 'Register') }}
+					{{
+						busy ? t('doriath', 'Submitting…') : t('doriath', 'Register')
+					}}
 				</button>
 			</div>
 		</form>
@@ -98,6 +115,7 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close', 'registered'],
 	data() {
 		return {
@@ -107,10 +125,12 @@ export default {
 				type: 'internal',
 				csr: '',
 			},
+
 			busy: false,
 			error: null,
 		}
 	},
+
 	watch: {
 		open(val) {
 			if (val === false) {
@@ -120,6 +140,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		async onSubmit() {
 			this.error = null
@@ -138,11 +159,15 @@ export default {
 				})
 				this.$emit('registered', row)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to register')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to register')
 			} finally {
 				this.busy = false
 			}
 		},
+
 		onCsrUpload(event) {
 			const file = event.target.files && event.target.files[0]
 			if (!file) {
@@ -166,18 +191,21 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	padding: 16px;
 }
+
 .doriath-app-register-dialog__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 12px;
 }
+
 .doriath-app-register-dialog__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
+
 .doriath-app-register-dialog__field input,
 .doriath-app-register-dialog__field textarea,
 .doriath-app-register-dialog__field select {
@@ -186,15 +214,18 @@ export default {
 	border-radius: var(--border-radius, 4px);
 	font-family: inherit;
 }
+
 .doriath-app-register-dialog__error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
+
 .doriath-app-register-dialog__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
+
 .doriath-app-register-dialog__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);

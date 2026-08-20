@@ -1,58 +1,58 @@
 ---
 sidebar_position: 1
 title: Open Doriath for the first time
-description: Open Doriath, create your first vault entry, and confirm the encryption back end is connected.
+description: Open Doriath, unlock your vault with a master password, and add your first secret.
 ---
 
 # Open Doriath for the first time
 
-A first look at Doriath — where the app lives in Nextcloud, what the
-navigation gives you, and how to add your first secret.
+A first look at Doriath — where the app lives in Nextcloud, how the
+lock screen protects your vault, and how to add your first secret.
 
-> **This guide is being written as Doriath approaches feature-completeness.**
-> The structure below mirrors the journeydoc shape the rest of the
-> fleet uses; bodies and screenshots fill in once the UI lands. Follow
-> the [GitHub repository](https://github.com/ConductionNL/doriath) for
-> milestones.
+> **Screenshots for this guide are still being captured.** The steps
+> below describe the real, shipped flow; the numbered walkthrough with
+> screenshots lands with the next journeydoc capture pass. Follow the
+> [repository](https://codeberg.org/Conduction/doriath) for progress.
 
 ## Goal
 
 By the end of this guide you will have opened Doriath from the Nextcloud
-app menu, added your first vault entry (a password or an API key),
-confirmed that the value is encrypted at rest, and located the entry
-again from the search bar.
+app menu, set a master password on first use, added your first vault
+entry (a password or an API key), and located it again from the
+Nextcloud unified search bar.
 
 ## Prerequisites
 
 - A Nextcloud account on an instance where the **Doriath** app is
   installed and enabled.
-- The **OpenRegister** app installed and enabled — Doriath stores its
-  vault data through OpenRegister, so it is a hard dependency.
-- A Nextcloud master encryption key configured (the platform's own
-  server-side encryption; Doriath layers per-entry encryption on top).
+- Nothing else. Doriath keeps its own database tables and its own
+  RSA-4096/AES-256 encryption — it does not depend on OpenRegister or on
+  Nextcloud's server-side encryption to protect your secrets.
 
 ## Steps
 
-The numbered steps land here once the UI is built. Each step that
-warrants a screenshot will get a matching shoot() call in the
-`docs-screenshots` capture spec (see ADR-030 / journeydoc).
+The numbered steps land here once the capture pass runs, but the flow
+is: open Doriath, set a master password on the lock screen (this
+bootstraps your personal encryption suite and, on first use per
+instance, the private Certificate Authority), then use **Vault** to add
+a secret and open it again with the reveal toggle.
 
 ## Verification
 
-You are set up correctly when: Doriath renders the empty-vault state on
-first launch, adding an entry returns to a list view with the entry
-present, and reopening the entry shows the value behind a "Reveal"
-gate — never inline as plain text.
+You are set up correctly when: the lock screen accepts your master
+password and takes you to the vault, adding an entry returns you to a
+list view with the entry present, and reopening the entry shows the
+value behind a "reveal" toggle — never inline as plain text.
 
 ## Common issues
 
 | Symptom | Fix |
 |---|---|
 | Doriath is missing from the app menu | The app is not enabled for your account — ask an administrator to enable it. |
-| "OpenRegister is not installed or enabled" banner | Install and enable OpenRegister, then reload Doriath. |
-| Vault entries appear as plain text | Nextcloud server-side encryption is not configured; see the [Admin guide](../admin/01-admin-settings.md). |
+| Vault stays locked after entering the master password | The password does not match the one used to create your encryption suite; use the compromise-recovery flow from the lock screen, or ask an admin. |
+| Secrets don't show up in Nextcloud's search bar | Only the secret's name and URL are indexed for search (never the encrypted value) — check the secret's name matches your search term. |
 
 ## Reference
 
-- [Manage Doriath settings](../admin/01-admin-settings.md) — encryption setup, group-level policies.
-- Doriath on GitHub: [ConductionNL/doriath](https://github.com/ConductionNL/doriath).
+- [Manage Doriath settings](../admin/01-admin-settings.md) — Certificate Authority health, password policy, application approvals.
+- Doriath repository: [codeberg.org/Conduction/doriath](https://codeberg.org/Conduction/doriath).

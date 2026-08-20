@@ -24,6 +24,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Db\LinkShare;
 use OCA\Doriath\Db\LinkShareMapper;
 use OCA\Doriath\Service\LinkShareService;
+use OCA\Doriath\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -32,420 +33,401 @@ use RuntimeException;
 /**
  * Tests for LinkShareService.
  */
-class LinkShareServiceTest extends TestCase
-{
-    /**
-     * The service under test.
-     *
-     * @var LinkShareService
-     */
-    private LinkShareService $service;
+class LinkShareServiceTest extends TestCase {
 
-    /**
-     * The mocked mapper.
-     *
-     * @var LinkShareMapper
-     */
-    private LinkShareMapper $mapper;
+	/**
+	 * The service under test.
+	 *
+	 * @var LinkShareService
+	 */
+	private LinkShareService $service;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->mapper = $this->createMock(originalClassName: LinkShareMapper::class);
-        $logger       = $this->createMock(originalClassName: LoggerInterface::class);
+	/**
+	 * The mocked mapper.
+	 *
+	 * @var LinkShareMapper
+	 */
+	private LinkShareMapper $mapper;
 
-        $this->service = new LinkShareService(mapper: $this->mapper, logger: $logger);
-    }
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->mapper = $this->createMock(originalClassName: LinkShareMapper::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
-    /**
-     * Build a LinkShare entity with sensible defaults for tests.
-     *
-     * @param array<string,mixed> $overrides Field overrides
-     *
-     * @return LinkShare
-     */
-    private function makeShare(array $overrides = []): LinkShare
-    {
-        $share = new LinkShare();
-        $share->setId($overrides['id'] ?? 'ls-1');
-        $share->setSecretId($overrides['secretId'] ?? 'secret-1');
-        $share->setToken($overrides['token'] ?? 'tok-1');
-        $share->setEncryptedSecretSnapshot($overrides['blob'] ?? 'blob');
-        $share->setArgon2idSalt($overrides['salt'] ?? 'salt');
-        $share->setEncryptionSuiteId($overrides['suiteId'] ?? 'suite-1');
-        $share->setUsageLimit($overrides['usageLimit'] ?? 3);
-        $share->setUsageCount($overrides['usageCount'] ?? 0);
-        $share->setFailedAttempts($overrides['failedAttempts'] ?? 0);
-        $share->setCreatedBy($overrides['createdBy'] ?? 'alice');
-        $share->setCreatedAt(new DateTime());
-        if (array_key_exists('expiresAt', $overrides) === true) {
-            $share->setExpiresAt($overrides['expiresAt']);
-        }
+		$this->service = new LinkShareService(
+			mapper: $this->mapper,
+			logger: $logger,
+			writeLockService: $this->createMock(WriteLockService::class),
+		);
+	}//end setUp()
 
-        return $share;
-    }
+	/**
+	 * Build a LinkShare entity with sensible defaults for tests.
+	 *
+	 * @param array<string,mixed> $overrides Field overrides
+	 *
+	 * @return LinkShare
+	 */
+	private function makeShare(array $overrides = []): LinkShare {
+		$share = new LinkShare();
+		$share->setId($overrides['id'] ?? 'ls-1');
+		$share->setSecretId($overrides['secretId'] ?? 'secret-1');
+		$share->setToken($overrides['token'] ?? 'tok-1');
+		$share->setEncryptedSecretSnapshot($overrides['blob'] ?? 'blob');
+		$share->setArgon2idSalt($overrides['salt'] ?? 'salt');
+		$share->setEncryptionSuiteId($overrides['suiteId'] ?? 'suite-1');
+		$share->setUsageLimit($overrides['usageLimit'] ?? 3);
+		$share->setUsageCount($overrides['usageCount'] ?? 0);
+		$share->setFailedAttempts($overrides['failedAttempts'] ?? 0);
+		$share->setCreatedBy($overrides['createdBy'] ?? 'alice');
+		$share->setCreatedAt(new DateTime());
+		if (array_key_exists('expiresAt', $overrides) === true) {
+			$share->setExpiresAt($overrides['expiresAt']);
+		}
 
-    /**
-     * Test create generates a 32-char hex token and persists the row.
-     *
-     * @return void
-     */
-    public function testCreateGeneratesTokenAndPersists(): void
-    {
-        $captured = null;
-        $this->mapper->expects($this->once())
-            ->method('insert')
-            ->willReturnCallback(
-                function (LinkShare $share) use (&$captured) {
-                    $captured = $share;
-                    return $share;
-                }
-            );
+		return $share;
+	}//end makeShare()
 
-        $result = $this->service->create(
-            secretId: 'secret-9',
-            encryptedSnapshot: 'the-blob',
-            salt: 'the-salt',
-            encryptionSuiteId: 'suite-42',
-            usageLimit: 5,
-            expiresAt: null,
-            userId: 'alice'
-        );
+	/**
+	 * Test create generates a 32-char hex token and persists the row.
+	 *
+	 * @return void
+	 */
+	public function testCreateGeneratesTokenAndPersists(): void {
+		$captured = null;
+		$this->mapper->expects($this->once())
+			->method('insert')
+			->willReturnCallback(
+				function (LinkShare $share) use (&$captured) {
+					$captured = $share;
+					return $share;
+				}
+			);
 
-        $this->assertSame('secret-9', $result->getSecretId());
-        $this->assertSame(5, $result->getUsageLimit());
-        $this->assertSame(0, $result->getUsageCount());
-        $this->assertSame('alice', $result->getCreatedBy());
-        // 128 bits of entropy = 32 hex chars.
-        $this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $result->getToken());
-        $this->assertSame($captured, $result);
-    }
+		$result = $this->service->create(
+			secretId: 'secret-9',
+			encryptedSnapshot: 'the-blob',
+			salt: 'the-salt',
+			encryptionSuiteId: 'suite-42',
+			usageLimit: 5,
+			expiresAt: null,
+			userId: 'alice'
+		);
 
-    /**
-     * Test create rejects a usage limit below the minimum.
-     *
-     * @return void
-     */
-    public function testCreateRejectsUsageLimitZero(): void
-    {
-        $this->mapper->expects($this->never())->method('insert');
-        $this->expectException(InvalidArgumentException::class);
+		$this->assertSame('secret-9', $result->getSecretId());
+		$this->assertSame(5, $result->getUsageLimit());
+		$this->assertSame(0, $result->getUsageCount());
+		$this->assertSame('alice', $result->getCreatedBy());
+		// 128 bits of entropy = 32 hex chars.
+		$this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $result->getToken());
+		$this->assertSame($captured, $result);
+	}//end testCreateGeneratesTokenAndPersists()
 
-        $this->service->create(
-            secretId: 'secret-1',
-            encryptedSnapshot: 'blob',
-            salt: 'salt',
-            encryptionSuiteId: 'suite-1',
-            usageLimit: 0,
-            expiresAt: null,
-            userId: 'alice'
-        );
-    }
+	/**
+	 * Test create rejects a usage limit below the minimum.
+	 *
+	 * @return void
+	 */
+	public function testCreateRejectsUsageLimitZero(): void {
+		$this->mapper->expects($this->never())->method('insert');
+		$this->expectException(InvalidArgumentException::class);
 
-    /**
-     * Test create rejects a usage limit above the maximum.
-     *
-     * @return void
-     */
-    public function testCreateRejectsUsageLimitEleven(): void
-    {
-        $this->mapper->expects($this->never())->method('insert');
-        $this->expectException(InvalidArgumentException::class);
+		$this->service->create(
+			secretId: 'secret-1',
+			encryptedSnapshot: 'blob',
+			salt: 'salt',
+			encryptionSuiteId: 'suite-1',
+			usageLimit: 0,
+			expiresAt: null,
+			userId: 'alice'
+		);
+	}//end testCreateRejectsUsageLimitZero()
 
-        $this->service->create(
-            secretId: 'secret-1',
-            encryptedSnapshot: 'blob',
-            salt: 'salt',
-            encryptionSuiteId: 'suite-1',
-            usageLimit: 11,
-            expiresAt: null,
-            userId: 'alice'
-        );
-    }
+	/**
+	 * Test create rejects a usage limit above the maximum.
+	 *
+	 * @return void
+	 */
+	public function testCreateRejectsUsageLimitEleven(): void {
+		$this->mapper->expects($this->never())->method('insert');
+		$this->expectException(InvalidArgumentException::class);
 
-    /**
-     * Test create rejects missing required fields.
-     *
-     * @return void
-     */
-    public function testCreateRejectsEmptySnapshot(): void
-    {
-        $this->mapper->expects($this->never())->method('insert');
-        $this->expectException(InvalidArgumentException::class);
+		$this->service->create(
+			secretId: 'secret-1',
+			encryptedSnapshot: 'blob',
+			salt: 'salt',
+			encryptionSuiteId: 'suite-1',
+			usageLimit: 11,
+			expiresAt: null,
+			userId: 'alice'
+		);
+	}//end testCreateRejectsUsageLimitEleven()
 
-        $this->service->create(
-            secretId: 'secret-1',
-            encryptedSnapshot: '',
-            salt: 'salt',
-            encryptionSuiteId: 'suite-1',
-            usageLimit: 1,
-            expiresAt: null,
-            userId: 'alice'
-        );
-    }
+	/**
+	 * Test create rejects missing required fields.
+	 *
+	 * @return void
+	 */
+	public function testCreateRejectsEmptySnapshot(): void {
+		$this->mapper->expects($this->never())->method('insert');
+		$this->expectException(InvalidArgumentException::class);
 
-    /**
-     * Test getByToken returns a valid link share.
-     *
-     * @return void
-     */
-    public function testGetByTokenReturnsValidShare(): void
-    {
-        $share = $this->makeShare(['token' => 'good', 'usageCount' => 1, 'usageLimit' => 3]);
-        $this->mapper->method('findByToken')->with('good')->willReturn($share);
+		$this->service->create(
+			secretId: 'secret-1',
+			encryptedSnapshot: '',
+			salt: 'salt',
+			encryptionSuiteId: 'suite-1',
+			usageLimit: 1,
+			expiresAt: null,
+			userId: 'alice'
+		);
+	}//end testCreateRejectsEmptySnapshot()
 
-        $result = $this->service->getByToken('good');
+	/**
+	 * Test getByToken returns a valid link share.
+	 *
+	 * @return void
+	 */
+	public function testGetByTokenReturnsValidShare(): void {
+		$share = $this->makeShare(['token' => 'good', 'usageCount' => 1, 'usageLimit' => 3]);
+		$this->mapper->method('findByToken')->with('good')->willReturn($share);
 
-        $this->assertSame('good', $result->getToken());
-    }
+		$result = $this->service->getByToken('good');
 
-    /**
-     * Test getByToken throws when the token does not exist.
-     *
-     * @return void
-     */
-    public function testGetByTokenThrowsWhenMissing(): void
-    {
-        $this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('nope'));
-        $this->expectException(RuntimeException::class);
+		$this->assertSame('good', $result->getToken());
+	}//end testGetByTokenReturnsValidShare()
 
-        $this->service->getByToken('missing');
-    }
+	/**
+	 * Test getByToken throws when the token does not exist.
+	 *
+	 * @return void
+	 */
+	public function testGetByTokenThrowsWhenMissing(): void {
+		$this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('nope'));
+		$this->expectException(RuntimeException::class);
 
-    /**
-     * Test getByToken deletes and throws when usage is exhausted.
-     *
-     * @return void
-     */
-    public function testGetByTokenThrowsAndDeletesWhenUsageExhausted(): void
-    {
-        $share = $this->makeShare(['usageCount' => 3, 'usageLimit' => 3]);
-        $this->mapper->method('findByToken')->willReturn($share);
-        $this->mapper->expects($this->once())->method('delete')->with($share);
+		$this->service->getByToken('missing');
+	}//end testGetByTokenThrowsWhenMissing()
 
-        $this->expectException(RuntimeException::class);
-        $this->service->getByToken('exhausted');
-    }
+	/**
+	 * Test getByToken deletes and throws when usage is exhausted.
+	 *
+	 * @return void
+	 */
+	public function testGetByTokenThrowsAndDeletesWhenUsageExhausted(): void {
+		$share = $this->makeShare(['usageCount' => 3, 'usageLimit' => 3]);
+		$this->mapper->method('findByToken')->willReturn($share);
+		$this->mapper->expects($this->once())->method('delete')->with($share);
 
-    /**
-     * Test getByToken deletes and throws when expired.
-     *
-     * @return void
-     */
-    public function testGetByTokenThrowsAndDeletesWhenExpired(): void
-    {
-        $share = $this->makeShare(['expiresAt' => new DateTime('2000-01-01')]);
-        $this->mapper->method('findByToken')->willReturn($share);
-        $this->mapper->expects($this->once())->method('delete')->with($share);
+		$this->expectException(RuntimeException::class);
+		$this->service->getByToken('exhausted');
+	}//end testGetByTokenThrowsAndDeletesWhenUsageExhausted()
 
-        $this->expectException(RuntimeException::class);
-        $this->service->getByToken('expired');
-    }
+	/**
+	 * Test getByToken deletes and throws when expired.
+	 *
+	 * @return void
+	 */
+	public function testGetByTokenThrowsAndDeletesWhenExpired(): void {
+		$share = $this->makeShare(['expiresAt' => new DateTime('2000-01-01')]);
+		$this->mapper->method('findByToken')->willReturn($share);
+		$this->mapper->expects($this->once())->method('delete')->with($share);
 
-    /**
-     * Test getByToken deletes and throws when brute-force threshold reached.
-     *
-     * @return void
-     */
-    public function testGetByTokenThrowsAndDeletesWhenBruteForced(): void
-    {
-        $share = $this->makeShare(['failedAttempts' => 5]);
-        $this->mapper->method('findByToken')->willReturn($share);
-        $this->mapper->expects($this->once())->method('delete')->with($share);
+		$this->expectException(RuntimeException::class);
+		$this->service->getByToken('expired');
+	}//end testGetByTokenThrowsAndDeletesWhenExpired()
 
-        $this->expectException(RuntimeException::class);
-        $this->service->getByToken('bruteforced');
-    }
+	/**
+	 * Test getByToken deletes and throws when brute-force threshold reached.
+	 *
+	 * @return void
+	 */
+	public function testGetByTokenThrowsAndDeletesWhenBruteForced(): void {
+		$share = $this->makeShare(['failedAttempts' => 5]);
+		$this->mapper->method('findByToken')->willReturn($share);
+		$this->mapper->expects($this->once())->method('delete')->with($share);
 
-    /**
-     * Test confirmAccess increments usage atomically and resets failures.
-     *
-     * @return void
-     */
-    public function testConfirmAccessIncrementsUsage(): void
-    {
-        $updated = $this->makeShare(['usageCount' => 2, 'usageLimit' => 3]);
-        $this->mapper->expects($this->once())
-            ->method('incrementUsageIfBelowLimit')
-            ->with('tok')
-            ->willReturn(1);
-        $this->mapper->method('findByToken')->with('tok')->willReturn($updated);
-        // Not yet at the limit, so it must NOT be deleted.
-        $this->mapper->expects($this->never())->method('delete');
+		$this->expectException(RuntimeException::class);
+		$this->service->getByToken('bruteforced');
+	}//end testGetByTokenThrowsAndDeletesWhenBruteForced()
 
-        $result = $this->service->confirmAccess('tok');
+	/**
+	 * Test confirmAccess increments usage atomically and resets failures.
+	 *
+	 * @return void
+	 */
+	public function testConfirmAccessIncrementsUsage(): void {
+		$updated = $this->makeShare(['usageCount' => 2, 'usageLimit' => 3]);
+		$this->mapper->expects($this->once())
+			->method('incrementUsageIfBelowLimit')
+			->with('tok')
+			->willReturn(1);
+		$this->mapper->method('findByToken')->with('tok')->willReturn($updated);
+		// Not yet at the limit, so it must NOT be deleted.
+		$this->mapper->expects($this->never())->method('delete');
 
-        $this->assertSame(2, $result->getUsageCount());
-    }
+		$result = $this->service->confirmAccess('tok');
 
-    /**
-     * Test confirmAccess deletes the share when the limit is reached.
-     *
-     * @return void
-     */
-    public function testConfirmAccessDeletesWhenLimitReached(): void
-    {
-        $updated = $this->makeShare(['usageCount' => 3, 'usageLimit' => 3]);
-        $this->mapper->method('incrementUsageIfBelowLimit')->willReturn(1);
-        $this->mapper->method('findByToken')->willReturn($updated);
-        $this->mapper->expects($this->once())->method('delete')->with($updated);
+		$this->assertSame(2, $result->getUsageCount());
+	}//end testConfirmAccessIncrementsUsage()
 
-        $result = $this->service->confirmAccess('tok');
+	/**
+	 * Test confirmAccess deletes the share when the limit is reached.
+	 *
+	 * @return void
+	 */
+	public function testConfirmAccessDeletesWhenLimitReached(): void {
+		$updated = $this->makeShare(['usageCount' => 3, 'usageLimit' => 3]);
+		$this->mapper->method('incrementUsageIfBelowLimit')->willReturn(1);
+		$this->mapper->method('findByToken')->willReturn($updated);
+		$this->mapper->expects($this->once())->method('delete')->with($updated);
 
-        $this->assertSame(3, $result->getUsageCount());
-    }
+		$result = $this->service->confirmAccess('tok');
 
-    /**
-     * Test confirmAccess throws when the atomic update affects no rows.
-     *
-     * @return void
-     */
-    public function testConfirmAccessThrowsWhenNoRowsAffected(): void
-    {
-        $this->mapper->method('incrementUsageIfBelowLimit')->willReturn(0);
-        $this->mapper->expects($this->never())->method('findByToken');
+		$this->assertSame(3, $result->getUsageCount());
+	}//end testConfirmAccessDeletesWhenLimitReached()
 
-        $this->expectException(RuntimeException::class);
-        $this->service->confirmAccess('tok');
-    }
+	/**
+	 * Test confirmAccess throws when the atomic update affects no rows.
+	 *
+	 * @return void
+	 */
+	public function testConfirmAccessThrowsWhenNoRowsAffected(): void {
+		$this->mapper->method('incrementUsageIfBelowLimit')->willReturn(0);
+		$this->mapper->expects($this->never())->method('findByToken');
 
-    /**
-     * Test recordFailedAttempt increments the counter below the threshold.
-     *
-     * @return void
-     */
-    public function testRecordFailedAttemptIncrements(): void
-    {
-        $share = $this->makeShare(['failedAttempts' => 2]);
-        $this->mapper->method('findByToken')->willReturn($share);
-        $this->mapper->expects($this->once())
-            ->method('update')
-            ->willReturnCallback(
-                function (LinkShare $s) {
-                    $this->assertSame(3, $s->getFailedAttempts());
-                    return $s;
-                }
-            );
-        $this->mapper->expects($this->never())->method('delete');
+		$this->expectException(RuntimeException::class);
+		$this->service->confirmAccess('tok');
+	}//end testConfirmAccessThrowsWhenNoRowsAffected()
 
-        $this->service->recordFailedAttempt('tok');
-    }
+	/**
+	 * Test recordFailedAttempt increments the counter below the threshold.
+	 *
+	 * @return void
+	 */
+	public function testRecordFailedAttemptIncrements(): void {
+		$share = $this->makeShare(['failedAttempts' => 2]);
+		$this->mapper->method('findByToken')->willReturn($share);
+		$this->mapper->expects($this->once())
+			->method('update')
+			->willReturnCallback(
+				function (LinkShare $s) {
+					$this->assertSame(3, $s->getFailedAttempts());
+					return $s;
+				}
+			);
+		$this->mapper->expects($this->never())->method('delete');
 
-    /**
-     * Test recordFailedAttempt deletes the share at the 5th failure.
-     *
-     * @return void
-     */
-    public function testRecordFailedAttemptDeletesAtThreshold(): void
-    {
-        $share = $this->makeShare(['failedAttempts' => 4]);
-        $this->mapper->method('findByToken')->willReturn($share);
-        $this->mapper->expects($this->once())->method('delete')->with($share);
-        $this->mapper->expects($this->never())->method('update');
+		$this->service->recordFailedAttempt('tok');
+	}//end testRecordFailedAttemptIncrements()
 
-        $this->service->recordFailedAttempt('tok');
+	/**
+	 * Test recordFailedAttempt deletes the share at the 5th failure.
+	 *
+	 * @return void
+	 */
+	public function testRecordFailedAttemptDeletesAtThreshold(): void {
+		$share = $this->makeShare(['failedAttempts' => 4]);
+		$this->mapper->method('findByToken')->willReturn($share);
+		$this->mapper->expects($this->once())->method('delete')->with($share);
+		$this->mapper->expects($this->never())->method('update');
 
-        $this->assertSame(5, $share->getFailedAttempts());
-    }
+		$this->service->recordFailedAttempt('tok');
 
-    /**
-     * Test recordFailedAttempt is a no-op for a non-existent token.
-     *
-     * @return void
-     */
-    public function testRecordFailedAttemptNoopForMissingToken(): void
-    {
-        $this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('nope'));
-        $this->mapper->expects($this->never())->method('update');
-        $this->mapper->expects($this->never())->method('delete');
+		$this->assertSame(5, $share->getFailedAttempts());
+	}//end testRecordFailedAttemptDeletesAtThreshold()
 
-        $this->service->recordFailedAttempt('missing');
-    }
+	/**
+	 * Test recordFailedAttempt is a no-op for a non-existent token.
+	 *
+	 * @return void
+	 */
+	public function testRecordFailedAttemptNoopForMissingToken(): void {
+		$this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('nope'));
+		$this->mapper->expects($this->never())->method('update');
+		$this->mapper->expects($this->never())->method('delete');
 
-    /**
-     * Test listBySecret filters to the requesting owner only (IDOR-safe).
-     *
-     * @return void
-     */
-    public function testListBySecretFiltersByOwner(): void
-    {
-        $mine    = $this->makeShare(['id' => 'a', 'createdBy' => 'alice']);
-        $theirs  = $this->makeShare(['id' => 'b', 'createdBy' => 'bob']);
-        $this->mapper->method('findBySecretId')->with('secret-1')->willReturn([$mine, $theirs]);
+		$this->service->recordFailedAttempt('missing');
+	}//end testRecordFailedAttemptNoopForMissingToken()
 
-        $result = $this->service->listBySecret('secret-1', 'alice');
+	/**
+	 * Test listBySecret filters to the requesting owner only (IDOR-safe).
+	 *
+	 * @return void
+	 */
+	public function testListBySecretFiltersByOwner(): void {
+		$mine = $this->makeShare(['id' => 'a', 'createdBy' => 'alice']);
+		$theirs = $this->makeShare(['id' => 'b', 'createdBy' => 'bob']);
+		$this->mapper->method('findBySecretId')->with('secret-1')->willReturn([$mine, $theirs]);
 
-        $this->assertCount(1, $result);
-        $this->assertSame('a', $result[0]->getId());
-    }
+		$result = $this->service->listBySecret('secret-1', 'alice');
 
-    /**
-     * Test delete validates ownership and removes the row.
-     *
-     * @return void
-     */
-    public function testDeleteByOwnerSucceeds(): void
-    {
-        $share = $this->makeShare(['id' => 'ls-7', 'createdBy' => 'alice']);
-        $this->mapper->method('findById')->with('ls-7')->willReturn($share);
-        $this->mapper->expects($this->once())->method('delete')->with($share);
+		$this->assertCount(1, $result);
+		$this->assertSame('a', $result[0]->getId());
+	}//end testListBySecretFiltersByOwner()
 
-        $this->service->delete('ls-7', 'alice');
-    }
+	/**
+	 * Test delete validates ownership and removes the row.
+	 *
+	 * @return void
+	 */
+	public function testDeleteByOwnerSucceeds(): void {
+		$share = $this->makeShare(['id' => 'ls-7', 'createdBy' => 'alice']);
+		$this->mapper->method('findById')->with('ls-7')->willReturn($share);
+		$this->mapper->expects($this->once())->method('delete')->with($share);
 
-    /**
-     * Test delete rejects a non-owner with InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testDeleteByNonOwnerRejected(): void
-    {
-        $share = $this->makeShare(['id' => 'ls-7', 'createdBy' => 'alice']);
-        $this->mapper->method('findById')->willReturn($share);
-        $this->mapper->expects($this->never())->method('delete');
+		$this->service->delete('ls-7', 'alice');
+	}//end testDeleteByOwnerSucceeds()
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->delete('ls-7', 'mallory');
-    }
+	/**
+	 * Test delete rejects a non-owner with InvalidArgumentException.
+	 *
+	 * @return void
+	 */
+	public function testDeleteByNonOwnerRejected(): void {
+		$share = $this->makeShare(['id' => 'ls-7', 'createdBy' => 'alice']);
+		$this->mapper->method('findById')->willReturn($share);
+		$this->mapper->expects($this->never())->method('delete');
 
-    /**
-     * Test delete throws when the link share does not exist.
-     *
-     * @return void
-     */
-    public function testDeleteThrowsWhenMissing(): void
-    {
-        $this->mapper->method('findById')->willThrowException(new DoesNotExistException('nope'));
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->delete('ls-7', 'mallory');
+	}//end testDeleteByNonOwnerRejected()
 
-        $this->expectException(RuntimeException::class);
-        $this->service->delete('missing', 'alice');
-    }
+	/**
+	 * Test delete throws when the link share does not exist.
+	 *
+	 * @return void
+	 */
+	public function testDeleteThrowsWhenMissing(): void {
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('nope'));
 
-    /**
-     * Test deleteBySecretId cascades to the mapper.
-     *
-     * @return void
-     */
-    public function testDeleteBySecretIdCascades(): void
-    {
-        $this->mapper->expects($this->once())->method('deleteBySecretId')->with('secret-1');
+		$this->expectException(RuntimeException::class);
+		$this->service->delete('missing', 'alice');
+	}//end testDeleteThrowsWhenMissing()
 
-        $this->service->deleteBySecretId('secret-1');
-    }
+	/**
+	 * Test deleteBySecretId cascades to the mapper.
+	 *
+	 * @return void
+	 */
+	public function testDeleteBySecretIdCascades(): void {
+		$this->mapper->expects($this->once())->method('deleteBySecretId')->with('secret-1');
 
-    /**
-     * Test deleteByUserId cascades to the mapper.
-     *
-     * @return void
-     */
-    public function testDeleteByUserIdCascades(): void
-    {
-        $this->mapper->expects($this->once())->method('deleteByUserId')->with('alice');
+		$this->service->deleteBySecretId('secret-1');
+	}//end testDeleteBySecretIdCascades()
 
-        $this->service->deleteByUserId('alice');
-    }
-}
+	/**
+	 * Test deleteByUserId cascades to the mapper.
+	 *
+	 * @return void
+	 */
+	public function testDeleteByUserIdCascades(): void {
+		$this->mapper->expects($this->once())->method('deleteByUserId')->with('alice');
+
+		$this->service->deleteByUserId('alice');
+	}//end testDeleteByUserIdCascades()
+}//end class

@@ -23,7 +23,7 @@
  * pull the entire NC design-system tree into the test bundle.
  *
  * @spec openspec/changes/implement-link-sharing/tasks.md#13.4
- * @spec openspec/changes/implement-link-sharing/tasks.md#13.5
+ * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -42,11 +42,13 @@ import { useSecretStore } from '../../src/store/modules/secret.js'
 const ncStubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
-		template: '<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['type', 'disabled', 'ariaLabel'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
 	},
 	NcSelect: {
 		props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'],
@@ -62,7 +64,8 @@ const ncStubs = {
 	Delete: { template: '<i class="icon-delete" />' },
 	CopyButton: {
 		props: ['value', 'label'],
-		template: '<button class="copy-stub" :data-label="label">{{ value }}</button>',
+		template:
+			'<button class="copy-stub" :data-label="label">{{ value }}</button>',
 	},
 }
 
@@ -77,13 +80,15 @@ describe('SecretShareDialog', () => {
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
 		await wrapper.vm.$nextTick()
 
-		expect(get).toHaveBeenCalledWith('/apps/doriath/api/v1/secrets/secret-42/link-shares')
+		expect(get).toHaveBeenCalledWith(
+			'/apps/doriath/api/v1/secrets/secret-42/link-shares',
+		)
 	})
 
 	it('createLink: decrypts the secret, encrypts a snapshot, and surfaces the one-time reveal', async () => {
@@ -115,7 +120,7 @@ describe('SecretShareDialog', () => {
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
@@ -135,12 +140,14 @@ describe('SecretShareDialog', () => {
 	})
 
 	it('revoke delegates to the store deleteLinkShare action', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ id: 'ls-1', token: 't1', usageLimit: 1, usageCount: 0 }] })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: [{ id: 'ls-1', token: 't1', usageLimit: 1, usageCount: 0 }],
+		})
 		const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.$nextTick()
@@ -156,7 +163,7 @@ describe('SecretShareDialog', () => {
 
 		const wrapper = mount(SecretShareDialog, {
 			propsData: { secretId: 'secret-42' },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		const linkStore = useLinkShareStore()

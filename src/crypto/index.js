@@ -1,4 +1,16 @@
-export { deriveAesKey, encryptPrivateKey, decryptPrivateKey } from './aes.js'
-export { generateKeyPair, importPrivateKey, importPublicKey, rsaEncrypt, rsaDecrypt } from './rsa.js'
-export { encodeEnvelope, decodeEnvelope } from './envelope.js'
-export { isArgon2Supported, deriveAesKeyArgon2id, encryptSnapshot, decryptSnapshot, generateLinkPassword } from './argon2.js'
+export { decryptPrivateKey, deriveAesKey, encryptPrivateKey } from './aes.js'
+export {
+	generateKeyPair,
+	importPrivateKey,
+	importPublicKey,
+	rsaDecrypt,
+	rsaEncrypt,
+} from './rsa.js'
+export { decodeEnvelope, encodeEnvelope } from './envelope.js'
+export {
+	decryptSnapshot,
+	deriveAesKeyArgon2id,
+	encryptSnapshot,
+	generateLinkPassword,
+	isArgon2Supported,
+} from './argon2.js'

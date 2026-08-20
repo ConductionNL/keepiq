@@ -36,52 +36,48 @@ use OCP\IRequest;
  * should consult `$this->getApplication()` for the calling application
  * — never trust headers directly.
  */
-abstract class ApplicationApiController extends Controller
-{
+abstract class ApplicationApiController extends Controller {
 
-    /**
-     * The Application entity resolved from the Bearer token. Populated
-     * by JwtAuthMiddleware::beforeController before the controller
-     * method runs.
-     *
-     * @var Application|null
-     */
-    private ?Application $application = null;
+	/**
+	 * The Application entity resolved from the Bearer token. Populated
+	 * by JwtAuthMiddleware::beforeController before the controller
+	 * method runs.
+	 *
+	 * @var Application|null
+	 */
+	private ?Application $application = null;
 
-    /**
-     * Constructor for ApplicationApiController.
-     *
-     * @param string   $appName The Nextcloud app name
-     * @param IRequest $request The HTTP request
-     *
-     * @return void
-     */
-    public function __construct(string $appName, IRequest $request)
-    {
-        parent::__construct(appName: $appName, request: $request);
-    }//end __construct()
+	/**
+	 * Constructor for ApplicationApiController.
+	 *
+	 * @param string $appName The Nextcloud app name
+	 * @param IRequest $request The HTTP request
+	 *
+	 * @return void
+	 */
+	public function __construct(string $appName, IRequest $request) {
+		parent::__construct(appName: $appName, request: $request);
+	}//end __construct()
 
-    /**
-     * Inject the Application entity (called by the middleware after the
-     * Bearer token is validated).
-     *
-     * @param Application $application The authenticated application
-     *
-     * @return void
-     */
-    public function setApplication(Application $application): void
-    {
-        $this->application = $application;
-    }//end setApplication()
+	/**
+	 * Inject the Application entity (called by the middleware after the
+	 * Bearer token is validated).
+	 *
+	 * @param Application $application The authenticated application
+	 *
+	 * @return void
+	 */
+	public function setApplication(Application $application): void {
+		$this->application = $application;
+	}//end setApplication()
 
-    /**
-     * Get the Application entity for the current Bearer-authenticated
-     * call.
-     *
-     * @return Application|null
-     */
-    public function getApplication(): ?Application
-    {
-        return $this->application;
-    }//end getApplication()
+	/**
+	 * Get the Application entity for the current Bearer-authenticated
+	 * call.
+	 *
+	 * @return Application|null
+	 */
+	public function getApplication(): ?Application {
+		return $this->application;
+	}//end getApplication()
 }//end class

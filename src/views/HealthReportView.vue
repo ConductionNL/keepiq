@@ -16,7 +16,10 @@
 	<div class="health-report" data-testid="health-report">
 		<h2>{{ t('doriath', 'Password health') }}</h2>
 
-		<p v-if="locked" class="health-report__locked" data-testid="health-report-locked">
+		<p
+			v-if="locked"
+			class="health-report__locked"
+			data-testid="health-report-locked">
 			{{ t('doriath', 'Unlock your vault to analyse password health.') }}
 		</p>
 
@@ -24,38 +27,70 @@
 			<div class="health-report__controls">
 				<NcSelect
 					v-model="stalenessOption"
-					:input-label="t('doriath', 'Flag passwords older than')"
+					:inputLabel="t('doriath', 'Flag passwords older than')"
 					:options="stalenessOptions"
 					:clearable="false"
 					label="label"
 					data-testid="staleness-select"
-					@input="reanalyse" />
+					@update:modelValue="reanalyse" />
 
-				<label v-if="breachGateOn" class="health-report__optin" data-testid="breach-optin">
-					<input v-model="breachOptIn" type="checkbox" @change="onBreachToggle">
-					{{ t('doriath', 'Check passwords against the Have I Been Pwned breach corpus') }}
+				<label
+					v-if="breachGateOn"
+					class="health-report__optin"
+					data-testid="breach-optin">
+					<input
+						v-model="breachOptIn"
+						type="checkbox"
+						@change="onBreachToggle" />
+					{{
+						t(
+							'doriath',
+							'Check passwords against the Have I Been Pwned breach corpus',
+						)
+					}}
 				</label>
 				<p v-if="breachGateOn" class="health-report__optin-hint">
-					{{ t('doriath', 'Only the first 5 characters of each password’s SHA-1 hash are sent (k-anonymity); the password itself never leaves your browser.') }}
+					{{
+						t(
+							'doriath',
+							'Only the first 5 characters of each password’s SHA-1 hash are sent (k-anonymity); the password itself never leaves your browser.',
+						)
+					}}
 				</p>
 			</div>
 
-			<p v-if="store.status === 'analysing'" data-testid="health-report-analysing">
+			<p
+				v-if="store.status === 'analysing'"
+				data-testid="health-report-analysing">
 				{{ t('doriath', 'Analysing your vault…') }}
 			</p>
 
 			<div v-else-if="store.status === 'ready'" class="health-report__body">
 				<div class="health-report__score" data-testid="health-score">
 					<span class="health-report__score-value">{{ store.score }}</span>
-					<span class="health-report__score-label">{{ t('doriath', 'Vault health score') }}</span>
+					<span class="health-report__score-label">{{
+						t('doriath', 'Vault health score')
+					}}</span>
 				</div>
 
 				<ul class="health-report__counts">
-					<li>{{ t('doriath', 'Weak') }}: {{ store.summary.weakCount }}</li>
-					<li>{{ t('doriath', 'Reused') }}: {{ store.summary.reusedCount }}</li>
-					<li>{{ t('doriath', 'Old') }}: {{ store.summary.staleCount }}</li>
-					<li v-if="breachActive">{{ t('doriath', 'Breached') }}: {{ store.summary.breachedCount }}</li>
-					<li>{{ t('doriath', 'Possibly compromised') }}: {{ store.summary.compromisedCount }}</li>
+					<li>
+						{{ t('doriath', 'Weak') }}: {{ store.summary.weakCount }}
+					</li>
+					<li>
+						{{ t('doriath', 'Reused') }}: {{ store.summary.reusedCount }}
+					</li>
+					<li>
+						{{ t('doriath', 'Old') }}: {{ store.summary.staleCount }}
+					</li>
+					<li v-if="breachActive">
+						{{ t('doriath', 'Breached') }}:
+						{{ store.summary.breachedCount }}
+					</li>
+					<li>
+						{{ t('doriath', 'Possibly compromised') }}:
+						{{ store.summary.compromisedCount }}
+					</li>
 				</ul>
 
 				<HealthCategory
@@ -65,7 +100,9 @@
 					@open="openSecret" />
 				<HealthCategory
 					:title="t('doriath', 'Reused passwords')"
-					:description="t('doriath', 'These secrets share an identical password.')"
+					:description="
+						t('doriath', 'These secrets share an identical password.')
+					"
 					:findings="store.reusedFindings"
 					testid="category-reused"
 					@open="openSecret" />
@@ -80,18 +117,51 @@
 					:findings="store.breachedFindings"
 					testid="category-breached"
 					@open="openSecret" />
-				<p v-else-if="store.breachStatus === 'unavailable'" data-testid="breach-unavailable">
-					{{ t('doriath', 'Breach check is currently unavailable. Other findings are unaffected.') }}
+				<NcButton
+					v-if="breachActive && store.breachedFindings.length"
+					variant="secondary"
+					data-testid="breach-flag-all"
+					@click="flagBreached">
+					{{ t('doriath', 'Flag all breached secrets for rotation') }}
+				</NcButton>
+				<p
+					v-else-if="store.breachStatus === 'unavailable'"
+					data-testid="breach-unavailable">
+					{{
+						t(
+							'doriath',
+							'Breach check is currently unavailable. Other findings are unaffected.',
+						)
+					}}
 				</p>
 				<HealthCategory
 					:title="t('doriath', 'Possibly compromised')"
-					:description="t('doriath', 'Flagged during an encryption-suite compromise recovery — rotate these values.')"
+					:description="
+						t(
+							'doriath',
+							'Flagged during an encryption-suite compromise recovery — rotate these values.',
+						)
+					"
 					:findings="store.compromisedFindings"
 					testid="category-compromised"
 					@open="openSecret" />
+				<HealthCategory
+					:title="t('doriath', 'Rotation due')"
+					:description="
+						t(
+							'doriath',
+							'Open rotation flags — expired, breached, or manually flagged credentials awaiting rotation.',
+						)
+					"
+					:findings="rotationFindings"
+					testid="category-rotation"
+					@open="openSecret" />
 			</div>
 
-			<div v-else-if="store.status === 'error'" class="health-report__error" data-testid="health-report-error">
+			<div
+				v-else-if="store.status === 'error'"
+				class="health-report__error"
+				data-testid="health-report-error">
 				{{ store.error }}
 			</div>
 		</template>
@@ -99,22 +169,24 @@
 </template>
 
 <script>
-import { NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
-import { useHealthStore } from '../store/modules/health.js'
-import { useSessionStore } from '../store/modules/session.js'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcSelect } from '@nextcloud/vue'
 import HealthCategory from '../components/HealthCategory.vue'
+import { useHealthStore } from '../store/modules/health.js'
+import { useRotationStore } from '../store/modules/rotation.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'HealthReportView',
-	components: { NcSelect, HealthCategory },
+	components: { NcSelect, NcButton, HealthCategory },
 
 	data() {
 		return {
 			store: useHealthStore(),
 			session: useSessionStore(),
+			rotation: useRotationStore(),
 			breachGateOn: loadState('doriath', 'breachCheckEnabled', false),
 			breachOptIn: false,
 			stalenessOption: { value: '365', label: t('doriath', '365 days') },
@@ -131,6 +203,7 @@ export default {
 		locked() {
 			return this.session.isLocked
 		},
+
 		/**
 		 * Whether breach checking is active (both gates on).
 		 *
@@ -140,6 +213,7 @@ export default {
 		breachActive() {
 			return this.breachGateOn && this.breachOptIn
 		},
+
 		/**
 		 * Staleness threshold options for the select.
 		 *
@@ -154,6 +228,31 @@ export default {
 				{ value: 'never', label: t('doriath', 'Never') },
 			]
 		},
+
+		/**
+		 * Open rotation flags as health findings (deep-link to secret).
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
+		 */
+		rotationFindings() {
+			return this.rotation.flags.map((flag) => ({
+				id: flag.secretId,
+				name: flag.secretName || flag.secretId,
+			}))
+		},
+	},
+
+	watch: {
+		/**
+		 * Persist the staleness threshold whenever the select changes.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+		 */
+		stalenessOption() {
+			this.persistStaleness()
+		},
 	},
 
 	/**
@@ -165,6 +264,11 @@ export default {
 	async created() {
 		this.store.registerLockReset()
 		await this.loadPrefs()
+		try {
+			await this.rotation.fetchFlags()
+		} catch (e) {
+			console.warn('Doriath: failed to load rotation flags', e)
+		}
 		if (!this.locked) {
 			await this.reanalyse()
 		}
@@ -179,13 +283,19 @@ export default {
 		 */
 		async loadPrefs() {
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/settings/user'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/settings/user'),
+				)
 				const threshold = response.data?.health_staleness_days ?? '365'
-				const match = this.stalenessOptions.find((o) => o.value === String(threshold))
+				const match = this.stalenessOptions.find(
+					(o) => o.value === String(threshold),
+				)
 				if (match) {
 					this.stalenessOption = match
 				}
-				this.breachOptIn = response.data?.breach_check_opt_in === '1' || response.data?.breach_check_opt_in === true
+				this.breachOptIn =
+					response.data?.breach_check_opt_in === '1'
+					|| response.data?.breach_check_opt_in === true
 			} catch (e) {
 				console.warn('Doriath: failed to load health prefs', e)
 			}
@@ -202,6 +312,23 @@ export default {
 				stalenessThreshold: this.stalenessOption?.value ?? '365',
 				breachEnabled: this.breachActive,
 			})
+		},
+
+		/**
+		 * Batch-flag all breached findings for rotation — secret IDs
+		 * ONLY leave the client (no verdicts, counts, or digests).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
+		 */
+		async flagBreached() {
+			try {
+				await this.rotation.flagSecrets(
+					this.store.breachedFindings.map((f) => f.id),
+				)
+			} catch (e) {
+				console.warn('Doriath: failed to batch-flag breached secrets', e)
+			}
 		},
 
 		/**
@@ -246,19 +373,9 @@ export default {
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 		 */
 		openSecret(secretId) {
-			this.$router.push({ name: 'SecretDetail', params: { id: secretId } }).catch(() => {})
-		},
-	},
-
-	watch: {
-		/**
-		 * Persist the staleness threshold whenever the select changes.
-		 *
-		 * @return {void}
-		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
-		 */
-		stalenessOption() {
-			this.persistStaleness()
+			this.$router
+				.push({ name: 'SecretDetail', params: { id: secretId } })
+				.catch(() => {})
 		},
 	},
 }

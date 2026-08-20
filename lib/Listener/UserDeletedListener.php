@@ -38,49 +38,47 @@ use Throwable;
  *
  * @template-implements IEventListener<Event>
  */
-class UserDeletedListener implements IEventListener
-{
-    /**
-     * Constructor for UserDeletedListener.
-     *
-     * @param AccountDeletionService $deletionService The deletion-cascade service
-     * @param LoggerInterface        $logger          The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        private AccountDeletionService $deletionService,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class UserDeletedListener implements IEventListener {
+	/**
+	 * Constructor for UserDeletedListener.
+	 *
+	 * @param AccountDeletionService $deletionService The deletion-cascade service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private AccountDeletionService $deletionService,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle a Nextcloud user-deletion event.
-     *
-     * @param Event $event The dispatched event
-     *
-     * @return void
-     *
-     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if (($event instanceof UserDeletedEvent) === false) {
-            return;
-        }
+	/**
+	 * Handle a Nextcloud user-deletion event.
+	 *
+	 * @param Event $event The dispatched event
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 */
+	public function handle(Event $event): void {
+		if (($event instanceof UserDeletedEvent) === false) {
+			return;
+		}
 
-        $userId = $event->getUser()->getUID();
+		$userId = $event->getUser()->getUID();
 
-        try {
-            $this->deletionService->deleteAllFor(userId: $userId, trigger: 'user-deleted');
-        } catch (Throwable $e) {
-            // Log and swallow: a failed cascade must not block NC user deletion.
-            // The cascade is idempotent and can be re-run; the event is emitted
-            // only on completed runs, so a partial run leaves no false audit row.
-            $this->logger->error(
-                'Doriath: account-deletion cascade failed for '.$userId.': '.$e->getMessage(),
-                ['exception' => $e]
-            );
-        }
-    }//end handle()
+		try {
+			$this->deletionService->deleteAllFor(userId: $userId, trigger: 'user-deleted');
+		} catch (Throwable $e) {
+			// Log and swallow: a failed cascade must not block NC user deletion.
+			// The cascade is idempotent and can be re-run; the event is emitted
+			// only on completed runs, so a partial run leaves no false audit row.
+			$this->logger->error(
+				'Doriath: account-deletion cascade failed for ' . $userId . ': ' . $e->getMessage(),
+				['exception' => $e]
+			);
+		}
+	}//end handle()
 }//end class

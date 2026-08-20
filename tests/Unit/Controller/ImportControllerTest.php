@@ -31,99 +31,92 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for the batch-import endpoint.
  */
-class ImportControllerTest extends TestCase
-{
-    /**
-     * Build the controller + mocked import service.
-     *
-     * @param string|null $userId The session user
-     *
-     * @return array{0:ImportController,1:ImportService}
-     */
-    private function build(?string $userId = 'alice'): array
-    {
-        $request = $this->createMock(IRequest::class);
-        $session = $this->createMock(IUserSession::class);
-        $service = $this->createMock(ImportService::class);
+class ImportControllerTest extends TestCase {
+	/**
+	 * Build the controller + mocked import service.
+	 *
+	 * @param string|null $userId The session user
+	 *
+	 * @return array{0:ImportController,1:ImportService}
+	 */
+	private function build(?string $userId = 'alice'): array {
+		$request = $this->createMock(IRequest::class);
+		$session = $this->createMock(IUserSession::class);
+		$service = $this->createMock(ImportService::class);
 
-        if ($userId !== null) {
-            $user = $this->createMock(IUser::class);
-            $user->method('getUID')->willReturn($userId);
-            $session->method('getUser')->willReturn($user);
-        } else {
-            $session->method('getUser')->willReturn(null);
-        }
+		if ($userId !== null) {
+			$user = $this->createMock(IUser::class);
+			$user->method('getUID')->willReturn($userId);
+			$session->method('getUser')->willReturn($user);
+		} else {
+			$session->method('getUser')->willReturn(null);
+		}
 
-        return [new ImportController($request, $service, $session), $service];
-    }
+		return [new ImportController($request, $service, $session), $service];
+	}//end build()
 
-    /**
-     * An anonymous request is unauthorized.
-     *
-     * @return void
-     */
-    public function testUnauthenticatedReturns401(): void
-    {
-        [$controller] = $this->build(userId: null);
-        $response = $controller->batchCreate([['name' => 'X']]);
-        $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-    }
+	/**
+	 * An anonymous request is unauthorized.
+	 *
+	 * @return void
+	 */
+	public function testUnauthenticatedReturns401(): void {
+		[$controller] = $this->build(userId: null);
+		$response = $controller->batchCreate([['name' => 'X']]);
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+	}//end testUnauthenticatedReturns401()
 
-    /**
-     * An empty body is a 400.
-     *
-     * @return void
-     */
-    public function testEmptyBodyReturns400(): void
-    {
-        [$controller] = $this->build();
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $controller->batchCreate(null)->getStatus());
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $controller->batchCreate([])->getStatus());
-    }
+	/**
+	 * An empty body is a 400.
+	 *
+	 * @return void
+	 */
+	public function testEmptyBodyReturns400(): void {
+		[$controller] = $this->build();
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $controller->batchCreate(null)->getStatus());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $controller->batchCreate([])->getStatus());
+	}//end testEmptyBodyReturns400()
 
-    /**
-     * A chunk over the cap is a 413.
-     *
-     * @return void
-     */
-    public function testOverCapReturns413(): void
-    {
-        [$controller] = $this->build();
-        $items    = array_fill(0, (ImportService::MAX_ITEMS + 1), ['name' => 'X']);
-        $response = $controller->batchCreate($items);
-        $this->assertSame(413, $response->getStatus());
-    }
+	/**
+	 * A chunk over the cap is a 413.
+	 *
+	 * @return void
+	 */
+	public function testOverCapReturns413(): void {
+		[$controller] = $this->build();
+		$items = array_fill(0, (ImportService::MAX_ITEMS + 1), ['name' => 'X']);
+		$response = $controller->batchCreate($items);
+		$this->assertSame(413, $response->getStatus());
+	}//end testOverCapReturns413()
 
-    /**
-     * No active suite maps to 412.
-     *
-     * @return void
-     */
-    public function testNoActiveSuiteReturns412(): void
-    {
-        [$controller, $service] = $this->build();
-        $service->method('commitChunk')->willThrowException(new SuiteBlockedException('no suite'));
-        $response = $controller->batchCreate([['name' => 'X']]);
-        $this->assertSame(412, $response->getStatus());
-    }
+	/**
+	 * No active suite maps to 412.
+	 *
+	 * @return void
+	 */
+	public function testNoActiveSuiteReturns412(): void {
+		[$controller, $service] = $this->build();
+		$service->method('commitChunk')->willThrowException(new SuiteBlockedException('no suite'));
+		$response = $controller->batchCreate([['name' => 'X']]);
+		$this->assertSame(412, $response->getStatus());
+	}//end testNoActiveSuiteReturns412()
 
-    /**
-     * A successful commit returns the per-index results with HTTP 200, and the
-     * session user is forwarded (no owner param accepted from the body).
-     *
-     * @return void
-     */
-    public function testSuccessReturnsResultsWithSessionOwner(): void
-    {
-        [$controller, $service] = $this->build('alice');
-        $service->expects($this->once())
-            ->method('commitChunk')
-            ->with($this->anything(), 'alice')
-            ->willReturn(['results' => [['index' => 0, 'status' => 'created', 'secretId' => 's1']], 'foldersCreated' => []]);
+	/**
+	 * A successful commit returns the per-index results with HTTP 200, and the
+	 * session user is forwarded (no owner param accepted from the body).
+	 *
+	 * @return void
+	 */
+	public function testSuccessReturnsResultsWithSessionOwner(): void {
+		[$controller, $service] = $this->build('alice');
+		$service->expects($this->once())
+			->method('commitChunk')
+			->with($this->anything(), 'alice')
+			->willReturn(['results' => [['index' => 0, 'status' => 'created', 'secretId' => 's1']], 'foldersCreated' => []]);
 
-        $response = $controller->batchCreate([['name' => 'X', 'key' => 'cipher', 'ownerId' => 'mallory']]);
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        $this->assertSame('created', $data['results'][0]['status']);
-    }
-}
+		$response = $controller->batchCreate([['name' => 'X', 'key' => 'cipher', 'ownerId' => 'mallory']]);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('created', $data['results'][0]['status']);
+	}//end testSuccessReturnsResultsWithSessionOwner()
+}//end class

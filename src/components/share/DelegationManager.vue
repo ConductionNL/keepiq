@@ -26,7 +26,8 @@
 			{{ t('doriath', 'Loading…') }}
 		</p>
 
-		<p v-else-if="store.count === 0"
+		<p
+			v-else-if="store.count === 0"
 			class="doriath-delegation-manager__empty"
 			data-testid="delegation-manager-empty">
 			{{ t('doriath', 'No active delegations for this secret.') }}
@@ -38,19 +39,23 @@
 				:key="row.id"
 				class="doriath-delegation-manager__row"
 				:data-testid="`delegation-row-${row.id}`">
-				<span class="doriath-delegation-manager__delegate"
+				<span
+					class="doriath-delegation-manager__delegate"
 					data-testid="delegation-row-delegate">
 					{{ row.delegatedTo }}
 				</span>
 				<span
 					class="doriath-delegation-manager__status"
 					:class="{
-						'doriath-delegation-manager__status--permanent': row.isPermanent === true,
+						'doriath-delegation-manager__status--permanent':
+							row.isPermanent === true,
 					}"
 					data-testid="delegation-row-status">
-					{{ row.isPermanent === true
-						? t('doriath', 'Permanent')
-						: t('doriath', 'Temporary') }}
+					{{
+						row.isPermanent === true
+							? t('doriath', 'Permanent')
+							: t('doriath', 'Temporary')
+					}}
 				</span>
 			</li>
 		</ul>
@@ -65,7 +70,8 @@
 			</button>
 		</div>
 
-		<p v-if="store.error"
+		<p
+			v-if="store.error"
 			class="doriath-delegation-manager__error"
 			data-testid="delegation-manager-error">
 			{{ store.error }}
@@ -84,6 +90,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		canReclaim: {
 			type: Boolean,
 			default: false,
@@ -169,8 +176,11 @@ export default {
 }
 
 .doriath-delegation-manager__status--permanent {
-	background: var(--color-warning, #f5a623);
-	color: #fff;
+	/* The only genuinely hardcoded colour in the app. White is not a safe
+	   foreground for --color-warning, which is a lighter yellow in dark mode;
+	   --color-warning-text is the paired value that stays readable on it. */
+	background: var(--color-warning);
+	color: var(--color-warning-text);
 }
 
 .doriath-delegation-manager__actions {
@@ -178,7 +188,7 @@ export default {
 }
 
 .doriath-delegation-manager__error {
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 	margin: 8px 0;
 }
 

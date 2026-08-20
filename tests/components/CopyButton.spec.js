@@ -16,7 +16,7 @@
  *    is unavailable (legacy IE/quirks paths)
  *
  * @spec openspec/changes/implement-secrets/tasks.md#7.6
- * @spec openspec/changes/implement-secrets/tasks.md#13.6
+ * @spec openspec/changes/implement-secrets/tasks.md#13.3
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -25,7 +25,7 @@ import { mount } from '@vue/test-utils'
 import CopyButton from '../../src/components/CopyButton.vue'
 
 // Helper: wait for any pending promises to settle (microtask drain).
-const flush = () => new Promise(resolve => setTimeout(resolve, 0))
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('CopyButton', () => {
 	let writeTextSpy
@@ -94,9 +94,9 @@ describe('CopyButton', () => {
 		expect(writeTextSpy).toHaveBeenCalledWith('secret')
 
 		// Wait past the clear timer (50ms + 50ms slack).
-		await new Promise(resolve => setTimeout(resolve, 100))
+		await new Promise((resolve) => setTimeout(resolve, 100))
 
-		expect(writeTextSpy.mock.calls.map(c => c[0])).toEqual(['secret', ''])
+		expect(writeTextSpy.mock.calls.map((c) => c[0])).toEqual(['secret', ''])
 	})
 
 	it('does NOT auto-clear when `clearAfter` is 0', async () => {
@@ -110,7 +110,7 @@ describe('CopyButton', () => {
 		expect(writeTextSpy).toHaveBeenCalledWith('secret')
 
 		// Wait long enough that ANY clear timer would have fired.
-		await new Promise(resolve => setTimeout(resolve, 100))
+		await new Promise((resolve) => setTimeout(resolve, 100))
 
 		// Still just the one call — the empty-string clear must not fire.
 		expect(writeTextSpy).toHaveBeenCalledOnce()

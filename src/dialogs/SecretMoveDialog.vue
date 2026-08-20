@@ -6,7 +6,8 @@
   root). This is a metadata-only change — no re-encryption is needed.
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Move secret')"
+	<NcDialog
+		:name="t('doriath', 'Move secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -15,20 +16,43 @@
 				{{ error }}
 			</NcNoteCard>
 
-			<NcSelect v-model="folderId"
+			<!--
+				⚠️ `append-to-body` MUST stay false inside a dialog.
+
+				NcSelect defaults it to true, which makes vue-select TELEPORT the
+				options list to <body>. A teleported list opened from inside an
+				NcDialog is painted behind that dialog, and the control is then
+				simply dead: the options are in the DOM, visible and enabled, but
+				every click lands on the dialog instead. Choosing a destination
+				folder was impossible — Playwright retried the click ~100 times
+				over 60s and each attempt hit `<div class="dialog">` (CI runs
+				30798827764, 30800957925, 30804327498).
+
+				Raising the menu's z-index does NOT fix it — tried at 10002 in
+				30804327498 and 30805835374, no change — because the teleported
+				list and the dialog end up in different stacking contexts, so the
+				list's own z-index never competes with the dialog's. Keeping the
+				list inside the dialog removes the question entirely.
+
+				The underlying defect is nc-vue's: NcSelect teleports by default
+				while NcModal (which NcDialog builds on) creates a stacking
+				context the teleported node cannot rise above. Every other
+				NcSelect this app renders inside a dialog has the same problem.
+			-->
+			<NcSelect
+				v-model="folderId"
 				:options="folderOptions"
-				:reduce="opt => opt.value"
-				:input-label="t('doriath', 'Destination folder')"
+				:reduce="(opt) => opt.value"
+				:inputLabel="t('doriath', 'Destination folder')"
+				:appendToBody="false"
 				:clearable="false" />
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="primary"
-				:disabled="saving"
-				@click="submit">
+			<NcButton variant="primary" :disabled="saving" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<FolderMove v-else :size="20" />
@@ -40,10 +64,16 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+} from '@nextcloud/vue'
 import FolderMove from 'vue-material-design-icons/FolderMove.vue'
-import { useSecretStore } from '../store/modules/secret.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { useSecretStore } from '../store/modules/secret.js'
 
 /**
  * Move a secret into a folder (or to the vault root) via the secret store.
@@ -67,11 +97,13 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/** The secret's current folder ID (preselected). */
 		currentFolderId: {
 			type: String,
 			default: null,
 		},
+
 		/** Optional callback fired with the updated secret after success. */
 		onSaved: {
 			type: Function,
@@ -92,7 +124,7 @@ export default {
 		folderOptions() {
 			const roots = [{ value: null, label: t('doriath', 'Vault root') }]
 			return roots.concat(
-				useFolderStore().folders.map(folder => ({
+				useFolderStore().folders.map((folder) => ({
 					value: folder.id,
 					label: folder.name,
 				})),
@@ -141,7 +173,10 @@ export default {
 				}
 				this.onUpdateOpen(false)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to move secret')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to move secret')
 			} finally {
 				this.saving = false
 			}

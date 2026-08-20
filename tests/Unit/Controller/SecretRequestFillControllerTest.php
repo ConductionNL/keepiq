@@ -25,6 +25,7 @@ use OCA\Doriath\Controller\SecretRequestFillController;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Doriath\Service\SecretRequestPolicy;
 use OCA\Doriath\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -37,217 +38,261 @@ use RuntimeException;
  *
  * @spec openspec/changes/implement-secret-requests/tasks.md#12.2
  */
-class SecretRequestFillControllerTest extends TestCase
-{
+class SecretRequestFillControllerTest extends TestCase {
 
-    /**
-     * The controller under test.
-     *
-     * @var SecretRequestFillController
-     */
-    private SecretRequestFillController $controller;
+	/**
+	 * The controller under test.
+	 *
+	 * @var SecretRequestFillController
+	 */
+	private SecretRequestFillController $controller;
 
-    /**
-     * The mocked secret-request service.
-     *
-     * @var SecretRequestService&MockObject
-     */
-    private SecretRequestService&MockObject $secretRequestService;
+	/**
+	 * The mocked secret-request service.
+	 *
+	 * @var SecretRequestService&MockObject
+	 */
+	private SecretRequestService&MockObject $secretRequestService;
 
-    /**
-     * The mocked encryption-suite service.
-     *
-     * @var EncryptionSuiteService&MockObject
-     */
-    private EncryptionSuiteService&MockObject $encryptionSuiteService;
+	/**
+	 * The mocked encryption-suite service.
+	 *
+	 * @var EncryptionSuiteService&MockObject
+	 */
+	private EncryptionSuiteService&MockObject $encryptionSuiteService;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $request = $this->createMock(originalClassName: IRequest::class);
-        $this->secretRequestService   = $this->createMock(originalClassName: SecretRequestService::class);
-        $this->encryptionSuiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$this->secretRequestService = $this->createMock(originalClassName: SecretRequestService::class);
+		$this->encryptionSuiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
 
-        $this->controller = new SecretRequestFillController(
-            request: $request,
-            secretRequestService: $this->secretRequestService,
-            encryptionSuiteService: $this->encryptionSuiteService,
-        );
+		$this->controller = new SecretRequestFillController(
+			request: $request,
+			secretRequestService: $this->secretRequestService,
+			suiteService: $this->encryptionSuiteService,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build a SecretRequest entity for the assertions below.
-     *
-     * @param string $status The status string.
-     *
-     * @return SecretRequest
-     */
-    private function makeRequest(string $status=SecretRequest::STATUS_PENDING): SecretRequest
-    {
-        $entity = new SecretRequest();
-        $entity->setId('req-1');
-        $entity->setSecretId('sec-1');
-        $entity->setEncryptionSuiteId('suite-1');
-        $entity->setToken('tok-1');
-        $entity->setRequestedFields(json_encode(['key', 'login']));
-        $entity->setStatus($status);
-        $entity->setIsReRequest(false);
-        $entity->setCreatedBy('alice');
-        $entity->setCreatedAt(new DateTime('2026-01-01T00:00:00Z'));
-        return $entity;
+	/**
+	 * Build a SecretRequest entity for the assertions below.
+	 *
+	 * @param string $status The status string.
+	 *
+	 * @return SecretRequest
+	 */
+	private function makeRequest(string $status = SecretRequest::STATUS_PENDING): SecretRequest {
+		$entity = new SecretRequest();
+		$entity->setId('req-1');
+		$entity->setSecretId('sec-1');
+		$entity->setEncryptionSuiteId('suite-1');
+		$entity->setToken('tok-1');
+		$entity->setRequestedFields(json_encode(['key', 'login']));
+		$entity->setStatus($status);
+		$entity->setIsReRequest(false);
+		$entity->setCreatedBy('alice');
+		$entity->setCreatedAt(new DateTime('2026-01-01T00:00:00Z'));
+		return $entity;
+	}//end makeRequest()
 
-    }//end makeRequest()
+	/**
+	 * Build an EncryptionSuite entity with a deterministic certificate.
+	 *
+	 * @return EncryptionSuite
+	 */
+	private function makeSuite(): EncryptionSuite {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setCertificate("-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----");
+		return $suite;
+	}//end makeSuite()
 
-    /**
-     * Build an EncryptionSuite entity with a deterministic certificate.
-     *
-     * @return EncryptionSuite
-     */
-    private function makeSuite(): EncryptionSuite
-    {
-        $suite = new EncryptionSuite();
-        $suite->setId('suite-1');
-        $suite->setCertificate("-----BEGIN CERTIFICATE-----\nABC\n-----END CERTIFICATE-----");
-        return $suite;
+	/**
+	 * Show returns the certificate, requested fields, and status.
+	 *
+	 * @return void
+	 */
+	public function testShowReturnsTheCertificateAndRequestedFields(): void {
+		$this->secretRequestService->expects($this->once())
+			->method('getByToken')->with('tok-1')->willReturn($this->makeRequest());
+		$this->encryptionSuiteService->expects($this->once())
+			->method('getSuite')->with(id: 'suite-1')->willReturn($this->makeSuite());
 
-    }//end makeSuite()
+		$response = $this->controller->show(token: 'tok-1');
+		$data = $response->getData();
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(expected: 'tok-1', actual: $data['token']);
+		$this->assertSame(expected: ['key', 'login'], actual: $data['requested_fields']);
+		$this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $data['public_certificate']);
+		$this->assertSame(expected: 'pending', actual: $data['status']);
 
-    /**
-     * Show returns the certificate, requested fields, and status.
-     *
-     * @return void
-     */
-    public function testShowReturnsTheCertificateAndRequestedFields(): void
-    {
-        $this->secretRequestService->expects($this->once())
-            ->method('getByToken')->with('tok-1')->willReturn($this->makeRequest());
-        $this->encryptionSuiteService->expects($this->once())
-            ->method('getSuite')->with(id: 'suite-1')->willReturn($this->makeSuite());
+	}//end testShowReturnsTheCertificateAndRequestedFields()
 
-        $response = $this->controller->show(token: 'tok-1');
-        $data     = $response->getData();
-        $this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
-        $this->assertSame(expected: 'tok-1', actual: $data['token']);
-        $this->assertSame(expected: ['key', 'login'], actual: $data['requested_fields']);
-        $this->assertStringContainsString(needle: 'BEGIN CERTIFICATE', haystack: $data['public_certificate']);
-        $this->assertSame(expected: 'pending', actual: $data['status']);
+	/**
+	 * Show propagates the InvalidArgumentException HTTP code (e.g. 410 Gone).
+	 *
+	 * @return void
+	 */
+	public function testShowReturnsTheCodedErrorForExpiredOrFulfilled(): void {
+		$this->secretRequestService->expects($this->once())
+			->method('getByToken')->willThrowException(
+				new InvalidArgumentException(message: 'Request expired', code: Http::STATUS_GONE)
+			);
 
-    }//end testShowReturnsTheCertificateAndRequestedFields()
+		$response = $this->controller->show(token: 'tok-1');
+		$this->assertSame(expected: Http::STATUS_GONE, actual: $response->getStatus());
+		$this->assertSame(expected: 'Request expired', actual: $response->getData()['message']);
 
-    /**
-     * Show propagates the InvalidArgumentException HTTP code (e.g. 410 Gone).
-     *
-     * @return void
-     */
-    public function testShowReturnsTheCodedErrorForExpiredOrFulfilled(): void
-    {
-        $this->secretRequestService->expects($this->once())
-            ->method('getByToken')->willThrowException(
-                new InvalidArgumentException(message: 'Request expired', code: Http::STATUS_GONE)
-            );
+	}//end testShowReturnsTheCodedErrorForExpiredOrFulfilled()
 
-        $response = $this->controller->show(token: 'tok-1');
-        $this->assertSame(expected: Http::STATUS_GONE, actual: $response->getStatus());
-        $this->assertSame(expected: 'Request expired', actual: $response->getData()['message']);
+	/**
+	 * A refusal carries a machine-readable reason, not only English prose.
+	 *
+	 * The recipient is a stranger reading this page in one of 37 locales. `message`
+	 * is composed server-side in English, so it is the wrong thing for the page to
+	 * render — measured in a browser on 2026-08-19: a real expired link showed
+	 * "Request has expired" while the translated string sat unreachable in
+	 * SecretRequestFill.vue. `reason` is what makes the translation reachable.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testShowIncludesAMachineReadableReasonOnRefusal(): void {
+		$this->secretRequestService->method('getByToken')->willThrowException(
+			new InvalidArgumentException(message: 'Request has expired', code: 408)
+		);
+		$this->secretRequestService->expects($this->once())
+			->method('refusalReason')
+			->with('tok-1')
+			->willReturn(SecretRequestPolicy::REASON_EXPIRED);
 
-    }//end testShowReturnsTheCodedErrorForExpiredOrFulfilled()
+		$data = $this->controller->show(token: 'tok-1')->getData();
 
-    /**
-     * Show falls back to a uniform 404 on any generic throwable.
-     *
-     * @return void
-     */
-    public function testShowFallsBackTo404WhenTheServiceCannotResolve(): void
-    {
-        $this->secretRequestService->expects($this->once())
-            ->method('getByToken')->willThrowException(new RuntimeException(message: 'boom'));
+		$this->assertSame(SecretRequestPolicy::REASON_EXPIRED, $data['reason']);
+		$this->assertSame('Request has expired', $data['message'], 'the message stays for API callers');
+	}//end testShowIncludesAMachineReadableReasonOnRefusal()
 
-        $response = $this->controller->show(token: 'tok-1');
-        $this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
+	/**
+	 * Show falls back to a uniform 404 on any generic throwable.
+	 *
+	 * @return void
+	 */
+	public function testShowFallsBackTo404WhenTheServiceCannotResolve(): void {
+		$this->secretRequestService->expects($this->once())
+			->method('getByToken')->willThrowException(new RuntimeException(message: 'boom'));
 
-    }//end testShowFallsBackTo404WhenTheServiceCannotResolve()
+		$response = $this->controller->show(token: 'tok-1');
+		$this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
 
-    /**
-     * Show surfaces a 503 when the recipient's suite lookup fails.
-     *
-     * @return void
-     */
-    public function testShowSurfaces503WhenTheSuiteLookupFails(): void
-    {
-        $this->secretRequestService->expects($this->once())
-            ->method('getByToken')->willReturn($this->makeRequest());
-        $this->encryptionSuiteService->expects($this->once())
-            ->method('getSuite')->willThrowException(new RuntimeException(message: 'no suite'));
+	}//end testShowFallsBackTo404WhenTheServiceCannotResolve()
 
-        $response = $this->controller->show(token: 'tok-1');
-        $this->assertSame(expected: Http::STATUS_SERVICE_UNAVAILABLE, actual: $response->getStatus());
+	/**
+	 * Show surfaces a 503 when the recipient's suite lookup fails.
+	 *
+	 * @return void
+	 */
+	public function testShowSurfaces503WhenTheSuiteLookupFails(): void {
+		$this->secretRequestService->expects($this->once())
+			->method('getByToken')->willReturn($this->makeRequest());
+		$this->encryptionSuiteService->expects($this->once())
+			->method('getSuite')->willThrowException(new RuntimeException(message: 'no suite'));
 
-    }//end testShowSurfaces503WhenTheSuiteLookupFails()
+		$response = $this->controller->show(token: 'tok-1');
+		$this->assertSame(expected: Http::STATUS_SERVICE_UNAVAILABLE, actual: $response->getStatus());
 
-    /**
-     * Fill forwards the encrypted field map verbatim to the service.
-     *
-     * @return void
-     */
-    public function testFillForwardsTheEncryptedFieldsToTheService(): void
-    {
-        $filled = $this->makeRequest(status: SecretRequest::STATUS_FULFILLED);
-        $filled->setFulfilledAt(new DateTime('2026-01-02T00:00:00Z'));
-        $this->secretRequestService->expects($this->once())
-            ->method('fill')
-            ->with(token: 'tok-1', encryptedFields: ['key' => 'BLOBA', 'login' => 'BLOBB'])
-            ->willReturn($filled);
+	}//end testShowSurfaces503WhenTheSuiteLookupFails()
 
-        $response = $this->controller->fill(
-            token: 'tok-1',
-            encryptedFields: ['key' => 'BLOBA', 'login' => 'BLOBB']
-        );
-        $this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
-        $this->assertSame(expected: 'fulfilled', actual: $response->getData()['status']);
+	/**
+	 * Fill forwards the encrypted field map verbatim to the service.
+	 *
+	 * @return void
+	 */
+	public function testFillForwardsTheEncryptedFieldsToTheService(): void {
+		$filled = $this->makeRequest(status: SecretRequest::STATUS_FULFILLED);
+		$filled->setFulfilledAt(new DateTime('2026-01-02T00:00:00Z'));
+		$this->secretRequestService->expects($this->once())
+			->method('fill')
+			->with(token: 'tok-1', encryptedFields: ['key' => 'BLOBA', 'login' => 'BLOBB'])
+			->willReturn($filled);
 
-    }//end testFillForwardsTheEncryptedFieldsToTheService()
+		$response = $this->controller->fill(
+			token: 'tok-1',
+			encryptedFields: ['key' => 'BLOBA', 'login' => 'BLOBB']
+		);
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(expected: 'fulfilled', actual: $response->getData()['status']);
 
-    /**
-     * Fill returns the coded validation error from the service.
-     *
-     * @return void
-     */
-    public function testFillReturnsTheCodedErrorForValidationFailure(): void
-    {
-        $this->secretRequestService->expects($this->once())
-            ->method('fill')
-            ->willThrowException(
-                new InvalidArgumentException(message: 'Missing required field: key', code: Http::STATUS_BAD_REQUEST)
-            );
+	}//end testFillForwardsTheEncryptedFieldsToTheService()
 
-        // Pass a non-empty body so the request reaches the service — the
-        // controller short-circuits an empty/missing body with its own
-        // 'encryptedFields is required' guard before calling fill().
-        $response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
-        $this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
-        $this->assertSame(expected: 'Missing required field: key', actual: $response->getData()['message']);
+	/**
+	 * Fill returns the coded validation error from the service.
+	 *
+	 * @return void
+	 */
+	public function testFillReturnsTheCodedErrorForValidationFailure(): void {
+		$this->secretRequestService->expects($this->once())
+			->method('fill')
+			->willThrowException(
+				new InvalidArgumentException(message: 'Missing required field: key', code: Http::STATUS_BAD_REQUEST)
+			);
 
-    }//end testFillReturnsTheCodedErrorForValidationFailure()
+		// Pass a non-empty body so the request reaches the service — the
+		// controller short-circuits an empty/missing body with its own
+		// 'encryptedFields is required' guard before calling fill().
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+		$this->assertSame(expected: 'Missing required field: key', actual: $response->getData()['message']);
 
-    /**
-     * Fill returns a 500 on any non-InvalidArgumentException failure.
-     *
-     * @return void
-     */
-    public function testFillReturns500OnGenericFailure(): void
-    {
-        $this->secretRequestService->expects($this->once())
-            ->method('fill')
-            ->willThrowException(new RuntimeException(message: 'boom'));
+	}//end testFillReturnsTheCodedErrorForValidationFailure()
 
-        $response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'B']);
-        $this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
+	/**
+	 * Fill returns a 500 on any non-InvalidArgumentException failure.
+	 *
+	 * @return void
+	 */
+	public function testFillReturns500OnGenericFailure(): void {
+		$this->secretRequestService->expects($this->once())
+			->method('fill')
+			->willThrowException(new RuntimeException(message: 'boom'));
 
-    }//end testFillReturns500OnGenericFailure()
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'B']);
+		$this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
+
+	}//end testFillReturns500OnGenericFailure()
+	/**
+	 * The fill response never tells the recipient which fields already hold values.
+	 *
+	 * "This field already has a value" is a read of the vault handed to an
+	 * unauthenticated party. Filled-ness is decided by the REQUESTER's client at
+	 * creation time, so the payload is asserted as a CLOSED set here rather than
+	 * only for the presence of what the recipient needs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+	 */
+	public function testShowNeverDisclosesWhichFieldsAreAlreadyFilled(): void {
+		$this->secretRequestService->method('getByToken')->willReturn($this->makeRequest());
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$data = $this->controller->show(token: 'tok-1')->getData();
+
+		foreach (['filled', 'filledFields', 'already_filled', 'values', 'key', 'login'] as $leak) {
+			$this->assertArrayNotHasKey(
+				key: $leak,
+				array: $data,
+				message: $leak . ' must not reach the fill recipient'
+			);
+		}
+
+		$this->assertSame(expected: ['key', 'login'], actual: $data['requested_fields']);
+	}//end testShowNeverDisclosesWhichFieldsAreAlreadyFilled()
+
 }//end class

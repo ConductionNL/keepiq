@@ -1,6 +1,7 @@
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
+import { useOfflineStore } from './offline.js'
 
 /**
  * Build a nested tree from a flat folder list.
@@ -55,11 +56,30 @@ export const useFolderStore = defineStore('folder', {
 		 */
 		async fetchFolders() {
 			this.loading = true
+			const offline = useOfflineStore()
+			if (offline.servedFromCache && offline.vault?.folders) {
+				this.folders = offline.vault.folders
+				this.loading = false
+				return
+			}
 			try {
 				const response = await axios.get(
 					generateUrl('/apps/doriath/api/v1/folders'),
 				)
 				this.folders = response.data || []
+			} catch (e) {
+				// Offline fallback: serve the cached folder tree (offline-
+				// readonly-cache §4.2).
+				const netErr =
+					e?.message === 'Network Error'
+					|| e?.code === 'ERR_NETWORK'
+					|| (e?.request && !e?.response)
+				if (netErr && offline.vault?.folders) {
+					offline.servedFromCache = true
+					this.folders = offline.vault.folders
+				} else {
+					throw e
+				}
 			} finally {
 				this.loading = false
 			}
@@ -93,7 +113,7 @@ export const useFolderStore = defineStore('folder', {
 				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
 				data,
 			)
-			const index = this.folders.findIndex(f => f.id === id)
+			const index = this.folders.findIndex((f) => f.id === id)
 			if (index !== -1) {
 				this.folders.splice(index, 1, response.data)
 			}
@@ -131,8 +151,11 @@ export const useFolderStore = defineStore('folder', {
 					directSecrets: options.directSecrets || 'move',
 				}
 			}
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/folders/${id}`), config)
-			this.folders = this.folders.filter(f => f.id !== id)
+			await axios.delete(
+				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
+				config,
+			)
+			this.folders = this.folders.filter((f) => f.id !== id)
 		},
 	},
 })

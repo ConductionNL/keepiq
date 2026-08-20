@@ -37,185 +37,194 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for BreachProxyController — the HIBP k-anonymity prefix proxy.
  */
-class BreachProxyControllerTest extends TestCase
-{
-    /** @var IRequest&MockObject */
-    private IRequest&MockObject $request;
+class BreachProxyControllerTest extends TestCase {
 
-    /** @var IAppConfig&MockObject */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /** @var IClientService&MockObject */
-    private IClientService&MockObject $clientService;
+	/**
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /** @var ICacheFactory&MockObject */
-    private ICacheFactory&MockObject $cacheFactory;
+	/**
+	 * @var IClientService&MockObject
+	 */
+	private IClientService&MockObject $clientService;
 
-    /** @var ICache&MockObject */
-    private ICache&MockObject $cache;
+	/**
+	 * @var ICacheFactory&MockObject
+	 */
+	private ICacheFactory&MockObject $cacheFactory;
 
-    /** @var IUserSession&MockObject */
-    private IUserSession&MockObject $userSession;
+	/**
+	 * @var ICache&MockObject
+	 */
+	private ICache&MockObject $cache;
 
-    /** @var LoggerInterface&MockObject */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $userSession;
 
-    /**
-     * Set up shared mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request       = $this->createMock(IRequest::class);
-        $this->appConfig     = $this->createMock(IAppConfig::class);
-        $this->clientService = $this->createMock(IClientService::class);
-        $this->cacheFactory  = $this->createMock(ICacheFactory::class);
-        $this->cache         = $this->createMock(ICache::class);
-        $this->userSession   = $this->createMock(IUserSession::class);
-        $this->logger        = $this->createMock(LoggerInterface::class);
+	/**
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-        $this->cacheFactory->method('createDistributed')->willReturn($this->cache);
+	/**
+	 * Set up shared mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->clientService = $this->createMock(IClientService::class);
+		$this->cacheFactory = $this->createMock(ICacheFactory::class);
+		$this->cache = $this->createMock(ICache::class);
+		$this->userSession = $this->createMock(IUserSession::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->userSession->method('getUser')->willReturn($user);
-    }//end setUp()
+		$this->cacheFactory->method('createDistributed')->willReturn($this->cache);
 
-    /**
-     * Build the controller with the current mocks.
-     *
-     * @return BreachProxyController
-     */
-    private function controller(): BreachProxyController
-    {
-        return new BreachProxyController(
-            $this->request,
-            $this->appConfig,
-            $this->clientService,
-            $this->cacheFactory,
-            $this->userSession,
-            $this->logger,
-        );
-    }//end controller()
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
+	}//end setUp()
 
-    /**
-     * When the admin gate is off, every request is forbidden.
-     *
-     * @return void
-     */
-    public function testForbiddenWhenAdminGateOff(): void
-    {
-        $this->appConfig->method('getValueBool')->willReturn(false);
-        $this->clientService->expects($this->never())->method('newClient');
+	/**
+	 * Build the controller with the current mocks.
+	 *
+	 * @return BreachProxyController
+	 */
+	private function controller(): BreachProxyController {
+		return new BreachProxyController(
+			$this->request,
+			$this->appConfig,
+			$this->clientService,
+			$this->cacheFactory,
+			$this->userSession,
+			$this->logger,
+		);
+	}//end controller()
 
-        $response = $this->controller()->range('ABCDE');
+	/**
+	 * When the admin gate is off, every request is forbidden.
+	 *
+	 * @return void
+	 */
+	public function testForbiddenWhenAdminGateOff(): void {
+		$this->appConfig->method('getValueBool')->willReturn(false);
+		$this->clientService->expects($this->never())->method('newClient');
 
-        $this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-    }//end testForbiddenWhenAdminGateOff()
+		$response = $this->controller()->range('ABCDE');
 
-    /**
-     * A non-5-hex prefix is rejected with 400 (never forwarded).
-     *
-     * @return void
-     */
-    public function testRejectsNonFiveHexPrefix(): void
-    {
-        $this->appConfig->method('getValueBool')->willReturn(true);
-        $this->clientService->expects($this->never())->method('newClient');
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testForbiddenWhenAdminGateOff()
 
-        foreach (['ABC', 'ABCDEF', 'GHIJK', 'AB!DE', ''] as $bad) {
-            $response = $this->controller()->range($bad);
-            $this->assertSame(
-                Http::STATUS_BAD_REQUEST,
-                $response->getStatus(),
-                "prefix '{$bad}' should be rejected"
-            );
-        }
-    }//end testRejectsNonFiveHexPrefix()
+	/**
+	 * A non-5-hex prefix is rejected with 400 (never forwarded).
+	 *
+	 * @return void
+	 */
+	public function testRejectsNonFiveHexPrefix(): void {
+		$this->appConfig->method('getValueBool')->willReturn(true);
+		$this->clientService->expects($this->never())->method('newClient');
 
-    /**
-     * A valid prefix is forwarded and the suffix list returned verbatim.
-     *
-     * @return void
-     */
-    public function testForwardsAndReturnsVerbatim(): void
-    {
-        $this->appConfig->method('getValueBool')->willReturn(true);
-        $this->cache->method('get')->willReturn(null);
+		foreach (['ABC', 'ABCDEF', 'GHIJK', 'AB!DE', ''] as $bad) {
+			$response = $this->controller()->range($bad);
+			$this->assertSame(
+				Http::STATUS_BAD_REQUEST,
+				$response->getStatus(),
+				"prefix '{$bad}' should be rejected"
+			);
+		}
+	}//end testRejectsNonFiveHexPrefix()
 
-        $body = "0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n00D4F6E8FA6EECAD2A3AA415EEC418D38EC:2";
-        $httpResponse = $this->createMock(IResponse::class);
-        $httpResponse->method('getBody')->willReturn($body);
-        $client = $this->createMock(IClient::class);
-        $client->expects($this->once())
-            ->method('get')
-            ->with(
-                $this->stringContains('/range/ABCDE'),
-                $this->callback(function ($opts) {
-                    return isset($opts['headers']['Add-Padding'])
-                        && $opts['headers']['Add-Padding'] === 'true';
-                })
-            )
-            ->willReturn($httpResponse);
-        $this->clientService->method('newClient')->willReturn($client);
-        $this->cache->expects($this->once())->method('set')->with('ABCDE', $body, $this->anything());
+	/**
+	 * A valid prefix is forwarded and the suffix list returned verbatim.
+	 *
+	 * @return void
+	 */
+	public function testForwardsAndReturnsVerbatim(): void {
+		$this->appConfig->method('getValueBool')->willReturn(true);
+		$this->cache->method('get')->willReturn(null);
 
-        $response = $this->controller()->range('abcde');
+		$body = "0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n00D4F6E8FA6EECAD2A3AA415EEC418D38EC:2";
+		$httpResponse = $this->createMock(IResponse::class);
+		$httpResponse->method('getBody')->willReturn($body);
+		$client = $this->createMock(IClient::class);
+		$client->expects($this->once())
+			->method('get')
+			->with(
+				$this->stringContains('/range/ABCDE'),
+				$this->callback(
+					function ($opts) {
+						return isset($opts['headers']['Add-Padding'])
+						&& $opts['headers']['Add-Padding'] === 'true';
+					}
+				)
+			)
+			->willReturn($httpResponse);
+		$this->clientService->method('newClient')->willReturn($client);
+		$this->cache->expects($this->once())->method('set')->with('ABCDE', $body, $this->anything());
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame(['suffixes' => $body], $response->getData());
-    }//end testForwardsAndReturnsVerbatim()
+		$response = $this->controller()->range('abcde');
 
-    /**
-     * A cache hit returns the cached body without an upstream call.
-     *
-     * @return void
-     */
-    public function testCacheHitSkipsUpstream(): void
-    {
-        $this->appConfig->method('getValueBool')->willReturn(true);
-        $this->cache->method('get')->willReturn('CAFE:5');
-        $this->clientService->expects($this->never())->method('newClient');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['suffixes' => $body], $response->getData());
+	}//end testForwardsAndReturnsVerbatim()
 
-        $response = $this->controller()->range('ABCDE');
+	/**
+	 * A cache hit returns the cached body without an upstream call.
+	 *
+	 * @return void
+	 */
+	public function testCacheHitSkipsUpstream(): void {
+		$this->appConfig->method('getValueBool')->willReturn(true);
+		$this->cache->method('get')->willReturn('CAFE:5');
+		$this->clientService->expects($this->never())->method('newClient');
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame(['suffixes' => 'CAFE:5'], $response->getData());
-    }//end testCacheHitSkipsUpstream()
+		$response = $this->controller()->range('ABCDE');
 
-    /**
-     * Upstream failure soft-degrades to 503; the log line never combines the
-     * prefix with a user id (privacy — k-anonymity is undermined by logging
-     * who looked up which prefix).
-     *
-     * @return void
-     */
-    public function testUpstreamFailureDegradesAndDoesNotLogPrefixWithUser(): void
-    {
-        $this->appConfig->method('getValueBool')->willReturn(true);
-        $this->cache->method('get')->willReturn(null);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['suffixes' => 'CAFE:5'], $response->getData());
+	}//end testCacheHitSkipsUpstream()
 
-        $client = $this->createMock(IClient::class);
-        $client->method('get')->willThrowException(new \RuntimeException('boom'));
-        $this->clientService->method('newClient')->willReturn($client);
+	/**
+	 * Upstream failure soft-degrades to 503; the log line never combines the
+	 * prefix with a user id (privacy — k-anonymity is undermined by logging
+	 * who looked up which prefix).
+	 *
+	 * @return void
+	 */
+	public function testUpstreamFailureDegradesAndDoesNotLogPrefixWithUser(): void {
+		$this->appConfig->method('getValueBool')->willReturn(true);
+		$this->cache->method('get')->willReturn(null);
 
-        $logged = [];
-        $this->logger->method('warning')->willReturnCallback(
-            function (string $message) use (&$logged): void {
-                $logged[] = $message;
-            }
-        );
+		$client = $this->createMock(IClient::class);
+		$client->method('get')->willThrowException(new \RuntimeException('boom'));
+		$this->clientService->method('newClient')->willReturn($client);
 
-        $response = $this->controller()->range('ABCDE');
+		$logged = [];
+		$this->logger->method('warning')->willReturnCallback(
+			function (string $message) use (&$logged): void {
+				$logged[] = $message;
+			}
+		);
 
-        $this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
-        foreach ($logged as $line) {
-            $this->assertFalse(
-                str_contains($line, 'ABCDE') && str_contains($line, 'alice'),
-                'A log line must never combine the prefix with the user id.'
-            );
-        }
-    }//end testUpstreamFailureDegradesAndDoesNotLogPrefixWithUser()
+		$response = $this->controller()->range('ABCDE');
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		foreach ($logged as $line) {
+			$this->assertFalse(
+				str_contains($line, 'ABCDE') && str_contains($line, 'alice'),
+				'A log line must never combine the prefix with the user id.'
+			);
+		}
+	}//end testUpstreamFailureDegradesAndDoesNotLogPrefixWithUser()
 }//end class

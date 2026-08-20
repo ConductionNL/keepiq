@@ -25,18 +25,30 @@ import axios from '@nextcloud/axios'
 import { useImportStore, COMMIT_CHUNK_SIZE } from '../../src/store/modules/import.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
-import { generateKeyPair, rsaDecrypt } from '../../src/crypto/rsa.js'
+import { rsaDecrypt } from '../../src/crypto/rsa.js'
+import { sharedKeyPair } from '../vitest/fixtures/rsa-fixtures.js'
 import { encryptBackup } from '../../src/export/backup.js'
 import { serializeVault } from '../../src/export/serializer.js'
 
 /**
- * Unlock the session store with a freshly generated RSA-4096 key pair so the
- * real encrypt path runs and the test can decrypt to verify the round-trip.
+ * Unlock the session store with the shared RSA-4096 key pair so the real
+ * encrypt path runs and the test can decrypt to verify the round-trip.
+ *
+ * The key material comes from `tests/vitest/fixtures/rsa-fixtures.js`, which
+ * imports a committed 4096-bit pair rather than generating one. A live
+ * `generateKeyPair()` is a random prime search with unbounded runtime; nine of
+ * them in this file (one per `unlockSession()` call) pushed the round-trip test
+ * past vitest's 5000ms default in ConductionNL/doriath run 30884131373, and
+ * caching a *generated* pair still left the first call on the timed path — that
+ * residual coin flip is what then timed out `emergencyEnvelope.spec.js` in run
+ * 31083918823. Every assertion still runs real RSA-OAEP against a real key;
+ * these tests assert the crypto round-trip, never key freshness. Pinia is
+ * recreated per test by `beforeEach`, so no store state leaks between cases.
  *
  * @return {Promise<CryptoKey>} The private key for decryption assertions.
  */
 async function unlockSession() {
-	const { privateKey, publicKeyPem } = await generateKeyPair()
+	const { privateKey, publicKeyPem } = await sharedKeyPair()
 	const session = useSessionStore()
 	session.certificate = publicKeyPem
 	session.cryptoKey = privateKey
@@ -58,12 +70,29 @@ describe('useImportStore', () => {
 		let body = null
 		vi.spyOn(axios, 'post').mockImplementation(async (url, payload) => {
 			body = payload
-			return { data: { results: payload.items.map((_, i) => ({ index: i, status: 'created', secretId: 's' + i })) } }
+			return {
+				data: {
+					results: payload.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: 's' + i,
+					})),
+				},
+			}
 		})
 
 		const store = useImportStore()
 		store.rows = [
-			{ sourceRow: 1, name: 'GitHub', url: 'https://github.com', login: 'octocat', password: 'hunter2-PLAINTEXT', additionalFields: { notes: 'secret-note' }, folder: 'Work/CI', errors: [] },
+			{
+				sourceRow: 1,
+				name: 'GitHub',
+				url: 'https://github.com',
+				login: 'octocat',
+				password: 'hunter2-PLAINTEXT',
+				additionalFields: { notes: 'secret-note' },
+				folder: 'Work/CI',
+				errors: [],
+			},
 		]
 		await store.commit()
 
@@ -76,7 +105,9 @@ describe('useImportStore', () => {
 		expect(body.items[0].url).toBe('https://github.com')
 		expect(body.items[0].folderPath).toEqual(['Work', 'CI'])
 		// Ciphertext decrypts back to the original plaintext.
-		expect(await rsaDecrypt(body.items[0].key, privateKey)).toBe('hunter2-PLAINTEXT')
+		expect(await rsaDecrypt(body.items[0].key, privateKey)).toBe(
+			'hunter2-PLAINTEXT',
+		)
 		expect(await rsaDecrypt(body.items[0].login, privateKey)).toBe('octocat')
 		expect(store.summary.imported).toBe(1)
 	})
@@ -87,7 +118,15 @@ describe('useImportStore', () => {
 
 		// Build a real export payload + encrypted backup envelope.
 		const decrypted = [
-			{ name: 'AWS', url: 'https://aws.test', login: 'admin', key: 'aws-key-123', additionalFields: null, folderId: 'f1', type: 'login' },
+			{
+				name: 'AWS',
+				url: 'https://aws.test',
+				login: 'admin',
+				key: 'aws-key-123',
+				additionalFields: null,
+				folderId: 'f1',
+				type: 'login',
+			},
 		]
 		const folders = [{ id: 'f1', name: 'Cloud', parentId: null }]
 		const payload = serializeVault(decrypted, folders, { mode: 'vault' })
@@ -96,11 +135,21 @@ describe('useImportStore', () => {
 		const captured = []
 		vi.spyOn(axios, 'post').mockImplementation(async (url, b) => {
 			captured.push(b)
-			return { data: { results: b.items.map((_, i) => ({ index: i, status: 'created', secretId: 'x' + i })) } }
+			return {
+				data: {
+					results: b.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: 'x' + i,
+					})),
+				},
+			}
 		})
 
 		const store = useImportStore()
-		await store.parseFile(JSON.stringify(envelope), 'doriath-backup', { passphrase: 'restore-pass' })
+		await store.parseFile(JSON.stringify(envelope), 'doriath-backup', {
+			passphrase: 'restore-pass',
+		})
 		expect(store.rows).toHaveLength(1)
 		await store.detectDuplicates()
 		await store.commit()
@@ -118,11 +167,28 @@ describe('useImportStore', () => {
 		const calls = []
 		vi.spyOn(axios, 'post').mockImplementation(async (url, b) => {
 			calls.push(b.items.length)
-			return { data: { results: b.items.map((_, i) => ({ index: i, status: 'created', secretId: 'y' })) } }
+			return {
+				data: {
+					results: b.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: 'y',
+					})),
+				},
+			}
 		})
 
 		const store = useImportStore()
-		store.rows = Array.from({ length: 120 }, (_, i) => ({ sourceRow: i + 1, name: 'S' + i, url: null, login: null, password: 'p', additionalFields: null, folder: '', errors: [] }))
+		store.rows = Array.from({ length: 120 }, (_, i) => ({
+			sourceRow: i + 1,
+			name: 'S' + i,
+			url: null,
+			login: null,
+			password: 'p',
+			additionalFields: null,
+			folder: '',
+			errors: [],
+		}))
 		await store.commit()
 
 		expect(calls).toEqual([COMMIT_CHUNK_SIZE, COMMIT_CHUNK_SIZE, 20])
@@ -137,7 +203,18 @@ describe('useImportStore', () => {
 		vi.spyOn(axios, 'post').mockRejectedValue(new Error('5xx'))
 
 		const store = useImportStore()
-		store.rows = [{ sourceRow: 1, name: 'X', url: null, login: null, password: 'p', additionalFields: null, folder: '', errors: [] }]
+		store.rows = [
+			{
+				sourceRow: 1,
+				name: 'X',
+				url: null,
+				login: null,
+				password: 'p',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
+		]
 		await store.commit()
 
 		expect(store.summary.imported).toBe(0)
@@ -149,16 +226,36 @@ describe('useImportStore', () => {
 		await unlockSession()
 		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
 		vi.spyOn(axios, 'post').mockImplementation(async (url, b) => ({
-			data: { results: [
-				{ index: 0, status: 'created', secretId: 'ok' },
-				{ index: 1, status: 'failed', error: 'bad item' },
-			] },
+			data: {
+				results: [
+					{ index: 0, status: 'created', secretId: 'ok' },
+					{ index: 1, status: 'failed', error: 'bad item' },
+				],
+			},
 		}))
 
 		const store = useImportStore()
 		store.rows = [
-			{ sourceRow: 1, name: 'Good', url: null, login: null, password: 'p', additionalFields: null, folder: '', errors: [] },
-			{ sourceRow: 2, name: 'Bad', url: null, login: null, password: 'p', additionalFields: null, folder: '', errors: [] },
+			{
+				sourceRow: 1,
+				name: 'Good',
+				url: null,
+				login: null,
+				password: 'p',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
+			{
+				sourceRow: 2,
+				name: 'Bad',
+				url: null,
+				login: null,
+				password: 'p',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
 		]
 		await store.commit()
 
@@ -177,13 +274,39 @@ describe('useImportStore', () => {
 		const captured = []
 		vi.spyOn(axios, 'post').mockImplementation(async (url, b) => {
 			captured.push(b)
-			return { data: { results: b.items.map((_, i) => ({ index: i, status: 'created', secretId: 'z' })) } }
+			return {
+				data: {
+					results: b.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: 'z',
+					})),
+				},
+			}
 		})
 
 		const store = useImportStore()
 		store.rows = [
-			{ sourceRow: 1, name: 'GitHub', url: 'https://github.com/', login: null, password: 'p', additionalFields: null, folder: '', errors: [] },
-			{ sourceRow: 2, name: 'New', url: 'https://new.test', login: null, password: 'p', additionalFields: null, folder: '', errors: [] },
+			{
+				sourceRow: 1,
+				name: 'GitHub',
+				url: 'https://github.com/',
+				login: null,
+				password: 'p',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
+			{
+				sourceRow: 2,
+				name: 'New',
+				url: 'https://new.test',
+				login: null,
+				password: 'p',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
 		]
 		await store.detectDuplicates()
 		expect(store.duplicates).toHaveLength(1)
@@ -197,7 +320,18 @@ describe('useImportStore', () => {
 
 		// Now import-as-copy: the duplicate commits with a suffix.
 		store.reset()
-		store.rows = [{ sourceRow: 1, name: 'GitHub', url: 'https://github.com/', login: null, password: 'p', additionalFields: null, folder: '', errors: [] }]
+		store.rows = [
+			{
+				sourceRow: 1,
+				name: 'GitHub',
+				url: 'https://github.com/',
+				login: null,
+				password: 'p',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
+		]
 		await store.detectDuplicates()
 		store.resolveDuplicate(1, 'copy')
 		captured.length = 0
@@ -220,15 +354,120 @@ describe('useImportStore', () => {
 		await unlockSession()
 		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
 		vi.spyOn(axios, 'post').mockImplementation(async (url, b) => ({
-			data: { results: b.items.map((_, i) => ({ index: i, status: 'created', secretId: 's' })) },
+			data: {
+				results: b.items.map((_, i) => ({
+					index: i,
+					status: 'created',
+					secretId: 's',
+				})),
+			},
 		}))
 
 		const store = useImportStore()
-		store.rows = [{ sourceRow: 1, name: 'X', url: null, login: 'u', password: 'plain-secret', additionalFields: null, folder: '', errors: [] }]
+		store.rows = [
+			{
+				sourceRow: 1,
+				name: 'X',
+				url: null,
+				login: 'u',
+				password: 'plain-secret',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
+		]
 		await store.commit()
 
 		for (const call of lsSpy.mock.calls) {
 			expect(JSON.stringify(call)).not.toContain('plain-secret')
 		}
+	})
+
+	it('splits an imported TOTP seed into its own totp-typed row (add-totp-secrets D6)', () => {
+		const store = useImportStore()
+		const rows = [
+			{
+				sourceRow: 1,
+				name: 'GitHub',
+				url: 'https://github.com',
+				login: 'alice',
+				password: 'pw',
+				additionalFields: { totp: 'JBSWY3DPEHPK3PXP', notes: 'n' },
+				folder: 'Work',
+				errors: [],
+			},
+			{
+				sourceRow: 2,
+				name: 'Plain',
+				url: null,
+				login: null,
+				password: 'x',
+				additionalFields: null,
+				folder: '',
+				errors: [],
+			},
+		]
+		const out = store.expandTotpRows(rows)
+
+		// Original login row keeps its non-totp additional fields, loses the seed.
+		const login = out.find((r) => r.name === 'GitHub')
+		expect(login.additionalFields).toEqual({ notes: 'n' })
+
+		// A new totp row carries the seed as its password (→ encrypted key).
+		const totp = out.find((r) => r.type === 'totp')
+		expect(totp).toBeTruthy()
+		expect(totp.name).toBe('GitHub (TOTP)')
+		expect(totp.password).toBe('JBSWY3DPEHPK3PXP')
+		expect(totp.folder).toBe('Work')
+
+		// The untouched row passes through unchanged.
+		expect(out.some((r) => r.name === 'Plain')).toBe(true)
+		expect(out).toHaveLength(3)
+	})
+
+	it('stamps the resolved totp type id on committed totp items, seed stays ciphertext', async () => {
+		const privateKey = await unlockSession()
+
+		// Seed the type store so commit resolves the totp type id without a fetch.
+		const { useSecretTypeStore } =
+			await import('../../src/store/modules/secretType.js')
+		useSecretTypeStore().types = [{ id: 'type-totp-uuid', name: 'totp' }]
+
+		let posted = null
+		vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
+			posted = body
+			return {
+				data: {
+					results: body.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: `s${i}`,
+					})),
+					foldersCreated: [],
+				},
+			}
+		})
+
+		const store = useImportStore()
+		store.rows = [
+			{
+				sourceRow: 1,
+				name: 'GH (TOTP)',
+				url: null,
+				login: null,
+				password: 'JBSWY3DPEHPK3PXP',
+				additionalFields: null,
+				folder: '',
+				type: 'totp',
+				errors: [],
+			},
+		]
+		await store.commit()
+
+		const item = posted.items[0]
+		expect(item.typeId).toBe('type-totp-uuid')
+		// The seed is ciphertext in `key`, never plaintext on the wire.
+		expect(JSON.stringify(posted)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(await rsaDecrypt(item.key, privateKey)).toBe('JBSWY3DPEHPK3PXP')
 	})
 })

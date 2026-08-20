@@ -31,18 +31,30 @@ import KeyGeneratorModal from '../../src/dialogs/KeyGeneratorModal.vue'
 const ncStubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
-		template: '<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="nc-dialog-stub"><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['type', 'disabled'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
 	},
 	NcCheckboxRadioSwitch: {
 		props: ['checked', 'type'],
 		template: '<label class="nc-checkbox-stub"><slot /></label>',
 	},
 	NcInputField: {
-		props: ['value', 'label', 'min', 'max', 'type', 'helperText', 'readOnly', 'showTrailingButton', 'trailingButtonLabel'],
+		props: [
+			'value',
+			'label',
+			'min',
+			'max',
+			'type',
+			'helperText',
+			'readOnly',
+			'showTrailingButton',
+			'trailingButtonLabel',
+		],
 		template: '<div class="nc-input-stub" :data-label="label">{{ value }}</div>',
 	},
 	NcLoadingIcon: { template: '<span class="nc-loading-stub" />' },
@@ -66,7 +78,7 @@ describe('KeyGeneratorModal', () => {
 
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.generate()
@@ -90,7 +102,7 @@ describe('KeyGeneratorModal', () => {
 
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.regex = '[A-Z]{3}-\\d{3}'
@@ -110,7 +122,7 @@ describe('KeyGeneratorModal', () => {
 
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		await wrapper.vm.generate()
@@ -123,7 +135,7 @@ describe('KeyGeneratorModal', () => {
 	it('use(): emits the generated key and closes the dialog', async () => {
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.generatedKey = 'preview-key'
@@ -141,7 +153,7 @@ describe('KeyGeneratorModal', () => {
 	it('use(): no-op when no key has been generated yet', () => {
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.use()
@@ -152,7 +164,7 @@ describe('KeyGeneratorModal', () => {
 	it('reset() clears the preview and error when the dialog closes', () => {
 		const wrapper = mount(KeyGeneratorModal, {
 			propsData: { open: true },
-			stubs: ncStubs,
+			global: { stubs: ncStubs },
 		})
 
 		wrapper.vm.generatedKey = 'old-key'

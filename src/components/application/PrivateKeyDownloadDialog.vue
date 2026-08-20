@@ -11,7 +11,8 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.4
 -->
 <template>
-	<section v-if="open"
+	<section
+		v-if="open"
 		class="doriath-private-key-dialog"
 		role="dialog"
 		data-testid="private-key-dialog">
@@ -19,14 +20,22 @@
 			<h3>{{ t('doriath', 'Your private key') }}</h3>
 		</header>
 
-		<p class="doriath-private-key-dialog__warning" data-testid="private-key-warning">
-			{{ t('doriath', 'This is the only time this private key will be shown. Save it securely; it cannot be recovered.') }}
+		<p
+			class="doriath-private-key-dialog__warning"
+			data-testid="private-key-warning">
+			{{
+				t(
+					'doriath',
+					'This is the only time this private key will be shown. Save it securely; it cannot be recovered.',
+				)
+			}}
 		</p>
 
 		<textarea
 			readonly
 			rows="10"
 			class="doriath-private-key-dialog__key"
+			:aria-label="t('doriath', 'Private key')"
 			data-testid="private-key-textarea"
 			:value="privateKey" />
 
@@ -34,7 +43,10 @@
 			<button type="button" data-testid="private-key-copy" @click="onCopy">
 				{{ copyLabel }}
 			</button>
-			<button type="button" data-testid="private-key-download" @click="onDownload">
+			<button
+				type="button"
+				data-testid="private-key-download"
+				@click="onDownload">
 				{{ t('doriath', 'Download as .pem') }}
 			</button>
 		</div>
@@ -43,8 +55,10 @@
 			<input
 				v-model="acknowledged"
 				type="checkbox"
-				data-testid="private-key-ack">
-			<span>{{ t('doriath', 'I have stored the private key in a safe place.') }}</span>
+				data-testid="private-key-ack" />
+			<span>{{
+				t('doriath', 'I have stored the private key in a safe place.')
+			}}</span>
 		</label>
 
 		<div class="doriath-private-key-dialog__close">
@@ -68,15 +82,18 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		privateKey: {
 			type: String,
 			default: '',
 		},
+
 		filename: {
 			type: String,
 			default: 'doriath-application.pem',
 		},
 	},
+
 	emits: ['close'],
 	data() {
 		return {
@@ -84,11 +101,15 @@ export default {
 			copied: false,
 		}
 	},
+
 	computed: {
 		copyLabel() {
-			return this.copied ? t('doriath', 'Copied!') : t('doriath', 'Copy to clipboard')
+			return this.copied
+				? t('doriath', 'Copied!')
+				: t('doriath', 'Copy to clipboard')
 		},
 	},
+
 	watch: {
 		open(val) {
 			if (val === false) {
@@ -97,21 +118,27 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		async onCopy() {
 			try {
 				if (navigator?.clipboard?.writeText) {
 					await navigator.clipboard.writeText(this.privateKey)
 					this.copied = true
-					setTimeout(() => { this.copied = false }, 1500)
+					setTimeout(() => {
+						this.copied = false
+					}, 1500)
 				}
 			} catch (_e) {
 				// Silently ignore — the user can still copy from the textarea.
 			}
 		},
+
 		onDownload() {
 			try {
-				const blob = new Blob([this.privateKey], { type: 'application/x-pem-file' })
+				const blob = new Blob([this.privateKey], {
+					type: 'application/x-pem-file',
+				})
 				const url = URL.createObjectURL(blob)
 				const a = document.createElement('a')
 				a.href = url
@@ -137,14 +164,21 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	padding: 16px;
 }
+
 .doriath-private-key-dialog__warning {
-	background-color: var(--color-error-rest, #f8d7d4);
-	border: 1px solid var(--color-error, #e9322d);
+	/* This is the one-time private-key download warning, so it must be
+	   unmissable in either theme. --color-error-rest does not exist and the pale
+	   pink fallback left near-white dark-mode text unreadable on it; the
+	   --color-error / --color-error-text pairing is guaranteed contrasty. */
+	background-color: var(--color-error);
+	color: var(--color-error-text);
+	border: 1px solid var(--color-error-text);
 	padding: 8px;
 	border-radius: var(--border-radius, 4px);
 	margin-bottom: 8px;
 	font-weight: 600;
 }
+
 .doriath-private-key-dialog__key {
 	width: 100%;
 	font-family: monospace;
@@ -153,28 +187,33 @@ export default {
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-private-key-dialog__actions {
 	display: flex;
 	gap: 8px;
 	margin-top: 8px;
 }
+
 .doriath-private-key-dialog__actions button {
 	border: 1px solid var(--color-border-dark, #999);
 	background-color: transparent;
 	padding: 6px 12px;
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-private-key-dialog__ack {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin-top: 12px;
 }
+
 .doriath-private-key-dialog__close {
 	display: flex;
 	justify-content: flex-end;
 	margin-top: 12px;
 }
+
 .doriath-private-key-dialog__close .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
@@ -182,6 +221,7 @@ export default {
 	padding: 8px 16px;
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-private-key-dialog__close .primary:disabled {
 	background-color: var(--color-background-darker, #ccc);
 	cursor: not-allowed;

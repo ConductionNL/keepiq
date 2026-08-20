@@ -41,102 +41,97 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  */
-class SecretType extends Entity implements JsonSerializable
-{
+class SecretType extends Entity implements JsonSerializable {
 
-    /**
-     * The unique type name (lowercase machine identifier).
-     *
-     * @var string
-     */
-    protected string $name = '';
+	/**
+	 * The unique type name (lowercase machine identifier).
+	 *
+	 * @var string
+	 */
+	protected string $name = '';
 
-    /**
-     * The human-readable label.
-     *
-     * @var string
-     */
-    protected string $label = '';
+	/**
+	 * The human-readable label.
+	 *
+	 * @var string
+	 */
+	protected string $label = '';
 
-    /**
-     * The type scope: system, user, or global.
-     *
-     * @var string
-     */
-    protected string $scope = 'user';
+	/**
+	 * The type scope: system, user, or global.
+	 *
+	 * @var string
+	 */
+	protected string $scope = 'user';
 
-    /**
-     * The owning Nextcloud user ID (null for system and global scopes).
-     *
-     * @var string|null
-     */
-    protected ?string $ownerId = null;
+	/**
+	 * The owning Nextcloud user ID (null for system and global scopes).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $ownerId = null;
 
-    /**
-     * When the type was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the type was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for SecretType.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'name', type: 'string');
-        $this->addType(fieldName: 'label', type: 'string');
-        $this->addType(fieldName: 'scope', type: 'string');
-        $this->addType(fieldName: 'ownerId', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Constructor for SecretType.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'name', type: 'string');
+		$this->addType(fieldName: 'label', type: 'string');
+		$this->addType(fieldName: 'scope', type: 'string');
+		$this->addType(fieldName: 'ownerId', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+	}//end __construct()
 
-    /**
-     * Serialize the entity to an array for the API.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'        => $this->getId(),
-            'name'      => $this->name,
-            'label'     => $this->label,
-            'scope'     => $this->scope,
-            'ownerId'   => $this->ownerId,
-            'createdAt' => $this->createdAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'name' => $this->name,
+			'label' => $this->label,
+			'scope' => $this->scope,
+			'ownerId' => $this->ownerId,
+			'createdAt' => $this->createdAt?->format('c'),
+		];
+	}//end jsonSerialize()
 }//end class

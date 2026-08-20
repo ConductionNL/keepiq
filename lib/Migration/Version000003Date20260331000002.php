@@ -30,82 +30,78 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Create the doriath_suite_migr table.
  */
-class Version000003Date20260331000002 extends SimpleMigrationStep
-{
-    /**
-     * Change the database schema to add the suite migrations table.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+class Version000003Date20260331000002 extends SimpleMigrationStep {
+	/**
+	 * Change the database schema to add the suite migrations table.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_suite_migr') === true) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_suite_migr') === true) {
+			return null;
+		}
 
-        $table = $schema->createTable('doriath_suite_migr');
+		$table = $schema->createTable('doriath_suite_migr');
 
-        $table->addColumn(
-                'id',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 36,
-                ]
-                );
-        $table->addColumn(
-                'old_suite_id',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 36,
-                ]
-                );
-        $table->addColumn(
-                'new_suite_id',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 36,
-                ]
-                );
-        $table->addColumn(
-                'status',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 30,
-                    'default' => 'in_progress',
-                ]
-                );
-        $table->addColumn(
-                'started_at',
-                Types::DATETIME,
-                [
-                    'notnull' => true,
-                ]
-                );
-        $table->addColumn(
-                'completed_at',
-                Types::DATETIME,
-                [
-                    'notnull' => false,
-                ]
-                );
+		$table->addColumn(
+			'id',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 36,
+			]
+		);
+		$table->addColumn(
+			'old_suite_id',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 36,
+			]
+		);
+		$table->addColumn(
+			'new_suite_id',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 36,
+			]
+		);
+		$table->addColumn(
+			'status',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 30,
+				'default' => 'in_progress',
+			]
+		);
+		$table->addColumn(
+			'started_at',
+			Types::DATETIME,
+			[
+				'notnull' => true,
+			]
+		);
+		$table->addColumn(
+			'completed_at',
+			Types::DATETIME,
+			[
+				'notnull' => false,
+			]
+		);
 
-        $table->setPrimaryKey(['id']);
-        $table->addIndex(['old_suite_id'], 'doriath_sm_old_suite_idx');
-        $table->addIndex(['new_suite_id'], 'doriath_sm_new_suite_idx');
+		$table->setPrimaryKey(['id']);
+		$table->addIndex(['old_suite_id'], 'doriath_sm_old_suite_idx');
+		$table->addIndex(['new_suite_id'], 'doriath_sm_new_suite_idx');
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

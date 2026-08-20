@@ -34,251 +34,241 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for ShareRequestService.
  */
-class ShareRequestServiceTest extends TestCase
-{
-    /**
-     * Service under test.
-     *
-     * @var ShareRequestService
-     */
-    private ShareRequestService $service;
+class ShareRequestServiceTest extends TestCase {
 
-    /**
-     * @var ShareTargetMapper&MockObject
-     */
-    private ShareTargetMapper $shareTargetMapper;
+	/**
+	 * Service under test.
+	 *
+	 * @var ShareRequestService
+	 */
+	private ShareRequestService $service;
 
-    /**
-     * @var SecretMapper&MockObject
-     */
-    private SecretMapper $secretMapper;
+	/**
+	 * @var ShareTargetMapper&MockObject
+	 */
+	private ShareTargetMapper $shareTargetMapper;
 
-    /**
-     * @var NotificationService&MockObject
-     */
-    private NotificationService $notificationService;
+	/**
+	 * @var SecretMapper&MockObject
+	 */
+	private SecretMapper $secretMapper;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->shareTargetMapper   = $this->createMock(originalClassName: ShareTargetMapper::class);
-        $this->secretMapper        = $this->createMock(originalClassName: SecretMapper::class);
-        $this->notificationService = $this->createMock(originalClassName: NotificationService::class);
-        $logger                    = $this->createMock(originalClassName: LoggerInterface::class);
+	/**
+	 * @var NotificationService&MockObject
+	 */
+	private NotificationService $notificationService;
 
-        $this->service = new ShareRequestService(
-            shareTargetMapper: $this->shareTargetMapper,
-            secretMapper: $this->secretMapper,
-            notificationService: $this->notificationService,
-            logger: $logger
-        );
-    }
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
+		$this->secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
-    /**
-     * Helper: build an owner Secret.
-     *
-     * @param string $id      Secret ID
-     * @param string $ownerId Owner UID
-     *
-     * @return Secret
-     */
-    private function makeOwnerSecret(string $id, string $ownerId): Secret
-    {
-        $secret = new Secret();
-        $secret->setId($id);
-        $secret->setOwnerType('user');
-        $secret->setOwnerId($ownerId);
-        $secret->setName('demo');
-        return $secret;
-    }
+		$this->service = new ShareRequestService(
+			shareTargetMapper: $this->shareTargetMapper,
+			secretMapper: $this->secretMapper,
+			notificationService: $this->notificationService,
+			logger: $logger
+		);
+	}//end setUp()
 
-    /**
-     * Test submitShareRequest fires a notification at the owner when the
-     * requester holds a share.
-     *
-     * @return void
-     */
-    public function testSubmitShareRequestFiresOwnerNotification(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
-        $this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
-            ->willReturn(new ShareTarget());
+	/**
+	 * Helper: build an owner Secret.
+	 *
+	 * @param string $id Secret ID
+	 * @param string $ownerId Owner UID
+	 *
+	 * @return Secret
+	 */
+	private function makeOwnerSecret(string $id, string $ownerId): Secret {
+		$secret = new Secret();
+		$secret->setId($id);
+		$secret->setOwnerType('user');
+		$secret->setOwnerId($ownerId);
+		$secret->setName('demo');
+		return $secret;
+	}//end makeOwnerSecret()
 
-        $this->notificationService->expects($this->once())
-            ->method('notify')
-            ->with('share_request', 'alice');
+	/**
+	 * Test submitShareRequest fires a notification at the owner when the
+	 * requester holds a share.
+	 *
+	 * @return void
+	 */
+	public function testSubmitShareRequestFiresOwnerNotification(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
+			->willReturn(new ShareTarget());
 
-        $this->service->submitShareRequest(
-            sourceSecretId: 'src-1',
-            targetUserId: 'carol',
-            requesterId: 'bob'
-        );
-    }
+		$this->notificationService->expects($this->once())
+			->method('notify')
+			->with('share_request', 'alice');
 
-    /**
-     * Test submitShareRequest rejects requester who does not hold a share.
-     *
-     * @return void
-     */
-    public function testSubmitShareRequestRejectsNonRecipient(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
-        $this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
-            ->willThrowException(new DoesNotExistException('no'));
+		$this->service->submitShareRequest(
+			sourceSecretId: 'src-1',
+			targetUserId: 'carol',
+			requesterId: 'bob'
+		);
+	}//end testSubmitShareRequestFiresOwnerNotification()
 
-        $this->notificationService->expects($this->never())->method('notify');
+	/**
+	 * Test submitShareRequest rejects requester who does not hold a share.
+	 *
+	 * @return void
+	 */
+	public function testSubmitShareRequestRejectsNonRecipient(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new DoesNotExistException('no'));
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('existing share recipients');
+		$this->notificationService->expects($this->never())->method('notify');
 
-        $this->service->submitShareRequest(
-            sourceSecretId: 'src-1',
-            targetUserId: 'carol',
-            requesterId: 'mallory'
-        );
-    }
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('existing share recipients');
 
-    /**
-     * Test submitShareRequest rejects when the requester IS the owner.
-     *
-     * @return void
-     */
-    public function testSubmitShareRequestRejectsOwnerSubmitter(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
+		$this->service->submitShareRequest(
+			sourceSecretId: 'src-1',
+			targetUserId: 'carol',
+			requesterId: 'mallory'
+		);
+	}//end testSubmitShareRequestRejectsNonRecipient()
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Owners share directly');
+	/**
+	 * Test submitShareRequest rejects when the requester IS the owner.
+	 *
+	 * @return void
+	 */
+	public function testSubmitShareRequestRejectsOwnerSubmitter(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
 
-        $this->service->submitShareRequest(
-            sourceSecretId: 'src-1',
-            targetUserId: 'carol',
-            requesterId: 'alice'
-        );
-    }
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Owners share directly');
 
-    /**
-     * Test submitShareRequest rejects requesting to share with owner.
-     *
-     * @return void
-     */
-    public function testSubmitShareRequestRejectsTargetOwner(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
-        $this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
-            ->willReturn(new ShareTarget());
+		$this->service->submitShareRequest(
+			sourceSecretId: 'src-1',
+			targetUserId: 'carol',
+			requesterId: 'alice'
+		);
+	}//end testSubmitShareRequestRejectsOwnerSubmitter()
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('with the secret owner');
+	/**
+	 * Test submitShareRequest rejects requesting to share with owner.
+	 *
+	 * @return void
+	 */
+	public function testSubmitShareRequestRejectsTargetOwner(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
+			->willReturn(new ShareTarget());
 
-        $this->service->submitShareRequest(
-            sourceSecretId: 'src-1',
-            targetUserId: 'alice',
-            requesterId: 'bob'
-        );
-    }
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('with the secret owner');
 
-    /**
-     * Test approveShareRequest returns the parameters for the share flow.
-     *
-     * @return void
-     */
-    public function testApproveShareRequestReturnsParameters(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
+		$this->service->submitShareRequest(
+			sourceSecretId: 'src-1',
+			targetUserId: 'alice',
+			requesterId: 'bob'
+		);
+	}//end testSubmitShareRequestRejectsTargetOwner()
 
-        $result = $this->service->approveShareRequest(
-            params: [
-                'sourceSecretId' => 'src-1',
-                'requesterId'    => 'bob',
-                'targetUserId'   => 'carol',
-            ],
-            ownerId: 'alice'
-        );
+	/**
+	 * Test approveShareRequest returns the parameters for the share flow.
+	 *
+	 * @return void
+	 */
+	public function testApproveShareRequestReturnsParameters(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
 
-        $this->assertSame('src-1', $result['sourceSecretId']);
-        $this->assertSame('bob', $result['requesterId']);
-        $this->assertSame('carol', $result['targetUserId']);
-    }
+		$result = $this->service->approveShareRequest(
+			params: [
+				'sourceSecretId' => 'src-1',
+				'requesterId' => 'bob',
+				'targetUserId' => 'carol',
+			],
+			ownerId: 'alice'
+		);
 
-    /**
-     * Test approveShareRequest rejects non-owner.
-     *
-     * @return void
-     */
-    public function testApproveShareRequestRejectsNonOwner(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
+		$this->assertSame('src-1', $result['sourceSecretId']);
+		$this->assertSame('bob', $result['requesterId']);
+		$this->assertSame('carol', $result['targetUserId']);
+	}//end testApproveShareRequestReturnsParameters()
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Not authorized');
+	/**
+	 * Test approveShareRequest rejects non-owner.
+	 *
+	 * @return void
+	 */
+	public function testApproveShareRequestRejectsNonOwner(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
 
-        $this->service->approveShareRequest(
-            params: [
-                'sourceSecretId' => 'src-1',
-                'requesterId'    => 'bob',
-                'targetUserId'   => 'carol',
-            ],
-            ownerId: 'mallory'
-        );
-    }
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Not authorized');
 
-    /**
-     * Test denyShareRequest fires a result notification at the requester.
-     *
-     * @return void
-     */
-    public function testDenyShareRequestNotifiesRequester(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
+		$this->service->approveShareRequest(
+			params: [
+				'sourceSecretId' => 'src-1',
+				'requesterId' => 'bob',
+				'targetUserId' => 'carol',
+			],
+			ownerId: 'mallory'
+		);
+	}//end testApproveShareRequestRejectsNonOwner()
 
-        $this->notificationService->expects($this->once())
-            ->method('notify')
-            ->with('share_request_result', 'bob');
+	/**
+	 * Test denyShareRequest fires a result notification at the requester.
+	 *
+	 * @return void
+	 */
+	public function testDenyShareRequestNotifiesRequester(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
 
-        $this->service->denyShareRequest(
-            params: [
-                'sourceSecretId' => 'src-1',
-                'requesterId'    => 'bob',
-                'targetUserId'   => 'carol',
-            ],
-            ownerId: 'alice'
-        );
-    }
+		$this->notificationService->expects($this->once())
+			->method('notify')
+			->with('share_request_result', 'bob');
 
-    /**
-     * Test denyShareRequest rejects non-owner.
-     *
-     * @return void
-     */
-    public function testDenyShareRequestRejectsNonOwner(): void
-    {
-        $secret = $this->makeOwnerSecret('src-1', 'alice');
-        $this->secretMapper->method('findById')->willReturn($secret);
+		$this->service->denyShareRequest(
+			params: [
+				'sourceSecretId' => 'src-1',
+				'requesterId' => 'bob',
+				'targetUserId' => 'carol',
+			],
+			ownerId: 'alice'
+		);
+	}//end testDenyShareRequestNotifiesRequester()
 
-        $this->notificationService->expects($this->never())->method('notify');
+	/**
+	 * Test denyShareRequest rejects non-owner.
+	 *
+	 * @return void
+	 */
+	public function testDenyShareRequestRejectsNonOwner(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Not authorized');
+		$this->notificationService->expects($this->never())->method('notify');
 
-        $this->service->denyShareRequest(
-            params: [
-                'sourceSecretId' => 'src-1',
-                'requesterId'    => 'bob',
-                'targetUserId'   => 'carol',
-            ],
-            ownerId: 'mallory'
-        );
-    }
-}
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Not authorized');
+
+		$this->service->denyShareRequest(
+			params: [
+				'sourceSecretId' => 'src-1',
+				'requesterId' => 'bob',
+				'targetUserId' => 'carol',
+			],
+			ownerId: 'mallory'
+		);
+	}//end testDenyShareRequestRejectsNonOwner()
+}//end class

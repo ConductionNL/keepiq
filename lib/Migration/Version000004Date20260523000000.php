@@ -59,113 +59,108 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Convert is_active column on doriath_ca_certs from SMALLINT to BOOLEAN.
  */
-class Version000004Date20260523000000 extends SimpleMigrationStep
-{
-    /**
-     * Constructor.
-     *
-     * @param IDBConnection $connection The database connection
-     *
-     * @return void
-     */
-    public function __construct(private IDBConnection $connection)
-    {
-    }//end __construct()
+class Version000004Date20260523000000 extends SimpleMigrationStep {
+	/**
+	 * Constructor.
+	 *
+	 * @param IDBConnection $connection The database connection
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private IDBConnection $connection,
+	) {
+	}//end __construct()
 
-    /**
-     * Perform a dialect-aware raw SQL conversion of the is_active column
-     * from SMALLINT to BOOLEAN before the schema diff runs. PostgreSQL
-     * requires an explicit USING clause; other dialects accept the
-     * schema-level diff in changeSchema() directly.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+	/**
+	 * Perform a dialect-aware raw SQL conversion of the is_active column
+	 * from SMALLINT to BOOLEAN before the schema diff runs. PostgreSQL
+	 * requires an explicit USING clause; other dialects accept the
+	 * schema-level diff in changeSchema() directly.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return void
+	 */
+	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_ca_certs') === false) {
-            return;
-        }
+		if ($schema->hasTable('doriath_ca_certs') === false) {
+			return;
+		}
 
-        $table = $schema->getTable('doriath_ca_certs');
-        if ($table->hasColumn('is_active') === false) {
-            return;
-        }
+		$table = $schema->getTable('doriath_ca_certs');
+		if ($table->hasColumn('is_active') === false) {
+			return;
+		}
 
-        // Skip when the column has already been migrated to BOOLEAN.
-        if ($table->getColumn('is_active')->getType()->getName() === Types::BOOLEAN) {
-            return;
-        }
+		// Skip when the column has already been migrated to BOOLEAN.
+		if ($table->getColumn('is_active')->getType()->getName() === Types::BOOLEAN) {
+			return;
+		}
 
-        $platform = $this->connection->getDatabasePlatform()->getName();
-        if ($platform !== 'postgresql') {
-            // MySQL/MariaDB TINYINT(1) ↔ BOOLEAN and SQLite INTEGER ↔
-            // BOOLEAN are accepted by Doctrine without an explicit cast,
-            // so the schema-level diff in changeSchema() handles them.
-            return;
-        }
+		$platform = $this->connection->getDatabasePlatform()->getName();
+		if ($platform !== 'postgresql') {
+			// MySQL/MariaDB TINYINT(1) ↔ BOOLEAN and SQLite INTEGER ↔
+			// BOOLEAN are accepted by Doctrine without an explicit cast,
+			// so the schema-level diff in changeSchema() handles them.
+			return;
+		}
 
-        // PostgreSQL needs an explicit USING clause to cast smallint to
-        // boolean. Run the conversion as raw SQL so the subsequent
-        // schema diff finds the column already at BOOLEAN and emits a
-        // no-op.
-        $this->connection->executeStatement(
-            'ALTER TABLE "*PREFIX*doriath_ca_certs" '
-            .'ALTER COLUMN "is_active" DROP DEFAULT, '
-            .'ALTER COLUMN "is_active" TYPE BOOLEAN USING ("is_active" <> 0), '
-            .'ALTER COLUMN "is_active" SET DEFAULT FALSE'
-        );
+		// PostgreSQL needs an explicit USING clause to cast smallint to
+		// boolean. Run the conversion as raw SQL so the subsequent
+		// schema diff finds the column already at BOOLEAN and emits a
+		// no-op.
+		$this->connection->executeStatement(
+			'ALTER TABLE "*PREFIX*doriath_ca_certs" '
+			. 'ALTER COLUMN "is_active" DROP DEFAULT, '
+			. 'ALTER COLUMN "is_active" TYPE BOOLEAN USING ("is_active" <> 0), '
+			. 'ALTER COLUMN "is_active" SET DEFAULT FALSE'
+		);
 
-        $output->info('Doriath: converted doriath_ca_certs.is_active from SMALLINT to BOOLEAN');
-    }//end preSchemaChange()
+		$output->info('Doriath: converted doriath_ca_certs.is_active from SMALLINT to BOOLEAN');
+	}//end preSchemaChange()
 
-    /**
-     * Update the column metadata to match the new Version000002
-     * declaration. For PostgreSQL the column has already been converted
-     * in preSchemaChange so this emits a no-op; for MySQL/SQLite it
-     * runs the type change directly.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     * @SuppressWarnings(PHPMD.StaticAccess)          Doctrine\DBAL\Types\Type::getType() is a static
-     *   factory required by the DBAL API for type resolution — no instance-based alternative
-     *   exists.
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+	/**
+	 * Update the column metadata to match the new Version000002
+	 * declaration. For PostgreSQL the column has already been converted
+	 * in preSchemaChange so this emits a no-op; for MySQL/SQLite it
+	 * runs the type change directly.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) Doctrine\DBAL\Types\Type::getType() is a static
+	 *   factory required by the DBAL API for type resolution — no instance-based alternative
+	 *   exists.
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_ca_certs') === false) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_ca_certs') === false) {
+			return null;
+		}
 
-        $table = $schema->getTable('doriath_ca_certs');
-        if ($table->hasColumn('is_active') === false) {
-            return null;
-        }
+		$table = $schema->getTable('doriath_ca_certs');
+		if ($table->hasColumn('is_active') === false) {
+			return null;
+		}
 
-        $column = $table->getColumn('is_active');
-        if ($column->getType()->getName() === Types::BOOLEAN) {
-            return null;
-        }
+		$column = $table->getColumn('is_active');
+		if ($column->getType()->getName() === Types::BOOLEAN) {
+			return null;
+		}
 
-        $column->setType(\Doctrine\DBAL\Types\Type::getType(Types::BOOLEAN));
-        $column->setDefault(false);
+		$column->setType(\Doctrine\DBAL\Types\Type::getType(Types::BOOLEAN));
+		$column->setDefault(false);
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

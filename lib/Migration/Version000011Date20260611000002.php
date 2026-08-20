@@ -36,41 +36,37 @@ use OCP\Migration\SimpleMigrationStep;
  * The full DashboardSummary endpoint + admin/user settings split +
  * dashboard widgets ship with the dedicated build cycle.
  */
-class Version000011Date20260611000002 extends SimpleMigrationStep
-{
-    /**
-     * Change the database schema to add the dashboard_settings table.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+class Version000011Date20260611000002 extends SimpleMigrationStep {
+	/**
+	 * Change the database schema to add the dashboard_settings table.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_dashboard_settings') === true) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_dashboard_settings') === true) {
+			return null;
+		}
 
-        $table = $schema->createTable('doriath_dashboard_settings');
+		$table = $schema->createTable('doriath_dashboard_settings');
 
-        $table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
-        $table->addColumn('user_id', Types::STRING, ['notnull' => true, 'length' => 64]);
-        $table->addColumn('setting_key', Types::STRING, ['notnull' => true, 'length' => 64]);
-        $table->addColumn('setting_value', Types::TEXT, ['notnull' => true]);
-        $table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
-        $table->addColumn('updated_at', Types::DATETIME, ['notnull' => true]);
+		$table->addColumn('id', Types::STRING, ['notnull' => true, 'length' => 36]);
+		$table->addColumn('user_id', Types::STRING, ['notnull' => true, 'length' => 64]);
+		$table->addColumn('setting_key', Types::STRING, ['notnull' => true, 'length' => 64]);
+		$table->addColumn('setting_value', Types::TEXT, ['notnull' => true]);
+		$table->addColumn('created_at', Types::DATETIME, ['notnull' => true]);
+		$table->addColumn('updated_at', Types::DATETIME, ['notnull' => true]);
 
-        $table->setPrimaryKey(['id']);
-        $table->addUniqueIndex(['user_id', 'setting_key'], 'doriath_ds_user_key_uniq');
-        $table->addIndex(['user_id'], 'doriath_ds_user_idx');
+		$table->setPrimaryKey(['id']);
+		$table->addUniqueIndex(['user_id', 'setting_key'], 'doriath_ds_user_key_uniq');
+		$table->addIndex(['user_id'], 'doriath_ds_user_idx');
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

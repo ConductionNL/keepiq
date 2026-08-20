@@ -42,72 +42,70 @@ use Throwable;
  *
  * @spec openspec/changes/implement-user-sharing/tasks.md#8.3
  */
-class EncryptionSuiteRevokedListener implements IEventListener
-{
-    /**
-     * Constructor.
-     *
-     * @param ShareTargetMapper $shareTargetMapper The share-target mapper
-     * @param DelegationService $delegationService The delegation service
-     * @param LoggerInterface   $logger            The logger
-     *
-     * @return void
-     */
-    public function __construct(
-        private ShareTargetMapper $shareTargetMapper,
-        private DelegationService $delegationService,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class EncryptionSuiteRevokedListener implements IEventListener {
+	/**
+	 * Constructor.
+	 *
+	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper
+	 * @param DelegationService $delegationService The delegation service
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private ShareTargetMapper $shareTargetMapper,
+		private DelegationService $delegationService,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle the EncryptionSuiteRevokedEvent.
-     *
-     * @param Event $event The dispatched event
-     *
-     * @return void
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof EncryptionSuiteRevokedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle the EncryptionSuiteRevokedEvent.
+	 *
+	 * @param Event $event The dispatched event
+	 *
+	 * @return void
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof EncryptionSuiteRevokedEvent === false) {
+			return;
+		}
 
-        if ($event->getOwnerType() !== 'user') {
-            // Application suites do not participate in the
-            // user-sharing graph — revocation just cleans up the suite.
-            return;
-        }
+		if ($event->getOwnerType() !== 'user') {
+			// Application suites do not participate in the
+			// user-sharing graph — revocation just cleans up the suite.
+			return;
+		}
 
-        $userId = $event->getOwnerId();
+		$userId = $event->getOwnerId();
 
-        try {
-            // The ex-recipient can no longer decrypt anything; sweep
-            // every ShareTarget where they were the recipient.
-            $this->shareTargetMapper->deleteByTargetUser(targetUserId: $userId);
-        } catch (Throwable $exception) {
-            $this->logger->warning(
-                'Doriath: EncryptionSuiteRevokedListener share-target sweep failed for '
-                .$userId.': '.$exception->getMessage(),
-                ['app' => 'doriath']
-            );
-        }
+		try {
+			// The ex-recipient can no longer decrypt anything; sweep
+			// every ShareTarget where they were the recipient.
+			$this->shareTargetMapper->deleteByTargetUser(targetUserId: $userId);
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Doriath: EncryptionSuiteRevokedListener share-target sweep failed for '
+				. $userId . ': ' . $exception->getMessage(),
+				['app' => 'doriath']
+			);
+		}
 
-        try {
-            $promoted = $this->delegationService->makePermanent(originalOwnerId: $userId);
-            if ($promoted > 0) {
-                $this->logger->info(
-                    'Doriath: promoted '.$promoted.' delegations to permanent after revoking '
-                    .$event->getSuiteId().' (owner='.$userId.')',
-                    ['app' => 'doriath']
-                );
-            }
-        } catch (Throwable $exception) {
-            $this->logger->warning(
-                'Doriath: EncryptionSuiteRevokedListener delegation-promote failed for '
-                .$userId.': '.$exception->getMessage(),
-                ['app' => 'doriath']
-            );
-        }
-    }//end handle()
+		try {
+			$promoted = $this->delegationService->makePermanent(originalOwnerId: $userId);
+			if ($promoted > 0) {
+				$this->logger->info(
+					'Doriath: promoted ' . $promoted . ' delegations to permanent after revoking '
+					. $event->getSuiteId() . ' (owner=' . $userId . ')',
+					['app' => 'doriath']
+				);
+			}
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Doriath: EncryptionSuiteRevokedListener delegation-promote failed for '
+				. $userId . ': ' . $exception->getMessage(),
+				['app' => 'doriath']
+			);
+		}
+	}//end handle()
 }//end class

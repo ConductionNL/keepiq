@@ -13,20 +13,31 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Audit trail')"
-		:description="t('doriath', 'Review who accessed and changed secrets across the instance. The trail starts at the deployment of this feature; there is no historical backfill.')">
+		:description="
+			t(
+				'doriath',
+				'Review who accessed and changed secrets across the instance. The trail starts at the deployment of this feature; there is no historical backfill.',
+			)
+		">
 		<div class="audit-admin">
 			<!-- Retention setting -->
 			<div class="audit-admin__retention" data-testid="audit-retention">
-				<label for="audit-retention-days">{{ t('doriath', 'Retention window (days)') }}</label>
+				<label for="audit-retention-days">{{
+					t('doriath', 'Retention window (days)')
+				}}</label>
 				<input
 					id="audit-retention-days"
 					v-model.number="retentionDays"
 					type="number"
 					min="30"
 					data-testid="audit-retention-input"
-					@change="saveRetention">
-				<span class="audit-admin__hint">{{ t('doriath', 'Minimum 30 days') }}</span>
-				<span v-if="retentionError" class="audit-admin__error">{{ retentionError }}</span>
+					@change="saveRetention" />
+				<span class="audit-admin__hint">{{
+					t('doriath', 'Minimum 30 days')
+				}}</span>
+				<span v-if="retentionError" class="audit-admin__error">{{
+					retentionError
+				}}</span>
 			</div>
 
 			<!-- Filter bar -->
@@ -36,19 +47,21 @@
 					class="audit-admin__filter"
 					:options="eventOptions"
 					label="label"
-					:input-label="t('doriath', 'Event type')"
+					:inputLabel="t('doriath', 'Event type')"
 					:placeholder="t('doriath', 'All event types')"
 					data-testid="audit-filter-eventtype"
-					@input="onFilterChange" />
+					@update:modelValue="onFilterChange" />
 
 				<div class="audit-admin__filter">
-					<label for="audit-filter-actor">{{ t('doriath', 'Actor') }}</label>
+					<label for="audit-filter-actor">{{
+						t('doriath', 'Actor')
+					}}</label>
 					<input
 						id="audit-filter-actor"
 						v-model="filterActor"
 						type="text"
 						data-testid="audit-filter-actor"
-						@change="onFilterChange">
+						@change="onFilterChange" />
 				</div>
 
 				<div class="audit-admin__filter">
@@ -58,7 +71,7 @@
 						v-model="filterFrom"
 						type="date"
 						data-testid="audit-filter-from"
-						@change="onFilterChange">
+						@change="onFilterChange" />
 				</div>
 
 				<div class="audit-admin__filter">
@@ -68,10 +81,11 @@
 						v-model="filterTo"
 						type="date"
 						data-testid="audit-filter-to"
-						@change="onFilterChange">
+						@change="onFilterChange" />
 				</div>
 
-				<NcButton type="secondary"
+				<NcButton
+					variant="secondary"
 					data-testid="audit-export-csv"
 					@click="exportCsv">
 					{{ t('doriath', 'Export CSV') }}
@@ -80,7 +94,8 @@
 
 			<NcLoadingIcon v-if="loading" :size="24" />
 
-			<NcEmptyContent v-else-if="entries.length === 0"
+			<NcEmptyContent
+				v-else-if="entries.length === 0"
 				:name="t('doriath', 'No audit entries match the current filter')"
 				data-testid="audit-empty">
 				<template #icon>
@@ -91,14 +106,23 @@
 			<table v-else class="audit-admin__table" data-testid="audit-table">
 				<thead>
 					<tr>
-						<th>{{ t('doriath', 'When') }}</th>
-						<th>{{ t('doriath', 'Event') }}</th>
-						<th>{{ t('doriath', 'Actor') }}</th>
-						<th>{{ t('doriath', 'Object') }}</th>
+						<th scope="col">
+							{{ t('doriath', 'When') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Event') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Actor') }}
+						</th>
+						<th scope="col">
+							{{ t('doriath', 'Object') }}
+						</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="entry in entries"
+					<tr
+						v-for="entry in entries"
 						:key="entry.id"
 						data-testid="audit-row">
 						<td>{{ formatTime(entry.occurredAt) }}</td>
@@ -109,11 +133,19 @@
 				</tbody>
 			</table>
 
-			<div v-if="entries.length > 0" class="audit-admin__pagination" data-testid="audit-pagination">
+			<div
+				v-if="entries.length > 0"
+				class="audit-admin__pagination"
+				data-testid="audit-pagination">
 				<NcButton :disabled="page <= 1" @click="goToPage(page - 1)">
 					{{ t('doriath', 'Previous') }}
 				</NcButton>
-				<span>{{ t('doriath', 'Page {page} of {pages}', { page, pages: pageCount }) }}</span>
+				<span>{{
+					t('doriath', 'Page {page} of {pages}', {
+						page,
+						pages: pageCount,
+					})
+				}}</span>
 				<NcButton :disabled="page >= pageCount" @click="goToPage(page + 1)">
 					{{ t('doriath', 'Next') }}
 				</NcButton>
@@ -124,12 +156,16 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
-import History from 'vue-material-design-icons/History.vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
+import History from 'vue-material-design-icons/History.vue'
 import { useAuditStore } from '../../store/modules/audit.js'
-import { auditActorLabel, auditEventLabel, auditEventOptions } from '../../utils/auditEventLabels.js'
+import {
+	auditActorLabel,
+	auditEventLabel,
+	auditEventOptions,
+} from '../../utils/auditEventLabels.js'
 import { buildCsv, downloadCsv } from '../../utils/csv.js'
 
 /**
@@ -171,6 +207,7 @@ export default {
 		entries() {
 			return useAuditStore().adminEntries
 		},
+
 		/**
 		 * Whether the audit store is loading.
 		 *
@@ -180,6 +217,7 @@ export default {
 		loading() {
 			return useAuditStore().loading
 		},
+
 		/**
 		 * The current 1-based admin page number.
 		 *
@@ -189,6 +227,7 @@ export default {
 		page() {
 			return useAuditStore().adminPage
 		},
+
 		/**
 		 * The total number of admin pages.
 		 *
@@ -222,6 +261,7 @@ export default {
 		label(eventType) {
 			return auditEventLabel(eventType)
 		},
+
 		/**
 		 * Resolve a human-readable actor label for an entry.
 		 *
@@ -232,6 +272,7 @@ export default {
 		actor(entry) {
 			return auditActorLabel(entry)
 		},
+
 		/**
 		 * Format an ISO timestamp as a localized date-time.
 		 *
@@ -258,7 +299,9 @@ export default {
 		 */
 		async loadRetention() {
 			try {
-				const response = await axios.get(generateUrl('/apps/doriath/api/settings/admin'))
+				const response = await axios.get(
+					generateUrl('/apps/doriath/api/settings/admin'),
+				)
 				this.retentionDays = response.data.audit_retention_days ?? 365
 			} catch (e) {
 				this.retentionDays = 365
@@ -278,7 +321,8 @@ export default {
 					audit_retention_days: this.retentionDays,
 				})
 			} catch (e) {
-				this.retentionError = e?.response?.data?.message
+				this.retentionError =
+					e?.response?.data?.message
 					|| t('doriath', 'Retention must be at least 30 days')
 				await this.loadRetention()
 			}
@@ -357,7 +401,7 @@ export default {
 	}
 
 	&__error {
-		color: var(--color-error);
+		color: var(--color-error-text);
 	}
 
 	&__hint {

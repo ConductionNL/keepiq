@@ -59,9 +59,12 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/ca/status'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/ca/status'),
+			)
 			this.status = response.data.status || 'unknown'
-			this.intermediateExpiresAt = response.data.intermediate_expires_at || null
+			this.intermediateExpiresAt =
+				response.data.intermediate_expires_at || null
 			this.rootExpiresAt = response.data.root_expires_at || null
 		} catch (e) {
 			console.warn('Doriath: failed to load CA status', e)
@@ -72,7 +75,11 @@ export default {
 	methods: {
 		formatDate(date) {
 			if (!date) return ''
-			try { return new Date(date).toLocaleDateString() } catch { return String(date) }
+			try {
+				return new Date(date).toLocaleDateString()
+			} catch {
+				return String(date)
+			}
 		},
 	},
 }
@@ -85,16 +92,19 @@ export default {
 	border-radius: var(--border-radius-large);
 	padding: 1rem;
 }
+
 .ca-health-card__header {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin-bottom: 0.5rem;
 }
+
 .ca-health-card__header h3 {
 	margin: 0;
 	font-size: 1rem;
 }
+
 .ca-health-card__indicator {
 	display: inline-block;
 	width: 10px;
@@ -102,21 +112,26 @@ export default {
 	border-radius: 50%;
 	background: var(--color-text-lighter);
 }
+
 .ca-health-card--healthy .ca-health-card__indicator {
-	background: var(--color-success);
+	background: var(--color-success-text);
 }
+
 .ca-health-card--expiring_soon .ca-health-card__indicator {
-	background: var(--color-warning);
+	background: var(--color-warning-text);
 }
+
 .ca-health-card--degraded .ca-health-card__indicator,
 .ca-health-card--not_configured .ca-health-card__indicator {
-	background: var(--color-error);
+	background: var(--color-error-text);
 }
+
 .ca-health-card__row {
 	display: flex;
 	justify-content: space-between;
 	padding: 4px 0;
 }
+
 .ca-health-card__link {
 	display: inline-block;
 	margin-top: 0.5rem;

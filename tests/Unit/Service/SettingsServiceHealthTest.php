@@ -37,113 +37,114 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for the password-health-related settings.
  */
-class SettingsServiceHealthTest extends TestCase
-{
-    /** @var IAppConfig&MockObject */
-    private IAppConfig&MockObject $appConfig;
+class SettingsServiceHealthTest extends TestCase {
 
-    /** @var IConfig&MockObject */
-    private IConfig&MockObject $config;
+	/**
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /** @var SettingsService */
-    private SettingsService $service;
+	/**
+	 * @var IConfig&MockObject
+	 */
+	private IConfig&MockObject $config;
 
-    /**
-     * Set up the service with mocked dependencies.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->config    = $this->createMock(IConfig::class);
+	/**
+	 * @var SettingsService
+	 */
+	private SettingsService $service;
 
-        $this->service = new SettingsService(
-            $this->appConfig,
-            $this->config,
-            $this->createMock(IAppManager::class),
-            $this->createMock(ContainerInterface::class),
-            $this->createMock(IGroupManager::class),
-            $this->createMock(IUserSession::class),
-            $this->createMock(LoggerInterface::class),
-        );
-    }//end setUp()
+	/**
+	 * Set up the service with mocked dependencies.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->config = $this->createMock(IConfig::class);
 
-    /**
-     * The breach-check admin gate defaults to off.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
-     */
-    public function testBreachCheckDefaultsOff(): void
-    {
-        // The default passed to getValueBool for breach_check_enabled is false.
-        $this->appConfig->method('getValueBool')->willReturnCallback(
-            fn (string $app, string $key, bool $default = false): bool => $default
-        );
-        $this->appConfig->method('getValueInt')->willReturnCallback(
-            fn (string $app, string $key, int $default = 0): int => $default
-        );
-        $this->appConfig->method('getValueString')->willReturnCallback(
-            fn (string $app, string $key, string $default = ''): string => $default
-        );
+		$this->service = new SettingsService(
+			$this->appConfig,
+			$this->config,
+			$this->createMock(IAppManager::class),
+			$this->createMock(ContainerInterface::class),
+			$this->createMock(IGroupManager::class),
+			$this->createMock(IUserSession::class),
+			$this->createMock(LoggerInterface::class),
+		);
+	}//end setUp()
 
-        $settings = $this->service->getAdminSettings();
+	/**
+	 * The breach-check admin gate defaults to off.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
+	 */
+	public function testBreachCheckDefaultsOff(): void {
+		// The default passed to getValueBool for breach_check_enabled is false.
+		$this->appConfig->method('getValueBool')->willReturnCallback(
+			fn (string $app, string $key, bool $default = false): bool => $default
+		);
+		$this->appConfig->method('getValueInt')->willReturnCallback(
+			fn (string $app, string $key, int $default = 0): int => $default
+		);
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			fn (string $app, string $key, string $default = ''): string => $default
+		);
 
-        $this->assertArrayHasKey('breach_check_enabled', $settings);
-        $this->assertFalse($settings['breach_check_enabled']);
-    }//end testBreachCheckDefaultsOff()
+		$settings = $this->service->getAdminSettings();
 
-    /**
-     * Enabling the breach-check gate persists a boolean true.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
-     */
-    public function testBreachCheckPersistsEnabled(): void
-    {
-        $this->appConfig->method('getValueBool')->willReturn(true);
-        $this->appConfig->method('getValueInt')->willReturnArgument(2);
-        $this->appConfig->method('getValueString')->willReturnArgument(2);
+		$this->assertArrayHasKey('breach_check_enabled', $settings);
+		$this->assertFalse($settings['breach_check_enabled']);
+	}//end testBreachCheckDefaultsOff()
 
-        $this->appConfig->expects($this->once())
-            ->method('setValueBool')
-            ->with($this->anything(), 'breach_check_enabled', true);
+	/**
+	 * Enabling the breach-check gate persists a boolean true.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
+	 */
+	public function testBreachCheckPersistsEnabled(): void {
+		$this->appConfig->method('getValueBool')->willReturn(true);
+		$this->appConfig->method('getValueInt')->willReturnArgument(2);
+		$this->appConfig->method('getValueString')->willReturnArgument(2);
 
-        $this->service->updateAdminSettings(['breach_check_enabled' => true]);
-    }//end testBreachCheckPersistsEnabled()
+		$this->appConfig->expects($this->once())
+			->method('setValueBool')
+			->with($this->anything(), 'breach_check_enabled', true);
 
-    /**
-     * A valid staleness threshold is accepted and persisted.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
-     */
-    public function testValidStalenessThresholdAccepted(): void
-    {
-        $this->config->expects($this->once())
-            ->method('setUserValue')
-            ->with('alice', $this->anything(), 'health_staleness_days', '180');
-        $this->config->method('getUserValue')->willReturnArgument(3);
-        $this->appConfig->method('getValueString')->willReturnArgument(2);
+		$this->service->updateAdminSettings(['breach_check_enabled' => true]);
+	}//end testBreachCheckPersistsEnabled()
 
-        $this->service->updateUserPreferences('alice', ['health_staleness_days' => '180']);
-    }//end testValidStalenessThresholdAccepted()
+	/**
+	 * A valid staleness threshold is accepted and persisted.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+	 */
+	public function testValidStalenessThresholdAccepted(): void {
+		$this->config->expects($this->once())
+			->method('setUserValue')
+			->with('alice', $this->anything(), 'health_staleness_days', '180');
+		$this->config->method('getUserValue')->willReturnArgument(3);
+		$this->appConfig->method('getValueString')->willReturnArgument(2);
 
-    /**
-     * An out-of-set staleness threshold is rejected.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
-     */
-    public function testInvalidStalenessThresholdRejected(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->updateUserPreferences('alice', ['health_staleness_days' => '7']);
-    }//end testInvalidStalenessThresholdRejected()
+		$this->service->updateUserPreferences('alice', ['health_staleness_days' => '180']);
+	}//end testValidStalenessThresholdAccepted()
+
+	/**
+	 * An out-of-set staleness threshold is rejected.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-password-age-tracking
+	 */
+	public function testInvalidStalenessThresholdRejected(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->updateUserPreferences('alice', ['health_staleness_days' => '7']);
+	}//end testInvalidStalenessThresholdRejected()
 }//end class

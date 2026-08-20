@@ -1,5 +1,6 @@
 <template>
-	<NcDialog :name="t('doriath', 'Generate key')"
+	<NcDialog
+		:name="t('doriath', 'Generate key')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -8,35 +9,67 @@
 				{{ error }}
 			</NcNoteCard>
 
-			<fieldset :disabled="regex.length > 0" class="key-generator-modal__basic">
-				<NcInputField :value.sync="lengthInput"
+			<fieldset
+				:disabled="regex.length > 0"
+				class="key-generator-modal__basic">
+				<NcInputField
+					v-model="lengthInput"
 					type="number"
 					:label="t('doriath', 'Length')"
 					:min="minLength"
 					:max="maxLength" />
+				<p
+					v-if="policyFloorActive"
+					class="key-generator-modal__policy-hint"
+					data-testid="policy-floor-hint">
+					{{
+						t('doriath', 'Locked by org policy: minimum length {min}', {
+							min: minLength,
+						})
+					}}
+				</p>
 
-				<NcCheckboxRadioSwitch :checked.sync="includeSpecialCharacters" type="switch">
-					{{ t('doriath', 'Include special characters') }}
+				<NcCheckboxRadioSwitch
+					v-model="includeSpecialCharacters"
+					type="switch"
+					:disabled="symbolLocked">
+					{{
+						symbolLocked
+							? t(
+									'doriath',
+									'Include special characters (locked by org policy)',
+								)
+							: t('doriath', 'Include special characters')
+					}}
 				</NcCheckboxRadioSwitch>
 
-				<NcInputField :value.sync="excludedCharacters"
+				<NcInputField
+					v-model="excludedCharacters"
 					:label="t('doriath', 'Exclude characters')" />
 			</fieldset>
 
 			<details class="key-generator-modal__advanced">
 				<summary>{{ t('doriath', 'Advanced') }}</summary>
-				<NcInputField :value.sync="regex"
+				<NcInputField
+					v-model="regex"
 					:label="t('doriath', 'Regex pattern')"
-					:helper-text="t('doriath', 'When set, overrides length, special characters and exclusions.')" />
+					:helperText="
+						t(
+							'doriath',
+							'When set, overrides length, special characters and exclusions.',
+						)
+					" />
 			</details>
 
 			<div v-if="generatedKey" class="key-generator-modal__preview">
-				<NcInputField :value="generatedKey"
+				<!-- v9 models through `modelValue`; `:value` is a dead binding. -->
+				<NcInputField
+					:modelValue="generatedKey"
 					:label="t('doriath', 'Generated key')"
-					:read-only="true"
-					:show-trailing-button="true"
-					:trailing-button-label="t('doriath', 'Copy to clipboard')"
-					@trailing-button-click="copyToClipboard">
+					:readOnly="true"
+					:showTrailingButton="true"
+					:trailingButtonLabel="t('doriath', 'Copy to clipboard')"
+					@trailingButtonClick="copyToClipboard">
 					<template #trailing-button-icon>
 						<ContentCopy :size="20" />
 					</template>
@@ -45,17 +78,17 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton type="secondary" :disabled="loading" @click="generate">
+			<NcButton variant="secondary" :disabled="loading" @click="generate">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Dice5 v-else :size="20" />
 				</template>
 				{{ t('doriath', 'Generate') }}
 			</NcButton>
-			<NcButton type="primary" :disabled="!generatedKey" @click="use">
+			<NcButton variant="primary" :disabled="!generatedKey" @click="use">
 				{{ t('doriath', 'Use') }}
 			</NcButton>
 		</template>
@@ -63,6 +96,8 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -71,10 +106,9 @@ import {
 	NcLoadingIcon,
 	NcNoteCard,
 } from '@nextcloud/vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
+import { fetchPolicy } from '../policy/policy.js'
 
 export default {
 	name: 'KeyGeneratorModal',
@@ -111,6 +145,30 @@ export default {
 			error: null,
 			minLength: 8,
 			maxLength: 128,
+			policyFloorActive: false,
+			symbolLocked: false,
+		}
+	},
+
+	/**
+	 * Clamp the controls to the org policy floor (org-password-policies
+	 * §5.2) — the server clamp stays authoritative regardless.
+	 */
+	async mounted() {
+		const policy = await fetchPolicy()
+		if (policy?.policy_enabled === true) {
+			const floor = Number.parseInt(policy.generator_min_length, 10) || 0
+			if (floor > this.minLength) {
+				this.minLength = floor
+				this.policyFloorActive = true
+				if (Number(this.lengthInput) < floor) {
+					this.lengthInput = floor
+				}
+			}
+			if (policy.generator_require_symbol === true) {
+				this.includeSpecialCharacters = true
+				this.symbolLocked = true
+			}
 		}
 	},
 
@@ -147,10 +205,10 @@ export default {
 				const payload = this.regex
 					? { regex: this.regex }
 					: {
-						length: Number(this.lengthInput),
-						includeSpecialCharacters: this.includeSpecialCharacters,
-						excludedCharacters: this.excludedCharacters,
-					}
+							length: Number(this.lengthInput),
+							includeSpecialCharacters: this.includeSpecialCharacters,
+							excludedCharacters: this.excludedCharacters,
+						}
 
 				const response = await axios.post(
 					generateUrl('/apps/doriath/api/v1/generate-key'),
@@ -159,7 +217,8 @@ export default {
 				this.generatedKey = response.data.generatedKey
 			} catch (e) {
 				this.generatedKey = ''
-				this.error = e?.response?.data?.message
+				this.error =
+					e?.response?.data?.message
 					|| t('doriath', 'Failed to generate key')
 			} finally {
 				this.loading = false
@@ -215,5 +274,11 @@ export default {
 
 .key-generator-modal__preview {
 	margin-top: 8px;
+}
+
+.key-generator-modal__policy-hint {
+	color: var(--color-text-maxcontrast, #777);
+	font-size: 13px;
+	margin: 0;
 }
 </style>

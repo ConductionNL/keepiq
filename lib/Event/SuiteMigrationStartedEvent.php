@@ -27,52 +27,48 @@ use OCP\EventDispatcher\Event;
 /**
  * Fired when compromise recovery for an EncryptionSuite begins.
  */
-class SuiteMigrationStartedEvent extends Event
-{
-    /**
-     * Constructor for SuiteMigrationStartedEvent.
-     *
-     * @param string $oldSuiteId  The compromised suite ID
-     * @param string $newSuiteId  The replacement suite ID
-     * @param string $migrationId The migration record ID
-     *
-     * @return void
-     */
-    public function __construct(
-        private string $oldSuiteId,
-        private string $newSuiteId,
-        private string $migrationId,
-    ) {
-        parent::__construct();
-    }//end __construct()
+class SuiteMigrationStartedEvent extends Event {
+	/**
+	 * Constructor for SuiteMigrationStartedEvent.
+	 *
+	 * @param string $oldSuiteId The compromised suite ID
+	 * @param string $newSuiteId The replacement suite ID
+	 * @param string $migrationId The migration record ID
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private string $oldSuiteId,
+		private string $newSuiteId,
+		private string $migrationId,
+	) {
+		parent::__construct();
+	}//end __construct()
 
-    /**
-     * Get the compromised suite ID.
-     *
-     * @return string
-     */
-    public function getOldSuiteId(): string
-    {
-        return $this->oldSuiteId;
-    }//end getOldSuiteId()
+	/**
+	 * Get the compromised suite ID.
+	 *
+	 * @return string
+	 */
+	public function getOldSuiteId(): string {
+		return $this->oldSuiteId;
+	}//end getOldSuiteId()
 
-    /**
-     * Get the replacement suite ID.
-     *
-     * @return string
-     */
-    public function getNewSuiteId(): string
-    {
-        return $this->newSuiteId;
-    }//end getNewSuiteId()
+	/**
+	 * Get the replacement suite ID.
+	 *
+	 * @return string
+	 */
+	public function getNewSuiteId(): string {
+		return $this->newSuiteId;
+	}//end getNewSuiteId()
 
-    /**
-     * Get the migration record ID.
-     *
-     * @return string
-     */
-    public function getMigrationId(): string
-    {
-        return $this->migrationId;
-    }//end getMigrationId()
+	/**
+	 * Get the migration record ID.
+	 *
+	 * @return string
+	 */
+	public function getMigrationId(): string {
+		return $this->migrationId;
+	}//end getMigrationId()
 }//end class

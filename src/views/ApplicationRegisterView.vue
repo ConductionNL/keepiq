@@ -3,9 +3,9 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   Developer-facing "register an application" page. Shows the user's own
-  application registrations and lets them add new ones via the
-  ApplicationRegisterDialog. When the server returns a one-time private
-  key the PrivateKeyDownloadDialog is shown until the user
+  application registrations (on the shared CnIndexPage list view) and lets
+  them add new ones via the ApplicationRegisterDialog. When the server returns
+  a one-time private key the PrivateKeyDownloadDialog is shown until the user
   acknowledges.
 
   Admins should use `AdminApplicationsView` for the approval queue;
@@ -14,49 +14,42 @@
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.1
 -->
 <template>
-	<div class="doriath-application-register-view" data-testid="application-register-view">
-		<header class="doriath-application-register-view__header">
-			<div>
-				<h2>{{ t('doriath', 'My applications') }}</h2>
-				<p class="doriath-application-register-view__intro">
-					{{ t('doriath', 'Register an application to access secrets via the JWT-Bearer flow.') }}
-				</p>
-			</div>
-			<button
-				type="button"
-				class="primary"
-				data-testid="application-register-open"
-				@click="dialogOpen = true">
-				{{ t('doriath', 'Register application') }}
-			</button>
-		</header>
-
-		<p v-if="store.loading" data-testid="application-register-loading">
-			{{ t('doriath', 'Loading…') }}
-		</p>
-
-		<p v-else-if="rows.length === 0" class="doriath-application-register-view__empty" data-testid="application-register-empty">
-			{{ t('doriath', 'You have not registered any applications yet.') }}
-		</p>
-
-		<ul v-else class="doriath-application-register-view__list">
-			<li
-				v-for="app in rows"
-				:key="app.id"
-				class="doriath-application-register-view__item"
-				data-testid="application-register-row">
-				<div>
-					<strong>{{ app.name }}</strong>
-					<small class="doriath-application-register-view__status">
-						{{ statusLabel(app.status) }}
-					</small>
-					<p v-if="app.description" class="doriath-application-register-view__description">
-						{{ app.description }}
-					</p>
-				</div>
-				<span class="doriath-application-register-view__type">{{ app.type }}</span>
-			</li>
-		</ul>
+	<div
+		class="doriath-application-register-view"
+		data-testid="application-register-view">
+		<CnIndexPage
+			viewMode="list"
+			:availableViewModes="['list', 'cards', 'table']"
+			listLabel="List"
+			:selectable="false"
+			:objects="rows"
+			:schema="listSchema"
+			:listConfig="listConfig"
+			:loading="store.loading"
+			:addLabel="t('doriath', 'Register application')"
+			addIcon="Plus"
+			inlineSearch
+			:searchValue="searchTerm"
+			:searchPlaceholder="t('doriath', 'Search applications')"
+			rowKey="id"
+			:emptyText="
+				t('doriath', 'You have not registered any applications yet.')
+			"
+			@add="dialogOpen = true"
+			@search="onSearch"
+			@rowClick="openApplication">
+			<template #row-badges="{ object }">
+				<CnStatusBadge
+					:label="statusLabel(object.status)"
+					:variant="statusVariant(object.status)"
+					size="small" />
+				<CnStatusBadge
+					v-if="object.type"
+					:label="object.type"
+					variant="default"
+					size="small" />
+			</template>
+		</CnIndexPage>
 
 		<ApplicationRegisterDialog
 			:open="dialogOpen"
@@ -64,48 +57,115 @@
 			@registered="onRegistered" />
 
 		<PrivateKeyDownloadDialog
-			:open="store.oneTimePrivateKey !== null && store.oneTimePrivateKey !== ''"
-			:private-key="store.oneTimePrivateKey || ''"
+			:open="
+				store.oneTimePrivateKey !== null && store.oneTimePrivateKey !== ''
+			"
+			:privateKey="store.oneTimePrivateKey || ''"
 			@close="onAcknowledgeKey" />
 	</div>
 </template>
 
 <script>
-import { useApplicationStore } from '../store/modules/application.js'
+import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import ApplicationRegisterDialog from '../components/application/ApplicationRegisterDialog.vue'
 import PrivateKeyDownloadDialog from '../components/application/PrivateKeyDownloadDialog.vue'
+import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
 	name: 'ApplicationRegisterView',
-	components: { ApplicationRegisterDialog, PrivateKeyDownloadDialog },
+
+	components: {
+		CnIndexPage,
+		CnStatusBadge,
+		ApplicationRegisterDialog,
+		PrivateKeyDownloadDialog,
+	},
+
 	data() {
 		return {
 			dialogOpen: false,
+			searchTerm: '',
 			store: useApplicationStore(),
 		}
 	},
+
 	computed: {
 		rows() {
-			return this.store.applications || []
+			const term = this.searchTerm.trim().toLowerCase()
+			const all = this.store.applications || []
+			if (!term) return all
+			return all.filter((a) => (a.name || '').toLowerCase().includes(term))
+		},
+
+		listSchema() {
+			return {
+				properties: {
+					name: { title: t('doriath', 'Name'), type: 'string' },
+					description: {
+						title: t('doriath', 'Description'),
+						type: 'string',
+					},
+				},
+
+				configuration: {
+					objectNameField: 'name',
+					objectDescriptionField: 'description',
+				},
+			}
+		},
+
+		listConfig() {
+			return { titleField: 'name', subtitleField: 'description' }
 		},
 	},
+
 	mounted() {
 		this.store.fetchApplications().catch(() => {})
 	},
+
 	methods: {
+		t,
+
+		onSearch(value) {
+			this.searchTerm = value
+		},
+
+		openApplication(object) {
+			this.$router.push(`/applications/${object.id}`)
+		},
+
 		statusLabel(status) {
 			switch (status) {
-			case 'active': return t('doriath', 'Active')
-			case 'pending': return t('doriath', 'Pending approval')
-			case 'rejected': return t('doriath', 'Rejected')
-			default: return status || ''
+				case 'active':
+					return t('doriath', 'Active')
+				case 'pending':
+					return t('doriath', 'Pending approval')
+				case 'rejected':
+					return t('doriath', 'Rejected')
+				default:
+					return status || ''
 			}
 		},
+
+		statusVariant(status) {
+			switch (status) {
+				case 'active':
+					return 'success'
+				case 'pending':
+					return 'warning'
+				case 'rejected':
+					return 'error'
+				default:
+					return 'default'
+			}
+		},
+
 		onRegistered() {
 			this.dialogOpen = false
 			// Refresh the list so the new row shows up.
 			this.store.fetchApplications().catch(() => {})
 		},
+
 		onAcknowledgeKey() {
 			this.store.clearOneTimePrivateKey()
 		},
@@ -116,56 +176,7 @@ export default {
 <style scoped>
 .doriath-application-register-view {
 	padding: 16px;
-}
-.doriath-application-register-view__header {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-start;
-	margin-bottom: 16px;
-}
-.doriath-application-register-view__intro {
-	color: var(--color-text-maxcontrast, #777);
-	font-size: 13px;
-	margin: 4px 0 0;
-}
-.doriath-application-register-view__empty {
-	color: var(--color-text-maxcontrast, #777);
-	font-size: 13px;
-}
-.doriath-application-register-view__list {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-}
-.doriath-application-register-view__item {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 12px;
-	padding: 12px 0;
-	border-bottom: 1px solid var(--color-border, #eee);
-}
-.doriath-application-register-view__status {
-	margin-left: 8px;
-	color: var(--color-text-maxcontrast, #777);
-	font-size: 12px;
-}
-.doriath-application-register-view__description {
-	margin: 4px 0 0;
-	color: var(--color-text-maxcontrast, #777);
-	font-size: 13px;
-}
-.doriath-application-register-view__type {
-	background-color: var(--color-background-darker, #ddd);
-	font-size: 11px;
-	padding: 2px 8px;
-	border-radius: 999px;
-}
-.primary {
-	background-color: var(--color-primary-element, #0082c9);
-	color: var(--color-primary-element-text, #fff);
-	border: 0;
-	padding: 8px 16px;
-	border-radius: var(--border-radius, 4px);
+	height: 100%;
+	overflow: auto;
 }
 </style>
