@@ -64,6 +64,99 @@ class SecretRequestPolicy {
 	public const ADDITIONAL_BLOB = 'additionalFields';
 
 	/**
+	 * Machine-readable reasons a fill link can be refused.
+	 *
+	 * The recipient is a stranger with no account, and the fill page is the only
+	 * thing they ever see. It has to tell them WHICH of these happened, in their
+	 * own language. A human-readable message cannot do that: it is composed here,
+	 * server-side, in English, and it is the one string the recipient reads.
+	 *
+	 * Measured before adding this, on a real expired request: the page rendered
+	 * "Request has expired" — this file's English, not the translated
+	 * `This request has expired.` that SecretRequestFill.vue already carried. That
+	 * translation was unreachable, because the client had nothing but prose to
+	 * switch on.
+	 *
+	 * @var array<int,string>
+	 */
+	public const REASONS = [
+		self::REASON_NOT_FOUND,
+		self::REASON_EXPIRED,
+		self::REASON_FULFILLED,
+		self::REASON_DECLINED,
+		self::REASON_LOCKED,
+		self::REASON_UNKNOWN,
+	];
+
+	/**
+	 * No request carries this token.
+	 *
+	 * @var string
+	 */
+	public const REASON_NOT_FOUND = 'not-found';
+
+	/**
+	 * The request's expiry has passed, or it was swept to `expired`.
+	 *
+	 * @var string
+	 */
+	public const REASON_EXPIRED = 'expired';
+
+	/**
+	 * Somebody already filled this request.
+	 *
+	 * @var string
+	 */
+	public const REASON_FULFILLED = 'fulfilled';
+
+	/**
+	 * The requester revoked this request.
+	 *
+	 * @var string
+	 */
+	public const REASON_DECLINED = 'declined';
+
+	/**
+	 * A compromise recovery is in progress on the target vault.
+	 *
+	 * @var string
+	 */
+	public const REASON_LOCKED = 'locked';
+
+	/**
+	 * A status this version does not know how to explain.
+	 *
+	 * @var string
+	 */
+	public const REASON_UNKNOWN = 'unknown';
+
+	/**
+	 * The request is open and may be filled.
+	 *
+	 * @var string
+	 */
+	private const REASON_OPEN = 'open';
+
+	/**
+	 * The message and HTTP code each refusal answers with.
+	 *
+	 * Kept as data next to the classifier rather than as arms of a switch, so the
+	 * reason a caller is told and the reason the client is handed can never
+	 * disagree. Two predicates answering the same question separately is how the
+	 * revoke path came to delete filled secrets earlier in this same feature.
+	 *
+	 * @var array<string,array{message:string,code:int}>
+	 */
+	private const REFUSALS = [
+		self::REASON_NOT_FOUND => ['message' => 'Request not found', 'code' => 404],
+		self::REASON_EXPIRED => ['message' => 'Request has expired', 'code' => 408],
+		self::REASON_FULFILLED => ['message' => 'Request was already fulfilled', 'code' => 410],
+		self::REASON_DECLINED => ['message' => 'Request was declined', 'code' => 410],
+		self::REASON_LOCKED => ['message' => 'Request is temporarily unavailable', 'code' => 423],
+		self::REASON_UNKNOWN => ['message' => 'Request is in an unknown state', 'code' => 500],
+	];
+
+	/**
 	 * Constructor for SecretRequestPolicy.
 	 *
 	 * @param SecretRequestMapper $mapper The request mapper
@@ -107,22 +200,98 @@ class SecretRequestPolicy {
 			throw new InvalidArgumentException(message: 'Request not found', code: 404);
 		}
 
-		switch ($entity->getStatus()) {
-			case SecretRequest::STATUS_LOCKED:
-				throw new InvalidArgumentException(message: 'Request is temporarily unavailable', code: 423);
-			case SecretRequest::STATUS_FULFILLED:
-				throw new InvalidArgumentException(message: 'Request was already fulfilled', code: 410);
-			case SecretRequest::STATUS_DECLINED:
-				throw new InvalidArgumentException(message: 'Request was declined', code: 410);
-			case SecretRequest::STATUS_PENDING:
-				if ($entity->isExpired() === true) {
-					throw new InvalidArgumentException(message: 'Request has expired', code: 408);
-				}
-				return $entity;
-			default:
-				throw new InvalidArgumentException(message: 'Request is in an unknown state', code: 500);
+		$reason = $this->classify(entity: $entity);
+		if ($reason === self::REASON_OPEN) {
+			return $entity;
 		}
+
+		throw new InvalidArgumentException(
+			message: self::REFUSALS[$reason]['message'],
+			code: self::REFUSALS[$reason]['code']
+		);
 	}//end requireOpenByToken()
+
+	/**
+	 * Why a token cannot be filled, as a machine-readable reason.
+	 *
+	 * Exists so the public fill page can render the refusal in the recipient's
+	 * language. It returns the SAME classification `requireOpenByToken()` refuses
+	 * on, by calling the same classifier, so the reason shown can never contradict
+	 * the status returned.
+	 *
+	 * Discloses nothing the refusal did not already disclose: the English message
+	 * on the error response says "already fulfilled" or "expired" in words. This
+	 * hands the client the same fact in a form it can translate.
+	 *
+	 * @param string $token The access token
+	 *
+	 * @return string One of self::REASONS, or REASON_NOT_FOUND for an empty token
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function refusalReason(string $token): string {
+		if ($token === '') {
+			return self::REASON_NOT_FOUND;
+		}
+
+		try {
+			$entity = $this->mapper->findByToken($token);
+		} catch (DoesNotExistException) {
+			return self::REASON_NOT_FOUND;
+		}
+
+		$reason = $this->classify(entity: $entity);
+
+		// An open request has no refusal to explain. Answering "unknown" rather
+		// than "open" keeps this method from becoming a status oracle for a live
+		// token: a caller learns only that there is nothing to report.
+		if ($reason === self::REASON_OPEN) {
+			return self::REASON_UNKNOWN;
+		}
+
+		return $reason;
+	}//end refusalReason()
+
+	/**
+	 * Classify a request as open, or as the reason it is refused.
+	 *
+	 * Expiry is evaluated FIRST, independently of the stored status. Being precise
+	 * about what that buys: a lapsed PENDING request was already refused before
+	 * this was hoisted, because the pending branch checked expiry itself. Hoisting
+	 * changes PRECEDENCE for every other status — a locked request whose expiry
+	 * passed now reports "expired" instead of "temporarily unavailable", which is
+	 * the truer answer, since locked invites the recipient to retry and an expired
+	 * request never can be. It also means a status added later cannot bypass expiry
+	 * by omission. The sweeper remains cleanup; enforcement is here.
+	 *
+	 * `expired` keeps an arm of its own even though the expiry check above catches
+	 * every request the sweeper produces — measured: all expired rows carry a past
+	 * `expires_at`, necessarily, since that is what the sweeper selects on. The arm
+	 * is the fallback for a request whose status says expired while its timestamp
+	 * does not, which without it would answer 500 'unknown state'. It answers with
+	 * the same reason and therefore the same 408 as the timestamp path: one
+	 * condition, one code.
+	 *
+	 * @param SecretRequest $entity The request to classify
+	 *
+	 * @return string REASON_OPEN, or the reason it is refused
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	private function classify(SecretRequest $entity): string {
+		if ($entity->isExpired() === true) {
+			return self::REASON_EXPIRED;
+		}
+
+		return match ($entity->getStatus()) {
+			SecretRequest::STATUS_LOCKED => self::REASON_LOCKED,
+			SecretRequest::STATUS_FULFILLED => self::REASON_FULFILLED,
+			SecretRequest::STATUS_DECLINED => self::REASON_DECLINED,
+			SecretRequest::STATUS_EXPIRED => self::REASON_EXPIRED,
+			SecretRequest::STATUS_PENDING => self::REASON_OPEN,
+			default => self::REASON_UNKNOWN,
+		};
+	}//end classify()
 
 	/**
 	 * Re-read a request by ID and assert it is still pending. Used by the

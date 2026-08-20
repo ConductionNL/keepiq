@@ -48,6 +48,24 @@
 					}}</span>
 				</div>
 				<div class="doriath-secret-request-list__actions">
+					<!--
+					  Recovering the link is the whole point of this list. The token is
+					  shown truncated on purpose, so without this the link is
+					  unobtainable once the create dialog is closed and the only way
+					  to get a usable request is to revoke and start again.
+					-->
+					<button
+						v-if="canCopyLink(row)"
+						type="button"
+						class="doriath-secret-request-list__copy"
+						:data-testid="`secret-request-row-copy-${row.id}`"
+						@click="onCopyLink(row)">
+						{{
+							copiedId === row.id
+								? t('doriath', 'Link copied')
+								: t('doriath', 'Copy fill link')
+						}}
+					</button>
 					<button
 						v-if="row.status === 'pending'"
 						type="button"
@@ -72,6 +90,7 @@
 
 <script>
 import { useSecretRequestStore } from '../../store/modules/secretRequest.js'
+import { fillLinkFor } from '../../utils/fillLink.js'
 
 export default {
 	name: 'SecretRequestList',
@@ -88,6 +107,7 @@ export default {
 
 	data() {
 		return {
+			copiedId: null,
 			store: useSecretRequestStore(),
 		}
 	},
@@ -121,6 +141,59 @@ export default {
 				return ''
 			}
 			return fields.join(', ')
+		},
+
+		/**
+		 * Whether this row's link can still be used.
+		 *
+		 * Offered only where the link would actually work: a fulfilled, declined or
+		 * lapsed request no longer accepts a submission, and handing someone a dead
+		 * URL is worse than not offering one. `expiresAt` is checked here rather
+		 * than trusting status, because expiry is not swept until the job for it
+		 * lands (secret-request-expiry-lifecycle) and a lapsed request still reads
+		 * as pending until then.
+		 *
+		 * @param {object} row The request row.
+		 *
+		 * @return {boolean} True when the link is still fillable.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-link-recovery
+		 */
+		canCopyLink(row) {
+			if (!row || row.status !== 'pending' || !row.token) {
+				return false
+			}
+
+			const expiry = row.expiresAt || row.expires_at
+			if (expiry && new Date(expiry).getTime() <= Date.now()) {
+				return false
+			}
+
+			return true
+		},
+
+		/**
+		 * Copy this request's fill link to the clipboard.
+		 *
+		 * @param {object} row The request row.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-link-recovery
+		 */
+		async onCopyLink(row) {
+			try {
+				await navigator.clipboard.writeText(fillLinkFor(row.token))
+				this.copiedId = row.id
+				setTimeout(() => {
+					if (this.copiedId === row.id) {
+						this.copiedId = null
+					}
+				}, 1500)
+			} catch (e) {
+				// eslint-disable-next-line no-console
+				console.warn('Doriath: clipboard write failed', e)
+			}
 		},
 
 		statusLabel(status) {
@@ -185,6 +258,10 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
+}
+
+.doriath-secret-request-list__copy {
+	cursor: pointer;
 }
 
 .doriath-secret-request-list__token {

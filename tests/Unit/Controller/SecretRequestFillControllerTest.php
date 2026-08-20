@@ -25,6 +25,7 @@ use OCA\Doriath\Controller\SecretRequestFillController;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Doriath\Service\SecretRequestPolicy;
 use OCA\Doriath\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -151,6 +152,34 @@ class SecretRequestFillControllerTest extends TestCase {
 	}//end testShowReturnsTheCodedErrorForExpiredOrFulfilled()
 
 	/**
+	 * A refusal carries a machine-readable reason, not only English prose.
+	 *
+	 * The recipient is a stranger reading this page in one of 37 locales. `message`
+	 * is composed server-side in English, so it is the wrong thing for the page to
+	 * render — measured in a browser on 2026-08-19: a real expired link showed
+	 * "Request has expired" while the translated string sat unreachable in
+	 * SecretRequestFill.vue. `reason` is what makes the translation reachable.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testShowIncludesAMachineReadableReasonOnRefusal(): void {
+		$this->secretRequestService->method('getByToken')->willThrowException(
+			new InvalidArgumentException(message: 'Request has expired', code: 408)
+		);
+		$this->secretRequestService->expects($this->once())
+			->method('refusalReason')
+			->with('tok-1')
+			->willReturn(SecretRequestPolicy::REASON_EXPIRED);
+
+		$data = $this->controller->show(token: 'tok-1')->getData();
+
+		$this->assertSame(SecretRequestPolicy::REASON_EXPIRED, $data['reason']);
+		$this->assertSame('Request has expired', $data['message'], 'the message stays for API callers');
+	}//end testShowIncludesAMachineReadableReasonOnRefusal()
+
+	/**
 	 * Show falls back to a uniform 404 on any generic throwable.
 	 *
 	 * @return void
@@ -237,4 +266,33 @@ class SecretRequestFillControllerTest extends TestCase {
 		$this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
 
 	}//end testFillReturns500OnGenericFailure()
+	/**
+	 * The fill response never tells the recipient which fields already hold values.
+	 *
+	 * "This field already has a value" is a read of the vault handed to an
+	 * unauthenticated party. Filled-ness is decided by the REQUESTER's client at
+	 * creation time, so the payload is asserted as a CLOSED set here rather than
+	 * only for the presence of what the recipient needs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+	 */
+	public function testShowNeverDisclosesWhichFieldsAreAlreadyFilled(): void {
+		$this->secretRequestService->method('getByToken')->willReturn($this->makeRequest());
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$data = $this->controller->show(token: 'tok-1')->getData();
+
+		foreach (['filled', 'filledFields', 'already_filled', 'values', 'key', 'login'] as $leak) {
+			$this->assertArrayNotHasKey(
+				key: $leak,
+				array: $data,
+				message: $leak . ' must not reach the fill recipient'
+			);
+		}
+
+		$this->assertSame(expected: ['key', 'login'], actual: $data['requested_fields']);
+	}//end testShowNeverDisclosesWhichFieldsAreAlreadyFilled()
+
 }//end class

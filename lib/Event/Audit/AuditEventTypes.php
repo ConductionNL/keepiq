@@ -58,6 +58,14 @@ final class AuditEventTypes {
 	public const REQUEST_RE_REQUESTED = 'request.re_requested';
 	public const REQUEST_REVOKED = 'request.revoked';
 
+	/**
+	 * A request lapsed and the sweeper acted on it. Distinct from
+	 * REQUEST_REVOKED because the actor is the system, not the requester —
+	 * recording a person as the actor for something they did not do would
+	 * corrupt the trail this capability exists to provide.
+	 */
+	public const REQUEST_EXPIRED = 'request.expired';
+
 	// Suite.
 	public const SUITE_REVOKED = 'suite.revoked';
 	public const SUITE_REINSTATED = 'suite.reinstated';
@@ -202,6 +210,10 @@ final class AuditEventTypes {
 		self::REQUEST_FULFILLED => [],
 		self::REQUEST_RE_REQUESTED => [],
 		self::REQUEST_REVOKED => [],
+		// No metadata: the request id is the object, and WHY it expired is the
+		// event type itself. Adding expires_at here would put a timestamp in the
+		// trail that the request row already carries.
+		self::REQUEST_EXPIRED => [],
 		self::SUITE_REVOKED => ['reason'],
 		self::SUITE_REINSTATED => [],
 		self::SUITE_RECOVERY_STARTED => [],

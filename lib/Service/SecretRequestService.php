@@ -28,6 +28,7 @@ namespace OCA\Doriath\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
@@ -36,6 +37,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 
 /**
  * Business logic for the SecretRequest lifecycle.
@@ -48,6 +50,14 @@ use Ramsey\Uuid\Uuid;
  * for a construction-time circular dependency. The remainder are two mappers,
  * two Db entities, two lookup exceptions and the value types (DateTime, Uuid) —
  * none of them indirection worth adding a class to hide.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ * The public surface IS the request state machine — create (plain / fresh /
+ * application / re-request), fill, approve, decline, and the read paths. The
+ * eleventh is `createForUserVault()`, which exists because a fresh request has
+ * to create its own Secret before it can create the request; splitting the
+ * creation paths across classes would scatter the rollback and the
+ * fresh-vs-re-request distinction that the spec turns on.
  */
 class SecretRequestService {
 	/*
@@ -99,6 +109,23 @@ class SecretRequestService {
 	public function getByToken(string $token): SecretRequest {
 		return $this->policy->requireOpenByToken(token: $token);
 	}//end getByToken()
+
+	/**
+	 * Why a token cannot be filled, as a machine-readable reason.
+	 *
+	 * Pass-through to the policy, which classifies refusals, so the public fill
+	 * page can render the refusal in the recipient's language instead of the
+	 * English message this server composes. See SecretRequestPolicy::REASONS.
+	 *
+	 * @param string $token The access token
+	 *
+	 * @return string One of SecretRequestPolicy::REASONS
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function refusalReason(string $token): string {
+		return $this->policy->refusalReason(token: $token);
+	}//end refusalReason()
 
 	/**
 	 * Mark a pending request as fulfilled from the public fill endpoint.
@@ -351,6 +378,94 @@ class SecretRequestService {
 	}//end create()
 
 	/**
+	 * Create a FRESH request in the requester's own vault, creating the Secret.
+	 *
+	 * This is the path a person takes when they have nothing to point at yet.
+	 * The spec has always required it — "the system MUST create an unfilled
+	 * Secret and a SecretRequest" — but the only surface that existed demanded a
+	 * pre-existing Secret, and `create()` refused an empty key, so a requester
+	 * had to invent a value for the credential they were about to ask for.
+	 *
+	 * Mirrors `ApplicationSecretRequestService::createForApplicationVault()`,
+	 * including its rollback: the shell exists only to receive this request, so
+	 * it must not survive a failed creation.
+	 *
+	 * A RE-REQUEST does not come through here. It targets an existing Secret and
+	 * keeps using `create()` / `createReRequest()`, which is what keeps the two
+	 * flows structurally distinct rather than distinguished by a boolean.
+	 *
+	 * @param string $userId The Nextcloud user creating the request
+	 * @param array<string> $requestedFields Field names to be filled in
+	 * @param string|null $name Name for the created Secret
+	 * @param string|null $folderId Optional folder to file it under
+	 * @param DateTime|null $expiresAt Optional expiry
+	 *
+	 * @return SecretRequest
+	 *
+	 * @throws InvalidArgumentException When userId or requestedFields are missing
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function createForUserVault(
+		string $userId,
+		array $requestedFields,
+		?string $name = null,
+		?string $folderId = null,
+		?DateTime $expiresAt = null,
+	): SecretRequest {
+		if ($userId === '') {
+			throw new InvalidArgumentException(message: 'userId is required');
+		}
+
+		if ($requestedFields === []) {
+			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
+		}
+
+		$secretService = $this->container->get(SecretService::class);
+
+		$shell = $secretService->create(
+			data: [
+				'name' => ($name ?? 'Unfilled request'),
+				'folderId' => $folderId,
+				// Keyless by design: the recipient supplies the value and the
+				// server never holds a plaintext one (ADR-003). Permitted only
+				// because a pending request will target this Secret.
+				'key' => '',
+			],
+			userId: $userId,
+			allowUnfilled: true
+		);
+
+		try {
+			return $this->create(
+				secretId: $shell->getId(),
+				// Read off the Secret the system just created rather than taken
+				// from a caller parameter: SecretService linked the shell to the
+				// user's active suite, so re-deriving it here cannot drift from
+				// the Secret the values will actually be written to.
+				encryptionSuiteId: (string)$shell->getEncryptionSuiteId(),
+				requestedFields: $requestedFields,
+				isReRequest: false,
+				expiresAt: $expiresAt,
+				userId: $userId
+			);
+		} catch (Throwable $exception) {
+			// No orphan shell: it holds no value and exists only for this
+			// request. Rollback failure must not mask the original error.
+			try {
+				$secretService->delete($shell->getId(), $userId);
+			} catch (Throwable $cleanup) {
+				$this->logger->error(
+					'Doriath: could not roll back the request placeholder: ' . $cleanup->getMessage(),
+					['exception' => $cleanup]
+				);
+			}
+
+			throw $exception;
+		}//end try
+	}//end createForUserVault()
+
+	/**
 	 * Create a new pending secret request keyed to an application.
 	 *
 	 * Resolves the application's active EncryptionSuite through the policy
@@ -503,10 +618,146 @@ class SecretRequestService {
 
 		$updated = $this->mapper->update($entity);
 
+		// Revoking releases the only justification a keyless Secret has for
+		// existing, so the placeholder goes with it — "the unfilled Secret MUST
+		// be deleted" (Revoke Request). This was never implemented; it only
+		// becomes reachable now that a fresh request creates its own Secret.
+		//
+		// The discriminator is EMPTINESS, not `isReRequest`. A plain request also
+		// carries `isReRequest === false` while targeting a Secret the USER
+		// picked, so deleting on that flag would destroy real credentials. A
+		// Secret holding no value is worthless to keep; one holding a value is
+		// never ours to remove here.
+		//
+		// After the status flip on purpose: if this cleanup fails, the request is
+		// already revoked and the worst case is an orphan empty Secret. The other
+		// order risks deleting a Secret while its request stays pending.
+		$this->deletePlaceholderIfUnfilled(request: $updated, userId: $userId);
+
 		$this->outbox->recordRevoked(userId: $userId, requestId: $requestId);
 
 		return $updated;
 	}//end decline()
+
+	/**
+	 * Transition a lapsed request to the terminal `expired` status.
+	 *
+	 * Called by the sweeper, never by a person, so there is no ownership check to
+	 * make here — the caller has already selected rows by `expires_at`. What this
+	 * does enforce is that only a PENDING request can lapse: a fulfilled or
+	 * declined request has already reached its end state, and re-terminating it
+	 * would rewrite history.
+	 *
+	 * Cleanup matches revoke exactly, because the keyless-placeholder invariant
+	 * does not care why the request ended: an unfilled placeholder goes, a
+	 * re-request's Secret and its values stay. Reusing the same helper is what
+	 * keeps the two paths from drifting.
+	 *
+	 * @param SecretRequest $request The lapsed request
+	 *
+	 * @return SecretRequest|null The updated request, or null when it was not pending
+	 *
+	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function expire(SecretRequest $request): ?SecretRequest {
+		if ($request->getStatus() !== SecretRequest::STATUS_PENDING) {
+			return null;
+		}
+
+		$request->setStatus(SecretRequest::STATUS_EXPIRED);
+		$updated = $this->mapper->update($request);
+
+		// The owner id comes off the Secret rather than the request's creator: an
+		// application-created request has `created_by = 'application:<id>'`, which
+		// is not a user id, and the placeholder deletion is scoped by ownership.
+		$this->deletePlaceholderIfUnfilled(
+			request: $updated,
+			userId: (string)$updated->getCreatedBy()
+		);
+
+		$this->outbox->recordExpired(requestId: $updated->getId());
+
+		$this->logger->info(
+			'Expired secret request ' . $updated->getId(),
+			['app' => 'doriath']
+		);
+
+		return $updated;
+	}//end expire()
+
+	/**
+	 * Delete the linked Secret when it never held a value.
+	 *
+	 * Fail-soft: a placeholder that outlives its request is untidy, but it must
+	 * never turn a successful revoke into an error the user has to retry.
+	 *
+	 * @param SecretRequest $request The revoked request
+	 * @param string $userId The revoking user
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	private function deletePlaceholderIfUnfilled(SecretRequest $request, string $userId): void {
+		try {
+			$secret = $this->secretMapper->findById($request->getSecretId());
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			// Already gone, or ambiguous — nothing safe to delete either way.
+			return;
+		}
+
+		if ($this->holdsNoValues(secret: $secret) === false) {
+			// Holds a value: a re-request target, a plain request's own Secret, or a
+			// placeholder that has since been filled.
+			return;
+		}
+
+		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+			// Application-owned shells are cleaned up by their own vault's paths;
+			// this user path must not reach across an ownership boundary.
+			return;
+		}
+
+		try {
+			$this->container->get(SecretService::class)->delete($secret->getId(), $userId);
+		} catch (Throwable $exception) {
+			$this->logger->error(
+				'Doriath: could not delete the placeholder for revoked request '
+				. $request->getId() . ': ' . $exception->getMessage(),
+				['exception' => $exception]
+			);
+		}
+	}//end deletePlaceholderIfUnfilled()
+
+	/**
+	 * Whether a Secret holds no value in any of its value columns.
+	 *
+	 * Deliberately wider than `SecretService::hadNoValues()`, which asks the same
+	 * question for a different decision. That one guards whether to write a version
+	 * row: too eager and you get a junk row. This one guards a HARD delete that
+	 * takes the version history with it: too eager and you destroy a credential.
+	 * The costs are not symmetric, so the predicates stay separate and this one
+	 * errs toward keeping the Secret. Residue is exactly the orphan-placeholder
+	 * tidiness the expiry cleanup handles.
+	 *
+	 * `key` alone is not enough. Nothing requires `key` among `requestedFields`, so
+	 * a requester can ask for a login or a custom member on its own; filling that
+	 * leaves `key` empty on a Secret that now holds ciphertext. `url` is included
+	 * because it is requestable plaintext and `createForUserVault()` never sets it,
+	 * so a genuine fresh placeholder always has it null.
+	 *
+	 * @param Secret $secret The Secret linked to the revoked request
+	 *
+	 * @return bool True when every value column is empty
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	private function holdsNoValues(Secret $secret): bool {
+		return (string)$secret->getKey() === ''
+			&& (string)$secret->getLogin() === ''
+			&& (string)$secret->getAdditionalFields() === ''
+			&& (string)$secret->getUrl() === '';
+	}//end holdsNoValues()
 
 	/**
 	 * List secret requests created by a given user.

@@ -27,7 +27,47 @@
     / Encryption sections the previous MainMenu footer item did.
 -->
 <template>
+	<!-- Public surface: a recipient with no account, holding a fill link.
+	     Rendered WITHOUT the app shell, because CnAppRoot's CnAppNav lists every
+	     page in the manifest — measured on 2026-08-19, an anonymous recipient was
+	     served "Dashboard, Vault, Password health, Certificates, Emergency access,
+	     Settings…", none of which they can open. That is the app's whole feature
+	     surface disclosed to a stranger, and a row of dead links around the one
+	     task they came to do.
+
+	     CnAppRoot hosts `<router-view>` itself, so skipping it means rendering the
+	     route here. The library documents this as the supported path for a layout
+	     that is not the app shell. `t()` is an app-level mixin from main.js, not a
+	     CnAppRoot injection, so public views keep their translations.
+
+	     The offline banner, migration banner, lock-screen gating and user-settings
+	     dialog are all deliberately absent: every one of them speaks about a vault
+	     the recipient has no account for. -->
+	<div v-if="isPublicPage" class="doriath-public-shell">
+		<!-- Every route's component IS CnPageRenderer (see routesFromManifest in
+		     main.js), and it takes its manifest, component registry, page types and
+		     translator by INJECT — from CnAppRoot. Outside the shell those injections
+		     do not exist, so the renderer mounts and finds no page: the first attempt
+		     at this rendered a blank page and logged "[CnPageRenderer] No page found
+		     for $route.name". Its props take precedence over inject, so they are
+		     supplied here.
+
+		     `v-bind="route.params"` is required with the v-slot form: the route
+		     records set `props: true`, but vue-router only applies that itself when
+		     it owns the rendering. Without it SecretRequestFill gets no `token`. -->
+		<router-view v-slot="{ Component, route }">
+			<component
+				:is="Component"
+				v-bind="route.params"
+				:manifest="manifest"
+				:customComponents="customComponents"
+				:pageTypes="pageTypes"
+				:translate="translateForApp" />
+		</router-view>
+	</div>
+
 	<div
+		v-else
 		class="doriath-shell"
 		:class="{ 'doriath-shell--locked': isLockScreen }">
 		<!-- Stale-data banner (offline-readonly-cache §4.3): shown whenever the
@@ -51,6 +91,7 @@
 
 		<CnAppRoot
 			:aiCompanion="true"
+			:supportDialog="showSupportDialog"
 			:manifest="manifest"
 			:customComponents="customComponents"
 			:pageTypes="pageTypes"
@@ -153,7 +194,7 @@
 										@click="handleRevoke">
 										{{
 											revoking
-												? t('doriath', 'Revoking...')
+												? t('doriath', 'Revoking…')
 												: t('doriath', 'Confirm revocation')
 										}}
 									</NcButton>
@@ -275,7 +316,12 @@ import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
-import { handleLockTransition, LOCK_ROUTE_NAME } from './router/guards.js'
+import {
+	handleLockTransition,
+	isPublicRoute,
+	isPublicSurface,
+	LOCK_ROUTE_NAME,
+} from './router/guards.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
@@ -370,6 +416,65 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether this page is being served to an anonymous recipient.
+		 *
+		 * Selects the shell-free layout. Decided from the URL for the same reason
+		 * `showSupportDialog` is: the value is needed on the very first render, and
+		 * `$route` is not resolved yet at that point — a computed keyed on
+		 * `$route.name` reads undefined exactly when it matters, which is the bug
+		 * the support-note fix already walked into once.
+		 *
+		 * Failing "public" is the safe direction here: an authenticated user
+		 * mis-detected as public would lose their navigation, which is visible and
+		 * reported immediately. The reverse — a stranger served the full app nav —
+		 * is what shipped unnoticed until it was measured in a browser.
+		 *
+		 * @return {boolean} True on the anonymous recipient surfaces.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+		 */
+		isPublicPage() {
+			return isPublicSurface(window.location)
+		},
+
+		/**
+		 * Whether the first-open support note may be shown.
+		 *
+		 * False on every anonymous recipient surface. Those pages are opened by
+		 * people who are not our users at all — someone filling in a credential we
+		 * asked them for, or opening a share — and a donation appeal mid-task is at
+		 * best noise, at worst a phishing tell on a page about to receive a secret.
+		 *
+		 * Decided from the URL rather than from `$route`, and that is not a
+		 * shortcut: CnAppRoot reads this prop ONCE in `setup()`
+		 * (`props.supportDialog === false` selects whether the dialog is wired at
+		 * all), which happens before the router resolves the initial navigation. A
+		 * reactive computed keyed on `$route.name` is therefore still undefined at
+		 * the only moment the value is read — which is exactly why the first attempt
+		 * at this had no effect.
+		 *
+		 * `/apps/doriath/public` is the anonymous shell, so anything served from it
+		 * is a recipient page by definition. The hash prefixes cover the same routes
+		 * reached on the authenticated shell.
+		 *
+		 * The library's own guard is not enough: it opens the note only on a
+		 * DEFINITIVE "not seen" answer, but the preference request 401s for an
+		 * anonymous visitor, and a 401 is not a definitive no.
+		 *
+		 * @return {boolean} False on public recipient pages.
+		 *
+		 * @spec exclude Host-level suppression of a library affordance. No
+		 *   requirement describes the support note; what matters is that the public
+		 *   recipient pages stay task-only, which the view specs assert.
+		 */
+		showSupportDialog() {
+			return (
+				isPublicSurface(window.location) === false
+				&& isPublicRoute(this.$route) === false
+			)
+		},
+
 		/**
 		 * Current Nextcloud user permissions, surfaced to the app shell.
 		 *

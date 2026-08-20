@@ -281,8 +281,18 @@
 				</h3>
 
 				<div class="secret-detail__requests-actions">
-					<NcButton variant="secondary" @click="openRequestCreate">
-						{{ t('doriath', 'Request fill-in') }}
+					<!-- This action always targets THIS Secret, so the label says which
+					     of the two things it does. Asking for a credential you do not
+					     have yet starts from the vault, not from inside a Secret. -->
+					<NcButton
+						variant="secondary"
+						data-testid="secret-detail-request-create"
+						@click="openRequestCreate">
+						{{
+							secretHasValue
+								? t('doriath', 'Ask for new values')
+								: t('doriath', 'Ask someone to fill this in')
+						}}
 					</NcButton>
 				</div>
 
@@ -294,6 +304,7 @@
 					v-if="requestDialogOpen"
 					:open="requestDialogOpen"
 					:secret="secret"
+					:isReRequest="secretHasValue"
 					data-testid="secret-detail-request-dialog"
 					@update:open="requestDialogOpen = $event"
 					@created="onRequestCreated" />
@@ -396,6 +407,22 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether this Secret already holds a value.
+		 *
+		 * Decides both the label and whether the request is a re-request: asking
+		 * for values that exist overwrites them in place, which is exactly what a
+		 * re-request is for. An empty placeholder awaiting its first fill is not
+		 * an overwrite, so it must not be labelled or treated as one.
+		 *
+		 * @return {boolean} True when a value is present.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 */
+		secretHasValue() {
+			return String(this.secret?.key || '') !== ''
+		},
+
 		secretId() {
 			return this.$route.params.id
 		},
@@ -668,14 +695,22 @@ export default {
 		},
 
 		/**
-		 * Close the dialog after the new request was created — the
-		 * SecretRequestList re-fetches on its own via the store, so
-		 * no extra refresh is required.
+		 * A request was created against this Secret.
+		 *
+		 * This must NOT close the dialog. The dialog has just built the fill link
+		 * and is showing it with a Copy button and a Done action; closing here
+		 * unmounts it (`v-if`) one tick after `submit()` set `fillUrl`, so the
+		 * requester is never shown the URL the whole feature exists to produce.
+		 * The list re-fetches itself via the store, so there is nothing else to do
+		 * here — the user dismisses the dialog when they have the link.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		onRequestCreated() {
-			this.requestDialogOpen = false
+			// Intentionally empty: see the docblock. Kept as the `created` hook so
+			// a future refresh has an obvious home.
 		},
 	},
 }

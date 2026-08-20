@@ -58,6 +58,17 @@ class SecretRequest extends Entity implements JsonSerializable {
 	public const STATUS_LOCKED = 'locked';
 
 	/**
+	 * Terminal: the request's `expires_at` passed and the sweeper acted on it.
+	 *
+	 * Distinct from DECLINED on purpose. Revoking means the requester changed
+	 * their mind; expiring means time ran out, and the two have different
+	 * consequences for someone looking at a vault that is missing a row. Without
+	 * a status of its own, an automatic expiry would be indistinguishable from a
+	 * cancellation after the fact.
+	 */
+	public const STATUS_EXPIRED = 'expired';
+
+	/**
 	 * The unfilled (or to-be-overwritten) Secret ID.
 	 *
 	 * @var string
