@@ -104,7 +104,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testARequestWithoutAnExpiryIsAllowed(): void {
 		$this->mapper->method('findByToken')
@@ -124,7 +124,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testLapsedButUnsweptRequestIsRefused(): void {
 		$this->mapper->method('findByToken')->willReturn(
@@ -159,7 +159,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testExpiredStatusWithoutATimestampStillReportsExpiry(): void {
 		$this->mapper->method('findByToken')->willReturn($this->make(SecretRequest::STATUS_EXPIRED));
@@ -184,7 +184,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testASweptRequestReportsExpiryWith408(): void {
 		$this->mapper->method('findByToken')->willReturn(
@@ -299,7 +299,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testExpiryTakesPrecedenceOverATemporaryStatus(): void {
 		$this->mapper->method('findByToken')->willReturn(

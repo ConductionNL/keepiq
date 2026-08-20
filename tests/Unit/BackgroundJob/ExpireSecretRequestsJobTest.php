@@ -130,7 +130,7 @@ class ExpireSecretRequestsJobTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testTheSweepExpiresEveryLapsedRequestItFound(): void {
 		$first = $this->lapsed('req-1');
@@ -163,7 +163,7 @@ class ExpireSecretRequestsJobTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testARequestTheQueryDidNotReturnIsNeverExpired(): void {
 		$this->mapper->expects($this->once())
@@ -186,7 +186,7 @@ class ExpireSecretRequestsJobTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testAFailingRequestDoesNotStopTheBatch(): void {
 		$this->mapper->method('findLapsedPending')->willReturn([
@@ -223,7 +223,7 @@ class ExpireSecretRequestsJobTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testAFailingSelectionIsLoggedAndNotThrown(): void {
 		$this->mapper->method('findLapsedPending')
@@ -245,7 +245,7 @@ class ExpireSecretRequestsJobTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testASecondRunSweepsNothingFurther(): void {
 		$this->mapper->method('findLapsedPending')
@@ -272,7 +272,7 @@ class ExpireSecretRequestsJobTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function testARequestTheServiceRefusesIsNotReportedAsExpired(): void {
 		$this->mapper->method('findLapsedPending')->willReturn([$this->lapsed('req-raced')]);
