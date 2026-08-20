@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Þessi síða þarf öruggja (https://) tengingu, því gildið þitt er kóðað í vafranum áður en það er sent.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Opnaðu sama tengil með https:// í byrjun. Ef það virkar enn ekki, spurðu þann sem sendi hann.",
         "This request could not be found.": "Þessi beiðni fannst ekki.",
-        "Revoking…": "Afturkalla…"
+        "Outstanding secret requests": "Óafgreiddar leyndarmálsbeiðnir",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Skilríki sem þetta forrit hefur beðið fólk um að fylla út. Bíðandi tengill virkar fyrir alla sem hafa hann, svo afturkallaðu þá sem ekki eiga lengur að vera nothæfir.",
+        "Revoke this request?": "Afturkalla þessa beiðni?",
+        "Revoke the request": "Afturkalla beiðnina",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Útfyllingartengillinn hættir að virka samstundis, jafnvel þótt einhver hafi hann þegar. Ef forritið bíður þessara skilríkja getur samþættingin stöðvast.",
+        "This application asked for: {fields}": "Þetta forrit bað um: {fields}",
+        "Revoking…": "Afturkalla…",
+        "Expired {when}": "Útrunnið {when}",
+        "Expires {when}": "Rennur út {when}",
+        "No expiry": "Engin lokadagsetning"
     },
     "plurals": null
 }

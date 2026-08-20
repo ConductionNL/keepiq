@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ehhez az oldalhoz biztonságos (https://) kapcsolat kell, mert az értéket a böngésző titkosítja elküldés előtt.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Nyissa meg ugyanazt a hivatkozást https:// kezdettel. Ha még így sem működik, kérdezze meg a feladót.",
         "This request could not be found.": "Ez a kérelem nem található.",
-        "Revoking…": "Visszavonás…"
+        "Outstanding secret requests": "Nyitott titokkérelmek",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Hitelesítő adatok, amelyek kitöltésére ez az alkalmazás megkért embereket. A várakozó hivatkozás mindenkinél működik, akinél megvan, ezért vonja vissza azokat, amelyek már nem lehetnek használhatók.",
+        "Revoke this request?": "Visszavonja ezt a kérelmet?",
+        "Revoke the request": "Kérelem visszavonása",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "A kitöltési hivatkozás azonnal működésképtelen lesz, akkor is, ha valakinél már megvan. Ha az alkalmazás erre a hitelesítő adatra vár, az integrációja leállhat.",
+        "This application asked for: {fields}": "Ez az alkalmazás ezt kérte: {fields}",
+        "Revoking…": "Visszavonás…",
+        "Expired {when}": "Lejárt {when}",
+        "Expires {when}": "Lejár {when}",
+        "No expiry": "Nincs lejárat"
     },
     "plurals": null
 }

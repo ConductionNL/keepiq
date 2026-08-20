@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Questa pagina dovra ina colliaziun segira (https://), perquai che tes valur vegn criptà en il navigatur avant ch'el vegn tramess.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Avra il medem link cun https:// al cumenzament. Sch'i na funcziunescha anc adina betg, dumonda la persuna che ha tramess el.",
         "This request could not be found.": "Questa dumonda n'è betg vegnida chattada.",
-        "Revoking…": "Vegn revocà…"
+        "Outstanding secret requests": "Dumondas da secret pendentas",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Datas d’access che questa applicaziun ha dumandà da persunas da cumplettar. In lien pendent funcziunescha per mintgin che l’ha, perquai revochescha quels che na duain betg pli esser utilisabels.",
+        "Revoke this request?": "Revocar questa dumonda?",
+        "Revoke the request": "Revocar la dumonda",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Il lien da cumplettar chala immediatamain da funcziunar, era sche insatgi l’ha gia. Sche l’applicaziun spetga questas datas d’access, po sia integraziun chalar da funcziunar.",
+        "This application asked for: {fields}": "Questa applicaziun ha dumandà: {fields}",
+        "Revoking…": "Vegn revocà…",
+        "Expired {when}": "Scadì {when}",
+        "Expires {when}": "Scada {when}",
+        "No expiry": "Nagina scadenza"
     },
     "plurals": null
 }

@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Гэтая сторінка патрабуе бяспечнага (https://) злучэння, бо ваша значэнне шыфруецца ў браўзеры перад адпраўкай.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Адкрыйце тую ж пасылку, што пачынаецца з https://. Калі ўсё роўна не працуе, спытайце таго, хто яе даслаў.",
         "This request could not be found.": "Гэты запыт не знойдзены.",
-        "Revoking…": "Адкліканне…"
+        "Outstanding secret requests": "Чаканыя запыты сакрэтаў",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Уліковыя дадзеныя, якія гэты дадатак папрасіў людзей запоўніць. Чакальная ссылка працуе для кожнага, хто яе мае, таму адклічце тыя, якія больш не павінны быць прыдатнымі.",
+        "Revoke this request?": "Адклікаць гэты запыт?",
+        "Revoke the request": "Адклікаць запыт",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Ссылка для запаўнення перастае працаваць адразу, нават калі яна ў кагосьці ўжо ёсць. Калі дадатак чакае гэтыя дадзеныя, яго інтэграцыя можа перастаць працаваць.",
+        "This application asked for: {fields}": "Гэты дадатак запытаў: {fields}",
+        "Revoking…": "Адкліканне…",
+        "Expired {when}": "Скончыўся {when}",
+        "Expires {when}": "Сканчаецца {when}",
+        "No expiry": "Без тэрміну дзеяння"
     },
     "plurals": null
 }

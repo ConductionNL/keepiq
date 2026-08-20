@@ -28,6 +28,15 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		secretRequests: [],
 		/** @type {object|null} The public payload of the request being filled. */
 		publicRequest: null,
+		/**
+		 * @type {Array<object>} One application's requests, for an administrator.
+		 *
+		 * Kept apart from `secretRequests` on purpose. That collection means "requests
+		 * I created"; this one means "requests this application created", and the two
+		 * are read under different authority. Sharing one array would make a stale
+		 * render from the wrong scope indistinguishable from a correct one.
+		 */
+		applicationRequests: [],
 		/** @type {boolean} Whether a request is in flight. */
 		loading: false,
 		/** @type {string|null} The last error message (or null). */
@@ -155,6 +164,19 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string} requestId The request ID.
 		 * @return {Promise<void>}
 		 */
+		/**
+		 * Revoke one of the CURRENT USER's own requests.
+		 *
+		 * Distinct from `revokeApplicationRequest()` below, which is admin-scoped and
+		 * carries the application in the path. Kept separate so the two authorities
+		 * never share a call site.
+		 *
+		 * @param {string} requestId The request to revoke.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-revoke-request
+		 */
 		async revokeRequest(requestId) {
 			this.loading = true
 			this.error = null
@@ -163,6 +185,80 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 					generateUrl(`/apps/doriath/api/v1/secret-requests/${requestId}`),
 				)
 				this.secretRequests = this.secretRequests.filter(
+					(r) => r.id !== requestId,
+				)
+			} catch (e) {
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to revoke request'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Every secret request one application created (administrators only).
+		 *
+		 * The scope lives in the URL, not in a flag this store or the component
+		 * decides: a non-administrator calling this receives 403 from the server.
+		 * That matters because the same list component renders both a user's own
+		 * requests and an application's — if the authority were a prop, the
+		 * component would become the place an access decision is accidentally made.
+		 *
+		 * @param {string} applicationId The application whose requests to load.
+		 *
+		 * @return {Promise<Array<object>>} The application's requests.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
+		async fetchApplicationRequests(applicationId) {
+			this.loading = true
+			this.error = null
+			try {
+				const response = await axios.get(
+					generateUrl(
+						`/apps/doriath/api/v1/applications/${applicationId}/secret-requests`,
+					),
+				)
+				this.applicationRequests = response.data || []
+				return this.applicationRequests
+			} catch (e) {
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| "Failed to load the application's requests"
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Revoke one of an application's requests (administrators only).
+		 *
+		 * The application id stays in the path so the server can enforce that the
+		 * request really is that application's, rather than trusting a request id
+		 * on its own.
+		 *
+		 * @param {string} applicationId The owning application.
+		 * @param {string} requestId The request to revoke.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 */
+		async revokeApplicationRequest(applicationId, requestId) {
+			this.loading = true
+			this.error = null
+			try {
+				await axios.delete(
+					generateUrl(
+						`/apps/doriath/api/v1/applications/${applicationId}/secret-requests/${requestId}`,
+					),
+				)
+				this.applicationRequests = this.applicationRequests.filter(
 					(r) => r.id !== requestId,
 				)
 			} catch (e) {

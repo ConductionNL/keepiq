@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Tämä sivu vaatii suojatun (https://) yhteyden, koska arvosi salataan selaimessa ennen lähettämistä.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Avaa sama linkki niin, että se alkaa https://. Jos se ei vieläkään toimi, kysy lähettäjältä.",
         "This request could not be found.": "Tätä pyyntöä ei löytynyt.",
-        "Revoking…": "Perutaan…"
+        "Outstanding secret requests": "Odottavat salaisuuspyynnöt",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Tunnistetiedot, joita tämä sovellus on pyytänyt ihmisiltä. Odottava linkki toimii kaikilla, joilla se on, joten peru ne, joita ei enää pidä voida käyttää.",
+        "Revoke this request?": "Perutaanko tämä pyyntö?",
+        "Revoke the request": "Peru pyyntö",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Täyttölinkki lakkaa toimimasta heti, vaikka joku olisi jo saanut sen. Jos sovellus odottaa näitä tunnistetietoja, sen integraatio voi lakata toimimasta.",
+        "This application asked for: {fields}": "Tämä sovellus pyysi: {fields}",
+        "Revoking…": "Perutaan…",
+        "Expired {when}": "Vanhentunut {when}",
+        "Expires {when}": "Vanhenee {when}",
+        "No expiry": "Ei vanhenemista"
     },
     "plurals": null
 }

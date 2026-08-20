@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Aquesta pàgina necessita una connexió segura (https://), perquè el teu valor es xifra al navegador abans d’enviar-se.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Obre el mateix enllaç començant per https://. Si encara no funciona, pregunta-ho a qui te l’ha enviat.",
         "This request could not be found.": "No s'ha pogut trobar aquesta sol·licitud.",
-        "Revoking…": "S’està revocant…"
+        "Outstanding secret requests": "Sol·licituds de secret pendents",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Credencials que aquesta aplicació ha demanat a persones que emplenin. Un enllaç pendent funciona per a qualsevol que el tingui, així que revoqueu els que ja no hagin de ser utilitzables.",
+        "Revoke this request?": "Voleu revocar aquesta sol·licitud?",
+        "Revoke the request": "Revoca la sol·licitud",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "L’enllaç d’emplenament deixa de funcionar immediatament, encara que algú ja el tingui. Si l’aplicació espera aquesta credencial, la seva integració pot deixar de funcionar.",
+        "This application asked for: {fields}": "Aquesta aplicació ha demanat: {fields}",
+        "Revoking…": "S’està revocant…",
+        "Expired {when}": "Caducat {when}",
+        "Expires {when}": "Caduca {when}",
+        "No expiry": "Sense caducitat"
     },
     "plurals": null
 }

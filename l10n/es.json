@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Esta página necesita una conexión segura (https://), porque tu valor se cifra en el navegador antes de enviarse.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Abre el mismo enlace empezando por https://. Si aún no funciona, pregunta a quien te lo envió.",
         "This request could not be found.": "No se ha podido encontrar esta solicitud.",
-        "Revoking…": "Revocando…"
+        "Outstanding secret requests": "Solicitudes de secreto pendientes",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Credenciales que esta aplicación ha pedido a otras personas que rellenen. Un enlace pendiente funciona para cualquiera que lo tenga, así que revoca los que ya no deban usarse.",
+        "Revoke this request?": "¿Revocar esta solicitud?",
+        "Revoke the request": "Revocar la solicitud",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "El enlace de relleno deja de funcionar de inmediato, incluso si alguien ya lo tiene. Si la aplicación espera esta credencial, su integración puede dejar de funcionar.",
+        "This application asked for: {fields}": "Esta aplicación pidió: {fields}",
+        "Revoking…": "Revocando…",
+        "Expired {when}": "Caducado {when}",
+        "Expires {when}": "Caduca {when}",
+        "No expiry": "Sin caducidad"
     },
     "plurals": null
 }

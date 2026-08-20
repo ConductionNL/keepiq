@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Ta stran potrebuje varno (https://) povezavo, ker se vaša vrednost šifrira v brskalniku pred pošiljanjem.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Odprite isto povezavo, ki se začne s https://. Če še vedno ne deluje, vprašajte pošiljatelja.",
         "This request could not be found.": "Te zahteve ni bilo mogoče najti.",
-        "Revoking…": "Preklic…"
+        "Outstanding secret requests": "Nerešene zahteve za skrivnost",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Poverilnice, za katere je ta aplikacija prosila ljudi, da jih izpolnijo. Čakajoča povezava deluje za vsakogar, ki jo ima, zato prekličite tiste, ki ne smejo biti več uporabne.",
+        "Revoke this request?": "Prekliči to zahtevo?",
+        "Revoke the request": "Prekliči zahtevo",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Povezava za izpolnjevanje takoj preneha delovati, tudi če jo ima kdo že. Če aplikacija čaka na to poverilnico, lahko njena integracija preneha delovati.",
+        "This application asked for: {fields}": "Ta aplikacija je zahtevala: {fields}",
+        "Revoking…": "Preklic…",
+        "Expired {when}": "Poteklo {when}",
+        "Expires {when}": "Poteče {when}",
+        "No expiry": "Brez poteka"
     },
     "plurals": null
 }

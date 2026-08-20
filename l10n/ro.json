@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Această pagină necesită o conexiune securizată (https://), deoarece valoarea este criptată în browser înainte de trimitere.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Deschideți același link începând cu https://. Dacă tot nu funcționează, întrebați persoana care l-a trimis.",
         "This request could not be found.": "Această cerere nu a fost găsită.",
-        "Revoking…": "Se revocă…"
+        "Outstanding secret requests": "Cereri de secret în așteptare",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Credențiale pe care această aplicație a cerut unor persoane să le completeze. Un link în așteptare funcționează pentru oricine îl are, așa că revocați-le pe cele care nu ar mai trebui să fie utilizabile.",
+        "Revoke this request?": "Revocați această cerere?",
+        "Revoke the request": "Revocați cererea",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Linkul de completare încetează imediat să funcționeze, chiar dacă cineva îl are deja. Dacă aplicația așteaptă această credențială, integrarea ei se poate opri.",
+        "This application asked for: {fields}": "Această aplicație a cerut: {fields}",
+        "Revoking…": "Se revocă…",
+        "Expired {when}": "Expirat {when}",
+        "Expires {when}": "Expiră {when}",
+        "No expiry": "Fără expirare"
     },
     "plurals": null
 }

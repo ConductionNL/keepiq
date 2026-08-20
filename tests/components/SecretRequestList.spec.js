@@ -7,11 +7,10 @@
  * @spec openspec/changes/implement-secret-requests/tasks.md#13.4
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import axios from '@nextcloud/axios'
-
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretRequestList from '../../src/components/secretRequest/SecretRequestList.vue'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -192,5 +191,149 @@ describe('SecretRequestList', () => {
 
 		// Truncated on screen; the full value reaches the clipboard only on request.
 		expect(wrapper.text()).not.toContain(full)
+	})
+
+	describe('application scope (administrator view)', () => {
+		const appRows = [
+			{
+				id: 'r-app-1',
+				status: 'pending',
+				token: 'FULLTOKEN0123456789abcdef',
+				requestedFields: ['key', 'login'],
+				createdBy: 'application:app-1',
+			},
+			{
+				id: 'r-app-2',
+				status: 'pending',
+				token: 'LAPSEDTOKEN0123456789abc',
+				requestedFields: ['key'],
+				createdBy: 'application:app-1',
+				expiresAt: '2020-01-01T00:00:00+00:00',
+			},
+		]
+
+		it('fetches from the admin endpoint, not the user one', async () => {
+			// The scope has to come from the URL. If the component fetched the user
+			// endpoint and filtered client-side, an administrator would see nothing
+			// (application rows never match a user listing) and the authority for the
+			// read would have moved into the component.
+			const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: appRows })
+			mount(SecretRequestList, { propsData: { applicationId: 'app-1' } })
+			await flush()
+
+			const urls = get.mock.calls.map((c) => c[0])
+			expect(
+				urls.some((u) => u.includes('/applications/app-1/secret-requests')),
+			).toBe(true)
+			// And NOT the user endpoint — note the admin URL also ends in
+			// '/secret-requests', so the user one has to be matched exactly.
+			expect(urls.some((u) => /\/api\/v1\/secret-requests$/.test(u))).toBe(
+				false,
+			)
+		})
+
+		it('renders the application rows', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: appRows })
+			const wrapper = mount(SecretRequestList, {
+				propsData: { applicationId: 'app-1' },
+			})
+			await flush()
+
+			expect(wrapper.text()).toContain('key')
+			expect(wrapper.findAll('li').length).toBe(2)
+		})
+
+		it('never renders a full token', async () => {
+			// A row travels into screenshots and over shoulders, and a fill token is a
+			// bearer credential: whoever reads it can submit against the request.
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: appRows })
+			const wrapper = mount(SecretRequestList, {
+				propsData: { applicationId: 'app-1' },
+			})
+			await flush()
+
+			expect(wrapper.text()).not.toContain('FULLTOKEN0123456789abcdef')
+			expect(wrapper.text()).not.toContain('LAPSEDTOKEN0123456789abc')
+			expect(wrapper.text()).toContain('FULLTOKE…')
+		})
+
+		it('lists the expiry, and reads a lapsed row as expired', async () => {
+			// The scenario requires status, requested fields AND expiry. The second
+			// row lapsed in 2020 but is still stored as `pending` — nothing sweeps
+			// within the hour — so labelling it "Pending" would show a state the
+			// access gate no longer honours, and leave the absent copy button
+			// unexplained.
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: appRows })
+			const wrapper = mount(SecretRequestList, {
+				propsData: { applicationId: 'app-1' },
+			})
+			await flush()
+
+			const rows = wrapper.findAll('li')
+			expect(rows[1].text()).toContain('Expired')
+			expect(rows[1].text()).not.toContain('Pending')
+			// A request with no expiry is a link that works forever — say so rather
+			// than leaving the cell blank.
+			expect(rows[0].text()).toContain('No expiry')
+		})
+
+		it('offers copy-link only where the link is still usable', async () => {
+			// The second row lapsed in 2020. Nothing sweeps within the hour between
+			// runs of the expiry job, so a pending row can still be past its expiry —
+			// judged on the timestamp, never on the stored status alone.
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: appRows })
+			const wrapper = mount(SecretRequestList, {
+				propsData: { applicationId: 'app-1' },
+			})
+			await flush()
+
+			const rows = wrapper.findAll('li')
+			expect(rows[0].html()).toContain('secret-request-row-copy-r-app-1')
+			expect(rows[1].html()).not.toContain('secret-request-row-copy-r-app-2')
+		})
+
+		it('asks before revoking, and revokes through the application endpoint', async () => {
+			// An admin revoke interrupts software they did not write, so it confirms
+			// first — unlike a user revoking a request they created themselves.
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: appRows })
+			const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
+			const wrapper = mount(SecretRequestList, {
+				propsData: { applicationId: 'app-1' },
+			})
+			await flush()
+
+			// One shared testid across rows, so select the first.
+			await wrapper
+				.findAll('[data-testid="secret-request-row-revoke"]')[0]
+				.trigger('click')
+			await flush()
+
+			expect(del).not.toHaveBeenCalled()
+			expect(wrapper.vm.revokeTarget).toEqual(
+				expect.objectContaining({ id: 'r-app-1' }),
+			)
+
+			await wrapper.vm.onRevokeConfirmed()
+			await flush()
+
+			expect(del).toHaveBeenCalledTimes(1)
+			expect(del.mock.calls[0][0]).toContain(
+				'/applications/app-1/secret-requests/r-app-1',
+			)
+		})
+
+		it('a user-scoped revoke still goes straight through', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({ data: [appRows[0]] })
+			const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
+			const wrapper = mount(SecretRequestList)
+			await flush()
+
+			await wrapper
+				.findAll('[data-testid="secret-request-row-revoke"]')[0]
+				.trigger('click')
+			await flush()
+
+			expect(del).toHaveBeenCalledTimes(1)
+		})
 	})
 })

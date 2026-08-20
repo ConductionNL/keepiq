@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Šiam puslapiui reikia saugaus (https://) ryšio, nes jūsų reikšmė šifruojama naršyklėje prieš išsiuntimą.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Atidarykite tą pačią nuorodą, kuri pradedama https://. Jei vis tiek neveikia, paklauskite to, kas ją atsiuntė.",
         "This request could not be found.": "Ši užklausa nerasta.",
-        "Revoking…": "Atšaukiama…"
+        "Outstanding secret requests": "Neįvykdytos slaptų duomenų užklausos",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Prisijungimo duomenys, kurių ši programa paprašė žmonių užpildyti. Laukianti nuoroda veikia visiems, kas ją turi, todėl atšaukite tas, kurios nebeturi būti naudojamos.",
+        "Revoke this request?": "Atšaukti šią užklausą?",
+        "Revoke the request": "Atšaukti užklausą",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Užpildymo nuoroda nustoja veikti nedelsiant, net jei kas nors ją jau turi. Jei programa laukia šių duomenų, jos integracija gali nustoti veikti.",
+        "This application asked for: {fields}": "Ši programa paprašė: {fields}",
+        "Revoking…": "Atšaukiama…",
+        "Expired {when}": "Baigėsi {when}",
+        "Expires {when}": "Baigiasi {when}",
+        "No expiry": "Be galiojimo pabaigos"
     },
     "plurals": null
 }

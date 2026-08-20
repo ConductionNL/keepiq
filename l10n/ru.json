@@ -408,7 +408,16 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Эта страница требует защищённого (https://) соединения, потому что ваше значение шифруется в браузере перед отправкой.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Откройте ту же ссылку, начинающуюся с https://. Если всё равно не работает, спросите отправителя.",
         "This request could not be found.": "Этот запрос не найден.",
-        "Revoking…": "Отзыв…"
+        "Outstanding secret requests": "Ожидающие запросы секретов",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Учётные данные, которые это приложение попросило заполнить. Ожидающая ссылка работает для любого, у кого она есть, поэтому отзовите те, которые больше не должны быть пригодны.",
+        "Revoke this request?": "Отозвать этот запрос?",
+        "Revoke the request": "Отозвать запрос",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Ссылка для заполнения перестаёт работать сразу, даже если она у кого-то уже есть. Если приложение ждёт эти учётные данные, его интеграция может перестать работать.",
+        "This application asked for: {fields}": "Это приложение запросило: {fields}",
+        "Revoking…": "Отзыв…",
+        "Expired {when}": "Истёк {when}",
+        "Expires {when}": "Истекает {when}",
+        "No expiry": "Без срока действия"
     },
     "plurals": null
 }
