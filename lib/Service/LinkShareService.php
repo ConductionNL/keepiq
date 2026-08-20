@@ -159,7 +159,9 @@ class LinkShareService {
 		$this->auditTrail->recordCreated(
 			userId: $userId,
 			linkShareId: $linkShare->getId(),
-			hasPassword: ($salt !== ''),
+			// Always true here: the guard above throws when $salt === '', so a
+			// link share cannot reach this point without one.
+			hasPassword: true,
 			expiresAtIso: $expiresAtIso,
 		);
 
