@@ -241,6 +241,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'application#approve', 'url' => '/api/v1/applications/{id}/approve',     'verb' => 'POST'],
     ['name' => 'application#reject',  'url' => '/api/v1/applications/{id}/reject',      'verb' => 'POST'],
     ['name' => 'application#certificate', 'url' => '/api/v1/applications/{id}/certificate', 'verb' => 'GET'],
+
+    // An administrator's view of what an application is asking humans for
+    // (admin-application-request-visibility). Admin-scoped, NOT registrar-scoped,
+    // and distinct from /api/v1/app/secret-requests, which is the application's
+    // own Bearer-authenticated surface over its own vault.
+    ['name' => 'applicationRequestAdmin#index',   'url' => '/api/v1/applications/{id}/secret-requests', 'verb' => 'GET'],
+    ['name' => 'applicationRequestAdmin#destroy', 'url' => '/api/v1/applications/{id}/secret-requests/{requestId}', 'verb' => 'DELETE'],
+
     ['name' => 'application#show',    'url' => '/api/v1/applications/{id}',              'verb' => 'GET'],
     ['name' => 'application#destroy', 'url' => '/api/v1/applications/{id}',              'verb' => 'DELETE'],
 

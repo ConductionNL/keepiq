@@ -69,6 +69,35 @@ class SecretRequest extends Entity implements JsonSerializable {
 	public const STATUS_EXPIRED = 'expired';
 
 	/**
+	 * Prefix marking `created_by` as an application rather than a Nextcloud user.
+	 *
+	 * A user id can never equal this form, which is what keeps the two kinds of
+	 * requester from colliding in one column — and also why no human listing could
+	 * ever match an application's rows.
+	 *
+	 * @var string
+	 */
+	public const ACTOR_APPLICATION_PREFIX = 'application:';
+
+	/**
+	 * The `created_by` value identifying an application as the requester.
+	 *
+	 * A method rather than string concatenation at each call site: the literal was
+	 * already written twice in ApplicationSecretRequestService, and this change
+	 * needed a third for the admin listing. Three hand-built copies of the value a
+	 * scoping query matches on is how one of them eventually differs.
+	 *
+	 * @param string $applicationId The application's id
+	 *
+	 * @return string The composed actor string
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public static function actorForApplication(string $applicationId): string {
+		return self::ACTOR_APPLICATION_PREFIX . $applicationId;
+	}//end actorForApplication()
+
+	/**
 	 * The unfilled (or to-be-overwritten) Secret ID.
 	 *
 	 * @var string
@@ -183,6 +212,45 @@ class SecretRequest extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'fulfilledAt', type: 'datetime');
 	}//end __construct()
+
+	/**
+	 * Record an application as this request's creator.
+	 *
+	 * An instance method so no caller composes the actor string itself. Production
+	 * code reaches the value only through this setter and
+	 * `belongsToApplication()`, both of which go through
+	 * `actorForApplication()` — one composition point, and no cross-class static
+	 * access for phpmd to object to.
+	 *
+	 * @param string $applicationId The creating application
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function setCreatedByApplication(string $applicationId): void {
+		$this->setCreatedBy(self::actorForApplication(applicationId: $applicationId));
+	}//end setCreatedByApplication()
+
+	/**
+	 * Whether this request was created by the given application.
+	 *
+	 * An instance method so callers compare through the entity that owns the
+	 * column, rather than each composing the actor string themselves.
+	 *
+	 * @param string $applicationId The application to test against
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function belongsToApplication(string $applicationId): bool {
+		if ($applicationId === '') {
+			return false;
+		}
+
+		return $this->createdBy === self::actorForApplication(applicationId: $applicationId);
+	}//end belongsToApplication()
 
 	/**
 	 * Check whether the request is currently expired.

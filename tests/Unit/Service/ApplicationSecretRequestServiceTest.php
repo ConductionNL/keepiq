@@ -260,21 +260,28 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 	 * Fulfilled rows are excluded, and one application cannot enumerate
 	 * another's because the prefix is a value only this service writes.
 	 *
+	 * Goes through the mapper's `findByApplication()` since the admin listing was
+	 * added: the `application:` literal used to be hand-built at three call sites,
+	 * and three copies of the value a scoping query matches on is how one of them
+	 * eventually differs. The composed string is asserted separately in
+	 * SecretRequestServiceTest::testTheApplicationActorStringCannotCollideWithAUid,
+	 * so the prefix is still pinned — just in one place instead of each caller.
+	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
 	 */
 	public function testListPendingForApplicationVaultScopesAndFilters(): void {
 		$pending = $this->buildPending();
-		$pending->setCreatedBy('application:app-1');
+		$pending->setCreatedBy(SecretRequest::actorForApplication('app-1'));
 
 		$fulfilled = $this->buildPending();
-		$fulfilled->setCreatedBy('application:app-1');
+		$fulfilled->setCreatedBy(SecretRequest::actorForApplication('app-1'));
 		$fulfilled->setStatus(SecretRequest::STATUS_FULFILLED);
 
 		$this->mapper->expects($this->once())
-			->method('findByCreatedBy')
-			->with('application:app-1')
+			->method('findByApplication')
+			->with('app-1')
 			->willReturn([$pending, $fulfilled]);
 
 		$rows = $this->makeService()->listPendingForApplicationVault(applicationId: 'app-1');

@@ -25,6 +25,10 @@
 
 import { test, expect } from '@playwright/test'
 import { BASE_URL } from '../base-url'
+// The lock screen hides `.app-navigation` (exclusive-surface contract), so the
+// user-settings entry is only reachable from an unlocked vault — these two
+// tests borrow the workflow layer's dev-password unlock like navigation.spec.
+import { unlockVault } from '../workflows/_workflow-helpers'
 
 // ---------------------------------------------------------------------------
 // Encryption Suites — weak-password rejection in first-time setup
@@ -203,12 +207,9 @@ test.describe('User Settings — spec: user-settings/spec.md', () => {
 	}) => {
 		// @e2e user-settings::user-opens-settings
 
-		await page.goto('/index.php/apps/doriath/lock', {
-			waitUntil: 'domcontentloaded',
-		})
-		await expect(
-			page.locator('h1.lock-screen__title, .lock-screen h1').first(),
-		).toBeVisible({ timeout: 15_000 })
+		// The nav (and with it this entry) is hidden on the lock screen, so the
+		// affordance is asserted where it exists: the unlocked shell.
+		await unlockVault(page)
 		await expect(page.locator('.app-navigation').first()).toBeVisible({
 			timeout: 15_000,
 		})
@@ -254,12 +255,8 @@ test.describe('User Settings — spec: user-settings/spec.md', () => {
 	test('user-settings dialog has a manifest opener in the settings foldout', async ({
 		page,
 	}) => {
-		await page.goto('/index.php/apps/doriath/lock', {
-			waitUntil: 'domcontentloaded',
-		})
-		await expect(
-			page.locator('h1.lock-screen__title, .lock-screen h1').first(),
-		).toBeVisible({ timeout: 15_000 })
+		// Same unlock rationale as above: the nav no longer exists while locked.
+		await unlockVault(page)
 
 		const nav = page.locator('.app-navigation').first()
 		await expect(nav).toBeVisible({ timeout: 15_000 })

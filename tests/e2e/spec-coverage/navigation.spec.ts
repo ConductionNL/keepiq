@@ -18,6 +18,12 @@ import {
 	collectDoriathErrors,
 	assertNoDoriathErrors,
 } from './_helpers'
+// The lock screen is now an EXCLUSIVE surface: App.vue hides `.app-navigation`
+// on the Lock route, so nav coverage requires an unlocked vault. This borrows
+// the workflow layer's unlock (dev master password, debug instances only) —
+// the one deliberate exception to this suite's no-unlock rule, because the
+// asserted surface no longer exists while locked.
+import { unlockVault } from '../workflows/_workflow-helpers'
 
 // The app's left navigation is the `.app-navigation` container. We scope ALL
 // nav queries to it (never the global NC header / apps menu) and additionally
@@ -41,10 +47,26 @@ async function expandSettingsFoldout(page: import('@playwright/test').Page) {
 }
 
 test.describe('App navigation — manifest menu', () => {
-	test('left navigation renders the manifest menu entries', async ({ page }) => {
+	test('the app navigation is hidden on the lock screen', async ({ page }) => {
+		// The unlock/setup prompt is the ONLY interactive surface while locked:
+		// App.vue's `doriath-shell--locked` modifier hides `.app-navigation`
+		// (and its floating toggle) on the Lock route. This is the inverse of
+		// what this spec used to assert — the old behaviour (a fully clickable
+		// sidebar beside the lock prompt) was the bug.
 		const errors = collectDoriathErrors(page)
 		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
+
+		await expect(appNav(page)).toBeHidden()
+
+		assertNoDoriathErrors(errors)
+	})
+
+	test('left navigation renders the manifest menu entries once unlocked', async ({
+		page,
+	}) => {
+		const errors = collectDoriathErrors(page)
+		await unlockVault(page)
 
 		const nav = appNav(page)
 		await expect(nav).toBeVisible({ timeout: 15_000 })
@@ -66,15 +88,15 @@ test.describe('App navigation — manifest menu', () => {
 		assertNoDoriathErrors(errors)
 	})
 
-	test('clicking the Lock vault nav entry keeps the locked user on the lock gate', async ({
+	test('clicking the Lock vault nav entry locks the vault and hides the nav', async ({
 		page,
 	}) => {
-		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
-		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
+		await unlockVault(page)
 
-		// "Lock vault" is a doriath-owned route (/apps/doriath/lock) in the
-		// settings foldout — expand it, then clicking the entry is a safe in-app
-		// navigation that stays on the lock gate.
+		// "Lock vault" is a doriath-owned route (/apps/doriath/#/lock) in the
+		// settings foldout — expand it and click the entry. App.vue's $route
+		// watcher calls session.lock() on entering /lock while unlocked, so
+		// this drives the real re-lock flow end to end.
 		await expandSettingsFoldout(page)
 		const lockEntry = appNav(page).locator('a[href$="#/lock"]').first()
 		await expect(lockEntry).toBeVisible()
@@ -84,5 +106,8 @@ test.describe('App navigation — manifest menu', () => {
 		// Hash-mode router: the lock route is `#/lock` (the path may retain the
 		// `/lock` prefix from the initial load, so assert the hash, not the path).
 		await expect(page).toHaveURL(/#\/lock$/)
+		// Back on the lock gate the nav disappears again — the exclusive-surface
+		// contract, asserted on the transition and not only on a cold load.
+		await expect(appNav(page)).toBeHidden()
 	})
 })

@@ -43,6 +43,30 @@ use OCP\IDBConnection;
  */
 class SecretRequestMapper extends QBMapper {
 	/**
+	 * Every request an application created, whatever its status.
+	 *
+	 * Deliberately not filtered to pending. An administrator auditing an
+	 * application needs the fulfilled and revoked ones too — "what has this thing
+	 * been asking people for" is the question, and a list of only what is
+	 * outstanding answers a narrower one.
+	 *
+	 * Scoping is structural: `created_by` is set by the service, never by a request
+	 * body, and no Nextcloud user id can take the `application:` form. So this
+	 * cannot be steered into returning another actor's rows.
+	 *
+	 * @param string $applicationId The application whose requests to return
+	 *
+	 * @return array<int,SecretRequest> Every request that application created
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function findByApplication(string $applicationId): array {
+		return $this->findByCreatedBy(
+			userId: SecretRequest::ACTOR_APPLICATION_PREFIX . $applicationId
+		);
+	}//end findByApplication()
+
+	/**
 	 * Constructor for SecretRequestMapper.
 	 *
 	 * @param IDBConnection $db The database connection
@@ -108,6 +132,48 @@ class SecretRequestMapper extends QBMapper {
 	}//end findBySecretId()
 
 	/**
+	 * Move a request out of `pending` only if it is still pending.
+	 *
+	 * A conditional write, because reading a status and then writing is a race the
+	 * callers cannot win any other way. `QBMapper::update()` issues
+	 * `UPDATE ... WHERE id = ?` with no status guard, so a caller that checked
+	 * `pending` on an entity loaded earlier will happily overwrite whatever the row
+	 * says now. The expiry job holds up to 500 entities across a batch, and an
+	 * administrator revoking has a person-sized gap between reading and writing —
+	 * in both cases a recipient can fill the request in between, and the stale write
+	 * turns `fulfilled` into `expired` or `declined`.
+	 *
+	 * The submitted values survive that (the fill persists them BEFORE flipping the
+	 * status), which makes it worse rather than better: the row ends up terminal with
+	 * `fulfilled_at` still set, telling the requester their request lapsed while the
+	 * credential sits in their vault.
+	 *
+	 * Reported by review on PR #282 and #286.
+	 *
+	 * @param string $requestId The request to transition
+	 * @param string $toStatus The terminal status to move it to
+	 *
+	 * @return bool True when this call performed the transition; false when the row
+	 *              was no longer pending, and the caller must do nothing further.
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	public function transitionIfPending(string $requestId, string $toStatus): bool {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('status', $qb->createNamedParameter($toStatus))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($requestId)))
+			->andWhere(
+				$qb->expr()->eq(
+					'status',
+					$qb->createNamedParameter(SecretRequest::STATUS_PENDING)
+				)
+			);
+
+		return $qb->executeStatement() > 0;
+	}//end transitionIfPending()
+
+	/**
 	 * Find all secret requests created by a given user.
 	 *
 	 * @param string $userId The Nextcloud user ID
@@ -137,7 +203,7 @@ class SecretRequestMapper extends QBMapper {
 	 *
 	 * @return SecretRequest[]
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function findLapsedPending(DateTime $now, int $limit = 500): array {
 		$qb = $this->db->getQueryBuilder();

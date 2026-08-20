@@ -97,7 +97,7 @@ class ExpireSecretRequestsJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
 	 *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
 	 *
-	 * @spec openspec/changes/secret-request-expiry-lifecycle/specs/secret-requests/spec.md#requirement-optional-expiry
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	protected function run($argument): void {
 		try {

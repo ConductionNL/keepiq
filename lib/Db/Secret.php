@@ -269,6 +269,32 @@ class Secret extends Entity implements JsonSerializable {
 	}//end __construct()
 
 	/**
+	 * Whether this Secret holds no value in any of its value columns.
+	 *
+	 * Lives on the entity because it is a fact about the row, and because two
+	 * services now need the same answer: a user revoking their own request and an
+	 * administrator revoking an application's. A copy in each would be two
+	 * predicates answering one question — which is exactly how the revoke path came
+	 * to hard-delete filled secrets, when it tested `key` alone while a Secret could
+	 * hold a login, a custom-field blob or a url with no key set.
+	 *
+	 * Deliberately wider than SecretService's snapshot test: being too eager there
+	 * writes a junk version row, while being too eager in a caller of THIS destroys
+	 * a credential and its history. The costs are not symmetric, so this one errs
+	 * toward reporting that a value is present.
+	 *
+	 * @return bool True when every value column is empty
+	 *
+	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 */
+	public function holdsNoValues(): bool {
+		return (string)$this->key === ''
+			&& (string)$this->login === ''
+			&& (string)$this->additionalFields === ''
+			&& (string)$this->url === '';
+	}//end holdsNoValues()
+
+	/**
 	 * Serialize the entity to an array for the API, including encrypted blobs.
 	 *
 	 * @return array<string,mixed>
