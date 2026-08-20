@@ -38,7 +38,9 @@ describe('secret store — additional fields', () => {
 	})
 
 	it('encrypts the members as ONE blob on create', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 's1' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 's1' } })
 
 		await useSecretStore().createSecret({
 			name: 'Supplier API',
@@ -47,11 +49,15 @@ describe('secret store — additional fields', () => {
 		})
 
 		const body = post.mock.calls[0][1]
-		expect(body.additionalFields).toBe('ENC({"client-id":"abc","tenant":"acme"})')
+		expect(body.additionalFields).toBe(
+			'ENC({"client-id":"abc","tenant":"acme"})',
+		)
 	})
 
 	it('puts the members ONLY inside the blob, nowhere else in the body', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 's1' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 's1' } })
 
 		await useSecretStore().createSecret({
 			name: 'Supplier API',

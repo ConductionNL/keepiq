@@ -30,7 +30,8 @@ const stubs = {
 	},
 	NcButton: {
 		props: ['disabled', 'variant', 'ariaLabel', 'title'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcSelect: {
 		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'],
@@ -82,7 +83,9 @@ describe('SecretCreateDialog — additional fields', () => {
 	it('offers the editor', async () => {
 		const wrapper = await mountDialog()
 
-		expect(wrapper.find('[data-testid="additional-fields-editor"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="additional-fields-editor"]').exists(),
+		).toBe(true)
 	})
 
 	it('sends the members the user added, as one object', async () => {
@@ -175,7 +178,9 @@ describe('SecretCreateDialog — additional fields', () => {
 
 	it('defaults the folder to the one being viewed, and persists it', async () => {
 		const store = useSecretStore()
-		const create = vi.spyOn(store, 'createSecret').mockResolvedValue({ id: 's1' })
+		const create = vi
+			.spyOn(store, 'createSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		const wrapper = mount(SecretCreateDialog, {
 			propsData: { folderId: 'folder-42' },

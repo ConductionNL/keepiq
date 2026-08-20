@@ -22,7 +22,10 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { rsaDecrypt, rsaEncrypt } from '../../src/crypto/rsa.js'
-import { membersToObject, objectToMembers } from '../../src/utils/additionalFields.js'
+import {
+	membersToObject,
+	objectToMembers,
+} from '../../src/utils/additionalFields.js'
 import { sharedKeyPair } from './fixtures/rsa-fixtures.js'
 
 /** @type {object} A real RSA-4096 pair. */
@@ -46,14 +49,18 @@ describe('additional fields under real encryption', () => {
 			JSON.stringify(membersToObject(members)),
 			pair.publicKey,
 		)
-		const opened = objectToMembers(JSON.parse(await rsaDecrypt(sealed, pair.privateKey)))
+		const opened = objectToMembers(
+			JSON.parse(await rsaDecrypt(sealed, pair.privateKey)),
+		)
 
 		expect(opened).toEqual(members)
 	})
 
 	it('leaks neither member names nor values into the ciphertext', async () => {
 		const sealed = await rsaEncrypt(
-			JSON.stringify(membersToObject([{ name: 'recovery-codes', value: 'a1b2c3' }])),
+			JSON.stringify(
+				membersToObject([{ name: 'recovery-codes', value: 'a1b2c3' }]),
+			),
 			pair.publicKey,
 		)
 
@@ -65,10 +72,15 @@ describe('additional fields under real encryption', () => {
 		// Removing the last member sends `{}`. It must be sealed like any other blob
 		// — an empty value stored in the clear would say "this secret has no
 		// additional fields" to anyone reading the database.
-		const sealed = await rsaEncrypt(JSON.stringify(membersToObject([])), pair.publicKey)
+		const sealed = await rsaEncrypt(
+			JSON.stringify(membersToObject([])),
+			pair.publicKey,
+		)
 
 		expect(sealed).not.toBe('{}')
 		expect(sealed.length).toBeGreaterThan(0)
-		expect(objectToMembers(JSON.parse(await rsaDecrypt(sealed, pair.privateKey)))).toEqual([])
+		expect(
+			objectToMembers(JSON.parse(await rsaDecrypt(sealed, pair.privateKey))),
+		).toEqual([])
 	})
 })

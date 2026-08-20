@@ -30,7 +30,8 @@ const stubs = {
 	},
 	NcButton: {
 		props: ['disabled', 'variant', 'ariaLabel', 'title'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcSelect: {
 		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'],
@@ -106,21 +107,25 @@ describe('SecretEditDialog — additional fields', () => {
 			{ name: 'client-id', value: 'acme-4711' },
 			{ name: 'tenant', value: 'acme' },
 		])
-		expect(wrapper.find('[data-testid="additional-field-name-0"]').element.value).toBe(
-			'client-id',
-		)
+		expect(
+			wrapper.find('[data-testid="additional-field-name-0"]').element.value,
+		).toBe('client-id')
 	})
 
 	it('shows no members for a secret that has none', async () => {
 		const wrapper = await mountOver(null)
 
 		expect(wrapper.vm.additionalFields).toEqual([])
-		expect(wrapper.find('[data-testid="additional-fields-empty"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="additional-fields-empty"]').exists(),
+		).toBe(true)
 	})
 
 	it('sends the whole blob when one member is renamed', async () => {
 		const wrapper = await mountOver({ old: 'keepme', tenant: 'acme' })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.additionalFields = [
 			{ name: 'new', value: 'keepme' },
@@ -137,7 +142,9 @@ describe('SecretEditDialog — additional fields', () => {
 
 	it('sends the blob when a value changes or a member is added', async () => {
 		const wrapper = await mountOver({ tenant: 'acme' })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.additionalFields = [
 			{ name: 'tenant', value: 'globex' },
@@ -155,7 +162,9 @@ describe('SecretEditDialog — additional fields', () => {
 		// Not null, and not omitted: either would be read as "leave the stored blob
 		// alone", so the member the user just deleted would survive the save.
 		const wrapper = await mountOver({ tenant: 'acme' })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.additionalFields = []
 		await wrapper.vm.submit()
@@ -168,7 +177,9 @@ describe('SecretEditDialog — additional fields', () => {
 		// because it is pointless work and because rewriting is what loses a
 		// concurrent session's additions.
 		const wrapper = await mountOver({ tenant: 'acme' })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.name = 'Renamed only'
 		await wrapper.vm.submit()
@@ -185,7 +196,9 @@ describe('SecretEditDialog — additional fields', () => {
 		// blob for nothing — and rewriting the blob is exactly what loses a
 		// concurrent session's additions.
 		const wrapper = await mountOver({ tenant: 'acme' })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.name = 'Renamed'
 		await wrapper.vm.submit()

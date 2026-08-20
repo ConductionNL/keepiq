@@ -27,7 +27,8 @@ const stubs = {
 	},
 	NcButton: {
 		props: ['disabled', 'ariaLabel', 'variant'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 }
 
@@ -41,7 +42,9 @@ describe('AdditionalFieldsEditor', () => {
 	it('says there are none rather than showing an empty list', () => {
 		const wrapper = mountEditor([])
 
-		expect(wrapper.find('[data-testid="additional-fields-empty"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="additional-fields-empty"]').exists(),
+		).toBe(true)
 	})
 
 	it('renders one row per member, with name and value', () => {
@@ -50,8 +53,12 @@ describe('AdditionalFieldsEditor', () => {
 			{ name: 'tenant', value: 'acme' },
 		])
 
-		expect(wrapper.find('[data-testid="additional-field-row-0"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="additional-field-row-1"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="additional-field-row-0"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="additional-field-row-1"]').exists()).toBe(
+			true,
+		)
 		expect(
 			wrapper.find('[data-testid="additional-field-name-0"]').element.value,
 		).toBe('client-id')
@@ -80,7 +87,9 @@ describe('AdditionalFieldsEditor', () => {
 		// second field with that label while the value is misrouted or shadowed.
 		const wrapper = mountEditor([])
 
-		await wrapper.find('[data-testid="additional-field-new-name"]').setValue('key')
+		await wrapper
+			.find('[data-testid="additional-field-new-name"]')
+			.setValue('key')
 		await wrapper.find('[data-testid="additional-field-add"]').trigger('click')
 
 		const error = wrapper.find('[data-testid="additional-field-error"]')
@@ -92,13 +101,21 @@ describe('AdditionalFieldsEditor', () => {
 	it('refuses a duplicate and a blank, and emits nothing', async () => {
 		const wrapper = mountEditor([{ name: 'tenant', value: 'acme' }])
 
-		await wrapper.find('[data-testid="additional-field-new-name"]').setValue('tenant')
+		await wrapper
+			.find('[data-testid="additional-field-new-name"]')
+			.setValue('tenant')
 		await wrapper.find('[data-testid="additional-field-add"]').trigger('click')
-		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(
+			true,
+		)
 
-		await wrapper.find('[data-testid="additional-field-new-name"]').setValue('   ')
+		await wrapper
+			.find('[data-testid="additional-field-new-name"]')
+			.setValue('   ')
 		await wrapper.find('[data-testid="additional-field-add"]').trigger('click')
-		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(
+			true,
+		)
 
 		expect(wrapper.emitted('update:members')).toBeUndefined()
 	})
@@ -127,10 +144,14 @@ describe('AdditionalFieldsEditor', () => {
 		])
 
 		await wrapper.find('[data-testid="additional-field-name-0"]').setValue('url')
-		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(
+			true,
+		)
 
 		await wrapper.find('[data-testid="additional-field-name-0"]').setValue('b')
-		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('does not flag a member for colliding with ITSELF', async () => {
@@ -140,13 +161,17 @@ describe('AdditionalFieldsEditor', () => {
 
 		await wrapper.find('[data-testid="additional-field-name-0"]').setValue('a')
 
-		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('changes a value without touching the name', async () => {
 		const wrapper = mountEditor([{ name: 'client-id', value: 'old' }])
 
-		await wrapper.find('[data-testid="additional-field-value-0"]').setValue('new')
+		await wrapper
+			.find('[data-testid="additional-field-value-0"]')
+			.setValue('new')
 
 		expect(wrapper.emitted('update:members')[0][0]).toEqual([
 			{ name: 'client-id', value: 'new' },
@@ -156,7 +181,9 @@ describe('AdditionalFieldsEditor', () => {
 	it('removes a member and can empty the list entirely', async () => {
 		const wrapper = mountEditor([{ name: 'only', value: '1' }])
 
-		await wrapper.find('[data-testid="additional-field-remove-0"]').trigger('click')
+		await wrapper
+			.find('[data-testid="additional-field-remove-0"]')
+			.trigger('click')
 
 		// An EMPTY list, which the caller turns into an empty blob rather than null.
 		expect(wrapper.emitted('update:members')[0][0]).toEqual([])
@@ -177,7 +204,8 @@ describe('AdditionalFieldsEditor', () => {
 			locked.find('[data-testid="additional-field-name-0"]').element.disabled,
 		).toBe(true)
 		expect(
-			locked.find('[data-testid="additional-field-new-name"]').element.disabled,
+			locked.find('[data-testid="additional-field-new-name"]').element
+				.disabled,
 		).toBe(true)
 	})
 })
