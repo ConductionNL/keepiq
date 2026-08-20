@@ -35,14 +35,9 @@ declare(strict_types=1);
 namespace OCA\Doriath\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * What an application is asking humans for, and how an administrator ends it.
@@ -52,10 +47,9 @@ class ApplicationRequestAdminService {
 	 * Constructor for ApplicationRequestAdminService.
 	 *
 	 * @param SecretRequestMapper $mapper Reads the request rows
-	 * @param SecretMapper $secretMapper Reads the Secret a request writes to
 	 * @param SecretRequestOutbox $outbox The audit + notification outbox
 	 * @param LoggerInterface $logger The logger
-	 * @param ContainerInterface $container Resolves SecretService lazily
+	 * @param SecretPlaceholderCleaner $placeholderCleaner Removes an unfilled placeholder
 	 *
 	 * @return void
 	 *
@@ -63,10 +57,9 @@ class ApplicationRequestAdminService {
 	 */
 	public function __construct(
 		private SecretRequestMapper $mapper,
-		private SecretMapper $secretMapper,
 		private SecretRequestOutbox $outbox,
 		private LoggerInterface $logger,
-		private ContainerInterface $container,
+		private SecretPlaceholderCleaner $placeholderCleaner,
 	) {
 	}//end __construct()
 
@@ -162,8 +155,25 @@ class ApplicationRequestAdminService {
 			throw new InvalidArgumentException(message: 'Request is not pending', code: 400);
 		}
 
+		// Conditional transition, not read-then-write. The check above races the
+		// recipient: `QBMapper::update()` issues `WHERE id = ?` with no status guard,
+		// so a fill landing between the two would have `fulfilled` overwritten with
+		// `declined` — and the audit event would then record a revoke of a request
+		// that had in fact been answered. Raised in review on PR #286.
+		$transitioned = $this->mapper->transitionIfPending(
+			requestId: $requestId,
+			toStatus: SecretRequest::STATUS_DECLINED
+		);
+
+		if ($transitioned === false) {
+			// It stopped being pending while we were deciding. Same refusal as the
+			// check above, because it is the same situation — only observed later. No
+			// cleanup and no audit event: nothing happened.
+			throw new InvalidArgumentException(message: 'Request is not pending', code: 400);
+		}
+
 		$entity->setStatus(SecretRequest::STATUS_DECLINED);
-		$updated = $this->mapper->update($entity);
+		$updated = $entity;
 
 		$this->logger->info(
 			'Doriath: administrator ' . $adminUserId . ' revoked application request ' . $requestId,
@@ -173,62 +183,15 @@ class ApplicationRequestAdminService {
 		// After the status flip, deliberately: if the cleanup fails the request is
 		// already revoked and the worst case is an orphan empty Secret. The other
 		// order risks deleting a Secret while its request stays pending.
-		$this->deletePlaceholderIfUnfilled(request: $updated, applicationId: $applicationId);
+		$this->placeholderCleaner->removeIfUnfilled(
+			request: $updated,
+			expectedOwnerType: 'application',
+			expectedOwnerId: $applicationId
+		);
 
 		$this->outbox->recordRevoked(userId: $adminUserId, requestId: $requestId);
 
 		return $updated;
 	}//end revokeForApplication()
 
-	/**
-	 * Delete an application-owned placeholder that never held a value.
-	 *
-	 * Uses `Secret::holdsNoValues()` rather than its own test, sharing the
-	 * predicate with the user-scoped revoke: the cost of being too eager is
-	 * identical here, a hard delete taking a credential and its version history
-	 * with it.
-	 *
-	 * Ownership is re-checked against the Secret, not inferred from the request:
-	 * two checks against different data, so a mismatched pair cannot destroy a
-	 * third party's Secret.
-	 *
-	 * Fail-soft, because an orphan empty Secret is untidy while a revoke the
-	 * administrator believes failed sends them back to retry against a circulating
-	 * link that is in fact already dead.
-	 *
-	 * @param SecretRequest $request The revoked request
-	 * @param string $applicationId The owning application
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
-	 */
-	private function deletePlaceholderIfUnfilled(SecretRequest $request, string $applicationId): void {
-		try {
-			$secret = $this->secretMapper->findById($request->getSecretId());
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
-			return;
-		}
-
-		if ($secret->holdsNoValues() === false) {
-			return;
-		}
-
-		if ($secret->getOwnerType() !== 'application' || $secret->getOwnerId() !== $applicationId) {
-			return;
-		}
-
-		try {
-			$this->container->get(SecretService::class)->deleteByApplication(
-				secretId: $secret->getId(),
-				applicationId: $applicationId
-			);
-		} catch (Throwable $exception) {
-			$this->logger->error(
-				'Doriath: could not delete the application placeholder for revoked request '
-				. $request->getId() . ': ' . $exception->getMessage(),
-				['exception' => $exception]
-			);
-		}
-	}//end deletePlaceholderIfUnfilled()
 }//end class

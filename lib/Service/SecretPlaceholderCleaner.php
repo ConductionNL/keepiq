@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Doriath\Service;
 
+use InvalidArgumentException;
 use OCA\Doriath\Db\Secret;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
@@ -67,18 +68,25 @@ class SecretPlaceholderCleaner {
 	/**
 	 * Remove the request's placeholder Secret, if it never held a value.
 	 *
-	 * One method for both actors, because the lookup, the emptiness test and the
-	 * fail-soft logging are identical. What genuinely differs is the AUTHORIZATION,
-	 * and that is the parameter:
+	 * One method for all three actors, because the lookup, the emptiness test and
+	 * the fail-soft logging are identical. What genuinely differs is the
+	 * AUTHORIZATION, and that is what the parameters carry — the caller states which
+	 * vault it is entitled to delete from, and a Secret owned by anyone else is left
+	 * alone:
 	 *
-	 * - `$actingUserId` given — a user revoking their own request. The Secret must be
-	 *   theirs: user-owned, and owned by them. That is an authorization boundary, not
-	 *   a tidiness check, and it must not be relaxed.
-	 * - `$actingUserId` null — the system expiring a lapsed request. There is no
-	 *   acting user to match against, so the owner is taken from the SECRET and the
-	 *   matching vault's delete path is used.
+	 * - `'user'` + a uid — a user revoking their own request.
+	 * - `'application'` + an application id — an administrator revoking on behalf of
+	 *   that application.
+	 * - both null — the system expiring a lapsed request. There is no acting party to
+	 *   match against, so the owner is taken from the SECRET and that vault's delete
+	 *   path is used.
 	 *
-	 * The second case is what the previous code got wrong: expiry was routed through
+	 * Stating the expectation rather than inferring it is the point. The ownership
+	 * check runs against the SECRET while the expectation comes from the CALLER, so
+	 * a mismatched pair cannot destroy a third party's Secret — two checks against
+	 * different data.
+	 *
+	 * The null case is what the previous code got wrong: expiry was routed through
 	 * the user branch with the request's `created_by` passed as the owner. For an
 	 * application request that value is `application:<id>`, never a user id, and the
 	 * branch also required `owner_type === 'user'` — so it failed twice over and
@@ -90,13 +98,26 @@ class SecretPlaceholderCleaner {
 	 * expiry sweep.
 	 *
 	 * @param SecretRequest $request The request whose placeholder may go
-	 * @param string|null $actingUserId The revoking user, or null when the system acted
+	 * @param string|null $expectedOwnerType 'user', 'application', or null for the system
+	 * @param string|null $expectedOwnerId The owner the caller may delete from, or null
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
-	public function removeIfUnfilled(SecretRequest $request, ?string $actingUserId): void {
+	public function removeIfUnfilled(
+		SecretRequest $request,
+		?string $expectedOwnerType,
+		?string $expectedOwnerId,
+	): void {
+		// Both or neither. A half-stated expectation would silently widen into the
+		// system case and delete outside the caller's vault.
+		if (($expectedOwnerType === null) !== ($expectedOwnerId === null)) {
+			throw new InvalidArgumentException(
+				'An owner expectation needs both a type and an id, or neither'
+			);
+		}
+
 		try {
 			$secret = $this->secretMapper->findById($request->getSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
@@ -121,10 +142,10 @@ class SecretPlaceholderCleaner {
 			return;
 		}
 
-		if ($actingUserId !== null
-			&& ($secret->getOwnerType() !== 'user' || $ownerId !== $actingUserId)
+		if ($expectedOwnerType !== null
+			&& ($secret->getOwnerType() !== $expectedOwnerType || $ownerId !== $expectedOwnerId)
 		) {
-			// A user may only remove a placeholder in their own vault.
+			// The Secret belongs to a vault this caller has no claim on.
 			return;
 		}
 

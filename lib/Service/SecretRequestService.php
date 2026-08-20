@@ -634,7 +634,7 @@ class SecretRequestService {
 		// After the status flip on purpose: if this cleanup fails, the request is
 		// already revoked and the worst case is an orphan empty Secret. The other
 		// order risks deleting a Secret while its request stays pending.
-		$this->placeholderCleaner->removeIfUnfilled(request: $updated, actingUserId: $userId);
+		$this->placeholderCleaner->removeIfUnfilled(request: $updated, expectedOwnerType: 'user', expectedOwnerId: $userId);
 
 		$this->outbox->recordRevoked(userId: $userId, requestId: $requestId);
 
@@ -688,7 +688,7 @@ class SecretRequestService {
 		// and for the cleanup below. Re-reading the row would only cost a query.
 		$request->setStatus(SecretRequest::STATUS_EXPIRED);
 
-		$this->placeholderCleaner->removeIfUnfilled(request: $request, actingUserId: null);
+		$this->placeholderCleaner->removeIfUnfilled(request: $request, expectedOwnerType: null, expectedOwnerId: null);
 
 		$this->outbox->recordExpired(requestId: $request->getId());
 
