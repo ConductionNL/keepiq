@@ -32,6 +32,7 @@ use InvalidArgumentException;
 use OCA\Doriath\Controller\ApplicationRequestAdminController;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Service\ApplicationRequestAdminService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -39,6 +40,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 /**
  * Tests for the admin-scoped application-request surface.
@@ -228,4 +230,104 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testTheServicesRefusalCodeIsPreserved()
+	/**
+	 * A refusal that carries no code still gets a sane status.
+	 *
+	 * `InvalidArgumentException` defaults its code to 0, and a JSONResponse with
+	 * status 0 is not a response any client can interpret. The fallback exists for
+	 * exactly that, and nothing exercised it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testACodelessRefusalFallsBackToBadRequest(): void {
+		$this->service->method('listForApplication')->willThrowException(
+			new InvalidArgumentException(message: 'no code on this one')
+		);
+
+		$this->assertSame(
+			Http::STATUS_BAD_REQUEST,
+			$this->controllerFor('admin', true)->index(id: 'app-1')->getStatus()
+		);
+	}//end testACodelessRefusalFallsBackToBadRequest()
+
+	/**
+	 * The service's own refusal code survives on the listing path too.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testTheListingPreservesTheServicesRefusalCode(): void {
+		$this->service->method('listForApplication')->willThrowException(
+			new InvalidArgumentException(message: 'applicationId is required', code: 400)
+		);
+
+		$this->assertSame(
+			Http::STATUS_BAD_REQUEST,
+			$this->controllerFor('admin', true)->index(id: '')->getStatus()
+		);
+	}//end testTheListingPreservesTheServicesRefusalCode()
+
+	/**
+	 * An unexpected failure while listing answers 500, not a leaked message.
+	 *
+	 * A database error must not put its text in front of an administrator, and it
+	 * must not be reported as a 404 either — "nothing here" and "we broke" are
+	 * different answers and only one of them is worth retrying.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testAnUnexpectedListingFailureAnswers500(): void {
+		$this->service->method('listForApplication')
+			->willThrowException(new RuntimeException('connection reset'));
+
+		$response = $this->controllerFor('admin', true)->index(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertStringNotContainsString('connection reset', $response->getData()['message']);
+	}//end testAnUnexpectedListingFailureAnswers500()
+
+	/**
+	 * A revoke of an id that does not exist answers 404.
+	 *
+	 * The mapper throws a lookup exception rather than an InvalidArgumentException,
+	 * so this lands in the generic arm — which must still say "not found for this
+	 * application" rather than 500.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testRevokingAnUnknownIdAnswers404(): void {
+		$this->service->method('revokeForApplication')
+			->willThrowException(new DoesNotExistException('no such request'));
+
+		$this->assertSame(
+			Http::STATUS_NOT_FOUND,
+			$this->controllerFor('admin', true)->destroy(id: 'app-1', requestId: 'nope')->getStatus()
+		);
+	}//end testRevokingAnUnknownIdAnswers404()
+
+	/**
+	 * A codeless refusal on the revoke path also falls back.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testACodelessRevokeRefusalFallsBackToBadRequest(): void {
+		$this->service->method('revokeForApplication')->willThrowException(
+			new InvalidArgumentException(message: 'no code')
+		);
+
+		$this->assertSame(
+			Http::STATUS_BAD_REQUEST,
+			$this->controllerFor('admin', true)->destroy(id: 'app-1', requestId: 'req-1')->getStatus()
+		);
+	}//end testACodelessRevokeRefusalFallsBackToBadRequest()
+
 }//end class

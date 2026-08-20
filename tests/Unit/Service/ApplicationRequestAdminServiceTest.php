@@ -34,10 +34,12 @@ use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Service\ApplicationRequestAdminService;
 use OCA\Doriath\Service\SecretRequestOutbox;
 use OCA\Doriath\Service\SecretService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests for the admin-scoped application-request service.
@@ -346,4 +348,112 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 			isAdmin: true,
 		);
 	}//end testAdminRevokeWillNotDeleteAnotherApplicationsSecret()
+	/**
+	 * An empty applicationId is refused before any query runs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testListForApplicationRefusesAnEmptyApplicationId(): void {
+		$this->mapper->expects($this->never())->method('findByApplication');
+
+		try {
+			$this->admin->listForApplication(applicationId: '', isAdmin: true);
+			$this->fail('an empty applicationId must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(400, $e->getCode());
+		}
+	}//end testListForApplicationRefusesAnEmptyApplicationId()
+
+	/**
+	 * A request that is not pending cannot be revoked.
+	 *
+	 * 400 rather than a silent success: an administrator clicking revoke on a row
+	 * that something else already ended should learn that, not be told it worked.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testRevokeRefusesARequestThatIsNotPending(): void {
+		$entity = $this->appRequest('req-done', 'sec-1', 'app-1');
+		$entity->setStatus(SecretRequest::STATUS_FULFILLED);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->expects($this->never())->method('update');
+
+		try {
+			$this->admin->revokeForApplication(
+				requestId: 'req-done',
+				applicationId: 'app-1',
+				adminUserId: 'admin',
+				isAdmin: true,
+			);
+			$this->fail('a fulfilled request must not be revocable');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(400, $e->getCode());
+		}
+	}//end testRevokeRefusesARequestThatIsNotPending()
+
+	/**
+	 * A revoke survives the linked Secret having already gone.
+	 *
+	 * The request is still revoked; there is simply nothing left to clean up.
+	 * Throwing here would turn a successful revoke into a failure the administrator
+	 * has to retry against a Secret that no longer exists.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testRevokeSurvivesAMissingSecret(): void {
+		$entity = $this->appRequest('req-gone', 'sec-vanished', 'app-1');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->secretMapper->method('findById')
+			->willThrowException(new DoesNotExistException('gone'));
+
+		$this->secretService->expects($this->never())->method('deleteByApplication');
+
+		$this->assertSame(
+			SecretRequest::STATUS_DECLINED,
+			$this->admin->revokeForApplication(
+				requestId: 'req-gone',
+				applicationId: 'app-1',
+				adminUserId: 'admin',
+				isAdmin: true,
+			)->getStatus()
+		);
+	}//end testRevokeSurvivesAMissingSecret()
+
+	/**
+	 * A failing placeholder delete does not fail the revoke.
+	 *
+	 * An orphan empty Secret is untidy; a revoke the administrator believes did not
+	 * work is worse, because the fill link is already dead and they will go looking
+	 * for another way to kill it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testRevokeSurvivesAFailingPlaceholderDelete(): void {
+		$entity = $this->appRequest('req-stubborn', 'sec-empty', 'app-1');
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->secretMapper->method('findById')->willReturn($this->appSecret('sec-empty', 'app-1'));
+		$this->secretService->method('deleteByApplication')
+			->willThrowException(new RuntimeException('locked'));
+
+		$this->assertSame(
+			SecretRequest::STATUS_DECLINED,
+			$this->admin->revokeForApplication(
+				requestId: 'req-stubborn',
+				applicationId: 'app-1',
+				adminUserId: 'admin',
+				isAdmin: true,
+			)->getStatus()
+		);
+	}//end testRevokeSurvivesAFailingPlaceholderDelete()
+
 }//end class
