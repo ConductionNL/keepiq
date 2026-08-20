@@ -234,7 +234,7 @@ class SecretService {
 	 * every user write would let an ordinary create silently store a valueless
 	 * secret — the failure this flag exists to prevent.
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function create(array $data, string $userId, bool $allowUnfilled = false): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
@@ -1398,7 +1398,7 @@ class SecretService {
 	 *
 	 * @return bool True when a version row is warranted.
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	private function shouldSnapshot(Secret $before, Secret $after): bool {
 		if ($this->versionService === null) {
@@ -1423,7 +1423,7 @@ class SecretService {
 	 *
 	 * @return bool True when the row carried no value.
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	private function hadNoValues(Secret $secret): bool {
 		return (string)$secret->getKey() === ''

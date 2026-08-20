@@ -77,6 +77,7 @@ class SecretRequestService {
 	 * @param WriteLockService $writeLockService The compromise-recovery write lock
 	 * @param SecretMapper $secretMapper Reads the Secret a request writes to
 	 * @param ContainerInterface $container Resolves SecretService lazily (see fill)
+	 * @param SecretPlaceholderCleaner $placeholderCleaner Removes an unfilled placeholder
 	 *
 	 * @return void
 	 */
@@ -88,6 +89,7 @@ class SecretRequestService {
 		private WriteLockService $writeLockService,
 		private SecretMapper $secretMapper,
 		private ContainerInterface $container,
+		private SecretPlaceholderCleaner $placeholderCleaner,
 	) {
 	}//end __construct()
 
@@ -404,7 +406,7 @@ class SecretRequestService {
 	 *
 	 * @throws InvalidArgumentException When userId or requestedFields are missing
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function createForUserVault(
 		string $userId,
@@ -632,7 +634,7 @@ class SecretRequestService {
 		// After the status flip on purpose: if this cleanup fails, the request is
 		// already revoked and the worst case is an orphan empty Secret. The other
 		// order risks deleting a Secret while its request stays pending.
-		$this->deletePlaceholderIfUnfilled(request: $updated, userId: $userId);
+		$this->placeholderCleaner->removeIfUnfilled(request: $updated, actingUserId: $userId);
 
 		$this->outbox->recordRevoked(userId: $userId, requestId: $requestId);
 
@@ -660,108 +662,43 @@ class SecretRequestService {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
 	 */
 	public function expire(SecretRequest $request): ?SecretRequest {
+		// Fast path only. The entity may have been loaded a whole batch ago, so this
+		// check proves nothing on its own — the conditional write below is the
+		// guarantee.
 		if ($request->getStatus() !== SecretRequest::STATUS_PENDING) {
 			return null;
 		}
 
-		$request->setStatus(SecretRequest::STATUS_EXPIRED);
-		$updated = $this->mapper->update($request);
-
-		// The owner id comes off the Secret rather than the request's creator: an
-		// application-created request has `created_by = 'application:<id>'`, which
-		// is not a user id, and the placeholder deletion is scoped by ownership.
-		$this->deletePlaceholderIfUnfilled(
-			request: $updated,
-			userId: (string)$updated->getCreatedBy()
+		// Conditional transition, not read-then-write. `QBMapper::update()` issues
+		// `WHERE id = ?` with no status guard, so a recipient filling the request
+		// between the job's SELECT and this write had `fulfilled` replaced by
+		// `expired` — with `fulfilled_at` left set, so the requester was told their
+		// request lapsed while the credential sat in their vault. If the row is no
+		// longer pending we did nothing, and nothing downstream may run: no
+		// placeholder delete, no audit event claiming an expiry that never happened.
+		$transitioned = $this->mapper->transitionIfPending(
+			requestId: $request->getId(),
+			toStatus: SecretRequest::STATUS_EXPIRED
 		);
+		if ($transitioned === false) {
+			return null;
+		}
 
-		$this->outbox->recordExpired(requestId: $updated->getId());
+		// The write succeeded, so mirror it onto the in-memory entity for the caller
+		// and for the cleanup below. Re-reading the row would only cost a query.
+		$request->setStatus(SecretRequest::STATUS_EXPIRED);
+
+		$this->placeholderCleaner->removeIfUnfilled(request: $request, actingUserId: null);
+
+		$this->outbox->recordExpired(requestId: $request->getId());
 
 		$this->logger->info(
-			'Expired secret request ' . $updated->getId(),
+			'Expired secret request ' . $request->getId(),
 			['app' => 'doriath']
 		);
 
-		return $updated;
+		return $request;
 	}//end expire()
-
-	/**
-	 * Delete the linked Secret when it never held a value.
-	 *
-	 * Fail-soft: a placeholder that outlives its request is untidy, but it must
-	 * never turn a successful revoke into an error the user has to retry.
-	 *
-	 * @param SecretRequest $request The revoked request
-	 * @param string $userId The revoking user
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
-	 */
-	private function deletePlaceholderIfUnfilled(SecretRequest $request, string $userId): void {
-		try {
-			$secret = $this->secretMapper->findById($request->getSecretId());
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
-			// Already gone, or ambiguous — nothing safe to delete either way.
-			return;
-		}
-
-		if ($this->holdsNoValues(secret: $secret) === false) {
-			// Holds a value: a re-request target, a plain request's own Secret, or a
-			// placeholder that has since been filled.
-			return;
-		}
-
-		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-			// Application-owned shells are cleaned up by their own vault's paths;
-			// this user path must not reach across an ownership boundary.
-			return;
-		}
-
-		try {
-			$this->container->get(SecretService::class)->delete($secret->getId(), $userId);
-		} catch (Throwable $exception) {
-			$this->logger->error(
-				'Doriath: could not delete the placeholder for revoked request '
-				. $request->getId() . ': ' . $exception->getMessage(),
-				['exception' => $exception]
-			);
-		}
-	}//end deletePlaceholderIfUnfilled()
-
-	/**
-	 * Whether a Secret holds no value in any of its value columns.
-	 *
-	 * The predicate itself lives on the Secret entity, because it is a fact about
-	 * the row and TWO services need the same answer: this one for a user revoking
-	 * their own request, and ApplicationRequestAdminService for an administrator
-	 * revoking an application's. A copy in each would be two predicates answering
-	 * one question, which is how this path came to delete filled secrets in the
-	 * first place.
-	 *
-	 * Deliberately wider than `SecretService::hadNoValues()`, which asks the same
-	 * question for a different decision. That one guards whether to write a version
-	 * row: too eager and you get a junk row. This one guards a HARD delete that
-	 * takes the version history with it: too eager and you destroy a credential.
-	 * The costs are not symmetric, so the predicates stay separate and this one
-	 * errs toward keeping the Secret. Residue is exactly the orphan-placeholder
-	 * tidiness the expiry cleanup handles.
-	 *
-	 * `key` alone is not enough. Nothing requires `key` among `requestedFields`, so
-	 * a requester can ask for a login or a custom member on its own; filling that
-	 * leaves `key` empty on a Secret that now holds ciphertext. `url` is included
-	 * because it is requestable plaintext and `createForUserVault()` never sets it,
-	 * so a genuine fresh placeholder always has it null.
-	 *
-	 * @param Secret $secret The Secret linked to the revoked request
-	 *
-	 * @return bool True when every value column is empty
-	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
-	 */
-	private function holdsNoValues(Secret $secret): bool {
-		return $secret->holdsNoValues();
-	}//end holdsNoValues()
 
 	/**
 	 * List secret requests created by a given user.

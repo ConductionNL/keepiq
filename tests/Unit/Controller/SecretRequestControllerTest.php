@@ -103,7 +103,7 @@ class SecretRequestControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testCreateWithoutASecretIdTakesTheFreshPath(): void {
 		$this->service->expects($this->once())
@@ -131,7 +131,7 @@ class SecretRequestControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testReRequestWithoutASecretIdIsRefused(): void {
 		$this->service->expects($this->never())->method('createReRequest');
@@ -173,7 +173,7 @@ class SecretRequestControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testASuppliedSecretIdKeepsThePlainPath(): void {
 		$this->service->expects($this->once())->method('create')->willReturn($this->made());

@@ -417,7 +417,7 @@ export default {
 		 *
 		 * @return {boolean} True when a value is present.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		secretHasValue() {
 			return String(this.secret?.key || '') !== ''
@@ -706,7 +706,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		onRequestCreated() {
 			// Intentionally empty: see the docblock. Kept as the `created` hook so
