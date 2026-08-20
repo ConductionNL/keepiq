@@ -110,6 +110,8 @@ class KeyGeneratorRegexParser {
 	 * @return array{0:int,1:int} The [minLength, maxLength] pair
 	 *
 	 * @throws InvalidArgumentException When no quantifier is present or the range is invalid
+	 *
+	 * @spec openspec/specs/key-generator/spec.md#requirement-regex-override
 	 */
 	public function extractLength(string $regex): array {
 		if (preg_match('/\{(\d+)(?:,(\d+))?\}/', $regex, $matches) !== 1) {
