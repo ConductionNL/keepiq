@@ -974,7 +974,8 @@
         "Link copied": "Link copied",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.",
-        "This request could not be found.": "This request could not be found."
+        "This request could not be found.": "This request could not be found.",
+        "Revoking…": "Revoking…"
     },
     "plurals": ""
 }

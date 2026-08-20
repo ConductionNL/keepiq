@@ -402,7 +402,8 @@
         "Link copied": "Lien copié",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Cette page nécessite une connexion sécurisée (https://), car votre valeur est chiffrée dans votre navigateur avant l’envoi.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Ouvrez le même lien en commençant par https://. Si cela ne fonctionne toujours pas, demandez à la personne qui vous l’a envoyé.",
-        "This request could not be found.": "Cette demande n'a pas pu être trouvée."
+        "This request could not be found.": "Cette demande n'a pas pu être trouvée.",
+        "Revoking…": "Révocation…"
     },
     "plurals": null
 }

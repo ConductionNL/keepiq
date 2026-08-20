@@ -402,7 +402,8 @@
         "Link copied": "Врската е копирана",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Оваа страница бара безбедна (https://) врска бидејќи вашата вредност се шифрира во прелистувачот пред да се испрати.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Отворете ја истата врска што почнува со https://. Ако сè уште не работи, прашајте го оној што ја испрати.",
-        "This request could not be found.": "Ова барање не е најдено."
+        "This request could not be found.": "Ова барање не е најдено.",
+        "Revoking…": "Отповикување…"
     },
     "plurals": null
 }

@@ -119,7 +119,9 @@ describe('SecretRequestFill', () => {
 		// server now sends a `reason`, and this asserts the recipient reads
 		// the translated sentence rather than the server's.
 		vi.spyOn(axios, 'get').mockRejectedValue({
-			response: { data: { message: 'Request has expired', reason: 'expired' } },
+			response: {
+				data: { message: 'Request has expired', reason: 'expired' },
+			},
 		})
 		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
 		await flush()
@@ -133,7 +135,12 @@ describe('SecretRequestFill', () => {
 		// An older server, or a failure the server could not classify. An
 		// untranslated sentence beats a blank page, so the fallback must survive.
 		vi.spyOn(axios, 'get').mockRejectedValue({
-			response: { data: { message: 'Something specific went wrong', reason: 'unknown' } },
+			response: {
+				data: {
+					message: 'Something specific went wrong',
+					reason: 'unknown',
+				},
+			},
 		})
 		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
 		await flush()

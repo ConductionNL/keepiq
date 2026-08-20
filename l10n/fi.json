@@ -402,7 +402,8 @@
         "Link copied": "Linkki kopioitu",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Tämä sivu vaatii suojatun (https://) yhteyden, koska arvosi salataan selaimessa ennen lähettämistä.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Avaa sama linkki niin, että se alkaa https://. Jos se ei vieläkään toimi, kysy lähettäjältä.",
-        "This request could not be found.": "Tätä pyyntöä ei löytynyt."
+        "This request could not be found.": "Tätä pyyntöä ei löytynyt.",
+        "Revoking…": "Perutaan…"
     },
     "plurals": null
 }

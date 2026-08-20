@@ -402,7 +402,8 @@
         "Link copied": "Odkaz zkopírován",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Tato stránka vyžaduje zabezpečené připojení (https://), protože vaše hodnota se šifruje v prohlížeči před odesláním.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Otevřete stejný odkaz začínající na https://. Pokud to stále nefunguje, zeptejte se toho, kdo vám jej poslal.",
-        "This request could not be found.": "Tato žádost nebyla nalezena."
+        "This request could not be found.": "Tato žádost nebyla nalezena.",
+        "Revoking…": "Ruší se…"
     },
     "plurals": null
 }

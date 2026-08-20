@@ -1,9 +1,4 @@
 {
-  "src/App.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    }
-  },
   "src/cardIdentity/cardIdentity.js": {
     "eqeqeq": {
       "count": 2

@@ -402,7 +402,8 @@
         "Link copied": "Ο σύνδεσμος αντιγράφηκε",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Αυτή η σελίδα χρειάζεται ασφαλή (https://) σύνδεση, επειδή η τιμή σας κρυπτογραφείται στο πρόγραμμα περιήγησης πριν σταλεί.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Ανοίξτε τον ίδιο σύνδεσμο ξεκινώντας με https://. Αν εξακολουθεί να μην λειτουργεί, ρωτήστε αυτόν που τον έστειλε.",
-        "This request could not be found.": "Αυτό το αίτημα δεν βρέθηκε."
+        "This request could not be found.": "Αυτό το αίτημα δεν βρέθηκε.",
+        "Revoking…": "Ανάκληση…"
     },
     "plurals": null
 }

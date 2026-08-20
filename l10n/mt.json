@@ -402,7 +402,8 @@
         "Link copied": "Il-link ġie kkupjat",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Din il-paġna teħtieġ konnessjoni sigura (https://), għax il-valur tiegħek jiġi kkriptat fil-brawżer qabel jintbagħat.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Iftaħ l-istess link li jibda bi https://. Jekk xorta ma jaħdimx, staqsi lil min bagħtu.",
-        "This request could not be found.": "Din it-talba ma nstabitx."
+        "This request could not be found.": "Din it-talba ma nstabitx.",
+        "Revoking…": "Qed jiġi rrevokat…"
     },
     "plurals": null
 }

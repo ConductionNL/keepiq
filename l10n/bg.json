@@ -402,7 +402,8 @@
         "Link copied": "Връзката е копирана",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Тази страница изисква защитена (https://) връзка, защото стойността ви се шифрова в браузъра, преди да бъде изпратена.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Отворете същата връзка, започваща с https://. Ако все още не работи, попитайте човека, който ви я изпрати.",
-        "This request could not be found.": "Тази заявка не беше намерена."
+        "This request could not be found.": "Тази заявка не беше намерена.",
+        "Revoking…": "Отменяне…"
     },
     "plurals": null
 }
