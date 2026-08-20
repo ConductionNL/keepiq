@@ -91,7 +91,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 *
 		 * @return {Promise<object>} The created request.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		async createRequest(payload) {
 			this.loading = true

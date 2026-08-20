@@ -1281,7 +1281,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testFreshRequestCreatesItsOwnPlaceholder(): void {
 		$shell = new Secret();
@@ -1333,7 +1333,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testFreshRequestRollsBackThePlaceholderOnFailure(): void {
 		$shell = new Secret();
@@ -1361,7 +1361,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testFreshRequestRefusesAnEmptyFieldList(): void {
 		$this->secretService->expects($this->never())->method('create');
@@ -1375,7 +1375,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeDeletesTheUnfilledPlaceholder(): void {
 		$entity = $this->makePending('req-1', 'sec-empty');
@@ -1405,7 +1405,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeNeverDeletesAFilledSecret(): void {
 		$entity = $this->makePending('req-2', 'sec-filled');
@@ -1429,7 +1429,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeDoesNotReachAcrossAnOwnershipBoundary(): void {
 		$entity = $this->makePending('req-3', 'sec-app');
@@ -1472,7 +1472,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testTwoFreshRequestsDoNotShareAPlaceholder(): void {
 		$first = new Secret();
@@ -1504,7 +1504,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testFreshRequestRefusesAnEmptyUserId(): void {
 		$this->secretService->expects($this->never())->method('create');
@@ -1523,7 +1523,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function testAFailingRollbackDoesNotMaskTheOriginalError(): void {
 		$shell = new Secret();
@@ -1555,7 +1555,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeSurvivesAMissingSecret(): void {
 		$entity = $this->makePending('req-gone', 'sec-vanished');
@@ -1580,7 +1580,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeSurvivesAFailingPlaceholderDelete(): void {
 		$entity = $this->makePending('req-stubborn', 'sec-empty');
@@ -1630,7 +1630,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeNeverDeletesASecretHoldingOnlyALogin(): void {
 		$entity = $this->makePending('req-login', 'sec-login');
@@ -1655,7 +1655,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeNeverDeletesASecretHoldingOnlyAdditionalFields(): void {
 		$entity = $this->makePending('req-extra', 'sec-extra');
@@ -1680,7 +1680,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeNeverDeletesASecretHoldingOnlyAUrl(): void {
 		$entity = $this->makePending('req-url', 'sec-url');
@@ -1704,7 +1704,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testRevokeStillDeletesATrulyEmptyPlaceholder(): void {
 		$entity = $this->makePending('req-empty', 'sec-empty-2');

@@ -395,7 +395,7 @@ export default {
 		 *
 		 * @return {object} Map of secretId to the pending request.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		pendingRequestsBySecret() {
 			const map = {}
@@ -723,7 +723,7 @@ export default {
 		 *
 		 * @return {string|null} 'awaiting-fill', 're-request' or null.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		requestStateFor(secret) {
 			if (!secret || !this.pendingRequestsBySecret[secret.id]) {
@@ -742,7 +742,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		async onCredentialRequested() {
 			// Deliberately NOT closing: the dialog has just computed the fill link

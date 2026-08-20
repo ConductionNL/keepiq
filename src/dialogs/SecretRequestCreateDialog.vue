@@ -181,7 +181,7 @@ export default {
 		 *
 		 * @return {string} The translated heading.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		title() {
 			if (this.isReRequest) {
@@ -207,7 +207,7 @@ export default {
 		 *
 		 * @return {Array<object>} The user's folders.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		folderOptions() {
 			return useFolderStore().folders || []
@@ -358,7 +358,7 @@ export default {
 		 *
 		 * @return {boolean} True when a value is already present.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 		 */
 		isFieldFilled(key) {
 			if (!this.secret) {
@@ -390,7 +390,7 @@ export default {
 		 *
 		 * @return {Array<string>} Field names to tick initially.
 		 *
-		 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 		 */
 		defaultSelection() {
 			if (this.isReRequest) {
