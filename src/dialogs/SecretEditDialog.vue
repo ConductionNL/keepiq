@@ -28,8 +28,8 @@
 			<NcSelect
 				v-model="typeId"
 				:options="typeOptions"
-				:reduce="(opt) => opt.value"
 				:inputLabel="t('doriath', 'Type')"
+				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
 			<!-- Card / identity composite payloads (card-identity-items §3.1). -->

@@ -32,6 +32,7 @@ use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Db\SecretRequest;
 use OCA\Doriath\Db\SecretRequestMapper;
 use OCA\Doriath\Service\ApplicationRequestAdminService;
+use OCA\Doriath\Service\SecretPlaceholderCleaner;
 use OCA\Doriath\Service\SecretRequestOutbox;
 use OCA\Doriath\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -90,10 +91,16 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 
 		$this->admin = new ApplicationRequestAdminService(
 			mapper: $this->mapper,
-			secretMapper: $this->secretMapper,
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
-			container: $container,
+			// A REAL cleaner over the same mocks, not a stub: the placeholder
+			// decisions asserted below (empty vs filled, whose vault) live in it, and
+			// stubbing it would let those assertions pass without exercising anything.
+			placeholderCleaner: new SecretPlaceholderCleaner(
+				secretMapper: $this->secretMapper,
+				logger: $this->createMock(LoggerInterface::class),
+				container: $container,
+			),
 		);
 	}//end setUp()
 
@@ -271,6 +278,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 		$entity = $this->appRequest('req-1', 'sec-empty', 'app-1');
 		$this->mapper->method('findById')->willReturn($entity);
 		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 		$this->secretMapper->method('findById')->willReturn($this->appSecret('sec-empty', 'app-1'));
 
 		$this->secretService->expects($this->once())
@@ -303,6 +311,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 		$entity = $this->appRequest('req-2', 'sec-filled', 'app-1');
 		$this->mapper->method('findById')->willReturn($entity);
 		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 
 		$filled = $this->appSecret('sec-filled', 'app-1');
 		$filled->setLogin('CIPHERTEXT-LOGIN');
@@ -336,6 +345,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 		$entity = $this->appRequest('req-3', 'sec-elsewhere', 'app-1');
 		$this->mapper->method('findById')->willReturn($entity);
 		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 		$this->secretMapper->method('findById')
 			->willReturn($this->appSecret('sec-elsewhere', 'app-OTHER'));
 
@@ -396,6 +406,49 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 	}//end testRevokeRefusesARequestThatIsNotPending()
 
 	/**
+	 * A request filled during the revoke is not overwritten, and nothing follows.
+	 *
+	 * Raised in review on PR #286. The pending check reads the row, then
+	 * `QBMapper::update()` writes it back with `WHERE id = ?` and no status guard —
+	 * so a recipient filling the request between the two had `fulfilled` replaced by
+	 * `declined`, and the administrator got an audit event recording a revoke of a
+	 * request that had in fact been answered.
+	 *
+	 * The entity says `pending` here, exactly as it would after the SELECT. Only the
+	 * conditional write can tell the difference, so this asserts on what happens when
+	 * it reports zero rows: the refusal the caller would have got a moment earlier,
+	 * and NOTHING downstream — no placeholder delete, no revoke recorded.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testARequestFilledDuringTheRevokeIsNotOverwritten(): void {
+		$entity = $this->appRequest('req-race', 'sec-race', 'app-1');
+		$this->mapper->method('findById')->willReturn($entity);
+
+		// The row stopped being pending after we read it.
+		$this->mapper->method('transitionIfPending')->willReturn(false);
+
+		// The unguarded write must not be reached at all.
+		$this->mapper->expects($this->never())->method('update');
+		$this->secretService->expects($this->never())->method('deleteByApplication');
+		$this->secretService->expects($this->never())->method('delete');
+
+		try {
+			$this->admin->revokeForApplication(
+				requestId: 'req-race',
+				applicationId: 'app-1',
+				adminUserId: 'admin',
+				isAdmin: true,
+			);
+			$this->fail('a request that stopped being pending must not be revocable');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(400, $e->getCode());
+		}
+	}//end testARequestFilledDuringTheRevokeIsNotOverwritten()
+
+	/**
 	 * A revoke survives the linked Secret having already gone.
 	 *
 	 * The request is still revoked; there is simply nothing left to clean up.
@@ -410,6 +463,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 		$entity = $this->appRequest('req-gone', 'sec-vanished', 'app-1');
 		$this->mapper->method('findById')->willReturn($entity);
 		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 		$this->secretMapper->method('findById')
 			->willThrowException(new DoesNotExistException('gone'));
 
@@ -441,6 +495,7 @@ class ApplicationRequestAdminServiceTest extends TestCase {
 		$entity = $this->appRequest('req-stubborn', 'sec-empty', 'app-1');
 		$this->mapper->method('findById')->willReturn($entity);
 		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->method('transitionIfPending')->willReturn(true);
 		$this->secretMapper->method('findById')->willReturn($this->appSecret('sec-empty', 'app-1'));
 		$this->secretService->method('deleteByApplication')
 			->willThrowException(new RuntimeException('locked'));

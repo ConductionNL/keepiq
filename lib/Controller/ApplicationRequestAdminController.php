@@ -93,18 +93,24 @@ class ApplicationRequestAdminController extends Controller {
 	 * may see this" depend on who happened to click Register months ago, and the
 	 * registrar may have left.
 	 *
-	 * @return string|null
+	 * Named for what it enforces rather than what it returns. It reads as a getter
+	 * if called `adminUid()`, and the authorization then hides behind an assignment
+	 * — invisible to a reviewer skimming the method, and to the IDOR gate, which
+	 * looks for the guard at the call site. Null means the caller is not an
+	 * administrator, and every caller must treat that as a refusal.
+	 *
+	 * @return string|null The administrator's uid, or null when the caller is not one
 	 *
 	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 	 */
-	private function adminUid(): ?string {
+	private function requireAdminUid(): ?string {
 		$user = $this->userSession->getUser();
 		if ($user === null || $this->groupManager->isAdmin($user->getUID()) === false) {
 			return null;
 		}
 
 		return $user->getUID();
-	}//end adminUid()
+	}//end requireAdminUid()
 
 	/**
 	 * 403 for non-admin callers.
@@ -166,7 +172,7 @@ class ApplicationRequestAdminController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {
-		$adminUid = $this->adminUid();
+		$adminUid = $this->requireAdminUid();
 		if ($adminUid === null) {
 			return $this->forbidden();
 		}
@@ -212,7 +218,7 @@ class ApplicationRequestAdminController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id, string $requestId): JSONResponse {
-		$adminUid = $this->adminUid();
+		$adminUid = $this->requireAdminUid();
 		if ($adminUid === null) {
 			return $this->forbidden();
 		}
