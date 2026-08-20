@@ -196,7 +196,7 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testCreateStillRefusesAnEmptyKeyByDefault(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
@@ -214,7 +214,7 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testCreateAllowsAnUnfilledPlaceholder(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
@@ -242,7 +242,7 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testUnfilledPlaceholderStillRequiresAName(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
@@ -270,7 +270,7 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testFillingAPlaceholderDoesNotSnapshotItsEmptyState(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);
@@ -308,7 +308,7 @@ class SecretServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	public function testUpdatingAFilledSecretStillSnapshots(): void {
 		$this->migrationService->method('isWriteLocked')->willReturn(false);

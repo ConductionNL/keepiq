@@ -276,7 +276,7 @@ class SecretRequestFillControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 	 */
 	public function testShowNeverDisclosesWhichFieldsAreAlreadyFilled(): void {
 		$this->secretRequestService->method('getByToken')->willReturn($this->makeRequest());

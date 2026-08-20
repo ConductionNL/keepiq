@@ -49,12 +49,12 @@ The dialog MUST be blocked (disabled) while the vault is locked.
 - **AND** MUST NOT write that value into the Secret's corresponding column
 
 #### Scenario: Create a secret inside the current folder
-@e2e exclude Had NO coverage at all until this change (it was carried off PR #270 as a known gap rather than waived). Now driven by SecretCreateDialog.additionalFields "defaults the folder to the one being viewed, and persists it", which asserts both the default and the folderId in the payload.
+@e2e exclude Had NO coverage of any kind until now — carried across PR #270, #282 and #286 as a known gap rather than waived with an exclude claiming coverage that did not exist. Two specs drive it, both real after this merge: SecretCreateDialog.requiredFields "defaults the folder to the one being viewed, and persists it" plus its null-folder-at-the-root counterpart, and SecretCreateDialog.additionalFields "defaults the folder to the one being viewed, and persists it".
 - **WHEN** the user is viewing a folder and creates a secret
 - **THEN** the dialog's folder field MUST default to that folder and the created secret MUST persist that `folderId`
 
 #### Scenario: Name and value are required
-@e2e exclude Also previously uncovered, and also from the #270 gap. Driven by SecretCreateDialog.additionalFields "requires a name AND a value before anything is sent", which walks every partial state including whitespace-only and asserts no request is made.
+@e2e exclude Also previously uncovered, from the same gap. Driven by SecretCreateDialog.requiredFields "requires a name AND a value before anything is sent" and "stays blocked while the vault is locked, however complete the form is", and by SecretCreateDialog.additionalFields "requires a name AND a value before anything is sent". Each walks every partial state including whitespace-only and asserts no request is made.
 - **WHEN** the user submits with an empty name or empty value
 - **THEN** the submit control MUST be disabled and no request MUST be sent
 
@@ -87,7 +87,7 @@ your own secret meant asking a stranger to submit it.
 
 
 #### Scenario: Edit metadata only
-@e2e exclude Had NO coverage at all — no vitest, no Playwright — until owner-editable-additional-fields, which modified the requirement around it. Now driven by SecretEditDialog.additionalFields "alters no ciphertext when only the name changes", which asserts the diff carries the new name and NONE of key, login or additionalFields. It sits with the additional-field tests because it is the same diff logic: a rename that re-encrypted the blob would also be a rename that loses a concurrent session's members.
+@e2e exclude Previously uncovered. Driven by SecretEditDialog.metadataOnly — only the name is sent when only the name changed, nothing is sent when nothing changed, and the counterpart that the value IS re-encrypted when it really changes, since the rule is "only CHANGED sensitive fields" rather than "never" — and by SecretEditDialog.additionalFields "alters no ciphertext when only the name changes". Same diff logic: a rename that re-encrypted the blob would also be a rename that loses a concurrent session's members.
 - **WHEN** the user changes only the name and saves
 - **THEN** the system MUST persist the new name and MUST NOT alter the stored ciphertext
 #### Scenario: Edit an existing additional field
@@ -139,6 +139,7 @@ revoke one.
 - **THEN** the share token MUST resolve via the public endpoint `GET /api/v1/public/link-shares/{token}`
 
 #### Scenario: Revoke a link share
+@e2e exclude Coverage existed and was simply never annotated: tests/store/share.spec.js "DELETEs and removes the share from the list" asserts both halves of this scenario — the DELETE is issued and the share leaves the list. Found while clearing the gate-19 debt on this spec, not written for it.
 - **WHEN** the owner revokes an existing link share from the dialog
 - **THEN** the system MUST delete it and it MUST disappear from the list
 
@@ -155,6 +156,7 @@ entry (ADR-036). Affordances MUST open dialogs through the injected
 target secret / folder context as props.
 
 #### Scenario: Modal opened via registry dispatcher
+@e2e exclude Had NO coverage until now, and the gap was invisible by construction: `cnOpenModal` is an inject whose default is a NO-OP so the view still mounts in isolation, so a regression to local dialog state looks identical in every other test while the dialog silently never opens in the real app. Driven by SecretList.registryDispatch — the key and props each affordance dispatches, that those keys exist in src/registry.js as `kind: "modal"`, and that the no-op default does not throw. A one-character key typo fails it; verified by injecting one.
 - **WHEN** the user clicks a write affordance
 - **THEN** the corresponding registry-registered modal MUST mount via `cnOpenModal`
 - **THEN** closing the dialog MUST emit `close` and unmount it

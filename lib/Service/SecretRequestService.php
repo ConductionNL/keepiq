@@ -404,7 +404,7 @@ class SecretRequestService {
 	 *
 	 * @throws InvalidArgumentException When userId or requestedFields are missing
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function createForUserVault(
 		string $userId,
@@ -696,7 +696,7 @@ class SecretRequestService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	private function deletePlaceholderIfUnfilled(SecretRequest $request, string $userId): void {
 		try {
@@ -757,7 +757,7 @@ class SecretRequestService {
 	 *
 	 * @return bool True when every value column is empty
 	 *
-	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
+	 * @spec openspec/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
 	private function holdsNoValues(Secret $secret): bool {
 		return $secret->holdsNoValues();
