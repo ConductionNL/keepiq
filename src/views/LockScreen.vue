@@ -152,7 +152,7 @@
 							@click="handleSetup">
 							{{
 								loading
-									? t('doriath', 'Setting up...')
+									? t('doriath', 'Setting up…')
 									: t('doriath', 'Set up vault')
 							}}
 						</NcButton>
@@ -173,7 +173,7 @@
 						</template>
 						{{
 							loading
-								? t('doriath', 'Unlocking...')
+								? t('doriath', 'Unlocking…')
 								: t('doriath', 'Unlock with passkey')
 						}}
 					</NcButton>
@@ -198,7 +198,7 @@
 						@click="handleUnlock">
 						{{
 							loading
-								? t('doriath', 'Unlocking...')
+								? t('doriath', 'Unlocking…')
 								: t('doriath', 'Unlock')
 						}}
 					</NcButton>
@@ -648,7 +648,7 @@ export default {
 	min-height: calc(var(--default-clickable-area, 44px) + 2em);
 }
 
-/* Let the red/green state fade in rather than snap. */
+/* Let the error state fade in rather than snap. */
 .lock-screen__confirm :deep(.input-field__input) {
 	transition: border-color 0.2s ease-out;
 }

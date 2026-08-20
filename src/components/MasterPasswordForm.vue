@@ -42,7 +42,7 @@
 			@click="handleSubmit">
 			{{
 				loading
-					? t('doriath', 'Changing...')
+					? t('doriath', 'Changing…')
 					: t('doriath', 'Change password')
 			}}
 		</NcButton>
