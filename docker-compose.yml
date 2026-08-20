@@ -3,11 +3,10 @@
 # Brings up PostgreSQL + Nextcloud 32 on http://localhost:8080 (admin/admin),
 # with this repo bind-mounted as the `doriath` custom app and the sibling
 # `../openregister` checkout mounted alongside it — Doriath builds on
-# OpenRegister's AppHost engine, so both apps must be enabled:
+# OpenRegister's AppHost engine, so both apps are enabled automatically on
+# every start by the before-starting hook (docker/nextcloud/enable-apps.sh):
 #
 #   docker compose up -d
-#   docker exec nextcloud php occ app:enable openregister
-#   docker exec nextcloud php occ app:enable doriath
 #
 # Mirrors openregister/docker-compose.yml (same port, same container name for
 # the `docker exec nextcloud php occ ...` habit) — run only ONE of these app
@@ -70,6 +69,10 @@ services:
       - ./custom_apps:/var/www/html/custom_apps
       - .:/var/www/html/custom_apps/doriath
       - ../openregister:/var/www/html/custom_apps/openregister
+      # before-starting hooks run as www-data on every start, after
+      # install/upgrade — this one enables openregister + doriath. Do NOT
+      # replace the image's entrypoint for this (that broke startup before).
+      - ./docker/nextcloud/enable-apps.sh:/docker-entrypoint-hooks.d/before-starting/enable-apps.sh:ro
     environment:
       - POSTGRES_DB=nextcloud
       - POSTGRES_USER=nextcloud

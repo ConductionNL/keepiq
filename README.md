@@ -143,11 +143,11 @@ next to this repo (`../openregister`) — Doriath builds on OpenRegister's AppHo
 ```bash
 composer install && npm install && npm run build
 docker compose up -d
-docker exec nextcloud php occ app:enable openregister
-docker exec nextcloud php occ app:enable doriath
 ```
 
-Nextcloud is served at http://localhost:8080 (admin/admin).
+Nextcloud is served at http://localhost:8080 (admin/admin). Both `openregister`
+and `doriath` are enabled automatically on every container start by the
+`before-starting` hook in `docker/nextcloud/enable-apps.sh`.
 
 ### Frontend development
 
@@ -172,6 +172,9 @@ npm run stylelint       # CSS linting
 ```
 
 ### Enable locally
+
+The docker compose stack enables both apps automatically on every start. To
+(re-)enable them by hand — e.g. after disabling them, without restarting:
 
 ```bash
 npm install && npm run build
