@@ -23,19 +23,34 @@
 					type="text"
 					required
 					autocomplete="off"
-					data-testid="group-share-form-group">
+					data-testid="group-share-form-group" />
 			</label>
 
-			<p v-if="memberCount > 0" class="doriath-group-share-form__hint" data-testid="group-share-form-hint">
-				{{ t('doriath', 'Will share with {count} member(s) with an active suite.', { count: memberCount }) }}
+			<p
+				v-if="memberCount > 0"
+				class="doriath-group-share-form__hint"
+				data-testid="group-share-form-hint">
+				{{
+					t(
+						'doriath',
+						'Will share with {count} member(s) with an active suite.',
+						{ count: memberCount },
+					)
+				}}
 			</p>
 
-			<p v-if="error" class="doriath-group-share-form__error" data-testid="group-share-form-error">
+			<p
+				v-if="error"
+				class="doriath-group-share-form__error"
+				data-testid="group-share-form-error">
 				{{ error }}
 			</p>
 
 			<div class="doriath-group-share-form__actions">
-				<button type="button" data-testid="group-share-form-cancel" @click="$emit('cancel')">
+				<button
+					type="button"
+					data-testid="group-share-form-cancel"
+					@click="$emit('cancel')">
 					{{ t('doriath', 'Cancel') }}
 				</button>
 				<button
@@ -43,7 +58,11 @@
 					class="primary"
 					data-testid="group-share-form-submit"
 					:disabled="busy || groupId === '' || memberCount === 0">
-					{{ busy ? t('doriath', 'Sharing…') : t('doriath', 'Share with group') }}
+					{{
+						busy
+							? t('doriath', 'Sharing…')
+							: t('doriath', 'Share with group')
+					}}
 				</button>
 			</div>
 		</form>
@@ -60,10 +79,12 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		plaintextSnapshot: {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Eligible members for the picked group. Each entry must include
 		 * `userId` and `publicCertificate`; members without an active suite
@@ -74,6 +95,7 @@ export default {
 			default: () => [],
 		},
 	},
+
 	emits: ['cancel', 'shared'],
 	data() {
 		return {
@@ -82,11 +104,13 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		memberCount() {
 			return this.members.length
 		},
 	},
+
 	methods: {
 		async onSubmit() {
 			this.error = null
@@ -104,7 +128,6 @@ export default {
 			try {
 				const recipients = []
 				for (const member of this.members) {
-					// eslint-disable-next-line no-await-in-loop
 					const encryptedFields = await store.encryptForRecipient(
 						this.plaintextSnapshot,
 						member.publicCertificate,
@@ -116,7 +139,8 @@ export default {
 				}
 				this.$emit('shared', { groupId: this.groupId, recipients })
 			} catch (e) {
-				this.error = e?.message || t('doriath', 'Failed to encrypt for group')
+				this.error =
+					e?.message || t('doriath', 'Failed to encrypt for group')
 			} finally {
 				this.busy = false
 			}
@@ -132,24 +156,29 @@ export default {
 	gap: 4px;
 	margin-bottom: 12px;
 }
+
 .doriath-group-share-form__field input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-group-share-form__hint {
 	font-size: 13px;
 	color: var(--color-text-maxcontrast, #777);
 }
+
 .doriath-group-share-form__error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
+
 .doriath-group-share-form__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
+
 .doriath-group-share-form__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);

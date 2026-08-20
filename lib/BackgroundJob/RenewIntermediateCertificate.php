@@ -32,70 +32,69 @@ use Psr\Log\LoggerInterface;
 /**
  * Daily check: renew the intermediate certificate if within 30 days of expiry.
  */
-class RenewIntermediateCertificate extends TimedJob
-{
-    /**
-     * Constructor for RenewIntermediateCertificate.
-     *
-     * @param ITimeFactory                $time         The time factory
-     * @param CACertificateMapper         $caCertMapper The CA certificate mapper
-     * @param CertificateAuthorityService $caService    The CA service
-     * @param LoggerInterface             $logger       The logger interface
-     *
-     * @return void
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private CACertificateMapper $caCertMapper,
-        private CertificateAuthorityService $caService,
-        private LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: 86400);
-    }//end __construct()
+class RenewIntermediateCertificate extends TimedJob {
+	/**
+	 * Constructor for RenewIntermediateCertificate.
+	 *
+	 * @param ITimeFactory $time The time factory
+	 * @param CACertificateMapper $caCertMapper The CA certificate mapper
+	 * @param CertificateAuthorityService $caService The CA service
+	 * @param LoggerInterface $logger The logger interface
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private CACertificateMapper $caCertMapper,
+		private CertificateAuthorityService $caService,
+		private LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: 86400);
+	}//end __construct()
 
-    /**
-     * Run the background job to renew intermediate certificate.
-     *
-     * @param mixed $argument The job argument
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
-     */
-    protected function run($argument): void
-    {
-        try {
-            $intermediate = $this->caCertMapper->findActiveIntermediate();
-        } catch (Exception) {
-            $this->logger->warning('Doriath: No active intermediate found, skipping renewal check');
-            return;
-        }
+	/**
+	 * Run the background job to renew intermediate certificate.
+	 *
+	 * @param mixed $argument The job argument
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
+	 *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
+	 */
+	protected function run($argument): void {
+		try {
+			$intermediate = $this->caCertMapper->findActiveIntermediate();
+		} catch (Exception) {
+			$this->logger->warning('Doriath: No active intermediate found, skipping renewal check');
+			return;
+		}
 
-        $expiresAt = $intermediate->getExpiresAt();
-        if ($expiresAt === null) {
-            return;
-        }
+		$expiresAt = $intermediate->getExpiresAt();
+		if ($expiresAt === null) {
+			return;
+		}
 
-        $daysUntilExpiry = (int) $expiresAt->diff(new DateTime())->format('%r%a');
-        if ($daysUntilExpiry > 30) {
-            return;
-        }
+		$daysUntilExpiry = (int)$expiresAt->diff(new DateTime())->format('%r%a');
+		if ($daysUntilExpiry > 30) {
+			return;
+		}
 
-        $this->logger->info("Doriath: Intermediate certificate expires in {$daysUntilExpiry} days, auto-renewing");
+		$this->logger->info("Doriath: Intermediate certificate expires in {$daysUntilExpiry} days, auto-renewing");
 
-        try {
-            $count = $this->caService->renewIntermediate(forced: false);
-            $this->logger->info("Doriath: Intermediate auto-renewed, {$count} suites re-signed");
-        } catch (Exception $e) {
-            $this->logger->error(
-                    'Doriath: Intermediate auto-renewal failed',
-                    [
-                        'exception' => $e->getMessage(),
-                    ]
-                    );
-        }
-    }//end run()
+		try {
+			$count = $this->caService->renewIntermediate(forced: false);
+			$this->logger->info("Doriath: Intermediate auto-renewed, {$count} suites re-signed");
+		} catch (Exception $e) {
+			$this->logger->error(
+				'Doriath: Intermediate auto-renewal failed',
+				[
+					'exception' => $e->getMessage(),
+				]
+			);
+		}
+	}//end run()
 }//end class

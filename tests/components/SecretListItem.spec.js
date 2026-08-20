@@ -16,8 +16,15 @@
  *    propagation on the actions slot — clicking copy must not navigate)
  *  - on copy, lazily decrypt by calling useSecretStore().fetchSecret
  *
+ * Keyboard accessibility (WCAG 2.1 AA SC 2.1.1 / 4.1.2, ADR-010):
+ *  - the row exposes role="button", tabindex="0" and an aria-label so a
+ *    keyboard-only user can Tab to it and knows what it does
+ *  - Enter and Space on the focused row emit `open` (matching click)
+ *  - keyboard activation of the inner copy control does NOT bubble as `open`
+ *
  * @spec openspec/changes/implement-secrets/tasks.md#7.3
- * @spec openspec/changes/implement-secrets/tasks.md#13.4
+ * @spec openspec/changes/implement-secrets/tasks.md#13.3
+ * @spec openspec/changes/keyboard-accessible-secret-rows/tasks.md#2.3
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -78,7 +85,12 @@ describe('SecretListItem', () => {
 		// returns null and the <img> branch is skipped.
 		const wrapper = mount(SecretListItem, {
 			propsData: {
-				secret: { id: 's-1', name: 'X', url: 'https://github.com', typeId: 'type-api' },
+				secret: {
+					id: 's-1',
+					name: 'X',
+					url: 'https://github.com',
+					typeId: 'type-api',
+				},
 			},
 		})
 
@@ -108,6 +120,68 @@ describe('SecretListItem', () => {
 		expect(wrapper.find('.secret-list-item__actions').exists()).toBe(false)
 	})
 
+	it('warns on the row when the secret is possibly compromised', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: {
+					id: 's-1',
+					name: 'Router admin',
+					url: 'https://router.local',
+					typeId: 'type-login',
+					possiblyCompromisedAt: '2026-08-11T12:00:00+00:00',
+				},
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(true)
+		expect(wrapper.text()).toContain('Assume this value was exposed')
+		expect(wrapper.text()).toContain('change it at its source')
+	})
+
+	it('shows no compromise warning when the flag is absent', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: {
+					id: 's-1',
+					name: 'Router admin',
+					url: 'https://router.local',
+					typeId: 'type-login',
+					possiblyCompromisedAt: null,
+				},
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(false)
+	})
+
+	it('warns on a BLOCKED row too, where the flag matters most', () => {
+		// A secret that failed migration returns no ciphertext, so the health
+		// pass can never see it. The row-level flag is the only signal left.
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: {
+					id: 's-1',
+					name: 'Unreadable',
+					typeId: 'type-api',
+					blocked: true,
+					unrecoverable: true,
+					possiblyCompromisedAt: '2026-08-11T12:00:00+00:00',
+				},
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-possibly-compromised"]').exists(),
+		).toBe(true)
+		// And the lock reason must not blame a revoked suite.
+		expect(wrapper.text()).toContain('Could not be migrated to your new key')
+		expect(wrapper.text()).not.toContain('suite revoked')
+	})
+
 	it('clicking the copy button does NOT bubble as `open` (stop.propagation)', async () => {
 		const secretStore = useSecretStore()
 		secretStore.fetchSecret = vi.fn().mockResolvedValue({
@@ -129,6 +203,75 @@ describe('SecretListItem', () => {
 		expect(wrapper.emitted('open')).toBeFalsy()
 	})
 
+	it('exposes an interactive role, tabindex and accessible name on the row', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: {
+					id: 's-1',
+					name: 'GitHub PAT',
+					url: null,
+					typeId: 'type-api',
+				},
+			},
+		})
+
+		const row = wrapper.find('.secret-list-item')
+		expect(row.attributes('role')).toBe('button')
+		expect(row.attributes('tabindex')).toBe('0')
+		// The accessible name is built via t('doriath', 'Open {name}', ...).
+		// The global test `t` stub does not interpolate placeholders, so we
+		// assert the label is present and carries the "Open" affordance verb;
+		// interpolation of the secret name happens at runtime.
+		expect(row.attributes('aria-label')).toBeDefined()
+		expect(row.attributes('aria-label')).toContain('Open')
+	})
+
+	it('emits `open` when the focused row is activated via Enter', async () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-77', name: 'AWS', url: null, typeId: 'type-login' },
+			},
+		})
+
+		const row = wrapper.find('.secret-list-item')
+		await row.trigger('keydown.enter')
+
+		expect(wrapper.emitted('open')).toBeTruthy()
+		expect(wrapper.emitted('open')[0]).toEqual(['s-77'])
+	})
+
+	it('emits `open` when the focused row is activated via Space', async () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-88', name: 'GCP', url: null, typeId: 'type-login' },
+			},
+		})
+
+		const row = wrapper.find('.secret-list-item')
+		await row.trigger('keydown.space')
+
+		expect(wrapper.emitted('open')).toBeTruthy()
+		expect(wrapper.emitted('open')[0]).toEqual(['s-88'])
+	})
+
+	it('keyboard activation inside the copy control does NOT bubble as `open`', async () => {
+		const secretStore = useSecretStore()
+		secretStore.fetchSecret = vi
+			.fn()
+			.mockResolvedValue({ id: 's-1', name: 'X', key: 'k' })
+
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-1', name: 'X', url: null, typeId: 'type-login' },
+			},
+		})
+
+		// Enter originating inside the actions wrapper (target !== the row).
+		await wrapper.find('.secret-list-item__actions').trigger('keydown.enter')
+
+		expect(wrapper.emitted('open')).toBeFalsy()
+	})
+
 	it('resolveKey() lazily decrypts via useSecretStore().fetchSecret', async () => {
 		const secretStore = useSecretStore()
 		secretStore.fetchSecret = vi.fn().mockResolvedValue({
@@ -147,5 +290,55 @@ describe('SecretListItem', () => {
 
 		expect(secretStore.fetchSecret).toHaveBeenCalledWith('s-1')
 		expect(value).toBe('decrypted-key')
+	})
+	it('marks a placeholder as awaiting its first fill', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-1', name: 'Supplier API key', key: '' },
+				requestState: 'awaiting-fill',
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-request-awaiting-fill"]').exists(),
+		).toBe(true)
+		expect(wrapper.text()).toContain('Waiting for someone to fill this in')
+	})
+
+	it('distinguishes a re-request from an empty placeholder', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-2', name: 'Rotating token', key: 'CIPHER' },
+				requestState: 're-request',
+			},
+		})
+
+		// The consequences differ: this one still works until new values arrive.
+		expect(
+			wrapper.find('[data-testid="secret-request-re-request"]').exists(),
+		).toBe(true)
+		expect(wrapper.text()).toContain('New values requested')
+		expect(wrapper.text()).not.toContain('Waiting for someone')
+	})
+
+	it('shows no indicator when there is no outstanding request', () => {
+		const wrapper = mount(SecretListItem, {
+			propsData: { secret: { id: 's-3', name: 'Plain', key: 'CIPHER' } },
+		})
+
+		expect(wrapper.find('.secret-list-item__request').exists()).toBe(false)
+	})
+
+	it('never renders a fill token in the row', () => {
+		// The component takes a STATE, not the request, so a token cannot reach a
+		// list row even if a caller had one to hand.
+		const wrapper = mount(SecretListItem, {
+			propsData: {
+				secret: { id: 's-4', name: 'Tokenless', key: '' },
+				requestState: 'awaiting-fill',
+			},
+		})
+
+		expect(wrapper.html()).not.toMatch(/[a-f0-9]{32}/)
 	})
 })

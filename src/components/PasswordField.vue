@@ -1,10 +1,18 @@
 <template>
 	<div class="doriath-password-field">
-		<NcInputField :value="displayValue"
+		<!-- v9 NcInputField models through `modelValue` and has NO `value` prop.
+		     A `:value` binding leaves `modelValue` undefined (it is declared
+		     `required`), the component throws
+		     "Cannot read properties of undefined (reading 'toString')", and the
+		     <input> never renders — the wrapper div is still there, so it looks
+		     present. No lint rule catches this. -->
+		<NcInputField
+			:modelValue="displayValue"
 			:label="label"
 			:type="revealed ? 'text' : 'password'"
-			:read-only="true" />
-		<NcButton type="tertiary"
+			:readOnly="true" />
+		<NcButton
+			variant="tertiary"
 			:aria-label="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
 			:title="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
 			@click="toggle">
@@ -49,6 +57,7 @@ export default {
 				return t('doriath', 'Password')
 			},
 		},
+
 		/** An async resolver that returns the plaintext value (e.g. decrypt). */
 		resolve: {
 			type: Function,

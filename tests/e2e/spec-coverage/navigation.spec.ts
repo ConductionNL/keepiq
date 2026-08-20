@@ -31,9 +31,11 @@ function appNav(page: import('@playwright/test').Page) {
 // entries become visible. The toggle is clicked via a real DOM `.click()` so
 // the full-page lock-screen layout cannot swallow the synthetic pointer event.
 async function expandSettingsFoldout(page: import('@playwright/test').Page) {
-	const toggle = page.locator(
-		'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',
-	).first()
+	const toggle = page
+		.locator(
+			'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',
+		)
+		.first()
 	await expect(toggle).toBeVisible({ timeout: 5_000 })
 	await toggle.evaluate((el: HTMLElement) => el.click())
 }
@@ -48,18 +50,25 @@ test.describe('App navigation — manifest menu', () => {
 		await expect(nav).toBeVisible({ timeout: 15_000 })
 
 		// The Dashboard entry points at the doriath app root (not /apps/dashboard).
-		await expect(nav.locator('a[href="/apps/doriath/#/"]').first()).toBeVisible()
+		// Matched on the hash SUFFIX, not the whole href: under vue-router 4 the
+		// hash-history links render relative (`#/`) rather than carrying the
+		// absolute app base (`/apps/doriath/#/`). Both resolve to the same route
+		// from any doriath page; asserting the literal absolute form would pin a
+		// router implementation detail rather than the requirement.
+		await expect(nav.locator('a[href$="#/"]').first()).toBeVisible()
 		// Footer entry: Documentation (pinned, always visible).
 		await expect(nav.getByText(/Documentation/i).first()).toBeVisible()
 		// Lock vault lives in the settings foldout (section: "settings"); expand
 		// it so the doriath-owned lock route becomes visible.
 		await expandSettingsFoldout(page)
-		await expect(nav.locator('a[href="/apps/doriath/#/lock"]').first()).toBeVisible()
+		await expect(nav.locator('a[href$="#/lock"]').first()).toBeVisible()
 
 		assertNoDoriathErrors(errors)
 	})
 
-	test('clicking the Lock vault nav entry keeps the locked user on the lock gate', async ({ page }) => {
+	test('clicking the Lock vault nav entry keeps the locked user on the lock gate', async ({
+		page,
+	}) => {
 		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 
@@ -67,7 +76,7 @@ test.describe('App navigation — manifest menu', () => {
 		// settings foldout — expand it, then clicking the entry is a safe in-app
 		// navigation that stays on the lock gate.
 		await expandSettingsFoldout(page)
-		const lockEntry = appNav(page).locator('a[href="/apps/doriath/#/lock"]').first()
+		const lockEntry = appNav(page).locator('a[href$="#/lock"]').first()
 		await expect(lockEntry).toBeVisible()
 		await lockEntry.evaluate((el: HTMLElement) => el.click())
 

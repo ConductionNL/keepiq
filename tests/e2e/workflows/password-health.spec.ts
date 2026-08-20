@@ -23,10 +23,18 @@
  * secret to analyse.
  */
 import { test, expect } from '@playwright/test'
-import { APP_BASE, DEV_MASTER_PASSWORD, gotoLockSettled, gotoVaultRoute, unlockVault } from './_workflow-helpers'
+import {
+	APP_BASE,
+	DEV_MASTER_PASSWORD,
+	gotoLockSettled,
+	gotoVaultRoute,
+	unlockVault,
+} from './_workflow-helpers'
 
 test.describe('password health', () => {
-	test('the secrets list shows a strength badge after unlock', async ({ page }) => {
+	test('the secrets list shows a strength badge after unlock', async ({
+		page,
+	}) => {
 		// @e2e password-health::weak-password-badged
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
@@ -35,13 +43,17 @@ test.describe('password health', () => {
 
 		// At least one secret renders; once the post-unlock health pass runs a
 		// strength badge appears on a password-bearing secret.
-		const firstSecret = page.locator('[data-testid="secret-list-item"], .secret-list-item').first()
+		const firstSecret = page
+			.locator('[data-testid="secret-list-item"], .secret-list-item')
+			.first()
 		await expect(firstSecret).toBeVisible({ timeout: 20_000 })
 		const badge = page.locator('[data-testid^="strength-badge-"]').first()
 		await expect(badge).toBeVisible({ timeout: 20_000 })
 	})
 
-	test('the health report lists categories and deep-links to a secret', async ({ page }) => {
+	test('the health report lists categories and deep-links to a secret', async ({
+		page,
+	}) => {
 		// @e2e password-health::report-lists-findings-with-deep-links
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
@@ -52,20 +64,24 @@ test.describe('password health', () => {
 		await expect(report).toBeVisible({ timeout: 20_000 })
 
 		// The score renders once analysis settles.
-		await expect(page.locator('[data-testid="health-score"]')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('[data-testid="health-score"]')).toBeVisible({
+			timeout: 20_000,
+		})
 
 		// The weak-passwords category section is present.
 		await expect(page.locator('[data-testid="category-weak"]')).toBeVisible()
 
 		// A finding (if any) deep-links to the secret detail.
 		const finding = page.locator('[data-testid^="finding-"]').first()
-		if (await finding.count() > 0) {
+		if ((await finding.count()) > 0) {
 			await finding.click()
 			await expect(page).toHaveURL(/\/secrets\//, { timeout: 20_000 })
 		}
 	})
 
-	test('a locked vault exposes no health data (router gates the dashboard)', async ({ page }) => {
+	test('a locked vault exposes no health data (router gates the dashboard)', async ({
+		page,
+	}) => {
 		// @e2e password-health::locked-vault-shows-no-health-data
 		// Do NOT unlock. A fresh load of the dashboard route while locked is
 		// redirected to the lock gate by the zero-knowledge router guard (the same
@@ -76,7 +92,9 @@ test.describe('password health', () => {
 
 		// No health data leaks while locked: no strength badges, no dashboard card.
 		await expect(page.locator('[data-testid^="strength-badge-"]')).toHaveCount(0)
-		await expect(page.locator('[data-testid="health-card-unlocked"]')).toHaveCount(0)
+		await expect(
+			page.locator('[data-testid="health-card-unlocked"]'),
+		).toHaveCount(0)
 	})
 
 	test('breach opt-in is absent when the admin gate is off', async ({ page }) => {
@@ -91,7 +109,9 @@ test.describe('password health', () => {
 		await gotoLockSettled(page)
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'password-health')
-		await expect(page.locator('[data-testid="health-report"]')).toBeVisible({ timeout: 20_000 })
+		await expect(page.locator('[data-testid="health-report"]')).toBeVisible({
+			timeout: 20_000,
+		})
 
 		// With the default-off admin gate, the opt-in control is not rendered and
 		// no breach proxy request is made.

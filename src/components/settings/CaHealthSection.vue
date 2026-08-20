@@ -11,21 +11,65 @@
 			</div>
 
 			<template v-if="caStatus && caStatus.root">
-				<p>{{ t('doriath', 'Root expires') }}: {{ caStatus.root.expiresAt }}</p>
-				<p>{{ t('doriath', 'Intermediate expires') }}: {{ caStatus.intermediate?.expiresAt }}</p>
+				<p>
+					{{ t('doriath', 'Root expires') }}: {{ caStatus.root.expiresAt }}
+				</p>
+				<p>
+					{{ t('doriath', 'Intermediate expires') }}:
+					{{ caStatus.intermediate?.expiresAt }}
+				</p>
 			</template>
+
+			<ul
+				v-if="caStatus?.issued"
+				class="ca-health__issued"
+				data-testid="ca-issued-counts">
+				<li>
+					{{
+						t('doriath', 'Active user vault certificates: {n}', {
+							n: caStatus.issued.activeUserSuites,
+						})
+					}}
+				</li>
+				<li>
+					{{
+						t('doriath', 'Active application certificates: {n}', {
+							n: caStatus.issued.activeApplicationSuites,
+						})
+					}}
+				</li>
+				<li>
+					{{
+						t('doriath', 'Stored certificate secrets: {n}', {
+							n: caStatus.issued.storedCertificates,
+						})
+					}}
+				</li>
+				<li>
+					{{
+						t(
+							'doriath',
+							'Stored certificates expiring within 30 days: {n}',
+							{ n: caStatus.issued.storedExpiringSoon },
+						)
+					}}
+				</li>
+			</ul>
 
 			<NcButton
 				v-if="caStatus?.status === 'not_configured'"
-				type="primary"
+				variant="primary"
 				:disabled="loading"
 				@click="retryBootstrap">
 				{{ t('doriath', 'Retry bootstrap') }}
 			</NcButton>
 
 			<NcButton
-				v-if="caStatus?.status === 'healthy' || caStatus?.status === 'expiring_soon'"
-				type="secondary"
+				v-if="
+					caStatus?.status === 'healthy'
+					|| caStatus?.status === 'expiring_soon'
+				"
+				variant="secondary"
 				:disabled="loading"
 				@click="forceRenewIntermediate">
 				{{ t('doriath', 'Force renew intermediate') }}
@@ -35,10 +79,10 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'CaHealthSection',
@@ -67,6 +111,7 @@ export default {
 			}
 			return map[this.caStatus?.status] || 'grey'
 		},
+
 		/**
 		 * Map CA status to a translated, human-readable label.
 		 *
@@ -95,9 +140,12 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-8
 		 */
 		async fetchStatus() {
-			const response = await axios.get(generateUrl('/apps/doriath/api/v1/ca/status'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/v1/ca/status'),
+			)
 			this.caStatus = response.data
 		},
+
 		/**
 		 * Admin action: retry a failed CA bootstrap, then refresh status.
 		 *
@@ -109,6 +157,7 @@ export default {
 			await this.fetchStatus()
 			this.loading = false
 		},
+
 		/**
 		 * Admin action: force-renew the intermediate certificate, then refresh status.
 		 *
@@ -116,7 +165,9 @@ export default {
 		 */
 		async forceRenewIntermediate() {
 			this.loading = true
-			await axios.post(generateUrl('/apps/doriath/api/v1/ca/renew-intermediate'))
+			await axios.post(
+				generateUrl('/apps/doriath/api/v1/ca/renew-intermediate'),
+			)
 			await this.fetchStatus()
 			this.loading = false
 		},
@@ -131,14 +182,27 @@ export default {
 	gap: 0.5rem;
 	margin-bottom: 0.5rem;
 }
+
 .ca-health__indicator {
 	width: 12px;
 	height: 12px;
 	border-radius: 50%;
 	display: inline-block;
 }
-.ca-health__indicator--green { background: var(--color-success); }
-.ca-health__indicator--yellow { background: var(--color-warning); }
-.ca-health__indicator--red { background: var(--color-error); }
-.ca-health__indicator--grey { background: var(--color-text-lighter); }
+
+.ca-health__indicator--green {
+	background: var(--color-success-text);
+}
+
+.ca-health__indicator--yellow {
+	background: var(--color-warning-text);
+}
+
+.ca-health__indicator--red {
+	background: var(--color-error-text);
+}
+
+.ca-health__indicator--grey {
+	background: var(--color-text-lighter);
+}
 </style>

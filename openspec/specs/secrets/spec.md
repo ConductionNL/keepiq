@@ -4,6 +4,8 @@
 
 **OpenSpec changes:**
 - `implement-secrets` (2026-03-31) — Full implementation: Secret/Folder/SecretType CRUD, search, unified search, list/pagination, favicon, clipboard
+- `application-secret-delete` (2026-07-06) — In-process-only application-vault seam for same-instance trusted consumers (OpenRegister `credential-doriath-leaf`): `SecretService::deleteByApplication` (own-vault scoped, idempotent silent no-op, `secret.deleted` audit with application actor) + `SecretService::getByNameForApplication` (own-vault read-by-name, ciphertext intact, null on absent/cross-vault/ambiguous with no existence oracle, `application.secret_retrieved` audit parity with the machine read path); machine HTTP surface keeps its no-DELETE stance (canonical home is this spec, not `secret-store-api`, because it owns the SecretService lifecycle while store-api owns only the HTTP contract)
+- `request-first-secret-requests` (2026-08-18) — States the keyless exception the secret-requests capability depends on: a Secret MAY have an empty `key` ONLY while a pending SecretRequest targets it, as an explicit creation-time opt-in that is never the default, so the placeholder that spec mandates stops contradicting the key requirement here
 
 ## Purpose
 
@@ -70,9 +72,7 @@ Folders are owned per user or application and form a tree via `parent_id`. Folde
 | `migration_error` | text | No | Set when re-encryption fails during compromise recovery; null on success. Cleared on successful retry. |
 | `created_at` | datetime | No | |
 | `updated_at` | datetime | No | |
-
 ## Requirements
-
 ### Requirement: Create Secret
 The system MUST allow an authenticated user to create a secret with at minimum a name and a key value.
 
@@ -150,8 +150,62 @@ Secrets associated with a revoked suite become accessible again automatically on
 - WHEN the user requests the secret with their master password in session
 - THEN the system MUST decrypt and return all fields normally
 
+### Requirement: Possibly-Compromised Flag Lifecycle
+
+The system MUST raise, render and clear the `possibly_compromised_at` flag as set out below. The field is already defined in this spec's data model as "Set during compromise recovery migration; null if not compromised. Signals the user should rotate this secret's value.", and exists on `doriath_secrets` only; what follows fixes its behaviour, which is currently unspecified and unimplemented — nothing in the system ever sets the flag, leaving every consumer of it permanently inert.
+
+**Raise.** The system MUST set `possibly_compromised_at` on every secret migrated by a compromise-recovery migration, at the moment that secret's re-encrypted value is committed. The flag MUST be raised for the migrated row regardless of whether other rows in the same migration failed, and MUST NOT be raised for rows the migration did not touch. Raising it MUST be idempotent: a re-run or a retry MUST NOT overwrite an already-set timestamp.
+
+**Render.** A secret carrying `possibly_compromised_at` MUST be surfaced as a warning that is hard to ignore — visible on the secret itself and in the vault-wide health surface, not only in a report the user must go looking for. The warning MUST say that the stored value should be considered exposed and replaced at its source, and MUST NOT be dismissible in a way that hides it while the flag is still set. The flag is plaintext metadata, not ciphertext, so rendering it requires no decryption and MUST work whether or not the vault is unlocked.
+
+**Clear.** The flag MUST be cleared exactly when the secret's `key` ciphertext is written with a value different from the stored one, whoever writes it. Binding the rule to the write rather than to the writer is deliberate: any future path that replaces the value inherits the clearing without needing its own rule, and no path can replace a value while leaving the warning standing.
+
+It MUST NOT be cleared by a rename, a folder move, a type change, a metadata edit, a share operation, or by the migration itself. It MUST NOT be cleared by a write that re-submits the ciphertext already stored — a client that echoes the whole record back on every save must not silence the warning without the value having changed. Clearing a source secret's flag MUST propagate to shared copies through the existing sync-on-update path.
+
+Note for implementers: secret-request **fulfilment** is expected to be such a write, but currently is not one. `SecretRequestService::fill()` flips the request to `fulfilled` and notifies the requester without ever writing the submitted blobs to the linked Secret row, so there is no key write to clear the flag on — and, more seriously, the filled-in values are discarded. That is a defect in the secret-requests capability rather than in this requirement; the rule above applies unchanged the moment fulfilment writes the value.
+
+#### Scenario: Every migrated secret is flagged
+
+@e2e exclude Flag-raising is asserted on the persisted row at the moment of the re-encryption write; covered by PHPUnit on the re-encryption endpoint and unit tests of the migration driver.
+- **GIVEN** a compromise-recovery migration processing a user's secrets
+- **WHEN** a secret's re-encrypted value is committed
+- **THEN** that secret's `possibly_compromised_at` MUST be set
+- **AND** a secret whose re-encryption failed MUST NOT be flagged
+
+#### Scenario: Flag raising is idempotent
+
+@e2e exclude Idempotency of a timestamp write has no DOM surface; covered by PHPUnit on the re-encryption endpoint.
+- **GIVEN** a secret already carrying a `possibly_compromised_at` timestamp
+- **WHEN** it is processed again by a retry or a subsequent migration
+- **THEN** the existing timestamp MUST be preserved rather than overwritten
+
+#### Scenario: A flagged secret warns the user prominently
+
+- **GIVEN** a secret carrying `possibly_compromised_at`
+- **WHEN** the user views their vault and opens that secret
+- **THEN** a warning MUST be shown on the secret and reflected in the vault health surface, stating that the value should be considered exposed and replaced at its source
+- **AND** the warning MUST NOT be dismissible while the flag is still set
+
+#### Scenario: Metadata edits do not clear the flag
+
+@e2e exclude Distinguishing a metadata write from a value write is a service-layer assertion on the persisted row; covered by PHPUnit on the secret-update path.
+- **GIVEN** a secret carrying `possibly_compromised_at`
+- **WHEN** the owner renames it, moves it to another folder, or shares it
+- **THEN** `possibly_compromised_at` MUST remain set
+
+#### Scenario: Replacing the value clears the flag
+
+@e2e exclude Clearing is asserted on the persisted row and on shared copies after sync-on-update; covered by PHPUnit on the secret-update and share-sync paths.
+- **GIVEN** a secret carrying `possibly_compromised_at`
+- **WHEN** any path writes a `key` ciphertext different from the stored one
+- **THEN** `possibly_compromised_at` MUST be cleared on that secret and on every shared copy of it
+- **WHEN** a write re-submits the ciphertext already stored, alongside a rename
+- **THEN** `possibly_compromised_at` MUST remain set
+
 ### Requirement: Secret Types
 Every secret MUST have a type. The type is a UI hint only — it drives how the UI labels and presents fields but does not affect server-side validation or the underlying data model. If no type is specified at creation, the `login` system type MUST be used as default.
+
+There are **seven** built-in system types: `login`, `api_key`, `ssh_key`, `certificate`, `note`, `database`, and `totp` (labelled "Authenticator (TOTP)"). The `totp` type marks a secret whose encrypted `key` field holds a TOTP seed — an `otpauth://totp/...` URI (RFC 6238 / Key Uri Format) or a bare base32 secret — stored as ciphertext exactly like any other secret value; it drives the UI to render a client-side one-time-code generator (see the "Client-Side TOTP Code Generation" requirement). Introducing the `totp` type MUST NOT add a database column or migration: the seed lives in the existing `key` blob, so a `totp` secret is indistinguishable from any other secret to the server.
 
 System types are built-in and cannot be modified or deleted. Users may create their own types (visible only to them). Administrators may create global types visible to all users on the instance.
 
@@ -164,6 +218,19 @@ System types are built-in and cannot be modified or deleted. Users may create th
 - GIVEN a user creates a secret without specifying a type
 - WHEN the secret is stored
 - THEN the secret MUST default to the `login` system type
+
+#### Scenario: TOTP is a seeded system type
+- GIVEN the app's secret-type seeding has run
+- WHEN the system secret types are listed
+- THEN `totp` ("Authenticator (TOTP)") MUST be present as a system type alongside the other six
+- AND it MUST be a system type that cannot be modified or deleted
+
+#### Scenario: TOTP secret stores its seed as ciphertext in the existing key field
+- GIVEN a user creates a secret of type `totp` with an `otpauth://totp` seed
+- WHEN the secret is stored
+- THEN the seed MUST be persisted in the existing encrypted `key` field as ciphertext
+- AND no new database column MUST be introduced for the seed
+- AND the server MUST NOT be able to distinguish the `totp` secret's ciphertext from any other secret's `key`
 
 #### Scenario: User creates custom type
 - GIVEN a user creates a SecretType with scope `user`
@@ -313,6 +380,8 @@ Received shares MUST be included in search results and treated identically to ow
 
 Search requires the master password to be in session (the user must be inside the app).
 
+The fuzzy-match scan (SQL substring pre-filter plus in-memory Levenshtein post-filter) MUST be bounded per request — it MUST NOT load or Levenshtein-compare a user's entire secret set regardless of vault size. The scan MUST stop once either the requested result page is filled with enough margin to sort correctly, or a documented candidate ceiling is reached, whichever comes first.
+
 #### Scenario: Search by name
 - GIVEN a user has their master password in session
 - WHEN they search for "Githb"
@@ -327,6 +396,12 @@ Search requires the master password to be in session (the user must be inside th
 - GIVEN a user searches for a string with no similarity to any name or url
 - WHEN the query is processed
 - THEN the system MUST return an empty result set
+
+#### Scenario: Search scan is bounded regardless of vault size
+- GIVEN a user's vault contains more secrets than the documented candidate ceiling
+- WHEN they perform a search
+- THEN the system MUST NOT issue a mapper query whose limit equals the user's total secret count
+- AND the system MUST still return matches found within the bounded scan without a request timeout or unbounded memory growth
 
 ### Requirement: Nextcloud Unified Search Integration
 The system MUST register a Nextcloud search provider (`OCP\Search\IProvider`) so that secrets are discoverable via the Nextcloud unified search (Ctrl+F / search bar).
@@ -349,6 +424,72 @@ The lock screen MUST support a return URL parameter so the post-unlock redirect 
 - WHEN they click a secret in the Nextcloud unified search results
 - THEN they MUST be redirected to the Doriath lock screen
 - AND after entering their master password they MUST be redirected to the intended secret
+
+### Requirement: Client-Side TOTP Code Generation
+The system MUST generate the current TOTP one-time code for a secret of type `totp` entirely in the browser, from the decrypted seed, while the vault is unlocked (the owner's `CryptoKey` is in session per the encryption-suites Session Mechanism requirement). The plaintext seed, any HMAC key derived from it, and the generated code MUST NEVER be transmitted to the server or persisted in `localStorage`, `sessionStorage`, IndexedDB, or any other storage. When the vault locks (manual lock, session timeout, all tabs closed), all TOTP state (seeds, derived keys, codes, timers) MUST be discarded — matching the password-health no-leak contract.
+
+The generator MUST parse an `otpauth://totp/...` URI to obtain the base32 secret, `algorithm` (SHA1 default, SHA256, or SHA512), `digits` (6 default or 8), and `period` (30 seconds default), and MUST also accept a bare base32 secret treated with those defaults. It MUST compute the code per RFC 6238 (HMAC over the time counter, RFC 4226 dynamic truncation) using WebCrypto, display the code with a live countdown to the next time window, and offer copy-to-clipboard.
+
+A `totp` secret whose decrypted `key` is not a parseable `otpauth://totp` URI or bare base32 secret MUST display an explicit invalid-seed state and MUST NOT display a code — the system MUST NEVER show a fabricated or best-guess code.
+
+TOTP seeds MUST be excluded from password-health strength, reuse, and breach analysis (high-entropy machine material, not a password).
+
+#### Scenario: Current code is generated in the browser
+@e2e exclude In-memory WebCrypto computation over the decrypted vault — asserting the RFC 6238 code value and that no HTTP request or browser-storage write carries the seed/HMAC-key/code is a wire-shape and cryptographic-vector assertion, not a DOM flow; covered by vitest (RFC 6238 published test vectors + no-leak request/storage guard).
+- **GIVEN** the vault is unlocked and a `totp` secret holds a known `otpauth://totp` seed
+- **WHEN** the TOTP generator computes the code for a fixed timestamp matching an RFC 6238 test vector
+- **THEN** it MUST produce the vector's expected code
+- **AND** no HTTP request and no browser-storage write issued by the generator MUST contain the seed, a derived HMAC key, or the code
+
+#### Scenario: Locking the vault discards TOTP state
+@e2e exclude Memory/timer-lifecycle contract — asserting seeds, derived keys, codes, and countdown timers are dropped is not DOM-observable; covered by vitest (TOTP store reset on lock hook).
+- **GIVEN** a `totp` secret's code is being displayed with a running countdown
+- **WHEN** the user locks the vault
+- **THEN** all seeds, derived keys, generated codes, and countdown timers MUST be discarded from memory
+
+#### Scenario: Invalid seed shows an error, never a fabricated code
+@e2e exclude Parser contract over decrypted in-memory value — asserting the invalid-seed branch renders no code is covered by vitest (parser + component test with a malformed seed).
+- **GIVEN** a `totp` secret whose decrypted `key` is not a valid `otpauth://totp` URI or base32 secret
+- **WHEN** the secret is viewed with the vault unlocked
+- **THEN** the UI MUST show an explicit "not a valid authenticator secret" state
+- **AND** it MUST NOT display any one-time code
+
+#### Scenario: TOTP seed is excluded from password-health analysis
+@e2e exclude Engine-guard contract — asserting `totp`-typed secrets are skipped by strength/reuse/breach analysis is covered by vitest (health engine excludes totp type).
+- **GIVEN** the vault contains a `totp` secret and the password-health analysis runs
+- **WHEN** the health engine processes the vault
+- **THEN** the `totp` secret's seed MUST NOT be scored for strength, counted for reuse, or breach-checked
+
+### Requirement: Unfilled Request Placeholder
+
+A Secret MUST normally carry a value: creating one with an empty `key` MUST be refused. A Secret with neither a value nor a reason to be empty is litter, and the requirement exists so that stays true.
+
+The single exception is the placeholder a secret request writes into. A Secret MAY have an empty `key` only while a pending `SecretRequest` targets it. The secret-requests capability requires the system to create exactly such a placeholder for a fresh request (`a placeholder with no key value`), so without this exception stated here, that requirement and this one contradict each other — which is how the implementation came to refuse the placeholder the other spec mandates.
+
+The exception MUST be an explicit opt-in at creation, asserted by the caller creating the placeholder, and MUST NOT be the default. A caller that does not ask for it MUST still be refused an empty `key`. The system MUST NOT infer the exception by looking for a pending request at creation time: the caller already knows its own intent, and the lookup would couple secret creation to the request store.
+
+Cleanup is the other half of the invariant and is already required by the secret-requests capability: revoking a request MUST delete the unfilled Secret it created.
+
+Known limitation, stated rather than implied: an EXPIRED request remains `pending` — expiry stops submissions but does not revoke — so its placeholder persists as a permanently empty Secret until the request is revoked. Whether expiry should auto-revoke is a change to the Optional Expiry requirement and is out of scope here.
+
+#### Scenario: An ordinary secret still requires a value
+- **WHEN** a Secret is created without a `key` and without asserting the placeholder exception
+- **THEN** the system MUST refuse it
+
+#### Scenario: A request placeholder may be created without a value
+- **GIVEN** a fresh secret request is being created
+- **WHEN** the system creates the Secret the request will write into, asserting the placeholder exception
+- **THEN** the Secret MUST be created with an empty `key`
+- **AND** it MUST be owned by the requester and linked to their active EncryptionSuite
+
+#### Scenario: A name is still required for a placeholder
+- **WHEN** a placeholder is created with an empty `key` and no name
+- **THEN** the system MUST refuse it, because a nameless empty Secret cannot be identified in a vault
+
+#### Scenario: Revoking the request removes the placeholder
+- **GIVEN** a pending request that created its own unfilled Secret
+- **WHEN** the request is revoked
+- **THEN** the unfilled Secret MUST be deleted, so no keyless Secret outlives the request that justified it
 
 ## User Stories
 

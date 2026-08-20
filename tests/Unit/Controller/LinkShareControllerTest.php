@@ -38,230 +38,220 @@ use RuntimeException;
 /**
  * Tests for LinkShareController.
  */
-class LinkShareControllerTest extends TestCase
-{
-    /**
-     * The controller under test.
-     *
-     * @var LinkShareController
-     */
-    private LinkShareController $controller;
+class LinkShareControllerTest extends TestCase {
 
-    /**
-     * The mocked link share service.
-     *
-     * @var LinkShareService&MockObject
-     */
-    private LinkShareService&MockObject $linkShareService;
+	/**
+	 * The controller under test.
+	 *
+	 * @var LinkShareController
+	 */
+	private LinkShareController $controller;
 
-    /**
-     * The mocked suite service.
-     *
-     * @var EncryptionSuiteService&MockObject
-     */
-    private EncryptionSuiteService&MockObject $suiteService;
+	/**
+	 * The mocked link share service.
+	 *
+	 * @var LinkShareService&MockObject
+	 */
+	private LinkShareService&MockObject $linkShareService;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * The mocked suite service.
+	 *
+	 * @var EncryptionSuiteService&MockObject
+	 */
+	private EncryptionSuiteService&MockObject $suiteService;
 
-        $request                = $this->createMock(originalClassName: IRequest::class);
-        $this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
-        $this->suiteService     = $this->createMock(originalClassName: EncryptionSuiteService::class);
-        $urlGenerator           = $this->createMock(originalClassName: IURLGenerator::class);
-        $urlGenerator->method('linkToRoute')->willReturn('/apps/doriath/');
-        $urlGenerator->method('getAbsoluteURL')->willReturnCallback(
-            static fn (string $path): string => 'https://cloud.example.com'.$path
-        );
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $userSession = $this->createMock(originalClassName: IUserSession::class);
-        $user        = $this->createMock(originalClassName: IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $userSession->method('getUser')->willReturn($user);
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
+		$this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
+		$urlGenerator = $this->createMock(originalClassName: IURLGenerator::class);
+		$urlGenerator->method('linkToRoute')->willReturn('/apps/doriath/');
+		$urlGenerator->method('getAbsoluteURL')->willReturnCallback(
+			static fn (string $path): string => 'https://cloud.example.com' . $path
+		);
 
-        $this->controller = new LinkShareController(
-            request: $request,
-            linkShareService: $this->linkShareService,
-            suiteService: $this->suiteService,
-            userSession: $userSession,
-            urlGenerator: $urlGenerator,
-        );
-    }
+		$userSession = $this->createMock(originalClassName: IUserSession::class);
+		$user = $this->createMock(originalClassName: IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$userSession->method('getUser')->willReturn($user);
 
-    /**
-     * Build a LinkShare entity for assertions.
-     *
-     * @return LinkShare
-     */
-    private function makeShare(): LinkShare
-    {
-        $share = new LinkShare();
-        $share->setId('ls-1');
-        $share->setSecretId('secret-1');
-        $share->setToken('abcd1234');
-        $share->setEncryptedSecretSnapshot('blob');
-        $share->setArgon2idSalt('salt');
-        $share->setEncryptionSuiteId('suite-1');
-        $share->setUsageLimit(3);
-        $share->setUsageCount(0);
-        $share->setCreatedBy('alice');
-        $share->setCreatedAt(new DateTime());
+		$this->controller = new LinkShareController(
+			request: $request,
+			linkShareService: $this->linkShareService,
+			suiteService: $this->suiteService,
+			userSession: $userSession,
+			urlGenerator: $urlGenerator,
+		);
+	}//end setUp()
 
-        return $share;
-    }
+	/**
+	 * Build a LinkShare entity for assertions.
+	 *
+	 * @return LinkShare
+	 */
+	private function makeShare(): LinkShare {
+		$share = new LinkShare();
+		$share->setId('ls-1');
+		$share->setSecretId('secret-1');
+		$share->setToken('abcd1234');
+		$share->setEncryptedSecretSnapshot('blob');
+		$share->setArgon2idSalt('salt');
+		$share->setEncryptionSuiteId('suite-1');
+		$share->setUsageLimit(3);
+		$share->setUsageCount(0);
+		$share->setCreatedBy('alice');
+		$share->setCreatedAt(new DateTime());
 
-    /**
-     * Build an active EncryptionSuite for the owner.
-     *
-     * @return EncryptionSuite
-     */
-    private function makeSuite(): EncryptionSuite
-    {
-        $suite = new EncryptionSuite();
-        $suite->setId('suite-1');
-        $suite->setOwnerType('user');
-        $suite->setOwnerId('alice');
-        $suite->setStatus('active');
+		return $share;
+	}//end makeShare()
 
-        return $suite;
-    }
+	/**
+	 * Build an active EncryptionSuite for the owner.
+	 *
+	 * @return EncryptionSuite
+	 */
+	private function makeSuite(): EncryptionSuite {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$suite->setStatus('active');
 
-    /**
-     * Test index returns metadata without the blob.
-     *
-     * @return void
-     */
-    public function testIndexReturnsShares(): void
-    {
-        $this->linkShareService->method('listBySecret')
-            ->with('secret-1', 'alice')
-            ->willReturn([$this->makeShare()]);
+		return $suite;
+	}//end makeSuite()
 
-        $response = $this->controller->index('secret-1');
-        $data     = $response->getData();
+	/**
+	 * Test index returns metadata without the blob.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsShares(): void {
+		$this->linkShareService->method('listBySecret')
+			->with('secret-1', 'alice')
+			->willReturn([$this->makeShare()]);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertCount(1, $data);
-        $this->assertArrayNotHasKey('encryptedSecretSnapshot', $data[0]);
-        $this->assertArrayNotHasKey('argon2idSalt', $data[0]);
-    }
+		$response = $this->controller->index('secret-1');
+		$data = $response->getData();
 
-    /**
-     * Test create returns 201 with token and link URL, no blob echoed.
-     *
-     * @return void
-     */
-    public function testCreateReturnsCreatedWithLinkUrl(): void
-    {
-        $this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
-        $this->linkShareService->method('create')->willReturn($this->makeShare());
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertCount(1, $data);
+		$this->assertArrayNotHasKey('encryptedSecretSnapshot', $data[0]);
+		$this->assertArrayNotHasKey('argon2idSalt', $data[0]);
+	}//end testIndexReturnsShares()
 
-        $response = $this->controller->create(
-            secretId: 'secret-1',
-            encryptedSecretSnapshot: 'blob',
-            argon2idSalt: 'salt',
-            usageLimit: 3,
-            expiresAt: null
-        );
-        $data = $response->getData();
+	/**
+	 * Test create returns 201 with token and link URL, no blob echoed.
+	 *
+	 * @return void
+	 */
+	public function testCreateReturnsCreatedWithLinkUrl(): void {
+		$this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
+		$this->linkShareService->method('create')->willReturn($this->makeShare());
 
-        $this->assertSame(Http::STATUS_CREATED, $response->getStatus());
-        $this->assertSame('abcd1234', $data['token']);
-        $this->assertArrayHasKey('linkUrl', $data);
-        $this->assertStringContainsString('#/share/link/abcd1234', $data['linkUrl']);
-        $this->assertArrayNotHasKey('encryptedSecretSnapshot', $data);
-    }
+		$response = $this->controller->create(
+			secretId: 'secret-1',
+			encryptedSecretSnapshot: 'blob',
+			argon2idSalt: 'salt',
+			usageLimit: 3,
+			expiresAt: null
+		);
+		$data = $response->getData();
 
-    /**
-     * Test create returns 400 when the usage limit is invalid.
-     *
-     * @return void
-     */
-    public function testCreateRejectsInvalidUsageLimit(): void
-    {
-        $this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
-        $this->linkShareService->method('create')
-            ->willThrowException(new InvalidArgumentException('Usage limit must be between 1 and 10'));
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('abcd1234', $data['token']);
+		$this->assertArrayHasKey('linkUrl', $data);
+		$this->assertStringContainsString('#/share/link/abcd1234', $data['linkUrl']);
+		$this->assertArrayNotHasKey('encryptedSecretSnapshot', $data);
+	}//end testCreateReturnsCreatedWithLinkUrl()
 
-        $response = $this->controller->create(
-            secretId: 'secret-1',
-            encryptedSecretSnapshot: 'blob',
-            argon2idSalt: 'salt',
-            usageLimit: 11,
-            expiresAt: null
-        );
+	/**
+	 * Test create returns 400 when the usage limit is invalid.
+	 *
+	 * @return void
+	 */
+	public function testCreateRejectsInvalidUsageLimit(): void {
+		$this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
+		$this->linkShareService->method('create')
+			->willThrowException(new InvalidArgumentException('Usage limit must be between 1 and 10'));
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+		$response = $this->controller->create(
+			secretId: 'secret-1',
+			encryptedSecretSnapshot: 'blob',
+			argon2idSalt: 'salt',
+			usageLimit: 11,
+			expiresAt: null
+		);
 
-    /**
-     * Test create returns 400 when the expiry timestamp is malformed.
-     *
-     * @return void
-     */
-    public function testCreateRejectsInvalidExpiry(): void
-    {
-        $this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+	}//end testCreateRejectsInvalidUsageLimit()
 
-        $response = $this->controller->create(
-            secretId: 'secret-1',
-            encryptedSecretSnapshot: 'blob',
-            argon2idSalt: 'salt',
-            usageLimit: 1,
-            expiresAt: 'not-a-date'
-        );
+	/**
+	 * Test create returns 400 when the expiry timestamp is malformed.
+	 *
+	 * @return void
+	 */
+	public function testCreateRejectsInvalidExpiry(): void {
+		$this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
 
-        $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-    }
+		$response = $this->controller->create(
+			secretId: 'secret-1',
+			encryptedSecretSnapshot: 'blob',
+			argon2idSalt: 'salt',
+			usageLimit: 1,
+			expiresAt: 'not-a-date'
+		);
 
-    /**
-     * Test destroy returns 200 on a successful revoke.
-     *
-     * @return void
-     */
-    public function testDestroySucceeds(): void
-    {
-        $this->linkShareService->expects($this->once())
-            ->method('delete')
-            ->with('ls-1', 'alice');
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+	}//end testCreateRejectsInvalidExpiry()
 
-        $response = $this->controller->destroy('ls-1');
+	/**
+	 * Test destroy returns 200 on a successful revoke.
+	 *
+	 * @return void
+	 */
+	public function testDestroySucceeds(): void {
+		$this->linkShareService->expects($this->once())
+			->method('delete')
+			->with('ls-1', 'alice');
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-    }
+		$response = $this->controller->destroy('ls-1');
 
-    /**
-     * Test destroy returns 403 when the requester is not the owner.
-     *
-     * @return void
-     */
-    public function testDestroyNonOwnerForbidden(): void
-    {
-        $this->linkShareService->method('delete')
-            ->willThrowException(new InvalidArgumentException('Access denied'));
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testDestroySucceeds()
 
-        $response = $this->controller->destroy('ls-1');
+	/**
+	 * Test destroy returns 403 when the requester is not the owner.
+	 *
+	 * @return void
+	 */
+	public function testDestroyNonOwnerForbidden(): void {
+		$this->linkShareService->method('delete')
+			->willThrowException(new InvalidArgumentException('Access denied'));
 
-        $this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-    }
+		$response = $this->controller->destroy('ls-1');
 
-    /**
-     * Test destroy returns 404 when the link share does not exist.
-     *
-     * @return void
-     */
-    public function testDestroyNotFound(): void
-    {
-        $this->linkShareService->method('delete')
-            ->willThrowException(new RuntimeException('Link share not found'));
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testDestroyNonOwnerForbidden()
 
-        $response = $this->controller->destroy('missing');
+	/**
+	 * Test destroy returns 404 when the link share does not exist.
+	 *
+	 * @return void
+	 */
+	public function testDestroyNotFound(): void {
+		$this->linkShareService->method('delete')
+			->willThrowException(new RuntimeException('Link share not found'));
 
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }
-}
+		$response = $this->controller->destroy('missing');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testDestroyNotFound()
+}//end class

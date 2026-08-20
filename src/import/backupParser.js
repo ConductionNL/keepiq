@@ -11,7 +11,7 @@
  * standard duplicate-detection step is applied downstream by the wizard.
  */
 
-import { decryptBackup, BACKUP_FORMAT } from '../export/backup.js'
+import { BACKUP_FORMAT, decryptBackup } from '../export/backup.js'
 import { registerParser } from './parserRegistry.js'
 
 /**
@@ -22,7 +22,7 @@ import { registerParser } from './parserRegistry.js'
  */
 function toRows(payload) {
 	const secrets = (payload && payload.secrets) || []
-	return secrets.map(s => ({
+	return secrets.map((s) => ({
 		name: s.name ?? '',
 		url: s.url ?? null,
 		login: s.login ?? null,

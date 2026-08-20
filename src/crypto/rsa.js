@@ -28,8 +28,11 @@ export async function generateKeyPair() {
 
 	// Export public key as SPKI PEM.
 	const spki = await crypto.subtle.exportKey('spki', keyPair.publicKey)
-	const publicKeyPem = '-----BEGIN PUBLIC KEY-----\n'
-		+ btoa(String.fromCharCode(...new Uint8Array(spki))).match(/.{1,64}/g).join('\n')
+	const publicKeyPem =
+		'-----BEGIN PUBLIC KEY-----\n'
+		+ btoa(String.fromCharCode(...new Uint8Array(spki)))
+			.match(/.{1,64}/g)
+			.join('\n')
 		+ '\n-----END PUBLIC KEY-----'
 
 	return {
@@ -53,7 +56,7 @@ export async function importPrivateKey(pem) {
 		.replace(/-----END RSA PRIVATE KEY-----/, '')
 		.replace(/\s/g, '')
 
-	const binary = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0))
+	const binary = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
 
 	return crypto.subtle.importKey(
 		'pkcs8',
@@ -173,7 +176,7 @@ export async function importPublicKey(pem) {
 		.replace(/-----END CERTIFICATE-----/, '')
 		.replace(/\s/g, '')
 
-	let spki = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0))
+	let spki = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
 	if (isCertificate === true) {
 		spki = extractSpkiFromCertificate(spki)
 	}
@@ -212,11 +215,7 @@ export async function rsaEncrypt(plaintext, publicKey) {
 
 	for (let i = 0; i < chunks.length; i++) {
 		const encrypted = new Uint8Array(
-			await crypto.subtle.encrypt(
-				{ name: 'RSA-OAEP' },
-				publicKey,
-				chunks[i],
-			),
+			await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, chunks[i]),
 		)
 		result.set(encrypted, 4 + i * RSA_BLOCK_SIZE)
 	}
@@ -232,22 +231,39 @@ export async function rsaEncrypt(plaintext, publicKey) {
  * @return {Promise<string>} Decrypted plaintext
  */
 export async function rsaDecrypt(ciphertext, privateKey) {
-	const raw = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0))
+	const raw = Uint8Array.from(atob(ciphertext), (c) => c.charCodeAt(0))
 	const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength)
 	const chunkCount = view.getUint32(0, false)
 
-	let plaintext = ''
-	const decoder = new TextDecoder()
+	// Collect the decrypted chunk bytes and decode ONCE at the end. Decoding
+	// per chunk tears any multi-byte UTF-8 character that straddles a
+	// RSA_CHUNK_SIZE boundary: TextDecoder.decode() without { stream: true }
+	// treats every call as a complete input and emits U+FFFD for the trailing
+	// partial sequence, so 'é' split across two blocks came back as two
+	// replacement characters. Encryption chunks by BYTES, so a boundary lands
+	// mid-character whenever the plaintext is non-ASCII and longer than one
+	// chunk. Compromise-recovery migration is the first code to round-trip
+	// every value in a vault, and a torn decrypt there fails the round-trip
+	// compare forever, leaving the record unmigratable and the migration
+	// unable to reach its completion gate.
+	const parts = []
+	let total = 0
 
 	for (let i = 0; i < chunkCount; i++) {
 		const block = raw.slice(4 + i * RSA_BLOCK_SIZE, 4 + (i + 1) * RSA_BLOCK_SIZE)
-		const decrypted = await crypto.subtle.decrypt(
-			{ name: 'RSA-OAEP' },
-			privateKey,
-			block,
+		const decrypted = new Uint8Array(
+			await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, block),
 		)
-		plaintext += decoder.decode(decrypted)
+		parts.push(decrypted)
+		total += decrypted.length
 	}
 
-	return plaintext
+	const joined = new Uint8Array(total)
+	let offset = 0
+	for (const part of parts) {
+		joined.set(part, offset)
+		offset += part.length
+	}
+
+	return new TextDecoder().decode(joined)
 }

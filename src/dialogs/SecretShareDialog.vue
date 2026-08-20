@@ -12,7 +12,8 @@
   implement-user-sharing backend is unbuilt, so there is nothing to drive yet.
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Share secret')"
+	<NcDialog
+		:name="t('doriath', 'Share secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -24,29 +25,50 @@
 			<!-- One-time reveal of the freshly created link. -->
 			<div v-if="createdUrl" class="share-dialog__reveal">
 				<NcNoteCard type="success">
-					{{ t('doriath', 'Link created. Copy the link and password now — the password is shown only once.') }}
+					{{
+						t(
+							'doriath',
+							'Link created. Copy the link and password now — the password is shown only once.',
+						)
+					}}
 				</NcNoteCard>
 				<div class="share-dialog__row">
-					<span class="share-dialog__label">{{ t('doriath', 'Link') }}</span>
+					<span class="share-dialog__label">{{
+						t('doriath', 'Link')
+					}}</span>
 					<span class="share-dialog__value">{{ createdUrl }}</span>
-					<CopyButton :value="createdUrl" :label="t('doriath', 'Copy link')" />
+					<CopyButton
+						:value="createdUrl"
+						:label="t('doriath', 'Copy link')" />
 				</div>
 				<div class="share-dialog__row">
-					<span class="share-dialog__label">{{ t('doriath', 'Password') }}</span>
-					<span class="share-dialog__value share-dialog__value--mono">{{ createdPassword }}</span>
-					<CopyButton :value="createdPassword" :label="t('doriath', 'Copy password')" />
+					<span class="share-dialog__label">{{
+						t('doriath', 'Password')
+					}}</span>
+					<span class="share-dialog__value share-dialog__value--mono">{{
+						createdPassword
+					}}</span>
+					<CopyButton
+						:value="createdPassword"
+						:label="t('doriath', 'Copy password')" />
 				</div>
 			</div>
 
 			<!-- Create form. -->
 			<div v-else class="share-dialog__create">
 				<p class="share-dialog__intro">
-					{{ t('doriath', 'Create a password-protected link. Anyone with the link and password can view the secret until the usage limit is reached.') }}
+					{{
+						t(
+							'doriath',
+							'Create a password-protected link. Anyone with the link and password can view the secret until the usage limit is reached.',
+						)
+					}}
 				</p>
-				<NcSelect v-model="usageLimit"
+				<NcSelect
+					v-model="usageLimit"
 					:options="usageOptions"
-					:reduce="opt => opt.value"
-					:input-label="t('doriath', 'Usage limit')"
+					:reduce="(opt) => opt.value"
+					:inputLabel="t('doriath', 'Usage limit')"
 					:clearable="false" />
 			</div>
 
@@ -57,13 +79,20 @@
 				<p v-else-if="linkShares.length === 0" class="share-dialog__empty">
 					{{ t('doriath', 'No active link shares.') }}
 				</p>
-				<div v-for="share in linkShares"
+				<div
+					v-for="share in linkShares"
 					:key="share.id"
 					class="share-dialog__share-row">
 					<span class="share-dialog__value">
-						{{ t('doriath', 'Used {used} of {limit}', { used: share.usageCount || 0, limit: share.usageLimit }) }}
+						{{
+							t('doriath', 'Used {used} of {limit}', {
+								used: share.usageCount || 0,
+								limit: share.usageLimit,
+							})
+						}}
 					</span>
-					<NcButton type="tertiary"
+					<NcButton
+						variant="tertiary"
 						:aria-label="t('doriath', 'Revoke')"
 						@click="revoke(share.id)">
 						<template #icon>
@@ -75,7 +104,7 @@
 
 			<!-- Deferred: user-to-user share. -->
 			<div class="share-dialog__user">
-				<NcButton type="secondary" :disabled="true">
+				<NcButton variant="secondary" :disabled="true">
 					<template #icon>
 						<AccountPlus :size="20" />
 					</template>
@@ -85,11 +114,12 @@
 		</div>
 
 		<template #actions>
-			<NcButton type="tertiary" @click="onUpdateOpen(false)">
+			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
 				{{ createdUrl ? t('doriath', 'Done') : t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton v-if="!createdUrl"
-				type="primary"
+			<NcButton
+				v-if="!createdUrl"
+				variant="primary"
 				:disabled="creating"
 				@click="createLink">
 				<template #icon>
@@ -103,13 +133,19 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard, NcSelect } from '@nextcloud/vue'
-import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
+import {
+	NcButton,
+	NcDialog,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+} from '@nextcloud/vue'
 import AccountPlus from 'vue-material-design-icons/AccountPlus.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import CopyButton from '../components/CopyButton.vue'
-import { useSecretStore } from '../store/modules/secret.js'
 import { useLinkShareStore } from '../store/modules/linkShare.js'
+import { useSecretStore } from '../store/modules/secret.js'
 
 /**
  * Create + manage password-protected public link shares for a secret. Emits
@@ -155,6 +191,7 @@ export default {
 		linkShares() {
 			return useLinkShareStore().linkShares
 		},
+
 		usageOptions() {
 			return Array.from({ length: 10 }, (_, i) => ({
 				value: i + 1,
@@ -167,7 +204,7 @@ export default {
 		await this.loadShares()
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		useLinkShareStore().clearCreatedPassword()
 	},
 
@@ -184,7 +221,10 @@ export default {
 			try {
 				await useLinkShareStore().fetchLinkShares(this.secretId)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to load link shares')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to load link shares')
 			} finally {
 				this.loadingShares = false
 			}
@@ -225,12 +265,19 @@ export default {
 					additionalFields: secret.additionalFields || null,
 				}
 				const linkStore = useLinkShareStore()
-				await linkStore.createLinkShare(this.secretId, snapshot, this.usageLimit)
+				await linkStore.createLinkShare(
+					this.secretId,
+					snapshot,
+					this.usageLimit,
+				)
 				this.createdUrl = linkStore.createdLinkUrl
 				this.createdPassword = linkStore.createdPassword
 				this.$emit('saved')
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to create link share')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to create link share')
 			} finally {
 				this.creating = false
 			}
@@ -247,7 +294,10 @@ export default {
 			try {
 				await useLinkShareStore().deleteLinkShare(id)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('doriath', 'Failed to revoke link share')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('doriath', 'Failed to revoke link share')
 			}
 		},
 	},

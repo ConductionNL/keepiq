@@ -13,6 +13,7 @@
 import { chromium, request, type FullConfig } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
+import { resolveBaseUrl } from './base-url'
 
 const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
@@ -20,11 +21,13 @@ const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 	const ctx = await request.newContext()
 	try {
-		const res = await ctx.get(`${baseURL}/status.php`, { failOnStatusCode: false })
+		const res = await ctx.get(`${baseURL}/status.php`, {
+			failOnStatusCode: false,
+		})
 		if (!res.ok()) {
 			throw new Error(
 				`Nextcloud status.php returned ${res.status()} at ${baseURL}. `
-				+ 'Make sure the docker container is running.',
+					+ 'Make sure the docker container is running.',
 			)
 		}
 		const body = await res.json().catch(() => ({}))
@@ -64,9 +67,10 @@ async function cachedSessionValid(baseURL: string): Promise<boolean> {
 }
 
 export default async function globalSetup(config: FullConfig): Promise<void> {
-	const baseURL = (config.projects[0]?.use?.baseURL as string | undefined)
-		?? process.env.NEXTCLOUD_URL
-		?? 'http://localhost:8080'
+	// No localhost:8080 fallback — that is the SHARED dev container, and this
+	// function performs LOGINS.
+	const baseURL =
+		(config.projects[0]?.use?.baseURL as string | undefined) ?? resolveBaseUrl()
 	const username = process.env.NC_ADMIN_USER ?? 'admin'
 	const password = process.env.NC_ADMIN_PASS ?? 'admin'
 
@@ -98,7 +102,10 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 			await userField.fill(username)
 			await page.locator('input[name="password"]').fill(password)
 			await page.locator('button[type="submit"]').first().click()
-			await page.waitForSelector('#header, header.header', { state: 'attached', timeout: 40_000 })
+			await page.waitForSelector('#header, header.header', {
+				state: 'attached',
+				timeout: 40_000,
+			})
 			// Give the redirect a moment to settle, then confirm we left /login.
 			await page.waitForLoadState('domcontentloaded').catch(() => {})
 			if (!/\/login(\?|$|\/)/.test(page.url())) {
@@ -117,8 +124,8 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	if (!loggedIn) {
 		throw new Error(
 			`Login failed after ${MAX_ATTEMPTS} attempts (last: ${String(lastErr)}). `
-			+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin) and that the '
-			+ 'instance is reachable / not brute-force throttled.',
+				+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin) and that the '
+				+ 'instance is reachable / not brute-force throttled.',
 		)
 	}
 

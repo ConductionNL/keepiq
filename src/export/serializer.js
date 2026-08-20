@@ -80,7 +80,7 @@ function collectSubtree(folders, rootIds) {
 			continue
 		}
 		selected.add(id)
-		for (const childId of (childrenOf.get(id) || [])) {
+		for (const childId of childrenOf.get(id) || []) {
 			stack.push(childId)
 		}
 	}
@@ -121,7 +121,8 @@ export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
 			login: secret.login ?? null,
 			password: secret.key ?? null,
 			additionalFields: secret.additionalFields ?? null,
-			folder: secret.folderId != null ? (pathMap.get(secret.folderId) ?? '') : '',
+			folder:
+				secret.folderId != null ? (pathMap.get(secret.folderId) ?? '') : '',
 		})
 	}
 

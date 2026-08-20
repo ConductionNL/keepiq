@@ -1,15 +1,20 @@
 <template>
 	<CnSettingsSection
 		:name="t('doriath', 'Notifications')"
-		:description="t('doriath', 'Choose which Doriath events you receive notifications for')">
+		:description="
+			t('doriath', 'Choose which Doriath events you receive notifications for')
+		">
 		<div class="notification-toggles">
-			<div v-for="toggle in toggles" :key="toggle.key" class="notification-toggles__row">
+			<div
+				v-for="toggle in toggles"
+				:key="toggle.key"
+				class="notification-toggles__row">
 				<label :for="`notify-${toggle.key}`">
 					<input
 						:id="`notify-${toggle.key}`"
 						v-model="prefs[toggle.key]"
 						type="checkbox"
-						@change="save(toggle.key)">
+						@change="save(toggle.key)" />
 					{{ toggle.label }}
 				</label>
 			</div>
@@ -40,10 +45,22 @@ export default {
 	computed: {
 		toggles() {
 			return [
-				{ key: 'notify_shares', label: t('doriath', 'A secret is shared with me') },
-				{ key: 'notify_requests', label: t('doriath', 'A secret request is fulfilled or expires') },
-				{ key: 'notify_group_shares', label: t('doriath', 'A group share affects me') },
-				{ key: 'notify_security', label: t('doriath', 'Security event (compromise, revocation)') },
+				{
+					key: 'notify_shares',
+					label: t('doriath', 'A secret is shared with me'),
+				},
+				{
+					key: 'notify_requests',
+					label: t('doriath', 'A secret request is fulfilled or expires'),
+				},
+				{
+					key: 'notify_group_shares',
+					label: t('doriath', 'A group share affects me'),
+				},
+				{
+					key: 'notify_security',
+					label: t('doriath', 'Security event (compromise, revocation)'),
+				},
 			]
 		},
 	},
@@ -55,10 +72,13 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/doriath/api/settings/user'))
+			const response = await axios.get(
+				generateUrl('/apps/doriath/api/settings/user'),
+			)
 			for (const key of Object.keys(this.prefs)) {
 				if (response.data[key] !== undefined) {
-					this.prefs[key] = response.data[key] === '1' || response.data[key] === true
+					this.prefs[key] =
+						response.data[key] === '1' || response.data[key] === true
 				}
 			}
 		} catch (e) {

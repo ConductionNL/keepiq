@@ -47,91 +47,89 @@ use OCP\IUserSession;
 /**
  * Authenticated batch-create endpoint for client-encrypted import.
  */
-class ImportController extends OCSController
-{
-    /**
-     * HTTP 412 Precondition Failed status code (no active suite).
-     *
-     * @var int
-     */
-    private const STATUS_PRECONDITION_FAILED = 412;
+class ImportController extends OCSController {
+	/**
+	 * HTTP 412 Precondition Failed status code (no active suite).
+	 *
+	 * @var int
+	 */
+	private const STATUS_PRECONDITION_FAILED = 412;
 
-    /**
-     * HTTP 413 Payload Too Large status code (chunk over the cap).
-     *
-     * @var int
-     */
-    private const STATUS_PAYLOAD_TOO_LARGE = 413;
+	/**
+	 * HTTP 413 Payload Too Large status code (chunk over the cap).
+	 *
+	 * @var int
+	 */
+	private const STATUS_PAYLOAD_TOO_LARGE = 413;
 
-    /**
-     * Constructor for ImportController.
-     *
-     * @param IRequest      $request       The request
-     * @param ImportService $importService The import service
-     * @param IUserSession  $userSession   The user session
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private ImportService $importService,
-        private IUserSession $userSession,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+	/**
+	 * Constructor for ImportController.
+	 *
+	 * @param IRequest $request The request
+	 * @param ImportService $importService The import service
+	 * @param IUserSession $userSession The user session
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private ImportService $importService,
+		private IUserSession $userSession,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Commit one chunk of already-encrypted import items.
-     *
-     * Owner is the session user only; the request body carries no owner/user
-     * selector. Validates the chunk size cap, then delegates each item to the
-     * import service and returns per-index results.
-     *
-     * @param array<int,array<string,mixed>> $items The encrypted items
-     *
-     * @NoAdminRequired
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
-     */
-    #[NoAdminRequired]
-    public function batchCreate(?array $items=null): JSONResponse
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Commit one chunk of already-encrypted import items.
+	 *
+	 * Owner is the session user only; the request body carries no owner/user
+	 * selector. Validates the chunk size cap, then delegates each item to the
+	 * import service and returns per-index results.
+	 *
+	 * @param array<int,array<string,mixed>> $items The encrypted items
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+	 */
+	#[NoAdminRequired]
+	public function batchCreate(?array $items = null): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-        if ($items === null || $items === []) {
-            return new JSONResponse(
-                data: ['message' => 'No items supplied'],
-                statusCode: Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($items === null || $items === []) {
+			return new JSONResponse(
+				data: ['message' => 'No items supplied'],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if (count($items) > ImportService::MAX_ITEMS) {
-            return new JSONResponse(
-                data: ['message' => 'Chunk exceeds the maximum of '.ImportService::MAX_ITEMS.' items'],
-                statusCode: self::STATUS_PAYLOAD_TOO_LARGE
-            );
-        }
+		if (count($items) > ImportService::MAX_ITEMS) {
+			return new JSONResponse(
+				data: ['message' => 'Chunk exceeds the maximum of ' . ImportService::MAX_ITEMS . ' items'],
+				statusCode: self::STATUS_PAYLOAD_TOO_LARGE
+			);
+		}
 
-        try {
-            $result = $this->importService->commitChunk(items: $items, userId: $user->getUID());
-        } catch (SuiteBlockedException $e) {
-            return new JSONResponse(
-                data: ['message' => $e->getMessage()],
-                statusCode: self::STATUS_PRECONDITION_FAILED
-            );
-        } catch (InvalidArgumentException $e) {
-            return new JSONResponse(
-                data: ['message' => $e->getMessage()],
-                statusCode: self::STATUS_PAYLOAD_TOO_LARGE
-            );
-        }
+		try {
+			$result = $this->importService->commitChunk(items: $items, userId: $user->getUID());
+		} catch (SuiteBlockedException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage()],
+				statusCode: self::STATUS_PRECONDITION_FAILED
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage()],
+				statusCode: self::STATUS_PAYLOAD_TOO_LARGE
+			);
+		}
 
-        // HTTP 200 even on partial failure — per-index results carry the detail.
-        return new JSONResponse(data: $result);
-    }//end batchCreate()
+		// HTTP 200 even on partial failure — per-index results carry the detail.
+		return new JSONResponse(data: $result);
+	}//end batchCreate()
 }//end class

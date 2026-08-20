@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 
 /**
@@ -161,10 +161,15 @@ export const useApplicationStore = defineStore('application', {
 				this.oneTimePrivateKeyAppId = id
 			}
 
-			this.pendingApplications = this.pendingApplications.filter((a) => a.id !== id)
+			this.pendingApplications = this.pendingApplications.filter(
+				(a) => a.id !== id,
+			)
 			const idx = this.applications.findIndex((a) => a.id === id)
 			if (idx !== -1) {
-				this.applications.splice(idx, 1, { ...this.applications[idx], ...data })
+				this.applications.splice(idx, 1, {
+					...this.applications[idx],
+					...data,
+				})
 			} else if (data.id) {
 				this.applications.push(data)
 			}
@@ -182,7 +187,9 @@ export const useApplicationStore = defineStore('application', {
 				generateUrl(`/apps/doriath/api/v1/applications/${id}/reject`),
 				{},
 			)
-			this.pendingApplications = this.pendingApplications.filter((a) => a.id !== id)
+			this.pendingApplications = this.pendingApplications.filter(
+				(a) => a.id !== id,
+			)
 			this.applications = this.applications.filter((a) => a.id !== id)
 		},
 
@@ -198,7 +205,9 @@ export const useApplicationStore = defineStore('application', {
 				generateUrl(`/apps/doriath/api/v1/applications/${id}`),
 			)
 			this.applications = this.applications.filter((a) => a.id !== id)
-			this.pendingApplications = this.pendingApplications.filter((a) => a.id !== id)
+			this.pendingApplications = this.pendingApplications.filter(
+				(a) => a.id !== id,
+			)
 			if (this.currentApplication?.id === id) {
 				this.currentApplication = null
 			}
@@ -263,13 +272,18 @@ export const useApplicationStore = defineStore('application', {
 				ownerType: 'application',
 				ownerId: applicationId,
 			}
-			if (data.login !== undefined && data.login !== null && data.login !== '') {
+			if (
+				data.login !== undefined
+				&& data.login !== null
+				&& data.login !== ''
+			) {
 				payload.login = await rsaEncrypt(String(data.login), publicKey)
 			}
 			if (data.additionalFields) {
-				const json = typeof data.additionalFields === 'string'
-					? data.additionalFields
-					: JSON.stringify(data.additionalFields)
+				const json =
+					typeof data.additionalFields === 'string'
+						? data.additionalFields
+						: JSON.stringify(data.additionalFields)
 				payload.additionalFields = await rsaEncrypt(json, publicKey)
 			}
 

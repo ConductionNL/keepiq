@@ -1,7 +1,9 @@
 <template>
-	<NcButton :type="buttonType"
+	<NcButton
+		:variant="buttonType"
 		:aria-label="label"
 		:title="label"
+		@pointerdown="prewarm"
 		@click="onCopy">
 		<template #icon>
 			<Check v-if="copied" :size="20" />
@@ -13,8 +15,8 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
-import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Check from 'vue-material-design-icons/Check.vue'
+import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 
 /**
  * A copy-to-clipboard button with a transient confirmation and an
@@ -37,11 +39,13 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		/** An async resolver that returns the value to copy. */
 		resolve: {
 			type: Function,
 			default: null,
 		},
+
 		/** The accessible label for the button. */
 		label: {
 			type: String,
@@ -49,11 +53,13 @@ export default {
 				return t('doriath', 'Copy to clipboard')
 			},
 		},
+
 		/** The NcButton type. */
 		buttonType: {
 			type: String,
 			default: 'tertiary',
 		},
+
 		/** Seconds after which the clipboard is cleared (0 disables clearing). */
 		clearAfter: {
 			type: Number,
@@ -65,6 +71,8 @@ export default {
 		return {
 			copied: false,
 			timer: null,
+			/** @type {string|null} Value pre-resolved on pointerdown (mobile §5.2). */
+			prewarmed: null,
 		}
 	},
 
@@ -78,6 +86,25 @@ export default {
 		t,
 
 		/**
+		 * Pre-resolve the value on pointerdown — this fires within the same user
+		 * gesture as, and just before, the click, so the plaintext is ready by
+		 * the time `onCopy` writes the clipboard synchronously (mobile-pwa §5.2:
+		 * mobile Safari drops a clipboard write that trails a fresh async
+		 * decrypt). No-op when a direct `value` is supplied.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async prewarm() {
+			if (this.resolve && this.prewarmed === null) {
+				try {
+					this.prewarmed = await this.resolve()
+				} catch {
+					// Leave null; onCopy will resolve+surface the error on click.
+				}
+			}
+		},
+
+		/**
 		 * Resolve the value, write it to the clipboard, confirm, and schedule
 		 * the clipboard auto-clear.
 		 *
@@ -86,7 +113,11 @@ export default {
 		async onCopy() {
 			let text = this.value
 			if (this.resolve) {
-				text = await this.resolve()
+				// Prefer a value already resolved by the pointerdown pre-warm so
+				// the clipboard write stays inside the tap gesture (mobile Safari
+				// drops a write that follows a fresh async decrypt, §5.2).
+				text =
+					this.prewarmed !== null ? this.prewarmed : await this.resolve()
 			}
 			await this.writeClipboard(text)
 

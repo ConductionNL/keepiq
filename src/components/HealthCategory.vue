@@ -12,26 +12,51 @@
 <template>
 	<section class="health-category" :data-testid="testid">
 		<h3>{{ title }}</h3>
-		<p v-if="description" class="health-category__description">{{ description }}</p>
+		<p v-if="description" class="health-category__description">
+			{{ description }}
+		</p>
 
 		<p v-if="findings.length === 0" class="health-category__empty">
 			{{ t('doriath', 'No findings in this category.') }}
 		</p>
 
 		<ul v-else class="health-category__list">
-			<li v-for="finding in findings" :key="finding.id" class="health-category__item">
+			<li
+				v-for="finding in findings"
+				:key="finding.id"
+				class="health-category__item">
 				<button
 					type="button"
 					class="health-category__link"
 					:data-testid="`finding-${finding.id}`"
 					@click="$emit('open', finding.id)">
 					<span class="health-category__name">{{ finding.name }}</span>
-					<span v-if="finding.folderPath" class="health-category__path">{{ finding.folderPath }}</span>
-					<span v-if="finding.shareCount > 1" class="health-category__meta">
-						{{ n('doriath', 'shared with %n secret', 'shared with %n secrets', finding.shareCount) }}
+					<span v-if="finding.folderPath" class="health-category__path">{{
+						finding.folderPath
+					}}</span>
+					<span
+						v-if="finding.shareCount > 1"
+						class="health-category__meta">
+						{{
+							n(
+								'doriath',
+								'shared with %n secret',
+								'shared with %n secrets',
+								finding.shareCount,
+							)
+						}}
 					</span>
-					<span v-if="finding.breach && finding.breach.count > 0" class="health-category__meta">
-						{{ n('doriath', 'seen %n time in breaches', 'seen %n times in breaches', finding.breach.count) }}
+					<span
+						v-if="finding.breach && finding.breach.count > 0"
+						class="health-category__meta">
+						{{
+							n(
+								'doriath',
+								'seen %n time in breaches',
+								'seen %n times in breaches',
+								finding.breach.count,
+							)
+						}}
 					</span>
 				</button>
 			</li>
@@ -48,14 +73,17 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		description: {
 			type: String,
 			default: '',
 		},
+
 		findings: {
 			type: Array,
 			default: () => [],
 		},
+
 		testid: {
 			type: String,
 			default: 'health-category',

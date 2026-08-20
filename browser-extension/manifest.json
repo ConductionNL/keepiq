@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Doriath",
+  "version": "0.1.0",
+  "description": "Zero-knowledge autofill for the Doriath secrets manager. The vault is unlocked and every secret decrypted inside the extension — the server only ever ships encrypted blobs.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "clipboardWrite",
+    "idle",
+    "windows"
+  ],
+  "optional_permissions": [
+    "webAuthenticationProxy"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Doriath"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "all_frames": true,
+      "run_at": "document_idle",
+      "js": ["content-script.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inpage-shim.js"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

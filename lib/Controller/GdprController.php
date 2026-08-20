@@ -45,110 +45,107 @@ use OCP\IUserSession;
 /**
  * Controller for GDPR data-subject endpoints.
  */
-class GdprController extends Controller
-{
-    /**
-     * The exact phrase a user must type to confirm account data deletion.
-     *
-     * @var string
-     */
-    public const CONFIRMATION_PHRASE = 'DELETE MY DORIATH DATA';
+class GdprController extends Controller {
+	/**
+	 * The exact phrase a user must type to confirm account data deletion.
+	 *
+	 * @var string
+	 */
+	public const CONFIRMATION_PHRASE = 'DELETE MY DORIATH DATA';
 
-    /**
-     * Constructor for GdprController.
-     *
-     * @param IRequest               $request         The request
-     * @param GdprService            $gdprService     The GDPR metadata service
-     * @param AccountDeletionService $deletionService The deletion-cascade service
-     * @param IUserSession           $userSession     The user session
-     * @param IEventDispatcher       $dispatcher      The event dispatcher
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private GdprService $gdprService,
-        private AccountDeletionService $deletionService,
-        private IUserSession $userSession,
-        private IEventDispatcher $dispatcher,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+	/**
+	 * Constructor for GdprController.
+	 *
+	 * @param IRequest $request The request
+	 * @param GdprService $gdprService The GDPR metadata service
+	 * @param AccountDeletionService $deletionService The deletion-cascade service
+	 * @param IUserSession $userSession The user session
+	 * @param IEventDispatcher $dispatcher The event dispatcher
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private GdprService $gdprService,
+		private AccountDeletionService $deletionService,
+		private IUserSession $userSession,
+		private IEventDispatcher $dispatcher,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Return the session user's server-readable personal-data metadata package.
-     *
-     * Self-scoped: there is no user parameter; the data subject is always the
-     * authenticated session user. The browser merges this with the
-     * client-decrypted vault into the full GDPR export package. Emits
-     * GdprExportPerformedEvent recording whether the client included the vault
-     * half (reported via the includesVault query flag).
-     *
-     * @NoAdminRequired
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
-     */
-    #[NoAdminRequired]
-    public function metadata(): JSONResponse
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Return the session user's server-readable personal-data metadata package.
+	 *
+	 * Self-scoped: there is no user parameter; the data subject is always the
+	 * authenticated session user. The browser merges this with the
+	 * client-decrypted vault into the full GDPR export package. Emits
+	 * GdprExportPerformedEvent recording whether the client included the vault
+	 * half (reported via the includesVault query flag).
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 */
+	#[NoAdminRequired]
+	public function metadata(): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-        $userId   = $user->getUID();
-        $document = $this->gdprService->collectMetadata(userId: $userId);
+		$userId = $user->getUID();
+		$document = $this->gdprService->collectMetadata(userId: $userId);
 
-        $includesVault = filter_var(
-            $this->request->getParam('includesVault', 'false'),
-            FILTER_VALIDATE_BOOLEAN
-        );
+		$includesVault = filter_var(
+			$this->request->getParam('includesVault', 'false'),
+			FILTER_VALIDATE_BOOLEAN
+		);
 
-        $this->dispatcher->dispatchTyped(
-            new GdprExportPerformedEvent(userId: $userId, includesVault: $includesVault)
-        );
+		$this->dispatcher->dispatchTyped(
+			new GdprExportPerformedEvent(userId: $userId, includesVault: $includesVault)
+		);
 
-        return new JSONResponse(data: $document);
-    }//end metadata()
+		return new JSONResponse(data: $document);
+	}//end metadata()
 
-    /**
-     * Delete all of the session user's Doriath data (GDPR Art. 17).
-     *
-     * Gated by the typed confirmation phrase in the request body. The
-     * master-password re-authentication is enforced client-side (proof of
-     * knowledge): the server cannot verify the master password under the
-     * always-E2E model (ADR-003), so it never sees it. Returns the per-entity
-     * DeletionReport counts.
-     *
-     * @NoAdminRequired
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
-     */
-    #[NoAdminRequired]
-    public function deleteAccountData(): JSONResponse
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Delete all of the session user's Doriath data (GDPR Art. 17).
+	 *
+	 * Gated by the typed confirmation phrase in the request body. The
+	 * master-password re-authentication is enforced client-side (proof of
+	 * knowledge): the server cannot verify the master password under the
+	 * always-E2E model (ADR-003), so it never sees it. Returns the per-entity
+	 * DeletionReport counts.
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 */
+	#[NoAdminRequired]
+	public function deleteAccountData(): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
 
-        $confirmation = (string) $this->request->getParam('confirmation', '');
-        if ($confirmation !== self::CONFIRMATION_PHRASE) {
-            return new JSONResponse(
-                data: ['message' => 'Confirmation phrase does not match'],
-                statusCode: Http::STATUS_BAD_REQUEST
-            );
-        }
+		$confirmation = (string)$this->request->getParam('confirmation', '');
+		if ($confirmation !== self::CONFIRMATION_PHRASE) {
+			return new JSONResponse(
+				data: ['message' => 'Confirmation phrase does not match'],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        $report = $this->deletionService->deleteAllFor(
-            userId: $user->getUID(),
-            trigger: 'in-app',
-        );
+		$report = $this->deletionService->deleteAllFor(
+			userId: $user->getUID(),
+			trigger: 'in-app',
+		);
 
-        return new JSONResponse(data: ['deleted' => true, 'report' => $report]);
-    }//end deleteAccountData()
+		return new JSONResponse(data: ['deleted' => true, 'report' => $report]);
+	}//end deleteAccountData()
 }//end class

@@ -16,14 +16,15 @@
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { useSessionStore, onVaultLock } from './session.js'
+import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
-import { analyse, sha256Hex } from '../../health/engine.js'
 import { isPasswordBearing } from '../../health/classify.js'
+import { analyse, sha256Hex } from '../../health/engine.js'
 import { checkValue } from '../../health/hibp.js'
+import { useSecretTypeStore } from './secretType.js'
+import { onVaultLock, useSessionStore } from './session.js'
 
 export const useHealthStore = defineStore('health', {
 	state: () => ({
@@ -44,16 +45,36 @@ export const useHealthStore = defineStore('health', {
 	}),
 
 	getters: {
-		/** @return {Array<object>} Weak findings. */
-		weakFindings: (state) => state.findings.filter((f) => f.flags.includes('weak')),
-		/** @return {Array<object>} Reused findings. */
-		reusedFindings: (state) => state.findings.filter((f) => f.flags.includes('reused')),
-		/** @return {Array<object>} Stale findings. */
-		staleFindings: (state) => state.findings.filter((f) => f.flags.includes('stale')),
-		/** @return {Array<object>} Breached findings. */
-		breachedFindings: (state) => state.findings.filter((f) => f.flags.includes('breached')),
-		/** @return {Array<object>} Possibly-compromised findings. */
-		compromisedFindings: (state) => state.findings.filter((f) => f.flags.includes('compromised')),
+		/**
+		 * @param state
+		 * @return {Array<object>} Weak findings.
+		 */
+		weakFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('weak')),
+		/**
+		 * @param state
+		 * @return {Array<object>} Reused findings.
+		 */
+		reusedFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('reused')),
+		/**
+		 * @param state
+		 * @return {Array<object>} Stale findings.
+		 */
+		staleFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('stale')),
+		/**
+		 * @param state
+		 * @return {Array<object>} Breached findings.
+		 */
+		breachedFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('breached')),
+		/**
+		 * @param state
+		 * @return {Array<object>} Possibly-compromised findings.
+		 */
+		compromisedFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('compromised')),
 		/**
 		 * Map of secretId -> zxcvbn score for the StrengthBadge component.
 		 *
@@ -132,8 +153,34 @@ export const useHealthStore = defineStore('health', {
 		 * @param {object} session The session store (holds the CryptoKey).
 		 * @return {Promise<Array<object>>} Decrypted rows.
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
 		 */
 		async loadDecryptedRows(session) {
+			// Resolve the set of `totp` type ids so authenticator seeds — which
+			// are high-entropy machine material, not passwords — are excluded
+			// from strength / reuse / breach analysis (add-totp-secrets D7).
+			const typeStore = useSecretTypeStore()
+			if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+				try {
+					await typeStore.fetchTypes()
+				} catch {
+					// Non-fatal: without types we simply cannot exclude totp rows.
+				}
+			}
+			const types = Array.isArray(typeStore.types) ? typeStore.types : []
+			// `totp` seeds and `passkey` private keys are high-entropy machine
+			// material — scoring, reuse-matching, or breach-checking them is
+			// meaningless noise (add-totp-secrets D7, passkey-item-type D6).
+			const excludedTypeIds = new Set(
+				types
+					.filter(
+						(type) =>
+							type
+							&& (type.name === 'totp' || type.name === 'passkey'),
+					)
+					.map((type) => type.id),
+			)
+
 			const response = await axios.get(
 				generateUrl('/apps/doriath/api/v1/secrets'),
 				{ params: { limit: 100 } },
@@ -144,9 +191,14 @@ export const useHealthStore = defineStore('health', {
 				if (secret.blocked || !secret.key) {
 					continue
 				}
+				// Skip TOTP and passkey secrets: their material must never be
+				// scored, reuse-matched, or breach-checked (add-totp-secrets
+				// D7, passkey-item-type D6).
+				if (excludedTypeIds.has(secret.typeId)) {
+					continue
+				}
 				let value = ''
 				try {
-					// eslint-disable-next-line no-await-in-loop
 					value = await rsaDecrypt(secret.key, session.cryptoKey)
 				} catch {
 					continue
@@ -181,12 +233,12 @@ export const useHealthStore = defineStore('health', {
 				if (!isPasswordBearing(row.value)) {
 					continue
 				}
-				// eslint-disable-next-line no-await-in-loop
+
 				const digest = await sha256Hex(row.value)
 				if (results.has(digest)) {
 					continue
 				}
-				// eslint-disable-next-line no-await-in-loop
+
 				const verdict = await checkValue(row.value)
 				if (verdict.status === 'unavailable') {
 					anyUnavailable = true
@@ -211,7 +263,9 @@ export const useHealthStore = defineStore('health', {
 				return analyse(rows, options)
 			}
 			if (!this.worker) {
-				this.worker = new Worker(new URL('../../health/worker.js', import.meta.url))
+				this.worker = new Worker(
+					new URL('../../health/worker.js', import.meta.url),
+				)
 			}
 			const worker = this.worker
 			const requestId = Math.random().toString(36).slice(2)
@@ -220,7 +274,9 @@ export const useHealthStore = defineStore('health', {
 				rows,
 				options: {
 					stalenessThreshold: options.stalenessThreshold,
-					breachResults: options.breachResults ? Array.from(options.breachResults.entries()) : null,
+					breachResults: options.breachResults
+						? Array.from(options.breachResults.entries())
+						: null,
 				},
 			}
 			return new Promise((resolve, reject) => {
@@ -232,7 +288,9 @@ export const useHealthStore = defineStore('health', {
 					if (event.data.ok) {
 						resolve(event.data.result)
 					} else {
-						reject(new Error(event.data.error || 'Worker analysis failed'))
+						reject(
+							new Error(event.data.error || 'Worker analysis failed'),
+						)
 					}
 				}
 				worker.addEventListener('message', onMessage)

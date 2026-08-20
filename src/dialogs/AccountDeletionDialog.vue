@@ -15,7 +15,8 @@
   @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 -->
 <template>
-	<NcDialog :name="t('doriath', 'Delete my Doriath data')"
+	<NcDialog
+		:name="t('doriath', 'Delete my Doriath data')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -30,17 +31,37 @@
 					{{ t('doriath', 'Your Doriath data has been deleted.') }}
 				</NcNoteCard>
 				<ul>
-					<li>{{ t('doriath', 'Secrets deleted') }}: {{ report.secretsDeleted }}</li>
-					<li>{{ t('doriath', 'Secrets transferred to a delegate') }}: {{ report.secretsTransferred }}</li>
-					<li>{{ t('doriath', 'Shares detached') }}: {{ report.sharesDetached }}</li>
-					<li>{{ t('doriath', 'Received shares removed') }}: {{ report.sharesRemoved }}</li>
-					<li>{{ t('doriath', 'Encryption suites removed') }}: {{ report.suitesDeleted }}</li>
+					<li>
+						{{ t('doriath', 'Secrets deleted') }}:
+						{{ report.secretsDeleted }}
+					</li>
+					<li>
+						{{ t('doriath', 'Secrets transferred to a delegate') }}:
+						{{ report.secretsTransferred }}
+					</li>
+					<li>
+						{{ t('doriath', 'Shares detached') }}:
+						{{ report.sharesDetached }}
+					</li>
+					<li>
+						{{ t('doriath', 'Received shares removed') }}:
+						{{ report.sharesRemoved }}
+					</li>
+					<li>
+						{{ t('doriath', 'Encryption suites removed') }}:
+						{{ report.suitesDeleted }}
+					</li>
 				</ul>
 			</div>
 
 			<div v-else class="deletion-dialog__form">
 				<NcNoteCard type="warning">
-					{{ t('doriath', 'This permanently deletes ALL of your secrets, folders, shares, link shares, requests, and encryption keys. This cannot be undone.') }}
+					{{
+						t(
+							'doriath',
+							'This permanently deletes ALL of your secrets, folders, shares, link shares, requests, and encryption keys. This cannot be undone.',
+						)
+					}}
 				</NcNoteCard>
 
 				<p class="deletion-dialog__suggestion">
@@ -49,11 +70,11 @@
 					</a>
 				</p>
 
-				<NcPasswordField :value.sync="masterPassword"
+				<NcPasswordField
+					v-model="masterPassword"
 					:label="t('doriath', 'Re-enter your master password')" />
 
-				<NcTextField :value.sync="confirmation"
-					:label="confirmationLabel" />
+				<NcTextField v-model="confirmation" :label="confirmationLabel" />
 			</div>
 		</div>
 
@@ -61,8 +82,9 @@
 			<NcButton @click="onUpdateOpen(false)">
 				{{ report ? t('doriath', 'Close') : t('doriath', 'Cancel') }}
 			</NcButton>
-			<NcButton v-if="!report"
-				type="error"
+			<NcButton
+				v-if="!report"
+				variant="error"
 				:disabled="!canSubmit || loading"
 				@click="onDelete">
 				{{ t('doriath', 'Delete everything') }}
@@ -72,10 +94,16 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcPasswordField, NcTextField } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcDialog,
+	NcNoteCard,
+	NcPasswordField,
+	NcTextField,
+} from '@nextcloud/vue'
+import { verifyMasterPassword } from '../crypto/reauth.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
-import { verifyMasterPassword } from '../crypto/reauth.js'
 
 /** The exact phrase the user must type (mirrors GdprController). */
 const CONFIRMATION_PHRASE = 'DELETE MY DORIATH DATA'
@@ -89,12 +117,14 @@ export default {
 		NcTextField,
 		NcPasswordField,
 	},
+
 	props: {
 		open: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['update:open', 'export-first'],
 	/**
 	 * Provide the export + session Pinia stores to the component.
@@ -108,6 +138,7 @@ export default {
 			sessionStore: useSessionStore(),
 		}
 	},
+
 	data() {
 		return {
 			masterPassword: '',
@@ -116,6 +147,7 @@ export default {
 			error: null,
 		}
 	},
+
 	computed: {
 		/**
 		 * Whether a deletion is in flight (from the store).
@@ -126,6 +158,7 @@ export default {
 		loading() {
 			return this.exportStore.loading
 		},
+
 		/**
 		 * The confirmation-field label including the exact required phrase.
 		 *
@@ -133,8 +166,11 @@ export default {
 		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 		 */
 		confirmationLabel() {
-			return this.t('doriath', 'Type "{phrase}" to confirm', { phrase: CONFIRMATION_PHRASE })
+			return this.t('doriath', 'Type "{phrase}" to confirm', {
+				phrase: CONFIRMATION_PHRASE,
+			})
 		},
+
 		/**
 		 * Whether deletion may be submitted: BOTH a master password and the exact
 		 * confirmation phrase must be present (double-gated).
@@ -143,9 +179,13 @@ export default {
 		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 		 */
 		canSubmit() {
-			return this.masterPassword.length > 0 && this.confirmation === CONFIRMATION_PHRASE
+			return (
+				this.masterPassword.length > 0
+				&& this.confirmation === CONFIRMATION_PHRASE
+			)
 		},
 	},
+
 	methods: {
 		/**
 		 * Verify the master password client-side, then run the deletion cascade
@@ -165,13 +205,19 @@ export default {
 				return
 			}
 			try {
-				const result = await this.exportStore.deleteAccountData(this.confirmation)
+				const result = await this.exportStore.deleteAccountData(
+					this.confirmation,
+				)
 				this.report = result.report || result
 				this.sessionStore.lock()
 			} catch (e) {
-				this.error = this.exportStore.error || (e && e.message) || this.t('doriath', 'Deletion failed')
+				this.error =
+					this.exportStore.error
+					|| (e && e.message)
+					|| this.t('doriath', 'Deletion failed')
 			}
 		},
+
 		/**
 		 * Reset the dialog state (no master password retained).
 		 *
@@ -184,6 +230,7 @@ export default {
 			this.report = null
 			this.error = null
 		},
+
 		/**
 		 * Handle open-state changes, clearing state on close.
 		 *

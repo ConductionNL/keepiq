@@ -15,17 +15,20 @@
   @spec openspec/changes/implement-user-sharing/tasks.md#task-12.1
 -->
 <template>
-	<section v-if="open"
+	<section
+		v-if="open"
 		class="doriath-share-dialog"
 		role="dialog"
 		data-testid="share-dialog">
 		<header class="doriath-share-dialog__header">
 			<h3>{{ t('doriath', 'Share with a Nextcloud user') }}</h3>
-			<button type="button"
+			<button
+				type="button"
 				class="doriath-share-dialog__close"
 				data-testid="share-dialog-close"
+				:aria-label="t('doriath', 'Close')"
 				@click="$emit('close')">
-				×
+				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 		<form @submit.prevent="onSubmit">
@@ -36,13 +39,19 @@
 					type="text"
 					required
 					autocomplete="off"
-					data-testid="share-dialog-target">
+					data-testid="share-dialog-target" />
 			</label>
-			<p v-if="error" class="doriath-share-dialog__error" data-testid="share-dialog-error">
+			<p
+				v-if="error"
+				class="doriath-share-dialog__error"
+				data-testid="share-dialog-error">
 				{{ error }}
 			</p>
 			<div class="doriath-share-dialog__actions">
-				<button type="button" data-testid="share-dialog-cancel" @click="$emit('close')">
+				<button
+					type="button"
+					data-testid="share-dialog-cancel"
+					@click="$emit('close')">
 					{{ t('doriath', 'Cancel') }}
 				</button>
 				<button
@@ -67,19 +76,23 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		secretId: {
 			type: String,
 			required: true,
 		},
+
 		plaintextSnapshot: {
 			type: Object,
 			default: () => ({}),
 		},
+
 		recipientCertificate: {
 			type: String,
 			default: '',
 		},
 	},
+
 	emits: ['close', 'shared'],
 	data() {
 		return {
@@ -88,6 +101,7 @@ export default {
 			error: null,
 		}
 	},
+
 	watch: {
 		open(val) {
 			if (val === false) {
@@ -97,6 +111,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		async onSubmit() {
 			this.error = null
@@ -112,13 +127,17 @@ export default {
 			const store = useShareStore()
 			this.busy = true
 			try {
-				const encrypted = await store.encryptForRecipient(this.plaintextSnapshot, this.recipientCertificate)
+				const encrypted = await store.encryptForRecipient(
+					this.plaintextSnapshot,
+					this.recipientCertificate,
+				)
 				this.$emit('shared', {
 					targetUserId: this.targetUserId,
 					encryptedFields: encrypted,
 				})
 			} catch (e) {
-				this.error = e?.message || t('doriath', 'Failed to encrypt for recipient')
+				this.error =
+					e?.message || t('doriath', 'Failed to encrypt for recipient')
 			} finally {
 				this.busy = false
 			}
@@ -135,38 +154,45 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	max-width: 480px;
 }
+
 .doriath-share-dialog__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 12px;
 }
+
 .doriath-share-dialog__close {
 	background: transparent;
 	border: 0;
 	font-size: 24px;
 	cursor: pointer;
 }
+
 .doriath-share-dialog__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
+
 .doriath-share-dialog__field input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-share-dialog__error {
-	color: var(--color-error, #e9322d);
+	color: var(--color-error-text);
 	font-size: 13px;
 }
+
 .doriath-share-dialog__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
+
 .doriath-share-dialog__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
@@ -174,6 +200,7 @@ export default {
 	padding: 8px 16px;
 	border-radius: var(--border-radius, 4px);
 }
+
 .doriath-share-dialog__actions button:not(.primary) {
 	background-color: transparent;
 	border: 1px solid var(--color-border-dark, #999);

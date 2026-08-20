@@ -47,9 +47,7 @@ describe('useApplicationStore', () => {
 	describe('fetchPending', () => {
 		it('hydrates the pending queue', async () => {
 			vi.spyOn(axios, 'get').mockResolvedValue({
-				data: [
-					{ id: 'pen-1', name: 'CI Bot', status: 'pending' },
-				],
+				data: [{ id: 'pen-1', name: 'CI Bot', status: 'pending' }],
 			})
 			const store = useApplicationStore()
 			await store.fetchPending()
@@ -62,11 +60,19 @@ describe('useApplicationStore', () => {
 	describe('registerApplication', () => {
 		it('posts the form and pushes the row onto the list', async () => {
 			const post = vi.spyOn(axios, 'post').mockResolvedValue({
-				data: { id: 'app-new', name: 'New', status: 'pending', type: 'external' },
+				data: {
+					id: 'app-new',
+					name: 'New',
+					status: 'pending',
+					type: 'external',
+				},
 			})
 			const store = useApplicationStore()
 
-			const result = await store.registerApplication({ name: 'New', type: 'external' })
+			const result = await store.registerApplication({
+				name: 'New',
+				type: 'external',
+			})
 
 			expect(post).toHaveBeenCalledOnce()
 			const [url, body] = post.mock.calls[0]
@@ -83,7 +89,8 @@ describe('useApplicationStore', () => {
 		})
 
 		it('surfaces the one-time private_key into store state', async () => {
-			const pem = '-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----'
+			const pem =
+				'-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----'
 			vi.spyOn(axios, 'post').mockResolvedValue({
 				data: { id: 'app-x', name: 'X', status: 'active', private_key: pem },
 			})
@@ -101,7 +108,9 @@ describe('useApplicationStore', () => {
 				data: { id: 'app-1', name: 'A', status: 'active' },
 			})
 			const store = useApplicationStore()
-			store.pendingApplications = [{ id: 'app-1', name: 'A', status: 'pending' }]
+			store.pendingApplications = [
+				{ id: 'app-1', name: 'A', status: 'pending' },
+			]
 			store.applications = [{ id: 'app-1', name: 'A', status: 'pending' }]
 
 			await store.approveApplication('app-1')
@@ -148,7 +157,9 @@ describe('useApplicationStore', () => {
 
 			await store.deleteApplication('app-1')
 
-			expect(del).toHaveBeenCalledWith('/apps/doriath/api/v1/applications/app-1')
+			expect(del).toHaveBeenCalledWith(
+				'/apps/doriath/api/v1/applications/app-1',
+			)
 			expect(store.applications.map((a) => a.id)).toEqual(['app-2'])
 			expect(store.pendingApplications).toHaveLength(0)
 			expect(store.currentApplication).toBeNull()
@@ -171,11 +182,17 @@ describe('useApplicationStore', () => {
 	describe('fetchCertificate', () => {
 		it('returns the certificate from the API', async () => {
 			vi.spyOn(axios, 'get').mockResolvedValue({
-				data: { id: 'app-1', certificate: '-----BEGIN CERTIFICATE-----STUB-----END CERTIFICATE-----' },
+				data: {
+					id: 'app-1',
+					certificate:
+						'-----BEGIN CERTIFICATE-----STUB-----END CERTIFICATE-----',
+				},
 			})
 			const store = useApplicationStore()
 			const cert = await store.fetchCertificate('app-1')
-			expect(cert).toBe('-----BEGIN CERTIFICATE-----STUB-----END CERTIFICATE-----')
+			expect(cert).toBe(
+				'-----BEGIN CERTIFICATE-----STUB-----END CERTIFICATE-----',
+			)
 		})
 
 		it('returns empty when the API omits the certificate field', async () => {

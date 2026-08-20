@@ -7,7 +7,8 @@
  *  - debug=false → no-op;
  *  - missing dev EncryptionSuite → no-op;
  *  - no dev secrets → no-op;
- *  - existing delegation for the first dev secret → idempotency no-op;
+ *  - version marker already matches the installed app version → no-op;
+ *  - pre-existing delegation for the deterministic ID → idempotency no-op;
  *  - happy path → 1 temporary SecretDelegation row with the documented
  *    owner/delegate/initiator shape.
  *
@@ -35,6 +36,7 @@ use OCA\Doriath\Db\SecretDelegationMapper;
 use OCA\Doriath\Db\SecretMapper;
 use OCA\Doriath\Repair\SeedDevelopmentSecretDelegations;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -43,147 +45,212 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for SeedDevelopmentSecretDelegations.
  */
-class SeedDevelopmentSecretDelegationsTest extends TestCase
-{
-    /**
-     * Build a dev Secret with the given ID.
-     *
-     * @param string $id The secret ID
-     *
-     * @return Secret
-     */
-    private function devSecret(string $id): Secret
-    {
-        $secret = new Secret();
-        $secret->setId($id);
-        return $secret;
-    }
+class SeedDevelopmentSecretDelegationsTest extends TestCase {
+	/**
+	 * Build a dev Secret with the given ID.
+	 *
+	 * @param string $id The secret ID
+	 *
+	 * @return Secret
+	 */
+	private function devSecret(string $id): Secret {
+		$secret = new Secret();
+		$secret->setId($id);
+		return $secret;
+	}//end devSecret()
 
-    /**
-     * debug=false → no insert.
-     *
-     * @return void
-     */
-    public function testNoOpWhenDebugDisabled(): void
-    {
-        $config = $this->createMock(IConfig::class);
-        $config->method('getSystemValueBool')->willReturn(false);
+	/**
+	 * Build an IAppConfig mock reporting an installed version that has NOT
+	 * yet been seeded (i.e. the version-gate never blocks the run).
+	 *
+	 * @return IAppConfig&\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private function unseededAppConfig(): IAppConfig {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $default = '') {
+					if ($key === 'installed_version') {
+						return '1.2.3';
+					}
 
-        $delegationMapper = $this->createMock(SecretDelegationMapper::class);
-        $delegationMapper->expects($this->never())->method('insert');
+					return $default;
+				}
+			);
 
-        $step = new SeedDevelopmentSecretDelegations(
-            secretMapper: $this->createMock(SecretMapper::class),
-            delegationMapper: $delegationMapper,
-            suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-            config: $config,
-            logger: $this->createMock(LoggerInterface::class),
-        );
-        $step->run($this->createMock(IOutput::class));
-    }
+		return $appConfig;
+	}//end unseededAppConfig()
 
-    /**
-     * Missing dev EncryptionSuite → no-op.
-     *
-     * @return void
-     */
-    public function testNoOpWhenSuiteMissing(): void
-    {
-        $config = $this->createMock(IConfig::class);
-        $config->method('getSystemValueBool')->willReturn(true);
+	/**
+	 * debug=false → no insert.
+	 *
+	 * @return void
+	 */
+	public function testNoOpWhenDebugDisabled(): void {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueBool')->willReturn(false);
 
-        $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
-        $suiteMapper->method('findActiveByOwner')->willThrowException(new DoesNotExistException('no'));
+		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
+		$delegationMapper->expects($this->never())->method('insert');
 
-        $delegationMapper = $this->createMock(SecretDelegationMapper::class);
-        $delegationMapper->expects($this->never())->method('insert');
+		$step = new SeedDevelopmentSecretDelegations(
+			secretMapper: $this->createMock(SecretMapper::class),
+			delegationMapper: $delegationMapper,
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			config: $config,
+			appConfig: $this->unseededAppConfig(),
+			logger: $this->createMock(LoggerInterface::class),
+		);
+		$step->run($this->createMock(IOutput::class));
+	}//end testNoOpWhenDebugDisabled()
 
-        $step = new SeedDevelopmentSecretDelegations(
-            secretMapper: $this->createMock(SecretMapper::class),
-            delegationMapper: $delegationMapper,
-            suiteMapper: $suiteMapper,
-            config: $config,
-            logger: $this->createMock(LoggerInterface::class),
-        );
-        $step->run($this->createMock(IOutput::class));
-    }
+	/**
+	 * Missing dev EncryptionSuite → no-op.
+	 *
+	 * @return void
+	 */
+	public function testNoOpWhenSuiteMissing(): void {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueBool')->willReturn(true);
 
-    /**
-     * Idempotency: pre-existing delegation on first secret → no-op.
-     *
-     * @return void
-     */
-    public function testIdempotencyWhenFirstSecretAlreadyDelegated(): void
-    {
-        $config = $this->createMock(IConfig::class);
-        $config->method('getSystemValueBool')->willReturn(true);
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suiteMapper->method('findActiveByOwner')->willThrowException(new DoesNotExistException('no'));
 
-        $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
-        $suite       = new EncryptionSuite();
-        $suite->setId('suite-1');
-        $suiteMapper->method('findActiveByOwner')->willReturn($suite);
+		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
+		$delegationMapper->expects($this->never())->method('insert');
 
-        $secretMapper = $this->createMock(SecretMapper::class);
-        $secretMapper->method('findByOwner')->willReturn([$this->devSecret('s-1')]);
+		$step = new SeedDevelopmentSecretDelegations(
+			secretMapper: $this->createMock(SecretMapper::class),
+			delegationMapper: $delegationMapper,
+			suiteMapper: $suiteMapper,
+			config: $config,
+			appConfig: $this->unseededAppConfig(),
+			logger: $this->createMock(LoggerInterface::class),
+		);
+		$step->run($this->createMock(IOutput::class));
+	}//end testNoOpWhenSuiteMissing()
 
-        $delegationMapper = $this->createMock(SecretDelegationMapper::class);
-        $delegationMapper->method('findBySecret')->with('s-1')->willReturn([new SecretDelegation()]);
-        $delegationMapper->expects($this->never())->method('insert');
+	/**
+	 * Version marker already matches the installed app version → the
+	 * repair step short-circuits before touching any mapper.
+	 *
+	 * @return void
+	 */
+	public function testNoOpWhenVersionMarkerMatchesInstalledVersion(): void {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueBool')->willReturn(true);
 
-        $step = new SeedDevelopmentSecretDelegations(
-            secretMapper: $secretMapper,
-            delegationMapper: $delegationMapper,
-            suiteMapper: $suiteMapper,
-            config: $config,
-            logger: $this->createMock(LoggerInterface::class),
-        );
-        $step->run($this->createMock(IOutput::class));
-    }
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $default = '') {
+					if ($key === 'installed_version') {
+						return '1.2.3';
+					}
 
-    /**
-     * Happy path: debug + suite + 1+ secrets → insert one temporary
-     * delegation row.
-     *
-     * @return void
-     */
-    public function testHappyPathInsertsOneTemporaryDelegation(): void
-    {
-        $config = $this->createMock(IConfig::class);
-        $config->method('getSystemValueBool')->willReturn(true);
+					if ($key === 'dev_seed_secret_delegations_version') {
+						return '1.2.3';
+					}
 
-        $suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
-        $suite       = new EncryptionSuite();
-        $suite->setId('suite-1');
-        $suiteMapper->method('findActiveByOwner')->willReturn($suite);
+					return $default;
+				}
+			);
 
-        $secretMapper = $this->createMock(SecretMapper::class);
-        $secretMapper->method('findByOwner')->willReturn([$this->devSecret('s-github')]);
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suiteMapper->expects($this->never())->method('findActiveByOwner');
 
-        $delegationMapper = $this->createMock(SecretDelegationMapper::class);
-        $delegationMapper->method('findBySecret')->willReturn([]);
+		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
+		$delegationMapper->expects($this->never())->method('insert');
 
-        $inserted = null;
-        $delegationMapper->expects($this->once())
-            ->method('insert')
-            ->willReturnCallback(static function (SecretDelegation $e) use (&$inserted): SecretDelegation {
-                $inserted = $e;
-                return $e;
-            });
+		$step = new SeedDevelopmentSecretDelegations(
+			secretMapper: $this->createMock(SecretMapper::class),
+			delegationMapper: $delegationMapper,
+			suiteMapper: $suiteMapper,
+			config: $config,
+			appConfig: $appConfig,
+			logger: $this->createMock(LoggerInterface::class),
+		);
+		$step->run($this->createMock(IOutput::class));
+	}//end testNoOpWhenVersionMarkerMatchesInstalledVersion()
 
-        $step = new SeedDevelopmentSecretDelegations(
-            secretMapper: $secretMapper,
-            delegationMapper: $delegationMapper,
-            suiteMapper: $suiteMapper,
-            config: $config,
-            logger: $this->createMock(LoggerInterface::class),
-        );
-        $step->run($this->createMock(IOutput::class));
+	/**
+	 * Idempotency: pre-existing delegation for the deterministic ID → no-op.
+	 *
+	 * @return void
+	 */
+	public function testIdempotencyWhenFirstSecretAlreadyDelegated(): void {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueBool')->willReturn(true);
 
-        $this->assertNotNull($inserted);
-        $this->assertSame('s-github', $inserted->getSecretId());
-        $this->assertSame('admin', $inserted->getOriginalOwnerId());
-        $this->assertSame('dev-user-2', $inserted->getDelegatedTo());
-        $this->assertSame('admin', $inserted->getInitiatedBy());
-        $this->assertFalse($inserted->getIsPermanent());
-    }
-}
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suiteMapper->method('findActiveByOwner')->willReturn($suite);
+
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findByOwner')->willReturn([$this->devSecret('s-1')]);
+
+		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
+		$delegationMapper->method('findById')->willReturn(new SecretDelegation());
+		$delegationMapper->expects($this->never())->method('insert');
+
+		$step = new SeedDevelopmentSecretDelegations(
+			secretMapper: $secretMapper,
+			delegationMapper: $delegationMapper,
+			suiteMapper: $suiteMapper,
+			config: $config,
+			appConfig: $this->unseededAppConfig(),
+			logger: $this->createMock(LoggerInterface::class),
+		);
+		$step->run($this->createMock(IOutput::class));
+	}//end testIdempotencyWhenFirstSecretAlreadyDelegated()
+
+	/**
+	 * Happy path: debug + suite + 1+ secrets → insert one temporary
+	 * delegation row.
+	 *
+	 * @return void
+	 */
+	public function testHappyPathInsertsOneTemporaryDelegation(): void {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueBool')->willReturn(true);
+
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suiteMapper->method('findActiveByOwner')->willReturn($suite);
+
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findByOwner')->willReturn([$this->devSecret('s-github')]);
+
+		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
+		$delegationMapper->method('findById')->willThrowException(new DoesNotExistException('not seeded'));
+
+		$inserted = null;
+		$delegationMapper->expects($this->once())
+			->method('insert')
+			->willReturnCallback(
+				static function (SecretDelegation $e) use (&$inserted): SecretDelegation {
+					$inserted = $e;
+					return $e;
+				}
+			);
+
+		$step = new SeedDevelopmentSecretDelegations(
+			secretMapper: $secretMapper,
+			delegationMapper: $delegationMapper,
+			suiteMapper: $suiteMapper,
+			config: $config,
+			appConfig: $this->unseededAppConfig(),
+			logger: $this->createMock(LoggerInterface::class),
+		);
+		$step->run($this->createMock(IOutput::class));
+
+		$this->assertNotNull($inserted);
+		$this->assertSame('s-github', $inserted->getSecretId());
+		$this->assertSame('admin', $inserted->getOriginalOwnerId());
+		$this->assertSame('dev-user-2', $inserted->getDelegatedTo());
+		$this->assertSame('admin', $inserted->getInitiatedBy());
+		$this->assertFalse($inserted->getIsPermanent());
+	}//end testHappyPathInsertsOneTemporaryDelegation()
+}//end class

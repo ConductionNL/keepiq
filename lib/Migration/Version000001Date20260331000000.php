@@ -30,127 +30,128 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * Create the doriath_enc_suites table.
  */
-class Version000001Date20260331000000 extends SimpleMigrationStep
-{
-    /**
-     * Change the database schema to add the encryption suites table.
-     *
-     * @param IOutput             $output        The output interface
-     * @param Closure             $schemaClosure The schema closure
-     * @param array<string,mixed> $options       Migration options
-     *
-     * @return null|ISchemaWrapper
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
-    {
-        // @var ISchemaWrapper $schema
-        $schema = $schemaClosure();
+class Version000001Date20260331000000 extends SimpleMigrationStep {
+	/**
+	 * Change the database schema to add the encryption suites table.
+	 *
+	 * @param IOutput $output The output interface
+	 * @param Closure $schemaClosure The schema closure
+	 * @param array<string,mixed> $options Migration options
+	 *
+	 * @return null|ISchemaWrapper
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) 109 lines of straight-line
+	 *   addColumn()/addIndex() DDL for the app's initial schema. There is no
+	 *   branching or duplicated logic to extract — the length is the width of the
+	 *   tables being created — and this is the one migration every fresh install
+	 *   must run, so it is deliberately left as a single auditable block.
+	 */
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
+		// @var ISchemaWrapper $schema
+		$schema = $schemaClosure();
 
-        if ($schema->hasTable('doriath_enc_suites') === true) {
-            return null;
-        }
+		if ($schema->hasTable('doriath_enc_suites') === true) {
+			return null;
+		}
 
-        $table = $schema->createTable('doriath_enc_suites');
+		$table = $schema->createTable('doriath_enc_suites');
 
-        $table->addColumn(
-                'id',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 36,
-                ]
-                );
-        $table->addColumn(
-                'owner_type',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 20,
-                ]
-                );
-        $table->addColumn(
-                'owner_id',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 64,
-                ]
-                );
-        $table->addColumn(
-                'certificate',
-                Types::TEXT,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'private_key',
-                Types::TEXT,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'status',
-                Types::STRING,
-                [
-                    'notnull' => true,
-                    'length'  => 20,
-                    'default' => 'active',
-                ]
-                );
-        $table->addColumn(
-                'revoked_at',
-                Types::DATETIME,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'revoked_reason',
-                Types::STRING,
-                [
-                    'notnull' => false,
-                    'length'  => 255,
-                ]
-                );
-        $table->addColumn(
-                'revoked_by',
-                Types::STRING,
-                [
-                    'notnull' => false,
-                    'length'  => 64,
-                ]
-                );
-        $table->addColumn(
-                'reinstated_at',
-                Types::DATETIME,
-                [
-                    'notnull' => false,
-                ]
-                );
-        $table->addColumn(
-                'reinstated_by',
-                Types::STRING,
-                [
-                    'notnull' => false,
-                    'length'  => 64,
-                ]
-                );
-        $table->addColumn(
-                'created_at',
-                Types::DATETIME,
-                [
-                    'notnull' => true,
-                ]
-                );
+		$table->addColumn(
+			'id',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 36,
+			]
+		);
+		$table->addColumn(
+			'owner_type',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 20,
+			]
+		);
+		$table->addColumn(
+			'owner_id',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 64,
+			]
+		);
+		$table->addColumn(
+			'certificate',
+			Types::TEXT,
+			[
+				'notnull' => false,
+			]
+		);
+		$table->addColumn(
+			'private_key',
+			Types::TEXT,
+			[
+				'notnull' => false,
+			]
+		);
+		$table->addColumn(
+			'status',
+			Types::STRING,
+			[
+				'notnull' => true,
+				'length' => 20,
+				'default' => 'active',
+			]
+		);
+		$table->addColumn(
+			'revoked_at',
+			Types::DATETIME,
+			[
+				'notnull' => false,
+			]
+		);
+		$table->addColumn(
+			'revoked_reason',
+			Types::STRING,
+			[
+				'notnull' => false,
+				'length' => 255,
+			]
+		);
+		$table->addColumn(
+			'revoked_by',
+			Types::STRING,
+			[
+				'notnull' => false,
+				'length' => 64,
+			]
+		);
+		$table->addColumn(
+			'reinstated_at',
+			Types::DATETIME,
+			[
+				'notnull' => false,
+			]
+		);
+		$table->addColumn(
+			'reinstated_by',
+			Types::STRING,
+			[
+				'notnull' => false,
+				'length' => 64,
+			]
+		);
+		$table->addColumn(
+			'created_at',
+			Types::DATETIME,
+			[
+				'notnull' => true,
+			]
+		);
 
-        $table->setPrimaryKey(['id']);
-        $table->addIndex(['owner_type', 'owner_id'], 'doriath_es_owner_idx');
+		$table->setPrimaryKey(['id']);
+		$table->addIndex(['owner_type', 'owner_id'], 'doriath_es_owner_idx');
 
-        return $schema;
-    }//end changeSchema()
+		return $schema;
+	}//end changeSchema()
 }//end class

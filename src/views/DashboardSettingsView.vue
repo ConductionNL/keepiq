@@ -1,9 +1,29 @@
+<!--
+  @visual exclude UNREACHABLE, not un-baselined — tracked in issue #208. Nothing
+  in src/ imports this component; `grep -rn DashboardSettingsView src/` returns
+  only this file. It is in no `pages[]` entry, not in src/registry.js, and there
+  is no router. The shipped bundle settles it —
+  `grep -c doriath-dashboard-settings js/doriath-main.js` returns 0 while the
+  same probe returns 1 for wired views, so webpack tree-shook it out. There is
+  no route for a browser to visit and therefore no screen to capture.
+  ⚠️ This waiver is not "no baseline needed" — it records a defect, and a larger
+  one than its neighbour: this view is the ONLY consumer of
+  useDashboardSettingsStore, which is backed by a real controller and the
+  oc_doriath_dashboard_settings table, so the whole dashboard-preferences
+  feature is implemented end to end with no way in. Remove this waiver together
+  with issue #208, by wiring the view up or by deleting the feature.
+-->
 <template>
 	<div class="doriath-dashboard-settings">
 		<h2>{{ t('doriath', 'Dashboard preferences') }}</h2>
 
 		<p class="doriath-dashboard-settings__intro">
-			{{ t('doriath', 'Customise how your Doriath dashboard looks. Leave a value blank to fall back to the system default.') }}
+			{{
+				t(
+					'doriath',
+					'Customise how your Doriath dashboard looks. Leave a value blank to fall back to the system default.',
+				)
+			}}
 		</p>
 
 		<form data-testid="dashboard-settings-form" @submit.prevent="save">
@@ -12,8 +32,12 @@
 
 				<label class="doriath-dashboard-settings__field">
 					<span>{{ t('doriath', 'Default view') }}</span>
-					<select v-model="form.default_view" data-testid="default-view-select">
-						<option value="">{{ t('doriath', 'System default') }}</option>
+					<select
+						v-model="form.default_view"
+						data-testid="default-view-select">
+						<option value="">
+							{{ t('doriath', 'System default') }}
+						</option>
 						<option value="list">{{ t('doriath', 'List') }}</option>
 						<option value="grid">{{ t('doriath', 'Grid') }}</option>
 					</select>
@@ -21,20 +45,34 @@
 
 				<label class="doriath-dashboard-settings__field">
 					<span>{{ t('doriath', 'Sort field') }}</span>
-					<select v-model="form.sort_field" data-testid="sort-field-select">
-						<option value="">{{ t('doriath', 'System default') }}</option>
+					<select
+						v-model="form.sort_field"
+						data-testid="sort-field-select">
+						<option value="">
+							{{ t('doriath', 'System default') }}
+						</option>
 						<option value="name">{{ t('doriath', 'Name') }}</option>
-						<option value="created_at">{{ t('doriath', 'Created at') }}</option>
-						<option value="updated_at">{{ t('doriath', 'Last modified') }}</option>
+						<option value="created_at">
+							{{ t('doriath', 'Created at') }}
+						</option>
+						<option value="updated_at">
+							{{ t('doriath', 'Last modified') }}
+						</option>
 					</select>
 				</label>
 
 				<label class="doriath-dashboard-settings__field">
 					<span>{{ t('doriath', 'Sort direction') }}</span>
-					<select v-model="form.sort_direction" data-testid="sort-direction-select">
-						<option value="">{{ t('doriath', 'System default') }}</option>
+					<select
+						v-model="form.sort_direction"
+						data-testid="sort-direction-select">
+						<option value="">
+							{{ t('doriath', 'System default') }}
+						</option>
 						<option value="asc">{{ t('doriath', 'Ascending') }}</option>
-						<option value="desc">{{ t('doriath', 'Descending') }}</option>
+						<option value="desc">
+							{{ t('doriath', 'Descending') }}
+						</option>
 					</select>
 				</label>
 			</fieldset>
@@ -43,17 +81,26 @@
 				<legend>{{ t('doriath', 'Widgets') }}</legend>
 
 				<label>
-					<input v-model="form.show_kpi_widget" type="checkbox" data-testid="kpi-toggle">
+					<input
+						v-model="form.show_kpi_widget"
+						type="checkbox"
+						data-testid="kpi-toggle" />
 					{{ t('doriath', 'Show KPI cards') }}
 				</label>
 
 				<label>
-					<input v-model="form.show_recent_widget" type="checkbox" data-testid="recent-toggle">
+					<input
+						v-model="form.show_recent_widget"
+						type="checkbox"
+						data-testid="recent-toggle" />
 					{{ t('doriath', 'Show recent secrets') }}
 				</label>
 
 				<label>
-					<input v-model="form.show_migration_banner" type="checkbox" data-testid="migration-toggle">
+					<input
+						v-model="form.show_migration_banner"
+						type="checkbox"
+						data-testid="migration-toggle" />
 					{{ t('doriath', 'Show migration banner when active') }}
 				</label>
 			</fieldset>
@@ -64,7 +111,11 @@
 					class="primary"
 					:disabled="store.loading"
 					data-testid="save-settings">
-					{{ store.loading ? t('doriath', 'Saving…') : t('doriath', 'Save') }}
+					{{
+						store.loading
+							? t('doriath', 'Saving…')
+							: t('doriath', 'Save')
+					}}
 				</button>
 				<button
 					type="button"
@@ -83,7 +134,10 @@
 </template>
 
 <script>
-import { useDashboardSettingsStore, ALLOWED_DASHBOARD_KEYS } from '../store/modules/dashboardSettings.js'
+import {
+	ALLOWED_DASHBOARD_KEYS,
+	useDashboardSettingsStore,
+} from '../store/modules/dashboardSettings.js'
 
 /**
  * Per-user dashboard preferences view backed by
@@ -133,8 +187,14 @@ export default {
 			this.form.sort_field = s.sort_field ?? ''
 			this.form.sort_direction = s.sort_direction ?? ''
 			this.form.show_kpi_widget = this.coerceBool(s.show_kpi_widget, true)
-			this.form.show_recent_widget = this.coerceBool(s.show_recent_widget, true)
-			this.form.show_migration_banner = this.coerceBool(s.show_migration_banner, true)
+			this.form.show_recent_widget = this.coerceBool(
+				s.show_recent_widget,
+				true,
+			)
+			this.form.show_migration_banner = this.coerceBool(
+				s.show_migration_banner,
+				true,
+			)
 		},
 
 		/**
@@ -199,28 +259,34 @@ export default {
 	max-width: 720px;
 	padding: 1rem;
 }
+
 .doriath-dashboard-settings__group {
 	border: 1px solid var(--color-border, #ddd);
 	padding: 1rem;
 	margin-bottom: 1rem;
 }
+
 .doriath-dashboard-settings__group legend {
 	font-weight: 600;
 }
+
 .doriath-dashboard-settings__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 0.75rem;
 }
+
 .doriath-dashboard-settings__actions {
 	display: flex;
 	gap: 0.5rem;
 	margin-top: 1rem;
 }
+
 .doriath-dashboard-settings__error {
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 }
+
 .doriath-dashboard-settings__intro {
 	color: var(--color-text-lighter);
 }

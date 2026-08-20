@@ -32,215 +32,210 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for SecretTypeService.
  */
-class SecretTypeServiceTest extends TestCase
-{
-    /** @var SecretTypeService */
-    private SecretTypeService $service;
+class SecretTypeServiceTest extends TestCase {
 
-    /** @var SecretTypeMapper */
-    private $mapper;
+	/**
+	 * @var SecretTypeService
+	 */
+	private SecretTypeService $service;
 
-    /** @var SecretMapper */
-    private $secretMapper;
+	/**
+	 * @var SecretTypeMapper
+	 */
+	private $mapper;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->mapper       = $this->createMock(SecretTypeMapper::class);
-        $this->secretMapper = $this->createMock(SecretMapper::class);
-        $logger             = $this->createMock(LoggerInterface::class);
+	/**
+	 * @var SecretMapper
+	 */
+	private $secretMapper;
 
-        $this->service = new SecretTypeService(
-            mapper: $this->mapper,
-            secretMapper: $this->secretMapper,
-            logger: $logger,
-        );
-    }//end setUp()
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->mapper = $this->createMock(SecretTypeMapper::class);
+		$this->secretMapper = $this->createMock(SecretMapper::class);
+		$logger = $this->createMock(LoggerInterface::class);
 
-    /**
-     * Build a SecretType.
-     *
-     * @param string      $scope   The scope
-     * @param string|null $ownerId The owner ID
-     *
-     * @return SecretType
-     */
-    private function makeType(string $scope = 'user', ?string $ownerId = 'alice'): SecretType
-    {
-        $type = new SecretType();
-        $type->setId('type-1');
-        $type->setName('custom');
-        $type->setLabel('Custom');
-        $type->setScope($scope);
-        $type->setOwnerId($ownerId);
-        return $type;
-    }//end makeType()
+		$this->service = new SecretTypeService(
+			mapper: $this->mapper,
+			secretMapper: $this->secretMapper,
+			logger: $logger,
+		);
+	}//end setUp()
 
-    /**
-     * A user can create a user-scoped type.
-     *
-     * @return void
-     */
-    public function testCreateUserType(): void
-    {
-        $this->mapper->method('countByName')->willReturn(0);
-        $this->mapper->expects($this->once())->method('insert');
+	/**
+	 * Build a SecretType.
+	 *
+	 * @param string $scope The scope
+	 * @param string|null $ownerId The owner ID
+	 *
+	 * @return SecretType
+	 */
+	private function makeType(string $scope = 'user', ?string $ownerId = 'alice'): SecretType {
+		$type = new SecretType();
+		$type->setId('type-1');
+		$type->setName('custom');
+		$type->setLabel('Custom');
+		$type->setScope($scope);
+		$type->setOwnerId($ownerId);
+		return $type;
+	}//end makeType()
 
-        $type = $this->service->createType(
-            name: 'wifi',
-            label: 'WiFi',
-            scope: 'user',
-            userId: 'alice',
-            isAdmin: false,
-        );
+	/**
+	 * A user can create a user-scoped type.
+	 *
+	 * @return void
+	 */
+	public function testCreateUserType(): void {
+		$this->mapper->method('countByName')->willReturn(0);
+		$this->mapper->expects($this->once())->method('insert');
 
-        $this->assertSame('user', $type->getScope());
-        $this->assertSame('alice', $type->getOwnerId());
-        $this->assertSame('wifi', $type->getName());
-    }//end testCreateUserType()
+		$type = $this->service->createType(
+			name: 'wifi',
+			label: 'WiFi',
+			scope: 'user',
+			userId: 'alice',
+			isAdmin: false,
+		);
 
-    /**
-     * An admin can create a global type with null owner.
-     *
-     * @return void
-     */
-    public function testCreateGlobalTypeAsAdmin(): void
-    {
-        $this->mapper->method('countByName')->willReturn(0);
-        $this->mapper->expects($this->once())->method('insert');
+		$this->assertSame('user', $type->getScope());
+		$this->assertSame('alice', $type->getOwnerId());
+		$this->assertSame('wifi', $type->getName());
+	}//end testCreateUserType()
 
-        $type = $this->service->createType(
-            name: 'corp',
-            label: 'Corporate',
-            scope: 'global',
-            userId: 'admin',
-            isAdmin: true,
-        );
+	/**
+	 * An admin can create a global type with null owner.
+	 *
+	 * @return void
+	 */
+	public function testCreateGlobalTypeAsAdmin(): void {
+		$this->mapper->method('countByName')->willReturn(0);
+		$this->mapper->expects($this->once())->method('insert');
 
-        $this->assertSame('global', $type->getScope());
-        $this->assertNull($type->getOwnerId());
-    }//end testCreateGlobalTypeAsAdmin()
+		$type = $this->service->createType(
+			name: 'corp',
+			label: 'Corporate',
+			scope: 'global',
+			userId: 'admin',
+			isAdmin: true,
+		);
 
-    /**
-     * A non-admin cannot create a global type.
-     *
-     * @return void
-     */
-    public function testCreateGlobalTypeAsNonAdminRejected(): void
-    {
-        $this->expectException(ForbiddenException::class);
+		$this->assertSame('global', $type->getScope());
+		$this->assertNull($type->getOwnerId());
+	}//end testCreateGlobalTypeAsAdmin()
 
-        $this->service->createType(
-            name: 'corp',
-            label: 'Corporate',
-            scope: 'global',
-            userId: 'alice',
-            isAdmin: false,
-        );
-    }//end testCreateGlobalTypeAsNonAdminRejected()
+	/**
+	 * A non-admin cannot create a global type.
+	 *
+	 * @return void
+	 */
+	public function testCreateGlobalTypeAsNonAdminRejected(): void {
+		$this->expectException(ForbiddenException::class);
 
-    /**
-     * A duplicate name is rejected with a conflict.
-     *
-     * @return void
-     */
-    public function testDuplicateNameRejected(): void
-    {
-        $this->mapper->method('countByName')->willReturn(1);
+		$this->service->createType(
+			name: 'corp',
+			label: 'Corporate',
+			scope: 'global',
+			userId: 'alice',
+			isAdmin: false,
+		);
+	}//end testCreateGlobalTypeAsNonAdminRejected()
 
-        $this->expectException(ConflictException::class);
+	/**
+	 * A duplicate name is rejected with a conflict.
+	 *
+	 * @return void
+	 */
+	public function testDuplicateNameRejected(): void {
+		$this->mapper->method('countByName')->willReturn(1);
 
-        $this->service->createType(
-            name: 'login',
-            label: 'My Login',
-            scope: 'user',
-            userId: 'alice',
-            isAdmin: false,
-        );
-    }//end testDuplicateNameRejected()
+		$this->expectException(ConflictException::class);
 
-    /**
-     * System types cannot be modified.
-     *
-     * @return void
-     */
-    public function testSystemTypeImmutable(): void
-    {
-        $this->mapper->method('findById')->willReturn($this->makeType(scope: 'system', ownerId: null));
+		$this->service->createType(
+			name: 'login',
+			label: 'My Login',
+			scope: 'user',
+			userId: 'alice',
+			isAdmin: false,
+		);
+	}//end testDuplicateNameRejected()
 
-        $this->expectException(ForbiddenException::class);
+	/**
+	 * System types cannot be modified.
+	 *
+	 * @return void
+	 */
+	public function testSystemTypeImmutable(): void {
+		$this->mapper->method('findById')->willReturn($this->makeType(scope: 'system', ownerId: null));
 
-        $this->service->updateType(id: 'type-1', label: 'Hacked', userId: 'alice', isAdmin: true);
-    }//end testSystemTypeImmutable()
+		$this->expectException(ForbiddenException::class);
 
-    /**
-     * A user cannot modify another user's type.
-     *
-     * @return void
-     */
-    public function testCannotModifyOtherUsersType(): void
-    {
-        $this->mapper->method('findById')->willReturn($this->makeType(scope: 'user', ownerId: 'bob'));
+		$this->service->updateType(id: 'type-1', label: 'Hacked', userId: 'alice', isAdmin: true);
+	}//end testSystemTypeImmutable()
 
-        $this->expectException(ForbiddenException::class);
+	/**
+	 * A user cannot modify another user's type.
+	 *
+	 * @return void
+	 */
+	public function testCannotModifyOtherUsersType(): void {
+		$this->mapper->method('findById')->willReturn($this->makeType(scope: 'user', ownerId: 'bob'));
 
-        $this->service->updateType(id: 'type-1', label: 'Mine', userId: 'alice', isAdmin: false);
-    }//end testCannotModifyOtherUsersType()
+		$this->expectException(ForbiddenException::class);
 
-    /**
-     * Deleting a custom type reassigns its secrets to login.
-     *
-     * @return void
-     */
-    public function testDeleteTypeFallsBackToLogin(): void
-    {
-        $this->mapper->method('findById')->willReturn($this->makeType(scope: 'user', ownerId: 'alice'));
+		$this->service->updateType(id: 'type-1', label: 'Mine', userId: 'alice', isAdmin: false);
+	}//end testCannotModifyOtherUsersType()
 
-        $login = new SecretType();
-        $login->setId('login-id');
-        $login->setName('login');
-        $this->mapper->method('findByName')->willReturn($login);
+	/**
+	 * Deleting a custom type reassigns its secrets to login.
+	 *
+	 * @return void
+	 */
+	public function testDeleteTypeFallsBackToLogin(): void {
+		$this->mapper->method('findById')->willReturn($this->makeType(scope: 'user', ownerId: 'alice'));
 
-        $this->secretMapper->expects($this->once())
-            ->method('reassignType')
-            ->with('type-1', 'login-id');
-        $this->mapper->expects($this->once())->method('delete');
+		$login = new SecretType();
+		$login->setId('login-id');
+		$login->setName('login');
+		$this->mapper->method('findByName')->willReturn($login);
 
-        $this->service->deleteType(id: 'type-1', userId: 'alice', isAdmin: false);
-    }//end testDeleteTypeFallsBackToLogin()
+		$this->secretMapper->expects($this->once())
+			->method('reassignType')
+			->with('type-1', 'login-id');
+		$this->mapper->expects($this->once())->method('delete');
 
-    /**
-     * resolveTypeForSecret returns the login type when no type is given.
-     *
-     * @return void
-     */
-    public function testResolveDefaultsToLogin(): void
-    {
-        $login = new SecretType();
-        $login->setId('login-id');
-        $login->setName('login');
-        $this->mapper->method('findByName')->willReturn($login);
+		$this->service->deleteType(id: 'type-1', userId: 'alice', isAdmin: false);
+	}//end testDeleteTypeFallsBackToLogin()
 
-        $resolved = $this->service->resolveTypeForSecret(typeId: null, userId: 'alice');
+	/**
+	 * resolveTypeForSecret returns the login type when no type is given.
+	 *
+	 * @return void
+	 */
+	public function testResolveDefaultsToLogin(): void {
+		$login = new SecretType();
+		$login->setId('login-id');
+		$login->setName('login');
+		$this->mapper->method('findByName')->willReturn($login);
 
-        $this->assertSame('login-id', $resolved);
-    }//end testResolveDefaultsToLogin()
+		$resolved = $this->service->resolveTypeForSecret(typeId: null, userId: 'alice');
 
-    /**
-     * An unknown type ID is rejected.
-     *
-     * @return void
-     */
-    public function testResolveUnknownTypeRejected(): void
-    {
-        $this->mapper->method('findById')->willThrowException(new DoesNotExistException('nope'));
+		$this->assertSame('login-id', $resolved);
+	}//end testResolveDefaultsToLogin()
 
-        $this->expectException(\InvalidArgumentException::class);
+	/**
+	 * An unknown type ID is rejected.
+	 *
+	 * @return void
+	 */
+	public function testResolveUnknownTypeRejected(): void {
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('nope'));
 
-        $this->service->resolveTypeForSecret(typeId: 'ghost', userId: 'alice');
-    }//end testResolveUnknownTypeRejected()
+		$this->expectException(\InvalidArgumentException::class);
+
+		$this->service->resolveTypeForSecret(typeId: 'ghost', userId: 'alice');
+	}//end testResolveUnknownTypeRejected()
 }//end class

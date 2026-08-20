@@ -16,8 +16,24 @@ import { describe, it, expect } from 'vitest'
 import { generateCsv, parseCsv, CSV_COLUMNS } from '../../src/export/csv.js'
 
 const secrets = [
-	{ name: 'Simple', url: 'https://a.test', login: 'u1', password: 'p1', additionalFields: { notes: 'plain' }, folder: 'Work', type: 'login' },
-	{ name: 'Has, comma', url: null, login: 'u2', password: 'has "quote"', additionalFields: 'line1\nline2', folder: 'Work/Sub', type: 'login' },
+	{
+		name: 'Simple',
+		url: 'https://a.test',
+		login: 'u1',
+		password: 'p1',
+		additionalFields: { notes: 'plain' },
+		folder: 'Work',
+		type: 'login',
+	},
+	{
+		name: 'Has, comma',
+		url: null,
+		login: 'u2',
+		password: 'has "quote"',
+		additionalFields: 'line1\nline2',
+		folder: 'Work/Sub',
+		type: 'login',
+	},
 ]
 
 describe('generateCsv', () => {

@@ -43,115 +43,110 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getUpdatedAt()
  * @method void setUpdatedAt(DateTime $updatedAt)
  */
-class Folder extends Entity implements JsonSerializable
-{
+class Folder extends Entity implements JsonSerializable {
 
-    /**
-     * The folder name (single path segment, no slashes).
-     *
-     * @var string
-     */
-    protected string $name = '';
+	/**
+	 * The folder name (single path segment, no slashes).
+	 *
+	 * @var string
+	 */
+	protected string $name = '';
 
-    /**
-     * The parent folder ID (null for root-level folders).
-     *
-     * @var string|null
-     */
-    protected ?string $parentId = null;
+	/**
+	 * The parent folder ID (null for root-level folders).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $parentId = null;
 
-    /**
-     * The owner type: user or application.
-     *
-     * Defaults to an empty string (not 'user') so that an explicit
-     * setOwnerType('user') call marks the column dirty in NC's QBMapper and
-     * is written on INSERT — the column is NOT NULL.
-     *
-     * @var string
-     */
-    protected string $ownerType = '';
+	/**
+	 * The owner type: user or application.
+	 *
+	 * Defaults to an empty string (not 'user') so that an explicit
+	 * setOwnerType('user') call marks the column dirty in NC's QBMapper and
+	 * is written on INSERT — the column is NOT NULL.
+	 *
+	 * @var string
+	 */
+	protected string $ownerType = '';
 
-    /**
-     * The owner ID (Nextcloud user ID or application ID).
-     *
-     * @var string
-     */
-    protected string $ownerId = '';
+	/**
+	 * The owner ID (Nextcloud user ID or application ID).
+	 *
+	 * @var string
+	 */
+	protected string $ownerId = '';
 
-    /**
-     * When the folder was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * When the folder was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * When the folder was last updated.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $updatedAt = null;
+	/**
+	 * When the folder was last updated.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $updatedAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Constructor for Folder.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'name', type: 'string');
-        $this->addType(fieldName: 'parentId', type: 'string');
-        $this->addType(fieldName: 'ownerType', type: 'string');
-        $this->addType(fieldName: 'ownerId', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-        $this->addType(fieldName: 'updatedAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Constructor for Folder.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'name', type: 'string');
+		$this->addType(fieldName: 'parentId', type: 'string');
+		$this->addType(fieldName: 'ownerType', type: 'string');
+		$this->addType(fieldName: 'ownerId', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+		$this->addType(fieldName: 'updatedAt', type: 'datetime');
+	}//end __construct()
 
-    /**
-     * Serialize the entity to an array for the API.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'        => $this->getId(),
-            'name'      => $this->name,
-            'parentId'  => $this->parentId,
-            'ownerType' => $this->ownerType,
-            'ownerId'   => $this->ownerId,
-            'createdAt' => $this->createdAt?->format('c'),
-            'updatedAt' => $this->updatedAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->getId(),
+			'name' => $this->name,
+			'parentId' => $this->parentId,
+			'ownerType' => $this->ownerType,
+			'ownerId' => $this->ownerId,
+			'createdAt' => $this->createdAt?->format('c'),
+			'updatedAt' => $this->updatedAt?->format('c'),
+		];
+	}//end jsonSerialize()
 }//end class

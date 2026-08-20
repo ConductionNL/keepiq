@@ -38,22 +38,30 @@ const ROUTES = [
 
 test.describe('Gated routes — router guard redirects to lock', () => {
 	for (const route of ROUTES) {
-		test(`${route.name} (${route.hash}) redirects a locked user to the lock screen`, async ({ page }) => {
+		test(`${route.name} (${route.hash}) redirects a locked user to the lock screen`, async ({
+			page,
+		}) => {
 			const errors = collectDoriathErrors(page)
 			await gotoRoute(page, route.hash)
 
 			// The guard sends us to /lock (preserving the intended route in returnUrl).
 			await expect(page).toHaveURL(/\/lock/, { timeout: 15_000 })
 			await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
-			await expect(lockHeading(page)).toHaveText(/Unlock Doriath|Set up your master password/i)
+			await expect(lockHeading(page)).toHaveText(
+				/Unlock Doriath|Set up your master password/i,
+			)
 
 			assertNoDoriathErrors(errors)
 		})
 	}
 
-	test('app root resolves into the SPA and lands on the lock gate', async ({ page }) => {
+	test('app root resolves into the SPA and lands on the lock gate', async ({
+		page,
+	}) => {
 		const errors = collectDoriathErrors(page)
-		await page.goto('/index.php/apps/doriath/', { waitUntil: 'domcontentloaded' })
+		await page.goto('/index.php/apps/doriath/', {
+			waitUntil: 'domcontentloaded',
+		})
 
 		// The SPA shell mounts and the lock gate is shown.
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })

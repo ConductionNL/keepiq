@@ -1,3 +1,16 @@
+<!--
+  @visual exclude UNREACHABLE, not un-baselined — tracked in issue #208. Nothing
+  in src/ imports this component: it is in no `pages[]` entry, not in
+  src/registry.js, and there is no router. The shipped bundle settles it —
+  `grep -c doriath-applications-view js/doriath-main.js` returns 0 while the
+  same probe returns 1 for wired views (personal-activity, cert-inventory), so
+  webpack tree-shook it out entirely. There is no route for a browser to visit
+  and therefore no screen to capture. The admin approval queue that DOES ship is
+  src/components/settings/ApplicationQueueSection.vue, wired into
+  src/views/settings/Settings.vue; this file is very likely its predecessor.
+  ⚠️ This waiver is not "no baseline needed" — it records a defect. It must be
+  removed together with issue #208, by deleting this file or by wiring it up.
+-->
 <template>
 	<div class="doriath-applications-view">
 		<h2>{{ t('doriath', 'Registered applications') }}</h2>
@@ -6,7 +19,11 @@
 			<header>
 				<h3>
 					{{ t('doriath', 'Pending approval') }}
-					<span v-if="pendingCount > 0" class="doriath-applications-view__badge">{{ pendingCount }}</span>
+					<span
+						v-if="pendingCount > 0"
+						class="doriath-applications-view__badge"
+						>{{ pendingCount }}</span
+					>
 				</h3>
 			</header>
 
@@ -14,7 +31,9 @@
 				{{ t('doriath', 'Loading…') }}
 			</p>
 
-			<p v-else-if="pendingCount === 0" class="doriath-applications-view__empty">
+			<p
+				v-else-if="pendingCount === 0"
+				class="doriath-applications-view__empty">
 				{{ t('doriath', 'No applications are awaiting approval.') }}
 			</p>
 
@@ -26,9 +45,19 @@
 					data-testid="pending-application">
 					<div class="doriath-applications-view__meta">
 						<strong>{{ app.name }}</strong>
-						<span v-if="app.description" class="doriath-applications-view__description">{{ app.description }}</span>
+						<span
+							v-if="app.description"
+							class="doriath-applications-view__description"
+							>{{ app.description }}</span
+						>
 						<small>
-							{{ t('doriath', 'Registered by {user}', { user: app.registered_by || t('doriath', 'anonymous') }) }}
+							{{
+								t('doriath', 'Registered by {user}', {
+									user:
+										app.registered_by
+										|| t('doriath', 'anonymous'),
+								})
+							}}
 						</small>
 					</div>
 					<div class="doriath-applications-view__actions">
@@ -50,19 +79,31 @@
 			</ul>
 		</section>
 
-		<section v-if="hasPrivateKey" class="doriath-applications-view__keydialog" data-testid="private-key-dialog">
+		<section
+			v-if="hasPrivateKey"
+			class="doriath-applications-view__keydialog"
+			data-testid="private-key-dialog">
 			<h3>{{ t('doriath', 'Save the application private key') }}</h3>
 			<p class="doriath-applications-view__warning">
-				{{ t('doriath', 'This is the only time the private key is shown. Save it securely; it cannot be recovered.') }}
+				{{
+					t(
+						'doriath',
+						'This is the only time the private key is shown. Save it securely; it cannot be recovered.',
+					)
+				}}
 			</p>
 			<textarea
 				:value="store.oneTimePrivateKey"
 				readonly
 				class="doriath-applications-view__keytext"
+				:aria-label="t('doriath', 'Private key')"
 				data-testid="private-key-text" />
 			<div class="doriath-applications-view__actions">
 				<label>
-					<input v-model="acknowledged" type="checkbox" data-testid="acknowledge-key">
+					<input
+						v-model="acknowledged"
+						type="checkbox"
+						data-testid="acknowledge-key" />
 					{{ t('doriath', 'I have saved the private key.') }}
 				</label>
 				<button
@@ -104,9 +145,11 @@ export default {
 		pending() {
 			return this.store.pendingApplications
 		},
+
 		pendingCount() {
 			return this.store.pendingCount
 		},
+
 		hasPrivateKey() {
 			return !!this.store.oneTimePrivateKey
 		},
@@ -127,6 +170,7 @@ export default {
 		async approve(id) {
 			await this.store.approveApplication(id)
 		},
+
 		/**
 		 * Reject (hard-delete) a pending application.
 		 *
@@ -136,6 +180,7 @@ export default {
 		async reject(id) {
 			await this.store.rejectApplication(id)
 		},
+
 		/**
 		 * Clear the one-time private-key dialog state after the admin
 		 * has acknowledged saving it.
@@ -155,6 +200,7 @@ export default {
 	max-width: 800px;
 	padding: 1rem;
 }
+
 .doriath-applications-view__badge {
 	display: inline-block;
 	min-width: 1.5rem;
@@ -165,11 +211,13 @@ export default {
 	font-size: 0.8rem;
 	text-align: center;
 }
+
 .doriath-applications-view__list {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
+
 .doriath-applications-view__item {
 	display: flex;
 	gap: 1rem;
@@ -178,28 +226,39 @@ export default {
 	padding: 0.75rem 0;
 	border-bottom: 1px solid var(--color-border, #ddd);
 }
+
 .doriath-applications-view__description {
 	display: block;
 	color: var(--color-text-lighter);
 }
+
 .doriath-applications-view__actions {
 	display: flex;
 	gap: 0.5rem;
 	align-items: center;
 }
+
 .doriath-applications-view__empty {
 	color: var(--color-text-lighter);
 }
+
 .doriath-applications-view__keydialog {
 	margin-top: 2rem;
 	padding: 1rem;
-	border: 1px solid var(--color-warning, #f00);
-	background: var(--color-warning-rest, #ffe);
+	/* --color-warning-rest is not a Nextcloud variable, so this always fell back
+	   to the pale light-theme yellow and the inherited near-white dark-mode text
+	   was unreadable on it. The old #f00 border fallback was wrong twice over:
+	   red for a warning, and unreachable because --color-warning is defined. */
+	border: 1px solid var(--color-warning-text);
+	background: var(--color-background-dark);
+	color: var(--color-main-text);
 }
+
 .doriath-applications-view__warning {
 	font-weight: 600;
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 }
+
 .doriath-applications-view__keytext {
 	width: 100%;
 	min-height: 12rem;

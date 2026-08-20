@@ -15,14 +15,16 @@
 		<PasswordStrengthMeter
 			v-if="newPassword"
 			:password="newPassword"
-			@strength-change="onStrengthChange" />
+			@strengthChange="onStrengthChange" />
 
 		<NcPasswordField
 			v-model="confirmPassword"
 			:label="t('doriath', 'Confirm new password')"
 			:disabled="loading" />
 
-		<NcNoteCard v-if="confirmPassword && newPassword !== confirmPassword" type="error">
+		<NcNoteCard
+			v-if="confirmPassword && newPassword !== confirmPassword"
+			type="error">
 			{{ t('doriath', 'Passwords do not match') }}
 		</NcNoteCard>
 
@@ -35,18 +37,22 @@
 		</NcNoteCard>
 
 		<NcButton
-			type="primary"
+			variant="primary"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
-			{{ loading ? t('doriath', 'Changing...') : t('doriath', 'Change password') }}
+			{{
+				loading
+					? t('doriath', 'Changing...')
+					: t('doriath', 'Change password')
+			}}
 		</NcButton>
 	</div>
 </template>
 
 <script>
 import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
-import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 
 export default {
 	name: 'MasterPasswordForm',
@@ -72,11 +78,13 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		canSubmit() {
-			return this.currentPassword
+			return (
+				this.currentPassword
 				&& this.newPassword
 				&& this.confirmPassword
 				&& this.newPassword === this.confirmPassword
 				&& this.strengthValid
+			)
 		},
 	},
 

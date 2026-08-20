@@ -26,6 +26,5 @@ namespace OCA\Doriath\Exception;
 /**
  * Thrown when a folder name would collide with an existing sibling in the same parent.
  */
-class DuplicateFolderNameException extends ConflictException
-{
+class DuplicateFolderNameException extends ConflictException {
 }//end class

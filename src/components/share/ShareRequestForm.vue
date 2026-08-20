@@ -14,18 +14,24 @@
   @spec openspec/changes/implement-user-sharing/tasks.md#12.4
 -->
 <template>
-	<section v-if="open"
+	<section
+		v-if="open"
 		class="doriath-share-request-form"
 		role="dialog"
 		data-testid="share-request-form">
 		<header class="doriath-share-request-form__header">
-			<h3>{{ t('doriath', 'Request the owner share this secret with someone') }}</h3>
+			<h3>
+				{{
+					t('doriath', 'Request the owner share this secret with someone')
+				}}
+			</h3>
 			<button
 				type="button"
 				class="doriath-share-request-form__close"
 				data-testid="share-request-form-close"
+				:aria-label="t('doriath', 'Close')"
 				@click="$emit('close')">
-				×
+				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 		<form @submit.prevent="onSubmit">
@@ -36,9 +42,12 @@
 					type="text"
 					required
 					autocomplete="off"
-					data-testid="share-request-form-target">
+					data-testid="share-request-form-target" />
 			</label>
-			<p v-if="error" class="doriath-share-request-form__error" data-testid="share-request-form-error">
+			<p
+				v-if="error"
+				class="doriath-share-request-form__error"
+				data-testid="share-request-form-error">
 				{{ error }}
 			</p>
 			<div class="doriath-share-request-form__actions">
@@ -52,9 +61,11 @@
 					type="submit"
 					:disabled="!targetUserId || submitting"
 					data-testid="share-request-form-submit">
-					{{ submitting
-						? t('doriath', 'Submitting…')
-						: t('doriath', 'Send request') }}
+					{{
+						submitting
+							? t('doriath', 'Submitting…')
+							: t('doriath', 'Send request')
+					}}
 				</button>
 			</div>
 		</form>
@@ -73,6 +84,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		secretId: {
 			type: String,
 			required: true,
@@ -118,7 +130,9 @@ export default {
 				this.$emit('submitted', { targetUserId: this.targetUserId })
 				this.$emit('close')
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
 					|| t('doriath', 'Failed to send the share request')
 			} finally {
 				this.submitting = false
@@ -170,7 +184,7 @@ export default {
 }
 
 .doriath-share-request-form__error {
-	color: var(--color-error, #c00);
+	color: var(--color-error-text);
 	margin: 8px 0;
 }
 

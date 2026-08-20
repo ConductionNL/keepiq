@@ -27,228 +27,218 @@ use OCA\Doriath\Exception\AuditForbiddenMetadataException;
 use OCA\Doriath\Service\AuditService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 /**
  * Tests for AuditService — the single write path + query API.
  */
-class AuditServiceTest extends TestCase
-{
-    /**
-     * The service under test.
-     *
-     * @var AuditService
-     */
-    private AuditService $service;
+class AuditServiceTest extends TestCase {
 
-    /**
-     * The mocked audit-entry mapper.
-     *
-     * @var AuditEntryMapper&MockObject
-     */
-    private AuditEntryMapper $mapper;
+	/**
+	 * The service under test.
+	 *
+	 * @var AuditService
+	 */
+	private AuditService $service;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->mapper = $this->createMock(originalClassName: AuditEntryMapper::class);
-        $logger       = $this->createMock(originalClassName: LoggerInterface::class);
-        $this->service = new AuditService(mapper: $this->mapper, logger: $logger);
-    }//end setUp()
+	/**
+	 * The mocked audit-entry mapper.
+	 *
+	 * @var AuditEntryMapper&MockObject
+	 */
+	private AuditEntryMapper $mapper;
 
-    /**
-     * record() persists an entry through the mapper with the event fields.
-     *
-     * @return void
-     */
-    public function testRecordPersistsEntry(): void
-    {
-        $captured = null;
-        $this->mapper->expects($this->once())
-            ->method('insert')
-            ->willReturnCallback(
-                function (AuditEntry $entry) use (&$captured): AuditEntry {
-                    $captured = $entry;
-                    return $entry;
-                }
-            );
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->mapper = $this->createMock(originalClassName: AuditEntryMapper::class);
+		$this->service = new AuditService(mapper: $this->mapper);
+	}//end setUp()
 
-        $event = AuditEvent::forUser(
-            actorId: 'alice',
-            eventType: AuditEventTypes::SECRET_UPDATED,
-            objectType: 'secret',
-            objectId: 'sec-1',
-            objectName: 'GitHub deploy key',
-            metadata: ['changedFields' => ['name']],
-        );
+	/**
+	 * record() persists an entry through the mapper with the event fields.
+	 *
+	 * @return void
+	 */
+	public function testRecordPersistsEntry(): void {
+		$captured = null;
+		$this->mapper->expects($this->once())
+			->method('insert')
+			->willReturnCallback(
+				function (AuditEntry $entry) use (&$captured): AuditEntry {
+					$captured = $entry;
+					return $entry;
+				}
+			);
 
-        $this->service->record($event);
+		$event = AuditEvent::forUser(
+			actorId: 'alice',
+			eventType: AuditEventTypes::SECRET_UPDATED,
+			objectType: 'secret',
+			objectId: 'sec-1',
+			objectName: 'GitHub deploy key',
+			metadata: ['changedFields' => ['name']],
+		);
 
-        $this->assertNotNull($captured);
-        $this->assertSame('alice', $captured->getActorId());
-        $this->assertSame('user', $captured->getActorType());
-        $this->assertSame('secret.updated', $captured->getEventType());
-        $this->assertSame('sec-1', $captured->getObjectId());
-        $this->assertSame('GitHub deploy key', $captured->getObjectName());
-        $this->assertSame(['changedFields' => ['name']], $captured->getMetadataArray());
-    }//end testRecordPersistsEntry()
+		$this->service->record($event);
 
-    /**
-     * record() drops metadata keys not on the per-event-type whitelist.
-     *
-     * @return void
-     */
-    public function testRecordDropsUnknownMetadataKeys(): void
-    {
-        $captured = null;
-        $this->mapper->method('insert')->willReturnCallback(
-            function (AuditEntry $entry) use (&$captured): AuditEntry {
-                $captured = $entry;
-                return $entry;
-            }
-        );
+		$this->assertNotNull($captured);
+		$this->assertSame('alice', $captured->getActorId());
+		$this->assertSame('user', $captured->getActorType());
+		$this->assertSame('secret.updated', $captured->getEventType());
+		$this->assertSame('sec-1', $captured->getObjectId());
+		$this->assertSame('GitHub deploy key', $captured->getObjectName());
+		$this->assertSame(['changedFields' => ['name']], $captured->getMetadataArray());
+	}//end testRecordPersistsEntry()
 
-        // share.granted whitelist = {recipientType, recipientId}; "note" is unknown.
-        $event = AuditEvent::forUser(
-            actorId: 'alice',
-            eventType: AuditEventTypes::SHARE_GRANTED,
-            objectType: 'share',
-            objectId: 'sh-1',
-            objectName: null,
-            metadata: ['recipientType' => 'user', 'recipientId' => 'bob', 'note' => 'leak me'],
-        );
+	/**
+	 * record() drops metadata keys not on the per-event-type whitelist.
+	 *
+	 * @return void
+	 */
+	public function testRecordDropsUnknownMetadataKeys(): void {
+		$captured = null;
+		$this->mapper->method('insert')->willReturnCallback(
+			function (AuditEntry $entry) use (&$captured): AuditEntry {
+				$captured = $entry;
+				return $entry;
+			}
+		);
 
-        $this->service->record($event);
+		// share.granted whitelist = {recipientType, recipientId}; "note" is unknown.
+		$event = AuditEvent::forUser(
+			actorId: 'alice',
+			eventType: AuditEventTypes::SHARE_GRANTED,
+			objectType: 'share',
+			objectId: 'sh-1',
+			objectName: null,
+			metadata: ['recipientType' => 'user', 'recipientId' => 'bob', 'note' => 'leak me'],
+		);
 
-        $meta = $captured->getMetadataArray();
-        $this->assertArrayHasKey('recipientType', $meta);
-        $this->assertArrayHasKey('recipientId', $meta);
-        $this->assertArrayNotHasKey('note', $meta);
-    }//end testRecordDropsUnknownMetadataKeys()
+		$this->service->record($event);
 
-    /**
-     * record() rejects every forbidden secret-material key with an exception.
-     *
-     * @return void
-     */
-    public function testRecordRejectsEveryForbiddenKey(): void
-    {
-        foreach (AuditEventTypes::FORBIDDEN_KEYS as $forbidden) {
-            $event = AuditEvent::forUser(
-                actorId: 'alice',
-                eventType: AuditEventTypes::SECRET_CREATED,
-                objectType: 'secret',
-                objectId: 'sec-1',
-                objectName: 'X',
-                metadata: [$forbidden => 'super-secret-value'],
-            );
+		$meta = $captured->getMetadataArray();
+		$this->assertArrayHasKey('recipientType', $meta);
+		$this->assertArrayHasKey('recipientId', $meta);
+		$this->assertArrayNotHasKey('note', $meta);
+	}//end testRecordDropsUnknownMetadataKeys()
 
-            $threw = false;
-            try {
-                $this->service->record($event);
-            } catch (AuditForbiddenMetadataException) {
-                $threw = true;
-            }
+	/**
+	 * record() rejects every forbidden secret-material key with an exception.
+	 *
+	 * @return void
+	 */
+	public function testRecordRejectsEveryForbiddenKey(): void {
+		foreach (AuditEventTypes::FORBIDDEN_KEYS as $forbidden) {
+			$event = AuditEvent::forUser(
+				actorId: 'alice',
+				eventType: AuditEventTypes::SECRET_CREATED,
+				objectType: 'secret',
+				objectId: 'sec-1',
+				objectName: 'X',
+				metadata: [$forbidden => 'super-secret-value'],
+			);
 
-            $this->assertTrue($threw, "Forbidden key '{$forbidden}' must be rejected");
-        }
-    }//end testRecordRejectsEveryForbiddenKey()
+			$threw = false;
+			try {
+				$this->service->record($event);
+			} catch (AuditForbiddenMetadataException) {
+				$threw = true;
+			}
 
-    /**
-     * record() rejects a forbidden key nested inside a metadata array.
-     *
-     * @return void
-     */
-    public function testRecordRejectsNestedForbiddenKey(): void
-    {
-        $this->expectException(AuditForbiddenMetadataException::class);
+			$this->assertTrue($threw, "Forbidden key '{$forbidden}' must be rejected");
+		}
+	}//end testRecordRejectsEveryForbiddenKey()
 
-        $event = AuditEvent::forUser(
-            actorId: 'alice',
-            eventType: AuditEventTypes::SECRET_CREATED,
-            objectType: 'secret',
-            objectId: 'sec-1',
-            objectName: 'X',
-            metadata: ['changedFields' => ['nested' => ['password' => 'leak']]],
-        );
+	/**
+	 * record() rejects a forbidden key nested inside a metadata array.
+	 *
+	 * @return void
+	 */
+	public function testRecordRejectsNestedForbiddenKey(): void {
+		$this->expectException(AuditForbiddenMetadataException::class);
 
-        $this->service->record($event);
-    }//end testRecordRejectsNestedForbiddenKey()
+		$event = AuditEvent::forUser(
+			actorId: 'alice',
+			eventType: AuditEventTypes::SECRET_CREATED,
+			objectType: 'secret',
+			objectId: 'sec-1',
+			objectName: 'X',
+			metadata: ['changedFields' => ['nested' => ['password' => 'leak']]],
+		);
 
-    /**
-     * purge() loops batches and sums the deletions, using the retention window.
-     *
-     * @return void
-     */
-    public function testPurgeLoopsBatches(): void
-    {
-        // First batch returns a full batch (1000), second a partial (12) → stop.
-        $this->mapper->expects($this->exactly(2))
-            ->method('purgeOlderThan')
-            ->willReturnOnConsecutiveCalls(1000, 12);
+		$this->service->record($event);
+	}//end testRecordRejectsNestedForbiddenKey()
 
-        $total = $this->service->purge(retentionDays: 365, batchSize: 1000);
+	/**
+	 * purge() loops batches and sums the deletions, using the retention window.
+	 *
+	 * @return void
+	 */
+	public function testPurgeLoopsBatches(): void {
+		// First batch returns a full batch (1000), second a partial (12) → stop.
+		$this->mapper->expects($this->exactly(2))
+			->method('purgeOlderThan')
+			->willReturnOnConsecutiveCalls(1000, 12);
 
-        $this->assertSame(1012, $total);
-    }//end testPurgeLoopsBatches()
+		$total = $this->service->purge(retentionDays: 365, batchSize: 1000);
 
-    /**
-     * anonymizeUser() replaces the actor and scrubs user-referencing metadata.
-     *
-     * @return void
-     */
-    public function testAnonymizeUserScrubsActorAndMetadata(): void
-    {
-        $this->mapper->expects($this->once())
-            ->method('anonymizeActor')
-            ->with('bob')
-            ->willReturn(3);
+		$this->assertSame(1012, $total);
+	}//end testPurgeLoopsBatches()
 
-        $referencing = new AuditEntry();
-        $referencing->setId(7);
-        $referencing->setEventType(AuditEventTypes::SHARE_GRANTED);
-        $referencing->setMetadata((string) json_encode(['recipientType' => 'user', 'recipientId' => 'bob']));
+	/**
+	 * anonymizeUser() replaces the actor and scrubs user-referencing metadata.
+	 *
+	 * @return void
+	 */
+	public function testAnonymizeUserScrubsActorAndMetadata(): void {
+		$this->mapper->expects($this->once())
+			->method('anonymizeActor')
+			->with('bob')
+			->willReturn(3);
 
-        $this->mapper->method('findMetadataReferencing')->with('bob')->willReturn([$referencing]);
+		$referencing = new AuditEntry();
+		$referencing->setId(7);
+		$referencing->setEventType(AuditEventTypes::SHARE_GRANTED);
+		$referencing->setMetadata((string)json_encode(['recipientType' => 'user', 'recipientId' => 'bob']));
 
-        $rewritten = null;
-        $this->mapper->expects($this->once())
-            ->method('rewriteMetadata')
-            ->willReturnCallback(
-                function (int $id, ?string $json) use (&$rewritten): void {
-                    $rewritten = json_decode((string) $json, true);
-                }
-            );
+		$this->mapper->method('findMetadataReferencing')->with('bob')->willReturn([$referencing]);
 
-        $this->service->anonymizeUser('bob');
+		$rewritten = null;
+		$this->mapper->expects($this->once())
+			->method('rewriteMetadata')
+			->willReturnCallback(
+				function (int $id, ?string $json) use (&$rewritten): void {
+					$rewritten = json_decode((string)$json, true);
+				}
+			);
 
-        $this->assertSame('deleted-account', $rewritten['recipientId']);
-        $this->assertSame('user', $rewritten['recipientType']);
-        $this->assertStringNotContainsString('bob', (string) json_encode($rewritten));
-    }//end testAnonymizeUserScrubsActorAndMetadata()
+		$this->service->anonymizeUser('bob');
 
-    /**
-     * adminQuery() returns entries + total + clamps page/limit.
-     *
-     * @return void
-     */
-    public function testAdminQueryReturnsEntriesAndTotal(): void
-    {
-        $entry = new AuditEntry();
-        $entry->setEventType(AuditEventTypes::SECRET_READ);
+		$this->assertSame('deleted-account', $rewritten['recipientId']);
+		$this->assertSame('user', $rewritten['recipientType']);
+		$this->assertStringNotContainsString('bob', (string)json_encode($rewritten));
+	}//end testAnonymizeUserScrubsActorAndMetadata()
 
-        $this->mapper->method('findFiltered')->willReturn([$entry]);
-        $this->mapper->method('countFiltered')->willReturn(137);
+	/**
+	 * adminQuery() returns entries + total + clamps page/limit.
+	 *
+	 * @return void
+	 */
+	public function testAdminQueryReturnsEntriesAndTotal(): void {
+		$entry = new AuditEntry();
+		$entry->setEventType(AuditEventTypes::SECRET_READ);
 
-        $result = $this->service->adminQuery(['eventType' => 'secret.read'], 2, 50);
+		$this->mapper->method('findFiltered')->willReturn([$entry]);
+		$this->mapper->method('countFiltered')->willReturn(137);
 
-        $this->assertSame(137, $result['total']);
-        $this->assertSame(2, $result['page']);
-        $this->assertSame(50, $result['limit']);
-        $this->assertCount(1, $result['entries']);
-    }//end testAdminQueryReturnsEntriesAndTotal()
+		$result = $this->service->adminQuery(['eventType' => 'secret.read'], 2, 50);
+
+		$this->assertSame(137, $result['total']);
+		$this->assertSame(2, $result['page']);
+		$this->assertSame(50, $result['limit']);
+		$this->assertCount(1, $result['entries']);
+	}//end testAdminQueryReturnsEntriesAndTotal()
 }//end class

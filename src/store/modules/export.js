@@ -16,13 +16,15 @@
  * scope, and secret count — never secret material or the passphrase.
  */
 
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { serializeVault } from '../../export/serializer.js'
+import { defineStore } from 'pinia'
+import { sealForRequest } from '../../crypto/cxp.js'
+import { buildCxfDocument } from '../../cxf/cxf.js'
 import { encryptBackup } from '../../export/backup.js'
 import { generateCsv } from '../../export/csv.js'
 import { assembleGdprPackage } from '../../export/gdprPackage.js'
+import { serializeVault } from '../../export/serializer.js'
 
 /**
  * Trigger a local file download from a string blob. No network involved.
@@ -64,10 +66,11 @@ export const useExportStore = defineStore('export', {
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
 		 */
 		async reportExport(mode, scope, secretCount) {
-			await axios.post(
-				generateUrl('/apps/doriath/api/v1/export/events'),
-				{ mode, scope, secretCount },
-			)
+			await axios.post(generateUrl('/apps/doriath/api/v1/export/events'), {
+				mode,
+				scope,
+				secretCount,
+			})
 		},
 
 		/**
@@ -87,7 +90,11 @@ export const useExportStore = defineStore('export', {
 				const payload = serializeVault(secrets, folders, scope)
 				const envelope = await encryptBackup(payload, passphrase)
 				// Report BEFORE offering the download; a failure aborts the export.
-				await this.reportExport('encrypted-backup', scope.mode || 'vault', payload.secrets.length)
+				await this.reportExport(
+					'encrypted-backup',
+					scope.mode || 'vault',
+					payload.secrets.length,
+				)
 				downloadBlob(
 					'vault.doriath-backup',
 					JSON.stringify(envelope, null, 2),
@@ -118,10 +125,112 @@ export const useExportStore = defineStore('export', {
 			try {
 				const payload = serializeVault(secrets, folders, scope)
 				const csv = generateCsv(payload.secrets)
-				await this.reportExport('plaintext-csv', scope.mode || 'vault', payload.secrets.length)
+				await this.reportExport(
+					'plaintext-csv',
+					scope.mode || 'vault',
+					payload.secrets.length,
+				)
 				downloadBlob('vault.csv', csv, 'text/csv')
 			} catch (e) {
 				this.error = e.message || 'CSV export failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Export a FIDO CXF document (cxf-import-export §3). A CXF file is
+		 * PLAINTEXT — the dialog enforces the same warning + master-password
+		 * re-auth gates as the CSV path before calling this. The document is
+		 * assembled entirely client-side; the unmapped-item report (values
+		 * with no CXF home) is returned so the dialog can show it BEFORE the
+		 * download when `dryRun` is set. Never sends plaintext to the server.
+		 *
+		 * @param {Array<object>} secrets Decrypted secrets.
+		 * @param {Array<object>} folders Folder rows.
+		 * @param {object} [scope] Scope selector.
+		 * @param {object} [options] Options.
+		 * @param {object} [options.typeNamesById] typeId → type-name map.
+		 * @param {boolean} [options.dryRun] Build + report only, no download.
+		 * @return {Promise<{unmapped: Array<string>, itemCount: number}>}
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-re-auth-gated-client-side-cxf-export
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
+		 */
+		async exportCxf(secrets, folders, scope = { mode: 'vault' }, options = {}) {
+			this.loading = true
+			this.error = null
+			try {
+				const payload = serializeVault(secrets, folders, scope)
+				const { document, unmapped, itemCount } = buildCxfDocument(
+					payload.secrets,
+					{
+						typeNamesById: options.typeNamesById,
+					},
+				)
+				if (options.dryRun) {
+					return { unmapped, itemCount }
+				}
+				// Report BEFORE offering the download; a failure aborts.
+				await this.reportExport('cxf', scope.mode || 'vault', itemCount)
+				downloadBlob(
+					'vault.cxf',
+					JSON.stringify(document, null, 2),
+					'application/json',
+				)
+				return { unmapped, itemCount }
+			} catch (e) {
+				this.error = e.message || 'CXF export failed'
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * CXP (FIDO Credential Exchange Protocol) export: assemble the CXF payload
+		 * via the EXISTING export path, then HPKE-seal it for a CXP request's
+		 * public key. Returns ONLY the sealed envelope — no plaintext file is ever
+		 * written (cxp-transfer §4.1). Reports the transfer with mode `cxp`.
+		 *
+		 * The caller MUST have already gated on the fresh master-password re-auth
+		 * (cxf-import-export D5), exactly as the file-based CXF export does.
+		 *
+		 * @param {object} request The peer's CXP request { v, requesterPublicKey, nonce, requestedFormat }
+		 * @param {Array} secrets The vault secrets
+		 * @param {Array} folders The folders
+		 * @param {object} scope The export scope
+		 * @param {object} options Options ({ dryRun, typeNamesById })
+		 * @return {Promise<{ envelope: object|null, unmapped: Array, itemCount: number }>}
+		 */
+		async exportCxpSealed(
+			request,
+			secrets,
+			folders,
+			scope = { mode: 'vault' },
+			options = {},
+		) {
+			this.loading = true
+			this.error = null
+			try {
+				const payload = serializeVault(secrets, folders, scope)
+				const { document, unmapped, itemCount } = buildCxfDocument(
+					payload.secrets,
+					{
+						typeNamesById: options.typeNamesById,
+					},
+				)
+				if (options.dryRun) {
+					return { envelope: null, unmapped, itemCount }
+				}
+				// Seal the assembled CXF payload for the requester — in-memory only.
+				const cxfBytes = new TextEncoder().encode(JSON.stringify(document))
+				const envelope = await sealForRequest(request, cxfBytes)
+				// Report BEFORE handing back the envelope; a failure aborts.
+				await this.reportExport('cxp', scope.mode || 'vault', itemCount)
+				return { envelope, unmapped, itemCount }
+			} catch (e) {
+				this.error = e.message || 'CXP transfer failed'
 				throw e
 			} finally {
 				this.loading = false

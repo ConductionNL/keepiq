@@ -34,146 +34,140 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for the read-only AuditController — scope + no-existence-oracle.
  */
-class AuditControllerTest extends TestCase
-{
-    /**
-     * The controller under test.
-     *
-     * @var AuditController
-     */
-    private AuditController $controller;
+class AuditControllerTest extends TestCase {
 
-    /**
-     * The mocked audit service.
-     *
-     * @var AuditService&MockObject
-     */
-    private AuditService $auditService;
+	/**
+	 * The controller under test.
+	 *
+	 * @var AuditController
+	 */
+	private AuditController $controller;
 
-    /**
-     * The mocked secret mapper.
-     *
-     * @var SecretMapper&MockObject
-     */
-    private SecretMapper $secretMapper;
+	/**
+	 * The mocked audit service.
+	 *
+	 * @var AuditService&MockObject
+	 */
+	private AuditService $auditService;
 
-    /**
-     * Set up test fixtures with a logged-in user "alice".
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $request            = $this->createMock(IRequest::class);
-        $this->auditService = $this->createMock(AuditService::class);
-        $this->secretMapper = $this->createMock(SecretMapper::class);
+	/**
+	 * The mocked secret mapper.
+	 *
+	 * @var SecretMapper&MockObject
+	 */
+	private SecretMapper $secretMapper;
 
-        $userSession = $this->createMock(IUserSession::class);
-        $user        = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $userSession->method('getUser')->willReturn($user);
+	/**
+	 * Set up test fixtures with a logged-in user "alice".
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$request = $this->createMock(IRequest::class);
+		$this->auditService = $this->createMock(AuditService::class);
+		$this->secretMapper = $this->createMock(SecretMapper::class);
 
-        $this->controller = new AuditController(
-            $request,
-            $this->auditService,
-            $this->secretMapper,
-            $userSession,
-        );
-    }//end setUp()
+		$userSession = $this->createMock(IUserSession::class);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$userSession->method('getUser')->willReturn($user);
 
-    /**
-     * Owner sees their secret's activity.
-     *
-     * @return void
-     */
-    public function testSecretActivityForOwner(): void
-    {
-        $secret = new Secret();
-        $secret->setOwnerType('user');
-        $secret->setOwnerId('alice');
-        $this->secretMapper->method('findById')->with('sec-1')->willReturn($secret);
+		$this->controller = new AuditController(
+			$request,
+			$this->auditService,
+			$this->secretMapper,
+			$userSession,
+		);
+	}//end setUp()
 
-        $this->auditService->expects($this->once())
-            ->method('listForObject')
-            ->with('secret', 'sec-1')
-            ->willReturn([]);
+	/**
+	 * Owner sees their secret's activity.
+	 *
+	 * @return void
+	 */
+	public function testSecretActivityForOwner(): void {
+		$secret = new Secret();
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('alice');
+		$this->secretMapper->method('findById')->with('sec-1')->willReturn($secret);
 
-        $response = $this->controller->secret('sec-1');
+		$this->auditService->expects($this->once())
+			->method('listForObject')
+			->with('secret', 'sec-1')
+			->willReturn([]);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-    }//end testSecretActivityForOwner()
+		$response = $this->controller->secret('sec-1');
 
-    /**
-     * A non-owned secret returns 404 — and never queries the audit service.
-     *
-     * @return void
-     */
-    public function testSecretActivityNonOwnerReturns404(): void
-    {
-        $secret = new Secret();
-        $secret->setOwnerType('user');
-        $secret->setOwnerId('mallory');
-        $this->secretMapper->method('findById')->with('sec-1')->willReturn($secret);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testSecretActivityForOwner()
 
-        $this->auditService->expects($this->never())->method('listForObject');
+	/**
+	 * A non-owned secret returns 404 — and never queries the audit service.
+	 *
+	 * @return void
+	 */
+	public function testSecretActivityNonOwnerReturns404(): void {
+		$secret = new Secret();
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('mallory');
+		$this->secretMapper->method('findById')->with('sec-1')->willReturn($secret);
 
-        $response = $this->controller->secret('sec-1');
+		$this->auditService->expects($this->never())->method('listForObject');
 
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }//end testSecretActivityNonOwnerReturns404()
+		$response = $this->controller->secret('sec-1');
 
-    /**
-     * A nonexistent secret returns the SAME 404 — no existence oracle.
-     *
-     * @return void
-     */
-    public function testSecretActivityNonexistentReturnsSame404(): void
-    {
-        $this->secretMapper->method('findById')->willThrowException(new DoesNotExistException('nope'));
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testSecretActivityNonOwnerReturns404()
 
-        $response = $this->controller->secret('sec-missing');
+	/**
+	 * A nonexistent secret returns the SAME 404 — no existence oracle.
+	 *
+	 * @return void
+	 */
+	public function testSecretActivityNonexistentReturnsSame404(): void {
+		$this->secretMapper->method('findById')->willThrowException(new DoesNotExistException('nope'));
 
-        $this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-    }//end testSecretActivityNonexistentReturnsSame404()
+		$response = $this->controller->secret('sec-missing');
 
-    /**
-     * /audit/me is strictly scoped to the session user as actor.
-     *
-     * @return void
-     */
-    public function testPersonalActivityScopedToSessionUser(): void
-    {
-        $this->auditService->expects($this->once())
-            ->method('listForActor')
-            ->with('alice')
-            ->willReturn([]);
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testSecretActivityNonexistentReturnsSame404()
 
-        $response = $this->controller->me();
+	/**
+	 * /audit/me is strictly scoped to the session user as actor.
+	 *
+	 * @return void
+	 */
+	public function testPersonalActivityScopedToSessionUser(): void {
+		$this->auditService->expects($this->once())
+			->method('listForActor')
+			->with('alice')
+			->willReturn([]);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-    }//end testPersonalActivityScopedToSessionUser()
+		$response = $this->controller->mine();
 
-    /**
-     * The admin index passes filters + pagination through to the service.
-     *
-     * @return void
-     */
-    public function testAdminIndexPassesFilters(): void
-    {
-        $captured = null;
-        $this->auditService->method('adminQuery')->willReturnCallback(
-            function (array $filters, int $page, int $limit) use (&$captured): array {
-                $captured = [$filters, $page, $limit];
-                return ['entries' => [], 'total' => 0, 'page' => $page, 'limit' => $limit];
-            }
-        );
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testPersonalActivityScopedToSessionUser()
 
-        $response = $this->controller->index(eventType: 'secret.read', actor: 'bob', page: 3, limit: 25);
+	/**
+	 * The admin index passes filters + pagination through to the service.
+	 *
+	 * @return void
+	 */
+	public function testAdminIndexPassesFilters(): void {
+		$captured = null;
+		$this->auditService->method('adminQuery')->willReturnCallback(
+			function (array $filters, int $page, int $limit) use (&$captured): array {
+				$captured = [$filters, $page, $limit];
+				return ['entries' => [], 'total' => 0, 'page' => $page, 'limit' => $limit];
+			}
+		);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('secret.read', $captured[0]['eventType']);
-        $this->assertSame('bob', $captured[0]['actor']);
-        $this->assertSame(3, $captured[1]);
-        $this->assertSame(25, $captured[2]);
-    }//end testAdminIndexPassesFilters()
+		$response = $this->controller->index(eventType: 'secret.read', actor: 'bob', page: 3, limit: 25);
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('secret.read', $captured[0]['eventType']);
+		$this->assertSame('bob', $captured[0]['actor']);
+		$this->assertSame(3, $captured[1]);
+		$this->assertSame(25, $captured[2]);
+	}//end testAdminIndexPassesFilters()
 }//end class

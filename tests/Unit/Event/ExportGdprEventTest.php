@@ -32,106 +32,101 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for the typed export/deletion events.
  */
-class ExportGdprEventTest extends TestCase
-{
-    /**
-     * The metadata keys that must NEVER appear in any event payload.
-     *
-     * @var string[]
-     */
-    private const FORBIDDEN = ['key', 'login', 'password', 'value', 'additionalFields', 'ciphertext', 'payload', 'secret'];
+class ExportGdprEventTest extends TestCase {
+	/**
+	 * The metadata keys that must NEVER appear in any event payload.
+	 *
+	 * @var string[]
+	 */
+	private const FORBIDDEN = ['key', 'login', 'password', 'value', 'additionalFields', 'ciphertext', 'payload', 'secret'];
 
-    /**
-     * Assert a payload contains no secret-material keys (recursively).
-     *
-     * @param array<string,mixed> $payload The payload
-     *
-     * @return void
-     */
-    private function assertNoSecretMaterial(array $payload): void
-    {
-        foreach ($payload as $value) {
-            if (is_array($value) === true) {
-                $this->assertNoSecretMaterial($value);
-            }
-        }
-        foreach (self::FORBIDDEN as $forbidden) {
-            $this->assertArrayNotHasKey($forbidden, $payload, "forbidden key '$forbidden' present");
-        }
-    }
+	/**
+	 * Assert a payload contains no secret-material keys (recursively).
+	 *
+	 * @param array<string,mixed> $payload The payload
+	 *
+	 * @return void
+	 */
+	private function assertNoSecretMaterial(array $payload): void {
+		foreach ($payload as $value) {
+			if (is_array($value) === true) {
+				$this->assertNoSecretMaterial($value);
+			}
+		}
 
-    /**
-     * SecretExportedEvent: actor + counts/modes only, matching the whitelist.
-     *
-     * @return void
-     */
-    public function testSecretExportedEventPayload(): void
-    {
-        $event = new SecretExportedEvent(userId: 'alice', mode: 'encrypted-backup', scope: 'vault', secretCount: 120);
-        $this->assertSame('alice', $event->getUserId());
-        $meta = $event->getMetadata();
-        $this->assertSame(['mode' => 'encrypted-backup', 'scope' => 'vault', 'secretCount' => 120], $meta);
-        $this->assertNoSecretMaterial($meta);
-    }
+		foreach (self::FORBIDDEN as $forbidden) {
+			$this->assertArrayNotHasKey($forbidden, $payload, "forbidden key '$forbidden' present");
+		}
+	}//end assertNoSecretMaterial()
 
-    /**
-     * GdprExportPerformedEvent records the vault-inclusion flag, no material.
-     *
-     * @return void
-     */
-    public function testGdprExportPerformedEventPayload(): void
-    {
-        $withVault = new GdprExportPerformedEvent(userId: 'alice', includesVault: true);
-        $this->assertTrue($withVault->includesVault());
-        $this->assertSame('alice', $withVault->getUserId());
-        $this->assertSame('metadata-and-vault', $withVault->getMetadata()['scope']);
-        $this->assertNoSecretMaterial($withVault->getMetadata());
+	/**
+	 * SecretExportedEvent: actor + counts/modes only, matching the whitelist.
+	 *
+	 * @return void
+	 */
+	public function testSecretExportedEventPayload(): void {
+		$event = new SecretExportedEvent(userId: 'alice', mode: 'encrypted-backup', scope: 'vault', secretCount: 120);
+		$this->assertSame('alice', $event->getUserId());
+		$meta = $event->getMetadata();
+		$this->assertSame(['mode' => 'encrypted-backup', 'scope' => 'vault', 'secretCount' => 120], $meta);
+		$this->assertNoSecretMaterial($meta);
+	}//end testSecretExportedEventPayload()
 
-        $metaOnly = new GdprExportPerformedEvent(userId: 'alice', includesVault: false);
-        $this->assertSame('metadata-only', $metaOnly->getMetadata()['scope']);
-    }
+	/**
+	 * GdprExportPerformedEvent records the vault-inclusion flag, no material.
+	 *
+	 * @return void
+	 */
+	public function testGdprExportPerformedEventPayload(): void {
+		$withVault = new GdprExportPerformedEvent(userId: 'alice', includesVault: true);
+		$this->assertTrue($withVault->includesVault());
+		$this->assertSame('alice', $withVault->getUserId());
+		$this->assertSame('metadata-and-vault', $withVault->getMetadata()['scope']);
+		$this->assertNoSecretMaterial($withVault->getMetadata());
 
-    /**
-     * AccountDataDeletedEvent carries trigger + counts only, matching the
-     * vault.account_deleted whitelist keys.
-     *
-     * @return void
-     */
-    public function testAccountDataDeletedEventPayload(): void
-    {
-        $report = new DeletionReport();
-        $report->secretsDeleted     = 200;
-        $report->secretsTransferred = 3;
-        $report->sharesDetached     = 12;
-        $report->sharesRemoved      = 5;
-        $report->requestsDeleted    = 4;
-        $report->suitesDeleted      = 1;
+		$metaOnly = new GdprExportPerformedEvent(userId: 'alice', includesVault: false);
+		$this->assertSame('metadata-only', $metaOnly->getMetadata()['scope']);
+	}//end testGdprExportPerformedEventPayload()
 
-        $event = new AccountDataDeletedEvent(userId: 'alice', trigger: 'user-deleted', report: $report);
-        $this->assertSame('alice', $event->getUserId());
-        $this->assertSame('user-deleted', $event->getTrigger());
+	/**
+	 * AccountDataDeletedEvent carries trigger + counts only, matching the
+	 * vault.account_deleted whitelist keys.
+	 *
+	 * @return void
+	 */
+	public function testAccountDataDeletedEventPayload(): void {
+		$report = new DeletionReport();
+		$report->secretsDeleted = 200;
+		$report->secretsTransferred = 3;
+		$report->sharesDetached = 12;
+		$report->sharesRemoved = 5;
+		$report->requestsDeleted = 4;
+		$report->suitesDeleted = 1;
 
-        $meta = $event->getMetadata();
-        $this->assertSame('user-deleted', $meta['trigger']);
-        $this->assertSame(203, $meta['secretCount']);
-        $this->assertSame(17, $meta['shareCount']);
-        $this->assertSame(4, $meta['requestCount']);
-        $this->assertSame(1, $meta['suiteCount']);
-        $this->assertNoSecretMaterial($meta);
-    }
+		$event = new AccountDataDeletedEvent(userId: 'alice', trigger: 'user-deleted', report: $report);
+		$this->assertSame('alice', $event->getUserId());
+		$this->assertSame('user-deleted', $event->getTrigger());
 
-    /**
-     * The event classes expose NO accessor that returns secret material.
-     *
-     * @return void
-     */
-    public function testNoSecretMaterialAccessors(): void
-    {
-        foreach ([SecretExportedEvent::class, GdprExportPerformedEvent::class, AccountDataDeletedEvent::class] as $class) {
-            $methods = get_class_methods($class);
-            foreach (['getKey', 'getLogin', 'getPassword', 'getValue', 'getCiphertext', 'getSecret'] as $banned) {
-                $this->assertNotContains($banned, $methods, "$class exposes $banned");
-            }
-        }
-    }
+		$meta = $event->getMetadata();
+		$this->assertSame('user-deleted', $meta['trigger']);
+		$this->assertSame(203, $meta['secretCount']);
+		$this->assertSame(17, $meta['shareCount']);
+		$this->assertSame(4, $meta['requestCount']);
+		$this->assertSame(1, $meta['suiteCount']);
+		$this->assertNoSecretMaterial($meta);
+	}//end testAccountDataDeletedEventPayload()
+
+	/**
+	 * The event classes expose NO accessor that returns secret material.
+	 *
+	 * @return void
+	 */
+	public function testNoSecretMaterialAccessors(): void {
+		foreach ([SecretExportedEvent::class, GdprExportPerformedEvent::class, AccountDataDeletedEvent::class] as $class) {
+			$methods = get_class_methods($class);
+			foreach (['getKey', 'getLogin', 'getPassword', 'getValue', 'getCiphertext', 'getSecret'] as $banned) {
+				$this->assertNotContains($banned, $methods, "$class exposes $banned");
+			}
+		}
+	}//end testNoSecretMaterialAccessors()
 }//end class

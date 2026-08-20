@@ -14,7 +14,15 @@
  */
 
 /** The fixed column order, matching the generic CSV import mapping. */
-export const CSV_COLUMNS = ['name', 'url', 'login', 'password', 'notes', 'folder', 'type']
+export const CSV_COLUMNS = [
+	'name',
+	'url',
+	'login',
+	'password',
+	'notes',
+	'folder',
+	'type',
+]
 
 /**
  * Quote a single CSV field per RFC 4180.
@@ -155,9 +163,10 @@ export function parseCsv(csv) {
 		return []
 	}
 	const header = rows[0]
-	return rows.slice(1)
-		.filter(r => r.length > 1 || (r.length === 1 && r[0] !== ''))
-		.map(r => {
+	return rows
+		.slice(1)
+		.filter((r) => r.length > 1 || (r.length === 1 && r[0] !== ''))
+		.map((r) => {
 			const obj = {}
 			header.forEach((col, idx) => {
 				obj[col] = r[idx] ?? ''

@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 
 /**
  * Pinia store for the append-only audit trail (add-secret-audit-trail §5.1).
@@ -48,7 +48,8 @@ export const useAuditStore = defineStore('audit', {
 		 * @param {object} state The store state.
 		 * @return {number}
 		 */
-		adminPageCount: (state) => Math.max(1, Math.ceil(state.adminTotal / state.adminLimit)),
+		adminPageCount: (state) =>
+			Math.max(1, Math.ceil(state.adminTotal / state.adminLimit)),
 	},
 
 	actions: {

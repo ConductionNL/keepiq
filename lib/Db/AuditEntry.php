@@ -49,118 +49,114 @@ use OCP\AppFramework\Db\Entity;
  * @method string|null getMetadata()
  * @method void setMetadata(?string $metadata)
  */
-class AuditEntry extends Entity implements JsonSerializable
-{
+class AuditEntry extends Entity implements JsonSerializable {
 
-    /**
-     * When the audited operation occurred.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $occurredAt = null;
+	/**
+	 * When the audited operation occurred.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $occurredAt = null;
 
-    /**
-     * The actor type: user | application | system | link_visitor.
-     *
-     * @var string
-     */
-    protected string $actorType = '';
+	/**
+	 * The actor type: user | application | system | link_visitor.
+	 *
+	 * @var string
+	 */
+	protected string $actorType = '';
 
-    /**
-     * The actor's Nextcloud user ID or application ID (null for system/link_visitor).
-     *
-     * @var string|null
-     */
-    protected ?string $actorId = null;
+	/**
+	 * The actor's Nextcloud user ID or application ID (null for system/link_visitor).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $actorId = null;
 
-    /**
-     * The dot-namespaced event type, e.g. secret.read.
-     *
-     * @var string
-     */
-    protected string $eventType = '';
+	/**
+	 * The dot-namespaced event type, e.g. secret.read.
+	 *
+	 * @var string
+	 */
+	protected string $eventType = '';
 
-    /**
-     * The object type: secret | folder | share | link_share | secret_request | suite | application | vault.
-     *
-     * @var string
-     */
-    protected string $objectType = '';
+	/**
+	 * The object type: secret | folder | share | link_share | secret_request | suite | application | vault.
+	 *
+	 * @var string
+	 */
+	protected string $objectType = '';
 
-    /**
-     * The object reference ID.
-     *
-     * @var string|null
-     */
-    protected ?string $objectId = null;
+	/**
+	 * The object reference ID.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $objectId = null;
 
-    /**
-     * The denormalized non-sensitive object name (survives object deletion).
-     *
-     * @var string|null
-     */
-    protected ?string $objectName = null;
+	/**
+	 * The denormalized non-sensitive object name (survives object deletion).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $objectName = null;
 
-    /**
-     * The whitelisted metadata payload as a JSON string.
-     *
-     * @var string|null
-     */
-    protected ?string $metadata = null;
+	/**
+	 * The whitelisted metadata payload as a JSON string.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $metadata = null;
 
-    /**
-     * Constructor for AuditEntry.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'occurredAt', type: 'datetime');
-        $this->addType(fieldName: 'actorType', type: 'string');
-        $this->addType(fieldName: 'actorId', type: 'string');
-        $this->addType(fieldName: 'eventType', type: 'string');
-        $this->addType(fieldName: 'objectType', type: 'string');
-        $this->addType(fieldName: 'objectId', type: 'string');
-        $this->addType(fieldName: 'objectName', type: 'string');
-        $this->addType(fieldName: 'metadata', type: 'string');
-    }//end __construct()
+	/**
+	 * Constructor for AuditEntry.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'occurredAt', type: 'datetime');
+		$this->addType(fieldName: 'actorType', type: 'string');
+		$this->addType(fieldName: 'actorId', type: 'string');
+		$this->addType(fieldName: 'eventType', type: 'string');
+		$this->addType(fieldName: 'objectType', type: 'string');
+		$this->addType(fieldName: 'objectId', type: 'string');
+		$this->addType(fieldName: 'objectName', type: 'string');
+		$this->addType(fieldName: 'metadata', type: 'string');
+	}//end __construct()
 
-    /**
-     * Decode the stored metadata JSON to an associative array.
-     *
-     * @return array<string,mixed>
-     */
-    public function getMetadataArray(): array
-    {
-        if ($this->metadata === null || $this->metadata === '') {
-            return [];
-        }
+	/**
+	 * Decode the stored metadata JSON to an associative array.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function getMetadataArray(): array {
+		if ($this->metadata === null || $this->metadata === '') {
+			return [];
+		}
 
-        $decoded = json_decode($this->metadata, true);
-        if (is_array($decoded) === false) {
-            return [];
-        }
+		$decoded = json_decode($this->metadata, true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
 
-        return $decoded;
-    }//end getMetadataArray()
+		return $decoded;
+	}//end getMetadataArray()
 
-    /**
-     * Serialize the entity to an array for JSON output.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'         => $this->id,
-            'occurredAt' => $this->occurredAt?->format('c'),
-            'actorType'  => $this->actorType,
-            'actorId'    => $this->actorId,
-            'eventType'  => $this->eventType,
-            'objectType' => $this->objectType,
-            'objectId'   => $this->objectId,
-            'objectName' => $this->objectName,
-            'metadata'   => $this->getMetadataArray(),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for JSON output.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		return [
+			'id' => $this->id,
+			'occurredAt' => $this->occurredAt?->format('c'),
+			'actorType' => $this->actorType,
+			'actorId' => $this->actorId,
+			'eventType' => $this->eventType,
+			'objectType' => $this->objectType,
+			'objectId' => $this->objectId,
+			'objectName' => $this->objectName,
+			'metadata' => $this->getMetadataArray(),
+		];
+	}//end jsonSerialize()
 }//end class

@@ -1,41 +1,42 @@
+# Doriath — Conduction PHPStan config.
+#
+# The shared base is the single source of truth. Everything here is either the
+# app's own tracked debt or an ignore naming a symbol that exists in no other
+# fleet app. Anything you are tempted to add that another app would also need
+# belongs in the base, not here.
+#
+# No baseline: this app ships no `phpstan-baseline.neon`.
+includes:
+    - vendor/conduction/hydra-gates/quality-config/phpstan-base.neon
+
 parameters:
-    level: 5
-    paths:
-        - lib
-    bootstrapFiles:
-        - phpstan-bootstrap.php
-    excludePaths:
-        - vendor
-    scanDirectories:
-        - vendor/nextcloud/ocp
-    reportUnmatchedIgnoredErrors: false
+    # App-specific only. The base already sets level, paths, bootstrapFiles,
+    # excludePaths, scanDirectories and every fleet-wide ignore.
+    scanFiles:
+        # AppHost Settings engine (GenericSettingsSection + GenericAdminSettings)
+        # so Sections\SettingsSection and Settings\AdminSettings resolve the base
+        # classes they extend when the openregister sibling app is absent from the
+        # analysis path. Analysis-only — never loaded at runtime (ADR-040).
+        - tests/stubs/openregister-apphost.stub.php
+
     ignoreErrors:
-        # Nextcloud internal classes that PHPStan might not recognize
-        - '#Call to an undefined method OC::#'
-        - '#Class OC not found#'
-        - '#Access to static property \$server on an unknown class OC#'
-        # OCA classes from other apps (OpenRegister) not available during static analysis
-        - '#unknown class OCA\\OpenRegister\\#'
-        - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class OCA\\OpenRegister\\#'
-        - '#has invalid return type OCA\\OpenRegister\\#'
-        # Doctrine\DBAL classes (used in migrations for cross-dialect column type changes;
-        # not in vendor stubs because doriath doesn't directly require doctrine/dbal — it
-        # comes through Nextcloud's runtime via OCP\DB\Types).
-        - '#unknown class Doctrine\\DBAL\\#'
+        # Doctrine\DBAL wordings the base does not cover. The base ignores the
+        # "unknown class" / "not found" shapes; migrations here also produce the
+        # capitalised "Class …" wording and Platforms\* references, which come
+        # through Nextcloud's runtime via OCP\DB\Types rather than a direct require.
         - '#class Doctrine\\DBAL\\#'
         - '#Class Doctrine\\DBAL\\#'
         - '#Doctrine\\DBAL\\Platforms\\#'
-        # GuzzleHttp is available at runtime via Nextcloud but not in composer require
-        - '#unknown class GuzzleHttp\\#'
-        - '#GuzzleHttp\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class GuzzleHttp\\#'
-        - '#invalid type GuzzleHttp\\#'
-        - '#Caught class GuzzleHttp\\#'
-        # Dynamic HTTP status codes from business rule validation results
-        - '#Parameter \$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
-        # registerRepairStep exists on server; not yet in nextcloud/ocp stub used for analysis
-        - '#Call to an undefined method OCP\\AppFramework\\Bootstrap\\IRegistrationContext::registerRepairStep#'
+        # nextcloud/ocp declares DataResponse's body bound as
+        #   `@psalm-type DataResponseType = array|int|float|string|bool|object|null|…`
+        #   `@template-covariant T of DataResponseType`
+        # `@psalm-type` is a Psalm-only alias — PHPStan cannot resolve it, so the
+        # template bound degrades to an unresolvable type and EVERY `array` body is
+        # reported as a non-matching template argument even though `array` is
+        # explicitly IN DataResponseType. Verified false positive: the identical
+        # error appears with both named and positional arguments, and Psalm (which
+        # does understand the alias) reports nothing.
+        - '#Parameter (\#\d+ )?\$data of class OCP\\AppFramework\\Http\\DataResponse constructor expects#'
         # Entities use string UUIDs as primary keys instead of auto-increment ints;
         # getId() returns int per OCP\Entity but the actual value is a UUID string at runtime
         - '#Parameter \#1 \$id of method OCP\\AppFramework\\Db\\Entity::setId\(\) expects int, string given#'

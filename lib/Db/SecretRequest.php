@@ -50,173 +50,176 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getFulfilledAt()
  * @method void setFulfilledAt(?DateTime $fulfilledAt)
- *
- * @SuppressWarnings(PHPMD.LongVariable) Property names mirror DB columns.
  */
-class SecretRequest extends Entity implements JsonSerializable
-{
-    public const STATUS_PENDING   = 'pending';
-    public const STATUS_FULFILLED = 'fulfilled';
-    public const STATUS_DECLINED  = 'declined';
-    public const STATUS_LOCKED    = 'locked';
+class SecretRequest extends Entity implements JsonSerializable {
+	public const STATUS_PENDING = 'pending';
+	public const STATUS_FULFILLED = 'fulfilled';
+	public const STATUS_DECLINED = 'declined';
+	public const STATUS_LOCKED = 'locked';
 
-    /**
-     * The unfilled (or to-be-overwritten) Secret ID.
-     *
-     * @var string
-     */
-    protected string $secretId = '';
+	/**
+	 * Terminal: the request's `expires_at` passed and the sweeper acted on it.
+	 *
+	 * Distinct from DECLINED on purpose. Revoking means the requester changed
+	 * their mind; expiring means time ran out, and the two have different
+	 * consequences for someone looking at a vault that is missing a row. Without
+	 * a status of its own, an automatic expiry would be indistinguishable from a
+	 * cancellation after the fact.
+	 */
+	public const STATUS_EXPIRED = 'expired';
 
-    /**
-     * The recipient's active EncryptionSuite ID.
-     *
-     * @var string
-     */
-    protected string $encryptionSuiteId = '';
+	/**
+	 * The unfilled (or to-be-overwritten) Secret ID.
+	 *
+	 * @var string
+	 */
+	protected string $secretId = '';
 
-    /**
-     * The URL-safe access token.
-     *
-     * @var string
-     */
-    protected string $token = '';
+	/**
+	 * The recipient's active EncryptionSuite ID.
+	 *
+	 * @var string
+	 */
+	protected string $encryptionSuiteId = '';
 
-    /**
-     * JSON-encoded array of field names the requester wants filled in.
-     *
-     * @var string
-     */
-    protected string $requestedFields = '[]';
+	/**
+	 * The URL-safe access token.
+	 *
+	 * @var string
+	 */
+	protected string $token = '';
 
-    /**
-     * Request lifecycle: pending / fulfilled / declined / locked.
-     *
-     * @var string
-     */
-    protected string $status = self::STATUS_PENDING;
+	/**
+	 * JSON-encoded array of field names the requester wants filled in.
+	 *
+	 * @var string
+	 */
+	protected string $requestedFields = '[]';
 
-    /**
-     * Whether this is a re-request (overwrite an existing Secret).
-     *
-     * @var boolean
-     */
-    protected bool $isReRequest = false;
+	/**
+	 * Request lifecycle: pending / fulfilled / declined / locked.
+	 *
+	 * @var string
+	 */
+	protected string $status = self::STATUS_PENDING;
 
-    /**
-     * Optional expiry timestamp.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $expiresAt = null;
+	/**
+	 * Whether this is a re-request (overwrite an existing Secret).
+	 *
+	 * @var boolean
+	 */
+	protected bool $isReRequest = false;
 
-    /**
-     * The Nextcloud user ID that created the request.
-     *
-     * @var string
-     */
-    protected string $createdBy = '';
+	/**
+	 * Optional expiry timestamp.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $expiresAt = null;
 
-    /**
-     * When the request was created.
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $createdAt = null;
+	/**
+	 * The Nextcloud user ID that created the request.
+	 *
+	 * @var string
+	 */
+	protected string $createdBy = '';
 
-    /**
-     * When the request was fulfilled (nullable).
-     *
-     * @var DateTime|null
-     */
-    protected ?DateTime $fulfilledAt = null;
+	/**
+	 * When the request was created.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $createdAt = null;
 
-    /**
-     * The UUID primary key.
-     *
-     * @var string
-     */
-    public $id = '';
+	/**
+	 * When the request was fulfilled (nullable).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $fulfilledAt = null;
 
-    /**
-     * Get the UUID primary key.
-     *
-     * @return string
-     */
-    public function getId(): string
-    {
-        return (string) $this->id;
-    }//end getId()
+	/**
+	 * The UUID primary key.
+	 *
+	 * @var string
+	 */
+	public $id = '';
 
-    /**
-     * Set the UUID primary key.
-     *
-     * @param string $id The UUID
-     *
-     * @return void
-     */
-    public function setId($id): void
-    {
-        $this->setter(name: 'id', args: [$id]);
-    }//end setId()
+	/**
+	 * Get the UUID primary key.
+	 *
+	 * @return string
+	 */
+	public function getId(): string {
+		return (string)$this->id;
+	}//end getId()
 
-    /**
-     * Constructor for SecretRequest.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->addType(fieldName: 'id', type: 'string');
-        $this->addType(fieldName: 'secretId', type: 'string');
-        $this->addType(fieldName: 'encryptionSuiteId', type: 'string');
-        $this->addType(fieldName: 'token', type: 'string');
-        $this->addType(fieldName: 'requestedFields', type: 'string');
-        $this->addType(fieldName: 'status', type: 'string');
-        $this->addType(fieldName: 'isReRequest', type: 'boolean');
-        $this->addType(fieldName: 'expiresAt', type: 'datetime');
-        $this->addType(fieldName: 'createdBy', type: 'string');
-        $this->addType(fieldName: 'createdAt', type: 'datetime');
-        $this->addType(fieldName: 'fulfilledAt', type: 'datetime');
-    }//end __construct()
+	/**
+	 * Set the UUID primary key.
+	 *
+	 * @param string $id The UUID
+	 *
+	 * @return void
+	 */
+	public function setId($id): void {
+		$this->setter(name: 'id', args: [$id]);
+	}//end setId()
 
-    /**
-     * Check whether the request is currently expired.
-     *
-     * @return bool
-     */
-    public function isExpired(): bool
-    {
-        if ($this->expiresAt === null) {
-            return false;
-        }
+	/**
+	 * Constructor for SecretRequest.
+	 *
+	 * @return void
+	 */
+	public function __construct() {
+		$this->addType(fieldName: 'id', type: 'string');
+		$this->addType(fieldName: 'secretId', type: 'string');
+		$this->addType(fieldName: 'encryptionSuiteId', type: 'string');
+		$this->addType(fieldName: 'token', type: 'string');
+		$this->addType(fieldName: 'requestedFields', type: 'string');
+		$this->addType(fieldName: 'status', type: 'string');
+		$this->addType(fieldName: 'isReRequest', type: 'boolean');
+		$this->addType(fieldName: 'expiresAt', type: 'datetime');
+		$this->addType(fieldName: 'createdBy', type: 'string');
+		$this->addType(fieldName: 'createdAt', type: 'datetime');
+		$this->addType(fieldName: 'fulfilledAt', type: 'datetime');
+	}//end __construct()
 
-        return $this->expiresAt < new DateTime();
-    }//end isExpired()
+	/**
+	 * Check whether the request is currently expired.
+	 *
+	 * @return bool
+	 */
+	public function isExpired(): bool {
+		if ($this->expiresAt === null) {
+			return false;
+		}
 
-    /**
-     * Serialize the entity to an array for the API.
-     *
-     * @return array<string,mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        $requested = json_decode($this->requestedFields, true);
-        if (is_array($requested) === false) {
-            $requested = [];
-        }
+		return $this->expiresAt < new DateTime();
+	}//end isExpired()
 
-        return [
-            'id'                => $this->getId(),
-            'secretId'          => $this->secretId,
-            'encryptionSuiteId' => $this->encryptionSuiteId,
-            'token'             => $this->token,
-            'requestedFields'   => $requested,
-            'status'            => $this->status,
-            'isReRequest'       => $this->isReRequest,
-            'expiresAt'         => $this->expiresAt?->format('c'),
-            'createdBy'         => $this->createdBy,
-            'createdAt'         => $this->createdAt?->format('c'),
-            'fulfilledAt'       => $this->fulfilledAt?->format('c'),
-        ];
-    }//end jsonSerialize()
+	/**
+	 * Serialize the entity to an array for the API.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function jsonSerialize(): array {
+		$requested = json_decode($this->requestedFields, true);
+		if (is_array($requested) === false) {
+			$requested = [];
+		}
+
+		return [
+			'id' => $this->getId(),
+			'secretId' => $this->secretId,
+			'encryptionSuiteId' => $this->encryptionSuiteId,
+			'token' => $this->token,
+			'requestedFields' => $requested,
+			'status' => $this->status,
+			'isReRequest' => $this->isReRequest,
+			'expiresAt' => $this->expiresAt?->format('c'),
+			'createdBy' => $this->createdBy,
+			'createdAt' => $this->createdAt?->format('c'),
+			'fulfilledAt' => $this->fulfilledAt?->format('c'),
+		];
+	}//end jsonSerialize()
 }//end class

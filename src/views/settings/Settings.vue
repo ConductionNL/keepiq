@@ -14,27 +14,54 @@
 <template>
 	<div class="doriath-settings">
 		<PasswordPolicySection />
+		<OrgPasswordPolicySection />
 		<BreachCheckSection />
 		<CaHealthSection />
 		<ApplicationQueueSection />
+		<AttachmentLimitsSection />
+		<RotationPolicySection />
+		<MachineLeaseSection />
+		<ComplianceSection />
+		<SiemSection />
+		<HoneySection />
+		<OfflineCacheSection />
+		<OffboardingSection />
 		<AdminAuditSection />
 	</div>
 </template>
 
 <script>
-import PasswordPolicySection from '../../components/settings/PasswordPolicySection.vue'
+import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
+import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
+import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
-import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
-import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
+import ComplianceSection from '../../components/settings/ComplianceSection.vue'
+import HoneySection from '../../components/settings/HoneySection.vue'
+import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
+import OffboardingSection from '../../components/settings/OffboardingSection.vue'
+import OfflineCacheSection from '../../components/settings/OfflineCacheSection.vue'
+import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolicySection.vue'
+import PasswordPolicySection from '../../components/settings/PasswordPolicySection.vue'
+import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
+import SiemSection from '../../components/settings/SiemSection.vue'
 
 export default {
 	name: 'Settings',
 	components: {
 		PasswordPolicySection,
+		OrgPasswordPolicySection,
 		BreachCheckSection,
 		CaHealthSection,
 		ApplicationQueueSection,
+		AttachmentLimitsSection,
+		RotationPolicySection,
+		MachineLeaseSection,
+		ComplianceSection,
+		SiemSection,
+		HoneySection,
+		OfflineCacheSection,
+		OffboardingSection,
 		AdminAuditSection,
 	},
 }

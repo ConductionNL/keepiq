@@ -34,59 +34,55 @@ use OCP\EventDispatcher\Event;
 /**
  * Fired when a GDPR data export package is produced.
  */
-class GdprExportPerformedEvent extends Event
-{
-    /**
-     * Constructor for GdprExportPerformedEvent.
-     *
-     * @param string $userId        The session user that produced the export
-     * @param bool   $includesVault Whether the decrypted vault half was included
-     *
-     * @return void
-     */
-    public function __construct(
-        private string $userId,
-        private bool $includesVault,
-    ) {
-        parent::__construct();
-    }//end __construct()
+class GdprExportPerformedEvent extends Event {
+	/**
+	 * Constructor for GdprExportPerformedEvent.
+	 *
+	 * @param string $userId The session user that produced the export
+	 * @param bool $includesVault Whether the decrypted vault half was included
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private string $userId,
+		private bool $includesVault,
+	) {
+		parent::__construct();
+	}//end __construct()
 
-    /**
-     * Get the acting user ID.
-     *
-     * @return string
-     */
-    public function getUserId(): string
-    {
-        return $this->userId;
-    }//end getUserId()
+	/**
+	 * Get the acting user ID.
+	 *
+	 * @return string
+	 */
+	public function getUserId(): string {
+		return $this->userId;
+	}//end getUserId()
 
-    /**
-     * Whether the decrypted vault half was included.
-     *
-     * @return bool
-     */
-    public function includesVault(): bool
-    {
-        return $this->includesVault;
-    }//end includesVault()
+	/**
+	 * Whether the decrypted vault half was included.
+	 *
+	 * @return bool
+	 */
+	public function includesVault(): bool {
+		return $this->includesVault;
+	}//end includesVault()
 
-    /**
-     * Get the audit metadata payload — no secret material. The 'scope' key maps
-     * the vault-inclusion flag onto the whitelisted vault.gdpr_exported keys.
-     *
-     * @return array<string,mixed>
-     */
-    public function getMetadata(): array
-    {
-        $scope = 'metadata-only';
-        if ($this->includesVault === true) {
-            $scope = 'metadata-and-vault';
-        }
+	/**
+	 * Get the audit metadata payload — no secret material. The 'scope' key maps
+	 * the vault-inclusion flag onto the whitelisted vault.gdpr_exported keys.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function getMetadata(): array {
+		$scope = 'metadata-only';
+		if ($this->includesVault === true) {
+			$scope = 'metadata-and-vault';
+		}
 
-        return [
-            'mode'  => 'gdpr-package',
-            'scope' => $scope,
-        ];
-    }//end getMetadata()
+		return [
+			'mode' => 'gdpr-package',
+			'scope' => $scope,
+		];
+	}//end getMetadata()
 }//end class
