@@ -41,9 +41,7 @@
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
 			{{
-				loading
-					? t('doriath', 'Changing...')
-					: t('doriath', 'Change password')
+				loading ? t('doriath', 'Changing…') : t('doriath', 'Change password')
 			}}
 		</NcButton>
 	</div>
