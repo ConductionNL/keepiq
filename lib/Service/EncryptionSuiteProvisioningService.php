@@ -34,6 +34,7 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\IAppConfig;
 use OCP\IUserManager;
@@ -79,9 +80,100 @@ class EncryptionSuiteProvisioningService {
 	 *
 	 * @return EncryptionSuite
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @throws ConflictException When the owner already has an active suite. Use
+	 *                           createSuccessorSuite() for a compromise recovery,
+	 *                           which is the one flow allowed a second active suite.
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
 	 */
 	public function createSuite(
+		string $ownerType,
+		string $ownerId,
+		string $publicKeyPem,
+		string $encryptedPrivateKey,
+	): EncryptionSuite {
+		// Refused BEFORE the CA is consulted and before anything is signed: a create
+		// that must not happen should cost no certificate. Reported as #289 — the
+		// endpoint checked auth, parameters and the migration write-lock, but never
+		// whether a suite already existed, so any session could mint a second active
+		// suite. Resolution picks the NEWEST active suite, so new secrets were sealed
+		// to a key the owner was not unlocking with: they decrypt for nobody, and
+		// nothing reports it at the time.
+		//
+		// Two named methods rather than a boolean flag. The flag encoded exactly this
+		// distinction — "is this a plain create or a rotation successor" — and a caller
+		// reading `createSuite(...)` at a call site could not see which rules applied
+		// to it. It also meant the one dangerous case was reachable by passing `true`,
+		// which is easy to do by accident and invisible in review.
+		$active = $this->mapper->countActiveByOwner(ownerType: $ownerType, ownerId: $ownerId);
+		if ($active > 0) {
+			throw new ConflictException(
+				message: 'An active EncryptionSuite already exists for this owner. '
+				. 'Change the master password or start a compromise recovery instead of creating a second suite.'
+			);
+		}
+
+		return $this->issueSuite(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			publicKeyPem: $publicKeyPem,
+			encryptedPrivateKey: $encryptedPrivateKey
+		);
+	}//end createSuite()
+
+	/**
+	 * Create a successor suite for a compromise recovery, bypassing the single-active
+	 * rule.
+	 *
+	 * The ONE flow permitted two active suites at once. The old suite must stay active
+	 * and readable for the whole migration — the browser decrypts what it is migrating
+	 * with it — while the successor takes new writes. See "Suite Resolution Is
+	 * Deterministic During A Migration": resolution selects the newest active suite,
+	 * which is always the write target.
+	 *
+	 * Named rather than flagged so that the exception to the rule is legible at its
+	 * call site, and so that reaching it is a deliberate act.
+	 *
+	 * @param string $ownerType 'user' or 'application'
+	 * @param string $ownerId Nextcloud user ID or Application ID
+	 * @param string $publicKeyPem PEM-encoded public key
+	 * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
+	 *
+	 * @return EncryptionSuite
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function createSuccessorSuite(
+		string $ownerType,
+		string $ownerId,
+		string $publicKeyPem,
+		string $encryptedPrivateKey,
+	): EncryptionSuite {
+		return $this->issueSuite(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			publicKeyPem: $publicKeyPem,
+			encryptedPrivateKey: $encryptedPrivateKey
+		);
+	}//end createSuccessorSuite()
+
+	/**
+	 * Sign the public key and persist the suite. Shared by both entry points.
+	 *
+	 * Deliberately private: it carries NO single-active check, so the decision about
+	 * whether an additional active suite is permitted is made by whichever public
+	 * method the caller chose, and cannot be skipped by calling this directly.
+	 *
+	 * @param string $ownerType 'user' or 'application'
+	 * @param string $ownerId Nextcloud user ID or Application ID
+	 * @param string $publicKeyPem PEM-encoded public key
+	 * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
+	 *
+	 * @return EncryptionSuite
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-creation-on-first-login
+	 */
+	private function issueSuite(
 		string $ownerType,
 		string $ownerId,
 		string $publicKeyPem,
@@ -109,7 +201,7 @@ class EncryptionSuiteProvisioningService {
 		$this->logger->info("Doriath: EncryptionSuite created for {$ownerType}/{$ownerId}");
 
 		return $suite;
-	}//end createSuite()
+	}//end issueSuite()
 
 	/**
 	 * Provision an EncryptionSuite for a registered application.
