@@ -327,7 +327,12 @@ class SecretService {
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			// No MultipleObjectsReturnedException arm: findActiveByOwner()
+			// sets maxResults(1) precisely so findEntity() can never see two
+			// rows. That bound IS the fix for the bug its docblock describes —
+			// the unbounded version threw mid-migration and this catch then
+			// reported "No active encryption suite" to a user who had two.
+		} catch (DoesNotExistException) {
 			throw new SuiteBlockedException(
 				message: 'No active EncryptionSuite for application ' . $applicationId
 			);
@@ -427,7 +432,12 @@ class SecretService {
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			// No MultipleObjectsReturnedException arm: findActiveByOwner()
+			// sets maxResults(1) precisely so findEntity() can never see two
+			// rows. That bound IS the fix for the bug its docblock describes —
+			// the unbounded version threw mid-migration and this catch then
+			// reported "No active encryption suite" to a user who had two.
+		} catch (DoesNotExistException) {
 			throw new SuiteBlockedException(
 				message: 'No active EncryptionSuite for application ' . $applicationId
 			);
@@ -1297,7 +1307,9 @@ class SecretService {
 	private function getActiveSuiteOrBlock(string $userId): EncryptionSuite {
 		try {
 			return $this->suiteMapper->findActiveByOwner('user', $userId);
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			// See the note above: findActiveByOwner() bounds the query with
+			// maxResults(1), so MultipleObjectsReturnedException is unreachable.
+		} catch (DoesNotExistException) {
 			throw new SuiteBlockedException(message: 'No active encryption suite — it may be revoked or not yet created');
 		}
 	}//end getActiveSuiteOrBlock()

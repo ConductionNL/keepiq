@@ -71,11 +71,16 @@ class BreachProxyController extends Controller {
 	private const UPSTREAM_TIMEOUT = 5;
 
 	/**
-	 * The per-prefix response cache (null when no distributed cache is available).
+	 * The per-prefix response cache.
 	 *
-	 * @var ICache|null
+	 * NOT nullable. `ICacheFactory::createDistributed()` always returns an
+	 * ICache — it hands back a no-op implementation when no distributed cache
+	 * is configured rather than null — so the `?` this replaces described a
+	 * state that could not occur, and the `null` case was never assigned.
+	 *
+	 * @var ICache
 	 */
-	private ?ICache $cache;
+	private ICache $cache;
 
 	/**
 	 * Constructor for BreachProxyController.
@@ -113,6 +118,18 @@ class BreachProxyController extends Controller {
 	 *
 	 * @param string $prefix The 5-character hexadecimal SHA-1 prefix
 	 *
+	 * @no-admin-idor-exempt `$prefix` is not an object reference. It is a
+	 * 5-character SHA-1 prefix forwarded to HaveIBeenPwned's k-anonymity range
+	 * API, chosen precisely so neither this app nor the upstream can tell which
+	 * password was checked. There is no addressable record for a caller-scoping
+	 * guard to compare against, so the "scope the object to the caller" fix
+	 * gate-7's FAIL message prescribes has no subject here. The two refusals in
+	 * the body are deliberately NOT authorization: the 401 is authentication
+	 * (`.github#365`) and the 403 is an instance-wide `breach_check_enabled`
+	 * feature flag that answers the same way for every caller — which is why
+	 * gate-7 correctly stops treating that 403 as a guard once it requires a
+	 * 403 to have consulted the caller.
+	 *
 	 * @NoAdminRequired
 	 *
 	 * @return DataResponse
@@ -143,7 +160,7 @@ class BreachProxyController extends Controller {
 			);
 		}
 
-		$cached = $this->cache?->get($prefix);
+		$cached = $this->cache->get($prefix);
 		if (is_string($cached) === true) {
 			return new DataResponse(data: ['suffixes' => $cached]);
 		}
@@ -170,7 +187,7 @@ class BreachProxyController extends Controller {
 			);
 		}//end try
 
-		$this->cache?->set($prefix, $body, self::CACHE_TTL);
+		$this->cache->set($prefix, $body, self::CACHE_TTL);
 
 		return new DataResponse(data: ['suffixes' => $body]);
 	}//end range()

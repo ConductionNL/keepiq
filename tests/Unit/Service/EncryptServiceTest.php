@@ -79,15 +79,24 @@ class EncryptServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testRsaEncryptUnderCertificateDecryptsWithMatchingPrivateKey(): void {
+		// 4096 bits, not 2048, and that is load-bearing rather than cautious.
+		// EncryptService pads to RSA_BLOCK_SIZE = 512 bytes and encrypts with
+		// OPENSSL_NO_PADDING, so the key MUST be exactly 4096 bits wide. Under a
+		// 2048-bit key the 512-byte block does not fit and openssl fails with
+		// `error:0200006E:rsa routines::data too large for key size` — which this
+		// test did, on every run, because the fixture contradicted the invariant
+		// the rest of the app enforces (CertificateAuthorityService mints 4096,
+		// ApplicationLifecycleService rejects anything below it).
+		//
 		// CA that issues the suite certificate.
-		$caKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+		$caKey = openssl_pkey_new(['private_key_bits' => 4096, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
 		$caCsr = openssl_csr_new(['commonName' => 'Doriath Test CA'], $caKey);
 		$caCert = openssl_csr_sign($caCsr, null, $caKey, 365);
 		openssl_x509_export($caCert, $caCertPem);
 
 		// The user's real key pair. The private half is wrapped + later unwrapped
 		// by the read path; the certificate carries the matching public half.
-		$userKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+		$userKey = openssl_pkey_new(['private_key_bits' => 4096, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
 		openssl_pkey_export($userKey, $userPrivatePem);
 		$userCsr = openssl_csr_new(['commonName' => 'doriath-user'], $userKey);
 		$userCert = openssl_csr_sign($userCsr, $caCertPem, $caKey, 365);
