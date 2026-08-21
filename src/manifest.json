@@ -105,8 +105,8 @@
 						"id": "migration-in-progress-banner",
 						"type": "banner",
 						"showTitle": false,
-						"_note": "ADR-049 dissolution of the doriath-migration-banner custom widget. The two-state warning/error variant mapping cannot live in ONE banner config (variant is static), so two banner entries carry complementary visibleWhen predicates against GET /api/v1/migrations/status. The legacy widget's click emitted a 'navigate' event that had no consumer (no 'migration' route exists; the migration UI lives in user settings), so no route is configured.",
-						"content": {
+						"_note": "ADR-049 dissolution of the doriath-migration-banner custom widget. The two-state warning/error variant mapping cannot live in ONE banner config (variant is static), so two banner entries carry complementary visibleWhen predicates against GET /api/v1/migrations/status. The legacy widget's click emitted a 'navigate' event that had no consumer (no 'migration' route exists; the migration UI lives in user settings), so no route is configured. ⚠️ These fields live under `props`, NOT `content`: CnDashboardPage resolves `props = content.props || def.props || {}`, so a banner whose fields sit directly in `content` receives an EMPTY props object and renders blank. `content` is `additionalProperties: true`, so no gate catches it.",
+						"props": {
 							"variant": "warning",
 							"text": "Compromise recovery in progress — open the migration screen (Settings → Security) for live progress.",
 							"visibleWhen": {
@@ -122,7 +122,7 @@
 						"type": "banner",
 						"showTitle": false,
 						"_note": "Complement of migration-in-progress-banner (error state). NOTE: /api/v1/migrations/status currently only ever returns 'in_progress' or 'none' (MigrationService::getInProgressMigration filters status='in_progress'), so this state is unreachable server-side today — exactly like the legacy widget, whose completed_with_errors branch read summary.migration_status, a key DashboardService::fetchSummary never emits. Fail-safe hidden until the endpoint grows the state.",
-						"content": {
+						"props": {
 							"variant": "error",
 							"text": "Compromise recovery completed with errors — open the migration screen (Settings → Security) for details.",
 							"visibleWhen": {
@@ -138,7 +138,7 @@
 						"type": "banner",
 						"showTitle": false,
 						"_note": "ADR-049 dissolution of the doriath-pending-apps custom widget (admin-only, hidden at zero). Expressed as a banner because hide-when-zero against an app endpoint has no stat-widget equivalent: hideWhenZero exists only on stats-block entries[], which are OR-source-only (register+schema required). visibleWhen pending_apps_count > 0 reproduces both gates in one predicate — non-admins get null (hidden) and admins with an empty queue get 0 (hidden). Routes to ApplicationRegister (the approval queue itself lives in admin settings, which is not a router route).",
-						"content": {
+						"props": {
 							"variant": "warning",
 							"text": "Application(s) awaiting approval — open the applications page.",
 							"visibleWhen": {
