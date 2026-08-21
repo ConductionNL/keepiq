@@ -98,80 +98,63 @@
 			"title": "Vault overview",
 			"config": {
 				"description": "Your secrets, folders and applications at a glance",
-				"documentationUrl": "https://doriath.conduction.nl"
-			},
-			"widgets": [
-				{
-					"id": "migration-in-progress-banner",
-					"widgetKey": "banner",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 12,
-					"gridHeight": 1,
-					"_note": "ADR-049 dissolution of the doriath-migration-banner custom widget. The two-state warning/error variant mapping cannot live in ONE banner config (variant is static), so two banner entries carry complementary visibleWhen predicates against GET /api/v1/migrations/status. The legacy widget's click emitted a 'navigate' event that had no consumer (no 'migration' route exists; the migration UI lives in user settings), so no route is configured.",
-					"props": {
-						"variant": "warning",
-						"text": "Compromise recovery in progress — open the migration screen (Settings → Security) for live progress.",
-						"visibleWhen": {
-							"endpoint": "/apps/doriath/api/v1/migrations/status",
-							"field": "status",
-							"op": "eq",
-							"value": "in_progress"
+				"documentationUrl": "https://doriath.conduction.nl",
+				"_note": "The eleven dashboard widgets live in config.widgets[] + config.layout[], NOT in the page-level widgets[] array. CnPageRenderer renders a bare CnWidgetGrid whenever a typed page carries page-level widgets targeting the body slot, so this type:\"dashboard\" page never mounted CnDashboardPage and lost its header, max-width, padding, sidebar and grid discipline (hydra gate-69 page-type-discipline; hrmq#112 moved 47 pages for the same reason). Only config.widgets/config.layout reach the typed page component. Three shape differences follow from that move, all verified against the installed @conduction/nextcloud-vue dist rather than the schema prose: (1) banner/stat/text payloads move from props{} to content{}, because CnDashboardPage's registry branch passes the widget def's content BOTH as a `content` prop and spread flat, which is the dual shape those renderers document; (2) tile fields move to the widget def's TOP LEVEL, because isTile() is matched before the registry branch and CnDashboardPage.getTileConfig() reads title/icon/iconType/backgroundColor/textColor/linkType/linkValue straight off the def and never looks at content; (3) showTitle:false is set on the eight widgets that render inside CnWidgetWrapper, so they stay header-less exactly as they were under the bare CnWidgetGrid — without it a non-card widget would grow a header captioned with its own widget id. Tiles bypass the wrapper entirely, so they carry no showTitle.",
+				"widgets": [
+					{
+						"id": "migration-in-progress-banner",
+						"type": "banner",
+						"showTitle": false,
+						"_note": "ADR-049 dissolution of the doriath-migration-banner custom widget. The two-state warning/error variant mapping cannot live in ONE banner config (variant is static), so two banner entries carry complementary visibleWhen predicates against GET /api/v1/migrations/status. The legacy widget's click emitted a 'navigate' event that had no consumer (no 'migration' route exists; the migration UI lives in user settings), so no route is configured.",
+						"content": {
+							"variant": "warning",
+							"text": "Compromise recovery in progress — open the migration screen (Settings → Security) for live progress.",
+							"visibleWhen": {
+								"endpoint": "/apps/doriath/api/v1/migrations/status",
+								"field": "status",
+								"op": "eq",
+								"value": "in_progress"
+							}
 						}
-					}
-				},
-				{
-					"id": "migration-errors-banner",
-					"widgetKey": "banner",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 1,
-					"gridWidth": 12,
-					"gridHeight": 1,
-					"_note": "Complement of migration-in-progress-banner (error state). NOTE: /api/v1/migrations/status currently only ever returns 'in_progress' or 'none' (MigrationService::getInProgressMigration filters status='in_progress'), so this state is unreachable server-side today — exactly like the legacy widget, whose completed_with_errors branch read summary.migration_status, a key DashboardService::fetchSummary never emits. Fail-safe hidden until the endpoint grows the state.",
-					"props": {
-						"variant": "error",
-						"text": "Compromise recovery completed with errors — open the migration screen (Settings → Security) for details.",
-						"visibleWhen": {
-							"endpoint": "/apps/doriath/api/v1/migrations/status",
-							"field": "status",
-							"op": "eq",
-							"value": "completed_with_errors"
+					},
+					{
+						"id": "migration-errors-banner",
+						"type": "banner",
+						"showTitle": false,
+						"_note": "Complement of migration-in-progress-banner (error state). NOTE: /api/v1/migrations/status currently only ever returns 'in_progress' or 'none' (MigrationService::getInProgressMigration filters status='in_progress'), so this state is unreachable server-side today — exactly like the legacy widget, whose completed_with_errors branch read summary.migration_status, a key DashboardService::fetchSummary never emits. Fail-safe hidden until the endpoint grows the state.",
+						"content": {
+							"variant": "error",
+							"text": "Compromise recovery completed with errors — open the migration screen (Settings → Security) for details.",
+							"visibleWhen": {
+								"endpoint": "/apps/doriath/api/v1/migrations/status",
+								"field": "status",
+								"op": "eq",
+								"value": "completed_with_errors"
+							}
 						}
-					}
-				},
-				{
-					"id": "pending-apps-banner",
-					"widgetKey": "banner",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 2,
-					"gridWidth": 12,
-					"gridHeight": 1,
-					"_note": "ADR-049 dissolution of the doriath-pending-apps custom widget (admin-only, hidden at zero). Expressed as a banner because hide-when-zero against an app endpoint has no stat-widget equivalent: hideWhenZero exists only on stats-block entries[], which are OR-source-only (register+schema required). visibleWhen pending_apps_count > 0 reproduces both gates in one predicate — non-admins get null (hidden) and admins with an empty queue get 0 (hidden). Routes to ApplicationRegister (the approval queue itself lives in admin settings, which is not a router route).",
-					"props": {
-						"variant": "warning",
-						"text": "Application(s) awaiting approval — open the applications page.",
-						"visibleWhen": {
-							"endpoint": "/apps/doriath/api/dashboard/summary",
-							"field": "pending_apps_count",
-							"op": "gt",
-							"value": 0
-						},
-						"route": "ApplicationRegister"
-					}
-				},
-				{
-					"id": "kpi-total-secrets",
-					"widgetKey": "stat",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 3,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"_note": "ADR-049 dissolution of the doriath-kpi-card custom widget — endpoint-bound KPI tiles against GET /api/dashboard/summary. Bound to the payload keys DashboardService::fetchSummary actually emits (total_secrets / shared_with_me_count / folders_count); the legacy view read shared_secrets / folder_count / compromised_count, which the backend never sends. The 'Possibly compromised' card is dropped: compromised_count does not exist in the summary payload, so it was a permanently-zero dead binding.",
-					"props": {
+					},
+					{
+						"id": "pending-apps-banner",
+						"type": "banner",
+						"showTitle": false,
+						"_note": "ADR-049 dissolution of the doriath-pending-apps custom widget (admin-only, hidden at zero). Expressed as a banner because hide-when-zero against an app endpoint has no stat-widget equivalent: hideWhenZero exists only on stats-block entries[], which are OR-source-only (register+schema required). visibleWhen pending_apps_count > 0 reproduces both gates in one predicate — non-admins get null (hidden) and admins with an empty queue get 0 (hidden). Routes to ApplicationRegister (the approval queue itself lives in admin settings, which is not a router route).",
+						"content": {
+							"variant": "warning",
+							"text": "Application(s) awaiting approval — open the applications page.",
+							"visibleWhen": {
+								"endpoint": "/apps/doriath/api/dashboard/summary",
+								"field": "pending_apps_count",
+								"op": "gt",
+								"value": 0
+							},
+							"route": "ApplicationRegister"
+						}
+					},
+					{
+						"id": "kpi-total-secrets",
+						"type": "stat",
+						"showTitle": false,
+						"_note": "ADR-049 dissolution of the doriath-kpi-card custom widget — endpoint-bound KPI tiles against GET /api/dashboard/summary. Bound to the payload keys DashboardService::fetchSummary actually emits (total_secrets / shared_with_me_count / folders_count); the legacy view read shared_secrets / folder_count / compromised_count, which the backend never sends. The 'Possibly compromised' card is dropped: compromised_count does not exist in the summary payload, so it was a permanently-zero dead binding.",
 						"content": {
 							"label": "Total secrets",
 							"icon": "ClipboardList",
@@ -181,17 +164,11 @@
 							},
 							"valueField": "total_secrets"
 						}
-					}
-				},
-				{
-					"id": "kpi-shared-with-me",
-					"widgetKey": "stat",
-					"slot": "body",
-					"gridX": 3,
-					"gridY": 3,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
+					},
+					{
+						"id": "kpi-shared-with-me",
+						"type": "stat",
+						"showTitle": false,
 						"content": {
 							"label": "Shared with you",
 							"icon": "AccountGroup",
@@ -200,17 +177,11 @@
 							},
 							"valueField": "shared_with_me_count"
 						}
-					}
-				},
-				{
-					"id": "kpi-folders",
-					"widgetKey": "stat",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 3,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
+					},
+					{
+						"id": "kpi-folders",
+						"type": "stat",
+						"showTitle": false,
 						"content": {
 							"label": "Folders",
 							"icon": "FolderOutline",
@@ -219,18 +190,12 @@
 							},
 							"valueField": "folders_count"
 						}
-					}
-				},
-				{
-					"id": "kpi-rotation-due",
-					"widgetKey": "stat",
-					"slot": "body",
-					"gridX": 9,
-					"gridY": 3,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"_note": "Rotation-due count (rotation-expiry-policies §7.2) — open rotation flags for the caller's secrets, from DashboardService::fetchSummary rotation_due_count. Deep-dive detail lives in the password-health report's rotation category.",
-					"props": {
+					},
+					{
+						"id": "kpi-rotation-due",
+						"type": "stat",
+						"showTitle": false,
+						"_note": "Rotation-due count (rotation-expiry-policies §7.2) — open rotation flags for the caller's secrets, from DashboardService::fetchSummary rotation_due_count. Deep-dive detail lives in the password-health report's rotation category.",
 						"content": {
 							"label": "Rotation due",
 							"icon": "Autorenew",
@@ -240,86 +205,143 @@
 							},
 							"valueField": "rotation_due_count"
 						}
-					}
-				},
-				{
-					"id": "recent-activity-text",
-					"widgetKey": "text",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 5,
-					"gridWidth": 6,
-					"gridHeight": 4,
-					"_note": "ADR-049 dissolution of the doriath-recent-activity static placeholder widget. Replace with a real feed widget once an underlying activity schema lands.",
-					"props": {
+					},
+					{
+						"id": "recent-activity-text",
+						"type": "text",
+						"showTitle": false,
+						"_note": "ADR-049 dissolution of the doriath-recent-activity static placeholder widget. Replace with a real feed widget once an underlying activity schema lands.",
 						"content": {
 							"contentMode": "markdown",
 							"text": "**Recent activity**\n\n- Placeholder: user opened a record\n- Placeholder: status changed to Review\n- Placeholder: comment added"
 						}
+					},
+					{
+						"id": "quick-action-new-secret",
+						"type": "tile",
+						"_note": "Union of the bump-ncvue branch's real quick-action tiles with development's ADR-049 placeholder text; wired here in place of the quick-actions-text placeholder since these already point at live deep links. Tile fields sit at the def's top level because CnDashboardPage.getTileConfig() reads them from there, not from content.",
+						"title": "New secret",
+						"icon": "Plus",
+						"iconType": "class",
+						"backgroundColor": "#21468B",
+						"textColor": "#ffffff",
+						"linkType": "app",
+						"linkValue": "/apps/doriath/secrets"
+					},
+					{
+						"id": "quick-action-register-application",
+						"type": "tile",
+						"title": "Register application",
+						"icon": "Plus",
+						"iconType": "class",
+						"backgroundColor": "#3b82f6",
+						"textColor": "#ffffff",
+						"linkType": "app",
+						"linkValue": "/apps/doriath/applications"
+					},
+					{
+						"id": "quick-action-documentation",
+						"type": "tile",
+						"title": "Documentation",
+						"icon": "BookOpenVariantOutline",
+						"iconType": "class",
+						"backgroundColor": "#6b7280",
+						"textColor": "#ffffff",
+						"linkType": "url",
+						"linkValue": "https://doriath.conduction.nl"
 					}
-				},
-				{
-					"id": "quick-action-new-secret",
-					"widgetKey": "tile",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 5,
-					"gridWidth": 6,
-					"gridHeight": 2,
-					"_note": "Union of the bump-ncvue branch's real quick-action tiles with development's ADR-049 placeholder text; wired here in place of the quick-actions-text placeholder since these already point at live deep links.",
-					"props": {
-						"content": {
-							"title": "New secret",
-							"icon": "Plus",
-							"iconType": "class",
-							"backgroundColor": "#21468B",
-							"textColor": "#ffffff",
-							"linkType": "app",
-							"linkValue": "/apps/doriath/secrets"
-						}
+				],
+				"layout": [
+					{
+						"id": 1,
+						"widgetId": "migration-in-progress-banner",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 1
+					},
+					{
+						"id": 2,
+						"widgetId": "migration-errors-banner",
+						"gridX": 0,
+						"gridY": 1,
+						"gridWidth": 12,
+						"gridHeight": 1
+					},
+					{
+						"id": 3,
+						"widgetId": "pending-apps-banner",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 12,
+						"gridHeight": 1
+					},
+					{
+						"id": 4,
+						"widgetId": "kpi-total-secrets",
+						"gridX": 0,
+						"gridY": 3,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 5,
+						"widgetId": "kpi-shared-with-me",
+						"gridX": 3,
+						"gridY": 3,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 6,
+						"widgetId": "kpi-folders",
+						"gridX": 6,
+						"gridY": 3,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 7,
+						"widgetId": "kpi-rotation-due",
+						"gridX": 9,
+						"gridY": 3,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 8,
+						"widgetId": "recent-activity-text",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 4
+					},
+					{
+						"id": 9,
+						"widgetId": "quick-action-new-secret",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 2
+					},
+					{
+						"id": 10,
+						"widgetId": "quick-action-register-application",
+						"gridX": 6,
+						"gridY": 7,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 11,
+						"widgetId": "quick-action-documentation",
+						"gridX": 9,
+						"gridY": 7,
+						"gridWidth": 3,
+						"gridHeight": 2
 					}
-				},
-				{
-					"id": "quick-action-register-application",
-					"widgetKey": "tile",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 7,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"content": {
-							"title": "Register application",
-							"icon": "Plus",
-							"iconType": "class",
-							"backgroundColor": "#3b82f6",
-							"textColor": "#ffffff",
-							"linkType": "app",
-							"linkValue": "/apps/doriath/applications"
-						}
-					}
-				},
-				{
-					"id": "quick-action-documentation",
-					"widgetKey": "tile",
-					"slot": "body",
-					"gridX": 9,
-					"gridY": 7,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"content": {
-							"title": "Documentation",
-							"icon": "BookOpenVariantOutline",
-							"iconType": "class",
-							"backgroundColor": "#6b7280",
-							"textColor": "#ffffff",
-							"linkType": "url",
-							"linkValue": "https://doriath.conduction.nl"
-						}
-					}
-				}
-			]
+				]
+			}
 		},
 		{
 			"id": "FeaturesRoadmap",
