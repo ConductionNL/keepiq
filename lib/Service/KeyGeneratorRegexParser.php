@@ -110,6 +110,8 @@ class KeyGeneratorRegexParser {
 	 * @return array{0:int,1:int} The [minLength, maxLength] pair
 	 *
 	 * @throws InvalidArgumentException When no quantifier is present or the range is invalid
+	 *
+	 * @spec openspec/specs/key-generator/spec.md#requirement-regex-override
 	 */
 	public function extractLength(string $regex): array {
 		if (preg_match('/\{(\d+)(?:,(\d+))?\}/', $regex, $matches) !== 1) {
@@ -120,7 +122,11 @@ class KeyGeneratorRegexParser {
 
 		$min = (int)$matches[1];
 		$max = $min;
-		if (isset($matches[2]) === true && $matches[2] !== '') {
+		// Group 2 is the LAST group in the pattern, and PHP omits a trailing
+		// unmatched group from $matches rather than setting it to '' — so
+		// isset() already covers the `{16}` case and the `!== ''` this replaces
+		// was unreachable. (The '' form only happens for MIDDLE groups.)
+		if (isset($matches[2]) === true) {
 			$max = (int)$matches[2];
 		}
 

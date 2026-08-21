@@ -71,11 +71,16 @@ class BreachProxyController extends Controller {
 	private const UPSTREAM_TIMEOUT = 5;
 
 	/**
-	 * The per-prefix response cache (null when no distributed cache is available).
+	 * The per-prefix response cache.
 	 *
-	 * @var ICache|null
+	 * NOT nullable. `ICacheFactory::createDistributed()` always returns an
+	 * ICache — it hands back a no-op implementation when no distributed cache
+	 * is configured rather than null — so the `?` this replaces described a
+	 * state that could not occur, and the `null` case was never assigned.
+	 *
+	 * @var ICache
 	 */
-	private ?ICache $cache;
+	private ICache $cache;
 
 	/**
 	 * Constructor for BreachProxyController.
@@ -155,7 +160,7 @@ class BreachProxyController extends Controller {
 			);
 		}
 
-		$cached = $this->cache?->get($prefix);
+		$cached = $this->cache->get($prefix);
 		if (is_string($cached) === true) {
 			return new DataResponse(data: ['suffixes' => $cached]);
 		}
@@ -182,7 +187,7 @@ class BreachProxyController extends Controller {
 			);
 		}//end try
 
-		$this->cache?->set($prefix, $body, self::CACHE_TTL);
+		$this->cache->set($prefix, $body, self::CACHE_TTL);
 
 		return new DataResponse(data: ['suffixes' => $body]);
 	}//end range()
