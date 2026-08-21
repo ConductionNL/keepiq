@@ -77,13 +77,13 @@ class SecretRequestMapperTest extends TestCase {
 		parent::setUp();
 
 		if (class_exists(\OC::class) === false || \OC::$server === null) {
-			$this->markTestSkipped('needs a bootstrapped Nextcloud with a database');
+			$this->markTestSkipped(message: 'needs a bootstrapped Nextcloud with a database');
 		}
 
 		$this->db = \OC::$server->get(IDBConnection::class);
 
 		if ($this->db->tableExists('doriath_secret_requests') === false) {
-			$this->markTestSkipped('doriath migrations have not run on this instance');
+			$this->markTestSkipped(message: 'doriath migrations have not run on this instance');
 		}
 
 		$this->mapper = new SecretRequestMapper(db: $this->db);
@@ -155,7 +155,11 @@ class SecretRequestMapperTest extends TestCase {
 		$status = $result->fetchOne();
 		$result->closeCursor();
 
-		return $status === false ? null : (string)$status;
+		if ($status === false) {
+			return null;
+		}
+
+		return (string)$status;
 	}//end statusOf()
 
 	/**
@@ -169,13 +173,16 @@ class SecretRequestMapperTest extends TestCase {
 		$id = $this->insertRequest(status: SecretRequest::STATUS_PENDING);
 
 		$this->assertTrue(
-			$this->mapper->transitionIfPending(
+			condition: $this->mapper->transitionIfPending(
 				requestId: $id,
 				toStatus: SecretRequest::STATUS_EXPIRED
 			),
-			'a pending row must transition'
+			message: 'a pending row must transition'
 		);
-		$this->assertSame(SecretRequest::STATUS_EXPIRED, $this->statusOf($id));
+		$this->assertSame(
+			expected: SecretRequest::STATUS_EXPIRED,
+			actual: $this->statusOf(id: $id)
+		);
 	}//end testAPendingRequestTransitions()
 
 	/**
@@ -196,16 +203,16 @@ class SecretRequestMapperTest extends TestCase {
 		$this->mapper->transitionIfPending(requestId: $id, toStatus: SecretRequest::STATUS_EXPIRED);
 
 		$this->assertFalse(
-			$this->mapper->transitionIfPending(
+			condition: $this->mapper->transitionIfPending(
 				requestId: $id,
 				toStatus: SecretRequest::STATUS_DECLINED
 			),
-			'a row that is no longer pending must refuse the transition'
+			message: 'a row that is no longer pending must refuse the transition'
 		);
 		$this->assertSame(
-			SecretRequest::STATUS_EXPIRED,
-			$this->statusOf($id),
-			'the losing caller must not have written its own status'
+			expected: SecretRequest::STATUS_EXPIRED,
+			actual: $this->statusOf(id: $id),
+			message: 'the losing caller must not have written its own status'
 		);
 	}//end testTheSecondTransitionLosesAndChangesNothing()
 
@@ -230,13 +237,13 @@ class SecretRequestMapperTest extends TestCase {
 
 		foreach ([SecretRequest::STATUS_EXPIRED, SecretRequest::STATUS_DECLINED] as $target) {
 			$this->assertFalse(
-				$this->mapper->transitionIfPending(requestId: $id, toStatus: $target),
-				'a fulfilled request must not be moved to ' . $target
+				condition: $this->mapper->transitionIfPending(requestId: $id, toStatus: $target),
+				message: 'a fulfilled request must not be moved to ' . $target
 			);
 			$this->assertSame(
-				SecretRequest::STATUS_FULFILLED,
-				$this->statusOf($id),
-				'the fulfilled status must survive an attempt to write ' . $target
+				expected: SecretRequest::STATUS_FULFILLED,
+				actual: $this->statusOf(id: $id),
+				message: 'the fulfilled status must survive an attempt to write ' . $target
 			);
 		}
 	}//end testAFulfilledRequestIsUntouchable()
@@ -253,7 +260,7 @@ class SecretRequestMapperTest extends TestCase {
 	 */
 	public function testAnUnknownRequestReportsFalse(): void {
 		$this->assertFalse(
-			$this->mapper->transitionIfPending(
+			condition: $this->mapper->transitionIfPending(
 				requestId: 'test-does-not-exist',
 				toStatus: SecretRequest::STATUS_EXPIRED
 			)
