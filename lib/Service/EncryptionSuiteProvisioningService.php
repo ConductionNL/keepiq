@@ -34,6 +34,7 @@ use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
 use OCA\Doriath\Db\EncryptionSuite;
 use OCA\Doriath\Db\EncryptionSuiteMapper;
+use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Support\SuppressesDiagnostics;
 use OCP\IAppConfig;
 use OCP\IUserManager;
@@ -79,7 +80,11 @@ class EncryptionSuiteProvisioningService {
 	 *
 	 * @return EncryptionSuite
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @throws ConflictException When the owner already has an active suite. Use
+	 *                           createSuccessorSuite() for a compromise recovery,
+	 *                           which is the one flow allowed a second active suite.
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
 	 */
 	public function createSuite(
 		string $ownerType,
@@ -87,14 +92,136 @@ class EncryptionSuiteProvisioningService {
 		string $publicKeyPem,
 		string $encryptedPrivateKey,
 	): EncryptionSuite {
+		// Sign BEFORE the duplicate check, deliberately, and this order was wrong in
+		// the first version of this fix. Checking state first meant a caller who both
+		// held a suite AND submitted malformed key material got 409, hiding a client
+		// error behind a state error — caught by the Newman contract assertion "invalid
+		// public key is a 400 client error (not 500)". Input validity is a property of
+		// the request; whether a suite already exists is a property of the world, and
+		// the request should be judged on its own terms first.
+		//
+		// The cost of this order is a certificate that gets discarded when the refusal
+		// follows. That is CPU only: signing performs no database write and serials are
+		// random_int() rather than a persisted counter, so nothing is consumed and no
+		// gap is left behind.
+		$certificate = $this->signFor(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			publicKeyPem: $publicKeyPem
+		);
+
+		// Reported as #289 — the endpoint checked auth, parameters and the migration
+		// write-lock, but never whether a suite already existed, so any session could
+		// mint a second active suite. Resolution picks the NEWEST active suite, so new
+		// secrets were sealed to a key the owner was not unlocking with: they decrypt
+		// for nobody, and nothing reports it at the time.
+		$active = $this->mapper->countActiveByOwner(ownerType: $ownerType, ownerId: $ownerId);
+		if ($active > 0) {
+			throw new ConflictException(
+				message: 'An active EncryptionSuite already exists for this owner. '
+				. 'Change the master password or start a compromise recovery instead of creating a second suite.'
+			);
+		}
+
+		return $this->persistSuite(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			certificate: $certificate,
+			encryptedPrivateKey: $encryptedPrivateKey
+		);
+	}//end createSuite()
+
+	/**
+	 * Create a successor suite for a compromise recovery, bypassing the single-active
+	 * rule.
+	 *
+	 * The ONE flow permitted two active suites at once. The old suite must stay active
+	 * and readable for the whole migration — the browser decrypts what it is migrating
+	 * with it — while the successor takes new writes. See "Suite Resolution Is
+	 * Deterministic During A Migration": resolution selects the newest active suite,
+	 * which is always the write target.
+	 *
+	 * Named rather than flagged so that the exception to the rule is legible at its
+	 * call site, and so that reaching it is a deliberate act.
+	 *
+	 * @param string $ownerType 'user' or 'application'
+	 * @param string $ownerId Nextcloud user ID or Application ID
+	 * @param string $publicKeyPem PEM-encoded public key
+	 * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
+	 *
+	 * @return EncryptionSuite
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function createSuccessorSuite(
+		string $ownerType,
+		string $ownerId,
+		string $publicKeyPem,
+		string $encryptedPrivateKey,
+	): EncryptionSuite {
+		$certificate = $this->signFor(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			publicKeyPem: $publicKeyPem
+		);
+
+		return $this->persistSuite(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			certificate: $certificate,
+			encryptedPrivateKey: $encryptedPrivateKey
+		);
+	}//end createSuccessorSuite()
+
+	/**
+	 * Assert the CA is usable and sign the submitted public key.
+	 *
+	 * Separated from persistence so a caller can order the two around its own checks.
+	 * `createSuite()` needs to sign first — a malformed key must be reported as a bad
+	 * request rather than masked by a state conflict — and only then refuse a
+	 * duplicate.
+	 *
+	 * @param string $ownerType 'user' or 'application'
+	 * @param string $ownerId Nextcloud user ID or Application ID
+	 * @param string $publicKeyPem PEM-encoded public key
+	 *
+	 * @return string The issued PEM certificate
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-creation-on-first-login
+	 */
+	private function signFor(string $ownerType, string $ownerId, string $publicKeyPem): string {
 		$caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
 		if ($caStatus !== 'healthy') {
 			throw new RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: ' . $caStatus . ')');
 		}
 
 		$commonName = $this->resolveCommonName(ownerType: $ownerType, ownerId: $ownerId);
-		$certificate = $this->caService->signPublicKey(publicKeyPem: $publicKeyPem, commonName: $commonName);
 
+		return $this->caService->signPublicKey(publicKeyPem: $publicKeyPem, commonName: $commonName);
+	}//end signFor()
+
+	/**
+	 * Build and store the suite row.
+	 *
+	 * Deliberately carries NO single-active check: whether an additional active suite
+	 * is permitted is decided by whichever public method the caller chose, so it cannot
+	 * be skipped by reaching this directly.
+	 *
+	 * @param string $ownerType 'user' or 'application'
+	 * @param string $ownerId Nextcloud user ID or Application ID
+	 * @param string $certificate The issued PEM certificate
+	 * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
+	 *
+	 * @return EncryptionSuite
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-creation-on-first-login
+	 */
+	private function persistSuite(
+		string $ownerType,
+		string $ownerId,
+		string $certificate,
+		string $encryptedPrivateKey,
+	): EncryptionSuite {
 		$suite = new EncryptionSuite();
 		$suite->setId(Uuid::uuid4()->toString());
 		$suite->setOwnerType($ownerType);
@@ -109,7 +236,7 @@ class EncryptionSuiteProvisioningService {
 		$this->logger->info("Doriath: EncryptionSuite created for {$ownerType}/{$ownerId}");
 
 		return $suite;
-	}//end createSuite()
+	}//end persistSuite()
 
 	/**
 	 * Provision an EncryptionSuite for a registered application.

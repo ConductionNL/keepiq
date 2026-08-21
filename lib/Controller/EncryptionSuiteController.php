@@ -24,6 +24,7 @@ namespace OCA\Doriath\Controller;
 use Exception;
 use InvalidArgumentException;
 use OCA\Doriath\AppInfo\Application;
+use OCA\Doriath\Exception\ConflictException;
 use OCA\Doriath\Service\EncryptionSuiteService;
 use OCA\Doriath\Service\MigrationService;
 use OCA\Doriath\Settings\AdminSettings;
@@ -118,6 +119,32 @@ class EncryptionSuiteController extends OCSController {
 	}//end show()
 
 	/**
+	 * Whether both halves of the submitted key material are present.
+	 *
+	 * Extracted from create() because these four comparisons were three of that
+	 * method's ten branches, and an endpoint's parameter contract reads better as a
+	 * named question than as a chain inside the flow it guards.
+	 *
+	 * @param string|null $publicKey The submitted public key
+	 * @param string|null $encryptedPrivateKey The submitted private-key envelope
+	 *
+	 * @return bool True when both are present and non-empty
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-creation-on-first-login
+	 */
+	private function hasKeyMaterial(?string $publicKey, ?string $encryptedPrivateKey): bool {
+		if ($publicKey === null || $publicKey === '') {
+			return false;
+		}
+
+		if ($encryptedPrivateKey === null || $encryptedPrivateKey === '') {
+			return false;
+		}
+
+		return true;
+	}//end hasKeyMaterial()
+
+	/**
 	 * Create a new EncryptionSuite for the current user.
 	 *
 	 * @param string $publicKey The PEM-encoded public key
@@ -141,7 +168,7 @@ class EncryptionSuiteController extends OCSController {
 
 		// Validate required params HERE so a missing body returns 400, not a 500
 		// from the framework dispatcher failing to bind non-nullable arguments.
-		if ($publicKey === null || $publicKey === '' || $encryptedPrivateKey === null || $encryptedPrivateKey === '') {
+		if ($this->hasKeyMaterial(publicKey: $publicKey, encryptedPrivateKey: $encryptedPrivateKey) === false) {
 			return new JSONResponse(
 				data: ['message' => 'Missing required parameters: publicKey and encryptedPrivateKey are required'],
 				statusCode: Http::STATUS_BAD_REQUEST
@@ -167,6 +194,14 @@ class EncryptionSuiteController extends OCSController {
 				encryptedPrivateKey: $encryptedPrivateKey
 			);
 			return new JSONResponse(data: $suite->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+		} catch (ConflictException $e) {
+			// BEFORE the RuntimeException arm below, which this extends — caught after
+			// it, a duplicate-suite refusal would surface as 503 "service unavailable"
+			// and read as a server fault the client should retry. It is neither.
+			return new JSONResponse(
+				data: ['error' => 'suite_already_exists', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			// Malformed key material (e.g. a non-PEM publicKey) is a client error,
 			// not a server fault — surface it as a 400 instead of a 500.
@@ -355,7 +390,7 @@ class EncryptionSuiteController extends OCSController {
 			// submitted public key. So a certificate that does not carry the
 			// browser's key aborts here with nothing written: no new suite, no
 			// migration, and the old suite still active.
-			$newSuite = $this->suiteService->createSuite(
+			$newSuite = $this->suiteService->createSuccessorSuite(
 				ownerType: 'user',
 				ownerId: $userId,
 				publicKeyPem: $publicKey,

@@ -67,10 +67,12 @@ class EncryptionSuiteService {
 	 * @param string $ownerId Nextcloud user ID or Application ID
 	 * @param string $publicKeyPem PEM-encoded public key
 	 * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
-	 *
 	 * @return EncryptionSuite
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * Refuses when the owner already has an active suite — see the provisioning
+	 * service, which throws. A compromise recovery uses createSuccessorSuite().
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
 	 */
 	public function createSuite(
 		string $ownerType,
@@ -85,6 +87,36 @@ class EncryptionSuiteService {
 			encryptedPrivateKey: $encryptedPrivateKey,
 		);
 	}//end createSuite()
+
+	/**
+	 * Create a successor suite for a compromise recovery.
+	 *
+	 * The one flow allowed a second active suite: the old one stays active and
+	 * readable so the browser can decrypt what it is migrating, while the successor
+	 * takes new writes.
+	 *
+	 * @param string $ownerType 'user' or 'application'
+	 * @param string $ownerId Nextcloud user ID or Application ID
+	 * @param string $publicKeyPem PEM-encoded public key
+	 * @param string $encryptedPrivateKey Base64-encoded AES-GCM envelope of the private key
+	 *
+	 * @return EncryptionSuite
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function createSuccessorSuite(
+		string $ownerType,
+		string $ownerId,
+		string $publicKeyPem,
+		string $encryptedPrivateKey,
+	): EncryptionSuite {
+		return $this->provisioning->createSuccessorSuite(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			publicKeyPem: $publicKeyPem,
+			encryptedPrivateKey: $encryptedPrivateKey,
+		);
+	}//end createSuccessorSuite()
 
 	/**
 	 * Provision an EncryptionSuite for a registered application.

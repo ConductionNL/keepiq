@@ -384,6 +384,38 @@ The system MUST NOT report success in terms that imply the vault is secure again
 - **WHEN** the user watches the recovery dialog
 - **THEN** it MUST show live progress and MUST NOT report completion until the migration has actually terminated
 
+### Requirement: A Plain Create Refuses To Mint A Second Active Suite
+
+`POST /api/v1/suites` MUST refuse, with `409 Conflict`, when the owner already has an `active` EncryptionSuite. The frontend hides the setup form once a suite exists, but that is presentation: the API MUST enforce the invariant itself, because a session cookie or app password reaches the endpoint without the form.
+
+A second suite minted this way is silent data loss. Suite resolution selects the most recently created active suite, so new secrets are sealed to the new key while the owner keeps unlocking with the master password of the old one — the new records decrypt for nobody, and nothing reports an error at the time it happens. Two browser tabs left on the first-setup screen are enough to cause it, which makes it reachable by accident rather than only by a crafted request.
+
+Malformed key material MUST still be reported as `400 Bad Request` even when the owner already has an active suite. Two things are wrong with such a request and the response must name the one the caller can act on: "you already have a suite" tells a client nothing about the unparseable key it sent. Validity of the request is judged before the state of the world, which means the refusal may discard an already-issued certificate — acceptable, because issuing one performs no write and consumes no serial.
+
+This governs the PLAIN create path only. A compromise recovery legitimately creates a successor while the old suite stays active — see "Suite Resolution Is Deterministic During A Migration" — so the refusal MUST be something that path can opt out of explicitly, and MUST NOT be expressed as a database uniqueness constraint on `(owner_type, owner_id)` where `status = 'active'`. Such a constraint would make key rotation impossible and contradicts that requirement.
+
+#### Scenario: A second plain create is refused
+
+@e2e exclude The setup form is unreachable once a suite exists, so the flow cannot be driven from the DOM; the guard is server-side and covered by PHPUnit on the service and the controller.
+- **GIVEN** an owner already has an active EncryptionSuite
+- **WHEN** a plain create is submitted for that owner
+- **THEN** the system MUST refuse with `409 Conflict`
+- **AND** it MUST NOT insert a suite
+
+#### Scenario: A bad key is a client error even when a suite exists
+
+@e2e exclude Server-side status-code contract; covered by PHPUnit and by the Newman contract collection.
+- **GIVEN** an owner already has an active EncryptionSuite
+- **WHEN** a plain create is submitted with an unparseable public key
+- **THEN** the system MUST refuse with `400 Bad Request`, not `409 Conflict`
+
+#### Scenario: Compromise recovery still creates its successor
+
+@e2e exclude Server-side; covered by PHPUnit on the recovery endpoint.
+- **GIVEN** an owner has an active EncryptionSuite and no migration in progress
+- **WHEN** they submit a compromise recovery
+- **THEN** the successor suite MUST be created even though the old one is still active
+
 ### Requirement: Revocation
 The system MUST allow a user or administrator to revoke an EncryptionSuite. Revocation assumes the private key is intact but access should be blocked — it is an administrative action, not a key compromise. When a suite is revoked, all secrets encrypted with it become immediately inaccessible. The private key remains in the database, AES-encrypted, unchanged.
 
