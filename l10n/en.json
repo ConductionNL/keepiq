@@ -987,7 +987,14 @@
         "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.",
         "This application asked for: {fields}": "This application asked for: {fields}",
         "Expired {when}": "Expired {when}",
-        "Expires {when}": "Expires {when}"
+        "Expires {when}": "Expires {when}",
+        "Add a field": "Add a field",
+        "Field name": "Field name",
+        "Give the field a name.": "Give the field a name.",
+        "No additional fields yet.": "No additional fields yet.",
+        "Remove": "Remove",
+        "Remove this field": "Remove this field",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is a built-in field, not an additional one — choose a different name."
     },
     "plurals": ""
 }

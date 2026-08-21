@@ -135,6 +135,7 @@
 import { NcDialog } from '@nextcloud/vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
+import { memberNameError } from '../utils/additionalFields.js'
 import { fillLinkFor } from '../utils/fillLink.js'
 
 /**
@@ -459,16 +460,16 @@ export default {
 				return
 			}
 
-			if (['key', 'login', 'url'].includes(name) === true) {
-				this.customFieldError = t(
-					'doriath',
-					'That is a built-in field — tick it in the list above instead.',
-				)
-				return
-			}
-
-			if (this.availableFields.some((f) => f.key === name) === true) {
-				this.customFieldError = t('doriath', 'That field is already listed.')
+			// The reserved-name and duplicate rules are SHARED with the secret
+			// create/edit dialogs (src/utils/additionalFields.js). They were written
+			// out here first; a second copy in those dialogs is how `url` ends up
+			// accepted in one place and refused in another.
+			const error = memberNameError(
+				name,
+				this.availableFields.map((f) => f.key),
+			)
+			if (error !== '') {
+				this.customFieldError = error
 				return
 			}
 

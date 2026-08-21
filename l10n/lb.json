@@ -95,7 +95,7 @@
         "Note": "Notiz",
         "Login": "Anmeldung",
         "Copy login": "Anmeldedaten kopieren",
-        "Additional fields": "Zusätzliche Felder",
+        "Additional fields": "Zousätzlech Felder",
         "Back to vault": "Zurück zum Tresor",
         "Delete secret": "Geheimnis löschen",
         "Cannot open secret": "Geheimnis kann nicht geöffnet werden",
@@ -417,7 +417,15 @@
         "Revoking…": "Gëtt zréckgesat…",
         "Expired {when}": "Verfall {when}",
         "Expires {when}": "Verfällt {when}",
-        "No expiry": "Kee Verfall"
+        "No expiry": "Kee Verfall",
+        "No additional fields yet.": "Nach keng zousätzlech Felder.",
+        "Field name": "Feldnumm",
+        "Value": "Wäert",
+        "Add a field": "E Feld dobäisetzen",
+        "Remove": "Ewechhuelen",
+        "Remove this field": "Dëst Feld ewechhuelen",
+        "Give the field a name.": "Gitt dem Feld en Numm.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ ass en integréiert Feld, kee zousätzlecht — wielt en anere Numm."
     },
     "plurals": null
 }

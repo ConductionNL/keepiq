@@ -182,7 +182,7 @@
         "Note": "Notitie",
         "Login": "Inlog",
         "Copy login": "Inlog kopiëren",
-        "Additional fields": "Aanvullende velden",
+        "Additional fields": "Extra velden",
         "Back to vault": "Terug naar kluis",
         "Delete secret": "Geheim verwijderen",
         "Cannot open secret": "Kan geheim niet openen",
@@ -576,7 +576,15 @@
         "Revoking…": "Intrekken…",
         "Expired {when}": "Verlopen {when}",
         "Expires {when}": "Verloopt {when}",
-        "No expiry": "Geen vervaldatum"
+        "No expiry": "Geen vervaldatum",
+        "No additional fields yet.": "Nog geen extra velden.",
+        "Field name": "Veldnaam",
+        "Value": "Waarde",
+        "Add a field": "Voeg een veld toe",
+        "Remove": "Verwijderen",
+        "Remove this field": "Dit veld verwijderen",
+        "Give the field a name.": "Geef het veld een naam.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is een ingebouwd veld, geen extra veld — kies een andere naam."
     },
     "plurals": null
 }

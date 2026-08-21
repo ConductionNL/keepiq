@@ -417,7 +417,15 @@
         "Revoking…": "Tühistamine…",
         "Expired {when}": "Aegunud {when}",
         "Expires {when}": "Aegub {when}",
-        "No expiry": "Aegumiseta"
+        "No expiry": "Aegumiseta",
+        "No additional fields yet.": "Lisavälju veel ei ole.",
+        "Field name": "Välja nimi",
+        "Value": "Väärtus",
+        "Add a field": "Lisa väli",
+        "Remove": "Eemalda",
+        "Remove this field": "Eemalda see väli",
+        "Give the field a name.": "Anna väljale nimi.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ on sisseehitatud väli, mitte lisaväli — vali teine nimi."
     },
     "plurals": null
 }

@@ -417,7 +417,15 @@
         "Revoking…": "Perutaan…",
         "Expired {when}": "Vanhentunut {when}",
         "Expires {when}": "Vanhenee {when}",
-        "No expiry": "Ei vanhenemista"
+        "No expiry": "Ei vanhenemista",
+        "No additional fields yet.": "Ei vielä lisäkenttiä.",
+        "Field name": "Kentän nimi",
+        "Value": "Arvo",
+        "Add a field": "Lisää kenttä",
+        "Remove": "Poista",
+        "Remove this field": "Poista tämä kenttä",
+        "Give the field a name.": "Anna kentälle nimi.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "”{name}” on sisäänrakennettu kenttä, ei lisäkenttä — valitse toinen nimi."
     },
     "plurals": null
 }

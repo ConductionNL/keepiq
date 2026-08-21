@@ -417,7 +417,15 @@
         "Revoking…": "Á chúlghairm…",
         "Expired {when}": "As feidhm {when}",
         "Expires {when}": "Téann as feidhm {when}",
-        "No expiry": "Gan dul as feidhm"
+        "No expiry": "Gan dul as feidhm",
+        "No additional fields yet.": "Níl aon réimse breise ann fós.",
+        "Field name": "Ainm an réimse",
+        "Value": "Luach",
+        "Add a field": "Cuir réimse leis",
+        "Remove": "Bain",
+        "Remove this field": "Bain an réimse seo",
+        "Give the field a name.": "Tabhair ainm ar an réimse.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "Is réimse ionsuite é “{name}”, nach ceann breise — roghnaigh ainm eile."
     },
     "plurals": null
 }

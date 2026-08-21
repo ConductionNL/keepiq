@@ -417,7 +417,15 @@
         "Revoking…": "Tilbagekalder…",
         "Expired {when}": "Udløbet {when}",
         "Expires {when}": "Udløber {when}",
-        "No expiry": "Ingen udløbsdato"
+        "No expiry": "Ingen udløbsdato",
+        "No additional fields yet.": "Ingen yderligere felter endnu.",
+        "Field name": "Feltnavn",
+        "Value": "Værdi",
+        "Add a field": "Tilføj et felt",
+        "Remove": "Fjern",
+        "Remove this field": "Fjern dette felt",
+        "Give the field a name.": "Giv feltet et navn.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” er et indbygget felt, ikke et yderligere — vælg et andet navn."
     },
     "plurals": null
 }

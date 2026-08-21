@@ -417,7 +417,15 @@
         "Revoking…": "Отменяне…",
         "Expired {when}": "Изтекла {when}",
         "Expires {when}": "Изтича {when}",
-        "No expiry": "Без изтичане"
+        "No expiry": "Без изтичане",
+        "No additional fields yet.": "Все още няма допълнителни полета.",
+        "Field name": "Име на полето",
+        "Value": "Стойност",
+        "Add a field": "Добавяне на поле",
+        "Remove": "Премахване",
+        "Remove this field": "Премахване на това поле",
+        "Give the field a name.": "Дайте име на полето.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ е вградено поле, а не допълнително — изберете друго име."
     },
     "plurals": null
 }

@@ -95,7 +95,7 @@
         "Note": "Shënim",
         "Login": "Hyrja",
         "Copy login": "Kopjo hyrjen",
-        "Additional fields": "Fushat shtesë",
+        "Additional fields": "Fusha shtesë",
         "Back to vault": "Kthehu te kasaforta",
         "Delete secret": "Fshi sekretin",
         "Cannot open secret": "Nuk mund të hapet sekreti",
@@ -417,7 +417,15 @@
         "Revoking…": "Po revokohet…",
         "Expired {when}": "Skaduar {when}",
         "Expires {when}": "Skadon {when}",
-        "No expiry": "Pa skadencë"
+        "No expiry": "Pa skadencë",
+        "No additional fields yet.": "Nuk ka ende fusha shtesë.",
+        "Field name": "Emri i fushës",
+        "Value": "Vlera",
+        "Add a field": "Shto një fushë",
+        "Remove": "Hiq",
+        "Remove this field": "Hiq këtë fushë",
+        "Give the field a name.": "Jepni emër fushës.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” është fushë e integruar, jo shtesë — zgjidhni emër tjetër."
     },
     "plurals": null
 }

@@ -95,7 +95,7 @@
         "Note": "Nota",
         "Login": "Accesso",
         "Copy login": "Copia accesso",
-        "Additional fields": "Campi aggiuntivi",
+        "Additional fields": "Champs supplementars",
         "Back to vault": "Torna alla cassaforte",
         "Delete secret": "Elimina segreto",
         "Cannot open secret": "Impossibile aprire il segreto",
@@ -417,7 +417,15 @@
         "Revoking…": "Vegn revocà…",
         "Expired {when}": "Scadì {when}",
         "Expires {when}": "Scada {when}",
-        "No expiry": "Nagina scadenza"
+        "No expiry": "Nagina scadenza",
+        "No additional fields yet.": "Anc nagins champs supplementars.",
+        "Field name": "Num dal champ",
+        "Value": "Valur",
+        "Add a field": "Agiuntar in champ",
+        "Remove": "Allontanar",
+        "Remove this field": "Allontanar quest champ",
+        "Give the field a name.": "Dai in num al champ.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» è in champ integrà, betg in supplementar — tscherna in auter num."
     },
     "plurals": null
 }

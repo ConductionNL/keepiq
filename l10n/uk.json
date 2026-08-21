@@ -95,7 +95,7 @@
         "Note": "Заметка",
         "Login": "Логин",
         "Copy login": "Скопировать логин",
-        "Additional fields": "Дополнительные поля",
+        "Additional fields": "Додаткові поля",
         "Back to vault": "Вернуться в хранилище",
         "Delete secret": "Удалить секрет",
         "Cannot open secret": "Невозможно открыть секрет",
@@ -417,7 +417,15 @@
         "Revoking…": "Відкликання…",
         "Expired {when}": "Закінчився {when}",
         "Expires {when}": "Закінчується {when}",
-        "No expiry": "Без терміну дії"
+        "No expiry": "Без терміну дії",
+        "No additional fields yet.": "Додаткових полів ще немає.",
+        "Field name": "Назва поля",
+        "Value": "Значення",
+        "Add a field": "Додати поле",
+        "Remove": "Видалити",
+        "Remove this field": "Видалити це поле",
+        "Give the field a name.": "Дайте полю назву.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» — вбудоване поле, а не додаткове: виберіть іншу назву."
     },
     "plurals": null
 }

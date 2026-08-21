@@ -417,7 +417,15 @@
         "Revoking…": "Preklic…",
         "Expired {when}": "Poteklo {when}",
         "Expires {when}": "Poteče {when}",
-        "No expiry": "Brez poteka"
+        "No expiry": "Brez poteka",
+        "No additional fields yet.": "Dodatnih polj še ni.",
+        "Field name": "Ime polja",
+        "Value": "Vrednost",
+        "Add a field": "Dodaj polje",
+        "Remove": "Odstrani",
+        "Remove this field": "Odstrani to polje",
+        "Give the field a name.": "Poimenujte polje.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ je vgrajeno polje, ne dodatno — izberite drugo ime."
     },
     "plurals": null
 }

@@ -95,7 +95,7 @@
         "Note": "Notatka",
         "Login": "Login",
         "Copy login": "Kopiuj login",
-        "Additional fields": "Dodatkowe pola",
+        "Additional fields": "Pola dodatkowe",
         "Back to vault": "Powrót do skarbca",
         "Delete secret": "Usuń sekret",
         "Cannot open secret": "Nie można otworzyć sekretu",
@@ -417,7 +417,15 @@
         "Revoking…": "Odwoływanie…",
         "Expired {when}": "Wygasło {when}",
         "Expires {when}": "Wygasa {when}",
-        "No expiry": "Bez wygaśnięcia"
+        "No expiry": "Bez wygaśnięcia",
+        "No additional fields yet.": "Brak pól dodatkowych.",
+        "Field name": "Nazwa pola",
+        "Value": "Wartość",
+        "Add a field": "Dodaj pole",
+        "Remove": "Usuń",
+        "Remove this field": "Usuń to pole",
+        "Give the field a name.": "Nadaj polu nazwę.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}” to pole wbudowane, a nie dodatkowe — wybierz inną nazwę."
     },
     "plurals": null
 }

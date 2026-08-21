@@ -95,7 +95,7 @@
         "Note": "Bilješka",
         "Login": "Prijava",
         "Copy login": "Kopiraj prijavu",
-        "Additional fields": "Dodatna polja",
+        "Additional fields": "Další pole",
         "Back to vault": "Natrag na trezor",
         "Delete secret": "Izbriši tajnu",
         "Cannot open secret": "Nije moguće otvoriti tajnu",
@@ -417,7 +417,15 @@
         "Revoking…": "Ruší se…",
         "Expired {when}": "Vypršelo {when}",
         "Expires {when}": "Vyprší {when}",
-        "No expiry": "Bez vypršení"
+        "No expiry": "Bez vypršení",
+        "No additional fields yet.": "Zatím žádná další pole.",
+        "Field name": "Název pole",
+        "Value": "Hodnota",
+        "Add a field": "Přidat pole",
+        "Remove": "Odebrat",
+        "Remove this field": "Odebrat toto pole",
+        "Give the field a name.": "Pojmenujte pole.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ je vestavěné pole, nikoli další — zvolte jiný název."
     },
     "plurals": null
 }

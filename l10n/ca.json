@@ -95,7 +95,7 @@
         "Note": "Nota",
         "Login": "Inicio de sesión",
         "Copy login": "Copiar inicio de sesión",
-        "Additional fields": "Campos adicionales",
+        "Additional fields": "Camps addicionals",
         "Back to vault": "Volver a la bóveda",
         "Delete secret": "Eliminar secreto",
         "Cannot open secret": "No se puede abrir el secreto",
@@ -417,7 +417,15 @@
         "Revoking…": "S’està revocant…",
         "Expired {when}": "Caducat {when}",
         "Expires {when}": "Caduca {when}",
-        "No expiry": "Sense caducitat"
+        "No expiry": "Sense caducitat",
+        "No additional fields yet.": "Encara no hi ha camps addicionals.",
+        "Field name": "Nom del camp",
+        "Value": "Valor",
+        "Add a field": "Afegeix un camp",
+        "Remove": "Elimina",
+        "Remove this field": "Elimina aquest camp",
+        "Give the field a name.": "Doneu un nom al camp.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» és un camp integrat, no addicional: trieu un altre nom."
     },
     "plurals": null
 }
