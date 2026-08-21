@@ -496,7 +496,10 @@ class SecretRequestPolicy {
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			// The mapper bounds this query with maxResults(1), so findEntity()
+			// can never see two rows and MultipleObjectsReturnedException is
+			// unreachable here.
+		} catch (DoesNotExistException) {
 			throw new InvalidArgumentException(
 				message: 'No active EncryptionSuite for application ' . $applicationId,
 				code: 400,

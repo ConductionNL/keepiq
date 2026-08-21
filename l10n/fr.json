@@ -408,7 +408,24 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Cette page nécessite une connexion sécurisée (https://), car votre valeur est chiffrée dans votre navigateur avant l’envoi.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Ouvrez le même lien en commençant par https://. Si cela ne fonctionne toujours pas, demandez à la personne qui vous l’a envoyé.",
         "This request could not be found.": "Cette demande n'a pas pu être trouvée.",
-        "Revoking…": "Révocation…"
+        "Outstanding secret requests": "Demandes de secret en cours",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Identifiants que cette application a demandé à des personnes de remplir. Un lien en attente fonctionne pour quiconque le possède : révoquez donc ceux qui ne doivent plus être utilisables.",
+        "Revoke this request?": "Révoquer cette demande ?",
+        "Revoke the request": "Révoquer la demande",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Le lien de remplissage cesse immédiatement de fonctionner, même si quelqu’un le possède déjà. Si l’application attend cet identifiant, son intégration peut s’arrêter.",
+        "This application asked for: {fields}": "Cette application a demandé : {fields}",
+        "Revoking…": "Révocation…",
+        "Expired {when}": "Expiré {when}",
+        "Expires {when}": "Expire {when}",
+        "No expiry": "Pas d’expiration",
+        "No additional fields yet.": "Aucun champ supplémentaire pour le moment.",
+        "Field name": "Nom du champ",
+        "Value": "Valeur",
+        "Add a field": "Ajouter un champ",
+        "Remove": "Supprimer",
+        "Remove this field": "Supprimer ce champ",
+        "Give the field a name.": "Donnez un nom au champ.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "« {name} » est un champ intégré, pas un champ supplémentaire — choisissez un autre nom."
     },
     "plurals": null
 }

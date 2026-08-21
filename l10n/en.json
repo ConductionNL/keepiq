@@ -979,7 +979,22 @@
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.",
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.",
         "This request could not be found.": "This request could not be found.",
-        "Revoking…": "Revoking…"
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.",
+        "Outstanding secret requests": "Outstanding secret requests",
+        "Revoke the request": "Revoke the request",
+        "Revoke this request?": "Revoke this request?",
+        "Revoking…": "Revoking…",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.",
+        "This application asked for: {fields}": "This application asked for: {fields}",
+        "Expired {when}": "Expired {when}",
+        "Expires {when}": "Expires {when}",
+        "Add a field": "Add a field",
+        "Field name": "Field name",
+        "Give the field a name.": "Give the field a name.",
+        "No additional fields yet.": "No additional fields yet.",
+        "Remove": "Remove",
+        "Remove this field": "Remove this field",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is a built-in field, not an additional one — choose a different name."
     },
     "plurals": ""
 }

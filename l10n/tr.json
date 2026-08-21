@@ -408,7 +408,24 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Bu sayfa güvenli (https://) bir bağlantı gerektirir, çünkü değeriniz gönderilmeden önce tarayıcınızda şifrelenir.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Aynı bağlantıyı https:// ile başlayacak şekilde açın. Hâlâ çalışmıyorsa, gönderen kişiye sorun.",
         "This request could not be found.": "Bu istek bulunamadı.",
-        "Revoking…": "İptal ediliyor…"
+        "Outstanding secret requests": "Bekleyen parola istekleri",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Bu uygulamanın kişilerden doldurmasını istediği kimlik bilgileri. Bekleyen bir bağlantı, ona sahip olan herkes için çalışır; bu yüzden artık kullanılmaması gerekenleri iptal edin.",
+        "Revoke this request?": "Bu istek iptal edilsin mi?",
+        "Revoke the request": "İsteği iptal et",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Doldurma bağlantısı hemen çalışmayı bırakır, birisi zaten ona sahip olsa bile. Uygulama bu kimlik bilgisini bekliyorsa, entegrasyonu çalışmayı bırakabilir.",
+        "This application asked for: {fields}": "Bu uygulama şunu istedi: {fields}",
+        "Revoking…": "İptal ediliyor…",
+        "Expired {when}": "Süresi doldu {when}",
+        "Expires {when}": "Süresi doluyor {when}",
+        "No expiry": "Süre sınırı yok",
+        "No additional fields yet.": "Henüz ek alan yok.",
+        "Field name": "Alan adı",
+        "Value": "Değer",
+        "Add a field": "Alan ekle",
+        "Remove": "Kaldır",
+        "Remove this field": "Bu alanı kaldır",
+        "Give the field a name.": "Alana bir ad verin.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” yerleşik bir alandır, ek alan değil — başka bir ad seçin."
     },
     "plurals": null
 }

@@ -279,7 +279,7 @@ class ApplicationSecretRequestService {
 			throw new InvalidArgumentException(message: 'applicationId is required', code: 400);
 		}
 
-		$rows = $this->mapper->findByCreatedBy('application:' . $applicationId);
+		$rows = $this->mapper->findByApplication($applicationId);
 
 		$pending = array_values(
 			array_filter(
@@ -333,7 +333,7 @@ class ApplicationSecretRequestService {
 		// The actor is the application, not a user. `created_by` is a plain
 		// string column, so the prefix keeps an application id from being read
 		// as a Nextcloud user id by anything that consumes this field.
-		$entity->setCreatedBy('application:' . $applicationId);
+		$entity->setCreatedByApplication(applicationId: $applicationId);
 		$entity->setCreatedAt(new DateTime());
 		$entity->setToken(bin2hex(random_bytes(16)));
 

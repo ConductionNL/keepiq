@@ -408,7 +408,24 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Esta página necessita de uma ligação segura (https://), porque o seu valor é cifrado no navegador antes de ser enviado.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Abra o mesmo link começando por https://. Se ainda não funcionar, pergunte a quem o enviou.",
         "This request could not be found.": "Não foi possível encontrar este pedido.",
-        "Revoking…": "A revogar…"
+        "Outstanding secret requests": "Pedidos de segredo pendentes",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Credenciais que esta aplicação pediu a pessoas para preencherem. Um link pendente funciona para qualquer pessoa que o tenha, por isso revogue os que já não devam ser utilizáveis.",
+        "Revoke this request?": "Revogar este pedido?",
+        "Revoke the request": "Revogar o pedido",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "O link de preenchimento deixa de funcionar imediatamente, mesmo que alguém já o tenha. Se a aplicação estiver à espera desta credencial, a integração pode deixar de funcionar.",
+        "This application asked for: {fields}": "Esta aplicação pediu: {fields}",
+        "Revoking…": "A revogar…",
+        "Expired {when}": "Expirado {when}",
+        "Expires {when}": "Expira {when}",
+        "No expiry": "Sem expiração",
+        "No additional fields yet.": "Ainda não há campos adicionais.",
+        "Field name": "Nome do campo",
+        "Value": "Valor",
+        "Add a field": "Adicionar um campo",
+        "Remove": "Remover",
+        "Remove this field": "Remover este campo",
+        "Give the field a name.": "Dê um nome ao campo.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” é um campo integrado, não adicional — escolha outro nome."
     },
     "plurals": null
 }

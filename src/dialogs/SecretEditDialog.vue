@@ -28,8 +28,8 @@
 			<NcSelect
 				v-model="typeId"
 				:options="typeOptions"
-				:reduce="(opt) => opt.value"
 				:inputLabel="t('doriath', 'Type')"
+				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
 			<!-- Card / identity composite payloads (card-identity-items §3.1). -->
@@ -107,6 +107,11 @@
 
 			<NcTextField v-model="login" :label="t('doriath', 'Login (optional)')" />
 
+			<AdditionalFieldsEditor
+				:members="additionalFields"
+				:disabled="saving || loading"
+				@update:members="additionalFields = $event" />
+
 			<NcNoteCard
 				v-if="!policyVerdict.compliant"
 				type="warning"
@@ -142,6 +147,7 @@ import {
 } from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
+import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_FIELDS,
@@ -155,6 +161,7 @@ import {
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -165,6 +172,10 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
+		AdditionalFieldsEditor,
+		ContentSave,
+		Dice5,
+		KeyGeneratorModal,
 		NcButton,
 		NcDialog,
 		NcLoadingIcon,
@@ -172,9 +183,6 @@ export default {
 		NcPasswordField,
 		NcSelect,
 		NcTextField,
-		ContentSave,
-		Dice5,
-		KeyGeneratorModal,
 	},
 
 	props: {
@@ -203,6 +211,7 @@ export default {
 			value: '',
 			url: '',
 			login: '',
+			additionalFields: [],
 			generatorOpen: false,
 			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
 			identity: {
@@ -299,7 +308,13 @@ export default {
 		/**
 		 * Load + decrypt the secret and seed the form fields.
 		 *
+		 * Seeding the additional fields from the CURRENT decrypted copy is what bounds
+		 * the last-writer-wins window: a save rewrites the whole blob, so starting
+		 * from a stale copy would drop members another session added.
+		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		async load() {
 			this.loading = true
@@ -312,6 +327,12 @@ export default {
 				this.value = secret.key || ''
 				this.url = secret.url || ''
 				this.login = secret.login || ''
+				// From the DECRYPTED blob the store already parsed. Pre-filling from
+				// the current decrypted copy is also what bounds the known
+				// last-writer-wins window: the whole blob is rewritten on save, so an
+				// edit begun from a stale copy would drop members another session
+				// added meanwhile.
+				this.additionalFields = objectToMembers(secret.additionalFields)
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -377,6 +398,8 @@ export default {
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		async submit() {
 			if (!this.canSubmit) {
@@ -418,6 +441,19 @@ export default {
 				}
 				if ((this.login || '') !== (o.login || '')) {
 					diff.login = this.login
+				}
+
+				// One blob is the storage unit, so ANY member change rewrites all of
+				// it. Sent only when something actually changed, and sent as `{}`
+				// rather than null when the last member is removed: null would mean
+				// "not provided", which the store reads as "leave the stored blob
+				// alone" — the opposite of what removing the last field means.
+				const nextMembers = membersToObject(this.additionalFields)
+				const priorMembers = membersToObject(
+					objectToMembers(o.additionalFields),
+				)
+				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
+					diff.additionalFields = nextMembers
 				}
 
 				let updated = this.original

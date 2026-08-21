@@ -408,7 +408,24 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Teastaíonn ceangal slán (https://) ón leathanach seo, mar déantar do luach a chriptiú sa bhrabhsálaí sula seoltar é.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Oscail an nasc céanna ag tosú le https://. Mura n-oibríonn sé fós, fiafraigh den duine a sheol é.",
         "This request could not be found.": "Níorbh fhéidir an iarraidh seo a aimsiú.",
-        "Revoking…": "Á chúlghairm…"
+        "Outstanding secret requests": "Iarratais rúin ar feitheamh",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Dintiúir a d’iarr an feidhmchlár seo ar dhaoine a líonadh. Oibríonn nasc ar feitheamh do dhuine ar bith a bhfuil sé aige, mar sin cúlghairm aon cheann nár cheart a bheith inúsáidte a thuilleadh.",
+        "Revoke this request?": "An iarratas seo a chúlghairm?",
+        "Revoke the request": "Cúlghairm an iarratas",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Stopann an nasc líonta ag obair láithreach, fiú má tá sé ag duine cheana féin. Má tá an feidhmchlár ag fanacht ar an dintiúr seo, féadfaidh a chomhtháthú stopadh.",
+        "This application asked for: {fields}": "D’iarr an feidhmchlár seo: {fields}",
+        "Revoking…": "Á chúlghairm…",
+        "Expired {when}": "As feidhm {when}",
+        "Expires {when}": "Téann as feidhm {when}",
+        "No expiry": "Gan dul as feidhm",
+        "No additional fields yet.": "Níl aon réimse breise ann fós.",
+        "Field name": "Ainm an réimse",
+        "Value": "Luach",
+        "Add a field": "Cuir réimse leis",
+        "Remove": "Bain",
+        "Remove this field": "Bain an réimse seo",
+        "Give the field a name.": "Tabhair ainm ar an réimse.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "Is réimse ionsuite é “{name}”, nach ceann breise — roghnaigh ainm eile."
     },
     "plurals": null
 }

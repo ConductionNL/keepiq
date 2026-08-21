@@ -408,7 +408,24 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Šai lapai nepieciešams drošs (https://) savienojums, jo jūsu vērtība tiek šifrēta pārlūkā pirms nosūtīšanas.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Atveriet to pašu saiti, kas sākas ar https://. Ja joprojām nedarbojas, pajautājiet sūtītājam.",
         "This request could not be found.": "Šis pieprasījums netika atrasts.",
-        "Revoking…": "Atsauc…"
+        "Outstanding secret requests": "Neizpildīti noslēpumu pieprasījumi",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Akreditācijas dati, ko šī lietotne ir lūgusi cilvēkiem aizpildīt. Gaidoša saite darbojas ikvienam, kam tā ir, tāpēc atsauc tās, kuras vairs nedrīkst izmantot.",
+        "Revoke this request?": "Atsaukt šo pieprasījumu?",
+        "Revoke the request": "Atsaukt pieprasījumu",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Aizpildīšanas saite pārstāj darboties nekavējoties, pat ja kādam tā jau ir. Ja lietotne gaida šos akreditācijas datus, tās integrācija var pārstāt darboties.",
+        "This application asked for: {fields}": "Šī lietotne lūdza: {fields}",
+        "Revoking…": "Atsauc…",
+        "Expired {when}": "Beidzies {when}",
+        "Expires {when}": "Beidzas {when}",
+        "No expiry": "Bez termiņa",
+        "No additional fields yet.": "Vēl nav papildu lauku.",
+        "Field name": "Lauka nosaukums",
+        "Value": "Vērtība",
+        "Add a field": "Pievienot lauku",
+        "Remove": "Noņemt",
+        "Remove this field": "Noņemt šo lauku",
+        "Give the field a name.": "Piešķir laukam nosaukumu.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” ir iebūvēts lauks, nevis papildu — izvēlies citu nosaukumu."
     },
     "plurals": null
 }

@@ -408,7 +408,24 @@
         "This page needs a secure (https://) connection, because your value is encrypted in your browser before it is sent.": "Тази страница изисква защитена (https://) връзка, защото стойността ви се шифрова в браузъра, преди да бъде изпратена.",
         "Open the same link with https:// at the start. If it still does not work, ask the person who sent it.": "Отворете същата връзка, започваща с https://. Ако все още не работи, попитайте човека, който ви я изпрати.",
         "This request could not be found.": "Тази заявка не беше намерена.",
-        "Revoking…": "Отменяне…"
+        "Outstanding secret requests": "Чакащи заявки за тайна",
+        "Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.": "Идентификационни данни, които това приложение е поискало от хора да попълнят. Чакаща връзка работи за всеки, който я има, затова отменете тези, които вече не трябва да са използваеми.",
+        "Revoke this request?": "Да се отмени ли тази заявка?",
+        "Revoke the request": "Отмяна на заявката",
+        "The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.": "Връзката за попълване спира да работи веднага, дори ако някой вече я има. Ако приложението чака тези данни, интеграцията му може да спре да работи.",
+        "This application asked for: {fields}": "Това приложение поиска: {fields}",
+        "Revoking…": "Отменяне…",
+        "Expired {when}": "Изтекла {when}",
+        "Expires {when}": "Изтича {when}",
+        "No expiry": "Без изтичане",
+        "No additional fields yet.": "Все още няма допълнителни полета.",
+        "Field name": "Име на полето",
+        "Value": "Стойност",
+        "Add a field": "Добавяне на поле",
+        "Remove": "Премахване",
+        "Remove this field": "Премахване на това поле",
+        "Give the field a name.": "Дайте име на полето.",
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ е вградено поле, а не допълнително — изберете друго име."
     },
     "plurals": null
 }
