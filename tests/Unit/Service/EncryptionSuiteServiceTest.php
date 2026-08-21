@@ -115,8 +115,15 @@ class EncryptionSuiteServiceTest extends TestCase {
 	 * secrets were sealed to a key the owner was not unlocking with — they decrypt for
 	 * nobody, and nothing reports it at the time it happens.
 	 *
-	 * Asserts NO INSERT and NO SIGNING: refusing after issuing a certificate would
-	 * spend a CA signature on a suite that must not exist.
+	 * Asserts NO INSERT — nothing is persisted, which is the whole guarantee.
+	 *
+	 * It deliberately does NOT assert that signing is skipped. An earlier version of
+	 * this fix checked state first so a refused create would spend no CA signature,
+	 * and that ordering was wrong: a caller who both held a suite AND submitted
+	 * malformed key material got 409, hiding a client error behind a state error. The
+	 * Newman contract assertion "invalid public key is a 400 client error (not 500)"
+	 * caught it. Signing now happens first, and the discarded certificate costs CPU
+	 * only — no database write, and serials are random rather than a counter.
 	 *
 	 * @return void
 	 *
@@ -124,15 +131,47 @@ class EncryptionSuiteServiceTest extends TestCase {
 	 */
 	public function testCreateSuiteRefusesASecondActiveSuite(): void {
 		$this->appConfig->method('getValueString')->willReturn('healthy');
+		$this->caService->method('signPublicKey')->willReturn('-----BEGIN CERTIFICATE-----...');
 		$this->mapper->method('countActiveByOwner')->willReturn(1);
 
 		$this->mapper->expects($this->never())->method('insert');
-		$this->caService->expects($this->never())->method('signPublicKey');
 
 		$this->expectException(exception: ConflictException::class);
 
 		$this->service->createSuite('user', 'testuser', 'pubkey-pem', 'encrypted-pk');
 	}//end testCreateSuiteRefusesASecondActiveSuite()
+
+	/**
+	 * Malformed key material reports as a CLIENT error even when a suite exists.
+	 *
+	 * The regression that the Newman contract suite caught and no unit test did: with
+	 * the duplicate check running first, a caller who both held an active suite and
+	 * submitted an unparseable public key received 409 instead of 400. Two things were
+	 * wrong with the request and the response named the one the caller could do least
+	 * about — "you already have a suite" tells them nothing about the garbage they
+	 * sent, and a client fixing their key material would have had no signal at all.
+	 *
+	 * Pinned here so the ordering cannot quietly flip back: the exception type IS the
+	 * contract, because the controller maps InvalidArgumentException to 400 and
+	 * ConflictException to 409.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testAMalformedKeyIsAClientErrorEvenWhenASuiteAlreadyExists(): void {
+		$this->appConfig->method('getValueString')->willReturn('healthy');
+		$this->mapper->method('countActiveByOwner')->willReturn(1);
+		$this->caService->method('signPublicKey')
+			->willThrowException(new InvalidArgumentException('Invalid public key PEM'));
+
+		$this->mapper->expects($this->never())->method('insert');
+
+		// InvalidArgumentException -> 400, NOT ConflictException -> 409.
+		$this->expectException(exception: InvalidArgumentException::class);
+
+		$this->service->createSuite('user', 'testuser', 'not-a-pem', 'encrypted-pk');
+	}//end testAMalformedKeyIsAClientErrorEvenWhenASuiteAlreadyExists()
 
 	/**
 	 * Compromise recovery still gets its successor while the old suite is active.
