@@ -18,7 +18,7 @@
         "php": "^8.3",
         "phpseclib/phpseclib": "^3.0",
         "ramsey/uuid": "^4.9",
-        "web-token/jwt-library": "^3.4.10"
+        "web-token/jwt-library": "^4.1.7"
     },
     "require-dev": {
         "conduction/coding-standard": "^1.0",
