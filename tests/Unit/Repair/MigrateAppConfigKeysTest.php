@@ -521,6 +521,45 @@ class MigrateAppConfigKeysTest extends TestCase {
 	 *
 	 * @return MigrateAppConfigKeys
 	 */
+	/**
+	 * An unreadable SOURCE value is logged, and the next key still migrates.
+	 *
+	 * The two reads used to sit outside the try, so a throwing read escaped
+	 * run(). This step also runs under <install>, so an app that cannot
+	 * finish its repair steps does not enable at all — every route goes with
+	 * it. One unreadable key must cost that key its value, not the install.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/app-identity/spec.md
+	 */
+	public function testAThrowingReadIsLoggedAndTheNextKeyStillMigrates(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getKeys')->willReturn(['boom', 'master_password_min_length']);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '', bool $lazy = false): string {
+				if ($key === 'boom') {
+					throw new \RuntimeException('config store unavailable');
+				}
+
+				return ($app === 'doriath' && $key === 'master_password_min_length') ? '16' : '';
+			}
+		);
+
+		// The key AFTER the unreadable one must still land.
+		$appConfig->expects($this->once())
+			->method('setValueString')
+			->with('keepiq', 'master_password_min_length', '16');
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->atLeastOnce())->method('warning');
+
+		$step = new MigrateAppConfigKeys(appConfig: $appConfig, logger: $logger);
+
+		// The assertion that matters: run() RETURNS rather than throwing.
+		$step->run($this->createMock(IOutput::class));
+	}//end testAThrowingReadIsLoggedAndTheNextKeyStillMigrates()
+
 	private function step(IAppConfig $appConfig): MigrateAppConfigKeys {
 		return new MigrateAppConfigKeys(
 			appConfig: $appConfig,

@@ -171,19 +171,27 @@ class MigrateAppConfigKeys implements IRepairStep {
 				continue;
 			}
 
-			$old = $this->appConfig->getValueString(self::OLD_APP_ID, $key, '');
-			if ($old === '') {
-				$emptySource++;
-				continue;
-			}
-
-			$existing = $this->appConfig->getValueString(Application::APP_ID, $key, '');
-			if ($existing !== '') {
-				$alreadyPresent++;
-				continue;
-			}
-
+			/* The two READS belong inside the try as much as the write does.
+			   They used to sit outside it, so a read that threw propagated
+			   out of run() and aborted `occ upgrade` — and because this step
+			   also runs under <install>, an app that cannot finish its
+			   repair steps does not enable at all, taking every route with
+			   it. That is the opposite of what this class's docblock
+			   promises ("every failure is logged and the loop continues").
+			   One unreadable key is not worth an install. */
 			try {
+				$old = $this->appConfig->getValueString(self::OLD_APP_ID, $key, '');
+				if ($old === '') {
+					$emptySource++;
+					continue;
+				}
+
+				$existing = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+				if ($existing !== '') {
+					$alreadyPresent++;
+					continue;
+				}
+
 				$this->appConfig->setValueString(Application::APP_ID, $key, $old);
 				$migrated++;
 			} catch (Throwable $e) {
