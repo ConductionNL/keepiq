@@ -2,6 +2,9 @@
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
 	"version": "1.0.0",
 	"dependencies": [],
+	"nav": {
+		"includePersonalSettings": false
+	},
 	"menu": [
 		{
 			"id": "Dashboard",
@@ -12,8 +15,8 @@
 		},
 		{
 			"id": "Vault",
-			"label": "Vault",
-			"icon": "LockOutline",
+			"label": "All secrets",
+			"icon": "KeyVariant",
 			"route": "SecretList",
 			"order": 20
 		},
@@ -62,7 +65,7 @@
 			"label": "Certificates",
 			"icon": "CertificateOutline",
 			"route": "Certificates",
-			"section": "footer",
+			"section": "settings",
 			"order": 88
 		},
 		{
@@ -70,7 +73,7 @@
 			"label": "Emergency access",
 			"icon": "ShieldKeyOutline",
 			"route": "EmergencyAccess",
-			"section": "footer",
+			"section": "settings",
 			"order": 89
 		},
 		{

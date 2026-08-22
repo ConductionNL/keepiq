@@ -319,13 +319,17 @@ test.describe('Routed page surfaces — authenticated', () => {
 			placement.Dashboard,
 			`the nav did not render its daily-use entries (saw: ${JSON.stringify(placement)})`,
 		).toBe('main')
-		expect(placement.Vault).toBe('main')
-		// …and the relocated entry is in the foldout, not the main list. Both
+		expect(placement['All secrets']).toBe('main')
+		// …and the relocated entries are in the foldout, not the main list. Both
 		// halves: "not in main" alone would also pass if it vanished entirely.
 		expect(
 			placement.Applications,
 			`"Applications" should be in the settings foldout (saw: ${JSON.stringify(placement)})`,
 		).toBe('foldout')
+		// Restyle Stage 1: Certificates and Emergency access moved from the
+		// footer to the settings foldout (RESTYLE-PLAN.md).
+		expect(placement.Certificates).toBe('foldout')
+		expect(placement['Emergency access']).toBe('foldout')
 	})
 
 	test('ApplicationRegisterView lists the caller’s applications at #/applications', async ({
