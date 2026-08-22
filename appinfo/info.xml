@@ -41,16 +41,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Doriath</namespace>
     <documentation>
-        <user>https://codeberg.org/Conduction/doriath</user>
-        <admin>https://codeberg.org/Conduction/doriath</admin>
-        <developer>https://codeberg.org/Conduction/doriath</developer>
+        <user>https://github.com/ConductionNL/keepiq</user>
+        <admin>https://github.com/ConductionNL/keepiq</admin>
+        <developer>https://github.com/ConductionNL/keepiq</developer>
     </documentation>
     <category>security</category>
-    <website>https://codeberg.org/Conduction/doriath</website>
-    <bugs>https://codeberg.org/Conduction/doriath/issues</bugs>
-    <repository>https://codeberg.org/Conduction/doriath</repository>
+    <website>https://github.com/ConductionNL/keepiq</website>
+    <bugs>https://github.com/ConductionNL/keepiq/issues</bugs>
+    <repository>https://github.com/ConductionNL/keepiq</repository>
 
-    <screenshot>https://codeberg.org/Conduction/doriath/raw/branch/main/img/app-store.svg</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/keepiq/development/img/app-store.svg</screenshot>
 
     <!--
         The <database> entries are load-bearing, not decoration.
