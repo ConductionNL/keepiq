@@ -17,7 +17,7 @@
 		</p>
 
 		<p v-if="findings.length === 0" class="health-category__empty">
-			{{ t('doriath', 'No findings in this category.') }}
+			{{ t('keepiq', 'No findings in this category.') }}
 		</p>
 
 		<ul v-else class="health-category__list">
@@ -39,7 +39,7 @@
 						class="health-category__meta">
 						{{
 							n(
-								'doriath',
+								'keepiq',
 								'shared with %n secret',
 								'shared with %n secrets',
 								finding.shareCount,
@@ -51,7 +51,7 @@
 						class="health-category__meta">
 						{{
 							n(
-								'doriath',
+								'keepiq',
 								'seen %n time in breaches',
 								'seen %n times in breaches',
 								finding.breach.count,

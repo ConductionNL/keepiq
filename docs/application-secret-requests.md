@@ -58,7 +58,7 @@ submit against it. So it needs an off switch that does not depend on the
 application cooperating, and **Revoke** is it.
 
 Revoking asks for confirmation, and names the fields being asked for, because the
-consequences reach outside Doriath:
+consequences reach outside Keepiq:
 
 - the fill link stops working immediately, even if someone already has it;
 - the empty placeholder Secret the request created is deleted;

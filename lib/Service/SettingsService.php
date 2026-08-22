@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Settings Service
+ * Keepiq Settings Service
  *
  * The settings surface every authenticated user touches: the CONFIG_KEYS
  * whitelist (`getSettings()` / `updateSettings()`) and the per-user
@@ -11,7 +11,7 @@
  * so SettingsController and InitializeSettings keep one seam.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,10 +24,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -38,7 +38,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Service for the user-scoped Doriath configuration surface.
+ * Service for the user-scoped Keepiq configuration surface.
  */
 class SettingsService {
 
@@ -227,7 +227,7 @@ class SettingsService {
 	}//end getPolicy()
 
 	/**
-	 * Load configuration from doriath_register.json via OpenRegister.
+	 * Load configuration from keepiq_register.json via OpenRegister.
 	 *
 	 * @param bool $force Force re-import even if already configured.
 	 *

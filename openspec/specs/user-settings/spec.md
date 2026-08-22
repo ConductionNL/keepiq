@@ -9,7 +9,7 @@
 
 ## Purpose
 
-Doriath user settings allow each user to configure their personal vault preferences: session timeout duration and notification toggles. User settings are accessed via `NcAppSettingsDialog` (the gear icon in the app navigation) and stored using Nextcloud's `OCP\IConfig` for per-user values.
+Keepiq user settings allow each user to configure their personal vault preferences: session timeout duration and notification toggles. User settings are accessed via `NcAppSettingsDialog` (the gear icon in the app navigation) and stored using Nextcloud's `OCP\IConfig` for per-user values.
 
 ## Data Model
 
@@ -33,7 +33,7 @@ See [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for the notification event map
 The app MUST provide user settings via `NcAppSettingsDialog` (NOT `NcDialog`), accessible from the app navigation gear icon.
 
 #### Scenario: User opens settings
-- GIVEN a user clicks the gear icon in the Doriath navigation
+- GIVEN a user clicks the gear icon in the Keepiq navigation
 - WHEN the dialog opens
 - THEN the system MUST display `NcAppSettingsDialog` with user preference sections
 
@@ -48,10 +48,10 @@ The user MUST be able to configure how long their master password session stays 
 - AND the user MUST be redirected to the lock screen
 
 #### Scenario: User selects Nextcloud session duration
-@e2e exclude Verifying that the Doriath session stays active while the NC session is valid requires inspecting the in-memory WebCrypto key lifetime — not DOM-observable; covered by unit tests of the session-timeout guard.
+@e2e exclude Verifying that the Keepiq session stays active while the NC session is valid requires inspecting the in-memory WebCrypto key lifetime — not DOM-observable; covered by unit tests of the session-timeout guard.
 - GIVEN a user sets session timeout to "Nextcloud session"
 - WHEN the Nextcloud session is valid
-- THEN the Doriath session remains active
+- THEN the Keepiq session remains active
 
 ### Requirement: Notification Toggles [MVP]
 The user MUST be able to toggle notification categories on or off.

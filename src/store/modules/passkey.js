@@ -42,12 +42,13 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * Load the caller's enrolled passkeys.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 		 */
 		async fetchCredentials() {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/passkeys'),
+					generateUrl('/apps/keepiq/api/v1/passkeys'),
 				)
 				this.credentials = response.data ?? []
 				this.hasActive = this.credentials.some((c) => c.status === 'active')
@@ -61,6 +62,8 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * present AND the caller has an active enrolled passkey.
 		 *
 		 * @return {Promise<boolean>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-master-password-remains-the-canonical-fallback
 		 */
 		async isUnlockOffered() {
 			if (!this.supported) {
@@ -68,7 +71,7 @@ export const usePasskeyStore = defineStore('passkey', {
 			}
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/passkeys/login-options'),
+					generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
 				)
 				return (response.data?.credentials?.length ?? 0) > 0
 			} catch (e) {
@@ -85,6 +88,8 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * @param {string} masterPassword The master password (never sent).
 		 * @param {string} label A nickname for the passkey.
 		 * @return {Promise<object>} The enrolled credential.
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
 		 */
 		async enroll(masterPassword, label) {
 			this.error = null
@@ -95,22 +100,22 @@ export const usePasskeyStore = defineStore('passkey', {
 
 			// 1. Creation options + challenge from the server.
 			const challengeResp = await axios.get(
-				generateUrl('/apps/doriath/api/v1/passkeys/challenge'),
+				generateUrl('/apps/keepiq/api/v1/passkeys/challenge'),
 			)
 			const challenge = fromBase64Url(
 				challengeResp.data.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
 			)
 
 			const userId = new TextEncoder().encode(
-				window.OC?.getCurrentUser?.()?.uid || 'doriath-user',
+				window.OC?.getCurrentUser?.()?.uid || 'keepiq-user',
 			)
 			const created = await navigator.credentials.create({
 				publicKey: {
-					rp: { id: RP_ID, name: 'Doriath' },
+					rp: { id: RP_ID, name: 'Keepiq' },
 					user: {
 						id: userId,
-						name: label || 'Doriath vault',
-						displayName: label || 'Doriath vault',
+						name: label || 'Keepiq vault',
+						displayName: label || 'Keepiq vault',
 					},
 					challenge,
 					pubKeyCredParams: [
@@ -160,7 +165,7 @@ export const usePasskeyStore = defineStore('passkey', {
 
 			// 5. Persist the envelope (never the raw key or PRF output).
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/passkeys'),
+				generateUrl('/apps/keepiq/api/v1/passkeys'),
 				{
 					credentialId,
 					wrappedUnlockKey,
@@ -183,11 +188,12 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * unwrap the raw unlock key → hand it to the session unlock path.
 		 *
 		 * @return {Promise<boolean>} Whether the unlock succeeded.
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 		 */
 		async unlockWithPasskey() {
 			this.error = null
 			const optResp = await axios.get(
-				generateUrl('/apps/doriath/api/v1/passkeys/login-options'),
+				generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
 			)
 			const options = optResp.data
 			if (!options.credentials?.length) {
@@ -235,7 +241,7 @@ export const usePasskeyStore = defineStore('passkey', {
 
 			// Best-effort last-used stamp.
 			axios
-				.post(generateUrl(`/apps/doriath/api/v1/passkeys/${cred.id}/used`))
+				.post(generateUrl(`/apps/keepiq/api/v1/passkeys/${cred.id}/used`))
 				.catch(() => {})
 			return true
 		},
@@ -245,13 +251,12 @@ export const usePasskeyStore = defineStore('passkey', {
 		 *
 		 * @param {string} id The credential id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 		 */
 		async revoke(id) {
 			this.error = null
 			try {
-				await axios.delete(
-					generateUrl(`/apps/doriath/api/v1/passkeys/${id}`),
-				)
+				await axios.delete(generateUrl(`/apps/keepiq/api/v1/passkeys/${id}`))
 				this.credentials = this.credentials.filter((c) => c.id !== id)
 				this.hasActive = this.credentials.some((c) => c.status === 'active')
 			} catch (e) {

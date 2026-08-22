@@ -7,7 +7,7 @@
 
 ## Purpose
 
-A vault is the highest-value target an intruder touches first, and zero-knowledge (ADR-003) lets the server see every *access* to a secret while never seeing its *content* — making deception one of the few post-compromise detection controls a zero-knowledge store can offer natively. This feature lets an owner or admin flag a purpose-made decoy secret as a honey credential; any server-observable access to it (UI reveal, machine API, link share, user share) immediately raises a high-severity alert — Nextcloud notification to the owner and admins, a distinguished `honey.accessed` audit event, and an optional SIEM event — riding Doriath's existing typed audit-event stream (`SecretService::dispatchAudit`, `lib/Service/SecretService.php:166`). The flag is invisible to recipients/attackers, alerts are rate-limited and per-accessor snoozable, and the tripwire is fail-soft. No self-hosted password manager ships this; Infisical offers it only as a paid feature.
+A vault is the highest-value target an intruder touches first, and zero-knowledge (ADR-003) lets the server see every *access* to a secret while never seeing its *content* — making deception one of the few post-compromise detection controls a zero-knowledge store can offer natively. This feature lets an owner or admin flag a purpose-made decoy secret as a honey credential; any server-observable access to it (UI reveal, machine API, link share, user share) immediately raises a high-severity alert — Nextcloud notification to the owner and admins, a distinguished `honey.accessed` audit event, and an optional SIEM event — riding Keepiq's existing typed audit-event stream (`SecretService::dispatchAudit`, `lib/Service/SecretService.php:166`). The flag is invisible to recipients/attackers, alerts are rate-limited and per-accessor snoozable, and the tripwire is fail-soft. No self-hosted password manager ships this; Infisical offers it only as a paid feature.
 
 ## Requirements
 
@@ -74,6 +74,6 @@ The system MUST never record a secret value, login, additional field, plaintext,
 ## Notes
 
 - Honest boundary: rides the typed audit-event stream, covering exactly the channels that emit a per-object read event.
-- Reuses the typed `AuditEvent` bus + string whitelist from `secret-audit-trail` and the `NotificationService`/`DoriathNotifier` path (new ungated `honey_access` subject).
+- Reuses the typed `AuditEvent` bus + string whitelist from `secret-audit-trail` and the `NotificationService`/`KeepiqNotifier` path (new ungated `honey_access` subject).
 - SIEM event is optional and class-existence-guarded on the sibling `siem-audit-export` change.
 - Related ADRs: ADR-001 (own tables — imperative, no OpenRegister), ADR-003 (zero-knowledge — access visible, content not).

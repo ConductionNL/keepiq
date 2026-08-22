@@ -12,7 +12,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Team folder sharing')"
+		:name="t('keepiq', 'Team folder sharing')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -26,7 +26,7 @@
 				<p>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Share the folder "{name}" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.',
 							{ name: folderName },
 						)
@@ -37,13 +37,13 @@
 					:disabled="busy"
 					data-testid="team-folder-share"
 					@click="onShareFolder">
-					{{ t('doriath', 'Share this folder') }}
+					{{ t('keepiq', 'Share this folder') }}
 				</NcButton>
 			</div>
 
 			<!-- Shared: membership management + fan-out state. -->
 			<div v-else class="team-folder-dialog__members">
-				<h4>{{ t('doriath', 'Members') }}</h4>
+				<h4>{{ t('keepiq', 'Members') }}</h4>
 				<ul
 					v-if="members.length"
 					class="team-folder-dialog__member-list"
@@ -71,14 +71,14 @@
 							:disabled="busy"
 							:data-testid="`team-folder-grade-${member.memberId}`"
 							@change="onGradeChange(member, $event.target.value)">
-							<option value="read">{{ t('doriath', 'Read') }}</option>
+							<option value="read">{{ t('keepiq', 'Read') }}</option>
 							<option value="write">
-								{{ t('doriath', 'Write') }}
+								{{ t('keepiq', 'Write') }}
 							</option>
 						</select>
 						<NcButton
 							variant="tertiary"
-							:aria-label="t('doriath', 'Remove member')"
+							:aria-label="t('keepiq', 'Remove member')"
 							:disabled="busy"
 							:data-testid="`team-folder-remove-${member.memberId}`"
 							@click="onRemoveMember(member)">
@@ -89,7 +89,7 @@
 					</li>
 				</ul>
 				<p v-else class="team-folder-dialog__empty">
-					{{ t('doriath', 'No members yet — add a user or group below.') }}
+					{{ t('keepiq', 'No members yet — add a user or group below.') }}
 				</p>
 
 				<div class="team-folder-dialog__add">
@@ -97,13 +97,13 @@
 						v-model="newMemberType"
 						:options="memberTypeOptions"
 						:reduce="(opt) => opt.value"
-						:inputLabel="t('doriath', 'Member type')"
+						:inputLabel="t('keepiq', 'Member type')"
 						:clearable="false" />
 					<label class="team-folder-dialog__id-field">
 						<span>{{
 							newMemberType === 'group'
-								? t('doriath', 'Group ID')
-								: t('doriath', 'User ID')
+								? t('keepiq', 'Group ID')
+								: t('keepiq', 'User ID')
 						}}</span>
 						<input
 							v-model.trim="newMemberId"
@@ -116,7 +116,7 @@
 						:disabled="busy || newMemberId === ''"
 						data-testid="team-folder-add-member"
 						@click="onAddMember">
-						{{ t('doriath', 'Add member') }}
+						{{ t('keepiq', 'Add member') }}
 					</NcButton>
 				</div>
 
@@ -130,7 +130,7 @@
 						data-testid="team-folder-needs-reshare">
 						{{
 							n(
-								'doriath',
+								'keepiq',
 								'%n secret copy still needs to be encrypted and shared.',
 								'%n secret copies still need to be encrypted and shared.',
 								pendingCount,
@@ -148,7 +148,7 @@
 							variant="tertiary"
 							data-testid="team-folder-cancel-fanout"
 							@click="store.cancelFanOut()">
-							{{ t('doriath', 'Cancel') }}
+							{{ t('keepiq', 'Cancel') }}
 						</NcButton>
 						<NcButton
 							v-else
@@ -156,7 +156,7 @@
 							:disabled="busy"
 							data-testid="team-folder-run-fanout"
 							@click="onRunFanOut">
-							{{ t('doriath', 'Encrypt and share now') }}
+							{{ t('keepiq', 'Encrypt and share now') }}
 						</NcButton>
 					</div>
 				</div>
@@ -167,7 +167,7 @@
 						:disabled="busy"
 						data-testid="team-folder-unshare"
 						@click="onUnshare">
-						{{ t('doriath', 'Stop sharing this folder') }}
+						{{ t('keepiq', 'Stop sharing this folder') }}
 					</NcButton>
 				</div>
 			</div>
@@ -253,10 +253,18 @@ export default {
 			return Math.round((this.fanOut.done / this.fanOut.total) * 100)
 		},
 
+		/**
+		 * The two membership kinds a team folder accepts: a Nextcloud user or
+		 * a Nextcloud group.
+		 *
+		 * @return {Array<{label: string, value: string}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-membership-propagation-with-group-membership
+		 */
 		memberTypeOptions() {
 			return [
-				{ label: this.t('doriath', 'User'), value: 'user' },
-				{ label: this.t('doriath', 'Group'), value: 'group' },
+				{ label: this.t('keepiq', 'User'), value: 'user' },
+				{ label: this.t('keepiq', 'Group'), value: 'group' },
 			]
 		},
 	},
@@ -277,6 +285,8 @@ export default {
 
 		/**
 		 * Refresh the team-folder list and the pending reconcile count.
+		 *
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 */
 		async refresh() {
 			try {
@@ -287,7 +297,7 @@ export default {
 				}
 			} catch (e) {
 				this.error =
-					e?.message || this.t('doriath', 'Failed to load team folder')
+					e?.message || this.t('keepiq', 'Failed to load team folder')
 			}
 		},
 

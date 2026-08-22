@@ -4,7 +4,7 @@
  * Unit tests for ScanCertificateExpiryJob (certificate-lifecycle §6.3).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\BackgroundJob
+ * @package  OCA\Keepiq\Tests\Unit\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\BackgroundJob;
+namespace OCA\Keepiq\Tests\Unit\BackgroundJob;
 
 use DateTime;
-use OCA\Doriath\BackgroundJob\ScanCertificateExpiryJob;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Service\CertificateLifecycleService;
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\BackgroundJob\ScanCertificateExpiryJob;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

@@ -5,7 +5,7 @@
  * Have I Been Pwned (HIBP) k-anonymity breach-check client.
  *
  * Computes SHA-1 of a decrypted value IN THE BROWSER, keeps the 35-character
- * suffix local, and sends ONLY the first 5 hash characters to the Doriath
+ * suffix local, and sends ONLY the first 5 hash characters to the Keepiq
  * server proxy (`GET /api/v1/breach-check/range/{prefix}`). The proxy forwards
  * the prefix to HIBP and returns the suffix list verbatim; the suffix match
  * happens here, locally. The full hash and the value never leave the browser
@@ -94,7 +94,7 @@ export async function checkValue(value, fetchRange = defaultFetchRange) {
 }
 
 /**
- * Default range fetcher: calls the Doriath server proxy with the 5-char prefix.
+ * Default range fetcher: calls the Keepiq server proxy with the 5-char prefix.
  *
  * @param {string} prefix The 5-character SHA-1 prefix (the ONLY data sent).
  * @return {Promise<string>} The verbatim HIBP suffix list.
@@ -102,7 +102,7 @@ export async function checkValue(value, fetchRange = defaultFetchRange) {
 async function defaultFetchRange(prefix) {
 	const response = await axios.get(
 		generateUrl(
-			'/apps/doriath/api/v1/breach-check/range/' + encodeURIComponent(prefix),
+			'/apps/keepiq/api/v1/breach-check/range/' + encodeURIComponent(prefix),
 		),
 	)
 	return response?.data?.suffixes ?? ''

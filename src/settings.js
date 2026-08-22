@@ -2,11 +2,11 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
- * Doriath admin-settings bootstrap.
+ * Keepiq admin-settings bootstrap.
  *
  * ⚠️ The mount is deliberately NOT inside the `loadTranslations` callback.
  * That scaffold pattern (inherited from nextcloud-app-template) renders a
- * BLANK admin panel whenever `/custom_apps/doriath/l10n/<locale>.json` 404s —
+ * BLANK admin panel whenever `/custom_apps/keepiq/l10n/<locale>.json` 404s —
  * which it does on installs whose Apache allowlist only passes JS/CSS.
  * Translation loading is fire-and-forget; the panel must mount regardless.
  */
@@ -21,7 +21,7 @@ import AdminRoot from './views/settings/AdminRoot.vue'
 import pinia from './pinia.js'
 
 try {
-	const result = loadTranslations('doriath', () => {})
+	const result = loadTranslations('keepiq', () => {})
 	if (result && typeof result.then === 'function') {
 		result.then(
 			() => {},
@@ -35,4 +35,4 @@ try {
 const app = createApp({ render: () => h(AdminRoot) })
 app.mixin({ methods: { t, n } })
 app.use(pinia)
-app.mount('#doriath-settings')
+app.mount('#keepiq-settings')

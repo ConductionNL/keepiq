@@ -1,23 +1,23 @@
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Session')"
-		:description="t('doriath', 'Vault session timeout for this account')">
+		:name="t('keepiq', 'Session')"
+		:description="t('keepiq', 'Vault session timeout for this account')">
 		<div class="session-timeout">
 			<label for="session-timeout-select">{{
-				t('doriath', 'Lock vault after')
+				t('keepiq', 'Lock vault after')
 			}}</label>
 			<select
 				id="session-timeout-select"
 				v-model="sessionTimeout"
 				@change="save">
 				<option value="session">
-					{{ t('doriath', 'Nextcloud session') }}
+					{{ t('keepiq', 'Nextcloud session') }}
 				</option>
 				<option value="10min">
-					{{ t('doriath', '10 minutes') }}
+					{{ t('keepiq', '10 minutes') }}
 				</option>
 				<option value="30min">
-					{{ t('doriath', '30 minutes') }}
+					{{ t('keepiq', '30 minutes') }}
 				</option>
 			</select>
 		</div>
@@ -47,11 +47,11 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/user'),
+				generateUrl('/apps/keepiq/api/settings/user'),
 			)
 			this.sessionTimeout = response.data.session_timeout || 'session'
 		} catch (e) {
-			console.warn('Doriath: failed to load user settings', e)
+			console.warn('Keepiq: failed to load user settings', e)
 		}
 	},
 
@@ -62,7 +62,7 @@ export default {
 		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-5.1
 		 */
 		async save() {
-			await axios.put(generateUrl('/apps/doriath/api/settings/user'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/user'), {
 				session_timeout: this.sessionTimeout,
 			})
 		},

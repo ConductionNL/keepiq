@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Prune Secret Versions Job
+ * Keepiq Prune Secret Versions Job
  *
  * Nightly retention pruning of secret version history
  * (secret-version-history §4.2): per-secret count-based pruning plus a
@@ -9,7 +9,7 @@
  * is structurally untouchable here.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,11 +22,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\SecretVersionMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\SecretVersionMapper;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -85,13 +85,13 @@ class PruneSecretVersionsJob extends TimedJob {
 
 			if ($pruned > 0) {
 				$this->logger->info(
-					'Doriath: pruned ' . $pruned . ' secret versions beyond retention',
+					'Keepiq: pruned ' . $pruned . ' secret versions beyond retention',
 					['app' => Application::APP_ID]
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: version prune failed: ' . $exception->getMessage(),
+				'Keepiq: version prune failed: ' . $exception->getMessage(),
 				['app' => Application::APP_ID]
 			);
 		}//end try

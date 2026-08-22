@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Attachment Controller
+ * Keepiq Attachment Controller
  *
  * Authenticated API controller for encrypted attachments
  * (encrypted-attachments §4.1): upload/list under a secret, grant-gated
@@ -11,7 +11,7 @@
  * Blobs travel base64-encoded in JSON — ciphertext both ways.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +24,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\AttachmentService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\AttachmentService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

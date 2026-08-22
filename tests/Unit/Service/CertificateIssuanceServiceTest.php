@@ -4,7 +4,7 @@
  * Unit tests for CertificateIssuanceService (certificate-lifecycle).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\CACertificate;
-use OCA\Doriath\Db\CACertificateMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Service\CertificateIssuanceService;
-use OCA\Doriath\Service\X509CertificateAssembler;
+use OCA\Keepiq\Db\CACertificate;
+use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Service\CertificateIssuanceService;
+use OCA\Keepiq\Service\X509CertificateAssembler;
 use OCP\Security\ICrypto;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -170,7 +170,7 @@ class CertificateIssuanceServiceTest extends TestCase {
 
 		$dn = array_merge(
 			CertificateIssuanceService::DEFAULT_DN,
-			['commonName' => 'Doriath Test Intermediate']
+			['commonName' => 'Keepiq Test Intermediate']
 		);
 
 		$csr = openssl_csr_new($dn, $key, ['digest_alg' => 'sha256']);
@@ -242,7 +242,7 @@ class CertificateIssuanceServiceTest extends TestCase {
 				'stateOrProvinceName' => 'Noord-Holland',
 				'localityName' => 'Amsterdam',
 				'organizationName' => 'Conduction',
-				'organizationalUnitName' => 'Doriath',
+				'organizationalUnitName' => 'Keepiq',
 			],
 			CertificateIssuanceService::DEFAULT_DN,
 			'DEFAULT_DN is consumed by the whole CA; changing it re-brands every issued certificate'
@@ -287,7 +287,7 @@ class CertificateIssuanceServiceTest extends TestCase {
 	public function testIssuedCertificateCarriesTheSubmittedPublicKeyWithPrivateKey(): void {
 		[$pub, $priv] = $this->makeRsaKeypair(2048);
 
-		$certPem = $this->service->signPublicKey($pub, 'Doriath User', $priv);
+		$certPem = $this->service->signPublicKey($pub, 'Keepiq User', $priv);
 
 		$this->assertSame(
 			bin2hex(openssl_pkey_get_details(openssl_pkey_get_public($pub))['rsa']['n']),
@@ -359,7 +359,7 @@ class CertificateIssuanceServiceTest extends TestCase {
 
 		$this->expectException(InvalidArgumentException::class);
 
-		$this->service->signPublicKey($pub, 'Doriath User', '-----BEGIN PRIVATE KEY-----\nnope\n-----END PRIVATE KEY-----');
+		$this->service->signPublicKey($pub, 'Keepiq User', '-----BEGIN PRIVATE KEY-----\nnope\n-----END PRIVATE KEY-----');
 
 	}//end testInvalidPrivateKeyPemIsRejected()
 

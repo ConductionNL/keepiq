@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Application Lease Policy Entity
+ * Keepiq Application Lease Policy Entity
  *
  * Per-application override of the instance lease policy
  * (machine-secret-leases §2.4). Null fields fall through to the admin
  * defaults in SettingsService.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;

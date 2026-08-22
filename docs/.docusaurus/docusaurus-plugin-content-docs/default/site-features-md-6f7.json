@@ -1,6 +1,6 @@
 {
   "id": "FEATURES",
-  "title": "Doriath — Feature Analysis & Product Strategy",
+  "title": "Keepiq — Feature Analysis & Product Strategy",
   "description": "Executive Summary",
   "source": "@site/FEATURES.md",
   "sourceDirName": ".",
@@ -8,13 +8,13 @@
   "permalink": "/docs/FEATURES",
   "draft": false,
   "unlisted": false,
-  "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/FEATURES.md",
+  "editUrl": "https://github.com/ConductionNL/keepiq/tree/development/docs/FEATURES.md",
   "tags": [],
   "version": "current",
   "frontMatter": {},
   "sidebar": "tutorialSidebar",
   "previous": {
-    "title": "Doriath — Design References & Dashboard Wireframes",
+    "title": "Keepiq — Design References & Dashboard Wireframes",
     "permalink": "/docs/DESIGN-REFERENCES"
   }
 }

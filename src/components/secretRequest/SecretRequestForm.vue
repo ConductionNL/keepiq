@@ -10,17 +10,17 @@
   @spec openspec/changes/implement-secret-requests/tasks.md#task-8.2
 -->
 <template>
-	<section class="doriath-secret-request-form" data-testid="secret-request-form">
+	<section class="keepiq-secret-request-form" data-testid="secret-request-form">
 		<header>
-			<h4>{{ t('doriath', 'Request fill-in') }}</h4>
+			<h4>{{ t('keepiq', 'Request fill-in') }}</h4>
 		</header>
 		<form @submit.prevent="onSubmit">
-			<fieldset class="doriath-secret-request-form__fields">
-				<legend>{{ t('doriath', 'Fields to fill in') }}</legend>
+			<fieldset class="keepiq-secret-request-form__fields">
+				<legend>{{ t('keepiq', 'Fields to fill in') }}</legend>
 				<label
 					v-for="field in availableFields"
 					:key="field"
-					class="doriath-secret-request-form__field">
+					class="keepiq-secret-request-form__field">
 					<input
 						v-model="selectedFields"
 						type="checkbox"
@@ -30,40 +30,38 @@
 				</label>
 			</fieldset>
 
-			<label class="doriath-secret-request-form__expires">
-				<span>{{ t('doriath', 'Expires at (optional)') }}</span>
+			<label class="keepiq-secret-request-form__expires">
+				<span>{{ t('keepiq', 'Expires at (optional)') }}</span>
 				<input
 					v-model="expiresAt"
 					type="datetime-local"
 					data-testid="secret-request-form-expires" />
 			</label>
 
-			<label
-				v-if="canReRequest"
-				class="doriath-secret-request-form__rerequest">
+			<label v-if="canReRequest" class="keepiq-secret-request-form__rerequest">
 				<input
 					v-model="isReRequest"
 					type="checkbox"
 					data-testid="secret-request-form-rerequest" />
 				<span>{{
-					t('doriath', 'Refresh existing values (re-request)')
+					t('keepiq', 'Refresh existing values (re-request)')
 				}}</span>
 			</label>
 
 			<p
 				v-if="error"
-				class="doriath-secret-request-form__error"
+				class="keepiq-secret-request-form__error"
 				data-testid="secret-request-form-error">
 				{{ error }}
 			</p>
 
 			<p
 				v-if="createdLink"
-				class="doriath-secret-request-form__link"
+				class="keepiq-secret-request-form__link"
 				data-testid="secret-request-form-link">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Share this link with the recipient. It is only valid once.',
 					)
 				}}
@@ -71,12 +69,12 @@
 				<code>{{ createdLink }}</code>
 			</p>
 
-			<div class="doriath-secret-request-form__actions">
+			<div class="keepiq-secret-request-form__actions">
 				<button
 					type="button"
 					data-testid="secret-request-form-cancel"
 					@click="$emit('cancel')">
-					{{ t('doriath', 'Cancel') }}
+					{{ t('keepiq', 'Cancel') }}
 				</button>
 				<button
 					type="submit"
@@ -85,8 +83,8 @@
 					:disabled="busy || selectedFields.length === 0">
 					{{
 						busy
-							? t('doriath', 'Creating…')
-							: t('doriath', 'Create request')
+							? t('keepiq', 'Creating…')
+							: t('keepiq', 'Create request')
 					}}
 				</button>
 			</div>
@@ -139,10 +137,19 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Create the secret request (fresh or re-request) and surface its
+		 * fill-in link.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.selectedFields.length === 0) {
-				this.error = t('doriath', 'Pick at least one field')
+				this.error = t('keepiq', 'Pick at least one field')
 				return
 			}
 
@@ -167,7 +174,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to create request')
+					|| t('keepiq', 'Failed to create request')
 			} finally {
 				this.busy = false
 			}
@@ -177,7 +184,7 @@ export default {
 </script>
 
 <style scoped>
-.doriath-secret-request-form__fields {
+.keepiq-secret-request-form__fields {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -187,32 +194,32 @@ export default {
 	margin-bottom: 12px;
 }
 
-.doriath-secret-request-form__field,
-.doriath-secret-request-form__rerequest {
+.keepiq-secret-request-form__field,
+.keepiq-secret-request-form__rerequest {
 	display: flex;
 	gap: 8px;
 	align-items: center;
 }
 
-.doriath-secret-request-form__expires {
+.keepiq-secret-request-form__expires {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
 
-.doriath-secret-request-form__expires input {
+.keepiq-secret-request-form__expires input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
 
-.doriath-secret-request-form__error {
+.keepiq-secret-request-form__error {
 	color: var(--color-error-text);
 	font-size: 13px;
 }
 
-.doriath-secret-request-form__link {
+.keepiq-secret-request-form__link {
 	/* --color-success-rest is not a Nextcloud variable, so this always fell back
 	   to the pale light-theme green. The panel inherits the surrounding text
 	   colour, which is near-white in dark mode, leaving it unreadable. Keep the
@@ -226,13 +233,13 @@ export default {
 	font-size: 13px;
 }
 
-.doriath-secret-request-form__actions {
+.keepiq-secret-request-form__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
 
-.doriath-secret-request-form__actions .primary {
+.keepiq-secret-request-form__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
 	border: 0;

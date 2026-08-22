@@ -4,7 +4,7 @@
  * Unit tests for ApplicationTokenController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\ApplicationTokenController;
-use OCA\Doriath\Service\JwtAuthService;
+use OCA\Keepiq\Controller\ApplicationTokenController;
+use OCA\Keepiq\Service\JwtAuthService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;

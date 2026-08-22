@@ -4,7 +4,7 @@
  * Static-analysis stub for OpenRegister's AppHost Settings engine (ADR-040).
  *
  * Analysis-only — referenced from phpstan.neon `scanFiles` and psalm.xml
- * `<stubs>`, and NEVER loaded at runtime. Doriath's Sections\SettingsSection
+ * `<stubs>`, and NEVER loaded at runtime. Keepiq's Sections\SettingsSection
  * and Settings\AdminSettings are engine-backed stubs that extend these two
  * classes; the real implementations live in the openregister sibling app
  * (openregister/lib/AppHost/Settings/), which is absent from the CI analysis

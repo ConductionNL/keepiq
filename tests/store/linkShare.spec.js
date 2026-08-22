@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit tests for the `useLinkShareStore` Pinia store
@@ -83,7 +83,7 @@ describe('useLinkShareStore', () => {
 					id: 'ls-001',
 					token: 'abcdef1234567890abcdef1234567890',
 					linkUrl:
-						'https://nc.example/index.php/apps/doriath/share/link/abcdef1234567890abcdef1234567890',
+						'https://nc.example/index.php/apps/keepiq/share/link/abcdef1234567890abcdef1234567890',
 					usageLimit: 1,
 					usageCount: 0,
 					createdAt: '2026-06-11T12:00:00Z',
@@ -101,7 +101,7 @@ describe('useLinkShareStore', () => {
 
 			expect(post).toHaveBeenCalledOnce()
 			const [url, body] = post.mock.calls[0]
-			expect(url).toBe('/apps/doriath/api/v1/secrets/secret-42/link-shares')
+			expect(url).toBe('/apps/keepiq/api/v1/secrets/secret-42/link-shares')
 
 			// The POST body must contain the encrypted blob + salt + usageLimit
 			// + expiresAt — and absolutely nothing that resembles the plaintext.
@@ -225,7 +225,7 @@ describe('useLinkShareStore', () => {
 
 			await store.deleteLinkShare('ls-2')
 
-			expect(del).toHaveBeenCalledWith('/apps/doriath/api/v1/link-shares/ls-2')
+			expect(del).toHaveBeenCalledWith('/apps/keepiq/api/v1/link-shares/ls-2')
 			expect(store.linkShares).toHaveLength(2)
 			expect(store.linkShares.map((r) => r.id)).toEqual(['ls-1', 'ls-3'])
 		})

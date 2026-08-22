@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Ephemeral Send Entity
+ * Keepiq Ephemeral Send Entity
  *
  * One ad-hoc burn-after-reading share (ephemeral-send §1). The payload
  * is client-encrypted AES-256-GCM ciphertext; the server never holds a
  * decryptable content key (fragment mode) or plaintext (ADR-003).
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

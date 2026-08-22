@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath EncryptionSuiteRevokedEvent
+ * Keepiq EncryptionSuiteRevokedEvent
  *
  * Dispatched when an EncryptionSuite is revoked — listeners cascade
  * through share targets the suite's owner can no longer decrypt and
  * promote any temporary delegations they had granted to permanent.
  *
  * @category Event
- * @package  OCA\Doriath\Event
+ * @package  OCA\Keepiq\Event
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event;
+namespace OCA\Keepiq\Event;
 
 use OCP\EventDispatcher\Event;
 

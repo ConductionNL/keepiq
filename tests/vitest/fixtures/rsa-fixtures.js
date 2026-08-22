@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Deterministic RSA-2048 test material for the crypto unit tests.
@@ -9,7 +9,7 @@
  * extracted from the same certificate. Generated once with:
  *
  *   openssl req -x509 -newkey rsa:2048 -keyout k.pem -out cert.pem \
- *     -days 3650 -nodes -subj "/CN=doriath-test"
+ *     -days 3650 -nodes -subj "/CN=keepiq-test"
  *   openssl pkcs8 -topk8 -nocrypt -in k.pem -out key8.pem
  *   openssl x509 -in cert.pem -pubkey -noout > pub.pem
  *

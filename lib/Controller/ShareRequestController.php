@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Share Request Controller
+ * Keepiq Share Request Controller
  *
  * Authenticated API controller for the share-request lifecycle:
  *  - create   submit a request to the owner
@@ -9,7 +9,7 @@
  *  - deny     owner denies (notifies the requester)
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,11 +22,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\ShareRequestService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\ShareRequestService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath EmergencyAccessSuiteRotationListener
+ * Keepiq EmergencyAccessSuiteRotationListener
  *
  * Listens for SuiteMigrationCompletedEvent (compromise recovery / key rotation)
  * and invalidates the grantor's emergency-access recovery envelopes
@@ -12,7 +12,7 @@
  * id recorded at designation.
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,10 +25,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Service\EmergencyEnvelopeInvalidationService;
+use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
+use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -77,7 +77,7 @@ class EmergencyAccessSuiteRotationListener implements IEventListener {
 				reason: 'grantor_rotation',
 			);
 		} catch (Throwable $e) {
-			$this->logger->error('Doriath: emergency-access rotation invalidation failed: ' . $e->getMessage());
+			$this->logger->error('Keepiq: emergency-access rotation invalidation failed: ' . $e->getMessage());
 		}
 	}//end handle()
 }//end class

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Ephemeral Send Purge Job
+ * Keepiq Ephemeral Send Purge Job
  *
  * Hourly deletion of TTL-elapsed and fully-burned ephemeral sends
  * (ephemeral-send §3.1) so ciphertext never outlives its send.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,10 +20,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\EphemeralSendService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\EphemeralSendService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -68,13 +68,13 @@ class EphemeralSendPurgeJob extends TimedJob {
 			$purged = $this->service->purge();
 			if ($purged > 0) {
 				$this->logger->info(
-					'Doriath: purged ' . $purged . ' dead ephemeral sends',
+					'Keepiq: purged ' . $purged . ' dead ephemeral sends',
 					['app' => Application::APP_ID]
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: ephemeral-send purge failed: ' . $exception->getMessage(),
+				'Keepiq: ephemeral-send purge failed: ' . $exception->getMessage(),
 				['app' => Application::APP_ID]
 			);
 		}

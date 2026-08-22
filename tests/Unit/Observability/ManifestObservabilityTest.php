@@ -5,7 +5,7 @@
  * (apphost-adoption; ADR-006 / ADR-040).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Observability
+ * @package  OCA\Keepiq\Tests\Unit\Observability
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -18,7 +18,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Observability;
+namespace OCA\Keepiq\Tests\Unit\Observability;
 
 use PHPUnit\Framework\TestCase;
 
@@ -31,10 +31,10 @@ use PHPUnit\Framework\TestCase;
  * The scenarios in openspec/specs/apphost-adoption/spec.md were waived with
  * "@e2e exclude API-only endpoint — covered by the OR AppHost Newman contract
  * collection". That collection is real and correct, but it lives in the
- * OPENREGISTER repository and doriath's CI never executes it, so nothing in
+ * OPENREGISTER repository and keepiq's CI never executes it, so nothing in
  * this repo asserted the contract. The observable HTTP surface is now covered
- * by tests/integration/doriath.postman_collection.json folder 0, which runs in
- * doriath's own CI (enable-newman: true).
+ * by tests/integration/keepiq.postman_collection.json folder 0, which runs in
+ * keepiq's own CI (enable-newman: true).
  *
  * One property cannot be asserted from that HTTP surface: that the
  * suites_total gauge EXCLUDES non-active suites. Both the dev instance and a

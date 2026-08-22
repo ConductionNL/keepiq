@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Secret Request Entity
+ * Keepiq Secret Request Entity
  *
  * Database entity representing a request for someone to fill in a secret —
  * either a brand-new request (creates an unfilled Secret) or a re-request
  * for an existing Secret.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

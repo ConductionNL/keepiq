@@ -4,7 +4,7 @@
  * Unit tests for SecretService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,22 +17,22 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Exception\SuiteBlockedException;
-use OCA\Doriath\Exception\WriteLockedException;
-use OCA\Doriath\Service\LinkShareService;
-use OCA\Doriath\Service\MigrationService;
-use OCA\Doriath\Service\SecretService;
-use OCA\Doriath\Service\SecretTypeService;
-use OCA\Doriath\Service\SecretVersionService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -702,8 +702,8 @@ class SecretServiceTest extends TestCase {
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-10.1
 	 */
 	public function testDeleteCascadesToGroupSharesAndDelegations(): void {
-		$groupShareMapper = $this->createMock(\OCA\Doriath\Db\GroupShareMapper::class);
-		$delegationMapper = $this->createMock(\OCA\Doriath\Db\SecretDelegationMapper::class);
+		$groupShareMapper = $this->createMock(\OCA\Keepiq\Db\GroupShareMapper::class);
+		$delegationMapper = $this->createMock(\OCA\Keepiq\Db\SecretDelegationMapper::class);
 		$logger = $this->createMock(LoggerInterface::class);
 
 		$service = new SecretService(

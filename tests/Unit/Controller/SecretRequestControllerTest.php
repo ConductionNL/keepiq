@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - SecretRequestController tests
+ * Keepiq - SecretRequestController tests
  *
  * This controller had NO test file at all, and 0/121 statement coverage, while
  * carrying the user-facing request surface: the create endpoint that decides
@@ -17,7 +17,7 @@
  * request into the wrong service method.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -30,11 +30,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\SecretRequestController;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Keepiq\Controller\SecretRequestController;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

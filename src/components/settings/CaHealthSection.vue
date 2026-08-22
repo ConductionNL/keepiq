@@ -1,7 +1,7 @@
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Certificate Authority')"
-		:description="t('doriath', 'Status of the private Certificate Authority')">
+		:name="t('keepiq', 'Certificate Authority')"
+		:description="t('keepiq', 'Status of the private Certificate Authority')">
 		<div class="ca-health">
 			<div class="ca-health__status">
 				<span
@@ -12,10 +12,10 @@
 
 			<template v-if="caStatus && caStatus.root">
 				<p>
-					{{ t('doriath', 'Root expires') }}: {{ caStatus.root.expiresAt }}
+					{{ t('keepiq', 'Root expires') }}: {{ caStatus.root.expiresAt }}
 				</p>
 				<p>
-					{{ t('doriath', 'Intermediate expires') }}:
+					{{ t('keepiq', 'Intermediate expires') }}:
 					{{ caStatus.intermediate?.expiresAt }}
 				</p>
 			</template>
@@ -26,21 +26,21 @@
 				data-testid="ca-issued-counts">
 				<li>
 					{{
-						t('doriath', 'Active user vault certificates: {n}', {
+						t('keepiq', 'Active user vault certificates: {n}', {
 							n: caStatus.issued.activeUserSuites,
 						})
 					}}
 				</li>
 				<li>
 					{{
-						t('doriath', 'Active application certificates: {n}', {
+						t('keepiq', 'Active application certificates: {n}', {
 							n: caStatus.issued.activeApplicationSuites,
 						})
 					}}
 				</li>
 				<li>
 					{{
-						t('doriath', 'Stored certificate secrets: {n}', {
+						t('keepiq', 'Stored certificate secrets: {n}', {
 							n: caStatus.issued.storedCertificates,
 						})
 					}}
@@ -48,7 +48,7 @@
 				<li>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Stored certificates expiring within 30 days: {n}',
 							{ n: caStatus.issued.storedExpiringSoon },
 						)
@@ -61,7 +61,7 @@
 				variant="primary"
 				:disabled="loading"
 				@click="retryBootstrap">
-				{{ t('doriath', 'Retry bootstrap') }}
+				{{ t('keepiq', 'Retry bootstrap') }}
 			</NcButton>
 
 			<NcButton
@@ -72,7 +72,7 @@
 				variant="secondary"
 				:disabled="loading"
 				@click="forceRenewIntermediate">
-				{{ t('doriath', 'Force renew intermediate') }}
+				{{ t('keepiq', 'Force renew intermediate') }}
 			</NcButton>
 		</div>
 	</CnSettingsSection>
@@ -120,12 +120,12 @@ export default {
 		 */
 		statusLabel() {
 			const map = {
-				healthy: t('doriath', 'Healthy'),
-				expiring_soon: t('doriath', 'Expiring soon'),
-				action_required: t('doriath', 'Action required'),
-				not_configured: t('doriath', 'Not configured'),
+				healthy: t('keepiq', 'Healthy'),
+				expiring_soon: t('keepiq', 'Expiring soon'),
+				action_required: t('keepiq', 'Action required'),
+				not_configured: t('keepiq', 'Not configured'),
 			}
-			return map[this.caStatus?.status] || t('doriath', 'Unknown')
+			return map[this.caStatus?.status] || t('keepiq', 'Unknown')
 		},
 	},
 
@@ -141,7 +141,7 @@ export default {
 		 */
 		async fetchStatus() {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/ca/status'),
+				generateUrl('/apps/keepiq/api/v1/ca/status'),
 			)
 			this.caStatus = response.data
 		},
@@ -153,7 +153,7 @@ export default {
 		 */
 		async retryBootstrap() {
 			this.loading = true
-			await axios.post(generateUrl('/apps/doriath/api/v1/ca/bootstrap-retry'))
+			await axios.post(generateUrl('/apps/keepiq/api/v1/ca/bootstrap-retry'))
 			await this.fetchStatus()
 			this.loading = false
 		},
@@ -166,7 +166,7 @@ export default {
 		async forceRenewIntermediate() {
 			this.loading = true
 			await axios.post(
-				generateUrl('/apps/doriath/api/v1/ca/renew-intermediate'),
+				generateUrl('/apps/keepiq/api/v1/ca/renew-intermediate'),
 			)
 			await this.fetchStatus()
 			this.loading = false

@@ -4,7 +4,7 @@
  * Unit tests for AuditService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\AuditEntry;
-use OCA\Doriath\Db\AuditEntryMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Exception\AuditForbiddenMetadataException;
-use OCA\Doriath\Service\AuditService;
+use OCA\Keepiq\Db\AuditEntry;
+use OCA\Keepiq\Db\AuditEntryMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\AuditForbiddenMetadataException;
+use OCA\Keepiq\Service\AuditService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 

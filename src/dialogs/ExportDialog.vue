@@ -20,7 +20,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Export vault')"
+		:name="t('keepiq', 'Export vault')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -30,14 +30,14 @@
 			</NcNoteCard>
 
 			<fieldset class="export-dialog__modes">
-				<legend>{{ t('doriath', 'Export format') }}</legend>
+				<legend>{{ t('keepiq', 'Export format') }}</legend>
 				<NcCheckboxRadioSwitch
 					:modelValue="mode"
 					value="encrypted-backup"
 					name="export-mode"
 					type="radio"
 					@update:modelValue="mode = $event">
-					{{ t('doriath', 'Encrypted backup (recommended)') }}
+					{{ t('keepiq', 'Encrypted backup (recommended)') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
 					:modelValue="mode"
@@ -45,7 +45,7 @@
 					name="export-mode"
 					type="radio"
 					@update:modelValue="mode = $event">
-					{{ t('doriath', 'Plaintext CSV (unencrypted)') }}
+					{{ t('keepiq', 'Plaintext CSV (unencrypted)') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
 					:modelValue="mode"
@@ -54,7 +54,7 @@
 					type="radio"
 					data-testid="export-mode-cxf"
 					@update:modelValue="mode = $event">
-					{{ t('doriath', 'FIDO Credential Exchange (CXF, unencrypted)') }}
+					{{ t('keepiq', 'FIDO Credential Exchange (CXF, unencrypted)') }}
 				</NcCheckboxRadioSwitch>
 			</fieldset>
 
@@ -66,21 +66,19 @@
 				type="warning"
 				data-testid="cxf-unmapped-report">
 				<p>
-					{{
-						t('doriath', 'The following will not survive a CXF export:')
-					}}
+					{{ t('keepiq', 'The following will not survive a CXF export:') }}
 				</p>
 				<ul>
 					<li v-for="(entry, idx) in cxfReport.unmapped" :key="idx">
 						{{ entry }}
 					</li>
 				</ul>
-				<p>{{ t('doriath', 'Export again to proceed anyway.') }}</p>
+				<p>{{ t('keepiq', 'Export again to proceed anyway.') }}</p>
 			</NcNoteCard>
 
 			<NcSelect
 				v-model="scopeFolder"
-				:inputLabel="t('doriath', 'Scope')"
+				:inputLabel="t('keepiq', 'Scope')"
 				:options="scopeOptions"
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
@@ -89,12 +87,12 @@
 			<div v-if="mode === 'encrypted-backup'" class="export-dialog__backup">
 				<NcPasswordField
 					v-model="passphrase"
-					:label="t('doriath', 'Backup passphrase')"
+					:label="t('keepiq', 'Backup passphrase')"
 					@update:modelValue="onPassphraseInput" />
 				<p class="export-dialog__hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.',
 						)
 					}}
@@ -112,7 +110,7 @@
 				<NcNoteCard type="warning">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
 						)
 					}}
@@ -122,7 +120,7 @@
 					@update:modelValue="warningAcknowledged = $event">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'I understand the file is unencrypted and will delete it after use',
 						)
 					}}
@@ -130,19 +128,19 @@
 				<NcPasswordField
 					v-if="warningAcknowledged"
 					v-model="masterPassword"
-					:label="t('doriath', 'Re-enter your master password')" />
+					:label="t('keepiq', 'Re-enter your master password')" />
 			</div>
 		</div>
 
 		<template #actions>
 			<NcButton @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
 				:disabled="!canSubmit || loading"
 				@click="onExport">
-				{{ t('doriath', 'Export') }}
+				{{ t('keepiq', 'Export') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -251,7 +249,7 @@ export default {
 		 */
 		scopeOptions() {
 			const opts = [
-				{ label: this.t('doriath', 'Entire vault'), value: 'vault' },
+				{ label: this.t('keepiq', 'Entire vault'), value: 'vault' },
 			]
 			for (const folder of this.folders) {
 				opts.push({ label: folder.name, value: folder.id })
@@ -267,10 +265,10 @@ export default {
 		 */
 		strengthLabel() {
 			if (this.passphraseScore >= PASSPHRASE_FLOOR) {
-				return this.t('doriath', 'Passphrase strength: strong enough')
+				return this.t('keepiq', 'Passphrase strength: strong enough')
 			}
 			return this.t(
-				'doriath',
+				'keepiq',
 				'Passphrase too weak — choose a longer, less predictable passphrase',
 			)
 		},
@@ -353,7 +351,7 @@ export default {
 						this.masterPassword,
 					)
 					if (!ok) {
-						this.error = this.t('doriath', 'Incorrect master password')
+						this.error = this.t('keepiq', 'Incorrect master password')
 						return
 					}
 					if (this.mode === 'cxf') {
@@ -392,7 +390,7 @@ export default {
 				this.error =
 					this.exportStore.error
 					|| (e && e.message)
-					|| this.t('doriath', 'Export failed')
+					|| this.t('keepiq', 'Export failed')
 			}
 		},
 

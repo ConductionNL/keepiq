@@ -72,7 +72,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/suites'),
+					generateUrl('/apps/keepiq/api/v1/suites'),
 				)
 				const suites = response.data
 				this.currentSuite = suites.find((s) => s.status === 'active') || null
@@ -107,7 +107,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				)
 
 				const response = await axios.post(
-					generateUrl('/apps/doriath/api/v1/suites'),
+					generateUrl('/apps/keepiq/api/v1/suites'),
 					{
 						publicKey: publicKeyPem,
 						encryptedPrivateKey: encryptedPk,
@@ -154,7 +154,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// Update on server.
 			await axios.put(
 				generateUrl(
-					`/apps/doriath/api/v1/suites/${session.suiteId}/private-key`,
+					`/apps/keepiq/api/v1/suites/${session.suiteId}/private-key`,
 				),
 				{ encryptedPrivateKey: newEncryptedPk },
 			)
@@ -204,7 +204,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			this.migrationDroppedVersions = 0
 
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/suites/compromise-recovery'),
+				generateUrl('/apps/keepiq/api/v1/suites/compromise-recovery'),
 				{
 					publicKey: publicKeyPem,
 					encryptedPrivateKey: newEncryptedPk,
@@ -311,7 +311,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				for (;;) {
 					const { data } = await axios.get(
 						generateUrl(
-							`/apps/doriath/api/v1/migrations/${migrationId}/work`,
+							`/apps/keepiq/api/v1/migrations/${migrationId}/work`,
 						),
 					)
 
@@ -611,7 +611,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
 		recordUrl(migrationId, store, id) {
-			const base = `/apps/doriath/api/v1/migrations/${migrationId}`
+			const base = `/apps/keepiq/api/v1/migrations/${migrationId}`
 
 			if (store === MIGRATION_STORES.SECRETS) {
 				return generateUrl(`${base}/secrets/${id}`)
@@ -757,7 +757,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 				const { data } = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/migrations/${migrationId}/complete`,
+						`/apps/keepiq/api/v1/migrations/${migrationId}/complete`,
 					),
 					body,
 				)
@@ -791,7 +791,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			try {
 				const { data } = await axios.get(
 					generateUrl(
-						`/apps/doriath/api/v1/migrations/${this.migrationStatus.id}/work`,
+						`/apps/keepiq/api/v1/migrations/${this.migrationStatus.id}/work`,
 					),
 					{ params: { limit: 1 } },
 				)
@@ -840,12 +840,12 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// like a vault full of corrupt data instead of one mis-wired resume.
 			const { data: oldSuite } = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/suites/${this.migrationStatus.oldSuiteId}`,
+					`/apps/keepiq/api/v1/suites/${this.migrationStatus.oldSuiteId}`,
 				),
 			)
 			const { data: newSuite } = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/suites/${this.migrationStatus.newSuiteId}`,
+					`/apps/keepiq/api/v1/suites/${this.migrationStatus.newSuiteId}`,
 				),
 			)
 
@@ -925,7 +925,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/suites/${this.currentSuite.id}/revoke`,
+					`/apps/keepiq/api/v1/suites/${this.currentSuite.id}/revoke`,
 				),
 				{ reason },
 			)
@@ -949,7 +949,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		async fetchMigrationStatus() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/migrations/status'),
+					generateUrl('/apps/keepiq/api/v1/migrations/status'),
 				)
 				this.migrationStatus =
 					response.data.status === 'none' ? null : response.data

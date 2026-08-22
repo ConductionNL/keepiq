@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath SuiteMigrationCompletedListener
+ * Keepiq SuiteMigrationCompletedListener
  *
  * Responds to a compromise-recovery completion by unlocking dependent
  * SecretRequests and re-pointing them at the replacement suite
  * (implement-secret-requests §6.2).
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,10 +21,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Service\SecretRequestSuiteLockService;
+use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
+use OCA\Keepiq\Service\SecretRequestSuiteLockService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -58,6 +58,8 @@ class SuiteMigrationCompletedListener implements IEventListener {
 	 * @param Event $event The event
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof SuiteMigrationCompletedEvent) === false) {
@@ -70,7 +72,7 @@ class SuiteMigrationCompletedListener implements IEventListener {
 				$event->getNewSuiteId()
 			);
 			$this->logger->info(
-				'Doriath: unlocked SecretRequests after compromise recovery',
+				'Keepiq: unlocked SecretRequests after compromise recovery',
 				[
 					'oldSuiteId' => $event->getOldSuiteId(),
 					'newSuiteId' => $event->getNewSuiteId(),
@@ -79,7 +81,7 @@ class SuiteMigrationCompletedListener implements IEventListener {
 			);
 		} catch (Throwable $e) {
 			$this->logger->error(
-				'Doriath: SuiteMigrationCompletedListener failed: ' . $e->getMessage(),
+				'Keepiq: SuiteMigrationCompletedListener failed: ' . $e->getMessage(),
 				['exception' => $e]
 			);
 		}

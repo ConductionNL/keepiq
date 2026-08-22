@@ -4,7 +4,7 @@
  * Unit tests for FolderService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,23 +17,23 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Exception\DuplicateFolderNameException;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\FolderCascadeService;
-use OCA\Doriath\Service\FolderDeletionService;
-use OCA\Doriath\Service\FolderNameGuard;
-use OCA\Doriath\Service\FolderOwnershipGuard;
-use OCA\Doriath\Service\FolderService;
-use OCA\Doriath\Service\FolderTreeService;
-use OCA\Doriath\Service\SecretChildDataCleaner;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\DuplicateFolderNameException;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\FolderCascadeService;
+use OCA\Keepiq\Service\FolderDeletionService;
+use OCA\Keepiq\Service\FolderNameGuard;
+use OCA\Keepiq\Service\FolderOwnershipGuard;
+use OCA\Keepiq\Service\FolderService;
+use OCA\Keepiq\Service\FolderTreeService;
+use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

@@ -4,7 +4,7 @@
  * Unit tests for KeyGeneratorService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Service\KeyGeneratorService;
+use OCA\Keepiq\Service\KeyGeneratorService;
 use PHPUnit\Framework\TestCase;
 
 /**

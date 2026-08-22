@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Key Generator Controller
+ * Keepiq Key Generator Controller
  *
  * API controller exposing the stateless key generator.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\KeyGeneratorService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\KeyGeneratorService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

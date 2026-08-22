@@ -4,7 +4,7 @@
  * Unit tests for JwtAuthMiddleware.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Middleware
+ * @package  OCA\Keepiq\Tests\Unit\Middleware
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,12 +17,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Middleware;
+namespace OCA\Keepiq\Tests\Unit\Middleware;
 
-use OCA\Doriath\Controller\ApplicationApiController;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Middleware\JwtAuthMiddleware;
-use OCA\Doriath\Service\JwtAuthService;
+use OCA\Keepiq\Controller\ApplicationApiController;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Middleware\JwtAuthMiddleware;
+use OCA\Keepiq\Service\JwtAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -71,7 +71,7 @@ class JwtAuthMiddlewareTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$middleware = new JwtAuthMiddleware($request, $service, $logger);
 
-		$controller = new ConcreteAppController('doriath', $request);
+		$controller = new ConcreteAppController('keepiq', $request);
 		$request->method('getHeader')->with('Authorization')->willReturn('');
 
 		$this->expectException(RuntimeException::class);
@@ -90,7 +90,7 @@ class JwtAuthMiddlewareTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$middleware = new JwtAuthMiddleware($request, $service, $logger);
 
-		$controller = new ConcreteAppController('doriath', $request);
+		$controller = new ConcreteAppController('keepiq', $request);
 		$request->method('getHeader')->with('Authorization')->willReturn('Basic abc');
 
 		$this->expectException(RuntimeException::class);
@@ -110,7 +110,7 @@ class JwtAuthMiddlewareTest extends TestCase {
 		$service->method('validateAccessToken')->with('bad-token')->willReturn(null);
 
 		$middleware = new JwtAuthMiddleware($request, $service, $logger);
-		$controller = new ConcreteAppController('doriath', $request);
+		$controller = new ConcreteAppController('keepiq', $request);
 
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('Invalid or expired');
@@ -134,7 +134,7 @@ class JwtAuthMiddlewareTest extends TestCase {
 		$service->method('validateAccessToken')->with('good-token')->willReturn($app);
 
 		$middleware = new JwtAuthMiddleware($request, $service, $logger);
-		$controller = new ConcreteAppController('doriath', $request);
+		$controller = new ConcreteAppController('keepiq', $request);
 
 		$middleware->beforeController($controller, 'index');
 		$this->assertSame($app, $controller->getApplication());
@@ -151,7 +151,7 @@ class JwtAuthMiddlewareTest extends TestCase {
 		$logger = $this->createMock(LoggerInterface::class);
 		$middleware = new JwtAuthMiddleware($request, $service, $logger);
 
-		$controller = new ConcreteAppController('doriath', $request);
+		$controller = new ConcreteAppController('keepiq', $request);
 		$response = $middleware->afterException($controller, 'index', new RuntimeException('nope'));
 
 		$this->assertInstanceOf(JSONResponse::class, $response);

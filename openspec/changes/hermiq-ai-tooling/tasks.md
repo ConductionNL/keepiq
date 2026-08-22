@@ -8,7 +8,7 @@ Depends on OpenRegister's `AttributeToolScanner`, `McpTool` attribute and `IMcpS
 - [ ] 1.2 Create `lib/Mcp/EntryMetadataTools.php` with `#[McpTool(name: 'listEntries', scope: 'read', readOnlyHint: true)]` calling `SecretService::list()`/`search()` for the session user and projecting through 1.1; optional `folderId`, `typeId`, `query`; no user parameter
 - [ ] 1.3 Create `lib/Mcp/ExpiryReportTools.php` with `#[McpTool(name: 'expiryReport', ...)]` over `CertificateLifecycleService::inventory(userId, isAdmin: false)` + secrets with `expiresAt` in window; validate `withinDays` 0..365; mark `expired: true`
 - [ ] 1.4 Create `lib/Mcp/RotationStatusTools.php` with `#[McpTool(name: 'rotationStatus', ...)]` over `RotationFlagService::openFlags(userId)` + counts
-- [ ] 1.5 Create `lib/Mcp/DoriathScannableServices.php` (SPDX + `@spec` docblock, DocuDesk pattern) returning exactly the three facade classes; register the `IMcpScannableServices::doriath` alias in `Application::register()` guarded by the OR-present check
+- [ ] 1.5 Create `lib/Mcp/KeepiqScannableServices.php` (SPDX + `@spec` docblock, DocuDesk pattern) returning exactly the three facade classes; register the `IMcpScannableServices::keepiq` alias in `Application::register()` guarded by the OR-present check
 
 ## 2. Audit
 
@@ -17,9 +17,9 @@ Depends on OpenRegister's `AttributeToolScanner`, `McpTool` attribute and `IMcpS
 ## 3. Tests
 
 - [ ] 3.1 `tests/unit/Mcp/MetadataAllowListTest.php`: every projected result key ∈ allow-list; positive control — a fixture row with `key`/`login`/`encryptionSuiteId`/an unknown key is stripped and a poisoned allow-list makes the test fail
-- [ ] 3.2 `tests/unit/Mcp/ScannableSurfaceTest.php`: reflection over `lib/` — `#[McpTool]` appears only on the three facade methods; `DoriathScannableServices` lists exactly the three classes
+- [ ] 3.2 `tests/unit/Mcp/ScannableSurfaceTest.php`: reflection over `lib/` — `#[McpTool]` appears only on the three facade methods; `KeepiqScannableServices` lists exactly the three classes
 - [ ] 3.3 Per-tool tests (`ExpiryReportToolTest` at 90/30/7 thresholds and out-of-range `withinDays`; `RotationStatusToolTest` asserting no flag state changes; `EntryMetadataToolsTest` asserting user-A cannot see user-B entries and locked/no-suite vault returns an empty list)
-- [ ] 3.4 Extend the MCP surface probe: catalog is exactly the three `doriath.*` read tools, all `readOnlyHint: true`, `scope: read`; none ends in `.create/.update/.delete`
+- [ ] 3.4 Extend the MCP surface probe: catalog is exactly the three `keepiq.*` read tools, all `readOnlyHint: true`, `scope: read`; none ends in `.create/.update/.delete`
 - [ ] 3.5 Audit test: entry attributed `mcp`/principal, payload count-only
 
 ## 4. Docs and gates

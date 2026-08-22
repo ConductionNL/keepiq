@@ -4,7 +4,7 @@
  * Unit tests for the ADR-037 modular register fragment deep-merge.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -17,9 +17,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Service\RegisterConfigurationLoader;
+use OCA\Keepiq\Service\RegisterConfigurationLoader;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 

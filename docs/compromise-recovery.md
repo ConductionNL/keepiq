@@ -7,7 +7,7 @@
 
 If your master password has been exposed, compromise recovery generates a **new
 key pair** and re-encrypts your vault under it, so the leaked key can be locked
-out. Because Doriath is end-to-end encrypted (ADR-003), the server cannot do any
+out. Because Keepiq is end-to-end encrypted (ADR-003), the server cannot do any
 of this for you: every decrypt and re-encrypt happens **in your browser**, and
 only ciphertext ever crosses the wire.
 
@@ -63,7 +63,7 @@ Progress is shown inside the recovery dialog as `n of m` across every store.
 ## If it is interrupted
 
 Closing the tab does not lose progress. The migration stays in progress, your
-vault stays readable, and the next time you open Doriath a banner tells you how
+vault stays readable, and the next time you open Keepiq a banner tells you how
 many records remain and offers to resume.
 
 Resuming asks for your **previous** master password — the current one is already
@@ -88,7 +88,7 @@ So recovery offers a choice, and names the affected secrets:
 - **Finish anyway** — end the rotation and accept that those secrets can no
   longer be opened. The button states how many.
 
-**This is the one irreversible decision in Doriath.** Finishing locks the old
+**This is the one irreversible decision in Keepiq.** Finishing locks the old
 key, so the listed secrets become unopenable. Their stored data is kept, so a
 future recovery tool could still reach it, but nothing in the app will open them
 again. You will need to set those values afresh at their source. Nothing is

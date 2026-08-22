@@ -4,7 +4,7 @@
  * Unit tests for AttachmentService (encrypted-attachments §7.1).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,18 +17,18 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Attachment;
-use OCA\Doriath\Db\AttachmentGrant;
-use OCA\Doriath\Db\AttachmentGrantMapper;
-use OCA\Doriath\Db\AttachmentMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Service\AttachmentService;
-use OCA\Doriath\Service\WriteLockService;
+use OCA\Keepiq\Db\Attachment;
+use OCA\Keepiq\Db\AttachmentGrant;
+use OCA\Keepiq\Db\AttachmentGrantMapper;
+use OCA\Keepiq\Db\AttachmentMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\AttachmentService;
+use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IAppData;

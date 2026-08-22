@@ -1,19 +1,19 @@
-# doriath-cli
+# keepiq-cli
 
-A single static binary, stdlib-only Go client for [Doriath](../), the
+A single static binary, stdlib-only Go client for [Keepiq](../), the
 zero-knowledge Nextcloud secrets manager. It talks to the **same** server
 surfaces the browser app and the openconnector machine consumer already use —
 nothing new server-side — and does **all** decryption client-side, so no
 plaintext key material ever reaches the server (ADR-003).
 
 `v1 is READ-ONLY.` There is no create/edit/update/delete command: a write in
-Doriath's model requires re-wrapping the value under every recipient's public
+Keepiq's model requires re-wrapping the value under every recipient's public
 key (the share fan-out), a separate and larger surface deferred to a follow-up.
 
 ## Install
 
 Download the binary for your platform from the release page and drop it on your
-`PATH`. It needs no PHP, no Node, no runtime — a clean image runs `doriath
+`PATH`. It needs no PHP, no Node, no runtime — a clean image runs `keepiq
 --version` out of the box. Cross-compiled targets: `linux`, `darwin`, `windows`
 on `amd64` and `arm64`.
 
@@ -21,15 +21,15 @@ Build from source:
 
 ```sh
 cd cli
-go build -o doriath .
+go build -o keepiq .
 ```
 
 Shell completion:
 
 ```sh
-doriath completion bash  > /etc/bash_completion.d/doriath
-doriath completion zsh   > "${fpath[1]}/_doriath"
-doriath completion fish  > ~/.config/fish/completions/doriath.fish
+keepiq completion bash  > /etc/bash_completion.d/keepiq
+keepiq completion zsh   > "${fpath[1]}/_keepiq"
+keepiq completion fish  > ~/.config/fish/completions/keepiq.fish
 ```
 
 ## Human mode
@@ -39,11 +39,11 @@ login password) and unlocks by deriving the master-password key and unwrapping
 the EncryptionSuite private key **in this process**.
 
 ```sh
-doriath login --url https://cloud.example.org --user alice   # stores URL + app-password (0600)
-doriath list                                                 # metadata only
-doriath show <id>                                            # reveal all fields
-doriath get  <id> key                                        # print one field
-doriath copy <id> key --clear-after 30                       # to clipboard, auto-clear
+keepiq login --url https://cloud.example.org --user alice   # stores URL + app-password (0600)
+keepiq list                                                 # metadata only
+keepiq show <id>                                            # reveal all fields
+keepiq get  <id> key                                        # print one field
+keepiq copy <id> key --clear-after 30                       # to clipboard, auto-clear
 ```
 
 The master password is prompted per invocation (no echo where a TTY is
@@ -52,14 +52,14 @@ unlock key locally. A wrong master password, or a private key that does not
 match the suite certificate, fails fast with a mismatch error before any secret
 is touched.
 
-> **Never run `doriath` human-mode unlock on a shared or untrusted host.** The
+> **Never run `keepiq` human-mode unlock on a shared or untrusted host.** The
 > derived key lives in this process's memory while it runs; a host you do not
 > control can read that memory. Use CI mode with a scoped application key there
 > instead.
 
 ### Custody
 
-- The **app-password** is stored in `~/.config/doriath/config.json`, mode `0600`.
+- The **app-password** is stored in `~/.config/keepiq/config.json`, mode `0600`.
   An OS-keyring backend is a planned hardening follow-up (it needs cgo/dbus and
   would break the pure-static single-binary build).
 - The **master password** and the derived unlock key are **never** written to
@@ -69,17 +69,17 @@ is touched.
 ## CI mode
 
 Non-interactive machine use. An RFC 7523 consumer that holds the **application
-private key** — a credential Doriath never stores. It self-configures from the
+private key** — a credential Keepiq never stores. It self-configures from the
 instance discovery document alone.
 
 ```sh
-export DORIATH_URL=https://cloud.example.org
-export DORIATH_APP_ID=my-pipeline
-export DORIATH_APP_KEY_FILE=/run/secrets/doriath-app.pem   # or DORIATH_APP_KEY=<PEM>
+export KEEPIQ_URL=https://cloud.example.org
+export KEEPIQ_APP_ID=my-pipeline
+export KEEPIQ_APP_KEY_FILE=/run/secrets/keepiq-app.pem   # or KEEPIQ_APP_KEY=<PEM>
 
-doriath ci fetch DB_PASSWORD --output json                 # {"name":...,"value":...}
-doriath ci fetch DB_PASSWORD --output env                  # export DORIATH_DB_PASSWORD='…'
-doriath ci run DB_PASSWORD,API_TOKEN -- ./migrate.sh       # injected into the child env only
+keepiq ci fetch DB_PASSWORD --output json                 # {"name":...,"value":...}
+keepiq ci fetch DB_PASSWORD --output env                  # export KEEPIQ_DB_PASSWORD='…'
+keepiq ci run DB_PASSWORD,API_TOKEN -- ./migrate.sh       # injected into the child env only
 ```
 
 `ci run` injects the fetched secrets into the child process environment **only**

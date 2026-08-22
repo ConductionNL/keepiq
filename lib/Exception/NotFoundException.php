@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Not Found Exception
+ * Keepiq Not Found Exception
  *
  * Thrown when a referenced entity does not exist. Controllers map this to
  * an HTTP 404 response.
  *
  * @category Exception
- * @package  OCA\Doriath\Exception
+ * @package  OCA\Keepiq\Exception
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Exception;
+namespace OCA\Keepiq\Exception;
 
 use RuntimeException;
 

@@ -4,7 +4,7 @@
  * Unit tests for GdprController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,13 +17,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\GdprController;
-use OCA\Doriath\Event\GdprExportPerformedEvent;
-use OCA\Doriath\Service\AccountDeletionService;
-use OCA\Doriath\Service\DeletionReport;
-use OCA\Doriath\Service\GdprService;
+use OCA\Keepiq\Controller\GdprController;
+use OCA\Keepiq\Event\GdprExportPerformedEvent;
+use OCA\Keepiq\Service\AccountDeletionService;
+use OCA\Keepiq\Service\DeletionReport;
+use OCA\Keepiq\Service\GdprService;
 use OCP\AppFramework\Http;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Passkey Controller
+ * Keepiq Passkey Controller
  *
  * Passkey vault-login endpoints (passkey-vault-login §2.4): list,
  * enrollment challenge, enroll, unlock options, record-use, and revoke.
@@ -10,7 +10,7 @@
  * locked (§D3). No `#[PublicPage]`, so no public rate-limit surface.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,12 +23,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\PasskeyCredential;
-use OCA\Doriath\Service\PasskeyService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\PasskeyCredential;
+use OCA\Keepiq\Service\PasskeyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

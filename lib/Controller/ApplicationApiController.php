@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application API Controller (Base)
+ * Keepiq Application API Controller (Base)
  *
  * Marker base class for controllers that accept JWT-Bearer authentication
  * from a registered application instead of a Nextcloud session. The
@@ -9,7 +9,7 @@
  * whether to require + validate the Authorization header.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,9 +22,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\Db\Application;
+use OCA\Keepiq\Db\Application;
 use OCP\AppFramework\Controller;
 use OCP\IRequest;
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Certificate Authority Service
+ * Keepiq Certificate Authority Service
  *
  * Owns the private CA HIERARCHY — the root and intermediate certificates
  * themselves: bootstrap (including recovery from a half-written
@@ -15,7 +15,7 @@
  * keep a single CA-shaped facade.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,12 +28,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\CACertificate;
-use OCA\Doriath\Db\CACertificateMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\CACertificate;
+use OCA\Keepiq\Db\CACertificateMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
@@ -99,7 +99,7 @@ class CertificateAuthorityService {
 		if ($root !== null) {
 			try {
 				$this->caCertificateMapper->findActiveIntermediate();
-				$this->logger->info('Doriath: CA already bootstrapped, skipping');
+				$this->logger->info('Keepiq: CA already bootstrapped, skipping');
 				// Healthy state — make sure ca_status reflects it in case a prior
 				// partial-state install left it unset or degraded.
 				$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
@@ -108,17 +108,17 @@ class CertificateAuthorityService {
 				// Partial state: root exists but intermediate does not.
 				// Recover by issuing only the missing intermediate against the existing root.
 				$this->logger->warning(
-					'Doriath: detected partial CA state (root present, no active intermediate) — recovering intermediate'
+					'Keepiq: detected partial CA state (root present, no active intermediate) — recovering intermediate'
 				);
 				$recovered = $this->recoverIntermediate(root: $root);
-				$this->logger->info('Doriath: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
+				$this->logger->info('Keepiq: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
 				$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
-				$this->logger->info('Doriath: CA partial-state recovery complete');
+				$this->logger->info('Keepiq: CA partial-state recovery complete');
 				return;
 			}
 		}//end if
 
-		$this->logger->info('Doriath: Bootstrapping Certificate Authority');
+		$this->logger->info('Keepiq: Bootstrapping Certificate Authority');
 
 		// Generate root CA key pair.
 		$rootKey = openssl_pkey_new(
@@ -136,7 +136,7 @@ class CertificateAuthorityService {
 		// @codeCoverageIgnoreEnd
 		// Self-sign the root certificate.
 		$rootCsr = openssl_csr_new(
-			distinguished_names: array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Doriath Root CA']),
+			distinguished_names: array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Keepiq Root CA']),
 			private_key: $rootKey,
 			options: ['digest_alg' => 'sha256']
 		);
@@ -174,7 +174,7 @@ class CertificateAuthorityService {
 		$this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
 		$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
-		$this->logger->info('Doriath: CA bootstrap complete');
+		$this->logger->info('Keepiq: CA bootstrap complete');
 	}//end bootstrap()
 
 	/**
@@ -201,7 +201,7 @@ class CertificateAuthorityService {
 	 */
 	public function signPublicKey(
 		string $publicKeyPem,
-		string $commonName = 'Doriath User',
+		string $commonName = 'Keepiq User',
 		?string $privateKeyPem = null,
 	): string {
 		return $this->issuanceService->signPublicKey(
@@ -265,7 +265,7 @@ class CertificateAuthorityService {
 		$resignedCount = $this->issuanceService->resignAllActiveSuites();
 
 		$this->logger->info(
-			"Doriath: Intermediate renewed, {$resignedCount} suites re-signed",
+			"Keepiq: Intermediate renewed, {$resignedCount} suites re-signed",
 			[
 				'forced' => $forced,
 			]
@@ -297,7 +297,7 @@ class CertificateAuthorityService {
 		);
 
 		$rootCsr = openssl_csr_new(
-			distinguished_names: array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Doriath Root CA']),
+			distinguished_names: array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Keepiq Root CA']),
 			private_key: $rootKey,
 			options: ['digest_alg' => 'sha256']
 		);
@@ -348,7 +348,7 @@ class CertificateAuthorityService {
 
 		$resignedCount = $this->issuanceService->resignAllActiveSuites();
 
-		$this->logger->info("Doriath: Root renewed, {$resignedCount} suites re-signed");
+		$this->logger->info("Keepiq: Root renewed, {$resignedCount} suites re-signed");
 
 		return $resignedCount;
 	}//end renewRoot()
@@ -417,7 +417,7 @@ class CertificateAuthorityService {
 		$intCsr = openssl_csr_new(
 			distinguished_names: array_merge(
 				CertificateIssuanceService::DEFAULT_DN,
-				['commonName' => 'Doriath Intermediate CA']
+				['commonName' => 'Keepiq Intermediate CA']
 			),
 			private_key: $intKey,
 			options: ['digest_alg' => 'sha256']
@@ -465,6 +465,6 @@ class CertificateAuthorityService {
 	 */
 	private function setDegraded(): void {
 		$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'degraded');
-		$this->logger->error('Doriath: CA bootstrap failed, entering degraded state');
+		$this->logger->error('Keepiq: CA bootstrap failed, entering degraded state');
 	}//end setDegraded()
 }//end class

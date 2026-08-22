@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration - Default the secrets `key` column to the empty string
+ * Keepiq Migration - Default the secrets `key` column to the empty string
  *
  * Aligns the column with the entity contract it is supposed to mirror.
  * `Secret::$key` is declared `protected string $key = '';` — a non-null string
@@ -30,7 +30,7 @@
  * stays NOT NULL, so a genuine null is still rejected.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -43,7 +43,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath SIEM Forward Listener
+ * Keepiq SIEM Forward Listener
  *
  * Forwards every dispatched AuditEvent to the SIEM queue
  * (siem-audit-export §2.1). Fail-soft by contract: an enqueue failure
@@ -10,7 +10,7 @@
  * strict subsets of sanitized entries.
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,10 +23,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Service\SiemService;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Service\SiemService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -74,8 +74,8 @@ class SiemForwardListener implements IEventListener {
 		} catch (Throwable $exception) {
 			// Fail-soft: forwarding must never break the audited action.
 			$this->logger->error(
-				'Doriath: SIEM forward failed: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: SIEM forward failed: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 		}
 	}//end handle()

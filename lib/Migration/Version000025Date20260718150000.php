@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration - Ephemeral sends
+ * Keepiq Migration - Ephemeral sends
  *
  * Adds `doriath_ephemeral_sends` (ephemeral-send §1.1): ad-hoc one-time
  * shares that never touch the vault tables. The server stores only the
@@ -10,7 +10,7 @@
  * lives in the URL fragment and never reaches the server (ADR-003).
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

@@ -44,7 +44,7 @@ describe('CXP transport', () => {
 	it('rejects an unsupported request version at seal time', async () => {
 		const { request } = await createImportRequest()
 		await expect(
-			sealForRequest({ ...request, v: 'doriath-cxp-v99' }, cxfBytes()),
+			sealForRequest({ ...request, v: 'keepiq-cxp-v99' }, cxfBytes()),
 		).rejects.toThrow(/version/)
 	})
 
@@ -52,7 +52,7 @@ describe('CXP transport', () => {
 		const { request, session } = await createImportRequest()
 		const envelope = await sealForRequest(request, cxfBytes())
 		await expect(
-			openEnvelope(session, { ...envelope, v: 'doriath-cxp-v99' }),
+			openEnvelope(session, { ...envelope, v: 'keepiq-cxp-v99' }),
 		).rejects.toThrow(/version/)
 	})
 

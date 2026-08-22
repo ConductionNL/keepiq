@@ -3,13 +3,13 @@
 **Status**: done
 
 **OpenSpec changes:**
-- `cxf-import-export` (2026-07-16, depends on `passkey-item-type`) — Bidirectional, client-side, file-based FIDO Credential Exchange Format (CXF) import and export as a new format on the existing import/export pipelines: CXF-entity ↔ Doriath-secret-type mapping (passwords, passkeys, TOTP, notes, API keys, SSH keys, Wi-Fi), unmapped-item reporting, folder/collection mapping and duplicate detection reusing existing machinery, and re-auth-gated CXF export. CXP (HPKE encrypted transfer) is out of scope in v1.
+- `cxf-import-export` (2026-07-16, depends on `passkey-item-type`) — Bidirectional, client-side, file-based FIDO Credential Exchange Format (CXF) import and export as a new format on the existing import/export pipelines: CXF-entity ↔ Keepiq-secret-type mapping (passwords, passkeys, TOTP, notes, API keys, SSH keys, Wi-Fi), unmapped-item reporting, folder/collection mapping and duplicate detection reusing existing machinery, and re-auth-gated CXF export. CXP (HPKE encrypted transfer) is out of scope in v1.
 
 ## Purpose
 
 The FIDO Credential Exchange Format (CXF) reached FIDO Proposed Standard in August 2025 — the first vendor-neutral way to move a full credential set (passwords, passkeys, TOTP, notes, API keys, SSH keys, Wi-Fi) between managers without a lossy CSV. Apple ships CXF-based transfer in iOS 26 / macOS 26, and Bitwarden, 1Password, Dashlane, and Proton Pass are implementing it. Standards-based portability directly answers the lock-in objection that dominates buyer conversations after the LastPass trust collapse (ICO fine ~£1.2M, late 2025) — and no Nextcloud-native app offers it.
 
-This feature adds CXF as a new format on Doriath's already-shipped, always-E2E import and export pipelines: import parses and encrypts client-side; export decrypts and assembles client-side. It reuses the existing parser registry, mapping preview, folder mapping, duplicate detection, chunked commit, rejected rows, summary, and export gating — no new backend routes and no departure from the E2E contract (ADR-003). It completes the passkey story by using the `passkey-item-type` canonical schema (deliberately aligned 1:1 with the CXF passkey entity) as the passkey mapping target — hence this feature depends on `passkey-item-type`.
+This feature adds CXF as a new format on Keepiq's already-shipped, always-E2E import and export pipelines: import parses and encrypts client-side; export decrypts and assembles client-side. It reuses the existing parser registry, mapping preview, folder mapping, duplicate detection, chunked commit, rejected rows, summary, and export gating — no new backend routes and no departure from the E2E contract (ADR-003). It completes the passkey story by using the `passkey-item-type` canonical schema (deliberately aligned 1:1 with the CXF passkey entity) as the passkey mapping target — hence this feature depends on `passkey-item-type`.
 
 ## Requirements
 
@@ -21,8 +21,8 @@ The system MUST parse a CXF JSON document entirely in the browser, encrypt every
 - WHEN the import flow runs
 - THEN every request MUST carry only ciphertext for key/login/additional_fields; only name, url, type, and folder path may be plaintext
 
-### Requirement: CXF entity to Doriath type mapping
-The system MUST map CXF entities to Doriath secret types bidirectionally: passwords → `login`, passkeys → `passkey` (via `passkey-item-type`), TOTP → `totp`, notes → `note`, API keys → `api_key`, SSH keys → `ssh_key`, Wi-Fi → `note` with custom fields; export applies the reverse mapping.
+### Requirement: CXF entity to Keepiq type mapping
+The system MUST map CXF entities to Keepiq secret types bidirectionally: passwords → `login`, passkeys → `passkey` (via `passkey-item-type`), TOTP → `totp`, notes → `note`, API keys → `api_key`, SSH keys → `ssh_key`, Wi-Fi → `note` with custom fields; export applies the reverse mapping.
 
 #### Scenario: CXF passkey round-trips via the canonical schema
 - GIVEN a CXF document with a passkey entity
@@ -33,7 +33,7 @@ The system MUST map CXF entities to Doriath secret types bidirectionally: passwo
 The system MUST surface every unrepresentable item rather than silently dropping it — import failures into the rejected-rows list, export non-representable values into an export unmapped-item report shown before download.
 
 #### Scenario: Unrepresentable entity is reported
-- GIVEN a CXF entity Doriath cannot represent
+- GIVEN a CXF entity Keepiq cannot represent
 - WHEN the file is imported
 - THEN the entity MUST appear in the rejected-rows list with a reason and be counted in the summary, never silently dropped
 
@@ -56,7 +56,7 @@ The system's v1 CXF support MUST be file-based only; the encrypted Credential Ex
 ## User Stories
 
 - As an org migrating off LastPass/1Password, I want to import a standards-based CXF export so that I am not locked in and do not lose data to a lossy CSV.
-- As a user, I want to export my whole vault as CXF so that I can move to any CXF-supporting manager and prove Doriath does not trap my data.
+- As a user, I want to export my whole vault as CXF so that I can move to any CXF-supporting manager and prove Keepiq does not trap my data.
 - As a user, I want my passkeys and TOTP seeds to move through CXF, not just passwords, so that my full credential set migrates.
 - As a user, I want to be told exactly what will not survive a CXF round-trip so that I am not surprised by silent data loss.
 - As a security-conscious user, I want CXF export to warn me it is plaintext and re-check my master password so that I do not accidentally leak my vault.
@@ -64,7 +64,7 @@ The system's v1 CXF support MUST be file-based only; the encrypted Credential Ex
 ## Acceptance Criteria
 
 - [ ] CXF import parses client-side, encrypts before persistence, requires an unlocked vault, and reuses all existing import wizard steps.
-- [ ] CXF entities map to Doriath types bidirectionally, with passkeys via the `passkey-item-type` canonical schema and TOTP via the existing seed format.
+- [ ] CXF entities map to Keepiq types bidirectionally, with passkeys via the `passkey-item-type` canonical schema and TOTP via the existing seed format.
 - [ ] Every unrepresentable item is reported (import rejected rows; export unmapped-item report), never silently dropped.
 - [ ] CXF export assembles client-side, is gated by warning + fresh master-password re-auth, reports before download, and emits `SecretExportedEvent` mode `cxf` with no secret material.
 - [ ] A CXF export → import round-trip reproduces core credentials and folders; only documented extensions are lossy.

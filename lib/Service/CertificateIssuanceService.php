@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Certificate Issuance Service
+ * Keepiq Certificate Issuance Service
  *
  * Issues and re-issues LEAF certificates from the private CA's active
  * intermediate: signing a submitted public key, signing a PKCS#10 CSR,
@@ -17,7 +17,7 @@
  * holds silently makes every value encrypted under it undecryptable.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -30,13 +30,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\CACertificateMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Support\SuppressesDiagnostics;
+use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Security\ICrypto;
 use Psr\Log\LoggerInterface;
@@ -49,7 +49,7 @@ class CertificateIssuanceService {
 	use SuppressesDiagnostics;
 
 	/**
-	 * The distinguished name every Doriath-issued certificate is built
+	 * The distinguished name every Keepiq-issued certificate is built
 	 * from; the caller supplies only the common name. Single source of
 	 * truth for the whole private CA — CertificateAuthorityService
 	 * builds the root and intermediate DNs from it too.
@@ -61,7 +61,7 @@ class CertificateIssuanceService {
 		'stateOrProvinceName' => 'Noord-Holland',
 		'localityName' => 'Amsterdam',
 		'organizationName' => 'Conduction',
-		'organizationalUnitName' => 'Doriath',
+		'organizationalUnitName' => 'Keepiq',
 	];
 
 	/**
@@ -113,7 +113,7 @@ class CertificateIssuanceService {
 	 */
 	public function signPublicKey(
 		string $publicKeyPem,
-		string $commonName = 'Doriath User',
+		string $commonName = 'Keepiq User',
 		?string $privateKeyPem = null,
 	): string {
 		$intermediate = $this->caCertificateMapper->findActiveIntermediate();
@@ -266,7 +266,7 @@ class CertificateIssuanceService {
 		);
 		if ($newCertPem === null) {
 			$this->logger->warning(
-				"Doriath: re-issue kept existing certificate for suite {$suite->getId()} — "
+				"Keepiq: re-issue kept existing certificate for suite {$suite->getId()} — "
 				. 'could not re-sign while preserving its public key'
 			);
 
@@ -306,7 +306,7 @@ class CertificateIssuanceService {
 				$pubKey = openssl_pkey_get_public(public_key: $oldCert);
 				// @codeCoverageIgnoreStart
 				if ($pubKey === false) {
-					$this->logger->warning("Doriath: Could not extract public key from suite {$suite->getId()}");
+					$this->logger->warning("Keepiq: Could not extract public key from suite {$suite->getId()}");
 					continue;
 				}
 
@@ -329,7 +329,7 @@ class CertificateIssuanceService {
 				// key, we keep the existing certificate untouched.
 				if ($newCertPem === null) {
 					$this->logger->warning(
-						"Doriath: kept existing certificate for suite {$suite->getId()} — "
+						"Keepiq: kept existing certificate for suite {$suite->getId()} — "
 						. 'could not re-sign while preserving its public key'
 					);
 					continue;

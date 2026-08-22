@@ -6,7 +6,7 @@ p.on('console',m=>{if(m.type()==='error')errs.push('c:'+m.text().slice(0,160))})
 await p.goto(`${BASE}/index.php/login`,{waitUntil:'domcontentloaded'})
 await p.locator('input[name="user"]').fill('admin'); await p.locator('input[name="password"]').fill('admin')
 await p.locator('button[type="submit"]').first().click(); await p.waitForSelector('#header',{timeout:30000})
-await p.goto(`${BASE}/index.php/apps/doriath/`,{waitUntil:'domcontentloaded'}); await p.waitForTimeout(3000)
+await p.goto(`${BASE}/index.php/apps/keepiq/`,{waitUntil:'domcontentloaded'}); await p.waitForTimeout(3000)
 await p.locator('.lock-screen input[type="password"]').first().fill('Oj',{force:true}); await p.waitForTimeout(400)
 await p.evaluate(()=>{const bs=[...document.querySelectorAll('.lock-screen button')];const u=bs.find(b=>/Unlock/i.test(b.textContent||''));if(u)u.click()})
 await p.waitForTimeout(4000)
@@ -20,8 +20,8 @@ await p.waitForTimeout(3500)
 console.log('url:',p.url())
 const probe = await p.evaluate(()=>({
   detail: !!document.querySelector('.secret-detail'),
-  pwField: document.querySelectorAll('.secret-detail .doriath-password-field').length,
-  pwInput: document.querySelectorAll('.secret-detail .doriath-password-field input').length,
+  pwField: document.querySelectorAll('.secret-detail .keepiq-password-field').length,
+  pwInput: document.querySelectorAll('.secret-detail .keepiq-password-field input').length,
   anyInput: document.querySelectorAll('.secret-detail input').length,
   detailText: (document.querySelector('.secret-detail')?.innerText||'').slice(0,200)
 }))

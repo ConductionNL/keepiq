@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Share Authorization Service
+ * Keepiq Share Authorization Service
  *
  * The whole authorization surface of the user-to-user share lifecycle in
  * one place: who owns a secret, who holds an active delegation on it,
@@ -13,7 +13,7 @@
  * instead of each re-deriving them from the mappers.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,13 +26,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**

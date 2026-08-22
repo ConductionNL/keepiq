@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath audit-stream event registrar
+ * Keepiq audit-stream event registrar
  *
  * Binds every consumer of the typed AuditEvent stream: the append-only audit
  * log, the SIEM forwarder, and the honey-credential tripwire.
  *
  * @category AppInfo
- * @package  OCA\Doriath\AppInfo
+ * @package  OCA\Keepiq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\AppInfo;
+namespace OCA\Keepiq\AppInfo;
 
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Listener\AuditListener;
-use OCA\Doriath\Listener\HoneyTripwireListener;
-use OCA\Doriath\Listener\SiemForwardListener;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Listener\AuditListener;
+use OCA\Keepiq\Listener\HoneyTripwireListener;
+use OCA\Keepiq\Listener\SiemForwardListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -51,9 +51,9 @@ final class AuditStreamEventRegistrar {
 	 * @var array<int, string>
 	 */
 	private const SCOPED_AUDIT_EVENTS = [
-		'OCA\\Doriath\\Event\\SecretExportedEvent',
-		'OCA\\Doriath\\Event\\GdprExportPerformedEvent',
-		'OCA\\Doriath\\Event\\AccountDataDeletedEvent',
+		'OCA\\Keepiq\\Event\\SecretExportedEvent',
+		'OCA\\Keepiq\\Event\\GdprExportPerformedEvent',
+		'OCA\\Keepiq\\Event\\AccountDataDeletedEvent',
 	];
 
 	/**

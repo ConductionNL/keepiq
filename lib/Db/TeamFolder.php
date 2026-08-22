@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Entity
+ * Keepiq Team Folder Entity
  *
  * Database entity attaching shared membership to an existing per-user
  * Folder. The TeamFolder does not store secrets or key material — it only
@@ -9,7 +9,7 @@
  * produces ordinary per-recipient ShareTarget rows (ADR-003).
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

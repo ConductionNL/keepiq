@@ -25,7 +25,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Revoke this request?')"
+		:name="t('keepiq', 'Revoke this request?')"
 		:open="open"
 		size="normal"
 		data-testid="application-request-revoke-dialog"
@@ -33,7 +33,7 @@
 		<NcNoteCard type="warning" data-testid="application-request-revoke-warning">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'The fill link stops working immediately, even if someone already has it. If the application is waiting for this credential, its integration may stop working.',
 				)
 			}}
@@ -43,7 +43,7 @@
 			v-if="requestedFields.length > 0"
 			data-testid="application-request-revoke-fields">
 			{{
-				t('doriath', 'This application asked for: {fields}', {
+				t('keepiq', 'This application asked for: {fields}', {
 					fields: requestedFields.join(', '),
 				})
 			}}
@@ -54,13 +54,13 @@
 				variant="tertiary"
 				data-testid="application-request-revoke-cancel"
 				@click="$emit('close')">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				variant="error"
 				data-testid="application-request-revoke-confirm"
 				@click="$emit('confirm')">
-				{{ t('doriath', 'Revoke the request') }}
+				{{ t('keepiq', 'Revoke the request') }}
 			</NcButton>
 		</template>
 	</NcDialog>

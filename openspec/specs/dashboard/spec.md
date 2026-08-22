@@ -9,7 +9,7 @@
 
 ## Purpose
 
-The Doriath dashboard is the landing page after unlocking the vault. It provides a personal vault summary, quick access to recent and shared secrets, and — for administrators — CA health status and pending application registrations. The dashboard is designed as a security-aware overview: it highlights compromised secrets, active migrations, and vault health indicators.
+The Keepiq dashboard is the landing page after unlocking the vault. It provides a personal vault summary, quick access to recent and shared secrets, and — for administrators — CA health status and pending application registrations. The dashboard is designed as a security-aware overview: it highlights compromised secrets, active migrations, and vault health indicators.
 
 ## Data Model
 
@@ -118,5 +118,5 @@ The dashboard MUST be able to display a widget showing the user's most recently 
 ## Notes
 
 - The dashboard is only accessible after unlocking the vault (master password in session). The lock screen is the pre-dashboard route.
-- Unlike other Conduction apps, the dashboard does not use CnStatsBlock from `@conduction/nextcloud-vue` — Doriath implements its own KPI cards to match the security-focused design language.
+- Unlike other Conduction apps, the dashboard does not use CnStatsBlock from `@conduction/nextcloud-vue` — Keepiq implements its own KPI cards to match the security-focused design language.
 - Related specs: encryption-suites (migration), application-mgmt (pending counter), secrets (compromised count)

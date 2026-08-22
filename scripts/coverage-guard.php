@@ -59,7 +59,7 @@ const CG_CAPABILITIES = ['against', 'update-baseline', 'capabilities', 'changed-
  * Sum clover metrics for a named subset of files.
  *
  * WHY THIS EXISTS. Comparing the project-wide aggregate made the ratchet fire on
- * measurement noise. Measured on doriath#240 — a pull request whose entire diff
+ * measurement noise. Measured on keepiq#240 — a pull request whose entire diff
  * was `webpack.config.js`, containing no PHP at all:
  *
  *     Coverage current:       60.50%  (8303/13723 statements)

@@ -31,7 +31,7 @@ export async function fetchPolicy() {
 	}
 	try {
 		const response = await axios.get(
-			generateUrl('/apps/doriath/api/settings/policy'),
+			generateUrl('/apps/keepiq/api/settings/policy'),
 		)
 		cachedPolicy = response?.data ?? null
 	} catch {
@@ -91,7 +91,7 @@ export function evaluateScore(policy, typeName, value) {
 		return {
 			compliant: false,
 			reason: t(
-				'doriath',
+				'keepiq',
 				'Value strength {score} is below the org minimum of {floor}',
 				{ score, floor },
 			),
@@ -124,7 +124,7 @@ export async function evaluateHibp(policy, typeName, value) {
 	const result = await checkValue(value)
 	if (result.status === 'breached') {
 		return t(
-			'doriath',
+			'keepiq',
 			'This value appears in known breaches {count} times — choose another',
 			{ count: result.count },
 		)

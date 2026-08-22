@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Passkey Service
+ * Keepiq Passkey Service
  *
  * Passkey (WebAuthn PRF) vault-unlock envelope store
  * (passkey-vault-login §2). Every method is owner-scoped — a credential
@@ -12,7 +12,7 @@
  * unwrap, not a server-side assertion check (§D3).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,13 +25,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\PasskeyCredential;
-use OCA\Doriath\Db\PasskeyMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\PasskeyCredential;
+use OCA\Keepiq\Db\PasskeyMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Security\ISecureRandom;
 use Ramsey\Uuid\Uuid;

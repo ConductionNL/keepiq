@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Query Service
+ * Keepiq Team Folder Query Service
  *
  * The read side of the team-folder graph: the ownership guards every mutating
  * operation starts from, the two list views (owned folders with their member
@@ -14,7 +14,7 @@
  * Server-visible metadata only — this service never touches ciphertext.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,17 +27,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\TeamFolder;
-use OCA\Doriath\Db\TeamFolderMapper;
-use OCA\Doriath\Db\TeamFolderMember;
-use OCA\Doriath\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Db\TeamFolderMapper;
+use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 

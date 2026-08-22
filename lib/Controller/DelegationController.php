@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Delegation Controller
+ * Keepiq Delegation Controller
  *
  * Authenticated API controller for the SecretDelegation lifecycle:
  *  - index     list delegations for a secret
@@ -10,7 +10,7 @@
  *  - reclaim   reclaim all temporary delegations
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,11 +23,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\DelegationService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\DelegationService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

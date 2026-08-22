@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `src/dialogs/KeyGeneratorModal.vue` — the server-driven
@@ -84,7 +84,7 @@ describe('KeyGeneratorModal', () => {
 		await wrapper.vm.generate()
 
 		expect(post).toHaveBeenCalledWith(
-			expect.stringContaining('/apps/doriath/api/v1/generate-key'),
+			expect.stringContaining('/apps/keepiq/api/v1/generate-key'),
 			{
 				length: 16,
 				includeSpecialCharacters: true,
@@ -109,7 +109,7 @@ describe('KeyGeneratorModal', () => {
 		await wrapper.vm.generate()
 
 		expect(post).toHaveBeenCalledWith(
-			expect.stringContaining('/apps/doriath/api/v1/generate-key'),
+			expect.stringContaining('/apps/keepiq/api/v1/generate-key'),
 			{ regex: '[A-Z]{3}-\\d{3}' },
 		)
 		expect(wrapper.vm.generatedKey).toBe('ABC-123')

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Service
+ * Keepiq Audit Service
  *
  * The single write path into the append-only doriath_audit_log table and the
  * query API over it (add-secret-audit-trail §2.3). record() is the ONLY code
@@ -13,7 +13,7 @@
  * or delete-entry verb anywhere in the public API (Append-Only Log requirement).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,14 +26,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\AuditEntry;
-use OCA\Doriath\Db\AuditEntryMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Exception\AuditForbiddenMetadataException;
+use OCA\Keepiq\Db\AuditEntry;
+use OCA\Keepiq\Db\AuditEntryMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\AuditForbiddenMetadataException;
 
 /**
  * Single write path + query API for the append-only audit log.

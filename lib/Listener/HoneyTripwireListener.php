@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Honey Tripwire Listener
+ * Keepiq Honey Tripwire Listener
  *
  * The single central wiring point of the honey tripwire
  * (honey-credentials §3.1 / D1): subscribes to the typed AuditEvent
@@ -11,7 +11,7 @@
  * tripwire failure never blocks or delays the observed access.
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,13 +24,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Service\HoneyTripwireService;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\HoneyTripwireService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -92,8 +92,8 @@ class HoneyTripwireListener implements IEventListener {
 		} catch (Throwable $exception) {
 			// Fail-soft: the tripwire never breaks the observed access.
 			$this->logger->error(
-				'Doriath: honey tripwire failed: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: honey tripwire failed: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 		}//end try
 	}//end handle()

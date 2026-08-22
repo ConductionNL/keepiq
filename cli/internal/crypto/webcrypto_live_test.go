@@ -9,11 +9,11 @@ import (
 
 // TestWebCryptoLiveEnvelope decrypts an envelope produced by the BROWSER's real
 // WebCrypto (not Go), proving the CLI recipe matches byte-for-byte beyond the
-// RFC 6070 PBKDF2 anchor. Fixture path via DORIATH_LIVE_ENV; skipped otherwise.
+// RFC 6070 PBKDF2 anchor. Fixture path via KEEPIQ_LIVE_ENV; skipped otherwise.
 func TestWebCryptoLiveEnvelope(t *testing.T) {
 	// Defaults to the committed fixture so the cross-implementation parity check
-	// runs in CI; DORIATH_LIVE_ENV overrides it with a freshly-captured one.
-	path := os.Getenv("DORIATH_LIVE_ENV")
+	// runs in CI; KEEPIQ_LIVE_ENV overrides it with a freshly-captured one.
+	path := os.Getenv("KEEPIQ_LIVE_ENV")
 	if path == "" {
 		path = "testdata/webcrypto_envelope.json"
 	}

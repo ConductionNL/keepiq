@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath GdprService
+ * Keepiq GdprService
  *
  * Collects the server-readable half of a user's GDPR Art. 15 personal-data
  * export (secret-export-gdpr D3): encryption-suite records (excluding the
@@ -15,7 +15,7 @@
  * could select another user (fail-closed, no IDOR).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,15 +28,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 
 /**
  * Assembles the server-readable half of a GDPR personal-data export.
@@ -47,7 +47,7 @@ class GdprService {
 	 *
 	 * @var string
 	 */
-	private const FORMAT = 'doriath-gdpr-metadata';
+	private const FORMAT = 'keepiq-gdpr-metadata';
 
 	/**
 	 * The metadata document version.
@@ -66,8 +66,8 @@ class GdprService {
 	 * @param SecretRequestMapper $requestMapper The secret-request mapper
 	 * @param EncryptionSuiteMapper $suiteMapper The encryption-suite mapper
 	 * @param SettingsService $settingsService The settings service
-	 * @param \OCA\Doriath\Db\AttachmentMapper|null $attachmentMapper The attachment mapper (export metadata)
-	 * @param \OCA\Doriath\Db\AttachmentGrantMapper|null $grantMapper The attachment-grant mapper (export metadata)
+	 * @param \OCA\Keepiq\Db\AttachmentMapper|null $attachmentMapper The attachment mapper (export metadata)
+	 * @param \OCA\Keepiq\Db\AttachmentGrantMapper|null $grantMapper The attachment-grant mapper (export metadata)
 	 *
 	 * @return void
 	 */
@@ -79,8 +79,8 @@ class GdprService {
 		private SecretRequestMapper $requestMapper,
 		private EncryptionSuiteMapper $suiteMapper,
 		private SettingsService $settingsService,
-		private ?\OCA\Doriath\Db\AttachmentMapper $attachmentMapper = null,
-		private ?\OCA\Doriath\Db\AttachmentGrantMapper $grantMapper = null,
+		private ?\OCA\Keepiq\Db\AttachmentMapper $attachmentMapper = null,
+		private ?\OCA\Keepiq\Db\AttachmentGrantMapper $grantMapper = null,
 	) {
 	}//end __construct()
 
@@ -137,7 +137,7 @@ class GdprService {
 	 * wrapped file keys (encrypted-attachments §3.4). Blob bytes are the
 	 * client-assembled half — never produced server-side.
 	 *
-	 * @param array<int,\OCA\Doriath\Db\Secret> $ownedSecrets The subject's secrets
+	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The subject's secrets
 	 * @param string $userId The subject
 	 *
 	 * @return array<int,array<string,mixed>>
@@ -198,7 +198,7 @@ class GdprService {
 	/**
 	 * Collect the shares the user granted, across all secrets they own.
 	 *
-	 * @param array<int,\OCA\Doriath\Db\Secret> $ownedSecrets The user's secrets
+	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */

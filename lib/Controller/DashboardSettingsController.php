@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Dashboard Settings Controller
+ * Keepiq Dashboard Settings Controller
  *
  * Authenticated API controller for the per-user dashboard preference
  * scaffold. The full dashboard-summary endpoint (totals + CA health +
@@ -9,7 +9,7 @@
  * split land with the dedicated implement-dashboard-settings build cycle.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,11 +22,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\DashboardService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\DashboardService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

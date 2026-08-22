@@ -4,7 +4,7 @@
  * Unit tests for DiscoveryController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,9 +17,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\DiscoveryController;
+use OCA\Keepiq\Controller\DiscoveryController;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -43,9 +43,9 @@ class DiscoveryControllerTest extends TestCase {
 		$url->method('linkToRoute')->willReturnCallback(
 			static function (string $route): string {
 				return match ($route) {
-					'doriath.applicationToken.exchange' => '/apps/doriath/api/v1/token',
-					'doriath.applicationSecrets.index' => '/apps/doriath/api/v1/app/secrets',
-					default => '/apps/doriath/' . $route,
+					'keepiq.applicationToken.exchange' => '/apps/keepiq/api/v1/token',
+					'keepiq.applicationSecrets.index' => '/apps/keepiq/api/v1/app/secrets',
+					default => '/apps/keepiq/' . $route,
 				};
 			}
 		);
@@ -68,7 +68,7 @@ class DiscoveryControllerTest extends TestCase {
 
 		$data = $response->getData();
 		$this->assertSame(1, $data['apiVersion']);
-		$this->assertSame('/apps/doriath/api/v1/token', $data['tokenEndpoint']);
+		$this->assertSame('/apps/keepiq/api/v1/token', $data['tokenEndpoint']);
 		$this->assertSame('urn:ietf:params:oauth:grant-type:jwt-bearer', $data['grantType']);
 		$this->assertSame('RS256', $data['assertion']['alg']);
 		$this->assertSame(300, $data['assertion']['maxLifetime']);

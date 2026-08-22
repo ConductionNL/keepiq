@@ -29,7 +29,7 @@
 				data-testid="write-secret-success">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Secret written. The application can decrypt it with its private key.',
 					)
 				}}
@@ -38,7 +38,7 @@
 			<p class="write-secret-for-app__intro">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						"These fields are encrypted in your browser with the application's public key. You will not be able to read the secret back.",
 					)
 				}}
@@ -46,29 +46,29 @@
 
 			<NcTextField
 				v-model="name"
-				:label="t('doriath', 'Name')"
+				:label="t('keepiq', 'Name')"
 				:required="true"
 				data-testid="write-secret-name" />
 
-			<NcTextField v-model="url" :label="t('doriath', 'URL (optional)')" />
+			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
-			<NcTextField v-model="login" :label="t('doriath', 'Login (optional)')" />
+			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
 			<NcPasswordField
 				v-model="value"
-				:label="t('doriath', 'Secret value')"
+				:label="t('keepiq', 'Secret value')"
 				:required="true"
 				data-testid="write-secret-value" />
 
 			<NcTextArea
 				v-model="additionalFields"
-				:label="t('doriath', 'Additional fields (optional JSON)')"
+				:label="t('keepiq', 'Additional fields (optional JSON)')"
 				rows="3" />
 		</div>
 
 		<template #actions>
 			<NcButton variant="secondary" @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
@@ -137,12 +137,18 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The dialog heading, naming the owning application when known.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		dialogName() {
 			return this.applicationName
-				? this.t('doriath', 'Write secret for {app}', {
+				? this.t('keepiq', 'Write secret for {app}', {
 						app: this.applicationName,
 					})
-				: this.t('doriath', 'Write secret')
+				: this.t('keepiq', 'Write secret')
 		},
 
 		canSubmit() {
@@ -153,10 +159,17 @@ export default {
 			)
 		},
 
+		/**
+		 * The submit button label, which reports the in-browser encryption
+		 * step while the write is in flight.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		submitLabel() {
 			return this.busy
-				? this.t('doriath', 'Encrypting…')
-				: this.t('doriath', 'Write secret')
+				? this.t('keepiq', 'Encrypting…')
+				: this.t('keepiq', 'Write secret')
 		},
 	},
 
@@ -178,6 +191,13 @@ export default {
 			this.success = false
 		},
 
+		/**
+		 * Encrypt the fields under the application's certificate (in the
+		 * store) and write the secret against that application.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		async submit() {
 			if (!this.canSubmit || this.busy) {
 				return
@@ -210,7 +230,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					?? e?.message
-					?? this.t('doriath', 'Write failed')
+					?? this.t('keepiq', 'Write failed')
 			} finally {
 				this.busy = false
 			}

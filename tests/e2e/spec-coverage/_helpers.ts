@@ -2,9 +2,9 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Shared helpers for Doriath spec-coverage Playwright tests.
+ * Shared helpers for Keepiq spec-coverage Playwright tests.
  *
- * Doriath is a zero-knowledge encrypted vault: every in-app view (Dashboard,
+ * Keepiq is a zero-knowledge encrypted vault: every in-app view (Dashboard,
  * Vault, Features & roadmap, Secret detail) sits behind a master-password lock
  * screen and a router guard. The admin account already owns an EncryptionSuite,
  * but its master password is — by design — not recoverable (never stored server
@@ -17,14 +17,14 @@
  */
 import { type Page, expect } from '@playwright/test'
 
-export const APP_BASE = '/index.php/apps/doriath'
+export const APP_BASE = '/index.php/apps/keepiq'
 
 /**
- * Attach a doriath-origin error/5xx collector to a page. Returns the array that
+ * Attach a keepiq-origin error/5xx collector to a page. Returns the array that
  * accumulates offending messages. We deliberately ignore errors from other apps
  * (photos, core user-status, etc.) which are noisy on this shared dev instance.
  */
-export function collectDoriathErrors(page: Page): string[] {
+export function collectKeepiqErrors(page: Page): string[] {
 	const errors: string[] = []
 	page.on('console', (msg) => {
 		if (msg.type() !== 'error') return
@@ -36,27 +36,27 @@ export function collectDoriathErrors(page: Page): string[] {
 		//    expected 404 "Failed to load resource" for the non-existent id.
 		if (/Refused to apply style|MIME type/i.test(text)) return
 		if (/Failed to load resource.*404|status of 404/i.test(text)) return
-		// Only flag errors that name doriath or come from a doriath bundle.
+		// Only flag errors that name keepiq or come from a keepiq bundle.
 		const loc = msg.location()?.url ?? ''
-		if (/doriath/i.test(text) || /doriath/i.test(loc)) {
+		if (/keepiq/i.test(text) || /keepiq/i.test(loc)) {
 			errors.push(`console.error: ${text}`)
 		}
 	})
 	page.on('response', (res) => {
-		if (res.status() >= 500 && /\/doriath\//.test(res.url())) {
+		if (res.status() >= 500 && /\/keepiq\//.test(res.url())) {
 			errors.push(`HTTP ${res.status()}: ${res.url()}`)
 		}
 	})
 	return errors
 }
 
-/** Open the Doriath lock screen directly. */
+/** Open the Keepiq lock screen directly. */
 export async function gotoLock(page: Page): Promise<void> {
 	await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 }
 
 /**
- * Open a hash-routed Doriath view (e.g. '#/secrets'). Because the vault is
+ * Open a hash-routed Keepiq view (e.g. '#/secrets'). Because the vault is
  * locked, the router guard redirects to the lock screen — which is exactly the
  * behaviour the per-route specs assert.
  */
@@ -73,11 +73,11 @@ export function lockHeading(page: Page) {
 export async function expectLockScreen(page: Page): Promise<void> {
 	await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 	await expect(lockHeading(page)).toHaveText(
-		/Unlock Doriath|Set up your master password/i,
+		/Unlock Keepiq|Set up your master password/i,
 	)
 }
 
-/** Assert no doriath-origin console errors / 5xx were collected. */
-export function assertNoDoriathErrors(errors: string[]): void {
-	expect(errors, `doriath-origin errors:\n${errors.join('\n')}`).toEqual([])
+/** Assert no keepiq-origin console errors / 5xx were collected. */
+export function assertNoKeepiqErrors(errors: string[]): void {
+	expect(errors, `keepiq-origin errors:\n${errors.join('\n')}`).toEqual([])
 }

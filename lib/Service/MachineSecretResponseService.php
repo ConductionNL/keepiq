@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Machine Secret Response Service
+ * Keepiq Machine Secret Response Service
  *
  * Turns one Secret into the HTTP answer the machine secret-store API owes for
  * it: the lease decision, the conditional-request (ETag / 304) negotiation,
@@ -9,7 +9,7 @@
  * envelope body.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,12 +22,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\MachineLease;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Db\MachineLease;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -163,6 +163,16 @@ class MachineSecretResponseService {
 			return;
 		}
 
+		// HEADER NAMES DELIBERATELY STILL SAY `Doriath-` AFTER THE RENAME.
+		// These are a published wire contract, not an app id: the CLI reads
+		// them (cli/internal/client/client.go) and so does every third-party
+		// lease-aware machine consumer, keyed off the string. A consumer that
+		// stops finding `Doriath-Lease-Id` does not error — it silently falls
+		// back to the lease-unaware path and stops renewing, so the grant
+		// expires mid-run with no diagnostic. Per
+		// openspec/specs/secret-store-api/spec.md a breaking change to the
+		// machine surface ships as a NEW apiVersion, never as an in-place
+		// mutation, so renaming these belongs to that coordinated change.
 		$response->addHeader('Doriath-Lease-Id', (string)$lease->getId());
 		$response->addHeader('Doriath-Lease-Expires', (string)$lease->getExpiresAt()?->format('c'));
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Folder Mapper
+ * Keepiq Folder Mapper
  *
  * Database mapper for folder entities, including tree-traversal helpers
  * (path derivation, subtree collection, recursive secret counts).
@@ -13,7 +13,7 @@
  * per-level query cost is negligible.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,7 +26,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;

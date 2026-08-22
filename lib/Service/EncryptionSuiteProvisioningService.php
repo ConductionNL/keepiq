@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Encryption Suite Provisioning Service
+ * Keepiq Encryption Suite Provisioning Service
  *
  * Puts an EncryptionSuite into service: resolving the certificate common
  * name for its owner, obtaining a CA-signed certificate for its public
@@ -14,7 +14,7 @@
  * is EncryptionSuiteService's; this class only ever mints and stores.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,15 +27,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Support\SuppressesDiagnostics;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\IAppConfig;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
@@ -233,7 +233,7 @@ class EncryptionSuiteProvisioningService {
 
 		$this->mapper->insert($suite);
 
-		$this->logger->info("Doriath: EncryptionSuite created for {$ownerType}/{$ownerId}");
+		$this->logger->info("Keepiq: EncryptionSuite created for {$ownerType}/{$ownerId}");
 
 		return $suite;
 	}//end persistSuite()

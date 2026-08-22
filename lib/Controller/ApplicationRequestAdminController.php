@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - Administrator view of an application's secret requests
+ * Keepiq - Administrator view of an application's secret requests
  *
  * An application can ask a human to submit a credential into its own vault, and
  * until now no person could see that it had. `created_by` for such a request is
@@ -26,7 +26,7 @@
  * different authorities one typo apart.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -39,12 +39,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\ApplicationRequestAdminService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\ApplicationRequestAdminService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -76,7 +76,7 @@ class ApplicationRequestAdminController extends Controller {
 		private IUserSession $userSession,
 		private IGroupManager $groupManager,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

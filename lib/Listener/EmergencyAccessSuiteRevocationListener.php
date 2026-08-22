@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath EmergencyAccessSuiteRevocationListener
+ * Keepiq EmergencyAccessSuiteRevocationListener
  *
  * Listens for EncryptionSuiteRevokedEvent and invalidates the emergency-access
  * envelopes affected by the revocation (add-emergency-access §3.2 / design D6):
@@ -11,7 +11,7 @@
  *    grantee) are INVALIDATED — the grantee can no longer open them.
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,10 +24,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
-use OCA\Doriath\Service\EmergencyEnvelopeInvalidationService;
+use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -79,7 +79,7 @@ class EmergencyAccessSuiteRevocationListener implements IEventListener {
 			$this->service->clearForGrantorRevocation(grantorSuiteId: $suiteId);
 			$this->service->invalidateForGranteeRevocation(granteeSuiteId: $suiteId);
 		} catch (Throwable $e) {
-			$this->logger->error('Doriath: emergency-access revocation cleanup failed: ' . $e->getMessage());
+			$this->logger->error('Keepiq: emergency-access revocation cleanup failed: ' . $e->getMessage());
 		}
 	}//end handle()
 }//end class

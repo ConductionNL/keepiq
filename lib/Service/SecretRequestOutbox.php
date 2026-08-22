@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Request Outbox
+ * Keepiq Secret Request Outbox
  *
  * Everything the secret-request lifecycle emits OUTWARD: the typed audit
  * trail of each transition and the request_fulfilled notification to the
@@ -11,7 +11,7 @@
  * about it.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +24,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**

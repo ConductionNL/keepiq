@@ -4,7 +4,7 @@
  * Unit tests for ShareService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,26 +17,26 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Service\DirectShareRegistrar;
-use OCA\Doriath\Service\NotificationService;
-use OCA\Doriath\Service\RecipientSecretCopyFactory;
-use OCA\Doriath\Service\ShareAuthorizationService;
-use OCA\Doriath\Service\ShareRevocationService;
-use OCA\Doriath\Service\ShareService;
-use OCA\Doriath\Service\ShareSyncService;
-use OCA\Doriath\Service\TeamFolderService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\DirectShareRegistrar;
+use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
+use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\ShareSyncService;
+use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;

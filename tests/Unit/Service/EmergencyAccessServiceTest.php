@@ -8,7 +8,7 @@
  * server never holds a usable key (zero-knowledge, ADR-003).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,21 +21,21 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EmergencyContact;
-use OCA\Doriath\Db\EmergencyContactMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Service\EmergencyAccessAuditTrail;
-use OCA\Doriath\Service\EmergencyAccessService;
-use OCA\Doriath\Service\EmergencyEnvelopeInvalidationService;
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\Db\EmergencyContact;
+use OCA\Keepiq\Db\EmergencyContactMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\EmergencyAccessAuditTrail;
+use OCA\Keepiq\Service\EmergencyAccessService;
+use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;

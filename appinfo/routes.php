@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * Doriath route table.
+ * Keepiq route table.
  *
  * The canonical AppHost plumbing routes (dashboard page + SPA catch-all,
  * settings index/create/load, per-user preferences, and the observability
@@ -12,7 +12,7 @@ declare(strict_types=1);
  * /api/metrics URLs are unchanged; their controllers are aliased to the
  * AppHost generic controllers by Bootstrap::register() in Application.php.
  *
- * Every Doriath domain route is appended via $extra below — it is inserted
+ * Every Keepiq domain route is appended via $extra below — it is inserted
  * before the SPA catch-all so it keeps priority over the /{path} fallback.
  * This file references no OCA\OpenRegister symbol other than the pure array
  * builder Routes::standard(), so it is safe to require even when OpenRegister
@@ -254,6 +254,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
 
     // Machine secret-store API discovery document (public, no auth —
     // reveals only endpoint shapes; openconnector-secret-store-api §1.1).
+    // The `doriath` segment survives the doriath -> keepiq rename on purpose:
+    // it is a published contract URL, not an app id. See the class docblock
+    // on DiscoveryController for the full reasoning.
     ['name' => 'discovery#document', 'url' => '/api/v1/app/.well-known/doriath', 'verb' => 'GET'],
 
     // JWT-Bearer token exchange (public; signature-verified).

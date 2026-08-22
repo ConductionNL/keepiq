@@ -1,5 +1,5 @@
 {
-    "name": "conductionnl/doriath",
+    "name": "conductionnl/keepiq",
     "description": "Encrypted secrets manager for Nextcloud",
     "license": "EUPL-1.2",
     "authors": [
@@ -11,7 +11,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "OCA\\Doriath\\": "lib/"
+            "OCA\\Keepiq\\": "lib/"
         }
     },
     "require": {

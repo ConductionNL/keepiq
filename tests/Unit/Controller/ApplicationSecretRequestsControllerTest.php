@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath — machine secret-request surface tests
+ * Keepiq — machine secret-request surface tests
  *
  * What these lock down, from the secret-store-api delta:
  *
@@ -15,7 +15,7 @@
  *  - a missing principal is 401
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,16 +28,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Controller\ApplicationSecretRequestsController;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\ApplicationSecretRequestService;
+use OCA\Keepiq\Controller\ApplicationSecretRequestsController;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\ApplicationSecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -96,10 +96,10 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 		$urlGenerator->method('linkToRoute')->willReturnCallback(
 			static function (string $route, array $args = []): string {
 				if (str_ends_with($route, '.publicShell.page') === true) {
-					return '/index.php/apps/doriath/public';
+					return '/index.php/apps/keepiq/public';
 				}
 
-				return '/index.php/apps/doriath/api/v1/public/secret-requests/' . ($args['token'] ?? '');
+				return '/index.php/apps/keepiq/api/v1/public/secret-requests/' . ($args['token'] ?? '');
 			}
 		);
 		$urlGenerator->method('getAbsoluteURL')->willReturnCallback(
@@ -165,12 +165,12 @@ class ApplicationSecretRequestsControllerTest extends TestCase {
 		// resolved to the JSON endpoint, which would have sent the recipient a
 		// blob of JSON including the vault's public certificate.
 		$this->assertSame(
-			'https://nc.example/index.php/apps/doriath/public#/share/request/tok-abc',
+			'https://nc.example/index.php/apps/keepiq/public#/share/request/tok-abc',
 			$data['fillLinkUrl']
 		);
 		// The machine-readable endpoint stays available for polling.
 		$this->assertSame(
-			'https://nc.example/index.php/apps/doriath/api/v1/public/secret-requests/tok-abc',
+			'https://nc.example/index.php/apps/keepiq/api/v1/public/secret-requests/tok-abc',
 			$data['fillApiUrl']
 		);
 		$this->assertSame(['key', 'url'], $data['requestedFields']);

@@ -1,11 +1,11 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Round-trip tests for the AES-256-GCM master-password envelope in
  * `src/crypto/aes.js` + `src/crypto/envelope.js`.
  *
- * Doriath wraps the user's RSA private key with AES-256-GCM whose key is
+ * Keepiq wraps the user's RSA private key with AES-256-GCM whose key is
  * derived from the master password via PBKDF2-SHA256 (600k iterations).
  * The wrapped blob lives in `oc_doriath_settings` and the user only ever
  * unwraps it client-side during unlock. The envelope format is:

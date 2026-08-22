@@ -4,7 +4,7 @@
  * Unit tests for DelegationService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,17 +17,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Service\DelegationAuthorizer;
-use OCA\Doriath\Service\DelegationService;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\DelegationAuthorizer;
+use OCA\Keepiq\Service\DelegationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\TestCase;

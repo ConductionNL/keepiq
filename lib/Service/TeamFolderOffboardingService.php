@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Offboarding Service
+ * Keepiq Team Folder Offboarding Service
  *
  * Admin offboarding of a departing user (team-folder-sharing §2.5). Two ordered
  * steps: every team-folder-derived share the leaver holds is revoked, then every
@@ -13,7 +13,7 @@
  * `vault_admin` group, mirroring DelegationService.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,7 +26,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCP\IGroupManager;
@@ -106,7 +106,7 @@ class TeamFolderOffboardingService {
 		$this->logger->info(
 			'Offboarded ' . $leavingUserId . ': revoked ' . $revoked . ' team shares, transferred '
 			. $transferred . ' secrets to ' . $successorUserId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		$this->audit->offboarded(

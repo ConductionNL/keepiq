@@ -4,7 +4,7 @@
  * Unit tests for SecretTypeService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretType;
-use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Service\SecretTypeService;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\SecretTypeService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

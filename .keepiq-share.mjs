@@ -4,11 +4,11 @@ const b=await chromium.launch(); const c=await b.newContext(); const p=await c.n
 const errs=[]; const reqs=[]
 p.on('pageerror',e=>errs.push('PE:'+String(e).slice(0,220)))
 p.on('console',m=>{if(m.type()==='error')errs.push('C:'+m.text().slice(0,220))})
-p.on('response',r=>{if(r.url().includes('/doriath/'))reqs.push(`${r.status()} ${r.request().method()} ${r.url().replace(BASE,'')}`)})
+p.on('response',r=>{if(r.url().includes('/keepiq/'))reqs.push(`${r.status()} ${r.request().method()} ${r.url().replace(BASE,'')}`)})
 await p.goto(`${BASE}/index.php/login`,{waitUntil:'domcontentloaded'})
 await p.locator('input[name="user"]').fill('admin'); await p.locator('input[name="password"]').fill('admin')
 await p.locator('button[type="submit"]').first().click(); await p.waitForSelector('#header',{timeout:30000})
-await p.goto(`${BASE}/index.php/apps/doriath/`,{waitUntil:'domcontentloaded'}); await p.waitForTimeout(2500)
+await p.goto(`${BASE}/index.php/apps/keepiq/`,{waitUntil:'domcontentloaded'}); await p.waitForTimeout(2500)
 await p.locator('.lock-screen input[type="password"]').first().fill('Oj',{force:true}); await p.waitForTimeout(400)
 await p.evaluate(()=>{const bs=[...document.querySelectorAll('.lock-screen button')];const u=bs.find(b=>/Unlock/i.test(b.textContent||''));if(u)u.click()})
 await p.waitForTimeout(3500)

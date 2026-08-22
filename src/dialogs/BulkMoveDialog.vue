@@ -10,7 +10,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Move {count} secrets', { count: bulk.selectionCount })"
+		:name="t('keepiq', 'Move {count} secrets', { count: bulk.selectionCount })"
 		:open="open"
 		size="normal"
 		data-testid="bulk-move-dialog"
@@ -19,21 +19,21 @@
 			<NcSelect
 				v-model="targetFolder"
 				:options="folderOptions"
-				:inputLabel="t('doriath', 'Target folder')"
+				:inputLabel="t('keepiq', 'Target folder')"
 				label="label"
 				data-testid="bulk-move-folder" />
 			<BulkRunPanel @retry="onRetry" />
 		</div>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
 				:disabled="!targetFolder || bulk.progress.running"
 				data-testid="bulk-move-run"
 				@click="onRun">
-				{{ t('doriath', 'Move') }}
+				{{ t('keepiq', 'Move') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -74,8 +74,15 @@ export default {
 			return useBulkStore()
 		},
 
+		/**
+		 * The move-target picker options: the vault root plus every folder
+		 * the user owns.
+		 *
+		 * @return {Array<{id: string|null, label: string}>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		folderOptions() {
-			const options = [{ id: null, label: this.t('doriath', 'Vault root') }]
+			const options = [{ id: null, label: this.t('keepiq', 'Vault root') }]
 			for (const folder of useFolderStore().folders) {
 				options.push({ id: folder.id, label: folder.name })
 			}
@@ -101,12 +108,14 @@ export default {
 		 * Run the chunked move over the selection.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRun() {
 			await this.bulk.run(
 				this.bulk.selectedIds,
 				(id) => this.moveOne(id),
-				this.t('doriath', 'Moving secrets'),
+				this.t('keepiq', 'Moving secrets'),
 			)
 			this.$emit('done')
 		},
@@ -115,11 +124,12 @@ export default {
 		 * Retry only the failed subset.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
 			await this.bulk.retryFailed(
 				(id) => this.moveOne(id),
-				this.t('doriath', 'Retrying move'),
+				this.t('keepiq', 'Retrying move'),
 			)
 			this.$emit('done')
 		},

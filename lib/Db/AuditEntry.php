@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Entry Entity
+ * Keepiq Audit Entry Entity
  *
  * One append-only row in the doriath_audit_log table: a single
  * server-observable secret operation recorded with its actor, event type,
@@ -10,7 +10,7 @@
  * stored as a JSON string and exposed as a decoded array via getMetadataArray.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

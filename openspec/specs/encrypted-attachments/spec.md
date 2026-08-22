@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Secrets frequently arrive with an accompanying file — license keys, TLS certificates and key material, 2FA recovery-code sheets — that belongs with the credential. Encrypted attachments let a user store those files against a secret under Doriath's zero-knowledge model: the bytes and filename are encrypted in the browser before upload, the server stores only ciphertext it cannot read, and an attachment follows a shared secret to its recipients by re-wrapping a single file key per recipient rather than duplicating the blob. This closes a durable competitive gap — Vaultwarden and Psono ship attachments while Nextcloud Passwords has lacked them since 2019 — without introducing any new cryptographic primitive beyond the existing RSA/AES suite (ADR-003).
+Secrets frequently arrive with an accompanying file — license keys, TLS certificates and key material, 2FA recovery-code sheets — that belongs with the credential. Encrypted attachments let a user store those files against a secret under Keepiq's zero-knowledge model: the bytes and filename are encrypted in the browser before upload, the server stores only ciphertext it cannot read, and an attachment follows a shared secret to its recipients by re-wrapping a single file key per recipient rather than duplicating the blob. This closes a durable competitive gap — Vaultwarden and Psono ship attachments while Nextcloud Passwords has lacked them since 2019 — without introducing any new cryptographic primitive beyond the existing RSA/AES suite (ADR-003).
 
 ## Requirements
 

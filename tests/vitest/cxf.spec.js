@@ -8,14 +8,14 @@
  * Locks down:
  *  - Strict document validation: malformed input fails at parse with a
  *    format-specific error and creates nothing.
- *  - Every supported CXF entity maps to its Doriath type; passkeys land
+ *  - Every supported CXF entity maps to its Keepiq type; passkeys land
  *    on the canonical passkey-item-type schema; unrepresentable entries
  *    are rejected with a reason — never silently dropped.
  *  - Export builds a CXF document from serialized rows; values with no
  *    CXF home land in the unmapped report.
  *  - Export → import round-trips core credentials and folders.
  *
- * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-doriath-type-mapping
+ * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
  */
 
@@ -137,7 +137,7 @@ describe('CXF import mapping', () => {
 	const rows = cxfToRows(parseCxfDocument(SAMPLE_DOC))
 	const byName = Object.fromEntries(rows.map((row) => [row.name, row]))
 
-	it('maps each supported entity to its Doriath type', () => {
+	it('maps each supported entity to its Keepiq type', () => {
 		expect(byName['Example login'].type).toBe('login')
 		expect(byName['Example login'].login).toBe('alice')
 		expect(byName['Example login'].password).toBe('pw-placeholder')

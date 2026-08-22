@@ -4,7 +4,7 @@
  * Unit tests for ApplicationSecretsController (machine secret-store API).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,18 +17,18 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use DateTime;
-use OCA\Doriath\Controller\ApplicationSecretsController;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\MachineSecretEnvelopeService;
-use OCA\Doriath\Service\MachineSecretResponseService;
-use OCA\Doriath\Service\SecretService;
+use OCA\Keepiq\Controller\ApplicationSecretsController;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\MachineSecretEnvelopeService;
+use OCA\Keepiq\Service\MachineSecretResponseService;
+use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -83,7 +83,7 @@ class ApplicationSecretsControllerTest extends TestCase {
 		$this->secretService = $this->createMock(SecretService::class);
 		$this->dispatcher = $this->createMock(IEventDispatcher::class);
 		$this->envelopeService = new MachineSecretEnvelopeService(
-			suiteMapper: $this->createMock(\OCA\Doriath\Db\EncryptionSuiteMapper::class),
+			suiteMapper: $this->createMock(\OCA\Keepiq\Db\EncryptionSuiteMapper::class),
 			folderMapper: $this->folderMapper,
 		);
 
@@ -191,7 +191,7 @@ class ApplicationSecretsControllerTest extends TestCase {
 	 */
 	public function testByNameFolderScoped(): void {
 		$this->params['folder'] = 'infra/zgw';
-		$folder = new \OCA\Doriath\Db\Folder();
+		$folder = new \OCA\Keepiq\Db\Folder();
 		$folder->setId('fol-9');
 		$this->folderMapper->method('findByOwner')->willReturn([$folder]);
 		$this->folderMapper->method('getPath')->willReturn('infra/zgw');

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath AccountDataDeletedEvent
+ * Keepiq AccountDataDeletedEvent
  *
  * Dispatched ONLY on a completed account-deletion cascade run
  * (secret-export-gdpr D4/D5), by either trigger (in-app re-auth flow or the
@@ -14,7 +14,7 @@
  * trail.
  *
  * @category Event
- * @package  OCA\Doriath\Event
+ * @package  OCA\Keepiq\Event
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,9 +27,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event;
+namespace OCA\Keepiq\Event;
 
-use OCA\Doriath\Service\DeletionReport;
+use OCA\Keepiq\Service\DeletionReport;
 use OCP\EventDispatcher\Event;
 
 /**

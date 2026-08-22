@@ -1,6 +1,6 @@
-# Doriath — Newman API-contract suite
+# Keepiq — Newman API-contract suite
 
-`doriath.postman_collection.json` locks the HTTP contract of Doriath's
+`keepiq.postman_collection.json` locks the HTTP contract of Keepiq's
 controllers (`appinfo/routes.php` + `lib/Controller/*`): encryption suites, CA
 status, secrets, folders, secret-types, and the public link-share access route.
 
@@ -13,7 +13,7 @@ BASE_URL=http://localhost:8080 ADMIN_USER=admin ADMIN_PASS=admin ./run-newman.sh
 ```
 
 `run-newman.sh` uses a globally-installed `newman` if present, otherwise
-`npx newman`. Runs are serialised under `flock /tmp/uiaudit-doriath.lock` so
+`npx newman`. Runs are serialised under `flock /tmp/uiaudit-keepiq.lock` so
 parallel CI agents do not trip Nextcloud brute-force protection.
 
 ## Design (matches the procest `tests/integration/` pattern)

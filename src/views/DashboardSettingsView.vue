@@ -3,7 +3,7 @@
   in src/ imports this component; `grep -rn DashboardSettingsView src/` returns
   only this file. It is in no `pages[]` entry, not in src/registry.js, and there
   is no router. The shipped bundle settles it —
-  `grep -c doriath-dashboard-settings js/doriath-main.js` returns 0 while the
+  `grep -c keepiq-dashboard-settings js/keepiq-main.js` returns 0 while the
   same probe returns 1 for wired views, so webpack tree-shook it out. There is
   no route for a browser to visit and therefore no screen to capture.
   ⚠️ This waiver is not "no baseline needed" — it records a defect, and a larger
@@ -14,78 +14,78 @@
   with issue #208, by wiring the view up or by deleting the feature.
 -->
 <template>
-	<div class="doriath-dashboard-settings">
-		<h2>{{ t('doriath', 'Dashboard preferences') }}</h2>
+	<div class="keepiq-dashboard-settings">
+		<h2>{{ t('keepiq', 'Dashboard preferences') }}</h2>
 
-		<p class="doriath-dashboard-settings__intro">
+		<p class="keepiq-dashboard-settings__intro">
 			{{
 				t(
-					'doriath',
-					'Customise how your Doriath dashboard looks. Leave a value blank to fall back to the system default.',
+					'keepiq',
+					'Customise how your Keepiq dashboard looks. Leave a value blank to fall back to the system default.',
 				)
 			}}
 		</p>
 
 		<form data-testid="dashboard-settings-form" @submit.prevent="save">
-			<fieldset class="doriath-dashboard-settings__group">
-				<legend>{{ t('doriath', 'Layout') }}</legend>
+			<fieldset class="keepiq-dashboard-settings__group">
+				<legend>{{ t('keepiq', 'Layout') }}</legend>
 
-				<label class="doriath-dashboard-settings__field">
-					<span>{{ t('doriath', 'Default view') }}</span>
+				<label class="keepiq-dashboard-settings__field">
+					<span>{{ t('keepiq', 'Default view') }}</span>
 					<select
 						v-model="form.default_view"
 						data-testid="default-view-select">
 						<option value="">
-							{{ t('doriath', 'System default') }}
+							{{ t('keepiq', 'System default') }}
 						</option>
-						<option value="list">{{ t('doriath', 'List') }}</option>
-						<option value="grid">{{ t('doriath', 'Grid') }}</option>
+						<option value="list">{{ t('keepiq', 'List') }}</option>
+						<option value="grid">{{ t('keepiq', 'Grid') }}</option>
 					</select>
 				</label>
 
-				<label class="doriath-dashboard-settings__field">
-					<span>{{ t('doriath', 'Sort field') }}</span>
+				<label class="keepiq-dashboard-settings__field">
+					<span>{{ t('keepiq', 'Sort field') }}</span>
 					<select
 						v-model="form.sort_field"
 						data-testid="sort-field-select">
 						<option value="">
-							{{ t('doriath', 'System default') }}
+							{{ t('keepiq', 'System default') }}
 						</option>
-						<option value="name">{{ t('doriath', 'Name') }}</option>
+						<option value="name">{{ t('keepiq', 'Name') }}</option>
 						<option value="created_at">
-							{{ t('doriath', 'Created at') }}
+							{{ t('keepiq', 'Created at') }}
 						</option>
 						<option value="updated_at">
-							{{ t('doriath', 'Last modified') }}
+							{{ t('keepiq', 'Last modified') }}
 						</option>
 					</select>
 				</label>
 
-				<label class="doriath-dashboard-settings__field">
-					<span>{{ t('doriath', 'Sort direction') }}</span>
+				<label class="keepiq-dashboard-settings__field">
+					<span>{{ t('keepiq', 'Sort direction') }}</span>
 					<select
 						v-model="form.sort_direction"
 						data-testid="sort-direction-select">
 						<option value="">
-							{{ t('doriath', 'System default') }}
+							{{ t('keepiq', 'System default') }}
 						</option>
-						<option value="asc">{{ t('doriath', 'Ascending') }}</option>
+						<option value="asc">{{ t('keepiq', 'Ascending') }}</option>
 						<option value="desc">
-							{{ t('doriath', 'Descending') }}
+							{{ t('keepiq', 'Descending') }}
 						</option>
 					</select>
 				</label>
 			</fieldset>
 
-			<fieldset class="doriath-dashboard-settings__group">
-				<legend>{{ t('doriath', 'Widgets') }}</legend>
+			<fieldset class="keepiq-dashboard-settings__group">
+				<legend>{{ t('keepiq', 'Widgets') }}</legend>
 
 				<label>
 					<input
 						v-model="form.show_kpi_widget"
 						type="checkbox"
 						data-testid="kpi-toggle" />
-					{{ t('doriath', 'Show KPI cards') }}
+					{{ t('keepiq', 'Show KPI cards') }}
 				</label>
 
 				<label>
@@ -93,7 +93,7 @@
 						v-model="form.show_recent_widget"
 						type="checkbox"
 						data-testid="recent-toggle" />
-					{{ t('doriath', 'Show recent secrets') }}
+					{{ t('keepiq', 'Show recent secrets') }}
 				</label>
 
 				<label>
@@ -101,20 +101,18 @@
 						v-model="form.show_migration_banner"
 						type="checkbox"
 						data-testid="migration-toggle" />
-					{{ t('doriath', 'Show migration banner when active') }}
+					{{ t('keepiq', 'Show migration banner when active') }}
 				</label>
 			</fieldset>
 
-			<div class="doriath-dashboard-settings__actions">
+			<div class="keepiq-dashboard-settings__actions">
 				<button
 					type="submit"
 					class="primary"
 					:disabled="store.loading"
 					data-testid="save-settings">
 					{{
-						store.loading
-							? t('doriath', 'Saving…')
-							: t('doriath', 'Save')
+						store.loading ? t('keepiq', 'Saving…') : t('keepiq', 'Save')
 					}}
 				</button>
 				<button
@@ -122,11 +120,11 @@
 					:disabled="store.loading"
 					data-testid="reset-settings"
 					@click="reset">
-					{{ t('doriath', 'Reset to defaults') }}
+					{{ t('keepiq', 'Reset to defaults') }}
 				</button>
 			</div>
 
-			<p v-if="store.error" class="doriath-dashboard-settings__error">
+			<p v-if="store.error" class="keepiq-dashboard-settings__error">
 				{{ store.error }}
 			</p>
 		</form>
@@ -255,39 +253,39 @@ export default {
 </script>
 
 <style scoped>
-.doriath-dashboard-settings {
+.keepiq-dashboard-settings {
 	max-width: 720px;
 	padding: 1rem;
 }
 
-.doriath-dashboard-settings__group {
+.keepiq-dashboard-settings__group {
 	border: 1px solid var(--color-border, #ddd);
 	padding: 1rem;
 	margin-bottom: 1rem;
 }
 
-.doriath-dashboard-settings__group legend {
+.keepiq-dashboard-settings__group legend {
 	font-weight: 600;
 }
 
-.doriath-dashboard-settings__field {
+.keepiq-dashboard-settings__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 0.75rem;
 }
 
-.doriath-dashboard-settings__actions {
+.keepiq-dashboard-settings__actions {
 	display: flex;
 	gap: 0.5rem;
 	margin-top: 1rem;
 }
 
-.doriath-dashboard-settings__error {
+.keepiq-dashboard-settings__error {
 	color: var(--color-error-text);
 }
 
-.doriath-dashboard-settings__intro {
+.keepiq-dashboard-settings__intro {
 	color: var(--color-text-lighter);
 }
 </style>

@@ -18,7 +18,7 @@
  * gate-19 and are covered by PHPUnit (ImportControllerTest / ImportServiceTest)
  * and the import-store vitest (plaintext-never-in-request-body assertion).
  *
- * Environment assumptions match the other workflow specs: the doriath app is
+ * Environment assumptions match the other workflow specs: the keepiq app is
  * enabled and the admin owns one active EncryptionSuite seeded with the dev
  * master password.
  */

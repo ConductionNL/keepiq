@@ -11,37 +11,37 @@ import { translate as t } from '@nextcloud/l10n'
  */
 export function auditEventLabel(eventType) {
 	const labels = {
-		'secret.created': t('doriath', 'Secret created'),
-		'secret.updated': t('doriath', 'Secret updated'),
-		'secret.read': t('doriath', 'Secret read'),
-		'secret.deleted': t('doriath', 'Secret deleted'),
-		'folder.deleted_cascade': t('doriath', 'Folder deleted with contents'),
-		'share.granted': t('doriath', 'Share granted'),
-		'share.revoked': t('doriath', 'Share revoked'),
-		'share.delegated': t('doriath', 'Ownership delegated'),
-		'share.delegation_reclaimed': t('doriath', 'Delegation reclaimed'),
-		'link_share.created': t('doriath', 'Link share created'),
-		'link_share.accessed': t('doriath', 'Link share accessed'),
-		'link_share.access_failed': t('doriath', 'Link share access failed'),
-		'link_share.revoked': t('doriath', 'Link share revoked'),
-		'link_share.auto_deleted': t('doriath', 'Link share auto-deleted'),
-		'request.created': t('doriath', 'Secret request created'),
-		'request.fulfilled': t('doriath', 'Secret request fulfilled'),
-		'request.re_requested': t('doriath', 'Secret request re-requested'),
-		'request.revoked': t('doriath', 'Secret request revoked'),
-		'suite.revoked': t('doriath', 'Encryption suite revoked'),
-		'suite.reinstated': t('doriath', 'Encryption suite reinstated'),
-		'suite.recovery_started': t('doriath', 'Compromise recovery started'),
-		'suite.recovery_completed': t('doriath', 'Compromise recovery completed'),
-		'application.registered': t('doriath', 'Application registered'),
-		'application.approved': t('doriath', 'Application approved'),
-		'application.rejected': t('doriath', 'Application rejected'),
-		'application.deleted': t('doriath', 'Application deleted'),
-		'application.token_issued': t('doriath', 'Application token issued'),
-		'application.secret_retrieved': t('doriath', 'Application secret retrieved'),
-		'vault.exported': t('doriath', 'Vault exported'),
-		'vault.gdpr_exported': t('doriath', 'GDPR data exported'),
-		'vault.account_deleted': t('doriath', 'Account data deleted'),
+		'secret.created': t('keepiq', 'Secret created'),
+		'secret.updated': t('keepiq', 'Secret updated'),
+		'secret.read': t('keepiq', 'Secret read'),
+		'secret.deleted': t('keepiq', 'Secret deleted'),
+		'folder.deleted_cascade': t('keepiq', 'Folder deleted with contents'),
+		'share.granted': t('keepiq', 'Share granted'),
+		'share.revoked': t('keepiq', 'Share revoked'),
+		'share.delegated': t('keepiq', 'Ownership delegated'),
+		'share.delegation_reclaimed': t('keepiq', 'Delegation reclaimed'),
+		'link_share.created': t('keepiq', 'Link share created'),
+		'link_share.accessed': t('keepiq', 'Link share accessed'),
+		'link_share.access_failed': t('keepiq', 'Link share access failed'),
+		'link_share.revoked': t('keepiq', 'Link share revoked'),
+		'link_share.auto_deleted': t('keepiq', 'Link share auto-deleted'),
+		'request.created': t('keepiq', 'Secret request created'),
+		'request.fulfilled': t('keepiq', 'Secret request fulfilled'),
+		'request.re_requested': t('keepiq', 'Secret request re-requested'),
+		'request.revoked': t('keepiq', 'Secret request revoked'),
+		'suite.revoked': t('keepiq', 'Encryption suite revoked'),
+		'suite.reinstated': t('keepiq', 'Encryption suite reinstated'),
+		'suite.recovery_started': t('keepiq', 'Compromise recovery started'),
+		'suite.recovery_completed': t('keepiq', 'Compromise recovery completed'),
+		'application.registered': t('keepiq', 'Application registered'),
+		'application.approved': t('keepiq', 'Application approved'),
+		'application.rejected': t('keepiq', 'Application rejected'),
+		'application.deleted': t('keepiq', 'Application deleted'),
+		'application.token_issued': t('keepiq', 'Application token issued'),
+		'application.secret_retrieved': t('keepiq', 'Application secret retrieved'),
+		'vault.exported': t('keepiq', 'Vault exported'),
+		'vault.gdpr_exported': t('keepiq', 'GDPR data exported'),
+		'vault.account_deleted': t('keepiq', 'Account data deleted'),
 	}
 	return labels[eventType] || eventType
 }
@@ -100,13 +100,13 @@ export function auditEventOptions() {
  */
 export function auditActorLabel(entry) {
 	if (entry.actorType === 'link_visitor') {
-		return t('doriath', 'Anonymous visitor')
+		return t('keepiq', 'Anonymous visitor')
 	}
 	if (entry.actorType === 'system') {
-		return t('doriath', 'System')
+		return t('keepiq', 'System')
 	}
 	if (entry.actorId === 'deleted-account' || entry.actorId === null) {
-		return t('doriath', 'Deleted account')
+		return t('keepiq', 'Deleted account')
 	}
 	return entry.actorId
 }

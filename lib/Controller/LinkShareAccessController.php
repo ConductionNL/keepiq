@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Link Share Access Controller
+ * Keepiq Link Share Access Controller
  *
  * Public (unauthenticated) API controller for the two-phase link share
  * access protocol used by the external recipient's browser.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,10 +20,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\LinkShareService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\LinkShareService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;

@@ -2,13 +2,13 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
- * Doriath Tier-4 bootstrap (hydra ADR-024 / ADR-036).
+ * Keepiq Tier-4 bootstrap (hydra ADR-024 / ADR-036).
  *
  * Builds the vue-router from the bundled manifest, registers lib
  * icons + translations, and mounts the CnAppRoot-driven shell at
- * `#doriath-app`.
+ * `#keepiq-app`.
  *
- * ⚠️ The host element is `#doriath-app`, NOT `#content`. Under Vue 2,
+ * ⚠️ The host element is `#keepiq-app`, NOT `#content`. Under Vue 2,
  * `$mount('#content')` REPLACED the matched element, so the template's
  * `<div id="content">` (a duplicate of core's `layout.user.php` wrapper)
  * was swallowed. Vue 3's `mount()` renders INSIDE the match instead, so
@@ -65,7 +65,7 @@ try {
 } catch (e) {
 	// Non-fatal — lib translations fall back to English source.
 	// eslint-disable-next-line no-console
-	console.warn('[doriath] registerTranslations failed; falling back to English', e)
+	console.warn('[keepiq] registerTranslations failed; falling back to English', e)
 }
 
 // Fire-and-forget translation load. Some Nextcloud installs only allow
@@ -77,7 +77,7 @@ try {
  */
 function tryLoadTranslations() {
 	try {
-		const result = loadTranslations('doriath', () => {})
+		const result = loadTranslations('keepiq', () => {})
 		if (result && typeof result.then === 'function') {
 			result.then(
 				() => {},
@@ -133,7 +133,7 @@ function routesFromManifest(manifest) {
 }
 
 const router = createRouter({
-	history: createWebHashHistory(generateUrl('/apps/doriath')),
+	history: createWebHashHistory(generateUrl('/apps/keepiq')),
 	routes: routesFromManifest(mergedManifest),
 })
 
@@ -201,4 +201,4 @@ app.use(router)
 // loading spinner. See src/bootstrap/skip-actions.js for the full trace.
 ensureSkipActionsTarget()
 
-app.mount('#doriath-app')
+app.mount('#keepiq-app')

@@ -4,7 +4,7 @@
  * Unit tests for GdprService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,17 +17,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Service\GdprService;
-use OCA\Doriath\Service\SettingsService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\GdprService;
+use OCA\Keepiq\Service\SettingsService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -74,7 +74,7 @@ class GdprServiceTest extends TestCase {
 
 		$doc = $service->collectMetadata('alice');
 
-		$this->assertSame('doriath-gdpr-metadata', $doc['format']);
+		$this->assertSame('keepiq-gdpr-metadata', $doc['format']);
 		$this->assertSame(1, $doc['version']);
 		$this->assertSame('alice', $doc['subject']);
 		foreach (['suites', 'sharesGiven', 'sharesReceived', 'delegations', 'linkShares', 'requests', 'settings'] as $section) {

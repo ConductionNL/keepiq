@@ -4,7 +4,7 @@
  * Unit tests for LeaseService (machine-secret-leases §7.2/§7.3).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,15 +17,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\ApplicationLeasePolicyMapper;
-use OCA\Doriath\Db\MachineLease;
-use OCA\Doriath\Db\MachineLeaseMapper;
-use OCA\Doriath\Service\LeasePolicyService;
-use OCA\Doriath\Service\LeaseService;
+use OCA\Keepiq\Db\ApplicationLeasePolicyMapper;
+use OCA\Keepiq\Db\MachineLease;
+use OCA\Keepiq\Db\MachineLeaseMapper;
+use OCA\Keepiq\Service\LeasePolicyService;
+use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Event Factory
+ * Keepiq Audit Event Factory
  *
  * The injectable counterpart of AuditEvent's named constructors. Services
  * take this factory through constructor DI and call instance methods on it,
@@ -18,7 +18,7 @@
  * them rather than duplicating the ACTOR_* mapping.
  *
  * @category Event
- * @package  OCA\Doriath\Event\Audit
+ * @package  OCA\Keepiq\Event\Audit
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -31,7 +31,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event\Audit;
+namespace OCA\Keepiq\Event\Audit;
 
 /**
  * Builds AuditEvent instances through instance methods.

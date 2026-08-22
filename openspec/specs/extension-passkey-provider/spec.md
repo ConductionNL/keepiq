@@ -7,7 +7,7 @@
 
 ## Purpose
 
-`passkey-item-type` lets Doriath **store** passkeys but leaves them inert — it explicitly deferred acting as a WebAuthn authenticator/provider to a later change. This feature is that provider: the browser extension intercepts `navigator.credentials.create()`/`get()` on relying-party pages, saves newly-created passkeys into the vault and authenticates with stored ones, and performs the WebAuthn assertion signing **client-side in the extension** with the decrypted passkey private key. It updates the stored signature counter, is gated on per-site user opt-in, and falls through to the browser's platform authenticator on decline. Zero-knowledge is preserved — passkey private keys are only ever decrypted in the extension's service-worker memory (ADR-003) — with zero server changes: create/read reuse the `passkey-item-type` secret seam and the counter write-back reuses the existing secret-update path. Without a provider, stored passkeys are a credential no site can use; with one, they become a first-class login on the Nextcloud platform (FIDO 2026: ~75% of consumers hold at least one passkey; NC Passwords #792, May 2026, asks for exactly store + autofill of passkeys).
+`passkey-item-type` lets Keepiq **store** passkeys but leaves them inert — it explicitly deferred acting as a WebAuthn authenticator/provider to a later change. This feature is that provider: the browser extension intercepts `navigator.credentials.create()`/`get()` on relying-party pages, saves newly-created passkeys into the vault and authenticates with stored ones, and performs the WebAuthn assertion signing **client-side in the extension** with the decrypted passkey private key. It updates the stored signature counter, is gated on per-site user opt-in, and falls through to the browser's platform authenticator on decline. Zero-knowledge is preserved — passkey private keys are only ever decrypted in the extension's service-worker memory (ADR-003) — with zero server changes: create/read reuse the `passkey-item-type` secret seam and the counter write-back reuses the existing secret-update path. Without a provider, stored passkeys are a credential no site can use; with one, they become a first-class login on the Nextcloud platform (FIDO 2026: ~75% of consumers hold at least one passkey; NC Passwords #792, May 2026, asks for exactly store + autofill of passkeys).
 
 ## Requirements
 
@@ -58,10 +58,10 @@ The extension MUST set the user-verification flag only while unlocked, MUST prom
 
 ## User Stories
 
-- As a user, I want to register a passkey on a website and have it saved into my Doriath vault so I don't need a separate authenticator
+- As a user, I want to register a passkey on a website and have it saved into my Keepiq vault so I don't need a separate authenticator
 - As a user, I want to log into a website with a passkey stored in my vault so my stored passkeys are actually usable
 - As a security-conscious user, I want the WebAuthn signing to happen in the extension so the server never sees my passkey private key
-- As a user, I want to decide per site whether Doriath handles my passkey, and to fall back to my platform authenticator when I decline
+- As a user, I want to decide per site whether Keepiq handles my passkey, and to fall back to my platform authenticator when I decline
 - As a user, I want a locked extension to ask for my master password before it will sign, so a stolen unlocked-looking browser can't authenticate as me
 
 ## Acceptance Criteria
@@ -77,5 +77,5 @@ The extension MUST set the user-verification flag only while unlocked, MUST prom
 ## Notes
 
 - Depends on `browser-extension-autofill` (MV3 runtime: service worker, in-extension unlock, decrypt-on-demand, popup, content-script registration) and `passkey-item-type` (canonical passkey schema + secret seam).
-- Out of scope: passkey login into Doriath's own lock screen (`passkey-vault-login`), TOTP surfacing (`extension-totp-autofill`), enterprise/hardware attestation.
+- Out of scope: passkey login into Keepiq's own lock screen (`passkey-vault-login`), TOTP surfacing (`extension-totp-autofill`), enterprise/hardware attestation.
 - Related ADRs: ADR-001 (own tables, imperative — no OpenRegister), ADR-003 (always E2E, browser-user client-side WebCrypto, unencrypted `url` for matching).

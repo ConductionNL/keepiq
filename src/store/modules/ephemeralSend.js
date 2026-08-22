@@ -126,6 +126,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @param {number} params.ttlSeconds Optional TTL (0 = none).
 		 * @param {string} params.password Optional password ('' = fragment mode).
 		 * @return {Promise<string>} The full share URL (fragment included when keyless).
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
 		 */
 		async createSend({ payload, payloadType, maxViews, ttlSeconds, password }) {
 			const contentKey = await crypto.subtle.generateKey(
@@ -156,7 +157,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 			}
 
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/sends'),
+				generateUrl('/apps/keepiq/api/v1/sends'),
 				body,
 			)
 			const token = response.data?.token
@@ -166,7 +167,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 			// account-less recipient reaches the access route.
 			const base =
 				window.location.origin
-				+ generateUrl('/apps/doriath/public')
+				+ generateUrl('/apps/keepiq/public')
 				+ '#/send/'
 				+ encodeURIComponent(token)
 			// Fragment-mode: the content key NEVER reaches the server — it
@@ -178,12 +179,13 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * Load the caller's sends.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 		 */
 		async fetchSends() {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/sends'),
+					generateUrl('/apps/keepiq/api/v1/sends'),
 				)
 				this.sends = response.data || []
 			} finally {
@@ -196,9 +198,10 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 *
 		 * @param {string} id The send id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 		 */
 		async revoke(id) {
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/sends/${id}`))
+			await axios.delete(generateUrl(`/apps/keepiq/api/v1/sends/${id}`))
 			this.sends = this.sends.filter((s) => s.id !== id)
 		},
 
@@ -209,11 +212,13 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @param {string} fragmentKey The base64url fragment key ('' in password mode).
 		 * @param {string} password The password ('' in fragment mode).
 		 * @return {Promise<{payload: string, payloadType: string, burned: boolean}>}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 		 */
 		async accessSend(token, fragmentKey, password) {
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/access`,
+					`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(token)}/access`,
 				),
 			)
 			const data = response.data
@@ -240,7 +245,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 				const plaintext = await aesDecrypt(contentKey, data.encryptedPayload)
 				const confirm = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/confirm`,
+						`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(token)}/confirm`,
 					),
 				)
 				return {
@@ -254,7 +259,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 					// caller surfaces attemptsLeft.
 					const failure = await axios.post(
 						generateUrl(
-							`/apps/doriath/api/v1/public/sends/${encodeURIComponent(token)}/failure`,
+							`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(token)}/failure`,
 						),
 					)
 					const err = new Error('wrong-password')

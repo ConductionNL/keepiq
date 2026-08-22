@@ -1,6 +1,6 @@
 # Roadmap
 
-This document tracks the planned development of Doriath.
+This document tracks the planned development of Keepiq.
 
 Features are defined in [`openspec/specs/`](specs/). When a feature reaches `planned` status it is listed here and an OpenSpec change is created with `/opsx:ff`.
 
@@ -35,7 +35,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [Card & Identity Items](specs/card-identity-items/spec.md) | done — 2026-07-18 | 25 | [archive](changes/archive/2026-07-18-card-identity-items/) |
 | [Bulk Actions](specs/bulk-actions/spec.md) | done — 2026-07-18 | 26 | [archive](changes/archive/2026-07-18-bulk-actions/) |
 | [Mobile PWA](specs/mobile-pwa/spec.md) | done | 27 | [mobile-pwa](changes/archive/2026-07-20-mobile-pwa/) |
-| [Doriath CLI](specs/doriath-cli/spec.md) | in-progress | 28 | [doriath-cli](changes/doriath-cli/) |
+| [Keepiq CLI](specs/keepiq-cli/spec.md) | in-progress | 28 | [keepiq-cli](changes/keepiq-cli/) |
 | [CXP Transfer](specs/cxp-transfer/spec.md) | in-progress | 29 — after CXF | [cxp-transfer](changes/cxp-transfer/) |
 | [Certificate Lifecycle](specs/certificate-lifecycle/spec.md) | done | 30 | [certificate-lifecycle](changes/archive/2026-07-18-certificate-lifecycle/) |
 | [Honey Credentials](specs/honey-credentials/spec.md) | done | 31 — deception differentiator | [honey-credentials](changes/archive/2026-07-20-honey-credentials/) |
@@ -44,7 +44,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 
 ### Phase 1 — Foundation (Core)
 
-The minimum set that makes Doriath useful as a secrets manager.
+The minimum set that makes Keepiq useful as a secrets manager.
 
 1. **Encryption Suites** — CA bootstrap, key pair generation, user setup on first login
 2. **Secrets** — CRUD with RSA encryption at rest
@@ -70,7 +70,7 @@ _Not yet specced. To be explored in future `/opsx:app-explore` sessions._
 
 ### Phase 3.5 — Market-gap wave (specced 2026-07-16, deep-research driven)
 
-Eight changes created from the 2026-07-16 competitive deep-dive (results logged to the Spectr register, `sourceRef: deepdive-2026-07-16-app-doriath`). Ordered by demand evidence:
+Eight changes created from the 2026-07-16 competitive deep-dive (results logged to the Spectr register, `sourceRef: deepdive-2026-07-16-app-keepiq`). Ordered by demand evidence:
 
 1. **Team Folder Sharing** — share folders with users/groups, inheritance + offboarding (NC Passwords #582/#583, 63+60 reactions — the ecosystem's #1 wish)
 2. **Browser Extension & Autofill** — MV3 extension, zero-knowledge unlock, iframe-capable autofill (the #1 experiential complaint ecosystem-wide)
@@ -90,7 +90,7 @@ Sixteen follow-up changes from the same 2026-07-16 deep-dive: wave-1's deferred 
 **Sharing follow-ups**: `folder-permission-grades` (read/write grades — wave-1's declared v2), `ephemeral-send` (burn-after-read ad-hoc sends)
 **Compliance (BIO2/NIS2)**: `compliance-reporting` (auditor evidence export — no competitor has a BIO2/NIS2-framed report), `siem-audit-export` (syslog/webhook streaming), `org-password-policies` (admin generator/strength policies)
 **Item types & UX**: `card-identity-items` (card + identity types, BSN-aware), `bulk-actions` (multi-select operations), `mobile-pwa` (installable PWA)
-**Machine/dev**: `doriath-cli` (human + CI modes), `cxp-transfer` (HPKE provider-to-provider migration), `certificate-lifecycle` (inventory/renewal on the private CA), `honey-credentials` (decoy tripwires — deception is one of few detection controls a zero-knowledge store can offer)
+**Machine/dev**: `keepiq-cli` (human + CI modes), `cxp-transfer` (HPKE provider-to-provider migration), `certificate-lifecycle` (inventory/renewal on the private CA), `honey-credentials` (decoy tripwires — deception is one of few detection controls a zero-knowledge store can offer)
 
 ### Phase 4 — Future Development
 

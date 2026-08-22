@@ -14,7 +14,7 @@
  * committed secret, idempotent on retry, never set for a row that failed.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,21 +27,21 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
-use OCA\Doriath\Db\AttachmentGrant;
-use OCA\Doriath\Db\AttachmentGrantMapper;
-use OCA\Doriath\Db\MigrationFailure;
-use OCA\Doriath\Db\MigrationFailureMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretVersion;
-use OCA\Doriath\Db\SecretVersionMapper;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\MigrationWorkService;
+use OCA\Keepiq\Db\AttachmentGrant;
+use OCA\Keepiq\Db\AttachmentGrantMapper;
+use OCA\Keepiq\Db\MigrationFailure;
+use OCA\Keepiq\Db\MigrationFailureMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\MigrationWorkService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IDBConnection;

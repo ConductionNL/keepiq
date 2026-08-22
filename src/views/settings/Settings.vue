@@ -2,7 +2,7 @@
   SPDX-License-Identifier: EUPL-1.2
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
-  Doriath admin-settings root. Renders the three canonical admin-settings
+  Keepiq admin-settings root. Renders the three canonical admin-settings
   sections in order — PasswordPolicy → CaHealth → ApplicationQueue —
   per implement-dashboard-settings #4.4. The register form referenced by
   the legacy AdminSettings template has been removed (legacy admin-IA);
@@ -12,7 +12,7 @@
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
 -->
 <template>
-	<div class="doriath-settings">
+	<div class="keepiq-settings">
 		<PasswordPolicySection />
 		<OrgPasswordPolicySection />
 		<BreachCheckSection />

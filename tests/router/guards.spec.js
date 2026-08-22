@@ -364,13 +364,13 @@ describe('isPublicSurface', () => {
 	it('treats the anonymous shell as public whatever the hash is', () => {
 		expect(
 			isPublicSurface({
-				pathname: '/index.php/apps/doriath/public',
+				pathname: '/index.php/apps/keepiq/public',
 				hash: '',
 			}),
 		).toBe(true)
 		expect(
 			isPublicSurface({
-				pathname: '/index.php/apps/doriath/public',
+				pathname: '/index.php/apps/keepiq/public',
 				hash: '#/share/request/tok',
 			}),
 		).toBe(true)
@@ -383,7 +383,7 @@ describe('isPublicSurface', () => {
 			'#/send/tok',
 		]) {
 			expect(
-				isPublicSurface({ pathname: '/index.php/apps/doriath/', hash }),
+				isPublicSurface({ pathname: '/index.php/apps/keepiq/', hash }),
 			).toBe(true)
 		}
 	})
@@ -391,7 +391,7 @@ describe('isPublicSurface', () => {
 	it('leaves ordinary vault URLs alone', () => {
 		expect(
 			isPublicSurface({
-				pathname: '/index.php/apps/doriath/',
+				pathname: '/index.php/apps/keepiq/',
 				hash: '#/secrets',
 			}),
 		).toBe(false)
@@ -404,7 +404,7 @@ describe('isPublicSurface', () => {
 		// resolved a name — so a route-based check is still undefined there.
 		expect(
 			isPublicSurface({
-				pathname: '/index.php/apps/doriath/public',
+				pathname: '/index.php/apps/keepiq/public',
 				hash: '#/share/request/tok',
 			}),
 		).toBe(true)

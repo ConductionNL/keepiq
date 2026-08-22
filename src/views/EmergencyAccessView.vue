@@ -2,12 +2,12 @@
 <template>
 	<div class="emergency-access" data-testid="emergency-access-view">
 		<h2 class="emergency-access__title">
-			{{ t('doriath', 'Emergency access') }}
+			{{ t('keepiq', 'Emergency access') }}
 		</h2>
 		<p class="emergency-access__intro">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					"Designate a trusted person who can gain read access to your vault after a wait period — unless you decline. Your vault stays end-to-end encrypted: your key is escrowed only to the contact's certificate, never to the server.",
 				)
 			}}
@@ -17,29 +17,29 @@
 		<section
 			class="emergency-access__panel"
 			data-testid="emergency-access-designate">
-			<h3>{{ t('doriath', 'Designate an emergency contact') }}</h3>
+			<h3>{{ t('keepiq', 'Designate an emergency contact') }}</h3>
 			<div class="emergency-access__form">
 				<NcTextField
 					v-model="granteeUserId"
-					:label="t('doriath', 'Contact Nextcloud user ID')"
+					:label="t('keepiq', 'Contact Nextcloud user ID')"
 					data-testid="emergency-grantee-input" />
 				<NcSelect
 					v-model="waitPeriod"
 					:options="waitOptions"
-					:inputLabel="t('doriath', 'Wait period')"
+					:inputLabel="t('keepiq', 'Wait period')"
 					:reduce="(opt) => opt.value"
 					label="label"
 					data-testid="emergency-wait-select" />
 				<NcPasswordField
 					v-model="masterPassword"
-					:label="t('doriath', 'Your master password')"
+					:label="t('keepiq', 'Your master password')"
 					data-testid="emergency-master-input" />
 				<NcButton
 					variant="primary"
 					:disabled="!canDesignate || busy"
 					data-testid="emergency-designate-submit"
 					@click="designate">
-					{{ t('doriath', 'Designate') }}
+					{{ t('keepiq', 'Designate') }}
 				</NcButton>
 			</div>
 			<p
@@ -54,10 +54,10 @@
 		<section
 			class="emergency-access__panel"
 			data-testid="emergency-access-contacts">
-			<h3>{{ t('doriath', 'Your emergency contacts') }}</h3>
+			<h3>{{ t('keepiq', 'Your emergency contacts') }}</h3>
 			<NcEmptyContent
 				v-if="store.contacts.length === 0"
-				:name="t('doriath', 'No emergency contacts')" />
+				:name="t('keepiq', 'No emergency contacts')" />
 			<ul v-else class="emergency-access__list">
 				<li
 					v-for="c in store.contacts"
@@ -71,27 +71,27 @@
 						stateLabel(c.state)
 					}}</span>
 					<span class="emergency-access__wait">{{
-						t('doriath', '{days}d wait', { days: c.waitPeriodDays })
+						t('keepiq', '{days}d wait', { days: c.waitPeriodDays })
 					}}</span>
 					<NcButton
 						v-if="c.state === 'requested'"
 						variant="warning"
 						data-testid="emergency-decline"
 						@click="decline(c.id)">
-						{{ t('doriath', 'Decline request') }}
+						{{ t('keepiq', 'Decline request') }}
 					</NcButton>
 					<NcButton
 						v-if="c.state === 'invalidated'"
 						variant="secondary"
 						data-testid="emergency-reestablish"
 						@click="scrollToDesignate(c.granteeUserId)">
-						{{ t('doriath', 'Re-establish') }}
+						{{ t('keepiq', 'Re-establish') }}
 					</NcButton>
 					<NcButton
 						variant="error"
 						data-testid="emergency-revoke"
 						@click="revoke(c.id)">
-						{{ t('doriath', 'Revoke') }}
+						{{ t('keepiq', 'Revoke') }}
 					</NcButton>
 				</li>
 			</ul>
@@ -101,10 +101,10 @@
 		<section
 			class="emergency-access__panel"
 			data-testid="emergency-access-incoming">
-			<h3>{{ t('doriath', 'Vaults you can recover') }}</h3>
+			<h3>{{ t('keepiq', 'Vaults you can recover') }}</h3>
 			<NcEmptyContent
 				v-if="store.incoming.length === 0"
-				:name="t('doriath', 'No incoming emergency access')" />
+				:name="t('keepiq', 'No incoming emergency access')" />
 			<ul v-else class="emergency-access__list">
 				<li
 					v-for="c in store.incoming"
@@ -122,14 +122,14 @@
 						variant="primary"
 						data-testid="emergency-request"
 						@click="request(c.id)">
-						{{ t('doriath', 'Request access') }}
+						{{ t('keepiq', 'Request access') }}
 					</NcButton>
 					<NcButton
 						v-if="c.state === 'approved'"
 						variant="primary"
 						data-testid="emergency-recover"
 						@click="recover(c.id)">
-						{{ t('doriath', 'Recover vault') }}
+						{{ t('keepiq', 'Recover vault') }}
 					</NcButton>
 				</li>
 			</ul>
@@ -139,7 +139,7 @@
 				data-testid="emergency-recovered">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						"Recovered the grantor's key in your browser. You can now read their vault.",
 					)
 				}}
@@ -199,10 +199,10 @@ export default {
 		 */
 		waitOptions() {
 			return [
-				{ value: 1, label: t('doriath', '1 day') },
-				{ value: 3, label: t('doriath', '3 days') },
-				{ value: 7, label: t('doriath', '7 days') },
-				{ value: 30, label: t('doriath', '30 days') },
+				{ value: 1, label: t('keepiq', '1 day') },
+				{ value: 3, label: t('keepiq', '3 days') },
+				{ value: 7, label: t('keepiq', '7 days') },
+				{ value: 30, label: t('keepiq', '30 days') },
 			]
 		},
 
@@ -233,11 +233,11 @@ export default {
 		 */
 		stateLabel(state) {
 			const map = {
-				granted: t('doriath', 'Granted'),
-				requested: t('doriath', 'Requested'),
-				approved: t('doriath', 'Approved'),
-				declined: t('doriath', 'Declined'),
-				invalidated: t('doriath', 'Invalidated (re-establish)'),
+				granted: t('keepiq', 'Granted'),
+				requested: t('keepiq', 'Requested'),
+				approved: t('keepiq', 'Approved'),
+				declined: t('keepiq', 'Declined'),
+				invalidated: t('keepiq', 'Invalidated (re-establish)'),
 			}
 			return map[state] || state
 		},
@@ -263,7 +263,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Could not designate the contact')
+					|| t('keepiq', 'Could not designate the contact')
 			} finally {
 				this.busy = false
 			}
@@ -318,7 +318,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Could not recover access')
+					|| t('keepiq', 'Could not recover access')
 			}
 		},
 

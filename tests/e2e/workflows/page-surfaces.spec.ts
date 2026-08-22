@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Every routed page component of Doriath, driven in a real browser.
+ * Every routed page component of Keepiq, driven in a real browser.
  *
  * WHY THIS FILE IS UNDER workflows/ AND NOT UNDER visual/
  * -------------------------------------------------------
@@ -23,7 +23,7 @@
  * with nothing ever running — a check that cannot fail.
  *
  * So the load-bearing coverage lives HERE, in the suite CI actually runs. The
- * visual baselines in `tests/e2e/visual/doriath-pages.visual.spec.ts` are a
+ * visual baselines in `tests/e2e/visual/keepiq-pages.visual.spec.ts` are a
  * local-only extra; gate-26 is green because of this file, and that was
  * verified by deleting the visual spec and re-running the gate.
  *
@@ -58,10 +58,10 @@ import { APP_BASE, gotoVaultRoute, unlockVault } from './_workflow-helpers'
 const OPAQUE = 'ZTJlLXBhZ2Utc3VyZmFjZS1wbGFjZWhvbGRlcg=='
 
 /**
- * Call a Doriath JSON API from inside the page so the session cookie and the
+ * Call a Keepiq JSON API from inside the page so the session cookie and the
  * CSRF request token both travel with the request.
  *
- * @param page   The Playwright page, with a Doriath route already loaded.
+ * @param page   The Playwright page, with a Keepiq route already loaded.
  * @param method HTTP method.
  * @param path   App-relative path, e.g. `/api/v1/sends`.
  * @param body   Optional JSON body.

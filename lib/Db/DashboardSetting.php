@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Dashboard Setting Entity
+ * Keepiq Dashboard Setting Entity
  *
  * Per-user dashboard preference row — stores a single JSON-encoded
  * preference value keyed by a setting name (e.g. 'layout', 'visible_widgets',
  * 'default_view').
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

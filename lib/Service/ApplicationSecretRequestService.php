@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Secret Request Service
+ * Keepiq Application Secret Request Service
  *
  * Session-less secret-request creation for applications: the machine half of
  * the secret-requests capability.
@@ -21,7 +21,7 @@
  *     callers, by delegating to JwtAuthService::verifyAssertion().
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -34,12 +34,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -168,7 +168,7 @@ class ApplicationSecretRequestService {
 				);
 			} catch (Throwable $cleanupFailure) {
 				$this->logger->error(
-					'Doriath: failed to remove the shell of a failed application request',
+					'Keepiq: failed to remove the shell of a failed application request',
 					[
 						'secretId' => $shell->getId(),
 						'applicationId' => $applicationId,
@@ -352,7 +352,7 @@ class ApplicationSecretRequestService {
 
 		$this->logger->info(
 			'Created application-initiated secret request ' . $persisted->getId(),
-			['app' => 'doriath', 'applicationId' => $applicationId]
+			['app' => 'keepiq', 'applicationId' => $applicationId]
 		);
 
 		return $persisted;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Notification Service
+ * Keepiq Notification Service
  *
  * Central dispatch helper for the notification subjects raised by
  * sharing, secret-request and application-management flows. Subjects
@@ -9,7 +9,7 @@
  * the user has opted out, the notification is silently dropped.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,22 +22,22 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\IConfig;
 use OCP\Notification\IManager;
 use Psr\Log\LoggerInterface;
 
 /**
- * Dispatches Doriath notifications through OCP\Notification\IManager.
+ * Dispatches Keepiq notifications through OCP\Notification\IManager.
  *
  * The subject -> user-setting map mirrors the spec for
  * implement-user-sharing (§7), implement-secret-requests (§5),
  * and implement-application-mgmt (§7). A null setting key means the
  * notification is always delivered (admin-only "app_pending"). Subject
- * rendering lives in DoriathNotifier.
+ * rendering lives in KeepiqNotifier.
  */
 class NotificationService {
 	/**
@@ -104,6 +104,9 @@ class NotificationService {
 	 * @param string|null $objectId Optional object ID
 	 *
 	 * @return bool True when the notification was queued, false when suppressed.
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-notification-toggles-mvp
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-notification-on-share-received
 	 */
 	public function notify(
 		string $subject,
@@ -114,7 +117,7 @@ class NotificationService {
 	): bool {
 		if (array_key_exists($subject, self::SUBJECT_SETTING_MAP) === false) {
 			$this->logger->warning(
-				'Doriath notify(): unknown subject "' . $subject . '" — dropping',
+				'Keepiq notify(): unknown subject "' . $subject . '" — dropping',
 				['app' => Application::APP_ID]
 			);
 			return false;
@@ -127,7 +130,7 @@ class NotificationService {
 		$settingKey = self::SUBJECT_SETTING_MAP[$subject];
 		if ($settingKey !== null && $this->isOptedOut(userId: $recipientId, settingKey: $settingKey) === true) {
 			$this->logger->debug(
-				'Doriath notify(): user ' . $recipientId . ' opted out of "' . $subject . '"',
+				'Keepiq notify(): user ' . $recipientId . ' opted out of "' . $subject . '"',
 				['app' => Application::APP_ID]
 			);
 			return false;

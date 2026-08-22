@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Service Worker Controller
+ * Keepiq Service Worker Controller
  *
  * Serves the offline app-shell service worker (offline-readonly-cache §3)
  * from the app ROOT path (`/serviceworker.js`) with the correct
@@ -14,7 +14,7 @@
  * browser's SW machinery without app cookies/token.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,9 +27,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;

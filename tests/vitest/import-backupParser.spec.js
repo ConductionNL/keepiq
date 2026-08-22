@@ -19,7 +19,7 @@ import { backupParser, parseBackup } from '../../src/import/backupParser.js'
 import { getParser } from '../../src/import/parserRegistry.js'
 
 const payload = {
-	format: 'doriath-vault',
+	format: 'keepiq-vault',
 	version: 1,
 	secrets: [
 		{

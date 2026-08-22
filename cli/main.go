@@ -1,4 +1,4 @@
-// Command doriath is the Doriath command-line client (doriath-cli).
+// Command keepiq is the Keepiq command-line client (keepiq-cli).
 //
 // It serves the shell audience over the SAME server surfaces the browser and
 // the openconnector machine consumer already use — nothing new server-side.
@@ -8,7 +8,7 @@
 // material ever reaches the server (ADR-003). CI mode is an RFC 7523 machine
 // consumer holding the application private key.
 //
-// v1 is strictly READ-ONLY (doriath-cli §5): a write in Doriath's model
+// v1 is strictly READ-ONLY (keepiq-cli §5): a write in Keepiq's model
 // requires re-wrapping the value under every recipient's public key (the share
 // fan-out), which is a separate, larger surface deferred to a follow-up.
 //
@@ -23,8 +23,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ConductionNL/doriath/cli/internal/client"
-	dcrypto "github.com/ConductionNL/doriath/cli/internal/crypto"
+	"github.com/ConductionNL/keepiq/cli/internal/client"
+	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
 )
 
 // version is stamped at build time via -ldflags "-X main.version=…".
@@ -40,7 +40,7 @@ func main() {
 	var err error
 	switch cmd {
 	case "version", "--version", "-v":
-		fmt.Printf("doriath %s\n", version)
+		fmt.Printf("keepiq %s\n", version)
 	case "login":
 		err = cmdLogin(args)
 	case "list":
@@ -69,18 +69,18 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `doriath — zero-knowledge secrets CLI (read-only v1)
+	fmt.Fprint(os.Stderr, `keepiq — zero-knowledge secrets CLI (read-only v1)
 
 Human mode (decrypts client-side):
-  doriath login --url <instance> --user <nc-user>   store the instance + app-password
-  doriath list [--output json|table]                list your secrets (metadata only)
-  doriath show <id> [--output json]                 reveal one secret (all fields)
-  doriath get <id> <field>                          print one field (key|login|url|name)
-  doriath copy <id> <field> [--clear-after <sec>]   copy a field to the clipboard, auto-clear
+  keepiq login --url <instance> --user <nc-user>   store the instance + app-password
+  keepiq list [--output json|table]                list your secrets (metadata only)
+  keepiq show <id> [--output json]                 reveal one secret (all fields)
+  keepiq get <id> <field>                          print one field (key|login|url|name)
+  keepiq copy <id> <field> [--clear-after <sec>]   copy a field to the clipboard, auto-clear
 
 CI mode (RFC 7523 machine consumer):
-  doriath ci fetch <name> [--output env|json]       fetch+decrypt an application secret
-  doriath ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
+  keepiq ci fetch <name> [--output env|json]       fetch+decrypt an application secret
+  keepiq ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
 
   version | completion <bash|zsh|fish> | help
 
@@ -133,7 +133,7 @@ func promptSecret(label string) string {
 func openHumanSession(masterPassword string) (*client.Client, *dcrypto.UnlockedSuite, error) {
 	cfg, err := loadConfig()
 	if err != nil {
-		return nil, nil, fmt.Errorf("not logged in (run `doriath login`): %w", err)
+		return nil, nil, fmt.Errorf("not logged in (run `keepiq login`): %w", err)
 	}
 	c := client.New(cfg.URL)
 	c.WithAppPassword(cfg.User, cfg.AppPassword)
@@ -180,7 +180,7 @@ func cmdList(args []string) error {
 func cmdShow(args []string) error {
 	output, args := popFlag(args, "--output")
 	if len(args) < 1 {
-		return fmt.Errorf("usage: doriath show <id>")
+		return fmt.Errorf("usage: keepiq show <id>")
 	}
 	c, session, err := openHumanSession(promptSecret("Master password: "))
 	if err != nil {
@@ -202,7 +202,7 @@ func cmdShow(args []string) error {
 
 func cmdGet(args []string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("usage: doriath get <id> <field>")
+		return fmt.Errorf("usage: keepiq get <id> <field>")
 	}
 	c, session, err := openHumanSession(promptSecret("Master password: "))
 	if err != nil {
@@ -247,7 +247,7 @@ func emitJSON(v any) error {
 
 func cmdCI(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("usage: doriath ci <fetch|run> …")
+		return fmt.Errorf("usage: keepiq ci <fetch|run> …")
 	}
 	switch args[0] {
 	case "fetch":
@@ -267,11 +267,11 @@ func cmdCompletion(args []string) error {
 	// A minimal, valid completion script per shell (§1.3).
 	switch shell {
 	case "bash":
-		fmt.Print("complete -W 'login list show get copy ci version completion help' doriath\n")
+		fmt.Print("complete -W 'login list show get copy ci version completion help' keepiq\n")
 	case "zsh":
-		fmt.Print("#compdef doriath\ncompadd login list show get copy ci version completion help\n")
+		fmt.Print("#compdef keepiq\ncompadd login list show get copy ci version completion help\n")
 	case "fish":
-		fmt.Print("complete -c doriath -a 'login list show get copy ci version completion help'\n")
+		fmt.Print("complete -c keepiq -a 'login list show get copy ci version completion help'\n")
 	default:
 		return fmt.Errorf("unsupported shell %q (bash|zsh|fish)", shell)
 	}

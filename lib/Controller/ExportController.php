@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Export Controller
+ * Keepiq Export Controller
  *
  * Receives the client's report of a completed vault export and emits the typed
  * SecretExportedEvent for the session user (secret-export-gdpr D5). Because the
@@ -15,7 +15,7 @@
  * or any derived key — only the mode, scope, and secret count.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,10 +28,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Event\SecretExportedEvent;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Event\SecretExportedEvent;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

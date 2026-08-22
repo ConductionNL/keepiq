@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Notifier
+ * Keepiq Notifier
  *
- * INotifier implementation that renders Doriath notification subjects
+ * INotifier implementation that renders Keepiq notification subjects
  * into a localised parsed payload (icon + subject + message + link).
  *
  * @category Notification
- * @package  OCA\Doriath\Notification
+ * @package  OCA\Keepiq\Notification
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,11 +20,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Notification;
+namespace OCA\Keepiq\Notification;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
@@ -33,15 +33,15 @@ use OCP\Notification\INotifier;
 use OCP\Notification\UnknownNotificationException;
 
 /**
- * Renders Doriath notifications.
+ * Renders Keepiq notifications.
  *
  * The subject IDs here must match NotificationService::SUBJECT_SETTING_MAP.
  * Each branch builds a short subject line, a longer message line and a
  * deep-link the user clicks to land on the affected secret / queue.
  */
-class DoriathNotifier implements INotifier {
+class KeepiqNotifier implements INotifier {
 	/**
-	 * Constructor for DoriathNotifier.
+	 * Constructor for KeepiqNotifier.
 	 *
 	 * @param IFactory $l10nFactory The L10N factory
 	 * @param IURLGenerator $url The URL generator
@@ -69,7 +69,7 @@ class DoriathNotifier implements INotifier {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Doriath';
+		return 'Keepiq';
 	}//end getName()
 
 	/**
@@ -349,15 +349,31 @@ class DoriathNotifier implements INotifier {
 		}
 
 		try {
-			$route = $this->url->linkToRoute('doriath.dashboard.page') . '#/secrets/' . $secretId;
+			/* Route names are namespaced by the app id, so this must be built
+			   FROM the id rather than spelled out. It read
+			   'keepiq.dashboard.page' as a literal, which is correct only
+			   for as long as APP_ID happens to equal 'keepiq' — the next
+			   rename would move the route and leave the literal behind. The
+			   catch below then swallows the resulting exception, so every
+			   secret deep-link would quietly stop appearing with nothing
+			   logged: exactly the silent-failure shape this app id rename
+			   was full of. */
+			$route = $this->url->linkToRoute(Application::APP_ID . '.dashboard.page')
+				. '#/secrets/' . $secretId;
 			$notification->setLink($this->url->getAbsoluteURL($route));
 		} catch (InvalidArgumentException) {
-			// Fall back silently — the link is optional.
+			/* Deliberately swallowed: the link is optional and a notification
+			   without one is still useful. Worth knowing that this catch is
+			   what made the hardcoded route above dangerous — an unresolvable
+			   route produced no link, no error and no log. Deriving the name
+			   from APP_ID removes the way that actually happened; if a
+			   further failure mode turns up, this is where to add logging,
+			   which needs a logger injected into the constructor. */
 		}
 	}//end withSecretLink()
 
 	/**
-	 * Attach a link to the Doriath section of the Nextcloud admin settings.
+	 * Attach a link to the Keepiq section of the Nextcloud admin settings.
 	 *
 	 * @param INotification $notification The notification to mutate
 	 *

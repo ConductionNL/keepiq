@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Admin Settings Service
+ * Keepiq Admin Settings Service
  *
  * The instance-wide (admin-scoped) configuration surface: the whole
  * `getAdminSettings()` payload, the validated writes behind
@@ -17,7 +17,7 @@
  * out-of-bounds value throws before anything in its group is written.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -30,10 +30,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Reads and validates the instance-wide Doriath configuration.
+ * Reads and validates the instance-wide Keepiq configuration.
  */
 class AdminSettingsService {
 	/**
@@ -206,12 +206,12 @@ class AdminSettingsService {
 
 		// Best-effort CA status; never blocks if the service is unavailable.
 		try {
-			$caService = $this->container->get('OCA\Doriath\Service\CertificateAuthorityService');
+			$caService = $this->container->get('OCA\Keepiq\Service\CertificateAuthorityService');
 			if (method_exists($caService, 'getStatus') === true) {
 				$settings['ca_status'] = $caService->getStatus();
 			}
 		} catch (Throwable $e) {
-			$this->logger->debug('Doriath: CA status unavailable: ' . $e->getMessage());
+			$this->logger->debug('Keepiq: CA status unavailable: ' . $e->getMessage());
 			$settings['ca_status'] = ['status' => 'unknown'];
 		}
 
@@ -256,7 +256,7 @@ class AdminSettingsService {
 	}//end getPolicy()
 
 	/**
-	 * Load configuration from doriath_register.json via OpenRegister.
+	 * Load configuration from keepiq_register.json via OpenRegister.
 	 *
 	 * @param bool $force Force re-import even if already configured.
 	 *

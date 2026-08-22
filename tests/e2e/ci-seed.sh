@@ -3,18 +3,18 @@
 # SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 # SPDX-License-Identifier: EUPL-1.2
 #
-# Provision a freshly installed Nextcloud so Doriath's e2e suite can run, for
+# Provision a freshly installed Nextcloud so Keepiq's e2e suite can run, for
 # the shared `E2E Tests (Playwright)` CI job.
 #
 # Wired up as the workflow's `playwright-seed-command`. That step runs AFTER
 # `php -S` is up and with cwd set to the Nextcloud SERVER ROOT, so this is
 # invoked as:
 #
-#     playwright-seed-command: 'bash apps/doriath/tests/e2e/ci-seed.sh'
+#     playwright-seed-command: 'bash apps/keepiq/tests/e2e/ci-seed.sh'
 #
-# WHAT DORIATH ACTUALLY NEEDS (and why `occ app:enable` is not enough)
+# WHAT KEEPIQ ACTUALLY NEEDS (and why `occ app:enable` is not enough)
 # -------------------------------------------------------------------
-# Doriath is a zero-knowledge vault. Nine of its fifteen e2e spec files live in
+# Keepiq is a zero-knowledge vault. Nine of its fifteen e2e spec files live in
 # tests/e2e/workflows/ and DRIVE the vault: they unlock it with a known
 # development master password and then exercise secret CRUD, folders, sharing,
 # import, health and audit. That only works when the admin account owns an
@@ -99,19 +99,19 @@ fi
 # Every seeder is idempotent (SeedDevelopmentData returns early when admin
 # already owns a key-pair-consistent suite; SeedSecretTypes upserts by name), so
 # running them twice is harmless.
-echo "[ci-seed] enabling Nextcloud debug mode (gates the Doriath dev seeders)"
+echo "[ci-seed] enabling Nextcloud debug mode (gates the Keepiq dev seeders)"
 php occ config:system:set debug --value=true --type=boolean
 
-echo "[ci-seed] re-running Doriath repair steps so the dev seeders execute"
-php occ app:disable doriath
-php occ app:enable doriath
+echo "[ci-seed] re-running Keepiq repair steps so the dev seeders execute"
+php occ app:disable keepiq
+php occ app:enable keepiq
 
-# ── 2. Import the Doriath register into OpenRegister ─────────────────────────
-# Doriath adopts OpenRegister's AppHost engine (lib/AppInfo/Application.php,
-# ADR-040 / ADR-022) and ships lib/Settings/doriath_register.json.
+# ── 2. Import the Keepiq register into OpenRegister ─────────────────────────
+# Keepiq adopts OpenRegister's AppHost engine (lib/AppInfo/Application.php,
+# ADR-040 / ADR-022) and ships lib/Settings/keepiq_register.json.
 # `InitializeSettings` imports it with `force: false`, the version-guarded path,
 # which can advance the recorded configuration version WITHOUT applying
-# anything. Doriath has no `settings#import` route of its own (appinfo/routes.php
+# anything. Keepiq has no `settings#import` route of its own (appinfo/routes.php
 # registers only getAdminSettings / updateAdminSettings / getUserSettings /
 # updateUserSettings / getPolicy), so use OpenRegister's generic importer.
 #
@@ -125,7 +125,7 @@ php occ app:enable doriath
 # only README.md; if fragments are ever added they must each be posted
 # separately (the importer rejects multi-file uploads with "Expected only 1
 # file"), so the loop below is written to handle that already.
-APP_DIR="apps/doriath"
+APP_DIR="apps/keepiq"
 IMPORT_URL="${BASE}/index.php/apps/openregister/api/configurations/import"
 
 import_configuration() {
@@ -139,19 +139,19 @@ import_configuration() {
 			-H 'OCS-APIRequest: true' \
 			-F "file=@${file}" \
 			-F 'force=true' \
-			-F 'appId=doriath' \
+			-F 'appId=keepiq' \
 			"$IMPORT_URL" || echo 000
 	)"
 	echo "[ci-seed] import HTTP ${code}"
 	head -c 1500 "$body"; echo
 	if [ "$code" != "200" ]; then
-		echo "::error::Doriath configuration import failed for ${file} (HTTP ${code})."
+		echo "::error::Keepiq configuration import failed for ${file} (HTTP ${code})."
 		return 1
 	fi
 	return 0
 }
 
-import_configuration "${APP_DIR}/lib/Settings/doriath_register.json"
+import_configuration "${APP_DIR}/lib/Settings/keepiq_register.json"
 
 # ADR-037 fragments, in stable (sorted) order. `|| true` on the glob expansion
 # keeps `set -e` from aborting when the directory holds nothing but README.md.
@@ -174,8 +174,8 @@ done
 #
 # The shipped password_policy app rejects a password as short as the fixture's,
 # so it is disabled first. This instance exists only for this run.
-VAULT_FIXTURE_USER="${DORIATH_VAULT_USER:-alice}"
-VAULT_FIXTURE_PASS="${DORIATH_VAULT_PASS:-alice}"
+VAULT_FIXTURE_USER="${KEEPIQ_VAULT_USER:-alice}"
+VAULT_FIXTURE_PASS="${KEEPIQ_VAULT_PASS:-alice}"
 
 if php occ app:list | sed -n '/Enabled:/,/Disabled:/p' | grep -q 'password_policy'; then
 	echo "[ci-seed] disabling password_policy so the short fixture password is accepted"
@@ -191,7 +191,7 @@ if php occ user:info "$VAULT_FIXTURE_USER" >/dev/null 2>&1; then
 else
 	echo "[ci-seed] creating fixture user ${VAULT_FIXTURE_USER}"
 	OC_PASS="$VAULT_FIXTURE_PASS" php occ user:add --password-from-env \
-		--display-name="Doriath e2e vault fixture" "$VAULT_FIXTURE_USER"
+		--display-name="Keepiq e2e vault fixture" "$VAULT_FIXTURE_USER"
 fi
 
 if ! php occ user:info "$VAULT_FIXTURE_USER" >/dev/null 2>&1; then
@@ -304,9 +304,9 @@ elif kind == 'secrets':
 elif kind == 'registers':
     # REPORTED, NOT ASSERTED — deliberately. OpenRegister's ImportHandler
     # creates registers only from `components.registers`, and
-    # lib/Settings/doriath_register.json declares none: it is still the
+    # lib/Settings/keepiq_register.json declares none: it is still the
     # scaffold descriptor, carrying a single `example` schema and the comment
-    # "replace with your app's actual schemas". Asserting a `doriath` register
+    # "replace with your app's actual schemas". Asserting a `keepiq` register
     # here would assert something the shipped config does not describe.
     slugs = {field(i, 'slug') for i in items}
     print(f'[ci-seed] openregister registers present: {sorted(s for s in slugs if s)}')
@@ -317,7 +317,7 @@ elif kind == 'schemas':
     print(f'[ci-seed] openregister schemas present: {sorted(s for s in slugs if s)}')
     missing = [s for s in required if s not in slugs]
     if missing:
-        print(f'::error::Doriath schemas missing from OpenRegister after import: {missing}. '
+        print(f'::error::Keepiq schemas missing from OpenRegister after import: {missing}. '
               'The register descriptor did not apply — check the import response above.')
         sys.exit(1)
     print('[ci-seed] schemas OK.')
@@ -326,15 +326,15 @@ PY
 
 # Positive control FIRST — proves auth + unwrapping can return a non-empty list.
 TYPES_BODY="$(mktemp)"
-api_get '/index.php/apps/doriath/api/v1/secret-types' "$TYPES_BODY"
+api_get '/index.php/apps/keepiq/api/v1/secret-types' "$TYPES_BODY"
 verify "$TYPES_BODY" secret-types
 
 SUITES_BODY="$(mktemp)"
-api_get '/index.php/apps/doriath/api/v1/suites' "$SUITES_BODY"
+api_get '/index.php/apps/keepiq/api/v1/suites' "$SUITES_BODY"
 verify "$SUITES_BODY" suites
 
 SECRETS_BODY="$(mktemp)"
-api_get '/index.php/apps/doriath/api/v1/secrets?limit=100' "$SECRETS_BODY"
+api_get '/index.php/apps/keepiq/api/v1/secrets?limit=100' "$SECRETS_BODY"
 verify "$SECRETS_BODY" secrets
 
 REG_BODY="$(mktemp)"
@@ -348,10 +348,10 @@ verify "$SCH_BODY" schemas
 # The CA underwrites every suite certificate. Report its health — the
 # admin-settings spec asserts the "Healthy" label only when this agrees.
 CA_BODY="$(mktemp)"
-api_get '/index.php/apps/doriath/api/v1/ca/status' "$CA_BODY" || true
+api_get '/index.php/apps/keepiq/api/v1/ca/status' "$CA_BODY" || true
 echo "[ci-seed] CA status: $(head -c 400 "$CA_BODY")"
 
-echo "[ci-seed] Doriath dev vault provisioned."
+echo "[ci-seed] Keepiq dev vault provisioned."
 
 # ── 5. Warm the SPA so the first spec doesn't pay the cold start ─────────────
 # The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080`. It now sets
@@ -363,11 +363,11 @@ echo "[ci-seed] Doriath dev vault provisioned."
 # drifting upward. Failures are ignored on purpose — this is a warm-up, not a
 # gate. The real checks are above and below.
 for path in \
-	"/index.php/apps/doriath/" \
-	"/index.php/apps/doriath/lock" \
-	"/index.php/settings/admin/doriath" \
-	"/index.php/apps/doriath/api/v1/suites" \
-	"/index.php/apps/doriath/api/v1/secrets?limit=100"
+	"/index.php/apps/keepiq/" \
+	"/index.php/apps/keepiq/lock" \
+	"/index.php/settings/admin/keepiq" \
+	"/index.php/apps/keepiq/api/v1/suites" \
+	"/index.php/apps/keepiq/api/v1/secrets?limit=100"
 do
 	code="$(curl -sS -o /dev/null -w '%{http_code}' -u "${USER_NAME}:${USER_PASS}" \
 		-H 'OCS-APIRequest: true' "${BASE}${path}" || echo 000)"
@@ -386,13 +386,13 @@ done
 # actually JavaScript.
 APP_HTML="$(mktemp)"
 curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
-	"${BASE}/index.php/apps/doriath/" -o "$APP_HTML" || true
+	"${BASE}/index.php/apps/keepiq/" -o "$APP_HTML" || true
 
 # `|| true` is load-bearing: grep exits 1 when it matches nothing, and under
 # `set -euo pipefail` that aborts the script right here — so the case the gate
 # below exists to explain (no bundle) would die with a bare non-zero exit and
 # none of the diagnosis. Let it fall through to the gate instead.
-BUNDLE_SRC="$(grep -oE 'src="[^"]*doriath-main[^"]*"' "$APP_HTML" \
+BUNDLE_SRC="$(grep -oE 'src="[^"]*keepiq-main[^"]*"' "$APP_HTML" \
 	| head -1 | sed 's/^src="//; s/"$//' || true)"
 
 if [ -n "$BUNDLE_SRC" ]; then
@@ -418,7 +418,7 @@ if [ "$IN_CI" = "true" ]; then
 			echo "[ci-seed] bundle verified as JavaScript."
 			;;
 		*)
-			echo "::error::The Doriath frontend bundle did not serve as JavaScript (got: ${BUNDLE_INFO:-<not found>})."
+			echo "::error::The Keepiq frontend bundle did not serve as JavaScript (got: ${BUNDLE_INFO:-<not found>})."
 			echo "::error::The SPA cannot mount, so every UI spec would fail on a selector timeout with a misleading cause."
 			echo "::error::Check the 'Build app frontend' step — a missing bundle returns HTTP 200 text/html, not 404."
 			exit 1

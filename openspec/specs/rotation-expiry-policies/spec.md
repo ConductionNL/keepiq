@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Doriath's own roadmap lists "Password expiry reminders for secrets" (`docs/FEATURES.md:108`) as an unbuilt Enterprise feature, and it already carries the server-side fields a rotation loop needs — `key_updated_at` (ciphertext-age, `lib/Service/SecretService.php:411`) and `possibly_compromised_at` (`lib/Db/Secret.php:153`) — but nothing turns "stale" or "compromised" into a reminder or tracks whether the credential was actually rotated. This feature adds credential-hygiene the way NIS2 Art. 21(2)(j) (Dutch Cyberbeveiligingswet, ~Aug 2026) and BIO2 v1.3 push public-sector orgs to have it: per-secret and per-folder/type expiry, an admin-default and user-override max-age policy, approaching/overdue reminders (dashboard + Nextcloud notifications), a proven mark-rotated flow, and a rotate-after-breach/compromise flagging loop — all computed on server-visible metadata with **no decryption**, preserving the zero-knowledge model (ADR-003) and password-health's "No Server-Side Health Knowledge" invariant.
+Keepiq's own roadmap lists "Password expiry reminders for secrets" (`docs/FEATURES.md:108`) as an unbuilt Enterprise feature, and it already carries the server-side fields a rotation loop needs — `key_updated_at` (ciphertext-age, `lib/Service/SecretService.php:411`) and `possibly_compromised_at` (`lib/Db/Secret.php:153`) — but nothing turns "stale" or "compromised" into a reminder or tracks whether the credential was actually rotated. This feature adds credential-hygiene the way NIS2 Art. 21(2)(j) (Dutch Cyberbeveiligingswet, ~Aug 2026) and BIO2 v1.3 push public-sector orgs to have it: per-secret and per-folder/type expiry, an admin-default and user-override max-age policy, approaching/overdue reminders (dashboard + Nextcloud notifications), a proven mark-rotated flow, and a rotate-after-breach/compromise flagging loop — all computed on server-visible metadata with **no decryption**, preserving the zero-knowledge model (ADR-003) and password-health's "No Server-Side Health Knowledge" invariant.
 
 ## Requirements
 
@@ -77,7 +77,7 @@ The system MUST let a client batch-flag secret IDs for rotation with a neutral `
 - THEN each affected secret MUST carry an open `suite_compromise` flag
 
 ### Requirement: Rotation surfaced on dashboard and health report
-The system MUST surface pending rotation flags and overdue-expiry counts on the Doriath dashboard and within the existing password-health report categories, each finding deep-linking to the secret.
+The system MUST surface pending rotation flags and overdue-expiry counts on the Keepiq dashboard and within the existing password-health report categories, each finding deep-linking to the secret.
 
 #### Scenario: Dashboard shows rotation-due count
 - GIVEN an owner with open rotation flags
@@ -113,7 +113,7 @@ The system MUST emit audit events for setting expiry, flagging, rotating, dismis
 
 ## Notes
 
-- Honest boundary: Doriath stores static, zero-knowledge secrets and cannot mint dynamic credentials; this feature owns the policy/reminder/rotation-tracking loop on server-visible metadata (`key_updated_at`, `expires_at`, `possibly_compromised_at`) only — it never decrypts.
-- Reuses: `key_updated_at` and the staleness threshold from `password-health`; the re-request rotation mechanism from `secret-requests`; the `TimedJob`/notification patterns from `CheckRootCertificateExpiry`/`DoriathNotifier`; the string-typed audit whitelist from `secret-audit-trail`.
+- Honest boundary: Keepiq stores static, zero-knowledge secrets and cannot mint dynamic credentials; this feature owns the policy/reminder/rotation-tracking loop on server-visible metadata (`key_updated_at`, `expires_at`, `possibly_compromised_at`) only — it never decrypts.
+- Reuses: `key_updated_at` and the staleness threshold from `password-health`; the re-request rotation mechanism from `secret-requests`; the `TimedJob`/notification patterns from `CheckRootCertificateExpiry`/`KeepiqNotifier`; the string-typed audit whitelist from `secret-audit-trail`.
 - Related: `machine-secret-leases` (lease expiry emits a rotation trigger consumed here when both are present).
 - Related ADRs: ADR-001 (own tables — imperative, no OpenRegister), ADR-003 (zero-knowledge, no server-side decryption).

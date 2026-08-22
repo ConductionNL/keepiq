@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Version 22
+ * Keepiq Migration Version 22
  *
  * Credential rotation policies + expiry reminders
  * (rotation-expiry-policies §1.1): nullable `expires_at` on
@@ -10,7 +10,7 @@
  * never ciphertext (ADR-003).
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

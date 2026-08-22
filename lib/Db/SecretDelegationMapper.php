@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Secret Delegation Mapper
+ * Keepiq Secret Delegation Mapper
  *
  * Database mapper for secret delegation entities.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
