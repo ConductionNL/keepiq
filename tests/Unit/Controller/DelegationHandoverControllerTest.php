@@ -11,7 +11,7 @@
  * the service would satisfy a shape-only assertion.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,12 +24,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\DelegationController;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Service\DelegationService;
+use OCA\Keepiq\Controller\DelegationController;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Service\DelegationService;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;

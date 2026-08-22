@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit tests for suite revocation in `useEncryptionSuiteStore`
@@ -16,7 +16,7 @@
  *     suite" button, a confirmation NcNoteCard, and a reason field whose value
  *     gates the submit button (`:disabled="!revokeReason || revoking"`).
  *   - The Postman collection does NOT verify it. The only occurrence of
- *     "revoke" in tests/integration/doriath.postman_collection.json is inside
+ *     "revoke" in tests/integration/keepiq.postman_collection.json is inside
  *     an error-message string; there is no revoke request at all.
  *
  * Only the PHPUnit half held (EncryptionSuiteServiceTest::testRevokeSuiteSuccess
@@ -69,7 +69,7 @@ describe('useEncryptionSuiteStore — revocation', () => {
 
 		// The suite id must be in the path — revoking the wrong suite, or a
 		// path built from a stale id, locks a user out of the wrong vault.
-		expect(url).toContain('/apps/doriath/api/v1/suites/suite-1/revoke')
+		expect(url).toContain('/apps/keepiq/api/v1/suites/suite-1/revoke')
 
 		// The reason is REQUIRED by the spec: status is set alongside
 		// revoked_at, revoked_reason and revoked_by. Dropping it here would

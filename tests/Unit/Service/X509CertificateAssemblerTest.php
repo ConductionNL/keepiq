@@ -4,7 +4,7 @@
  * Unit tests for X509CertificateAssembler (certificate-lifecycle).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Service\CertificateIssuanceService;
-use OCA\Doriath\Service\X509CertificateAssembler;
+use OCA\Keepiq\Service\CertificateIssuanceService;
+use OCA\Keepiq\Service\X509CertificateAssembler;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -98,7 +98,7 @@ class X509CertificateAssemblerTest extends TestCase {
 
 		$dn = array_merge(
 			CertificateIssuanceService::DEFAULT_DN,
-			['commonName' => 'Doriath Test Intermediate']
+			['commonName' => 'Keepiq Test Intermediate']
 		);
 
 		$csr = openssl_csr_new($dn, $key, ['digest_alg' => 'sha256']);

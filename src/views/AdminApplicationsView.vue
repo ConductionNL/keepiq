@@ -2,7 +2,7 @@
   @visual exclude UNREACHABLE, not un-baselined — tracked in issue #208. Nothing
   in src/ imports this component: it is in no `pages[]` entry, not in
   src/registry.js, and there is no router. The shipped bundle settles it —
-  `grep -c doriath-applications-view js/doriath-main.js` returns 0 while the
+  `grep -c keepiq-applications-view js/keepiq-main.js` returns 0 while the
   same probe returns 1 for wired views (personal-activity, cert-inventory), so
   webpack tree-shook it out entirely. There is no route for a browser to visit
   and therefore no screen to capture. The admin approval queue that DOES ship is
@@ -12,67 +12,67 @@
   removed together with issue #208, by deleting this file or by wiring it up.
 -->
 <template>
-	<div class="doriath-applications-view">
-		<h2>{{ t('doriath', 'Registered applications') }}</h2>
+	<div class="keepiq-applications-view">
+		<h2>{{ t('keepiq', 'Registered applications') }}</h2>
 
-		<section class="doriath-applications-view__queue">
+		<section class="keepiq-applications-view__queue">
 			<header>
 				<h3>
-					{{ t('doriath', 'Pending approval') }}
+					{{ t('keepiq', 'Pending approval') }}
 					<span
 						v-if="pendingCount > 0"
-						class="doriath-applications-view__badge"
+						class="keepiq-applications-view__badge"
 						>{{ pendingCount }}</span
 					>
 				</h3>
 			</header>
 
 			<p v-if="store.loading">
-				{{ t('doriath', 'Loading…') }}
+				{{ t('keepiq', 'Loading…') }}
 			</p>
 
 			<p
 				v-else-if="pendingCount === 0"
-				class="doriath-applications-view__empty">
-				{{ t('doriath', 'No applications are awaiting approval.') }}
+				class="keepiq-applications-view__empty">
+				{{ t('keepiq', 'No applications are awaiting approval.') }}
 			</p>
 
-			<ul v-else class="doriath-applications-view__list">
+			<ul v-else class="keepiq-applications-view__list">
 				<li
 					v-for="app in pending"
 					:key="app.id"
-					class="doriath-applications-view__item"
+					class="keepiq-applications-view__item"
 					data-testid="pending-application">
-					<div class="doriath-applications-view__meta">
+					<div class="keepiq-applications-view__meta">
 						<strong>{{ app.name }}</strong>
 						<span
 							v-if="app.description"
-							class="doriath-applications-view__description"
+							class="keepiq-applications-view__description"
 							>{{ app.description }}</span
 						>
 						<small>
 							{{
-								t('doriath', 'Registered by {user}', {
+								t('keepiq', 'Registered by {user}', {
 									user:
 										app.registered_by
-										|| t('doriath', 'anonymous'),
+										|| t('keepiq', 'anonymous'),
 								})
 							}}
 						</small>
 					</div>
-					<div class="doriath-applications-view__actions">
+					<div class="keepiq-applications-view__actions">
 						<button
 							type="button"
 							class="primary"
 							data-testid="approve-button"
 							@click="approve(app.id)">
-							{{ t('doriath', 'Approve') }}
+							{{ t('keepiq', 'Approve') }}
 						</button>
 						<button
 							type="button"
 							data-testid="reject-button"
 							@click="reject(app.id)">
-							{{ t('doriath', 'Reject') }}
+							{{ t('keepiq', 'Reject') }}
 						</button>
 					</div>
 				</li>
@@ -81,13 +81,13 @@
 
 		<section
 			v-if="hasPrivateKey"
-			class="doriath-applications-view__keydialog"
+			class="keepiq-applications-view__keydialog"
 			data-testid="private-key-dialog">
-			<h3>{{ t('doriath', 'Save the application private key') }}</h3>
-			<p class="doriath-applications-view__warning">
+			<h3>{{ t('keepiq', 'Save the application private key') }}</h3>
+			<p class="keepiq-applications-view__warning">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'This is the only time the private key is shown. Save it securely; it cannot be recovered.',
 					)
 				}}
@@ -95,16 +95,16 @@
 			<textarea
 				:value="store.oneTimePrivateKey"
 				readonly
-				class="doriath-applications-view__keytext"
-				:aria-label="t('doriath', 'Private key')"
+				class="keepiq-applications-view__keytext"
+				:aria-label="t('keepiq', 'Private key')"
 				data-testid="private-key-text" />
-			<div class="doriath-applications-view__actions">
+			<div class="keepiq-applications-view__actions">
 				<label>
 					<input
 						v-model="acknowledged"
 						type="checkbox"
 						data-testid="acknowledge-key" />
-					{{ t('doriath', 'I have saved the private key.') }}
+					{{ t('keepiq', 'I have saved the private key.') }}
 				</label>
 				<button
 					type="button"
@@ -112,7 +112,7 @@
 					:disabled="acknowledged === false"
 					data-testid="dismiss-key"
 					@click="dismissKey">
-					{{ t('doriath', 'Dismiss') }}
+					{{ t('keepiq', 'Dismiss') }}
 				</button>
 			</div>
 		</section>
@@ -196,12 +196,12 @@ export default {
 </script>
 
 <style scoped>
-.doriath-applications-view {
+.keepiq-applications-view {
 	max-width: 800px;
 	padding: 1rem;
 }
 
-.doriath-applications-view__badge {
+.keepiq-applications-view__badge {
 	display: inline-block;
 	min-width: 1.5rem;
 	padding: 0 0.4rem;
@@ -212,13 +212,13 @@ export default {
 	text-align: center;
 }
 
-.doriath-applications-view__list {
+.keepiq-applications-view__list {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
 
-.doriath-applications-view__item {
+.keepiq-applications-view__item {
 	display: flex;
 	gap: 1rem;
 	align-items: flex-start;
@@ -227,22 +227,22 @@ export default {
 	border-bottom: 1px solid var(--color-border, #ddd);
 }
 
-.doriath-applications-view__description {
+.keepiq-applications-view__description {
 	display: block;
 	color: var(--color-text-lighter);
 }
 
-.doriath-applications-view__actions {
+.keepiq-applications-view__actions {
 	display: flex;
 	gap: 0.5rem;
 	align-items: center;
 }
 
-.doriath-applications-view__empty {
+.keepiq-applications-view__empty {
 	color: var(--color-text-lighter);
 }
 
-.doriath-applications-view__keydialog {
+.keepiq-applications-view__keydialog {
 	margin-top: 2rem;
 	padding: 1rem;
 	/* --color-warning-rest is not a Nextcloud variable, so this always fell back
@@ -254,12 +254,12 @@ export default {
 	color: var(--color-main-text);
 }
 
-.doriath-applications-view__warning {
+.keepiq-applications-view__warning {
 	font-weight: 600;
 	color: var(--color-error-text);
 }
 
-.doriath-applications-view__keytext {
+.keepiq-applications-view__keytext {
 	width: 100%;
 	min-height: 12rem;
 	font-family: monospace;

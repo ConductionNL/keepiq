@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath JWK Factory Adapter
+ * Keepiq JWK Factory Adapter
  *
  * A thin injectable seam over web-token/jwt-library's JWKFactory, whose key
  * construction entry points are static factory methods with no instance API
@@ -13,7 +13,7 @@
  * a test substitute the JWK construction step of the assertion-exchange path.
  *
  * @category Support
- * @package  OCA\Doriath\Support
+ * @package  OCA\Keepiq\Support
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,7 +26,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Support;
+namespace OCA\Keepiq\Support;
 
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;

@@ -3,7 +3,7 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   Account deletion dialog (secret-export-gdpr D4, tasks §6.3). Irreversibly
-  deletes all of the user's Doriath data (GDPR Art. 17). Double-gated:
+  deletes all of the user's Keepiq data (GDPR Art. 17). Double-gated:
 
   - Fresh master-password re-entry (client-side proof of knowledge, verified by
     decrypting the private-key blob — never sent to the server).
@@ -16,7 +16,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Delete my Doriath data')"
+		:name="t('keepiq', 'Delete my Keepiq data')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -28,27 +28,27 @@
 			<!-- Success: show the report -->
 			<div v-if="report" class="deletion-dialog__report">
 				<NcNoteCard type="success">
-					{{ t('doriath', 'Your Doriath data has been deleted.') }}
+					{{ t('keepiq', 'Your Keepiq data has been deleted.') }}
 				</NcNoteCard>
 				<ul>
 					<li>
-						{{ t('doriath', 'Secrets deleted') }}:
+						{{ t('keepiq', 'Secrets deleted') }}:
 						{{ report.secretsDeleted }}
 					</li>
 					<li>
-						{{ t('doriath', 'Secrets transferred to a delegate') }}:
+						{{ t('keepiq', 'Secrets transferred to a delegate') }}:
 						{{ report.secretsTransferred }}
 					</li>
 					<li>
-						{{ t('doriath', 'Shares detached') }}:
+						{{ t('keepiq', 'Shares detached') }}:
 						{{ report.sharesDetached }}
 					</li>
 					<li>
-						{{ t('doriath', 'Received shares removed') }}:
+						{{ t('keepiq', 'Received shares removed') }}:
 						{{ report.sharesRemoved }}
 					</li>
 					<li>
-						{{ t('doriath', 'Encryption suites removed') }}:
+						{{ t('keepiq', 'Encryption suites removed') }}:
 						{{ report.suitesDeleted }}
 					</li>
 				</ul>
@@ -58,7 +58,7 @@
 				<NcNoteCard type="warning">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'This permanently deletes ALL of your secrets, folders, shares, link shares, requests, and encryption keys. This cannot be undone.',
 						)
 					}}
@@ -66,13 +66,13 @@
 
 				<p class="deletion-dialog__suggestion">
 					<a href="#" @click.prevent="$emit('export-first')">
-						{{ t('doriath', 'Export your vault first (recommended)') }}
+						{{ t('keepiq', 'Export your vault first (recommended)') }}
 					</a>
 				</p>
 
 				<NcPasswordField
 					v-model="masterPassword"
-					:label="t('doriath', 'Re-enter your master password')" />
+					:label="t('keepiq', 'Re-enter your master password')" />
 
 				<NcTextField v-model="confirmation" :label="confirmationLabel" />
 			</div>
@@ -80,14 +80,14 @@
 
 		<template #actions>
 			<NcButton @click="onUpdateOpen(false)">
-				{{ report ? t('doriath', 'Close') : t('doriath', 'Cancel') }}
+				{{ report ? t('keepiq', 'Close') : t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				v-if="!report"
 				variant="error"
 				:disabled="!canSubmit || loading"
 				@click="onDelete">
-				{{ t('doriath', 'Delete everything') }}
+				{{ t('keepiq', 'Delete everything') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -106,7 +106,7 @@ import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
 
 /** The exact phrase the user must type (mirrors GdprController). */
-const CONFIRMATION_PHRASE = 'DELETE MY DORIATH DATA'
+const CONFIRMATION_PHRASE = 'DELETE MY KEEPIQ DATA'
 
 export default {
 	name: 'AccountDeletionDialog',
@@ -166,7 +166,7 @@ export default {
 		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 		 */
 		confirmationLabel() {
-			return this.t('doriath', 'Type "{phrase}" to confirm', {
+			return this.t('keepiq', 'Type "{phrase}" to confirm', {
 				phrase: CONFIRMATION_PHRASE,
 			})
 		},
@@ -201,7 +201,7 @@ export default {
 				this.masterPassword,
 			)
 			if (!ok) {
-				this.error = this.t('doriath', 'Incorrect master password')
+				this.error = this.t('keepiq', 'Incorrect master password')
 				return
 			}
 			try {
@@ -214,7 +214,7 @@ export default {
 				this.error =
 					this.exportStore.error
 					|| (e && e.message)
-					|| this.t('doriath', 'Deletion failed')
+					|| this.t('keepiq', 'Deletion failed')
 			}
 		},
 

@@ -10,49 +10,49 @@
   @spec openspec/changes/implement-secret-requests/tasks.md#task-8.3
 -->
 <template>
-	<section class="doriath-secret-request-list" data-testid="secret-request-list">
-		<header class="doriath-secret-request-list__header">
-			<h4>{{ t('doriath', 'Outstanding requests') }}</h4>
+	<section class="keepiq-secret-request-list" data-testid="secret-request-list">
+		<header class="keepiq-secret-request-list__header">
+			<h4>{{ t('keepiq', 'Outstanding requests') }}</h4>
 			<span
 				v-if="store.pendingCount > 0"
-				class="doriath-secret-request-list__count"
+				class="keepiq-secret-request-list__count"
 				data-testid="secret-request-pending-count">
 				{{ store.pendingCount }}
 			</span>
 		</header>
 
-		<p v-if="store.loading" class="doriath-secret-request-list__loading">
-			{{ t('doriath', 'Loading…') }}
+		<p v-if="store.loading" class="keepiq-secret-request-list__loading">
+			{{ t('keepiq', 'Loading…') }}
 		</p>
 
 		<p
 			v-else-if="rows.length === 0"
-			class="doriath-secret-request-list__empty"
+			class="keepiq-secret-request-list__empty"
 			data-testid="secret-request-list-empty">
-			{{ t('doriath', 'No outstanding requests.') }}
+			{{ t('keepiq', 'No outstanding requests.') }}
 		</p>
 
-		<ul v-else class="doriath-secret-request-list__rows">
+		<ul v-else class="keepiq-secret-request-list__rows">
 			<li
 				v-for="row in rows"
 				:key="row.id"
-				class="doriath-secret-request-list__row"
+				class="keepiq-secret-request-list__row"
 				:data-testid="`secret-request-row-${row.status}`">
-				<div class="doriath-secret-request-list__meta">
+				<div class="keepiq-secret-request-list__meta">
 					<strong>{{ statusLabel(effectiveStatus(row)) }}</strong>
 					<span
-						class="doriath-secret-request-list__expiry"
+						class="keepiq-secret-request-list__expiry"
 						:data-testid="`secret-request-row-expiry-${row.id}`"
 						>{{ expiryLabel(row) }}</span
 					>
-					<span class="doriath-secret-request-list__token">{{
+					<span class="keepiq-secret-request-list__token">{{
 						truncateToken(row.token)
 					}}</span>
-					<span class="doriath-secret-request-list__fields">{{
+					<span class="keepiq-secret-request-list__fields">{{
 						formatFields(row.requestedFields || row.requested_fields)
 					}}</span>
 				</div>
-				<div class="doriath-secret-request-list__actions">
+				<div class="keepiq-secret-request-list__actions">
 					<!--
 					  Recovering the link is the whole point of this list. The token is
 					  shown truncated on purpose, so without this the link is
@@ -62,23 +62,23 @@
 					<button
 						v-if="canCopyLink(row)"
 						type="button"
-						class="doriath-secret-request-list__copy"
+						class="keepiq-secret-request-list__copy"
 						:data-testid="`secret-request-row-copy-${row.id}`"
 						@click="onCopyLink(row)">
 						{{
 							copiedId === row.id
-								? t('doriath', 'Link copied')
-								: t('doriath', 'Copy fill link')
+								? t('keepiq', 'Link copied')
+								: t('keepiq', 'Copy fill link')
 						}}
 					</button>
 					<button
 						v-if="row.status === 'pending'"
 						type="button"
-						class="doriath-secret-request-list__revoke"
+						class="keepiq-secret-request-list__revoke"
 						data-testid="secret-request-row-revoke"
 						:disabled="store.loading"
 						@click="onRevoke(row.id)">
-						{{ t('doriath', 'Revoke') }}
+						{{ t('keepiq', 'Revoke') }}
 					</button>
 				</div>
 			</li>
@@ -86,7 +86,7 @@
 
 		<p
 			v-if="store.error"
-			class="doriath-secret-request-list__error"
+			class="keepiq-secret-request-list__error"
 			data-testid="secret-request-list-error">
 			{{ store.error }}
 		</p>
@@ -299,7 +299,7 @@ export default {
 				}, 1500)
 			} catch (e) {
 				// eslint-disable-next-line no-console
-				console.warn('Doriath: clipboard write failed', e)
+				console.warn('Keepiq: clipboard write failed', e)
 			}
 		},
 
@@ -353,15 +353,15 @@ export default {
 		expiryLabel(row) {
 			const expiry = row?.expiresAt || row?.expires_at
 			if (!expiry) {
-				return t('doriath', 'No expiry')
+				return t('keepiq', 'No expiry')
 			}
 
 			const when = this.formatDate(expiry)
 			if (new Date(expiry).getTime() <= Date.now()) {
-				return t('doriath', 'Expired {when}', { when })
+				return t('keepiq', 'Expired {when}', { when })
 			}
 
-			return t('doriath', 'Expires {when}', { when })
+			return t('keepiq', 'Expires {when}', { when })
 		},
 
 		/**
@@ -404,15 +404,15 @@ export default {
 		statusLabel(status) {
 			switch (status) {
 				case 'pending':
-					return t('doriath', 'Pending')
+					return t('keepiq', 'Pending')
 				case 'fulfilled':
-					return t('doriath', 'Fulfilled')
+					return t('keepiq', 'Fulfilled')
 				case 'declined':
-					return t('doriath', 'Declined')
+					return t('keepiq', 'Declined')
 				case 'locked':
-					return t('doriath', 'Locked')
+					return t('keepiq', 'Locked')
 				case 'expired':
-					return t('doriath', 'Expired')
+					return t('keepiq', 'Expired')
 				default:
 					return status
 			}
@@ -492,13 +492,13 @@ export default {
 </script>
 
 <style scoped>
-.doriath-secret-request-list__header {
+.keepiq-secret-request-list__header {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
 
-.doriath-secret-request-list__count {
+.keepiq-secret-request-list__count {
 	/* A badge needs its own contrast, not the page's. --color-warning-rest does
 	   not exist, so this was a pale cream fallback carrying warning-coloured
 	   text — low contrast in light mode and wrong in dark. Nextcloud guarantees
@@ -510,13 +510,13 @@ export default {
 	padding: 2px 8px;
 }
 
-.doriath-secret-request-list__rows {
+.keepiq-secret-request-list__rows {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
 
-.doriath-secret-request-list__row {
+.keepiq-secret-request-list__row {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -525,27 +525,27 @@ export default {
 	gap: 8px;
 }
 
-.doriath-secret-request-list__meta {
+.keepiq-secret-request-list__meta {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 }
 
-.doriath-secret-request-list__copy {
+.keepiq-secret-request-list__copy {
 	cursor: pointer;
 }
 
-.doriath-secret-request-list__token {
+.keepiq-secret-request-list__token {
 	font-family: monospace;
 	font-size: 12px;
 	color: var(--color-text-maxcontrast, #777);
 }
 
-.doriath-secret-request-list__fields {
+.keepiq-secret-request-list__fields {
 	font-size: 12px;
 }
 
-.doriath-secret-request-list__revoke {
+.keepiq-secret-request-list__revoke {
 	background: transparent;
 	border: 1px solid var(--color-border-dark, #999);
 	color: var(--color-error-text);
@@ -554,12 +554,12 @@ export default {
 	cursor: pointer;
 }
 
-.doriath-secret-request-list__empty {
+.keepiq-secret-request-list__empty {
 	color: var(--color-text-maxcontrast, #777);
 	font-size: 13px;
 }
 
-.doriath-secret-request-list__error {
+.keepiq-secret-request-list__error {
 	color: var(--color-error-text);
 	font-size: 13px;
 }

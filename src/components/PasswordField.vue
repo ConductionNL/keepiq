@@ -1,5 +1,5 @@
 <template>
-	<div class="doriath-password-field">
+	<div class="keepiq-password-field">
 		<!-- v9 NcInputField models through `modelValue` and has NO `value` prop.
 		     A `:value` binding leaves `modelValue` undefined (it is declared
 		     `required`), the component throws
@@ -13,15 +13,15 @@
 			:readOnly="true" />
 		<NcButton
 			variant="tertiary"
-			:aria-label="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
-			:title="revealed ? t('doriath', 'Hide') : t('doriath', 'Show')"
+			:aria-label="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
+			:title="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
 			@click="toggle">
 			<template #icon>
 				<EyeOff v-if="revealed" :size="20" />
 				<Eye v-else :size="20" />
 			</template>
 		</NcButton>
-		<CopyButton :resolve="resolvePlain" :label="t('doriath', 'Copy password')" />
+		<CopyButton :resolve="resolvePlain" :label="t('keepiq', 'Copy password')" />
 	</div>
 </template>
 
@@ -54,7 +54,7 @@ export default {
 		label: {
 			type: String,
 			default() {
-				return t('doriath', 'Password')
+				return t('keepiq', 'Password')
 			},
 		},
 
@@ -110,13 +110,13 @@ export default {
 </script>
 
 <style scoped>
-.doriath-password-field {
+.keepiq-password-field {
 	display: flex;
 	align-items: flex-end;
 	gap: 4px;
 }
 
-.doriath-password-field :deep(.input-field) {
+.keepiq-password-field :deep(.input-field) {
 	flex: 1 1 auto;
 }
 </style>

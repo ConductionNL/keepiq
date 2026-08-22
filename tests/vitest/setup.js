@@ -1,8 +1,8 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Global setup for Doriath Vitest unit tests.
+ * Global setup for Keepiq Vitest unit tests.
  *
  * Stubs the Nextcloud `t()` and `n()` translation helpers so component
  * renders that call them resolve to the bare key string. Loaded

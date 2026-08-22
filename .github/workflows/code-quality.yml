@@ -103,14 +103,14 @@ jobs:
   quality:
     uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
-      app-name: doriath
+      app-name: keepiq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
       # Order matters: the PHPUnit matrix uses the whole list, but the E2E
       # (Playwright), Newman and Journeydoc jobs all check out
       # `fromJSON(nextcloud-test-refs)[0]` as their single server. That server
       # has to be one OpenRegister can load, because `additional-apps` below
-      # installs it and doriath's AppHost integration delegates to it —
+      # installs it and keepiq's AppHost integration delegates to it —
       # OpenRegister's lib/ContextChat/ContentProvider.php implements
       # `OCP\ContextChat\IContentProvider`, which exists in stable32 and NOT in
       # stable31 (verified: raw.githubusercontent.com returns 404 for the
@@ -145,8 +145,8 @@ jobs:
       enable-eslint: true
       enable-phpunit: true
       enable-newman: true
-      # Doriath adopts OpenRegister's AppHost engine in lib/AppInfo/Application.php
-      # (ADR-040 / ADR-022) and ships lib/Settings/doriath_register.json, so
+      # Keepiq adopts OpenRegister's AppHost engine in lib/AppInfo/Application.php
+      # (ADR-040 / ADR-022) and ships lib/Settings/keepiq_register.json, so
       # OpenRegister must be present in the test instance — otherwise
       # SettingsService::isOpenRegisterAvailable() is false, InitializeSettings
       # skips the register import with a warning, and the app boots without the
@@ -179,7 +179,7 @@ jobs:
       # upload-artifact steps actually look.
       enable-playwright: true
       playwright-test-path: tests/e2e
-      # Doriath's nine workflow specs UNLOCK the vault with the development
+      # Keepiq's nine workflow specs UNLOCK the vault with the development
       # master password seeded by lib/Repair/SeedDevelopmentData.php — and that
       # repair step returns immediately unless the `debug` system config is
       # true, which `occ maintenance:install` does not set. A stock CI install
@@ -188,7 +188,7 @@ jobs:
       # register through OpenRegister's admin API, and fails loudly if the
       # suite / secrets / schemas still aren't there.
       # cwd for this step is the Nextcloud server root.
-      playwright-seed-command: 'bash apps/doriath/tests/e2e/ci-seed.sh'
+      playwright-seed-command: 'bash apps/keepiq/tests/e2e/ci-seed.sh'
 
       # ── Frontend Check legs ──────────────────────────────────────────────
       # `frontend-checks` defaults to `[]`, and an empty list means the shared

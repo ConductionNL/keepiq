@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Folder Tree Service
+ * Keepiq Folder Tree Service
  *
  * The SHAPE-CHANGING operations of the per-owner folder tree: create, rename
  * and move. Each validates the name, resolves ownership of anything it
@@ -11,7 +11,7 @@
  * Deletion is a protocol of its own and lives in FolderDeletionService.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,15 +24,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Exception\DuplicateFolderNameException;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Exception\DuplicateFolderNameException;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -113,7 +113,7 @@ class FolderTreeService {
 		$folder->setUpdatedAt($now);
 
 		$this->mapper->insert($folder);
-		$this->logger->info("Doriath: folder '{$name}' created by {$userId}");
+		$this->logger->info("Keepiq: folder '{$name}' created by {$userId}");
 
 		return $folder;
 	}//end create()

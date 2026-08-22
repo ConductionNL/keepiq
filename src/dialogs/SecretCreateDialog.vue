@@ -8,7 +8,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'New secret')"
+		:name="t('keepiq', 'New secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -17,18 +17,18 @@
 				{{ error }}
 			</NcNoteCard>
 			<NcNoteCard v-if="locked" type="warning">
-				{{ t('doriath', 'Unlock the vault before creating a secret.') }}
+				{{ t('keepiq', 'Unlock the vault before creating a secret.') }}
 			</NcNoteCard>
 
 			<NcTextField
 				v-model="name"
-				:label="t('doriath', 'Name')"
+				:label="t('keepiq', 'Name')"
 				:required="true" />
 
 			<NcSelect
 				v-model="typeId"
 				:options="typeOptions"
-				:inputLabel="t('doriath', 'Type')"
+				:inputLabel="t('keepiq', 'Type')"
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
@@ -37,7 +37,7 @@
 			<template v-if="isCard">
 				<NcPasswordField
 					v-model="card.number"
-					:label="t('doriath', 'Card number')"
+					:label="t('keepiq', 'Card number')"
 					data-testid="card-number" />
 				<NcNoteCard
 					v-if="card.number !== '' && !luhnOk"
@@ -45,52 +45,52 @@
 					data-testid="card-luhn-hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'This number does not pass the card checksum — double-check it (saving is not blocked).',
 						)
 					}}
 				</NcNoteCard>
 				<NcTextField
 					v-model="card.expiry"
-					:label="t('doriath', 'Expiry (MM/YY)')"
+					:label="t('keepiq', 'Expiry (MM/YY)')"
 					data-testid="card-expiry" />
 				<NcPasswordField
 					v-model="card.cvv"
-					:label="t('doriath', 'CVV')"
+					:label="t('keepiq', 'CVV')"
 					data-testid="card-cvv" />
 				<NcPasswordField
 					v-model="card.pin"
-					:label="t('doriath', 'PIN (optional)')"
+					:label="t('keepiq', 'PIN (optional)')"
 					data-testid="card-pin" />
 				<NcTextField
 					v-model="card.cardholder"
-					:label="t('doriath', 'Cardholder name')"
+					:label="t('keepiq', 'Cardholder name')"
 					data-testid="card-cardholder" />
 			</template>
 			<template v-else-if="isIdentity">
 				<NcTextField
 					v-model="identity.firstName"
-					:label="t('doriath', 'First name')"
+					:label="t('keepiq', 'First name')"
 					data-testid="identity-first-name" />
 				<NcTextField
 					v-model="identity.lastName"
-					:label="t('doriath', 'Last name')"
+					:label="t('keepiq', 'Last name')"
 					data-testid="identity-last-name" />
 				<NcTextField
 					v-model="identity.address"
-					:label="t('doriath', 'Address')"
+					:label="t('keepiq', 'Address')"
 					data-testid="identity-address" />
 				<NcTextField
 					v-model="identity.phone"
-					:label="t('doriath', 'Phone')"
+					:label="t('keepiq', 'Phone')"
 					data-testid="identity-phone" />
 				<NcTextField
 					v-model="identity.email"
-					:label="t('doriath', 'Email')"
+					:label="t('keepiq', 'Email')"
 					data-testid="identity-email" />
 				<NcPasswordField
 					v-model="identity.bsn"
-					:label="t('doriath', 'BSN')"
+					:label="t('keepiq', 'BSN')"
 					data-testid="identity-bsn" />
 			</template>
 			<div v-else class="secret-form__value-row">
@@ -100,8 +100,8 @@
 					:label="valueLabel" />
 				<NcButton
 					variant="tertiary-no-background"
-					:title="t('doriath', 'Generate a strong key')"
-					:aria-label="t('doriath', 'Generate a strong key')"
+					:title="t('keepiq', 'Generate a strong key')"
+					:aria-label="t('keepiq', 'Generate a strong key')"
 					@click="openGenerator">
 					<template #icon>
 						<Dice5 :size="20" />
@@ -115,9 +115,9 @@
 				@update:open="generatorOpen = $event"
 				@generated="onGenerated" />
 
-			<NcTextField v-model="url" :label="t('doriath', 'URL (optional)')" />
+			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
-			<NcTextField v-model="login" :label="t('doriath', 'Login (optional)')" />
+			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
 			<AdditionalFieldsEditor
 				:members="additionalFields"
@@ -127,7 +127,7 @@
 			<NcSelect
 				v-model="selectedFolderId"
 				:options="folderOptions"
-				:inputLabel="t('doriath', 'Folder')"
+				:inputLabel="t('keepiq', 'Folder')"
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
@@ -141,14 +141,14 @@
 
 		<template #actions>
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<Plus v-else :size="20" />
 				</template>
-				{{ t('doriath', 'Create secret') }}
+				{{ t('keepiq', 'Create secret') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -258,7 +258,7 @@ export default {
 		},
 
 		folderOptions() {
-			const roots = [{ value: null, label: t('doriath', 'Vault root') }]
+			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
 				useFolderStore().folders.map((folder) => ({
 					value: folder.id,
@@ -270,8 +270,8 @@ export default {
 		valueLabel() {
 			const type = useSecretTypeStore().typesById[this.typeId]
 			return type && type.name === 'note'
-				? t('doriath', 'Note')
-				: t('doriath', 'Secret value')
+				? t('keepiq', 'Note')
+				: t('keepiq', 'Secret value')
 		},
 
 		/** The selected type's system name (card-identity-items §3.1). */
@@ -443,7 +443,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to create secret')
+					|| t('keepiq', 'Failed to create secret')
 			} finally {
 				this.saving = false
 			}

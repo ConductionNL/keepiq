@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath X.509 Certificate Assembler
+ * Keepiq X.509 Certificate Assembler
  *
  * Assembles and signs X.509 certificates with phpseclib, which — unlike
  * ext-openssl's CSR path — can bind a PUBLIC-ONLY key deterministically
@@ -13,7 +13,7 @@
  * so it is purely the "how do we mint this DER" half of issuance.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,10 +26,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Support\PublicKeyLoaderAdapter;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Support\PublicKeyLoaderAdapter;
 use phpseclib3\Crypt\RSA;
 use phpseclib3\Crypt\RSA\PrivateKey;
 use phpseclib3\Crypt\RSA\PublicKey;
@@ -164,7 +164,7 @@ class X509CertificateAssembler {
 			return $signer->saveX509($signed);
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: phpseclib re-sign failed: ' . $exception->getMessage(),
+				'Keepiq: phpseclib re-sign failed: ' . $exception->getMessage(),
 				['app' => Application::APP_ID]
 			);
 

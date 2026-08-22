@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Honey Alert Entity
+ * Keepiq Honey Alert Entity
  *
  * One raised tripwire alert (honey-credentials §1): who accessed a
  * decoy secret, over which channel, from where. Carries NO secret
  * material — accessor/channel/transport metadata only.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

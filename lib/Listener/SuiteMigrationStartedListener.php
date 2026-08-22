@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath SuiteMigrationStartedListener
+ * Keepiq SuiteMigrationStartedListener
  *
  * Responds to a compromise-recovery start by locking dependent SecretRequests
  * so the public fill page returns 423 LOCKED until the migration completes
  * (implement-secret-requests §6.1).
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,10 +21,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Event\SuiteMigrationStartedEvent;
-use OCA\Doriath\Service\SecretRequestSuiteLockService;
+use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
+use OCA\Keepiq\Service\SecretRequestSuiteLockService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -67,7 +67,7 @@ class SuiteMigrationStartedListener implements IEventListener {
 		try {
 			$locked = $this->secretRequestService->lockByEncryptionSuiteId($event->getOldSuiteId());
 			$this->logger->info(
-				'Doriath: locked SecretRequests for compromised suite',
+				'Keepiq: locked SecretRequests for compromised suite',
 				[
 					'oldSuiteId' => $event->getOldSuiteId(),
 					'locked' => $locked,
@@ -75,7 +75,7 @@ class SuiteMigrationStartedListener implements IEventListener {
 			);
 		} catch (Throwable $e) {
 			$this->logger->error(
-				'Doriath: SuiteMigrationStartedListener failed: ' . $e->getMessage(),
+				'Keepiq: SuiteMigrationStartedListener failed: ' . $e->getMessage(),
 				['exception' => $e]
 			);
 		}

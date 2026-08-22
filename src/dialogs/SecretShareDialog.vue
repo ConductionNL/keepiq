@@ -13,7 +13,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Share secret')"
+		:name="t('keepiq', 'Share secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -27,30 +27,30 @@
 				<NcNoteCard type="success">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Link created. Copy the link and password now — the password is shown only once.',
 						)
 					}}
 				</NcNoteCard>
 				<div class="share-dialog__row">
 					<span class="share-dialog__label">{{
-						t('doriath', 'Link')
+						t('keepiq', 'Link')
 					}}</span>
 					<span class="share-dialog__value">{{ createdUrl }}</span>
 					<CopyButton
 						:value="createdUrl"
-						:label="t('doriath', 'Copy link')" />
+						:label="t('keepiq', 'Copy link')" />
 				</div>
 				<div class="share-dialog__row">
 					<span class="share-dialog__label">{{
-						t('doriath', 'Password')
+						t('keepiq', 'Password')
 					}}</span>
 					<span class="share-dialog__value share-dialog__value--mono">{{
 						createdPassword
 					}}</span>
 					<CopyButton
 						:value="createdPassword"
-						:label="t('doriath', 'Copy password')" />
+						:label="t('keepiq', 'Copy password')" />
 				</div>
 			</div>
 
@@ -59,7 +59,7 @@
 				<p class="share-dialog__intro">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Create a password-protected link. Anyone with the link and password can view the secret until the usage limit is reached.',
 						)
 					}}
@@ -68,16 +68,16 @@
 					v-model="usageLimit"
 					:options="usageOptions"
 					:reduce="(opt) => opt.value"
-					:inputLabel="t('doriath', 'Usage limit')"
+					:inputLabel="t('keepiq', 'Usage limit')"
 					:clearable="false" />
 			</div>
 
 			<!-- Existing link shares. -->
 			<div class="share-dialog__existing">
-				<h4>{{ t('doriath', 'Active link shares') }}</h4>
+				<h4>{{ t('keepiq', 'Active link shares') }}</h4>
 				<NcLoadingIcon v-if="loadingShares" :size="24" />
 				<p v-else-if="linkShares.length === 0" class="share-dialog__empty">
-					{{ t('doriath', 'No active link shares.') }}
+					{{ t('keepiq', 'No active link shares.') }}
 				</p>
 				<div
 					v-for="share in linkShares"
@@ -85,7 +85,7 @@
 					class="share-dialog__share-row">
 					<span class="share-dialog__value">
 						{{
-							t('doriath', 'Used {used} of {limit}', {
+							t('keepiq', 'Used {used} of {limit}', {
 								used: share.usageCount || 0,
 								limit: share.usageLimit,
 							})
@@ -93,7 +93,7 @@
 					</span>
 					<NcButton
 						variant="tertiary"
-						:aria-label="t('doriath', 'Revoke')"
+						:aria-label="t('keepiq', 'Revoke')"
 						@click="revoke(share.id)">
 						<template #icon>
 							<Delete :size="20" />
@@ -108,14 +108,14 @@
 					<template #icon>
 						<AccountPlus :size="20" />
 					</template>
-					{{ t('doriath', 'Share with a Nextcloud user (coming soon)') }}
+					{{ t('keepiq', 'Share with a Nextcloud user (coming soon)') }}
 				</NcButton>
 			</div>
 		</div>
 
 		<template #actions>
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ createdUrl ? t('doriath', 'Done') : t('doriath', 'Cancel') }}
+				{{ createdUrl ? t('keepiq', 'Done') : t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				v-if="!createdUrl"
@@ -126,7 +126,7 @@
 					<NcLoadingIcon v-if="creating" :size="20" />
 					<ShareVariant v-else :size="20" />
 				</template>
-				{{ t('doriath', 'Create link') }}
+				{{ t('keepiq', 'Create link') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -224,7 +224,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to load link shares')
+					|| t('keepiq', 'Failed to load link shares')
 			} finally {
 				this.loadingShares = false
 			}
@@ -277,7 +277,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to create link share')
+					|| t('keepiq', 'Failed to create link share')
 			} finally {
 				this.creating = false
 			}
@@ -297,7 +297,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to revoke link share')
+					|| t('keepiq', 'Failed to revoke link share')
 			}
 		},
 	},

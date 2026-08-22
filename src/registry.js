@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
- * V2 component registry for doriath (hydra ADR-036).
+ * V2 component registry for keepiq (hydra ADR-036).
  *
  * Recognised kinds: page, widget, modal, form-field, cell-renderer.
  *

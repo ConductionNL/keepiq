@@ -24,53 +24,53 @@
 -->
 <template>
 	<section
-		class="doriath-additional-fields"
+		class="keepiq-additional-fields"
 		data-testid="additional-fields-editor">
-		<h4 class="doriath-additional-fields__title">
-			{{ t('doriath', 'Additional fields') }}
+		<h4 class="keepiq-additional-fields__title">
+			{{ t('keepiq', 'Additional fields') }}
 		</h4>
 
 		<p
 			v-if="members.length === 0"
-			class="doriath-additional-fields__empty"
+			class="keepiq-additional-fields__empty"
 			data-testid="additional-fields-empty">
-			{{ t('doriath', 'No additional fields yet.') }}
+			{{ t('keepiq', 'No additional fields yet.') }}
 		</p>
 
-		<ul v-else class="doriath-additional-fields__list">
+		<ul v-else class="keepiq-additional-fields__list">
 			<li
 				v-for="(member, index) in members"
 				:key="index"
-				class="doriath-additional-fields__row"
+				class="keepiq-additional-fields__row"
 				:data-testid="`additional-field-row-${index}`">
 				<NcTextField
 					:modelValue="member.name"
-					:label="t('doriath', 'Field name')"
+					:label="t('keepiq', 'Field name')"
 					:disabled="disabled"
 					:data-testid="`additional-field-name-${index}`"
 					@update:modelValue="onRename(index, $event)" />
 				<NcTextField
 					:modelValue="member.value"
-					:label="t('doriath', 'Value')"
+					:label="t('keepiq', 'Value')"
 					:disabled="disabled"
 					:data-testid="`additional-field-value-${index}`"
 					@update:modelValue="onRevalue(index, $event)" />
 				<NcButton
 					variant="tertiary"
 					:disabled="disabled"
-					:aria-label="t('doriath', 'Remove this field')"
+					:aria-label="t('keepiq', 'Remove this field')"
 					:data-testid="`additional-field-remove-${index}`"
 					@click="onRemove(index)">
-					{{ t('doriath', 'Remove') }}
+					{{ t('keepiq', 'Remove') }}
 				</NcButton>
 			</li>
 		</ul>
 
-		<div class="doriath-additional-fields__add">
+		<div class="keepiq-additional-fields__add">
 			<NcTextField
 				v-model="newName"
-				:label="t('doriath', 'Add a field')"
-				:placeholder="t('doriath', 'e.g. client-id')"
+				:label="t('keepiq', 'Add a field')"
+				:placeholder="t('keepiq', 'e.g. client-id')"
 				:disabled="disabled"
 				data-testid="additional-field-new-name"
 				@keyup.enter="onAdd" />
@@ -79,7 +79,7 @@
 				:disabled="disabled"
 				data-testid="additional-field-add"
 				@click="onAdd">
-				{{ t('doriath', 'Add') }}
+				{{ t('keepiq', 'Add') }}
 			</NcButton>
 		</div>
 
@@ -91,7 +91,7 @@
 		-->
 		<p
 			v-if="nameError"
-			class="doriath-additional-fields__error"
+			class="keepiq-additional-fields__error"
 			data-testid="additional-field-error">
 			{{ nameError }}
 		</p>
@@ -247,29 +247,29 @@ export default {
 </script>
 
 <style scoped>
-.doriath-additional-fields {
+.keepiq-additional-fields {
 	margin-block: 0.75rem;
 }
 
-.doriath-additional-fields__list {
+.keepiq-additional-fields__list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
 
-.doriath-additional-fields__row,
-.doriath-additional-fields__add {
+.keepiq-additional-fields__row,
+.keepiq-additional-fields__add {
 	display: flex;
 	align-items: flex-end;
 	gap: 0.5rem;
 	margin-block-end: 0.5rem;
 }
 
-.doriath-additional-fields__empty {
+.keepiq-additional-fields__empty {
 	color: var(--color-text-maxcontrast);
 }
 
-.doriath-additional-fields__error {
+.keepiq-additional-fields__error {
 	color: var(--color-error);
 }
 </style>

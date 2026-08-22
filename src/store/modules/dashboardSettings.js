@@ -59,7 +59,7 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/dashboard-settings'),
+					generateUrl('/apps/keepiq/api/v1/dashboard-settings'),
 				)
 				const data = response.data || {}
 				this.settings = data.settings ?? data ?? {}
@@ -126,7 +126,7 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 			this.error = null
 			try {
 				const response = await axios.put(
-					generateUrl('/apps/doriath/api/v1/dashboard-settings'),
+					generateUrl('/apps/keepiq/api/v1/dashboard-settings'),
 					{ settings: filtered },
 				)
 				const data = response.data || {}
@@ -152,7 +152,7 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 			this.error = null
 			try {
 				await axios.delete(
-					generateUrl('/apps/doriath/api/v1/dashboard-settings'),
+					generateUrl('/apps/keepiq/api/v1/dashboard-settings'),
 				)
 				this.settings = {}
 			} catch (err) {

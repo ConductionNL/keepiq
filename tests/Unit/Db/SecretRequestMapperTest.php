@@ -17,7 +17,7 @@
  * script nobody runs again is not proven at all.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Db
+ * @package  OCA\Keepiq\Tests\Unit\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -30,11 +30,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Db;
+namespace OCA\Keepiq\Tests\Unit\Db;
 
 use DateTime;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 
@@ -83,7 +83,7 @@ class SecretRequestMapperTest extends TestCase {
 		$this->db = \OC::$server->get(IDBConnection::class);
 
 		if ($this->db->tableExists('doriath_secret_requests') === false) {
-			$this->markTestSkipped(message: 'doriath migrations have not run on this instance');
+			$this->markTestSkipped(message: 'keepiq migrations have not run on this instance');
 		}
 
 		$this->mapper = new SecretRequestMapper(db: $this->db);

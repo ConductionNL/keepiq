@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Request Fill Controller
+ * Keepiq Secret Request Fill Controller
  *
  * Public (unauthenticated) API controller backing the secret-request
  * fill-in flow. The recipient receives a one-time URL that contains an
@@ -15,7 +15,7 @@
  * blobs on the underlying Secret.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,12 +28,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;

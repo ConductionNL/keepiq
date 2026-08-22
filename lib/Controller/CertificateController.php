@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Certificate Controller
+ * Keepiq Certificate Controller
  *
  * Certificate-lifecycle endpoints (certificate-lifecycle §4): the
  * three-source inventory, client-parsed metadata submission for
@@ -11,7 +11,7 @@
  * IDOR). No PEM, private key, or ciphertext is ever emitted.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +24,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\CertificateLifecycleService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\CertificateLifecycleService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

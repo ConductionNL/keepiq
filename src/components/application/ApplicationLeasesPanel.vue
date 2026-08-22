@@ -12,7 +12,7 @@
 -->
 <template>
 	<section class="app-leases" data-testid="application-leases-panel">
-		<h3>{{ t('doriath', 'Machine leases') }}</h3>
+		<h3>{{ t('keepiq', 'Machine leases') }}</h3>
 
 		<NcNoteCard v-if="error" type="error" data-testid="lease-error">
 			{{ error }}
@@ -21,7 +21,7 @@
 		<p v-if="leases.length === 0" class="app-leases__empty">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'No leases yet — a lease appears when the application fetches a secret.',
 				)
 			}}
@@ -31,19 +31,19 @@
 			<thead>
 				<tr>
 					<th scope="col">
-						{{ t('doriath', 'Secret') }}
+						{{ t('keepiq', 'Secret') }}
 					</th>
 					<th scope="col">
-						{{ t('doriath', 'Granted') }}
+						{{ t('keepiq', 'Granted') }}
 					</th>
 					<th scope="col">
-						{{ t('doriath', 'Expires') }}
+						{{ t('keepiq', 'Expires') }}
 					</th>
 					<th scope="col">
-						{{ t('doriath', 'Renewals') }}
+						{{ t('keepiq', 'Renewals') }}
 					</th>
 					<th scope="col">
-						{{ t('doriath', 'Status') }}
+						{{ t('keepiq', 'Status') }}
 					</th>
 					<th scope="col" />
 				</tr>
@@ -72,7 +72,7 @@
 							variant="tertiary"
 							:data-testid="`lease-revoke-${lease.id}`"
 							@click="onRevoke(lease)">
-							{{ t('doriath', 'Revoke') }}
+							{{ t('keepiq', 'Revoke') }}
 						</NcButton>
 					</td>
 				</tr>

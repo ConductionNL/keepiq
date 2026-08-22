@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Attachment Mapper
+ * Keepiq Attachment Mapper
  *
  * Query-builder mapper for Attachment rows.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;

@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Shared helpers for the Doriath DEEP, data-dependent workflow e2e layer.
+ * Shared helpers for the Keepiq DEEP, data-dependent workflow e2e layer.
  *
  * Unlike the spec-coverage suite (which only asserts the lock screen and the
  * router-guard redirect), these workflow specs DRIVE the vault: they unlock
@@ -11,7 +11,7 @@
  * WebCrypto primitives.
  *
  * Environment assumptions (verified live, 2026-06-10):
- *   - The doriath app is enabled and serving at /index.php/apps/doriath/.
+ *   - The keepiq app is enabled and serving at /index.php/apps/keepiq/.
  *   - The admin user owns ONE active EncryptionSuite, seeded by the
  *     `SeedDevelopmentData` install repair step with the known development
  *     master password `Oj` (a 2-char password — valid for UNLOCK, which has no
@@ -22,7 +22,7 @@
  */
 import { type Page, expect } from '@playwright/test'
 
-export const APP_BASE = '/index.php/apps/doriath'
+export const APP_BASE = '/index.php/apps/keepiq'
 
 /**
  * The known development master password. Seeded by
@@ -31,7 +31,7 @@ export const APP_BASE = '/index.php/apps/doriath'
  * ⚠️ THE TARGET INSTANCE MUST HAVE `debug` ENABLED:
  *
  *     occ config:system:set debug --value=true --type=boolean
- *     occ app:disable doriath && occ app:enable doriath   # re-run repair steps
+ *     occ app:disable keepiq && occ app:enable keepiq   # re-run repair steps
  *
  * `SeedDevelopmentData::run()` returns immediately when `debug` is false, so on
  * an instance without it NO dev vault is ever created. The app then sits in
@@ -49,14 +49,14 @@ export function lockHeading(page: Page) {
 }
 
 /**
- * Open the Doriath lock screen and wait for the suite-state fetch to settle.
+ * Open the Keepiq lock screen and wait for the suite-state fetch to settle.
  *
  * LockScreen.created() runs fetchSuite() asynchronously; until it resolves,
  * `currentSuite` is null and the heading renders the SETUP copy, then flips to
  * the UNLOCK copy once the active suite arrives. Waiting only for "either"
  * heading races that flip, so we wait for the /api/v1/suites response and then
  * for the heading to STABILISE (two consecutive identical reads) before
- * returning. When admin owns an active suite this lands on "Unlock Doriath".
+ * returning. When admin owns an active suite this lands on "Unlock Keepiq".
  */
 export async function gotoLockSettled(page: Page): Promise<string> {
 	const suitesResp = page
@@ -179,7 +179,7 @@ export async function openVault(page: Page): Promise<void> {
 	// the vault stays unlocked, unlike a full `page.goto`).
 	await page.evaluate(() => {
 		const a = Array.from(document.querySelectorAll('a')).find((x) =>
-			/(#\/secrets$)|(\/apps\/doriath\/?#\/secrets$)/.test(
+			/(#\/secrets$)|(\/apps\/keepiq\/?#\/secrets$)/.test(
 				x.getAttribute('href') || '',
 			),
 		)
@@ -196,7 +196,7 @@ export async function openVault(page: Page): Promise<void> {
  * Navigate to an in-app route WITHIN the already-unlocked SPA, in place.
  *
  * The router runs in hash mode, so routes are `#/<route>`. A full `page.goto`
- * to a path-form URL (e.g. `/apps/doriath/secrets`) reloads the page, which
+ * to a path-form URL (e.g. `/apps/keepiq/secrets`) reloads the page, which
  * wipes the in-memory CryptoKey and bounces back to the lock gate. Setting
  * `location.hash` navigates the SPA in place and keeps the vault unlocked.
  *

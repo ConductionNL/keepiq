@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath JWT Authentication Service
+ * Keepiq JWT Authentication Service
  *
  * Exchanges a JWT bearer assertion (RS256, signed by an application's
  * registered private key) for a short-lived opaque access token usable
@@ -10,7 +10,7 @@
  * via a distributed jti cache.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,13 +23,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ICacheFactory;
@@ -50,12 +50,23 @@ class JwtAuthService {
 	/**
 	 * Distributed cache namespace for jti replay protection.
 	 *
+	 * KEPT ON THE OLD `doriath_` PREFIX ACROSS THE RENAME, deliberately.
+	 * The jti cache IS the replay-protection window: renaming the namespace
+	 * empties it, and every assertion already spent during the preceding
+	 * CLOCK_SKEW+exp window becomes replayable exactly once more. Keeping
+	 * the namespace keeps the window intact across the upgrade. The cost of
+	 * keeping it is zero — no client ever sees this string.
+	 *
 	 * @var string
 	 */
 	public const JTI_CACHE_NS = 'doriath_jwt_jti';
 
 	/**
 	 * Distributed cache namespace for opaque access tokens.
+	 *
+	 * Kept on the old prefix for the same reason as JTI_CACHE_NS: renaming
+	 * it invalidates every live bearer token mid-flight, 401-ing machine
+	 * consumers that hold a token issued seconds before the upgrade.
 	 *
 	 * @var string
 	 */
@@ -78,7 +89,22 @@ class JwtAuthService {
 
 	/**
 	 * The expected audience claim ("aud") for assertions targeted at
-	 * this Doriath instance.
+	 * this Keepiq instance.
+	 *
+	 * DELIBERATELY STILL `doriath` AFTER THE RENAME. This value is not an
+	 * app id, it is a published authentication parameter: every registered
+	 * application signs `aud=doriath` into its RS256 assertion with a
+	 * private key this server does not hold and cannot re-sign. Changing
+	 * the expected audience would reject every existing application's
+	 * assertion with an opaque 400 — a fleet-wide credential outage that
+	 * no repair step can heal, because the fix lives in each consumer's
+	 * configuration.
+	 *
+	 * The value is advertised in the `.well-known` discovery document, so a
+	 * self-configuring consumer reads it rather than hardcoding it; rolling
+	 * it to `keepiq` is a coordinated cross-app change (a new `apiVersion`
+	 * per openspec/specs/secret-store-api/spec.md), not part of an app-id
+	 * rename.
 	 *
 	 * @var string
 	 */

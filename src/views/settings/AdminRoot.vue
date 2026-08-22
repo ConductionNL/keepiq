@@ -1,7 +1,7 @@
 <template>
 	<CnAdminSettingsShell
-		appId="doriath"
-		appName="Doriath"
+		appId="keepiq"
+		appName="Keepiq"
 		@reimported="onReimported">
 		<Settings v-if="storesReady" />
 	</CnAdminSettingsShell>

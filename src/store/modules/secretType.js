@@ -40,7 +40,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 			}
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/secret-types'),
+					generateUrl('/apps/keepiq/api/v1/secret-types'),
 				)
 				this.types = response.data || []
 			} catch (e) {
@@ -69,7 +69,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 */
 		async createType(data) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/secret-types'),
+				generateUrl('/apps/keepiq/api/v1/secret-types'),
 				{ name: data.name, label: data.label, scope: data.scope || 'user' },
 			)
 			this.types.push(response.data)
@@ -85,7 +85,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 */
 		async updateType(id, label) {
 			const response = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/secret-types/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/secret-types/${id}`),
 				{ label },
 			)
 			const index = this.types.findIndex((t) => t.id === id)
@@ -103,7 +103,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 */
 		async deleteType(id) {
 			await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/secret-types/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/secret-types/${id}`),
 			)
 			this.types = this.types.filter((t) => t.id !== id)
 		},

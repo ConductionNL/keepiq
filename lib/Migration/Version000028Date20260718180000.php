@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration - SIEM audit export
+ * Keepiq Migration - SIEM audit export
  *
  * Adds `doriath_siem_sinks` (delivery targets with per-sink state) and
  * `doriath_siem_queue` (bounded forwarding queue) — siem-audit-export
@@ -9,7 +9,7 @@
  * no secret material ever reaches these tables.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

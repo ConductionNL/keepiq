@@ -1,15 +1,15 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Doriath Register",
-    "description": "Register containing all schemas for the Doriath application.",
+    "title": "Keepiq Register",
+    "description": "Register containing all schemas for the Keepiq application.",
     "version": "0.1.1"
   },
   "x-openregister": {
     "type": "application",
-    "app": "doriath",
+    "app": "keepiq",
     "openregister": "^v0.2.10",
-    "description": "Doriath — replace with your app description"
+    "description": "Keepiq — replace with your app description"
   },
   "paths": {},
   "components": {
@@ -19,7 +19,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.1",
         "title": "Example",
-        "description": "Import canary. Doriath stores its secrets in its own tables (lib/Db), not as OpenRegister objects, so this is the only schema in the descriptor — and tests/e2e/ci-seed.sh asserts it is present after import, which is what proves the OpenRegister import path actually ran. Do not delete it without moving that assertion to a real schema first.",
+        "description": "Import canary. Keepiq stores its secrets in its own tables (lib/Db), not as OpenRegister objects, so this is the only schema in the descriptor — and tests/e2e/ci-seed.sh asserts it is present after import, which is what proves the OpenRegister import path actually ran. Do not delete it without moving that assertion to a real schema first.",
         "type": "object",
         "required": [
           "title"

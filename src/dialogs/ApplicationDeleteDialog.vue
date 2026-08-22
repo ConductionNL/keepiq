@@ -17,7 +17,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Delete application')"
+		:name="t('keepiq', 'Delete application')"
 		:open="open"
 		size="normal"
 		data-testid="application-delete-dialog"
@@ -25,7 +25,7 @@
 		<NcNoteCard type="warning" data-testid="application-delete-warning">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'Delete this application? This cascades to its secrets.',
 				)
 			}}
@@ -35,13 +35,13 @@
 				variant="tertiary"
 				data-testid="application-delete-cancel"
 				@click="$emit('close')">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				variant="error"
 				data-testid="application-delete-confirm"
 				@click="$emit('confirm')">
-				{{ t('doriath', 'Delete') }}
+				{{ t('keepiq', 'Delete') }}
 			</NcButton>
 		</template>
 	</NcDialog>

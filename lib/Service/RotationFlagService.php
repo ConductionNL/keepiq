@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Rotation Flag Service
+ * Keepiq Rotation Flag Service
  *
  * The rotation-flag lifecycle (rotation-expiry-policies §3): raising the
  * one-open-flag-per-secret row, batch flagging owned secrets, the
@@ -11,7 +11,7 @@
  * resolution; the two share no state beyond the secret id.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,15 +24,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\RotationFlag;
-use OCA\Doriath\Db\RotationFlagMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Db\RotationFlag;
+use OCA\Keepiq\Db\RotationFlagMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;

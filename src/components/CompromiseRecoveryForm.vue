@@ -1,6 +1,6 @@
 <template>
 	<div class="compromise-recovery-form">
-		<h2>{{ t('doriath', 'Compromise recovery') }}</h2>
+		<h2>{{ t('keepiq', 'Compromise recovery') }}</h2>
 
 		<!-- Surface 1 of 3: before confirm. Shown in every phase, because
 		     regaining access is never the same thing as being safe. -->
@@ -8,7 +8,7 @@
 			<p>
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Every value stored in this vault must be assumed to have been exposed and must be changed at its source.',
 					)
 				}}
@@ -16,7 +16,7 @@
 			<p>
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Rotating your key restores access to your secrets so you can go and change those values in an orderly fashion. It does not make the old values safe.',
 					)
 				}}
@@ -26,12 +26,12 @@
 		<template v-if="phase === 'idle'">
 			<NcPasswordField
 				v-model="oldPassword"
-				:label="t('doriath', 'Old (compromised) password')"
+				:label="t('keepiq', 'Old (compromised) password')"
 				:disabled="loading" />
 
 			<NcPasswordField
 				v-model="newPassword"
-				:label="t('doriath', 'New password')"
+				:label="t('keepiq', 'New password')"
 				:disabled="loading" />
 
 			<PasswordStrengthMeter
@@ -41,7 +41,7 @@
 
 			<NcPasswordField
 				v-model="confirmPassword"
-				:label="t('doriath', 'Confirm new password')"
+				:label="t('keepiq', 'Confirm new password')"
 				:disabled="loading" />
 		</template>
 
@@ -66,7 +66,7 @@
 				<p>
 					{{
 						n(
-							'doriath',
+							'keepiq',
 							'%n secret could not be decrypted with your old key, so it did not migrate.',
 							'%n secrets could not be decrypted with your old key, so they did not migrate.',
 							lossCount,
@@ -76,7 +76,7 @@
 				<p>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Finishing the rotation locks the old key, so these secrets can no longer be opened. Their stored data is kept, but you will need to set their values again at the source.',
 						)
 					}}
@@ -87,7 +87,7 @@
 				v-if="lossListTruncated"
 				class="compromise-recovery-form__list-detail">
 				{{
-					t('doriath', 'Showing {shown} of {total}.', {
+					t('keepiq', 'Showing {shown} of {total}.', {
 						shown: unrecoverable.length,
 						total: lossCount,
 					})
@@ -114,7 +114,7 @@
 
 			<div class="compromise-recovery-form__actions">
 				<NcButton :disabled="loading" @click="handleRetry">
-					{{ t('doriath', 'Try these again') }}
+					{{ t('keepiq', 'Try these again') }}
 				</NcButton>
 				<NcButton
 					variant="error"
@@ -122,7 +122,7 @@
 					@click="handleAcceptLosses">
 					{{
 						n(
-							'doriath',
+							'keepiq',
 							'Finish anyway, losing access to %n secret',
 							'Finish anyway, losing access to %n secrets',
 							lossCount,
@@ -139,7 +139,7 @@
 				<p>
 					{{
 						n(
-							'doriath',
+							'keepiq',
 							'Key rotation finished. %n secret was re-encrypted under your new key.',
 							'Key rotation finished. %n secrets were re-encrypted under your new key.',
 							result.migrated,
@@ -149,7 +149,7 @@
 				<p v-if="result.droppedVersions > 0">
 					{{
 						n(
-							'doriath',
+							'keepiq',
 							'%n older version was dropped because only recent history can be carried across.',
 							'%n older versions were dropped because only recent history can be carried across.',
 							result.droppedVersions,
@@ -159,7 +159,7 @@
 				<p>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'The migrated values are still to be considered exposed. Change each of them at its source.',
 						)
 					}}
@@ -170,7 +170,7 @@
 				<NcNoteCard type="warning">
 					{{
 						n(
-							'doriath',
+							'keepiq',
 							'%n secret did not migrate.',
 							'%n secrets did not migrate.',
 							result.failures.length,
@@ -197,8 +197,8 @@
 			@click="handleSubmit">
 			{{
 				loading
-					? t('doriath', 'Rotating keys…')
-					: t('doriath', 'Start key rotation')
+					? t('keepiq', 'Rotating keys…')
+					: t('keepiq', 'Start key rotation')
 			}}
 		</NcButton>
 	</div>
@@ -319,11 +319,11 @@ export default {
 				return ''
 			}
 			if (p.phase === 'starting') {
-				return this.t('doriath', 'Preparing…')
+				return this.t('keepiq', 'Preparing…')
 			}
 			// this.t rather than the bare global: the component's own translation
 			// function is what handles placeholder interpolation.
-			return this.t('doriath', '{done} of {total} records re-encrypted', {
+			return this.t('keepiq', '{done} of {total} records re-encrypted', {
 				done: p.done,
 				total: Math.max(p.total, p.done),
 			})
@@ -414,7 +414,7 @@ export default {
 		async handleRetry() {
 			if (this.activeOldPassword === null) {
 				this.error = this.t(
-					'doriath',
+					'keepiq',
 					'Re-enter your old password to retry the remaining secrets.',
 				)
 				this.phase = 'idle'
@@ -455,12 +455,12 @@ export default {
 			}
 
 			const labels = {
-				secrets: t('doriath', 'Secret'),
-				versions: t('doriath', 'Version history entry'),
-				attachmentGrants: t('doriath', 'Attachment key'),
+				secrets: t('keepiq', 'Secret'),
+				versions: t('keepiq', 'Version history entry'),
+				attachmentGrants: t('keepiq', 'Attachment key'),
 			}
 
-			const kind = labels[item.store] ?? t('doriath', 'Record')
+			const kind = labels[item.store] ?? t('keepiq', 'Record')
 
 			return `${kind} ${item.id}`
 		},
@@ -508,7 +508,7 @@ export default {
 			return (
 				e?.response?.data?.message
 				|| e?.message
-				|| this.t('doriath', 'Failed to start recovery')
+				|| this.t('keepiq', 'Failed to start recovery')
 			)
 		},
 	},

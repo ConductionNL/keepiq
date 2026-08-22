@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath platform-integration registrar
+ * Keepiq platform-integration registrar
  *
- * Registers the three Nextcloud platform extension points Doriath plugs into:
+ * Registers the three Nextcloud platform extension points Keepiq plugs into:
  * unified search, notifications, and request middleware.
  *
  * @category AppInfo
- * @package  OCA\Doriath\AppInfo
+ * @package  OCA\Keepiq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,17 +20,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\AppInfo;
+namespace OCA\Keepiq\AppInfo;
 
-use OCA\Doriath\Middleware\JwtAuthMiddleware;
-use OCA\Doriath\Notification\DoriathNotifier;
-use OCA\Doriath\Search\SecretSearchProvider;
+use OCA\Keepiq\Middleware\JwtAuthMiddleware;
+use OCA\Keepiq\Notification\KeepiqNotifier;
+use OCA\Keepiq\Search\SecretSearchProvider;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Plugs Doriath into Nextcloud's own extension points.
+ * Plugs Keepiq into Nextcloud's own extension points.
  *
- * These three registrations are not Doriath domain wiring — they are the
+ * These three registrations are not Keepiq domain wiring — they are the
  * places where the PLATFORM calls into this app: the unified-search bar, the
  * notification renderer, and the request pipeline. They are grouped because
  * they share that direction of control and because each one is a single
@@ -56,7 +56,7 @@ final class PlatformIntegrationRegistrar {
 
 		// The notifier responsible for rendering sharing, secret-request and
 		// application-management notification subjects.
-		$context->registerNotifierService(DoriathNotifier::class);
+		$context->registerNotifierService(KeepiqNotifier::class);
 
 		// The JWT-Bearer middleware for application-authenticated routes.
 		// Fires only on ApplicationApiController subclasses; session

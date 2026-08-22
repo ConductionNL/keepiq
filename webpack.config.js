@@ -13,14 +13,14 @@ webpackConfig.stats = {
 	modules: false,
 }
 
-const appId = 'doriath'
+const appId = 'keepiq'
 
 // Lazy-loaded chunks (the argon2-browser WASM loader for link-share encryption)
 // must resolve relative to the script that loaded them. Nextcloud serves the
 // entry bundle from `/custom_apps/<app>/js/`, but the default publicPath points
 // lazy chunks at `/apps/<app>/js/` which 401s. `publicPath: 'auto'` makes
 // webpack derive the chunk base from the executing script's own URL, so chunks
-// load from the same `/custom_apps/doriath/js/` directory as the main bundle.
+// load from the same `/custom_apps/keepiq/js/` directory as the main bundle.
 webpackConfig.output = {
 	...(webpackConfig.output || {}),
 	publicPath: 'auto',
@@ -90,7 +90,7 @@ if (useLocalLib) {
 	if (!satisfied) {
 		// eslint-disable-next-line no-console
 		console.warn(
-			`[doriath] IGNORING sibling @conduction/nextcloud-vue@${localVersion} — `
+			`[keepiq] IGNORING sibling @conduction/nextcloud-vue@${localVersion} — `
 				+ "it does not satisfy this app's declared range. Building against the npm dist.",
 		)
 		useLocalLib = false
@@ -206,7 +206,7 @@ webpackConfig.resolve.fallback = {
 // inlines its own ~3 MB framework copy. Stable filenames mean each
 // entry's `Util::addScript` PHP call can reference the chunk directly
 // without a manifest. The shared chunks are loaded once per page and
-// cached across navigations between doriath's own pages.
+// cached across navigations between keepiq's own pages.
 //
 // CRITICAL: templates/index.php + templates/settings/admin.php MUST
 // addScript these shared chunks BEFORE the entry script — without

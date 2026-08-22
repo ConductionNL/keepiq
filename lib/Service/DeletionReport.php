@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath DeletionReport
+ * Keepiq DeletionReport
  *
  * A small value object accumulating per-entity counts produced by the
  * account-deletion cascade (secret-export-gdpr D4). It is returned to the
@@ -9,7 +9,7 @@
  * It holds counts only — never any secret material or personal data.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use JsonSerializable;
 

@@ -4,7 +4,7 @@
  * Unit tests for MachineSecretEnvelopeService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Service\MachineSecretEnvelopeService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 

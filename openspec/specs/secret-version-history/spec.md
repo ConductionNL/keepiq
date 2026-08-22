@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Doriath overwrites a secret's encrypted fields in place (`lib/Service/SecretService.php:766-791`), so a bad rotation or accidental overwrite is unrecoverable. Version history retains the previous ciphertext of a secret whenever its fields change and lets a user review and roll back to a prior value. A version is simply the previous ciphertext under the secret's existing RSA key — no new cryptography — and a restore is an ordinary update that the existing sync-on-update fan-out propagates to every shared copy. This matches shipped capability in the comparators Doriath is measured against (Passbolt v5.7.0, 2026; Bitwarden item history) and answers a concrete NIS2 credential-hygiene / audit driver.
+Keepiq overwrites a secret's encrypted fields in place (`lib/Service/SecretService.php:766-791`), so a bad rotation or accidental overwrite is unrecoverable. Version history retains the previous ciphertext of a secret whenever its fields change and lets a user review and roll back to a prior value. A version is simply the previous ciphertext under the secret's existing RSA key — no new cryptography — and a restore is an ordinary update that the existing sync-on-update fan-out propagates to every shared copy. This matches shipped capability in the comparators Keepiq is measured against (Passbolt v5.7.0, 2026; Bitwarden item history) and answers a concrete NIS2 credential-hygiene / audit driver.
 
 ## Requirements
 

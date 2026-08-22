@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Doriath already stores TOTP seeds and generates the current 6-digit code, but only in the web UI — a user who autofills a login through the browser extension must still open the web app to read the code. This feature surfaces TOTP where the login is filled: the extension popup shows the current RFC 6238 code with a live countdown for a login matched to a `totp` secret by origin, auto-copies the code to the clipboard after autofilling credentials (with a scheduled clipboard clear), and optionally fills it into a detected one-time-code input. All code generation happens client-side in the extension from the decrypted seed, which never leaves the extension — the same zero-knowledge guarantee the web UI already provides. It reuses the existing `totp` type and seed storage and the existing RFC 6238 generator (`src/totp/totp.js`), and the extension runtime from `browser-extension-autofill`; it adds no backend and no schema. This closes the oldest, most-discussed one-app credential+TOTP wish on the platform (NC Passwords #69, 43 comments) and ships free the auto-copy-on-autofill Bitwarden charges premium for.
+Keepiq already stores TOTP seeds and generates the current 6-digit code, but only in the web UI — a user who autofills a login through the browser extension must still open the web app to read the code. This feature surfaces TOTP where the login is filled: the extension popup shows the current RFC 6238 code with a live countdown for a login matched to a `totp` secret by origin, auto-copies the code to the clipboard after autofilling credentials (with a scheduled clipboard clear), and optionally fills it into a detected one-time-code input. All code generation happens client-side in the extension from the decrypted seed, which never leaves the extension — the same zero-knowledge guarantee the web UI already provides. It reuses the existing `totp` type and seed storage and the existing RFC 6238 generator (`src/totp/totp.js`), and the extension runtime from `browser-extension-autofill`; it adds no backend and no schema. This closes the oldest, most-discussed one-app credential+TOTP wish on the platform (NC Passwords #69, 43 comments) and ships free the auto-copy-on-autofill Bitwarden charges premium for.
 
 ## Requirements
 
@@ -49,7 +49,7 @@ The extension MUST show a "not a valid authenticator secret" state and never a f
 
 ## User Stories
 
-- As a user, I want the current one-time code shown next to my login in the extension so I don't have to open the Doriath web app to read it
+- As a user, I want the current one-time code shown next to my login in the extension so I don't have to open the Keepiq web app to read it
 - As a user, I want the code copied to my clipboard when I autofill so it is one paste away on the 2FA prompt
 - As a user, I want the code filled into the OTP box automatically when possible
 - As a security-conscious user, I want the code generated in the extension and the clipboard cleared shortly after, so the seed never leaves the extension and the code doesn't linger

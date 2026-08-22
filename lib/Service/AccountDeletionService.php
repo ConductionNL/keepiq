@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Doriath AccountDeletionService
+ * Keepiq AccountDeletionService
  *
  * Orchestrates the GDPR Art. 17 (right-to-erasure) cascade that removes all of
- * a user's Doriath data, with defined semantics for shared and delegated
+ * a user's Keepiq data, with defined semantics for shared and delegated
  * secrets (secret-export-gdpr D4). One implementation serves both triggers:
  * the in-app re-auth flow and the automatic UserDeletedEvent listener.
  *
@@ -23,7 +23,7 @@
  *    original owners' secrets are untouched.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -36,14 +36,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\DashboardSettingMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Event\AccountDataDeletedEvent;
+use OCA\Keepiq\Db\DashboardSettingMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Event\AccountDataDeletedEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**
@@ -95,7 +95,7 @@ class AccountDeletionService {
 	}//end __construct()
 
 	/**
-	 * Delete all Doriath data for a user, running the ordered cascade and
+	 * Delete all Keepiq data for a user, running the ordered cascade and
 	 * dispatching AccountDataDeletedEvent on completion.
 	 *
 	 * @param string $userId The Nextcloud user ID

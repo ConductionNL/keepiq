@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Offline Manifest Service
+ * Keepiq Offline Manifest Service
  *
  * Assembles the consolidated offline-cache snapshot (offline-readonly-cache
  * §1.3): one owner-scoped payload — active suite blob + KDF params, every
@@ -10,7 +10,7 @@
  * transaction.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,14 +23,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**

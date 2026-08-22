@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Doriath Web App Manifest Controller
+ * Keepiq Web App Manifest Controller
  *
- * Serves the Doriath PWA web app manifest (mobile-pwa §1) with the
+ * Serves the Keepiq PWA web app manifest (mobile-pwa §1) with the
  * correct `application/manifest+json` MIME type. This is distinct from
  * the internal `src/manifest.json` page/router manifest — different
  * consumer, different schema (W3C Web App Manifest). Public + CSRF-free
@@ -12,7 +12,7 @@
  * on Nextcloud's instance service worker (§D2).
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,9 +25,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -57,7 +57,7 @@ class WebManifestController extends Controller {
 	}//end __construct()
 
 	/**
-	 * The Doriath web app manifest.
+	 * The Keepiq web app manifest.
 	 *
 	 * @PublicPage
 	 * @NoCSRFRequired
@@ -71,15 +71,15 @@ class WebManifestController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function manifest(): DataDisplayResponse {
-		$vaultUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page') . '#/secrets';
-		$startUrl = $this->urlGenerator->linkToRouteAbsolute('doriath.dashboard.page');
-		$scope = $this->urlGenerator->linkToRoute('doriath.dashboard.page');
+		$vaultUrl = $this->urlGenerator->linkToRouteAbsolute('keepiq.dashboard.page') . '#/secrets';
+		$startUrl = $this->urlGenerator->linkToRouteAbsolute('keepiq.dashboard.page');
+		$scope = $this->urlGenerator->linkToRoute('keepiq.dashboard.page');
 		$maskable = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon-maskable.svg'));
 		$anyIcon = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon.svg'));
 
 		$manifest = [
-			'name' => 'Doriath',
-			'short_name' => 'Doriath',
+			'name' => 'Keepiq',
+			'short_name' => 'Keepiq',
 			'description' => 'Encrypted secrets manager — your zero-knowledge vault.',
 			'display' => 'standalone',
 			// NL Design System / brand tokens (cobalt) — the app icon is a

@@ -34,7 +34,7 @@ export const useHoneyStore = defineStore('honey', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/honey`),
 				)
 				this.status = response.data
 				return this.status
@@ -55,7 +55,7 @@ export const useHoneyStore = defineStore('honey', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/honey`),
 					{ note },
 				)
 				this.status = { flagged: true, flag: response.data }
@@ -76,7 +76,7 @@ export const useHoneyStore = defineStore('honey', {
 			this.error = null
 			try {
 				await axios.delete(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/honey`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/honey`),
 				)
 				this.status = { flagged: false, flag: null }
 				return true
@@ -96,7 +96,7 @@ export const useHoneyStore = defineStore('honey', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/honey/alerts'),
+					generateUrl('/apps/keepiq/api/v1/honey/alerts'),
 				)
 				this.alerts = response.data ?? []
 				return this.alerts
@@ -119,7 +119,7 @@ export const useHoneyStore = defineStore('honey', {
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/honey/alerts/${alertId}/acknowledge`,
+						`/apps/keepiq/api/v1/honey/alerts/${alertId}/acknowledge`,
 					),
 				)
 				this.alerts = this.alerts.map((a) =>
@@ -144,7 +144,7 @@ export const useHoneyStore = defineStore('honey', {
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/honey/alerts/${alertId}/snooze`,
+						`/apps/keepiq/api/v1/honey/alerts/${alertId}/snooze`,
 					),
 					{ hours },
 				)

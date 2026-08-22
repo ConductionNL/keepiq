@@ -4,7 +4,7 @@
 			<p v-if="isReRequest" class="secret-request-create-dialog__note">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Existing values will be overwritten when the recipient fills in this re-request.',
 					)
 				}}
@@ -12,19 +12,19 @@
 
 			<div v-if="isFreshRequest" class="secret-request-create-dialog__new">
 				<label for="new-secret-name">{{
-					t('doriath', 'What are you asking for?')
+					t('keepiq', 'What are you asking for?')
 				}}</label>
 				<input
 					id="new-secret-name"
 					v-model="newName"
 					type="text"
-					:placeholder="t('doriath', 'e.g. Supplier API key')" />
+					:placeholder="t('keepiq', 'e.g. Supplier API key')" />
 				<label for="new-secret-folder">{{
-					t('doriath', 'Folder (optional)')
+					t('keepiq', 'Folder (optional)')
 				}}</label>
 				<select id="new-secret-folder" v-model="newFolderId">
 					<option value="">
-						{{ t('doriath', 'No folder') }}
+						{{ t('keepiq', 'No folder') }}
 					</option>
 					<option v-for="f in folderOptions" :key="f.id" :value="f.id">
 						{{ f.name }}
@@ -33,7 +33,7 @@
 				<p class="secret-request-create-dialog__hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'A placeholder is created now and stays empty until the recipient fills it in — you never have to invent a value.',
 						)
 					}}
@@ -41,7 +41,7 @@
 			</div>
 
 			<fieldset class="secret-request-create-dialog__fields">
-				<legend>{{ t('doriath', 'Requested fields') }}</legend>
+				<legend>{{ t('keepiq', 'Requested fields') }}</legend>
 				<label
 					v-for="field in availableFields"
 					:key="field.key"
@@ -54,23 +54,23 @@
 					<span
 						v-if="field.filled && !isReRequest"
 						class="secret-request-create-dialog__filled">
-						{{ t('doriath', '— already has a value') }}
+						{{ t('keepiq', '— already has a value') }}
 					</span>
 				</label>
 
 				<div class="secret-request-create-dialog__custom">
 					<label for="custom-field-input">{{
-						t('doriath', 'Also ask for another field')
+						t('keepiq', 'Also ask for another field')
 					}}</label>
 					<div class="secret-request-create-dialog__custom-row">
 						<input
 							id="custom-field-input"
 							v-model="customFieldInput"
 							type="text"
-							:placeholder="t('doriath', 'e.g. client-id')"
+							:placeholder="t('keepiq', 'e.g. client-id')"
 							@keyup.enter="addCustomField" />
 						<button type="button" @click="addCustomField">
-							{{ t('doriath', 'Add') }}
+							{{ t('keepiq', 'Add') }}
 						</button>
 					</div>
 					<p
@@ -83,14 +83,14 @@
 
 			<div class="secret-request-create-dialog__expiry">
 				<label for="expiry-input">{{
-					t('doriath', 'Expires at (optional)')
+					t('keepiq', 'Expires at (optional)')
 				}}</label>
 				<input id="expiry-input" v-model="expiresAt" type="datetime-local" />
 			</div>
 
 			<div v-if="fillUrl" class="secret-request-create-dialog__url">
 				<label for="secret-request-fill-url">{{
-					t('doriath', 'Share this link with the recipient')
+					t('keepiq', 'Share this link with the recipient')
 				}}</label>
 				<div class="secret-request-create-dialog__url-row">
 					<input
@@ -99,7 +99,7 @@
 						readonly
 						:value="fillUrl" />
 					<button @click="copyUrl">
-						{{ copied ? t('doriath', 'Copied!') : t('doriath', 'Copy') }}
+						{{ copied ? t('keepiq', 'Copied!') : t('keepiq', 'Copy') }}
 					</button>
 				</div>
 			</div>
@@ -111,7 +111,7 @@
 
 		<template #actions>
 			<button @click="onClose">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</button>
 			<button
 				v-if="!fillUrl"
@@ -120,12 +120,12 @@
 				@click="submit">
 				{{
 					submitting
-						? t('doriath', 'Creating…')
-						: t('doriath', 'Create request')
+						? t('keepiq', 'Creating…')
+						: t('keepiq', 'Create request')
 				}}
 			</button>
 			<button v-else class="primary" @click="onClose">
-				{{ t('doriath', 'Done') }}
+				{{ t('keepiq', 'Done') }}
 			</button>
 		</template>
 	</NcDialog>
@@ -225,12 +225,12 @@ export default {
 		 */
 		title() {
 			if (this.isReRequest) {
-				return t('doriath', 'Re-request secret values')
+				return t('keepiq', 'Re-request secret values')
 			}
 
 			return this.isFreshRequest
-				? t('doriath', 'Ask someone for a credential')
-				: t('doriath', 'Request secret fill-in')
+				? t('keepiq', 'Ask someone for a credential')
+				: t('keepiq', 'Request secret fill-in')
 		},
 
 		/**
@@ -270,14 +270,14 @@ export default {
 		 */
 		availableFields() {
 			const fields = [
-				{ key: 'key', label: t('doriath', 'Key / password') },
-				{ key: 'login', label: t('doriath', 'Login') },
+				{ key: 'key', label: t('keepiq', 'Key / password') },
+				{ key: 'login', label: t('keepiq', 'Login') },
 				// Flagged plaintext because it is genuinely different: `url` is
 				// stored searchable, not encrypted, and the recipient deserves to
 				// know that before typing something sensitive into it.
 				{
 					key: 'url',
-					label: t('doriath', 'URL (stored unencrypted)'),
+					label: t('keepiq', 'URL (stored unencrypted)'),
 					plaintext: true,
 				},
 			]
@@ -326,7 +326,7 @@ export default {
 
 			if (this.isFreshRequest && this.newName.trim() === '') {
 				this.error = t(
-					'doriath',
+					'keepiq',
 					'Give the credential a name so you can find it later.',
 				)
 				return
@@ -373,7 +373,7 @@ export default {
 				if (request && request.token) {
 					// The recipient has no Nextcloud account, so this must point at
 					// the ANONYMOUS shell (`publicShell#page`) carrying the router's
-					// hash route. The plain `/apps/doriath/share/request/<token>`
+					// hash route. The plain `/apps/keepiq/share/request/<token>`
 					// form this used to build answers 401 for exactly the person it
 					// is meant for — the link was unusable by any external
 					// recipient, which is the whole purpose of a fill link.
@@ -385,7 +385,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to create request')
+					|| t('keepiq', 'Failed to create request')
 			} finally {
 				this.submitting = false
 			}
@@ -497,7 +497,7 @@ export default {
 					this.copied = false
 				}, 1500)
 			} catch (e) {
-				console.warn('Doriath: clipboard write failed', e)
+				console.warn('Keepiq: clipboard write failed', e)
 			}
 		},
 

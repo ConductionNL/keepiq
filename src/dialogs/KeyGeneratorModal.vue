@@ -1,6 +1,6 @@
 <template>
 	<NcDialog
-		:name="t('doriath', 'Generate key')"
+		:name="t('keepiq', 'Generate key')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -15,7 +15,7 @@
 				<NcInputField
 					v-model="lengthInput"
 					type="number"
-					:label="t('doriath', 'Length')"
+					:label="t('keepiq', 'Length')"
 					:min="minLength"
 					:max="maxLength" />
 				<p
@@ -23,7 +23,7 @@
 					class="key-generator-modal__policy-hint"
 					data-testid="policy-floor-hint">
 					{{
-						t('doriath', 'Locked by org policy: minimum length {min}', {
+						t('keepiq', 'Locked by org policy: minimum length {min}', {
 							min: minLength,
 						})
 					}}
@@ -36,26 +36,26 @@
 					{{
 						symbolLocked
 							? t(
-									'doriath',
+									'keepiq',
 									'Include special characters (locked by org policy)',
 								)
-							: t('doriath', 'Include special characters')
+							: t('keepiq', 'Include special characters')
 					}}
 				</NcCheckboxRadioSwitch>
 
 				<NcInputField
 					v-model="excludedCharacters"
-					:label="t('doriath', 'Exclude characters')" />
+					:label="t('keepiq', 'Exclude characters')" />
 			</fieldset>
 
 			<details class="key-generator-modal__advanced">
-				<summary>{{ t('doriath', 'Advanced') }}</summary>
+				<summary>{{ t('keepiq', 'Advanced') }}</summary>
 				<NcInputField
 					v-model="regex"
-					:label="t('doriath', 'Regex pattern')"
+					:label="t('keepiq', 'Regex pattern')"
 					:helperText="
 						t(
-							'doriath',
+							'keepiq',
 							'When set, overrides length, special characters and exclusions.',
 						)
 					" />
@@ -65,10 +65,10 @@
 				<!-- v9 models through `modelValue`; `:value` is a dead binding. -->
 				<NcInputField
 					:modelValue="generatedKey"
-					:label="t('doriath', 'Generated key')"
+					:label="t('keepiq', 'Generated key')"
 					:readOnly="true"
 					:showTrailingButton="true"
-					:trailingButtonLabel="t('doriath', 'Copy to clipboard')"
+					:trailingButtonLabel="t('keepiq', 'Copy to clipboard')"
 					@trailingButtonClick="copyToClipboard">
 					<template #trailing-button-icon>
 						<ContentCopy :size="20" />
@@ -79,17 +79,17 @@
 
 		<template #actions>
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="secondary" :disabled="loading" @click="generate">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Dice5 v-else :size="20" />
 				</template>
-				{{ t('doriath', 'Generate') }}
+				{{ t('keepiq', 'Generate') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="!generatedKey" @click="use">
-				{{ t('doriath', 'Use') }}
+				{{ t('keepiq', 'Use') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -211,7 +211,7 @@ export default {
 						}
 
 				const response = await axios.post(
-					generateUrl('/apps/doriath/api/v1/generate-key'),
+					generateUrl('/apps/keepiq/api/v1/generate-key'),
 					payload,
 				)
 				this.generatedKey = response.data.generatedKey
@@ -219,7 +219,7 @@ export default {
 				this.generatedKey = ''
 				this.error =
 					e?.response?.data?.message
-					|| t('doriath', 'Failed to generate key')
+					|| t('keepiq', 'Failed to generate key')
 			} finally {
 				this.loading = false
 			}

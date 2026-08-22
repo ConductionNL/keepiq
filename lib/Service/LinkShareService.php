@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Link Share Service
+ * Keepiq Link Share Service
  *
  * Business logic for password-protected link shares: creation, public
  * access (two-phase protocol), usage-limit enforcement, brute-force
  * protection, manual revocation, and cascade deletion.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,12 +21,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\LinkShare;
-use OCA\Doriath\Db\LinkShareMapper;
+use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Db\LinkShareMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Log\LoggerInterface;
@@ -149,7 +149,7 @@ class LinkShareService {
 
 		$this->mapper->insert($linkShare);
 
-		$this->logger->info("Doriath: link share created for secret {$secretId} by {$userId}");
+		$this->logger->info("Keepiq: link share created for secret {$secretId} by {$userId}");
 
 		$expiresAtIso = null;
 		if ($expiresAt !== null) {
@@ -238,7 +238,7 @@ class LinkShareService {
 
 		if ($linkShare->getUsageCount() >= $linkShare->getUsageLimit()) {
 			$this->mapper->delete($linkShare);
-			$this->logger->info("Doriath: link share {$linkShare->getId()} auto-deleted (usage limit reached)");
+			$this->logger->info("Keepiq: link share {$linkShare->getId()} auto-deleted (usage limit reached)");
 		}
 
 		return $linkShare;
@@ -269,7 +269,7 @@ class LinkShareService {
 		if ($linkShare->getFailedAttempts() >= self::MAX_FAILED_ATTEMPTS) {
 			$this->mapper->delete($linkShare);
 			$this->logger->warning(
-				"Doriath: link share {$linkShare->getId()} permanently deleted after "
+				"Keepiq: link share {$linkShare->getId()} permanently deleted after "
 				. self::MAX_FAILED_ATTEMPTS . ' failed attempts'
 			);
 
@@ -329,7 +329,7 @@ class LinkShareService {
 		}
 
 		$this->mapper->delete($linkShare);
-		$this->logger->info("Doriath: link share {$id} revoked by {$userId}");
+		$this->logger->info("Keepiq: link share {$id} revoked by {$userId}");
 
 		$this->auditTrail->recordRevoked(userId: $userId, linkShareId: $id);
 	}//end delete()
@@ -343,7 +343,7 @@ class LinkShareService {
 	 */
 	public function deleteBySecretId(string $secretId): void {
 		$this->mapper->deleteBySecretId($secretId);
-		$this->logger->info("Doriath: cascade-deleted link shares for secret {$secretId}");
+		$this->logger->info("Keepiq: cascade-deleted link shares for secret {$secretId}");
 	}//end deleteBySecretId()
 
 	/**
@@ -355,7 +355,7 @@ class LinkShareService {
 	 */
 	public function deleteByUserId(string $userId): void {
 		$this->mapper->deleteByUserId($userId);
-		$this->logger->info("Doriath: cascade-deleted link shares for user {$userId}");
+		$this->logger->info("Keepiq: cascade-deleted link shares for user {$userId}");
 	}//end deleteByUserId()
 
 	/**

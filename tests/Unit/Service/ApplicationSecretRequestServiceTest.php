@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath — application-owned secret request tests
+ * Keepiq — application-owned secret request tests
  *
  * What these lock down:
  *
@@ -17,7 +17,7 @@
  *    event per creation carrying no field names
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -30,21 +30,21 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Service\ApplicationSecretRequestService;
-use OCA\Doriath\Service\JwtAuthService;
-use OCA\Doriath\Service\SecretRequestOutbox;
-use OCA\Doriath\Service\SecretRequestPolicy;
-use OCA\Doriath\Service\SecretService;
-use OCA\Doriath\Service\WriteLockService;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\ApplicationSecretRequestService;
+use OCA\Keepiq\Service\JwtAuthService;
+use OCA\Keepiq\Service\SecretRequestOutbox;
+use OCA\Keepiq\Service\SecretRequestPolicy;
+use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\WriteLockService;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

@@ -4,7 +4,7 @@
  * Unit tests for ApplicationService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,17 +17,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Service\ApplicationLifecycleService;
-use OCA\Doriath\Service\ApplicationService;
-use OCA\Doriath\Service\ApplicationSuiteProvisioner;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Service\ApplicationLifecycleService;
+use OCA\Keepiq\Service\ApplicationService;
+use OCA\Keepiq\Service\ApplicationSuiteProvisioner;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroup;
 use OCP\IGroupManager;

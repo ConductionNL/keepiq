@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Password Policy Service
+ * Keepiq Password Policy Service
  *
  * The organisation password policy (org-password-policies §1.1/§1.3/§3.1):
  * the nine policy keys, the floor every write dialog must enforce, and the
@@ -12,7 +12,7 @@
  * read — both of which are rules about the policy, not about settings.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,12 +25,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;

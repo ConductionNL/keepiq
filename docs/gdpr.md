@@ -5,7 +5,7 @@
 
 # Data export and GDPR rights
 
-Doriath is end-to-end encrypted (ADR-003): the server holds only ciphertext and
+Keepiq is end-to-end encrypted (ADR-003): the server holds only ciphertext and
 never sees a master password or a plaintext secret. That shapes how export,
 GDPR access (Art. 15), and erasure (Art. 17) work — the readable parts are
 produced in the browser, and deletion is a server-side cascade with a defined
@@ -46,7 +46,7 @@ changes the security gating of the chosen mode.
 
 ## GDPR data export (Art. 15, right of access)
 
-One machine-readable `doriath-gdpr-export.json` package, assembled in the
+One machine-readable `keepiq-gdpr-export.json` package, assembled in the
 browser from two halves:
 
 - **Server metadata** (`GET /api/v1/gdpr/metadata`, session user only):
@@ -68,16 +68,16 @@ Two triggers run the same ordered, idempotent cascade
 
 - **In-app** (`DELETE /api/v1/gdpr/account-data`): gated by master-password
   re-entry (client-side proof of knowledge) **and** a typed confirmation phrase
-  (`DELETE MY DORIATH DATA`). Deletes Doriath data; the Nextcloud account
+  (`DELETE MY KEEPIQ DATA`). Deletes Keepiq data; the Nextcloud account
   remains.
 - **Automatic**: a `UserDeletedEvent` listener runs the cascade when the
-  Nextcloud account is removed, so Doriath data never outlives its account.
+  Nextcloud account is removed, so Keepiq data never outlives its account.
 
 ### Shared-secret semantics
 
 - **Delegated secrets — ownership transfer.** A secret with an active
   delegation transfers to the delegate: the delegation becomes permanent and
-  the delegate becomes owner. Delegation is Doriath's existing, explicit
+  the delegate becomes owner. Delegation is Keepiq's existing, explicit
   successor mechanism; deletion respects it rather than silently picking an heir.
 - **Granted shares — detach with tombstone.** Each recipient's copy is already a
   full secret encrypted under the recipient's own suite. The share link is

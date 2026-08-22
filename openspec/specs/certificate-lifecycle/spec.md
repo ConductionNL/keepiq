@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Doriath already runs a private Certificate Authority (`lib/Service/CertificateAuthorityService.php`) and ships `certificate` as a system secret type (`lib/Repair/SeedSecretTypes.php:66`), but has no lifecycle tooling around either — the only automated machinery is the root-expiry notify job (`lib/BackgroundJob/CheckRootCertificateExpiry.php`) and intermediate auto-renew (`lib/BackgroundJob/RenewIntermediateCertificate.php`). This feature adds a certificate inventory, `notAfter`-driven expiry monitoring wired into the wave-1 `rotation-expiry-policies` reminder loop, guided renewal (private-CA re-issue for suite/app certs; a checklist + replace-value flow for externally-issued stored certs), and CA-health surfacing on the admin dashboard — parsing certificate metadata client-side for encrypted stored certificates and server-side only for the CA's own issued certificates, preserving the zero-knowledge model (ADR-003).
+Keepiq already runs a private Certificate Authority (`lib/Service/CertificateAuthorityService.php`) and ships `certificate` as a system secret type (`lib/Repair/SeedSecretTypes.php:66`), but has no lifecycle tooling around either — the only automated machinery is the root-expiry notify job (`lib/BackgroundJob/CheckRootCertificateExpiry.php`) and intermediate auto-renew (`lib/BackgroundJob/RenewIntermediateCertificate.php`). This feature adds a certificate inventory, `notAfter`-driven expiry monitoring wired into the wave-1 `rotation-expiry-policies` reminder loop, guided renewal (private-CA re-issue for suite/app certs; a checklist + replace-value flow for externally-issued stored certs), and CA-health surfacing on the admin dashboard — parsing certificate metadata client-side for encrypted stored certificates and server-side only for the CA's own issued certificates, preserving the zero-knowledge model (ADR-003).
 
 ## Requirements
 
@@ -55,8 +55,8 @@ The system MUST surface root/intermediate expiry and issued-certificate counts t
 
 - As a user, I want one place listing all my certificates with expiry dates
 - As a user, I want a reminder before a stored certificate expires
-- As a user, I want one-click re-issue of my Doriath-issued certificate without regenerating my key pair
-- As a user, I want a checklist for renewing a certificate Doriath did not issue
+- As a user, I want one-click re-issue of my Keepiq-issued certificate without regenerating my key pair
+- As a user, I want a checklist for renewing a certificate Keepiq did not issue
 - As an administrator, I want CA health and issued-cert counts on the dashboard
 
 ## Acceptance Criteria

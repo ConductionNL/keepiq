@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Link Share Controller
+ * Keepiq Link Share Controller
  *
  * Authenticated API controller for link share CRUD operations performed
  * by the secret owner.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,14 +20,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\LinkShareService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\LinkShareService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -170,7 +170,7 @@ class LinkShareController extends OCSController {
 		// authenticated dashboard.page route bounced account-less
 		// recipients to the Nextcloud login (fixed with ephemeral-send).
 		$linkUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('doriath.publicShell.page') . '#/share/link/' . $linkShare->getToken()
+			$this->urlGenerator->linkToRoute('keepiq.publicShell.page') . '#/share/link/' . $linkShare->getToken()
 		);
 
 		$payload = $linkShare->jsonSerialize();

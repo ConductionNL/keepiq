@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Compliance Report Mapper
+ * Keepiq Compliance Report Mapper
  *
  * Query-builder mapper for ComplianceReport rows (compliance-reporting
  * §1.2). Append-only: the mapper exposes no update path.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;

@@ -1,19 +1,19 @@
 <?php
 
 /**
- * Doriath Scan Certificate Expiry Job
+ * Keepiq Scan Certificate Expiry Job
  *
  * Daily scan of active CA-issued suite/application certificates
  * (certificate-lifecycle §3.1) — the enc_suites domain the stored-
  * secret expiry scan (`ScanExpiringSecretsJob`) structurally cannot
- * reach. Parses notAfter SERVER-side from the cleartext PEM Doriath
+ * reach. Parses notAfter SERVER-side from the cleartext PEM Keepiq
  * already stores and reminds the owning user at exact-day thresholds.
  * The daily cadence makes each threshold fire once per certificate —
  * same dedup model as the stored-secret scan. This job only NOTIFIES;
  * it never re-signs or mints keys.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,14 +26,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Service\CertificateLifecycleService;
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -102,7 +102,7 @@ class ScanCertificateExpiryJob extends TimedJob {
 					$this->scanOne(suite: $suite, now: $now);
 				} catch (Throwable $exception) {
 					$this->logger->warning(
-						'Doriath: certificate expiry scan failed for suite ' . $suite->getId() . ': ' . $exception->getMessage(),
+						'Keepiq: certificate expiry scan failed for suite ' . $suite->getId() . ': ' . $exception->getMessage(),
 						['app' => Application::APP_ID]
 					);
 				}

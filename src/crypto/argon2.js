@@ -88,7 +88,7 @@ export async function deriveAesKeyArgon2id(password, salt) {
 
 	// Resolve the webpack-emitted argon2.wasm URL. The webpack `asset/resource`
 	// rule turns `require('argon2.wasm')` into the hashed asset URL (served from
-	// `/custom_apps/doriath/js/argon2.wasm`). argon2-browser's own loader would
+	// `/custom_apps/keepiq/js/argon2.wasm`). argon2-browser's own loader would
 	// otherwise `atob()` that URL string as if it were embedded base64 and throw
 	// "string to be decoded is not correctly encoded". Provide a binary loader so
 	// it fetches the real .wasm bytes instead.

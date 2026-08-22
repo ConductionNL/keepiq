@@ -10,7 +10,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Move {count} secrets', { count: bulk.selectionCount })"
+		:name="t('keepiq', 'Move {count} secrets', { count: bulk.selectionCount })"
 		:open="open"
 		size="normal"
 		data-testid="bulk-move-dialog"
@@ -19,21 +19,21 @@
 			<NcSelect
 				v-model="targetFolder"
 				:options="folderOptions"
-				:inputLabel="t('doriath', 'Target folder')"
+				:inputLabel="t('keepiq', 'Target folder')"
 				label="label"
 				data-testid="bulk-move-folder" />
 			<BulkRunPanel @retry="onRetry" />
 		</div>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
 				:disabled="!targetFolder || bulk.progress.running"
 				data-testid="bulk-move-run"
 				@click="onRun">
-				{{ t('doriath', 'Move') }}
+				{{ t('keepiq', 'Move') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -75,7 +75,7 @@ export default {
 		},
 
 		folderOptions() {
-			const options = [{ id: null, label: this.t('doriath', 'Vault root') }]
+			const options = [{ id: null, label: this.t('keepiq', 'Vault root') }]
 			for (const folder of useFolderStore().folders) {
 				options.push({ id: folder.id, label: folder.name })
 			}
@@ -106,7 +106,7 @@ export default {
 			await this.bulk.run(
 				this.bulk.selectedIds,
 				(id) => this.moveOne(id),
-				this.t('doriath', 'Moving secrets'),
+				this.t('keepiq', 'Moving secrets'),
 			)
 			this.$emit('done')
 		},
@@ -119,7 +119,7 @@ export default {
 		async onRetry() {
 			await this.bulk.retryFailed(
 				(id) => this.moveOne(id),
-				this.t('doriath', 'Retrying move'),
+				this.t('keepiq', 'Retrying move'),
 			)
 			this.$emit('done')
 		},

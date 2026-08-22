@@ -1,4 +1,4 @@
-# Doriath — Conduction PHPStan config.
+# Keepiq — Conduction PHPStan config.
 #
 # The shared base is the single source of truth. Everything here is either the
 # app's own tracked debt or an ignore naming a symbol that exists in no other
@@ -44,7 +44,7 @@ parameters:
         # Companion of the setId ignore above: the entity overrides $id with a string
         # PHPDoc type which PHPStan flags as non-covariant against OCP\Entity::$id (int).
         # Same UUID-PK rationale.
-        - '#PHPDoc type string of property OCA\\Doriath\\Db\\[A-Za-z]+::\$id is not covariant with PHPDoc type int of overridden property OCP\\AppFramework\\Db\\Entity::\$id#'
+        - '#PHPDoc type string of property OCA\\Keepiq\\Db\\[A-Za-z]+::\$id is not covariant with PHPDoc type int of overridden property OCP\\AppFramework\\Db\\Entity::\$id#'
         # str_split with positive chunk size always returns non-empty array
         - '#Variable \$chunks in empty\(\) always exists and is not falsy#'
         - '#Strict comparison using === between false and true will always evaluate to false#'

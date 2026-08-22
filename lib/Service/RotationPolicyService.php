@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Rotation Policy Service
+ * Keepiq Rotation Policy Service
  *
  * Business logic for credential rotation policies + expiry
  * (rotation-expiry-policies §2/§3): effective-expiry resolution from
@@ -10,7 +10,7 @@
  * mark-rotated with a proven key_updated_at advance / dismiss).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,18 +23,18 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\ExpiryPolicy;
-use OCA\Doriath\Db\ExpiryPolicyMapper;
-use OCA\Doriath\Db\RotationFlag;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\ExpiryPolicy;
+use OCA\Keepiq\Db\ExpiryPolicyMapper;
+use OCA\Keepiq\Db\RotationFlag;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;

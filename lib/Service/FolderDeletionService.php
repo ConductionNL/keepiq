@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Folder Deletion Service
+ * Keepiq Folder Deletion Service
  *
  * The three-mode deletion protocol of the folder tree, split out of
  * FolderService: an empty folder goes directly, a non-empty LEAF folder needs
@@ -13,7 +13,7 @@
  * before any method here runs — this class receives a resolved Folder.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,16 +26,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Exception\ConflictException;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ConflictException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 
@@ -132,7 +132,7 @@ class FolderDeletionService {
 		if ($children === [] && $hasSecrets === false) {
 			// Empty folder — direct delete. No cascade event.
 			$this->mapper->delete($folder);
-			$this->logger->info("Doriath: empty folder {$id} deleted by {$userId}");
+			$this->logger->info("Keepiq: empty folder {$id} deleted by {$userId}");
 			return;
 		}
 
@@ -202,7 +202,7 @@ class FolderDeletionService {
 		}
 
 		$this->mapper->delete($folder);
-		$this->logger->info("Doriath: leaf folder {$folder->getId()} deleted (cascade={$cascade})");
+		$this->logger->info("Keepiq: leaf folder {$folder->getId()} deleted (cascade={$cascade})");
 	}//end deleteLeafWithSecrets()
 
 	/**
@@ -259,6 +259,6 @@ class FolderDeletionService {
 		}
 
 		$this->mapper->delete($folder);
-		$this->logger->info("Doriath: folder {$folder->getId()} deleted with resolution by {$userId}");
+		$this->logger->info("Keepiq: folder {$folder->getId()} deleted with resolution by {$userId}");
 	}//end deleteWithSubfolders()
 }//end class

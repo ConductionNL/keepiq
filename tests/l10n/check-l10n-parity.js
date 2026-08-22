@@ -76,7 +76,7 @@ const REQUIRED = (process.env.L10N_REQUIRED_LOCALES || EUROPEAN)
 // no-regression ratchet instead.
 //
 // Why the split: when this gate was first wired up, the 36 required locales
-// were 20,433 translations short (see doriath#180). A gate that is red on
+// were 20,433 translations short (see keepiq#180). A gate that is red on
 // every PR from day one gets switched off, and a gate that is not wired up at
 // all — which is what this file was for its entire life — measures nothing.
 // The ratchet is the honest middle: the debt is printed in full on every run
@@ -208,7 +208,7 @@ console.log(`l10n-parity ${label}: ${REQUIRED.length} required locales; checked 
 //
 // Every line below exists because a check that fails or passes for an
 // environmental reason is not measuring the code. This file was itself the
-// falsely-GREEN case (doriath#180: it had zero callers for its entire life),
+// falsely-GREEN case (keepiq#180: it had zero callers for its entire life),
 // and the same week gate-30 fleet-wide reported PASS having matched nothing
 // and written a 0-byte log (.github#213), while gates 22 and 53 reported
 // failures that were an unresolvable `ajv`, not findings.
@@ -326,7 +326,7 @@ if (ENFORCED.length === 0) {
 }
 console.log(`l10n-parity: OUTSTANDING TRANSLATION DEBT: ${totalDebt} missing/empty `
 	+ `across ${withinRatchet.length + regressions.length + hardEnforced.length} locale set(s). `
-	+ 'This is tracked, capped, and must only go down (doriath#180).')
+	+ 'This is tracked, capped, and must only go down (keepiq#180).')
 for (const { f, bound } of withinRatchet) {
 	console.log(`  · ${describe(f)}  [ratchet ${bound}]`)
 }

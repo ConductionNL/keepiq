@@ -3,7 +3,7 @@
 		class="secret-list-item"
 		role="button"
 		tabindex="0"
-		:aria-label="t('doriath', 'Open {name}', { name: secret.name })"
+		:aria-label="t('keepiq', 'Open {name}', { name: secret.name })"
 		:class="{ 'secret-list-item--blocked': secret.blocked }"
 		@click="$emit('open', secret.id)"
 		@keydown.enter="onRowActivate"
@@ -40,12 +40,12 @@
 				<AccountQuestion :size="16" />
 				{{
 					requestState === 'awaiting-fill'
-						? t('doriath', 'Waiting for someone to fill this in')
-						: t('doriath', 'New values requested')
+						? t('keepiq', 'Waiting for someone to fill this in')
+						: t('keepiq', 'New values requested')
 				}}
 			</span>
 			<span v-if="secret.tombstonedAt" class="secret-list-item__tombstone">
-				{{ t('doriath', 'Shared by a deleted account — no longer synced') }}
+				{{ t('keepiq', 'Shared by a deleted account — no longer synced') }}
 			</span>
 			<!--
 			  Driven by possiblyCompromisedAt on the secret payload, NOT by the
@@ -63,7 +63,7 @@
 				<AlertOutline :size="16" />
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Assume this value was exposed — change it at its source',
 					)
 				}}
@@ -83,7 +83,7 @@
 			@keydown.space.stop>
 			<CopyButton
 				:resolve="resolveKey"
-				:label="t('doriath', 'Copy password')"
+				:label="t('keepiq', 'Copy password')"
 				@copied="$emit('copied')" />
 		</span>
 	</div>
@@ -180,10 +180,10 @@ export default {
 		 */
 		blockedLabel() {
 			if (this.secret.unrecoverable === true) {
-				return t('doriath', 'Could not be migrated to your new key')
+				return t('keepiq', 'Could not be migrated to your new key')
 			}
 
-			return t('doriath', 'Locked — suite revoked')
+			return t('keepiq', 'Locked — suite revoked')
 		},
 	},
 

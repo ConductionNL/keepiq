@@ -6,13 +6,13 @@
 
 ## Context
 
-Doriath stores secrets (passwords, API keys, and other sensitive values) for multiple users and applications. The core security requirements are:
+Keepiq stores secrets (passwords, API keys, and other sensitive values) for multiple users and applications. The core security requirements are:
 
 1. Secrets are encrypted at rest and can only be decrypted by the holder of the correct private key
 2. A user or application can write a secret into another party's vault without being able to read it afterwards
 3. Private keys are never stored in plaintext — they are always protected by a master password (users) or passphrase (applications)
 4. The master password is never stored in the database
-5. **The server never decrypts secrets with entity context** — decrypted plaintext must never be linkable to a Doriath entity (secret, user, application) in server memory
+5. **The server never decrypts secrets with entity context** — decrypted plaintext must never be linkable to a Keepiq entity (secret, user, application) in server memory
 
 Requirement 5 was added after evaluating the security model: Bitwarden, Passbolt, Proton Pass, and 1Password all decrypt client-side. For a product that positions itself as an encrypted vault, the server should never see plaintext secrets in context. This rules out the original server-side-only architecture.
 
@@ -20,7 +20,7 @@ Requirement 5 was added after evaluating the security model: Bitwarden, Passbolt
 
 ### Encryption scheme (unchanged from original)
 
-Doriath uses a hybrid RSA + AES encryption scheme:
+Keepiq uses a hybrid RSA + AES encryption scheme:
 
 **Secrets are encrypted with RSA (asymmetric):**
 - Each user and application has an EncryptionSuite containing a public/private key pair
@@ -103,7 +103,7 @@ The server returns encrypted blobs. The application decrypts locally with its ow
 
 ### Internal Nextcloud applications — DecryptService
 
-Applications running inside the same Nextcloud PHP runtime (e.g., OpenConnector) should not duplicate Doriath's crypto logic. Doriath exposes two stateless PHP services for this:
+Applications running inside the same Nextcloud PHP runtime (e.g., OpenConnector) should not duplicate Keepiq's crypto logic. Keepiq exposes two stateless PHP services for this:
 
 #### `DecryptService::decrypt(string $privateKeyPem, string $passphrase, string $encryptedBlob): string`
 
@@ -114,9 +114,9 @@ A pure crypto utility:
 
 **Guarantees:**
 - No database calls
-- No calls to other Doriath services (SecretService, EncryptionSuiteService, etc.)
+- No calls to other Keepiq services (SecretService, EncryptionSuiteService, etc.)
 - No entity context in memory — the service receives raw bytes and returns raw bytes
-- The decrypted value cannot be linked to any Doriath entity within the service
+- The decrypted value cannot be linked to any Keepiq entity within the service
 - Stateless — no caching, no side effects
 
 #### `EncryptService::encrypt(string $publicCertPem, string $plaintext): string`
@@ -130,23 +130,23 @@ Same guarantees: no state, no database, no entity context.
 #### Internal app flow
 
 ```php
-// OpenConnector retrieving an API key from Doriath
+// OpenConnector retrieving an API key from Keepiq
 
-// 1. Get encrypted blob (via Doriath's SecretService — returns blob, never decrypts)
+// 1. Get encrypted blob (via Keepiq's SecretService — returns blob, never decrypts)
 $encryptedBlob = $secretService->getEncryptedValue($secretId, $appId);
 
 // 2. Read own credentials from Nextcloud's credential store
 $privateKey = $credentialsManager->retrieve($appId, 'doriath_private_key');
 $passphrase = $credentialsManager->retrieve($appId, 'doriath_passphrase');
 
-// 3. Decrypt using Doriath's stateless crypto utility
+// 3. Decrypt using Keepiq's stateless crypto utility
 $plaintext = $decryptService->decrypt($privateKey, $passphrase, $encryptedBlob);
 
 // 4. Use the plaintext value
 $connector->setApiKey($plaintext);
 ```
 
-The calling app stores its private key and passphrase in `OCP\Security\ICredentialsManager` under its own app namespace. Doriath's `DecryptService` never knows which app is calling or what the secret represents.
+The calling app stores its private key and passphrase in `OCP\Security\ICredentialsManager` under its own app namespace. Keepiq's `DecryptService` never knows which app is calling or what the secret represents.
 
 ### Link shares and secret requests — always client-side
 

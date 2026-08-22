@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath SIEM Sink Controller
+ * Keepiq SIEM Sink Controller
  *
  * Admin-only SIEM sink management (siem-audit-export §6): list, create,
  * update, delete, and test-fire sinks. Every method rejects a non-admin
@@ -9,7 +9,7 @@
  * HMAC secret is set but NEVER the secret itself.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,12 +22,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\SiemSink;
-use OCA\Doriath\Service\SiemService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Service\SiemService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

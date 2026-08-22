@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Request Policy
+ * Keepiq Secret Request Policy
  *
  * The precondition and authorization surface of the secret-request
  * lifecycle. Every "may this happen / is this request still open" decision
@@ -13,7 +13,7 @@
  * lifecycle service stay a description of state transitions.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,14 +26,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use RuntimeException;

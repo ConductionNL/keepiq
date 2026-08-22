@@ -23,38 +23,38 @@
   @spec openspec/changes/implement-link-sharing/tasks.md#task-9.1
 -->
 <template>
-	<div class="doriath-link-share-access" data-testid="link-share-access">
-		<header class="doriath-link-share-access__header">
-			<h1>{{ t('doriath', 'Shared secret') }}</h1>
+	<div class="keepiq-link-share-access" data-testid="link-share-access">
+		<header class="keepiq-link-share-access__header">
+			<h1>{{ t('keepiq', 'Shared secret') }}</h1>
 		</header>
 
-		<p v-if="loading && !share" class="doriath-link-share-access__loading">
-			{{ t('doriath', 'Loading…') }}
+		<p v-if="loading && !share" class="keepiq-link-share-access__loading">
+			{{ t('keepiq', 'Loading…') }}
 		</p>
 
 		<div
 			v-else-if="loadError"
-			class="doriath-link-share-access__error"
+			class="keepiq-link-share-access__error"
 			data-testid="link-share-load-error">
 			<p>{{ loadError }}</p>
 		</div>
 
 		<form
 			v-else-if="share && !snapshot"
-			class="doriath-link-share-access__form"
+			class="keepiq-link-share-access__form"
 			data-testid="link-share-form"
 			@submit.prevent="onUnlock">
 			<p>
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'This link is protected with a password. Enter the password you received to view the secret.',
 					)
 				}}
 			</p>
 
 			<label>
-				<span>{{ t('doriath', 'Access password') }}</span>
+				<span>{{ t('keepiq', 'Access password') }}</span>
 				<input
 					v-model="password"
 					type="password"
@@ -65,7 +65,7 @@
 
 			<p
 				v-if="unlockError"
-				class="doriath-link-share-access__error"
+				class="keepiq-link-share-access__error"
 				data-testid="link-share-unlock-error">
 				{{ unlockError }}
 			</p>
@@ -76,38 +76,38 @@
 				data-testid="link-share-submit">
 				{{
 					busy
-						? t('doriath', 'Decrypting…')
-						: t('doriath', 'Reveal secret')
+						? t('keepiq', 'Decrypting…')
+						: t('keepiq', 'Reveal secret')
 				}}
 			</button>
 		</form>
 
 		<div
 			v-else-if="snapshot"
-			class="doriath-link-share-access__snapshot"
+			class="keepiq-link-share-access__snapshot"
 			data-testid="link-share-snapshot">
 			<dl>
 				<template v-if="snapshot.name">
-					<dt>{{ t('doriath', 'Name') }}</dt>
+					<dt>{{ t('keepiq', 'Name') }}</dt>
 					<dd>{{ snapshot.name }}</dd>
 				</template>
 				<template v-if="snapshot.login">
-					<dt>{{ t('doriath', 'Login') }}</dt>
+					<dt>{{ t('keepiq', 'Login') }}</dt>
 					<dd>{{ snapshot.login }}</dd>
 				</template>
 				<template v-if="snapshot.url">
-					<dt>{{ t('doriath', 'URL') }}</dt>
+					<dt>{{ t('keepiq', 'URL') }}</dt>
 					<dd>{{ snapshot.url }}</dd>
 				</template>
-				<dt>{{ t('doriath', 'Secret value') }}</dt>
+				<dt>{{ t('keepiq', 'Secret value') }}</dt>
 				<dd>
 					<code data-testid="link-share-value">{{ snapshot.key }}</code>
 				</dd>
 			</dl>
-			<p class="doriath-link-share-access__warning">
+			<p class="keepiq-link-share-access__warning">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'You have viewed this share. It will not be reachable again once the usage cap is reached.',
 					)
 				}}
@@ -144,7 +144,7 @@ export default {
 		if (this.token) {
 			this.loadShare()
 		} else {
-			this.loadError = this.t('doriath', 'No share token in the URL.')
+			this.loadError = this.t('keepiq', 'No share token in the URL.')
 		}
 	},
 
@@ -170,7 +170,7 @@ export default {
 				this.loadError =
 					e?.response?.data?.message
 					?? this.t(
-						'doriath',
+						'keepiq',
 						'This share is not available. It may have expired or been used up.',
 					)
 			} finally {
@@ -195,7 +195,7 @@ export default {
 				await store.confirmPublicLinkShare(this.token)
 			} catch (e) {
 				this.unlockError = this.t(
-					'doriath',
+					'keepiq',
 					'The password does not match. Please try again.',
 				)
 				// Re-fetch with failed=1 so the brute-force counter ticks
@@ -214,7 +214,7 @@ export default {
 </script>
 
 <style scoped>
-.doriath-link-share-access {
+.keepiq-link-share-access {
 	max-width: 560px;
 	margin: 48px auto;
 	padding: 24px;
@@ -222,36 +222,36 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 }
 
-.doriath-link-share-access__header h1 {
+.keepiq-link-share-access__header h1 {
 	margin: 0 0 16px 0;
 }
 
-.doriath-link-share-access__form label {
+.keepiq-link-share-access__form label {
 	display: block;
 	margin: 12px 0;
 }
 
-.doriath-link-share-access__form input {
+.keepiq-link-share-access__form input {
 	display: block;
 	width: 100%;
 	padding: 8px;
 	margin-top: 4px;
 }
 
-.doriath-link-share-access__error {
+.keepiq-link-share-access__error {
 	color: var(--color-error-text);
 }
 
-.doriath-link-share-access__snapshot dt {
+.keepiq-link-share-access__snapshot dt {
 	font-weight: 600;
 	margin-top: 8px;
 }
 
-.doriath-link-share-access__snapshot dd {
+.keepiq-link-share-access__snapshot dd {
 	margin: 0 0 4px 0;
 }
 
-.doriath-link-share-access__warning {
+.keepiq-link-share-access__warning {
 	margin-top: 16px;
 	font-size: 0.9em;
 	color: var(--color-text-maxcontrast);

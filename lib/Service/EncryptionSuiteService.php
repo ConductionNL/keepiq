@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Encryption Suite Service
+ * Keepiq Encryption Suite Service
  *
  * Business logic for EncryptionSuite lifecycle: create, revoke, reinstate.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -171,7 +171,7 @@ class EncryptionSuiteService {
 
 		$this->mapper->update($suite);
 
-		$this->logger->info("Doriath: EncryptionSuite {$id} revoked by {$revokedBy}: {$reason}");
+		$this->logger->info("Keepiq: EncryptionSuite {$id} revoked by {$revokedBy}: {$reason}");
 
 		// Implement-user-sharing §10.3 — dispatch a revocation event so
 		// EncryptionSuiteRevokedListener can cascade share-target
@@ -231,7 +231,7 @@ class EncryptionSuiteService {
 
 		$this->mapper->update($suite);
 
-		$this->logger->info("Doriath: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
+		$this->logger->info("Keepiq: EncryptionSuite {$id} reinstated by {$reinstatedBy}");
 
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(
@@ -268,7 +268,7 @@ class EncryptionSuiteService {
 
 		$this->mapper->update($suite);
 
-		$this->logger->warning("Doriath: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
+		$this->logger->warning("Keepiq: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
 
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(

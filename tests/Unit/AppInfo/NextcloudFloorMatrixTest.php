@@ -4,7 +4,7 @@
  * Tests that the declared Nextcloud floor and the tested matrix agree.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\AppInfo
+ * @package  OCA\Keepiq\Tests\Unit\AppInfo
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -18,7 +18,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\AppInfo;
+namespace OCA\Keepiq\Tests\Unit\AppInfo;
 
 use PHPUnit\Framework\TestCase;
 

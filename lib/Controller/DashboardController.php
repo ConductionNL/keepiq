@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Dashboard Controller
+ * Keepiq Dashboard Controller
  *
- * Controller for the main Doriath dashboard page.
+ * Controller for the main Keepiq dashboard page.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\DashboardSummaryService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\DashboardSummaryService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -35,7 +35,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 
 /**
- * Controller for the main Doriath dashboard page.
+ * Controller for the main Keepiq dashboard page.
  */
 class DashboardController extends Controller {
 	/**
@@ -112,11 +112,11 @@ class DashboardController extends Controller {
 		// WASM module (argon2-browser). Nextcloud's default CSP forbids
 		// WebAssembly compilation, so opt in to `'wasm-unsafe-eval'` for this SPA
 		// page. No external script/connect domains are added — the WASM is
-		// app-local (served from custom_apps/doriath/js/argon2.wasm).
+		// app-local (served from custom_apps/keepiq/js/argon2.wasm).
 		$csp = new ContentSecurityPolicy();
 		$csp->allowEvalWasm(true);
 		// The password-health analysis runs in a dedicated same-origin web worker
-		// (src/health/worker.js, bundled to custom_apps/doriath/js). NC's default
+		// (src/health/worker.js, bundled to custom_apps/keepiq/js). NC's default
 		// CSP has no `worker-src`, so it falls back to the nonce-only `script-src`
 		// and blocks the dynamically-created worker. Allow workers from 'self'.
 		$csp->addAllowedWorkerSrcDomain("'self'");

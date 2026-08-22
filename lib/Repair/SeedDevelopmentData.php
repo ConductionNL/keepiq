@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Seed Development Data Repair Step
+ * Keepiq Seed Development Data Repair Step
  *
  * Creates a test user EncryptionSuite with a known master password for development.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,14 +19,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
 use DateTime;
 use Exception;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Service\CertificateAuthorityService;
-use OCA\Doriath\Service\EncryptService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Service\EncryptService;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -69,7 +69,7 @@ class SeedDevelopmentData implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Seed Doriath development data (debug only)';
+		return 'Seed Keepiq development data (debug only)';
 	}//end getName()
 
 	/**
@@ -89,7 +89,7 @@ class SeedDevelopmentData implements IRepairStep {
 			return;
 		}
 
-		$output->info('Seeding Doriath development data...');
+		$output->info('Seeding Keepiq development data...');
 
 		// Check if the dev user already has a REUSABLE suite. The guard keeps a
 		// sound one (and reports true so we mint nothing), and discards a
@@ -151,6 +151,6 @@ class SeedDevelopmentData implements IRepairStep {
 		$this->suiteMapper->insert($suite);
 
 		$output->info('Dev EncryptionSuite created for user: ' . self::DEV_USER_ID);
-		$this->logger->info('Doriath dev seed: EncryptionSuite created with master password: ' . self::DEV_MASTER_PASSWORD);
+		$this->logger->info('Keepiq dev seed: EncryptionSuite created with master password: ' . self::DEV_MASTER_PASSWORD);
 	}//end run()
 }//end class

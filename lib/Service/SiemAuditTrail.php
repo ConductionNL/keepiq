@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath SIEM Audit Trail
+ * Keepiq SIEM Audit Trail
  *
  * The one place that knows which audit event each SIEM sink
  * administration action emits. Extracted from SiemService so sink CRUD no
@@ -12,7 +12,7 @@
  * never the HMAC secret.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,10 +25,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**

@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `src/views/AdminApplicationsView.vue`.
@@ -69,7 +69,7 @@ describe('AdminApplicationsView', () => {
 		await flushPromises()
 
 		expect(post).toHaveBeenCalledWith(
-			'/apps/doriath/api/v1/applications/a1/approve',
+			'/apps/keepiq/api/v1/applications/a1/approve',
 			{},
 		)
 	})
@@ -87,7 +87,7 @@ describe('AdminApplicationsView', () => {
 		await flushPromises()
 
 		expect(post).toHaveBeenCalledWith(
-			'/apps/doriath/api/v1/applications/a1/reject',
+			'/apps/keepiq/api/v1/applications/a1/reject',
 			{},
 		)
 	})

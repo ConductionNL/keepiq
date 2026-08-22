@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath SuiteCompromiseListener
+ * Keepiq SuiteCompromiseListener
  *
  * Listens for SuiteMigrationCompletedEvent and notifies the original
  * owner of every secret whose copies were flagged 'possibly compromised'
  * during the migration so the owner can investigate.
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,13 +21,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Service\NotificationService;
-use OCA\Doriath\Service\RotationPolicyService;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
+use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -118,8 +118,8 @@ class SuiteCompromiseListener implements IEventListener {
 			}//end foreach
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: SuiteCompromiseListener failed: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: SuiteCompromiseListener failed: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 		}//end try
 	}//end handle()

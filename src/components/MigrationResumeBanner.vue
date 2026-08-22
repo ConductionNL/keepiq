@@ -20,15 +20,15 @@
 <template>
 	<div
 		v-if="migration !== null"
-		class="doriath-migration-banner"
+		class="keepiq-migration-banner"
 		role="status"
 		data-testid="migration-resume-banner">
-		<div class="doriath-migration-banner__message">
+		<div class="keepiq-migration-banner__message">
 			<AlertOutline :size="20" />
 			<span>
-				<strong>{{ t('doriath', 'Key rotation unfinished') }}</strong>
+				<strong>{{ t('keepiq', 'Key rotation unfinished') }}</strong>
 				{{ remainingLabel }}
-				{{ t('doriath', 'Your vault is read-only until it finishes.') }}
+				{{ t('keepiq', 'Your vault is read-only until it finishes.') }}
 			</span>
 		</div>
 
@@ -36,29 +36,29 @@
 		     The new one is already in the session, so it is not asked for. -->
 		<form
 			v-if="expanded && locked === false"
-			class="doriath-migration-banner__form"
+			class="keepiq-migration-banner__form"
 			@submit.prevent="onResume">
 			<NcPasswordField
 				v-model="oldPassword"
-				:label="t('doriath', 'Your previous master password')"
+				:label="t('keepiq', 'Your previous master password')"
 				:disabled="busy" />
 			<NcButton
 				type="submit"
 				variant="primary"
 				:disabled="busy || oldPassword === ''">
-				{{ busy ? t('doriath', 'Resuming…') : t('doriath', 'Resume now') }}
+				{{ busy ? t('keepiq', 'Resuming…') : t('keepiq', 'Resume now') }}
 			</NcButton>
 		</form>
 
-		<p v-if="expanded && locked" class="doriath-migration-banner__hint">
-			{{ t('doriath', 'Unlock your vault first, then resume.') }}
+		<p v-if="expanded && locked" class="keepiq-migration-banner__hint">
+			{{ t('keepiq', 'Unlock your vault first, then resume.') }}
 		</p>
 
-		<p v-if="progressLabel" class="doriath-migration-banner__hint">
+		<p v-if="progressLabel" class="keepiq-migration-banner__hint">
 			{{ progressLabel }}
 		</p>
 
-		<p v-if="error" class="doriath-migration-banner__error">
+		<p v-if="error" class="keepiq-migration-banner__error">
 			{{ error }}
 		</p>
 
@@ -67,7 +67,7 @@
 			variant="secondary"
 			data-testid="migration-resume-open"
 			@click="expanded = true">
-			{{ t('doriath', 'Resume rotation') }}
+			{{ t('keepiq', 'Resume rotation') }}
 		</NcButton>
 	</div>
 </template>
@@ -125,13 +125,13 @@ export default {
 			const remaining = useEncryptionSuiteStore().migrationRemaining
 			if (remaining === null) {
 				return this.t(
-					'doriath',
+					'keepiq',
 					'Some secrets are still encrypted under your previous key.',
 				)
 			}
 
 			return this.n(
-				'doriath',
+				'keepiq',
 				'%n secret is still encrypted under your previous key.',
 				'%n secrets are still encrypted under your previous key.',
 				remaining,
@@ -150,7 +150,7 @@ export default {
 				return null
 			}
 
-			return this.t('doriath', '{done} of {total} records re-encrypted', {
+			return this.t('keepiq', '{done} of {total} records re-encrypted', {
 				done: progress.done,
 				total: Math.max(progress.total, progress.done),
 			})
@@ -209,7 +209,7 @@ export default {
 					this.error =
 						store.migrationBlockedMessage
 						|| this.t(
-							'doriath',
+							'keepiq',
 							'Some secrets could not be migrated. Open key rotation to decide what to do with them.',
 						)
 				}
@@ -217,7 +217,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| this.t('doriath', 'Could not resume the rotation.')
+					|| this.t('keepiq', 'Could not resume the rotation.')
 			} finally {
 				this.busy = false
 			}
@@ -232,7 +232,7 @@ export default {
  * only: --color-warning is a background tint that inverts between themes, so it
  * is paired with --color-warning-text rather than a fixed foreground.
  */
-.doriath-migration-banner {
+.keepiq-migration-banner {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -242,25 +242,25 @@ export default {
 	border-bottom: 1px solid var(--color-warning-text);
 }
 
-.doriath-migration-banner__message {
+.keepiq-migration-banner__message {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
 
-.doriath-migration-banner__form {
+.keepiq-migration-banner__form {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-end;
 	gap: 0.5rem;
 }
 
-.doriath-migration-banner__hint {
+.keepiq-migration-banner__hint {
 	margin: 0;
 	font-size: 0.9em;
 }
 
-.doriath-migration-banner__error {
+.keepiq-migration-banner__error {
 	margin: 0;
 	font-weight: 600;
 	color: var(--color-error-text);

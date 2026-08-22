@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Version Controller
+ * Keepiq Secret Version Controller
  *
  * Authenticated API controller for secret version history
  * (secret-version-history §6.1): metadata list, single-version blob read
@@ -10,7 +10,7 @@
  * existence oracle for inaccessible secrets.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,11 +23,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\SecretVersionService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

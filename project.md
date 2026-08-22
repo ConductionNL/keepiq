@@ -1,14 +1,14 @@
-# Doriath — Encrypted Secrets Manager
+# Keepiq — Encrypted Secrets Manager
 
 ## Overview
 
-Doriath is an encrypted secrets manager for Nextcloud. It securely stores and shares secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
+Keepiq is an encrypted secrets manager for Nextcloud. It securely stores and shares secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
 ## Architecture
 
 - **Type**: Nextcloud App (PHP backend + Vue 2 frontend)
 - **Data layer**: Own database tables (Doctrine ORM + ISchemaWrapper migrations)
-- **Pattern**: Thick backend — Doriath owns all encrypted data; no OpenRegister, no n8n
+- **Pattern**: Thick backend — Keepiq owns all encrypted data; no OpenRegister, no n8n
 - **Encryption**: RSA-4096 + AES-256 via OpenSSL; private CA with root and intermediate certificates
 - **License**: EUPL-1.2
 
@@ -31,7 +31,7 @@ Doriath is an encrypted secrets manager for Nextcloud. It securely stores and sh
 | `lib/Service/SettingsService.php` | Settings business logic |
 | `lib/Listener/DeepLinkRegistrationListener.php` | Registers deep link patterns with search |
 | `lib/Repair/InitializeSettings.php` | Initialize settings on install/upgrade |
-| `lib/Settings/doriath_register.json` | Register schema definition |
+| `lib/Settings/keepiq_register.json` | Register schema definition |
 | `src/App.vue` | App shell (navigation + routing) |
 | `src/navigation/MainMenu.vue` | App navigation sidebar |
 | `src/views/settings/UserSettings.vue` | User settings dialog |

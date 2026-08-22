@@ -13,19 +13,19 @@
 <template>
 	<section
 		v-if="open"
-		class="doriath-private-key-dialog"
+		class="keepiq-private-key-dialog"
 		role="dialog"
 		data-testid="private-key-dialog">
 		<header>
-			<h3>{{ t('doriath', 'Your private key') }}</h3>
+			<h3>{{ t('keepiq', 'Your private key') }}</h3>
 		</header>
 
 		<p
-			class="doriath-private-key-dialog__warning"
+			class="keepiq-private-key-dialog__warning"
 			data-testid="private-key-warning">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'This is the only time this private key will be shown. Save it securely; it cannot be recovered.',
 				)
 			}}
@@ -34,12 +34,12 @@
 		<textarea
 			readonly
 			rows="10"
-			class="doriath-private-key-dialog__key"
-			:aria-label="t('doriath', 'Private key')"
+			class="keepiq-private-key-dialog__key"
+			:aria-label="t('keepiq', 'Private key')"
 			data-testid="private-key-textarea"
 			:value="privateKey" />
 
-		<div class="doriath-private-key-dialog__actions">
+		<div class="keepiq-private-key-dialog__actions">
 			<button type="button" data-testid="private-key-copy" @click="onCopy">
 				{{ copyLabel }}
 			</button>
@@ -47,28 +47,28 @@
 				type="button"
 				data-testid="private-key-download"
 				@click="onDownload">
-				{{ t('doriath', 'Download as .pem') }}
+				{{ t('keepiq', 'Download as .pem') }}
 			</button>
 		</div>
 
-		<label class="doriath-private-key-dialog__ack">
+		<label class="keepiq-private-key-dialog__ack">
 			<input
 				v-model="acknowledged"
 				type="checkbox"
 				data-testid="private-key-ack" />
 			<span>{{
-				t('doriath', 'I have stored the private key in a safe place.')
+				t('keepiq', 'I have stored the private key in a safe place.')
 			}}</span>
 		</label>
 
-		<div class="doriath-private-key-dialog__close">
+		<div class="keepiq-private-key-dialog__close">
 			<button
 				type="button"
 				class="primary"
 				data-testid="private-key-dismiss"
 				:disabled="!acknowledged"
 				@click="$emit('close')">
-				{{ t('doriath', 'Dismiss') }}
+				{{ t('keepiq', 'Dismiss') }}
 			</button>
 		</div>
 	</section>
@@ -90,7 +90,7 @@ export default {
 
 		filename: {
 			type: String,
-			default: 'doriath-application.pem',
+			default: 'keepiq-application.pem',
 		},
 	},
 
@@ -105,8 +105,8 @@ export default {
 	computed: {
 		copyLabel() {
 			return this.copied
-				? t('doriath', 'Copied!')
-				: t('doriath', 'Copy to clipboard')
+				? t('keepiq', 'Copied!')
+				: t('keepiq', 'Copy to clipboard')
 		},
 	},
 
@@ -157,7 +157,7 @@ export default {
 </script>
 
 <style scoped>
-.doriath-private-key-dialog {
+.keepiq-private-key-dialog {
 	max-width: 640px;
 	background-color: var(--color-main-background, #fff);
 	border: 1px solid var(--color-border, #ddd);
@@ -165,7 +165,7 @@ export default {
 	padding: 16px;
 }
 
-.doriath-private-key-dialog__warning {
+.keepiq-private-key-dialog__warning {
 	/* This is the one-time private-key download warning, so it must be
 	   unmissable in either theme. --color-error-rest does not exist and the pale
 	   pink fallback left near-white dark-mode text unreadable on it; the
@@ -179,7 +179,7 @@ export default {
 	font-weight: 600;
 }
 
-.doriath-private-key-dialog__key {
+.keepiq-private-key-dialog__key {
 	width: 100%;
 	font-family: monospace;
 	font-size: 12px;
@@ -188,33 +188,33 @@ export default {
 	border-radius: var(--border-radius, 4px);
 }
 
-.doriath-private-key-dialog__actions {
+.keepiq-private-key-dialog__actions {
 	display: flex;
 	gap: 8px;
 	margin-top: 8px;
 }
 
-.doriath-private-key-dialog__actions button {
+.keepiq-private-key-dialog__actions button {
 	border: 1px solid var(--color-border-dark, #999);
 	background-color: transparent;
 	padding: 6px 12px;
 	border-radius: var(--border-radius, 4px);
 }
 
-.doriath-private-key-dialog__ack {
+.keepiq-private-key-dialog__ack {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin-top: 12px;
 }
 
-.doriath-private-key-dialog__close {
+.keepiq-private-key-dialog__close {
 	display: flex;
 	justify-content: flex-end;
 	margin-top: 12px;
 }
 
-.doriath-private-key-dialog__close .primary {
+.keepiq-private-key-dialog__close .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
 	border: 0;
@@ -222,7 +222,7 @@ export default {
 	border-radius: var(--border-radius, 4px);
 }
 
-.doriath-private-key-dialog__close .primary:disabled {
+.keepiq-private-key-dialog__close .primary:disabled {
 	background-color: var(--color-background-darker, #ccc);
 	cursor: not-allowed;
 }

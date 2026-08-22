@@ -81,7 +81,7 @@
                 <referencedClass name="GuzzleHttp\Client"/>
                 <referencedClass name="GuzzleHttp\Exception\GuzzleException"/>
                 <!-- Doctrine\DBAL (used in migrations for cross-dialect column type
-                     changes; not in vendor stubs because doriath doesn't directly
+                     changes; not in vendor stubs because keepiq doesn't directly
                      require doctrine/dbal — it comes through Nextcloud's runtime). -->
                 <referencedClass name="Doctrine\DBAL\Types\Type"/>
                 <referencedClass name="Doctrine\DBAL\Platforms\AbstractPlatform"/>

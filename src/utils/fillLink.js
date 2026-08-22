@@ -7,8 +7,8 @@
  * It lives here because getting it wrong is not a cosmetic bug. Two forms exist
  * and only one works for the person the link is for:
  *
- *   /apps/doriath/public#/share/request/<token>   200 — the anonymous SPA shell
- *   /apps/doriath/share/request/<token>           401 — requires a Nextcloud account
+ *   /apps/keepiq/public#/share/request/<token>   200 — the anonymous SPA shell
+ *   /apps/keepiq/share/request/<token>           401 — requires a Nextcloud account
  *   /api/v1/public/secret-requests/<token>        200 — JSON, for machines
  *
  * The dialog shipped the third form once and the second form before that, so a
@@ -38,7 +38,7 @@ export function fillLinkFor(token) {
 	}
 
 	return (
-		generateUrl('/apps/doriath/public', {}, { absolute: true })
+		generateUrl('/apps/keepiq/public', {}, { absolute: true })
 		+ `#/share/request/${token}`
 	)
 }

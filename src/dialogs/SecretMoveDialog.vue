@@ -7,7 +7,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Move secret')"
+		:name="t('keepiq', 'Move secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -43,21 +43,21 @@
 				v-model="folderId"
 				:options="folderOptions"
 				:reduce="(opt) => opt.value"
-				:inputLabel="t('doriath', 'Destination folder')"
+				:inputLabel="t('keepiq', 'Destination folder')"
 				:appendToBody="false"
 				:clearable="false" />
 		</div>
 
 		<template #actions>
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="saving" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<FolderMove v-else :size="20" />
 				</template>
-				{{ t('doriath', 'Move') }}
+				{{ t('keepiq', 'Move') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -122,7 +122,7 @@ export default {
 
 	computed: {
 		folderOptions() {
-			const roots = [{ value: null, label: t('doriath', 'Vault root') }]
+			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
 				useFolderStore().folders.map((folder) => ({
 					value: folder.id,
@@ -176,7 +176,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to move secret')
+					|| t('keepiq', 'Failed to move secret')
 			} finally {
 				this.saving = false
 			}

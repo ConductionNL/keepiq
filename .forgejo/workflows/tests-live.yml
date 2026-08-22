@@ -159,7 +159,7 @@ jobs:
             # same apps-extra tree. CI clones only this repo, so fetch OR's
             # release build instead.
             OR_SRC="$RUNNER_TEMP/openregister"
-            git clone --depth 1 https://codeberg.org/Conduction/openregister.git "$OR_SRC"
+            git clone --depth 1 https://github.com/ConductionNL/openregister.git "$OR_SRC"
             ( cd "$OR_SRC" && composer install --no-dev --no-interaction --no-progress --prefer-dist )
           fi
           docker exec nextcloud mkdir -p /var/www/html/custom_apps/openregister

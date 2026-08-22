@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Share Service
+ * Keepiq Share Service
  *
  * The user-to-user secret-share lifecycle: createShare (owner/delegate
  * authorization + recipient-suite precondition), createBatchShares (group
@@ -15,7 +15,7 @@
  * below so ShareController and SecretService keep one seam.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,12 +28,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;

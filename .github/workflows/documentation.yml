@@ -10,4 +10,9 @@ jobs:
   deploy:
     uses: ConductionNL/.github/.github/workflows/documentation.yml@main
     with:
+      # DNS moves separately from the app-id rename (doriath -> keepiq): the
+      # docs subdomain stays `doriath.conduction.nl` until the CNAME for
+      # `keepiq.conduction.nl` exists. Changing it here first would publish the
+      # site to a hostname that resolves nowhere. Keep this in step with
+      # docs/static/CNAME.
       cname: doriath.conduction.nl

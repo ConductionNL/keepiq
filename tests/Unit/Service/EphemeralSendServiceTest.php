@@ -4,7 +4,7 @@
  * Unit tests for EphemeralSendService (ephemeral-send §6.1/§6.2).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,13 +17,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EphemeralSend;
-use OCA\Doriath\Db\EphemeralSendMapper;
-use OCA\Doriath\Service\EphemeralSendService;
+use OCA\Keepiq\Db\EphemeralSend;
+use OCA\Keepiq\Db\EphemeralSendMapper;
+use OCA\Keepiq\Service\EphemeralSendService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Event
+ * Keepiq Audit Event
  *
  * The single typed event every audited secret operation dispatches via
  * OCP\EventDispatcher (add-secret-audit-trail §2.1, design D2). One concrete
@@ -15,7 +15,7 @@
  * keep call sites at dispatch points terse and make the actor type explicit.
  *
  * @category Event
- * @package  OCA\Doriath\Event\Audit
+ * @package  OCA\Keepiq\Event\Audit
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,7 +28,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event\Audit;
+namespace OCA\Keepiq\Event\Audit;
 
 use OCP\EventDispatcher\Event;
 

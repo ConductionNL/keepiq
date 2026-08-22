@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Key Generator Service
+ * Keepiq Key Generator Service
  *
  * Stateless cryptographically-secure random key/password generation.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use RuntimeException;
@@ -109,17 +109,17 @@ class KeyGeneratorService {
 	 */
 	private function policy(): ?array {
 		if ($this->appConfig === null
-			|| $this->appConfig->getValueBool('doriath', 'policy_enabled', false) === false
+			|| $this->appConfig->getValueBool('keepiq', 'policy_enabled', false) === false
 		) {
 			return null;
 		}
 
 		return [
-			'minLength' => max(8, $this->appConfig->getValueInt('doriath', 'generator_min_length', 12)),
-			'requireUpper' => $this->appConfig->getValueBool('doriath', 'generator_require_upper', false),
-			'requireLower' => $this->appConfig->getValueBool('doriath', 'generator_require_lower', false),
-			'requireDigit' => $this->appConfig->getValueBool('doriath', 'generator_require_digit', false),
-			'requireSymbol' => $this->appConfig->getValueBool('doriath', 'generator_require_symbol', false),
+			'minLength' => max(8, $this->appConfig->getValueInt('keepiq', 'generator_min_length', 12)),
+			'requireUpper' => $this->appConfig->getValueBool('keepiq', 'generator_require_upper', false),
+			'requireLower' => $this->appConfig->getValueBool('keepiq', 'generator_require_lower', false),
+			'requireDigit' => $this->appConfig->getValueBool('keepiq', 'generator_require_digit', false),
+			'requireSymbol' => $this->appConfig->getValueBool('keepiq', 'generator_require_symbol', false),
 		];
 	}//end policy()
 

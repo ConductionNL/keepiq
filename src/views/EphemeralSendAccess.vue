@@ -11,7 +11,7 @@
 -->
 <template>
 	<div class="send-access" data-testid="send-access-page">
-		<h2>{{ t('doriath', 'Someone sent you a secure message') }}</h2>
+		<h2>{{ t('keepiq', 'Someone sent you a secure message') }}</h2>
 
 		<NcNoteCard v-if="error" type="error" data-testid="send-access-error">
 			{{ error }}
@@ -19,7 +19,7 @@
 
 		<template v-if="payload === null && !gone">
 			<label v-if="needsPassword" class="send-access__field">
-				<span>{{ t('doriath', 'Password') }}</span>
+				<span>{{ t('keepiq', 'Password') }}</span>
 				<!--
 					autocomplete="off": this is the sender's out-of-band
 					passphrase for ONE ephemeral message, not the visitor's own
@@ -39,12 +39,12 @@
 				:disabled="busy || (needsPassword && password === '')"
 				data-testid="send-access-open"
 				@click="onOpen">
-				{{ t('doriath', 'Reveal the message') }}
+				{{ t('keepiq', 'Reveal the message') }}
 			</NcButton>
 			<p class="send-access__hint">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Revealing counts as a view — the message may burn afterwards.',
 					)
 				}}
@@ -56,11 +56,11 @@
 				{{
 					burned
 						? t(
-								'doriath',
+								'keepiq',
 								'This was the last view — the message has now been destroyed. Save it before leaving this page.',
 							)
 						: t(
-								'doriath',
+								'keepiq',
 								'Save this content now — it will not be retrievable once its views run out.',
 							)
 				}}
@@ -72,15 +72,15 @@
 				variant="secondary"
 				data-testid="send-access-copy"
 				@click="copyPayload">
-				{{ t('doriath', 'Copy content') }}
+				{{ t('keepiq', 'Copy content') }}
 			</NcButton>
 		</template>
 
 		<template v-else>
 			<NcEmptyContent
-				:name="t('doriath', 'This send is gone')"
+				:name="t('keepiq', 'This send is gone')"
 				:description="
-					t('doriath', 'It was burned, expired, or never existed.')
+					t('keepiq', 'It was burned, expired, or never existed.')
 				" />
 		</template>
 	</div>
@@ -124,7 +124,7 @@ export default {
 		try {
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/public/sends/${encodeURIComponent(this.token)}`,
+					`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(this.token)}`,
 				),
 			)
 			this.needsPassword = response.data?.hasPassword === true
@@ -154,11 +154,11 @@ export default {
 				if (e?.message === 'wrong-password') {
 					this.error = e.burned
 						? this.t(
-								'doriath',
+								'keepiq',
 								'Too many wrong passwords — the message has been destroyed.',
 							)
 						: this.t(
-								'doriath',
+								'keepiq',
 								'Wrong password — {count} attempt(s) left before the message is destroyed.',
 								{ count: e.attemptsLeft },
 							)

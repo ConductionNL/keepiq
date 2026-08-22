@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `src/dialogs/SecretShareDialog.vue` — the unified
@@ -87,7 +87,7 @@ describe('SecretShareDialog', () => {
 		await wrapper.vm.$nextTick()
 
 		expect(get).toHaveBeenCalledWith(
-			'/apps/doriath/api/v1/secrets/secret-42/link-shares',
+			'/apps/keepiq/api/v1/secrets/secret-42/link-shares',
 		)
 	})
 
@@ -155,7 +155,7 @@ describe('SecretShareDialog', () => {
 
 		await wrapper.vm.revoke('ls-1')
 
-		expect(del).toHaveBeenCalledWith('/apps/doriath/api/v1/link-shares/ls-1')
+		expect(del).toHaveBeenCalledWith('/apps/keepiq/api/v1/link-shares/ls-1')
 	})
 
 	it('closes the dialog: clears the one-time password and emits `close`', async () => {

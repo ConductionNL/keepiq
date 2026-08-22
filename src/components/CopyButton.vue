@@ -50,7 +50,7 @@ export default {
 		label: {
 			type: String,
 			default() {
-				return t('doriath', 'Copy to clipboard')
+				return t('keepiq', 'Copy to clipboard')
 			},
 		},
 

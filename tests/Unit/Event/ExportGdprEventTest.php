@@ -8,7 +8,7 @@
  * confirms the AuditListener contract (getUserId + getMetadata) is satisfied.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Event
+ * @package  OCA\Keepiq\Tests\Unit\Event
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,12 +21,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Event;
+namespace OCA\Keepiq\Tests\Unit\Event;
 
-use OCA\Doriath\Event\AccountDataDeletedEvent;
-use OCA\Doriath\Event\GdprExportPerformedEvent;
-use OCA\Doriath\Event\SecretExportedEvent;
-use OCA\Doriath\Service\DeletionReport;
+use OCA\Keepiq\Event\AccountDataDeletedEvent;
+use OCA\Keepiq\Event\GdprExportPerformedEvent;
+use OCA\Keepiq\Event\SecretExportedEvent;
+use OCA\Keepiq\Service\DeletionReport;
 use PHPUnit\Framework\TestCase;
 
 /**

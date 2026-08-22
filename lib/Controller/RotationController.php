@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Rotation Controller
+ * Keepiq Rotation Controller
  *
  * Authenticated API controller for rotation & expiry
  * (rotation-expiry-policies §5.1): per-secret expiry get/set, expiry
@@ -10,7 +10,7 @@
  * authorization in the service bodies with no existence oracle.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,16 +23,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\RotationPolicyService;
-use OCA\Doriath\Service\SecretService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\RotationPolicyService;
+use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

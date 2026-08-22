@@ -5,14 +5,14 @@
 
 # Audit trail
 
-Doriath records an **append-only audit trail** of secret operations for
+Keepiq records an **append-only audit trail** of secret operations for
 municipal accountability: knowing *who did what, when* to a credential. The
 trail starts at the deployment of this feature — there is no historical
 backfill.
 
 ## What is observable (and what is not)
 
-Doriath is always end-to-end encrypted (ADR-003): the server observes API
+Keepiq is always end-to-end encrypted (ADR-003): the server observes API
 operations on encrypted blobs but **never** sees plaintext. "Audit trail on all
 secret operations" therefore honestly means:
 

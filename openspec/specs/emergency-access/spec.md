@@ -17,7 +17,7 @@ A grantee MUST have an active EncryptionSuite; designating a user with no active
 
 #### Scenario: Grantee without an EncryptionSuite is rejected
 @e2e exclude State-machine/authorization contract — covered by PHPUnit EmergencyAccessServiceTest (designate/request/decline/approve-by-timeout + the approved+grantee release gate with identical wrong-state/wrong-caller refusal). A live Playwright run of the DOM flow is deferred: the worktree is not deployed and deploying to the shared dev instance is prohibited.
-- **GIVEN** user B has never opened Doriath and has no EncryptionSuite
+- **GIVEN** user B has never opened Keepiq and has no EncryptionSuite
 - **WHEN** grantor A attempts to designate B as an emergency contact
 - **THEN** the system MUST return an error indicating the grantee has no encryption suite
 - **AND** no emergency-contact relationship MUST be created
@@ -105,7 +105,7 @@ Because the recovery envelope escrows the grantor's private key as of designatio
 
 ### Requirement: Emergency contact designation requires two-phase confirmation
 
-Doriath SHALL let a vault owner register an emergency contact with a configured wait period and access level, and SHALL require a separate client-side confirmation step (performed against the contact's then-current EncryptionSuite public key) before any key material is transmitted.
+Keepiq SHALL let a vault owner register an emergency contact with a configured wait period and access level, and SHALL require a separate client-side confirmation step (performed against the contact's then-current EncryptionSuite public key) before any key material is transmitted.
 
 #### Scenario: Registration alone grants no access
 
@@ -127,7 +127,7 @@ Doriath SHALL let a vault owner register an emergency contact with a configured 
 
 ### Requirement: Access requests start an owner-cancellable wait period
 
-Doriath SHALL let a designated, active emergency contact request access to an owner's vault, notify the owner immediately, and start a wait-period timer that the owner can cancel at any time before it elapses.
+Keepiq SHALL let a designated, active emergency contact request access to an owner's vault, notify the owner immediately, and start a wait-period timer that the owner can cancel at any time before it elapses.
 
 #### Scenario: Owner is notified immediately on request
 
@@ -149,7 +149,7 @@ Doriath SHALL let a designated, active emergency contact request access to an ow
 
 ### Requirement: Unrejected requests auto-grant on wait-period expiry
 
-Doriath SHALL run a background job that transitions an emergency access request from `requested` to `granted` once its configured wait period has elapsed without an owner rejection, and grant the configured access level (`view` or `takeover`).
+Keepiq SHALL run a background job that transitions an emergency access request from `requested` to `granted` once its configured wait period has elapsed without an owner rejection, and grant the configured access level (`view` or `takeover`).
 
 #### Scenario: Expiry job grants access after the wait period
 
@@ -165,7 +165,7 @@ Doriath SHALL run a background job that transitions an emergency access request 
 
 ### Requirement: Granted view access is scoped per-object, alongside owner access
 
-Doriath's secret-read authorization SHALL treat a `granted` emergency access request as an additional valid identity for the named owner's secrets, without introducing a parallel access-control mechanism.
+Keepiq's secret-read authorization SHALL treat a `granted` emergency access request as an additional valid identity for the named owner's secrets, without introducing a parallel access-control mechanism.
 
 #### Scenario: Contact with granted view access can read the owner's secrets
 
@@ -181,7 +181,7 @@ Doriath's secret-read authorization SHALL treat a `granted` emergency access req
 
 ### Requirement: Every emergency-access state transition is auditable
 
-Doriath SHALL dispatch typed events for request, rejection, and grant so the (separately specced) audit-trail change can persist them.
+Keepiq SHALL dispatch typed events for request, rejection, and grant so the (separately specced) audit-trail change can persist them.
 
 #### Scenario: Grant dispatches a typed event with no key material
 

@@ -43,7 +43,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/versions`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/versions`),
 				)
 				this.versions = response.data || []
 			} catch (e) {
@@ -69,7 +69,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 				throw new Error('Vault is locked')
 			}
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/versions/${versionId}`),
+				generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
 			)
 			const version = { ...response.data }
 			if (version.key) {
@@ -107,7 +107,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/versions/${versionId}/restore`,
+						`/apps/keepiq/api/v1/versions/${versionId}/restore`,
 					),
 				)
 				// Propagate to recipients: decrypt the restored head with the

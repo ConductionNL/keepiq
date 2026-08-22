@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Certificate Lifecycle Service
+ * Keepiq Certificate Lifecycle Service
  *
  * Certificate inventory, client-parsed metadata persistence, guided
  * renewal, and suite re-issue orchestration (certificate-lifecycle §2).
@@ -9,11 +9,11 @@
  * parsed CLIENT-side (the server holds only ciphertext, ADR-003) and
  * the browser submits non-secret display metadata; CA-issued suite /
  * application / CA certificates are parsed SERVER-side from the
- * cleartext PEM Doriath already stores. No private key or ciphertext is
+ * cleartext PEM Keepiq already stores. No private key or ciphertext is
  * ever emitted.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,20 +26,20 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\CACertificateMapper;
-use OCA\Doriath\Db\CertificateMetadata;
-use OCA\Doriath\Db\CertificateMetadataMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Support\SuppressesDiagnostics;
+use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\CertificateMetadata;
+use OCA\Keepiq\Db\CertificateMetadataMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use RuntimeException;
@@ -211,7 +211,7 @@ class CertificateLifecycleService {
 
 	/**
 	 * The guided renewal checklist for an externally-issued stored
-	 * certificate (§2.5, D4): Doriath has no signing relationship with
+	 * certificate (§2.5, D4): Keepiq has no signing relationship with
 	 * the issuing CA, so the honest flow is a checklist plus a normal
 	 * client-side replace-value update. Emits certificate.renewal_marked.
 	 *
@@ -251,10 +251,10 @@ class CertificateLifecycleService {
 			'renewable' => false,
 			'reason' => 'externally_issued',
 			'steps' => [
-				'Request a renewed certificate from the issuing CA (Doriath has no signing relationship with it and cannot renew on your behalf).',
+				'Request a renewed certificate from the issuing CA (Keepiq has no signing relationship with it and cannot renew on your behalf).',
 				'Verify the renewed certificate chains to the expected CA and covers the same subject.',
 				'Note the new expiry (notAfter) date.',
-				'Update this secret with the new certificate value — the update re-encrypts in your browser and Doriath never sees the plaintext.',
+				'Update this secret with the new certificate value — the update re-encrypts in your browser and Keepiq never sees the plaintext.',
 				'Re-parse the certificate so the inventory metadata and expiry reminder follow the new notAfter.',
 			],
 		];

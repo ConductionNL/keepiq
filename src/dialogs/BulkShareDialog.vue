@@ -13,14 +13,14 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Share {count} secrets', { count: bulk.selectionCount })"
+		:name="t('keepiq', 'Share {count} secrets', { count: bulk.selectionCount })"
 		:open="open"
 		size="normal"
 		data-testid="bulk-share-dialog"
 		@update:open="$emit('close')">
 		<div class="bulk-share">
 			<label class="bulk-share__field">
-				<span>{{ t('doriath', 'Recipient user ID') }}</span>
+				<span>{{ t('keepiq', 'Recipient user ID') }}</span>
 				<input
 					v-model="targetUserId"
 					type="text"
@@ -33,14 +33,14 @@
 		</div>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
 				:disabled="targetUserId === '' || bulk.progress.running"
 				data-testid="bulk-share-run"
 				@click="onRun">
-				{{ t('doriath', 'Share') }}
+				{{ t('keepiq', 'Share') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -115,7 +115,7 @@ export default {
 			)
 
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/shares/register-batch'),
+				generateUrl('/apps/keepiq/api/v1/shares/register-batch'),
 				{
 					shares: [
 						{
@@ -147,7 +147,7 @@ export default {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/shares/recipient-certificate'),
+					generateUrl('/apps/keepiq/api/v1/shares/recipient-certificate'),
 					{ params: { userId: this.targetUserId } },
 				)
 				this.certificate = response.data?.certificate ?? ''
@@ -155,7 +155,7 @@ export default {
 				this.error =
 					e?.response?.status === 404
 						? this.t(
-								'doriath',
+								'keepiq',
 								'Recipient has no active encryption suite',
 							)
 						: e?.response?.data?.message || e?.message
@@ -165,7 +165,7 @@ export default {
 			await this.bulk.run(
 				this.bulk.selectedIds,
 				(id) => this.shareOne(id),
-				this.t('doriath', 'Sharing secrets'),
+				this.t('keepiq', 'Sharing secrets'),
 			)
 			this.$emit('done')
 		},
@@ -178,7 +178,7 @@ export default {
 		async onRetry() {
 			await this.bulk.retryFailed(
 				(id) => this.shareOne(id),
-				this.t('doriath', 'Retrying share'),
+				this.t('keepiq', 'Retrying share'),
 			)
 			this.$emit('done')
 		},

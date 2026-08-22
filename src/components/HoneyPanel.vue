@@ -26,7 +26,7 @@
 			@update:modelValue="onToggle">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'Honey tripwire — page me when anyone accesses this secret',
 				)
 			}}
@@ -36,7 +36,7 @@
 			<NcTextField
 				v-model="note"
 				:label="
-					t('doriath', 'Placement note (only you and admins see this)')
+					t('keepiq', 'Placement note (only you and admins see this)')
 				"
 				data-testid="honey-note"
 				@blur="saveNote" />
@@ -44,7 +44,7 @@
 			<p class="honey-panel__hint">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Every access via the app, machine API, link, or a shared copy raises an alert to you and the admins. The decoy is indistinguishable from a real secret.',
 					)
 				}}
@@ -57,16 +57,16 @@
 				<thead>
 					<tr>
 						<th scope="col">
-							{{ t('doriath', 'Accessor') }}
+							{{ t('keepiq', 'Accessor') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Channel') }}
+							{{ t('keepiq', 'Channel') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Count') }}
+							{{ t('keepiq', 'Count') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Last access') }}
+							{{ t('keepiq', 'Last access') }}
 						</th>
 						<th scope="col" />
 					</tr>
@@ -77,7 +77,7 @@
 						:key="alert.id"
 						:data-testid="`honey-alert-${alert.id}`">
 						<td>
-							{{ alert.accessorId || t('doriath', 'anonymous') }}
+							{{ alert.accessorId || t('keepiq', 'anonymous') }}
 							<div class="honey-panel__muted">
 								{{ alert.ip || '' }}
 							</div>
@@ -91,27 +91,27 @@
 								variant="tertiary"
 								:data-testid="`honey-ack-${alert.id}`"
 								@click="store.acknowledge(alert.id)">
-								{{ t('doriath', 'Acknowledge') }}
+								{{ t('keepiq', 'Acknowledge') }}
 							</NcButton>
 							<span v-else class="honey-panel__muted">{{
-								t('doriath', 'handled')
+								t('keepiq', 'handled')
 							}}</span>
 							<NcButton
 								v-if="!isSnoozed(alert)"
 								variant="tertiary"
 								:data-testid="`honey-snooze-${alert.id}`"
 								@click="store.snooze(alert.id)">
-								{{ t('doriath', 'Snooze 24h') }}
+								{{ t('keepiq', 'Snooze 24h') }}
 							</NcButton>
 							<span v-else class="honey-panel__muted">{{
-								t('doriath', 'snoozed')
+								t('keepiq', 'snoozed')
 							}}</span>
 						</td>
 					</tr>
 				</tbody>
 			</table>
 			<p v-else class="honey-panel__muted" data-testid="honey-no-alerts">
-				{{ t('doriath', 'No accesses recorded — the tripwire is armed.') }}
+				{{ t('keepiq', 'No accesses recorded — the tripwire is armed.') }}
 			</p>
 		</template>
 	</div>

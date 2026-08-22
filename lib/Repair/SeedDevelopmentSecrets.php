@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Seed Development Secrets Repair Step
+ * Keepiq Seed Development Secrets Repair Step
  *
  * Creates realistic example secrets and two folders for the development
  * user's vault. The sensitive fields are RSA-encrypted with the dev user's
@@ -9,7 +9,7 @@
  * Only runs in debug mode and only when the dev EncryptionSuite exists.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,16 +22,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
 use DateTime;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Service\EncryptService;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Service\EncryptService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
@@ -84,7 +84,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Seed Doriath development secrets (debug only)';
+		return 'Seed Keepiq development secrets (debug only)';
 	}//end getName()
 
 	/**
@@ -102,13 +102,13 @@ class SeedDevelopmentSecrets implements IRepairStep {
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
 		} catch (DoesNotExistException) {
-			$output->info('Doriath: no dev EncryptionSuite yet, skipping secret seed');
+			$output->info('Keepiq: no dev EncryptionSuite yet, skipping secret seed');
 			return;
 		}
 
 		// Idempotency: skip if the dev user already has secrets.
 		if ($this->secretMapper->countByOwner('user', self::DEV_USER_ID, null) > 0) {
-			$output->info('Doriath: dev user already has secrets, skipping');
+			$output->info('Keepiq: dev user already has secrets, skipping');
 			return;
 		}
 
@@ -117,7 +117,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 
 		$typeIds = $this->resolveTypeIds();
 		if ($typeIds === []) {
-			$output->info('Doriath: system types not seeded yet, skipping secret seed');
+			$output->info('Keepiq: system types not seeded yet, skipping secret seed');
 			return;
 		}
 
@@ -181,8 +181,8 @@ class SeedDevelopmentSecrets implements IRepairStep {
 			$count++;
 		}
 
-		$output->info('Doriath: seeded ' . $count . ' development secrets in 2 folders');
-		$this->logger->info('Doriath dev seed: created ' . $count . ' secrets');
+		$output->info('Keepiq: seeded ' . $count . ' development secrets in 2 folders');
+		$this->logger->info('Keepiq dev seed: created ' . $count . ' secrets');
 	}//end run()
 
 	/**

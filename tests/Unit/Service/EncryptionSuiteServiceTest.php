@@ -4,7 +4,7 @@
  * Unit tests for EncryptionSuiteService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,15 +17,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Service\CertificateAuthorityService;
-use OCA\Doriath\Service\EncryptionSuiteProvisioningService;
-use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Service\EncryptionSuiteProvisioningService;
+use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -416,7 +416,7 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$csr = (string)file_get_contents(__DIR__ . '/../fixtures/csr-4096.pem');
 
 		$this->appConfig->method('getValueString')
-			->with('doriath', 'ca_status', 'unknown')
+			->with('keepiq', 'ca_status', 'unknown')
 			->willReturn('healthy');
 
 		$this->caService->expects($this->once())

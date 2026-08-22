@@ -4,7 +4,7 @@
  * Unit tests for EncryptionSuiteRevokedListener.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Listener
+ * @package  OCA\Keepiq\Tests\Unit\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,12 +17,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Listener;
+namespace OCA\Keepiq\Tests\Unit\Listener;
 
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
-use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
-use OCA\Doriath\Service\DelegationService;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
+use OCA\Keepiq\Service\DelegationService;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

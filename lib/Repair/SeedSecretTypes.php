@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Seed Secret Types Repair Step
+ * Keepiq Seed Secret Types Repair Step
  *
  * Idempotently seeds the 7 immutable system SecretTypes on install and
  * upgrade, using deterministic (UUID v5) identifiers so the IDs are stable
@@ -12,7 +12,7 @@
  * server cannot distinguish a `totp` secret from any other.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,11 +25,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
 use DateTime;
-use OCA\Doriath\Db\SecretType;
-use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -99,7 +99,7 @@ class SeedSecretTypes implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Seed Doriath system secret types';
+		return 'Seed Keepiq system secret types';
 	}//end getName()
 
 	/**
@@ -110,7 +110,7 @@ class SeedSecretTypes implements IRepairStep {
 	 * @return string The deterministic UUID
 	 */
 	public static function deterministicId(string $name): string {
-		return Uuid::uuid5(self::TYPE_NAMESPACE, 'doriath:secret-type:' . $name)->toString();
+		return Uuid::uuid5(self::TYPE_NAMESPACE, 'keepiq:secret-type:' . $name)->toString();
 	}//end deterministicId()
 
 	/**
@@ -144,7 +144,7 @@ class SeedSecretTypes implements IRepairStep {
 			$created++;
 		}
 
-		$output->info('Doriath: seeded ' . $created . ' system secret types (' . count(self::SYSTEM_TYPES) . ' total)');
-		$this->logger->info('Doriath: SeedSecretTypes created ' . $created . ' new system types');
+		$output->info('Keepiq: seeded ' . $created . ' system secret types (' . count(self::SYSTEM_TYPES) . ' total)');
+		$this->logger->info('Keepiq: SeedSecretTypes created ' . $created . ' new system types');
 	}//end run()
 }//end class

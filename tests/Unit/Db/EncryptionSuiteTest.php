@@ -4,7 +4,7 @@
  * Unit tests for EncryptionSuite entity.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Db
+ * @package  OCA\Keepiq\Tests\Unit\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Db;
+namespace OCA\Keepiq\Tests\Unit\Db;
 
 use DateTime;
-use OCA\Doriath\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuite;
 use PHPUnit\Framework\TestCase;
 
 /**

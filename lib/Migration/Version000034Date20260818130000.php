@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration - Default the secret-version `key` column to empty string
+ * Keepiq Migration - Default the secret-version `key` column to empty string
  *
  * The same defect as Version000033, one table over, and reachable for the same
  * reason: `SecretVersion::$key` is declared `protected string $key = '';` while
@@ -28,7 +28,7 @@
  * cost. `login` and the remaining value columns here are already nullable.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -41,7 +41,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

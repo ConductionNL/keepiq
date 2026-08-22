@@ -11,13 +11,13 @@
   @spec openspec/changes/implement-user-sharing/tasks.md#task-12.3
 -->
 <template>
-	<section class="doriath-group-share-form" data-testid="group-share-form">
+	<section class="keepiq-group-share-form" data-testid="group-share-form">
 		<header>
-			<h4>{{ t('doriath', 'Share with a group') }}</h4>
+			<h4>{{ t('keepiq', 'Share with a group') }}</h4>
 		</header>
 		<form @submit.prevent="onSubmit">
-			<label class="doriath-group-share-form__field">
-				<span>{{ t('doriath', 'Group ID') }}</span>
+			<label class="keepiq-group-share-form__field">
+				<span>{{ t('keepiq', 'Group ID') }}</span>
 				<input
 					v-model.trim="groupId"
 					type="text"
@@ -28,11 +28,11 @@
 
 			<p
 				v-if="memberCount > 0"
-				class="doriath-group-share-form__hint"
+				class="keepiq-group-share-form__hint"
 				data-testid="group-share-form-hint">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Will share with {count} member(s) with an active suite.',
 						{ count: memberCount },
 					)
@@ -41,17 +41,17 @@
 
 			<p
 				v-if="error"
-				class="doriath-group-share-form__error"
+				class="keepiq-group-share-form__error"
 				data-testid="group-share-form-error">
 				{{ error }}
 			</p>
 
-			<div class="doriath-group-share-form__actions">
+			<div class="keepiq-group-share-form__actions">
 				<button
 					type="button"
 					data-testid="group-share-form-cancel"
 					@click="$emit('cancel')">
-					{{ t('doriath', 'Cancel') }}
+					{{ t('keepiq', 'Cancel') }}
 				</button>
 				<button
 					type="submit"
@@ -60,8 +60,8 @@
 					:disabled="busy || groupId === '' || memberCount === 0">
 					{{
 						busy
-							? t('doriath', 'Sharing…')
-							: t('doriath', 'Share with group')
+							? t('keepiq', 'Sharing…')
+							: t('keepiq', 'Share with group')
 					}}
 				</button>
 			</div>
@@ -115,11 +115,11 @@ export default {
 		async onSubmit() {
 			this.error = null
 			if (this.groupId === '') {
-				this.error = t('doriath', 'Group is required')
+				this.error = t('keepiq', 'Group is required')
 				return
 			}
 			if (this.memberCount === 0) {
-				this.error = t('doriath', 'No eligible members to share with')
+				this.error = t('keepiq', 'No eligible members to share with')
 				return
 			}
 
@@ -140,7 +140,7 @@ export default {
 				this.$emit('shared', { groupId: this.groupId, recipients })
 			} catch (e) {
 				this.error =
-					e?.message || t('doriath', 'Failed to encrypt for group')
+					e?.message || t('keepiq', 'Failed to encrypt for group')
 			} finally {
 				this.busy = false
 			}
@@ -150,36 +150,36 @@ export default {
 </script>
 
 <style scoped>
-.doriath-group-share-form__field {
+.keepiq-group-share-form__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
 
-.doriath-group-share-form__field input {
+.keepiq-group-share-form__field input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
 
-.doriath-group-share-form__hint {
+.keepiq-group-share-form__hint {
 	font-size: 13px;
 	color: var(--color-text-maxcontrast, #777);
 }
 
-.doriath-group-share-form__error {
+.keepiq-group-share-form__error {
 	color: var(--color-error-text);
 	font-size: 13px;
 }
 
-.doriath-group-share-form__actions {
+.keepiq-group-share-form__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
 
-.doriath-group-share-form__actions .primary {
+.keepiq-group-share-form__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
 	border: 0;

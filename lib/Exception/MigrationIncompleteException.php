@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Incomplete Exception
+ * Keepiq Migration Incomplete Exception
  *
  * Thrown when a compromise-recovery migration is asked to terminate while rows
  * in one or more suite-bound stores are still encrypted under the old suite.
@@ -10,7 +10,7 @@
  * instead. Controllers map this to an HTTP 409 response.
  *
  * @category Exception
- * @package  OCA\Doriath\Exception
+ * @package  OCA\Keepiq\Exception
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Exception;
+namespace OCA\Keepiq\Exception;
 
 use RuntimeException;
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - SecretRequestPolicy access-gate tests
+ * Keepiq - SecretRequestPolicy access-gate tests
  *
  * `requireOpenByToken()` is the enforcement point for the public fill surface:
  * every recipient request passes through it, and its refusal codes are what the
@@ -15,7 +15,7 @@
  *     the unknown-state 500
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,13 +28,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Service\SecretRequestPolicy;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Service\SecretRequestPolicy;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

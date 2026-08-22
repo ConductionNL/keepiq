@@ -1,14 +1,14 @@
 <template>
 	<section class="secret-activity" data-testid="secret-activity-tab">
 		<h3 class="secret-activity__heading">
-			{{ t('doriath', 'Activity') }}
+			{{ t('keepiq', 'Activity') }}
 		</h3>
 
 		<NcLoadingIcon v-if="loading" :size="24" />
 
 		<NcEmptyContent
 			v-else-if="entries.length === 0"
-			:name="t('doriath', 'No activity recorded yet')"
+			:name="t('keepiq', 'No activity recorded yet')"
 			data-testid="secret-activity-empty">
 			<template #icon>
 				<History :size="20" />

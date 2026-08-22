@@ -64,7 +64,7 @@ export const useFolderStore = defineStore('folder', {
 			}
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/folders'),
+					generateUrl('/apps/keepiq/api/v1/folders'),
 				)
 				this.folders = response.data || []
 			} catch (e) {
@@ -94,7 +94,7 @@ export const useFolderStore = defineStore('folder', {
 		 */
 		async createFolder(name, parentId = null) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/folders'),
+				generateUrl('/apps/keepiq/api/v1/folders'),
 				{ name, parentId },
 			)
 			this.folders.push(response.data)
@@ -110,7 +110,7 @@ export const useFolderStore = defineStore('folder', {
 		 */
 		async updateFolder(id, data) {
 			const response = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/folders/${id}`),
 				data,
 			)
 			const index = this.folders.findIndex((f) => f.id === id)
@@ -128,7 +128,7 @@ export const useFolderStore = defineStore('folder', {
 		 */
 		async fetchChildren(id) {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/folders/${id}/children`),
+				generateUrl(`/apps/keepiq/api/v1/folders/${id}/children`),
 			)
 			return response.data
 		},
@@ -152,7 +152,7 @@ export const useFolderStore = defineStore('folder', {
 				}
 			}
 			await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/folders/${id}`),
 				config,
 			)
 			this.folders = this.folders.filter((f) => f.id !== id)

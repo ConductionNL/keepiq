@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Doriath Secret Search Provider
+ * Keepiq Secret Search Provider
  *
- * Registers Doriath secrets with Nextcloud's unified search. The provider
+ * Registers Keepiq secrets with Nextcloud's unified search. The provider
  * queries the plaintext name and url columns only — no master password or
  * vault session is required (ADR-003 keeps name/url unencrypted for exactly
  * this purpose). Results deep-link into the app; if the vault is locked, the
  * in-app route guard redirects through the lock screen with a returnUrl.
  *
  * @category Search
- * @package  OCA\Doriath\Search
+ * @package  OCA\Keepiq\Search
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,11 +23,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Search;
+namespace OCA\Keepiq\Search;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
@@ -37,7 +37,7 @@ use OCP\Search\SearchResult;
 use OCP\Search\SearchResultEntry;
 
 /**
- * Unified search provider for Doriath secrets.
+ * Unified search provider for Keepiq secrets.
  *
  * @SuppressWarnings(PHPMD.StaticAccess) OCP\Search\SearchResult::complete() is the
  *   Nextcloud-mandated factory for building a provider result; there is no
@@ -73,7 +73,7 @@ class SecretSearchProvider implements IProvider {
 	 * @return string
 	 */
 	public function getId(): string {
-		return 'doriath-secrets';
+		return 'keepiq-secrets';
 	}//end getId()
 
 	/**
@@ -144,7 +144,7 @@ class SecretSearchProvider implements IProvider {
 		}
 
 		$deepLink = $this->urlGenerator->linkToRouteAbsolute(
-			'doriath.dashboard.page'
+			'keepiq.dashboard.page'
 		) . '#/secrets/' . $secret->getId();
 
 		$icon = $this->urlGenerator->imagePath(Application::APP_ID, 'app.svg');

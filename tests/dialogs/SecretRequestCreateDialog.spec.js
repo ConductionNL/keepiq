@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `src/dialogs/SecretRequestCreateDialog.vue`.
@@ -98,12 +98,12 @@ describe('SecretRequestCreateDialog', () => {
 		expect(payload.expiresAt.endsWith('Z')).toBe(true)
 
 		// fillUrl is populated from the response token.
-		// The anonymous shell, NOT /apps/doriath/share/request/<token>: the
+		// The anonymous shell, NOT /apps/keepiq/share/request/<token>: the
 		// recipient has no account, and that form answers 401 for them.
 		expect(wrapper.vm.fillUrl).toContain(
-			'/apps/doriath/public#/share/request/tok-abc',
+			'/apps/keepiq/public#/share/request/tok-abc',
 		)
-		expect(wrapper.vm.fillUrl).not.toContain('/apps/doriath/share/request/')
+		expect(wrapper.vm.fillUrl).not.toContain('/apps/keepiq/share/request/')
 
 		// `created` event is emitted with the store response.
 		const events = wrapper.emitted('created')
@@ -145,7 +145,7 @@ describe('SecretRequestCreateDialog', () => {
 			null, // no expiry → null (not empty string)
 		)
 		expect(wrapper.vm.fillUrl).toContain(
-			'/apps/doriath/public#/share/request/tok-rerequest',
+			'/apps/keepiq/public#/share/request/tok-rerequest',
 		)
 	})
 
@@ -159,11 +159,11 @@ describe('SecretRequestCreateDialog', () => {
 		})
 
 		wrapper.vm.fillUrl =
-			'http://nc.test/apps/doriath/public#/share/request/tok-1'
+			'http://nc.test/apps/keepiq/public#/share/request/tok-1'
 		await wrapper.vm.copyUrl()
 
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-			'http://nc.test/apps/doriath/public#/share/request/tok-1',
+			'http://nc.test/apps/keepiq/public#/share/request/tok-1',
 		)
 		expect(wrapper.vm.copied).toBe(true)
 	})

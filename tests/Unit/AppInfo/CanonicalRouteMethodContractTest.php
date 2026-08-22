@@ -4,7 +4,7 @@
  * Tests for the canonical AppHost route table's method contract.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\AppInfo
+ * @package  OCA\Keepiq\Tests\Unit\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\AppInfo;
+namespace OCA\Keepiq\Tests\Unit\AppInfo;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -31,7 +31,7 @@ use ReflectionClass;
  * controller when this app does not ship a class of that name.
  *
  * `OCA\OpenRegister\AppHost\Bootstrap::aliasControllerUnlessLeafDefinesIt()`
- * registers the DI alias `OCA\Doriath\Controller\XController` ->
+ * registers the DI alias `OCA\Keepiq\Controller\XController` ->
  * `OCA\OpenRegister\AppHost\Controller\GenericXController` ONLY when the leaf
  * class does not exist. So the seam has two sides, and they fail differently:
  *
@@ -47,11 +47,11 @@ use ReflectionClass;
  *
  * Measured live on 2026-08-08 against the dev instance:
  *
- *     GET /apps/doriath/api/settings -> 200
- *     PUT /apps/doriath/api/settings -> 500
+ *     GET /apps/keepiq/api/settings -> 200
+ *     PUT /apps/keepiq/api/settings -> 500
  *     nextcloud.log: ReflectionException: Method
- *     OCA\Doriath\Controller\SettingsController::update() does not exist
- *     (route doriath.settings.update)
+ *     OCA\Keepiq\Controller\SettingsController::update() does not exist
+ *     (route keepiq.settings.update)
  *
  * This test asserts the ITEM (each individual method), never the container
  * (the controller class merely existing).
@@ -104,7 +104,7 @@ class CanonicalRouteMethodContractTest extends TestCase {
 				continue;
 			}
 
-			$class = 'OCA\\Doriath\\Controller\\' . $prefix . 'Controller';
+			$class = 'OCA\\Keepiq\\Controller\\' . $prefix . 'Controller';
 			$this->assertTrue(
 				class_exists($class),
 				sprintf('%s exists on disk but does not autoload as %s', $file, $class)

@@ -63,7 +63,7 @@ is attributed to the system, because the requester took no action.
   several hours rather than in one transaction.
 - **The job is fail-soft per request.** One request that cannot be cleaned up is
   logged and skipped; the rest of the batch still completes. Check the Nextcloud
-  log for `Doriath: could not expire secret request` if you expect a request to
+  log for `Keepiq: could not expire secret request` if you expect a request to
   have been swept and it has not been.
 - **Nothing notifies the requester** that a request lapsed. They see it when they
   look at their requests. This is a deliberate omission for now, not an oversight.

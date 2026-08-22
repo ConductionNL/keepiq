@@ -20,7 +20,7 @@ that change first or land the registry stub here.
 
 - [ ] 2.1 Create `GdprService` in `lib/Service/GdprService.php` with `collectMetadata(userId)`: suites (certificate, status, audit fields — explicitly excluding the encrypted private-key blob, with the exclusion note embedded in the output), shares given/received, delegations, link-share metadata (no snapshots), secret requests, user settings
 - [ ] 2.2 Create `GdprController` with `#[NoAdminRequired]` endpoint `GET /api/v1/gdpr/metadata`, scoped exclusively to the session user (no user parameter)
-- [ ] 2.3 Version the metadata document (`format: doriath-gdpr-metadata`, `version: 1`) with per-section field documentation
+- [ ] 2.3 Version the metadata document (`format: keepiq-gdpr-metadata`, `version: 1`) with per-section field documentation
 
 ## 3. Backend — Account Deletion Cascade
 
@@ -53,7 +53,7 @@ that change first or land the registry stub here.
 - [ ] 6.2 Create `src/dialogs/ExportDialog.vue` (own file per ADR-004): mode choice (encrypted backup visually primary / plaintext CSV), scope selector (vault or folder NcSelect with `inputLabel`), backup-passphrase input with the zxcvbn strength meter (≥ 3 floor, submit disabled below it, hint recommending a written-down passphrase), plaintext path = warning NcNoteCard requiring acknowledgement → master-password re-entry → download
 - [ ] 6.3 Create `src/dialogs/AccountDeletionDialog.vue`: consequence summary (counts fetched per entity), non-blocking "export first" suggestion link, typed confirmation phrase input, master-password re-entry, irreversibility warning; on success show the deletion report
 - [ ] 6.4 Create `src/dialogs/GdprExportDialog.vue`: unlocked → full package; locked → offer unlock or metadata-only package with the explicit limitation text
-- [ ] 6.5 Add entry points in user settings (Export data / GDPR export / Delete my Doriath data) via the registry modal dispatch
+- [ ] 6.5 Add entry points in user settings (Export data / GDPR export / Delete my Keepiq data) via the registry modal dispatch
 - [ ] 6.6 Tombstone badge: render "Shared by a deleted account — no longer synced" on secrets with `tombstoned_at` in the list and detail views
 - [ ] 6.7 Register the backup-restore parser (`.doriath-backup`: passphrase prompt → `decryptBackup` → normalized rows) in the import wizard's parser registry
 

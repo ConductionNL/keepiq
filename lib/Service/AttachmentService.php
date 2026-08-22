@@ -1,17 +1,17 @@
 <?php
 
 /**
- * Doriath Attachment Service
+ * Keepiq Attachment Service
  *
  * Business logic for encrypted attachments (encrypted-attachments §2):
  * ciphertext blobs in IAppData, metadata + per-copy RSA-wrapped file keys
- * in Doriath's own tables. The server brokers where bytes live and who
+ * in Keepiq's own tables. The server brokers where bytes live and who
  * holds a wrapped key but never sees plaintext bytes, the plaintext
  * filename, or the file key (ADR-003). One physical blob per file; a
  * blob is unlinked only when its LAST grant is deleted.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,21 +24,21 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\Attachment;
-use OCA\Doriath\Db\AttachmentGrant;
-use OCA\Doriath\Db\AttachmentGrantMapper;
-use OCA\Doriath\Db\AttachmentMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\Attachment;
+use OCA\Keepiq\Db\AttachmentGrant;
+use OCA\Keepiq\Db\AttachmentGrantMapper;
+use OCA\Keepiq\Db\AttachmentMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\AppData\IAppDataFactory;
@@ -58,6 +58,13 @@ class AttachmentService {
 	 * The IAppData folder holding attachment ciphertext blobs.
 	 */
 	private const BLOB_FOLDER = 'attachments';
+
+	/**
+	 * The IAppData namespace the blob folder lives under.
+	 *
+	 * Pinned to the pre-rename app id on purpose — see blobFolder().
+	 */
+	private const BLOB_APP_DATA_NAMESPACE = 'doriath';
 
 	/**
 	 * Constructor for AttachmentService.
@@ -99,12 +106,28 @@ class AttachmentService {
 	}//end dispatchAudit()
 
 	/**
-	 * The blob folder inside Doriath's app data (created on demand).
+	 * The app-data namespace holding attachment ciphertext blobs.
+	 *
+	 * DELIBERATELY THE OLD APP ID, `doriath`, AFTER THE doriath -> keepiq
+	 * RENAME. `IAppDataFactory::get($appId)` resolves to the on-disk folder
+	 * `appdata_<instanceid>/<appId>/`, so this string is a STORAGE LOCATION,
+	 * not a label. Every attachment ever uploaded lives at
+	 * `appdata_<instanceid>/doriath/attachments/<blob_ref>`, addressed by the
+	 * `blob_ref` column in `doriath_attachments` — and the bytes are AES-GCM
+	 * ciphertext whose file key is RSA-wrapped per recipient, so they cannot
+	 * be re-created from anything the server holds.
+	 *
+	 * Passing `Application::APP_ID` here would silently point the app at an
+	 * empty `appdata_<instanceid>/keepiq/` folder: uploads would still work,
+	 * every existing attachment would 404 on download, and nothing would log
+	 * an error. Moving the folder is a filesystem migration that no repair
+	 * step in this change performs — see the report accompanying the rename.
+	 * Until that migration exists, this must not follow the app id.
 	 *
 	 * @return \OCP\Files\SimpleFS\ISimpleFolder
 	 */
 	private function blobFolder(): \OCP\Files\SimpleFS\ISimpleFolder {
-		$appData = $this->appDataFactory->get(Application::APP_ID);
+		$appData = $this->appDataFactory->get(self::BLOB_APP_DATA_NAMESPACE);
 		try {
 			return $appData->getFolder(self::BLOB_FOLDER);
 		} catch (NotFoundException) {

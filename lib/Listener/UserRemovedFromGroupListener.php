@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath UserRemovedFromGroupListener
+ * Keepiq UserRemovedFromGroupListener
  *
  * Listens for Nextcloud's UserRemovedEvent and revokes the group-derived
  * ShareTargets for the departing user (direct shares stay intact).
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,10 +20,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Service\GroupShareService;
-use OCA\Doriath\Service\TeamFolderService;
+use OCA\Keepiq\Service\GroupShareService;
+use OCA\Keepiq\Service\TeamFolderService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\UserRemovedEvent;
@@ -73,15 +73,15 @@ class UserRemovedFromGroupListener implements IEventListener {
 			);
 			if ($count > 0) {
 				$this->logger->info(
-					'Doriath: revoked ' . $count . ' group-derived shares for '
+					'Keepiq: revoked ' . $count . ' group-derived shares for '
 					. $event->getUser()->getUID() . ' leaving ' . $event->getGroup()->getGID(),
-					['app' => 'doriath']
+					['app' => 'keepiq']
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: UserRemovedFromGroupListener failed: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: UserRemovedFromGroupListener failed: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 		}
 
@@ -95,15 +95,15 @@ class UserRemovedFromGroupListener implements IEventListener {
 			);
 			if ($teamCount > 0) {
 				$this->logger->info(
-					'Doriath: revoked ' . $teamCount . ' team-folder-derived shares for '
+					'Keepiq: revoked ' . $teamCount . ' team-folder-derived shares for '
 					. $event->getUser()->getUID() . ' leaving ' . $event->getGroup()->getGID(),
-					['app' => 'doriath']
+					['app' => 'keepiq']
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: team-folder leave handling failed: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: team-folder leave handling failed: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 		}
 	}//end handle()

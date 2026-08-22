@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Group Share Entity
+ * Keepiq Group Share Entity
  *
  * Database entity representing a group-share record — the parent of N
  * per-recipient ShareTarget rows that fan a secret out to every member
  * of a Nextcloud group.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

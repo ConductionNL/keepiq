@@ -1,8 +1,8 @@
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Notifications')"
+		:name="t('keepiq', 'Notifications')"
 		:description="
-			t('doriath', 'Choose which Doriath events you receive notifications for')
+			t('keepiq', 'Choose which Keepiq events you receive notifications for')
 		">
 		<div class="notification-toggles">
 			<div
@@ -47,19 +47,19 @@ export default {
 			return [
 				{
 					key: 'notify_shares',
-					label: t('doriath', 'A secret is shared with me'),
+					label: t('keepiq', 'A secret is shared with me'),
 				},
 				{
 					key: 'notify_requests',
-					label: t('doriath', 'A secret request is fulfilled or expires'),
+					label: t('keepiq', 'A secret request is fulfilled or expires'),
 				},
 				{
 					key: 'notify_group_shares',
-					label: t('doriath', 'A group share affects me'),
+					label: t('keepiq', 'A group share affects me'),
 				},
 				{
 					key: 'notify_security',
-					label: t('doriath', 'Security event (compromise, revocation)'),
+					label: t('keepiq', 'Security event (compromise, revocation)'),
 				},
 			]
 		},
@@ -73,7 +73,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/user'),
+				generateUrl('/apps/keepiq/api/settings/user'),
 			)
 			for (const key of Object.keys(this.prefs)) {
 				if (response.data[key] !== undefined) {
@@ -82,7 +82,7 @@ export default {
 				}
 			}
 		} catch (e) {
-			console.warn('Doriath: failed to load notification prefs', e)
+			console.warn('Keepiq: failed to load notification prefs', e)
 		}
 	},
 
@@ -95,7 +95,7 @@ export default {
 		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-5.2
 		 */
 		async save(key) {
-			await axios.put(generateUrl('/apps/doriath/api/settings/user'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/user'), {
 				[key]: this.prefs[key] ? '1' : '0',
 			})
 		},

@@ -55,7 +55,7 @@ export const useApplicationStore = defineStore('application', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/applications'),
+					generateUrl('/apps/keepiq/api/v1/applications'),
 				)
 				this.applications = response.data || []
 				this.totalCount = this.applications.length
@@ -74,7 +74,7 @@ export const useApplicationStore = defineStore('application', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/applications/${id}`),
+					generateUrl(`/apps/keepiq/api/v1/applications/${id}`),
 				)
 				this.currentApplication = response.data
 				return this.currentApplication
@@ -93,7 +93,7 @@ export const useApplicationStore = defineStore('application', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/applications/pending'),
+					generateUrl('/apps/keepiq/api/v1/applications/pending'),
 				)
 				this.pendingApplications = response.data || []
 			} finally {
@@ -122,7 +122,7 @@ export const useApplicationStore = defineStore('application', {
 				csr: payload.csr ?? null,
 			}
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/applications'),
+				generateUrl('/apps/keepiq/api/v1/applications'),
 				body,
 			)
 			const data = response.data || {}
@@ -151,7 +151,7 @@ export const useApplicationStore = defineStore('application', {
 		 */
 		async approveApplication(id) {
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/applications/${id}/approve`),
+				generateUrl(`/apps/keepiq/api/v1/applications/${id}/approve`),
 				{},
 			)
 			const data = response.data || {}
@@ -184,7 +184,7 @@ export const useApplicationStore = defineStore('application', {
 		 */
 		async rejectApplication(id) {
 			await axios.post(
-				generateUrl(`/apps/doriath/api/v1/applications/${id}/reject`),
+				generateUrl(`/apps/keepiq/api/v1/applications/${id}/reject`),
 				{},
 			)
 			this.pendingApplications = this.pendingApplications.filter(
@@ -202,7 +202,7 @@ export const useApplicationStore = defineStore('application', {
 		 */
 		async deleteApplication(id) {
 			await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/applications/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/applications/${id}`),
 			)
 			this.applications = this.applications.filter((a) => a.id !== id)
 			this.pendingApplications = this.pendingApplications.filter(
@@ -235,7 +235,7 @@ export const useApplicationStore = defineStore('application', {
 		 */
 		async fetchCertificate(id) {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/applications/${id}/certificate`),
+				generateUrl(`/apps/keepiq/api/v1/applications/${id}/certificate`),
 			)
 			return response.data?.certificate ?? ''
 		},
@@ -288,7 +288,7 @@ export const useApplicationStore = defineStore('application', {
 			}
 
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/secrets'),
+				generateUrl('/apps/keepiq/api/v1/secrets'),
 				payload,
 			)
 			return response.data
@@ -304,7 +304,7 @@ export const useApplicationStore = defineStore('application', {
 		 */
 		async listApplicationSecrets(applicationId) {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/secrets'),
+				generateUrl('/apps/keepiq/api/v1/secrets'),
 				{ params: { ownerType: 'application', ownerId: applicationId } },
 			)
 			// SecretController.index returns a paginated envelope; fall

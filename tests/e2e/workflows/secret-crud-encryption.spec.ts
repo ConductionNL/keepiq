@@ -106,7 +106,7 @@ async function apiFind(page, name: string) {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			const res = await fetch(
-				'/index.php/apps/doriath/api/v1/secrets?limit=200',
+				'/index.php/apps/keepiq/api/v1/secrets?limit=200',
 				{
 					credentials: 'include',
 					headers: { requesttoken: token },
@@ -125,7 +125,7 @@ async function apiDelete(page, id: string): Promise<void> {
 		async ({ tokExpr, id }) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			await fetch(`/index.php/apps/doriath/api/v1/secrets/${id}`, {
+			await fetch(`/index.php/apps/keepiq/api/v1/secrets/${id}`, {
 				method: 'DELETE',
 				credentials: 'include',
 				headers: { requesttoken: token },
@@ -147,7 +147,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		await page.goto(`${APP_BASE}/secrets`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
 		await expect(lockHeading(page)).toHaveText(
-			/Unlock Doriath|Set up your master password/i,
+			/Unlock Keepiq|Set up your master password/i,
 		)
 		await expect(page.locator(`${SecretList} .secret-list-item`)).toHaveCount(0)
 	})
@@ -159,7 +159,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		const list = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			const res = await fetch('/index.php/apps/doriath/api/v1/secrets', {
+			const res = await fetch('/index.php/apps/keepiq/api/v1/secrets', {
 				credentials: 'include',
 				headers: { requesttoken: token },
 			})
@@ -179,7 +179,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		const types = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			const res = await fetch('/index.php/apps/doriath/api/v1/secret-types', {
+			const res = await fetch('/index.php/apps/keepiq/api/v1/secret-types', {
 				credentials: 'include',
 				headers: { requesttoken: token },
 			})
@@ -205,7 +205,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		const suite = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			const res = await fetch('/index.php/apps/doriath/api/v1/suites', {
+			const res = await fetch('/index.php/apps/keepiq/api/v1/suites', {
 				credentials: 'include',
 				headers: { requesttoken: token },
 			})
@@ -236,7 +236,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		const created = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			const res = await fetch('/index.php/apps/doriath/api/v1/secrets', {
+			const res = await fetch('/index.php/apps/keepiq/api/v1/secrets', {
 				method: 'POST',
 				credentials: 'include',
 				headers: { requesttoken: token, 'Content-Type': 'application/json' },
@@ -248,7 +248,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 			const body = await res.json().catch(() => ({}))
 			// Clean up so re-runs stay idempotent.
 			if (body && body.id) {
-				await fetch(`/index.php/apps/doriath/api/v1/secrets/${body.id}`, {
+				await fetch(`/index.php/apps/keepiq/api/v1/secrets/${body.id}`, {
 					method: 'DELETE',
 					credentials: 'include',
 					headers: { requesttoken: token },
@@ -279,7 +279,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
 			const suites = await (
-				await fetch('/index.php/apps/doriath/api/v1/suites', {
+				await fetch('/index.php/apps/keepiq/api/v1/suites', {
 					credentials: 'include',
 					headers: { requesttoken: token },
 				})
@@ -405,7 +405,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		await expect(page.locator(`${SecretDetail}__title`)).toHaveText(NAME)
 		await nativeClickByLabel(page, 'Show')
 		await expect(
-			page.locator('.secret-detail .doriath-password-field input'),
+			page.locator('.secret-detail .keepiq-password-field input'),
 		).toHaveValue(VALUE, { timeout: 10_000 })
 
 		// --- EDIT the value via the Edit dialog ---
@@ -426,7 +426,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		})
 		await nativeClickByLabel(page, 'Show')
 		await expect(
-			page.locator('.secret-detail .doriath-password-field input'),
+			page.locator('.secret-detail .keepiq-password-field input'),
 		).toHaveValue(NEW_VALUE, { timeout: 10_000 })
 
 		// --- DELETE (cleanup + assert gone) ---
@@ -449,7 +449,7 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		const probe = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			const res = await fetch('/index.php/apps/doriath/api/v1/secrets', {
+			const res = await fetch('/index.php/apps/keepiq/api/v1/secrets', {
 				credentials: 'include',
 				headers: { requesttoken: token },
 			})

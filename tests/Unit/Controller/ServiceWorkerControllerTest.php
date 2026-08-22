@@ -4,7 +4,7 @@
  * Contract tests for the ServiceWorkerController static-asset endpoint.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\ServiceWorkerController;
+use OCA\Keepiq\Controller\ServiceWorkerController;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Response;
@@ -78,7 +78,7 @@ class ServiceWorkerControllerTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		$this->appPath = sys_get_temp_dir() . '/doriath-sw-' . bin2hex(random_bytes(8));
+		$this->appPath = sys_get_temp_dir() . '/keepiq-sw-' . bin2hex(random_bytes(8));
 		mkdir($this->appPath . '/js', 0777, true);
 
 		$this->appManager = $this->createMock(originalClassName: IAppManager::class);
@@ -90,7 +90,7 @@ class ServiceWorkerControllerTest extends TestCase {
 	 * @return void
 	 */
 	protected function tearDown(): void {
-		$script = $this->appPath . '/js/doriath-service-worker.js';
+		$script = $this->appPath . '/js/keepiq-service-worker.js';
 		if (is_file($script) === true) {
 			unlink($script);
 		}
@@ -114,7 +114,7 @@ class ServiceWorkerControllerTest extends TestCase {
 	private function controller(): ServiceWorkerController {
 		$this->appManager->expects($this->once())
 			->method('getAppPath')
-			->with('doriath')
+			->with('keepiq')
 			->willReturn($this->appPath);
 
 		return new ServiceWorkerController(
@@ -148,7 +148,7 @@ class ServiceWorkerControllerTest extends TestCase {
 	public function testScriptServesTheBuiltWorkerAsJavaScript(): void {
 		$source = file_get_contents(__DIR__ . '/../../../src/offline/service-worker.js');
 		$this->assertIsString($source, 'the app must ship a service-worker source to serve');
-		file_put_contents($this->appPath . '/js/doriath-service-worker.js', $source);
+		file_put_contents($this->appPath . '/js/keepiq-service-worker.js', $source);
 
 		$response = $this->controller()->script();
 		$headers = $this->ownHeaders($response);
@@ -188,7 +188,7 @@ class ServiceWorkerControllerTest extends TestCase {
 	 */
 	public function testScriptIsServedUncacheable(): void {
 		file_put_contents(
-			$this->appPath . '/js/doriath-service-worker.js',
+			$this->appPath . '/js/keepiq-service-worker.js',
 			"self.addEventListener('install', () => {})\n"
 		);
 
@@ -209,7 +209,7 @@ class ServiceWorkerControllerTest extends TestCase {
 	 */
 	public function testScriptAnswers404AsJavaScriptWhenTheBuildIsMissing(): void {
 		$this->assertFileDoesNotExist(
-			$this->appPath . '/js/doriath-service-worker.js',
+			$this->appPath . '/js/keepiq-service-worker.js',
 			'this test only means anything while the artefact is absent'
 		);
 

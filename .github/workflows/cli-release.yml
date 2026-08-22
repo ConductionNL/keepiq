@@ -1,6 +1,6 @@
 name: CLI Release
 
-# Builds the doriath-cli single static binary for every supported platform.
+# Builds the keepiq-cli single static binary for every supported platform.
 # On a tag push it also uploads the artifacts to the GitHub release. The CLI is
 # stdlib-only Go, so the matrix is a plain cross-compile — no PHP/Node needed.
 
@@ -60,12 +60,12 @@ jobs:
         run: |
           ext=""
           [ "$GOOS" = "windows" ] && ext=".exe"
-          out="doriath-${GOOS}-${GOARCH}${ext}"
+          out="keepiq-${GOOS}-${GOARCH}${ext}"
           go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o "$out" .
           echo "ARTIFACT=cli/$out" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
-          name: doriath-${{ matrix.target.goos }}-${{ matrix.target.goarch }}
+          name: keepiq-${{ matrix.target.goos }}-${{ matrix.target.goarch }}
           path: ${{ env.ARTIFACT }}
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/cli-v')

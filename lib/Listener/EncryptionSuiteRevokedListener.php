@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath EncryptionSuiteRevokedListener
+ * Keepiq EncryptionSuiteRevokedListener
  *
  * Listens for EncryptionSuiteRevokedEvent. For a user-owned suite:
  *  - cascade-deletes ShareTargets where the suite owner was the recipient
@@ -12,7 +12,7 @@
  *    when the suite is gone).
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,11 +25,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
-use OCA\Doriath\Service\DelegationService;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Service\DelegationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -85,9 +85,9 @@ class EncryptionSuiteRevokedListener implements IEventListener {
 			$this->shareTargetMapper->deleteByTargetUser(targetUserId: $userId);
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: EncryptionSuiteRevokedListener share-target sweep failed for '
+				'Keepiq: EncryptionSuiteRevokedListener share-target sweep failed for '
 				. $userId . ': ' . $exception->getMessage(),
-				['app' => 'doriath']
+				['app' => 'keepiq']
 			);
 		}
 
@@ -95,16 +95,16 @@ class EncryptionSuiteRevokedListener implements IEventListener {
 			$promoted = $this->delegationService->makePermanent(originalOwnerId: $userId);
 			if ($promoted > 0) {
 				$this->logger->info(
-					'Doriath: promoted ' . $promoted . ' delegations to permanent after revoking '
+					'Keepiq: promoted ' . $promoted . ' delegations to permanent after revoking '
 					. $event->getSuiteId() . ' (owner=' . $userId . ')',
-					['app' => 'doriath']
+					['app' => 'keepiq']
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: EncryptionSuiteRevokedListener delegation-promote failed for '
+				'Keepiq: EncryptionSuiteRevokedListener delegation-promote failed for '
 				. $userId . ': ' . $exception->getMessage(),
-				['app' => 'doriath']
+				['app' => 'keepiq']
 			);
 		}
 	}//end handle()

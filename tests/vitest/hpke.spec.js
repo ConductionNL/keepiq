@@ -26,7 +26,7 @@ describe('HPKE base mode', () => {
 
 	it('seals and opens a payload round-trip', async () => {
 		const { privateKey, publicKeyRaw } = await generateRecipientKeyPair()
-		const info = enc.encode('doriath-cxp-v1:ctx')
+		const info = enc.encode('keepiq-cxp-v1:ctx')
 		const aad = enc.encode('32.1.2')
 		const pt = enc.encode(
 			'the CXF payload bytes — long enough to matter '.repeat(40),

@@ -5,9 +5,9 @@
 
 # Password health
 
-Doriath analyses the **hygiene** of your stored credentials — flagging weak,
+Keepiq analyses the **hygiene** of your stored credentials — flagging weak,
 reused, old, and (optionally) breached passwords — and shows an overall vault
-health score with a per-finding report. Because Doriath is always end-to-end
+health score with a per-finding report. Because Keepiq is always end-to-end
 encrypted (ADR-003), **all of this analysis runs in your browser**, on the
 unlocked vault, in memory. Nothing about the strength, reuse, or breach status
 of a password is ever sent to or stored on the server.
@@ -49,12 +49,12 @@ oracle ("attack the weak ones first"), so nothing health-related is written to
 
 ## Breach checking (opt-in, k-anonymity)
 
-When enabled, Doriath checks password-bearing values against the
+When enabled, Keepiq checks password-bearing values against the
 [Have I Been Pwned](https://haveibeenpwned.com/) corpus using the **k-anonymity
 range protocol**:
 
 1. Your browser computes `SHA-1(value)` and keeps the 35-character suffix local.
-2. It sends **only the first 5 hash characters** to a Doriath server proxy.
+2. It sends **only the first 5 hash characters** to a Keepiq server proxy.
 3. The proxy forwards that 5-char prefix to the HIBP range API (with response
    padding) and returns the suffix list verbatim.
 4. Your browser does the suffix match locally.

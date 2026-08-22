@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - ApplicationRequestAdminController tests
+ * Keepiq - ApplicationRequestAdminController tests
  *
  * This controller carries `#[NoAdminRequired]` while being admin-only, which is
  * a deliberate pairing rather than a mistake: the annotation lets the request
@@ -13,7 +13,7 @@
  * up. So the refusal is asserted here at the controller, not only in the service.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,12 +26,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\ApplicationRequestAdminController;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\ApplicationRequestAdminService;
+use OCA\Keepiq\Controller\ApplicationRequestAdminController;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\ApplicationRequestAdminService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;

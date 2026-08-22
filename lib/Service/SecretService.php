@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Service
+ * Keepiq Secret Service
  *
  * Business logic for the Secret entity: create (with encryption-suite link
  * and write-lock check), read (with revoked-suite blocking), update,
@@ -13,7 +13,7 @@
  * decryption happen client-side using the owner's RSA key (ADR-003).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,23 +26,23 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\GroupShareMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Exception\SuiteBlockedException;
-use OCA\Doriath\Exception\WriteLockedException;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShareMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Exception\WriteLockedException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -169,10 +169,10 @@ class SecretService {
 	 * whenever the listener is registered.
 	 *
 	 * Recording directly rather than through the event bus is what fixes
-	 * doriath#54: the application-vault seam methods (getByNameForApplication /
+	 * keepiq#54: the application-vault seam methods (getByNameForApplication /
 	 * deleteByApplication) are resolved cross-app by another Nextcloud app (e.g.
 	 * OpenRegister via OCP\Server::get). That caller's request never boots
-	 * Doriath's frontend Application::register, so its event dispatcher carries
+	 * Keepiq's frontend Application::register, so its event dispatcher carries
 	 * NO AuditListener and a bus dispatch fires into a listener-less dispatcher —
 	 * nothing persists. AuditService and its AuditEntryMapper are autowired from
 	 * the same container that already built this SecretService (they have
@@ -197,7 +197,7 @@ class SecretService {
 				$this->auditService->record($event);
 			} catch (Throwable $e) {
 				$this->logger->error(
-					'Doriath: audit entry could not be recorded: ' . $e->getMessage(),
+					'Keepiq: audit entry could not be recorded: ' . $e->getMessage(),
 					['exception' => $e]
 				);
 			}
@@ -276,7 +276,7 @@ class SecretService {
 		$secret->setKeyUpdatedAt($now);
 
 		$this->mapper->insert($secret);
-		$this->logger->info("Doriath: secret {$secret->getId()} created by {$userId}");
+		$this->logger->info("Keepiq: secret {$secret->getId()} created by {$userId}");
 
 		$this->dispatchAudit(
 			event: $this->auditEvents->forUser(
@@ -366,7 +366,7 @@ class SecretService {
 
 		$this->mapper->insert($secret);
 		$this->logger->info(
-			"Doriath: application-secret {$secret->getId()} created for app {$applicationId} by {$writingUserId}"
+			"Keepiq: application-secret {$secret->getId()} created for app {$applicationId} by {$writingUserId}"
 		);
 
 		return $secret;
@@ -669,7 +669,7 @@ class SecretService {
 
 		$this->mapper->delete($secret);
 		$this->logger->info(
-			"Doriath: application-secret {$secretId} deleted from vault of app {$applicationId}"
+			"Keepiq: application-secret {$secretId} deleted from vault of app {$applicationId}"
 		);
 
 		$this->dispatchAudit(
@@ -739,7 +739,7 @@ class SecretService {
 			// equivalent of the machine API's 409 (design D6). To the
 			// caller, ambiguity is indistinguishable from absence.
 			$this->logger->warning(
-				'Doriath: ambiguous secret name "' . $name . '" in vault of app '
+				'Keepiq: ambiguous secret name "' . $name . '" in vault of app '
 				. $applicationId . ' — ' . count($matches)
 				. ' matches, returning null (never guessing)'
 			);
@@ -968,7 +968,7 @@ class SecretService {
 		$this->rotationService?->deleteForSecret($id);
 
 		$this->mapper->delete($secret);
-		$this->logger->info("Doriath: secret {$id} deleted by {$userId}");
+		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
 		$this->dispatchAudit(
 			event: $this->auditEvents->forUser(

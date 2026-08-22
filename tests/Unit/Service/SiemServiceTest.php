@@ -4,7 +4,7 @@
  * Unit tests for SiemService (siem-audit-export §7).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,18 +17,18 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\SiemQueueItem;
-use OCA\Doriath\Db\SiemQueueItemMapper;
-use OCA\Doriath\Db\SiemSink;
-use OCA\Doriath\Db\SiemSinkMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Service\SiemService;
-use OCA\Doriath\Service\SiemSinkService;
-use OCA\Doriath\Service\SiemTransport;
+use OCA\Keepiq\Db\SiemQueueItem;
+use OCA\Keepiq\Db\SiemQueueItemMapper;
+use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Db\SiemSinkMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\SiemService;
+use OCA\Keepiq\Service\SiemSinkService;
+use OCA\Keepiq\Service\SiemTransport;
 use OCP\Http\Client\IClientService;
 use OCP\IGroupManager;
 use OCP\Security\ICrypto;

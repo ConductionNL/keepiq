@@ -7,7 +7,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'New folder')"
+		:name="t('keepiq', 'New folder')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -18,27 +18,27 @@
 
 			<NcTextField
 				v-model="name"
-				:label="t('doriath', 'Folder name')"
+				:label="t('keepiq', 'Folder name')"
 				:required="true" />
 
 			<NcSelect
 				v-model="selectedParentId"
 				:options="parentOptions"
 				:reduce="(opt) => opt.value"
-				:inputLabel="t('doriath', 'Parent folder')"
+				:inputLabel="t('keepiq', 'Parent folder')"
 				:clearable="false" />
 		</div>
 
 		<template #actions>
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<FolderPlus v-else :size="20" />
 				</template>
-				{{ t('doriath', 'Create folder') }}
+				{{ t('keepiq', 'Create folder') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -99,7 +99,7 @@ export default {
 
 	computed: {
 		parentOptions() {
-			const roots = [{ value: null, label: t('doriath', 'Vault root') }]
+			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
 				useFolderStore().folders.map((folder) => ({
 					value: folder.id,
@@ -161,7 +161,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to create folder')
+					|| t('keepiq', 'Failed to create folder')
 			} finally {
 				this.saving = false
 			}

@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Gate-19 spec-coverage — Doriath gated routes (Dashboard, Vault, Features &
+ * Gate-19 spec-coverage — Keepiq gated routes (Dashboard, Vault, Features &
  * roadmap, Secret detail).
  *
  * When the vault is locked, the router guard redirects every in-app route to
@@ -20,8 +20,8 @@ import { test, expect } from '@playwright/test'
 import {
 	gotoRoute,
 	lockHeading,
-	collectDoriathErrors,
-	assertNoDoriathErrors,
+	collectKeepiqErrors,
+	assertNoKeepiqErrors,
 } from './_helpers'
 
 const ROUTES = [
@@ -41,25 +41,25 @@ test.describe('Gated routes — router guard redirects to lock', () => {
 		test(`${route.name} (${route.hash}) redirects a locked user to the lock screen`, async ({
 			page,
 		}) => {
-			const errors = collectDoriathErrors(page)
+			const errors = collectKeepiqErrors(page)
 			await gotoRoute(page, route.hash)
 
 			// The guard sends us to /lock (preserving the intended route in returnUrl).
 			await expect(page).toHaveURL(/\/lock/, { timeout: 15_000 })
 			await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 			await expect(lockHeading(page)).toHaveText(
-				/Unlock Doriath|Set up your master password/i,
+				/Unlock Keepiq|Set up your master password/i,
 			)
 
-			assertNoDoriathErrors(errors)
+			assertNoKeepiqErrors(errors)
 		})
 	}
 
 	test('app root resolves into the SPA and lands on the lock gate', async ({
 		page,
 	}) => {
-		const errors = collectDoriathErrors(page)
-		await page.goto('/index.php/apps/doriath/', {
+		const errors = collectKeepiqErrors(page)
+		await page.goto('/index.php/apps/keepiq/', {
 			waitUntil: 'domcontentloaded',
 		})
 
@@ -67,6 +67,6 @@ test.describe('Gated routes — router guard redirects to lock', () => {
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 		await expect(page).toHaveURL(/\/lock/)
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 })

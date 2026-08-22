@@ -15,7 +15,7 @@
 -->
 <template>
 	<div
-		class="doriath-application-register-view"
+		class="keepiq-application-register-view"
 		data-testid="application-register-view">
 		<CnIndexPage
 			viewMode="list"
@@ -26,14 +26,14 @@
 			:schema="listSchema"
 			:listConfig="listConfig"
 			:loading="store.loading"
-			:addLabel="t('doriath', 'Register application')"
+			:addLabel="t('keepiq', 'Register application')"
 			addIcon="Plus"
 			inlineSearch
 			:searchValue="searchTerm"
-			:searchPlaceholder="t('doriath', 'Search applications')"
+			:searchPlaceholder="t('keepiq', 'Search applications')"
 			rowKey="id"
 			:emptyText="
-				t('doriath', 'You have not registered any applications yet.')
+				t('keepiq', 'You have not registered any applications yet.')
 			"
 			@add="dialogOpen = true"
 			@search="onSearch"
@@ -100,9 +100,9 @@ export default {
 		listSchema() {
 			return {
 				properties: {
-					name: { title: t('doriath', 'Name'), type: 'string' },
+					name: { title: t('keepiq', 'Name'), type: 'string' },
 					description: {
-						title: t('doriath', 'Description'),
+						title: t('keepiq', 'Description'),
 						type: 'string',
 					},
 				},
@@ -137,11 +137,11 @@ export default {
 		statusLabel(status) {
 			switch (status) {
 				case 'active':
-					return t('doriath', 'Active')
+					return t('keepiq', 'Active')
 				case 'pending':
-					return t('doriath', 'Pending approval')
+					return t('keepiq', 'Pending approval')
 				case 'rejected':
-					return t('doriath', 'Rejected')
+					return t('keepiq', 'Rejected')
 				default:
 					return status || ''
 			}
@@ -174,7 +174,7 @@ export default {
 </script>
 
 <style scoped>
-.doriath-application-register-view {
+.keepiq-application-register-view {
 	padding: 16px;
 	height: 100%;
 	overflow: auto;

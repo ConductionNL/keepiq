@@ -1,6 +1,6 @@
 ## Context
 
-Doriath's always-E2E architecture (ADR-003, encryption-suites spec) means the server cannot produce a readable export and cannot verify a master password — both export modes must run in the browser, where the decrypted vault is available once the user has unlocked. Conversely, *deletion* is a server-side concern with cross-user blast radius: the user-sharing spec makes recipient share-copies full `Secret` rows encrypted under the recipient's own suite (linked by `SecretShare`, kept in sync), introduces `SecretDelegation` with `is_permanent = true` defined as "owner's suite was revoked/deleted", and link shares + secret requests hold further references into the user's data.
+Keepiq's always-E2E architecture (ADR-003, encryption-suites spec) means the server cannot produce a readable export and cannot verify a master password — both export modes must run in the browser, where the decrypted vault is available once the user has unlocked. Conversely, *deletion* is a server-side concern with cross-user blast radius: the user-sharing spec makes recipient share-copies full `Secret` rows encrypted under the recipient's own suite (linked by `SecretShare`, kept in sync), introduces `SecretDelegation` with `is_permanent = true` defined as "owner's suite was revoked/deleted", and link shares + secret requests hold further references into the user's data.
 
 FEATURES.md promises at V1: secret export (encrypted backup, CSV), GDPR export, GDPR deletion, and an audit trail. The audit trail is unbuilt and not in flight (`add-secret-audit-trail` is the suggested future change), so this change emits the events and deliberately does not build storage or UI for them.
 
@@ -63,10 +63,10 @@ Because the server cannot verify the master password (ADR-003 — it never sees 
 
 Art. 15 covers *all* personal data, not just secret values. Two halves:
 
-- **Server half** — `GET /api/v1/gdpr/metadata` returns everything Doriath stores about the user that is readable server-side: EncryptionSuite records (certificate, status, audit fields — the encrypted private-key blob is **excluded**: it is unreadable to the data subject without the master password they already hold, and shipping it in an otherwise-unprotected JSON file only widens the attack surface; the exclusion and rationale are documented inside the package itself), CA-issued certificate DNs, shares given and received (counterparty user IDs included — they are part of the data subject's data), delegations, link-share metadata (no snapshots), secret requests, user settings.
+- **Server half** — `GET /api/v1/gdpr/metadata` returns everything Keepiq stores about the user that is readable server-side: EncryptionSuite records (certificate, status, audit fields — the encrypted private-key blob is **excluded**: it is unreadable to the data subject without the master password they already hold, and shipping it in an otherwise-unprotected JSON file only widens the attack surface; the exclusion and rationale are documented inside the package itself), CA-issued certificate DNs, shares given and received (counterparty user IDs included — they are part of the data subject's data), delegations, link-share metadata (no snapshots), secret requests, user settings.
 - **Client half** — the decrypted vault (same serializer as D1's payload).
 
-The browser merges both into one `doriath-gdpr-export.json` (versioned, self-describing, field-documented) and downloads it locally. The vault half requires an unlocked session; if the user cannot unlock (lost master password), the package contains the server half only, with the vault section marked `"unavailable": "vault is end-to-end encrypted and the data subject did not unlock it"` — which is itself the honest Art. 15 answer.
+The browser merges both into one `keepiq-gdpr-export.json` (versioned, self-describing, field-documented) and downloads it locally. The vault half requires an unlocked session; if the user cannot unlock (lost master password), the package contains the server half only, with the vault section marked `"unavailable": "vault is end-to-end encrypted and the data subject did not unlock it"` — which is itself the honest Art. 15 answer.
 
 **Why browser-assembled:** the server physically cannot produce the readable vault half; shipping two separate files confuses the "one package" expectation auditors have.
 
@@ -74,8 +74,8 @@ The browser merges both into one `doriath-gdpr-export.json` (versioned, self-des
 
 Two triggers, one implementation (`AccountDeletionService::deleteAllFor(userId)`):
 
-- **In-app** (`DELETE /api/v1/gdpr/account-data`): master-password re-auth (as D2) + typed confirmation phrase. Deletes Doriath data; the Nextcloud account remains.
-- **Automatic**: a registered `OCP\User\Events\UserDeletedEvent` listener runs the same cascade when the Nextcloud account is removed, so Doriath data can never outlive its account.
+- **In-app** (`DELETE /api/v1/gdpr/account-data`): master-password re-auth (as D2) + typed confirmation phrase. Deletes Keepiq data; the Nextcloud account remains.
+- **Automatic**: a registered `OCP\User\Events\UserDeletedEvent` listener runs the same cascade when the Nextcloud account is removed, so Keepiq data can never outlive its account.
 
 Cascade order (each step idempotent, the whole run resumable):
 
@@ -88,7 +88,7 @@ Cascade order (each step idempotent, the whole run resumable):
 7. **Settings / preferences**: deleted.
 8. Emit `AccountDataDeletedEvent` (D5).
 
-**Why ownership transfer only via existing delegation:** automatically picking a recipient to "inherit" an account's secrets would silently move credentials to someone the owner never chose as a successor. Delegation is Doriath's existing, explicit successor mechanism; deletion respects it and otherwise defaults to the conservative detach-with-tombstone. **Why tombstone instead of deleting recipient copies:** the recipient's copy is data the recipient legitimately holds (it was shared with them, it is encrypted under *their* key, they may depend on the credential operationally). Destroying it would let one user's account deletion break other users' access with zero notice — and GDPR erasure does not require destroying other parties' copies of information legitimately disclosed to them; it requires erasing the *subject's* data, which steps 3–7 do.
+**Why ownership transfer only via existing delegation:** automatically picking a recipient to "inherit" an account's secrets would silently move credentials to someone the owner never chose as a successor. Delegation is Keepiq's existing, explicit successor mechanism; deletion respects it and otherwise defaults to the conservative detach-with-tombstone. **Why tombstone instead of deleting recipient copies:** the recipient's copy is data the recipient legitimately holds (it was shared with them, it is encrypted under *their* key, they may depend on the credential operationally). Destroying it would let one user's account deletion break other users' access with zero notice — and GDPR erasure does not require destroying other parties' copies of information legitimately disclosed to them; it requires erasing the *subject's* data, which steps 3–7 do.
 
 ### D5: Audit Events — Emit Now, Store Later
 
@@ -131,4 +131,4 @@ Because export runs client-side, the server only learns about it when told: the 
 
 - Should detached recipient copies eventually expire (auto-delete N days after tombstoning)? Current decision: no — the credential is the recipient's working data; expiry policies belong to the Enterprise retention-policy tier in FEATURES.md.
 - Should the in-app deletion flow offer "export first" inline? Current decision: yes as a non-blocking suggestion link in the confirmation dialog (cheap, prevents most regret), but not as a mandatory step.
-- Nextcloud also ships a platform-level GDPR export hook (user_migration / data export apps). v1 ships Doriath's own package; wiring `IMigrator` support so Doriath data joins the platform-wide export bundle is a candidate follow-up — noted, not scoped, because the vault half cannot be produced without the user's browser anyway.
+- Nextcloud also ships a platform-level GDPR export hook (user_migration / data export apps). v1 ships Keepiq's own package; wiring `IMigrator` support so Keepiq data joins the platform-wide export bundle is a candidate follow-up — noted, not scoped, because the vault half cannot be produced without the user's browser anyway.

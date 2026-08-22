@@ -4,7 +4,7 @@
  * Unit tests for EncryptionSuiteController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,15 +17,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\EncryptionSuiteController;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\MigrationService;
+use OCA\Keepiq\Controller\EncryptionSuiteController;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;

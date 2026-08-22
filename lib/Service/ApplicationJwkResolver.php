@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application JWK Resolver
+ * Keepiq Application JWK Resolver
  *
  * Resolves the verification key of a registered application: its active
  * EncryptionSuite's certificate, converted to a JWK. Supports both RSA
@@ -10,7 +10,7 @@
  * the assertion verifier nor the token service has to know that chain.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,12 +23,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use Jose\Component\Core\JWK;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Support\JwkFactoryAdapter;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Support\JwkFactoryAdapter;
 use OCP\AppFramework\Db\DoesNotExistException;
 use RuntimeException;
 use Throwable;

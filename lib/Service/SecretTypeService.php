@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Secret Type Service
+ * Keepiq Secret Type Service
  *
  * Business logic for SecretType lifecycle: listing available types,
  * resolving the default login type, creating user and global custom types,
  * renaming, and deleting with fallback-to-login reassignment.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,15 +21,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretType;
-use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Exception\ForbiddenException;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -158,7 +158,7 @@ class SecretTypeService {
 		$type->setCreatedAt(new DateTime());
 
 		$this->mapper->insert($type);
-		$this->logger->info("Doriath: secret type '{$name}' ({$scope}) created by {$userId}");
+		$this->logger->info("Keepiq: secret type '{$name}' ({$scope}) created by {$userId}");
 
 		return $type;
 	}//end createType()
@@ -186,7 +186,7 @@ class SecretTypeService {
 
 		$type->setLabel($label);
 		$this->mapper->update($type);
-		$this->logger->info("Doriath: secret type {$id} relabelled by {$userId}");
+		$this->logger->info("Keepiq: secret type {$id} relabelled by {$userId}");
 
 		return $type;
 	}//end updateType()
@@ -209,7 +209,7 @@ class SecretTypeService {
 		$this->secretMapper->reassignType($id, $loginTypeId);
 
 		$this->mapper->delete($type);
-		$this->logger->info("Doriath: secret type {$id} deleted by {$userId} (secrets reassigned to login)");
+		$this->logger->info("Keepiq: secret type {$id} deleted by {$userId} (secrets reassigned to login)");
 	}//end deleteType()
 
 	/**

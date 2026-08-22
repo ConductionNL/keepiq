@@ -17,13 +17,13 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Import secrets')"
+		:name="t('keepiq', 'Import secrets')"
 		:open="open"
 		size="large"
 		@update:open="onUpdateOpen">
 		<div class="import-wizard">
 			<NcNoteCard v-if="locked" type="warning">
-				{{ t('doriath', 'Unlock the vault before importing secrets.') }}
+				{{ t('keepiq', 'Unlock the vault before importing secrets.') }}
 			</NcNoteCard>
 
 			<NcNoteCard v-else-if="store.error" type="error">
@@ -34,7 +34,7 @@
 			<div v-if="!locked && store.step === 'pick'" class="import-wizard__pick">
 				<NcSelect
 					v-model="format"
-					:inputLabel="t('doriath', 'Source format')"
+					:inputLabel="t('keepiq', 'Source format')"
 					:options="formatOptions"
 					:reduce="(opt) => opt.value"
 					:clearable="false" />
@@ -42,10 +42,10 @@
 				<NcPasswordField
 					v-if="requiresPassphrase"
 					v-model="passphrase"
-					:label="t('doriath', 'Backup passphrase')" />
+					:label="t('keepiq', 'Backup passphrase')" />
 
 				<label class="import-wizard__file">
-					<span>{{ t('doriath', 'Choose a file to import') }}</span>
+					<span>{{ t('keepiq', 'Choose a file to import') }}</span>
 					<input
 						ref="fileInput"
 						type="file"
@@ -56,7 +56,7 @@
 				<NcNoteCard v-if="kdbxDetected" type="error">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'KDBX files are not supported. In KeePass, choose File → Export → KeePass XML (2.x) and import the resulting XML file instead.',
 						)
 					}}
@@ -68,7 +68,7 @@
 				<p>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'{count} rows parsed. Review the field mapping before importing.',
 							{ count: store.rows.length },
 						)
@@ -79,19 +79,19 @@
 					<thead>
 						<tr>
 							<th scope="col">
-								{{ t('doriath', 'Name') }}
+								{{ t('keepiq', 'Name') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'URL') }}
+								{{ t('keepiq', 'URL') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Login') }}
+								{{ t('keepiq', 'Login') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Password') }}
+								{{ t('keepiq', 'Password') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Folder') }}
+								{{ t('keepiq', 'Folder') }}
 							</th>
 						</tr>
 					</thead>
@@ -111,7 +111,7 @@
 				<NcNoteCard v-if="store.rejected.length" type="warning">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'{count} rows were rejected and will be listed in the summary.',
 							{ count: store.rejected.length },
 						)
@@ -124,12 +124,12 @@
 				<NcCheckboxRadioSwitch
 					:modelValue="underOneFolder"
 					@update:modelValue="underOneFolder = $event">
-					{{ t('doriath', 'Import everything under one new folder') }}
+					{{ t('keepiq', 'Import everything under one new folder') }}
 				</NcCheckboxRadioSwitch>
 				<p class="import-wizard__hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Source folders are created beneath your vault, preserving their hierarchy. Existing folders with the same name are reused.',
 						)
 					}}
@@ -143,30 +143,30 @@
 				<template v-if="store.duplicates.length">
 					<p>
 						{{
-							t('doriath', '{count} rows match an existing secret.', {
+							t('keepiq', '{count} rows match an existing secret.', {
 								count: store.duplicates.length,
 							})
 						}}
 					</p>
 					<div class="import-wizard__bulk">
 						<NcButton @click="store.resolveAllDuplicates('skip')">
-							{{ t('doriath', 'Skip all') }}
+							{{ t('keepiq', 'Skip all') }}
 						</NcButton>
 						<NcButton @click="store.resolveAllDuplicates('copy')">
-							{{ t('doriath', 'Import all as copies') }}
+							{{ t('keepiq', 'Import all as copies') }}
 						</NcButton>
 					</div>
 					<table class="import-wizard__preview">
 						<thead>
 							<tr>
 								<th scope="col">
-									{{ t('doriath', 'Name') }}
+									{{ t('keepiq', 'Name') }}
 								</th>
 								<th scope="col">
-									{{ t('doriath', 'URL') }}
+									{{ t('keepiq', 'URL') }}
 								</th>
 								<th scope="col">
-									{{ t('doriath', 'Resolution') }}
+									{{ t('keepiq', 'Resolution') }}
 								</th>
 							</tr>
 						</thead>
@@ -179,7 +179,7 @@
 										:modelValue="
 											store.duplicateResolutions[dup.sourceRow]
 										"
-										:inputLabel="t('doriath', 'Resolution')"
+										:inputLabel="t('keepiq', 'Resolution')"
 										:options="resolutionOptions"
 										:reduce="(opt) => opt.value"
 										:clearable="false"
@@ -194,7 +194,7 @@
 						</tbody>
 					</table>
 				</template>
-				<NcEmptyContent v-else :name="t('doriath', 'No duplicates found')" />
+				<NcEmptyContent v-else :name="t('keepiq', 'No duplicates found')" />
 			</div>
 
 			<!-- Step: commit progress -->
@@ -203,7 +203,7 @@
 				<p>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Encrypting and importing… {done} of {total} batches.',
 							{
 								done: store.committedChunks,
@@ -219,46 +219,46 @@
 				<ul>
 					<li>
 						{{
-							t('doriath', 'Imported: {n}', {
+							t('keepiq', 'Imported: {n}', {
 								n: store.summary.imported,
 							})
 						}}
 					</li>
 					<li>
 						{{
-							t('doriath', 'Skipped duplicates: {n}', {
+							t('keepiq', 'Skipped duplicates: {n}', {
 								n: store.summary.skippedDuplicates,
 							})
 						}}
 					</li>
 					<li>
 						{{
-							t('doriath', 'Rejected: {n}', {
+							t('keepiq', 'Rejected: {n}', {
 								n: store.summary.rejected,
 							})
 						}}
 					</li>
 					<li>
 						{{
-							t('doriath', 'Folders created: {n}', {
+							t('keepiq', 'Folders created: {n}', {
 								n: store.summary.foldersCreated,
 							})
 						}}
 					</li>
 				</ul>
 				<template v-if="store.summary.rejectedRows.length">
-					<h4>{{ t('doriath', 'Rejected rows') }}</h4>
+					<h4>{{ t('keepiq', 'Rejected rows') }}</h4>
 					<table class="import-wizard__preview">
 						<thead>
 							<tr>
 								<th scope="col">
-									{{ t('doriath', 'Row') }}
+									{{ t('keepiq', 'Row') }}
 								</th>
 								<th scope="col">
-									{{ t('doriath', 'Name') }}
+									{{ t('keepiq', 'Name') }}
 								</th>
 								<th scope="col">
-									{{ t('doriath', 'Reason') }}
+									{{ t('keepiq', 'Reason') }}
 								</th>
 							</tr>
 						</thead>
@@ -273,7 +273,7 @@
 						</tbody>
 					</table>
 					<NcButton @click="downloadRejected">
-						{{ t('doriath', 'Download rejected rows') }}
+						{{ t('keepiq', 'Download rejected rows') }}
 					</NcButton>
 				</template>
 			</div>
@@ -283,12 +283,12 @@
 			<NcButton @click="onUpdateOpen(false)">
 				{{
 					store.step === 'summary'
-						? t('doriath', 'Close')
-						: t('doriath', 'Cancel')
+						? t('keepiq', 'Close')
+						: t('keepiq', 'Cancel')
 				}}
 			</NcButton>
 			<NcButton v-if="canGoBack" :disabled="store.loading" @click="back">
-				{{ t('doriath', 'Back') }}
+				{{ t('keepiq', 'Back') }}
 			</NcButton>
 			<NcButton
 				v-if="store.step !== 'commit' && store.step !== 'summary'"
@@ -399,8 +399,8 @@ export default {
 		 */
 		resolutionOptions() {
 			return [
-				{ value: 'skip', label: t('doriath', 'Skip') },
-				{ value: 'copy', label: t('doriath', 'Import as copy') },
+				{ value: 'skip', label: t('keepiq', 'Skip') },
+				{ value: 'copy', label: t('keepiq', 'Import as copy') },
 			]
 		},
 
@@ -445,8 +445,8 @@ export default {
 		 */
 		nextLabel() {
 			return this.store.step === 'duplicates'
-				? t('doriath', 'Import')
-				: t('doriath', 'Next')
+				? t('keepiq', 'Import')
+				: t('keepiq', 'Next')
 		},
 	},
 
@@ -550,7 +550,7 @@ export default {
 			const url = URL.createObjectURL(blob)
 			const a = document.createElement('a')
 			a.href = url
-			a.download = 'doriath-import-rejected.csv'
+			a.download = 'keepiq-import-rejected.csv'
 			document.body.appendChild(a)
 			a.click()
 			document.body.removeChild(a)

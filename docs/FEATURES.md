@@ -1,4 +1,4 @@
-# Doriath — Feature Analysis & Product Strategy
+# Keepiq — Feature Analysis & Product Strategy
 
 ## Executive Summary
 
@@ -47,7 +47,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | **Haven (NLnet Labs)** | Research / PKI toolkit | Active development | RPKI tooling, not a secrets manager |
 | **No direct equivalent** | — | — | Dutch government has no mandated secrets management standard. Municipalities typically use commercial tools (1Password, Azure Key Vault) or rely on OS-level key management |
 
-**Finding:** There is no Dutch government standard or Common Ground component for secrets management. This is an opportunity — Doriath could become the reference implementation for sovereign secrets management in the Dutch public sector.
+**Finding:** There is no Dutch government standard or Common Ground component for secrets management. This is an opportunity — Keepiq could become the reference implementation for sovereign secrets management in the Dutch public sector.
 
 ## 2. Feature Matrix
 
@@ -66,7 +66,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Favicon/icon next to secrets by URL | **MVP** | Visual identification of which service a secret belongs to (1Password, Bitwarden) |
 | Secret detail view with type-specific field presentation | **MVP** | Critical UX pattern |
 | Fuzzy search by name and URL (Levenshtein tolerance) | **MVP** | Typo-tolerant search |
-| Nextcloud unified search integration (IProvider) | **MVP** | Find secrets from Ctrl+F without opening Doriath |
+| Nextcloud unified search integration (IProvider) | **MVP** | Find secrets from Ctrl+F without opening Keepiq |
 | Deep-link from search results via lock screen | **MVP** | Seamless search → vault flow |
 | Bulk secret operations (delete, move folder) | **V1** | Efficiency for large vaults |
 | Secret import (CSV, Bitwarden JSON/CSV, KeePass 2.x XML, Nextcloud Passwords backup) | **V1** ✅ Built | Migration from other tools — client-side parse + encrypt, field-mapping preview, folder/collection mapping, duplicate detection, chunked encrypted commit, malformed-row rejection (see `docs/importing.md`) |
@@ -183,7 +183,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Application API authentication (RFC 7523 JWT Bearer) | **V1** | Standardized API access |
 | Application secret retrieval via REST API | **V1** | Programmatic consumption |
 | Machine secret-store API contract (discovery, name-addressing, encrypted envelope, ETag/`updated_since` rotation, write-back) | **V1 (implemented)** | Stable cross-repo contract — see [integration-openconnector.md](./integration-openconnector.md) |
-| OpenConnector integration (secret store for connectors) | **V1 (Doriath side implemented)** | Sister app integration — the `doriath://` reference resolver lives in the OpenConnector repo, contract-tested against `tests/integration/machine-secret-api.postman_collection.json` |
+| OpenConnector integration (secret store for connectors) | **V1 (Keepiq side implemented)** | Sister app integration — the `doriath://` reference resolver lives in the OpenConnector repo, contract-tested against `tests/integration/machine-secret-api.postman_collection.json` |
 
 ### Dashboard & Reporting
 
@@ -312,13 +312,13 @@ See the Notifications table in Section 2. Each notification event maps to a user
 
 ### What They Lack
 
-| Gap | Opportunity for Doriath |
+| Gap | Opportunity for Keepiq |
 |-----|------------------------|
-| No Nextcloud integration | Doriath lives in the collaboration platform — users, groups, search, notifications are native |
-| No write-without-read | Only Doriath (via asymmetric encryption) lets admins request secrets they can never read |
-| No private CA with user certificates | Doriath's PKI infrastructure enables certificate-based identity, not just password storage |
+| No Nextcloud integration | Keepiq lives in the collaboration platform — users, groups, search, notifications are native |
+| No write-without-read | Only Keepiq (via asymmetric encryption) lets admins request secrets they can never read |
+| No private CA with user certificates | Keepiq's PKI infrastructure enables certificate-based identity, not just password storage |
 | No application secret management via CSR | Standard PKI pattern for onboarding applications — competitors use API tokens or service accounts |
-| No request-based credential provisioning | Secret requests (fill-in links) are unique to Doriath |
+| No request-based credential provisioning | Secret requests (fill-in links) are unique to Keepiq |
 | SaaS data sovereignty concerns | Bitwarden/1Password/LastPass store encrypted data on third-party infrastructure |
 | No government-first design | No competitor targets Dutch public sector or supports NL Design System |
 | Infrastructure vs. user tool split | HashiCorp Vault is too complex for end users; Bitwarden has no infrastructure features |
@@ -339,14 +339,14 @@ See the Notifications table in Section 2. Each notification event maps to a user
 
 ### Positioning Statement
 
-**Doriath is the vault that lives where your team already works.** Built natively into Nextcloud, it provides enterprise-grade encrypted secret management — for humans and applications — without leaving your collaboration platform.
+**Keepiq is the vault that lives where your team already works.** Built natively into Nextcloud, it provides enterprise-grade encrypted secret management — for humans and applications — without leaving your collaboration platform.
 
 ### Differentiation Strategy
 
 Three pillars:
 
-1. **Platform leverage** — Nextcloud provides identity, groups, search, notifications, and files. Doriath orchestrates them for secret management instead of rebuilding them.
-2. **PKI-native architecture** — Unlike password managers that bolt on encryption, Doriath is built on a private Certificate Authority with X.509 certificates. This enables write-without-read, application CSR onboarding, and a foundation for future Certificate Authority functionality.
+1. **Platform leverage** — Nextcloud provides identity, groups, search, notifications, and files. Keepiq orchestrates them for secret management instead of rebuilding them.
+2. **PKI-native architecture** — Unlike password managers that bolt on encryption, Keepiq is built on a private Certificate Authority with X.509 certificates. This enables write-without-read, application CSR onboarding, and a foundation for future Certificate Authority functionality.
 3. **Government-first, enterprise-ready** — NL Design System theming, sovereign self-hosted deployment, WCAG AA compliance, and a path to becoming the reference secrets manager for Dutch public sector organizations.
 
 ### Risks
@@ -355,7 +355,7 @@ Three pillars:
 |------|----------|------------|
 | Feature gap vs. Bitwarden (browser extension, mobile, FIDO2) | High | Focus on what Bitwarden can't do: Nextcloud integration, write-without-read, application secrets. Browser extension is Enterprise tier. |
 | Passwords app incumbency on Nextcloud | High | Differentiate on encryption architecture (PKI vs. SSE), application secrets, and enterprise features. Consider migration tooling. |
-| No mobile app | Medium | Nextcloud's mobile apps provide the session; Doriath is web-first. Mobile vault is a future consideration. |
+| No mobile app | Medium | Nextcloud's mobile apps provide the session; Keepiq is web-first. Mobile vault is a future consideration. |
 | Complexity of PKI for end users | Medium | Zero-friction onboarding: EncryptionSuite auto-created on first login. Users only interact with master password, never with certificates. |
 | Master password lost = data lost | High | This is by design (zero-knowledge). Document clearly. Consider emergency access (V1) or admin recovery mechanisms (Enterprise). |
 | Small team | High | Own-DB architecture means more backend code than thin-client apps. Prioritize MVP ruthlessly. |
@@ -480,15 +480,15 @@ Large organizations, multi-instance deployments, and compliance-driven environme
 
 ## 7. Deep-Research Refresh (2026-07-16)
 
-Full findings are logged in the Spectr register (`sourceRef: deepdive-2026-07-16-app-doriath`): 22 competitors, 62 competitor features, 20 canonical demand-ranked features, 12 insights, 3 ecosystem gaps, 3 stakeholders, 7 customer journeys, 10 user stories, 12 external sources. Highlights that update the analysis above:
+Full findings are logged in the Spectr register (`sourceRef: deepdive-2026-07-16-app-keepiq`): 22 competitors, 62 competitor features, 20 canonical demand-ranked features, 12 insights, 3 ecosystem gaps, 3 stakeholders, 7 customer journeys, 10 user stories, 12 external sources. Highlights that update the analysis above:
 
 ### Regulatory tailwind (new since the original analysis)
 - **BIO2** (Baseline Informatiebeveiliging Overheid 2, est. 2025-09-24, v1.3 2026-01) **explicitly names "een wachtwoordmanager aanbieden" (provide a password manager to employees) as a measure** for Dutch government bodies — a named procurement driver.
 - **NIS2 / Cyberbeveiligingswet** enters into force ~2026-08-15 for ~8,000 Dutch organisations including all municipalities; Art. 21(2)(j) is the first EU law mandating MFA by name, with credential-hygiene requirements.
-- **Sovereignty whitespace**: Germany's openDesk and the Dutch Centric/SURF Nextcloud stacks ship **no** password/secrets component; VNG Common Ground has none either. Doriath can position as the missing sovereign-workplace module.
+- **Sovereignty whitespace**: Germany's openDesk and the Dutch Centric/SURF Nextcloud stacks ship **no** password/secrets component; VNG Common Ground has none either. Keepiq can position as the missing sovereign-workplace module.
 
 ### Market corrections and additions
-- **Vaultwarden** is the de-facto self-hosted default (~60k stars, not 42k); it structurally **cannot** ship SSO/SCIM (Bitwarden licensing) — Doriath inherits Nextcloud identity for free, a structural wedge.
+- **Vaultwarden** is the de-facto self-hosted default (~60k stars, not 42k); it structurally **cannot** ship SSO/SCIM (Bitwarden licensing) — Keepiq inherits Nextcloud identity for free, a structural wedge.
 - **HashiCorp Vault** is BUSL-1.1 (Aug 2023) and IBM-owned (Feb 2025); **OpenBao** (MPL-2.0, Linux Foundation) is the open fork, v2.5.x in 2026.
 - **Infisical** (MIT core, ~27.5k stars) expanded into PKI/PAM/honey tokens — machine-side only, no end-user vault.
 - **Bitwarden** remains the only vendor bridging human vault + machine secrets (Secrets Manager, paid bolt-on) and the only one with shipped **passkey vault-login**; it is also first on **FIDO CXP** portability.
@@ -496,7 +496,7 @@ Full findings are logged in the Spectr register (`sourceRef: deepdive-2026-07-16
 - **LastPass** trust erosion continued (ICO fine ~GBP 1.2M late 2025); **Dashlane** dropped its free plan (2025-09); **Proton Pass** shipped an audited CLI for CI/CD (2025-11).
 
 ### 2026 table stakes vs. the original tiering
-Passkey **storage**, TOTP, attachments, breach reports and reliable autofill are now tier-1 expectations, not Enterprise extras. Verified top user wishes on the Nextcloud platform (NC Passwords open issues by reactions): group sharing (63), folder sharing (60), TOTP (39, built in Doriath), passkeys (#615/#792), attachments (#176), bulk actions (#610).
+Passkey **storage**, TOTP, attachments, breach reports and reliable autofill are now tier-1 expectations, not Enterprise extras. Verified top user wishes on the Nextcloud platform (NC Passwords open issues by reactions): group sharing (63), folder sharing (60), TOTP (39, built in Keepiq), passkeys (#615/#792), attachments (#176), bulk actions (#610).
 
 ### Resulting spec wave (all changes created 2026-07-16)
 `team-folder-sharing`, `browser-extension-autofill`, `passkey-item-type`, `cxf-import-export`, `encrypted-attachments`, `secret-version-history`, `rotation-expiry-policies`, `machine-secret-leases` — see `openspec/ROADMAP.md` Phase 3.5 for ordering and evidence.

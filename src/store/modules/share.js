@@ -54,7 +54,7 @@ export const useShareStore = defineStore('share', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/shares`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`),
 				)
 				this.shares = response.data || []
 			} catch (e) {
@@ -118,7 +118,7 @@ export const useShareStore = defineStore('share', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/shares`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`),
 					{ targetUserId, recipientSecretId, groupShareId },
 				)
 				this.shares.push(response.data)
@@ -142,7 +142,7 @@ export const useShareStore = defineStore('share', {
 		async fetchWriteContext(secretId) {
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/secrets/${secretId}/write-context`,
+					`/apps/keepiq/api/v1/secrets/${secretId}/write-context`,
 				),
 			)
 			return response.data
@@ -171,7 +171,7 @@ export const useShareStore = defineStore('share', {
 			// Recipient rows of the SOURCE (write grade grants the list).
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/shares`,
+					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/shares`,
 				),
 			)
 			const shares = response.data || []
@@ -218,7 +218,7 @@ export const useShareStore = defineStore('share', {
 
 			const syncResponse = await axios.put(
 				generateUrl(
-					`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/sync`,
+					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/sync`,
 				),
 				{
 					expectedUpdatedAt: context.sourceUpdatedAt ?? '',
@@ -240,7 +240,7 @@ export const useShareStore = defineStore('share', {
 			this.error = null
 			try {
 				await axios.delete(
-					generateUrl(`/apps/doriath/api/v1/shares/${shareId}`),
+					generateUrl(`/apps/keepiq/api/v1/shares/${shareId}`),
 				)
 				this.shares = this.shares.filter((s) => s.id !== shareId)
 			} catch (e) {
@@ -356,7 +356,7 @@ export const useShareStore = defineStore('share', {
 				}
 
 				const response = await axios.put(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/sync`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/sync`),
 					{
 						expectedUpdatedAt,
 						updates,

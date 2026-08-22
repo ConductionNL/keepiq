@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Encryption Suite Controller
+ * Keepiq Encryption Suite Controller
  *
  * API controller for EncryptionSuite CRUD operations.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use Exception;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\MigrationService;
-use OCA\Doriath\Settings\AdminSettings;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,7 +48,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @param EncryptionSuiteService $suiteService The suite service
 	 * @param MigrationService $migrationService The migration service
 	 * @param IUserSession $userSession The user session
-	 * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
+	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
 	 * @return void
 	 */
@@ -57,7 +57,7 @@ class EncryptionSuiteController extends OCSController {
 		private EncryptionSuiteService $suiteService,
 		private MigrationService $migrationService,
 		private IUserSession $userSession,
-		private ?\OCA\Doriath\Service\PasskeyService $passkeyService = null,
+		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()

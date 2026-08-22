@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Rotation Flag Entity
+ * Keepiq Rotation Flag Entity
  *
  * One-open-flag-per-secret rotation marker (rotation-expiry-policies
  * §1.1). `key_updated_at_at_flag` freezes the ciphertext age at flag
@@ -10,7 +10,7 @@
  * never a breach verdict, score, or digest.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

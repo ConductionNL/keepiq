@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath SuppressesDiagnostics
+ * Keepiq SuppressesDiagnostics
  *
  * A single, named home for the "call a PHP function that reports invalid input
  * as a diagnostic warning AND as a false/null return value" pattern.
  *
- * Several extension functions used by Doriath (openssl_csr_get_public_key,
+ * Several extension functions used by Keepiq (openssl_csr_get_public_key,
  * openssl_csr_new, openssl_x509_parse, stream_socket_client) raise an E_WARNING
  * on input that is merely user-supplied-and-malformed — an entirely expected
  * condition here, because the input arrives over HTTP and is validated by
@@ -20,7 +20,7 @@
  * being restated at every site.
  *
  * @category Support
- * @package  OCA\Doriath\Support
+ * @package  OCA\Keepiq\Support
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -33,7 +33,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Support;
+namespace OCA\Keepiq\Support;
 
 /**
  * Runs a callable with PHP diagnostics (warnings/notices) discarded.

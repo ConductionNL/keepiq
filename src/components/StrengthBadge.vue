@@ -67,11 +67,11 @@ export default {
 		 */
 		label() {
 			const labels = [
-				t('doriath', 'Very weak'),
-				t('doriath', 'Weak'),
-				t('doriath', 'Fair'),
-				t('doriath', 'Strong'),
-				t('doriath', 'Very strong'),
+				t('keepiq', 'Very weak'),
+				t('keepiq', 'Weak'),
+				t('keepiq', 'Fair'),
+				t('keepiq', 'Strong'),
+				t('keepiq', 'Very strong'),
 			]
 			return labels[this.score] || labels[0]
 		},

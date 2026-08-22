@@ -63,7 +63,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/team-folders'),
+					generateUrl('/apps/keepiq/api/v1/team-folders'),
 				)
 				this.owned = response.data?.owned ?? []
 				this.memberOf = response.data?.memberOf ?? []
@@ -86,7 +86,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async shareFolder(folderId) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/team-folders'),
+				generateUrl('/apps/keepiq/api/v1/team-folders'),
 				{ folderId },
 			)
 			await this.fetchTeamFolders()
@@ -105,7 +105,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		async addMember(teamFolderId, memberType, memberId) {
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members`,
 				),
 				{ memberType, memberId },
 			)
@@ -123,7 +123,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		async removeMember(teamFolderId, membershipId) {
 			const response = await axios.delete(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
 				),
 			)
 			await this.fetchTeamFolders()
@@ -142,7 +142,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		async setMemberGrade(teamFolderId, membershipId, grade) {
 			const response = await axios.patch(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
 				),
 				{ grade },
 			)
@@ -158,7 +158,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async unshareFolder(teamFolderId) {
 			const response = await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}`),
+				generateUrl(`/apps/keepiq/api/v1/team-folders/${teamFolderId}`),
 			)
 			await this.fetchTeamFolders()
 			return response.data
@@ -174,7 +174,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		async reconcile(teamFolderId) {
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/reconcile`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/reconcile`,
 				),
 			)
 			return response.data
@@ -191,7 +191,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		async approveJoin(teamFolderId, newMemberId) {
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/approve-join`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/approve-join`,
 				),
 				{ newMemberId },
 			)
@@ -207,7 +207,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 */
 		async offboard(leavingUserId, successorUserId) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/team-folders/offboard'),
+				generateUrl('/apps/keepiq/api/v1/team-folders/offboard'),
 				{ leavingUserId, successorUserId },
 			)
 			return response.data
@@ -327,7 +327,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
 						const response = await axios.post(
 							generateUrl(
-								`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`,
+								`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
 							),
 							{ shares: chunk },
 						)
@@ -345,7 +345,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				if (chunk.length > 0 && !this.fanOutCancelled) {
 					const response = await axios.post(
 						generateUrl(
-							`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`,
+							`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
 						),
 						{ shares: chunk },
 					)

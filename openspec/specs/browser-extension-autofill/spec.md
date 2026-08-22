@@ -7,17 +7,17 @@
 
 ## Purpose
 
-Doriath has no way to fill a credential into a login form — every secret must be opened in the web UI and copy-pasted. Autofill via a browser extension is table-stakes for a 2026 password manager and the #1 experiential complaint across the Nextcloud secrets ecosystem (Nextcloud Passwords extension pairing and iframe-autofill failures; Padloc's decline partly from lacking autofill). This feature adds a Manifest V3 WebExtension (Firefox/Chrome/Edge) plus the thin API contract it needs, **without weakening zero-knowledge**: the extension pairs against the Nextcloud session, unlocks the vault in the extension (client-side decrypt), lists URL-matched credentials, autofills login forms including iframes, prompts to save/update on submit, and auto-locks on idle. The server only ever ships encrypted blobs (ADR-003).
+Keepiq has no way to fill a credential into a login form — every secret must be opened in the web UI and copy-pasted. Autofill via a browser extension is table-stakes for a 2026 password manager and the #1 experiential complaint across the Nextcloud secrets ecosystem (Nextcloud Passwords extension pairing and iframe-autofill failures; Padloc's decline partly from lacking autofill). This feature adds a Manifest V3 WebExtension (Firefox/Chrome/Edge) plus the thin API contract it needs, **without weakening zero-knowledge**: the extension pairs against the Nextcloud session, unlocks the vault in the extension (client-side decrypt), lists URL-matched credentials, autofills login forms including iframes, prompts to save/update on submit, and auto-locks on idle. The server only ever ships encrypted blobs (ADR-003).
 
 ## Requirements
 
 ### Requirement: Pairing against the Nextcloud session
-The system MUST let a browser extension authenticate using a Nextcloud-native credential (app password or OAuth-style flow) tied to the logged-in user, and MUST NOT mint a new long-lived Doriath credential so revocation stays native to Nextcloud.
+The system MUST let a browser extension authenticate using a Nextcloud-native credential (app password or OAuth-style flow) tied to the logged-in user, and MUST NOT mint a new long-lived Keepiq credential so revocation stays native to Nextcloud.
 
 #### Scenario: Revocation is native
 - GIVEN a paired extension using a Nextcloud app password
 - WHEN the user revokes that app password in Nextcloud
-- THEN the extension's later API requests MUST be rejected with no Doriath admin action
+- THEN the extension's later API requests MUST be rejected with no Keepiq admin action
 
 ### Requirement: In-extension unlock preserves zero-knowledge
 The system MUST require the master password to be entered in the extension and used only client-side; the master password, derived key, and plaintext MUST NEVER reach the server.
@@ -66,16 +66,16 @@ The system MUST clear the in-memory key on a configurable idle timeout, on brows
 
 ## User Stories
 
-- As a user, I want the extension to offer my saved credentials on the login page I'm visiting so I don't have to open Doriath and copy-paste
+- As a user, I want the extension to offer my saved credentials on the login page I'm visiting so I don't have to open Keepiq and copy-paste
 - As a user, I want autofill to work on login forms embedded in iframes, which the incumbent fails to do
 - As a user, I want to be prompted to save or update a credential when I log in, so my vault stays current
 - As a security-conscious user, I want unlocking to happen in the extension so the server never sees my master password or plaintext
-- As an admin, I want extension access to be revocable from Nextcloud security settings without a Doriath-specific credential to manage
+- As an admin, I want extension access to be revocable from Nextcloud security settings without a Keepiq-specific credential to manage
 - As a user, I want the extension to lock itself when I'm away
 
 ## Acceptance Criteria
 
-- [ ] The extension pairs via a Nextcloud app password or OAuth-style flow; no new long-lived Doriath credential is minted
+- [ ] The extension pairs via a Nextcloud app password or OAuth-style flow; no new long-lived Keepiq credential is minted
 - [ ] Revoking the Nextcloud credential immediately kills the extension's access
 - [ ] Unlock happens in the extension; master password, derived key, and plaintext never reach the server
 - [ ] A paired-but-locked extension can list unencrypted names/URLs but cannot decrypt any value

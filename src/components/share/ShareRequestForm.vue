@@ -16,27 +16,27 @@
 <template>
 	<section
 		v-if="open"
-		class="doriath-share-request-form"
+		class="keepiq-share-request-form"
 		role="dialog"
 		data-testid="share-request-form">
-		<header class="doriath-share-request-form__header">
+		<header class="keepiq-share-request-form__header">
 			<h3>
 				{{
-					t('doriath', 'Request the owner share this secret with someone')
+					t('keepiq', 'Request the owner share this secret with someone')
 				}}
 			</h3>
 			<button
 				type="button"
-				class="doriath-share-request-form__close"
+				class="keepiq-share-request-form__close"
 				data-testid="share-request-form-close"
-				:aria-label="t('doriath', 'Close')"
+				:aria-label="t('keepiq', 'Close')"
 				@click="$emit('close')">
 				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 		<form @submit.prevent="onSubmit">
-			<label class="doriath-share-request-form__field">
-				<span>{{ t('doriath', 'Target Nextcloud user ID') }}</span>
+			<label class="keepiq-share-request-form__field">
+				<span>{{ t('keepiq', 'Target Nextcloud user ID') }}</span>
 				<input
 					v-model.trim="targetUserId"
 					type="text"
@@ -46,16 +46,16 @@
 			</label>
 			<p
 				v-if="error"
-				class="doriath-share-request-form__error"
+				class="keepiq-share-request-form__error"
 				data-testid="share-request-form-error">
 				{{ error }}
 			</p>
-			<div class="doriath-share-request-form__actions">
+			<div class="keepiq-share-request-form__actions">
 				<button
 					type="button"
 					data-testid="share-request-form-cancel"
 					@click="$emit('close')">
-					{{ t('doriath', 'Cancel') }}
+					{{ t('keepiq', 'Cancel') }}
 				</button>
 				<button
 					type="submit"
@@ -63,8 +63,8 @@
 					data-testid="share-request-form-submit">
 					{{
 						submitting
-							? t('doriath', 'Submitting…')
-							: t('doriath', 'Send request')
+							? t('keepiq', 'Submitting…')
+							: t('keepiq', 'Send request')
 					}}
 				</button>
 			</div>
@@ -115,13 +115,13 @@ export default {
 		async onSubmit() {
 			this.error = null
 			if (this.targetUserId === '') {
-				this.error = t('doriath', 'Pick a recipient user')
+				this.error = t('keepiq', 'Pick a recipient user')
 				return
 			}
 			this.submitting = true
 			try {
 				await axios.post(
-					generateUrl('/apps/doriath/api/v1/share-requests'),
+					generateUrl('/apps/keepiq/api/v1/share-requests'),
 					{
 						sourceSecretId: this.secretId,
 						targetUserId: this.targetUserId,
@@ -133,7 +133,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to send the share request')
+					|| t('keepiq', 'Failed to send the share request')
 			} finally {
 				this.submitting = false
 			}
@@ -143,7 +143,7 @@ export default {
 </script>
 
 <style scoped>
-.doriath-share-request-form {
+.keepiq-share-request-form {
 	border: 1px solid var(--color-border, #e0e0e0);
 	border-radius: 8px;
 	padding: 16px;
@@ -151,44 +151,44 @@ export default {
 	margin: 16px 0;
 }
 
-.doriath-share-request-form__header {
+.keepiq-share-request-form__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 12px;
 }
 
-.doriath-share-request-form__header h3 {
+.keepiq-share-request-form__header h3 {
 	margin: 0;
 	font-size: 1.1rem;
 }
 
-.doriath-share-request-form__close {
+.keepiq-share-request-form__close {
 	background: none;
 	border: none;
 	font-size: 1.5rem;
 	cursor: pointer;
 }
 
-.doriath-share-request-form__field {
+.keepiq-share-request-form__field {
 	display: flex;
 	flex-direction: column;
 	margin-bottom: 12px;
 }
 
-.doriath-share-request-form__field input {
+.keepiq-share-request-form__field input {
 	margin-top: 4px;
 	padding: 8px;
 	border: 1px solid var(--color-border, #ccc);
 	border-radius: 4px;
 }
 
-.doriath-share-request-form__error {
+.keepiq-share-request-form__error {
 	color: var(--color-error-text);
 	margin: 8px 0;
 }
 
-.doriath-share-request-form__actions {
+.keepiq-share-request-form__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;

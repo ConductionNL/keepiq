@@ -47,7 +47,7 @@ export function memberNameError(name, taken = []) {
 	const trimmed = (name || '').trim()
 
 	if (trimmed === '') {
-		return t('doriath', 'Give the field a name.')
+		return t('keepiq', 'Give the field a name.')
 	}
 
 	// Case-insensitive: `Key` reaches the same column as `key`, so accepting it
@@ -58,14 +58,14 @@ export function memberNameError(name, taken = []) {
 		// above the input — telling that user to "use the field above" would send
 		// them looking for something that is not there.
 		return t(
-			'doriath',
+			'keepiq',
 			'“{name}” is a built-in field, not an additional one — choose a different name.',
 			{ name: trimmed.toLowerCase() },
 		)
 	}
 
 	if (taken.some((existing) => (existing || '').trim() === trimmed) === true) {
-		return t('doriath', 'That field is already listed.')
+		return t('keepiq', 'That field is already listed.')
 	}
 
 	return ''

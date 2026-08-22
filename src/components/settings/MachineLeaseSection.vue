@@ -11,10 +11,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Machine leases')"
+		:name="t('keepiq', 'Machine leases')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Access-grant lifetimes for the machine secret-store API. Leases govern grant lifetime only — stored ciphertext is untouched.',
 			)
 		">
@@ -23,7 +23,7 @@
 				{{ error }}
 			</NcNoteCard>
 			<label class="lease-policy__field">
-				<span>{{ t('doriath', 'Default lease TTL (seconds)') }}</span>
+				<span>{{ t('keepiq', 'Default lease TTL (seconds)') }}</span>
 				<input
 					v-model.number="defaultTtl"
 					type="number"
@@ -32,7 +32,7 @@
 					@change="save" />
 			</label>
 			<label class="lease-policy__field">
-				<span>{{ t('doriath', 'Maximum lease TTL (seconds)') }}</span>
+				<span>{{ t('keepiq', 'Maximum lease TTL (seconds)') }}</span>
 				<input
 					v-model.number="maxTtl"
 					type="number"
@@ -46,7 +46,7 @@
 					type="checkbox"
 					data-testid="lease-renewable"
 					@change="save" />
-				<span>{{ t('doriath', 'Leases are renewable') }}</span>
+				<span>{{ t('keepiq', 'Leases are renewable') }}</span>
 			</label>
 			<label class="lease-policy__check">
 				<input
@@ -56,7 +56,7 @@
 					@change="save" />
 				<span>{{
 					t(
-						'doriath',
+						'keepiq',
 						'A revoked lease blocks re-fetching the secret until re-granted',
 					)
 				}}</span>
@@ -91,7 +91,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin'),
 			)
 			this.defaultTtl = response.data.lease_default_ttl_seconds ?? 900
 			this.maxTtl = response.data.lease_max_ttl_seconds ?? 86400
@@ -112,7 +112,7 @@ export default {
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
 					lease_default_ttl_seconds: this.defaultTtl,
 					lease_max_ttl_seconds: this.maxTtl,
 					lease_renewable: this.renewable,

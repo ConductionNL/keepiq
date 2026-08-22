@@ -121,8 +121,8 @@ describe('useExportStore', () => {
 		})
 
 		const store = useExportStore()
-		const report = await store.deleteAccountData('DELETE MY DORIATH DATA')
-		expect(body).toEqual({ confirmation: 'DELETE MY DORIATH DATA' })
+		const report = await store.deleteAccountData('DELETE MY KEEPIQ DATA')
+		expect(body).toEqual({ confirmation: 'DELETE MY KEEPIQ DATA' })
 		expect(report.report.secretsDeleted).toBe(3)
 	})
 })

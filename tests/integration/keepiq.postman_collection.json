@@ -1,7 +1,7 @@
 {
 	"info": {
-		"name": "Doriath API Contract Suite",
-		"description": "Newman/Postman API-contract tests for the Doriath (vault) Nextcloud app. Locks the HTTP contract of doriath's controllers (appinfo/routes.php + lib/Controller/*): secrets, encryption suites, CA status, folders, secret-types, and the public link-share access endpoint. Every family is exercised for a happy path, an error/validation case (4xx, not 500 where the controller is correct), and an authorization case (no auth -> 401, or 404 for the public token route). The suite is self-contained and idempotent: it creates the vault objects it needs (a secret, a folder) and deletes them again in teardown.\n\nThis suite asserts the Phase-0 fixes: secret create returns 201 with ownerType:\"user\" (not 500); secret/suite/folder reads return their list/object shape; the public link-share token route is reachable without NC auth and 404s on an unknown token.\n\nMost vault WRITES that mint or use key material (suite create, private-key upload, link-share create) require the in-browser RSA crypto flow and an unlocked vault with a freshly-generated key \u2014 they are not drivable from a headless API client and are QUARANTINED honestly below (covered by Playwright). What IS drivable from the API is the full secret CRUD round-trip, folder create, and all the reads + authz, which this suite exercises. That used to depend on the AMBIENT state of a long-lived dev vault that already had an unlocked suite; the CI job installs a FRESH Nextcloud where the caller has none, and every secret write was refused by SecretService::getActiveSuiteOrBlock(). Worse, the refusal is invisible from the status line \u2014 these are OCSController routes and Nextcloud's OCSMiddleware rewrites a 403 into an OCS v1 envelope served as HTTP 200 with the real code in ocs.meta.statuscode. The suite therefore PROVISIONS its own precondition: 'SETUP: ensure the caller has an active encryption suite' uploads a real, committed test RSA-4096 public key when (and only when) the caller has no active suite. The suite no longer assumes any ambient vault state.\n\nAUTH MODEL: collection auth is noauth; every authenticated request carries an EXPLICIT basic-auth block (admin:admin via adminUser/adminPass). The no-auth requests target {{noAuthBase}} (127.0.0.1) so the host-scoped NC session cookie established on {{baseUrl}} (localhost) is never sent to them. Run with --ignore-redirects. See run-newman.sh.\n\nGAP-4 FIX (previously quarantined): SecretController::create and EncryptionSuiteController::create now declare their required params nullable and validate presence in the body, so OMITTING a required field returns a clean JSON 400 instead of NC's reflection param-injection 500 HTML page. EncryptionSuiteController::create additionally catches InvalidArgumentException from the key-signing path, so an invalid public key also degrades to a 400. The corresponding create-error tests now assert 400 (not the old quarantined 500).",
+		"name": "Keepiq API Contract Suite",
+		"description": "Newman/Postman API-contract tests for the Keepiq (vault) Nextcloud app. Locks the HTTP contract of keepiq's controllers (appinfo/routes.php + lib/Controller/*): secrets, encryption suites, CA status, folders, secret-types, and the public link-share access endpoint. Every family is exercised for a happy path, an error/validation case (4xx, not 500 where the controller is correct), and an authorization case (no auth -> 401, or 404 for the public token route). The suite is self-contained and idempotent: it creates the vault objects it needs (a secret, a folder) and deletes them again in teardown.\n\nThis suite asserts the Phase-0 fixes: secret create returns 201 with ownerType:\"user\" (not 500); secret/suite/folder reads return their list/object shape; the public link-share token route is reachable without NC auth and 404s on an unknown token.\n\nMost vault WRITES that mint or use key material (suite create, private-key upload, link-share create) require the in-browser RSA crypto flow and an unlocked vault with a freshly-generated key \u2014 they are not drivable from a headless API client and are QUARANTINED honestly below (covered by Playwright). What IS drivable from the API is the full secret CRUD round-trip, folder create, and all the reads + authz, which this suite exercises. That used to depend on the AMBIENT state of a long-lived dev vault that already had an unlocked suite; the CI job installs a FRESH Nextcloud where the caller has none, and every secret write was refused by SecretService::getActiveSuiteOrBlock(). Worse, the refusal is invisible from the status line \u2014 these are OCSController routes and Nextcloud's OCSMiddleware rewrites a 403 into an OCS v1 envelope served as HTTP 200 with the real code in ocs.meta.statuscode. The suite therefore PROVISIONS its own precondition: 'SETUP: ensure the caller has an active encryption suite' uploads a real, committed test RSA-4096 public key when (and only when) the caller has no active suite. The suite no longer assumes any ambient vault state.\n\nAUTH MODEL: collection auth is noauth; every authenticated request carries an EXPLICIT basic-auth block (admin:admin via adminUser/adminPass). The no-auth requests target {{noAuthBase}} (127.0.0.1) so the host-scoped NC session cookie established on {{baseUrl}} (localhost) is never sent to them. Run with --ignore-redirects. See run-newman.sh.\n\nGAP-4 FIX (previously quarantined): SecretController::create and EncryptionSuiteController::create now declare their required params nullable and validate presence in the body, so OMITTING a required field returns a clean JSON 400 instead of NC's reflection param-injection 500 HTML page. EncryptionSuiteController::create additionally catches InvalidArgumentException from the key-signing path, so an invalid public key also degrades to a 400. The corresponding create-error tests now assert 400 (not the old quarantined 500).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -23,7 +23,7 @@
 		},
 		{
 			"key": "nonAdminUser",
-			"value": "doriath-newman-nonadmin"
+			"value": "keepiq-newman-nonadmin"
 		},
 		{
 			"key": "nonAdminPass",
@@ -80,7 +80,7 @@
 	"item": [
 		{
 			"name": "0. AppHost observability (declarative health + metrics)",
-			"description": "Locks the ADR-006 / ADR-040 observability contract that src/manifest.json declares and OpenRegister's AppHost GenericHealthController / GenericMetricsController serve. These scenarios live in openspec/specs/apphost-adoption/spec.md and were previously waived with '@e2e exclude API-only endpoint — covered by the OR AppHost Newman contract collection'. That collection is in the OPENREGISTER repo and doriath's CI never runs it, so the contract was asserted NOWHERE for doriath. These requests assert it here, in doriath's own always-run collection.\n\nHealth is PUBLIC (auth-posture delta, ADR-006) so it is fetched from {{noAuthBase}} with no auth block — the host-scoped NC session cookie established on {{baseUrl}} is never sent there, keeping 'anonymous' honest.",
+			"description": "Locks the ADR-006 / ADR-040 observability contract that src/manifest.json declares and OpenRegister's AppHost GenericHealthController / GenericMetricsController serve. These scenarios live in openspec/specs/apphost-adoption/spec.md and were previously waived with '@e2e exclude API-only endpoint — covered by the OR AppHost Newman contract collection'. That collection is in the OPENREGISTER repo and keepiq's CI never runs it, so the contract was asserted NOWHERE for keepiq. These requests assert it here, in keepiq's own always-run collection.\n\nHealth is PUBLIC (auth-posture delta, ADR-006) so it is fetched from {{noAuthBase}} with no auth block — the host-scoped NC session cookie established on {{baseUrl}} is never sent there, keeping 'anonymous' honest.",
 			"item": [
 				{
 					"name": "Health: anonymous check succeeds (200, database+filesystem ok)",
@@ -111,14 +111,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/health",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/health",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"health"
 							]
@@ -174,14 +174,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/health",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/health",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"health"
 							]
@@ -197,7 +197,7 @@
 								"type": "text/javascript",
 								"exec": [
 									"// Reads the authoritative list so the metrics assertion below compares",
-									"// doriath_suites_total against an INDEPENDENTLY obtained number rather than",
+									"// keepiq_suites_total against an INDEPENDENTLY obtained number rather than",
 									"// against itself. Without this the parity test asserts nothing.",
 									"pm.test('suites list (200)', () => pm.response.to.have.status(200));",
 									"const b = pm.response.json();",
@@ -235,14 +235,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/suites",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"suites"
@@ -251,7 +251,7 @@
 					}
 				},
 				{
-					"name": "Metrics: admin scrape parity (doriath_info, doriath_up, suites_total)",
+					"name": "Metrics: admin scrape parity (keepiq_info, keepiq_up, suites_total)",
 					"event": [
 						{
 							"listen": "test",
@@ -268,12 +268,12 @@
 									"});",
 									"",
 									"const body = pm.response.text();",
-									"pm.test('exposes doriath_info with version/php_version/nextcloud_version labels', () => {",
-									"    const m = body.match(/^doriath_info\\{([^}]*)\\}/m);",
-									"    pm.expect(m, 'no doriath_info line').to.not.be.null;",
+									"pm.test('exposes keepiq_info with version/php_version/nextcloud_version labels', () => {",
+									"    const m = body.match(/^keepiq_info\\{([^}]*)\\}/m);",
+									"    pm.expect(m, 'no keepiq_info line').to.not.be.null;",
 									"    ['version=', 'php_version=', 'nextcloud_version='].forEach((l) => pm.expect(m[1]).to.include(l));",
 									"});",
-									"pm.test('exposes doriath_up 1', () => pm.expect(/^doriath_up 1$/m.test(body), 'no `doriath_up 1` line').to.be.true);",
+									"pm.test('exposes keepiq_up 1', () => pm.expect(/^keepiq_up 1$/m.test(body), 'no `keepiq_up 1` line').to.be.true);",
 									"",
 									"// CROSS-SURFACE CHECK, deliberately an inequality and not an equality.",
 									"//",
@@ -291,12 +291,12 @@
 									"// the caller can see active must be inside the instance-wide active count.",
 									"// This still catches a gauge stuck at 0, a query returning NULL/absent, and",
 									"// an owner-scoped regression of the metric.",
-									"pm.test('doriath_suites_total is an integer gauge', () => {",
-									"    const m = body.match(/^doriath_suites_total (\\d+)$/m);",
-									"    pm.expect(m, 'no doriath_suites_total line').to.not.be.null;",
+									"pm.test('keepiq_suites_total is an integer gauge', () => {",
+									"    const m = body.match(/^keepiq_suites_total (\\d+)$/m);",
+									"    pm.expect(m, 'no keepiq_suites_total line').to.not.be.null;",
 									"    pm.collectionVariables.set('metricsReportedSuites', m[1]);",
 									"});",
-									"pm.test('doriath_suites_total covers at least the caller-visible active suites', () => {",
+									"pm.test('keepiq_suites_total covers at least the caller-visible active suites', () => {",
 									"    const reported = Number(pm.collectionVariables.get('metricsReportedSuites'));",
 									"    const callerActive = Number(pm.collectionVariables.get('metricsExpectedActiveSuites'));",
 									"    pm.expect(reported, `gauge ${reported} < caller-visible active ${callerActive}`).to.be.at.least(callerActive);",
@@ -340,14 +340,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/metrics",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/metrics",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"metrics"
 							]
@@ -409,14 +409,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/suites",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"suites"
@@ -515,14 +515,14 @@
 							"raw": "{\n  \"publicKey\": \"-----BEGIN PUBLIC KEY-----\\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA5nI971jVJMdGEkzRKJwm\\nOJ8koLePTXiLF//ymL8SIAD+7+oohFsUejkNQttwCRfMdJjMIttmrK4brMoHKded\\nlFgr3athyG3Ad8dvVNOqw1qpPG3i0zRsO/VPZU2MrHFjvbYxGoEgSJUXGJEPG3CM\\nCm8ta6GHwSQ8IksE9ocNu9GHyJYPkcG3/rPxmOGG0644tzBxSrIgrW9ElQJPwrLk\\n5GF+QJnDq08vWOW/14m1FmZhzEILDVdfz/GQYlGKWCapq9EiaS2Q4jZkyMChuJP8\\ny3O+v/Shgk9WZ0werHYz45E0j5pnQN5D1aGMG6G/ygbMJmKS3umzBJw8Wa44RxfF\\n+2dsP2uExrd9fcFN1t5w8xocRX7w7FAiR3dNjAfb/+ldFBQ6VITWwwakmFmh3CbJ\\n96Bbi6i8XtWwyTGtOBKNFb2lqw5wuPcQNvpwo/f/X0251IprMaTHsXZ5i8oPvCcK\\nFe7W7rpB6anp4AvSVjp/fcSxnQpQuxWVSc8sUshv/ReXkBTHO3DNB6tQht2DmbX8\\nREUMNIgOK8GMh0+ucRX5sJGdtmuePmoMqViW+GXMh6kqQ6gZyOzFpjluVuy1Y9nt\\nZcLKDvzasoYOaTfEE7GRuj+5d8gDh+agjLQqprF73HHwefXiKYO+MFhSj5mhmIig\\nD0x5Bm6KbHUJDW0OXOk3FSkCAwEAAQ==\\n-----END PUBLIC KEY-----\",\n  \"encryptedPrivateKey\": \"NEWMAN-placeholder-encrypted-private-key\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/suites",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"suites"
@@ -572,14 +572,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites/00000000-0000-4000-8000-000000000000",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/suites/00000000-0000-4000-8000-000000000000",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"suites",
@@ -610,14 +610,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/suites",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/suites",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"suites"
@@ -668,14 +668,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/ca/status",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/ca/status",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"ca",
@@ -706,14 +706,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/ca/status",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/ca/status",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"ca",
@@ -785,14 +785,14 @@
 							"raw": "{\n  \"publicKey\": \"not-a-real-rsa-public-key\",\n  \"encryptedPrivateKey\": \"NEWMAN-placeholder-encrypted-private-key\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/suites",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/suites",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"suites"
@@ -848,14 +848,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -918,14 +918,14 @@
 							"raw": "{\n  \"name\": \"NEWMAN probe secret\",\n  \"key\": \"NEWMAN-encrypted-blob-placeholder\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -975,14 +975,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{secretId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{secretId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -1041,14 +1041,14 @@
 							"raw": "{\n  \"name\": \"NEWMAN probe secret renamed\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{secretId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{secretId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -1099,14 +1099,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/00000000-0000-4000-8000-000000000000",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/00000000-0000-4000-8000-000000000000",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -1168,14 +1168,14 @@
 							"raw": "{\n  \"name\": \"bad\",\n  \"key\": \"\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -1235,14 +1235,14 @@
 							"raw": "{\n  \"name\": \"missing key only\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -1272,14 +1272,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -1317,14 +1317,14 @@
 							"raw": "{\n  \"name\": \"anon\",\n  \"key\": \"anon\"\n}"
 						},
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -1379,14 +1379,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/folders",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"folders"
@@ -1447,14 +1447,14 @@
 							"raw": "{\n  \"name\": \"NEWMAN folder\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/folders",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"folders"
@@ -1503,14 +1503,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders/{{folderId}}/children",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/folders/{{folderId}}/children",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"folders",
@@ -1562,14 +1562,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secret-types",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secret-types",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secret-types"
@@ -1607,14 +1607,14 @@
 							"raw": "{\n  \"name\": \"anon\"\n}"
 						},
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/folders",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/folders",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"folders"
@@ -1644,14 +1644,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secret-types",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/secret-types",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secret-types"
@@ -1691,14 +1691,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/newman-unknown-token",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/link-shares/newman-unknown-token",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -1741,14 +1741,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/applications",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications"
@@ -1806,14 +1806,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/applications",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications"
@@ -1868,14 +1868,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications/{{appId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/applications/{{appId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications",
@@ -1932,14 +1932,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/applications",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications"
@@ -1998,14 +1998,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/applications",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications"
@@ -2058,14 +2058,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications/pending",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/applications/pending",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications",
@@ -2122,14 +2122,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/applications",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/applications",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications"
@@ -2167,14 +2167,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/applications",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/applications",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications"
@@ -2211,14 +2211,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/app/secrets",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/app/secrets",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"app",
@@ -2259,14 +2259,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/app/secrets",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/app/secrets",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"app",
@@ -2307,14 +2307,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/token",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/token",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"token"
@@ -2363,14 +2363,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -2431,14 +2431,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secret-requests",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secret-requests",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secret-requests"
@@ -2493,14 +2493,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{reqSecretId}}/requests",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{reqSecretId}}/requests",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -2556,14 +2556,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/{{reqToken}}",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/secret-requests/{{reqToken}}",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -2600,14 +2600,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/00000000000000000000000000000000",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/secret-requests/00000000000000000000000000000000",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -2649,14 +2649,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/{{reqToken}}/fill",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/secret-requests/{{reqToken}}/fill",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -2697,14 +2697,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/secret-requests",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/secret-requests",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secret-requests"
@@ -2747,14 +2747,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secret-requests",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secret-requests",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secret-requests"
@@ -2807,14 +2807,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{reqSecretId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{reqSecretId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -2867,14 +2867,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/secret-requests/{{reqToken}}",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/secret-requests/{{reqToken}}",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -2921,14 +2921,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets"
@@ -2983,14 +2983,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{lsSecretId}}/link-shares",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{lsSecretId}}/link-shares",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -3060,14 +3060,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{lsSecretId}}/link-shares",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{lsSecretId}}/link-shares",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -3133,14 +3133,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/{{lsToken}}",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/link-shares/{{lsToken}}",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -3178,14 +3178,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/00000000000000000000000000000000",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/link-shares/00000000000000000000000000000000",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -3221,14 +3221,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{lsSecretId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{lsSecretId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -3284,14 +3284,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/v1/public/link-shares/{{lsToken}}",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/public/link-shares/{{lsToken}}",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"public",
@@ -3332,14 +3332,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/applications/{{appId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/applications/{{appId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"applications",
@@ -3405,14 +3405,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/secrets/{{secretId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/secrets/{{secretId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"secrets",
@@ -3458,14 +3458,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/index.php/apps/doriath/api/v1/folders/{{folderId}}",
+							"raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/folders/{{folderId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"v1",
 								"folders",
@@ -3652,7 +3652,7 @@
 									"// A 403 that still shipped the gauge would be the same leak with a",
 									"// different status line.",
 									"pm.test('no metric data in the rejection body', () => {",
-									"    pm.expect(pm.response.text()).to.not.include('doriath_suites_total');",
+									"    pm.expect(pm.response.text()).to.not.include('keepiq_suites_total');",
 									"});"
 								]
 							}
@@ -3682,14 +3682,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{noAuthBase}}/index.php/apps/doriath/api/metrics",
+							"raw": "{{noAuthBase}}/index.php/apps/keepiq/api/metrics",
 							"host": [
 								"{{noAuthBase}}"
 							],
 							"path": [
 								"index.php",
 								"apps",
-								"doriath",
+								"keepiq",
 								"api",
 								"metrics"
 							]

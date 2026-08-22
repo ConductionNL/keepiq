@@ -95,7 +95,7 @@ export const useSecretStore = defineStore('secret', {
 
 				try {
 					const response = await axios.get(
-						generateUrl('/apps/doriath/api/v1/secrets'),
+						generateUrl('/apps/keepiq/api/v1/secrets'),
 						{ params },
 					)
 					this.secrets = response.data.items || []
@@ -197,7 +197,7 @@ export const useSecretStore = defineStore('secret', {
 
 				try {
 					const response = await axios.get(
-						generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
+						generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
 					)
 					const secret = response.data
 					this.currentSecret = await this.decryptSecret(secret)
@@ -309,7 +309,7 @@ export const useSecretStore = defineStore('secret', {
 			}
 
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/secrets'),
+				generateUrl('/apps/keepiq/api/v1/secrets'),
 				payload,
 			)
 			return response.data
@@ -372,7 +372,7 @@ export const useSecretStore = defineStore('secret', {
 			}
 
 			const response = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
 				payload,
 			)
 
@@ -448,7 +448,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @return {Promise<void>}
 		 */
 		async deleteSecret(id) {
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/secrets/${id}`))
+			await axios.delete(generateUrl(`/apps/keepiq/api/v1/secrets/${id}`))
 			this.secrets = this.secrets.filter((s) => s.id !== id)
 		},
 

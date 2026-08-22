@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath SuiteMigrationCompletedEvent
+ * Keepiq SuiteMigrationCompletedEvent
  *
  * Dispatched when compromise recovery for an EncryptionSuite completes.
  * Listeners typically unlock dependent resources and re-point them at the
  * new suite (e.g. SecretRequest re-encryption pivot).
  *
  * @category Event
- * @package  OCA\Doriath\Event
+ * @package  OCA\Keepiq\Event
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event;
+namespace OCA\Keepiq\Event;
 
 use OCP\EventDispatcher\Event;
 

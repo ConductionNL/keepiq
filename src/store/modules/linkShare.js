@@ -39,7 +39,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/link-shares`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/link-shares`,
 					),
 				)
 				this.linkShares = response.data || []
@@ -73,7 +73,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/link-shares`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/link-shares`,
 					),
 					{
 						encryptedSecretSnapshot: blob,
@@ -98,7 +98,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 * @param {string} id The link share ID
 		 */
 		async deleteLinkShare(id) {
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/link-shares/${id}`))
+			await axios.delete(generateUrl(`/apps/keepiq/api/v1/link-shares/${id}`))
 			this.linkShares = this.linkShares.filter((share) => share.id !== id)
 		},
 
@@ -125,7 +125,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 		async fetchPublicLinkShare(token, failed = false) {
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}`,
+					`/apps/keepiq/api/v1/public/link-shares/${encodeURIComponent(token)}`,
 				),
 				{ params: failed ? { failed: '1' } : {} },
 			)
@@ -146,7 +146,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 		async confirmPublicLinkShare(token) {
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/public/link-shares/${encodeURIComponent(token)}/confirm`,
+					`/apps/keepiq/api/v1/public/link-shares/${encodeURIComponent(token)}/confirm`,
 				),
 				{},
 			)

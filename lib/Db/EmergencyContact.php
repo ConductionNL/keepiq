@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Emergency Contact Entity
+ * Keepiq Emergency Contact Entity
  *
  * Database entity for the break-glass emergency-access relationship between a
  * vault owner (grantor) and a trusted Nextcloud user (grantee). The row holds
@@ -12,7 +12,7 @@
  * the vault stays zero-knowledge (ADR-003).
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,7 +25,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

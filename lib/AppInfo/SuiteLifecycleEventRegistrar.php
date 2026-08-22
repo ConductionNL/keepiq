@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath suite-lifecycle event registrar
+ * Keepiq suite-lifecycle event registrar
  *
  * Binds every listener that reacts to an EncryptionSuite changing state:
  * compromise-recovery migration start/finish, suite revocation, and the
  * emergency-access envelopes those two invalidate.
  *
  * @category AppInfo
- * @package  OCA\Doriath\AppInfo
+ * @package  OCA\Keepiq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,17 +21,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\AppInfo;
+namespace OCA\Keepiq\AppInfo;
 
-use OCA\Doriath\Event\EncryptionSuiteRevokedEvent;
-use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Event\SuiteMigrationStartedEvent;
-use OCA\Doriath\Listener\EmergencyAccessSuiteRevocationListener;
-use OCA\Doriath\Listener\EmergencyAccessSuiteRotationListener;
-use OCA\Doriath\Listener\EncryptionSuiteRevokedListener;
-use OCA\Doriath\Listener\SuiteCompromiseListener;
-use OCA\Doriath\Listener\SuiteMigrationCompletedListener;
-use OCA\Doriath\Listener\SuiteMigrationStartedListener;
+use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
+use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
+use OCA\Keepiq\Listener\EmergencyAccessSuiteRevocationListener;
+use OCA\Keepiq\Listener\EmergencyAccessSuiteRotationListener;
+use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
+use OCA\Keepiq\Listener\SuiteCompromiseListener;
+use OCA\Keepiq\Listener\SuiteMigrationCompletedListener;
+use OCA\Keepiq\Listener\SuiteMigrationStartedListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**

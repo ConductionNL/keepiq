@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath SuiteMigrationStartedEvent
+ * Keepiq SuiteMigrationStartedEvent
  *
  * Dispatched when compromise recovery for an EncryptionSuite begins.
  * Listeners typically lock dependent resources (SecretRequests, etc.).
  *
  * @category Event
- * @package  OCA\Doriath\Event
+ * @package  OCA\Keepiq\Event
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event;
+namespace OCA\Keepiq\Event;
 
 use OCP\EventDispatcher\Event;
 

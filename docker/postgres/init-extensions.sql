@@ -1,6 +1,6 @@
--- PostgreSQL extension initialization for the Doriath dev stack.
+-- PostgreSQL extension initialization for the Keepiq dev stack.
 --
--- Doriath's own tables need nothing beyond stock PostgreSQL; these
+-- Keepiq's own tables need nothing beyond stock PostgreSQL; these
 -- extensions are for the OpenRegister backend mounted alongside it
 -- (vector/trigram search). Trimmed copy of openregister's
 -- docker/postgres/init-extensions.sql.

@@ -11,10 +11,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Offline read-only cache')"
+		:name="t('keepiq', 'Offline read-only cache')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Let users read their vault offline from an encrypted local snapshot refreshed on each unlock.',
 			)
 		">
@@ -26,12 +26,12 @@
 					type="checkbox"
 					data-testid="offline-cache-enabled"
 					@change="save" />
-				{{ t('doriath', 'Enable offline caching for this instance') }}
+				{{ t('keepiq', 'Enable offline caching for this instance') }}
 			</label>
 			<p class="offline-cache__disclosure">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						"The offline snapshot stores secret ciphertext (openable only with the user's master-password-derived key, exactly as on the server) and encrypts secret names, URLs and folder names at rest. Offline access is strictly read-only. Disable this for endpoints that must never cache credentials; disabling purges existing caches on next load.",
 					)
 				}}
@@ -63,13 +63,13 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin'),
 			)
 			this.enabled =
 				response.data?.offline_cache_enabled !== false
 				&& response.data?.offline_cache_enabled !== '0'
 		} catch (e) {
-			console.warn('Doriath: failed to load offline-cache switch', e)
+			console.warn('Keepiq: failed to load offline-cache switch', e)
 		}
 	},
 
@@ -80,7 +80,7 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async save() {
-			await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
 				offline_cache_enabled: this.enabled,
 			})
 		},

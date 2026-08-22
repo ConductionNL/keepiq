@@ -6,7 +6,7 @@ await p.locator('input[name="user"]').fill('admin')
 await p.locator('input[name="password"]').fill('admin')
 await p.locator('button[type="submit"]').first().click()
 await p.waitForSelector('#header',{timeout:30000})
-await p.goto(`${BASE}/index.php/apps/doriath/`,{waitUntil:'domcontentloaded'})
+await p.goto(`${BASE}/index.php/apps/keepiq/`,{waitUntil:'domcontentloaded'})
 await p.waitForTimeout(3000)
 // unlock with the seeded dev master password
 await p.locator('.lock-screen input[type="password"]').first().fill('Oj',{force:true})

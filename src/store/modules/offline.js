@@ -110,7 +110,7 @@ export const useOfflineStore = defineStore('offline', {
 			}
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/offline/manifest'),
+					generateUrl('/apps/keepiq/api/v1/offline/manifest'),
 				)
 				const snapshot = await encryptSnapshot(session.aesKey, response.data)
 				const written = await writeSnapshot(snapshot)

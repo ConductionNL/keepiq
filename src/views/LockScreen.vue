@@ -10,8 +10,8 @@
 			<NcNoteCard v-if="!isSecureContext" type="error">
 				{{
 					t(
-						'doriath',
-						'Doriath requires a secure connection (HTTPS) to function. Please access this instance over HTTPS.',
+						'keepiq',
+						'Keepiq requires a secure connection (HTTPS) to function. Please access this instance over HTTPS.',
 					)
 				}}
 			</NcNoteCard>
@@ -27,7 +27,7 @@
 			<NcNoteCard v-else-if="checkFailed && offlineStore.online" type="error">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Could not determine whether your vault is already set up. To protect your existing vault, setup and unlock are unavailable until this check succeeds.',
 					)
 				}}
@@ -39,7 +39,7 @@
 			<!--
 			  No title while setup-vs-unlock is unknown — pending, or failed
 			  while online (the error card explains itself). Either title
-			  would be a claim we cannot back yet: "Unlock Doriath" reads
+			  would be a claim we cannot back yet: "Unlock Keepiq" reads
 			  wrong to a user who has never set a password. Failed-while-
 			  offline keeps the title: that state renders the unlock form.
 			-->
@@ -48,8 +48,8 @@
 				class="lock-screen__title">
 				{{
 					isFirstSetup
-						? t('doriath', 'Set up your master password')
-						: t('doriath', 'Unlock Doriath')
+						? t('keepiq', 'Set up your master password')
+						: t('keepiq', 'Unlock Keepiq')
 				}}
 			</h1>
 
@@ -67,14 +67,14 @@
 			<template v-else-if="checking">
 				<div class="lock-screen__checking">
 					<NcLoadingIcon :size="32" />
-					<p>{{ t('doriath', 'Checking your vault…') }}</p>
+					<p>{{ t('keepiq', 'Checking your vault…') }}</p>
 				</div>
 			</template>
 
 			<!-- Failed while online: banner above explains, only retry here. -->
 			<template v-else-if="checkFailed && offlineStore.online">
 				<NcButton variant="primary" :wide="true" @click="checkSuite">
-					{{ t('doriath', 'Try again') }}
+					{{ t('keepiq', 'Try again') }}
 				</NcButton>
 			</template>
 
@@ -90,7 +90,7 @@
 				<NcNoteCard v-if="hasPausedMigration" type="warning">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Key rotation is unfinished and your vault is read-only. Unlock to continue — you will then be asked for your previous master password to resume it.',
 						)
 					}}
@@ -100,7 +100,7 @@
 				<template v-if="isFirstSetup">
 					<NcPasswordField
 						v-model="masterPassword"
-						:label="t('doriath', 'Master password')"
+						:label="t('keepiq', 'Master password')"
 						:disabled="loading"
 						@blur="revealMismatch"
 						@keyup.enter="handleSetup" />
@@ -120,7 +120,7 @@
 					<NcPasswordField
 						v-model="confirmPassword"
 						class="lock-screen__confirm"
-						:label="t('doriath', 'Confirm master password')"
+						:label="t('keepiq', 'Confirm master password')"
 						:disabled="loading"
 						:error="showMismatch || !!error"
 						:helperText="confirmHelperText"
@@ -138,7 +138,7 @@
 						:title="
 							showMismatch
 								? t(
-										'doriath',
+										'keepiq',
 										'The password does not match. Please try again.',
 									)
 								: null
@@ -150,8 +150,8 @@
 							@click="handleSetup">
 							{{
 								loading
-									? t('doriath', 'Setting up…')
-									: t('doriath', 'Set up vault')
+									? t('keepiq', 'Setting up…')
+									: t('keepiq', 'Set up vault')
 							}}
 						</NcButton>
 					</span>
@@ -171,8 +171,8 @@
 						</template>
 						{{
 							loading
-								? t('doriath', 'Unlocking…')
-								: t('doriath', 'Unlock with passkey')
+								? t('keepiq', 'Unlocking…')
+								: t('keepiq', 'Unlock with passkey')
 						}}
 					</NcButton>
 
@@ -184,7 +184,7 @@
 					-->
 					<NcPasswordField
 						v-model="masterPassword"
-						:label="t('doriath', 'Master password')"
+						:label="t('keepiq', 'Master password')"
 						:disabled="loading"
 						:error="!!error"
 						:helperText="error || ''"
@@ -196,8 +196,8 @@
 						@click="handleUnlock">
 						{{
 							loading
-								? t('doriath', 'Unlocking…')
-								: t('doriath', 'Unlock')
+								? t('keepiq', 'Unlocking…')
+								: t('keepiq', 'Unlock')
 						}}
 					</NcButton>
 				</template>
@@ -350,7 +350,7 @@ export default {
 		 */
 		confirmHelperText() {
 			if (this.showMismatch) {
-				return t('doriath', 'The password does not match. Please try again.')
+				return t('keepiq', 'The password does not match. Please try again.')
 			}
 			return this.error || ''
 		},
@@ -470,7 +470,7 @@ export default {
 				this.error =
 					e?.message
 					|| t(
-						'doriath',
+						'keepiq',
 						'Passkey unlock failed — use your master password',
 					)
 			} finally {
@@ -511,7 +511,7 @@ export default {
 					}
 				}
 				this.error = t(
-					'doriath',
+					'keepiq',
 					'Wrong master password or decryption failed',
 				)
 			} finally {
@@ -552,7 +552,7 @@ export default {
 				await this.suiteStore.createSuite(this.masterPassword)
 				this.$router.push('/')
 			} catch (e) {
-				this.error = e.message || t('doriath', 'Setup failed')
+				this.error = e.message || t('keepiq', 'Setup failed')
 			} finally {
 				this.loading = false
 				this.masterPassword = ''
@@ -582,7 +582,7 @@ export default {
 	 * visible and clickable beside it. The unlock/setup prompt must be the
 	 * only interactive surface, so cover the whole viewport below the
 	 * Nextcloud global header (which stays reachable — locking the vault
-	 * must not trap the user inside Doriath). z-index sits above
+	 * must not trap the user inside Keepiq). z-index sits above
 	 * NcAppNavigation (~1800) but below the header (2000) and modals.
 	 */
 	position: fixed;

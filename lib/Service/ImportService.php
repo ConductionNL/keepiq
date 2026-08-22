@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Import Service
+ * Keepiq Import Service
  *
  * Server side of the client-side import pipeline (secret-import D7). The browser
  * parses, maps, deduplicates, and ENCRYPTS every sensitive field locally, then
@@ -18,7 +18,7 @@
  * field is accepted from the request (ADR-005, IDOR-safe by construction).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -31,10 +31,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Exception\SuiteBlockedException;
+use OCA\Keepiq\Exception\SuiteBlockedException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -162,7 +162,7 @@ class ImportService {
 
 		$createdCount = count(array_filter($results, static fn (array $r): bool => $r['status'] === 'created'));
 		$this->logger->debug(
-			'Doriath: import chunk committed ' . $createdCount . ' of ' . count($items) . ' items for user ' . $userId
+			'Keepiq: import chunk committed ' . $createdCount . ' of ' . count($items) . ' items for user ' . $userId
 		);
 
 		return [

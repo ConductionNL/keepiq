@@ -1,14 +1,14 @@
-# Doriath — Architecture & Data Model
+# Keepiq — Architecture & Data Model
 
 ## 1. Overview
 
-Doriath is an encrypted secrets manager for Nextcloud — a password manager and key store for users and applications. It stores secrets (passwords, API keys, tokens, certificates) encrypted at rest using RSA-4096 public-key cryptography, with private keys protected by AES-256 encryption derived from a user's master password. A private Certificate Authority (root + intermediate) signs all user and application certificates.
+Keepiq is an encrypted secrets manager for Nextcloud — a password manager and key store for users and applications. It stores secrets (passwords, API keys, tokens, certificates) encrypted at rest using RSA-4096 public-key cryptography, with private keys protected by AES-256 encryption derived from a user's master password. A private Certificate Authority (root + intermediate) signs all user and application certificates.
 
 ### Architecture Pattern
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Doriath Frontend (Vue 2 + Pinia)                           │
+│  Keepiq Frontend (Vue 2 + Pinia)                           │
 │  - Lock screen (master password entry)                      │
 │  - Vault: secrets list with folder tree                     │
 │  - Secret detail views (by type)                            │
@@ -20,7 +20,7 @@ Doriath is an encrypted secrets manager for Nextcloud — a password manager and
 └──────────────┬──────────────────────────────────────────────┘
                │ REST API calls (Nextcloud session + X-Vault-Password)
 ┌──────────────▼──────────────────────────────────────────────┐
-│  Doriath PHP Backend                                         │
+│  Keepiq PHP Backend                                         │
 │  - Controllers: Secrets, EncryptionSuites, Applications,    │
 │    Sharing, KeyGenerator, Settings                           │
 │  - Services: EncryptionService, CertificateAuthorityService,│
@@ -37,7 +37,7 @@ Doriath is an encrypted secrets manager for Nextcloud — a password manager and
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Doriath owns **all its database tables** — it does NOT use OpenRegister. This is an explicit exception to the org-wide ADR-001, justified by the security requirements of field-level encryption control and the need to eliminate intermediary services from the data path. See [ADR-001](../openspec/architecture/adr-001-own-database-tables.md).
+Keepiq owns **all its database tables** — it does NOT use OpenRegister. This is an explicit exception to the org-wide ADR-001, justified by the security requirements of field-level encryption control and the need to eliminate intermediary services from the data path. See [ADR-001](../openspec/architecture/adr-001-own-database-tables.md).
 
 ## 2. Standards Research
 
@@ -74,21 +74,21 @@ This means:
 
 ### 2.3 Key Findings
 
-1. **X.509 / RFC 5280** defines the certificate format Doriath uses for its private CA. The root certificate (20-year lifetime) signs an intermediate certificate (3-year lifetime), which in turn signs user and application certificates. This two-tier CA structure follows PKI best practice — the root key is used rarely, limiting exposure.
+1. **X.509 / RFC 5280** defines the certificate format Keepiq uses for its private CA. The root certificate (20-year lifetime) signs an intermediate certificate (3-year lifetime), which in turn signs user and application certificates. This two-tier CA structure follows PKI best practice — the root key is used rarely, limiting exposure.
 
-2. **NIST SP 800-57** recommends RSA-4096 for protection beyond 2031 (>128-bit security strength). AES-256 provides 256-bit security strength. Both exceed NIST's minimum recommendations for sensitive data protection. Key sizes in Doriath are only allowed to increase, never decrease.
+2. **NIST SP 800-57** recommends RSA-4096 for protection beyond 2031 (>128-bit security strength). AES-256 provides 256-bit security strength. Both exceed NIST's minimum recommendations for sensitive data protection. Key sizes in Keepiq are only allowed to increase, never decrease.
 
 3. **NIST SP 800-63B** defines memorized secret (password) requirements: minimum 8 characters (we require 12), no composition rules (we use entropy-based scoring instead), and blocklist checking. Our zxcvbn-based approach aligns with NIST's shift from complexity rules to entropy measurement.
 
 4. **OWASP Password Storage Cheat Sheet** recommends Argon2id as the first choice for password hashing / key derivation. We use Argon2id for link share snapshot encryption (deriving an AES key from the link password). For master password → AES key derivation, we use a similar KDF approach.
 
-5. **PKCS#10 (CSR)** enables applications to register with Doriath by submitting a Certificate Signing Request containing their public key. Doriath signs the public key with the CA intermediate and never stores the application's private key — the application manages its own key externally. This is standard PKI practice for distributed systems.
+5. **PKCS#10 (CSR)** enables applications to register with Keepiq by submitting a Certificate Signing Request containing their public key. Keepiq signs the public key with the CA intermediate and never stores the application's private key — the application manages its own key externally. This is standard PKI practice for distributed systems.
 
 6. **RSA chunking constraint** (PKCS#1): RSA-4096 can encrypt at most ~500 bytes per operation (key size in bytes − padding overhead). Secrets larger than this limit must be chunked. This is a known limitation documented in [ADR-003](../openspec/architecture/adr-003-rsa-aes-encryption-architecture.md).
 
-7. **zxcvbn** scores passwords on a 0–4 scale: 0 = too guessable, 1 = very guessable, 2 = somewhat guessable, 3 = safely unguessable (resists online attacks, ~10^8 guesses), 4 = very unguessable (resists offline attacks, ~10^10 guesses). Doriath requires score ≥ 3 by default, configurable up to 4 by admins.
+7. **zxcvbn** scores passwords on a 0–4 scale: 0 = too guessable, 1 = very guessable, 2 = somewhat guessable, 3 = safely unguessable (resists online attacks, ~10^8 guesses), 4 = very unguessable (resists offline attacks, ~10^10 guesses). Keepiq requires score ≥ 3 by default, configurable up to 4 by admins.
 
-8. **No applicable Schema.org types** — Schema.org has no standard vocabulary for secrets, credentials, or vault entries. Doriath entities do not carry schema.org type annotations, unlike other Conduction apps that model semantic data.
+8. **No applicable Schema.org types** — Schema.org has no standard vocabulary for secrets, credentials, or vault entries. Keepiq entities do not carry schema.org type annotations, unlike other Conduction apps that model semantic data.
 
 ## 3. Data Model Decisions
 
@@ -136,7 +136,7 @@ The cryptographic identity of a user or application. Holds a public certificate 
 
 #### Certificate Distinguished Name (DN)
 
-All certificates issued by the Doriath CA share a common set of DN fields, with the `commonName` varying by certificate type:
+All certificates issued by the Keepiq CA share a common set of DN fields, with the `commonName` varying by certificate type:
 
 **Default DN fields** (defined as `DEFAULT_DN` in `CertificateAuthorityService`):
 
@@ -146,14 +146,14 @@ All certificates issued by the Doriath CA share a common set of DN fields, with 
 | `stateOrProvinceName` | Noord-Holland |
 | `localityName` | Amsterdam |
 | `organizationName` | Conduction |
-| `organizationalUnitName` | Doriath |
+| `organizationalUnitName` | Keepiq |
 
 **Common Name by certificate type:**
 
 | Certificate | Common Name | Example |
 |-------------|-------------|---------|
-| Root CA | `Doriath Root CA` | `Doriath Root CA` |
-| Intermediate CA | `Doriath Intermediate CA` | `Doriath Intermediate CA` |
+| Root CA | `Keepiq Root CA` | `Keepiq Root CA` |
+| Intermediate CA | `Keepiq Intermediate CA` | `Keepiq Intermediate CA` |
 | User certificate | Federated cloud ID (user@instance), falls back to user ID | `admin@nextcloud.local` |
 | Application certificate | Application ID | `a1b2c3d4-...` |
 
@@ -244,7 +244,7 @@ Organizes secrets into a per-user tree hierarchy.
 
 #### Application
 
-An external or internal application registered to use Doriath as a secret store.
+An external or internal application registered to use Keepiq as a secret store.
 
 | Property | Type | Notes |
 |----------|------|-------|
@@ -381,7 +381,7 @@ Tracks compromise recovery migrations.
 
 ### 3.4 Nextcloud Integration Strategy
 
-**Principle: Doriath handles all encryption and secret storage itself. Nextcloud provides identity, session, notification, and search infrastructure.**
+**Principle: Keepiq handles all encryption and secret storage itself. Nextcloud provides identity, session, notification, and search infrastructure.**
 
 #### REUSE from Nextcloud
 
@@ -398,7 +398,7 @@ Tracks compromise recovery migrations.
 | **User Deletion** | `OCP\User\Events\UserDeletedEvent` | Clean up EncryptionSuite, secrets, shares on user delete | Event listener |
 | **Group Membership** | `OCP\Group\Events\UserAddedEvent` / `UserRemovedEvent` | Trigger group share add/revoke | Event listeners |
 
-#### BUILD in Doriath (Security-specific)
+#### BUILD in Keepiq (Security-specific)
 
 | What | Why Not Reuse |
 |------|---------------|
@@ -421,7 +421,7 @@ $session->get('doriath_aes_key'); // retrieve for decryption
 // Notifications — secret shared
 $manager = \OCP\Server::get(\OCP\Notification\IManager::class);
 $notification = $manager->createNotification();
-$notification->setApp('doriath')
+$notification->setApp('keepiq')
     ->setUser($recipientId)
     ->setSubject('secret_shared', ['sharer' => $sharerId])
     ->setObject('secret', $secretId);
@@ -453,7 +453,7 @@ class UserRemovedFromGroupListener implements \OCP\EventDispatcher\IEventListene
 
 ### 3.5 @conduction/nextcloud-vue Library
 
-Doriath uses its own database (not OpenRegister), so **store-level** components (`useObjectStore`, plugins) do not apply. However, the following **UI components and patterns** from `@conduction/nextcloud-vue` are used:
+Keepiq uses its own database (not OpenRegister), so **store-level** components (`useObjectStore`, plugins) do not apply. However, the following **UI components and patterns** from `@conduction/nextcloud-vue` are used:
 
 | Layer | What to Use | Purpose |
 |-------|-------------|---------|
@@ -461,9 +461,9 @@ Doriath uses its own database (not OpenRegister), so **store-level** components 
 | **Settings** | `CnSettingsSection`, `CnVersionInfoCard`, `CnSettingsCard` | Admin settings page (CA health, password policy, app management) |
 | **Detail pages** | `CnDetailPage`, `CnDetailCard`, `CnObjectSidebar` | Secret detail view with card-based layout + sidebar (files, notes, tags, audit trail) |
 | **CSS** | NL Design System double-fallback pattern (cn- prefix) | Government theming compliance |
-| **Not used** | `useObjectStore`, `registerMappingPlugin`, `lifecyclePlugin`, `useListView`, `useDetailView` | These depend on OpenRegister API — Doriath has its own backend API |
+| **Not used** | `useObjectStore`, `registerMappingPlugin`, `lifecyclePlugin`, `useListView`, `useDetailView` | These depend on OpenRegister API — Keepiq has its own backend API |
 
-Doriath implements its own Pinia stores (`useSecretStore`, `useEncryptionSuiteStore`, `useApplicationStore`, etc.) that call Doriath's REST API instead of the OpenRegister API. The stores follow the same patterns (loading state, pagination, CRUD) but are not derived from `useObjectStore`.
+Keepiq implements its own Pinia stores (`useSecretStore`, `useEncryptionSuiteStore`, `useApplicationStore`, etc.) that call Keepiq's REST API instead of the OpenRegister API. The stores follow the same patterns (loading state, pagination, CRUD) but are not derived from `useObjectStore`.
 
 **package.json dependency** (MUST be present):
 ```json
@@ -522,15 +522,15 @@ The MainMenu footer contains two items: **"Lock vault"** (lock icon — calls `s
 
 ### 3.7 OpenConnector Integration
 
-Doriath acts as a **secret store for OpenConnector**. When OpenConnector needs API keys or credentials to connect to external services, it can retrieve them from Doriath's application vault via the API.
+Keepiq acts as a **secret store for OpenConnector**. When OpenConnector needs API keys or credentials to connect to external services, it can retrieve them from Keepiq's application vault via the API.
 
 **Integration pattern:**
-1. Register OpenConnector as an Application in Doriath (admin auto-approved)
+1. Register OpenConnector as an Application in Keepiq (admin auto-approved)
 2. OpenConnector receives an EncryptionSuite (via generated key pair or CSR)
 3. Admin writes API keys/credentials into OpenConnector's application vault
-4. OpenConnector retrieves its secrets via Doriath's API using `X-Vault-Password` header
+4. OpenConnector retrieves its secrets via Keepiq's API using `X-Vault-Password` header
 
-This integration is via Doriath's REST API — no tight coupling or shared database.
+This integration is via Keepiq's REST API — no tight coupling or shared database.
 
 ## 4. Database Configuration
 
@@ -582,7 +582,7 @@ documented intent rather than silently drop a limit during refactoring.
 | `EphemeralSendAccessController::failure` | 15 / 60s | Failed-password reporting (burns the send at 5); the limit caps deliberate burn-griefing bursts. |
 
 All limits are keyed anonymously (per-IP) by Nextcloud's rate-limiter
-middleware, which is available since NC 24; Doriath's `info.xml` floor
+middleware, which is available since NC 24; Keepiq's `info.xml` floor
 (NC 31) already satisfies this.
 
 ## 5. Open Research Questions
@@ -593,7 +593,7 @@ middleware, which is available since NC 24; Doriath's `info.xml` floor
 
 3. **Subfolder cascade** — Does `?cascade=delete` and `?cascade=move` apply recursively to subfolders, or only to direct contents? Unclear whether recursive folder deletion should be allowed.
 
-4. **Internal application master password** — How does a Nextcloud app running a cronjob authenticate to its Doriath vault? No solution found that doesn't compromise the security model. See Vault-app.docx for full analysis.
+4. **Internal application master password** — How does a Nextcloud app running a cronjob authenticate to its Keepiq vault? No solution found that doesn't compromise the security model. See Vault-app.docx for full analysis.
 
 5. **Post-quantum cryptography** — RSA-4096 is vulnerable to future quantum attacks. Post-quantum algorithms are not yet available in stable PHP/OpenSSL. Must be revisited when PHP gains support.
 

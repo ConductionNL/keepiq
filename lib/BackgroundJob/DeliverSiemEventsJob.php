@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Deliver SIEM Events Job
+ * Keepiq Deliver SIEM Events Job
  *
  * Minute-cadence drain of the SIEM forwarding queue (siem-audit-export
  * §4.1): due pending rows per enabled sink in bounded batches, with
  * backoff and dead-lettering handled by the service.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,10 +21,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\SiemService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\SiemService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -69,7 +69,7 @@ class DeliverSiemEventsJob extends TimedJob {
 			$this->siemService->deliverDue();
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: SIEM delivery drain failed: ' . $exception->getMessage(),
+				'Keepiq: SIEM delivery drain failed: ' . $exception->getMessage(),
 				['app' => Application::APP_ID]
 			);
 		}

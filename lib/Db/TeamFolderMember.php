@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Team Folder Member Entity
+ * Keepiq Team Folder Member Entity
  *
  * Database entity representing one member (a Nextcloud user or group) of
  * a TeamFolder. Group members expand statically to individual user
  * shares at fan-out time (ADR-003 — no live group key).
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

@@ -41,7 +41,7 @@ if (is_dir($serverTestsLib)) {
 
 // Stub Doctrine\DBAL\ParameterType for unit tests that mock IDBConnection or
 // IQueryBuilder. The real class lives in doctrine/dbal which is provided by
-// Nextcloud at runtime but not part of doriath's composer dev deps.
+// Nextcloud at runtime but not part of keepiq's composer dev deps.
 if (class_exists('Doctrine\\DBAL\\ParameterType') === false) {
 	eval(
 		'namespace Doctrine\\DBAL; '

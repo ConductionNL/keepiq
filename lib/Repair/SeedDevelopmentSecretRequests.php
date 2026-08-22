@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Seed Development Secret Requests Repair Step
+ * Keepiq Seed Development Secret Requests Repair Step
  *
  * Creates example SecretRequest rows for the dev user's secrets so the
  * frontend can render the request list/fill flow without a real recipient
  * generating tokens. Debug-only, idempotent.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,16 +21,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
 use DateInterval;
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -95,7 +95,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Seed Doriath development secret requests (debug only)';
+		return 'Seed Keepiq development secret requests (debug only)';
 	}//end getName()
 
 	/**
@@ -124,13 +124,13 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
 		} catch (DoesNotExistException) {
-			$output->info('Doriath: no dev EncryptionSuite, skipping secret-request seed');
+			$output->info('Keepiq: no dev EncryptionSuite, skipping secret-request seed');
 			return;
 		}
 
 		$secrets = $this->secretMapper->findByOwner('user', self::DEV_USER_ID);
 		if ($secrets === []) {
-			$output->info('Doriath: no dev secrets, skipping secret-request seed');
+			$output->info('Keepiq: no dev secrets, skipping secret-request seed');
 			return;
 		}
 
@@ -174,8 +174,8 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 		}
 
 		$this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
-		$output->info('Doriath: seeded ' . $seeded . ' development secret requests');
-		$this->logger->info('Doriath dev seed: created ' . $seeded . ' secret requests');
+		$output->info('Keepiq: seeded ' . $seeded . ' development secret requests');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' secret requests');
 	}//end run()
 
 	/**
@@ -186,7 +186,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 	 * @return string
 	 */
 	private function deterministicId(string $seed): string {
-		return Uuid::uuid5(Uuid::NAMESPACE_OID, 'doriath:secret-request:' . $seed)->toString();
+		return Uuid::uuid5(Uuid::NAMESPACE_OID, 'keepiq:secret-request:' . $seed)->toString();
 	}//end deterministicId()
 
 	/**
@@ -216,7 +216,7 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 		// hitting the primary-key constraint.
 		try {
 			$this->requestMapper->findById($id);
-			$this->logger->debug('Doriath dev seed: secret request ' . $id . ' already exists, skipping');
+			$this->logger->debug('Keepiq dev seed: secret request ' . $id . ' already exists, skipping');
 			return 0;
 		} catch (DoesNotExistException) {
 			// Not seeded yet — insert below.

@@ -32,14 +32,14 @@
 			:disabled="store.loading || done"
 			data-testid="admin-handover-button"
 			@click="onHandover">
-			{{ t('doriath', 'Take over as vault administrator') }}
+			{{ t('keepiq', 'Take over as vault administrator') }}
 		</NcButton>
 
 		<p
 			v-if="done"
 			class="admin-handover__done"
 			data-testid="admin-handover-done">
-			{{ t('doriath', 'Permanent') }}
+			{{ t('keepiq', 'Permanent') }}
 		</p>
 
 		<p

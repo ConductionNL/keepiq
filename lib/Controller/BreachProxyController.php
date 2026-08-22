@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Breach Proxy Controller
+ * Keepiq Breach Proxy Controller
  *
  * A prefix-only proxy to the Have I Been Pwned (HIBP) range API, implementing
  * the server side of the k-anonymity breach-check flow (password-health §1.5,
@@ -15,7 +15,7 @@
  * per prefix (no user association is ever logged).
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,9 +28,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -103,6 +103,9 @@ class BreachProxyController extends Controller {
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
+		// Namespace deliberately still `doriath_` after the doriath -> keepiq
+		// rename: an ICache key prefix, not an app id. Renaming it would only
+		// throw away a warm HIBP range cache. See appinfo/info.xml.
 		$this->cache = $cacheFactory->createDistributed('doriath_breach_range');
 	}//end __construct()
 
@@ -178,7 +181,7 @@ class BreachProxyController extends Controller {
 		} catch (Throwable $e) {
 			// Soft-degrade: never log the prefix together with a user id (privacy).
 			$this->logger->warning(
-				'Doriath: HIBP range lookup failed: ' . $e->getMessage(),
+				'Keepiq: HIBP range lookup failed: ' . $e->getMessage(),
 				['app' => Application::APP_ID]
 			);
 			return new DataResponse(

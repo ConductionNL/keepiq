@@ -66,7 +66,7 @@ export const useAuditStore = defineStore('audit', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/audit/secret/${secretId}`),
+					generateUrl(`/apps/keepiq/api/v1/audit/secret/${secretId}`),
 				)
 				this.secretEntries = response.data.entries || []
 			} catch (e) {
@@ -86,7 +86,7 @@ export const useAuditStore = defineStore('audit', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/audit/me'),
+					generateUrl('/apps/keepiq/api/v1/audit/me'),
 				)
 				this.personalEntries = response.data.entries || []
 			} finally {
@@ -123,7 +123,7 @@ export const useAuditStore = defineStore('audit', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/audit'),
+					generateUrl('/apps/keepiq/api/v1/audit'),
 					{ params: this.buildAdminParams(page) },
 				)
 				this.adminEntries = response.data.entries || []
@@ -161,7 +161,7 @@ export const useAuditStore = defineStore('audit', {
 			let pages = 1
 			do {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/audit'),
+					generateUrl('/apps/keepiq/api/v1/audit'),
 					{ params: this.buildAdminParams(page) },
 				)
 				const entries = response.data.entries || []

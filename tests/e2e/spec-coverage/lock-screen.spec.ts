@@ -2,11 +2,11 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Gate-19 spec-coverage — Doriath lock screen.
+ * Gate-19 spec-coverage — Keepiq lock screen.
  *
  * The lock screen is the canonical entry surface for the vault: every in-app
  * route is gated behind it. For the admin account (which already owns an
- * EncryptionSuite) it renders the "Unlock Doriath" form. These tests assert the
+ * EncryptionSuite) it renders the "Unlock Keepiq" form. These tests assert the
  * real LockScreen.vue DOM without unlocking (the master password is, by design,
  * unrecoverable).
  *
@@ -24,21 +24,21 @@ const LockScreen = '.lock-screen'
 import {
 	gotoLock,
 	lockHeading,
-	collectDoriathErrors,
-	assertNoDoriathErrors,
+	collectKeepiqErrors,
+	assertNoKeepiqErrors,
 } from './_helpers'
 
 test.describe('Lock screen — spec: encryption-suites/spec.md', () => {
 	test('renders unlock form with password field and Unlock button', async ({
 		page,
 	}) => {
-		const errors = collectDoriathErrors(page)
+		const errors = collectKeepiqErrors(page)
 		await gotoLock(page)
 
 		// Heading is one of the two lock-screen modes.
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 		const heading = (await lockHeading(page).textContent())?.trim() ?? ''
-		expect(heading).toMatch(/Unlock Doriath|Set up your master password/i)
+		expect(heading).toMatch(/Unlock Keepiq|Set up your master password/i)
 
 		// A master-password field is always present.
 		await expect(
@@ -56,7 +56,7 @@ test.describe('Lock screen — spec: encryption-suites/spec.md', () => {
 		// The lock icon card renders (LockScreen.vue structural element).
 		await expect(page.locator(`${LockScreen}__card`)).toBeVisible()
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 
 	test('strength meter appears and validates while typing on setup mode only', async ({
@@ -138,7 +138,7 @@ test.describe('Lock screen — spec: encryption-suites/spec.md', () => {
 				.locator(LockScreen)
 				.getByText(/Wrong master password|decryption failed/i),
 		).toBeVisible({ timeout: 15_000 })
-		await expect(lockHeading(page)).toHaveText(/Unlock Doriath/i)
+		await expect(lockHeading(page)).toHaveText(/Unlock Keepiq/i)
 		await expect(page).toHaveURL(/\/lock/)
 	})
 })

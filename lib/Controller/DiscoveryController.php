@@ -1,17 +1,27 @@
 <?php
 
 /**
- * Doriath Machine API Discovery Controller
+ * Keepiq Machine API Discovery Controller
  *
  * Serves the unauthenticated, machine-readable discovery document at
  * `GET /api/v1/app/.well-known/doriath`. A consumer configures one base
  * URL plus its application id and private key, fetches this document, and
  * derives every contract URL (token endpoint, grant type, assertion
  * requirements, secret endpoints, envelope formats) without reading
- * Doriath source. The document carries no instance-private data.
+ * Keepiq source. The document carries no instance-private data.
+ *
+ * THE PATH SEGMENT STILL SAYS `doriath` AFTER THE doriath -> keepiq RENAME,
+ * on purpose. It is the one URL a machine consumer is configured with by
+ * hand; everything else it uses is derived from the document this endpoint
+ * returns. Renaming the segment would break every configured consumer at the
+ * same moment as, and independently of, the `/apps/<id>/` prefix change —
+ * two breaking changes where the contract (openspec/specs/secret-store-api/
+ * spec.md) allows none in place. Moving it belongs to the coordinated
+ * apiVersion bump that also retires the `doriath-machine-secret-v1` envelope
+ * name and the `aud=doriath` claim, not to an app-id rename.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +34,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Service\JwtAuthService;
-use OCA\Doriath\Service\MachineSecretEnvelopeService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Service\JwtAuthService;
+use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -66,7 +76,7 @@ class DiscoveryController extends Controller {
 		private IURLGenerator $urlGenerator,
 		private ?IAppConfig $appConfig = null,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -91,7 +101,7 @@ class DiscoveryController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function document(): JSONResponse {
-		$tokenEndpoint = $this->urlGenerator->linkToRoute('doriath.applicationToken.exchange');
+		$tokenEndpoint = $this->urlGenerator->linkToRoute('keepiq.applicationToken.exchange');
 		$tokenAbsolute = $this->urlGenerator->getAbsoluteURL($tokenEndpoint);
 
 		return new JSONResponse(
@@ -106,11 +116,11 @@ class DiscoveryController extends Controller {
 					'audienceUrl' => $tokenAbsolute,
 				],
 				'secrets' => [
-					'list' => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index'),
-					'byId' => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index') . '/{id}',
-					'byName' => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index') . '/by-name/{name}',
-					'create' => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index'),
-					'update' => $this->urlGenerator->linkToRoute('doriath.applicationSecrets.index') . '/{id}',
+					'list' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index'),
+					'byId' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index') . '/{id}',
+					'byName' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index') . '/by-name/{name}',
+					'create' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index'),
+					'update' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index') . '/{id}',
 				],
 				'envelopeFormats' => [MachineSecretEnvelopeService::FORMAT],
 				// Machine leases (machine-secret-leases §3.3): additive
@@ -118,9 +128,9 @@ class DiscoveryController extends Controller {
 				// addressing change.
 				'lease' => [
 					'supported' => true,
-					'defaultTtl' => $this->appConfig?->getValueInt(DoriathApp::APP_ID, 'lease_default_ttl_seconds', 900) ?? 900,
-					'maxTtl' => $this->appConfig?->getValueInt(DoriathApp::APP_ID, 'lease_max_ttl_seconds', 86400) ?? 86400,
-					'renewable' => $this->appConfig?->getValueBool(DoriathApp::APP_ID, 'lease_renewable', true) ?? true,
+					'defaultTtl' => $this->appConfig?->getValueInt(KeepiqApp::APP_ID, 'lease_default_ttl_seconds', 900) ?? 900,
+					'maxTtl' => $this->appConfig?->getValueInt(KeepiqApp::APP_ID, 'lease_max_ttl_seconds', 86400) ?? 86400,
+					'renewable' => $this->appConfig?->getValueBool(KeepiqApp::APP_ID, 'lease_renewable', true) ?? true,
 				],
 			]
 		);

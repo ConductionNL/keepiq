@@ -1,14 +1,14 @@
 {
-  "id": "doriath",
-  "name": "Doriath",
-  "namespace": "Doriath",
+  "id": "keepiq",
+  "name": "Keepiq",
+  "namespace": "Keepiq",
   "summary": "Encrypted secrets manager for Nextcloud — password manager and key store for users and applications",
   "goal": "Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority",
   "category": "security",
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "author": "Conduction B.V.",
-  "repository": "https://github.com/ConductionNL/doriath",
+  "repository": "https://github.com/ConductionNL/keepiq",
   "dependencies": {
     "requiresOpenRegister": false,
     "additionalCiApps": []
@@ -20,9 +20,9 @@
   },
   "architecture": {
     "dataLayer": "own-database-tables",
-    "pattern": "Thick backend — Doriath owns its own encrypted database tables; no OpenRegister, no n8n",
+    "pattern": "Thick backend — Keepiq owns its own encrypted database tables; no OpenRegister, no n8n",
     "encryption": "RSA-4096 + AES-256 via OpenSSL; private CA with root and intermediate certificates",
-    "frontend": "Vue 2.7 + Pinia, queries Doriath REST API",
+    "frontend": "Vue 2.7 + Pinia, queries Keepiq REST API",
     "authentication": "Nextcloud session (users) or X-Vault-Password header (external apps)"
   },
   "createdAt": "2026-03-23",

@@ -1,17 +1,17 @@
 schema: spec-driven
 
 context: |
-  Project: Doriath
-  Repo: ConductionNL/doriath
+  Project: Keepiq
+  Repo: ConductionNL/keepiq
   Type: Nextcloud App (PHP backend + Vue 2 frontend)
   Description: Encrypted secrets manager for Nextcloud — stores and shares secrets (passwords, API keys)
     for users and applications using end-to-end RSA/AES encryption with a private Certificate Authority.
   Key components: Secrets, EncryptionSuites, CACertificates, Applications, Sharing (user/link/request)
   Database: PostgreSQL (own tables — does NOT use OpenRegister)
-  Mount path: /var/www/html/custom_apps/doriath
+  Mount path: /var/www/html/custom_apps/keepiq
 
   Architecture:
-    Pattern: Thick backend — Doriath owns all database tables and handles all encryption server-side
+    Pattern: Thick backend — Keepiq owns all database tables and handles all encryption server-side
     Data layer: Own Doctrine entities and migrations (no OpenRegister dependency)
     Encryption: RSA-4096 for secrets, AES-256 for private keys; always E2E (see ADR-003 revised)
     Frontend: Vue 2.7 + Pinia stores; browser users decrypt client-side via WebCrypto API
@@ -19,9 +19,9 @@ context: |
     Master password: Never leaves the browser; AES-derived key and CryptoKey held in JS memory only
 
   Shared library: @conduction/nextcloud-vue (UI components only — CnDataTable, CnSettingsSection, etc.)
-    Note: useObjectStore and OpenRegister-specific features do NOT apply (Doriath has own DB)
+    Note: useObjectStore and OpenRegister-specific features do NOT apply (Keepiq has own DB)
 
-  Sister app: OpenConnector — uses Doriath as a secret store for connector API credentials
+  Sister app: OpenConnector — uses Keepiq as a secret store for connector API credentials
   Shared specs: See ../openspec/specs/ for cross-project conventions
   Project guidelines: See ../project.md for workspace-wide standards
   Architecture: See docs/ARCHITECTURE.md for standards research and data model decisions
@@ -29,9 +29,9 @@ context: |
 
 rules:
   proposal:
-    - Doriath owns its own database — do NOT reference OpenRegister for data storage
+    - Keepiq owns its own database — do NOT reference OpenRegister for data storage
     - Security implications must be explicitly addressed for any feature touching encryption
-    - Consider impact on OpenConnector where Doriath acts as a secret provider
+    - Consider impact on OpenConnector where Keepiq acts as a secret provider
     - Reference docs/FEATURES.md for feature tier (MVP/V1/Enterprise)
   specs:
     - Specify which fields are stored encrypted vs plain text
@@ -44,7 +44,7 @@ rules:
     - Master password never leaves the browser; AES-derived key and CryptoKey held in JS memory only
     - Migrations must use Nextcloud's ISchemaWrapper pattern
     - MUST use @conduction/nextcloud-vue UI components (CnDataTable, CnSettingsSection, CnVersionInfoCard, CnDetailPage, CnObjectSidebar, etc.)
-    - MUST NOT use useObjectStore or OpenRegister-specific features — Doriath has its own Pinia stores with client-side decrypt logic
+    - MUST NOT use useObjectStore or OpenRegister-specific features — Keepiq has its own Pinia stores with client-side decrypt logic
     - MUST use CnDetailPage + CnObjectSidebar for secret detail views (card-based layout with sidebar)
     - MUST use CnSettingsSection + CnVersionInfoCard for admin settings page
     - MUST add @conduction/nextcloud-vue npm dependency (^0.1.0-beta.1) + conditional webpack alias + dedup aliases
@@ -63,4 +63,4 @@ rules:
     - Cross-reference shared specs (nextcloud-app, api-patterns, nl-design, docker)
     - Flag any pattern that stores a private key or master password unencrypted as a BLOCKER
     - Flag spec deviations from org-wide ADRs with WARNING and justification
-    - ADR-001 (OpenRegister data layer) is explicitly superseded by Doriath ADR-001 for this app
+    - ADR-001 (OpenRegister data layer) is explicitly superseded by Keepiq ADR-001 for this app

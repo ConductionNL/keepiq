@@ -127,7 +127,7 @@ export const useAttachmentStore = defineStore('attachment', {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/attachments`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/attachments`,
 					),
 				)
 				const rows = []
@@ -205,7 +205,7 @@ export const useAttachmentStore = defineStore('attachment', {
 
 				await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/attachments`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/attachments`,
 					),
 					{
 						blob: toBase64(blob),
@@ -235,7 +235,7 @@ export const useAttachmentStore = defineStore('attachment', {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/doriath/api/v1/attachments/${attachment.id}/blob`,
+						`/apps/keepiq/api/v1/attachments/${attachment.id}/blob`,
 					),
 				)
 				const key = await this.unwrapFileKey(attachment.wrappedFileKey)
@@ -273,7 +273,7 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.error = null
 			try {
 				await axios.delete(
-					generateUrl(`/apps/doriath/api/v1/attachments/${attachmentId}`),
+					generateUrl(`/apps/keepiq/api/v1/attachments/${attachmentId}`),
 				)
 				await this.fetchAttachments(secretId)
 			} catch (e) {
@@ -309,7 +309,7 @@ export const useAttachmentStore = defineStore('attachment', {
 			}
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/secrets/${sourceSecretId}/attachments`,
+					`/apps/keepiq/api/v1/secrets/${sourceSecretId}/attachments`,
 				),
 			)
 			const recipientKey = await importPublicKey(recipientCertificate)
@@ -323,7 +323,7 @@ export const useAttachmentStore = defineStore('attachment', {
 				const rewrapped = await rsaEncrypt(rawBase64, recipientKey)
 
 				await axios.post(
-					generateUrl(`/apps/doriath/api/v1/attachments/${row.id}/grants`),
+					generateUrl(`/apps/keepiq/api/v1/attachments/${row.id}/grants`),
 					{
 						copySecretId,
 						recipientId,

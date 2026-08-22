@@ -12,7 +12,7 @@
 <template>
 	<NcDialog
 		:name="
-			t('doriath', 'Delete {count} secrets', { count: bulk.selectionCount })
+			t('keepiq', 'Delete {count} secrets', { count: bulk.selectionCount })
 		"
 		:open="open"
 		size="normal"
@@ -22,7 +22,7 @@
 			<NcNoteCard type="warning" data-testid="bulk-delete-warning">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'This permanently deletes {count} secrets and revokes their shares. There is no trash — this cannot be undone.',
 						{ count: bulk.selectionCount },
 					)
@@ -30,7 +30,7 @@
 			</NcNoteCard>
 			<label v-if="needsTypedConfirmation" class="bulk-delete__confirm">
 				<span>{{
-					t('doriath', 'Type {word} to confirm', { word: confirmWord })
+					t('keepiq', 'Type {word} to confirm', { word: confirmWord })
 				}}</span>
 				<input v-model="typed" type="text" data-testid="bulk-delete-typed" />
 			</label>
@@ -38,7 +38,7 @@
 		</div>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 			<NcButton
 				variant="error"
@@ -46,7 +46,7 @@
 				data-testid="bulk-delete-run"
 				@click="onRun">
 				{{
-					t('doriath', 'Delete {count} secrets', {
+					t('keepiq', 'Delete {count} secrets', {
 						count: bulk.selectionCount,
 					})
 				}}
@@ -136,7 +136,7 @@ export default {
 			await this.bulk.run(
 				this.bulk.selectedIds,
 				(id) => this.deleteOne(id),
-				this.t('doriath', 'Deleting secrets'),
+				this.t('keepiq', 'Deleting secrets'),
 			)
 			this.$emit('done')
 		},
@@ -149,7 +149,7 @@ export default {
 		async onRetry() {
 			await this.bulk.retryFailed(
 				(id) => this.deleteOne(id),
-				this.t('doriath', 'Retrying delete'),
+				this.t('keepiq', 'Retrying delete'),
 			)
 			this.$emit('done')
 		},

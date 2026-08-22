@@ -19,7 +19,7 @@
 
 		<dl class="card-display__fields">
 			<div v-if="payload.number">
-				<dt>{{ t('doriath', 'Number') }}</dt>
+				<dt>{{ t('keepiq', 'Number') }}</dt>
 				<dd class="card-display__masked">
 					<span data-testid="card-number-value">{{
 						revealed.number ? payload.number : '•••• •••• •••• ••••'
@@ -30,21 +30,21 @@
 						@click="toggle('number')">
 						{{
 							revealed.number
-								? t('doriath', 'Hide')
-								: t('doriath', 'Show')
+								? t('keepiq', 'Hide')
+								: t('keepiq', 'Show')
 						}}
 					</NcButton>
 					<CopyButton
 						:value="payload.number"
-						:label="t('doriath', 'Copy number')" />
+						:label="t('keepiq', 'Copy number')" />
 				</dd>
 			</div>
 			<div v-if="payload.expiry">
-				<dt>{{ t('doriath', 'Expiry') }}</dt>
+				<dt>{{ t('keepiq', 'Expiry') }}</dt>
 				<dd>{{ payload.expiry }}</dd>
 			</div>
 			<div v-if="payload.cvv">
-				<dt>{{ t('doriath', 'CVV') }}</dt>
+				<dt>{{ t('keepiq', 'CVV') }}</dt>
 				<dd class="card-display__masked">
 					<span data-testid="card-cvv-value">{{
 						revealed.cvv ? payload.cvv : '•••'
@@ -55,17 +55,17 @@
 						@click="toggle('cvv')">
 						{{
 							revealed.cvv
-								? t('doriath', 'Hide')
-								: t('doriath', 'Show')
+								? t('keepiq', 'Hide')
+								: t('keepiq', 'Show')
 						}}
 					</NcButton>
 					<CopyButton
 						:value="payload.cvv"
-						:label="t('doriath', 'Copy CVV')" />
+						:label="t('keepiq', 'Copy CVV')" />
 				</dd>
 			</div>
 			<div v-if="payload.pin">
-				<dt>{{ t('doriath', 'PIN') }}</dt>
+				<dt>{{ t('keepiq', 'PIN') }}</dt>
 				<dd class="card-display__masked">
 					<span data-testid="card-pin-value">{{
 						revealed.pin ? payload.pin : '••••'
@@ -76,17 +76,17 @@
 						@click="toggle('pin')">
 						{{
 							revealed.pin
-								? t('doriath', 'Hide')
-								: t('doriath', 'Show')
+								? t('keepiq', 'Hide')
+								: t('keepiq', 'Show')
 						}}
 					</NcButton>
 					<CopyButton
 						:value="payload.pin"
-						:label="t('doriath', 'Copy PIN')" />
+						:label="t('keepiq', 'Copy PIN')" />
 				</dd>
 			</div>
 			<div v-if="payload.cardholder">
-				<dt>{{ t('doriath', 'Cardholder') }}</dt>
+				<dt>{{ t('keepiq', 'Cardholder') }}</dt>
 				<dd>{{ payload.cardholder }}</dd>
 			</div>
 		</dl>

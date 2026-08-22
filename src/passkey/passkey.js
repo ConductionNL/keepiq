@@ -9,7 +9,7 @@
  * align 1:1 with the FIDO Credential Exchange Format (CXF) passkey
  * entity (`credentialId`, `rpId`, `rpName`, `userName`, `userDisplayName`,
  * `userHandle`, `privateKey`); `algorithm`, `counter`, `transports`, and
- * `createdAt` are documented Doriath extensions. Everything here runs
+ * `createdAt` are documented Keepiq extensions. Everything here runs
  * client-side only — the serialized JSON is encrypted before it ever
  * leaves the browser (ADR-003).
  *
@@ -27,7 +27,7 @@ const REQUIRED_FIELDS = ['credentialId', 'rpId', 'privateKey']
  *
  * Required: `credentialId`, `rpId`, `privateKey`. Optional fields default
  * honestly (`counter: 0`, `transports: []`, `createdAt: now`) — defaults
- * are only applied for the documented Doriath extension fields, never
+ * are only applied for the documented Keepiq extension fields, never
  * for credential material (passkey-item-type D2).
  *
  * @param {object} input Loose credential fields.

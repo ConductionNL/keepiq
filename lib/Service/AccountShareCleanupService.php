@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Account Share Cleanup Service
+ * Keepiq Account Share Cleanup Service
  *
  * The share-shaped steps of the GDPR Art. 17 erasure cascade (secret-export-gdpr
  * D4), split out of AccountDeletionService: delegated secrets are transferred,
@@ -13,7 +13,7 @@
  * recipient's copy.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,12 +26,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\GroupShareMapper;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\GroupShareMapper;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 
 /**
  * Runs the share-related steps of the account-deletion cascade.
@@ -74,7 +74,7 @@ class AccountShareCleanupService {
 	 * hard delete because the owner_id no longer matches the departing user.
 	 *
 	 * @param string $userId The departing user
-	 * @param array<int,\OCA\Doriath\Db\Secret> $ownedSecrets The user's secrets
+	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
 	 * @param DeletionReport $report The running report
 	 *
 	 * @return void
@@ -116,7 +116,7 @@ class AccountShareCleanupService {
 	 * written to the recipient copy. GroupShares the user created are deleted
 	 * the same way (their per-member ShareTarget rows carry the groupShareId).
 	 *
-	 * @param array<int,\OCA\Doriath\Db\Secret> $ownedSecrets The user's secrets
+	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
 	 * @param DeletionReport $report The running report
 	 *
 	 * @return void

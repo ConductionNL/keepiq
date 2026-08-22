@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Version 20
+ * Keepiq Migration Version 20
  *
  * Encrypted attachments (encrypted-attachments §1.1). Creates
  * `doriath_attachments` (one row per uploaded ciphertext blob, stored in
@@ -11,7 +11,7 @@
  * plaintext filename, or the file key (ADR-003).
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

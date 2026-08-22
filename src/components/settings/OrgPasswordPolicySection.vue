@@ -11,10 +11,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Org password policy')"
+		:name="t('keepiq', 'Org password policy')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Quality floor for secret values: the generator floor is enforced server-side; save-flow checks run in the browser before encryption (the server never sees a value).',
 			)
 		">
@@ -28,11 +28,11 @@
 					type="checkbox"
 					data-testid="policy-enabled"
 					@change="save" />
-				<span>{{ t('doriath', 'Enable the org password policy') }}</span>
+				<span>{{ t('keepiq', 'Enable the org password policy') }}</span>
 			</label>
 			<label class="org-policy__field">
 				<span>{{
-					t('doriath', 'Generator minimum length (at least 8)')
+					t('keepiq', 'Generator minimum length (at least 8)')
 				}}</span>
 				<input
 					v-model.number="policy.generator_min_length"
@@ -42,7 +42,7 @@
 					@change="save" />
 			</label>
 			<div class="org-policy__group">
-				<span>{{ t('doriath', 'Generated values must contain') }}</span>
+				<span>{{ t('keepiq', 'Generated values must contain') }}</span>
 				<label
 					v-for="cls in classes"
 					:key="cls.key"
@@ -57,7 +57,7 @@
 			</div>
 			<label class="org-policy__field">
 				<span>{{
-					t('doriath', 'Minimum strength score for manual values (0–4)')
+					t('keepiq', 'Minimum strength score for manual values (0–4)')
 				}}</span>
 				<input
 					v-model.number="policy.min_zxcvbn_score"
@@ -75,7 +75,7 @@
 					@change="save" />
 				<span>{{
 					t(
-						'doriath',
+						'keepiq',
 						'Block values found in known breaches (requires the breach check gate)',
 					)
 				}}</span>
@@ -83,7 +83,7 @@
 			<NcSelect
 				v-model="exemptTypes"
 				:options="typeOptions"
-				:inputLabel="t('doriath', 'Exempt secret types')"
+				:inputLabel="t('keepiq', 'Exempt secret types')"
 				multiple
 				data-testid="policy-exempt-types"
 				@update:modelValue="save" />
@@ -125,19 +125,19 @@ export default {
 			return [
 				{
 					key: 'generator_require_upper',
-					label: this.t('doriath', 'an uppercase letter'),
+					label: this.t('keepiq', 'an uppercase letter'),
 				},
 				{
 					key: 'generator_require_lower',
-					label: this.t('doriath', 'a lowercase letter'),
+					label: this.t('keepiq', 'a lowercase letter'),
 				},
 				{
 					key: 'generator_require_digit',
-					label: this.t('doriath', 'a digit'),
+					label: this.t('keepiq', 'a digit'),
 				},
 				{
 					key: 'generator_require_symbol',
-					label: this.t('doriath', 'a symbol'),
+					label: this.t('keepiq', 'a symbol'),
 				},
 			]
 		},
@@ -157,7 +157,7 @@ export default {
 				await typeStore.fetchTypes()
 			}
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin'),
 			)
 			for (const key of Object.keys(this.policy)) {
 				if (response.data[key] !== undefined) {
@@ -181,7 +181,7 @@ export default {
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
 					...this.policy,
 					policy_exempt_types: this.exemptTypes,
 				})

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath JWT Assertion Verifier
+ * Keepiq JWT Assertion Verifier
  *
  * The JOSE half of the JWT-Bearer exchange: deserialising a
  * Compact-Serialized JWS, decoding and vetting its claim set (audience,
@@ -15,7 +15,7 @@
  * public key.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,7 +28,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
@@ -123,7 +123,7 @@ class JwtAssertionVerifier {
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'JwtAuthService: failed to deserialize assertion (' . $e->getMessage() . ')',
-				['app' => 'doriath']
+				['app' => 'keepiq']
 			);
 			throw new RuntimeException(message: 'Invalid assertion format');
 		}

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Version 15
+ * Keepiq Migration Version 15
  *
  * Create the doriath_audit_log table — the append-only audit trail backing
  * the add-secret-audit-trail change (§1.1). One row per server-observable
@@ -11,7 +11,7 @@
  * by-event-type, retention purge by occurred_at).
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
