@@ -349,10 +349,26 @@ class KeepiqNotifier implements INotifier {
 		}
 
 		try {
-			$route = $this->url->linkToRoute('keepiq.dashboard.page') . '#/secrets/' . $secretId;
+			/* Route names are namespaced by the app id, so this must be built
+			   FROM the id rather than spelled out. It read
+			   'keepiq.dashboard.page' as a literal, which is correct only
+			   for as long as APP_ID happens to equal 'keepiq' — the next
+			   rename would move the route and leave the literal behind. The
+			   catch below then swallows the resulting exception, so every
+			   secret deep-link would quietly stop appearing with nothing
+			   logged: exactly the silent-failure shape this app id rename
+			   was full of. */
+			$route = $this->url->linkToRoute(Application::APP_ID . '.dashboard.page')
+				. '#/secrets/' . $secretId;
 			$notification->setLink($this->url->getAbsoluteURL($route));
 		} catch (InvalidArgumentException) {
-			// Fall back silently — the link is optional.
+			/* Deliberately swallowed: the link is optional and a notification
+			   without one is still useful. Worth knowing that this catch is
+			   what made the hardcoded route above dangerous — an unresolvable
+			   route produced no link, no error and no log. Deriving the name
+			   from APP_ID removes the way that actually happened; if a
+			   further failure mode turns up, this is where to add logging,
+			   which needs a logger injected into the constructor. */
 		}
 	}//end withSecretLink()
 
