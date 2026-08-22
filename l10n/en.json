@@ -996,5 +996,6 @@
         "Remove this field": "Remove this field",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is a built-in field, not an additional one — choose a different name."
     },
-    "plurals": ""
+    "plurals": "",
+    "pluralForm": "nplurals=2; plural=(n != 1);"
 }
