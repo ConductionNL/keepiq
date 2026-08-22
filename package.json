@@ -22,6 +22,8 @@
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
     "check:manifest": "node tests/validate-manifest.js",
+    "l10n:build": "node scripts/build-l10n-js.js",
+    "check:l10n-js": "node scripts/build-l10n-js.js --check",
     "stylelint": "stylelint \"src/**/*.{vue,scss,css}\"",
     "format": "prettier --check \"**/*.{js,ts,vue,css,scss}\"",
     "format:fix": "prettier --write \"**/*.{js,ts,vue,css,scss}\"",
