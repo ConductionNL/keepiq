@@ -121,6 +121,13 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The move-target options: the vault root plus every folder the user
+		 * owns.
+		 *
+		 * @return {Array<{value: string|null, label: string}>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
+		 */
 		folderOptions() {
 			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
@@ -159,6 +166,7 @@ export default {
 		 * Persist the new folder via the store.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
 		 */
 		async submit() {
 			this.saving = true

@@ -140,6 +140,16 @@ class MigrateAppConfigKeys implements IRepairStep {
 	 * @param IOutput $output The output interface for progress reporting
 	 *
 	 * @return void
+	 *
+	 * @spec exclude One-off doriath->keepiq app-id rename plumbing: it moves
+	 *       IAppConfig rows between namespaces and adds no behaviour of its
+	 *       own. The settings it preserves are specified where they are read —
+	 *       the password floors in
+	 *       openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy,
+	 *       ca_status in
+	 *       openspec/specs/encryption-suites/spec.md#requirement-ca-health-check
+	 *       and audit_retention_days in
+	 *       openspec/specs/secret-audit-trail/spec.md#requirement-retention-and-automated-purge.
 	 */
 	public function run(IOutput $output): void {
 		$keys = $this->oldKeys();

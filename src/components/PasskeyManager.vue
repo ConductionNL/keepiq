@@ -167,6 +167,7 @@ export default {
 		 * Run the enrollment ceremony.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 		 */
 		async onEnroll() {
 			this.busy = true

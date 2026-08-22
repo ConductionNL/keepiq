@@ -53,6 +53,8 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 		 * Hydrate the full per-user settings map from the server.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
+		 * @spec openspec/specs/user-settings/spec.md#requirement-default-secret-type-v1
 		 */
 		async fetchAll() {
 			this.loading = true
@@ -110,6 +112,8 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 		 *
 		 * @param {Record<string,string>} updates The preference updates.
 		 * @return {Promise<Record<string,string>>}
+		 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
+		 * @spec openspec/specs/user-settings/spec.md#requirement-default-secret-type-v1
 		 */
 		async setMany(updates) {
 			const filtered = {}
@@ -146,6 +150,7 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 		 * current user. The dashboard reverts to the admin defaults.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-settings/spec.md#requirement-user-settings-dialog-mvp
 		 */
 		async reset() {
 			this.loading = true

@@ -135,6 +135,8 @@ export default {
 		 * idempotent membership fan-out once for the whole folder.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async onRun() {
 			await this.bulk.run(
@@ -156,6 +158,7 @@ export default {
 		 * reconcile step makes the re-run a no-op for shared pairs).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
 			await this.bulk.retryFailed(

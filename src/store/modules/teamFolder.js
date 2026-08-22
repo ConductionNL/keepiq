@@ -57,6 +57,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * Hydrate the owned + member-of team-folder lists.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 */
 		async fetchTeamFolders() {
 			this.loading = true
@@ -83,6 +84,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} folderId The folder to share.
 		 * @return {Promise<object>} The TeamFolder row.
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 */
 		async shareFolder(folderId) {
 			const response = await axios.post(
@@ -101,6 +103,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} memberType   `user` or `group`.
 		 * @param {string} memberId     The Nextcloud user/group id.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-nested-subfolder-inheritance
 		 */
 		async addMember(teamFolderId, memberType, memberId) {
 			const response = await axios.post(
@@ -119,6 +123,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {string} membershipId The membership row id.
 		 * @return {Promise<{revoked: number}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async removeMember(teamFolderId, membershipId) {
 			const response = await axios.delete(
@@ -138,6 +143,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} membershipId The membership row id.
 		 * @param {string} grade 'read' | 'write'.
 		 * @return {Promise<object>} The updated membership.
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 		 */
 		async setMemberGrade(teamFolderId, membershipId, grade) {
 			const response = await axios.patch(
@@ -155,6 +162,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} teamFolderId The team folder.
 		 * @return {Promise<{revoked: number}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async unshareFolder(teamFolderId) {
 			const response = await axios.delete(
@@ -170,6 +178,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} teamFolderId The team folder.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-nested-subfolder-inheritance
 		 */
 		async reconcile(teamFolderId) {
 			const response = await axios.get(
@@ -187,6 +197,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {string} newMemberId  The approved user id.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-membership-propagation-with-group-membership
 		 */
 		async approveJoin(teamFolderId, newMemberId) {
 			const response = await axios.post(
@@ -204,6 +215,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} leavingUserId   The user being offboarded.
 		 * @param {string} successorUserId The successor.
 		 * @return {Promise<{revoked: number, transferred: number, skipped: Array<string>}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
 		 */
 		async offboard(leavingUserId, successorUserId) {
 			const response = await axios.post(
@@ -260,6 +272,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} teamFolderId The team folder to fan out.
 		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async runFanOut(teamFolderId) {
 			const secretStore = useSecretStore()

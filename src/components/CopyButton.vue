@@ -46,7 +46,14 @@ export default {
 			default: null,
 		},
 
-		/** The accessible label for the button. */
+		/**
+		 * The accessible label for the button.
+		 *
+		 * @spec exclude A Vue prop `default()` factory returning a translated
+		 *   fallback string — it declares a default value, not behaviour. The
+		 *   copy behaviour this labels is specified in
+		 *   openspec/specs/mobile-pwa/spec.md#requirement-mobile-webcrypto-and-clipboard-verification.
+		 */
 		label: {
 			type: String,
 			default() {

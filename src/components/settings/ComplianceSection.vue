@@ -168,6 +168,9 @@ export default {
 
 	/**
 	 * Load the warm metrics + the snapshot list.
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-admin-only-access
 	 */
 	async created() {
 		try {
@@ -188,6 +191,7 @@ export default {
 		 * Generate a new immutable snapshot.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 		 */
 		async onGenerate() {
 			this.busy = true
@@ -210,6 +214,7 @@ export default {
 		 *
 		 * @param {string} id The report id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 		 */
 		async openReport(id) {
 			try {

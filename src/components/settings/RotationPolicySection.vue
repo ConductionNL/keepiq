@@ -70,6 +70,8 @@ export default {
 
 	/**
 	 * Load the current instance defaults.
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	async created() {
 		try {
@@ -91,6 +93,8 @@ export default {
 		 * Persist the defaults (server validates positivity).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
 		 */
 		async save() {
 			this.error = null

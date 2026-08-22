@@ -98,6 +98,13 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The parent-folder picker options: the vault root plus every folder
+		 * the user owns.
+		 *
+		 * @return {Array<{value: string|null, label: string}>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
+		 */
 		parentOptions() {
 			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
@@ -140,6 +147,7 @@ export default {
 		 * Create the folder via the store.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
 		 */
 		async submit() {
 			if (!this.canSubmit) {

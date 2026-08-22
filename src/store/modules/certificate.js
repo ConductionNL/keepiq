@@ -28,6 +28,7 @@ export const useCertificateStore = defineStore('certificate', {
 		 * Load the certificate inventory.
 		 *
 		 * @return {Promise<object|null>} The inventory groups.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-certificate-inventory-across-all-three-sources
 		 */
 		async fetchInventory() {
 			this.loading = true
@@ -53,6 +54,7 @@ export const useCertificateStore = defineStore('certificate', {
 		 *
 		 * @param {string} secretId The secret ID.
 		 * @return {Promise<object|null>} The stored metadata row.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
 		 */
 		async parseAndSubmit(secretId) {
 			this.error = null
@@ -79,6 +81,7 @@ export const useCertificateStore = defineStore('certificate', {
 		 *
 		 * @param {string} secretId The secret ID.
 		 * @return {Promise<object|null>} {renewable, reason, steps}.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 		 */
 		async renewalChecklist(secretId) {
 			this.error = null
@@ -100,6 +103,7 @@ export const useCertificateStore = defineStore('certificate', {
 		 *
 		 * @param {string} suiteId The suite ID.
 		 * @return {Promise<object|null>} The refreshed suite row.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 		 */
 		async reissueSuite(suiteId) {
 			this.error = null

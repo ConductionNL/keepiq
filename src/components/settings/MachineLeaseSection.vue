@@ -87,6 +87,8 @@ export default {
 
 	/**
 	 * Load the current instance lease policy.
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 	 */
 	async created() {
 		try {
@@ -108,6 +110,8 @@ export default {
 		 * Persist the policy (server enforces the 60s floor).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-renewal-within-policy
 		 */
 		async save() {
 			this.error = null

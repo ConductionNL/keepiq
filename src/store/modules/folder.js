@@ -53,6 +53,7 @@ export const useFolderStore = defineStore('folder', {
 		 * Fetch the current user's folders.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async fetchFolders() {
 			this.loading = true
@@ -91,6 +92,7 @@ export const useFolderStore = defineStore('folder', {
 		 * @param {string} name The folder name.
 		 * @param {string|null} parentId The parent folder ID (null = root).
 		 * @return {Promise<object>} The created folder.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async createFolder(name, parentId = null) {
 			const response = await axios.post(
@@ -107,6 +109,7 @@ export const useFolderStore = defineStore('folder', {
 		 * @param {string} id The folder ID.
 		 * @param {object} data The change ({ name } and/or { parentId, move: true }).
 		 * @return {Promise<object>} The updated folder.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async updateFolder(id, data) {
 			const response = await axios.put(
@@ -125,6 +128,7 @@ export const useFolderStore = defineStore('folder', {
 		 *
 		 * @param {string} id The folder ID.
 		 * @return {Promise<object>} { directSecretCount, subfolders }.
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
 		 */
 		async fetchChildren(id) {
 			const response = await axios.get(
@@ -139,6 +143,8 @@ export const useFolderStore = defineStore('folder', {
 		 * @param {string} id The folder ID.
 		 * @param {object} options { cascade } and/or { subfolders, directSecrets }.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
 		 */
 		async deleteFolder(id, options = {}) {
 			const config = {}

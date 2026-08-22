@@ -196,6 +196,9 @@ export default {
 
 		/**
 		 * Call the server-side generator and display the result.
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-default-generation
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		async generate() {
 			this.loading = true

@@ -263,6 +263,8 @@ export default {
 		 *
 		 * @param {object} row The stored-secret inventory row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-certificate-inventory-across-all-three-sources
 		 */
 		async onParse(row) {
 			this.busy = true
@@ -298,6 +300,7 @@ export default {
 		 *
 		 * @param {object} row The suite inventory row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 		 */
 		async onReissue(row) {
 			this.busy = true

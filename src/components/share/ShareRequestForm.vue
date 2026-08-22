@@ -110,6 +110,13 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Ask another user to share a secret with the caller (the
+		 * recipient-initiated direction).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.targetUserId === '') {

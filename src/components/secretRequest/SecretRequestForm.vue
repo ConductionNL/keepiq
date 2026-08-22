@@ -137,6 +137,15 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Create the secret request (fresh or re-request) and surface its
+		 * fill-in link.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.selectedFields.length === 0) {

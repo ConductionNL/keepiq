@@ -257,7 +257,9 @@ export default {
 		/**
 		 * Absolute relay URL.
 		 *
-		 * @param path
+		 * @param {string} path Optional sub-path appended to the relay route.
+		 * @return {string}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-v1-scope-is-the-browser-session-flow
 		 */
 		relayUrl(path = '') {
 			return generateUrl('/apps/keepiq/api/v1/cxp/relay' + path)
@@ -267,6 +269,8 @@ export default {
 		 * Receive flow: publish a CXP request and poll for the sealed envelope.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-importing-provider
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-v1-scope-is-the-browser-session-flow
 		 */
 		async startReceive() {
 			this.error = null
@@ -295,6 +299,8 @@ export default {
 		 * hand the CXF payload to the existing import wizard.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-client-side-hpke-seal-and-open
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-importing-provider
 		 */
 		pollForEnvelope() {
 			this.pollTimer = setTimeout(async () => {
@@ -347,6 +353,9 @@ export default {
 		 * the CXF payload, and publish only the sealed envelope.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-exporting-provider
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-client-side-hpke-seal-and-open
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-cxp-transfer-emits-an-export-event-with-mode-cxp
 		 */
 		async doSend() {
 			this.error = null

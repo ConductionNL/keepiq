@@ -283,6 +283,15 @@ export default {
 			return 'text'
 		},
 
+		/**
+		 * Encrypt the filled-in values under the requester's certificate in
+		 * the browser and submit them against the request token.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-field-validation
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-write-once
+		 */
 		async onSubmit() {
 			this.submitError = null
 			this.busy = true

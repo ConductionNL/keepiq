@@ -43,6 +43,13 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The four notification categories the user can opt out of, paired
+		 * with their translated labels.
+		 *
+		 * @return {Array<{key: string, label: string}>}
+		 * @spec openspec/specs/user-settings/spec.md#requirement-notification-toggles-mvp
+		 */
 		toggles() {
 			return [
 				{

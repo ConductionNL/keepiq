@@ -518,6 +518,7 @@ export default {
 		 * Human last-sync label for the stale banner.
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-a-stale-data-banner-shows-the-last-sync-time
 		 */
 		syncedLabel() {
 			return this.offlineStore.syncedAt

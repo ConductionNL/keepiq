@@ -134,6 +134,12 @@ export default {
 		}
 	},
 
+	/**
+	 * Resolve the share token from the route (or the URL path when no router
+	 * is wired) and start the public Phase-1 fetch.
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-access-via-link
+	 */
 	mounted() {
 		// The manifest router passes :token through props. When no
 		// router is wired (component-test mount), we fall back to
@@ -154,6 +160,13 @@ export default {
 			return m ? decodeURIComponent(m[1]) : ''
 		},
 
+		/**
+		 * Phase 1: fetch the public share metadata and encrypted snapshot for
+		 * the token. A 404 is the generic not-found-or-expired answer.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-access-via-link
+		 */
 		async loadShare() {
 			this.loading = true
 			this.loadError = ''
@@ -176,6 +189,16 @@ export default {
 			}
 		},
 
+		/**
+		 * Phase 2: derive the Argon2id key from the supplied password,
+		 * decrypt the snapshot in the browser, then confirm the view so the
+		 * server can count (and auto-delete at) the usage cap.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-kdf-for-snapshot-encryption
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-brute-force-protection
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-auto-deletion
+		 */
 		async onUnlock() {
 			if (!this.password || this.busy) {
 				return

@@ -130,6 +130,9 @@ class DashboardService {
 	 * @return DashboardSetting The persisted row.
 	 *
 	 * @throws InvalidArgumentException When validation fails.
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-secret-type-v1
 	 */
 	public function set(string $userId, string $settingKey, mixed $value): DashboardSetting {
 		$this->validateUserId(userId: $userId);

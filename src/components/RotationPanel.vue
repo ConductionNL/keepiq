@@ -141,6 +141,14 @@ export default {
 			return this.store.flagsBySecretId[this.secretId] || null
 		},
 
+		/**
+		 * The chip text for the open rotation flag, named after the reason
+		 * that raised it (user request, policy expiry, suite compromise).
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
+		 */
 		flagLabel() {
 			const reasons = {
 				user_flagged: this.t('keepiq', 'Rotation requested'),
@@ -175,6 +183,14 @@ export default {
 			return 'rotation-panel__chip--ok'
 		},
 
+		/**
+		 * The chip text for the effective expiry, phrased as "Expired" once
+		 * the date has passed and "Expires" while it is still ahead.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
+		 */
 		expiryLabel() {
 			const date = new Date(
 				Date.parse(this.effectiveExpiry),

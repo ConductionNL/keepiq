@@ -340,6 +340,8 @@ class LinkShareService {
 	 * @param string $secretId The secret ID
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-delete-secret
 	 */
 	public function deleteBySecretId(string $secretId): void {
 		$this->mapper->deleteBySecretId($secretId);
@@ -352,6 +354,8 @@ class LinkShareService {
 	 * @param string $userId The Nextcloud user ID
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function deleteByUserId(string $userId): void {
 		$this->mapper->deleteByUserId($userId);

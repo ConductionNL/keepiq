@@ -61,6 +61,9 @@ class UserAddedToGroupListener implements IEventListener {
 	 * @param Event $event The dispatched event
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-new-group-member-owner-notification
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-membership-propagation-with-group-membership
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof UserAddedEvent === false) {

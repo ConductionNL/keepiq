@@ -122,6 +122,14 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * What may happen to the folder's own secrets on delete: move them up
+		 * to the parent, or delete them with the folder.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
+		 */
 		directOptions() {
 			return [
 				{ value: 'move', label: t('keepiq', 'Move to parent folder') },
@@ -129,6 +137,14 @@ export default {
 			]
 		},
 
+		/**
+		 * What may happen to each subfolder on delete, offered per subfolder
+		 * so the resolution plan is explicit rather than a blanket cascade.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
+		 */
 		subfolderOptions() {
 			return [
 				{ value: 'keep', label: t('keepiq', 'Keep (move to parent)') },
@@ -168,6 +184,7 @@ export default {
 		 * Submit the resolution plan and delete the folder.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async submit() {
 			this.loading = true

@@ -253,6 +253,12 @@ export default {
 			return this.store.currentApplication
 		},
 
+		/**
+		 * The translated registration status of the application on show.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
+		 */
 		statusLabel() {
 			switch (this.application?.status) {
 				case 'active':
@@ -287,6 +293,14 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Load the application and its active suite certificate.
+		 *
+		 * @param {string} id The application id.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		async load(id) {
 			this.loading = true
 			this.error = ''

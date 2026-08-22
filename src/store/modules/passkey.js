@@ -42,6 +42,7 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * Load the caller's enrolled passkeys.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 		 */
 		async fetchCredentials() {
 			this.error = null
@@ -61,6 +62,8 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * present AND the caller has an active enrolled passkey.
 		 *
 		 * @return {Promise<boolean>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-master-password-remains-the-canonical-fallback
 		 */
 		async isUnlockOffered() {
 			if (!this.supported) {
@@ -85,6 +88,8 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * @param {string} masterPassword The master password (never sent).
 		 * @param {string} label A nickname for the passkey.
 		 * @return {Promise<object>} The enrolled credential.
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
 		 */
 		async enroll(masterPassword, label) {
 			this.error = null
@@ -183,6 +188,7 @@ export const usePasskeyStore = defineStore('passkey', {
 		 * unwrap the raw unlock key → hand it to the session unlock path.
 		 *
 		 * @return {Promise<boolean>} Whether the unlock succeeded.
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 		 */
 		async unlockWithPasskey() {
 			this.error = null
@@ -245,6 +251,7 @@ export const usePasskeyStore = defineStore('passkey', {
 		 *
 		 * @param {string} id The credential id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 		 */
 		async revoke(id) {
 			this.error = null

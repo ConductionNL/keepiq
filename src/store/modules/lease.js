@@ -28,6 +28,7 @@ export const useLeaseStore = defineStore('lease', {
 		 *
 		 * @param {string} applicationId The application id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-aware-audit-trail
 		 */
 		async fetchForApplication(applicationId) {
 			this.loading = true
@@ -48,6 +49,7 @@ export const useLeaseStore = defineStore('lease', {
 		 *
 		 * @param {string} leaseId The lease id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 		 */
 		async revoke(leaseId) {
 			const response = await axios.delete(

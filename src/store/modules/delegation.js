@@ -71,6 +71,7 @@ export const useDelegationStore = defineStore('delegation', {
 		 *
 		 * @param {string} secretId The Secret ID
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
 		 */
 		async fetchDelegations(secretId) {
 			this.loading = true
@@ -186,6 +187,7 @@ export const useDelegationStore = defineStore('delegation', {
 		 *
 		 * @param {string} secretId The Secret ID
 		 * @return {Promise<number>} Removed count
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-reclaim-delegation
 		 */
 		async reclaimDelegation(secretId) {
 			this.loading = true

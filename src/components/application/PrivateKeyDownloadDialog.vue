@@ -103,6 +103,13 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The copy button's label, which flips to a transient confirmation
+		 * after the key has been copied.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		copyLabel() {
 			return this.copied
 				? t('keepiq', 'Copied!')

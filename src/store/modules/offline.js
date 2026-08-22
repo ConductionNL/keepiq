@@ -101,6 +101,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * unlock. Fail-soft — a cache write failure never breaks the session.
 		 *
 		 * @return {Promise<boolean>} Whether a snapshot was written.
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
 		 */
 		async syncNow() {
 			this.ensureLockHook()

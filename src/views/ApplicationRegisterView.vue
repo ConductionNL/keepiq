@@ -95,6 +95,12 @@ export default {
 			return all.filter((a) => (a.name || '').toLowerCase().includes(term))
 		},
 
+		/**
+		 * The CnList schema that renders the registered-application rows.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 */
 		listSchema() {
 			return {
 				properties: {
@@ -132,6 +138,13 @@ export default {
 			this.$router.push(`/applications/${object.id}`)
 		},
 
+		/**
+		 * The translated registration status shown on a list row.
+		 *
+		 * @param {string} status The stored application status.
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
+		 */
 		statusLabel(status) {
 			switch (status) {
 				case 'active':

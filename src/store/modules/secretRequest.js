@@ -59,6 +59,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * Hydrate the requests created by the current user.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		async fetchRequests() {
 			this.loading = true
@@ -280,6 +281,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 *
 		 * @param {string} token The opaque request token.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 		 */
 		async fetchPublicRequest(token) {
 			this.loading = true

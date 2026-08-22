@@ -456,6 +456,14 @@ export default {
 			)
 		},
 
+		/**
+		 * The label for the decrypted key field, which reads "Note" for the
+		 * `note` system type and "Key" otherwise.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+		 */
 		keyLabel() {
 			const typeStore = useSecretTypeStore()
 			const type = this.secret ? typeStore.typesById[this.secret.typeId] : null
@@ -596,6 +604,7 @@ export default {
 		 * Load and decrypt the secret.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async load() {
 			this.loading = true

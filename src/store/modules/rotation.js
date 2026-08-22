@@ -51,6 +51,7 @@ export const useRotationStore = defineStore('rotation', {
 		 * Load the caller's open rotation flags.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
 		 */
 		async fetchFlags() {
 			this.loading = true
@@ -75,6 +76,7 @@ export const useRotationStore = defineStore('rotation', {
 		 * Load the caller's applicable expiry policies.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		async fetchPolicies() {
 			try {
@@ -100,6 +102,8 @@ export const useRotationStore = defineStore('rotation', {
 		 * @param {number|null} policy.maxAgeDays Max credential age in days.
 		 * @param {Array<number>} policy.reminderDays Reminder thresholds.
 		 * @return {Promise<object>} The saved policy.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
 		 */
 		async upsertPolicy({ scope, scopeId, maxAgeDays, reminderDays }) {
 			const response = await axios.post(
@@ -115,6 +119,7 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} policyId The policy id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		async deletePolicy(policyId) {
 			await axios.delete(
@@ -128,6 +133,7 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>} { expiresAt, effectiveExpiry }.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 		 */
 		async getExpiry(secretId) {
 			const response = await axios.get(
@@ -142,6 +148,8 @@ export const useRotationStore = defineStore('rotation', {
 		 * @param {string} secretId The secret id.
 		 * @param {string|null} expiresAt ISO expiry or null to clear.
 		 * @return {Promise<object>} { secret, effectiveExpiry }.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-and-rotation-actions-are-audited
 		 */
 		async setExpiry(secretId, expiresAt) {
 			const response = await axios.put(
@@ -157,6 +165,7 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {Array<string>} secretIds The secret ids to flag.
 		 * @return {Promise<number>} How many flags are now open.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
 		 */
 		async flagSecrets(secretIds) {
 			const response = await axios.post(
@@ -174,6 +183,7 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} flagId The flag id.
 		 * @return {Promise<object>} { resolved, requiresRotation }.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-proven-mark-rotated-flow
 		 */
 		async markRotated(flagId) {
 			const response = await axios.post(
@@ -190,6 +200,7 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} flagId The flag id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-and-rotation-actions-are-audited
 		 */
 		async dismissFlag(flagId) {
 			await axios.post(

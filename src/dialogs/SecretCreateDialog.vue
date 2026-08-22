@@ -257,6 +257,14 @@ export default {
 			}))
 		},
 
+		/**
+		 * The folder picker options: the vault root plus every folder the
+		 * user owns.
+		 *
+		 * @return {Array<{value: string|null, label: string}>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
 		folderOptions() {
 			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
@@ -267,6 +275,14 @@ export default {
 			)
 		},
 
+		/**
+		 * The label for the secret-value field, which reads "Note" for the
+		 * `note` system type and "Secret value" otherwise.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
 		valueLabel() {
 			const type = useSecretTypeStore().typesById[this.typeId]
 			return type && type.name === 'note'

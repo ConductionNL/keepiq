@@ -253,6 +253,14 @@ export default {
 			return Math.round((this.fanOut.done / this.fanOut.total) * 100)
 		},
 
+		/**
+		 * The two membership kinds a team folder accepts: a Nextcloud user or
+		 * a Nextcloud group.
+		 *
+		 * @return {Array<{label: string, value: string}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-membership-propagation-with-group-membership
+		 */
 		memberTypeOptions() {
 			return [
 				{ label: this.t('keepiq', 'User'), value: 'user' },
@@ -277,6 +285,8 @@ export default {
 
 		/**
 		 * Refresh the team-folder list and the pending reconcile count.
+		 *
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 */
 		async refresh() {
 			try {

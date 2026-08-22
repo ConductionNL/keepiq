@@ -112,6 +112,13 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Fan the secret out to every current member of the chosen group,
+		 * encrypting once per member in the browser.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-with-group-static-expansion
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.groupId === '') {

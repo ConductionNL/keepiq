@@ -102,6 +102,13 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The post-run summary sentence: revoked/transferred counts plus the
+		 * skipped-secrets caveat the admin has to act on.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
+		 */
 		summaryText() {
 			if (!this.summary) {
 				return ''

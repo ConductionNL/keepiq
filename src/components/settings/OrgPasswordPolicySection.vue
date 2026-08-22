@@ -121,6 +121,14 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The four character-class toggles the generator policy exposes,
+		 * paired with their translated labels.
+		 *
+		 * @return {Array<{key: string, label: string}>}
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-generator-locked-to-policy
+		 */
 		classes() {
 			return [
 				{
@@ -149,6 +157,8 @@ export default {
 
 	/**
 	 * Load the current policy + the type list for the exempt picker.
+	 *
+	 * @spec openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy
 	 */
 	async created() {
 		try {
@@ -177,6 +187,8 @@ export default {
 		 * Persist the policy (server validates floors + the HIBP gate).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-audited-policy-changes
 		 */
 		async save() {
 			this.error = null

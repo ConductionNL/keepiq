@@ -33,6 +33,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 * Load the link shares for a secret (metadata only — no blobs).
 		 *
 		 * @param {string} secretId The secret ID
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-multiple-concurrent-link-shares
 		 */
 		async fetchLinkShares(secretId) {
 			this.loading = true
@@ -61,6 +62,8 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 * @param {number} usageLimit The usage limit (1-10)
 		 * @param {string|null} expiresAt Optional ISO-8601 expiry timestamp
 		 * @return {Promise<object>} The created link share metadata
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-kdf-for-snapshot-encryption
 		 */
 		async createLinkShare(secretId, snapshot, usageLimit = 1, expiresAt = null) {
 			this.loading = true
@@ -96,6 +99,7 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 * Revoke (delete) a link share by ID.
 		 *
 		 * @param {string} id The link share ID
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-manual-revocation
 		 */
 		async deleteLinkShare(id) {
 			await axios.delete(generateUrl(`/apps/keepiq/api/v1/link-shares/${id}`))

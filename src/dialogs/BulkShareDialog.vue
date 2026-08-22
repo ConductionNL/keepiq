@@ -92,6 +92,8 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-ownership-and-authorization-preserved
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		async shareOne(secretId) {
 			const secretStore = useSecretStore()
@@ -142,6 +144,8 @@ export default {
 		 * Resolve the recipient certificate once, then run the fan-out.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRun() {
 			this.error = null
@@ -174,6 +178,7 @@ export default {
 		 * Retry only the failed subset (idempotent server writes).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
 			await this.bulk.retryFailed(

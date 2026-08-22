@@ -140,6 +140,13 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Submit the registration, optionally carrying a PKCS#10 CSR.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.form.name === '') {

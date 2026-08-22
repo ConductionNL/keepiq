@@ -126,6 +126,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @param {number} params.ttlSeconds Optional TTL (0 = none).
 		 * @param {string} params.password Optional password ('' = fragment mode).
 		 * @return {Promise<string>} The full share URL (fragment included when keyless).
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
 		 */
 		async createSend({ payload, payloadType, maxViews, ttlSeconds, password }) {
 			const contentKey = await crypto.subtle.generateKey(
@@ -178,6 +179,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * Load the caller's sends.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 		 */
 		async fetchSends() {
 			this.loading = true
@@ -196,6 +198,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 *
 		 * @param {string} id The send id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 		 */
 		async revoke(id) {
 			await axios.delete(generateUrl(`/apps/keepiq/api/v1/sends/${id}`))
@@ -209,6 +212,8 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @param {string} fragmentKey The base64url fragment key ('' in password mode).
 		 * @param {string} password The password ('' in fragment mode).
 		 * @return {Promise<{payload: string, payloadType: string, burned: boolean}>}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 		 */
 		async accessSend(token, fragmentKey, password) {
 			const response = await axios.post(

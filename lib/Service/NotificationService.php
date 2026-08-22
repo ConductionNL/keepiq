@@ -104,6 +104,9 @@ class NotificationService {
 	 * @param string|null $objectId Optional object ID
 	 *
 	 * @return bool True when the notification was queued, false when suppressed.
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-notification-toggles-mvp
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-notification-on-share-received
 	 */
 	public function notify(
 		string $subject,

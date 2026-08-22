@@ -302,6 +302,8 @@ export default {
 
 	/**
 	 * Load the sink list.
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	async created() {
 		try {
@@ -353,6 +355,7 @@ export default {
 		 * Create or update the sink from the form.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onSave() {
 			this.busy = true
@@ -400,6 +403,7 @@ export default {
 		 *
 		 * @param {object} sink The sink row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-forwarded-payload-carries-no-secret-material
 		 */
 		async onTest(sink) {
 			this.busy = true
@@ -436,6 +440,7 @@ export default {
 		 *
 		 * @param {object} sink The sink row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onDelete(sink) {
 			this.busy = true
@@ -457,6 +462,7 @@ export default {
 		 *
 		 * @param {object} sink The sink row.
 		 * @return {string}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-backpressure-and-observability
 		 */
 		statusLabel(sink) {
 			if (!sink.lastDeliveryStatus) {

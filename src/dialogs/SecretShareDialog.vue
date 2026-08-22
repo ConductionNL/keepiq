@@ -215,6 +215,7 @@ export default {
 		 * Load the existing link shares for this secret.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-multiple-concurrent-link-shares
 		 */
 		async loadShares() {
 			this.loadingShares = true
@@ -251,6 +252,8 @@ export default {
 		 * the snapshot, and POSTs only the blob.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-share-a-secret-via-a-public-link
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
 		 */
 		async createLink() {
 			this.creating = true
@@ -288,6 +291,7 @@ export default {
 		 *
 		 * @param {string} id The link share ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-manual-revocation
 		 */
 		async revoke(id) {
 			this.error = ''

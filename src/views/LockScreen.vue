@@ -459,6 +459,8 @@ export default {
 		 * lock screen — the master password always works.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-master-password-remains-the-canonical-fallback
 		 */
 		async handlePasskeyUnlock() {
 			this.loading = true

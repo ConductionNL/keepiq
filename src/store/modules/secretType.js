@@ -29,6 +29,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 * Fetch the secret types available to the current user.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 */
 		async fetchTypes() {
 			this.loading = true
@@ -66,6 +67,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 *
 		 * @param {object} data The type fields (name, label, scope).
 		 * @return {Promise<object>} The created type.
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 */
 		async createType(data) {
 			const response = await axios.post(
@@ -82,6 +84,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 * @param {string} id The type ID.
 		 * @param {string} label The new label.
 		 * @return {Promise<object>} The updated type.
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 */
 		async updateType(id, label) {
 			const response = await axios.put(
@@ -100,6 +103,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 *
 		 * @param {string} id The type ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 */
 		async deleteType(id) {
 			await axios.delete(generateUrl(`/apps/keepiq/api/v1/secret-types/${id}`))

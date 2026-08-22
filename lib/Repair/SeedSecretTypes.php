@@ -108,6 +108,8 @@ class SeedSecretTypes implements IRepairStep {
 	 * @param string $name The system type name
 	 *
 	 * @return string The deterministic UUID
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public static function deterministicId(string $name): string {
 		return Uuid::uuid5(self::TYPE_NAMESPACE, 'keepiq:secret-type:' . $name)->toString();
@@ -119,6 +121,10 @@ class SeedSecretTypes implements IRepairStep {
 	 * @param IOutput $output The output interface for progress reporting
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+	 * @spec openspec/specs/passkey-item-type/spec.md#requirement-passkey-system-secret-type
+	 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
 	 */
 	public function run(IOutput $output): void {
 		$created = 0;

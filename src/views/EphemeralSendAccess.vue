@@ -119,6 +119,8 @@ export default {
 
 	/**
 	 * Peek the send so the page knows whether to prompt for a password.
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
 	 */
 	async mounted() {
 		try {
@@ -138,6 +140,8 @@ export default {
 		 * Fetch, decrypt, and confirm the view.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 		 */
 		async onOpen() {
 			this.busy = true

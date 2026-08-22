@@ -149,6 +149,18 @@ class MigrateUserPreferences implements IRepairStep {
 	 * @param IOutput $output The output interface for progress reporting
 	 *
 	 * @return void
+	 *
+	 * @spec exclude One-off doriath->keepiq app-id rename plumbing: it moves
+	 *       oc_preferences rows between namespaces and adds no behaviour of its
+	 *       own. The preferences it preserves are specified where they are
+	 *       read — session_timeout and the notification toggles in
+	 *       openspec/specs/user-settings/spec.md#requirement-session-timeout-preference-mvp
+	 *       and
+	 *       openspec/specs/user-settings/spec.md#requirement-notification-toggles-mvp,
+	 *       offline_cache_optin in
+	 *       openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
+	 *       and breach_check_opt_in in
+	 *       openspec/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity.
 	 */
 	public function run(IOutput $output): void {
 		$this->migrated = 0;

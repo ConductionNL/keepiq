@@ -481,7 +481,13 @@ export default {
 			}
 		},
 
-		/** Minimal schema so CnIndexPage can offer cards/table fallbacks. */
+		/**
+		 * Minimal schema so CnIndexPage can offer cards/table fallbacks.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-secret-list-rows-must-be-keyboard-operable
+		 */
 		listSchema() {
 			return {
 				properties: {
@@ -496,6 +502,13 @@ export default {
 			}
 		},
 
+		/**
+		 * The sort fields the list offers, matching the columns the server
+		 * accepts for the paged secrets query.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
 		sortOptions() {
 			return [
 				{ value: 'name', label: t('keepiq', 'Name') },

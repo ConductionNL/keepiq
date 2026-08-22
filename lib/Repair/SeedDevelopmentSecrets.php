@@ -93,6 +93,13 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	 * @param IOutput $output The output interface for progress reporting
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Debug-only fixture data, gated on the `debug` system value
+	 *       and never present on a production instance; it asserts no product
+	 *       behaviour of its own. The shapes it fabricates are specified where
+	 *       they are produced for real —
+	 *       openspec/specs/secrets/spec.md#requirement-create-secret and
+	 *       openspec/specs/secrets/spec.md#requirement-folder-management.
 	 */
 	public function run(IOutput $output): void {
 		if ($this->config->getSystemValueBool('debug', false) === false) {

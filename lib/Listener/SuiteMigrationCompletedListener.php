@@ -58,6 +58,8 @@ class SuiteMigrationCompletedListener implements IEventListener {
 	 * @param Event $event The event
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof SuiteMigrationCompletedEvent) === false) {

@@ -235,6 +235,14 @@ export default {
 			}))
 		},
 
+		/**
+		 * The label for the secret-value field, which reads "Note" for the
+		 * `note` system type and "Secret value" otherwise.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
 		valueLabel() {
 			const type = useSecretTypeStore().typesById[this.typeId]
 			return type && type.name === 'note'

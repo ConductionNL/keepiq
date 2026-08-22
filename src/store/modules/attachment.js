@@ -120,6 +120,7 @@ export const useAttachmentStore = defineStore('attachment', {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
 		 */
 		async fetchAttachments(secretId) {
 			this.loading = true
@@ -171,6 +172,8 @@ export const useAttachmentStore = defineStore('attachment', {
 		 * @param {string} secretId The owning secret id.
 		 * @param {File} file The picked file.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
 		 */
 		async upload(secretId, file) {
 			const session = useSessionStore()
@@ -228,6 +231,7 @@ export const useAttachmentStore = defineStore('attachment', {
 		 *
 		 * @param {object} attachment The listed attachment row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
 		 */
 		async download(attachment) {
 			this.loading = true
@@ -267,6 +271,8 @@ export const useAttachmentStore = defineStore('attachment', {
 		 * @param {string} secretId The owning secret id (for the refresh).
 		 * @param {string} attachmentId The attachment id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-deletion-cascade
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-operations-are-auditable
 		 */
 		async remove(secretId, attachmentId) {
 			this.loading = true

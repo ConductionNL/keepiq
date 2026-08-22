@@ -137,6 +137,12 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The dialog heading, naming the owning application when known.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		dialogName() {
 			return this.applicationName
 				? this.t('keepiq', 'Write secret for {app}', {
@@ -153,6 +159,13 @@ export default {
 			)
 		},
 
+		/**
+		 * The submit button label, which reports the in-browser encryption
+		 * step while the write is in flight.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		submitLabel() {
 			return this.busy
 				? this.t('keepiq', 'Encrypting…')
@@ -178,6 +191,13 @@ export default {
 			this.success = false
 		},
 
+		/**
+		 * Encrypt the fields under the application's certificate (in the
+		 * store) and write the secret against that application.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		async submit() {
 			if (!this.canSubmit || this.busy) {
 				return

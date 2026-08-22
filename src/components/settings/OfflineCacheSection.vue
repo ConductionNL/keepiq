@@ -59,6 +59,7 @@ export default {
 	 * Load the current instance-wide offline-cache switch.
 	 *
 	 * @return {Promise<void>}
+	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
 	 */
 	async created() {
 		try {
@@ -78,6 +79,7 @@ export default {
 		 * Persist the instance-wide offline-cache switch.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
 		 */
 		async save() {
 			await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {

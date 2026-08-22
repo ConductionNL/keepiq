@@ -50,7 +50,14 @@ export default {
 	},
 
 	props: {
-		/** The field label. */
+		/**
+		 * The field label.
+		 *
+		 * @spec exclude A Vue prop `default()` factory returning a translated
+		 *   fallback string — it declares a default value, not behaviour. The
+		 *   masked-reveal behaviour this labels is specified in
+		 *   openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal.
+		 */
 		label: {
 			type: String,
 			default() {

@@ -65,6 +65,9 @@ class EncryptionSuiteRevokedListener implements IEventListener {
 	 * @param Event $event The dispatched event
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-encryptionsuite-revocation-share-cleanup
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-permanent-transfer-on-suite-revocation
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof EncryptionSuiteRevokedEvent === false) {

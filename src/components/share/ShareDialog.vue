@@ -113,6 +113,13 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Share the secret with one user: re-encrypt under the recipient's
+		 * certificate in the browser, then register the share target.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.targetUserId === '') {

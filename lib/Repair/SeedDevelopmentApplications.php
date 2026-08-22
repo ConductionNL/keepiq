@@ -71,6 +71,14 @@ class SeedDevelopmentApplications implements IRepairStep {
 	 * @param IOutput $output The output channel
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Debug-only fixture data, gated on the `debug` system value
+	 *       and never present on a production instance; it asserts no product
+	 *       behaviour of its own. Real application creation and the approval
+	 *       states it fakes are specified in
+	 *       openspec/specs/application-mgmt/spec.md#requirement-register-application
+	 *       and
+	 *       openspec/specs/application-mgmt/spec.md#requirement-approval-queue.
 	 */
 	public function run(IOutput $output): void {
 		if ($this->config->getSystemValueBool('debug', false) === false) {

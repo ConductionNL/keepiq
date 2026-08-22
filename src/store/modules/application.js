@@ -50,6 +50,7 @@ export const useApplicationStore = defineStore('application', {
 		 * applications.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
 		 */
 		async fetchApplications() {
 			this.loading = true
@@ -69,6 +70,7 @@ export const useApplicationStore = defineStore('application', {
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
 		 */
 		async fetchApplication(id) {
 			this.loading = true
@@ -88,6 +90,8 @@ export const useApplicationStore = defineStore('application', {
 		 * admin group; the API returns 403 otherwise.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		async fetchPending() {
 			this.loading = true
@@ -113,6 +117,8 @@ export const useApplicationStore = defineStore('application', {
 		 * @param {string} [payload.type] Application type.
 		 * @param {string|null} [payload.csr] Optional PKCS#10 CSR PEM.
 		 * @return {Promise<object>} The created application row.
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
 		 */
 		async registerApplication(payload) {
 			const body = {
@@ -148,6 +154,8 @@ export const useApplicationStore = defineStore('application', {
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<object>} The approved application row.
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
 		 */
 		async approveApplication(id) {
 			const response = await axios.post(
@@ -181,6 +189,7 @@ export const useApplicationStore = defineStore('application', {
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
 		 */
 		async rejectApplication(id) {
 			await axios.post(
@@ -199,6 +208,7 @@ export const useApplicationStore = defineStore('application', {
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
 		 */
 		async deleteApplication(id) {
 			await axios.delete(generateUrl(`/apps/keepiq/api/v1/applications/${id}`))
@@ -230,6 +240,8 @@ export const useApplicationStore = defineStore('application', {
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<string>} The PEM-encoded certificate.
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
 		 */
 		async fetchCertificate(id) {
 			const response = await axios.get(
@@ -253,6 +265,7 @@ export const useApplicationStore = defineStore('application', {
 		 * @param {string} applicationId The owning application ID.
 		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, typeId, folderId).
 		 * @return {Promise<object>} The created Secret row (server response).
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
 		 */
 		async writeSecretForApplication(applicationId, data) {
 			const pem = await this.fetchCertificate(applicationId)
@@ -299,6 +312,7 @@ export const useApplicationStore = defineStore('application', {
 		 *
 		 * @param {string} applicationId The owning application ID.
 		 * @return {Promise<Array<object>>} The application's secrets.
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
 		 */
 		async listApplicationSecrets(applicationId) {
 			const response = await axios.get(

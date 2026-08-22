@@ -36,6 +36,13 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The translated CA health status shown on the card.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-ca-health-status-card-admin-v1
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-ca-health-on-the-admin-dashboard
+		 */
 		statusLabel() {
 			const map = {
 				healthy: t('keepiq', 'Healthy'),
@@ -47,6 +54,13 @@ export default {
 			return map[this.status] || this.status
 		},
 
+		/**
+		 * Deep link to the admin settings page that owns CA management.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-ca-health-status-card-admin-v1
+		 * @spec openspec/specs/admin-settings/spec.md#requirement-ca-management-actions-v1
+		 */
 		adminSettingsUrl() {
 			return generateUrl('/settings/admin/keepiq')
 		},

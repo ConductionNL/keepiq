@@ -74,6 +74,13 @@ export default {
 			return useBulkStore()
 		},
 
+		/**
+		 * The move-target picker options: the vault root plus every folder
+		 * the user owns.
+		 *
+		 * @return {Array<{id: string|null, label: string}>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		folderOptions() {
 			const options = [{ id: null, label: this.t('keepiq', 'Vault root') }]
 			for (const folder of useFolderStore().folders) {
@@ -101,6 +108,8 @@ export default {
 		 * Run the chunked move over the selection.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRun() {
 			await this.bulk.run(
@@ -115,6 +124,7 @@ export default {
 		 * Retry only the failed subset.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
 			await this.bulk.retryFailed(

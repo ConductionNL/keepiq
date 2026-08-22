@@ -68,6 +68,9 @@ class SuiteCompromiseListener implements IEventListener {
 	 * @param Event $event The dispatched event
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-encryptionsuite-compromise-shared-copy-migration-and-owner-notification
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof SuiteMigrationCompletedEvent === false) {

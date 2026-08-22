@@ -88,6 +88,9 @@ export default {
 
 	/**
 	 * Load the current admin limits.
+	 *
+	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 	 */
 	async created() {
 		try {
@@ -112,6 +115,8 @@ export default {
 		 * Persist the limits (server validates positivity).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 		 */
 		async save() {
 			this.error = null

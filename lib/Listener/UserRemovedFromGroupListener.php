@@ -60,6 +60,9 @@ class UserRemovedFromGroupListener implements IEventListener {
 	 * @param Event $event The dispatched event
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-member-leaves-group-auto-revocation
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof UserRemovedEvent === false) {

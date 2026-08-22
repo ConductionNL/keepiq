@@ -119,6 +119,8 @@ class SecretTypeService {
 	 * @throws InvalidArgumentException When validation fails
 	 * @throws ForbiddenException When a non-admin requests a global type
 	 * @throws ConflictException When the name already exists
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function createType(
 		string $name,
@@ -175,6 +177,8 @@ class SecretTypeService {
 	 *
 	 * @throws ForbiddenException When the type is a system type or not owned
 	 * @throws InvalidArgumentException When the label is empty
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function updateType(string $id, string $label, string $userId, bool $isAdmin): SecretType {
 		$label = trim($label);
@@ -201,6 +205,8 @@ class SecretTypeService {
 	 * @return void
 	 *
 	 * @throws ForbiddenException When the type is a system type or not owned
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function deleteType(string $id, string $userId, bool $isAdmin): void {
 		$type = $this->loadManageable(id: $id, userId: $userId, isAdmin: $isAdmin);

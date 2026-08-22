@@ -116,6 +116,13 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Reload the application's secrets (ciphertext rows; only metadata is
+		 * displayable here).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		async refresh() {
 			if (!this.applicationId || !this.applicationActive) {
 				this.secrets = []
