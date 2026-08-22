@@ -122,7 +122,7 @@ export async function purge() {
 			req.onerror = () => resolve()
 			req.onblocked = () => resolve()
 		})
-	} catch (e) {
+	} catch {
 		// Legacy eviction is best-effort; the current snapshot still evicts.
 	}
 

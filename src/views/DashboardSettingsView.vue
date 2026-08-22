@@ -112,9 +112,7 @@
 					:disabled="store.loading"
 					data-testid="save-settings">
 					{{
-						store.loading
-							? t('keepiq', 'Saving…')
-							: t('keepiq', 'Save')
+						store.loading ? t('keepiq', 'Saving…') : t('keepiq', 'Save')
 					}}
 				</button>
 				<button

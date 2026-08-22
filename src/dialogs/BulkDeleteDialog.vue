@@ -11,9 +11,7 @@
 -->
 <template>
 	<NcDialog
-		:name="
-			t('keepiq', 'Delete {count} secrets', { count: bulk.selectionCount })
-		"
+		:name="t('keepiq', 'Delete {count} secrets', { count: bulk.selectionCount })"
 		:open="open"
 		size="normal"
 		data-testid="bulk-delete-dialog"

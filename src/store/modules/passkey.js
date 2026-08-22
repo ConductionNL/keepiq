@@ -249,9 +249,7 @@ export const usePasskeyStore = defineStore('passkey', {
 		async revoke(id) {
 			this.error = null
 			try {
-				await axios.delete(
-					generateUrl(`/apps/keepiq/api/v1/passkeys/${id}`),
-				)
+				await axios.delete(generateUrl(`/apps/keepiq/api/v1/passkeys/${id}`))
 				this.credentials = this.credentials.filter((c) => c.id !== id)
 				this.hasActive = this.credentials.some((c) => c.status === 'active')
 			} catch (e) {

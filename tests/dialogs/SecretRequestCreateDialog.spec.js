@@ -158,8 +158,7 @@ describe('SecretRequestCreateDialog', () => {
 			global: { stubs: ncStubs },
 		})
 
-		wrapper.vm.fillUrl =
-			'http://nc.test/apps/keepiq/public#/share/request/tok-1'
+		wrapper.vm.fillUrl = 'http://nc.test/apps/keepiq/public#/share/request/tok-1'
 		await wrapper.vm.copyUrl()
 
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(

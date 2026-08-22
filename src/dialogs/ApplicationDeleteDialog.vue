@@ -24,10 +24,7 @@
 		@update:open="$emit('close')">
 		<NcNoteCard type="warning" data-testid="application-delete-warning">
 			{{
-				t(
-					'keepiq',
-					'Delete this application? This cascades to its secrets.',
-				)
+				t('keepiq', 'Delete this application? This cascades to its secrets.')
 			}}
 		</NcNoteCard>
 		<template #actions>

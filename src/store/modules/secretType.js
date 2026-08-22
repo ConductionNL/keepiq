@@ -102,9 +102,7 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 * @return {Promise<void>}
 		 */
 		async deleteType(id) {
-			await axios.delete(
-				generateUrl(`/apps/keepiq/api/v1/secret-types/${id}`),
-			)
+			await axios.delete(generateUrl(`/apps/keepiq/api/v1/secret-types/${id}`))
 			this.types = this.types.filter((t) => t.id !== id)
 		},
 	},

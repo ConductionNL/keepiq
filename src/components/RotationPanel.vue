@@ -150,9 +150,7 @@ export default {
 					'Rotation due — possible compromise',
 				),
 			}
-			return (
-				reasons[this.openFlag?.reason] || this.t('keepiq', 'Rotation due')
-			)
+			return reasons[this.openFlag?.reason] || this.t('keepiq', 'Rotation due')
 		},
 
 		daysLeft() {

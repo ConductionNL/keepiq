@@ -67,9 +67,7 @@ export const useCertificateStore = defineStore('certificate', {
 				return null
 			}
 			const response = await axios.put(
-				generateUrl(
-					`/apps/keepiq/api/v1/certificates/${secretId}/metadata`,
-				),
+				generateUrl(`/apps/keepiq/api/v1/certificates/${secretId}/metadata`),
 				parsed,
 			)
 			await this.fetchInventory()

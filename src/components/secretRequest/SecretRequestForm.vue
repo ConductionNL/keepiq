@@ -38,9 +38,7 @@
 					data-testid="secret-request-form-expires" />
 			</label>
 
-			<label
-				v-if="canReRequest"
-				class="keepiq-secret-request-form__rerequest">
+			<label v-if="canReRequest" class="keepiq-secret-request-form__rerequest">
 				<input
 					v-model="isReRequest"
 					type="checkbox"

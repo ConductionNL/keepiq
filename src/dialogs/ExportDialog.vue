@@ -66,9 +66,7 @@
 				type="warning"
 				data-testid="cxf-unmapped-report">
 				<p>
-					{{
-						t('keepiq', 'The following will not survive a CXF export:')
-					}}
+					{{ t('keepiq', 'The following will not survive a CXF export:') }}
 				</p>
 				<ul>
 					<li v-for="(entry, idx) in cxfReport.unmapped" :key="idx">

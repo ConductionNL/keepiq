@@ -37,9 +37,7 @@
 					class="resolution-dialog__row">
 					<span class="resolution-dialog__name">{{ sub.name }}</span>
 					<span class="resolution-dialog__count">
-						{{
-							n('keepiq', '%n secret', '%n secrets', sub.secretCount)
-						}}
+						{{ n('keepiq', '%n secret', '%n secrets', sub.secretCount) }}
 					</span>
 					<NcSelect
 						v-model="plan[sub.id]"

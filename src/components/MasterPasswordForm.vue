@@ -40,9 +40,7 @@
 			variant="primary"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
-			{{
-				loading ? t('keepiq', 'Changing…') : t('keepiq', 'Change password')
-			}}
+			{{ loading ? t('keepiq', 'Changing…') : t('keepiq', 'Change password') }}
 		</NcButton>
 	</div>
 </template>

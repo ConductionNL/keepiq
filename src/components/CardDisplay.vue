@@ -54,9 +54,7 @@
 						data-testid="card-reveal-cvv"
 						@click="toggle('cvv')">
 						{{
-							revealed.cvv
-								? t('keepiq', 'Hide')
-								: t('keepiq', 'Show')
+							revealed.cvv ? t('keepiq', 'Hide') : t('keepiq', 'Show')
 						}}
 					</NcButton>
 					<CopyButton
@@ -75,9 +73,7 @@
 						data-testid="card-reveal-pin"
 						@click="toggle('pin')">
 						{{
-							revealed.pin
-								? t('keepiq', 'Hide')
-								: t('keepiq', 'Show')
+							revealed.pin ? t('keepiq', 'Hide') : t('keepiq', 'Show')
 						}}
 					</NcButton>
 					<CopyButton

@@ -141,9 +141,7 @@ export const useShareStore = defineStore('share', {
 		 */
 		async fetchWriteContext(secretId) {
 			const response = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/secrets/${secretId}/write-context`,
-				),
+				generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/write-context`),
 			)
 			return response.data
 		},

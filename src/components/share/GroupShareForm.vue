@@ -139,8 +139,7 @@ export default {
 				}
 				this.$emit('shared', { groupId: this.groupId, recipients })
 			} catch (e) {
-				this.error =
-					e?.message || t('keepiq', 'Failed to encrypt for group')
+				this.error = e?.message || t('keepiq', 'Failed to encrypt for group')
 			} finally {
 				this.busy = false
 			}

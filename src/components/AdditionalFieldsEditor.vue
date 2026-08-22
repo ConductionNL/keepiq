@@ -23,9 +23,7 @@
   @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 -->
 <template>
-	<section
-		class="keepiq-additional-fields"
-		data-testid="additional-fields-editor">
+	<section class="keepiq-additional-fields" data-testid="additional-fields-editor">
 		<h4 class="keepiq-additional-fields__title">
 			{{ t('keepiq', 'Additional fields') }}
 		</h4>

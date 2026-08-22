@@ -336,10 +336,7 @@ export default {
 					} else {
 						this.error =
 							e.message
-							|| this.t(
-								'keepiq',
-								'Could not open the sealed transfer',
-							)
+							|| this.t('keepiq', 'Could not open the sealed transfer')
 					}
 				}
 			}, POLL_INTERVAL)

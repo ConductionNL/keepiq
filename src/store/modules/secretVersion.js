@@ -106,9 +106,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(
-						`/apps/keepiq/api/v1/versions/${versionId}/restore`,
-					),
+					generateUrl(`/apps/keepiq/api/v1/versions/${versionId}/restore`),
 				)
 				// Propagate to recipients: decrypt the restored head with the
 				// session key, then re-encrypt per recipient (share fan-out).

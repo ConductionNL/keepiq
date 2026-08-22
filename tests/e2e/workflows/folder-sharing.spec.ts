@@ -295,18 +295,15 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			async ({ tokExpr, secretApiId, folderId }) => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
-				await fetch(
-					`/index.php/apps/keepiq/api/v1/secrets/${secretApiId}`,
-					{
-						method: 'PUT',
-						credentials: 'include',
-						headers: {
-							requesttoken: token,
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({ folderId: null }),
+				await fetch(`/index.php/apps/keepiq/api/v1/secrets/${secretApiId}`, {
+					method: 'PUT',
+					credentials: 'include',
+					headers: {
+						requesttoken: token,
+						'Content-Type': 'application/json',
 					},
-				)
+					body: JSON.stringify({ folderId: null }),
+				})
 				await fetch(`/index.php/apps/keepiq/api/v1/folders/${folderId}`, {
 					method: 'DELETE',
 					credentials: 'include',

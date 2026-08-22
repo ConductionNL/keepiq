@@ -32,9 +32,7 @@
 			:searchValue="searchTerm"
 			:searchPlaceholder="t('keepiq', 'Search applications')"
 			rowKey="id"
-			:emptyText="
-				t('keepiq', 'You have not registered any applications yet.')
-			"
+			:emptyText="t('keepiq', 'You have not registered any applications yet.')"
 			@add="dialogOpen = true"
 			@search="onSearch"
 			@rowClick="openApplication">

@@ -147,7 +147,9 @@ self.addEventListener('activate', (event) => {
 						   logout - the eviction guarantee this cache is built around.
 						   Remove the legacy arm only once no client can still be running
 						   a pre-rename build. */
-						(n) => (n.startsWith('keepiq-shell-') || n.startsWith('doriath-shell-'))
+						(n) =>
+							(n.startsWith('keepiq-shell-')
+								|| n.startsWith('doriath-shell-'))
 							&& n !== CACHE_NAME,
 					)
 					.map((n) => caches.delete(n)),

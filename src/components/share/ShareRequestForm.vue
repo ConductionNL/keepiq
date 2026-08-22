@@ -21,9 +21,7 @@
 		data-testid="share-request-form">
 		<header class="keepiq-share-request-form__header">
 			<h3>
-				{{
-					t('keepiq', 'Request the owner share this secret with someone')
-				}}
+				{{ t('keepiq', 'Request the owner share this secret with someone') }}
 			</h3>
 			<button
 				type="button"
@@ -120,13 +118,10 @@ export default {
 			}
 			this.submitting = true
 			try {
-				await axios.post(
-					generateUrl('/apps/keepiq/api/v1/share-requests'),
-					{
-						sourceSecretId: this.secretId,
-						targetUserId: this.targetUserId,
-					},
-				)
+				await axios.post(generateUrl('/apps/keepiq/api/v1/share-requests'), {
+					sourceSecretId: this.secretId,
+					targetUserId: this.targetUserId,
+				})
 				this.$emit('submitted', { targetUserId: this.targetUserId })
 				this.$emit('close')
 			} catch (e) {

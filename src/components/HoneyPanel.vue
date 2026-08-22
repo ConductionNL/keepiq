@@ -35,9 +35,7 @@
 		<template v-if="flagged">
 			<NcTextField
 				v-model="note"
-				:label="
-					t('keepiq', 'Placement note (only you and admins see this)')
-				"
+				:label="t('keepiq', 'Placement note (only you and admins see this)')"
 				data-testid="honey-note"
 				@blur="saveNote" />
 

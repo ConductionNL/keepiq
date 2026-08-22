@@ -38,19 +38,13 @@
 
 		<p v-else-if="!applicationActive" class="application-secrets-panel__empty">
 			{{
-				t(
-					'keepiq',
-					'Approve this application before writing secrets to it.',
-				)
+				t('keepiq', 'Approve this application before writing secrets to it.')
 			}}
 		</p>
 
 		<p v-else-if="secrets.length === 0" class="application-secrets-panel__empty">
 			{{
-				t(
-					'keepiq',
-					'No secrets have been written for this application yet.',
-				)
+				t('keepiq', 'No secrets have been written for this application yet.')
 			}}
 		</p>
 

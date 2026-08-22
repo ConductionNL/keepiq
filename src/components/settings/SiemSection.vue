@@ -173,9 +173,7 @@
 					v-model="form.categoryFilter"
 					:options="categoryOptions"
 					multiple
-					:inputLabel="
-						t('keepiq', 'Category filter (empty = all events)')
-					"
+					:inputLabel="t('keepiq', 'Category filter (empty = all events)')"
 					data-testid="siem-form-categories" />
 				<NcTextField
 					v-model="form.queueCap"
@@ -196,9 +194,7 @@
 						:disabled="busy || !formValid"
 						data-testid="siem-form-save"
 						@click="onSave">
-						{{
-							editingId ? t('keepiq', 'Save') : t('keepiq', 'Create')
-						}}
+						{{ editingId ? t('keepiq', 'Save') : t('keepiq', 'Create') }}
 					</NcButton>
 					<NcButton
 						variant="tertiary"
@@ -424,8 +420,7 @@ export default {
 						{
 							name: sink.name,
 							error:
-								response.data?.error
-								|| t('keepiq', 'unknown error'),
+								response.data?.error || t('keepiq', 'unknown error'),
 						},
 					)
 				}

@@ -172,9 +172,7 @@
 								<div style="margin-top: 0.5rem">
 									<NcTextField
 										v-model="revokeReason"
-										:label="
-											t('keepiq', 'Reason for revocation')
-										"
+										:label="t('keepiq', 'Reason for revocation')"
 										:placeholder="
 											t(
 												'keepiq',

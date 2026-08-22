@@ -75,9 +75,7 @@
 				:disabled="busy || !password"
 				data-testid="link-share-submit">
 				{{
-					busy
-						? t('keepiq', 'Decrypting…')
-						: t('keepiq', 'Reveal secret')
+					busy ? t('keepiq', 'Decrypting…') : t('keepiq', 'Reveal secret')
 				}}
 			</button>
 		</form>

@@ -305,10 +305,7 @@ export default {
 				const result = await this.store.reissueSuite(row.id)
 				if (result) {
 					showSuccess(
-						t(
-							'keepiq',
-							'Certificate re-issued with the same key pair.',
-						),
+						t('keepiq', 'Certificate re-issued with the same key pair.'),
 					)
 				} else if (this.store.error) {
 					showError(this.store.error)

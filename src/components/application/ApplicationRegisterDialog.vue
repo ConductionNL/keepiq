@@ -95,9 +95,7 @@
 					class="primary"
 					data-testid="application-register-submit"
 					:disabled="busy || form.name === ''">
-					{{
-						busy ? t('keepiq', 'Submitting…') : t('keepiq', 'Register')
-					}}
+					{{ busy ? t('keepiq', 'Submitting…') : t('keepiq', 'Register') }}
 				</button>
 			</div>
 		</form>

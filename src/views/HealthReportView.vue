@@ -74,15 +74,11 @@
 				</div>
 
 				<ul class="health-report__counts">
-					<li>
-						{{ t('keepiq', 'Weak') }}: {{ store.summary.weakCount }}
-					</li>
+					<li>{{ t('keepiq', 'Weak') }}: {{ store.summary.weakCount }}</li>
 					<li>
 						{{ t('keepiq', 'Reused') }}: {{ store.summary.reusedCount }}
 					</li>
-					<li>
-						{{ t('keepiq', 'Old') }}: {{ store.summary.staleCount }}
-					</li>
+					<li>{{ t('keepiq', 'Old') }}: {{ store.summary.staleCount }}</li>
 					<li v-if="breachActive">
 						{{ t('keepiq', 'Breached') }}:
 						{{ store.summary.breachedCount }}

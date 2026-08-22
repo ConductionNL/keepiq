@@ -201,9 +201,7 @@ export const useApplicationStore = defineStore('application', {
 		 * @return {Promise<void>}
 		 */
 		async deleteApplication(id) {
-			await axios.delete(
-				generateUrl(`/apps/keepiq/api/v1/applications/${id}`),
-			)
+			await axios.delete(generateUrl(`/apps/keepiq/api/v1/applications/${id}`))
 			this.applications = this.applications.filter((a) => a.id !== id)
 			this.pendingApplications = this.pendingApplications.filter(
 				(a) => a.id !== id,
