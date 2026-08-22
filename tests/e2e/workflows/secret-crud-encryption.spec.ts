@@ -391,9 +391,18 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 				document.querySelectorAll('.secret-list-item'),
 			).find(
 				(i) =>
-					(
-						i.querySelector('.secret-list-item__name')?.textContent || ''
-					).trim() === name,
+					// Own text nodes only: `.secret-list-item__name` also contains a
+					// <StrengthBadge>, so `textContent` appends its label ("Very
+					// strong") and this exact comparison stops matching once the
+					// badge resolves. It would then click nothing and fail on the
+					// detail card instead, pointing away from the real cause.
+					Array.from(
+						i.querySelector('.secret-list-item__name')?.childNodes || [],
+					)
+						.filter((c) => c.nodeType === 3)
+						.map((c) => c.textContent || '')
+						.join('')
+						.trim() === name,
 			)
 			if (r) {
 				;(r as HTMLElement).click()

@@ -100,10 +100,22 @@ async function openFirstSecret(page): Promise<string> {
 		const row =
 			rows.find((r) => !r.classList.contains('secret-list-item--blocked'))
 			|| rows[0]
+		// Read ONLY the element's own text nodes. `.secret-list-item__name`
+		// wraps `{{ secret.name }}` AND a <StrengthBadge>, so `textContent`
+		// yields "AWS Console Very strong" once the badge has resolved — a name
+		// that matches nothing in the API payload this is compared against. The
+		// badge loads asynchronously, so whether it is present is a race: this
+		// read used to win it by accident and the test only failed when it
+		// lost. Excluding child ELEMENTS makes the extraction independent of
+		// that timing rather than lucky.
 		const n = row
-			? (
-					row.querySelector('.secret-list-item__name')?.textContent || ''
-				).trim()
+			? Array.from(
+					row.querySelector('.secret-list-item__name')?.childNodes || [],
+				)
+					.filter((c) => c.nodeType === 3)
+					.map((c) => c.textContent || '')
+					.join('')
+					.trim()
 			: ''
 		if (row) {
 			const main = row.querySelector(
