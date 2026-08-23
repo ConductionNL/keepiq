@@ -32,7 +32,7 @@
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "BookOpenVariantOutline",
-			"href": "https://doriath.conduction.nl",
+			"href": "https://keepiq.conduction.nl",
 			"section": "footer",
 			"order": 80
 		},
@@ -101,7 +101,7 @@
 			"title": "Vault overview",
 			"config": {
 				"description": "Your secrets, folders and applications at a glance",
-				"documentationUrl": "https://doriath.conduction.nl",
+				"documentationUrl": "https://keepiq.conduction.nl",
 				"_note": "The eleven dashboard widgets live in config.widgets[] + config.layout[], NOT in the page-level widgets[] array. CnPageRenderer renders a bare CnWidgetGrid whenever a typed page carries page-level widgets targeting the body slot, so this type:\"dashboard\" page never mounted CnDashboardPage and lost its header, max-width, padding, sidebar and grid discipline (hydra gate-69 page-type-discipline; hrmq#112 moved 47 pages for the same reason). Only config.widgets/config.layout reach the typed page component. Three shape differences follow from that move, all verified against the installed @conduction/nextcloud-vue dist rather than the schema prose: (1) banner/stat/text payloads move from props{} to content{}, because CnDashboardPage's registry branch passes the widget def's content BOTH as a `content` prop and spread flat, which is the dual shape those renderers document; (2) tile fields move to the widget def's TOP LEVEL, because isTile() is matched before the registry branch and CnDashboardPage.getTileConfig() reads title/icon/iconType/backgroundColor/textColor/linkType/linkValue straight off the def and never looks at content; (3) showTitle:false is set on the eight widgets that render inside CnWidgetWrapper, so they stay header-less exactly as they were under the bare CnWidgetGrid — without it a non-card widget would grow a header captioned with its own widget id. Tiles bypass the wrapper entirely, so they carry no showTitle.",
 				"widgets": [
 					{
@@ -251,7 +251,7 @@
 						"backgroundColor": "#6b7280",
 						"textColor": "#ffffff",
 						"linkType": "url",
-						"linkValue": "https://doriath.conduction.nl"
+						"linkValue": "https://keepiq.conduction.nl"
 					}
 				],
 				"layout": [
@@ -352,7 +352,7 @@
 			"type": "roadmap",
 			"title": "Features & roadmap",
 			"config": {
-				"documentationUrl": "https://doriath.conduction.nl"
+				"documentationUrl": "https://keepiq.conduction.nl"
 			}
 		},
 		{

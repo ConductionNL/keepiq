@@ -27,7 +27,7 @@ const BRAND_THEME = require.resolve('@conduction/docusaurus-preset/theme');
 const config = createConfig({
   title: 'Keepiq',
   tagline: 'Self-hosted password and secrets vault. Per-user, per-team, audited.',
-  url: 'https://doriath.conduction.nl',
+  url: 'https://keepiq.conduction.nl',
   baseUrl: '/',
 
   organizationName: 'ConductionNL',
