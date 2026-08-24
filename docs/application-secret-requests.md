@@ -24,7 +24,7 @@ shows:
 | Column | Notes |
 |---|---|
 | Status | Pending, Fulfilled, Declined, Expired |
-| Expiry | "Expires <date>", "Expired <date>", or **"No expiry"** — a link that works forever |
+| Expiry | `Expires <date>`, `Expired <date>`, or **"No expiry"** — a link that works forever |
 | Token | Truncated. The full value goes to the clipboard only via **Copy fill link** |
 | Requested fields | The field names asked for, e.g. `key, login` |
 

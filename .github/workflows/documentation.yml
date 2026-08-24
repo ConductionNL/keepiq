@@ -2,9 +2,9 @@ name: Documentation
 
 on:
   push:
-    branches: [documentation]
+    branches: [development]
   pull_request:
-    branches: [documentation]
+    branches: [development]
 
 jobs:
   deploy:
@@ -19,3 +19,11 @@ jobs:
       cname: keepiq.conduction.nl
 
       docs-hosts: doriath.conduction.nl,keepiq.conduction.nl
+
+      # Named explicitly, because the comment above already knows the answer
+      # and the workflow did not. The callee derives the worker from `cname`
+      # when not told — `keepiq-docs`, which does not exist. Deploying that
+      # creates a SECOND worker while both custom domains keep routing to
+      # `doriath-docs`: every deploy green, reaching nobody. Renaming the
+      # worker is a Cloudflare-side move, not something this file can perform.
+      worker-name: doriath-docs
