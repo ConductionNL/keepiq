@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Fjarlægja",
         "Remove this field": "Fjarlægja þetta svið",
         "Give the field a name.": "Gefðu sviðinu nafn.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ er innbyggt svið, ekki viðbótarsvið — veldu annað nafn."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ er innbyggt svið, ekki viðbótarsvið — veldu annað nafn.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

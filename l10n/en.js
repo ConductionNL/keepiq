@@ -995,7 +995,8 @@ OC.L10N.register(
         "No additional fields yet.": "No additional fields yet.",
         "Remove": "Remove",
         "Remove this field": "Remove this field",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is a built-in field, not an additional one — choose a different name."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is a built-in field, not an additional one — choose a different name.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

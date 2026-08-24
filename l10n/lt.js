@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Pašalinti",
         "Remove this field": "Pašalinti šį lauką",
         "Give the field a name.": "Suteikite laukui pavadinimą.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ yra integruotas laukas, o ne papildomas — pasirinkite kitą pavadinimą."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ yra integruotas laukas, o ne papildomas — pasirinkite kitą pavadinimą.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

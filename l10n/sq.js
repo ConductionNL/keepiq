@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Hiq",
         "Remove this field": "Hiq këtë fushë",
         "Give the field a name.": "Jepni emër fushës.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” është fushë e integruar, jo shtesë — zgjidhni emër tjetër."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” është fushë e integruar, jo shtesë — zgjidhni emër tjetër.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

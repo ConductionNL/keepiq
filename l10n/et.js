@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Eemalda",
         "Remove this field": "Eemalda see väli",
         "Give the field a name.": "Anna väljale nimi.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ on sisseehitatud väli, mitte lisaväli — vali teine nimi."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ on sisseehitatud väli, mitte lisaväli — vali teine nimi.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

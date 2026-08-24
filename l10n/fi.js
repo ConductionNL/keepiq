@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Poista",
         "Remove this field": "Poista tämä kenttä",
         "Give the field a name.": "Anna kentälle nimi.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "”{name}” on sisäänrakennettu kenttä, ei lisäkenttä — valitse toinen nimi."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "”{name}” on sisäänrakennettu kenttä, ei lisäkenttä — valitse toinen nimi.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Eltávolítás",
         "Remove this field": "Mező eltávolítása",
         "Give the field a name.": "Adjon nevet a mezőnek.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "A(z) „{name}” beépített mező, nem további — válasszon másik nevet."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "A(z) „{name}” beépített mező, nem további — válasszon másik nevet.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

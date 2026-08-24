@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Allontanar",
         "Remove this field": "Allontanar quest champ",
         "Give the field a name.": "Dai in num al champ.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» è in champ integrà, betg in supplementar — tscherna in auter num."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» è in champ integrà, betg in supplementar — tscherna in auter num.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

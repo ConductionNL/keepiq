@@ -289,6 +289,13 @@
 						}}
 					</p>
 				</NcAppSettingsSection>
+
+				<!-- Version footer (restyle stage 3): a plain trailing line,
+				     matching the legacy UserSettings.vue surface. Hidden when
+				     the initial state is absent. -->
+				<p v-if="appVersion" class="user-settings__version">
+					{{ t('keepiq', 'Keepiq {version}', { version: appVersion }) }}
+				</p>
 			</template>
 		</CnAppRoot>
 	</div>
@@ -296,6 +303,7 @@
 
 <script>
 import { CnAppRoot } from '@conduction/nextcloud-vue'
+import { loadState } from '@nextcloud/initial-state'
 import { translate as ncT } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -396,6 +404,13 @@ export default {
 			 * form mid-transition — the key is still cleared.
 			 */
 			unloading: false,
+			/**
+			 * App version for the user-settings dialog footer, provided by
+			 * DashboardController::page() from appinfo/info.xml. Empty when
+			 * the initial state is absent (e.g. public surfaces), which
+			 * hides the footer line entirely.
+			 */
+			appVersion: loadState('keepiq', 'appVersion', ''),
 			storesReady: false,
 			timeoutInterval: null,
 			sessionTimeout: 'session',
@@ -803,6 +818,11 @@ export default {
 
 .user-settings__suite-info p {
 	margin: 0.25rem 0;
+}
+
+.user-settings__version {
+	margin-top: 1rem;
+	color: var(--color-text-maxcontrast);
 }
 
 .keepiq-offline-banner {

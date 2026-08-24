@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Remover",
         "Remove this field": "Remover este campo",
         "Give the field a name.": "Dê um nome ao campo.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” é um campo integrado, não adicional — escolha outro nome."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” é um campo integrado, não adicional — escolha outro nome.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )
