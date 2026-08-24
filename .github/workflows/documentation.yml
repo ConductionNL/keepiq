@@ -10,9 +10,12 @@ jobs:
   deploy:
     uses: ConductionNL/.github/.github/workflows/documentation.yml@main
     with:
-      # DNS moves separately from the app-id rename (doriath -> keepiq): the
-      # docs subdomain stays `doriath.conduction.nl` until the CNAME for
-      # `keepiq.conduction.nl` exists. Changing it here first would publish the
-      # site to a hostname that resolves nowhere. Keep this in step with
-      # docs/static/CNAME.
-      cname: doriath.conduction.nl
+      # `keepiq.conduction.nl` resolves as of 2026-08-23 — attached as a second
+      # custom domain on the SAME `doriath-docs` worker that serves
+      # `doriath.conduction.nl`. Both hosts answer, so nothing goes dark either
+      # way. docs-hosts must list BOTH: wrangler reconciles the worker's
+      # triggers against it, so a host omitted there is removed. Keep this in
+      # step with docs/static/CNAME.
+      cname: keepiq.conduction.nl
+
+      docs-hosts: doriath.conduction.nl,keepiq.conduction.nl
