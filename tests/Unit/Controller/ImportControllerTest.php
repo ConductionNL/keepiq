@@ -4,7 +4,7 @@
  * Unit tests for ImportController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,11 +17,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\ImportController;
-use OCA\Doriath\Exception\SuiteBlockedException;
-use OCA\Doriath\Service\ImportService;
+use OCA\Keepiq\Controller\ImportController;
+use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Service\ImportService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Initialize Settings Repair Step
+ * Keepiq Initialize Settings Repair Step
  *
- * Repair step that initializes Doriath register and schemas on install/upgrade.
+ * Repair step that initializes Keepiq register and schemas on install/upgrade.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\SettingsService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\SettingsService;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -30,7 +30,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Repair step that initializes Doriath configuration via SettingsService.
+ * Repair step that initializes Keepiq configuration via SettingsService.
  */
 class InitializeSettings implements IRepairStep {
 	private const DEFAULT_CONFIG = [
@@ -70,11 +70,11 @@ class InitializeSettings implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Initialize Doriath register and schemas via ConfigurationService';
+		return 'Initialize Keepiq register and schemas via ConfigurationService';
 	}//end getName()
 
 	/**
-	 * Run the repair step to initialize Doriath configuration.
+	 * Run the repair step to initialize Keepiq configuration.
 	 *
 	 * @param IOutput $output The output interface for progress reporting
 	 *
@@ -83,7 +83,7 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
 	 */
 	public function run(IOutput $output): void {
-		$output->info('Initializing Doriath configuration...');
+		$output->info('Initializing Keepiq configuration...');
 
 		// Seed default app config values for encryption settings.
 		foreach (self::DEFAULT_CONFIG as $key => $value) {
@@ -99,7 +99,7 @@ class InitializeSettings implements IRepairStep {
 				'OpenRegister is not installed or enabled. Skipping auto-configuration.'
 			);
 			$this->logger->warning(
-				'Doriath: OpenRegister not available, skipping register initialization'
+				'Keepiq: OpenRegister not available, skipping register initialization'
 			);
 			return;
 		}
@@ -117,19 +117,19 @@ class InitializeSettings implements IRepairStep {
 			if ($result['success'] === true) {
 				$version = ($result['version'] ?? 'unknown');
 				$output->info(
-					'Doriath configuration imported successfully (version: ' . $version . ')'
+					'Keepiq configuration imported successfully (version: ' . $version . ')'
 				);
 				return;
 			}
 
 			$message = ($result['message'] ?? 'unknown error');
 			$output->warning(
-				'Doriath configuration import issue: ' . $message
+				'Keepiq configuration import issue: ' . $message
 			);
 		} catch (Throwable $e) {
-			$output->warning('Could not auto-configure Doriath: ' . $e->getMessage());
+			$output->warning('Could not auto-configure Keepiq: ' . $e->getMessage());
 			$this->logger->error(
-				'Doriath initialization failed',
+				'Keepiq initialization failed',
 				['exception' => $e->getMessage()]
 			);
 		}//end try

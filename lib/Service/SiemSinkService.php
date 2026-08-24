@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath SIEM Sink Service
+ * Keepiq SIEM Sink Service
  *
  * Sink administration for SIEM audit export (siem-audit-export §6.1):
  * create, update, delete, list and test-fire. Extracted from SiemService,
@@ -13,7 +13,7 @@
  * ever returns it.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,13 +26,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\SiemQueueItemMapper;
-use OCA\Doriath\Db\SiemSink;
-use OCA\Doriath\Db\SiemSinkMapper;
+use OCA\Keepiq\Db\SiemQueueItemMapper;
+use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Db\SiemSinkMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Security\ICrypto;
 use Ramsey\Uuid\Uuid;

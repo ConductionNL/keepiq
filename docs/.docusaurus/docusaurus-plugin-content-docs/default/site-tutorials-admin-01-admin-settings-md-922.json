@@ -1,6 +1,6 @@
 {
   "id": "tutorials/admin/admin-settings",
-  "title": "Manage Doriath settings",
+  "title": "Manage Keepiq settings",
   "description": "Configure encryption, group-level sharing policies, and the audit log from the Nextcloud admin settings panel.",
   "source": "@site/tutorials/admin/01-admin-settings.md",
   "sourceDirName": "tutorials/admin",
@@ -8,13 +8,13 @@
   "permalink": "/docs/tutorials/admin/admin-settings",
   "draft": false,
   "unlisted": false,
-  "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/tutorials/admin/01-admin-settings.md",
+  "editUrl": "https://github.com/ConductionNL/keepiq/tree/development/docs/tutorials/admin/01-admin-settings.md",
   "tags": [],
   "version": "current",
   "sidebarPosition": 1,
   "frontMatter": {
     "sidebar_position": 1,
-    "title": "Manage Doriath settings",
+    "title": "Manage Keepiq settings",
     "description": "Configure encryption, group-level sharing policies, and the audit log from the Nextcloud admin settings panel."
   },
   "sidebar": "tutorialSidebar",
@@ -23,7 +23,7 @@
     "permalink": "/docs/category/admin-guide"
   },
   "next": {
-    "title": "Doriath — Architecture & Data Model",
+    "title": "Keepiq — Architecture & Data Model",
     "permalink": "/docs/ARCHITECTURE"
   }
 }

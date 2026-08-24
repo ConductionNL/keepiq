@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Public Key Loader Adapter
+ * Keepiq Public Key Loader Adapter
  *
  * A thin injectable seam over phpseclib3's PublicKeyLoader, whose key-parsing
  * entry points are static factory methods with no instance API
@@ -14,7 +14,7 @@
  * the app to exercise — a collaborator a test can substitute.
  *
  * @category Support
- * @package  OCA\Doriath\Support
+ * @package  OCA\Keepiq\Support
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Support;
+namespace OCA\Keepiq\Support;
 
 use phpseclib3\Crypt\Common\AsymmetricKey;
 use phpseclib3\Crypt\Common\PrivateKey;

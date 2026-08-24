@@ -8,26 +8,26 @@ import (
 	"time"
 
 	"crypto/rsa"
-	"github.com/ConductionNL/doriath/cli/internal/client"
+	"github.com/ConductionNL/keepiq/cli/internal/client"
 
-	dcrypto "github.com/ConductionNL/doriath/cli/internal/crypto"
+	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
 )
 
-// ciSetup loads the CI-mode inputs: the instance URL (DORIATH_URL), the
-// application id (DORIATH_APP_ID), and the application private key — supplied by
-// env (DORIATH_APP_KEY, a PEM) or file (DORIATH_APP_KEY_FILE), the operator's own
-// credential Doriath never stores (§4.1). It self-configures from discovery and
+// ciSetup loads the CI-mode inputs: the instance URL (KEEPIQ_URL), the
+// application id (KEEPIQ_APP_ID), and the application private key — supplied by
+// env (KEEPIQ_APP_KEY, a PEM) or file (KEEPIQ_APP_KEY_FILE), the operator's own
+// credential Keepiq never stores (§4.1). It self-configures from discovery and
 // exchanges an RFC 7523 assertion for a bearer token.
 func ciSetup() (c *client.Client, key *rsa.PrivateKey, disc *client.Discovery, bearer, appID string, err error) {
-	url := os.Getenv("DORIATH_URL")
-	appID = os.Getenv("DORIATH_APP_ID")
+	url := os.Getenv("KEEPIQ_URL")
+	appID = os.Getenv("KEEPIQ_APP_ID")
 	if url == "" || appID == "" {
-		return nil, nil, nil, "", "", fmt.Errorf("set DORIATH_URL and DORIATH_APP_ID")
+		return nil, nil, nil, "", "", fmt.Errorf("set KEEPIQ_URL and KEEPIQ_APP_ID")
 	}
 
-	pemStr := os.Getenv("DORIATH_APP_KEY")
+	pemStr := os.Getenv("KEEPIQ_APP_KEY")
 	if pemStr == "" {
-		if f := os.Getenv("DORIATH_APP_KEY_FILE"); f != "" {
+		if f := os.Getenv("KEEPIQ_APP_KEY_FILE"); f != "" {
 			data, rerr := os.ReadFile(f)
 			if rerr != nil {
 				return nil, nil, nil, "", "", rerr
@@ -36,7 +36,7 @@ func ciSetup() (c *client.Client, key *rsa.PrivateKey, disc *client.Discovery, b
 		}
 	}
 	if pemStr == "" {
-		return nil, nil, nil, "", "", fmt.Errorf("set DORIATH_APP_KEY (PEM) or DORIATH_APP_KEY_FILE")
+		return nil, nil, nil, "", "", fmt.Errorf("set KEEPIQ_APP_KEY (PEM) or KEEPIQ_APP_KEY_FILE")
 	}
 	pk, perr := dcrypto.ParsePrivateKey(pemStr)
 	if perr != nil {
@@ -71,7 +71,7 @@ func fetchDecrypt(c *client.Client, key *rsa.PrivateKey, name, bearer string) (s
 func cmdCIFetch(args []string) error {
 	output, args := popFlag(args, "--output")
 	if len(args) < 1 {
-		return fmt.Errorf("usage: doriath ci fetch <name> [--output env|json]")
+		return fmt.Errorf("usage: keepiq ci fetch <name> [--output env|json]")
 	}
 	c, key, _, bearer, _, err := ciSetup()
 	if err != nil {
@@ -104,7 +104,7 @@ func cmdCIRun(args []string) error {
 		}
 	}
 	if sep < 1 || sep+1 >= len(args) {
-		return fmt.Errorf("usage: doriath ci run <name>[,<name>...] -- <cmd...>")
+		return fmt.Errorf("usage: keepiq ci run <name>[,<name>...] -- <cmd...>")
 	}
 	names := strings.Split(args[0], ",")
 	cmd := args[sep+1:]
@@ -135,7 +135,7 @@ func envName(secretName string) string {
 			b.WriteRune('_')
 		}
 	}
-	return "DORIATH_" + b.String()
+	return "KEEPIQ_" + b.String()
 }
 
 func shellQuote(v string) string {

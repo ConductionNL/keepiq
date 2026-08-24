@@ -4,7 +4,7 @@
  * Unit tests for EncryptionSuiteController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\EncryptionSuiteController;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\MigrationService;
+use OCA\Keepiq\Controller\EncryptionSuiteController;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\MigrationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -219,6 +220,103 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testCreateReturns503WhenCaDegraded()
 
 	/**
+	 * A duplicate-suite refusal is a 409, not the 503 its parent class would give.
+	 *
+	 * Issue #289. `ConflictException` extends `RuntimeException`, and this controller
+	 * already maps `RuntimeException` to 503 — so if the catch arms are ever reordered,
+	 * or the new arm removed, a duplicate create silently starts reporting "service
+	 * unavailable". That tells the client to retry something it must never retry, and
+	 * tells the operator a server is unhealthy when nothing is. The status code is the
+	 * whole contract here, so it is pinned separately from the service-level test.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testCreateReturns409WhenAnActiveSuiteAlreadyExists(): void {
+		$this->suiteService->method('createSuite')
+			->willThrowException(new ConflictException('An active EncryptionSuite already exists for this owner.'));
+
+		$response = $this->controller->create('pub-key', 'encrypted-pk');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(
+			expected: 'suite_already_exists',
+			actual: $response->getData()['error'],
+			message: 'the client needs a machine-readable reason, not only English prose'
+		);
+	}//end testCreateReturns409WhenAnActiveSuiteAlreadyExists()
+
+	/**
+	 * A plain create goes through the GUARDED entry point.
+	 *
+	 * Pinned by method choice: if this call site ever moved to createSuccessorSuite
+	 * the guard would simply be off for the one path it exists to protect, and
+	 * nothing else would look wrong.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testCreateUsesTheGuardedEntryPoint(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-new');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('testuser');
+		$suite->setStatus('active');
+
+		$this->suiteService->expects($this->once())->method('createSuite')->willReturn($suite);
+		$this->suiteService->expects($this->never())->method('createSuccessorSuite');
+
+		$this->controller->create('pub-key', 'encrypted-pk');
+	}//end testCreateUsesTheGuardedEntryPoint()
+
+	/**
+	 * Compromise recovery uses the SUCCESSOR entry point, not the guarded one.
+	 *
+	 * The more important half of the pair: routing recovery through the guarded
+	 * createSuite() would refuse key rotation for anyone who has a suite — which is
+	 * everyone who could need it — and nothing else would look wrong. Found by
+	 * mutation: the earlier flag-based version of this call failed no test at all
+	 * until this test existed.
+	 *
+	 * The old suite must stay active for the whole migration, so this path legitimately
+	 * produces two active suites; see "Suite Resolution Is Deterministic During A
+	 * Migration".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testCompromiseRecoveryUsesTheSuccessorEntryPoint(): void {
+		$oldSuite = new EncryptionSuite();
+		$oldSuite->setId('old-suite');
+		$oldSuite->setPrivateKey('old-encrypted-pk');
+
+		$newSuite = new EncryptionSuite();
+		$newSuite->setId('new-suite');
+		$newSuite->setStatus('active');
+
+		$migration = new SuiteMigration();
+		$migration->setId('migr-1');
+		$migration->setOldSuiteId('old-suite');
+		$migration->setNewSuiteId('new-suite');
+		$migration->setStatus('in_progress');
+
+		$this->suiteService->method('getActiveSuite')->willReturn($oldSuite);
+		$this->migrationService->method('initiateCompromiseRecovery')->willReturn($migration);
+
+		$this->suiteService->expects($this->once())
+			->method('createSuccessorSuite')
+			->willReturn($newSuite);
+		$this->suiteService->expects($this->never())->method('createSuite');
+
+		$response = $this->controller->compromiseRecovery('pub-key', 'encrypted-pk');
+
+		$this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
+	}//end testCompromiseRecoveryUsesTheSuccessorEntryPoint()
+
+	/**
 	 * Test updatePrivateKey returns updated suite.
 	 *
 	 * @return void
@@ -377,7 +475,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->suiteService->method('getActiveSuite')
 			->with('user', 'testuser')
 			->willReturn($oldSuite);
-		$this->suiteService->method('createSuite')
+		$this->suiteService->method('createSuccessorSuite')
 			->willReturn($newSuite);
 		$this->migrationService->method('initiateCompromiseRecovery')
 			->with('old-suite', 'new-suite')
@@ -462,7 +560,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 
 		// Verbatim from CertificateIssuanceService, which throws when the issued
 		// certificate does not carry the key that was submitted for it.
-		$this->suiteService->method('createSuite')->willThrowException(
+		$this->suiteService->method('createSuccessorSuite')->willThrowException(
 			new \RuntimeException(
 				'Refusing to issue a certificate that does not carry the submitted public key'
 			)
@@ -511,7 +609,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->suiteService->method('getActiveSuite')
 			->with('user', 'testuser')
 			->willReturn($oldSuite);
-		$this->suiteService->method('createSuite')
+		$this->suiteService->method('createSuccessorSuite')
 			->willReturn($newSuite);
 		$this->migrationService->method('initiateCompromiseRecovery')
 			->willReturn($migration);

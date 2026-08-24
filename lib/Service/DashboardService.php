@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Dashboard Service
+ * Keepiq Dashboard Service
  *
  * Per-user dashboard preference storage — provides get/set/list methods
  * over DashboardSetting rows.
@@ -11,7 +11,7 @@
  * the two halves share no state and no caller.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,12 +24,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\DashboardSetting;
-use OCA\Doriath\Db\DashboardSettingMapper;
+use OCA\Keepiq\Db\DashboardSetting;
+use OCA\Keepiq\Db\DashboardSettingMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -130,6 +130,9 @@ class DashboardService {
 	 * @return DashboardSetting The persisted row.
 	 *
 	 * @throws InvalidArgumentException When validation fails.
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-secret-type-v1
 	 */
 	public function set(string $userId, string $settingKey, mixed $value): DashboardSetting {
 		$this->validateUserId(userId: $userId);
@@ -162,7 +165,7 @@ class DashboardService {
 
 		$this->logger->debug(
 			'Saved dashboard setting ' . $settingKey . ' for user ' . $userId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		return $persisted;

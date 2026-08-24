@@ -5,7 +5,7 @@
 
 # Additional fields
 
-A secret has a few fields Doriath knows by name — its value, a login, a URL — and
+A secret has a few fields Keepiq knows by name — its value, a login, a URL — and
 then whatever else you need. Those extras are **additional fields**: named entries
 you add yourself, like `client-id`, `tenant` or `recovery-codes`.
 
@@ -38,7 +38,7 @@ Two consequences follow from this, and both are deliberate:
 Those names already belong to the secret's own fields. A field named `url` would
 not be a second field that happens to be called that — it would collide with the
 real URL, which is stored as searchable plaintext rather than ciphertext. So
-instead of quietly putting your value somewhere you did not intend, Doriath asks
+instead of quietly putting your value somewhere you did not intend, Keepiq asks
 you to pick a different name.
 
 The same rule applies when renaming an existing field, and when asking somebody

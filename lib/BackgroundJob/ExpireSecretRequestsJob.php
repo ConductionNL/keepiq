@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Background Job - Expire lapsed secret requests
+ * Keepiq Background Job - Expire lapsed secret requests
  *
  * Expiry used to be checked only when someone opened the fill link. Nothing
  * swept, so a request whose expiry passed months ago still sat `pending`, still
@@ -22,7 +22,7 @@
  * delete vault rows nobody agreed to give up.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -35,11 +35,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -104,8 +104,8 @@ class ExpireSecretRequestsJob extends TimedJob {
 			$lapsed = $this->mapper->findLapsedPending(now: new DateTime(), limit: self::BATCH);
 		} catch (Throwable $exception) {
 			$this->logger->error(
-				'Doriath: could not select lapsed secret requests: ' . $exception->getMessage(),
-				['exception' => $exception, 'app' => 'doriath']
+				'Keepiq: could not select lapsed secret requests: ' . $exception->getMessage(),
+				['exception' => $exception, 'app' => 'keepiq']
 			);
 
 			return;
@@ -119,17 +119,17 @@ class ExpireSecretRequestsJob extends TimedJob {
 				}
 			} catch (Throwable $exception) {
 				$this->logger->error(
-					'Doriath: could not expire secret request ' . $request->getId()
+					'Keepiq: could not expire secret request ' . $request->getId()
 					. ': ' . $exception->getMessage(),
-					['exception' => $exception, 'app' => 'doriath']
+					['exception' => $exception, 'app' => 'keepiq']
 				);
 			}
 		}
 
 		if ($expired > 0) {
 			$this->logger->info(
-				'Doriath: expired ' . $expired . ' lapsed secret request(s)',
-				['app' => 'doriath']
+				'Keepiq: expired ' . $expired . ' lapsed secret request(s)',
+				['app' => 'keepiq']
 			);
 		}
 	}//end run()

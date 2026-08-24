@@ -11,68 +11,68 @@
   @spec openspec/changes/implement-user-sharing/tasks.md#12.5
 -->
 <template>
-	<section class="doriath-delegation-manager" data-testid="delegation-manager">
-		<header class="doriath-delegation-manager__header">
-			<h4>{{ t('doriath', 'Delegations') }}</h4>
+	<section class="keepiq-delegation-manager" data-testid="delegation-manager">
+		<header class="keepiq-delegation-manager__header">
+			<h4>{{ t('keepiq', 'Delegations') }}</h4>
 			<span
 				v-if="store.count > 0"
-				class="doriath-delegation-manager__count"
+				class="keepiq-delegation-manager__count"
 				data-testid="delegation-manager-count">
 				{{ store.count }}
 			</span>
 		</header>
 
-		<p v-if="store.loading" class="doriath-delegation-manager__loading">
-			{{ t('doriath', 'Loading…') }}
+		<p v-if="store.loading" class="keepiq-delegation-manager__loading">
+			{{ t('keepiq', 'Loading…') }}
 		</p>
 
 		<p
 			v-else-if="store.count === 0"
-			class="doriath-delegation-manager__empty"
+			class="keepiq-delegation-manager__empty"
 			data-testid="delegation-manager-empty">
-			{{ t('doriath', 'No active delegations for this secret.') }}
+			{{ t('keepiq', 'No active delegations for this secret.') }}
 		</p>
 
-		<ul v-else class="doriath-delegation-manager__rows">
+		<ul v-else class="keepiq-delegation-manager__rows">
 			<li
 				v-for="row in store.delegations"
 				:key="row.id"
-				class="doriath-delegation-manager__row"
+				class="keepiq-delegation-manager__row"
 				:data-testid="`delegation-row-${row.id}`">
 				<span
-					class="doriath-delegation-manager__delegate"
+					class="keepiq-delegation-manager__delegate"
 					data-testid="delegation-row-delegate">
 					{{ row.delegatedTo }}
 				</span>
 				<span
-					class="doriath-delegation-manager__status"
+					class="keepiq-delegation-manager__status"
 					:class="{
-						'doriath-delegation-manager__status--permanent':
+						'keepiq-delegation-manager__status--permanent':
 							row.isPermanent === true,
 					}"
 					data-testid="delegation-row-status">
 					{{
 						row.isPermanent === true
-							? t('doriath', 'Permanent')
-							: t('doriath', 'Temporary')
+							? t('keepiq', 'Permanent')
+							: t('keepiq', 'Temporary')
 					}}
 				</span>
 			</li>
 		</ul>
 
-		<div v-if="canReclaim" class="doriath-delegation-manager__actions">
+		<div v-if="canReclaim" class="keepiq-delegation-manager__actions">
 			<button
 				type="button"
 				:disabled="store.hasTemporary === false || store.loading"
 				data-testid="delegation-manager-reclaim"
 				@click="onReclaim">
-				{{ t('doriath', 'Reclaim temporary delegations') }}
+				{{ t('keepiq', 'Reclaim temporary delegations') }}
 			</button>
 		</div>
 
 		<p
 			v-if="store.error"
-			class="doriath-delegation-manager__error"
+			class="keepiq-delegation-manager__error"
 			data-testid="delegation-manager-error">
 			{{ store.error }}
 		</p>
@@ -126,23 +126,23 @@ export default {
 </script>
 
 <style scoped>
-.doriath-delegation-manager {
+.keepiq-delegation-manager {
 	margin: 16px 0;
 }
 
-.doriath-delegation-manager__header {
+.keepiq-delegation-manager__header {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin-bottom: 8px;
 }
 
-.doriath-delegation-manager__header h4 {
+.keepiq-delegation-manager__header h4 {
 	margin: 0;
 	font-size: 1rem;
 }
 
-.doriath-delegation-manager__count {
+.keepiq-delegation-manager__count {
 	background: var(--color-primary-element, #0080ff);
 	color: var(--color-primary-element-text, #fff);
 	padding: 2px 8px;
@@ -150,13 +150,13 @@ export default {
 	font-size: 0.8rem;
 }
 
-.doriath-delegation-manager__rows {
+.keepiq-delegation-manager__rows {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
 
-.doriath-delegation-manager__row {
+.keepiq-delegation-manager__row {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -164,18 +164,18 @@ export default {
 	border-bottom: 1px solid var(--color-border, #eee);
 }
 
-.doriath-delegation-manager__delegate {
+.keepiq-delegation-manager__delegate {
 	font-weight: 500;
 }
 
-.doriath-delegation-manager__status {
+.keepiq-delegation-manager__status {
 	font-size: 0.85rem;
 	padding: 2px 8px;
 	border-radius: 999px;
 	background: var(--color-background-dark, #f0f0f0);
 }
 
-.doriath-delegation-manager__status--permanent {
+.keepiq-delegation-manager__status--permanent {
 	/* The only genuinely hardcoded colour in the app. White is not a safe
 	   foreground for --color-warning, which is a lighter yellow in dark mode;
 	   --color-warning-text is the paired value that stays readable on it. */
@@ -183,17 +183,17 @@ export default {
 	color: var(--color-warning-text);
 }
 
-.doriath-delegation-manager__actions {
+.keepiq-delegation-manager__actions {
 	margin-top: 12px;
 }
 
-.doriath-delegation-manager__error {
+.keepiq-delegation-manager__error {
 	color: var(--color-error-text);
 	margin: 8px 0;
 }
 
-.doriath-delegation-manager__empty,
-.doriath-delegation-manager__loading {
+.keepiq-delegation-manager__empty,
+.keepiq-delegation-manager__loading {
 	color: var(--color-text-maxcontrast, #777);
 	margin: 8px 0;
 }

@@ -4,7 +4,7 @@
 
   Renewal checklist for an externally-issued stored certificate.
 
-  Doriath's own CA can renew what it issued; a certificate that arrived from
+  Keepiq's own CA can renew what it issued; a certificate that arrived from
   outside cannot be renewed here at all, so the only useful answer is the
   manual procedure. The steps come from the certificate store, which derives
   them from the parsed certificate.
@@ -16,7 +16,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Renew certificate')"
+		:name="t('keepiq', 'Renew certificate')"
 		:open="checklist !== null"
 		size="normal"
 		data-testid="cert-checklist-dialog"
@@ -25,8 +25,8 @@
 			<p>
 				{{
 					t(
-						'doriath',
-						'This certificate was issued outside Doriath, so it cannot be renewed here. Follow these steps:',
+						'keepiq',
+						'This certificate was issued outside Keepiq, so it cannot be renewed here. Follow these steps:',
 					)
 				}}
 			</p>
@@ -38,7 +38,7 @@
 		</div>
 		<template #actions>
 			<NcButton variant="primary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>

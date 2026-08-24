@@ -4,7 +4,7 @@
  * Unit tests for AccountDeletionService — the GDPR Art. 17 cascade.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,27 +17,27 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\DashboardSettingMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\GroupShareMapper;
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Db\SuiteMigrationMapper;
-use OCA\Doriath\Event\AccountDataDeletedEvent;
-use OCA\Doriath\Service\AccountDeletionService;
-use OCA\Doriath\Service\AccountShareCleanupService;
-use OCA\Doriath\Service\AccountSuiteCleanupService;
-use OCA\Doriath\Service\SecretChildDataCleaner;
+use OCA\Keepiq\Db\DashboardSettingMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\GroupShareMapper;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Event\AccountDataDeletedEvent;
+use OCA\Keepiq\Service\AccountDeletionService;
+use OCA\Keepiq\Service\AccountShareCleanupService;
+use OCA\Keepiq\Service\AccountSuiteCleanupService;
+use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;
 

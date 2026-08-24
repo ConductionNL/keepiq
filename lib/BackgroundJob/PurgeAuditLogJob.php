@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Purge Audit Log Background Job
+ * Keepiq Purge Audit Log Background Job
  *
  * Nightly retention enforcement for the append-only audit trail
  * (add-secret-audit-trail §4.3): deletes audit entries older than the
@@ -14,7 +14,7 @@
  * needed.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,11 +27,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\AuditService;
-use OCA\Doriath\Service\SettingsService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -91,12 +91,12 @@ class PurgeAuditLogJob extends TimedJob {
 			$deleted = $this->auditService->purge($retentionDays);
 			if ($deleted > 0) {
 				$this->logger->info(
-					"Doriath: purged {$deleted} audit entries older than {$retentionDays} days"
+					"Keepiq: purged {$deleted} audit entries older than {$retentionDays} days"
 				);
 			}
 		} catch (Throwable $e) {
 			$this->logger->error(
-				'Doriath: audit-log purge failed: ' . $e->getMessage(),
+				'Keepiq: audit-log purge failed: ' . $e->getMessage(),
 				['exception' => $e]
 			);
 		}

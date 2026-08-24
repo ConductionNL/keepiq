@@ -1,15 +1,15 @@
 <template>
 	<div class="master-password-form">
-		<h2>{{ t('doriath', 'Change master password') }}</h2>
+		<h2>{{ t('keepiq', 'Change master password') }}</h2>
 
 		<NcPasswordField
 			v-model="currentPassword"
-			:label="t('doriath', 'Current password')"
+			:label="t('keepiq', 'Current password')"
 			:disabled="loading" />
 
 		<NcPasswordField
 			v-model="newPassword"
-			:label="t('doriath', 'New password')"
+			:label="t('keepiq', 'New password')"
 			:disabled="loading" />
 
 		<PasswordStrengthMeter
@@ -19,13 +19,13 @@
 
 		<NcPasswordField
 			v-model="confirmPassword"
-			:label="t('doriath', 'Confirm new password')"
+			:label="t('keepiq', 'Confirm new password')"
 			:disabled="loading" />
 
 		<NcNoteCard
 			v-if="confirmPassword && newPassword !== confirmPassword"
 			type="error">
-			{{ t('doriath', 'Passwords do not match') }}
+			{{ t('keepiq', 'Passwords do not match') }}
 		</NcNoteCard>
 
 		<NcNoteCard v-if="error" type="error">
@@ -33,16 +33,14 @@
 		</NcNoteCard>
 
 		<NcNoteCard v-if="success" type="success">
-			{{ t('doriath', 'Master password changed successfully') }}
+			{{ t('keepiq', 'Master password changed successfully') }}
 		</NcNoteCard>
 
 		<NcButton
 			variant="primary"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
-			{{
-				loading ? t('doriath', 'Changing…') : t('doriath', 'Change password')
-			}}
+			{{ loading ? t('keepiq', 'Changing…') : t('keepiq', 'Change password') }}
 		</NcButton>
 	</div>
 </template>
@@ -117,7 +115,7 @@ export default {
 				this.newPassword = ''
 				this.confirmPassword = ''
 			} catch (e) {
-				this.error = e.message || t('doriath', 'Failed to change password')
+				this.error = e.message || t('keepiq', 'Failed to change password')
 			} finally {
 				this.loading = false
 			}

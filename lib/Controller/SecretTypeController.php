@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Secret Type Controller
+ * Keepiq Secret Type Controller
  *
  * Authenticated API controller for SecretType CRUD: listing available
  * types, creating user/global custom types, relabelling, and deleting with
  * fallback-to-login reassignment.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,13 +21,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Service\SecretTypeService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\SecretTypeService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

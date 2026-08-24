@@ -5,11 +5,11 @@
 # entrypoint entirely and prevents Nextcloud from starting — hence this hook.
 #
 # app:enable is idempotent, so re-running on every start is harmless.
-# openregister must be enabled first: doriath builds on its AppHost engine.
+# openregister must be enabled first: keepiq builds on its AppHost engine.
 #
 # SPDX-License-Identifier: EUPL-1.2
 # SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 set -eu
 
 php /var/www/html/occ app:enable openregister
-php /var/www/html/occ app:enable doriath
+php /var/www/html/occ app:enable keepiq

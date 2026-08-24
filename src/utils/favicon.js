@@ -11,7 +11,7 @@ import { loadState } from '@nextcloud/initial-state'
  */
 function faviconTemplate() {
 	try {
-		return loadState('doriath', 'faviconServiceUrl', '') || ''
+		return loadState('keepiq', 'faviconServiceUrl', '') || ''
 	} catch {
 		return ''
 	}

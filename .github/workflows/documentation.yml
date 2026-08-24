@@ -10,4 +10,12 @@ jobs:
   deploy:
     uses: ConductionNL/.github/.github/workflows/documentation.yml@main
     with:
-      cname: doriath.conduction.nl
+      # `keepiq.conduction.nl` resolves as of 2026-08-23 — attached as a second
+      # custom domain on the SAME `doriath-docs` worker that serves
+      # `doriath.conduction.nl`. Both hosts answer, so nothing goes dark either
+      # way. docs-hosts must list BOTH: wrangler reconciles the worker's
+      # triggers against it, so a host omitted there is removed. Keep this in
+      # step with docs/static/CNAME.
+      cname: keepiq.conduction.nl
+
+      docs-hosts: doriath.conduction.nl,keepiq.conduction.nl

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Direct Share Registrar
+ * Keepiq Direct Share Registrar
  *
  * Bulk registration of DIRECT user-to-user shares from client-encrypted
  * blobs (bulk-actions §6.1/§7.1). For each row the server creates the
@@ -15,7 +15,7 @@
  * builder, none of which the single-share lifecycle uses.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,12 +28,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 

@@ -19,6 +19,6 @@ if (!defined('OC_CONSOLE')) {
 	}
 
 	\OC_App::loadApps();
-	\OC_App::loadApp('doriath');
+	\OC_App::loadApp('keepiq');
 	OC_Hook::clear();
 }

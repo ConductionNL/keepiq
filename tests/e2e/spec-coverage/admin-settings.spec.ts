@@ -2,10 +2,10 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Gate-19 spec-coverage — Doriath admin settings page.
+ * Gate-19 spec-coverage — Keepiq admin settings page.
  *
  * The admin settings page is a Nextcloud settings section (not gated by the
- * vault lock), so it is fully reachable and renders the Doriath Vue admin UI:
+ * vault lock), so it is fully reachable and renders the Keepiq Vue admin UI:
  * a CnVersionInfoCard, a Password Policy section, and a Certificate Authority
  * health section. These are real, data-independent surfaces.
  *
@@ -22,9 +22,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { test, expect } from '@playwright/test'
-import { collectDoriathErrors, assertNoDoriathErrors } from './_helpers'
+import { collectKeepiqErrors, assertNoKeepiqErrors } from './_helpers'
 
-const ADMIN_SETTINGS = '/index.php/settings/admin/doriath'
+const ADMIN_SETTINGS = '/index.php/settings/admin/keepiq'
 
 // Read the app version from appinfo/info.xml so the version-card assertion
 // tracks the real deployed version instead of a hard-coded literal that breaks
@@ -38,17 +38,17 @@ const APP_VERSION = (() => {
 })()
 
 test.describe('Admin settings — spec: admin-settings/spec.md', () => {
-	test('settings section loads with the Doriath administration heading', async ({
+	test('settings section loads with the Keepiq administration heading', async ({
 		page,
 	}) => {
-		const errors = collectDoriathErrors(page)
+		const errors = collectKeepiqErrors(page)
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 
 		const heading = page.locator('#app-content h1, #content h1').first()
 		await expect(heading).toBeVisible({ timeout: 15_000 })
-		await expect(heading).toHaveText(/Doriath/i)
+		await expect(heading).toHaveText(/Keepiq/i)
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 
 	test('Version Information card shows app name and the current app version', async ({
@@ -56,8 +56,8 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 	}) => {
 		// @e2e admin-settings::admin-opens-settings
 		// The scenario is "the FIRST section MUST be a CnVersionInfoCard with app
-		// name Doriath and the current version" — which is what this asserts.
-		const errors = collectDoriathErrors(page)
+		// name Keepiq and the current version" — which is what this asserts.
+		const errors = collectKeepiqErrors(page)
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 
 		const content = page.locator('#app-content, #content').first()
@@ -75,11 +75,11 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 			content.getByText(/support@conduction\.nl/i).first(),
 		).toBeVisible()
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 
 	test('Password Policy section renders', async ({ page }) => {
-		const errors = collectDoriathErrors(page)
+		const errors = collectKeepiqErrors(page)
 		await page.goto(ADMIN_SETTINGS, { waitUntil: 'domcontentloaded' })
 
 		const content = page.locator('#app-content, #content').first()
@@ -87,7 +87,7 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 			timeout: 15_000,
 		})
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 
 	test('Certificate Authority section renders and reports Healthy status', async ({
@@ -98,7 +98,7 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 		// admin views settings, THEN the CA section MUST show "Healthy" status
 		// WITH ROOT AND INTERMEDIATE EXPIRY DATES. All three clauses are asserted
 		// below — the expiry dates were previously not checked at all.
-		const errors = collectDoriathErrors(page)
+		const errors = collectKeepiqErrors(page)
 
 		// The scenario's GIVEN, as a HARD precondition.
 		//
@@ -127,7 +127,7 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 				(head && head.getAttribute('data-requesttoken'))
 				|| ((window as any).OC && (window as any).OC.requestToken)
 				|| ''
-			const res = await fetch('/index.php/apps/doriath/api/v1/ca/status', {
+			const res = await fetch('/index.php/apps/keepiq/api/v1/ca/status', {
 				credentials: 'include',
 				headers: { requesttoken: token, Accept: 'application/json' },
 			})
@@ -162,6 +162,6 @@ test.describe('Admin settings — spec: admin-settings/spec.md', () => {
 			`the CA section rendered no expiry dates (text was: ${sectionText.slice(0, 400)})`,
 		).toBeGreaterThanOrEqual(2)
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 })

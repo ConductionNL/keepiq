@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Suite Provisioner
+ * Keepiq Application Suite Provisioner
  *
  * The EncryptionSuite half of the registered-application lifecycle
  * (implement-application-mgmt §9.1/§9.4): provisioning a suite from a
@@ -14,7 +14,7 @@
  * transaction that triggered it.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -76,13 +76,13 @@ class ApplicationSuiteProvisioner {
 			);
 			$this->logger->info(
 				'Provisioned EncryptionSuite for application ' . $applicationId,
-				['app' => 'doriath']
+				['app' => 'keepiq']
 			);
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Failed to provision EncryptionSuite for application '
 				. $applicationId . ': ' . $exception->getMessage(),
-				['app' => 'doriath']
+				['app' => 'keepiq']
 			);
 		}
 	}//end provision()

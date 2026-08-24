@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Entity
+ * Keepiq Secret Entity
  *
  * Database entity representing a secret. The key, login, and
  * additional_fields columns hold RSA-encrypted ciphertext blobs produced
@@ -9,7 +9,7 @@
  * folder placement are stored in plaintext to enable search.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

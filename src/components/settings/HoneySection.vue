@@ -11,10 +11,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Honey credentials')"
+		:name="t('keepiq', 'Honey credentials')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Decoy tripwires: instance-wide alerts raised when anyone accesses a honey-flagged secret. Deception is detection — an alert never blocks the access.',
 			)
 		">
@@ -30,22 +30,22 @@
 				<thead>
 					<tr>
 						<th scope="col">
-							{{ t('doriath', 'Accessor') }}
+							{{ t('keepiq', 'Accessor') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Channel') }}
+							{{ t('keepiq', 'Channel') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'IP / agent') }}
+							{{ t('keepiq', 'IP / agent') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Count') }}
+							{{ t('keepiq', 'Count') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Last access') }}
+							{{ t('keepiq', 'Last access') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Status') }}
+							{{ t('keepiq', 'Status') }}
 						</th>
 						<th scope="col" />
 					</tr>
@@ -57,7 +57,7 @@
 						:data-testid="`honey-admin-alert-${alert.id}`">
 						<td>
 							{{ alert.accessorType }}:
-							{{ alert.accessorId || t('doriath', 'anonymous') }}
+							{{ alert.accessorId || t('keepiq', 'anonymous') }}
 						</td>
 						<td>{{ alert.channel }}</td>
 						<td class="honey-admin__transport">
@@ -73,7 +73,7 @@
 								v-if="alert.acknowledgedAt"
 								class="honey-admin__muted">
 								{{
-									t('doriath', 'handled by {who}', {
+									t('keepiq', 'handled by {who}', {
 										who: alert.acknowledgedBy,
 									})
 								}}
@@ -81,10 +81,10 @@
 							<span
 								v-else-if="isSnoozed(alert)"
 								class="honey-admin__muted"
-								>{{ t('doriath', 'snoozed') }}</span
+								>{{ t('keepiq', 'snoozed') }}</span
 							>
 							<strong v-else class="honey-admin__open">{{
-								t('doriath', 'OPEN')
+								t('keepiq', 'OPEN')
 							}}</strong>
 						</td>
 						<td class="honey-admin__actions">
@@ -93,14 +93,14 @@
 								variant="tertiary"
 								:data-testid="`honey-admin-ack-${alert.id}`"
 								@click="store.acknowledge(alert.id)">
-								{{ t('doriath', 'Acknowledge') }}
+								{{ t('keepiq', 'Acknowledge') }}
 							</NcButton>
 							<NcButton
 								v-if="!isSnoozed(alert)"
 								variant="tertiary"
 								:data-testid="`honey-admin-snooze-${alert.id}`"
 								@click="store.snooze(alert.id)">
-								{{ t('doriath', 'Snooze 24h') }}
+								{{ t('keepiq', 'Snooze 24h') }}
 							</NcButton>
 						</td>
 					</tr>
@@ -109,7 +109,7 @@
 			<p v-else class="honey-admin__muted">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						"No honey alerts. Owners arm tripwires from a secret's detail page.",
 					)
 				}}

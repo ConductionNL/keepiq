@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Migration Version 11
+ * Keepiq Migration Version 11
  *
  * Create the doriath_dashboard_settings table — backs the per-user
  * dashboard preference scaffold for the BLOCKED
  * implement-dashboard-settings change.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

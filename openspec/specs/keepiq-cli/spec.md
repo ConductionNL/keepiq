@@ -1,14 +1,14 @@
-# Doriath CLI Specification
+# Keepiq CLI Specification
 
 **Status**: done
 
-**OpenSpec changes:** [archive/2026-07-20-doriath-cli](../../changes/archive/2026-07-20-doriath-cli/)
+**OpenSpec changes:** [archive/2026-07-20-keepiq-cli](../../changes/archive/2026-07-20-keepiq-cli/)
 
 > Implemented in `cli/` (GitHub PR #111). Session-cache/keyring (3.3) and the full CI integration harness (6.2) are documented follow-ups; the security-critical crypto path is live-verified (WebCrypto cross-impl + live token-exchange assertion path).
 
 ## Purpose
 
-Give Doriath a shell front door. Today the vault is reachable through a browser (humans) and the RFC 7523 machine secret-store API (Nextcloud-internal apps such as OpenConnector), but nothing serves a developer at a terminal or a CI/CD pipeline — the DevOps audience Doriath's roadmap names at `docs/FEATURES.md:273` and `:471`. A single static binary with a human mode (app-password auth + local master-password unlock, all decryption client-side) and a CI mode (JWT machine auth, lease-aware fetch, env/JSON/`run --` output, never plaintext to disk) closes that gap without weakening the zero-knowledge model (ADR-003) and without adding any backend surface. Market-validated by Proton Pass's audited Nov-2025 CI/CD CLI (`docs/FEATURES.md:496`); canonical feature `cli-tool` (demand 58); serves the `devops-integrator` journey `cicd-secret-fetch` ("nothing stored in the pipeline").
+Give Keepiq a shell front door. Today the vault is reachable through a browser (humans) and the RFC 7523 machine secret-store API (Nextcloud-internal apps such as OpenConnector), but nothing serves a developer at a terminal or a CI/CD pipeline — the DevOps audience Keepiq's roadmap names at `docs/FEATURES.md:273` and `:471`. A single static binary with a human mode (app-password auth + local master-password unlock, all decryption client-side) and a CI mode (JWT machine auth, lease-aware fetch, env/JSON/`run --` output, never plaintext to disk) closes that gap without weakening the zero-knowledge model (ADR-003) and without adding any backend surface. Market-validated by Proton Pass's audited Nov-2025 CI/CD CLI (`docs/FEATURES.md:496`); canonical feature `cli-tool` (demand 58); serves the `devops-integrator` journey `cicd-secret-fetch` ("nothing stored in the pipeline").
 
 ## Requirements
 
@@ -17,7 +17,7 @@ The system MUST distribute the CLI as a single statically-linked, cross-platform
 
 #### Scenario: Binary runs with no runtime dependency
 - GIVEN a clean CI base image with no PHP or Node
-- WHEN the `doriath` binary is invoked
+- WHEN the `keepiq` binary is invoked
 - THEN the system MUST run without any external runtime or Nextcloud app install
 
 ### Requirement: Human mode preserves zero-knowledge decryption
@@ -45,11 +45,11 @@ The system MUST authenticate CI mode via the RFC 7523 JWT-bearer flow, decrypt t
 - THEN the system MUST return an encrypted envelope the CLI decrypts locally, with no server-side plaintext
 
 ### Requirement: CI-mode output never writes plaintext to disk
-The system MUST offer env-export, `--output json`, and `doriath run -- <cmd>` output modes, and MUST NOT write any decrypted value to a file; `run` injects into the child process environment only.
+The system MUST offer env-export, `--output json`, and `keepiq run -- <cmd>` output modes, and MUST NOT write any decrypted value to a file; `run` injects into the child process environment only.
 
 #### Scenario: run injects into the child environment only
 - GIVEN a resolvable set of application secrets
-- WHEN the user runs `doriath run -- <cmd>`
+- WHEN the user runs `keepiq run -- <cmd>`
 - THEN `<cmd>` MUST see the secrets in its environment and no decrypted value MUST be written to disk
 
 ### Requirement: CI mode honours leases when advertised

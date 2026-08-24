@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * Doriath documentation site.
+ * Keepiq documentation site.
  *
  * Built on @conduction/docusaurus-preset for brand defaults (tokens,
  * theme swizzles for Navbar / Footer, i18n scaffolding, KvK / BTW
@@ -9,7 +9,7 @@
  * path, mermaid theme, custom prism themes, navbar items — are passed
  * through createConfig() opts.
  *
- * Doriath is the self-hosted password and secrets vault in the
+ * Keepiq is the self-hosted password and secrets vault in the
  * Conduction fleet (per-user, per-team, audited). The app is in
  * development — this docs site provides the brand landing surface and
  * a journeydoc tutorial scaffold; tutorial bodies fill in as the UI
@@ -25,13 +25,13 @@ const { createConfig, baseFooterLinks } = require('@conduction/docusaurus-preset
 const BRAND_THEME = require.resolve('@conduction/docusaurus-preset/theme');
 
 const config = createConfig({
-  title: 'Doriath',
+  title: 'Keepiq',
   tagline: 'Self-hosted password and secrets vault. Per-user, per-team, audited.',
-  url: 'https://doriath.conduction.nl',
+  url: 'https://keepiq.conduction.nl',
   baseUrl: '/',
 
   organizationName: 'ConductionNL',
-  projectName: 'doriath',
+  projectName: 'keepiq',
 
   /* English-only for now (ADR-030). The brand preset ships a
      multi-locale i18n block (nl/en/de/fr), but enabling locales
@@ -65,7 +65,7 @@ const config = createConfig({
              plus the standard node_modules bucket. */
           exclude: ['**/node_modules/**', 'src/**'],
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/ConductionNL/doriath/tree/development/docs/',
+          editUrl: 'https://github.com/ConductionNL/keepiq/tree/development/docs/',
         },
         blog: false,
         theme: {
@@ -90,7 +90,7 @@ const config = createConfig({
         label: 'Documentation',
       },
       {
-        href: 'https://github.com/ConductionNL/doriath',
+        href: 'https://github.com/ConductionNL/keepiq',
         label: 'GitHub',
         position: 'right',
       },
@@ -115,7 +115,7 @@ const config = createConfig({
   /* themeConfig is shallow-merged into the preset's defaults
      (colorMode + navbar + footer). prism + mermaid land alongside. */
   themeConfig: {
-    image: 'img/og-doriath.png',
+    image: 'img/og-keepiq.png',
     prism: {
       theme: require('prism-react-renderer/themes/github'),
       darkTheme: require('prism-react-renderer/themes/dracula'),

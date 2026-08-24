@@ -9,6 +9,10 @@ import { describe, it, expect } from 'vitest'
 import { parseCertificatePem } from '../../src/certificates/x509.js'
 
 // Static self-signed RSA-2048 fixture: CN=x509-fixture.doriath.test,
+// The CN keeps the old name after the doriath -> keepiq rename because it is
+// baked into the SIGNED DER of the PEM below — editing the string here would
+// only make the assertion disagree with the certificate. Renaming it means
+// regenerating and re-signing the fixture, which is not part of a rename.
 // notAfter 2036-07-15T14:43:57Z, serial 0E9E...2E9F.
 const FIXTURE_PEM = `-----BEGIN CERTIFICATE-----
 MIIDbTCCAlWgAwIBAgIUDp6EiEfMr98205tBqHfwoL2zLp8wDQYJKoZIhvcNAQEL

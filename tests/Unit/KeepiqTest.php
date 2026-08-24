@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit;
+namespace OCA\Keepiq\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
 /**
  * Placeholder unit test — replace with real tests for your app logic.
  */
-class DoriathTest extends TestCase {
+class KeepiqTest extends TestCase {
 	public function testPlaceholder(): void {
 		$this->assertTrue(true);
 

@@ -66,7 +66,7 @@ export const useExportStore = defineStore('export', {
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
 		 */
 		async reportExport(mode, scope, secretCount) {
-			await axios.post(generateUrl('/apps/doriath/api/v1/export/events'), {
+			await axios.post(generateUrl('/apps/keepiq/api/v1/export/events'), {
 				mode,
 				scope,
 				secretCount,
@@ -253,7 +253,7 @@ export const useExportStore = defineStore('export', {
 			try {
 				const includesVault = secrets != null
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/gdpr/metadata'),
+					generateUrl('/apps/keepiq/api/v1/gdpr/metadata'),
 					{ params: { includesVault: includesVault ? 'true' : 'false' } },
 				)
 				const vaultPayload = includesVault
@@ -261,7 +261,7 @@ export const useExportStore = defineStore('export', {
 					: null
 				const pkg = assembleGdprPackage(response.data, vaultPayload)
 				downloadBlob(
-					'doriath-gdpr-export.json',
+					'keepiq-gdpr-export.json',
 					JSON.stringify(pkg, null, 2),
 					'application/json',
 				)
@@ -274,7 +274,7 @@ export const useExportStore = defineStore('export', {
 		},
 
 		/**
-		 * Delete all of the user's Doriath data (GDPR Art. 17). The
+		 * Delete all of the user's Keepiq data (GDPR Art. 17). The
 		 * master-password re-auth is verified client-side by the dialog before
 		 * this is called; the typed confirmation phrase is the server gate. The
 		 * password is NEVER sent.
@@ -288,7 +288,7 @@ export const useExportStore = defineStore('export', {
 			this.error = null
 			try {
 				const response = await axios.delete(
-					generateUrl('/apps/doriath/api/v1/gdpr/account-data'),
+					generateUrl('/apps/keepiq/api/v1/gdpr/account-data'),
 					{ data: { confirmation } },
 				)
 				return response.data

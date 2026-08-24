@@ -4,7 +4,7 @@
  * Unit tests for ExtensionController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -15,11 +15,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\ExtensionController;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\Controller\ExtensionController;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
@@ -27,7 +27,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \OCA\Doriath\Controller\ExtensionController
+ * @covers \OCA\Keepiq\Controller\ExtensionController
  */
 class ExtensionControllerTest extends TestCase {
 	/**

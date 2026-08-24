@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Secret Transfer Service
+ * Keepiq Team Secret Transfer Service
  *
  * Step 2 of admin offboarding (team-folder-sharing §2.5): every TEAM secret the
  * leaving user owns is handed to the successor through the existing permanent
@@ -13,7 +13,7 @@
  * the admin re-runs the offboarding after adding the successor to the folder.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,14 +26,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Db\TeamFolderMapper;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolderMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 

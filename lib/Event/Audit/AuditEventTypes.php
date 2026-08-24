@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Event Types
+ * Keepiq Audit Event Types
  *
  * The single source of truth for dot-namespaced audit event-type strings
  * (add-secret-audit-trail §2.2) and the per-event-type metadata whitelist.
@@ -11,7 +11,7 @@
  * recorded entry against the map for its event type.
  *
  * @category Event
- * @package  OCA\Doriath\Event\Audit
+ * @package  OCA\Keepiq\Event\Audit
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event\Audit;
+namespace OCA\Keepiq\Event\Audit;
 
 /**
  * Audit event-type constants and the metadata whitelist.

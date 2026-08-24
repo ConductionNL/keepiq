@@ -10,7 +10,7 @@
 
 @e2e exclude No application-management UI is built in v0.1; all scenarios exercise registration, CSR/key-pair handling, and JWT-auth API flows — covered by integration tests, not Playwright UI flows.
 
-External and internal applications can be registered in Doriath so that secrets can be attributed to them. An application gets its own EncryptionSuite, allowing secrets to be encrypted specifically for that application. The application can then retrieve and decrypt its own secrets via the API.
+External and internal applications can be registered in Keepiq so that secrets can be attributed to them. An application gets its own EncryptionSuite, allowing secrets to be encrypted specifically for that application. The application can then retrieve and decrypt its own secrets via the API.
 
 Registration is open (anyone can register, even anonymously), but non-admin registrations go into a pending queue for approval by the vault administrator. Secrets cannot be attributed to a pending application.
 
@@ -95,7 +95,7 @@ When a non-admin submits an application registration, all vault administrators M
 Notification content:
 - Title: "New application pending approval"
 - Body: "Application *{name}* is awaiting approval."
-- Action link: opens the approval queue in Doriath
+- Action link: opens the approval queue in Keepiq
 
 #### Scenario: Non-admin registers application
 - GIVEN a non-admin submits a registration
@@ -103,17 +103,17 @@ Notification content:
 - THEN a Nextcloud notification MUST be dispatched to all vault administrators
 
 ### Requirement: Pending Applications Counter on Dashboard
-The Doriath dashboard MUST display a visible counter of pending application registrations to vault administrators. Non-administrators MUST NOT see this counter.
+The Keepiq dashboard MUST display a visible counter of pending application registrations to vault administrators. Non-administrators MUST NOT see this counter.
 
 #### Scenario: Pending applications exist
 - GIVEN one or more applications are in `pending` status
-- WHEN a vault administrator views the Doriath dashboard
+- WHEN a vault administrator views the Keepiq dashboard
 - THEN the dashboard MUST show the count of pending registrations
 - AND the counter MUST link to the approval queue
 
 #### Scenario: No pending applications
 - GIVEN no applications are pending
-- WHEN a vault administrator views the Doriath dashboard
+- WHEN a vault administrator views the Keepiq dashboard
 - THEN the counter MUST NOT be shown (or shown as zero, implementation choice)
 
 ### Requirement: Attribute Secrets to Application
@@ -169,7 +169,7 @@ The listing MUST NOT render a request's full token, and MUST NOT expose any subm
 
 ## User Stories
 
-- As a developer, I want to register my application so that I can store and retrieve its secrets from Doriath
+- As a developer, I want to register my application so that I can store and retrieve its secrets from Keepiq
 - As an administrator, I want to approve or reject application registrations so that I control which applications can use the vault
 - As a user, I want to write a secret for an application without being able to read it so that sensitive values are never in my hands
 - As an application, I want to retrieve my secrets via the API using my private key so that I can configure myself securely
@@ -186,7 +186,7 @@ The listing MUST NOT render a request's full token, and MUST NOT expose any subm
 - [ ] Secrets cannot be attributed to pending applications
 - [ ] Writing a secret for an application encrypts it with the app's public certificate
 - [ ] All vault administrators receive a Nextcloud notification when a new application registration is pending
-- [ ] The Doriath dashboard shows a pending application counter to vault administrators (hidden from non-admins)
+- [ ] The Keepiq dashboard shows a pending application counter to vault administrators (hidden from non-admins)
 - [ ] Vault administrators can delete an active application
 - [ ] Deletion permanently removes the application, its EncryptionSuite, and all its secrets (hard delete, no soft-delete or deactivation state)
 
@@ -196,7 +196,7 @@ The listing MUST NOT render a request's full token, and MUST NOT expose any subm
 
 **Decision:** RFC 7523 — OAuth2 client credentials flow where the application authenticates by presenting a JWT signed with its own RSA private key.
 
-**Why:** Standard pattern (used by Google service accounts), uses the existing key infrastructure (the application already has an RSA key pair from registration), produces short-lived access tokens, and introduces no new credential to manage. Doriath owns the `/oauth2/token` endpoint since Nextcloud's oauth2 app does not support this grant type.
+**Why:** Standard pattern (used by Google service accounts), uses the existing key infrastructure (the application already has an RSA key pair from registration), produces short-lived access tokens, and introduces no new credential to manage. Keepiq owns the `/oauth2/token` endpoint since Nextcloud's oauth2 app does not support this grant type.
 
 **Recovery:** If the private key is lost, re-registration is the recovery path (new key pair, new EncryptionSuite; existing secrets encrypted with the old public key become inaccessible).
 

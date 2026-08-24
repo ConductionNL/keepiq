@@ -11,7 +11,7 @@
  *  - active apps carry approvedBy / approvedAt; pending app does not.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Repair
+ * @package  OCA\Keepiq\Tests\Unit\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +24,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Repair;
+namespace OCA\Keepiq\Tests\Unit\Repair;
 
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Repair\SeedDevelopmentApplications;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Repair\SeedDevelopmentApplications;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
 use OCP\Migration\IOutput;

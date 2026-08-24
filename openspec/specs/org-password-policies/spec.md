@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Give Doriath administrators an instance-wide, configurable password policy for stored
+Give Keepiq administrators an instance-wide, configurable password policy for stored
 secret values — a minimum length and character-class floor locked into the server-side
 key generator, a minimum zxcvbn strength score for manually entered login passwords, an
 optional block-on-HIBP-hit at save time, and per-`SecretType` exemptions. This turns the
@@ -14,7 +14,7 @@ existing generator, password-health, and admin-settings building blocks into the
 configurable credential-hygiene control that BIO2 / NIS2 procurement expects and that
 Bitwarden, Keeper, and Passbolt gate behind paid tiers.
 
-The policy respects Doriath's zero-knowledge boundary (ADR-003): the server stores the
+The policy respects Keepiq's zero-knowledge boundary (ADR-003): the server stores the
 policy and authoritatively enforces the generator floor and the per-type exemption
 metadata rule, but it can never see a manually entered plaintext value — those checks are
 hygiene guidance run client-side in the save flow for honest clients, not a security
@@ -29,7 +29,7 @@ The system MUST let an admin configure an instance-wide policy (`policy_enabled`
 MUST validate it server-side before persisting.
 
 #### Scenario: Admin saves and validation applies
-- GIVEN an admin opens the Doriath admin settings
+- GIVEN an admin opens the Keepiq admin settings
 - WHEN they save a policy with a below-floor `generator_min_length`
 - THEN the system MUST reject it, and MUST persist a valid policy otherwise
 

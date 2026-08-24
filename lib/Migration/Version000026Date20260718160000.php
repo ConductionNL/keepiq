@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration - Team-folder member grades
+ * Keepiq Migration - Team-folder member grades
  *
  * Adds the `grade` column (`read`|`write`, default `read`) to
  * `doriath_team_folder_members` (folder-permission-grades §1.1). The
@@ -9,7 +9,7 @@
  * is exactly the pre-grade behavior.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

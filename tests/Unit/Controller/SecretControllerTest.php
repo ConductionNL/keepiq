@@ -4,7 +4,7 @@
  * Unit tests for SecretController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,15 +17,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\SecretController;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Exception\SuiteBlockedException;
-use OCA\Doriath\Exception\WriteLockedException;
-use OCA\Doriath\Service\SecretService;
+use OCA\Keepiq\Controller\SecretController;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

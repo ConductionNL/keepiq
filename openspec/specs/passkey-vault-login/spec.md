@@ -9,7 +9,7 @@
 
 ## Purpose
 
-Let a Doriath user unlock their vault passwordlessly with a platform or roaming
+Let a Keepiq user unlock their vault passwordlessly with a platform or roaming
 WebAuthn authenticator, using the authenticator's PRF output to derive a
 key-encryption key that wraps a copy of the vault unlock key — an alternative
 unlock envelope stored alongside the canonical master-password envelope. The
@@ -114,7 +114,7 @@ suite rotation.
 ## Notes
 
 - New table `doriath_passkey_credentials` (own Doctrine entity/migration per ADR-001 — no OpenRegister).
-- KEK = HKDF-SHA256(prfOutput, salt=credentialId, info="doriath-passkey-kek-v1"); envelope reuses `src/crypto/envelope.js` (AES-256-GCM).
+- KEK = HKDF-SHA256(prfOutput, salt=credentialId, info="keepiq-passkey-kek-v1"); envelope reuses `src/crypto/envelope.js` (AES-256-GCM).
 - Staleness is tracked via an `unlock_key_epoch` on the private-key wrap.
 - Related specs: encryption-suites (unlock/session, master-password change), user-settings (management surface). Related ADRs: ADR-001, ADR-003.
 - Related change (composes later): offline-readonly-cache (offline passkey unlock is out of scope for v1).

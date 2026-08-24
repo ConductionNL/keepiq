@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Membership Resolver
+ * Keepiq Team Folder Membership Resolver
  *
  * Turns team-folder MEMBERSHIP rows into the concrete sets the fan-out works
  * on (team-folder-sharing §2.2): a group expands to its current users (static
@@ -13,7 +13,7 @@
  * Everything here is read-only: no row is written and no ciphertext is seen.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,14 +26,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\TeamFolder;
-use OCA\Doriath\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use OCP\IUserManager;
@@ -195,7 +195,7 @@ class TeamFolderMembershipResolver {
 	 *
 	 * @param string $userId The user
 	 *
-	 * @return array<int,\OCA\Doriath\Db\TeamFolderMember>
+	 * @return array<int,\OCA\Keepiq\Db\TeamFolderMember>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
 	 */

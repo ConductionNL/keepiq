@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Version 19
+ * Keepiq Migration Version 19
  *
  * Team folder sharing (team-folder-sharing §1.1/§1.2). Creates
  * `doriath_team_folders` (membership attachment on an existing owner
@@ -11,7 +11,7 @@
  * material is stored on any of these tables (ADR-003).
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

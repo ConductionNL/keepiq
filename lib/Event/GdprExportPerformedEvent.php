@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath GdprExportPerformedEvent
+ * Keepiq GdprExportPerformedEvent
  *
  * Dispatched when a user produces a GDPR Art. 15 personal-data export package.
  * The server half (metadata) is produced server-side; the vault half is
@@ -14,7 +14,7 @@
  * AuditListener (vault.gdpr_exported whitelist: mode, scope, secretCount).
  *
  * @category Event
- * @package  OCA\Doriath\Event
+ * @package  OCA\Keepiq\Event
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event;
+namespace OCA\Keepiq\Event;
 
 use OCP\EventDispatcher\Event;
 

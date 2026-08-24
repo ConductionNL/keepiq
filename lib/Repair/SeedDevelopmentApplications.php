@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Seed Development Applications Repair Step
+ * Keepiq Seed Development Applications Repair Step
  *
  * Creates example Application rows for the development vault so the admin
  * queue and JWT-Bearer flows have realistic dev fixtures. Debug-only,
@@ -9,7 +9,7 @@
  * attribution land via the dedicated implement-application-mgmt build cycle.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,11 +22,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
 use DateTime;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
@@ -62,7 +62,7 @@ class SeedDevelopmentApplications implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Seed Doriath development applications (debug only)';
+		return 'Seed Keepiq development applications (debug only)';
 	}//end getName()
 
 	/**
@@ -71,6 +71,14 @@ class SeedDevelopmentApplications implements IRepairStep {
 	 * @param IOutput $output The output channel
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Debug-only fixture data, gated on the `debug` system value
+	 *       and never present on a production instance; it asserts no product
+	 *       behaviour of its own. Real application creation and the approval
+	 *       states it fakes are specified in
+	 *       openspec/specs/application-mgmt/spec.md#requirement-register-application
+	 *       and
+	 *       openspec/specs/application-mgmt/spec.md#requirement-approval-queue.
 	 */
 	public function run(IOutput $output): void {
 		if ($this->config->getSystemValueBool('debug', false) === false) {
@@ -127,8 +135,8 @@ class SeedDevelopmentApplications implements IRepairStep {
 			$seeded++;
 		}//end foreach
 
-		$output->info('Doriath: seeded ' . $seeded . ' development applications');
-		$this->logger->info('Doriath dev seed: created ' . $seeded . ' applications');
+		$output->info('Keepiq: seeded ' . $seeded . ' development applications');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' applications');
 	}//end run()
 
 	/**
@@ -139,6 +147,6 @@ class SeedDevelopmentApplications implements IRepairStep {
 	 * @return string
 	 */
 	private function deterministicId(string $name): string {
-		return Uuid::uuid5(Uuid::NAMESPACE_OID, 'doriath:application:' . $name)->toString();
+		return Uuid::uuid5(Uuid::NAMESPACE_OID, 'keepiq:application:' . $name)->toString();
 	}//end deterministicId()
 }//end class

@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Share Target Entity
+ * Keepiq Share Target Entity
  *
  * Database entity representing a single user-to-user share of a secret —
  * one row per recipient. Each row links a source secret to a recipient's
  * encrypted Secret copy.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

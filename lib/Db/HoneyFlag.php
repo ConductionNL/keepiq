@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Honey Flag Entity
+ * Keepiq Honey Flag Entity
  *
  * Marks one secret as a decoy tripwire (honey-credentials §1). Lives in
  * a SIDE table — never a column on doriath_secrets and never part of
@@ -9,7 +9,7 @@
  * distinguish a honey secret.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

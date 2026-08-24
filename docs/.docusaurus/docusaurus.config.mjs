@@ -4,14 +4,14 @@
  * Modify the docusaurus.config.js file at your site's root instead.
  */
 export default {
-  "title": "Doriath",
+  "title": "Keepiq",
   "tagline": "Self-hosted password and secrets vault. Per-user, per-team, audited.",
   "favicon": "img/favicon.svg",
   "url": "https://doriath.conduction.nl",
   "baseUrl": "/",
   "trailingSlash": true,
   "organizationName": "ConductionNL",
-  "projectName": "doriath",
+  "projectName": "keepiq",
   "customFields": {
     "appVersion": "0.1.3"
   },
@@ -43,7 +43,7 @@ export default {
             "src/**"
           ],
           "sidebarPath": "/home/rubenlinde/nextcloud-docker-dev/workspace/server/apps-extra/doriath/docs/sidebars.js",
-          "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/"
+          "editUrl": "https://github.com/ConductionNL/keepiq/tree/development/docs/"
         },
         "blog": false,
         "theme": {
@@ -81,9 +81,9 @@ export default {
       "respectPrefersColorScheme": true
     },
     "navbar": {
-      "title": "Doriath",
+      "title": "Keepiq",
       "logo": {
-        "alt": "Doriath avatar",
+        "alt": "Keepiq avatar",
         "src": "img/logo.svg",
         "srcDark": "img/logo-dark.svg"
       },
@@ -95,7 +95,7 @@ export default {
           "label": "Documentation"
         },
         {
-          "href": "https://github.com/ConductionNL/doriath",
+          "href": "https://github.com/ConductionNL/keepiq",
           "label": "GitHub",
           "position": "right"
         },
@@ -142,7 +142,7 @@ export default {
       "terms": "https://www.conduction.nl/terms",
       "iso": "https://www.conduction.nl/iso"
     },
-    "image": "img/og-doriath.png",
+    "image": "img/og-keepiq.png",
     "metadata": [
       {
         "name": "twitter:site",
@@ -399,7 +399,7 @@ export default {
       "attributes": {
         "type": "application/ld+json"
       },
-      "innerHTML": "{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\",\"@id\":\"https://doriath.conduction.nl/#website\",\"url\":\"https://doriath.conduction.nl/\",\"name\":\"Doriath\",\"publisher\":{\"@id\":\"https://www.conduction.nl/#org\"},\"inLanguage\":[\"en\"]}",
+      "innerHTML": "{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\",\"@id\":\"https://doriath.conduction.nl/#website\",\"url\":\"https://doriath.conduction.nl/\",\"name\":\"Keepiq\",\"publisher\":{\"@id\":\"https://www.conduction.nl/#org\"},\"inLanguage\":[\"en\"]}",
       "customElement": false
     }
   ],

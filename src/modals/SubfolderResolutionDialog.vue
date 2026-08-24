@@ -1,6 +1,6 @@
 <template>
 	<NcDialog
-		:name="t('doriath', 'Delete folder')"
+		:name="t('keepiq', 'Delete folder')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -12,7 +12,7 @@
 			<p class="resolution-dialog__intro">
 				{{
 					n(
-						'doriath',
+						'keepiq',
 						'This folder contains %n secret directly.',
 						'This folder contains %n secrets directly.',
 						children.directSecretCount,
@@ -24,28 +24,26 @@
 				v-model="directSecrets"
 				:options="directOptions"
 				:reduce="(opt) => opt.value"
-				:inputLabel="t('doriath', 'Secrets in this folder')"
+				:inputLabel="t('keepiq', 'Secrets in this folder')"
 				:clearable="false" />
 
 			<div
 				v-if="children.subfolders && children.subfolders.length"
 				class="resolution-dialog__subfolders">
-				<p>{{ t('doriath', 'Choose what happens to each subfolder:') }}</p>
+				<p>{{ t('keepiq', 'Choose what happens to each subfolder:') }}</p>
 				<div
 					v-for="sub in children.subfolders"
 					:key="sub.id"
 					class="resolution-dialog__row">
 					<span class="resolution-dialog__name">{{ sub.name }}</span>
 					<span class="resolution-dialog__count">
-						{{
-							n('doriath', '%n secret', '%n secrets', sub.secretCount)
-						}}
+						{{ n('keepiq', '%n secret', '%n secrets', sub.secretCount) }}
 					</span>
 					<NcSelect
 						v-model="plan[sub.id]"
 						:options="subfolderOptions"
 						:reduce="(opt) => opt.value"
-						:inputLabel="t('doriath', 'Action')"
+						:inputLabel="t('keepiq', 'Action')"
 						:clearable="false" />
 				</div>
 			</div>
@@ -53,14 +51,14 @@
 
 		<template #actions>
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="error" :disabled="loading" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="loading" :size="20" />
 					<Delete v-else :size="20" />
 				</template>
-				{{ t('doriath', 'Delete folder') }}
+				{{ t('keepiq', 'Delete folder') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -124,18 +122,34 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * What may happen to the folder's own secrets on delete: move them up
+		 * to the parent, or delete them with the folder.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
+		 */
 		directOptions() {
 			return [
-				{ value: 'move', label: t('doriath', 'Move to parent folder') },
-				{ value: 'delete', label: t('doriath', 'Delete them') },
+				{ value: 'move', label: t('keepiq', 'Move to parent folder') },
+				{ value: 'delete', label: t('keepiq', 'Delete them') },
 			]
 		},
 
+		/**
+		 * What may happen to each subfolder on delete, offered per subfolder
+		 * so the resolution plan is explicit rather than a blanket cascade.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
+		 */
 		subfolderOptions() {
 			return [
-				{ value: 'keep', label: t('doriath', 'Keep (move to parent)') },
-				{ value: 'move', label: t('doriath', 'Move its secrets to parent') },
-				{ value: 'delete', label: t('doriath', 'Delete it entirely') },
+				{ value: 'keep', label: t('keepiq', 'Keep (move to parent)') },
+				{ value: 'move', label: t('keepiq', 'Move its secrets to parent') },
+				{ value: 'delete', label: t('keepiq', 'Delete it entirely') },
 			]
 		},
 	},
@@ -170,6 +184,7 @@ export default {
 		 * Submit the resolution plan and delete the folder.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async submit() {
 			this.loading = true
@@ -185,7 +200,7 @@ export default {
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message
-					|| t('doriath', 'Failed to delete folder')
+					|| t('keepiq', 'Failed to delete folder')
 			} finally {
 				this.loading = false
 			}

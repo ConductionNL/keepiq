@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Honey Controller
+ * Keepiq Honey Controller
  *
  * Honey-credential endpoints (honey-credentials §4): flag/unflag a
  * decoy secret, read the flag state, list alerts (owner-scoped;
@@ -11,7 +11,7 @@
  * response — only these owner/admin endpoints expose it.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,12 +24,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\HoneyAlert;
-use OCA\Doriath\Service\HoneyCredentialService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Service\HoneyCredentialService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

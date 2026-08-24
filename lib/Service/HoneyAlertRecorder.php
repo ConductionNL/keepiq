@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Honey Alert Recorder
+ * Keepiq Honey Alert Recorder
  *
  * The alert-row half of the decoy tripwire (honey-credentials §2.2, D5):
  * decides whether an observed access folds onto the accessor's latest alert
@@ -11,7 +11,7 @@
  * caller knows whether to page — it never pages or audits itself.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,14 +24,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\HoneyAlert;
-use OCA\Doriath\Db\HoneyAlertMapper;
-use OCA\Doriath\Db\HoneyFlag;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Db\HoneyAlertMapper;
+use OCA\Keepiq\Db\HoneyFlag;
 use OCP\IAppConfig;
 use Ramsey\Uuid\Uuid;
 

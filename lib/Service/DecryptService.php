@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Decrypt Service
+ * Keepiq Decrypt Service
  *
  * Stateless decryption service for RSA-OAEP and AES-256-GCM operations.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Exception\DecryptionException;
+use OCA\Keepiq\Exception\DecryptionException;
 
 /**
  * Stateless decryption service. No database access, no entity awareness.

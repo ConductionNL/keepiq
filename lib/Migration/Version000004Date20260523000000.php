@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Version 4
+ * Keepiq Migration Version 4
  *
  * Convert the `is_active` column on `doriath_ca_certs` from SMALLINT
  * to BOOLEAN. The original column was declared as SMALLINT in
@@ -34,7 +34,7 @@
  * match the new Version000002 declaration.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -47,7 +47,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
@@ -121,7 +121,7 @@ class Version000004Date20260523000000 extends SimpleMigrationStep {
 			. 'ALTER COLUMN "is_active" SET DEFAULT FALSE'
 		);
 
-		$output->info('Doriath: converted doriath_ca_certs.is_active from SMALLINT to BOOLEAN');
+		$output->info('Keepiq: converted doriath_ca_certs.is_active from SMALLINT to BOOLEAN');
 	}//end preSchemaChange()
 
 	/**

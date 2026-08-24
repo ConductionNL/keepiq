@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Secret Requests Controller
+ * Keepiq Application Secret Requests Controller
  *
  * The machine surface for secret requests: an application asks a human to fill
  * in a credential it must never handle itself.
@@ -20,7 +20,7 @@
  * the body is inert — there is no code path that reads one.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -33,15 +33,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\ApplicationSecretRequestService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\ApplicationSecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -70,7 +70,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 		private FolderMapper $folderMapper,
 		private IURLGenerator $urlGenerator,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -348,16 +348,16 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 			// The recipient has no Nextcloud account, so the URL must be the
 			// ANONYMOUS SPA shell (`publicShell.page`) carrying the router's
 			// hash route. Verified live: this form answers 200 while
-			// /apps/doriath/share/request/{token} answers 401.
+			// /apps/keepiq/share/request/{token} answers 401.
 			'fillLinkUrl' => $this->urlGenerator->getAbsoluteURL(
-				$this->urlGenerator->linkToRoute(DoriathApp::APP_ID . '.publicShell.page')
+				$this->urlGenerator->linkToRoute(KeepiqApp::APP_ID . '.publicShell.page')
 				. '#/share/request/' . $request->getToken()
 			),
 			// Kept alongside it so a machine polling for fulfilment does not
 			// have to parse the human URL.
 			'fillApiUrl' => $this->urlGenerator->getAbsoluteURL(
 				$this->urlGenerator->linkToRoute(
-					DoriathApp::APP_ID . '.secretRequestFill.show',
+					KeepiqApp::APP_ID . '.secretRequestFill.show',
 					['token' => $request->getToken()]
 				)
 			),

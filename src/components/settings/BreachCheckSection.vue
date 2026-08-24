@@ -12,10 +12,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Breach checking')"
+		:name="t('keepiq', 'Breach checking')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Allow users to check their passwords against the Have I Been Pwned breach corpus.',
 			)
 		">
@@ -27,13 +27,13 @@
 					type="checkbox"
 					data-testid="breach-check-enabled"
 					@change="save" />
-				{{ t('doriath', 'Enable breach checking for this instance') }}
+				{{ t('keepiq', 'Enable breach checking for this instance') }}
 			</label>
 			<p class="breach-check__disclosure">
 				{{
 					t(
-						'doriath',
-						'When a user opts in, Doriath sends 5-character SHA-1 hash prefixes of their passwords to Have I Been Pwned (api.pwnedpasswords.com). The full hash and the password never leave the server. Leave this off for air-gapped instances.',
+						'keepiq',
+						'When a user opts in, Keepiq sends 5-character SHA-1 hash prefixes of their passwords to Have I Been Pwned (api.pwnedpasswords.com). The full hash and the password never leave the server. Leave this off for air-gapped instances.',
 					)
 				}}
 			</p>
@@ -65,13 +65,13 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin'),
 			)
 			this.enabled =
 				response.data?.breach_check_enabled === true
 				|| response.data?.breach_check_enabled === '1'
 		} catch (e) {
-			console.warn('Doriath: failed to load breach-check gate', e)
+			console.warn('Keepiq: failed to load breach-check gate', e)
 		}
 	},
 
@@ -83,7 +83,7 @@ export default {
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
 		 */
 		async save() {
-			await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
 				breach_check_enabled: this.enabled,
 			})
 		},

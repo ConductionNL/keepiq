@@ -28,7 +28,7 @@
  * It also makes the test self-repairing: it creates the vault it goes on to
  * rotate, rather than rotating one that already held something. Rotation is
  * destructive to a vault's link shares and passkeys, so a spec that performs it
- * must own its subject. Point DORIATH_VAULT_USER at a throwaway account.
+ * must own its subject. Point KEEPIQ_VAULT_USER at a throwaway account.
  *
  * On CI there is no dev seed, so `alice` does not exist and this spec used to
  * time out on /login?user=alice&direct=1 — a missing fixture that reads as a
@@ -47,8 +47,8 @@ import { test, expect, type Page } from '@playwright/test'
 import { APP_BASE } from './_workflow-helpers'
 
 /** A fixture account that owns no EncryptionSuite, so setup mode is reachable. */
-const VAULT_USER = process.env.DORIATH_VAULT_USER ?? 'alice'
-const VAULT_PASS = process.env.DORIATH_VAULT_PASS ?? 'alice'
+const VAULT_USER = process.env.KEEPIQ_VAULT_USER ?? 'alice'
+const VAULT_PASS = process.env.KEEPIQ_VAULT_PASS ?? 'alice'
 
 /** Master passwords for the vault this spec creates and then rotates. */
 const OLD_MASTER = 'Or1ginal-master-passphrase!'
@@ -310,7 +310,7 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		test.skip(
 			didSetUp === false,
 			`${VAULT_USER} already owns an EncryptionSuite, so first-time setup was not offered. `
-				+ 'Reset that account or point DORIATH_VAULT_USER at one with no suite.',
+				+ 'Reset that account or point KEEPIQ_VAULT_USER at one with no suite.',
 		)
 
 		// Several secrets so the run lasts long enough for progress to be

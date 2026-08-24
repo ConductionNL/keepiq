@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Account Suite Cleanup Service
+ * Keepiq Account Suite Cleanup Service
  *
  * The key-material step of the GDPR Art. 17 erasure cascade
  * (secret-export-gdpr D4), split out of AccountDeletionService: a user's
@@ -10,7 +10,7 @@
  * first so no record is left pointing at a deleted suite.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,10 +23,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\SuiteMigrationMapper;
 
 /**
  * Removes a user's encryption suites and their migration records.

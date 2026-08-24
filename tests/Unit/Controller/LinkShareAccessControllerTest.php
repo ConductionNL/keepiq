@@ -4,7 +4,7 @@
  * Unit tests for LinkShareAccessController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,12 +17,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use DateTime;
-use OCA\Doriath\Controller\LinkShareAccessController;
-use OCA\Doriath\Db\LinkShare;
-use OCA\Doriath\Service\LinkShareService;
+use OCA\Keepiq\Controller\LinkShareAccessController;
+use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Service\LinkShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;

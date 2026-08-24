@@ -155,7 +155,7 @@ func selfSignedCert(t *testing.T, key *rsa.PrivateKey) string {
 	t.Helper()
 	tmpl := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
-		Subject:      pkix.Name{CommonName: "doriath-cli-test"},
+		Subject:      pkix.Name{CommonName: "keepiq-cli-test"},
 		NotBefore:    time.Now().Add(-time.Hour),
 		NotAfter:     time.Now().Add(time.Hour),
 	}

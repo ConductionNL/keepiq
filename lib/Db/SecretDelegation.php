@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Delegation Entity
+ * Keepiq Secret Delegation Entity
  *
  * Database entity representing a delegation record — an `original_owner`
  * temporarily (or permanently) handing the share/revoke authority over a
@@ -9,7 +9,7 @@
  * DelegationService.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

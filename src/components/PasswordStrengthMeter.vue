@@ -104,17 +104,17 @@ export default {
 		feedbackText() {
 			if (!this.password) return ''
 			if (this.password.length < this.effectiveMinLength) {
-				return t('doriath', 'At least {length} characters required', {
+				return t('keepiq', 'At least {length} characters required', {
 					length: this.effectiveMinLength,
 				})
 			}
 			if (this.feedback?.warning) return this.feedback.warning
 			const labels = [
-				t('doriath', 'Very weak'),
-				t('doriath', 'Weak'),
-				t('doriath', 'Fair'),
-				t('doriath', 'Strong'),
-				t('doriath', 'Very strong'),
+				t('keepiq', 'Very weak'),
+				t('keepiq', 'Weak'),
+				t('keepiq', 'Fair'),
+				t('keepiq', 'Strong'),
+				t('keepiq', 'Very strong'),
 			]
 			return labels[this.score]
 		},

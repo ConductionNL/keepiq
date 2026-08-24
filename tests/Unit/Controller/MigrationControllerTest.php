@@ -4,7 +4,7 @@
  * Unit tests for MigrationController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,19 +17,19 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use DateTime;
-use OCA\Doriath\Controller\MigrationController;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\MigrationIncompleteException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\MigrationService;
-use OCA\Doriath\Service\MigrationWorkService;
+use OCA\Keepiq\Controller\MigrationController;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\MigrationWorkService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;

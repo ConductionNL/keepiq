@@ -37,13 +37,14 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 		 */
 		async fetchVersions(secretId) {
 			this.loading = true
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/versions`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/versions`),
 				)
 				this.versions = response.data || []
 			} catch (e) {
@@ -62,6 +63,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		 *
 		 * @param {string} versionId The version id.
 		 * @return {Promise<object>} The version with plaintext fields.
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 		 */
 		async viewVersion(versionId) {
 			const session = useSessionStore()
@@ -69,7 +71,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 				throw new Error('Vault is locked')
 			}
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/versions/${versionId}`),
+				generateUrl(`/apps/keepiq/api/v1/versions/${versionId}`),
 			)
 			const version = { ...response.data }
 			if (version.key) {
@@ -100,15 +102,15 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		 * @param {string} versionId The version id.
 		 * @param {string} secretId The owning secret id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
 		 */
 		async restore(versionId, secretId) {
 			this.loading = true
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(
-						`/apps/doriath/api/v1/versions/${versionId}/restore`,
-					),
+					generateUrl(`/apps/keepiq/api/v1/versions/${versionId}/restore`),
 				)
 				// Propagate to recipients: decrypt the restored head with the
 				// session key, then re-encrypt per recipient (share fan-out).

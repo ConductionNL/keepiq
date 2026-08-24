@@ -26,7 +26,7 @@ import {
 } from '../../src/export/backup.js'
 
 const payload = {
-	format: 'doriath-vault',
+	format: 'keepiq-vault',
 	version: 1,
 	secrets: [
 		{

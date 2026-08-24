@@ -1,5 +1,5 @@
 /**
- * Build the Doriath MV3 extension with esbuild. Each entry is bundled to a
+ * Build the Keepiq MV3 extension with esbuild. Each entry is bundled to a
  * single self-contained ESM/IIFE file (MV3 forbids remote code + runtime chunk
  * loading), inlining the shared `src/crypto` and `src/totp` modules verbatim so
  * the PHP↔JS↔extension crypto stays in lockstep (ADR-003).

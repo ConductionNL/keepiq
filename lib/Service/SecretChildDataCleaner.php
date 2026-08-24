@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Child-Data Cleaner
+ * Keepiq Secret Child-Data Cleaner
  *
  * Removes the data that HANGS OFF a secret rather than living in the secret
  * row itself: encrypted attachments, the attachment grants a copy holds, and
@@ -14,7 +14,7 @@
  * also skips the enumeration query.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,9 +27,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretMapper;
 
 /**
  * Cascades attachment, grant and version-history removal for secrets.

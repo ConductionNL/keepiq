@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Seed Development Secret Delegations Repair Step
+ * Keepiq Seed Development Secret Delegations Repair Step
  *
  * Creates one example SecretDelegation row for the dev vault so the
  * DelegationManager UI has a temporary delegation to render.
@@ -14,7 +14,7 @@
  * row ID, plus an app-version marker in app config.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,15 +27,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -108,7 +108,7 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Seed Doriath development secret delegations (debug only)';
+		return 'Seed Keepiq development secret delegations (debug only)';
 	}//end getName()
 
 	/**
@@ -137,13 +137,13 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 		try {
 			$this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
 		} catch (DoesNotExistException) {
-			$output->info('Doriath: no dev EncryptionSuite, skipping delegation seed');
+			$output->info('Keepiq: no dev EncryptionSuite, skipping delegation seed');
 			return;
 		}
 
 		$secrets = $this->secretMapper->findByOwner('user', self::DEV_USER_ID);
 		if ($secrets === []) {
-			$output->info('Doriath: no dev secrets, skipping delegation seed');
+			$output->info('Keepiq: no dev secrets, skipping delegation seed');
 			return;
 		}
 
@@ -155,8 +155,8 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 		);
 
 		$this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
-		$output->info('Doriath: seeded ' . $seeded . ' development secret delegation');
-		$this->logger->info('Doriath dev seed: created ' . $seeded . ' SecretDelegation row');
+		$output->info('Keepiq: seeded ' . $seeded . ' development secret delegation');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' SecretDelegation row');
 	}//end run()
 
 	/**
@@ -167,7 +167,7 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 	 * @return string
 	 */
 	private function deterministicId(string $seed): string {
-		return Uuid::uuid5(Uuid::NAMESPACE_OID, 'doriath:secret-delegation:' . $seed)->toString();
+		return Uuid::uuid5(Uuid::NAMESPACE_OID, 'keepiq:secret-delegation:' . $seed)->toString();
 	}//end deterministicId()
 
 	/**
@@ -187,7 +187,7 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 		// hitting the primary-key constraint.
 		try {
 			$this->delegationMapper->findById($id);
-			$this->logger->debug('Doriath dev seed: secret delegation ' . $id . ' already exists, skipping');
+			$this->logger->debug('Keepiq dev seed: secret delegation ' . $id . ' already exists, skipping');
 			return 0;
 		} catch (DoesNotExistException) {
 			// Not seeded yet — insert below.

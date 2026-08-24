@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath SIEM Service
+ * Keepiq SIEM Service
  *
  * Payload building, forwarding-queue backpressure, and delivery drainage
  * (siem-audit-export §2/§4/§5). Forwarded payloads are rebuilt through
@@ -13,7 +13,7 @@
  * class keeps the queue.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,16 +26,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
-use OCA\Doriath\Db\SiemQueueItem;
-use OCA\Doriath\Db\SiemQueueItemMapper;
-use OCA\Doriath\Db\SiemSink;
-use OCA\Doriath\Db\SiemSinkMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Db\SiemQueueItem;
+use OCA\Keepiq\Db\SiemQueueItemMapper;
+use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Db\SiemSinkMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -360,8 +360,8 @@ class SiemService {
 				);
 			} catch (Throwable $exception) {
 				$this->logger->warning(
-					'Doriath: SIEM dead-letter notification failed: ' . $exception->getMessage(),
-					['app' => 'doriath']
+					'Keepiq: SIEM dead-letter notification failed: ' . $exception->getMessage(),
+					['app' => 'keepiq']
 				);
 			}
 		}

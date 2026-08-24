@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Version 18
+ * Keepiq Migration Version 18
  *
  * Create the `doriath_emergency_contacts` table backing the break-glass
  * emergency-access capability (add-emergency-access §1.2). One row per
@@ -11,7 +11,7 @@
  * `doriath_secrets`.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,7 +24,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

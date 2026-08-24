@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Offline Controller
+ * Keepiq Offline Controller
  *
  * The consolidated offline-cache manifest endpoint (offline-readonly-cache
  * §1.3). The controller owns the two transport-level decisions — is the
@@ -13,7 +13,7 @@
  * reveal, so it emits no secret.read audit event.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,10 +26,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\OfflineManifestService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\OfflineManifestService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

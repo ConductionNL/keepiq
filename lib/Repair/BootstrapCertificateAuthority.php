@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Bootstrap Certificate Authority Repair Step
+ * Keepiq Bootstrap Certificate Authority Repair Step
  *
  * Bootstraps the private CA (root + intermediate) on first install.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
-use OCA\Doriath\Service\CertificateAuthorityService;
+use OCA\Keepiq\Service\CertificateAuthorityService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -52,7 +52,7 @@ class BootstrapCertificateAuthority implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Bootstrap Doriath Certificate Authority';
+		return 'Bootstrap Keepiq Certificate Authority';
 	}//end getName()
 
 	/**
@@ -65,7 +65,7 @@ class BootstrapCertificateAuthority implements IRepairStep {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
 	 */
 	public function run(IOutput $output): void {
-		$output->info('Bootstrapping Doriath Certificate Authority...');
+		$output->info('Bootstrapping Keepiq Certificate Authority...');
 
 		try {
 			$this->caService->bootstrap();
@@ -73,7 +73,7 @@ class BootstrapCertificateAuthority implements IRepairStep {
 		} catch (Throwable $e) {
 			$output->warning('CA bootstrap failed: ' . $e->getMessage());
 			$this->logger->error(
-				'Doriath CA bootstrap failed',
+				'Keepiq CA bootstrap failed',
 				[
 					'exception' => $e->getMessage(),
 				]

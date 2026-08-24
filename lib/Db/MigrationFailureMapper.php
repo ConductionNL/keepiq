@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Failure mapper
+ * Keepiq Migration Failure mapper
  *
  * The authoritative record of what a compromise-recovery migration could not
  * carry across, keyed per RECORD.
@@ -16,7 +16,7 @@
  *   - `findByMigration()` is the DISPLAY list, which may be capped.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -29,7 +29,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use OCP\AppFramework\Db\QBMapper;

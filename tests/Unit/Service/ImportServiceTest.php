@@ -4,7 +4,7 @@
  * Unit tests for ImportService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Exception\SuiteBlockedException;
-use OCA\Doriath\Service\FolderService;
-use OCA\Doriath\Service\ImportService;
-use OCA\Doriath\Service\SecretService;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Service\FolderService;
+use OCA\Keepiq\Service\ImportService;
+use OCA\Keepiq\Service\SecretService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 

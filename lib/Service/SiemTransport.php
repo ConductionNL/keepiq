@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath SIEM Transport
+ * Keepiq SIEM Transport
  *
  * The wire half of SIEM audit export (siem-audit-export §3): the single
  * place the syslog/webhook choice is made and the only code that opens a
@@ -13,7 +13,7 @@
  * memory only, for the lifetime of one signature.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,11 +26,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\SiemSink;
-use OCA\Doriath\Support\SuppressesDiagnostics;
+use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\Http\Client\IClientService;
 use OCP\Security\ICrypto;
 use RuntimeException;
@@ -126,7 +126,7 @@ class SiemTransport {
 		try {
 			// RFC 5424: <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID SD MSG
 			// PRI 134 = facility 16 (local0), severity 6 (informational).
-			$message = '<134>1 ' . (new DateTime())->format('c') . ' nextcloud doriath - - - ' . $payloadJson;
+			$message = '<134>1 ' . (new DateTime())->format('c') . ' nextcloud keepiq - - - ' . $payloadJson;
 			// RFC 6587 octet-counted framing for TCP transport.
 			$frame = strlen($message) . ' ' . $message;
 			$written = fwrite($socket, $frame);
@@ -154,7 +154,7 @@ class SiemTransport {
 		$enc = $sink->getHmacSecretEnc();
 		if ($enc !== null && $enc !== '') {
 			$secret = $this->crypto->decrypt($enc);
-			$headers['X-Doriath-Signature'] = 'sha256=' . hash_hmac('sha256', $payloadJson, $secret);
+			$headers['X-Keepiq-Signature'] = 'sha256=' . hash_hmac('sha256', $payloadJson, $secret);
 		}
 
 		$client = $this->clientService->newClient();

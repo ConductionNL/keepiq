@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Gate-19 spec-coverage — Doriath scenarios that need a provisioned, suite-less
+ * Gate-19 spec-coverage — Keepiq scenarios that need a provisioned, suite-less
  * user (weak-password setup-mode rejection) or that document a real UI gap
  * (user-settings dialog is unreachable from the current manifest).
  *
@@ -43,7 +43,7 @@ test.describe('Encryption Suites — spec: encryption-suites/spec.md', () => {
 	 *      MUST remain disabled.
 	 *
 	 * Provisions a brand-new, unique Nextcloud user via the admin OCS API so the
-	 * account is guaranteed to have NO EncryptionSuite — Doriath then renders the
+	 * account is guaranteed to have NO EncryptionSuite — Keepiq then renders the
 	 * first-time setup form deterministically (no flaky reliance on a shared test
 	 * user whose suite state drifts between runs). The user is deleted afterwards.
 	 */
@@ -118,7 +118,7 @@ test.describe('Encryption Suites — spec: encryption-suites/spec.md', () => {
 			await testPage.waitForSelector('#header, header.header', {
 				timeout: 30_000,
 			})
-			await testPage.goto(`${BASE_URL}/index.php/apps/doriath/lock`, {
+			await testPage.goto(`${BASE_URL}/index.php/apps/keepiq/lock`, {
 				waitUntil: 'domcontentloaded',
 			})
 
@@ -189,7 +189,7 @@ test.describe('Encryption Suites — spec: encryption-suites/spec.md', () => {
 test.describe('User Settings — spec: user-settings/spec.md', () => {
 	/**
 	 * @e2e user-settings::user-opens-settings
-	 * GIVEN a user opens the settings foldout in the Doriath navigation
+	 * GIVEN a user opens the settings foldout in the Keepiq navigation
 	 * WHEN they click the "Settings" entry
 	 * THEN the system MUST display the NcAppSettingsDialog with the user
 	 *      preference sections (Session timeout / master-password / recovery).

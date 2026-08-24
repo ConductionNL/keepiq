@@ -2,14 +2,14 @@
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Doriath',
+  title: 'Keepiq',
   tagline: 'Encrypted secrets manager for Nextcloud',
-  url: 'https://doriath.app',
+  url: 'https://keepiq.app',
   baseUrl: '/',
 
   // GitHub pages deployment config
   organizationName: 'ConductionNL',
-  projectName: 'doriath',
+  projectName: 'keepiq',
   trailingSlash: false,
 
   onBrokenLinks: 'warn',
@@ -29,7 +29,7 @@ const config = {
           path: '../docs',
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl:
-            'https://github.com/ConductionNL/doriath/tree/main/docusaurus/',
+            'https://github.com/ConductionNL/keepiq/tree/main/docusaurus/',
         },
         blog: false,
         theme: {
@@ -43,9 +43,9 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'Doriath',
+        title: 'Keepiq',
         logo: {
-          alt: 'Doriath Logo',
+          alt: 'Keepiq Logo',
           src: 'img/logo.svg',
         },
         items: [
@@ -56,7 +56,7 @@ const config = {
             label: 'Documentation',
           },
           {
-            href: 'https://github.com/ConductionNL/doriath',
+            href: 'https://github.com/ConductionNL/keepiq',
             label: 'GitHub',
             position: 'right',
           },
@@ -79,7 +79,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/ConductionNL/doriath',
+                href: 'https://github.com/ConductionNL/keepiq',
               },
             ],
           },

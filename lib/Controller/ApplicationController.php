@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Controller
+ * Keepiq Application Controller
  *
  * Authenticated API controller for application registration + admin
  * approval queue. The #[PublicPage] anonymous-registration endpoint and
@@ -9,7 +9,7 @@
  * implement-application-mgmt build cycle.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,12 +22,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Service\ApplicationService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Service\ApplicationService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -62,7 +62,7 @@ class ApplicationController extends OCSController {
 		private IGroupManager $groupManager,
 		private IAppConfig $appConfig,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -214,7 +214,7 @@ class ApplicationController extends OCSController {
 			// app-config. The flag is read on every call (cheap key
 			// lookup) so toggling it takes effect immediately.
 			$anonEnabled = $this->appConfig->getValueString(
-				DoriathApp::APP_ID,
+				KeepiqApp::APP_ID,
 				'anonymous_application_registration_enabled',
 				'0'
 			);

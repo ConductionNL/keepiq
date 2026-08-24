@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Migration - Compliance reports
+ * Keepiq Migration - Compliance reports
  *
  * Adds `doriath_compliance_reports` (compliance-reporting §1.1):
  * immutable metadata-only posture snapshots. The aggregate is counts
  * only — never a secret value, name, or ciphertext.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

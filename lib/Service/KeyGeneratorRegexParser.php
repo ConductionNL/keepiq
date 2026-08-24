@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Key Generator Regex Parser
+ * Keepiq Key Generator Regex Parser
  *
  * Parses simple generation regexes into a character set and a length range.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 

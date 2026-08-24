@@ -10,7 +10,7 @@
  * events, and that a visible :focus-visible outline is rendered — matching the
  * mouse-click behaviour proven in secret-crud-encryption.spec.ts.
  *
- * Requires a live, seeded Doriath instance (the dev seed ships secrets such as
+ * Requires a live, seeded Keepiq instance (the dev seed ships secrets such as
  * "GitHub"). The vault is unlocked headlessly via the dev master password.
  *
  * ⚠️ THE FILE-LEVEL ANCHOR THAT USED TO BE HERE WAS DANGLING. It pointed at

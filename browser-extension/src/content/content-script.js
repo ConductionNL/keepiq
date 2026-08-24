@@ -204,7 +204,7 @@ function injectShim() {
 window.addEventListener('message', async (event) => {
 	if (event.source !== window) return
 	const data = event.data
-	if (!data || data.__doriath !== 'request') return
+	if (!data || data.__keepiq !== 'request') return
 	const type = data.op === 'create' ? 'webauthn-create' : 'webauthn-get'
 	try {
 		const res = await chrome.runtime.sendMessage({
@@ -213,7 +213,7 @@ window.addEventListener('message', async (event) => {
 		})
 		window.postMessage(
 			{
-				__doriath: 'response',
+				__keepiq: 'response',
 				id: data.id,
 				...(res || { error: 'no-response' }),
 			},
@@ -221,7 +221,7 @@ window.addEventListener('message', async (event) => {
 		)
 	} catch (e) {
 		window.postMessage(
-			{ __doriath: 'response', id: data.id, error: e.message || String(e) },
+			{ __keepiq: 'response', id: data.id, error: e.message || String(e) },
 			event.origin,
 		)
 	}

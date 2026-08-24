@@ -1,5 +1,5 @@
-// Package crypto reimplements Doriath's browser crypto recipe byte-for-byte
-// (doriath-cli §2), so the CLI decrypts client-side exactly as the Vue app and
+// Package crypto reimplements Keepiq's browser crypto recipe byte-for-byte
+// (keepiq-cli §2), so the CLI decrypts client-side exactly as the Vue app and
 // the openconnector machine recipe do — no plaintext key material ever reaches
 // the server (ADR-003).
 //

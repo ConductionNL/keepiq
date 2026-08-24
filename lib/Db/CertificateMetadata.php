@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Certificate Metadata Entity
+ * Keepiq Certificate Metadata Entity
  *
  * Client-parsed, NON-SECRET X.509 display metadata for an encrypted
  * certificate-type secret (certificate-lifecycle §1). Populated only by
@@ -9,7 +9,7 @@
  * derived server-side (ADR-003). Holds no key material or ciphertext.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

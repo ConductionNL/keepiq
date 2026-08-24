@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Token Controller
+ * Keepiq Application Token Controller
  *
  * Public OAuth-style token endpoint that exchanges a signed JWT
  * assertion (private_key_jwt grant) for a short-lived opaque Bearer
@@ -10,7 +10,7 @@
  * application's certificate public key.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,10 +23,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Service\JwtAuthService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Service\JwtAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -53,7 +53,7 @@ class ApplicationTokenController extends Controller {
 		IRequest $request,
 		private JwtAuthService $service,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -86,7 +86,7 @@ class ApplicationTokenController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
-	#[BruteForceProtection(action: 'doriathTokenExchange')]
+	#[BruteForceProtection(action: 'keepiqTokenExchange')]
 	#[AnonRateLimit(limit: 10, period: 60)]
 	public function exchange(string $grantType = '', string $assertion = ''): JSONResponse {
 		$grant = $this->resolveGrantType(fallback: $grantType);
@@ -99,7 +99,7 @@ class ApplicationTokenController extends Controller {
 				],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
-			$response->throttle(['action' => 'doriathTokenExchange']);
+			$response->throttle(['action' => 'keepiqTokenExchange']);
 			return $response;
 		}
 
@@ -111,7 +111,7 @@ class ApplicationTokenController extends Controller {
 				],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
-			$response->throttle(['action' => 'doriathTokenExchange']);
+			$response->throttle(['action' => 'keepiqTokenExchange']);
 			return $response;
 		}
 
@@ -127,7 +127,7 @@ class ApplicationTokenController extends Controller {
 				],
 				statusCode: Http::STATUS_UNAUTHORIZED
 			);
-			$response->throttle(['action' => 'doriathTokenExchange']);
+			$response->throttle(['action' => 'keepiqTokenExchange']);
 			return $response;
 		}
 

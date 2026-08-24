@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Emergency Access Service
+ * Keepiq Emergency Access Service
  *
  * The break-glass lifecycle: designate → request → (decline | approve-by-timeout)
  * → grantee view access, plus revoke and key-change invalidation
@@ -15,7 +15,7 @@
  * material NEVER enter an audit entry (design D8).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,15 +28,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EmergencyContact;
-use OCA\Doriath\Db\EmergencyContactMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
+use OCA\Keepiq\Db\EmergencyContact;
+use OCA\Keepiq\Db\EmergencyContactMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -222,7 +222,7 @@ class EmergencyAccessService {
 			false => $this->mapper->update($contact),
 		};
 
-		$this->logger->debug('Doriath: emergency contact designated for grantee ' . $granteeUserId);
+		$this->logger->debug('Keepiq: emergency contact designated for grantee ' . $granteeUserId);
 
 		$this->auditTrail->recordGranted(
 			grantorUserId: $grantorUserId,

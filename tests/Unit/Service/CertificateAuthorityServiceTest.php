@@ -4,7 +4,7 @@
  * Unit tests for CertificateAuthorityService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,17 +17,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\CACertificate;
-use OCA\Doriath\Db\CACertificateMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Service\CertificateAuthorityService;
-use OCA\Doriath\Service\CertificateAuthorityStatusService;
-use OCA\Doriath\Service\CertificateIssuanceService;
-use OCA\Doriath\Service\X509CertificateAssembler;
+use OCA\Keepiq\Db\CACertificate;
+use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Service\CertificateAuthorityStatusService;
+use OCA\Keepiq\Service\CertificateIssuanceService;
+use OCA\Keepiq\Service\X509CertificateAssembler;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
@@ -135,7 +135,7 @@ class CertificateAuthorityServiceTest extends TestCase {
 		// Healthy state should re-assert ca_status=healthy.
 		$this->appConfig->expects($this->once())
 			->method('setValueString')
-			->with('doriath', 'ca_status', 'healthy');
+			->with('keepiq', 'ca_status', 'healthy');
 
 		$this->service->bootstrap();
 	}//end testBootstrapSkipsIfCaExists()
@@ -179,7 +179,7 @@ class CertificateAuthorityServiceTest extends TestCase {
 
 		$this->appConfig->expects($this->once())
 			->method('setValueString')
-			->with('doriath', 'ca_status', 'healthy');
+			->with('keepiq', 'ca_status', 'healthy');
 
 		$this->service->bootstrap();
 	}//end testBootstrapRecoversIntermediateWhenMissing()
@@ -318,7 +318,7 @@ class CertificateAuthorityServiceTest extends TestCase {
 
 		$this->appConfig->expects($this->once())
 			->method('setValueString')
-			->with('doriath', 'ca_status', 'healthy');
+			->with('keepiq', 'ca_status', 'healthy');
 
 		$this->service->bootstrap();
 	}//end testBootstrapCreatesRootAndIntermediate()

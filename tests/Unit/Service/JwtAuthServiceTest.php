@@ -4,7 +4,7 @@
  * Unit tests for JwtAuthService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
@@ -25,13 +25,13 @@ use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Signature\Serializer\CompactSerializer;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Service\ApplicationJwkResolver;
-use OCA\Doriath\Service\JwtAssertionVerifier;
-use OCA\Doriath\Service\JwtAuthService;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Service\ApplicationJwkResolver;
+use OCA\Keepiq\Service\JwtAssertionVerifier;
+use OCA\Keepiq\Service\JwtAuthService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -98,7 +98,7 @@ class JwtAuthServiceTest extends TestCase {
 		];
 		$pkey = openssl_pkey_new($config);
 		$csr = openssl_csr_new(
-			['CN' => 'test-app', 'O' => 'doriath-tests'],
+			['CN' => 'test-app', 'O' => 'keepiq-tests'],
 			$pkey,
 			$config
 		);

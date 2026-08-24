@@ -11,7 +11,7 @@
 
 `team-folder-sharing` makes every folder member read-only: a member holds a per-recipient RSA copy and can view it, but only the folder owner (or a delegate) can push a new value to the whole team. Real teams need shared **editable** credentials — rotating a shared service password or CI token — without funnelling every rotation through the owner.
 
-This feature adds a permission grade (`read` default, or `write`) to each team-folder membership. A `write` grade authorizes the member to update a folder secret's value for all recipients. Because Doriath is zero-knowledge (ADR-003), a `write` grade is **not** a shared key: the writer's browser re-encrypts the new value under every recipient's public certificate and pushes it through the existing sync path, and the server accepts the fan-out only because the writer holds a `write` grant. Envelope crypto is unchanged; the server holds zero plaintext. The owner alone manages membership and grades.
+This feature adds a permission grade (`read` default, or `write`) to each team-folder membership. A `write` grade authorizes the member to update a folder secret's value for all recipients. Because Keepiq is zero-knowledge (ADR-003), a `write` grade is **not** a shared key: the writer's browser re-encrypts the new value under every recipient's public certificate and pushes it through the existing sync path, and the server accepts the fan-out only because the writer holds a `write` grant. Envelope crypto is unchanged; the server holds zero plaintext. The owner alone manages membership and grades.
 
 ## Requirements
 

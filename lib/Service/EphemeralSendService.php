@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Ephemeral Send Service
+ * Keepiq Ephemeral Send Service
  *
  * Burn-after-reading ad-hoc shares (ephemeral-send §2). No SecretService
  * or ShareService dependency — a send never creates a vault secret. The
@@ -17,7 +17,7 @@
  * burns the send at 5.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -30,13 +30,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EphemeralSend;
-use OCA\Doriath\Db\EphemeralSendMapper;
+use OCA\Keepiq\Db\EphemeralSend;
+use OCA\Keepiq\Db\EphemeralSendMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 

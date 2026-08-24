@@ -22,7 +22,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Encrypted transfer (CXP)')"
+		:name="t('keepiq', 'Encrypted transfer (CXP)')"
 		:open="open"
 		size="normal"
 		data-testid="cxp-dialog"
@@ -34,7 +34,7 @@
 			<NcNoteCard type="success">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Credentials travel HPKE-sealed directly between providers. No plaintext file is ever written to disk.',
 					)
 				}}
@@ -48,7 +48,7 @@
 					type="radio"
 					data-testid="cxp-direction-receive"
 					@update:modelValue="direction = $event">
-					{{ t('doriath', 'Receive credentials (import)') }}
+					{{ t('keepiq', 'Receive credentials (import)') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
 					:modelValue="direction"
@@ -57,7 +57,7 @@
 					type="radio"
 					data-testid="cxp-direction-send"
 					@update:modelValue="direction = $event">
-					{{ t('doriath', 'Send credentials (export)') }}
+					{{ t('keepiq', 'Send credentials (export)') }}
 				</NcCheckboxRadioSwitch>
 			</div>
 
@@ -66,7 +66,7 @@
 				<p v-if="!pairingId">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Start a request; share the pairing code with the sending provider, then wait for the sealed transfer.',
 						)
 					}}
@@ -77,17 +77,17 @@
 					:disabled="busy"
 					data-testid="cxp-start-receive"
 					@click="startReceive">
-					{{ t('doriath', 'Start encrypted request') }}
+					{{ t('keepiq', 'Start encrypted request') }}
 				</NcButton>
 				<div v-else>
 					<p>
-						{{ t('doriath', 'Pairing code — share with the sender:') }}
+						{{ t('keepiq', 'Pairing code — share with the sender:') }}
 					</p>
 					<code class="cxp-dialog__code" data-testid="cxp-pairing-code">{{
 						pairingId
 					}}</code>
 					<p v-if="waiting" class="cxp-dialog__status">
-						{{ t('doriath', 'Waiting for the sealed transfer…') }}
+						{{ t('keepiq', 'Waiting for the sealed transfer…') }}
 					</p>
 				</div>
 			</div>
@@ -96,19 +96,19 @@
 			<div v-else class="cxp-dialog__panel">
 				<NcTextField
 					v-model="sendPairingId"
-					:label="t('doriath', 'Pairing code from the receiving provider')"
+					:label="t('keepiq', 'Pairing code from the receiving provider')"
 					data-testid="cxp-send-pairing" />
 				<NcNoteCard type="warning">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Sending requires re-entering your master password, even while unlocked.',
 						)
 					}}
 				</NcNoteCard>
 				<NcPasswordField
 					v-model="masterPassword"
-					:label="t('doriath', 'Re-enter your master password')"
+					:label="t('keepiq', 'Re-enter your master password')"
 					data-testid="cxp-master-password" />
 				<NcNoteCard
 					v-if="cxpReport && cxpReport.unmapped.length > 0"
@@ -116,7 +116,7 @@
 					data-testid="cxp-unmapped-report">
 					{{
 						n(
-							'doriath',
+							'keepiq',
 							'%n item cannot be represented in CXF and will be skipped.',
 							'%n items cannot be represented in CXF and will be skipped.',
 							cxpReport.unmapped.length,
@@ -130,14 +130,14 @@
 					@click="doSend">
 					{{
 						cxpReport
-							? t('doriath', 'Confirm and send sealed transfer')
-							: t('doriath', 'Seal and send')
+							? t('keepiq', 'Confirm and send sealed transfer')
+							: t('keepiq', 'Seal and send')
 					}}
 				</NcButton>
 				<NcNoteCard v-if="sent" type="success" data-testid="cxp-sent">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Sealed transfer sent. No plaintext file was written.',
 						)
 					}}
@@ -147,7 +147,7 @@
 
 		<template #actions>
 			<NcButton @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -257,16 +257,20 @@ export default {
 		/**
 		 * Absolute relay URL.
 		 *
-		 * @param path
+		 * @param {string} path Optional sub-path appended to the relay route.
+		 * @return {string}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-v1-scope-is-the-browser-session-flow
 		 */
 		relayUrl(path = '') {
-			return generateUrl('/apps/doriath/api/v1/cxp/relay' + path)
+			return generateUrl('/apps/keepiq/api/v1/cxp/relay' + path)
 		},
 
 		/**
 		 * Receive flow: publish a CXP request and poll for the sealed envelope.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-importing-provider
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-v1-scope-is-the-browser-session-flow
 		 */
 		async startReceive() {
 			this.error = null
@@ -284,7 +288,7 @@ export default {
 				this.pollForEnvelope()
 			} catch (e) {
 				this.error =
-					e.message || this.t('doriath', 'Could not start the transfer')
+					e.message || this.t('keepiq', 'Could not start the transfer')
 			} finally {
 				this.busy = false
 			}
@@ -295,6 +299,8 @@ export default {
 		 * hand the CXF payload to the existing import wizard.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-client-side-hpke-seal-and-open
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-importing-provider
 		 */
 		pollForEnvelope() {
 			this.pollTimer = setTimeout(async () => {
@@ -330,16 +336,13 @@ export default {
 					if (this.pollCount >= POLL_MAX) {
 						this.waiting = false
 						this.error = this.t(
-							'doriath',
+							'keepiq',
 							'Timed out waiting for the sealed transfer',
 						)
 					} else {
 						this.error =
 							e.message
-							|| this.t(
-								'doriath',
-								'Could not open the sealed transfer',
-							)
+							|| this.t('keepiq', 'Could not open the sealed transfer')
 					}
 				}
 			}, POLL_INTERVAL)
@@ -350,6 +353,9 @@ export default {
 		 * the CXF payload, and publish only the sealed envelope.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-exporting-provider
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-client-side-hpke-seal-and-open
+		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-cxp-transfer-emits-an-export-event-with-mode-cxp
 		 */
 		async doSend() {
 			this.error = null
@@ -361,7 +367,7 @@ export default {
 					this.masterPassword,
 				)
 				if (!ok) {
-					this.error = this.t('doriath', 'Incorrect master password')
+					this.error = this.t('keepiq', 'Incorrect master password')
 					return
 				}
 				// Fetch the peer's CXP request from the relay ONCE and cache it: the
@@ -408,7 +414,7 @@ export default {
 			} catch (e) {
 				this.error =
 					e.message
-					|| this.t('doriath', 'Could not send the sealed transfer')
+					|| this.t('keepiq', 'Could not send the sealed transfer')
 			} finally {
 				this.busy = false
 			}

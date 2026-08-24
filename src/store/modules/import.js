@@ -477,7 +477,7 @@ export const useImportStore = defineStore('import', {
 			for (let attempt = 0; attempt < 2; attempt++) {
 				try {
 					const response = await axios.post(
-						generateUrl('/apps/doriath/api/v1/secrets/import-batch'),
+						generateUrl('/apps/keepiq/api/v1/secrets/import-batch'),
 						body,
 					)
 					return response.data

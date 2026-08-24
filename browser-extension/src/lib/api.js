@@ -1,7 +1,7 @@
 /**
- * Doriath API client for the extension. Authenticates with the paired Nextcloud
+ * Keepiq API client for the extension. Authenticates with the paired Nextcloud
  * app-password (HTTP Basic) — never a login password, never a new long-lived
- * Doriath secret (browser-extension-autofill §"Pairing"). Every response is an
+ * Keepiq secret (browser-extension-autofill §"Pairing"). Every response is an
  * encrypted blob or plaintext index field; the server never returns a decrypted
  * value.
  *
@@ -10,7 +10,7 @@
  * the master password and the derived CryptoKey never touch storage.
  */
 
-const CONFIG_KEY = 'doriath.config'
+const CONFIG_KEY = 'keepiq.config'
 
 /** Load the paired config from storage.local (or null if unpaired). */
 export async function loadConfig() {
@@ -40,7 +40,7 @@ function base(config) {
 }
 
 async function request(config, method, path, body) {
-	const res = await fetch(base(config) + '/index.php/apps/doriath' + path, {
+	const res = await fetch(base(config) + '/index.php/apps/keepiq' + path, {
 		method,
 		headers: {
 			Authorization: authHeader(config),
@@ -52,7 +52,7 @@ async function request(config, method, path, body) {
 	})
 	if (!res.ok) {
 		const text = await res.text().catch(() => '')
-		const err = new Error(`Doriath ${method} ${path} failed (${res.status})`)
+		const err = new Error(`Keepiq ${method} ${path} failed (${res.status})`)
 		err.status = res.status
 		err.body = text
 		throw err

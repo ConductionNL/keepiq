@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Compliance Report Service
+ * Keepiq Compliance Report Service
  *
  * Metadata-only compliance-posture aggregation (compliance-reporting
  * §2): six sections composed from COUNT queries over server-visible
@@ -10,7 +10,7 @@
  * against a key allowlist before persistence.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,14 +23,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\ComplianceReport;
-use OCA\Doriath\Db\ComplianceReportMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\ComplianceReport;
+use OCA\Keepiq\Db\ComplianceReportMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -299,7 +299,7 @@ class ComplianceReportService {
 	 * @return array<string,mixed>
 	 */
 	private function rotationPostureSection(): array {
-		if (class_exists(\OCA\Doriath\Service\RotationPolicyService::class) === false) {
+		if (class_exists(\OCA\Keepiq\Service\RotationPolicyService::class) === false) {
 			return ['available' => false];
 		}
 

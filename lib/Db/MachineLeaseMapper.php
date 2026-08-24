@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Machine Lease Mapper
+ * Keepiq Machine Lease Mapper
  *
  * Query-builder mapper for MachineLease rows (machine-secret-leases §1.2).
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;

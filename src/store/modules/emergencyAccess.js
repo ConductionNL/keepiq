@@ -63,7 +63,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/emergency-access/contacts'),
+					generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
 				)
 				this.contacts = Array.isArray(response.data) ? response.data : []
 			} finally {
@@ -81,7 +81,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/emergency-access/incoming'),
+					generateUrl('/apps/keepiq/api/v1/emergency-access/incoming'),
 				)
 				this.incoming = Array.isArray(response.data) ? response.data : []
 			} finally {
@@ -112,7 +112,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 			// 1. Fetch the grantee's public certificate (validates active suite).
 			const certResponse = await axios.get(
 				generateUrl(
-					'/apps/doriath/api/v1/emergency-access/grantee-certificate',
+					'/apps/keepiq/api/v1/emergency-access/grantee-certificate',
 				),
 				{ params: { granteeUserId } },
 			)
@@ -136,7 +136,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 
 			// 3. Persist only the grantee-encrypted envelope.
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/emergency-access/contacts'),
+				generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
 				{
 					granteeUserId,
 					waitPeriodDays,
@@ -157,7 +157,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		 */
 		async revoke(id) {
 			await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/emergency-access/contacts/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/emergency-access/contacts/${id}`),
 			)
 			await this.fetchContacts()
 		},
@@ -172,7 +172,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		async request(id) {
 			await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/emergency-access/contacts/${id}/request`,
+					`/apps/keepiq/api/v1/emergency-access/contacts/${id}/request`,
 				),
 			)
 			await this.fetchIncoming()
@@ -188,7 +188,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		async decline(id) {
 			await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/emergency-access/contacts/${id}/decline`,
+					`/apps/keepiq/api/v1/emergency-access/contacts/${id}/decline`,
 				),
 			)
 			await this.fetchContacts()
@@ -209,7 +209,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 			}
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/emergency-access/contacts/${id}/envelope`,
+					`/apps/keepiq/api/v1/emergency-access/contacts/${id}/envelope`,
 				),
 			)
 			const envelope = response.data.recoveryEnvelope

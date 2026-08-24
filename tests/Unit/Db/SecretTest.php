@@ -4,7 +4,7 @@
  * Unit tests for the Secret entity.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Db
+ * @package  OCA\Keepiq\Tests\Unit\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,9 +17,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Db;
+namespace OCA\Keepiq\Tests\Unit\Db;
 
-use OCA\Doriath\Db\Secret;
+use OCA\Keepiq\Db\Secret;
 use PHPUnit\Framework\TestCase;
 
 /**

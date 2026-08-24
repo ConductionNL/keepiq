@@ -16,7 +16,7 @@
  */
 
 /** The serialized payload format identifier. */
-export const PAYLOAD_FORMAT = 'doriath-vault'
+export const PAYLOAD_FORMAT = 'keepiq-vault'
 
 /** The serialized payload version. */
 export const PAYLOAD_VERSION = 1

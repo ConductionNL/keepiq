@@ -2,17 +2,17 @@
   SPDX-License-Identifier: EUPL-1.2
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
-  Doriath app shell — thin CnAppRoot wrapper (hydra ADR-024 / ADR-036).
+  Keepiq app shell — thin CnAppRoot wrapper (hydra ADR-024 / ADR-036).
 
   CnAppRoot handles the dependency check, manifest-driven CnAppNav,
   and per-route page dispatch (manifest.pages[].type →
-  Cn{Dashboard,Settings,Index,Detail,…}Page). For doriath the dashboard
+  Cn{Dashboard,Settings,Index,Detail,…}Page). For keepiq the dashboard
   is rendered via the v2 widget grid (the manifest's Dashboard page
   carries `widgets[]` targeting the `body` slot, so CnPageRenderer
   short-circuits the default CnDashboardPage component and mounts
   CnWidgetGrid directly — matches the shillinq#166 pattern).
 
-  Doriath-specific concerns the shell still owns:
+  Keepiq-specific concerns the shell still owns:
   - Pinia stores boot once (settings + object configure against
     OpenRegister).
   - Lock-screen gating: whenever the session locks, redirect to the
@@ -43,7 +43,7 @@
 	     The offline banner, migration banner, lock-screen gating and user-settings
 	     dialog are all deliberately absent: every one of them speaks about a vault
 	     the recipient has no account for. -->
-	<div v-if="isPublicPage" class="doriath-public-shell">
+	<div v-if="isPublicPage" class="keepiq-public-shell">
 		<!-- Every route's component IS CnPageRenderer (see routesFromManifest in
 		     main.js), and it takes its manifest, component registry, page types and
 		     translator by INJECT — from CnAppRoot. Outside the shell those injections
@@ -68,16 +68,16 @@
 
 	<div
 		v-else
-		class="doriath-shell"
-		:class="{ 'doriath-shell--locked': isLockScreen }">
+		class="keepiq-shell"
+		:class="{ 'keepiq-shell--locked': isLockScreen }">
 		<!-- Stale-data banner (offline-readonly-cache §4.3): shown whenever the
 		     vault is being served from the offline cache. -->
 		<div
 			v-if="offlineStore.servedFromCache"
-			class="doriath-offline-banner"
+			class="keepiq-offline-banner"
 			data-testid="offline-stale-banner">
 			{{
-				t('doriath', 'Offline — read-only. Last synced {when}.', {
+				t('keepiq', 'Offline — read-only. Last synced {when}.', {
 					when: syncedLabel,
 				})
 			}}
@@ -96,7 +96,7 @@
 			:customComponents="customComponents"
 			:pageTypes="pageTypes"
 			:registry="registry"
-			appId="doriath"
+			appId="keepiq"
 			:translate="translateForApp"
 			:permissions="permissions">
 			<!-- User-settings dialog body (opened from the manifest's
@@ -104,7 +104,7 @@
 		     cnOpenUserSettings inject). Sections preserve the legacy
 		     UserSettings.vue surface unchanged. -->
 			<template #user-settings>
-				<NcAppSettingsSection id="session" :name="t('doriath', 'Session')">
+				<NcAppSettingsSection id="session" :name="t('keepiq', 'Session')">
 					<template #icon>
 						<TimerIcon :size="20" />
 					</template>
@@ -112,14 +112,14 @@
 						<NcSelect
 							v-model="sessionTimeout"
 							:options="timeoutOptions"
-							:inputLabel="t('doriath', 'Session timeout')"
+							:inputLabel="t('keepiq', 'Session timeout')"
 							label="label"
 							:reduce="(opt) => opt.value"
 							@input="saveTimeout" />
 					</div>
 				</NcAppSettingsSection>
 
-				<NcAppSettingsSection id="security" :name="t('doriath', 'Security')">
+				<NcAppSettingsSection id="security" :name="t('keepiq', 'Security')">
 					<template #icon>
 						<ShieldIcon :size="20" />
 					</template>
@@ -133,7 +133,7 @@
 						<NcButton
 							variant="error"
 							@click="showRecovery = !showRecovery">
-							{{ t('doriath', 'My master password was compromised') }}
+							{{ t('keepiq', 'My master password was compromised') }}
 						</NcButton>
 						<CompromiseRecoveryForm v-if="showRecovery" />
 					</div>
@@ -141,7 +141,7 @@
 
 				<NcAppSettingsSection
 					id="encryption"
-					:name="t('doriath', 'Encryption')">
+					:name="t('keepiq', 'Encryption')">
 					<template #icon>
 						<KeyIcon :size="20" />
 					</template>
@@ -149,15 +149,15 @@
 						v-if="suiteStore.currentSuite"
 						class="user-settings__suite-info">
 						<p>
-							<strong>{{ t('doriath', 'Status') }}:</strong>
+							<strong>{{ t('keepiq', 'Status') }}:</strong>
 							{{ suiteStore.currentSuite.status }}
 						</p>
 						<p>
-							<strong>{{ t('doriath', 'Created') }}:</strong>
+							<strong>{{ t('keepiq', 'Created') }}:</strong>
 							{{ suiteStore.currentSuite.createdAt }}
 						</p>
 						<p>
-							<strong>{{ t('doriath', 'Suite ID') }}:</strong>
+							<strong>{{ t('keepiq', 'Suite ID') }}:</strong>
 							{{ suiteStore.currentSuite.id }}
 						</p>
 
@@ -165,19 +165,17 @@
 							<NcNoteCard v-if="revokeConfirm" type="warning">
 								{{
 									t(
-										'doriath',
+										'keepiq',
 										'Revoking your encryption suite will make all your secrets inaccessible until an administrator reinstates it. This cannot be undone by you.',
 									)
 								}}
 								<div style="margin-top: 0.5rem">
 									<NcTextField
 										v-model="revokeReason"
-										:label="
-											t('doriath', 'Reason for revocation')
-										"
+										:label="t('keepiq', 'Reason for revocation')"
 										:placeholder="
 											t(
-												'doriath',
+												'keepiq',
 												'e.g. Device lost, key compromised',
 											)
 										" />
@@ -194,14 +192,14 @@
 										@click="handleRevoke">
 										{{
 											revoking
-												? t('doriath', 'Revoking…')
-												: t('doriath', 'Confirm revocation')
+												? t('keepiq', 'Revoking…')
+												: t('keepiq', 'Confirm revocation')
 										}}
 									</NcButton>
 									<NcButton
 										variant="secondary"
 										@click="revokeConfirm = false">
-										{{ t('doriath', 'Cancel') }}
+										{{ t('keepiq', 'Cancel') }}
 									</NcButton>
 								</div>
 							</NcNoteCard>
@@ -209,14 +207,14 @@
 								v-else
 								variant="warning"
 								@click="revokeConfirm = true">
-								{{ t('doriath', 'Revoke encryption suite') }}
+								{{ t('keepiq', 'Revoke encryption suite') }}
 							</NcButton>
 						</template>
 
 						<NcNoteCard v-if="revokeSuccess" type="success">
 							{{
 								t(
-									'doriath',
+									'keepiq',
 									'Encryption suite revoked. Contact an administrator to reinstate it.',
 								)
 							}}
@@ -227,9 +225,9 @@
 					</div>
 					<NcEmptyContent
 						v-else
-						:name="t('doriath', 'No encryption suite')"
+						:name="t('keepiq', 'No encryption suite')"
 						:description="
-							t('doriath', 'Unlock the vault to set up encryption')
+							t('keepiq', 'Unlock the vault to set up encryption')
 						">
 						<template #icon>
 							<KeyIcon :size="64" />
@@ -239,15 +237,15 @@
 
 				<NcAppSettingsSection
 					id="browser-extension"
-					:name="t('doriath', 'Browser extension')">
+					:name="t('keepiq', 'Browser extension')">
 					<template #icon>
 						<PuzzleIcon :size="20" />
 					</template>
 					<p>
 						{{
 							t(
-								'doriath',
-								'The Doriath browser extension autofills your logins, provides passkeys, and shows TOTP codes — decrypting everything inside the extension. The server only ever ships encrypted blobs, so your master password and secrets never leave your device.',
+								'keepiq',
+								'The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — decrypting everything inside the extension. The server only ever ships encrypted blobs, so your master password and secrets never leave your device.',
 							)
 						}}
 					</p>
@@ -255,15 +253,15 @@
 						<li>
 							{{
 								t(
-									'doriath',
-									'Install the Doriath extension for your browser.',
+									'keepiq',
+									'Install the Keepiq extension for your browser.',
 								)
 							}}
 						</li>
 						<li>
 							{{
 								t(
-									'doriath',
+									'keepiq',
 									'Create a dedicated app password in Nextcloud security settings (never use your login password).',
 								)
 							}}
@@ -271,7 +269,7 @@
 						<li>
 							{{
 								t(
-									'doriath',
+									'keepiq',
 									'In the extension, enter this server URL, your username, and the app password, then unlock with your master password.',
 								)
 							}}
@@ -279,13 +277,13 @@
 					</ol>
 					<div class="user-settings__field">
 						<NcButton :href="securitySettingsUrl" variant="secondary">
-							{{ t('doriath', 'Open Nextcloud security settings') }}
+							{{ t('keepiq', 'Open Nextcloud security settings') }}
 						</NcButton>
 					</div>
 					<p class="user-settings__hint">
 						{{
 							t(
-								'doriath',
+								'keepiq',
 								'Revoke the app password in Nextcloud security settings at any time to disconnect the extension.',
 							)
 						}}
@@ -381,7 +379,7 @@ export default {
 		/**
 		 * 5-kind component registry for v2 manifests (hydra ADR-036).
 		 * Map of registry key → `{ kind, component, ...metadata }`.
-		 * See src/registry.js for the doriath entries.
+		 * See src/registry.js for the keepiq entries.
 		 */
 		registry: {
 			type: Object,
@@ -394,7 +392,7 @@ export default {
 			/**
 			 * True while the page is unloading (beforeunload fired). The
 			 * lock-redirect watcher skips its redirect in that window so
-			 * leaving Doriath for another app doesn't flash the unlock
+			 * leaving Keepiq for another app doesn't flash the unlock
 			 * form mid-transition — the key is still cleared.
 			 */
 			unloading: false,
@@ -408,9 +406,9 @@ export default {
 			revokeSuccess: false,
 			revokeError: null,
 			timeoutOptions: [
-				{ value: 'session', label: ncT('doriath', 'Nextcloud session') },
-				{ value: '10min', label: ncT('doriath', '10 minutes') },
-				{ value: '30min', label: ncT('doriath', '30 minutes') },
+				{ value: 'session', label: ncT('keepiq', 'Nextcloud session') },
+				{ value: '10min', label: ncT('keepiq', '10 minutes') },
+				{ value: '30min', label: ncT('keepiq', '30 minutes') },
 			],
 		}
 	},
@@ -454,7 +452,7 @@ export default {
 		 * the only moment the value is read — which is exactly why the first attempt
 		 * at this had no effect.
 		 *
-		 * `/apps/doriath/public` is the anonymous shell, so anything served from it
+		 * `/apps/keepiq/public` is the anonymous shell, so anything served from it
 		 * is a recipient page by definition. The hash prefixes cover the same routes
 		 * reached on the authenticated shell.
 		 *
@@ -520,11 +518,12 @@ export default {
 		 * Human last-sync label for the stale banner.
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-a-stale-data-banner-shows-the-last-sync-time
 		 */
 		syncedLabel() {
 			return this.offlineStore.syncedAt
 				? new Date(this.offlineStore.syncedAt).toLocaleString()
-				: ncT('doriath', 'unknown')
+				: ncT('keepiq', 'unknown')
 		},
 
 		/**
@@ -676,7 +675,7 @@ export default {
 		 * @spec exclude Pure i18n wrapper around Nextcloud translate — no domain logic.
 		 */
 		translateForApp(key) {
-			return ncT('doriath', key)
+			return ncT('keepiq', key)
 		},
 
 		/**
@@ -747,7 +746,7 @@ export default {
 				this.revokeError =
 					e.response?.data?.message
 					|| e.message
-					|| ncT('doriath', 'Failed to revoke suite')
+					|| ncT('keepiq', 'Failed to revoke suite')
 			} finally {
 				this.revoking = false
 			}
@@ -771,7 +770,7 @@ export default {
 			// Served by ServiceWorkerController at the app root so the browser
 			// gets the correct JS MIME and the worker's default scope is the
 			// whole SPA (offline-readonly-cache §3.2).
-			const swUrl = generateUrl('/apps/doriath/serviceworker.js')
+			const swUrl = generateUrl('/apps/keepiq/serviceworker.js')
 			navigator.serviceWorker.register(swUrl).catch(() => {
 				// Online-only fallback; the offline cache is simply absent.
 			})
@@ -794,7 +793,7 @@ export default {
  * empty sidebar panel standing, so target the container; the floating
  * toggle button lives inside it and disappears with it.
  */
-.doriath-shell--locked :deep(.app-navigation) {
+.keepiq-shell--locked :deep(.app-navigation) {
 	display: none;
 }
 
@@ -806,7 +805,7 @@ export default {
 	margin: 0.25rem 0;
 }
 
-.doriath-offline-banner {
+.keepiq-offline-banner {
 	position: sticky;
 	top: 0;
 	z-index: 2000;

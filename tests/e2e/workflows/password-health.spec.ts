@@ -17,7 +17,7 @@
  * key_updated_at server-maintenance, the no-health-write-surface route
  * enumeration, and the proxy logging — all covered by vitest + PHPUnit.
  *
- * Environment assumptions match the other workflow specs: the doriath app is
+ * Environment assumptions match the other workflow specs: the keepiq app is
  * enabled, the admin user owns one active EncryptionSuite seeded with the
  * development master password, and the dev seed data provides at least one
  * secret to analyse.

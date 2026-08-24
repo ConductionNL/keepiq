@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Certificate Authority Status Service
+ * Keepiq Certificate Authority Status Service
  *
  * Reports the health of the private CA and the counts of certificates it
  * has issued (certificate-lifecycle §2.6). This is a READ-ONLY view: it
@@ -13,7 +13,7 @@
  * CertificateAuthorityService's bootstrap/renewal write paths.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,14 +26,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\CACertificateMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 

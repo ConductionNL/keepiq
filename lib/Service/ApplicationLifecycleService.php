@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Lifecycle Service
+ * Keepiq Application Lifecycle Service
  *
  * The admission half of the registered-application capability: register,
  * approve and reject. These three transitions share one body of rules —
@@ -11,7 +11,7 @@
  * ApplicationService so the read/delete surface no longer carries them.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,13 +24,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Support\SuppressesDiagnostics;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -179,7 +179,7 @@ class ApplicationLifecycleService {
 
 		$this->logger->info(
 			'Approved application ' . $applicationId . ' by admin ' . $adminUserId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		$updated = $this->mapper->update($entity);
@@ -230,7 +230,7 @@ class ApplicationLifecycleService {
 
 		$this->logger->info(
 			'Rejected application ' . $applicationId . ' by admin ' . $adminUserId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		$this->auditTrail->recordRejected(
@@ -337,7 +337,7 @@ class ApplicationLifecycleService {
 
 		$this->logger->info(
 			'Registered application ' . $persisted->getId() . ' (' . $persisted->getName() . ') status=' . $persisted->getStatus(),
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		// §7.3 — Admin notification dispatch. When the new row is
@@ -393,7 +393,7 @@ class ApplicationLifecycleService {
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Failed to dispatch app_pending notifications: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				['app' => 'keepiq']
 			);
 		}//end try
 	}//end dispatchAdminPendingNotification()

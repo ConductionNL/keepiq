@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Expiry Policy Entity
+ * Keepiq Expiry Policy Entity
  *
  * One expiry rule (rotation-expiry-policies §1.1): scoped to a secret
  * TYPE or a FOLDER, owned by a user (or instance-wide when owner_id is
@@ -9,7 +9,7 @@
  * thresholds. Metadata only — never ciphertext.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

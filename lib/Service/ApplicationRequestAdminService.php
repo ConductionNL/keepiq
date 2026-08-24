@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - Administrator-scoped reads and revokes over application requests
+ * Keepiq - Administrator-scoped reads and revokes over application requests
  *
  * A class of its own rather than two more methods on SecretRequestService, for
  * the same reason the controller is separate: these answer to a DIFFERENT
@@ -19,7 +19,7 @@
  * the cost was hard-deleted credentials.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -32,11 +32,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -176,8 +176,8 @@ class ApplicationRequestAdminService {
 		$updated = $entity;
 
 		$this->logger->info(
-			'Doriath: administrator ' . $adminUserId . ' revoked application request ' . $requestId,
-			['app' => 'doriath']
+			'Keepiq: administrator ' . $adminUserId . ' revoked application request ' . $requestId,
+			['app' => 'keepiq']
 		);
 
 		// After the status flip, deliberately: if the cleanup fails the request is

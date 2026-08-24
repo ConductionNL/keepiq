@@ -23,7 +23,7 @@
 	window.addEventListener('message', (event) => {
 		if (event.source !== window) return
 		const data = event.data
-		if (!data || data.__doriath !== 'response') return
+		if (!data || data.__keepiq !== 'response') return
 		const entry = pending.get(data.id)
 		if (!entry) return
 		pending.delete(data.id)
@@ -36,7 +36,7 @@
 			pending.set(id, resolve)
 			window.postMessage(
 				{
-					__doriath: 'request',
+					__keepiq: 'request',
 					id,
 					op,
 					origin: location.origin,

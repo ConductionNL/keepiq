@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Honey Credential Service
+ * Keepiq Honey Credential Service
  *
  * Decoy tripwire logic (honey-credentials §2): flag/unflag decoy
  * secrets, raise deduplicated alerts on access, page owner + admins
@@ -11,7 +11,7 @@
  * any secret response shape.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,16 +24,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\HoneyAlert;
-use OCA\Doriath\Db\HoneyAlertMapper;
-use OCA\Doriath\Db\HoneyFlag;
-use OCA\Doriath\Db\HoneyFlagMapper;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Db\HoneyAlertMapper;
+use OCA\Keepiq\Db\HoneyFlag;
+use OCA\Keepiq\Db\HoneyFlagMapper;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 

@@ -10,7 +10,7 @@ The system MUST serve an unauthenticated, machine-readable discovery document at
 @e2e exclude Machine-to-machine API contract with no UI surface; covered by DiscoveryControllerTest (document shape, no instance-private data) and the machine-secret-api Newman collection's discovery group.
 - **WHEN** a machine consumer fetches the discovery document without authentication
 - **THEN** the response MUST contain the token endpoint, grant type, assertion requirements, secret endpoints, and `apiVersion`
-- **AND** the consumer can derive every contract URL without reading Doriath source or configuration
+- **AND** the consumer can derive every contract URL without reading Keepiq source or configuration
 
 ### Requirement: Name-Addressable Secret Retrieval
 The system MUST allow an authenticated application to retrieve a secret from its own vault by exact plaintext name via `GET /api/v1/app/secrets/by-name/{name}`, optionally scoped by a `folder` query parameter using slash-separated path notation. Zero matches MUST return 404. Exactly one match MUST return the encrypted envelope. Multiple matches MUST return 409 Conflict with a body listing each candidate's id, name, folder path, and update timestamp — the system MUST NOT silently pick one of several same-named secrets.

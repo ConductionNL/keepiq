@@ -13,7 +13,7 @@
 
 function fallThroughError(message) {
 	// NotAllowedError makes the RP fall back to another authenticator.
-	return { name: 'NotAllowedError', message: 'Doriath: ' + message }
+	return { name: 'NotAllowedError', message: 'Keepiq: ' + message }
 }
 
 /**

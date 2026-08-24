@@ -24,7 +24,7 @@ func configPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "doriath", "config.json"), nil
+	return filepath.Join(dir, "keepiq", "config.json"), nil
 }
 
 func loadConfig() (*config, error) {
@@ -62,7 +62,7 @@ func cmdLogin(args []string) error {
 	url, args := popFlag(args, "--url")
 	user, _ := popFlag(args, "--user")
 	if url == "" || user == "" {
-		return fmt.Errorf("usage: doriath login --url <instance> --user <nc-user>")
+		return fmt.Errorf("usage: keepiq login --url <instance> --user <nc-user>")
 	}
 	appPassword := promptSecret("Nextcloud app-password (NOT your login password): ")
 	if appPassword == "" {

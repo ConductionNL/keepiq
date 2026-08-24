@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Lease Service
+ * Keepiq Lease Service
  *
  * Access-grant lifetime governance for the machine secret-store API
  * (machine-secret-leases §2): grant-or-reuse on fetch, policy-capped
@@ -10,7 +10,7 @@
  * no dynamic credential minting; the ciphertext envelope is untouched.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,15 +23,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\MachineLease;
-use OCA\Doriath\Db\MachineLeaseMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Db\MachineLease;
+use OCA\Keepiq\Db\MachineLeaseMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;

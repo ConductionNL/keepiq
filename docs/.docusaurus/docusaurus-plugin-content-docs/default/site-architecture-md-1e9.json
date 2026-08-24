@@ -1,6 +1,6 @@
 {
   "id": "ARCHITECTURE",
-  "title": "Doriath — Architecture & Data Model",
+  "title": "Keepiq — Architecture & Data Model",
   "description": "1. Overview",
   "source": "@site/ARCHITECTURE.md",
   "sourceDirName": ".",
@@ -8,17 +8,17 @@
   "permalink": "/docs/ARCHITECTURE",
   "draft": false,
   "unlisted": false,
-  "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/ARCHITECTURE.md",
+  "editUrl": "https://github.com/ConductionNL/keepiq/tree/development/docs/ARCHITECTURE.md",
   "tags": [],
   "version": "current",
   "frontMatter": {},
   "sidebar": "tutorialSidebar",
   "previous": {
-    "title": "Manage Doriath settings",
+    "title": "Manage Keepiq settings",
     "permalink": "/docs/tutorials/admin/admin-settings"
   },
   "next": {
-    "title": "Doriath — Design References & Dashboard Wireframes",
+    "title": "Keepiq — Design References & Dashboard Wireframes",
     "permalink": "/docs/DESIGN-REFERENCES"
   }
 }

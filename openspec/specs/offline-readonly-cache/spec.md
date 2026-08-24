@@ -9,7 +9,7 @@
 
 ## Purpose
 
-Give Doriath users read-only access to their vault with no network. An encrypted
+Give Keepiq users read-only access to their vault with no network. An encrypted
 IndexedDB snapshot of the user's secret ciphertext, folder metadata, and KDF
 parameters is refreshed on each online session; a service worker serves the app
 shell offline; and offline unlock re-derives the master key locally exactly as
@@ -20,7 +20,7 @@ read-only in v1.
 
 Competitive context: offline access is a tier-2 "table-stakes but unevenly
 executed" capability (`docs/FEATURES.md:84`); Bitwarden caches vaults for
-temporary offline use and KeePassXC/Enpass are offline-first, while Doriath has
+temporary offline use and KeePassXC/Enpass are offline-first, while Keepiq has
 zero offline capability today. Canonical feature `offline-cache`, Spectr demand 50.
 Driving persona: municipal field workers who lose connectivity on site.
 
@@ -57,7 +57,7 @@ service worker MUST NOT cache any decrypted secret material.
 
 #### Scenario: App shell loads with no network
 - GIVEN a registered service worker and no connectivity
-- WHEN the user opens Doriath
+- WHEN the user opens Keepiq
 - THEN the shell MUST load from the service worker cache and no decrypted secret
   material MUST be present in that cache
 
@@ -68,7 +68,7 @@ offline and explain why, rather than queuing writes.
 #### Scenario: Write actions are disabled offline
 - GIVEN a user viewing their vault offline
 - WHEN they attempt to create, edit, share, or delete a secret
-- THEN the action MUST be prevented with an explanation that Doriath is read-only
+- THEN the action MUST be prevented with an explanation that Keepiq is read-only
   offline
 
 ### Requirement: A stale-data banner shows the last sync time
@@ -88,7 +88,7 @@ MUST be purged on next load.
 
 #### Scenario: Disabling offline caching purges existing caches
 - GIVEN an admin sets `offline_cache_enabled` to false
-- WHEN a user next loads Doriath
+- WHEN a user next loads Keepiq
 - THEN no snapshot MUST be written and any existing snapshot MUST be purged
 
 ### Requirement: The cache is evicted on lock, logout, and suite rotation

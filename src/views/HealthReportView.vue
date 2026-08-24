@@ -14,20 +14,20 @@
 -->
 <template>
 	<div class="health-report" data-testid="health-report">
-		<h2>{{ t('doriath', 'Password health') }}</h2>
+		<h2>{{ t('keepiq', 'Password health') }}</h2>
 
 		<p
 			v-if="locked"
 			class="health-report__locked"
 			data-testid="health-report-locked">
-			{{ t('doriath', 'Unlock your vault to analyse password health.') }}
+			{{ t('keepiq', 'Unlock your vault to analyse password health.') }}
 		</p>
 
 		<template v-else>
 			<div class="health-report__controls">
 				<NcSelect
 					v-model="stalenessOption"
-					:inputLabel="t('doriath', 'Flag passwords older than')"
+					:inputLabel="t('keepiq', 'Flag passwords older than')"
 					:options="stalenessOptions"
 					:clearable="false"
 					label="label"
@@ -44,7 +44,7 @@
 						@change="onBreachToggle" />
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Check passwords against the Have I Been Pwned breach corpus',
 						)
 					}}
@@ -52,7 +52,7 @@
 				<p v-if="breachGateOn" class="health-report__optin-hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Only the first 5 characters of each password’s SHA-1 hash are sent (k-anonymity); the password itself never leaves your browser.',
 						)
 					}}
@@ -62,58 +62,54 @@
 			<p
 				v-if="store.status === 'analysing'"
 				data-testid="health-report-analysing">
-				{{ t('doriath', 'Analysing your vault…') }}
+				{{ t('keepiq', 'Analysing your vault…') }}
 			</p>
 
 			<div v-else-if="store.status === 'ready'" class="health-report__body">
 				<div class="health-report__score" data-testid="health-score">
 					<span class="health-report__score-value">{{ store.score }}</span>
 					<span class="health-report__score-label">{{
-						t('doriath', 'Vault health score')
+						t('keepiq', 'Vault health score')
 					}}</span>
 				</div>
 
 				<ul class="health-report__counts">
+					<li>{{ t('keepiq', 'Weak') }}: {{ store.summary.weakCount }}</li>
 					<li>
-						{{ t('doriath', 'Weak') }}: {{ store.summary.weakCount }}
+						{{ t('keepiq', 'Reused') }}: {{ store.summary.reusedCount }}
 					</li>
-					<li>
-						{{ t('doriath', 'Reused') }}: {{ store.summary.reusedCount }}
-					</li>
-					<li>
-						{{ t('doriath', 'Old') }}: {{ store.summary.staleCount }}
-					</li>
+					<li>{{ t('keepiq', 'Old') }}: {{ store.summary.staleCount }}</li>
 					<li v-if="breachActive">
-						{{ t('doriath', 'Breached') }}:
+						{{ t('keepiq', 'Breached') }}:
 						{{ store.summary.breachedCount }}
 					</li>
 					<li>
-						{{ t('doriath', 'Possibly compromised') }}:
+						{{ t('keepiq', 'Possibly compromised') }}:
 						{{ store.summary.compromisedCount }}
 					</li>
 				</ul>
 
 				<HealthCategory
-					:title="t('doriath', 'Weak passwords')"
+					:title="t('keepiq', 'Weak passwords')"
 					:findings="store.weakFindings"
 					testid="category-weak"
 					@open="openSecret" />
 				<HealthCategory
-					:title="t('doriath', 'Reused passwords')"
+					:title="t('keepiq', 'Reused passwords')"
 					:description="
-						t('doriath', 'These secrets share an identical password.')
+						t('keepiq', 'These secrets share an identical password.')
 					"
 					:findings="store.reusedFindings"
 					testid="category-reused"
 					@open="openSecret" />
 				<HealthCategory
-					:title="t('doriath', 'Old passwords')"
+					:title="t('keepiq', 'Old passwords')"
 					:findings="store.staleFindings"
 					testid="category-stale"
 					@open="openSecret" />
 				<HealthCategory
 					v-if="breachActive"
-					:title="t('doriath', 'Breached passwords')"
+					:title="t('keepiq', 'Breached passwords')"
 					:findings="store.breachedFindings"
 					testid="category-breached"
 					@open="openSecret" />
@@ -122,23 +118,23 @@
 					variant="secondary"
 					data-testid="breach-flag-all"
 					@click="flagBreached">
-					{{ t('doriath', 'Flag all breached secrets for rotation') }}
+					{{ t('keepiq', 'Flag all breached secrets for rotation') }}
 				</NcButton>
 				<p
 					v-else-if="store.breachStatus === 'unavailable'"
 					data-testid="breach-unavailable">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Breach check is currently unavailable. Other findings are unaffected.',
 						)
 					}}
 				</p>
 				<HealthCategory
-					:title="t('doriath', 'Possibly compromised')"
+					:title="t('keepiq', 'Possibly compromised')"
 					:description="
 						t(
-							'doriath',
+							'keepiq',
 							'Flagged during an encryption-suite compromise recovery — rotate these values.',
 						)
 					"
@@ -146,10 +142,10 @@
 					testid="category-compromised"
 					@open="openSecret" />
 				<HealthCategory
-					:title="t('doriath', 'Rotation due')"
+					:title="t('keepiq', 'Rotation due')"
 					:description="
 						t(
-							'doriath',
+							'keepiq',
 							'Open rotation flags — expired, breached, or manually flagged credentials awaiting rotation.',
 						)
 					"
@@ -187,9 +183,9 @@ export default {
 			store: useHealthStore(),
 			session: useSessionStore(),
 			rotation: useRotationStore(),
-			breachGateOn: loadState('doriath', 'breachCheckEnabled', false),
+			breachGateOn: loadState('keepiq', 'breachCheckEnabled', false),
 			breachOptIn: false,
-			stalenessOption: { value: '365', label: t('doriath', '365 days') },
+			stalenessOption: { value: '365', label: t('keepiq', '365 days') },
 		}
 	},
 
@@ -222,10 +218,10 @@ export default {
 		 */
 		stalenessOptions() {
 			return [
-				{ value: '90', label: t('doriath', '90 days') },
-				{ value: '180', label: t('doriath', '180 days') },
-				{ value: '365', label: t('doriath', '365 days') },
-				{ value: 'never', label: t('doriath', 'Never') },
+				{ value: '90', label: t('keepiq', '90 days') },
+				{ value: '180', label: t('keepiq', '180 days') },
+				{ value: '365', label: t('keepiq', '365 days') },
+				{ value: 'never', label: t('keepiq', 'Never') },
 			]
 		},
 
@@ -267,7 +263,7 @@ export default {
 		try {
 			await this.rotation.fetchFlags()
 		} catch (e) {
-			console.warn('Doriath: failed to load rotation flags', e)
+			console.warn('Keepiq: failed to load rotation flags', e)
 		}
 		if (!this.locked) {
 			await this.reanalyse()
@@ -284,7 +280,7 @@ export default {
 		async loadPrefs() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/settings/user'),
+					generateUrl('/apps/keepiq/api/settings/user'),
 				)
 				const threshold = response.data?.health_staleness_days ?? '365'
 				const match = this.stalenessOptions.find(
@@ -297,7 +293,7 @@ export default {
 					response.data?.breach_check_opt_in === '1'
 					|| response.data?.breach_check_opt_in === true
 			} catch (e) {
-				console.warn('Doriath: failed to load health prefs', e)
+				console.warn('Keepiq: failed to load health prefs', e)
 			}
 		},
 
@@ -327,7 +323,7 @@ export default {
 					this.store.breachedFindings.map((f) => f.id),
 				)
 			} catch (e) {
-				console.warn('Doriath: failed to batch-flag breached secrets', e)
+				console.warn('Keepiq: failed to batch-flag breached secrets', e)
 			}
 		},
 
@@ -339,11 +335,11 @@ export default {
 		 */
 		async onBreachToggle() {
 			try {
-				await axios.put(generateUrl('/apps/doriath/api/settings/user'), {
+				await axios.put(generateUrl('/apps/keepiq/api/settings/user'), {
 					breach_check_opt_in: this.breachOptIn ? '1' : '0',
 				})
 			} catch (e) {
-				console.warn('Doriath: failed to save breach opt-in', e)
+				console.warn('Keepiq: failed to save breach opt-in', e)
 			}
 			await this.reanalyse()
 		},
@@ -357,11 +353,11 @@ export default {
 		 */
 		async persistStaleness() {
 			try {
-				await axios.put(generateUrl('/apps/doriath/api/settings/user'), {
+				await axios.put(generateUrl('/apps/keepiq/api/settings/user'), {
 					health_staleness_days: this.stalenessOption?.value ?? '365',
 				})
 			} catch (e) {
-				console.warn('Doriath: failed to save staleness threshold', e)
+				console.warn('Keepiq: failed to save staleness threshold', e)
 			}
 		},
 

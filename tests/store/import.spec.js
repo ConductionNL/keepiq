@@ -38,7 +38,7 @@ import { serializeVault } from '../../src/export/serializer.js'
  * imports a committed 4096-bit pair rather than generating one. A live
  * `generateKeyPair()` is a random prime search with unbounded runtime; nine of
  * them in this file (one per `unlockSession()` call) pushed the round-trip test
- * past vitest's 5000ms default in ConductionNL/doriath run 30884131373, and
+ * past vitest's 5000ms default in ConductionNL/keepiq run 30884131373, and
  * caching a *generated* pair still left the first call on the timed path — that
  * residual coin flip is what then timed out `emergencyEnvelope.spec.js` in run
  * 31083918823. Every assertion still runs real RSA-OAEP against a real key;

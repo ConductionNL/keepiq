@@ -6,7 +6,7 @@
  *
  * Drives the two UI-observable audit surfaces:
  *   - the per-secret Activity tab on the secret detail view, and
- *   - the admin instance-wide audit view in the Doriath admin settings,
+ *   - the admin instance-wide audit view in the Keepiq admin settings,
  *     including the client-side CSV export.
  *
  * The server-only contracts (append-only surface, retention purge,
@@ -14,7 +14,7 @@
  * assertion) are NOT driven here — they are covered by PHPUnit and carry an
  * `@e2e exclude` directive on their spec scenarios per gate-19.
  *
- * Environment assumptions match the other workflow specs: the doriath app is
+ * Environment assumptions match the other workflow specs: the keepiq app is
  * enabled, the admin user owns one active EncryptionSuite seeded with the
  * development master password, and the dev seed data provides at least one
  * secret to read/update.
@@ -61,7 +61,7 @@ test.describe('audit trail', () => {
 		// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud, and the
 		// readiness signal this test needs is the audit section below, not a
 		// quiet network.
-		await page.goto('/index.php/settings/admin/doriath', {
+		await page.goto('/index.php/settings/admin/keepiq', {
 			waitUntil: 'domcontentloaded',
 		})
 

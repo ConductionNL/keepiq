@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Honey Alert Mapper
+ * Keepiq Honey Alert Mapper
  *
  * Query-builder mapper for HoneyAlert rows (honey-credentials §1.2):
  * owner-scoped and instance-wide listings, the accessor-dedup lookup,
  * and the unacknowledged count for the admin dashboard.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;

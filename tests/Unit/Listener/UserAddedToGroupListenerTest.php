@@ -4,7 +4,7 @@
  * Unit tests for UserAddedToGroupListener.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Listener
+ * @package  OCA\Keepiq\Tests\Unit\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,11 +17,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Listener;
+namespace OCA\Keepiq\Tests\Unit\Listener;
 
-use OCA\Doriath\Listener\UserAddedToGroupListener;
-use OCA\Doriath\Service\GroupShareService;
-use OCA\Doriath\Service\TeamFolderService;
+use OCA\Keepiq\Listener\UserAddedToGroupListener;
+use OCA\Keepiq\Service\GroupShareService;
+use OCA\Keepiq\Service\TeamFolderService;
 use OCP\EventDispatcher\Event;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\IGroup;

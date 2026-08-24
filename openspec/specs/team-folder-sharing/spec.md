@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Doriath can share individual secrets with users and groups, but a team needs to share a whole **folder** (a "team vault") so that every secret inside it — and any added later — is automatically accessible to the team. Because Doriath's sharing model is per-recipient RSA re-encrypted copies (ADR-003), a team folder is defined as a **membership set** whose changes drive fan-out of the existing per-secret share operation, not a shared symmetric key. Membership propagates with Nextcloud group membership (join → owner-approved add; leave → auto-revoke), and an admin offboarding action cleanly removes a leaver and transfers the secrets they owned. This closes Doriath's biggest team-collaboration gap versus Bitwarden collections, 1Password shared vaults, Passbolt/Teampass folders, and the long-standing Nextcloud Passwords "share folder / share to group" requests.
+Keepiq can share individual secrets with users and groups, but a team needs to share a whole **folder** (a "team vault") so that every secret inside it — and any added later — is automatically accessible to the team. Because Keepiq's sharing model is per-recipient RSA re-encrypted copies (ADR-003), a team folder is defined as a **membership set** whose changes drive fan-out of the existing per-secret share operation, not a shared symmetric key. Membership propagates with Nextcloud group membership (join → owner-approved add; leave → auto-revoke), and an admin offboarding action cleanly removes a leaver and transfers the secrets they owned. This closes Keepiq's biggest team-collaboration gap versus Bitwarden collections, 1Password shared vaults, Passbolt/Teampass folders, and the long-standing Nextcloud Passwords "share folder / share to group" requests.
 
 ## Requirements
 

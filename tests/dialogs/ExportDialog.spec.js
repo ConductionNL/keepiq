@@ -125,7 +125,7 @@ describe('AccountDeletionDialog', () => {
 		await wrapper.vm.$nextTick()
 		expect(wrapper.vm.canSubmit).toBe(false)
 
-		wrapper.vm.confirmation = 'DELETE MY DORIATH DATA'
+		wrapper.vm.confirmation = 'DELETE MY KEEPIQ DATA'
 		await wrapper.vm.$nextTick()
 		expect(wrapper.vm.canSubmit).toBe(true)
 	})

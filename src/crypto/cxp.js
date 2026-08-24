@@ -21,6 +21,13 @@ import {
 } from './hpke.js'
 
 /** Pinned CXP transport version, validated at open time (fail-fast on mismatch). */
+// DELIBERATELY STILL `doriath-` AFTER THE doriath -> keepiq RENAME. This is a
+// protocol version, not an app name, and it is load-bearing twice over: it is
+// compared for equality on both the request and the envelope (below), and it is
+// fed into the HPKE `info` in bindingInfo(), which makes it a KEY DERIVATION
+// INPUT. Changing it means a peer running any other build cannot open our
+// envelopes at all. Per the same rule the machine API follows, a breaking
+// change ships as a NEW version string, never as an in-place rename.
 export const CXP_VERSION = 'doriath-cxp-v1'
 export const REQUESTED_FORMAT = 'CXF'
 

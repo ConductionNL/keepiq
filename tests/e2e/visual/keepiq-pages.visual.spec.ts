@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Visual-regression baselines for Doriath's routed page components.
+ * Visual-regression baselines for Keepiq's routed page components.
  *
  * Run:    npx playwright test --project visual
  * Update: npx playwright test --project visual --update-snapshots
@@ -60,10 +60,10 @@ import {
 const OPAQUE = 'dmlzdWFsLWJhc2VsaW5lLXBsYWNlaG9sZGVy'
 
 /**
- * Call a Doriath JSON API from inside the page, so the Nextcloud session cookie
+ * Call a Keepiq JSON API from inside the page, so the Nextcloud session cookie
  * and the CSRF request token both travel with the request.
  *
- * @param page   The Playwright page (any Doriath route already loaded).
+ * @param page   The Playwright page (any Keepiq route already loaded).
  * @param method HTTP method.
  * @param path   App-relative path, e.g. `/api/v1/sends`.
  * @param body   Optional JSON body.
@@ -105,7 +105,7 @@ async function api(
 	)
 }
 
-test.describe('Doriath — routed page baselines', () => {
+test.describe('Keepiq — routed page baselines', () => {
 	// ── The five authenticated pages ────────────────────────────────────────
 	// One unlock per test: each test gets a fresh page, and the CryptoKey does
 	// not survive a page. `test.describe.serial` is deliberately NOT used — it

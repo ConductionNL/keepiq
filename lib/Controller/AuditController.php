@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Controller
+ * Keepiq Audit Controller
  *
  * Read-only API over the append-only audit log (add-secret-audit-trail §4.1):
  * a per-secret owner-scoped activity endpoint (404-as-403 for non-owners, no
@@ -11,7 +11,7 @@
  * application surface, so the controller exposes only GET reads.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,12 +24,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Service\AuditService;
-use OCA\Doriath\Settings\AdminSettings;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath JWT Authentication Middleware
+ * Keepiq JWT Authentication Middleware
  *
  * Validates the `Authorization: Bearer <token>` header on controllers
  * that extend ApplicationApiController, resolving the bound Application
@@ -9,7 +9,7 @@
  * a 401 JSON response.
  *
  * @category Middleware
- * @package  OCA\Doriath\Middleware
+ * @package  OCA\Keepiq\Middleware
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,10 +22,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Middleware;
+namespace OCA\Keepiq\Middleware;
 
-use OCA\Doriath\Controller\ApplicationApiController;
-use OCA\Doriath\Service\JwtAuthService;
+use OCA\Keepiq\Controller\ApplicationApiController;
+use OCA\Keepiq\Service\JwtAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -82,7 +82,7 @@ class JwtAuthMiddleware extends Middleware {
 		if ($header === '' || stripos($header, 'Bearer ') !== 0) {
 			$this->logger->info(
 				'JwtAuthMiddleware: missing Bearer header',
-				['app' => 'doriath', 'method' => $methodName]
+				['app' => 'keepiq', 'method' => $methodName]
 			);
 			throw new RuntimeException(
 				message: 'Missing or malformed Authorization header'

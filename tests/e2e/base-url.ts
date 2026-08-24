@@ -7,7 +7,7 @@
  * WHY THIS EXISTS
  * ---------------
  * Specs used to compute the target themselves and fall back to
- * `http://localhost:8080` — the SHARED dev container. `doriath-coverage.spec.ts`
+ * `http://localhost:8080` — the SHARED dev container. `keepiq-coverage.spec.ts`
  * did it with absolute literals in its WRITE paths: it created an OCS user,
  * drove a real LOGIN form and then deleted the user, so every local run fired
  * account provisioning and failed logins (brute-force throttling) into an

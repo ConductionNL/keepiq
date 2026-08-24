@@ -13,10 +13,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Team offboarding')"
+		:name="t('keepiq', 'Team offboarding')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Revoke a leaving employee\'s team-folder access and transfer their owned team secrets to a successor.',
 			)
 		">
@@ -33,7 +33,7 @@
 
 			<div class="offboarding__fields">
 				<label class="offboarding__field">
-					<span>{{ t('doriath', 'Leaving user ID') }}</span>
+					<span>{{ t('keepiq', 'Leaving user ID') }}</span>
 					<input
 						v-model.trim="leavingUserId"
 						type="text"
@@ -41,7 +41,7 @@
 						data-testid="offboarding-leaving" />
 				</label>
 				<label class="offboarding__field">
-					<span>{{ t('doriath', 'Successor user ID') }}</span>
+					<span>{{ t('keepiq', 'Successor user ID') }}</span>
 					<input
 						v-model.trim="successorUserId"
 						type="text"
@@ -61,7 +61,7 @@
 					"
 					data-testid="offboarding-run"
 					@click="confirmOpen = true">
-					{{ t('doriath', 'Offboard user') }}
+					{{ t('keepiq', 'Offboard user') }}
 				</NcButton>
 			</div>
 
@@ -102,12 +102,19 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The post-run summary sentence: revoked/transferred counts plus the
+		 * skipped-secrets caveat the admin has to act on.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
+		 */
 		summaryText() {
 			if (!this.summary) {
 				return ''
 			}
 			const base = this.t(
-				'doriath',
+				'keepiq',
 				'Revoked {revoked} shares, transferred {transferred} secrets.',
 				{
 					revoked: this.summary.revoked,
@@ -121,7 +128,7 @@ export default {
 				base
 				+ ' '
 				+ this.n(
-					'doriath',
+					'keepiq',
 					'%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
 					'%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
 					this.summary.skipped.length,

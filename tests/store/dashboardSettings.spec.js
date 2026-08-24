@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit tests for the `useDashboardSettingsStore` Pinia store
@@ -84,7 +84,7 @@ describe('useDashboardSettingsStore', () => {
 			})
 
 			const [url, body] = put.mock.calls[0]
-			expect(url).toBe('/apps/doriath/api/v1/dashboard-settings')
+			expect(url).toBe('/apps/keepiq/api/v1/dashboard-settings')
 			expect(body.settings).toEqual({
 				default_view: 'grid',
 				sort_field: 'name',
@@ -145,7 +145,7 @@ describe('useDashboardSettingsStore', () => {
 			await store.reset()
 
 			expect(del).toHaveBeenCalledWith(
-				'/apps/doriath/api/v1/dashboard-settings',
+				'/apps/keepiq/api/v1/dashboard-settings',
 			)
 			expect(store.settings).toEqual({})
 		})
