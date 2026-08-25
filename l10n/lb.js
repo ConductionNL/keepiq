@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Ewechhuelen",
         "Remove this field": "Dëst Feld ewechhuelen",
         "Give the field a name.": "Gitt dem Feld en Numm.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ ass en integréiert Feld, kee zousätzlecht — wielt en anere Numm."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ ass en integréiert Feld, kee zousätzlecht — wielt en anere Numm.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

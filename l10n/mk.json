@@ -425,7 +425,8 @@
         "Remove": "Отстрани",
         "Remove this field": "Отстрани го ова поле",
         "Give the field a name.": "Дајте му име на полето.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ е вградено поле, а не дополнително — одберете друго име."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ е вградено поле, а не дополнително — одберете друго име.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "plurals": null
 }

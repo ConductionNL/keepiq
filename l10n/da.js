@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Fjern",
         "Remove this field": "Fjern dette felt",
         "Give the field a name.": "Giv feltet et navn.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” er et indbygget felt, ikke et yderligere — vælg et andet navn."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” er et indbygget felt, ikke et yderligere — vælg et andet navn.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

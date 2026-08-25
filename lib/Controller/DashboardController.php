@@ -23,6 +23,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\DashboardSummaryService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -44,6 +45,7 @@ class DashboardController extends Controller {
 	 * @param IRequest $request The request object
 	 * @param IInitialState $initialState The initial state service
 	 * @param IAppConfig $appConfig The app config interface
+	 * @param IAppManager $appManager The app manager (version source)
 	 * @param DashboardSummaryService $summaryService The dashboard summary aggregator
 	 * @param IUserSession $userSession The user session
 	 * @param IGroupManager $groupManager The group manager
@@ -54,6 +56,7 @@ class DashboardController extends Controller {
 		IRequest $request,
 		private IInitialState $initialState,
 		private IAppConfig $appConfig,
+		private IAppManager $appManager,
 		private DashboardSummaryService $summaryService,
 		private IUserSession $userSession,
 		private IGroupManager $groupManager,
@@ -104,6 +107,14 @@ class DashboardController extends Controller {
 		$this->initialState->provideInitialState(
 			key: 'breachCheckEnabled',
 			data: $this->appConfig->getValueBool(Application::APP_ID, 'breach_check_enabled', false),
+		);
+
+		// The user-settings dialog renders this as its version footer.
+		// IAppManager reads appinfo/info.xml — the version truth; the
+		// package.json version is stale and must not be used.
+		$this->initialState->provideInitialState(
+			key: 'appVersion',
+			data: $this->appManager->getAppVersion(Application::APP_ID),
 		);
 
 		$response = new TemplateResponse(appName: Application::APP_ID, templateName: 'index');

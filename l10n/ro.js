@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Eliminați",
         "Remove this field": "Eliminați acest câmp",
         "Give the field a name.": "Dați un nume câmpului.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}” este un câmp integrat, nu suplimentar — alegeți alt nume."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}” este un câmp integrat, nu suplimentar — alegeți alt nume.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

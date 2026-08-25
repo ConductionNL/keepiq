@@ -102,57 +102,8 @@
 			"config": {
 				"description": "Your secrets, folders and applications at a glance",
 				"documentationUrl": "https://keepiq.conduction.nl",
-				"_note": "The eleven dashboard widgets live in config.widgets[] + config.layout[], NOT in the page-level widgets[] array. CnPageRenderer renders a bare CnWidgetGrid whenever a typed page carries page-level widgets targeting the body slot, so this type:\"dashboard\" page never mounted CnDashboardPage and lost its header, max-width, padding, sidebar and grid discipline (hydra gate-69 page-type-discipline; hrmq#112 moved 47 pages for the same reason). Only config.widgets/config.layout reach the typed page component. Three shape differences follow from that move, all verified against the installed @conduction/nextcloud-vue dist rather than the schema prose: (1) banner/stat/text payloads move from props{} to content{}, because CnDashboardPage's registry branch passes the widget def's content BOTH as a `content` prop and spread flat, which is the dual shape those renderers document; (2) tile fields move to the widget def's TOP LEVEL, because isTile() is matched before the registry branch and CnDashboardPage.getTileConfig() reads title/icon/iconType/backgroundColor/textColor/linkType/linkValue straight off the def and never looks at content; (3) showTitle:false is set on the eight widgets that render inside CnWidgetWrapper, so they stay header-less exactly as they were under the bare CnWidgetGrid — without it a non-card widget would grow a header captioned with its own widget id. Tiles bypass the wrapper entirely, so they carry no showTitle.",
+				"_note": "The eight dashboard widgets live in config.widgets[] + config.layout[], NOT in the page-level widgets[] array. CnPageRenderer renders a bare CnWidgetGrid whenever a typed page carries page-level widgets targeting the body slot, so this type:\"dashboard\" page never mounted CnDashboardPage and lost its header, max-width, padding, sidebar and grid discipline (hydra gate-69 page-type-discipline; hrmq#112 moved 47 pages for the same reason). Only config.widgets/config.layout reach the typed page component. Three shape differences follow from that move, all verified against the installed @conduction/nextcloud-vue dist rather than the schema prose: (1) banner/stat/text payloads move from props{} to content{}, because CnDashboardPage's registry branch passes the widget def's content BOTH as a `content` prop and spread flat, which is the dual shape those renderers document; (2) tile fields move to the widget def's TOP LEVEL, because isTile() is matched before the registry branch and CnDashboardPage.getTileConfig() reads title/icon/iconType/backgroundColor/textColor/linkType/linkValue straight off the def and never looks at content; (3) showTitle:false is set on the five widgets that render inside CnWidgetWrapper (four stats, one text), so they stay header-less exactly as they were under the bare CnWidgetGrid — without it a non-card widget would grow a header captioned with its own widget id. Tiles bypass the wrapper entirely, so they carry no showTitle. NO BANNER WIDGETS: the three conditional banners (two migration states, pending apps) were removed because CnDashboardPage renders the CnWidgetWrapper card and reserves the grid row even while a banner's visibleWhen is unmet, so the dashboard opened on three tall empty cards for everyone (restyle follow-up 4c). Nothing is lost: MigrationResumeBanner in App.vue already shows migration state app-wide, the error state was unreachable server-side, and the approval queue lives in admin settings. Re-add them only after the library collapses hidden banners (wrapper + grid cell).",
 				"widgets": [
-					{
-						"id": "migration-in-progress-banner",
-						"type": "banner",
-						"showTitle": false,
-						"_note": "ADR-049 dissolution of the keepiq-migration-banner custom widget. The two-state warning/error variant mapping cannot live in ONE banner config (variant is static), so two banner entries carry complementary visibleWhen predicates against GET /api/v1/migrations/status. The legacy widget's click emitted a 'navigate' event that had no consumer (no 'migration' route exists; the migration UI lives in user settings), so no route is configured. ⚠️ These fields live under `props`, NOT `content`: CnDashboardPage resolves `props = content.props || def.props || {}`, so a banner whose fields sit directly in `content` receives an EMPTY props object and renders blank. `content` is `additionalProperties: true`, so no gate catches it.",
-						"props": {
-							"variant": "warning",
-							"text": "Compromise recovery in progress — open the migration screen (Settings → Security) for live progress.",
-							"visibleWhen": {
-								"endpoint": "/apps/keepiq/api/v1/migrations/status",
-								"field": "status",
-								"op": "eq",
-								"value": "in_progress"
-							}
-						}
-					},
-					{
-						"id": "migration-errors-banner",
-						"type": "banner",
-						"showTitle": false,
-						"_note": "Complement of migration-in-progress-banner (error state). NOTE: /api/v1/migrations/status currently only ever returns 'in_progress' or 'none' (MigrationService::getInProgressMigration filters status='in_progress'), so this state is unreachable server-side today — exactly like the legacy widget, whose completed_with_errors branch read summary.migration_status, a key DashboardService::fetchSummary never emits. Fail-safe hidden until the endpoint grows the state.",
-						"props": {
-							"variant": "error",
-							"text": "Compromise recovery completed with errors — open the migration screen (Settings → Security) for details.",
-							"visibleWhen": {
-								"endpoint": "/apps/keepiq/api/v1/migrations/status",
-								"field": "status",
-								"op": "eq",
-								"value": "completed_with_errors"
-							}
-						}
-					},
-					{
-						"id": "pending-apps-banner",
-						"type": "banner",
-						"showTitle": false,
-						"_note": "ADR-049 dissolution of the keepiq-pending-apps custom widget (admin-only, hidden at zero). Expressed as a banner because hide-when-zero against an app endpoint has no stat-widget equivalent: hideWhenZero exists only on stats-block entries[], which are OR-source-only (register+schema required). visibleWhen pending_apps_count > 0 reproduces both gates in one predicate — non-admins get null (hidden) and admins with an empty queue get 0 (hidden). Routes to ApplicationRegister (the approval queue itself lives in admin settings, which is not a router route).",
-						"props": {
-							"variant": "warning",
-							"text": "Application(s) awaiting approval — open the applications page.",
-							"visibleWhen": {
-								"endpoint": "/apps/keepiq/api/dashboard/summary",
-								"field": "pending_apps_count",
-								"op": "gt",
-								"value": 0
-							},
-							"route": "ApplicationRegister"
-						}
-					},
 					{
 						"id": "kpi-total-secrets",
 						"type": "stat",
@@ -257,89 +208,65 @@
 				"layout": [
 					{
 						"id": 1,
-						"widgetId": "migration-in-progress-banner",
+						"widgetId": "kpi-total-secrets",
 						"gridX": 0,
 						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 1
+						"gridWidth": 3,
+						"gridHeight": 2
 					},
 					{
 						"id": 2,
-						"widgetId": "migration-errors-banner",
-						"gridX": 0,
-						"gridY": 1,
-						"gridWidth": 12,
-						"gridHeight": 1
+						"widgetId": "kpi-shared-with-me",
+						"gridX": 3,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2
 					},
 					{
 						"id": 3,
-						"widgetId": "pending-apps-banner",
-						"gridX": 0,
-						"gridY": 2,
-						"gridWidth": 12,
-						"gridHeight": 1
+						"widgetId": "kpi-folders",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2
 					},
 					{
 						"id": 4,
-						"widgetId": "kpi-total-secrets",
-						"gridX": 0,
-						"gridY": 3,
+						"widgetId": "kpi-rotation-due",
+						"gridX": 9,
+						"gridY": 0,
 						"gridWidth": 3,
 						"gridHeight": 2
 					},
 					{
 						"id": 5,
-						"widgetId": "kpi-shared-with-me",
-						"gridX": 3,
-						"gridY": 3,
-						"gridWidth": 3,
-						"gridHeight": 2
+						"widgetId": "recent-activity-text",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 6,
+						"gridHeight": 4
 					},
 					{
 						"id": 6,
-						"widgetId": "kpi-folders",
+						"widgetId": "quick-action-new-secret",
 						"gridX": 6,
-						"gridY": 3,
-						"gridWidth": 3,
+						"gridY": 2,
+						"gridWidth": 6,
 						"gridHeight": 2
 					},
 					{
 						"id": 7,
-						"widgetId": "kpi-rotation-due",
-						"gridX": 9,
-						"gridY": 3,
+						"widgetId": "quick-action-register-application",
+						"gridX": 6,
+						"gridY": 4,
 						"gridWidth": 3,
 						"gridHeight": 2
 					},
 					{
 						"id": 8,
-						"widgetId": "recent-activity-text",
-						"gridX": 0,
-						"gridY": 5,
-						"gridWidth": 6,
-						"gridHeight": 4
-					},
-					{
-						"id": 9,
-						"widgetId": "quick-action-new-secret",
-						"gridX": 6,
-						"gridY": 5,
-						"gridWidth": 6,
-						"gridHeight": 2
-					},
-					{
-						"id": 10,
-						"widgetId": "quick-action-register-application",
-						"gridX": 6,
-						"gridY": 7,
-						"gridWidth": 3,
-						"gridHeight": 2
-					},
-					{
-						"id": 11,
 						"widgetId": "quick-action-documentation",
 						"gridX": 9,
-						"gridY": 7,
+						"gridY": 4,
 						"gridWidth": 3,
 						"gridHeight": 2
 					}

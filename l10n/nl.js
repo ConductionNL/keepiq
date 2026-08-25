@@ -585,7 +585,8 @@ OC.L10N.register(
         "Remove": "Verwijderen",
         "Remove this field": "Dit veld verwijderen",
         "Give the field a name.": "Geef het veld een naam.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is een ingebouwd veld, geen extra veld — kies een andere naam."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is een ingebouwd veld, geen extra veld — kies een andere naam.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

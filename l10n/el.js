@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Αφαίρεση",
         "Remove this field": "Αφαίρεση αυτού του πεδίου",
         "Give the field a name.": "Δώστε όνομα στο πεδίο.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "Το «{name}» είναι ενσωματωμένο πεδίο, όχι πρόσθετο — επιλέξτε άλλο όνομα."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "Το «{name}» είναι ενσωματωμένο πεδίο, όχι πρόσθετο — επιλέξτε άλλο όνομα.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Kaldır",
         "Remove this field": "Bu alanı kaldır",
         "Give the field a name.": "Alana bir ad verin.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” yerleşik bir alandır, ek alan değil — başka bir ad seçin."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” yerleşik bir alandır, ek alan değil — başka bir ad seçin.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

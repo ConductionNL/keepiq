@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Neħħi",
         "Remove this field": "Neħħi dan il-qasam",
         "Give the field a name.": "Agħti isem lill-qasam.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” huwa qasam integrat, mhux addizzjonali — agħżel isem oħra."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” huwa qasam integrat, mhux addizzjonali — agħżel isem oħra.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Elimina",
         "Remove this field": "Elimina aquest camp",
         "Give the field a name.": "Doneu un nom al camp.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» és un camp integrat, no addicional: trieu un altre nom."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» és un camp integrat, no addicional: trieu un altre nom.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

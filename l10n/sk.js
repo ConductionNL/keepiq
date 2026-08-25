@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Odobrať",
         "Remove this field": "Odobrať toto pole",
         "Give the field a name.": "Pomenujte pole.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ je vstavané pole, nie ďalšie — zvoľte iný názov."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ je vstavané pole, nie ďalšie — zvoľte iný názov.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

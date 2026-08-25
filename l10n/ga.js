@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Bain",
         "Remove this field": "Bain an réimse seo",
         "Give the field a name.": "Tabhair ainm ar an réimse.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "Is réimse ionsuite é “{name}”, nach ceann breise — roghnaigh ainm eile."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "Is réimse ionsuite é “{name}”, nach ceann breise — roghnaigh ainm eile.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )

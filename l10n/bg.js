@@ -426,7 +426,8 @@ OC.L10N.register(
         "Remove": "Премахване",
         "Remove this field": "Премахване на това поле",
         "Give the field a name.": "Дайте име на полето.",
-        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ е вградено поле, а не допълнително — изберете друго име."
+        "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ е вградено поле, а не допълнително — изберете друго име.",
+        "Keepiq {version}": "Keepiq {version}"
     },
     "nplurals=2; plural=(n != 1);"
 )
