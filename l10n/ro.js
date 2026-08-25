@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Eliminați acest câmp",
         "Give the field a name.": "Dați un nume câmpului.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}” este un câmp integrat, nu suplimentar — alegeți alt nume.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Element",
+        "No recent activity": "Nicio activitate recentă",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

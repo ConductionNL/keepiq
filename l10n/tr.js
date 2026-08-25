@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Bu alanı kaldır",
         "Give the field a name.": "Alana bir ad verin.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” yerleşik bir alandır, ek alan değil — başka bir ad seçin.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Öğe",
+        "No recent activity": "Yakın zamanda etkinlik yok",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

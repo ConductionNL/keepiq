@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Удалить это поле",
         "Give the field a name.": "Дайте полю имя.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» — встроенное поле, а не дополнительное: выберите другое имя.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Элемент",
+        "No recent activity": "Нет недавней активности",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

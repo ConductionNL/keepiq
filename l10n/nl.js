@@ -411,7 +411,7 @@ OC.L10N.register(
         "Unlock the vault before creating a secret.": "Ontgrendel de kluis voordat u een geheim aanmaakt.",
         "URL (optional)": "URL (optioneel)",
         "Used {used} of {limit}": "{used} van {limit} gebruikt",
-        "Vault root": "Kluiswortel",
+        "Vault root": "Hoofdmap",
         "via group": "via groep",
         "Welcome to Keepiq": "Welkom bij Keepiq",
         "Widgets": "Widgets",
@@ -586,7 +586,15 @@ OC.L10N.register(
         "Remove this field": "Dit veld verwijderen",
         "Give the field a name.": "Geef het veld een naam.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is een ingebouwd veld, geen extra veld — kies een andere naam.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Item",
+        "No recent activity": "Geen recente activiteit",
+        "View all": "Alles bekijken",
+        "Applications awaiting approval": "Applicaties in afwachting van goedkeuring",
+        "No applications awaiting approval": "Geen applicaties in afwachting van goedkeuring",
+        "Vault overview": "Kluisoverzicht",
+        "Your secrets, folders and applications at a glance": "Uw geheimen, mappen en applicaties in één oogopslag",
+        "Rotation due": "Rotatie vereist"
     },
     "nplurals=2; plural=(n != 1);"
 )

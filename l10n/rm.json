@@ -426,7 +426,15 @@
         "Remove this field": "Allontanar quest champ",
         "Give the field a name.": "Dai in num al champ.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» è in champ integrà, betg in supplementar — tscherna in auter num.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Element",
+        "No recent activity": "Nagina activitad recenta",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "plurals": null
 }

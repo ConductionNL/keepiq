@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Elimina aquest camp",
         "Give the field a name.": "Doneu un nom al camp.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "«{name}» és un camp integrat, no addicional: trieu un altre nom.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Element",
+        "No recent activity": "Sense activitat recent",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

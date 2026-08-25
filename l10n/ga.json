@@ -426,7 +426,15 @@
         "Remove this field": "Bain an réimse seo",
         "Give the field a name.": "Tabhair ainm ar an réimse.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "Is réimse ionsuite é “{name}”, nach ceann breise — roghnaigh ainm eile.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Mír",
+        "No recent activity": "Níl aon ghníomhaíocht le déanaí",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "plurals": null
 }

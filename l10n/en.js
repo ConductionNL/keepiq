@@ -996,7 +996,14 @@ OC.L10N.register(
         "Remove": "Remove",
         "Remove this field": "Remove this field",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is a built-in field, not an additional one — choose a different name.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Item",
+        "No recent activity": "No recent activity",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance"
     },
     "nplurals=2; plural=(n != 1);"
 )

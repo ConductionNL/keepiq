@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Ukloni ovo polje",
         "Give the field a name.": "Dajte polju naziv.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ je ugrađeno polje, a ne dodatno — odaberite drugi naziv.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Stavka",
+        "No recent activity": "Nema nedavnih aktivnosti",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

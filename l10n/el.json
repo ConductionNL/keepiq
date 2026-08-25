@@ -426,7 +426,15 @@
         "Remove this field": "Αφαίρεση αυτού του πεδίου",
         "Give the field a name.": "Δώστε όνομα στο πεδίο.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "Το «{name}» είναι ενσωματωμένο πεδίο, όχι πρόσθετο — επιλέξτε άλλο όνομα.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Στοιχείο",
+        "No recent activity": "Καμία πρόσφατη δραστηριότητα",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "plurals": null
 }

@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Hiq këtë fushë",
         "Give the field a name.": "Jepni emër fushës.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” është fushë e integruar, jo shtesë — zgjidhni emër tjetër.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Artikull",
+        "No recent activity": "Asnjë aktivitet i fundit",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

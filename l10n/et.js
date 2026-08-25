@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Eemalda see väli",
         "Give the field a name.": "Anna väljale nimi.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ on sisseehitatud väli, mitte lisaväli — vali teine nimi.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Üksus",
+        "No recent activity": "Hiljutine tegevus puudub",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

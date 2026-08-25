@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Noņemt šo lauku",
         "Give the field a name.": "Piešķir laukam nosaukumu.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” ir iebūvēts lauks, nevis papildu — izvēlies citu nosaukumu.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Vienums",
+        "No recent activity": "Nav nesenu darbību",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

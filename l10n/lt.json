@@ -426,7 +426,15 @@
         "Remove this field": "Pašalinti šį lauką",
         "Give the field a name.": "Suteikite laukui pavadinimą.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "„{name}“ yra integruotas laukas, o ne papildomas — pasirinkite kitą pavadinimą.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Elementas",
+        "No recent activity": "Nėra naujausios veiklos",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "plurals": null
 }

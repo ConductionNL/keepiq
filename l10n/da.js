@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Fjern dette felt",
         "Give the field a name.": "Giv feltet et navn.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” er et indbygget felt, ikke et yderligere — vælg et andet navn.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Element",
+        "No recent activity": "Ingen nylig aktivitet",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

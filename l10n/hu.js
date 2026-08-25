@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Mező eltávolítása",
         "Give the field a name.": "Adjon nevet a mezőnek.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "A(z) „{name}” beépített mező, nem további — válasszon másik nevet.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Elem",
+        "No recent activity": "Nincs friss tevékenység",
+        "View all": "View all",
+        "Applications awaiting approval": "Applications awaiting approval",
+        "No applications awaiting approval": "No applications awaiting approval",
+        "Vault overview": "Vault overview",
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Rotation due": "Rotation due"
     },
     "nplurals=2; plural=(n != 1);"
 )

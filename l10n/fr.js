@@ -427,7 +427,15 @@ OC.L10N.register(
         "Remove this field": "Supprimer ce champ",
         "Give the field a name.": "Donnez un nom au champ.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "« {name} » est un champ intégré, pas un champ supplémentaire — choisissez un autre nom.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Item": "Élément",
+        "No recent activity": "Aucune activité récente",
+        "View all": "Tout afficher",
+        "Applications awaiting approval": "Applications en attente d’approbation",
+        "No applications awaiting approval": "Aucune application en attente d’approbation",
+        "Vault overview": "Aperçu du coffre",
+        "Your secrets, folders and applications at a glance": "Vos secrets, dossiers et applications en un coup d’œil",
+        "Rotation due": "Rotation requise"
     },
     "nplurals=2; plural=(n != 1);"
 )
