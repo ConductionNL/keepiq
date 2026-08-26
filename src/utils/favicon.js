@@ -67,6 +67,10 @@ export function typeIconName(typeName) {
 		certificate: 'ShieldCheck',
 		note: 'NoteText',
 		database: 'Database',
+		totp: 'ClockOutline',
+		passkey: 'Fingerprint',
+		card: 'CreditCardOutline',
+		identity: 'CardAccountDetailsOutline',
 	}
 	return map[typeName] || 'Key'
 }

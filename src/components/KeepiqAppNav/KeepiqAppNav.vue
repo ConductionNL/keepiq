@@ -54,31 +54,23 @@
 					</template>
 				</NcAppNavigationItem>
 			</template>
-			<!-- The Vaults caption + tree host are OWNED BY THIS COMPONENT,
-			     not the manifest: buildManifest drops menu entries without
+			<!-- The Vaults caption + tree are OWNED BY THIS COMPONENT, not
+			     the manifest: buildManifest drops menu entries without
 			     route/href/action/children ("empty group shells"), which
 			     eats a `type: "caption"` declaration before it ever renders.
 			     Since the tree itself can only live here anyway, the caption
-			     rides along. Revisit if the lib's filter learns to spare
-			     captions. -->
+			     rides along. No "All vaults" host item — the caption already
+			     names the group and a second link to the vault root would
+			     double-highlight next to "All secrets". Revisit if the lib's
+			     filter learns to spare captions. -->
 			<NcAppNavigationCaption
+				v-if="folderTree.length > 0"
 				:name="t('keepiq', 'Vaults')"
 				data-testid="cn-nav-caption-FoldersCaption" />
-			<NcAppNavigationItem
-				:name="t('keepiq', 'All vaults')"
-				:to="{ name: 'SecretList' }"
-				:allow-collapse="folderTree.length > 0"
-				:open="treeOpen"
-				data-testid="cn-nav-entry-VaultTree"
-				@update:open="treeOpen = $event">
-				<template #icon>
-					<Inbox :size="20" />
-				</template>
-				<NavFolderTree
-					v-if="folderTree.length > 0"
-					:folders="folderTree"
-					:highlight-id="highlightFolderId" />
-			</NcAppNavigationItem>
+			<NavFolderTree
+				v-if="folderTree.length > 0"
+				:folders="folderTree"
+				:highlight-id="highlightFolderId" />
 		</template>
 		<template #footer>
 			<!-- Footer-section entries live in NcAppNavigation's #footer slot —
@@ -154,7 +146,6 @@ import {
 	NcAppNavigationItem,
 	NcAppNavigationSettings,
 } from '@nextcloud/vue'
-import Inbox from 'vue-material-design-icons/Inbox.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
@@ -169,7 +160,6 @@ export default {
 
 	components: {
 		CnIcon,
-		Inbox,
 		NavFolderTree,
 		NcAppNavigation,
 		NcAppNavigationCaption,
@@ -193,13 +183,6 @@ export default {
 			type: Object,
 			required: true,
 		},
-	},
-
-	data() {
-		return {
-			/** Collapse state of the vault-tree host item. */
-			treeOpen: true,
-		}
 	},
 
 	computed: {

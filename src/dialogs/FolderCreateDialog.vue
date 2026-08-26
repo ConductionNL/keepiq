@@ -6,8 +6,12 @@
   name (+ optional parent) form wired to the folder store.
 -->
 <template>
+	<!-- Level-appropriate wording (restyle terminology): a TOP-LEVEL folder
+	     is a Vault, one inside a vault is a folder. The wording follows the
+	     SELECTED parent, so switching the parent picker retitles the dialog
+	     live. -->
 	<NcDialog
-		:name="t('keepiq', 'New folder')"
+		:name="isVaultLevel ? t('keepiq', 'New vault') : t('keepiq', 'New folder')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -18,7 +22,7 @@
 
 			<NcTextField
 				v-model="name"
-				:label="t('keepiq', 'Folder name')"
+				:label="isVaultLevel ? t('keepiq', 'Vault name') : t('keepiq', 'Folder name')"
 				:required="true" />
 
 			<NcSelect
@@ -36,9 +40,10 @@
 			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
+					<Safe v-else-if="isVaultLevel" :size="20" />
 					<FolderPlus v-else :size="20" />
 				</template>
-				{{ t('keepiq', 'Create folder') }}
+				{{ isVaultLevel ? t('keepiq', 'Create vault') : t('keepiq', 'Create folder') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -54,7 +59,9 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
+import Safe from 'vue-material-design-icons/Safe.vue'
 import { useFolderStore } from '../store/modules/folder.js'
+import { folderPathLabel } from '../utils/vaultList.js'
 
 /**
  * Create a folder via the folder store. Emits `saved` with the new folder on
@@ -71,6 +78,7 @@ export default {
 		NcSelect,
 		NcTextField,
 		FolderPlus,
+		Safe,
 	},
 
 	props: {
@@ -99,18 +107,31 @@ export default {
 
 	computed: {
 		/**
+		 * Whether the SELECTED parent is the root — creating there makes a
+		 * top-level folder, i.e. a Vault (restyle terminology), and the
+		 * dialog's wording follows.
+		 *
+		 * @return {boolean}
+		 */
+		isVaultLevel() {
+			return !this.selectedParentId
+		},
+
+		/**
 		 * The parent-folder picker options: the vault root plus every folder
-		 * the user owns.
+		 * the user owns, path-labelled ("A / B / C") so same-named nested
+		 * folders stay distinguishable (restyle Stage 6).
 		 *
 		 * @return {Array<{value: string|null, label: string}>}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
 		 */
 		parentOptions() {
+			const folders = useFolderStore().folders
 			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
-				useFolderStore().folders.map((folder) => ({
+				folders.map((folder) => ({
 					value: folder.id,
-					label: folder.name,
+					label: folderPathLabel(folders, folder.id) || folder.name,
 				})),
 			)
 		},

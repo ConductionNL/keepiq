@@ -175,7 +175,9 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			.first()
 			.fill(FOLDER, { force: true })
 		await page.waitForTimeout(300)
-		await nativeClickByText(page, 'body button', 'Create folder')
+		// At the vault root the dialog's submit reads "Create vault"
+		// (level-appropriate terminology).
+		await nativeClickByText(page, 'body button', 'Create (vault|folder)')
 		await expect(page.locator('.folder-form')).toHaveCount(0, {
 			timeout: 15_000,
 		})

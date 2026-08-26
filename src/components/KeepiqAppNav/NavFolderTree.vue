@@ -27,8 +27,12 @@
 			:open="openState[node.id] ?? true"
 			:data-testid="`nav-folder-${node.id}`"
 			@update:open="openState[node.id] = $event">
+			<!-- Root-level entries ARE the vaults (Stage 5 terminology), so
+			     they carry the safe glyph; only nested entries are plain
+			     folders. -->
 			<template #icon>
-				<FolderOutline :size="18" />
+				<Safe v-if="depth === 0" :size="18" />
+				<FolderOutline v-else :size="18" />
 			</template>
 			<NavFolderTree
 				v-if="hasVisibleChildren(node)"
@@ -47,6 +51,7 @@
 <script>
 import { NcAppNavigationItem } from '@nextcloud/vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
+import Safe from 'vue-material-design-icons/Safe.vue'
 
 /**
  * Maximum folder depth the rail renders. Deeper levels are reachable
@@ -67,6 +72,7 @@ export default {
 	components: {
 		NcAppNavigationItem,
 		FolderOutline,
+		Safe,
 	},
 
 	props: {

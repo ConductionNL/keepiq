@@ -5,102 +5,6 @@
 		     own subfolder rows + breadcrumbs (Stage 6); the in-page folder
 		     sidebar is gone. -->
 		<div class="secret-list-view__main">
-			<!-- Toolbar (restyle Stage 5): a declarative toolbarItems() list —
-			     per-item `placement` decides between a visible button and the
-			     single "More actions" overflow. Visible = Refresh (plus "New
-			     secret", which is CnIndexPage's own add button below); the
-			     overflow carries the secondary actions, the "My data" entries
-			     (secret-export-gdpr §6.5) and the secret-type filter
-			     (passkey-item-type §3.3). data-testids and disabled conditions
-			     are unchanged from the pre-restyle toolbar. -->
-			<div class="secret-list-view__actions">
-				<NcButton
-					v-for="item in visibleToolbarItems"
-					:key="item.id"
-					variant="secondary"
-					:disabled="item.disabled"
-					:data-testid="item.testid"
-					@click="item.run()">
-					<template #icon>
-						<component :is="item.icon" :size="20" />
-					</template>
-					{{ item.label }}
-				</NcButton>
-				<NcActions
-					:menuName="t('keepiq', 'More actions')"
-					:forceMenu="true"
-					:forceName="true"
-					data-testid="more-actions">
-					<NcActionButton
-						v-for="item in overflowToolbarItems"
-						:key="item.id"
-						:disabled="item.disabled"
-						:data-testid="item.testid"
-						:close-after-click="true"
-						@click="item.run()">
-						<template #icon>
-							<component :is="item.icon" :size="20" />
-						</template>
-						{{ item.label }}
-					</NcActionButton>
-
-					<!-- Data export / GDPR / deletion entry points
-					     (secret-export-gdpr §6.5). -->
-					<NcActionSeparator />
-					<NcActionButton
-						data-testid="open-new-send"
-						:close-after-click="true"
-						@click="newSendOpen = true">
-						{{ t('keepiq', 'New ephemeral send') }}
-					</NcActionButton>
-					<NcActionButton
-						data-testid="open-my-sends"
-						:close-after-click="true"
-						@click="mySendsOpen = true">
-						{{ t('keepiq', 'My ephemeral sends') }}
-					</NcActionButton>
-					<NcActionButton :close-after-click="true" @click="openExport">
-						{{ t('keepiq', 'Export data') }}
-					</NcActionButton>
-					<NcActionButton
-						:disabled="vaultLocked"
-						data-testid="cxp-transfer"
-						:close-after-click="true"
-						@click="openCxp">
-						{{ t('keepiq', 'Encrypted transfer (CXP)') }}
-					</NcActionButton>
-					<NcActionButton :close-after-click="true" @click="openGdpr">
-						{{ t('keepiq', 'GDPR export') }}
-					</NcActionButton>
-					<NcActionButton :close-after-click="true" @click="deletionOpen = true">
-						{{ t('keepiq', 'Delete my Keepiq data') }}
-					</NcActionButton>
-
-					<!-- Secret-type filter (passkey-item-type §3.3): show only one
-					     type, e.g. passkeys. Server-side via the typeId param. -->
-					<NcActionSeparator />
-					<NcActionCaption :name="t('keepiq', 'Filter by type')" />
-					<NcActionRadio
-						name="secret-type-filter"
-						value=""
-						:model-value="typeFilter ?? ''"
-						data-testid="secret-type-filter"
-						@update:model-value="onTypeFilter(null)">
-						{{ t('keepiq', 'All types') }}
-					</NcActionRadio>
-					<NcActionRadio
-						v-for="option in typeFilterOptions"
-						:key="option.value"
-						name="secret-type-filter"
-						:value="option.value"
-						:model-value="typeFilter ?? ''"
-						data-testid="secret-type-filter"
-						@update:model-value="onTypeFilter(option.value)">
-						{{ option.label }}
-					</NcActionRadio>
-				</NcActions>
-			</div>
-
 			<ExportDialog
 				:open="exportOpen"
 				:secrets="decryptedSecrets"
@@ -235,6 +139,108 @@
 				@search="onSearch"
 				@sortChange="onSort"
 				@pageChanged="goToPage">
+				<!-- Title row (restyle Stage 8): the page title and the
+				     toolbar share ONE row, aligned with the page content.
+				     The toolbar is the Stage-5 declarative toolbarItems()
+				     list — per-item `placement` decides between a visible
+				     button and the single "More actions" overflow, which
+				     carries the secondary actions, the "My data" entries
+				     (secret-export-gdpr §6.5) and the secret-type filter
+				     (passkey-item-type §3.3). data-testids and disabled
+				     conditions are unchanged. -->
+				<template #header="{ title }">
+					<div class="secret-list-view__header">
+						<CnPageHeader :title="title" />
+						<div class="secret-list-view__actions">
+							<NcButton
+								v-for="item in visibleToolbarItems"
+								:key="item.id"
+								variant="secondary"
+								:disabled="item.disabled"
+								:data-testid="item.testid"
+								@click="item.run()">
+								<template #icon>
+									<component :is="item.icon" :size="20" />
+								</template>
+								{{ item.label }}
+							</NcButton>
+							<NcActions
+								:menuName="t('keepiq', 'More actions')"
+								:forceMenu="true"
+								:forceName="true"
+								data-testid="more-actions">
+								<NcActionButton
+									v-for="item in overflowToolbarItems"
+									:key="item.id"
+									:disabled="item.disabled"
+									:data-testid="item.testid"
+									:close-after-click="true"
+									@click="item.run()">
+									<template #icon>
+										<component :is="item.icon" :size="20" />
+									</template>
+									{{ item.label }}
+								</NcActionButton>
+
+								<!-- Data export / GDPR / deletion entry points
+								     (secret-export-gdpr §6.5). -->
+								<NcActionSeparator />
+								<NcActionButton
+									data-testid="open-new-send"
+									:close-after-click="true"
+									@click="newSendOpen = true">
+									{{ t('keepiq', 'New ephemeral send') }}
+								</NcActionButton>
+								<NcActionButton
+									data-testid="open-my-sends"
+									:close-after-click="true"
+									@click="mySendsOpen = true">
+									{{ t('keepiq', 'My ephemeral sends') }}
+								</NcActionButton>
+								<NcActionButton :close-after-click="true" @click="openExport">
+									{{ t('keepiq', 'Export data') }}
+								</NcActionButton>
+								<NcActionButton
+									:disabled="vaultLocked"
+									data-testid="cxp-transfer"
+									:close-after-click="true"
+									@click="openCxp">
+									{{ t('keepiq', 'Encrypted transfer (CXP)') }}
+								</NcActionButton>
+								<NcActionButton :close-after-click="true" @click="openGdpr">
+									{{ t('keepiq', 'GDPR export') }}
+								</NcActionButton>
+								<NcActionButton :close-after-click="true" @click="deletionOpen = true">
+									{{ t('keepiq', 'Delete my Keepiq data') }}
+								</NcActionButton>
+
+								<!-- Secret-type filter (passkey-item-type §3.3):
+								     show only one type, e.g. passkeys.
+								     Server-side via the typeId param. -->
+								<NcActionSeparator />
+								<NcActionCaption :name="t('keepiq', 'Filter by type')" />
+								<NcActionRadio
+									name="secret-type-filter"
+									value=""
+									:model-value="typeFilter ?? ''"
+									data-testid="secret-type-filter"
+									@update:model-value="onTypeFilter(null)">
+									{{ t('keepiq', 'All types') }}
+								</NcActionRadio>
+								<NcActionRadio
+									v-for="option in typeFilterOptions"
+									:key="option.value"
+									name="secret-type-filter"
+									:value="option.value"
+									:model-value="typeFilter ?? ''"
+									data-testid="secret-type-filter"
+									@update:model-value="onTypeFilter(option.value)">
+									{{ option.label }}
+								</NcActionRadio>
+							</NcActions>
+						</div>
+					</div>
+				</template>
 				<!-- Folder trail (restyle Stage 5): home crumb + parent walk to
 				     the current folder (unlinked). Empty at the vault root, so
 				     CnBreadcrumbs renders no landmark there. -->
@@ -267,7 +273,10 @@
 						class="secret-list-view__folder-row"
 						:data-testid="`folder-row-${object.folderId}`"
 						@click="openFolder(object.folderId)">
-						<FolderOutline :size="20" />
+						<!-- Root rows ARE the vaults → safe glyph; inside a
+						     vault the rows are plain folders. -->
+						<Safe v-if="!selectedFolderId" :size="20" />
+						<FolderOutline v-else :size="20" />
 						<span class="secret-list-view__folder-name">
 							{{ object.name }}
 						</span>
@@ -317,7 +326,11 @@
 </template>
 
 <script>
-import { CnBreadcrumbs, CnIndexPage } from '@conduction/nextcloud-vue'
+import {
+	CnBreadcrumbs,
+	CnIndexPage,
+	CnPageHeader,
+} from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
 	NcActionCaption,
@@ -335,6 +348,7 @@ import Import from 'vue-material-design-icons/Import.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
+import Safe from 'vue-material-design-icons/Safe.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
@@ -366,6 +380,7 @@ const PAGE_SIZE = 50
 const TOOLBAR_ICONS = {
 	refresh: markRaw(Refresh),
 	folderPlus: markRaw(FolderPlus),
+	safe: markRaw(Safe),
 	accountQuestion: markRaw(AccountQuestion),
 	import: markRaw(Import),
 	accountGroup: markRaw(AccountGroup),
@@ -391,6 +406,7 @@ export default {
 		SecretRequestCreateDialog,
 		CnBreadcrumbs,
 		CnIndexPage,
+		CnPageHeader,
 		NcActionButton,
 		NcActionCaption,
 		NcActionRadio,
@@ -400,6 +416,7 @@ export default {
 		NcEmptyContent,
 		FolderOutline,
 		KeyVariant,
+		Safe,
 		SecretListItem,
 		ExportDialog,
 		CxpTransferDialog,
@@ -709,7 +726,11 @@ export default {
 				{
 					id: 'new-folder',
 					label: this.newFolderLabel,
-					icon: TOOLBAR_ICONS.folderPlus,
+					// A top-level create makes a VAULT, so the entry carries
+					// the safe glyph there (restyle terminology).
+					icon: this.selectedFolderId
+						? TOOLBAR_ICONS.folderPlus
+						: TOOLBAR_ICONS.safe,
 					placement: 'overflow',
 					disabled: this.offlineReadOnly,
 					testid: 'open-create-folder',
@@ -1188,6 +1209,22 @@ export default {
 
 .secret-list-view__main {
 	min-width: 0;
+}
+
+/* Title row (restyle Stage 8): page title left, toolbar right, one line. */
+.secret-list-view__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.secret-list-view__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
 }
 
 .secret-list-view__bulk-bar {
