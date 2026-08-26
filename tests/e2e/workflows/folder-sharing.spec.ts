@@ -499,4 +499,78 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			'the deferred user-share affordance issued a request',
 		).toEqual([])
 	})
+
+	/*
+	 * Deep folder navigation purely through the LIST (restyle Stage 6): the
+	 * vault root shows top-level vaults as rows, clicking one descends, the
+	 * breadcrumb trail appears inside a folder, and clicking a crumb walks
+	 * back up — no sidebar involvement.
+	 */
+	test('navigates root → vault → nested folder via subfolder rows and breadcrumbs', async ({
+		page,
+	}) => {
+		// @e2e secrets-write-ui::create-a-folder
+		const PARENT = `__e2e_nav_vault_${Date.now()}`
+		const CHILD = `__e2e_nav_sub_${Date.now()}`
+		await unlockVault(page)
+		await openVault(page)
+
+		// Seed a vault + nested folder via the API (the create dialog is
+		// covered by its own test above; this one is about navigation).
+		const ids = await page.evaluate(
+			async ({ tokExpr, parent, child }) => {
+				// eslint-disable-next-line no-eval
+				const token = eval(tokExpr)
+				const mk = async (name: string, parentId: string | null) => {
+					const res = await fetch(
+						'/index.php/apps/keepiq/api/v1/folders',
+						{
+							method: 'POST',
+							credentials: 'include',
+							headers: {
+								requesttoken: token,
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({ name, parentId }),
+						},
+					)
+					return (await res.json()).id as string
+				}
+				const parentId = await mk(parent, null)
+				const childId = await mk(child, parentId)
+				return { parentId, childId }
+			},
+			{ tokExpr: REQ_TOKEN, parent: PARENT, child: CHILD },
+		)
+
+		// The freshly created folders only exist server-side; reload so the
+		// folder store fetches them.
+		await page.reload()
+		await page.waitForLoadState('networkidle')
+
+		// Root: the new vault appears as a subfolder row; descend into it.
+		const parentRow = page.getByTestId(`folder-row-${ids.parentId}`)
+		await expect(parentRow).toBeVisible({ timeout: 20_000 })
+		await parentRow.evaluate((el: HTMLElement) => el.click())
+
+		// Inside the vault: breadcrumbs render, the nested folder is a row.
+		await expect(page.getByTestId('cn-breadcrumbs')).toBeVisible({
+			timeout: 20_000,
+		})
+		const childRow = page.getByTestId(`folder-row-${ids.childId}`)
+		await expect(childRow).toBeVisible({ timeout: 20_000 })
+		await childRow.evaluate((el: HTMLElement) => el.click())
+
+		// Inside the nested folder: the trail carries the parent as a LINK;
+		// clicking it walks back up to the vault.
+		const crumbs = page.getByTestId('cn-breadcrumbs')
+		await expect(crumbs).toContainText(CHILD, { timeout: 20_000 })
+		await crumbs
+			.getByText(PARENT)
+			.first()
+			.evaluate((el: HTMLElement) => el.click())
+		await expect(
+			page.getByTestId(`folder-row-${ids.childId}`),
+		).toBeVisible({ timeout: 20_000 })
+	})
 })

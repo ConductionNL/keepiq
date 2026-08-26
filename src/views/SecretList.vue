@@ -225,7 +225,7 @@
 				:availableViewModes="['list', 'cards', 'table']"
 				listLabel="List"
 				:selectable="false"
-				:objects="secrets"
+				:objects="listObjects"
 				:schema="listSchema"
 				:loading="loading"
 				:pagination="pagination"
@@ -269,7 +269,22 @@
 					</NcEmptyContent>
 				</template>
 				<template #list-item="{ object }">
-					<div class="secret-list-view__row">
+					<!-- Subfolder row (restyle Stage 6): the current folder's
+					     direct subfolders list ABOVE the secrets, file-manager
+					     style; clicking one navigates into it. No bulk
+					     checkbox — folders are not bulk-operable. -->
+					<button
+						v-if="object.isFolder"
+						type="button"
+						class="secret-list-view__folder-row"
+						:data-testid="`folder-row-${object.folderId}`"
+						@click="openFolder(object.folderId)">
+						<FolderOutline :size="20" />
+						<span class="secret-list-view__folder-name">
+							{{ object.name }}
+						</span>
+					</button>
+					<div v-else class="secret-list-view__row">
 						<!-- Per-row selection (bulk-actions §1.1): click
 						     toggles, shift-click selects the range from the
 						     last-clicked row in the current view. -->
@@ -333,6 +348,7 @@ import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import SecretListItem from '../components/SecretListItem.vue'
@@ -357,6 +373,7 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { subfolderRows } from '../utils/vaultList.js'
 
 const PAGE_SIZE = 50
 
@@ -398,6 +415,7 @@ export default {
 		NcActions,
 		NcButton,
 		NcEmptyContent,
+		FolderOutline,
 		KeyVariant,
 		SecretListItem,
 		ExportDialog,
@@ -578,6 +596,36 @@ export default {
 				value: type.id,
 				label: type.label || type.name,
 			}))
+		},
+
+		/**
+		 * The current folder's direct subfolders as list rows (restyle
+		 * Stage 6): root = the top-level vaults. Filtered by the inline
+		 * search term — everything visible in the list is searchable —
+		 * and name-sorted as one group.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		folderRows() {
+			return subfolderRows(this.folders, this.selectedFolderId, this.searchTerm)
+		},
+
+		/**
+		 * What the list renders: subfolders first as a group, then the
+		 * secrets (restyle Stage 6, file-manager style). Folder rows show
+		 * only on the FIRST page — repeating them on every page of a long
+		 * secret list would read as duplicates. Pagination totals keep
+		 * counting secrets only.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		listObjects() {
+			if (this.secretStore.page > 1) {
+				return this.secrets
+			}
+			return [...this.folderRows, ...this.secrets]
 		},
 
 		/**
@@ -1118,6 +1166,17 @@ export default {
 		},
 
 		/**
+		 * Navigate into a subfolder row (restyle Stage 6).
+		 *
+		 * @param {string} folderId The clicked folder's id.
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		openFolder(folderId) {
+			this.$router.push(`/folders/${folderId}`)
+		},
+
+		/**
 		 * Copied-toast hook (SecretListItem @copied). No-op placeholder for
 		 * future toast wiring; kept so the event has a handler.
 		 *
@@ -1188,6 +1247,36 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+/* Subfolder rows (restyle Stage 6): full-width, file-manager style. */
+.secret-list-view__folder-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 10px 12px;
+	border: none;
+	border-radius: var(--border-radius-large, 12px);
+	background: transparent;
+	cursor: pointer;
+	text-align: start;
+	font: inherit;
+	color: inherit;
+}
+
+.secret-list-view__folder-row:hover,
+.secret-list-view__folder-row:focus-visible {
+	background-color: var(--color-background-hover, #f5f5f5);
+}
+
+.secret-list-view__folder-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 600;
 }
 
 .secret-list-view__check {

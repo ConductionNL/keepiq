@@ -74,6 +74,7 @@ import {
 import FolderMove from 'vue-material-design-icons/FolderMove.vue'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
+import { folderPathLabel } from '../utils/vaultList.js'
 
 /**
  * Move a secret into a folder (or to the vault root) via the secret store.
@@ -123,17 +124,20 @@ export default {
 	computed: {
 		/**
 		 * The move-target options: the vault root plus every folder the user
-		 * owns.
+		 * owns, at ANY depth. Labelled with the full "A / B / C" path so a
+		 * nested folder is distinguishable from a same-named one elsewhere
+		 * (restyle Stage 6).
 		 *
 		 * @return {Array<{value: string|null, label: string}>}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
 		 */
 		folderOptions() {
+			const folders = useFolderStore().folders
 			const roots = [{ value: null, label: t('keepiq', 'Vault root') }]
 			return roots.concat(
-				useFolderStore().folders.map((folder) => ({
+				folders.map((folder) => ({
 					value: folder.id,
-					label: folder.name,
+					label: folderPathLabel(folders, folder.id) || folder.name,
 				})),
 			)
 		},
