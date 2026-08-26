@@ -44,8 +44,12 @@ test.describe('secret import', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// The themed NcButton swallows Playwright's synthetic click, so fire a
-		// native HTMLButtonElement.click() to open the import wizard.
+		// Import lives in the "More actions" overflow (restyle Stage 5): open
+		// the menu, then the wizard. The themed buttons swallow Playwright's
+		// synthetic click, so fire native HTMLElement.click()s.
+		await page
+			.getByRole('button', { name: /More actions/i })
+			.evaluate((el: HTMLElement) => el.click())
 		await page
 			.getByTestId('import-secrets')
 			.evaluate((el: HTMLElement) => el.click())
@@ -85,8 +89,12 @@ test.describe('secret import', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// The themed NcButton swallows Playwright's synthetic click, so fire a
-		// native HTMLButtonElement.click() to open the import wizard.
+		// Import lives in the "More actions" overflow (restyle Stage 5): open
+		// the menu, then the wizard. The themed buttons swallow Playwright's
+		// synthetic click, so fire native HTMLElement.click()s.
+		await page
+			.getByRole('button', { name: /More actions/i })
+			.evaluate((el: HTMLElement) => el.click())
 		await page
 			.getByTestId('import-secrets')
 			.evaluate((el: HTMLElement) => el.click())

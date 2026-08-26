@@ -594,7 +594,13 @@ OC.L10N.register(
         "No applications awaiting approval": "Geen applicaties in afwachting van goedkeuring",
         "Vault overview": "Kluisoverzicht",
         "Your secrets, folders and applications at a glance": "Uw geheimen, mappen en applicaties in één oogopslag",
-        "Rotation due": "Rotatie vereist"
+        "Rotation due": "Rotatie vereist",
+        "Add your first secret using the button above": "Voeg uw eerste geheim toe met de knop hierboven",
+        "Filter by type": "Filteren op type",
+        "More actions": "Meer acties",
+        "New vault": "Nieuwe kluis",
+        "No secrets found": "Geen geheimen gevonden",
+        "Refresh": "Vernieuwen"
     },
     "nplurals=2; plural=(n != 1);"
 )

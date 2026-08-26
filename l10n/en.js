@@ -1003,7 +1003,13 @@ OC.L10N.register(
         "Applications awaiting approval": "Applications awaiting approval",
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
-        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance"
+        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
+        "Add your first secret using the button above": "Add your first secret using the button above",
+        "Filter by type": "Filter by type",
+        "More actions": "More actions",
+        "New vault": "New vault",
+        "No secrets found": "No secrets found",
+        "Refresh": "Refresh"
     },
     "nplurals=2; plural=(n != 1);"
 )
