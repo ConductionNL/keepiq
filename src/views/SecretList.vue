@@ -1,21 +1,9 @@
 <template>
 	<div class="secret-list-view">
-		<!-- Folder sidebar — the shared CnFolderSidebar (custom source), fed by
-		     the per-user folder store. -->
-		<div class="secret-list-view__sidebar">
-			<CnFolderSidebar
-				:folders="folders"
-				:selectedId="selectedFolderId"
-				:allLabel="t('keepiq', 'All secrets')"
-				allowCreate
-				:createLabel="t('keepiq', 'New folder')"
-				@select="selectFolder"
-				@create="openCreateFolder" />
-		</div>
-
-		<!-- Main: the shared CnIndexPage in list mode, plus the secondary
-		     actions (new folder / import / export / GDPR / account deletion)
-		     that live alongside it. -->
+		<!-- Single pane (restyle Stage 7): folder navigation lives in the app
+		     nav's folder tree (KeepiqAppNav/NavFolderTree) and in the list's
+		     own subfolder rows + breadcrumbs (Stage 6); the in-page folder
+		     sidebar is gone. -->
 		<div class="secret-list-view__main">
 			<!-- Toolbar (restyle Stage 5): a declarative toolbarItems() list —
 			     per-item `placement` decides between a visible button and the
@@ -329,11 +317,7 @@
 </template>
 
 <script>
-import {
-	CnBreadcrumbs,
-	CnFolderSidebar,
-	CnIndexPage,
-} from '@conduction/nextcloud-vue'
+import { CnBreadcrumbs, CnIndexPage } from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
 	NcActionCaption,
@@ -397,7 +381,7 @@ const MAX_TRAIL_DEPTH = 32
 /**
  * The main vault view: a folder sidebar plus a searchable, sortable,
  * paginated secret list, built on the shared CnIndexPage list view and
- * CnFolderSidebar. Names and urls are plaintext; encrypted fields are
+ * the app nav's folder tree. Names and urls are plaintext; encrypted fields are
  * decrypted only on demand (copy / detail) inside SecretListItem.
  */
 export default {
@@ -407,7 +391,6 @@ export default {
 		SecretRequestCreateDialog,
 		CnBreadcrumbs,
 		CnIndexPage,
-		CnFolderSidebar,
 		NcActionButton,
 		NcActionCaption,
 		NcActionRadio,
@@ -1140,22 +1123,6 @@ export default {
 		},
 
 		/**
-		 * Navigate to a folder filter (null = all secrets).
-		 *
-		 * @param {string|null} folderId The folder ID.
-		 * @return {void}
-		 */
-		selectFolder(folderId) {
-			if (folderId) {
-				this.$router.push(`/folders/${folderId}`)
-			} else if (this.$route.path !== '/secrets') {
-				this.$router.push('/secrets')
-			} else {
-				this.reload()
-			}
-		},
-
-		/**
 		 * Open a secret's detail view.
 		 *
 		 * @param {string} id The secret ID.
@@ -1215,19 +1182,11 @@ export default {
 
 <style scoped>
 .secret-list-view {
-	display: flex;
-	gap: 16px;
 	height: 100%;
 	padding: 16px;
 }
 
-.secret-list-view__sidebar {
-	width: 240px;
-	flex: 0 0 auto;
-}
-
 .secret-list-view__main {
-	flex: 1 1 auto;
 	min-width: 0;
 }
 

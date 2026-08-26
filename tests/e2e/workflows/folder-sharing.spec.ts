@@ -161,11 +161,14 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 
-		await nativeClickByText(
-			page,
-			'.secret-list-view__sidebar button',
-			'New folder',
-		)
+		// The create affordance lives in the toolbar's "More actions" overflow
+		// (restyle Stage 5); at the vault root its label is "New vault".
+		await page
+			.getByRole('button', { name: /More actions/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('open-create-folder')
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.locator('.folder-form')).toBeVisible({ timeout: 10_000 })
 		await page
 			.locator('.folder-form input[type="text"]')
@@ -176,6 +179,12 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await expect(page.locator('.folder-form')).toHaveCount(0, {
 			timeout: 15_000,
 		})
+
+		// The new vault appears in the app nav's folder tree (restyle Stage 7)
+		// — the create dialog's onSaved refetches the shared folder store.
+		await expect(
+			page.locator('[data-testid="nav-folder-tree"]').getByText(FOLDER),
+		).toBeVisible({ timeout: 15_000 })
 
 		const folder = await page.evaluate(
 			async ({ tokExpr, name }) => {
