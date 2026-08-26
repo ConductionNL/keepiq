@@ -585,7 +585,18 @@
         "Remove this field": "Dit veld verwijderen",
         "Give the field a name.": "Geef het veld een naam.",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is een ingebouwd veld, geen extra veld — kies een andere naam.",
-        "Keepiq {version}": "Keepiq {version}"
+        "Keepiq {version}": "Keepiq {version}",
+        "Applications": "Applicaties",
+        "Features & roadmap": "Functies en roadmap",
+        "Certificates": "Certificaten",
+        "Emergency access": "Noodtoegang",
+        "Lock vault": "Kluis vergrendelen",
+        "Personal settings": "Persoonlijke instellingen",
+        "Vault overview": "Kluisoverzicht",
+        "Your secrets, folders and applications at a glance": "Je geheimen, mappen en applicaties in één oogopslag",
+        "Rotation due": "Rotatie verlopen",
+        "Application": "Applicatie",
+        "Secure message": "Beveiligd bericht"
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"
