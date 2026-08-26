@@ -995,14 +995,7 @@
         "Remove": "Remove",
         "Remove this field": "Remove this field",
         "“{name}” is a built-in field, not an additional one — choose a different name.": "“{name}” is a built-in field, not an additional one — choose a different name.",
-        "Keepiq {version}": "Keepiq {version}",
-        "Features & roadmap": "Features & roadmap",
-        "Lock vault": "Lock vault",
-        "Personal settings": "Personal settings",
-        "Vault overview": "Vault overview",
-        "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Application": "Application",
-        "Secure message": "Secure message"
+        "Keepiq {version}": "Keepiq {version}"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
