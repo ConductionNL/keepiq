@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Visos saugyklos",
         "Admin settings": "Administravimo nustatymai",
         "Opens in a new tab": "Atsidaro naujoje kortelėje",
-        "Keepiq navigation": "Keepiq naršymas"
+        "Keepiq navigation": "Keepiq naršymas",
+        "Vault name": "Saugyklos pavadinimas",
+        "Create vault": "Sukurti saugyklą"
     },
     "nplurals=2; plural=(n != 1);"
 )

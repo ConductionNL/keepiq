@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Kaikki holvit",
         "Admin settings": "Hallinta-asetukset",
         "Opens in a new tab": "Avautuu uuteen välilehteen",
-        "Keepiq navigation": "Keepiqin navigointi"
+        "Keepiq navigation": "Keepiqin navigointi",
+        "Vault name": "Holvin nimi",
+        "Create vault": "Luo holvi"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Összes széf",
         "Admin settings": "Rendszergazdai beállítások",
         "Opens in a new tab": "Új lapon nyílik meg",
-        "Keepiq navigation": "Keepiq navigáció"
+        "Keepiq navigation": "Keepiq navigáció",
+        "Vault name": "Széf neve",
+        "Create vault": "Széf létrehozása"
     },
     "nplurals=2; plural=(n != 1);"
 )

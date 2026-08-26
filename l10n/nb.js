@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Alle hvelv",
         "Admin settings": "Administrasjonsinnstillinger",
         "Opens in a new tab": "Åpnes i en ny fane",
-        "Keepiq navigation": "Keepiq-navigasjon"
+        "Keepiq navigation": "Keepiq-navigasjon",
+        "Vault name": "Hvelvnavn",
+        "Create vault": "Opprett hvelv"
     },
     "nplurals=2; plural=(n != 1);"
 )

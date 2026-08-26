@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Сите трезори",
         "Admin settings": "Административни поставки",
         "Opens in a new tab": "Се отвора во ново јазиче",
-        "Keepiq navigation": "Навигација на Keepiq"
+        "Keepiq navigation": "Навигација на Keepiq",
+        "Vault name": "Име на трезорот",
+        "Create vault": "Создај трезор"
     },
     "nplurals=2; plural=(n != 1);"
 )

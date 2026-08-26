@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Todas las cajas fuertes",
         "Admin settings": "Ajustes de administración",
         "Opens in a new tab": "Se abre en una pestaña nueva",
-        "Keepiq navigation": "Navegación de Keepiq"
+        "Keepiq navigation": "Navegación de Keepiq",
+        "Vault name": "Nombre de la caja fuerte",
+        "Create vault": "Crear caja fuerte"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Svi trezori",
         "Admin settings": "Administratorske postavke",
         "Opens in a new tab": "Otvara se u novoj kartici",
-        "Keepiq navigation": "Keepiq navigacija"
+        "Keepiq navigation": "Keepiq navigacija",
+        "Vault name": "Naziv trezora",
+        "Create vault": "Stvori trezor"
     },
     "nplurals=2; plural=(n != 1);"
 )

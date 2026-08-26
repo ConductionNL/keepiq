@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Toate seifurile",
         "Admin settings": "Setări de administrare",
         "Opens in a new tab": "Se deschide într-o filă nouă",
-        "Keepiq navigation": "Navigare Keepiq"
+        "Keepiq navigation": "Navigare Keepiq",
+        "Vault name": "Numele seifului",
+        "Create vault": "Creare seif"
     },
     "nplurals=2; plural=(n != 1);"
 )

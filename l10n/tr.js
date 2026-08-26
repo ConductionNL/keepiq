@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Tüm kasalar",
         "Admin settings": "Yönetici ayarları",
         "Opens in a new tab": "Yeni sekmede açılır",
-        "Keepiq navigation": "Keepiq gezinmesi"
+        "Keepiq navigation": "Keepiq gezinmesi",
+        "Vault name": "Kasa adı",
+        "Create vault": "Kasa oluştur"
     },
     "nplurals=2; plural=(n != 1);"
 )

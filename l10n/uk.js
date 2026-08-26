@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Усі сховища",
         "Admin settings": "Налаштування адміністратора",
         "Opens in a new tab": "Відкривається в новій вкладці",
-        "Keepiq navigation": "Навігація Keepiq"
+        "Keepiq navigation": "Навігація Keepiq",
+        "Vault name": "Назва сховища",
+        "Create vault": "Створити сховище"
     },
     "nplurals=2; plural=(n != 1);"
 )

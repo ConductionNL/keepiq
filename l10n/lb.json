@@ -445,7 +445,9 @@
         "All vaults": "All Tresore",
         "Admin settings": "Administratiounsastellungen",
         "Opens in a new tab": "Gëtt an engem neien Tab opgemaach",
-        "Keepiq navigation": "Keepiq-Navigatioun"
+        "Keepiq navigation": "Keepiq-Navigatioun",
+        "Vault name": "Tresorsnumm",
+        "Create vault": "Tresor uleeën"
     },
     "plurals": null
 }

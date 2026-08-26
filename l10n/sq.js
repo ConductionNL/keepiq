@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Të gjitha kasafortat",
         "Admin settings": "Cilësimet e administrimit",
         "Opens in a new tab": "Hapet në një skedë të re",
-        "Keepiq navigation": "Navigimi i Keepiq"
+        "Keepiq navigation": "Navigimi i Keepiq",
+        "Vault name": "Emri i kasafortës",
+        "Create vault": "Krijo kasafortë"
     },
     "nplurals=2; plural=(n != 1);"
 )

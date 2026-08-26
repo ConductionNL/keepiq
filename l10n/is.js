@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Allar hvelfingar",
         "Admin settings": "Stjórnunarstillingar",
         "Opens in a new tab": "Opnast í nýjum flipa",
-        "Keepiq navigation": "Keepiq-leiðsögn"
+        "Keepiq navigation": "Keepiq-leiðsögn",
+        "Vault name": "Nafn hvelfingar",
+        "Create vault": "Búa til hvelfingu"
     },
     "nplurals=2; plural=(n != 1);"
 )

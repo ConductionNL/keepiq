@@ -605,7 +605,9 @@ OC.L10N.register(
         "All vaults": "Alle kluizen",
         "Admin settings": "Beheerdersinstellingen",
         "Opens in a new tab": "Opent in een nieuw tabblad",
-        "Keepiq navigation": "Keepiq-navigatie"
+        "Keepiq navigation": "Keepiq-navigatie",
+        "Vault name": "Kluisnaam",
+        "Create vault": "Kluis aanmaken"
     },
     "nplurals=2; plural=(n != 1);"
 )

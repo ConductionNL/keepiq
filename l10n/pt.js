@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Todos os cofres",
         "Admin settings": "Definições de administração",
         "Opens in a new tab": "Abre num novo separador",
-        "Keepiq navigation": "Navegação do Keepiq"
+        "Keepiq navigation": "Navegação do Keepiq",
+        "Vault name": "Nome do cofre",
+        "Create vault": "Criar cofre"
     },
     "nplurals=2; plural=(n != 1);"
 )

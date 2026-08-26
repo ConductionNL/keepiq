@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Alle Tresore",
         "Admin settings": "Verwaltungseinstellungen",
         "Opens in a new tab": "Wird in einem neuen Tab geöffnet",
-        "Keepiq navigation": "Keepiq-Navigation"
+        "Keepiq navigation": "Keepiq-Navigation",
+        "Vault name": "Tresorname",
+        "Create vault": "Tresor erstellen"
     },
     "nplurals=2; plural=(n != 1);"
 )

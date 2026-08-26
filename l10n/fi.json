@@ -445,7 +445,9 @@
         "All vaults": "Kaikki holvit",
         "Admin settings": "Hallinta-asetukset",
         "Opens in a new tab": "Avautuu uuteen välilehteen",
-        "Keepiq navigation": "Keepiqin navigointi"
+        "Keepiq navigation": "Keepiqin navigointi",
+        "Vault name": "Holvin nimi",
+        "Create vault": "Luo holvi"
     },
     "plurals": null
 }

@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Gach taisceadán",
         "Admin settings": "Socruithe riaracháin",
         "Opens in a new tab": "Osclaítear i gcluaisín nua é",
-        "Keepiq navigation": "Nascleanúint Keepiq"
+        "Keepiq navigation": "Nascleanúint Keepiq",
+        "Vault name": "Ainm an taisceadáin",
+        "Create vault": "Cruthaigh taisceadán"
     },
     "nplurals=2; plural=(n != 1);"
 )

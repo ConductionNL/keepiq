@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Wszystkie sejfy",
         "Admin settings": "Ustawienia administracyjne",
         "Opens in a new tab": "Otwiera się w nowej karcie",
-        "Keepiq navigation": "Nawigacja Keepiq"
+        "Keepiq navigation": "Nawigacja Keepiq",
+        "Vault name": "Nazwa sejfu",
+        "Create vault": "Utwórz sejf"
     },
     "nplurals=2; plural=(n != 1);"
 )

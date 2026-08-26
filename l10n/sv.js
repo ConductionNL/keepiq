@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Alla valv",
         "Admin settings": "Administrationsinställningar",
         "Opens in a new tab": "Öppnas i en ny flik",
-        "Keepiq navigation": "Keepiq-navigering"
+        "Keepiq navigation": "Keepiq-navigering",
+        "Vault name": "Valvets namn",
+        "Create vault": "Skapa valv"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Il-kaxxi-forti kollha",
         "Admin settings": "Settings tal-amministrazzjoni",
         "Opens in a new tab": "Jinfetaħ f’tab ġdida",
-        "Keepiq navigation": "Navigazzjoni ta’ Keepiq"
+        "Keepiq navigation": "Navigazzjoni ta’ Keepiq",
+        "Vault name": "Isem il-kaxxa-forti",
+        "Create vault": "Oħloq kaxxa-forti"
     },
     "nplurals=2; plural=(n != 1);"
 )

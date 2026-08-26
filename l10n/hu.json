@@ -445,7 +445,9 @@
         "All vaults": "Összes széf",
         "Admin settings": "Rendszergazdai beállítások",
         "Opens in a new tab": "Új lapon nyílik meg",
-        "Keepiq navigation": "Keepiq navigáció"
+        "Keepiq navigation": "Keepiq navigáció",
+        "Vault name": "Széf neve",
+        "Create vault": "Széf létrehozása"
     },
     "plurals": null
 }

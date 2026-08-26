@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Όλα τα θησαυροφυλάκια",
         "Admin settings": "Ρυθμίσεις διαχείρισης",
         "Opens in a new tab": "Ανοίγει σε νέα καρτέλα",
-        "Keepiq navigation": "Πλοήγηση Keepiq"
+        "Keepiq navigation": "Πλοήγηση Keepiq",
+        "Vault name": "Όνομα θησαυροφυλακίου",
+        "Create vault": "Δημιουργία θησαυροφυλακίου"
     },
     "nplurals=2; plural=(n != 1);"
 )

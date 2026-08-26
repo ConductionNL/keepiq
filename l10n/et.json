@@ -445,7 +445,9 @@
         "All vaults": "Kõik hoidlad",
         "Admin settings": "Halduri seaded",
         "Opens in a new tab": "Avaneb uuel vahekaardil",
-        "Keepiq navigation": "Keepiqi navigeerimine"
+        "Keepiq navigation": "Keepiqi navigeerimine",
+        "Vault name": "Hoidla nimi",
+        "Create vault": "Loo hoidla"
     },
     "plurals": null
 }

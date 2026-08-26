@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Visas glabātavas",
         "Admin settings": "Administrēšanas iestatījumi",
         "Opens in a new tab": "Atveras jaunā cilnē",
-        "Keepiq navigation": "Keepiq navigācija"
+        "Keepiq navigation": "Keepiq navigācija",
+        "Vault name": "Glabātavas nosaukums",
+        "Create vault": "Izveidot glabātavu"
     },
     "nplurals=2; plural=(n != 1);"
 )

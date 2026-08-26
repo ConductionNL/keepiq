@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Alle bokse",
         "Admin settings": "Administrationsindstillinger",
         "Opens in a new tab": "Åbnes i en ny fane",
-        "Keepiq navigation": "Keepiq-navigation"
+        "Keepiq navigation": "Keepiq-navigation",
+        "Vault name": "Boksnavn",
+        "Create vault": "Opret boks"
     },
     "nplurals=2; plural=(n != 1);"
 )

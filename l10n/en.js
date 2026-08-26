@@ -1014,7 +1014,9 @@ OC.L10N.register(
         "All vaults": "All vaults",
         "Keepiq navigation": "Keepiq navigation",
         "Opens in a new tab": "Opens in a new tab",
-        "Vaults": "Vaults"
+        "Vaults": "Vaults",
+        "Create vault": "Create vault",
+        "Vault name": "Vault name"
     },
     "nplurals=2; plural=(n != 1);"
 )

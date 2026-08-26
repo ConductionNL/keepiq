@@ -446,7 +446,9 @@ OC.L10N.register(
         "All vaults": "Všechny trezory",
         "Admin settings": "Nastavení správy",
         "Opens in a new tab": "Otevře se na nové kartě",
-        "Keepiq navigation": "Navigace Keepiq"
+        "Keepiq navigation": "Navigace Keepiq",
+        "Vault name": "Název trezoru",
+        "Create vault": "Vytvořit trezor"
     },
     "nplurals=2; plural=(n != 1);"
 )
