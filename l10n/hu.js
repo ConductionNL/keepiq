@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Adja hozzá első titkát a fenti gombbal",
         "More actions": "További műveletek",
         "New vault": "Új széf",
-        "Filter by type": "Szűrés típus szerint"
+        "Filter by type": "Szűrés típus szerint",
+        "Vaults": "Széfek",
+        "All vaults": "Összes széf",
+        "Admin settings": "Rendszergazdai beállítások",
+        "Opens in a new tab": "Új lapon nyílik meg",
+        "Keepiq navigation": "Keepiq navigáció"
     },
     "nplurals=2; plural=(n != 1);"
 )

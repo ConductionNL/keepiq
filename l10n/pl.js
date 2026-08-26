@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Dodaj swój pierwszy sekret przyciskiem powyżej",
         "More actions": "Więcej działań",
         "New vault": "Nowy sejf",
-        "Filter by type": "Filtruj według typu"
+        "Filter by type": "Filtruj według typu",
+        "Vaults": "Sejfy",
+        "All vaults": "Wszystkie sejfy",
+        "Admin settings": "Ustawienia administracyjne",
+        "Opens in a new tab": "Otwiera się w nowej karcie",
+        "Keepiq navigation": "Nawigacja Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

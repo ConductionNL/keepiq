@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Добавете първата си тайна чрез бутона по-горе",
         "More actions": "Още действия",
         "New vault": "Нов трезор",
-        "Filter by type": "Филтриране по тип"
+        "Filter by type": "Филтриране по тип",
+        "Vaults": "Трезори",
+        "All vaults": "Всички трезори",
+        "Admin settings": "Административни настройки",
+        "Opens in a new tab": "Отваря се в нов раздел",
+        "Keepiq navigation": "Навигация на Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

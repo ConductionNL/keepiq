@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Bættu við fyrsta leyndarmálinu þínu með hnappnum að ofan",
         "More actions": "Fleiri aðgerðir",
         "New vault": "Ný hvelfing",
-        "Filter by type": "Sía eftir tegund"
+        "Filter by type": "Sía eftir tegund",
+        "Vaults": "Hvelfingar",
+        "All vaults": "Allar hvelfingar",
+        "Admin settings": "Stjórnunarstillingar",
+        "Opens in a new tab": "Opnast í nýjum flipa",
+        "Keepiq navigation": "Keepiq-leiðsögn"
     },
     "nplurals=2; plural=(n != 1);"
 )

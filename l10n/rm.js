@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Agiunschè voss emprim secret cun il buttun survart",
         "More actions": "Dapli acziuns",
         "New vault": "Nov tresor",
-        "Filter by type": "Filtrar tenor tip"
+        "Filter by type": "Filtrar tenor tip",
+        "Vaults": "Tresors",
+        "All vaults": "Tut ils tresors",
+        "Admin settings": "Parameters d’administraziun",
+        "Opens in a new tab": "S’avra en in nov tab",
+        "Keepiq navigation": "Navigaziun da Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

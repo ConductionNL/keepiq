@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Adăugați primul secret cu butonul de mai sus",
         "More actions": "Mai multe acțiuni",
         "New vault": "Seif nou",
-        "Filter by type": "Filtrare după tip"
+        "Filter by type": "Filtrare după tip",
+        "Vaults": "Seifuri",
+        "All vaults": "Toate seifurile",
+        "Admin settings": "Setări de administrare",
+        "Opens in a new tab": "Se deschide într-o filă nouă",
+        "Keepiq navigation": "Navigare Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

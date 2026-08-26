@@ -440,7 +440,12 @@
         "Add your first secret using the button above": "Dodajte svoju prvu tajnu pomoću gumba iznad",
         "More actions": "Više radnji",
         "New vault": "Novi trezor",
-        "Filter by type": "Filtriraj po vrsti"
+        "Filter by type": "Filtriraj po vrsti",
+        "Vaults": "Trezori",
+        "All vaults": "Svi trezori",
+        "Admin settings": "Administratorske postavke",
+        "Opens in a new tab": "Otvara se u novoj kartici",
+        "Keepiq navigation": "Keepiq navigacija"
     },
     "plurals": null
 }

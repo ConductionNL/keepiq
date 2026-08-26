@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "İlk gizlinizi yukarıdaki düğmeyle ekleyin",
         "More actions": "Diğer işlemler",
         "New vault": "Yeni kasa",
-        "Filter by type": "Türe göre filtrele"
+        "Filter by type": "Türe göre filtrele",
+        "Vaults": "Kasalar",
+        "All vaults": "Tüm kasalar",
+        "Admin settings": "Yönetici ayarları",
+        "Opens in a new tab": "Yeni sekmede açılır",
+        "Keepiq navigation": "Keepiq gezinmesi"
     },
     "nplurals=2; plural=(n != 1);"
 )

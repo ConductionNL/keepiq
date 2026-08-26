@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Pievienojiet savu pirmo noslēpumu ar augšējo pogu",
         "More actions": "Vairāk darbību",
         "New vault": "Jauna glabātava",
-        "Filter by type": "Filtrēt pēc veida"
+        "Filter by type": "Filtrēt pēc veida",
+        "Vaults": "Glabātavas",
+        "All vaults": "Visas glabātavas",
+        "Admin settings": "Administrēšanas iestatījumi",
+        "Opens in a new tab": "Atveras jaunā cilnē",
+        "Keepiq navigation": "Keepiq navigācija"
     },
     "nplurals=2; plural=(n != 1);"
 )

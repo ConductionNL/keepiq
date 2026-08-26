@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Żid l-ewwel sigriet tiegħek bil-buttuna ta’ fuq",
         "More actions": "Aktar azzjonijiet",
         "New vault": "Kaxxa-forti ġdida",
-        "Filter by type": "Iffiltra skont it-tip"
+        "Filter by type": "Iffiltra skont it-tip",
+        "Vaults": "Kaxxi-forti",
+        "All vaults": "Il-kaxxi-forti kollha",
+        "Admin settings": "Settings tal-amministrazzjoni",
+        "Opens in a new tab": "Jinfetaħ f’tab ġdida",
+        "Keepiq navigation": "Navigazzjoni ta’ Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

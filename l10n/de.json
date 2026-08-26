@@ -440,7 +440,12 @@
         "Add your first secret using the button above": "Fügen Sie Ihr erstes Geheimnis über die Schaltfläche oben hinzu",
         "More actions": "Weitere Aktionen",
         "New vault": "Neuer Tresor",
-        "Filter by type": "Nach Typ filtern"
+        "Filter by type": "Nach Typ filtern",
+        "Vaults": "Tresore",
+        "All vaults": "Alle Tresore",
+        "Admin settings": "Verwaltungseinstellungen",
+        "Opens in a new tab": "Wird in einem neuen Tab geöffnet",
+        "Keepiq navigation": "Keepiq-Navigation"
     },
     "plurals": null
 }

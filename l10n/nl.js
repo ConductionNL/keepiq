@@ -600,7 +600,12 @@ OC.L10N.register(
         "More actions": "Meer acties",
         "New vault": "Nieuwe kluis",
         "No secrets found": "Geen geheimen gevonden",
-        "Refresh": "Vernieuwen"
+        "Refresh": "Vernieuwen",
+        "Vaults": "Kluizen",
+        "All vaults": "Alle kluizen",
+        "Admin settings": "Beheerdersinstellingen",
+        "Opens in a new tab": "Opent in een nieuw tabblad",
+        "Keepiq navigation": "Keepiq-navigatie"
     },
     "nplurals=2; plural=(n != 1);"
 )

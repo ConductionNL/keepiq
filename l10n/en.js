@@ -1009,7 +1009,12 @@ OC.L10N.register(
         "More actions": "More actions",
         "New vault": "New vault",
         "No secrets found": "No secrets found",
-        "Refresh": "Refresh"
+        "Refresh": "Refresh",
+        "Admin settings": "Admin settings",
+        "All vaults": "All vaults",
+        "Keepiq navigation": "Keepiq navigation",
+        "Opens in a new tab": "Opens in a new tab",
+        "Vaults": "Vaults"
     },
     "nplurals=2; plural=(n != 1);"
 )

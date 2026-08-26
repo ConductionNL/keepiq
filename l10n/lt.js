@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Pridėkite savo pirmąją paslaptį mygtuku viršuje",
         "More actions": "Daugiau veiksmų",
         "New vault": "Nauja saugykla",
-        "Filter by type": "Filtruoti pagal tipą"
+        "Filter by type": "Filtruoti pagal tipą",
+        "Vaults": "Saugyklos",
+        "All vaults": "Visos saugyklos",
+        "Admin settings": "Administravimo nustatymai",
+        "Opens in a new tab": "Atsidaro naujoje kortelėje",
+        "Keepiq navigation": "Keepiq naršymas"
     },
     "nplurals=2; plural=(n != 1);"
 )

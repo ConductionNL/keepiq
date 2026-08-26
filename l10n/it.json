@@ -440,7 +440,12 @@
         "Add your first secret using the button above": "Aggiungi il tuo primo segreto usando il pulsante qui sopra",
         "More actions": "Altre azioni",
         "New vault": "Nuova cassaforte",
-        "Filter by type": "Filtra per tipo"
+        "Filter by type": "Filtra per tipo",
+        "Vaults": "Casseforti",
+        "All vaults": "Tutte le casseforti",
+        "Admin settings": "Impostazioni di amministrazione",
+        "Opens in a new tab": "Si apre in una nuova scheda",
+        "Keepiq navigation": "Navigazione di Keepiq"
     },
     "plurals": null
 }

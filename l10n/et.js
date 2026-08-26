@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Lisa oma esimene saladus ülaloleva nupuga",
         "More actions": "Rohkem toiminguid",
         "New vault": "Uus hoidla",
-        "Filter by type": "Filtreeri tüübi järgi"
+        "Filter by type": "Filtreeri tüübi järgi",
+        "Vaults": "Hoidlad",
+        "All vaults": "Kõik hoidlad",
+        "Admin settings": "Halduri seaded",
+        "Opens in a new tab": "Avaneb uuel vahekaardil",
+        "Keepiq navigation": "Keepiqi navigeerimine"
     },
     "nplurals=2; plural=(n != 1);"
 )

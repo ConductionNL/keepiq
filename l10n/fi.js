@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Lisää ensimmäinen salaisuutesi yllä olevalla painikkeella",
         "More actions": "Lisää toimintoja",
         "New vault": "Uusi holvi",
-        "Filter by type": "Suodata tyypin mukaan"
+        "Filter by type": "Suodata tyypin mukaan",
+        "Vaults": "Holvit",
+        "All vaults": "Kaikki holvit",
+        "Admin settings": "Hallinta-asetukset",
+        "Opens in a new tab": "Avautuu uuteen välilehteen",
+        "Keepiq navigation": "Keepiqin navigointi"
     },
     "nplurals=2; plural=(n != 1);"
 )

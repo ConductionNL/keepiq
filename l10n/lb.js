@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Füügt Äert éischt Geheimnis mam Knäppchen uewen dobäi",
         "More actions": "Méi Aktiounen",
         "New vault": "Neien Tresor",
-        "Filter by type": "No Typ filteren"
+        "Filter by type": "No Typ filteren",
+        "Vaults": "Tresore",
+        "All vaults": "All Tresore",
+        "Admin settings": "Administratiounsastellungen",
+        "Opens in a new tab": "Gëtt an engem neien Tab opgemaach",
+        "Keepiq navigation": "Keepiq-Navigatioun"
     },
     "nplurals=2; plural=(n != 1);"
 )

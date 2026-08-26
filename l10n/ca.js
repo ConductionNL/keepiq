@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Afegiu el vostre primer secret amb el botó de dalt",
         "More actions": "Més accions",
         "New vault": "Nova caixa forta",
-        "Filter by type": "Filtra per tipus"
+        "Filter by type": "Filtra per tipus",
+        "Vaults": "Caixes fortes",
+        "All vaults": "Totes les caixes fortes",
+        "Admin settings": "Paràmetres d’administració",
+        "Opens in a new tab": "S’obre en una pestanya nova",
+        "Keepiq navigation": "Navegació de Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

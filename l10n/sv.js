@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Lägg till din första hemlighet med knappen ovan",
         "More actions": "Fler åtgärder",
         "New vault": "Nytt valv",
-        "Filter by type": "Filtrera efter typ"
+        "Filter by type": "Filtrera efter typ",
+        "Vaults": "Valv",
+        "All vaults": "Alla valv",
+        "Admin settings": "Administrationsinställningar",
+        "Opens in a new tab": "Öppnas i en ny flik",
+        "Keepiq navigation": "Keepiq-navigering"
     },
     "nplurals=2; plural=(n != 1);"
 )

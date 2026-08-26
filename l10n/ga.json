@@ -440,7 +440,12 @@
         "Add your first secret using the button above": "Cuir do chéad rún leis an gcnaipe thuas",
         "More actions": "Tuilleadh gníomhartha",
         "New vault": "Taisceadán nua",
-        "Filter by type": "Scag de réir cineáil"
+        "Filter by type": "Scag de réir cineáil",
+        "Vaults": "Taisceadáin",
+        "All vaults": "Gach taisceadán",
+        "Admin settings": "Socruithe riaracháin",
+        "Opens in a new tab": "Osclaítear i gcluaisín nua é",
+        "Keepiq navigation": "Nascleanúint Keepiq"
     },
     "plurals": null
 }

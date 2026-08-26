@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Dodajte svoju prvu tajnu dugmetom iznad",
         "More actions": "Još radnji",
         "New vault": "Novi trezor",
-        "Filter by type": "Filtriraj po tipu"
+        "Filter by type": "Filtriraj po tipu",
+        "Vaults": "Trezori",
+        "All vaults": "Svi trezori",
+        "Admin settings": "Administratorska podešavanja",
+        "Opens in a new tab": "Otvara se u novoj kartici",
+        "Keepiq navigation": "Keepiq navigacija"
     },
     "nplurals=2; plural=(n != 1);"
 )

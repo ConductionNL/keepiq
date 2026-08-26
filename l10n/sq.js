@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Shtoni sekretin tuaj të parë me butonin sipër",
         "More actions": "Më shumë veprime",
         "New vault": "Kasafortë e re",
-        "Filter by type": "Filtro sipas llojit"
+        "Filter by type": "Filtro sipas llojit",
+        "Vaults": "Kasaforta",
+        "All vaults": "Të gjitha kasafortat",
+        "Admin settings": "Cilësimet e administrimit",
+        "Opens in a new tab": "Hapet në një skedë të re",
+        "Keepiq navigation": "Navigimi i Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

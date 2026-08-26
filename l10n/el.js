@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Προσθέστε το πρώτο σας μυστικό με το παραπάνω κουμπί",
         "More actions": "Περισσότερες ενέργειες",
         "New vault": "Νέο θησαυροφυλάκιο",
-        "Filter by type": "Φιλτράρισμα ανά τύπο"
+        "Filter by type": "Φιλτράρισμα ανά τύπο",
+        "Vaults": "Θησαυροφυλάκια",
+        "All vaults": "Όλα τα θησαυροφυλάκια",
+        "Admin settings": "Ρυθμίσεις διαχείρισης",
+        "Opens in a new tab": "Ανοίγει σε νέα καρτέλα",
+        "Keepiq navigation": "Πλοήγηση Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -441,7 +441,12 @@ OC.L10N.register(
         "Add your first secret using the button above": "Adicione o seu primeiro segredo com o botão acima",
         "More actions": "Mais ações",
         "New vault": "Novo cofre",
-        "Filter by type": "Filtrar por tipo"
+        "Filter by type": "Filtrar por tipo",
+        "Vaults": "Cofres",
+        "All vaults": "Todos os cofres",
+        "Admin settings": "Definições de administração",
+        "Opens in a new tab": "Abre num novo separador",
+        "Keepiq navigation": "Navegação do Keepiq"
     },
     "nplurals=2; plural=(n != 1);"
 )

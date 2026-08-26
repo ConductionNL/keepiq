@@ -440,7 +440,12 @@
         "Add your first secret using the button above": "Pridajte svoje prvé tajomstvo tlačidlom vyššie",
         "More actions": "Ďalšie akcie",
         "New vault": "Nový trezor",
-        "Filter by type": "Filtrovať podľa typu"
+        "Filter by type": "Filtrovať podľa typu",
+        "Vaults": "Trezory",
+        "All vaults": "Všetky trezory",
+        "Admin settings": "Nastavenia správy",
+        "Opens in a new tab": "Otvorí sa na novej karte",
+        "Keepiq navigation": "Navigácia Keepiq"
     },
     "plurals": null
 }
