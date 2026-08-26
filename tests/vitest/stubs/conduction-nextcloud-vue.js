@@ -164,4 +164,33 @@ const CnStatusBadge = {
 	},
 }
 
-export { CnIndexPage, CnFolderSidebar, CnStatusBadge }
+/**
+ * CnBreadcrumbs stub — one span per crumb (label or icon name), the last
+ * carrying aria-current="page", mirroring the real component's contract so
+ * tests can assert on the rendered trail.
+ */
+const CnBreadcrumbs = {
+	name: 'CnBreadcrumbs',
+	props: ['crumbs', 'ariaLabel'],
+	render() {
+		const crumbs = this.crumbs || []
+		if (crumbs.length === 0) return null
+		return h(
+			'nav',
+			{ 'data-testid': 'cn-breadcrumbs', 'aria-label': this.ariaLabel },
+			crumbs.map((crumb, index) =>
+				h(
+					'span',
+					{
+						class: 'cn-breadcrumbs__crumb',
+						'aria-current':
+							index === crumbs.length - 1 ? 'page' : undefined,
+					},
+					crumb.label || crumb.icon,
+				),
+			),
+		)
+	},
+}
+
+export { CnIndexPage, CnFolderSidebar, CnStatusBadge, CnBreadcrumbs }
