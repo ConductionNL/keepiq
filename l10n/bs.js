@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Osvježi",
+        "No secrets found": "Nije pronađena nijedna tajna",
+        "Add your first secret using the button above": "Dodajte svoju prvu tajnu dugmetom iznad",
+        "More actions": "Više radnji",
+        "New vault": "Novi trezor",
+        "Filter by type": "Filtriraj po tipu"
     },
     "nplurals=2; plural=(n != 1);"
 )

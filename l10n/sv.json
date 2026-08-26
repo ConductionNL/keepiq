@@ -434,7 +434,13 @@
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Uppdatera",
+        "No secrets found": "Inga hemligheter hittades",
+        "Add your first secret using the button above": "Lägg till din första hemlighet med knappen ovan",
+        "More actions": "Fler åtgärder",
+        "New vault": "Nytt valv",
+        "Filter by type": "Filtrera efter typ"
     },
     "plurals": null
 }

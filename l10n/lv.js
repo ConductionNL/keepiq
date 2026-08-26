@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Atsvaidzināt",
+        "No secrets found": "Noslēpumi nav atrasti",
+        "Add your first secret using the button above": "Pievienojiet savu pirmo noslēpumu ar augšējo pogu",
+        "More actions": "Vairāk darbību",
+        "New vault": "Jauna glabātava",
+        "Filter by type": "Filtrēt pēc veida"
     },
     "nplurals=2; plural=(n != 1);"
 )

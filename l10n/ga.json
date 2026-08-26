@@ -434,7 +434,13 @@
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Athnuaigh",
+        "No secrets found": "Níor aimsíodh aon rúin",
+        "Add your first secret using the button above": "Cuir do chéad rún leis an gcnaipe thuas",
+        "More actions": "Tuilleadh gníomhartha",
+        "New vault": "Taisceadán nua",
+        "Filter by type": "Scag de réir cineáil"
     },
     "plurals": null
 }

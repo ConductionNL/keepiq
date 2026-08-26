@@ -434,7 +434,13 @@
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Obnoviť",
+        "No secrets found": "Nenašli sa žiadne tajomstvá",
+        "Add your first secret using the button above": "Pridajte svoje prvé tajomstvo tlačidlom vyššie",
+        "More actions": "Ďalšie akcie",
+        "New vault": "Nový trezor",
+        "Filter by type": "Filtrovať podľa typu"
     },
     "plurals": null
 }

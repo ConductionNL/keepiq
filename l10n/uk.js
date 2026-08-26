@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Оновити",
+        "No secrets found": "Секретів не знайдено",
+        "Add your first secret using the button above": "Додайте свій перший секрет кнопкою вище",
+        "More actions": "Більше дій",
+        "New vault": "Нове сховище",
+        "Filter by type": "Фільтрувати за типом"
     },
     "nplurals=2; plural=(n != 1);"
 )

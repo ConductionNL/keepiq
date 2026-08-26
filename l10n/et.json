@@ -434,7 +434,13 @@
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Värskenda",
+        "No secrets found": "Ühtegi saladust ei leitud",
+        "Add your first secret using the button above": "Lisa oma esimene saladus ülaloleva nupuga",
+        "More actions": "Rohkem toiminguid",
+        "New vault": "Uus hoidla",
+        "Filter by type": "Filtreeri tüübi järgi"
     },
     "plurals": null
 }

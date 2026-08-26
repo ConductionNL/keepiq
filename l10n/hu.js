@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Frissítés",
+        "No secrets found": "Nem található titok",
+        "Add your first secret using the button above": "Adja hozzá első titkát a fenti gombbal",
+        "More actions": "További műveletek",
+        "New vault": "Új széf",
+        "Filter by type": "Szűrés típus szerint"
     },
     "nplurals=2; plural=(n != 1);"
 )

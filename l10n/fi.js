@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Päivitä",
+        "No secrets found": "Salaisuuksia ei löytynyt",
+        "Add your first secret using the button above": "Lisää ensimmäinen salaisuutesi yllä olevalla painikkeella",
+        "More actions": "Lisää toimintoja",
+        "New vault": "Uusi holvi",
+        "Filter by type": "Suodata tyypin mukaan"
     },
     "nplurals=2; plural=(n != 1);"
 )

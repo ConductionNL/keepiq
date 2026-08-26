@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Aġġorna",
+        "No secrets found": "Ma nstabu l-ebda sigrieti",
+        "Add your first secret using the button above": "Żid l-ewwel sigriet tiegħek bil-buttuna ta’ fuq",
+        "More actions": "Aktar azzjonijiet",
+        "New vault": "Kaxxa-forti ġdida",
+        "Filter by type": "Iffiltra skont it-tip"
     },
     "nplurals=2; plural=(n != 1);"
 )

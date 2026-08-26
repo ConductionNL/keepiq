@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Aktualiséieren",
+        "No secrets found": "Keng Geheimnisser fonnt",
+        "Add your first secret using the button above": "Füügt Äert éischt Geheimnis mam Knäppchen uewen dobäi",
+        "More actions": "Méi Aktiounen",
+        "New vault": "Neien Tresor",
+        "Filter by type": "No Typ filteren"
     },
     "nplurals=2; plural=(n != 1);"
 )

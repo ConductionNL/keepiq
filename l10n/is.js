@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Uppfæra",
+        "No secrets found": "Engin leyndarmál fundust",
+        "Add your first secret using the button above": "Bættu við fyrsta leyndarmálinu þínu með hnappnum að ofan",
+        "More actions": "Fleiri aðgerðir",
+        "New vault": "Ný hvelfing",
+        "Filter by type": "Sía eftir tegund"
     },
     "nplurals=2; plural=(n != 1);"
 )

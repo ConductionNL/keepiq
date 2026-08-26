@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Yenile",
+        "No secrets found": "Hiç gizli bulunamadı",
+        "Add your first secret using the button above": "İlk gizlinizi yukarıdaki düğmeyle ekleyin",
+        "More actions": "Diğer işlemler",
+        "New vault": "Yeni kasa",
+        "Filter by type": "Türe göre filtrele"
     },
     "nplurals=2; plural=(n != 1);"
 )

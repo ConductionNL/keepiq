@@ -434,7 +434,13 @@
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Atnaujinti",
+        "No secrets found": "Paslapčių nerasta",
+        "Add your first secret using the button above": "Pridėkite savo pirmąją paslaptį mygtuku viršuje",
+        "More actions": "Daugiau veiksmų",
+        "New vault": "Nauja saugykla",
+        "Filter by type": "Filtruoti pagal tipą"
     },
     "plurals": null
 }

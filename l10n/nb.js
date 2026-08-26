@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Oppdater",
+        "No secrets found": "Ingen hemmeligheter funnet",
+        "Add your first secret using the button above": "Legg til din første hemmelighet med knappen ovenfor",
+        "More actions": "Flere handlinger",
+        "New vault": "Nytt hvelv",
+        "Filter by type": "Filtrer etter type"
     },
     "nplurals=2; plural=(n != 1);"
 )

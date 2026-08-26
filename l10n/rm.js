@@ -435,7 +435,13 @@ OC.L10N.register(
         "No applications awaiting approval": "No applications awaiting approval",
         "Vault overview": "Vault overview",
         "Your secrets, folders and applications at a glance": "Your secrets, folders and applications at a glance",
-        "Rotation due": "Rotation due"
+        "Rotation due": "Rotation due",
+        "Refresh": "Actualisar",
+        "No secrets found": "Nagins secrets chattads",
+        "Add your first secret using the button above": "Agiunschè voss emprim secret cun il buttun survart",
+        "More actions": "Dapli acziuns",
+        "New vault": "Nov tresor",
+        "Filter by type": "Filtrar tenor tip"
     },
     "nplurals=2; plural=(n != 1);"
 )
