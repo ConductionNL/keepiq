@@ -374,6 +374,7 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { secretDetailLocation } from '../utils/detailRoute.js'
 import { subfolderRows } from '../utils/vaultList.js'
 
 const PAGE_SIZE = 50
@@ -1169,13 +1170,17 @@ export default {
 		},
 
 		/**
-		 * Open a secret's detail view.
+		 * Open a secret's detail sidebar (restyle Stage 8): the optional
+		 * `:id?` segment joins the current list route, so the list stays
+		 * mounted behind the sidebar and the folder context survives in
+		 * the path.
 		 *
 		 * @param {string} id The secret ID.
 		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		openSecret(id) {
-			this.$router.push(`/secrets/${id}`)
+			this.$router.push(secretDetailLocation(this.$route, id))
 		},
 
 		/**

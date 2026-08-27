@@ -50,14 +50,12 @@ import HealthReportView from './views/HealthReportView.vue'
 import LinkShareAccess from './views/LinkShareAccess.vue'
 import LockScreen from './views/LockScreen.vue'
 import PersonalActivityView from './views/PersonalActivityView.vue'
-import SecretDetail from './views/SecretDetail.vue'
 import SecretList from './views/SecretList.vue'
 import SecretRequestFill from './views/SecretRequestFill.vue'
 
 export default {
 	LockScreen: { kind: 'page', component: LockScreen },
 	SecretList: { kind: 'page', component: SecretList },
-	SecretDetail: { kind: 'page', component: SecretDetail },
 	SecretRequestFill: { kind: 'page', component: SecretRequestFill },
 	LinkShareAccess: { kind: 'page', component: LinkShareAccess },
 	EphemeralSendAccess: { kind: 'page', component: EphemeralSendAccess },
