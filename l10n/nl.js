@@ -617,7 +617,9 @@ OC.L10N.register(
         "Application": "Applicatie",
         "Secure message": "Beveiligd bericht",
         "Flows": "Flows",
-        "Flow": "Flow"
+        "Flow": "Flow",
+        "Registered by": "Geregistreerd door",
+        "Requested": "Aangevraagd"
     },
     "nplurals=2; plural=(n != 1);"
 )
