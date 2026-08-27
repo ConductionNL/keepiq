@@ -74,6 +74,12 @@ const PROTECTED_ROUTES = [
 	'SecretDetail',
 	'ApplicationRegister',
 	'ApplicationDetail',
+	// Flows are PROTECTED, not public. A flow in this app can read and write
+	// vault secrets, so the authoring surface must sit behind the lock exactly
+	// as the secret list does — a locked vault that still lets someone edit the
+	// automation over it is not locked.
+	'Flows',
+	'FlowDetail',
 ]
 
 describe('createVaultGuard', () => {

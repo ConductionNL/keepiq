@@ -592,9 +592,6 @@ OC.L10N.register(
         "View all": "Alles bekijken",
         "Applications awaiting approval": "Applicaties in afwachting van goedkeuring",
         "No applications awaiting approval": "Geen applicaties in afwachting van goedkeuring",
-        "Vault overview": "Kluisoverzicht",
-        "Your secrets, folders and applications at a glance": "Uw geheimen, mappen en applicaties in één oogopslag",
-        "Rotation due": "Rotatie vereist",
         "Add your first secret using the button above": "Voeg uw eerste geheim toe met de knop hierboven",
         "Filter by type": "Filteren op type",
         "More actions": "Meer acties",
@@ -607,7 +604,18 @@ OC.L10N.register(
         "Opens in a new tab": "Opent in een nieuw tabblad",
         "Keepiq navigation": "Keepiq-navigatie",
         "Vault name": "Kluisnaam",
-        "Create vault": "Kluis aanmaken"
+        "Create vault": "Kluis aanmaken",
+        "Applications": "Applicaties",
+        "Features & roadmap": "Functies en roadmap",
+        "Certificates": "Certificaten",
+        "Emergency access": "Noodtoegang",
+        "Lock vault": "Kluis vergrendelen",
+        "Personal settings": "Persoonlijke instellingen",
+        "Vault overview": "Kluisoverzicht",
+        "Your secrets, folders and applications at a glance": "Je geheimen, mappen en applicaties in één oogopslag",
+        "Rotation due": "Rotatie verlopen",
+        "Application": "Applicatie",
+        "Secure message": "Beveiligd bericht"
     },
     "nplurals=2; plural=(n != 1);"
 )
