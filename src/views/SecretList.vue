@@ -119,7 +119,7 @@
 				:selectable="false"
 				:objects="listObjects"
 				:schema="listSchema"
-				:loading="loading"
+				:loading="loading || folderSwitching"
 				:pagination="pagination"
 				showTitle
 				:title="pageTitle"
@@ -462,6 +462,19 @@ export default {
 			lastCheckedId: null,
 			newSendOpen: false,
 			mySendsOpen: false,
+			/**
+			 * True while a folder navigation's fetch is in flight. Blanks
+			 * the list so CnIndexPage shows its full loading spinner
+			 * (it only does so when loading AND empty) instead of the
+			 * PREVIOUS folder's rows suddenly swapping for the new ones.
+			 *
+			 * Starts TRUE: root ↔ folder navigations REMOUNT this view
+			 * (CnPageRenderer keys renders on the page id, and the two
+			 * routes are different pages), and a fresh mount renders the
+			 * store's previous rows before mounted() fetches anything —
+			 * the watcher below never sees that transition.
+			 */
+			folderSwitching: true,
 		}
 	},
 
@@ -630,6 +643,11 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		listObjects() {
+			// Mid folder-switch: nothing — the old folder's rows must not
+			// linger while the new folder's secrets are still loading.
+			if (this.folderSwitching) {
+				return []
+			}
 			if (this.secretStore.page > 1) {
 				return this.secrets
 			}
@@ -832,8 +850,15 @@ export default {
 	},
 
 	watch: {
-		selectedFolderId() {
-			this.reload()
+		async selectedFolderId() {
+			// Blank the list for the duration of the fetch so the switch
+			// reads as loading → new folder, never old rows → new rows.
+			this.folderSwitching = true
+			try {
+				await this.reload()
+			} finally {
+				this.folderSwitching = false
+			}
 		},
 	},
 
@@ -857,7 +882,14 @@ export default {
 			// costs the badge and never the list itself.
 			useSecretRequestStore().fetchRequests(),
 		])
-		await this.reload()
+		try {
+			await this.reload()
+		} finally {
+			// Mount-time counterpart of the selectedFolderId watcher:
+			// `folderSwitching` starts true so the spinner covers this whole
+			// preamble instead of the store's previous rows.
+			this.folderSwitching = false
+		}
 		// Lazily run the client-side password-health pass after the first list
 		// render so strength badges appear without blocking the render. Fire and
 		// forget; it aborts cleanly when the vault is locked (password-health D2).
