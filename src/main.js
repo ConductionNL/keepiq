@@ -23,6 +23,7 @@ import {
 	buildManifest,
 	CnPageRenderer,
 	defaultPageTypes,
+	invalidateEndpointSourceCache,
 	registerBuiltinDashboardWidgets,
 	registerIcons,
 	registerTranslations,
@@ -155,6 +156,19 @@ const router = createRouter({
 // secret-bearing and neither holds a key, but anything added there needs its
 // own gating: this guard will not cover it.
 router.beforeEach(createVaultGuard(() => useSessionStore(pinia)))
+
+// The dashboard's endpoint-bound widgets (KPI stats, activity feed, pending
+// queue) fetch through the library's shared endpoint cache, which holds
+// responses for 5 minutes. Fine within a page, but wrong ACROSS a
+// navigation: create a secret and come back, and the dashboard still shows
+// the pre-creation totals and an activity feed without the event. Dropping
+// the cache whenever a navigation lands on the dashboard makes every visit
+// current, while same-page dedupe/caching keeps working.
+router.afterEach((to) => {
+	if (to.name === 'Dashboard') {
+		invalidateEndpointSourceCache()
+	}
+})
 
 tryLoadTranslations()
 

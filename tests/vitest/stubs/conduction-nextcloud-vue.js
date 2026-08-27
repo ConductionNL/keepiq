@@ -7,7 +7,7 @@
  * The published library ships a fat bundle (its own @nextcloud/vue copy,
  * apexcharts, leaflet, codemirror, …) that neither resolves nor renders under
  * vitest's jsdom env. Views under test import only a handful of primitives
- * (CnIndexPage, CnFolderSidebar, CnStatusBadge) and assert on emitted events +
+ * (CnIndexPage, CnBreadcrumbs, CnStatusBadge) and assert on emitted events +
  * the slots they pass down — not on the library's real markup. So we swap the
  * whole package for minimal Vue 3 render-function stubs.
  *
@@ -106,50 +106,8 @@ const CnIndexPage = {
 	},
 }
 
-/**
- * CnFolderSidebar stub — an "All" button (emits `select` null) and an optional
- * New-folder button (emits `create`).
- */
-const CnFolderSidebar = {
-	name: 'CnFolderSidebar',
-	props: [
-		'folders',
-		'selectedId',
-		'allLabel',
-		'allowCreate',
-		'createLabel',
-		'source',
-		'objects',
-		'groupBy',
-	],
-	emits: ['select', 'create'],
-	render() {
-		const children = [
-			h(
-				'button',
-				{
-					class: 'cn-folder-sidebar__all',
-					onClick: () => this.$emit('select', null),
-				},
-				this.allLabel,
-			),
-		]
-		if (this.allowCreate) {
-			children.push(
-				h(
-					'button',
-					{
-						class: 'cn-folder-sidebar__new',
-						onClick: () =>
-							this.$emit('create', { parentId: this.selectedId }),
-					},
-					this.createLabel,
-				),
-			)
-		}
-		return h('div', { class: 'cn-folder-sidebar' }, children)
-	},
-}
+// CnFolderSidebar stub removed with the in-page folder pane (restyle
+// Stage 7) — folder navigation lives in KeepiqAppNav's tree now.
 
 /** CnStatusBadge stub — a pill span carrying the label. */
 const CnStatusBadge = {
@@ -164,4 +122,33 @@ const CnStatusBadge = {
 	},
 }
 
-export { CnIndexPage, CnFolderSidebar, CnStatusBadge }
+/**
+ * CnBreadcrumbs stub — one span per crumb (label or icon name), the last
+ * carrying aria-current="page", mirroring the real component's contract so
+ * tests can assert on the rendered trail.
+ */
+const CnBreadcrumbs = {
+	name: 'CnBreadcrumbs',
+	props: ['crumbs', 'ariaLabel'],
+	render() {
+		const crumbs = this.crumbs || []
+		if (crumbs.length === 0) return null
+		return h(
+			'nav',
+			{ 'data-testid': 'cn-breadcrumbs', 'aria-label': this.ariaLabel },
+			crumbs.map((crumb, index) =>
+				h(
+					'span',
+					{
+						class: 'cn-breadcrumbs__crumb',
+						'aria-current':
+							index === crumbs.length - 1 ? 'page' : undefined,
+					},
+					crumb.label || crumb.icon,
+				),
+			),
+		)
+	},
+}
+
+export { CnIndexPage, CnStatusBadge, CnBreadcrumbs }

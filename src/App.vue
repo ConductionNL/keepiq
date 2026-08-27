@@ -99,6 +99,13 @@
 			appId="keepiq"
 			:translate="translateForApp"
 			:permissions="permissions">
+			<!-- Keepiq's own left rail (restyle Stage 7): manifest-driven
+			     entries PLUS the recursive vault/folder tree, which the
+			     default CnAppNav cannot render. The `.keepiq-shell--locked`
+			     rule below keeps hiding it on the lock screen. -->
+			<template #menu>
+				<KeepiqAppNav :manifest="manifest" />
+			</template>
 			<!-- User-settings dialog body (opened from the manifest's
 		     `action: "user-settings"` menu entry via CnAppRoot's
 		     cnOpenUserSettings inject). Sections preserve the legacy
@@ -319,6 +326,7 @@ import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
+import KeepiqAppNav from './components/KeepiqAppNav/KeepiqAppNav.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
@@ -351,6 +359,7 @@ export default {
 		MasterPasswordForm,
 		PasskeyManager,
 		CompromiseRecoveryForm,
+		KeepiqAppNav,
 		MigrationResumeBanner,
 	},
 
