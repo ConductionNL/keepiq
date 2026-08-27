@@ -447,7 +447,14 @@
         "Opens in a new tab": "Osclaítear i gcluaisín nua é",
         "Keepiq navigation": "Nascleanúint Keepiq",
         "Vault name": "Ainm an taisceadáin",
-        "Create vault": "Cruthaigh taisceadán"
+        "Create vault": "Cruthaigh taisceadán",
+        "Details": "Sonraí",
+        "Versions": "Leaganacha",
+        "Secret actions": "Gníomhartha an rúin",
+        "More information": "Tuilleadh faisnéise",
+        "Personal details": "Sonraí pearsanta",
+        "Address details": "Sonraí seolta",
+        "Contact details": "Sonraí teagmhála"
     },
     "plurals": null
 }

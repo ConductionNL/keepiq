@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Hapet në një skedë të re",
         "Keepiq navigation": "Navigimi i Keepiq",
         "Vault name": "Emri i kasafortës",
-        "Create vault": "Krijo kasafortë"
+        "Create vault": "Krijo kasafortë",
+        "Details": "Hollësi",
+        "Versions": "Versione",
+        "Secret actions": "Veprimet e sekretit",
+        "More information": "Më shumë informacion",
+        "Personal details": "Të dhëna personale",
+        "Address details": "Të dhëna adrese",
+        "Contact details": "Të dhëna kontakti"
     },
     "nplurals=2; plural=(n != 1);"
 )

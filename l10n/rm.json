@@ -447,7 +447,14 @@
         "Opens in a new tab": "S’avra en in nov tab",
         "Keepiq navigation": "Navigaziun da Keepiq",
         "Vault name": "Num dal tresor",
-        "Create vault": "Crear tresor"
+        "Create vault": "Crear tresor",
+        "Details": "Detagls",
+        "Versions": "Versiuns",
+        "Secret actions": "Acziuns dal secret",
+        "More information": "Dapli infurmaziuns",
+        "Personal details": "Datas persunalas",
+        "Address details": "Datas d'adressa",
+        "Contact details": "Datas da contact"
     },
     "plurals": null
 }

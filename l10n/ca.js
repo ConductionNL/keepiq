@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "S’obre en una pestanya nova",
         "Keepiq navigation": "Navegació de Keepiq",
         "Vault name": "Nom de la caixa forta",
-        "Create vault": "Crea la caixa forta"
+        "Create vault": "Crea la caixa forta",
+        "Details": "Detalls",
+        "Versions": "Versions",
+        "Secret actions": "Accions del secret",
+        "More information": "Més informació",
+        "Personal details": "Dades personals",
+        "Address details": "Dades d'adreça",
+        "Contact details": "Dades de contacte"
     },
     "nplurals=2; plural=(n != 1);"
 )

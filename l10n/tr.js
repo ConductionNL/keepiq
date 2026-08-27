@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Yeni sekmede açılır",
         "Keepiq navigation": "Keepiq gezinmesi",
         "Vault name": "Kasa adı",
-        "Create vault": "Kasa oluştur"
+        "Create vault": "Kasa oluştur",
+        "Details": "Ayrıntılar",
+        "Versions": "Sürümler",
+        "Secret actions": "Gizli işlemleri",
+        "More information": "Daha fazla bilgi",
+        "Personal details": "Kişisel bilgiler",
+        "Address details": "Adres bilgileri",
+        "Contact details": "İletişim bilgileri"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -447,7 +447,14 @@
         "Opens in a new tab": "Otvara se u novoj kartici",
         "Keepiq navigation": "Keepiq navigacija",
         "Vault name": "Naziv trezora",
-        "Create vault": "Kreiraj trezor"
+        "Create vault": "Kreiraj trezor",
+        "Details": "Detalji",
+        "Versions": "Verzije",
+        "Secret actions": "Radnje nad tajnom",
+        "More information": "Više informacija",
+        "Personal details": "Lični podaci",
+        "Address details": "Podaci o adresi",
+        "Contact details": "Kontakt podaci"
     },
     "plurals": null
 }

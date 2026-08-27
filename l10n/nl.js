@@ -615,7 +615,14 @@ OC.L10N.register(
         "Your secrets, folders and applications at a glance": "Je geheimen, mappen en applicaties in één oogopslag",
         "Rotation due": "Rotatie verlopen",
         "Application": "Applicatie",
-        "Secure message": "Beveiligd bericht"
+        "Secure message": "Beveiligd bericht",
+        "Details": "Details",
+        "Versions": "Versies",
+        "Secret actions": "Acties voor het geheim",
+        "More information": "Meer informatie",
+        "Personal details": "Persoonlijke gegevens",
+        "Address details": "Adresgegevens",
+        "Contact details": "Contactgegevens"
     },
     "nplurals=2; plural=(n != 1);"
 )

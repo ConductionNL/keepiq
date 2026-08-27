@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Otvara se u novoj kartici",
         "Keepiq navigation": "Keepiq navigacija",
         "Vault name": "Naziv trezora",
-        "Create vault": "Stvori trezor"
+        "Create vault": "Stvori trezor",
+        "Details": "Pojedinosti",
+        "Versions": "Verzije",
+        "Secret actions": "Radnje tajne",
+        "More information": "Više informacija",
+        "Personal details": "Osobni podaci",
+        "Address details": "Podaci o adresi",
+        "Contact details": "Kontaktni podaci"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Új lapon nyílik meg",
         "Keepiq navigation": "Keepiq navigáció",
         "Vault name": "Széf neve",
-        "Create vault": "Széf létrehozása"
+        "Create vault": "Széf létrehozása",
+        "Details": "Részletek",
+        "Versions": "Verziók",
+        "Secret actions": "Titok műveletei",
+        "More information": "További információk",
+        "Personal details": "Személyes adatok",
+        "Address details": "Címadatok",
+        "Contact details": "Elérhetőségi adatok"
     },
     "nplurals=2; plural=(n != 1);"
 )

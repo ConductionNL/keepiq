@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Jinfetaħ f’tab ġdida",
         "Keepiq navigation": "Navigazzjoni ta’ Keepiq",
         "Vault name": "Isem il-kaxxa-forti",
-        "Create vault": "Oħloq kaxxa-forti"
+        "Create vault": "Oħloq kaxxa-forti",
+        "Details": "Dettalji",
+        "Versions": "Verżjonijiet",
+        "Secret actions": "Azzjonijiet tas-sigriet",
+        "More information": "Aktar informazzjoni",
+        "Personal details": "Dettalji personali",
+        "Address details": "Dettalji tal-indirizz",
+        "Contact details": "Dettalji ta' kuntatt"
     },
     "nplurals=2; plural=(n != 1);"
 )

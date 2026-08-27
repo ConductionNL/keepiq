@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Відкривається в новій вкладці",
         "Keepiq navigation": "Навігація Keepiq",
         "Vault name": "Назва сховища",
-        "Create vault": "Створити сховище"
+        "Create vault": "Створити сховище",
+        "Details": "Подробиці",
+        "Versions": "Версії",
+        "Secret actions": "Дії з секретом",
+        "More information": "Більше інформації",
+        "Personal details": "Особисті дані",
+        "Address details": "Адресні дані",
+        "Contact details": "Контактні дані"
     },
     "nplurals=2; plural=(n != 1);"
 )

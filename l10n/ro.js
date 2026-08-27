@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Se deschide într-o filă nouă",
         "Keepiq navigation": "Navigare Keepiq",
         "Vault name": "Numele seifului",
-        "Create vault": "Creare seif"
+        "Create vault": "Creare seif",
+        "Details": "Detalii",
+        "Versions": "Versiuni",
+        "Secret actions": "Acțiuni pentru secret",
+        "More information": "Mai multe informații",
+        "Personal details": "Date personale",
+        "Address details": "Date de adresă",
+        "Contact details": "Date de contact"
     },
     "nplurals=2; plural=(n != 1);"
 )

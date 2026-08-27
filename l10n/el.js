@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Ανοίγει σε νέα καρτέλα",
         "Keepiq navigation": "Πλοήγηση Keepiq",
         "Vault name": "Όνομα θησαυροφυλακίου",
-        "Create vault": "Δημιουργία θησαυροφυλακίου"
+        "Create vault": "Δημιουργία θησαυροφυλακίου",
+        "Details": "Λεπτομέρειες",
+        "Versions": "Εκδόσεις",
+        "Secret actions": "Ενέργειες μυστικού",
+        "More information": "Περισσότερες πληροφορίες",
+        "Personal details": "Προσωπικά στοιχεία",
+        "Address details": "Στοιχεία διεύθυνσης",
+        "Contact details": "Στοιχεία επικοινωνίας"
     },
     "nplurals=2; plural=(n != 1);"
 )

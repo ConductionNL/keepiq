@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Otwiera się w nowej karcie",
         "Keepiq navigation": "Nawigacja Keepiq",
         "Vault name": "Nazwa sejfu",
-        "Create vault": "Utwórz sejf"
+        "Create vault": "Utwórz sejf",
+        "Details": "Szczegóły",
+        "Versions": "Wersje",
+        "Secret actions": "Akcje sekretu",
+        "More information": "Więcej informacji",
+        "Personal details": "Dane osobowe",
+        "Address details": "Dane adresowe",
+        "Contact details": "Dane kontaktowe"
     },
     "nplurals=2; plural=(n != 1);"
 )

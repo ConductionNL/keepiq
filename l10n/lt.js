@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Atsidaro naujoje kortelėje",
         "Keepiq navigation": "Keepiq naršymas",
         "Vault name": "Saugyklos pavadinimas",
-        "Create vault": "Sukurti saugyklą"
+        "Create vault": "Sukurti saugyklą",
+        "Details": "Išsami informacija",
+        "Versions": "Versijos",
+        "Secret actions": "Paslapties veiksmai",
+        "More information": "Daugiau informacijos",
+        "Personal details": "Asmens duomenys",
+        "Address details": "Adreso duomenys",
+        "Contact details": "Kontaktiniai duomenys"
     },
     "nplurals=2; plural=(n != 1);"
 )

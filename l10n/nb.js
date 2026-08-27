@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Åpnes i en ny fane",
         "Keepiq navigation": "Keepiq-navigasjon",
         "Vault name": "Hvelvnavn",
-        "Create vault": "Opprett hvelv"
+        "Create vault": "Opprett hvelv",
+        "Details": "Detaljer",
+        "Versions": "Versjoner",
+        "Secret actions": "Handlinger for hemmelighet",
+        "More information": "Mer informasjon",
+        "Personal details": "Personlige opplysninger",
+        "Address details": "Adresseopplysninger",
+        "Contact details": "Kontaktopplysninger"
     },
     "nplurals=2; plural=(n != 1);"
 )

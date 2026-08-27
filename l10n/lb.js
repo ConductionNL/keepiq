@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Gëtt an engem neien Tab opgemaach",
         "Keepiq navigation": "Keepiq-Navigatioun",
         "Vault name": "Tresorsnumm",
-        "Create vault": "Tresor uleeën"
+        "Create vault": "Tresor uleeën",
+        "Details": "Detailer",
+        "Versions": "Versiounen",
+        "Secret actions": "Aktioune fir d'Geheimnis",
+        "More information": "Méi Informatiounen",
+        "Personal details": "Perséinlech Donnéeën",
+        "Address details": "Adressdaten",
+        "Contact details": "Kontaktdaten"
     },
     "nplurals=2; plural=(n != 1);"
 )

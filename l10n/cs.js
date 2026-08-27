@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Otevře se na nové kartě",
         "Keepiq navigation": "Navigace Keepiq",
         "Vault name": "Název trezoru",
-        "Create vault": "Vytvořit trezor"
+        "Create vault": "Vytvořit trezor",
+        "Details": "Podrobnosti",
+        "Versions": "Verze",
+        "Secret actions": "Akce tajemství",
+        "More information": "Více informací",
+        "Personal details": "Osobní údaje",
+        "Address details": "Adresní údaje",
+        "Contact details": "Kontaktní údaje"
     },
     "nplurals=2; plural=(n != 1);"
 )

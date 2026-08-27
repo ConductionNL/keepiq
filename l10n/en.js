@@ -1016,7 +1016,14 @@ OC.L10N.register(
         "Opens in a new tab": "Opens in a new tab",
         "Vaults": "Vaults",
         "Create vault": "Create vault",
-        "Vault name": "Vault name"
+        "Vault name": "Vault name",
+        "Details": "Details",
+        "Versions": "Versions",
+        "Secret actions": "Secret actions",
+        "More information": "More information",
+        "Personal details": "Personal details",
+        "Address details": "Address details",
+        "Contact details": "Contact details"
     },
     "nplurals=2; plural=(n != 1);"
 )

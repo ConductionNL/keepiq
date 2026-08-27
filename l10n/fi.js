@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Avautuu uuteen välilehteen",
         "Keepiq navigation": "Keepiqin navigointi",
         "Vault name": "Holvin nimi",
-        "Create vault": "Luo holvi"
+        "Create vault": "Luo holvi",
+        "Details": "Tiedot",
+        "Versions": "Versiot",
+        "Secret actions": "Salaisuuden toiminnot",
+        "More information": "Lisätietoja",
+        "Personal details": "Henkilötiedot",
+        "Address details": "Osoitetiedot",
+        "Contact details": "Yhteystiedot"
     },
     "nplurals=2; plural=(n != 1);"
 )

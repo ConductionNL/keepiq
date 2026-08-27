@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Avaneb uuel vahekaardil",
         "Keepiq navigation": "Keepiqi navigeerimine",
         "Vault name": "Hoidla nimi",
-        "Create vault": "Loo hoidla"
+        "Create vault": "Loo hoidla",
+        "Details": "Üksikasjad",
+        "Versions": "Versioonid",
+        "Secret actions": "Saladuse toimingud",
+        "More information": "Lisateave",
+        "Personal details": "Isikuandmed",
+        "Address details": "Aadressiandmed",
+        "Contact details": "Kontaktandmed"
     },
     "nplurals=2; plural=(n != 1);"
 )

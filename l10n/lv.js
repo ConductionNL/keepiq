@@ -448,7 +448,14 @@ OC.L10N.register(
         "Opens in a new tab": "Atveras jaunā cilnē",
         "Keepiq navigation": "Keepiq navigācija",
         "Vault name": "Glabātavas nosaukums",
-        "Create vault": "Izveidot glabātavu"
+        "Create vault": "Izveidot glabātavu",
+        "Details": "Detaļas",
+        "Versions": "Versijas",
+        "Secret actions": "Noslēpuma darbības",
+        "More information": "Vairāk informācijas",
+        "Personal details": "Personas dati",
+        "Address details": "Adreses dati",
+        "Contact details": "Kontaktinformācija"
     },
     "nplurals=2; plural=(n != 1);"
 )
