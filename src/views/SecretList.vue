@@ -375,6 +375,7 @@ import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
 import { secretDetailLocation } from '../utils/detailRoute.js'
+import { secretTypeLabel } from '../utils/secretTypes.js'
 import { subfolderRows } from '../utils/vaultList.js'
 
 const PAGE_SIZE = 50
@@ -611,7 +612,7 @@ export default {
 		typeFilterOptions() {
 			return useSecretTypeStore().types.map((type) => ({
 				value: type.id,
-				label: type.label || type.name,
+				label: secretTypeLabel(type),
 			}))
 		},
 

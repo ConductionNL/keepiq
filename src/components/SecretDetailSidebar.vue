@@ -864,6 +864,7 @@ import { cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { secretTypeLabel } from '../utils/secretTypes.js'
 
 /**
  * The secret detail sidebar (restyle Stage 8). Encrypted fields are
@@ -980,8 +981,9 @@ export default {
 			if (!this.secret) {
 				return ''
 			}
-			const type = useSecretTypeStore().typesById[this.secret.typeId]
-			return type ? type.label || type.name : ''
+			return secretTypeLabel(
+				useSecretTypeStore().typesById[this.secret.typeId],
+			)
 		},
 
 		/**

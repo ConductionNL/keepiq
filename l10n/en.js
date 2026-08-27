@@ -1023,7 +1023,14 @@ OC.L10N.register(
         "More information": "More information",
         "Personal details": "Personal details",
         "Address details": "Address details",
-        "Contact details": "Contact details"
+        "Contact details": "Contact details",
+        "API Key": "API Key",
+        "SSH Key": "SSH Key",
+        "Certificate": "Certificate",
+        "Secure Note": "Secure Note",
+        "Database": "Database",
+        "Authenticator (TOTP)": "Authenticator (TOTP)",
+        "Payment Card": "Payment Card"
     },
     "nplurals=2; plural=(n != 1);"
 )
