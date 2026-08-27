@@ -193,6 +193,34 @@ export async function openVault(page: Page): Promise<void> {
 }
 
 /**
+ * Click an entry inside the vault toolbar's "More actions" overflow.
+ *
+ * The overflow entries are NcActionButtons (restyle Stage 5), and NcActionButton
+ * renders its `data-testid` on the `<li role="presentation">` WRAPPER while the
+ * Vue click handler sits on the inner `button.action-button`. A native click on
+ * the element that carries the testid therefore hits the presentational list
+ * item and fires nothing — the dialog never opens and the spec times out on its
+ * next locator. So: open the menu, then natively click the INNER button of the
+ * testid-carrying wrapper (native, because the themed button swallows
+ * Playwright's synthetic click, same as the unlock button above).
+ *
+ * @param page   The Playwright page (must be on the vault list, unlocked).
+ * @param testid The `data-testid` of the overflow entry, e.g. 'import-secrets'.
+ */
+export async function clickOverflowAction(
+	page: Page,
+	testid: string,
+): Promise<void> {
+	await page
+		.getByRole('button', { name: /More actions/i })
+		.first()
+		.evaluate((el: HTMLElement) => el.click())
+	const inner = page.getByTestId(testid).locator('button').first()
+	await inner.waitFor({ state: 'attached', timeout: 10_000 })
+	await inner.evaluate((el: HTMLElement) => el.click())
+}
+
+/**
  * Navigate to an in-app route WITHIN the already-unlocked SPA, in place.
  *
  * The router runs in hash mode, so routes are `#/<route>`. A full `page.goto`

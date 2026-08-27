@@ -378,8 +378,18 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		// row ever said anything.
 		// The user-settings dialog is modal. Navigating the hash underneath it
 		// leaves the vault list mounted but covered, so the row indicator is
-		// never shown — close the dialog first.
-		await page.keyboard.press('Escape')
+		// never shown — close the dialogs first. They can be STACKED (the
+		// recovery dialog sits on the user-settings dialog) and Escape closes
+		// only the topmost, so press it once per remaining dialog instead of
+		// once in total — the single-press form left one dialog standing and
+		// was the recorded flake on CI.
+		for (let i = 0; i < 5; i++) {
+			if ((await page.locator('[role="dialog"]').count()) === 0) {
+				break
+			}
+			await page.keyboard.press('Escape')
+			await page.waitForTimeout(500)
+		}
 		await expect(page.locator('[role="dialog"]')).toHaveCount(0, {
 			timeout: 15_000,
 		})

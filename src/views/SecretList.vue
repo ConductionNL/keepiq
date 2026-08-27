@@ -640,6 +640,7 @@ export default {
 		 * vault root (restyle Stage 5).
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		pageTitle() {
 			return this.selectedFolderName || t('keepiq', 'Secrets')
@@ -650,6 +651,7 @@ export default {
 		 * folder is a Vault, a folder inside one is a folder.
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
 		 */
 		newFolderLabel() {
 			return this.selectedFolderId
@@ -664,6 +666,7 @@ export default {
 		 * runaway depth.
 		 *
 		 * @return {Array<object>} Folder objects along the trail.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		folderTrail() {
 			if (!this.selectedFolderId) {
@@ -692,6 +695,7 @@ export default {
 		 * at the root — no trail is rendered there.
 		 *
 		 * @return {Array<object>} CnBreadcrumbs `crumbs` entries.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		breadcrumbs() {
 			const trail = this.folderTrail
@@ -722,6 +726,7 @@ export default {
 		 * listed — it stays CnIndexPage's own add button.
 		 *
 		 * @return {Array<{id: string, label: string, icon: object, placement: string, disabled: boolean, testid: (string|undefined), run: Function}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		toolbarItems() {
 			const items = [
@@ -791,12 +796,20 @@ export default {
 			return items
 		},
 
-		/** Toolbar items rendered as visible buttons. */
+		/**
+		 * Toolbar items rendered as visible buttons.
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
 		visibleToolbarItems() {
 			return this.toolbarItems.filter((item) => item.placement === 'visible')
 		},
 
-		/** Toolbar items rendered inside the "More actions" overflow. */
+		/**
+		 * Toolbar items rendered inside the "More actions" overflow.
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
 		overflowToolbarItems() {
 			return this.toolbarItems.filter((item) => item.placement === 'overflow')
 		},

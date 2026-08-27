@@ -190,20 +190,38 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The folder store backing the rail's vault/folder tree.
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
 		folderStore() {
 			return useFolderStore()
 		},
 
+		/**
+		 * The session store: its lock state gates the tree fetch.
+		 *
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
+		 */
 		sessionStore() {
 			return useSessionStore()
 		},
 
-		/** The nested vault/folder tree feeding NavFolderTree. */
+		/**
+		 * The nested vault/folder tree feeding NavFolderTree.
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
 		folderTree() {
 			return this.folderStore.folderTree
 		},
 
-		/** The manifest menu, order-sorted (entries without order last). */
+		/**
+		 * The manifest menu, order-sorted (entries without order last).
+		 *
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
+		 */
 		sortedMenu() {
 			return [...(this.manifest?.menu || [])].sort(
 				(a, b) =>
@@ -212,19 +230,31 @@ export default {
 			)
 		},
 
-		/** Main-section entries (no `section`, or section "main"). */
+		/**
+		 * Main-section entries (no `section`, or section "main").
+		 *
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
+		 */
 		mainItems() {
 			return this.sortedMenu.filter(
 				(item) => !item.section || item.section === 'main',
 			)
 		},
 
-		/** Footer-section entries (Documentation, roadmap, activity, …). */
+		/**
+		 * Footer-section entries (Documentation, roadmap, activity, …).
+		 *
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
+		 */
 		footerItems() {
 			return this.sortedMenu.filter((item) => item.section === 'footer')
 		},
 
-		/** Settings-foldout entries (Applications, Lock vault, …). */
+		/**
+		 * Settings-foldout entries (Applications, Lock vault, …).
+		 *
+		 * @spec openspec/specs/menu-architecture/spec.md#requirement-setup-admin-entries-live-in-the-settings-foldout
+		 */
 		settingsItems() {
 			return this.sortedMenu.filter((item) => item.section === 'settings')
 		},
@@ -246,6 +276,7 @@ export default {
 		 * scheme-prefixed hrefs in a new tab.
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/menu-architecture/spec.md#requirement-setup-admin-entries-live-in-the-settings-foldout
 		 */
 		adminSettingsHref() {
 			const origin =
@@ -260,6 +291,7 @@ export default {
 		 * The active folder id from the route.
 		 *
 		 * @return {string|null}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		activeFolderId() {
 			return this.$route?.params?.folderId || null
@@ -316,7 +348,7 @@ export default {
 	 * Load the folder tree once at mount when the vault is unlocked.
 	 *
 	 * @return {void}
-	 * @spec openspec/specs/dashboard/spec.md#app-navigation-renders
+	 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
 	 */
 	mounted() {
 		if (!this.sessionStore.isLocked) {
@@ -331,7 +363,7 @@ export default {
 		 *
 		 * @param {object} item The menu entry.
 		 * @return {object|null}
-		 * @spec openspec/specs/dashboard/spec.md#app-navigation-renders
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
 		 */
 		itemTo(item) {
 			return item.route && !item.action ? { name: item.route } : null
@@ -344,7 +376,7 @@ export default {
 		 *
 		 * @param {object} item The menu entry.
 		 * @return {string|null}
-		 * @spec openspec/specs/dashboard/spec.md#app-navigation-renders
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
 		 */
 		itemHref(item) {
 			return item.href && !item.action ? item.href : null
@@ -355,7 +387,7 @@ export default {
 		 *
 		 * @param {object} item The menu entry.
 		 * @return {boolean}
-		 * @spec openspec/specs/dashboard/spec.md#app-navigation-renders
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
 		 */
 		isActive(item) {
 			return Boolean(item.route) && this.$route?.name === item.route
@@ -369,7 +401,7 @@ export default {
 		 * @param {object} item The clicked entry.
 		 * @param {Event} event The click event.
 		 * @return {void}
-		 * @spec openspec/specs/dashboard/spec.md#app-navigation-renders
+		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
 		 */
 		onItemClick(item, event) {
 			if (item.action === 'user-settings') {

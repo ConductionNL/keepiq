@@ -39,7 +39,12 @@
  * `secrets-write-ui` scenarios they actually drive.
  */
 import { test, expect } from '@playwright/test'
-import { gotoLockSettled, unlockVault, openVault } from './_workflow-helpers'
+import {
+	clickOverflowAction,
+	gotoLockSettled,
+	openVault,
+	unlockVault,
+} from './_workflow-helpers'
 
 const REQ_TOKEN = `(() => {
 	const head = document.querySelector('head[data-requesttoken]');
@@ -162,13 +167,10 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await openVault(page)
 
 		// The create affordance lives in the toolbar's "More actions" overflow
-		// (restyle Stage 5); at the vault root its label is "New vault".
-		await page
-			.getByRole('button', { name: /More actions/i })
-			.evaluate((el: HTMLElement) => el.click())
-		await page
-			.getByTestId('open-create-folder')
-			.evaluate((el: HTMLElement) => el.click())
+		// (restyle Stage 5); at the vault root its label is "New vault". The
+		// helper clicks the NcActionButton's INNER button — the testid sits on
+		// the presentational <li>, whose click fires nothing.
+		await clickOverflowAction(page, 'open-create-folder')
 		await expect(page.locator('.folder-form')).toBeVisible({ timeout: 10_000 })
 		await page
 			.locator('.folder-form input[type="text"]')
@@ -206,9 +208,11 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		)
 		expect(folder, 'folder must be persisted').toBeTruthy()
 
-		await expect(
-			page.locator('.secret-list-view__sidebar', { hasText: FOLDER }),
-		).toBeVisible({ timeout: 10_000 })
+		// The in-page folder pane is gone (restyle Stage 6): at the vault root
+		// the new vault appears as a SUBFOLDER ROW in the list itself.
+		await expect(page.getByTestId(`folder-row-${folder.id}`)).toBeVisible({
+			timeout: 10_000,
+		})
 
 		await page.evaluate(
 			async ({ tokExpr, id }) => {
@@ -554,10 +558,14 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			{ tokExpr: REQ_TOKEN, parent: PARENT, child: CHILD },
 		)
 
-		// The freshly created folders only exist server-side; reload so the
-		// folder store fetches them.
-		await page.reload()
-		await page.waitForLoadState('networkidle')
+		// The freshly created folders only exist server-side, and the folder
+		// store refetches on unlock. A reload alone cannot surface them: it
+		// wipes the in-memory CryptoKey, so the app lands back on the lock
+		// gate and no vault row ever renders. Reload, unlock again, reopen
+		// the vault (domcontentloaded, not networkidle — ADR-074 rule 4).
+		await page.reload({ waitUntil: 'domcontentloaded' })
+		await unlockVault(page)
+		await openVault(page)
 
 		// Root: the new vault appears as a subfolder row; descend into it.
 		const parentRow = page.getByTestId(`folder-row-${ids.parentId}`)

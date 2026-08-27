@@ -58,6 +58,7 @@ export function resolveFaviconUrl(url) {
  *
  * @param {string} typeName The secret type machine name.
  * @return {string} The vue-material-design-icons component name.
+ * @spec openspec/specs/secrets/spec.md#requirement-secret-types
  */
 export function typeIconName(typeName) {
 	const map = {
