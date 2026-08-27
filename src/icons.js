@@ -27,6 +27,7 @@ import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import Pulse from 'vue-material-design-icons/Pulse.vue'
 import ShieldKeyOutline from 'vue-material-design-icons/ShieldKeyOutline.vue'
+import Sitemap from 'vue-material-design-icons/Sitemap.vue'
 import ViewDashboardOutline from 'vue-material-design-icons/ViewDashboardOutline.vue'
 
 export default {
@@ -45,5 +46,6 @@ export default {
 	Plus,
 	Pulse,
 	ShieldKeyOutline,
+	Sitemap,
 	ViewDashboardOutline,
 }
