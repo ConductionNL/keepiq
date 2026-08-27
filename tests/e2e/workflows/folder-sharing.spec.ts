@@ -580,8 +580,8 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			.getByText(PARENT)
 			.first()
 			.evaluate((el: HTMLElement) => el.click())
-		await expect(
-			page.getByTestId(`folder-row-${ids.childId}`),
-		).toBeVisible({ timeout: 20_000 })
+		await expect(page.getByTestId(`folder-row-${ids.childId}`)).toBeVisible({
+			timeout: 20_000,
+		})
 	})
 })

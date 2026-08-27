@@ -26,7 +26,7 @@ describe('subfolderRows', () => {
 		expect(rows.map((r) => r.name)).toEqual(['Alpha vault', 'Beta vault'])
 	})
 
-	it('lists only the selected folder\'s DIRECT children', () => {
+	it("lists only the selected folder's DIRECT children", () => {
 		const rows = subfolderRows(FOLDERS, 'a')
 		expect(rows.map((r) => r.folderId)).toEqual(['a2', 'a1'])
 	})
@@ -42,10 +42,13 @@ describe('subfolderRows', () => {
 	})
 
 	it('filters by the inline search term, case-insensitively', () => {
-		expect(subfolderRows(FOLDERS, 'a', 'NEST').map((r) => r.folderId))
-			.toEqual(['a2', 'a1'])
-		expect(subfolderRows(FOLDERS, 'a', 'another').map((r) => r.folderId))
-			.toEqual(['a2'])
+		expect(subfolderRows(FOLDERS, 'a', 'NEST').map((r) => r.folderId)).toEqual([
+			'a2',
+			'a1',
+		])
+		expect(
+			subfolderRows(FOLDERS, 'a', 'another').map((r) => r.folderId),
+		).toEqual(['a2'])
 		expect(subfolderRows(FOLDERS, 'a', 'no-match')).toEqual([])
 	})
 

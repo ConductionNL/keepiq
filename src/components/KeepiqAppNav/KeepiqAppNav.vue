@@ -33,7 +33,9 @@
   which this component still renders.
 -->
 <template>
-	<NcAppNavigation :aria-label="t('keepiq', 'Keepiq navigation')" data-testid="cn-nav">
+	<NcAppNavigation
+		:aria-label="t('keepiq', 'Keepiq navigation')"
+		data-testid="cn-nav">
 		<template #list>
 			<template v-for="item in mainItems" :key="item.id">
 				<NcAppNavigationCaption
@@ -70,7 +72,7 @@
 			<NavFolderTree
 				v-if="folderTree.length > 0"
 				:folders="folderTree"
-				:highlight-id="highlightFolderId" />
+				:highlightId="highlightFolderId" />
 		</template>
 		<template #footer>
 			<!-- Footer-section entries live in NcAppNavigation's #footer slot —
@@ -113,7 +115,9 @@
 							<ShieldAccountOutline :size="20" />
 						</template>
 						<template #counter>
-							<OpenInNew :size="16" :title="t('keepiq', 'Opens in a new tab')" />
+							<OpenInNew
+								:size="16"
+								:title="t('keepiq', 'Opens in a new tab')" />
 						</template>
 					</NcAppNavigationItem>
 					<NcAppNavigationItem
@@ -148,9 +152,9 @@ import {
 } from '@nextcloud/vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
+import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
-import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
 
 /**
  * Keepiq's manifest-driven left rail with the recursive vault/folder tree.
@@ -202,7 +206,8 @@ export default {
 		/** The manifest menu, order-sorted (entries without order last). */
 		sortedMenu() {
 			return [...(this.manifest?.menu || [])].sort(
-				(a, b) => (a.order ?? Number.MAX_SAFE_INTEGER)
+				(a, b) =>
+					(a.order ?? Number.MAX_SAFE_INTEGER)
 					- (b.order ?? Number.MAX_SAFE_INTEGER),
 			)
 		},
@@ -243,8 +248,11 @@ export default {
 		 * @return {string}
 		 */
 		adminSettingsHref() {
-			const origin = (typeof window !== 'undefined'
-				&& window.location && window.location.origin) || ''
+			const origin =
+				(typeof window !== 'undefined'
+					&& window.location
+					&& window.location.origin)
+				|| ''
 			return origin + generateUrl('/settings/admin/keepiq')
 		},
 
@@ -297,7 +305,7 @@ export default {
 		 *
 		 * @param {boolean} locked The new lock state.
 		 */
-		'sessionStore.isLocked'(locked) {
+		'sessionStore.isLocked': function (locked) {
 			if (!locked) {
 				this.fetchFoldersSafe()
 			}

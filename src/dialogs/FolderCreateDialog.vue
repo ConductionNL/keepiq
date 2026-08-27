@@ -22,7 +22,11 @@
 
 			<NcTextField
 				v-model="name"
-				:label="isVaultLevel ? t('keepiq', 'Vault name') : t('keepiq', 'Folder name')"
+				:label="
+					isVaultLevel
+						? t('keepiq', 'Vault name')
+						: t('keepiq', 'Folder name')
+				"
 				:required="true" />
 
 			<NcSelect
@@ -43,7 +47,11 @@
 					<Safe v-else-if="isVaultLevel" :size="20" />
 					<FolderPlus v-else :size="20" />
 				</template>
-				{{ isVaultLevel ? t('keepiq', 'Create vault') : t('keepiq', 'Create folder') }}
+				{{
+					isVaultLevel
+						? t('keepiq', 'Create vault')
+						: t('keepiq', 'Create folder')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>

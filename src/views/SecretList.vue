@@ -174,7 +174,7 @@
 									:key="item.id"
 									:disabled="item.disabled"
 									:data-testid="item.testid"
-									:close-after-click="true"
+									:closeAfterClick="true"
 									@click="item.run()">
 									<template #icon>
 										<component :is="item.icon" :size="20" />
@@ -187,30 +187,36 @@
 								<NcActionSeparator />
 								<NcActionButton
 									data-testid="open-new-send"
-									:close-after-click="true"
+									:closeAfterClick="true"
 									@click="newSendOpen = true">
 									{{ t('keepiq', 'New ephemeral send') }}
 								</NcActionButton>
 								<NcActionButton
 									data-testid="open-my-sends"
-									:close-after-click="true"
+									:closeAfterClick="true"
 									@click="mySendsOpen = true">
 									{{ t('keepiq', 'My ephemeral sends') }}
 								</NcActionButton>
-								<NcActionButton :close-after-click="true" @click="openExport">
+								<NcActionButton
+									:closeAfterClick="true"
+									@click="openExport">
 									{{ t('keepiq', 'Export data') }}
 								</NcActionButton>
 								<NcActionButton
 									:disabled="vaultLocked"
 									data-testid="cxp-transfer"
-									:close-after-click="true"
+									:closeAfterClick="true"
 									@click="openCxp">
 									{{ t('keepiq', 'Encrypted transfer (CXP)') }}
 								</NcActionButton>
-								<NcActionButton :close-after-click="true" @click="openGdpr">
+								<NcActionButton
+									:closeAfterClick="true"
+									@click="openGdpr">
 									{{ t('keepiq', 'GDPR export') }}
 								</NcActionButton>
-								<NcActionButton :close-after-click="true" @click="deletionOpen = true">
+								<NcActionButton
+									:closeAfterClick="true"
+									@click="deletionOpen = true">
 									{{ t('keepiq', 'Delete my Keepiq data') }}
 								</NcActionButton>
 
@@ -218,13 +224,14 @@
 								     show only one type, e.g. passkeys.
 								     Server-side via the typeId param. -->
 								<NcActionSeparator />
-								<NcActionCaption :name="t('keepiq', 'Filter by type')" />
+								<NcActionCaption
+									:name="t('keepiq', 'Filter by type')" />
 								<NcActionRadio
 									name="secret-type-filter"
 									value=""
-									:model-value="typeFilter ?? ''"
+									:modelValue="typeFilter ?? ''"
 									data-testid="secret-type-filter"
-									@update:model-value="onTypeFilter(null)">
+									@update:modelValue="onTypeFilter(null)">
 									{{ t('keepiq', 'All types') }}
 								</NcActionRadio>
 								<NcActionRadio
@@ -232,9 +239,9 @@
 									:key="option.value"
 									name="secret-type-filter"
 									:value="option.value"
-									:model-value="typeFilter ?? ''"
+									:modelValue="typeFilter ?? ''"
 									data-testid="secret-type-filter"
-									@update:model-value="onTypeFilter(option.value)">
+									@update:modelValue="onTypeFilter(option.value)">
 									{{ option.label }}
 								</NcActionRadio>
 							</NcActions>
@@ -326,26 +333,22 @@
 </template>
 
 <script>
-import {
-	CnBreadcrumbs,
-	CnIndexPage,
-	CnPageHeader,
-} from '@conduction/nextcloud-vue'
+import { CnBreadcrumbs, CnIndexPage, CnPageHeader } from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
 	NcActionCaption,
 	NcActionRadio,
-	NcActionSeparator,
 	NcActions,
+	NcActionSeparator,
 	NcButton,
 	NcEmptyContent,
 } from '@nextcloud/vue'
 import { markRaw } from 'vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
-import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Safe from 'vue-material-design-icons/Safe.vue'
@@ -608,7 +611,11 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		folderRows() {
-			return subfolderRows(this.folders, this.selectedFolderId, this.searchTerm)
+			return subfolderRows(
+				this.folders,
+				this.selectedFolderId,
+				this.searchTerm,
+			)
 		},
 
 		/**
@@ -666,7 +673,11 @@ export default {
 			const trail = []
 			const seen = new Set()
 			let current = byId.get(this.selectedFolderId)
-			while (current && !seen.has(current.id) && trail.length < MAX_TRAIL_DEPTH) {
+			while (
+				current
+				&& !seen.has(current.id)
+				&& trail.length < MAX_TRAIL_DEPTH
+			) {
 				seen.add(current.id)
 				trail.unshift(current)
 				current = current.parentId ? byId.get(current.parentId) : null
@@ -689,17 +700,17 @@ export default {
 			}
 			return [
 				{ icon: 'Home', to: { name: 'SecretList' } },
-				...trail.map((folder, index) => (
+				...trail.map((folder, index) =>
 					index === trail.length - 1
 						? { label: folder.name }
 						: {
-							label: folder.name,
-							to: {
-								name: 'SecretListFolder',
-								params: { folderId: folder.id },
+								label: folder.name,
+								to: {
+									name: 'SecretListFolder',
+									params: { folderId: folder.id },
+								},
 							},
-						}
-				)),
+				),
 			]
 		},
 
@@ -731,6 +742,7 @@ export default {
 					icon: this.selectedFolderId
 						? TOOLBAR_ICONS.folderPlus
 						: TOOLBAR_ICONS.safe,
+
 					placement: 'overflow',
 					disabled: this.offlineReadOnly,
 					testid: 'open-create-folder',

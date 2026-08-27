@@ -23,7 +23,7 @@
 			:name="node.name"
 			:to="{ name: 'SecretListFolder', params: { folderId: node.id } }"
 			:active="node.id === highlightId"
-			:allow-collapse="hasVisibleChildren(node)"
+			:allowCollapse="hasVisibleChildren(node)"
 			:open="openState[node.id] ?? true"
 			:data-testid="`nav-folder-${node.id}`"
 			@update:open="openState[node.id] = $event">
@@ -38,10 +38,10 @@
 				v-if="hasVisibleChildren(node)"
 				:folders="node.children"
 				:depth="depth + 1"
-				:highlight-id="highlightId" />
+				:highlightId="highlightId" />
 			<NcAppNavigationItem
 				v-else-if="hasHiddenChildren(node)"
-				:name="'…'"
+				name="…"
 				:to="ellipsisTarget(node)"
 				:data-testid="`nav-folder-ellipsis-${node.id}`" />
 		</NcAppNavigationItem>
@@ -81,11 +81,13 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		/** This level's depth: 0 = the top-level vaults. */
 		depth: {
 			type: Number,
 			default: 0,
 		},
+
 		/**
 		 * The folder id to highlight. When the ACTIVE folder is deeper than
 		 * the display cap, the caller passes its deepest visible ancestor
@@ -118,8 +120,10 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		hasVisibleChildren(node) {
-			return (node.children || []).length > 0
+			return (
+				(node.children || []).length > 0
 				&& this.depth + 1 < NAV_TREE_MAX_DEPTH
+			)
 		},
 
 		/**
@@ -131,8 +135,10 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		hasHiddenChildren(node) {
-			return (node.children || []).length > 0
+			return (
+				(node.children || []).length > 0
 				&& this.depth + 1 >= NAV_TREE_MAX_DEPTH
+			)
 		},
 
 		/**

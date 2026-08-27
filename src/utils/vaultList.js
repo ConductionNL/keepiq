@@ -29,15 +29,24 @@ const FOLDER_ROW_PREFIX = 'folder:'
  * @spec openspec/specs/secrets/spec.md#requirement-folder-management
  */
 export function subfolderRows(folders, selectedFolderId, searchTerm = '') {
-	const needle = String(searchTerm || '').trim().toLowerCase()
+	const needle = String(searchTerm || '')
+		.trim()
+		.toLowerCase()
 	return (folders || [])
-		.filter((folder) => folder && (
-			selectedFolderId
-				? folder.parentId === selectedFolderId
-				: !folder.parentId
-		))
-		.filter((folder) => needle === ''
-			|| String(folder.name || '').toLowerCase().includes(needle))
+		.filter(
+			(folder) =>
+				folder
+				&& (selectedFolderId
+					? folder.parentId === selectedFolderId
+					: !folder.parentId),
+		)
+		.filter(
+			(folder) =>
+				needle === ''
+				|| String(folder.name || '')
+					.toLowerCase()
+					.includes(needle),
+		)
 		.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
 		.map((folder) => ({
 			id: `${FOLDER_ROW_PREFIX}${folder.id}`,
