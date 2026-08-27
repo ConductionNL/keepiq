@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
-    <id>doriath</id>
-    <name lang="en">Doriath</name>
-    <name lang="nl">Doriath</name>
+    <id>keepiq</id>
+    <name lang="en">Keepiq</name>
+    <name lang="nl">Keepiq</name>
     <summary lang="en">Encrypted secrets manager for Nextcloud — password manager and key store for users and applications</summary>
     <summary lang="nl">Versleutelde geheimenbeheerder voor Nextcloud — wachtwoordmanager en sleutelopslag voor gebruikers en applicaties</summary>
     <description lang="en"><![CDATA[A zero-knowledge encrypted secrets manager for Nextcloud — a personal vault for users and a write-without-read credential store for applications, using end-to-end RSA-4096/AES-256 encryption backed by a private Certificate Authority. Your master password is never stored: not even the server administrator can read your secrets.
@@ -39,18 +39,18 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <version>0.1.7-beta.20260820211310</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
-    <namespace>Doriath</namespace>
+    <namespace>Keepiq</namespace>
     <documentation>
-        <user>https://codeberg.org/Conduction/doriath</user>
-        <admin>https://codeberg.org/Conduction/doriath</admin>
-        <developer>https://codeberg.org/Conduction/doriath</developer>
+        <user>https://github.com/ConductionNL/keepiq</user>
+        <admin>https://github.com/ConductionNL/keepiq</admin>
+        <developer>https://github.com/ConductionNL/keepiq</developer>
     </documentation>
     <category>security</category>
-    <website>https://codeberg.org/Conduction/doriath</website>
-    <bugs>https://codeberg.org/Conduction/doriath/issues</bugs>
-    <repository>https://codeberg.org/Conduction/doriath</repository>
+    <website>https://github.com/ConductionNL/keepiq</website>
+    <bugs>https://github.com/ConductionNL/keepiq/issues</bugs>
+    <repository>https://github.com/ConductionNL/keepiq</repository>
 
-    <screenshot>https://codeberg.org/Conduction/doriath/raw/branch/main/img/app-store.svg</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/keepiq/development/img/app-store.svg</screenshot>
 
     <!--
         The <database> entries are load-bearing, not decoration.
@@ -58,22 +58,22 @@ Vrij en open source onder de EUPL-1.2-licentie.
         Nextcloud's OC\DB\MigrationService sets `checkOracle = true` for any app
         whose <dependencies> block declares NO <database> at all. With that flag
         on, every migration is validated against ensureOracleConstraints(), whose
-        Oracle-derived identifier limits Doriath's schema does not satisfy:
+        Oracle-derived identifier limits Keepiq's schema does not satisfy:
 
           - "Table name \"oc_doriath_certificate_metadata\" is too long."
             (28 chars unprefixed; the limit is 27)
           - the same rule's companion check rejects a default-named primary key
             on any table whose unprefixed name is >= 23 chars — which covers a
-            dozen Doriath tables (doriath_team_folder_members,
+            dozen Keepiq tables (doriath_team_folder_members,
             doriath_passkey_credentials, doriath_secret_delegations, …).
 
-        The result was that `occ app:enable doriath` ABORTED on a fresh install:
+        The result was that `occ app:enable keepiq` ABORTED on a fresh install:
         the app was not installable from scratch on a stock Nextcloud at all.
         (It survived on long-lived dev instances only because the checks apply
         exclusively to tables that do not exist yet.)
 
         Declaring the databases the app actually supports is Nextcloud's own
-        mechanism for this, and it is simply true: Doriath has never supported
+        mechanism for this, and it is simply true: Keepiq has never supported
         Oracle, and its docker-compose, CI and every deployment run PostgreSQL,
         MySQL/MariaDB or SQLite. It also brings this app in line with the rest of
         the fleet — openregister and opencatalogi already ship exactly these
@@ -82,6 +82,18 @@ Vrij en open source onder de EUPL-1.2-licentie.
         Renaming a dozen shipped tables to satisfy Oracle limits an Oracle-less
         app will never hit would be a far larger and riskier change for no
         behavioural gain.
+
+        THE `doriath_` TABLE PREFIX IS DELIBERATE AND STAYS. This app was
+        renamed doriath -> keepiq (2026-08); the app id, namespace, routes and
+        display name all moved, but the physical table names did NOT. These
+        tables hold the vault itself — `doriath_secrets`, `doriath_enc_suites`
+        (RSA-4096 private keys, AES-wrapped), `doriath_ca_certs`,
+        `doriath_passkey_credentials`, `doriath_attachments`. Renaming a table
+        is a data migration on the most sensitive rows in the fleet, with no
+        behavioural gain whatsoever: Doctrine/QBMapper addresses tables by the
+        string in the mapper, not by the app id. Any occurrence of `doriath_`
+        anywhere in this repository is a persisted storage identifier — a
+        table, an index, or an ICache namespace — and must be left alone.
     -->
     <dependencies>
         <php min-version="8.3"/>
@@ -105,57 +117,112 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </dependencies>
 
     <background-jobs>
-        <job>OCA\Doriath\BackgroundJob\RenewIntermediateCertificate</job>
-        <job>OCA\Doriath\BackgroundJob\CheckRootCertificateExpiry</job>
-        <job>OCA\Doriath\BackgroundJob\PurgeAuditLogJob</job>
-        <job>OCA\Doriath\BackgroundJob\ExpireSecretRequestsJob</job>
-        <job>OCA\Doriath\BackgroundJob\ApproveElapsedEmergencyRequests</job>
-        <job>OCA\Doriath\BackgroundJob\PruneSecretVersionsJob</job>
-        <job>OCA\Doriath\BackgroundJob\ScanExpiringSecretsJob</job>
-        <job>OCA\Doriath\BackgroundJob\ExpireMachineLeasesJob</job>
-        <job>OCA\Doriath\BackgroundJob\EphemeralSendPurgeJob</job>
-        <job>OCA\Doriath\BackgroundJob\RefreshComplianceMetricsJob</job>
-        <job>OCA\Doriath\BackgroundJob\DeliverSiemEventsJob</job>
-        <job>OCA\Doriath\BackgroundJob\ScanCertificateExpiryJob</job>
+        <job>OCA\Keepiq\BackgroundJob\RenewIntermediateCertificate</job>
+        <job>OCA\Keepiq\BackgroundJob\CheckRootCertificateExpiry</job>
+        <job>OCA\Keepiq\BackgroundJob\PurgeAuditLogJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireSecretRequestsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ApproveElapsedEmergencyRequests</job>
+        <job>OCA\Keepiq\BackgroundJob\PruneSecretVersionsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ScanExpiringSecretsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireMachineLeasesJob</job>
+        <job>OCA\Keepiq\BackgroundJob\EphemeralSendPurgeJob</job>
+        <job>OCA\Keepiq\BackgroundJob\RefreshComplianceMetricsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\DeliverSiemEventsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ScanCertificateExpiryJob</job>
     </background-jobs>
 
+    <!--
+        ORDERING: the two Migrate* steps come FIRST in both lists.
+
+        The doriath -> keepiq rename is not an upgrade as far as Nextcloud is
+        concerned — `oc_appconfig.appid` and `oc_preferences.appid` are both
+        namespaced by app id, so the new id simply cannot see anything the old
+        id stored. MigrateAppConfigKeys and MigrateUserPreferences copy those
+        two stores across, and they must run before any step that READS
+        configuration, or that step will act on defaults and then persist them:
+
+          - BootstrapCertificateAuthority reads the `ca_status` app-config
+            value; without the copy it sees a blank status on an instance that
+            already has a live CA in `doriath_ca_certs`.
+          - InitializeSettings seeds DEFAULT_CONFIG into any key that reads
+            back empty — i.e. it would overwrite the admin's real settings with
+            defaults if the copy had not happened yet.
+
+        They are registered under <install> as well as <post-migration> because
+        <install> is the path a real deployment takes: Nextcloud discovers
+        `keepiq` as a DIFFERENT app, not as an upgrade of `doriath`, so only
+        the install path is guaranteed to run.
+    -->
     <repair-steps>
         <post-migration>
-            <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
-            <step>OCA\Doriath\Repair\InitializeSettings</step>
-            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentApplications</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecretRequests</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentLinkShares</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentShares</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecretDelegations</step>
+            <step>OCA\Keepiq\Repair\MigrateAppConfigKeys</step>
+            <step>OCA\Keepiq\Repair\MigrateUserPreferences</step>
+            <!--
+                THE THIRD STORE KEYED BY APP ID, AND THE TWO ABOVE DO NOT COVER
+                IT. `oc_appconfig` and `oc_preferences` are Nextcloud's; this
+                one is OpenRegister's `openregister_schemas.application`.
+
+                OpenRegister resolves the two halves of a configuration by
+                DIFFERENT keys: a REGISTER by slug alone, a SCHEMA by the PAIR
+                (application, slug) via findByApplicationAndSlug(). This app now
+                passes `appId: Application::APP_ID` = `keepiq`, while every
+                schema it already owns still carries `application = doriath` —
+                so the pair matches nothing, and ImportHandler's not-found
+                branch is not an error path, it is the "create a new one" path.
+                The import then builds a SECOND, EMPTY schema set while every
+                stored secret stays bound to the old rows. Nothing errors; the
+                app renders empty collections.
+
+                MUST stay ahead of InitializeSettings, which is what triggers
+                that import via SettingsService.
+
+                Refuses rather than merges where a slug already has a twin under
+                the new application id, never deletes a schema, and never
+                throws — an escaping exception in <install> aborts the install.
+            -->
+            <step>OCA\Keepiq\Repair\MigrateSchemaApplicationId</step>
+            <step>OCA\Keepiq\Repair\BootstrapCertificateAuthority</step>
+            <step>OCA\Keepiq\Repair\InitializeSettings</step>
+            <step>OCA\Keepiq\Repair\SeedSecretTypes</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentData</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentSecrets</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentApplications</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentSecretRequests</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentLinkShares</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentShares</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
         </post-migration>
         <install>
-            <step>OCA\Doriath\Repair\BootstrapCertificateAuthority</step>
-            <step>OCA\Doriath\Repair\InitializeSettings</step>
-            <step>OCA\Doriath\Repair\SeedSecretTypes</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentData</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecrets</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentApplications</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecretRequests</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentLinkShares</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentShares</step>
-            <step>OCA\Doriath\Repair\SeedDevelopmentSecretDelegations</step>
+            <step>OCA\Keepiq\Repair\MigrateAppConfigKeys</step>
+            <step>OCA\Keepiq\Repair\MigrateUserPreferences</step>
+            <!-- Same step, same reason, same position ahead of
+                 InitializeSettings; see the <post-migration> block. An app-id
+                 rename presents to Nextcloud as a FRESH INSTALL, so this block
+                 is the one that actually fires on the upgrade it exists for. -->
+            <step>OCA\Keepiq\Repair\MigrateSchemaApplicationId</step>
+            <step>OCA\Keepiq\Repair\BootstrapCertificateAuthority</step>
+            <step>OCA\Keepiq\Repair\InitializeSettings</step>
+            <step>OCA\Keepiq\Repair\SeedSecretTypes</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentData</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentSecrets</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentApplications</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentSecretRequests</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentLinkShares</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentShares</step>
+            <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
         </install>
     </repair-steps>
 
     <settings>
-        <admin>OCA\Doriath\Settings\AdminSettings</admin>
-        <admin-section>OCA\Doriath\Sections\SettingsSection</admin-section>
+        <admin>OCA\Keepiq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Keepiq\Sections\SettingsSection</admin-section>
     </settings>
 
     <navigations>
         <navigation>
-            <id>doriath</id>
-            <name>Doriath</name>
-            <route>doriath.dashboard.page</route>
+            <id>keepiq</id>
+            <name>Keepiq</name>
+            <route>keepiq.dashboard.page</route>
             <icon>app.svg</icon>
         </navigation>
     </navigations>

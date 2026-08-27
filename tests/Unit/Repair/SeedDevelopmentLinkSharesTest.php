@@ -13,7 +13,7 @@
  *    with the documented usage-limit / usage-count / expiry shape.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Repair
+ * @package  OCA\Keepiq\Tests\Unit\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,15 +26,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Repair;
+namespace OCA\Keepiq\Tests\Unit\Repair;
 
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\LinkShare;
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Repair\SeedDevelopmentLinkShares;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Repair\SeedDevelopmentLinkShares;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IConfig;

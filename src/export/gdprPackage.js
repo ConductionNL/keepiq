@@ -6,7 +6,7 @@
  *
  * Merges the server-side metadata half (GET /api/v1/gdpr/metadata) with the
  * client-decrypted vault half (serializeVault output) into one versioned,
- * self-describing `doriath-gdpr-export.json` package, assembled in the browser.
+ * self-describing `keepiq-gdpr-export.json` package, assembled in the browser.
  *
  * When the vault is locked, the package is still produced with the metadata
  * half and a vault section that explicitly states the vault is end-to-end
@@ -16,7 +16,7 @@
  */
 
 /** The GDPR export package format identifier. */
-export const GDPR_PACKAGE_FORMAT = 'doriath-gdpr-export'
+export const GDPR_PACKAGE_FORMAT = 'keepiq-gdpr-export'
 
 /** The GDPR export package version. */
 export const GDPR_PACKAGE_VERSION = 1
@@ -54,7 +54,7 @@ export function assembleGdprPackage(metadata, vaultPayload) {
 		includesVault,
 		documentation: {
 			article: 'GDPR Article 15 (right of access)',
-			metadata: 'Server-readable personal data Doriath stores about you.',
+			metadata: 'Server-readable personal data Keepiq stores about you.',
 			vault: 'Your decrypted secrets, assembled in the browser; only present when you unlocked the vault.',
 			privateKeyExcluded:
 				'Encrypted private-key blobs are excluded from suite records — they are unreadable without your master password and shipping them widens the attack surface.',

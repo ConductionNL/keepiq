@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Scan Expiring Secrets Job
+ * Keepiq Scan Expiring Secrets Job
  *
  * Daily scan of all user-owned secrets against their effective expiry
  * (rotation-expiry-policies §4.1): reminder notifications when days-left
@@ -11,7 +11,7 @@
  * Server-visible metadata only — no ciphertext is ever touched.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,14 +24,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\RotationFlagMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Service\NotificationService;
-use OCA\Doriath\Service\RotationPolicyService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\RotationFlagMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -107,7 +107,7 @@ class ScanExpiringSecretsJob extends TimedJob {
 					$this->scanOne(secret: $secret, thresholds: $thresholds, now: $now);
 				} catch (Throwable $exception) {
 					$this->logger->warning(
-						'Doriath: expiry scan failed for secret ' . $secret->getId() . ': ' . $exception->getMessage(),
+						'Keepiq: expiry scan failed for secret ' . $secret->getId() . ': ' . $exception->getMessage(),
 						['app' => Application::APP_ID]
 					);
 				}

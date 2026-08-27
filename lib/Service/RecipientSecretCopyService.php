@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Recipient Secret Copy Service
+ * Keepiq Recipient Secret Copy Service
  *
  * Materialises the RECIPIENT'S encrypted copy of a shared secret from
  * browser-supplied ciphertext, and removes it again when the share is
@@ -13,7 +13,7 @@
  * anything (ADR-003).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,13 +26,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 

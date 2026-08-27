@@ -4,7 +4,7 @@
  * Unit tests for ComplianceReportService (compliance-reporting §7).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,11 +17,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\ComplianceReport;
-use OCA\Doriath\Db\ComplianceReportMapper;
-use OCA\Doriath\Service\ComplianceReportService;
+use OCA\Keepiq\Db\ComplianceReport;
+use OCA\Keepiq\Db\ComplianceReportMapper;
+use OCA\Keepiq\Service\ComplianceReportService;
 use OCP\App\IAppManager;
 use OCP\DB\IResult;
 use OCP\IAppConfig;

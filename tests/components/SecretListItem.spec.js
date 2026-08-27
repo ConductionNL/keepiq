@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `src/components/SecretListItem.vue`.
@@ -218,7 +218,7 @@ describe('SecretListItem', () => {
 		const row = wrapper.find('.secret-list-item')
 		expect(row.attributes('role')).toBe('button')
 		expect(row.attributes('tabindex')).toBe('0')
-		// The accessible name is built via t('doriath', 'Open {name}', ...).
+		// The accessible name is built via t('keepiq', 'Open {name}', ...).
 		// The global test `t` stub does not interpolate placeholders, so we
 		// assert the label is present and carries the "Open" affordance verb;
 		// interpolation of the secret name happens at runtime.

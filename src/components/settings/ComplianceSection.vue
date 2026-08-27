@@ -13,10 +13,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Compliance reporting')"
+		:name="t('keepiq', 'Compliance reporting')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'BIO2/NIS2-oriented posture snapshots from server-visible metadata only — no secret value, name, or ciphertext is ever read.',
 			)
 		">
@@ -32,22 +32,22 @@
 				data-testid="compliance-posture-card">
 				<h4>
 					{{
-						t('doriath', 'Live posture ({when})', {
-							when: computedAt || t('doriath', 'just computed'),
+						t('keepiq', 'Live posture ({when})', {
+							when: computedAt || t('keepiq', 'just computed'),
 						})
 					}}
 				</h4>
 				<ul>
 					<li>
 						{{
-							t('doriath', 'Users with an active vault: {n}', {
+							t('keepiq', 'Users with an active vault: {n}', {
 								n: metrics.adoption?.usersWithActiveSuite ?? 0,
 							})
 						}}
 					</li>
 					<li>
 						{{
-							t('doriath', 'Total secrets: {n}', {
+							t('keepiq', 'Total secrets: {n}', {
 								n: metrics.secretsPerUser?.totalSecrets ?? 0,
 							})
 						}}
@@ -55,7 +55,7 @@
 					<li>
 						{{
 							t(
-								'doriath',
+								'keepiq',
 								'Outstanding shares (user/group/link): {a} / {b} / {c}',
 								{
 									a: metrics.shareHygiene?.userShares ?? 0,
@@ -67,14 +67,14 @@
 					</li>
 					<li>
 						{{
-							t('doriath', 'Open rotation flags: {n}', {
+							t('keepiq', 'Open rotation flags: {n}', {
 								n: openFlagTotal,
 							})
 						}}
 					</li>
 					<li>
 						{{
-							t('doriath', 'Audit entries retained: {n} ({d} days)', {
+							t('keepiq', 'Audit entries retained: {n} ({d} days)', {
 								n: metrics.auditIntegrity?.totalEntries ?? 0,
 								d: metrics.auditIntegrity?.retentionDays ?? 0,
 							})
@@ -88,7 +88,7 @@
 				:disabled="busy"
 				data-testid="compliance-generate"
 				@click="onGenerate">
-				{{ t('doriath', 'Generate snapshot') }}
+				{{ t('keepiq', 'Generate snapshot') }}
 			</NcButton>
 
 			<table
@@ -98,13 +98,13 @@
 				<thead>
 					<tr>
 						<th scope="col">
-							{{ t('doriath', 'Generated') }}
+							{{ t('keepiq', 'Generated') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'By') }}
+							{{ t('keepiq', 'By') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Version') }}
+							{{ t('keepiq', 'Version') }}
 						</th>
 						<th scope="col" />
 					</tr>
@@ -119,7 +119,7 @@
 								variant="tertiary"
 								:data-testid="`compliance-open-${report.id}`"
 								@click="openReport(report.id)">
-								{{ t('doriath', 'View') }}
+								{{ t('keepiq', 'View') }}
 							</NcButton>
 						</td>
 					</tr>
@@ -168,12 +168,15 @@ export default {
 
 	/**
 	 * Load the warm metrics + the snapshot list.
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-admin-only-access
 	 */
 	async created() {
 		try {
 			const [metricsResponse, listResponse] = await Promise.all([
-				axios.get(generateUrl('/apps/doriath/api/v1/compliance/metrics')),
-				axios.get(generateUrl('/apps/doriath/api/v1/compliance/reports')),
+				axios.get(generateUrl('/apps/keepiq/api/v1/compliance/metrics')),
+				axios.get(generateUrl('/apps/keepiq/api/v1/compliance/reports')),
 			])
 			this.metrics = metricsResponse.data?.metrics ?? null
 			this.computedAt = metricsResponse.data?.computedAt ?? ''
@@ -188,13 +191,14 @@ export default {
 		 * Generate a new immutable snapshot.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 		 */
 		async onGenerate() {
 			this.busy = true
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl('/apps/doriath/api/v1/compliance/reports'),
+					generateUrl('/apps/keepiq/api/v1/compliance/reports'),
 				)
 				this.reports = [response.data, ...this.reports]
 				this.detail = response.data
@@ -210,11 +214,12 @@ export default {
 		 *
 		 * @param {string} id The report id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 		 */
 		async openReport(id) {
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/compliance/reports/${id}`),
+					generateUrl(`/apps/keepiq/api/v1/compliance/reports/${id}`),
 				)
 				this.detail = response.data
 			} catch (e) {

@@ -2,19 +2,19 @@
 	<div class="ca-health-card" :class="`ca-health-card--${status}`">
 		<div class="ca-health-card__header">
 			<span class="ca-health-card__indicator" :title="status" />
-			<h3>{{ t('doriath', 'Certificate Authority') }}</h3>
+			<h3>{{ t('keepiq', 'Certificate Authority') }}</h3>
 		</div>
 		<div class="ca-health-card__body">
 			<div class="ca-health-card__row">
-				<span>{{ t('doriath', 'Status') }}</span>
+				<span>{{ t('keepiq', 'Status') }}</span>
 				<strong>{{ statusLabel }}</strong>
 			</div>
 			<div v-if="intermediateExpiresAt" class="ca-health-card__row">
-				<span>{{ t('doriath', 'Intermediate expires') }}</span>
+				<span>{{ t('keepiq', 'Intermediate expires') }}</span>
 				<strong>{{ formatDate(intermediateExpiresAt) }}</strong>
 			</div>
 			<a class="ca-health-card__link" :href="adminSettingsUrl">
-				{{ t('doriath', 'Open admin settings') }}
+				{{ t('keepiq', 'Open admin settings') }}
 			</a>
 		</div>
 	</div>
@@ -36,19 +36,33 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The translated CA health status shown on the card.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-ca-health-status-card-admin-v1
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-ca-health-on-the-admin-dashboard
+		 */
 		statusLabel() {
 			const map = {
-				healthy: t('doriath', 'Healthy'),
-				expiring_soon: t('doriath', 'Expiring soon'),
-				degraded: t('doriath', 'Degraded'),
-				not_configured: t('doriath', 'Not configured'),
-				unknown: t('doriath', 'Unknown'),
+				healthy: t('keepiq', 'Healthy'),
+				expiring_soon: t('keepiq', 'Expiring soon'),
+				degraded: t('keepiq', 'Degraded'),
+				not_configured: t('keepiq', 'Not configured'),
+				unknown: t('keepiq', 'Unknown'),
 			}
 			return map[this.status] || this.status
 		},
 
+		/**
+		 * Deep link to the admin settings page that owns CA management.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-ca-health-status-card-admin-v1
+		 * @spec openspec/specs/admin-settings/spec.md#requirement-ca-management-actions-v1
+		 */
 		adminSettingsUrl() {
-			return generateUrl('/settings/admin/doriath')
+			return generateUrl('/settings/admin/keepiq')
 		},
 	},
 
@@ -60,14 +74,14 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/ca/status'),
+				generateUrl('/apps/keepiq/api/v1/ca/status'),
 			)
 			this.status = response.data.status || 'unknown'
 			this.intermediateExpiresAt =
 				response.data.intermediate_expires_at || null
 			this.rootExpiresAt = response.data.root_expires_at || null
 		} catch (e) {
-			console.warn('Doriath: failed to load CA status', e)
+			console.warn('Keepiq: failed to load CA status', e)
 			this.status = 'unknown'
 		}
 	},

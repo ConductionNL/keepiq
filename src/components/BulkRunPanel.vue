@@ -22,7 +22,7 @@
 				variant="tertiary"
 				data-testid="bulk-cancel"
 				@click="store.cancel()">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 		</div>
 
@@ -31,13 +31,13 @@
 				<thead>
 					<tr>
 						<th scope="col">
-							{{ t('doriath', 'Secret') }}
+							{{ t('keepiq', 'Secret') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Result') }}
+							{{ t('keepiq', 'Result') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Reason') }}
+							{{ t('keepiq', 'Reason') }}
 						</th>
 					</tr>
 				</thead>
@@ -62,7 +62,7 @@
 				variant="secondary"
 				data-testid="bulk-retry-failed"
 				@click="$emit('retry')">
-				{{ t('doriath', 'Retry {count} failed', { count: failedCount }) }}
+				{{ t('keepiq', 'Retry {count} failed', { count: failedCount }) }}
 			</NcButton>
 		</template>
 	</div>

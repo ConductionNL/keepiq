@@ -1,6 +1,6 @@
 {
   "id": "intro",
-  "title": "Doriath",
+  "title": "Keepiq",
   "description": "An encrypted secrets manager for Nextcloud — password manager and key store for users and applications.",
   "source": "@site/intro.md",
   "sourceDirName": ".",
@@ -8,7 +8,7 @@
   "permalink": "/docs/intro",
   "draft": false,
   "unlisted": false,
-  "editUrl": "https://github.com/ConductionNL/doriath/tree/development/docs/intro.md",
+  "editUrl": "https://github.com/ConductionNL/keepiq/tree/development/docs/intro.md",
   "tags": [],
   "version": "current",
   "sidebarPosition": 1,

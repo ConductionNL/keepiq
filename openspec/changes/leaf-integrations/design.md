@@ -2,19 +2,19 @@
 
 ## Context
 
-The fleet leaf wave assumes an app's domain objects live in OpenRegister and gain leaf widgets by declaring `linkedTypes`. Doriath inverted that assumption on purpose: it is a zero-knowledge secrets vault whose entities are app-owned tables with their own authorization model (suites, shares, delegation, team folders), and its register is a placeholder (`example` schema only — verified at HEAD; `RegisterConfigurationLoader` exists for AppHost adoption, not for domain data). The question this change answers is not "which leaves do we add" but "is any leaf justifiable", and the answer, after walking the candidates, is no — so the change ships the decision, its rationale, and a guard, and nothing else. Honesty over volume.
+The fleet leaf wave assumes an app's domain objects live in OpenRegister and gain leaf widgets by declaring `linkedTypes`. Keepiq inverted that assumption on purpose: it is a zero-knowledge secrets vault whose entities are app-owned tables with their own authorization model (suites, shares, delegation, team folders), and its register is a placeholder (`example` schema only — verified at HEAD; `RegisterConfigurationLoader` exists for AppHost adoption, not for domain data). The question this change answers is not "which leaves do we add" but "is any leaf justifiable", and the answer, after walking the candidates, is no — so the change ships the decision, its rationale, and a guard, and nothing else. Honesty over volume.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Make "Doriath has zero leaves" a specced decision a fleet sweep can cite, not an apparent gap
+- Make "Keepiq has zero leaves" a specced decision a fleet sweep can cite, not an apparent gap
 - Pin the underlying rule (no secret material *or vault-structure metadata* outside the vault ACL envelope) as a requirement that binds future changes
 - Guard the register shape by test so a codemod can't adopt a leaf silently
 - Define the exception gate so the decision is revisitable without being bypassable
 
 **Non-Goals:**
 - Building any leaf, feed, or calendar/deck/files/activity surface
-- Migrating any Doriath entity into OpenRegister
+- Migrating any Keepiq entity into OpenRegister
 - Changing the expiry/rotation notification pipeline (referenced as the served alternative, untouched)
 - The MCP question (separate `hermiq-ai-tooling` change; different mechanism, different — narrower — data class)
 

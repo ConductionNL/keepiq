@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Emergency-Access Approval Background Job
+ * Keepiq Emergency-Access Approval Background Job
  *
  * Periodically transitions `requested` emergency-access relationships to
  * `approved` once the grantor-configured wait period has elapsed with no
@@ -12,7 +12,7 @@
  * before a fetch attempt. No key material is touched — only the state column.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,9 +25,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Doriath\Service\EmergencyAccessService;
+use OCA\Keepiq\Service\EmergencyAccessService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -73,10 +73,10 @@ class ApproveElapsedEmergencyRequests extends TimedJob {
 		try {
 			$promoted = $this->service->approveElapsed();
 			if ($promoted > 0) {
-				$this->logger->info('Doriath: approved ' . $promoted . ' elapsed emergency-access request(s)');
+				$this->logger->info('Keepiq: approved ' . $promoted . ' elapsed emergency-access request(s)');
 			}
 		} catch (Throwable $e) {
-			$this->logger->error('Doriath: emergency-access approval job failed: ' . $e->getMessage());
+			$this->logger->error('Keepiq: emergency-access approval job failed: ' . $e->getMessage());
 		}
 	}//end run()
 }//end class

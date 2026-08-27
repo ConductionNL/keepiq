@@ -4,7 +4,7 @@
  * Unit tests for DashboardService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,12 +17,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\DashboardSetting;
-use OCA\Doriath\Db\DashboardSettingMapper;
-use OCA\Doriath\Service\DashboardService;
+use OCA\Keepiq\Db\DashboardSetting;
+use OCA\Keepiq\Db\DashboardSettingMapper;
+use OCA\Keepiq\Service\DashboardService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

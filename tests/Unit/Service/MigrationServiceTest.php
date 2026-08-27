@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Db\SuiteMigrationMapper;
-use OCA\Doriath\Exception\MigrationIncompleteException;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\LinkShareService;
-use OCA\Doriath\Service\MigrationService;
-use OCA\Doriath\Service\MigrationWorkService;
-use OCA\Doriath\Service\WriteLockService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\MigrationWorkService;
+use OCA\Keepiq\Service\WriteLockService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

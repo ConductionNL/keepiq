@@ -11,10 +11,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Attachments & version history')"
+		:name="t('keepiq', 'Attachments & version history')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes) and version-history retention.',
 			)
 		">
@@ -23,7 +23,7 @@
 				{{ error }}
 			</NcNoteCard>
 			<label class="attachment-limits__field">
-				<span>{{ t('doriath', 'Maximum size per attachment (MiB)') }}</span>
+				<span>{{ t('keepiq', 'Maximum size per attachment (MiB)') }}</span>
 				<input
 					v-model.number="maxMib"
 					type="number"
@@ -32,7 +32,7 @@
 					@change="save" />
 			</label>
 			<label class="attachment-limits__field">
-				<span>{{ t('doriath', 'Quota per user (MiB)') }}</span>
+				<span>{{ t('keepiq', 'Quota per user (MiB)') }}</span>
 				<input
 					v-model.number="quotaMib"
 					type="number"
@@ -41,7 +41,7 @@
 					@change="save" />
 			</label>
 			<label class="attachment-limits__field">
-				<span>{{ t('doriath', 'Versions kept per secret') }}</span>
+				<span>{{ t('keepiq', 'Versions kept per secret') }}</span>
 				<input
 					v-model.number="retentionCount"
 					type="number"
@@ -51,7 +51,7 @@
 			</label>
 			<label class="attachment-limits__field">
 				<span>{{
-					t('doriath', 'Version age limit (days, 0 = unlimited)')
+					t('keepiq', 'Version age limit (days, 0 = unlimited)')
 				}}</span>
 				<input
 					v-model.number="retentionDays"
@@ -88,11 +88,14 @@ export default {
 
 	/**
 	 * Load the current admin limits.
+	 *
+	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 	 */
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin'),
 			)
 			this.maxMib = Math.round(
 				(response.data.attachment_max_bytes ?? 25 * MIB) / MIB,
@@ -112,11 +115,13 @@ export default {
 		 * Persist the limits (server validates positivity).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 		 */
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
 					attachment_max_bytes: Math.max(1, this.maxMib) * MIB,
 					attachment_user_quota_bytes: Math.max(1, this.quotaMib) * MIB,
 					version_retention_count: Math.max(1, this.retentionCount),

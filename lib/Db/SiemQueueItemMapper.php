@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath SIEM Queue Item Mapper
+ * Keepiq SIEM Queue Item Mapper
  *
  * Query-builder mapper for SiemQueueItem rows (siem-audit-export §1.3):
  * bounded per-sink queue with due-fetch and cap counting.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use OCP\AppFramework\Db\QBMapper;

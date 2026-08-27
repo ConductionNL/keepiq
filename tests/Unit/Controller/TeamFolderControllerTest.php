@@ -8,7 +8,7 @@
  * moved with them, unchanged, to TeamFolderMemberControllerTest.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +24,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\TeamFolderController;
-use OCA\Doriath\Service\TeamFolderService;
+use OCA\Keepiq\Controller\TeamFolderController;
+use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

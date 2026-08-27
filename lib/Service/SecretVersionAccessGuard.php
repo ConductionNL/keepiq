@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Version Access Guard
+ * Keepiq Secret Version Access Guard
  *
  * The read-authorization surface of secret version history
  * (secret-version-history §2/§3). One place answers "may this caller read
@@ -10,7 +10,7 @@
  * revoked/compromised suite read-gate that mirrors the head-read posture.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,13 +23,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretVersion;
-use OCA\Doriath\Db\SecretVersionMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Db\SecretVersionMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**

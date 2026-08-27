@@ -6,7 +6,7 @@
 
 ## Purpose
 
-NIS2 / Cyberbeveiligingswet requires logging/monitoring integration and incident-detection capability, and every enterprise vault competitor ships SIEM export (Keeper, 1Password, Bitwarden) while every self-hosted OSS vault lacks it. This feature streams Doriath's existing sanitized audit events to an external SIEM through admin-configured syslog (RFC 5424, TCP/TLS) and webhook (HMAC-signed HTTPS POST) sinks — with per-category filtering, reliable background delivery (exponential-backoff retry, dead-letter with an admin notification, drop-oldest backpressure with a counter), per-sink observability, and a test-fire action — carrying identifiers only, never key material, per the audit trail's no-secret-material guarantee.
+NIS2 / Cyberbeveiligingswet requires logging/monitoring integration and incident-detection capability, and every enterprise vault competitor ships SIEM export (Keeper, 1Password, Bitwarden) while every self-hosted OSS vault lacks it. This feature streams Keepiq's existing sanitized audit events to an external SIEM through admin-configured syslog (RFC 5424, TCP/TLS) and webhook (HMAC-signed HTTPS POST) sinks — with per-category filtering, reliable background delivery (exponential-backoff retry, dead-letter with an admin notification, drop-oldest backpressure with a counter), per-sink observability, and a test-fire action — carrying identifiers only, never key material, per the audit trail's no-secret-material guarantee.
 
 ## Requirements
 
@@ -44,7 +44,7 @@ The system MUST enforce a per-sink queue cap with drop-oldest eviction and a dro
 
 ## User Stories
 
-- As a security team, I want Doriath audit events in our SIEM so that we can detect and investigate incidents centrally
+- As a security team, I want Keepiq audit events in our SIEM so that we can detect and investigate incidents centrally
 - As an administrator, I want a test-fire button and per-sink state so that I can validate and monitor a sink without waiting for real events
 - As a CISO, I want failed deliveries dead-lettered and alerted rather than silently dropped so that our compliance log stays trustworthy
 

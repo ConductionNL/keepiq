@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Ephemeral Send Controller
+ * Keepiq Ephemeral Send Controller
  *
  * Session-authenticated owner surface (ephemeral-send §4.1): create a
  * send from client-encrypted material, list my sends, revoke. Owner
  * scoping lives in the service bodies (no cross-user reads).
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,12 +21,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\EphemeralSend;
-use OCA\Doriath\Service\EphemeralSendService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\EphemeralSend;
+use OCA\Keepiq\Service\EphemeralSendService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

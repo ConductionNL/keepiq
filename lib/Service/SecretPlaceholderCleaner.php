@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - Removal of a secret request's unfilled placeholder
+ * Keepiq - Removal of a secret request's unfilled placeholder
  *
  * A request that created its own Secret leaves that Secret behind when the request
  * ends without being filled. Nothing else justifies a keyless Secret's existence,
@@ -17,7 +17,7 @@
  * destroyed is a different question and now has a name.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -30,12 +30,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequest;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequest;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
@@ -153,7 +153,7 @@ class SecretPlaceholderCleaner {
 			$this->deleteOwned(secret: $secret, ownerId: $ownerId);
 		} catch (Throwable $exception) {
 			$this->logger->error(
-				'Doriath: could not delete the placeholder for request '
+				'Keepiq: could not delete the placeholder for request '
 				. $request->getId() . ': ' . $exception->getMessage(),
 				['exception' => $exception]
 			);

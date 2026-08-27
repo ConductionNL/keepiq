@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Service\DecryptService;
-use OCA\Doriath\Service\EncryptService;
+use OCA\Keepiq\Service\DecryptService;
+use OCA\Keepiq\Service\EncryptService;
 use PHPUnit\Framework\TestCase;
 
 class EncryptServiceTest extends TestCase {
@@ -79,17 +79,26 @@ class EncryptServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testRsaEncryptUnderCertificateDecryptsWithMatchingPrivateKey(): void {
+		// 4096 bits, not 2048, and that is load-bearing rather than cautious.
+		// EncryptService pads to RSA_BLOCK_SIZE = 512 bytes and encrypts with
+		// OPENSSL_NO_PADDING, so the key MUST be exactly 4096 bits wide. Under a
+		// 2048-bit key the 512-byte block does not fit and openssl fails with
+		// `error:0200006E:rsa routines::data too large for key size` — which this
+		// test did, on every run, because the fixture contradicted the invariant
+		// the rest of the app enforces (CertificateAuthorityService mints 4096,
+		// ApplicationLifecycleService rejects anything below it).
+		//
 		// CA that issues the suite certificate.
-		$caKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-		$caCsr = openssl_csr_new(['commonName' => 'Doriath Test CA'], $caKey);
+		$caKey = openssl_pkey_new(['private_key_bits' => 4096, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+		$caCsr = openssl_csr_new(['commonName' => 'Keepiq Test CA'], $caKey);
 		$caCert = openssl_csr_sign($caCsr, null, $caKey, 365);
 		openssl_x509_export($caCert, $caCertPem);
 
 		// The user's real key pair. The private half is wrapped + later unwrapped
 		// by the read path; the certificate carries the matching public half.
-		$userKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+		$userKey = openssl_pkey_new(['private_key_bits' => 4096, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
 		openssl_pkey_export($userKey, $userPrivatePem);
-		$userCsr = openssl_csr_new(['commonName' => 'doriath-user'], $userKey);
+		$userCsr = openssl_csr_new(['commonName' => 'keepiq-user'], $userKey);
 		$userCert = openssl_csr_sign($userCsr, $caCertPem, $caKey, 365);
 		openssl_x509_export($userCert, $userCertPem);
 
@@ -157,7 +166,7 @@ class EncryptServiceTest extends TestCase {
 
 		$envelope = $this->encrypt->aesEncrypt('secret', $key);
 
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->decrypt->aesDecrypt($envelope, $wrongKey);
 	}//end testAesGcmWrongKeyFails()
 
@@ -177,7 +186,7 @@ class EncryptServiceTest extends TestCase {
 
 		$encrypted = $this->encrypt->encryptPrivateKey($this->privateKeyPem, $password);
 
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->decrypt->decryptPrivateKey($encrypted, $wrongPassword);
 	}//end testEncryptPrivateKeyWrongPasswordFails()
 
@@ -260,7 +269,7 @@ class EncryptServiceTest extends TestCase {
 		);
 		openssl_pkey_export($wrongPair, $wrongPrivateKeyPem);
 
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->decrypt->rsaDecrypt($ciphertext, $wrongPrivateKeyPem);
 	}//end testRsaDecryptWrongKeyFailsCleanly()
 
@@ -298,14 +307,14 @@ class EncryptServiceTest extends TestCase {
 	}//end testRsaEncryptExactlyOneChunkBoundary()
 
 	public function testRsaDecryptInvalidBase64(): void {
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Invalid RSA ciphertext format');
 		$this->decrypt->rsaDecrypt('!!!not-base64!!!', $this->privateKeyPem);
 	}//end testRsaDecryptInvalidBase64()
 
 	public function testRsaDecryptTooShortPayload(): void {
 		// Valid base64 but too short (less than 4 bytes).
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Invalid RSA ciphertext format');
 		$this->decrypt->rsaDecrypt(base64_encode('ab'), $this->privateKeyPem);
 	}//end testRsaDecryptTooShortPayload()
@@ -316,19 +325,19 @@ class EncryptServiceTest extends TestCase {
 		$fakeBlock = str_repeat("\0", 512);
 		$raw = $header . $fakeBlock;
 
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('length mismatch');
 		$this->decrypt->rsaDecrypt(base64_encode($raw), $this->privateKeyPem);
 	}//end testRsaDecryptLengthMismatch()
 
 	public function testRsaDecryptInvalidPrivateKey(): void {
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Invalid private key PEM');
 		$this->decrypt->rsaDecrypt(base64_encode(pack('N', 0)), 'not-a-key');
 	}//end testRsaDecryptInvalidPrivateKey()
 
 	public function testAesDecryptInvalidBase64(): void {
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Invalid base64 envelope');
 		$this->decrypt->aesDecrypt('!!!invalid-base64!!!', random_bytes(32));
 	}//end testAesDecryptInvalidBase64()
@@ -336,7 +345,7 @@ class EncryptServiceTest extends TestCase {
 	public function testAesDecryptEnvelopeTooShort(): void {
 		// Minimum length is 4 + 16 + 12 + 16 = 48. Send less.
 		$short = base64_encode(str_repeat("\0", 10));
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Envelope too short');
 		$this->decrypt->aesDecrypt($short, random_bytes(32));
 	}//end testAesDecryptEnvelopeTooShort()
@@ -352,14 +361,14 @@ class EncryptServiceTest extends TestCase {
 		// ciphertext
 			. random_bytes(16);
 		// tag
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Unsupported envelope version: 99');
 		$this->decrypt->aesDecrypt(base64_encode($envelope), random_bytes(32));
 	}//end testAesDecryptWrongVersionByte()
 
 	public function testDecryptPrivateKeyInvalidEnvelope(): void {
 		$short = base64_encode(str_repeat("\0", 10));
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Envelope too short');
 		$this->decrypt->decryptPrivateKey($short, 'password');
 	}//end testDecryptPrivateKeyInvalidEnvelope()
@@ -374,13 +383,13 @@ class EncryptServiceTest extends TestCase {
 		// ciphertext
 			. random_bytes(16);
 		// tag
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Unsupported envelope version: 42');
 		$this->decrypt->decryptPrivateKey(base64_encode($envelope), 'password');
 	}//end testDecryptPrivateKeyWrongVersion()
 
 	public function testDecryptPrivateKeyInvalidBase64(): void {
-		$this->expectException(\OCA\Doriath\Exception\DecryptionException::class);
+		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
 		$this->expectExceptionMessage('Invalid base64 envelope');
 		$this->decrypt->decryptPrivateKey('!!!bad-base64!!!', 'password');
 	}//end testDecryptPrivateKeyInvalidBase64()

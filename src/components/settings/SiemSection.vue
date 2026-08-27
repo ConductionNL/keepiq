@@ -11,10 +11,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'SIEM audit export')"
+		:name="t('keepiq', 'SIEM audit export')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Forward whitelisted audit events to syslog or webhook sinks. Payloads carry sanitized metadata only — no secret value, name, login, or ciphertext ever leaves the server.',
 			)
 		">
@@ -33,22 +33,22 @@
 				<thead>
 					<tr>
 						<th scope="col">
-							{{ t('doriath', 'Name') }}
+							{{ t('keepiq', 'Name') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Type') }}
+							{{ t('keepiq', 'Type') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Status') }}
+							{{ t('keepiq', 'Status') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Last success') }}
+							{{ t('keepiq', 'Last success') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Failures') }}
+							{{ t('keepiq', 'Failures') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Dropped') }}
+							{{ t('keepiq', 'Dropped') }}
 						</th>
 						<th scope="col" />
 					</tr>
@@ -61,7 +61,7 @@
 						<td>
 							{{ sink.name }}
 							<span v-if="!sink.enabled" class="siem__muted"
-								>({{ t('doriath', 'disabled') }})</span
+								>({{ t('keepiq', 'disabled') }})</span
 							>
 						</td>
 						<td>{{ sink.type }}</td>
@@ -86,28 +86,28 @@
 								:disabled="busy"
 								:data-testid="`siem-test-${sink.id}`"
 								@click="onTest(sink)">
-								{{ t('doriath', 'Test') }}
+								{{ t('keepiq', 'Test') }}
 							</NcButton>
 							<NcButton
 								variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-edit-${sink.id}`"
 								@click="startEdit(sink)">
-								{{ t('doriath', 'Edit') }}
+								{{ t('keepiq', 'Edit') }}
 							</NcButton>
 							<NcButton
 								variant="tertiary"
 								:disabled="busy"
 								:data-testid="`siem-delete-${sink.id}`"
 								@click="onDelete(sink)">
-								{{ t('doriath', 'Delete') }}
+								{{ t('keepiq', 'Delete') }}
 							</NcButton>
 						</td>
 					</tr>
 				</tbody>
 			</table>
 			<p v-else class="siem__muted">
-				{{ t('doriath', 'No SIEM sinks configured.') }}
+				{{ t('keepiq', 'No SIEM sinks configured.') }}
 			</p>
 
 			<NcButton
@@ -115,7 +115,7 @@
 				variant="primary"
 				data-testid="siem-add"
 				@click="startCreate">
-				{{ t('doriath', 'Add sink') }}
+				{{ t('keepiq', 'Add sink') }}
 			</NcButton>
 
 			<!-- Add / edit form. -->
@@ -123,27 +123,27 @@
 				<h4>
 					{{
 						editingId
-							? t('doriath', 'Edit sink')
-							: t('doriath', 'New sink')
+							? t('keepiq', 'Edit sink')
+							: t('keepiq', 'New sink')
 					}}
 				</h4>
 				<NcTextField
 					v-model="form.name"
-					:label="t('doriath', 'Name')"
+					:label="t('keepiq', 'Name')"
 					data-testid="siem-form-name" />
 				<NcSelect
 					v-if="!editingId"
 					v-model="form.type"
 					:options="['syslog', 'webhook']"
 					:clearable="false"
-					:inputLabel="t('doriath', 'Type')"
+					:inputLabel="t('keepiq', 'Type')"
 					data-testid="siem-form-type" />
 				<NcTextField
 					v-model="form.endpoint"
 					:label="
 						form.type === 'syslog'
-							? t('doriath', 'Endpoint (host:port)')
-							: t('doriath', 'Endpoint (https URL)')
+							? t('keepiq', 'Endpoint (host:port)')
+							: t('keepiq', 'Endpoint (https URL)')
 					"
 					:placeholder="
 						form.type === 'syslog'
@@ -156,16 +156,16 @@
 					v-model="form.tls"
 					type="switch"
 					data-testid="siem-form-tls">
-					{{ t('doriath', 'Use TLS transport') }}
+					{{ t('keepiq', 'Use TLS transport') }}
 				</NcCheckboxRadioSwitch>
 				<NcTextField
 					v-if="form.type === 'webhook'"
 					v-model="form.hmacSecret"
 					type="password"
-					:label="t('doriath', 'HMAC signing secret (write-only)')"
+					:label="t('keepiq', 'HMAC signing secret (write-only)')"
 					:placeholder="
 						editingHasSecret
-							? t('doriath', 'Leave blank to keep the current secret')
+							? t('keepiq', 'Leave blank to keep the current secret')
 							: ''
 					"
 					data-testid="siem-form-secret" />
@@ -173,22 +173,20 @@
 					v-model="form.categoryFilter"
 					:options="categoryOptions"
 					multiple
-					:inputLabel="
-						t('doriath', 'Category filter (empty = all events)')
-					"
+					:inputLabel="t('keepiq', 'Category filter (empty = all events)')"
 					data-testid="siem-form-categories" />
 				<NcTextField
 					v-model="form.queueCap"
 					type="number"
 					:label="
-						t('doriath', 'Queue cap (oldest events drop beyond this)')
+						t('keepiq', 'Queue cap (oldest events drop beyond this)')
 					"
 					data-testid="siem-form-queuecap" />
 				<NcCheckboxRadioSwitch
 					v-model="form.enabled"
 					type="switch"
 					data-testid="siem-form-enabled">
-					{{ t('doriath', 'Enabled') }}
+					{{ t('keepiq', 'Enabled') }}
 				</NcCheckboxRadioSwitch>
 				<div class="siem__form-actions">
 					<NcButton
@@ -196,16 +194,14 @@
 						:disabled="busy || !formValid"
 						data-testid="siem-form-save"
 						@click="onSave">
-						{{
-							editingId ? t('doriath', 'Save') : t('doriath', 'Create')
-						}}
+						{{ editingId ? t('keepiq', 'Save') : t('keepiq', 'Create') }}
 					</NcButton>
 					<NcButton
 						variant="tertiary"
 						:disabled="busy"
 						data-testid="siem-form-cancel"
 						@click="formOpen = false">
-						{{ t('doriath', 'Cancel') }}
+						{{ t('keepiq', 'Cancel') }}
 					</NcButton>
 				</div>
 			</div>
@@ -306,11 +302,13 @@ export default {
 
 	/**
 	 * Load the sink list.
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/siem/sinks'),
+				generateUrl('/apps/keepiq/api/v1/siem/sinks'),
 			)
 			this.sinks = response.data ?? []
 		} catch (e) {
@@ -357,6 +355,7 @@ export default {
 		 * Create or update the sink from the form.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onSave() {
 			this.busy = true
@@ -374,7 +373,7 @@ export default {
 				if (this.editingId) {
 					const response = await axios.put(
 						generateUrl(
-							`/apps/doriath/api/v1/siem/sinks/${this.editingId}`,
+							`/apps/keepiq/api/v1/siem/sinks/${this.editingId}`,
 						),
 						payload,
 					)
@@ -383,7 +382,7 @@ export default {
 					)
 				} else {
 					const response = await axios.post(
-						generateUrl('/apps/doriath/api/v1/siem/sinks'),
+						generateUrl('/apps/keepiq/api/v1/siem/sinks'),
 						{
 							...payload,
 							type: this.form.type,
@@ -404,6 +403,7 @@ export default {
 		 *
 		 * @param {object} sink The sink row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-forwarded-payload-carries-no-secret-material
 		 */
 		async onTest(sink) {
 			this.busy = true
@@ -411,21 +411,20 @@ export default {
 			this.notice = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/siem/sinks/${sink.id}/test`),
+					generateUrl(`/apps/keepiq/api/v1/siem/sinks/${sink.id}/test`),
 				)
 				if (response.data?.ok) {
-					this.notice = t('doriath', 'Test event delivered to "{name}".', {
+					this.notice = t('keepiq', 'Test event delivered to "{name}".', {
 						name: sink.name,
 					})
 				} else {
 					this.error = t(
-						'doriath',
+						'keepiq',
 						'Test delivery to "{name}" failed: {error}',
 						{
 							name: sink.name,
 							error:
-								response.data?.error
-								|| t('doriath', 'unknown error'),
+								response.data?.error || t('keepiq', 'unknown error'),
 						},
 					)
 				}
@@ -441,13 +440,14 @@ export default {
 		 *
 		 * @param {object} sink The sink row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onDelete(sink) {
 			this.busy = true
 			this.error = null
 			try {
 				await axios.delete(
-					generateUrl(`/apps/doriath/api/v1/siem/sinks/${sink.id}`),
+					generateUrl(`/apps/keepiq/api/v1/siem/sinks/${sink.id}`),
 				)
 				this.sinks = this.sinks.filter((s) => s.id !== sink.id)
 			} catch (e) {
@@ -462,10 +462,11 @@ export default {
 		 *
 		 * @param {object} sink The sink row.
 		 * @return {string}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-backpressure-and-observability
 		 */
 		statusLabel(sink) {
 			if (!sink.lastDeliveryStatus) {
-				return t('doriath', 'never attempted')
+				return t('keepiq', 'never attempted')
 			}
 			return sink.lastDeliveryStatus
 		},

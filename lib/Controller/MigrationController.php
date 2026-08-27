@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Migration Controller
+ * Keepiq Migration Controller
  *
  * Controller for suite migration tracking.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,17 +19,17 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use Exception;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\MigrationIncompleteException;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\MigrationService;
-use OCA\Doriath\Service\MigrationWorkService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\MigrationWorkService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

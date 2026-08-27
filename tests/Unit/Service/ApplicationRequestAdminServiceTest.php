@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - ApplicationRequestAdminService tests
+ * Keepiq - ApplicationRequestAdminService tests
  *
  * The administrator-scoped path over an application's secret requests. Every test
  * here is about authority or scope, because those are the only things that can go
@@ -10,7 +10,7 @@
  * a vault it was not asked about.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,18 +23,18 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Service\ApplicationRequestAdminService;
-use OCA\Doriath\Service\SecretPlaceholderCleaner;
-use OCA\Doriath\Service\SecretRequestOutbox;
-use OCA\Doriath\Service\SecretService;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Service\ApplicationRequestAdminService;
+use OCA\Keepiq\Service\SecretPlaceholderCleaner;
+use OCA\Keepiq\Service\SecretRequestOutbox;
+use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

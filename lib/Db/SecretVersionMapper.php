@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Secret Version Mapper
+ * Keepiq Secret Version Mapper
  *
  * Query-builder mapper for SecretVersion rows: next-version-number,
  * newest-first listing, count/age pruning, and the delete cascade.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;

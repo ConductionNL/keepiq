@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Group Share Controller
+ * Keepiq Group Share Controller
  *
  * Authenticated API controller for the GroupShare lifecycle:
  *  - index   list group shares for a secret
@@ -11,7 +11,7 @@
  *    'group_member_added' notification path
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +24,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\GroupShareService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\GroupShareService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

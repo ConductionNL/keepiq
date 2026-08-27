@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Listener
+ * Keepiq Audit Listener
  *
  * The single listener that turns audit events into append-only rows
  * (add-secret-audit-trail §2.4). It handles the internal AuditEvent dispatched
@@ -16,7 +16,7 @@
  * (the "Audit failure does not block the operation" requirement / design D2).
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -29,12 +29,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Service\AuditService;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\AuditService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -84,7 +84,7 @@ class AuditListener implements IEventListener {
 			// Fail-soft: never let an audit-write failure roll back or fail the
 			// audited operation. Log at error level so dropped entries surface.
 			$this->logger->error(
-				'Doriath: audit entry could not be recorded: ' . $e->getMessage(),
+				'Keepiq: audit entry could not be recorded: ' . $e->getMessage(),
 				['exception' => $e]
 			);
 		}

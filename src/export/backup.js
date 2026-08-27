@@ -22,7 +22,21 @@
 
 import { deriveAesKeyArgon2id } from '../crypto/argon2.js'
 
-/** The backup envelope format identifier. */
+/**
+ * The backup envelope format identifier.
+ *
+ * DELIBERATELY STILL `doriath-backup` AFTER THE doriath -> keepiq RENAME.
+ * `decryptBackup()` below rejects any envelope whose `format` does not match
+ * this constant EXACTLY, so this string is not a label — it is the key that
+ * unlocks every `.doriath-backup` file a user has already downloaded. Those
+ * files are passphrase-encrypted and suite-independent precisely so they
+ * survive losing the vault; renaming the identifier would make the app refuse
+ * to read the one artifact that exists to be readable when everything else is
+ * gone, with a "Not a Keepiq backup file" error on a file that IS one.
+ *
+ * Migrating it is a two-sided change (write the new name, accept both on
+ * read) and belongs to the coordinator, not to an app-id rename.
+ */
 export const BACKUP_FORMAT = 'doriath-backup'
 
 /** The backup envelope version. */
@@ -116,7 +130,7 @@ export async function encryptBackup(payload, passphrase) {
  */
 export async function decryptBackup(envelope, passphrase) {
 	if (!envelope || envelope.format !== BACKUP_FORMAT) {
-		throw new Error('Not a Doriath backup file')
+		throw new Error('Not a Keepiq backup file')
 	}
 	if (!envelope.kdf || envelope.kdf.alg !== 'argon2id' || !envelope.kdf.salt) {
 		throw new Error('Unsupported or missing KDF parameters')

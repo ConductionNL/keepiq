@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Certificate Metadata Service
+ * Keepiq Certificate Metadata Service
  *
  * Everything about certificate-TYPE stored secrets: identifying them
  * (the system `certificate` type id) and persisting the owner's
@@ -15,7 +15,7 @@
  * different path entirely and lives in CertificateLifecycleService.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,14 +28,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\CertificateMetadata;
-use OCA\Doriath\Db\CertificateMetadataMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretTypeMapper;
+use OCA\Keepiq\Db\CertificateMetadata;
+use OCA\Keepiq\Db\CertificateMetadataMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTypeMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath OpenRegister autoload prelude
+ * Keepiq OpenRegister autoload prelude
  *
  * Puts OpenRegister's PSR-4 prefix on the autoloader so this app can reference
  * `OCA\OpenRegister\AppHost\…` from its own `Application::register()`.
  *
  * @category AppInfo
- * @package  OCA\Doriath\AppInfo
+ * @package  OCA\Keepiq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\AppInfo;
+namespace OCA\Keepiq\AppInfo;
 
 /**
  * Registers OpenRegister's autoload prefix before AppHost is referenced.
@@ -33,7 +33,7 @@ namespace OCA\Doriath\AppInfo;
  * one app at a time. So every app's `register()` runs BEFORE the PSR-4 prefix
  * of every alphabetically-LATER app exists.
  *
- * `doriath` sorts before `openregister`, so `OCA\OpenRegister\` is NOT
+ * `keepiq` sorts before `openregister`, so `OCA\OpenRegister\` is NOT
  * autoloadable inside `Application::register()` on a perfectly healthy
  * instance with OpenRegister enabled. Left unguarded, the resulting `\Error`
  * aborted the whole of `register()` — the audit listener recorded ZERO

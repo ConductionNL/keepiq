@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Public Shell Controller
+ * Keepiq Public Shell Controller
  *
  * Serves the SPA shell WITHOUT a Nextcloud session for the anonymous
  * recipient pages (ephemeral-send §5.3, link-share access). The SPA
@@ -12,7 +12,7 @@
  * the AppHost generic controller, which must not grow public methods.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,9 +25,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;

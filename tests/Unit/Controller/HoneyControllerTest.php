@@ -5,7 +5,7 @@
  * (GET /api/v1/honey/alerts and DELETE /api/v1/secrets/{id}/honey).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,12 +21,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\HoneyController;
-use OCA\Doriath\Db\HoneyAlert;
-use OCA\Doriath\Service\HoneyCredentialService;
+use OCA\Keepiq\Controller\HoneyController;
+use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Service\HoneyCredentialService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;

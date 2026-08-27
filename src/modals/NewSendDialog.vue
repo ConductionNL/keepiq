@@ -10,7 +10,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'New ephemeral send')"
+		:name="t('keepiq', 'New ephemeral send')"
 		:open="open"
 		size="normal"
 		data-testid="new-send-dialog"
@@ -22,7 +22,7 @@
 
 			<template v-if="link === ''">
 				<label class="new-send__field">
-					<span>{{ t('doriath', 'Content to send') }}</span>
+					<span>{{ t('keepiq', 'Content to send') }}</span>
 					<textarea
 						v-model="payload"
 						rows="4"
@@ -31,11 +31,11 @@
 				<NcSelect
 					v-model="payloadType"
 					:options="['text', 'credential']"
-					:inputLabel="t('doriath', 'Type')"
+					:inputLabel="t('keepiq', 'Type')"
 					:clearable="false"
 					data-testid="send-type" />
 				<label class="new-send__field">
-					<span>{{ t('doriath', 'Maximum views (burns after)') }}</span>
+					<span>{{ t('keepiq', 'Maximum views (burns after)') }}</span>
 					<input
 						v-model.number="maxViews"
 						type="number"
@@ -46,7 +46,7 @@
 				<label class="new-send__field">
 					<span>{{
 						t(
-							'doriath',
+							'keepiq',
 							'Expires after (hours, 0 = no time limit, max 720)',
 						)
 					}}</span>
@@ -60,7 +60,7 @@
 				<label class="new-send__field">
 					<span>{{
 						t(
-							'doriath',
+							'keepiq',
 							'Password (optional — without one, the key travels in the link itself)',
 						)
 					}}</span>
@@ -83,7 +83,7 @@
 				<NcNoteCard type="warning" data-testid="send-link-once">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Copy this link now — it is shown only once. The content burns after {views} view(s).',
 							{ views: maxViews },
 						)
@@ -100,21 +100,21 @@
 					<input
 						:value="link"
 						readonly
-						:aria-label="t('doriath', 'Link')"
+						:aria-label="t('keepiq', 'Link')"
 						data-testid="send-link"
 						@focus="$event.target.select()" />
 					<NcButton
 						variant="secondary"
 						data-testid="send-copy-link"
 						@click="copyLink">
-						{{ t('doriath', 'Copy link') }}
+						{{ t('keepiq', 'Copy link') }}
 					</NcButton>
 				</div>
 			</template>
 		</div>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 			<NcButton
 				v-if="link === ''"
@@ -122,7 +122,7 @@
 				:disabled="payload === '' || busy"
 				data-testid="send-create"
 				@click="onCreate">
-				{{ t('doriath', 'Create send') }}
+				{{ t('keepiq', 'Create send') }}
 			</NcButton>
 		</template>
 	</NcDialog>

@@ -1,17 +1,17 @@
 <p align="center">
-  <img src="img/app-store.svg" alt="Doriath logo" width="80" height="80">
+  <img src="img/app-store.svg" alt="Keepiq logo" width="80" height="80">
 </p>
 
-<h1 align="center">Doriath</h1>
+<h1 align="center">Keepiq</h1>
 
 <p align="center">
   <strong>Encrypted secrets manager for Nextcloud — password manager and key store for users and applications</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/ConductionNL/doriath/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/doriath" alt="Latest release"></a>
-  <a href="https://github.com/ConductionNL/doriath/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
-  <a href="https://github.com/ConductionNL/doriath/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/doriath/code-quality.yml?label=quality" alt="Code quality"></a>
+  <a href="https://github.com/ConductionNL/keepiq/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/keepiq" alt="Latest release"></a>
+  <a href="https://github.com/ConductionNL/keepiq/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
+  <a href="https://github.com/ConductionNL/keepiq/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/keepiq/code-quality.yml?label=quality" alt="Code quality"></a>
 </p>
 
 ---
@@ -23,7 +23,7 @@
 
 Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
-> **Thick backend architecture** — Doriath owns its own encrypted database tables. No OpenRegister dependency. All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
+> **Thick backend architecture** — Keepiq owns its own encrypted database tables. No OpenRegister dependency. All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
 
 ## Screenshots
 
@@ -77,7 +77,7 @@ _See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full architecture do
 ### Directory Structure
 
 ```
-doriath/
+keepiq/
 ├── appinfo/                    # Nextcloud app manifest, routes, navigation
 ├── lib/                        # PHP backend
 │   ├── AppInfo/Application.php
@@ -85,7 +85,7 @@ doriath/
 │   ├── Service/SettingsService.php
 │   ├── Listener/DeepLinkRegistrationListener.php
 │   ├── Repair/InitializeSettings.php
-│   └── Settings/               # AdminSettings, doriath_register.json
+│   └── Settings/               # AdminSettings, keepiq_register.json
 ├── templates/                  # PHP templates (SPA shells)
 ├── src/                        # Vue 2 frontend
 │   ├── main.js                 # App entry point
@@ -125,17 +125,17 @@ doriath/
 ### From the Nextcloud App Store
 
 1. Go to **Apps** in your Nextcloud instance
-2. Search for **Doriath**
+2. Search for **Keepiq**
 3. Click **Download and enable**
 
 ### From Source
 
 ```bash
 cd /var/www/html/custom_apps
-git clone https://github.com/ConductionNL/doriath.git doriath
-cd doriath
+git clone https://github.com/ConductionNL/keepiq.git keepiq
+cd keepiq
 npm install && npm run build
-php occ app:enable doriath
+php occ app:enable keepiq
 ```
 
 ## Development
@@ -143,7 +143,7 @@ php occ app:enable doriath
 ### Start the environment
 
 Requires a sibling checkout of [openregister](https://github.com/ConductionNL/openregister)
-next to this repo (`../openregister`) — Doriath builds on OpenRegister's AppHost engine.
+next to this repo (`../openregister`) — Keepiq builds on OpenRegister's AppHost engine.
 
 ```bash
 composer install && npm install && npm run build
@@ -151,7 +151,7 @@ docker compose up -d
 ```
 
 Nextcloud is served at http://localhost:8080 (admin/admin). Both `openregister`
-and `doriath` are enabled automatically on every container start by the
+and `keepiq` are enabled automatically on every container start by the
 `before-starting` hook in `docker/nextcloud/enable-apps.sh`.
 
 ### Frontend development
@@ -184,7 +184,7 @@ The docker compose stack enables both apps automatically on every start. To
 ```bash
 npm install && npm run build
 docker exec nextcloud php occ app:enable openregister
-docker exec nextcloud php occ app:enable doriath
+docker exec nextcloud php occ app:enable keepiq
 ```
 
 ## Tech Stack
@@ -228,7 +228,7 @@ docker exec nextcloud php occ app:enable doriath
 
 ## Related Apps
 
-- **[OpenConnector](https://github.com/ConductionNL/openconnector)** — Uses Doriath as a secret store for connector API credentials
+- **[OpenConnector](https://github.com/ConductionNL/openconnector)** — Uses Keepiq as a secret store for connector API credentials
 
 _Add related apps here as integrations are built._
 

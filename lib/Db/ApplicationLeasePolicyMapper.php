@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Lease Policy Mapper
+ * Keepiq Application Lease Policy Mapper
  *
  * Query-builder mapper for per-application lease-policy overrides
  * (machine-secret-leases §1.2). The table is keyed by application_id
@@ -9,7 +9,7 @@
  * rather than the QBMapper entity path.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;

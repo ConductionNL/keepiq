@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Settings Controller
+ * Keepiq Settings Controller
  *
- * Controller for managing Doriath application settings.
+ * Controller for managing Keepiq application settings.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,12 +19,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\SettingsService;
-use OCA\Doriath\Settings\AdminSettings;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\SettingsService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -34,7 +34,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 
 /**
- * Controller for managing Doriath application settings.
+ * Controller for managing Keepiq application settings.
  */
 class SettingsController extends Controller {
 	/**
@@ -81,7 +81,7 @@ class SettingsController extends Controller {
 	 * {@see \OCA\OpenRegister\AppHost\Controller\GenericSettingsControllerBase::update()}.
 	 * `\OCA\OpenRegister\AppHost\Routes::standard()` — which `appinfo/routes.php`
 	 * returns wholesale — ships `['name' => 'settings#update', 'url' =>
-	 * '/api/settings', 'verb' => 'PUT']`, and because Doriath ships its own
+	 * '/api/settings', 'verb' => 'PUT']`, and because Keepiq ships its own
 	 * `SettingsController` class the AppHost generic is never aliased in
 	 * (`AppHost\Bootstrap::aliasControllerUnlessLeafDefinesIt()` only binds the
 	 * alias when the leaf does NOT define the class). So this method has to
@@ -133,7 +133,7 @@ class SettingsController extends Controller {
 	 *
 	 * The canonical AppHost route table still ships `settings#create`
 	 * (POST /api/settings) for the pre-ADR-066 `index/create/load` dialect, and
-	 * two Doriath callers still use it — `src/components/settings/
+	 * two Keepiq callers still use it — `src/components/settings/
 	 * PasswordPolicySection.vue::save()` and `src/store/modules/
 	 * settings.js::saveSettings()` — so it stays reachable and keeps writing
 	 * exactly what it wrote before (ADR-029).
@@ -157,7 +157,7 @@ class SettingsController extends Controller {
 	}//end create()
 
 	/**
-	 * Re-import the configuration from doriath_register.json (admin only).
+	 * Re-import the configuration from keepiq_register.json (admin only).
 	 *
 	 * Forces a fresh import regardless of version, auto-configuring
 	 * all schema and register IDs from the import result.

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Work Service
+ * Keepiq Migration Work Service
  *
  * The per-record half of compromise-recovery migration: what is still bound
  * to the old suite, and the guarded commit of one re-encrypted record.
@@ -11,7 +11,7 @@
  * refuse the write unless the row is one this migration is entitled to touch.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,20 +24,20 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\AttachmentGrant;
-use OCA\Doriath\Db\AttachmentGrantMapper;
-use OCA\Doriath\Db\MigrationFailureMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretVersion;
-use OCA\Doriath\Db\SecretVersionMapper;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Exception\ForbiddenException;
-use OCA\Doriath\Exception\NotFoundException;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\AttachmentGrant;
+use OCA\Keepiq\Db\AttachmentGrantMapper;
+use OCA\Keepiq\Db\MigrationFailureMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
@@ -751,7 +751,7 @@ class MigrationWorkService {
 		);
 
 		$this->logger->warning(
-			'Doriath: migration record failed',
+			'Keepiq: migration record failed',
 			[
 				'migrationId' => $migration->getId(),
 				'store' => $store,
@@ -826,7 +826,7 @@ class MigrationWorkService {
 
 		if ($dropped > 0) {
 			$this->logger->info(
-				'Doriath: dropped version history beyond the migration window',
+				'Keepiq: dropped version history beyond the migration window',
 				[
 					'migrationId' => $migration->getId(),
 					'dropped' => $dropped,

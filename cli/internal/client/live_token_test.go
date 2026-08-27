@@ -9,20 +9,23 @@ import (
 )
 
 // TestLiveTokenExchangeReachesValidation drives Discover + MachineToken against a
-// real instance (DORIATH_LIVE_URL). With a throwaway key and an unregistered
+// real instance (KEEPIQ_LIVE_URL). With a throwaway key and an unregistered
 // application id, the server must reach CLAIM validation and reject the issuer —
 // proving the assertion is well-formed (correct grant, audience, exp/iat window,
 // RS256 signature) rather than failing to parse. Skipped without the env var.
 func TestLiveTokenExchangeReachesValidation(t *testing.T) {
-	base := os.Getenv("DORIATH_LIVE_URL")
+	base := os.Getenv("KEEPIQ_LIVE_URL")
 	if base == "" {
-		t.Skip("set DORIATH_LIVE_URL to run the live token probe")
+		t.Skip("set KEEPIQ_LIVE_URL to run the live token probe")
 	}
 	c := New(base)
 	disc, err := c.Discover()
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
+	// Audience stays "doriath": it is JwtAuthService::EXPECTED_AUDIENCE, a
+	// published authentication parameter that the rename deliberately did not
+	// touch. See lib/Service/JwtAuthService.php.
 	if disc.TokenEndpoint == "" || disc.Assertion.Audience != "doriath" {
 		t.Fatalf("unexpected discovery: %+v", disc)
 	}

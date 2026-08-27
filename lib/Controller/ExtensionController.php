@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath ExtensionController
+ * Keepiq ExtensionController
  *
  * The thin server surface the browser extension needs on top of the existing
  * always-E2E secret endpoints (browser-extension-autofill §1). The extension is
@@ -12,7 +12,7 @@
  * NO server-side decrypt path here.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,10 +25,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -102,7 +102,7 @@ class ExtensionController extends Controller {
 
 	/**
 	 * Pair: confirm the app-password authenticates and advertise the extension
-	 * capabilities. No new long-lived Doriath credential is minted — the pairing
+	 * capabilities. No new long-lived Keepiq credential is minted — the pairing
 	 * IS the Nextcloud app-password, revocable from NC security settings.
 	 *
 	 * @return JSONResponse

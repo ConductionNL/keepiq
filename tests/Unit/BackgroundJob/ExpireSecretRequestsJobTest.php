@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath - ExpireSecretRequestsJob tests
+ * Keepiq - ExpireSecretRequestsJob tests
  *
  * The job had no test at all, while the task list claimed one. That gap matters
  * more than a coverage number: this is the only caller that deletes vault rows
@@ -15,7 +15,7 @@
  * over swept requests does nothing.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\BackgroundJob
+ * @package  OCA\Keepiq\Tests\Unit\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,13 +28,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\BackgroundJob;
+namespace OCA\Keepiq\Tests\Unit\BackgroundJob;
 
 use DateTime;
-use OCA\Doriath\BackgroundJob\ExpireSecretRequestsJob;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Keepiq\BackgroundJob\ExpireSecretRequestsJob;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

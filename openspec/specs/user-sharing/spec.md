@@ -69,7 +69,7 @@ The system MUST allow a user to share a secret they own with another Nextcloud u
 - AND create a SecretShare linking the original to the copy
 
 #### Scenario: Share with user without EncryptionSuite
-- GIVEN user B has never opened Doriath and has no EncryptionSuite
+- GIVEN user B has never opened Keepiq and has no EncryptionSuite
 - WHEN user A attempts to share a secret with user B
 - THEN the system MUST return an error indicating the recipient has no encryption suite
 
@@ -325,5 +325,5 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 ## Notes
 
 - The sync-on-update requirement means that updating a widely-shared secret triggers multiple re-encryption operations. For the initial implementation, this can be synchronous. Async fanout can be explored if performance becomes an issue.
-- **Future consideration (flagged for later):** delegation currently requires the delegatee to already hold a share, due to the cryptographic constraint that no one can decrypt a secret they were never given a copy of. This means an admin can only take over a secret if it was proactively shared with them. A team policy should ensure that secrets vital to operations are always shared with a designated admin. Whether a mechanism to enforce this policy (e.g. mandatory admin share on creation) should be added to Doriath is left for a future exploration session.
+- **Future consideration (flagged for later):** delegation currently requires the delegatee to already hold a share, due to the cryptographic constraint that no one can decrypt a secret they were never given a copy of. This means an admin can only take over a secret if it was proactively shared with them. A team policy should ensure that secrets vital to operations are always shared with a designated admin. Whether a mechanism to enforce this policy (e.g. mandatory admin share on creation) should be added to Keepiq is left for a future exploration session.
 - Related ADRs: ADR-003 (encryption architecture — write-without-read property)

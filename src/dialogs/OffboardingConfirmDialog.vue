@@ -17,7 +17,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Confirm offboarding')"
+		:name="t('keepiq', 'Confirm offboarding')"
 		:open="open"
 		size="small"
 		data-testid="offboarding-confirm-dialog"
@@ -25,7 +25,7 @@
 		<p class="offboarding__confirm">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'Revoke all team-folder access of "{leaving}" and transfer their owned team secrets to "{successor}"? This cannot be undone.',
 					{ leaving: leavingUserId, successor: successorUserId },
 				)
@@ -33,13 +33,13 @@
 		</p>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('update:open', false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				variant="error"
 				data-testid="offboarding-confirm"
 				@click="$emit('confirm')">
-				{{ t('doriath', 'Offboard') }}
+				{{ t('keepiq', 'Offboard') }}
 			</NcButton>
 		</template>
 	</NcDialog>

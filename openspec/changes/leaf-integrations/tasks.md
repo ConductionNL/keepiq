@@ -1,6 +1,6 @@
 ## 1. Guard test
 
-- [ ] 1.1 Create `tests/unit/Settings/RegisterLeafGuardTest.php`: load `lib/Settings/doriath_register.json` plus every `lib/Settings/register.d/*.json`, walk all schema `configuration` blocks, and assert neither `linkedTypes` nor `mailObjectTemplate` appears anywhere. Failure message names `openspec/specs/integration-boundary/spec.md` and its exception gate.
+- [ ] 1.1 Create `tests/unit/Settings/RegisterLeafGuardTest.php`: load `lib/Settings/keepiq_register.json` plus every `lib/Settings/register.d/*.json`, walk all schema `configuration` blocks, and assert neither `linkedTypes` nor `mailObjectTemplate` appears anywhere. Failure message names `openspec/specs/integration-boundary/spec.md` and its exception gate.
 - [ ] 1.2 Prove the guard can fail (positive control): run it once against an in-memory fixture that adds `linkedTypes` to the `example` schema and assert it reports the violation — then keep that as a second test case, not a one-off.
 
 ## 2. Documentation

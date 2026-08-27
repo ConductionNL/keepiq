@@ -28,13 +28,14 @@ export const useCertificateStore = defineStore('certificate', {
 		 * Load the certificate inventory.
 		 *
 		 * @return {Promise<object|null>} The inventory groups.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-certificate-inventory-across-all-three-sources
 		 */
 		async fetchInventory() {
 			this.loading = true
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/certificates/inventory'),
+					generateUrl('/apps/keepiq/api/v1/certificates/inventory'),
 				)
 				this.inventory = response.data
 				return this.inventory
@@ -53,6 +54,7 @@ export const useCertificateStore = defineStore('certificate', {
 		 *
 		 * @param {string} secretId The secret ID.
 		 * @return {Promise<object|null>} The stored metadata row.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
 		 */
 		async parseAndSubmit(secretId) {
 			this.error = null
@@ -61,15 +63,13 @@ export const useCertificateStore = defineStore('certificate', {
 			const parsed = await parseCertificatePem(secret?.key || '')
 			if (!parsed) {
 				this.error = t(
-					'doriath',
+					'keepiq',
 					'The secret value is not a parseable PEM certificate.',
 				)
 				return null
 			}
 			const response = await axios.put(
-				generateUrl(
-					`/apps/doriath/api/v1/certificates/${secretId}/metadata`,
-				),
+				generateUrl(`/apps/keepiq/api/v1/certificates/${secretId}/metadata`),
 				parsed,
 			)
 			await this.fetchInventory()
@@ -81,13 +81,14 @@ export const useCertificateStore = defineStore('certificate', {
 		 *
 		 * @param {string} secretId The secret ID.
 		 * @return {Promise<object|null>} {renewable, reason, steps}.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 		 */
 		async renewalChecklist(secretId) {
 			this.error = null
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/certificates/${secretId}/renewal-checklist`,
+						`/apps/keepiq/api/v1/certificates/${secretId}/renewal-checklist`,
 					),
 				)
 				return response.data
@@ -102,13 +103,14 @@ export const useCertificateStore = defineStore('certificate', {
 		 *
 		 * @param {string} suiteId The suite ID.
 		 * @return {Promise<object|null>} The refreshed suite row.
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 		 */
 		async reissueSuite(suiteId) {
 			this.error = null
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/certificates/suites/${suiteId}/reissue`,
+						`/apps/keepiq/api/v1/certificates/suites/${suiteId}/reissue`,
 					),
 				)
 				await this.fetchInventory()

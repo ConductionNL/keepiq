@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Attachment Grant Mapper
+ * Keepiq Attachment Grant Mapper
  *
  * Query-builder mapper for AttachmentGrant rows, including the
  * reference-count query the blob garbage collection relies on.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;

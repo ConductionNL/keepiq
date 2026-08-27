@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Group Share Service
+ * Keepiq Group Share Service
  *
  * Business logic for the GroupShare lifecycle: createGroupShare returns
  * the member fan-out the browser needs to encrypt for each eligible
@@ -12,7 +12,7 @@
  * group-derived shares (direct shares stay intact).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,19 +25,19 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\BulkGrantShareTargetMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\GroupShare;
-use OCA\Doriath\Db\GroupShareMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\GroupShareMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -185,7 +185,7 @@ class GroupShareService {
 
 		$this->logger->info(
 			'Revoked group share ' . $groupShareId . ' for secret ' . $entity->getSecretId(),
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 	}//end revokeGroupShare()
 

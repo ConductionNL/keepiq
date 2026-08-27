@@ -4,7 +4,7 @@
  * Unit tests for UserDeletedListener.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Listener
+ * @package  OCA\Keepiq\Tests\Unit\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,11 +17,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Listener;
+namespace OCA\Keepiq\Tests\Unit\Listener;
 
-use OCA\Doriath\Listener\UserDeletedListener;
-use OCA\Doriath\Service\AccountDeletionService;
-use OCA\Doriath\Service\DeletionReport;
+use OCA\Keepiq\Listener\UserDeletedListener;
+use OCA\Keepiq\Service\AccountDeletionService;
+use OCA\Keepiq\Service\DeletionReport;
 use OCP\EventDispatcher\Event;
 use OCP\IUser;
 use OCP\User\Events\UserDeletedEvent;

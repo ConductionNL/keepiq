@@ -18,7 +18,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Restore version')"
+		:name="t('keepiq', 'Restore version')"
 		:open="version !== null"
 		size="small"
 		data-testid="version-restore-dialog"
@@ -26,7 +26,7 @@
 		<p class="version-history__confirm">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'Restore version {number}? The current value is kept as a new version, and shared recipients receive the restored value.',
 					{ number: version ? version.versionNumber : 0 },
 				)
@@ -34,13 +34,13 @@
 		</p>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
 				data-testid="version-restore-confirm"
 				@click="$emit('confirm')">
-				{{ t('doriath', 'Restore') }}
+				{{ t('keepiq', 'Restore') }}
 			</NcButton>
 		</template>
 	</NcDialog>

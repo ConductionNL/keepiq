@@ -20,7 +20,7 @@ import {
 } from '../../src/export/gdprPackage.js'
 
 const metadata = {
-	format: 'doriath-gdpr-metadata',
+	format: 'keepiq-gdpr-metadata',
 	version: 1,
 	subject: 'alice',
 	suites: [],

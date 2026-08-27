@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Attachment Grant Entity
+ * Keepiq Attachment Grant Entity
  *
  * Per-copy wrapped file key (encrypted-attachments §1.1): the random AES
  * file key of one attachment, RSA-wrapped under one copy's
@@ -10,7 +10,7 @@
  * is deleted (reference count).
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

@@ -12,10 +12,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Audit trail')"
+		:name="t('keepiq', 'Audit trail')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Review who accessed and changed secrets across the instance. The trail starts at the deployment of this feature; there is no historical backfill.',
 			)
 		">
@@ -23,7 +23,7 @@
 			<!-- Retention setting -->
 			<div class="audit-admin__retention" data-testid="audit-retention">
 				<label for="audit-retention-days">{{
-					t('doriath', 'Retention window (days)')
+					t('keepiq', 'Retention window (days)')
 				}}</label>
 				<input
 					id="audit-retention-days"
@@ -33,7 +33,7 @@
 					data-testid="audit-retention-input"
 					@change="saveRetention" />
 				<span class="audit-admin__hint">{{
-					t('doriath', 'Minimum 30 days')
+					t('keepiq', 'Minimum 30 days')
 				}}</span>
 				<span v-if="retentionError" class="audit-admin__error">{{
 					retentionError
@@ -47,14 +47,14 @@
 					class="audit-admin__filter"
 					:options="eventOptions"
 					label="label"
-					:inputLabel="t('doriath', 'Event type')"
-					:placeholder="t('doriath', 'All event types')"
+					:inputLabel="t('keepiq', 'Event type')"
+					:placeholder="t('keepiq', 'All event types')"
 					data-testid="audit-filter-eventtype"
 					@update:modelValue="onFilterChange" />
 
 				<div class="audit-admin__filter">
 					<label for="audit-filter-actor">{{
-						t('doriath', 'Actor')
+						t('keepiq', 'Actor')
 					}}</label>
 					<input
 						id="audit-filter-actor"
@@ -65,7 +65,7 @@
 				</div>
 
 				<div class="audit-admin__filter">
-					<label for="audit-filter-from">{{ t('doriath', 'From') }}</label>
+					<label for="audit-filter-from">{{ t('keepiq', 'From') }}</label>
 					<input
 						id="audit-filter-from"
 						v-model="filterFrom"
@@ -75,7 +75,7 @@
 				</div>
 
 				<div class="audit-admin__filter">
-					<label for="audit-filter-to">{{ t('doriath', 'To') }}</label>
+					<label for="audit-filter-to">{{ t('keepiq', 'To') }}</label>
 					<input
 						id="audit-filter-to"
 						v-model="filterTo"
@@ -88,7 +88,7 @@
 					variant="secondary"
 					data-testid="audit-export-csv"
 					@click="exportCsv">
-					{{ t('doriath', 'Export CSV') }}
+					{{ t('keepiq', 'Export CSV') }}
 				</NcButton>
 			</div>
 
@@ -96,7 +96,7 @@
 
 			<NcEmptyContent
 				v-else-if="entries.length === 0"
-				:name="t('doriath', 'No audit entries match the current filter')"
+				:name="t('keepiq', 'No audit entries match the current filter')"
 				data-testid="audit-empty">
 				<template #icon>
 					<History :size="20" />
@@ -107,16 +107,16 @@
 				<thead>
 					<tr>
 						<th scope="col">
-							{{ t('doriath', 'When') }}
+							{{ t('keepiq', 'When') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Event') }}
+							{{ t('keepiq', 'Event') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Actor') }}
+							{{ t('keepiq', 'Actor') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Object') }}
+							{{ t('keepiq', 'Object') }}
 						</th>
 					</tr>
 				</thead>
@@ -138,16 +138,16 @@
 				class="audit-admin__pagination"
 				data-testid="audit-pagination">
 				<NcButton :disabled="page <= 1" @click="goToPage(page - 1)">
-					{{ t('doriath', 'Previous') }}
+					{{ t('keepiq', 'Previous') }}
 				</NcButton>
 				<span>{{
-					t('doriath', 'Page {page} of {pages}', {
+					t('keepiq', 'Page {page} of {pages}', {
 						page,
 						pages: pageCount,
 					})
 				}}</span>
 				<NcButton :disabled="page >= pageCount" @click="goToPage(page + 1)">
-					{{ t('doriath', 'Next') }}
+					{{ t('keepiq', 'Next') }}
 				</NcButton>
 			</div>
 		</div>
@@ -300,7 +300,7 @@ export default {
 		async loadRetention() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/settings/admin'),
+					generateUrl('/apps/keepiq/api/settings/admin'),
 				)
 				this.retentionDays = response.data.audit_retention_days ?? 365
 			} catch (e) {
@@ -317,13 +317,13 @@ export default {
 		async saveRetention() {
 			this.retentionError = ''
 			try {
-				await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
 					audit_retention_days: this.retentionDays,
 				})
 			} catch (e) {
 				this.retentionError =
 					e?.response?.data?.message
-					|| t('doriath', 'Retention must be at least 30 days')
+					|| t('keepiq', 'Retention must be at least 30 days')
 				await this.loadRetention()
 			}
 		},
@@ -363,11 +363,11 @@ export default {
 		async exportCsv() {
 			const rows = await useAuditStore().fetchAllAdminForExport()
 			const headers = [
-				t('doriath', 'When'),
-				t('doriath', 'Event'),
-				t('doriath', 'Actor'),
-				t('doriath', 'Object type'),
-				t('doriath', 'Object'),
+				t('keepiq', 'When'),
+				t('keepiq', 'Event'),
+				t('keepiq', 'Actor'),
+				t('keepiq', 'Object type'),
+				t('keepiq', 'Object'),
 			]
 			const data = rows.map((entry) => [
 				entry.occurredAt,
@@ -376,7 +376,7 @@ export default {
 				entry.objectType,
 				entry.objectName || entry.objectId || '',
 			])
-			downloadCsv('doriath-audit.csv', buildCsv(headers, data))
+			downloadCsv('keepiq-audit.csv', buildCsv(headers, data))
 		},
 	},
 }

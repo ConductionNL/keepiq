@@ -49,8 +49,16 @@ export default {
 		/** The accessible label for the button. */
 		label: {
 			type: String,
+			/**
+			 * @return {string} The translated fallback label.
+			 *
+			 * @spec exclude A Vue prop `default()` factory returning a translated
+			 *   fallback string — it declares a default value, not behaviour. The
+			 *   copy behaviour this labels is specified in
+			 *   openspec/specs/mobile-pwa/spec.md#requirement-mobile-webcrypto-and-clipboard-verification.
+			 */
 			default() {
-				return t('doriath', 'Copy to clipboard')
+				return t('keepiq', 'Copy to clipboard')
 			},
 		},
 

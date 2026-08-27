@@ -16,7 +16,7 @@
  * docs/ARCHITECTURE.md#41-public-endpoint-rate-limits.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -31,13 +31,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\ApplicationController;
-use OCA\Doriath\Controller\ApplicationSecretsController;
-use OCA\Doriath\Controller\ApplicationTokenController;
-use OCA\Doriath\Controller\LinkShareAccessController;
-use OCA\Doriath\Controller\SecretRequestFillController;
+use OCA\Keepiq\Controller\ApplicationController;
+use OCA\Keepiq\Controller\ApplicationSecretsController;
+use OCA\Keepiq\Controller\ApplicationTokenController;
+use OCA\Keepiq\Controller\LinkShareAccessController;
+use OCA\Keepiq\Controller\SecretRequestFillController;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;

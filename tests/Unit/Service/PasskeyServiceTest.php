@@ -4,7 +4,7 @@
  * Unit tests for PasskeyService (passkey-vault-login §5.1).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\PasskeyCredential;
-use OCA\Doriath\Db\PasskeyMapper;
-use OCA\Doriath\Service\PasskeyService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\PasskeyCredential;
+use OCA\Keepiq\Db\PasskeyMapper;
+use OCA\Keepiq\Service\PasskeyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\MockObject\MockObject;

@@ -59,13 +59,14 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * Hydrate the requests created by the current user.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-outstanding-request-indicator
 		 */
 		async fetchRequests() {
 			this.loading = true
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/secret-requests'),
+					generateUrl('/apps/keepiq/api/v1/secret-requests'),
 				)
 				this.secretRequests = response.data || []
 			} catch (e) {
@@ -107,7 +108,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl('/apps/doriath/api/v1/secret-requests'),
+					generateUrl('/apps/keepiq/api/v1/secret-requests'),
 					{
 						// A FRESH request omits secretId and encryptionSuiteId: the
 						// server creates the placeholder Secret and derives the suite
@@ -182,7 +183,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			this.error = null
 			try {
 				await axios.delete(
-					generateUrl(`/apps/doriath/api/v1/secret-requests/${requestId}`),
+					generateUrl(`/apps/keepiq/api/v1/secret-requests/${requestId}`),
 				)
 				this.secretRequests = this.secretRequests.filter(
 					(r) => r.id !== requestId,
@@ -219,7 +220,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/doriath/api/v1/applications/${applicationId}/secret-requests`,
+						`/apps/keepiq/api/v1/applications/${applicationId}/secret-requests`,
 					),
 				)
 				this.applicationRequests = response.data || []
@@ -255,7 +256,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			try {
 				await axios.delete(
 					generateUrl(
-						`/apps/doriath/api/v1/applications/${applicationId}/secret-requests/${requestId}`,
+						`/apps/keepiq/api/v1/applications/${applicationId}/secret-requests/${requestId}`,
 					),
 				)
 				this.applicationRequests = this.applicationRequests.filter(
@@ -280,6 +281,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 *
 		 * @param {string} token The opaque request token.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 		 */
 		async fetchPublicRequest(token) {
 			this.loading = true
@@ -287,7 +289,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/doriath/api/v1/public/secret-requests/${token}`,
+						`/apps/keepiq/api/v1/public/secret-requests/${token}`,
 					),
 				)
 				this.publicRequest = response.data
@@ -380,7 +382,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/public/secret-requests/${token}/fill`,
+					`/apps/keepiq/api/v1/public/secret-requests/${token}/fill`,
 				),
 				{ encryptedFields, plainFields },
 			)

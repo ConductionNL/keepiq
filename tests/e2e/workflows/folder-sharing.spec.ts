@@ -100,10 +100,22 @@ async function openFirstSecret(page): Promise<string> {
 		const row =
 			rows.find((r) => !r.classList.contains('secret-list-item--blocked'))
 			|| rows[0]
+		// Read ONLY the element's own text nodes. `.secret-list-item__name`
+		// wraps `{{ secret.name }}` AND a <StrengthBadge>, so `textContent`
+		// yields "AWS Console Very strong" once the badge has resolved — a name
+		// that matches nothing in the API payload this is compared against. The
+		// badge loads asynchronously, so whether it is present is a race: this
+		// read used to win it by accident and the test only failed when it
+		// lost. Excluding child ELEMENTS makes the extraction independent of
+		// that timing rather than lucky.
 		const n = row
-			? (
-					row.querySelector('.secret-list-item__name')?.textContent || ''
-				).trim()
+			? Array.from(
+					row.querySelector('.secret-list-item__name')?.childNodes || [],
+				)
+					.filter((c) => c.nodeType === 3)
+					.map((c) => c.textContent || '')
+					.join('')
+					.trim()
 			: ''
 		if (row) {
 			const main = row.querySelector(
@@ -127,7 +139,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		const folders = await page.evaluate(async (tokExpr) => {
 			// eslint-disable-next-line no-eval
 			const token = eval(tokExpr)
-			const res = await fetch('/index.php/apps/doriath/api/v1/folders', {
+			const res = await fetch('/index.php/apps/keepiq/api/v1/folders', {
 				credentials: 'include',
 				headers: { requesttoken: token },
 			})
@@ -169,7 +181,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			async ({ tokExpr, name }) => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
-				const res = await fetch('/index.php/apps/doriath/api/v1/folders', {
+				const res = await fetch('/index.php/apps/keepiq/api/v1/folders', {
 					credentials: 'include',
 					headers: { requesttoken: token },
 				})
@@ -191,7 +203,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			async ({ tokExpr, id }) => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
-				await fetch(`/index.php/apps/doriath/api/v1/folders/${id}`, {
+				await fetch(`/index.php/apps/keepiq/api/v1/folders/${id}`, {
 					method: 'DELETE',
 					credentials: 'include',
 					headers: { requesttoken: token },
@@ -219,7 +231,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			async ({ tokExpr, name }) => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
-				const res = await fetch('/index.php/apps/doriath/api/v1/folders', {
+				const res = await fetch('/index.php/apps/keepiq/api/v1/folders', {
 					method: 'POST',
 					credentials: 'include',
 					headers: {
@@ -263,7 +275,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
 				const res = await fetch(
-					'/index.php/apps/doriath/api/v1/secrets?limit=200',
+					'/index.php/apps/keepiq/api/v1/secrets?limit=200',
 					{
 						credentials: 'include',
 						headers: { requesttoken: token },
@@ -295,19 +307,16 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			async ({ tokExpr, secretApiId, folderId }) => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
-				await fetch(
-					`/index.php/apps/doriath/api/v1/secrets/${secretApiId}`,
-					{
-						method: 'PUT',
-						credentials: 'include',
-						headers: {
-							requesttoken: token,
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({ folderId: null }),
+				await fetch(`/index.php/apps/keepiq/api/v1/secrets/${secretApiId}`, {
+					method: 'PUT',
+					credentials: 'include',
+					headers: {
+						requesttoken: token,
+						'Content-Type': 'application/json',
 					},
-				)
-				await fetch(`/index.php/apps/doriath/api/v1/folders/${folderId}`, {
+					body: JSON.stringify({ folderId: null }),
+				})
+				await fetch(`/index.php/apps/keepiq/api/v1/folders/${folderId}`, {
 					method: 'DELETE',
 					credentials: 'include',
 					headers: { requesttoken: token },
@@ -364,7 +373,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
 				const secrets = await (
-					await fetch('/index.php/apps/doriath/api/v1/secrets?limit=200', {
+					await fetch('/index.php/apps/keepiq/api/v1/secrets?limit=200', {
 						credentials: 'include',
 						headers: { requesttoken: token },
 					})
@@ -372,7 +381,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 				for (const s of secrets.items || []) {
 					const shares = await (
 						await fetch(
-							`/index.php/apps/doriath/api/v1/secrets/${s.id}/link-shares`,
+							`/index.php/apps/keepiq/api/v1/secrets/${s.id}/link-shares`,
 							{
 								credentials: 'include',
 								headers: { requesttoken: token },
@@ -385,7 +394,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 							|| (shares[0].linkUrl || '').split('/').pop()
 						if (tok) {
 							const res = await fetch(
-								`/index.php/apps/doriath/api/v1/public/link-shares/${tok}`,
+								`/index.php/apps/keepiq/api/v1/public/link-shares/${tok}`,
 								{
 									credentials: 'include',
 									headers: { requesttoken: token },
@@ -408,7 +417,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 				// eslint-disable-next-line no-eval
 				const token = eval(tokExpr)
 				const secrets = await (
-					await fetch('/index.php/apps/doriath/api/v1/secrets?limit=200', {
+					await fetch('/index.php/apps/keepiq/api/v1/secrets?limit=200', {
 						credentials: 'include',
 						headers: { requesttoken: token },
 					})
@@ -416,7 +425,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 				for (const s of secrets.items || []) {
 					const shares = await (
 						await fetch(
-							`/index.php/apps/doriath/api/v1/secrets/${s.id}/link-shares`,
+							`/index.php/apps/keepiq/api/v1/secrets/${s.id}/link-shares`,
 							{
 								credentials: 'include',
 								headers: { requesttoken: token },
@@ -425,7 +434,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 					).json()
 					for (const sh of Array.isArray(shares) ? shares : []) {
 						await fetch(
-							`/index.php/apps/doriath/api/v1/link-shares/${sh.id}`,
+							`/index.php/apps/keepiq/api/v1/link-shares/${sh.id}`,
 							{
 								method: 'DELETE',
 								credentials: 'include',

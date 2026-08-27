@@ -5,7 +5,7 @@
  * (POST /api/v1/public/sends/{token}/failure).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,10 +21,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\EphemeralSendAccessController;
-use OCA\Doriath\Service\EphemeralSendService;
+use OCA\Keepiq\Controller\EphemeralSendAccessController;
+use OCA\Keepiq\Service\EphemeralSendService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;

@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Migration Version 2
+ * Keepiq Migration Version 2
  *
  * Create the doriath_ca_certs table.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
@@ -41,8 +41,8 @@ use OCP\Migration\SimpleMigrationStep;
  * Column "oc_doriath_ca_certs"."is_active" is type Bool and also NotNull, so
  * it can not store "false".
  *
- * With `notnull => true` that exception aborted `occ app:enable doriath` on a
- * fresh NC 31 install — i.e. Doriath could not be installed at all on the
+ * With `notnull => true` that exception aborted `occ app:enable keepiq` on a
+ * fresh NC 31 install — i.e. Keepiq could not be installed at all on the
  * minimum version its own appinfo/info.xml declares
  * (`<nextcloud min-version="31" …>`). Nextcloud 32 narrowed the same check to
  * Oracle only, which is why the defect was invisible on newer servers; no CI

@@ -12,14 +12,14 @@ Two design options exist:
 1. **Separate tables** — `UserEncryptionSuite` and `AppEncryptionSuite`
 2. **Polymorphic association** — single `EncryptionSuite` table with `owner_type` (user|application) and `owner_id` columns
 
-A complicating factor: Nextcloud users are not stored in Doriath's own database — they are managed by Nextcloud's user backend. This means that even with separate tables, the "user" side cannot use a native foreign key constraint to the users table.
+A complicating factor: Nextcloud users are not stored in Keepiq's own database — they are managed by Nextcloud's user backend. This means that even with separate tables, the "user" side cannot use a native foreign key constraint to the users table.
 
 ## Decision
 
 Use a single `EncryptionSuite` table with polymorphic `owner_type` and `owner_id` columns.
 
 - `owner_type`: enum `user` | `application`
-- `owner_id`: string (Nextcloud user ID, or Doriath Application row ID)
+- `owner_id`: string (Nextcloud user ID, or Keepiq Application row ID)
 
 Referential integrity for the `application` owner type is enforced at the application layer with cascade delete logic. For the `user` owner type, a Nextcloud `IUserDeletedEvent` listener handles cleanup.
 

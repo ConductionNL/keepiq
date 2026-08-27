@@ -17,11 +17,11 @@
 		v-if="store.supported"
 		class="passkey-manager"
 		data-testid="passkey-manager">
-		<h4>{{ t('doriath', 'Passkey unlock') }}</h4>
+		<h4>{{ t('keepiq', 'Passkey unlock') }}</h4>
 		<p class="passkey-manager__hint">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'Unlock your vault with a passkey (Touch ID, Windows Hello, or a security key). Your master password always keeps working — losing an authenticator loses no data.',
 				)
 			}}
@@ -33,7 +33,7 @@
 		<NcNoteCard v-if="hasStale" type="warning" data-testid="passkey-stale-note">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'Your master password changed — re-enroll your passkeys to unlock with them again.',
 				)
 			}}
@@ -48,7 +48,7 @@
 				:key="cred.id"
 				:data-testid="`passkey-${cred.id}`">
 				<span class="passkey-manager__label">{{
-					cred.label || t('doriath', 'Passkey')
+					cred.label || t('keepiq', 'Passkey')
 				}}</span>
 				<span
 					:class="`passkey-manager__status passkey-manager__status--${cred.status}`"
@@ -56,16 +56,16 @@
 				>
 				<span class="passkey-manager__muted">{{
 					cred.lastUsedAt
-						? t('doriath', 'last used {when}', {
+						? t('keepiq', 'last used {when}', {
 								when: formatDate(cred.lastUsedAt),
 							})
-						: t('doriath', 'never used')
+						: t('keepiq', 'never used')
 				}}</span>
 				<NcButton
 					variant="tertiary"
 					:data-testid="`passkey-revoke-${cred.id}`"
 					@click="store.revoke(cred.id)">
-					{{ t('doriath', 'Revoke') }}
+					{{ t('keepiq', 'Revoke') }}
 				</NcButton>
 			</li>
 		</ul>
@@ -79,21 +79,21 @@
 				<template #icon>
 					<KeyIcon :size="20" />
 				</template>
-				{{ t('doriath', 'Add passkey') }}
+				{{ t('keepiq', 'Add passkey') }}
 			</NcButton>
 			<span v-if="vaultLocked" class="passkey-manager__muted">{{
-				t('doriath', 'Unlock your vault to add a passkey.')
+				t('keepiq', 'Unlock your vault to add a passkey.')
 			}}</span>
 		</div>
 
 		<div v-else class="passkey-manager__form" data-testid="passkey-enroll-form">
 			<NcTextField
 				v-model="label"
-				:label="t('doriath', 'Passkey name (e.g. MacBook Touch ID)')"
+				:label="t('keepiq', 'Passkey name (e.g. MacBook Touch ID)')"
 				data-testid="passkey-label" />
 			<NcPasswordField
 				v-model="masterPassword"
-				:label="t('doriath', 'Confirm your master password')"
+				:label="t('keepiq', 'Confirm your master password')"
 				data-testid="passkey-master" />
 			<div class="passkey-manager__form-actions">
 				<NcButton
@@ -103,12 +103,12 @@
 					@click="onEnroll">
 					{{
 						busy
-							? t('doriath', 'Enrolling…')
-							: t('doriath', 'Enroll passkey')
+							? t('keepiq', 'Enrolling…')
+							: t('keepiq', 'Enroll passkey')
 					}}
 				</NcButton>
 				<NcButton variant="tertiary" :disabled="busy" @click="cancel">
-					{{ t('doriath', 'Cancel') }}
+					{{ t('keepiq', 'Cancel') }}
 				</NcButton>
 			</div>
 		</div>
@@ -167,15 +167,16 @@ export default {
 		 * Run the enrollment ceremony.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 		 */
 		async onEnroll() {
 			this.busy = true
 			try {
 				await this.store.enroll(this.masterPassword, this.label)
-				showSuccess(t('doriath', 'Passkey enrolled.'))
+				showSuccess(t('keepiq', 'Passkey enrolled.'))
 				this.cancel()
 			} catch (e) {
-				this.store.error = e?.message || t('doriath', 'Enrollment failed')
+				this.store.error = e?.message || t('keepiq', 'Enrollment failed')
 			} finally {
 				this.busy = false
 			}

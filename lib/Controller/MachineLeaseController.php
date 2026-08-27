@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Machine Lease Controller
+ * Keepiq Machine Lease Controller
  *
  * Bearer-authenticated lease surface for a registered application
  * (machine-secret-leases §4.1): list own leases, renew, and self-revoke
@@ -10,7 +10,7 @@
  * the SAME 404 as a nonexistent lease (no existence oracle).
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,12 +23,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Db\MachineLease;
-use OCA\Doriath\Service\LeaseService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Db\MachineLease;
+use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -53,7 +53,7 @@ class MachineLeaseController extends ApplicationApiController {
 		IRequest $request,
 		private LeaseService $leaseService,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

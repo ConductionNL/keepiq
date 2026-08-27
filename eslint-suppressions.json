@@ -103,9 +103,6 @@
     }
   },
   "src/dialogs/CxpTransferDialog.vue": {
-    "jsdoc/require-param-type": {
-      "count": 1
-    },
     "vue/custom-event-name-casing": {
       "count": 1
     }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Machine Lease Entity
+ * Keepiq Machine Lease Entity
  *
  * One short-lived access grant of one application to one secret on the
  * machine secret-store API (machine-secret-leases §1.1). Leases govern
@@ -9,7 +9,7 @@
  * dynamic credential minting.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

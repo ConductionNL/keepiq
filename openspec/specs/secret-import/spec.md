@@ -28,7 +28,7 @@ An import MUST only be possible while the vault is unlocked (the owner's CryptoK
 ### Requirement: Supported Import Formats
 The system MUST support importing from: generic CSV, Bitwarden JSON export, Bitwarden CSV export, and KeePass 2.x XML export. Format selection MUST be explicit (user picks the source tool/format), with file-content validation against the chosen format.
 
-KDBX (`.kdbx` binary KeePass container) import is OUT OF SCOPE for v1: KDBX is an encrypted container, not an interchange format — supporting it would require shipping a second full crypto stack in the browser and prompting users for a foreign master password inside Doriath. When a KDBX file is detected (magic bytes), the system MUST reject it with guidance to use KeePass's `File → Export → KeePass XML (2.x)` function and import the resulting XML.
+KDBX (`.kdbx` binary KeePass container) import is OUT OF SCOPE for v1: KDBX is an encrypted container, not an interchange format — supporting it would require shipping a second full crypto stack in the browser and prompting users for a foreign master password inside Keepiq. When a KDBX file is detected (magic bytes), the system MUST reject it with guidance to use KeePass's `File → Export → KeePass XML (2.x)` function and import the resulting XML.
 
 #### Scenario: Bitwarden JSON import
 @e2e exclude Format parsing (login items, TOTP, collections) covered exhaustively by the import-parsers vitest with fixtures; the e2e drives the generic-CSV path end-to-end.
@@ -55,18 +55,18 @@ KDBX (`.kdbx` binary KeePass container) import is OUT OF SCOPE for v1: KDBX is a
 - **AND** MUST NOT create any secrets or folders
 
 ### Requirement: Nextcloud Passwords App Migration
-The system MUST provide a dedicated migration path for the Nextcloud Passwords app via its JSON backup export. The parser MUST map the Passwords fields onto Doriath fields (label→name, url→url, username→login, password→key, notes and custom fields→additional_fields) and MUST preserve the Passwords folder hierarchy as folder paths. The import UI MUST document where the export is produced in the Passwords app (Settings → Backup → Export).
+The system MUST provide a dedicated migration path for the Nextcloud Passwords app via its JSON backup export. The parser MUST map the Passwords fields onto Keepiq fields (label→name, url→url, username→login, password→key, notes and custom fields→additional_fields) and MUST preserve the Passwords folder hierarchy as folder paths. The import UI MUST document where the export is produced in the Passwords app (Settings → Backup → Export).
 
 Migration is file-based only: the system MUST NOT read the Passwords app's database or API, because a server-side migration would decrypt credentials on the server, violating the always-E2E architecture (ADR-003).
 
 #### Scenario: Passwords app backup imported with folders
 @e2e exclude Passwords-app field mapping + folder-hierarchy resolution covered by the ncPasswords import-parsers vitest.
 - **WHEN** a user imports a Nextcloud Passwords JSON backup containing passwords organised in folders
-- **THEN** each password MUST become a Doriath secret with its custom fields and notes preserved as encrypted additional fields
+- **THEN** each password MUST become a Keepiq secret with its custom fields and notes preserved as encrypted additional fields
 - **AND** the folder hierarchy MUST be recreated per the folder mapping step
 
 ### Requirement: Field Mapping Preview
-The system MUST show a field-mapping preview after parsing and before anything is persisted. The preview MUST show which source field maps to which Doriath field, with a sample of parsed rows; sensitive values MUST be masked by default with per-cell reveal.
+The system MUST show a field-mapping preview after parsing and before anything is persisted. The preview MUST show which source field maps to which Keepiq field, with a sample of parsed rows; sensitive values MUST be masked by default with per-cell reveal.
 
 For known formats (Bitwarden, KeePass XML, Nextcloud Passwords) the mapping is fixed and shown read-only. For generic CSV the mapping MUST be auto-detected from common header names and MUST be user-adjustable per column (target field, named additional field, or ignore); exactly one column MUST map to name, and at most one column to each of url, login, and key. The import MUST NOT proceed past this step without explicit user confirmation.
 
@@ -81,12 +81,12 @@ For known formats (Bitwarden, KeePass XML, Nextcloud Passwords) the mapping is f
 - **THEN** no secrets, folders, or server-side records of the import attempt exist
 
 ### Requirement: Folder and Collection Mapping
-The system MUST map source hierarchies (CSV folder column, Bitwarden folders/collections, KeePass groups, Passwords folders) onto Doriath folders. For each source root folder, the user MUST be able to choose an existing Doriath folder as the target or have it created (default), and MUST be able to place the entire import under a single new folder. Nested hierarchy MUST be preserved beneath the chosen target. Folders MUST be created idempotently at commit time, and folders whose rows were all rejected or skipped MUST NOT be created.
+The system MUST map source hierarchies (CSV folder column, Bitwarden folders/collections, KeePass groups, Passwords folders) onto Keepiq folders. For each source root folder, the user MUST be able to choose an existing Keepiq folder as the target or have it created (default), and MUST be able to place the entire import under a single new folder. Nested hierarchy MUST be preserved beneath the chosen target. Folders MUST be created idempotently at commit time, and folders whose rows were all rejected or skipped MUST NOT be created.
 
 #### Scenario: Bitwarden collections become folders
 @e2e exclude Nested-folder idempotent ensuring covered by the ImportService PHPUnit (Work reused, Work/CI created once); the e2e CSV path drives single-folder creation.
 - **WHEN** a user imports a Bitwarden export with collections "Work" and "Work/CI"
-- **THEN** committed secrets MUST be placed in Doriath folders "Work" and "Work/CI" with the same nesting
+- **THEN** committed secrets MUST be placed in Keepiq folders "Work" and "Work/CI" with the same nesting
 
 #### Scenario: Import under a single new folder
 @e2e exclude "Import under one folder" toggle is a client-side folder-path rewrite; folder-ensuring is covered by the ImportService PHPUnit.

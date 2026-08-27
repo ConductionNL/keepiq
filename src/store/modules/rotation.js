@@ -51,13 +51,14 @@ export const useRotationStore = defineStore('rotation', {
 		 * Load the caller's open rotation flags.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
 		 */
 		async fetchFlags() {
 			this.loading = true
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/rotation-flags'),
+					generateUrl('/apps/keepiq/api/v1/rotation-flags'),
 				)
 				this.flags = response.data || []
 			} catch (e) {
@@ -75,11 +76,12 @@ export const useRotationStore = defineStore('rotation', {
 		 * Load the caller's applicable expiry policies.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		async fetchPolicies() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/expiry-policies'),
+					generateUrl('/apps/keepiq/api/v1/expiry-policies'),
 				)
 				this.policies = response.data || []
 			} catch (e) {
@@ -100,10 +102,12 @@ export const useRotationStore = defineStore('rotation', {
 		 * @param {number|null} policy.maxAgeDays Max credential age in days.
 		 * @param {Array<number>} policy.reminderDays Reminder thresholds.
 		 * @return {Promise<object>} The saved policy.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
 		 */
 		async upsertPolicy({ scope, scopeId, maxAgeDays, reminderDays }) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/expiry-policies'),
+				generateUrl('/apps/keepiq/api/v1/expiry-policies'),
 				{ scope, scopeId, maxAgeDays, reminderDays },
 			)
 			await this.fetchPolicies()
@@ -115,10 +119,11 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} policyId The policy id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		async deletePolicy(policyId) {
 			await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/expiry-policies/${policyId}`),
+				generateUrl(`/apps/keepiq/api/v1/expiry-policies/${policyId}`),
 			)
 			this.policies = this.policies.filter((p) => p.id !== policyId)
 		},
@@ -128,10 +133,11 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>} { expiresAt, effectiveExpiry }.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 		 */
 		async getExpiry(secretId) {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/expiry`),
+				generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/expiry`),
 			)
 			return response.data
 		},
@@ -142,10 +148,12 @@ export const useRotationStore = defineStore('rotation', {
 		 * @param {string} secretId The secret id.
 		 * @param {string|null} expiresAt ISO expiry or null to clear.
 		 * @return {Promise<object>} { secret, effectiveExpiry }.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-and-rotation-actions-are-audited
 		 */
 		async setExpiry(secretId, expiresAt) {
 			const response = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/expiry`),
+				generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/expiry`),
 				{ expiresAt },
 			)
 			return response.data
@@ -157,10 +165,11 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {Array<string>} secretIds The secret ids to flag.
 		 * @return {Promise<number>} How many flags are now open.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
 		 */
 		async flagSecrets(secretIds) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/rotation-flags'),
+				generateUrl('/apps/keepiq/api/v1/rotation-flags'),
 				{ secretIds },
 			)
 			await this.fetchFlags()
@@ -174,10 +183,11 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} flagId The flag id.
 		 * @return {Promise<object>} { resolved, requiresRotation }.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-proven-mark-rotated-flow
 		 */
 		async markRotated(flagId) {
 			const response = await axios.post(
-				generateUrl(`/apps/doriath/api/v1/rotation-flags/${flagId}/rotated`),
+				generateUrl(`/apps/keepiq/api/v1/rotation-flags/${flagId}/rotated`),
 			)
 			if (response.data?.resolved === true) {
 				this.flags = this.flags.filter((f) => f.id !== flagId)
@@ -190,10 +200,11 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {string} flagId The flag id.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-and-rotation-actions-are-audited
 		 */
 		async dismissFlag(flagId) {
 			await axios.post(
-				generateUrl(`/apps/doriath/api/v1/rotation-flags/${flagId}/dismiss`),
+				generateUrl(`/apps/keepiq/api/v1/rotation-flags/${flagId}/dismiss`),
 			)
 			this.flags = this.flags.filter((f) => f.id !== flagId)
 		},

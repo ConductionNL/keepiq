@@ -50,7 +50,7 @@ export async function parseBackup(input, options = {}) {
 /** The backup-restore parser descriptor. */
 export const backupParser = {
 	id: BACKUP_FORMAT,
-	label: 'Doriath encrypted backup (.doriath-backup)',
+	label: 'Keepiq encrypted backup (.doriath-backup)',
 	requiresPassphrase: true,
 	parse: parseBackup,
 }

@@ -10,29 +10,29 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'My ephemeral sends')"
+		:name="t('keepiq', 'My ephemeral sends')"
 		:open="open"
 		size="normal"
 		data-testid="my-sends-dialog"
 		@update:open="$emit('close')">
 		<div class="my-sends">
 			<p v-if="store.sends.length === 0" class="my-sends__empty">
-				{{ t('doriath', 'No active sends.') }}
+				{{ t('keepiq', 'No active sends.') }}
 			</p>
 			<table v-else class="my-sends__table" data-testid="my-sends-table">
 				<thead>
 					<tr>
 						<th scope="col">
-							{{ t('doriath', 'Type') }}
+							{{ t('keepiq', 'Type') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Views left') }}
+							{{ t('keepiq', 'Views left') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Expires') }}
+							{{ t('keepiq', 'Expires') }}
 						</th>
 						<th scope="col">
-							{{ t('doriath', 'Password') }}
+							{{ t('keepiq', 'Password') }}
 						</th>
 						<th scope="col" />
 					</tr>
@@ -48,14 +48,14 @@
 							{{
 								send.expiresAt
 									? formatDate(send.expiresAt)
-									: t('doriath', 'never')
+									: t('keepiq', 'never')
 							}}
 						</td>
 						<td>
 							{{
 								send.hasPassword
-									? t('doriath', 'yes')
-									: t('doriath', 'no')
+									? t('keepiq', 'yes')
+									: t('keepiq', 'no')
 							}}
 						</td>
 						<td>
@@ -63,7 +63,7 @@
 								variant="tertiary"
 								:data-testid="`send-revoke-${send.id}`"
 								@click="onRevoke(send.id)">
-								{{ t('doriath', 'Revoke') }}
+								{{ t('keepiq', 'Revoke') }}
 							</NcButton>
 						</td>
 					</tr>
@@ -72,7 +72,7 @@
 		</div>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>

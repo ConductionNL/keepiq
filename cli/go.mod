@@ -1,3 +1,3 @@
-module github.com/ConductionNL/doriath/cli
+module github.com/ConductionNL/keepiq/cli
 
 go 1.22

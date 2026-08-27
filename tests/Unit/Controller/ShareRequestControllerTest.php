@@ -5,7 +5,7 @@
  * (POST /api/v1/share-requests/deny).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,11 +21,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\ShareRequestController;
-use OCA\Doriath\Service\ShareRequestService;
+use OCA\Keepiq\Controller\ShareRequestController;
+use OCA\Keepiq\Service\ShareRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

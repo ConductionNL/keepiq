@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Doriath Application Entity
+ * Keepiq Application Entity
  *
  * Database entity representing a registered application that may own
- * Doriath secrets. The full JWT-Bearer + admin-approval-queue flow
+ * Keepiq secrets. The full JWT-Bearer + admin-approval-queue flow
  * ships with the dedicated implement-application-mgmt build cycle;
  * this entity is the smallest backing row that supports register /
  * approve / reject / delete + cascade.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

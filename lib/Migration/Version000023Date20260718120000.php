@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration - Machine secret leases
+ * Keepiq Migration - Machine secret leases
  *
  * Adds `doriath_machine_leases` (short-lived access-grant records for the
  * bearer-authed machine API; machine-secret-leases §1.1) and
@@ -10,7 +10,7 @@
  * ciphertext envelope is untouched.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

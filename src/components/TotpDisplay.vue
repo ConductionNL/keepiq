@@ -2,7 +2,7 @@
 	<div class="totp-display" data-testid="totp-display">
 		<div v-if="invalid" class="totp-display__invalid" data-testid="totp-invalid">
 			<AlertCircleOutline :size="20" />
-			<span>{{ t('doriath', 'Not a valid authenticator secret') }}</span>
+			<span>{{ t('keepiq', 'Not a valid authenticator secret') }}</span>
 		</div>
 
 		<template v-else-if="code">
@@ -44,7 +44,7 @@
 
 				<CopyButton
 					:value="code"
-					:label="t('doriath', 'Copy one-time code')"
+					:label="t('keepiq', 'Copy one-time code')"
 					data-testid="totp-copy" />
 			</div>
 		</template>
@@ -175,7 +175,7 @@ export default {
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
 		 */
 		countdownLabel() {
-			return t('doriath', '{seconds} seconds until the code refreshes', {
+			return t('keepiq', '{seconds} seconds until the code refreshes', {
 				seconds: this.remaining,
 			})
 		},

@@ -4,7 +4,7 @@
  * Unit tests for WebManifestController (mobile-pwa §6.1).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,9 +17,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\WebManifestController;
+use OCA\Keepiq\Controller\WebManifestController;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
@@ -37,10 +37,10 @@ class WebManifestControllerTest extends TestCase {
 	 */
 	public function testManifestShape(): void {
 		$url = $this->createMock(originalClassName: IURLGenerator::class);
-		$url->method('linkToRouteAbsolute')->willReturn('https://cloud.example/apps/doriath/');
-		$url->method('linkToRoute')->willReturn('/apps/doriath/');
+		$url->method('linkToRouteAbsolute')->willReturn('https://cloud.example/apps/keepiq/');
+		$url->method('linkToRoute')->willReturn('/apps/keepiq/');
 		$url->method('imagePath')->willReturnCallback(
-			static fn (string $app, string $file): string => '/apps/doriath/img/' . $file
+			static fn (string $app, string $file): string => '/apps/keepiq/img/' . $file
 		);
 		$url->method('getAbsoluteURL')->willReturnCallback(
 			static fn (string $path): string => 'https://cloud.example' . $path
@@ -57,12 +57,12 @@ class WebManifestControllerTest extends TestCase {
 		// Response::getHeaders() needs the OC container (CSP defaults), so unit
 		// tests assert the manifest body shape only.
 		$manifest = json_decode($response->getData(), true);
-		$this->assertSame('Doriath', $manifest['name']);
+		$this->assertSame('Keepiq', $manifest['name']);
 		$this->assertSame('standalone', $manifest['display']);
 		$this->assertSame('#21468B', $manifest['theme_color']);
 		$this->assertSame('#21468B', $manifest['background_color']);
-		$this->assertStringContainsString('/apps/doriath/', $manifest['start_url']);
-		$this->assertSame('/apps/doriath/', $manifest['scope']);
+		$this->assertStringContainsString('/apps/keepiq/', $manifest['start_url']);
+		$this->assertSame('/apps/keepiq/', $manifest['scope']);
 
 		// Maskable + any-purpose icons at both 192 and 512.
 		$purposes = array_column($manifest['icons'], 'purpose');

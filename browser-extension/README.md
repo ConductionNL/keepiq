@@ -1,7 +1,7 @@
-# Doriath browser extension
+# Keepiq browser extension
 
 A Manifest V3 WebExtension (Firefox / Chrome / Edge) that brings **autofill**,
-**passkey provision**, and **TOTP** to the [Doriath](../) secrets manager —
+**passkey provision**, and **TOTP** to the [Keepiq](../) secrets manager —
 without weakening its zero-knowledge model.
 
 The extension is a **second end-to-end client**, exactly the shape ADR-003
@@ -20,7 +20,7 @@ browser-extension/
   src/
     crypto/                  the SAME recipe as the web app (re-exported from ../../src/crypto)
     lib/
-      api.js                 Doriath API client (pair, match, list, get, create, update)
+      api.js                 Keepiq API client (pair, match, list, get, create, update)
       match.js               registrable-domain / origin matching over unencrypted url/name
       vault.js               in-worker unlock/lock state + decrypt-on-demand
     background/

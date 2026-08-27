@@ -5,7 +5,7 @@
  *
  * Exercises the cross-service invariants of §15.1-§15.9 against the
  * shared in-memory mapper fixtures rather than a live SQL harness. The
- * doriath PHP suite is unit-only (mocked QBMappers, no live HTTP) and
+ * keepiq PHP suite is unit-only (mocked QBMappers, no live HTTP) and
  * the live-instance suite belongs in the fleet-wide Newman/Playwright
  * gate per the §14 deferrals — this test file pushes the invariants
  * down one layer (multiple real services + in-memory fixture mappers)
@@ -23,7 +23,7 @@
  *  - §15.9 Group-member-leave revokes group-derived shares, not direct shares.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -36,31 +36,31 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Service\DelegationAuthorizer;
-use OCA\Doriath\Service\DelegationService;
-use OCA\Doriath\Service\DirectShareRegistrar;
-use OCA\Doriath\Service\LinkShareService;
-use OCA\Doriath\Service\MigrationService;
-use OCA\Doriath\Service\NotificationService;
-use OCA\Doriath\Service\RecipientSecretCopyFactory;
-use OCA\Doriath\Service\SecretService;
-use OCA\Doriath\Service\SecretTypeService;
-use OCA\Doriath\Service\ShareAuthorizationService;
-use OCA\Doriath\Service\ShareRevocationService;
-use OCA\Doriath\Service\ShareService;
-use OCA\Doriath\Service\ShareSyncService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\DelegationAuthorizer;
+use OCA\Keepiq\Service\DelegationService;
+use OCA\Keepiq\Service\DirectShareRegistrar;
+use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
+use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareRevocationService;
+use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
@@ -251,7 +251,7 @@ class UserSharingIntegrationTest extends TestCase {
 		$secretMapper = $this->createMock(SecretMapper::class);
 		$shareService = $this->createMock(ShareService::class);
 		$linkShareService = $this->createMock(LinkShareService::class);
-		$groupShareMapper = $this->createMock(\OCA\Doriath\Db\GroupShareMapper::class);
+		$groupShareMapper = $this->createMock(\OCA\Keepiq\Db\GroupShareMapper::class);
 		$delegationMapper = $this->createMock(SecretDelegationMapper::class);
 
 		$service = new SecretService(

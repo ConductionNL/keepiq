@@ -5,7 +5,7 @@
  * derivation per source event, the share-copy pivot, and fail-softness.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Listener
+ * @package  OCA\Keepiq\Tests\Unit\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -18,16 +18,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Listener;
+namespace OCA\Keepiq\Tests\Unit\Listener;
 
-use OCA\Doriath\Db\LinkShare;
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Listener\HoneyTripwireListener;
-use OCA\Doriath\Service\HoneyTripwireService;
+use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Listener\HoneyTripwireListener;
+use OCA\Keepiq\Service\HoneyTripwireService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;

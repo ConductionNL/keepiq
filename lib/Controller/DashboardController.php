@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Dashboard Controller
+ * Keepiq Dashboard Controller
  *
- * Controller for the main Doriath dashboard page.
+ * Controller for the main Keepiq dashboard page.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,10 +19,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\DashboardSummaryService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\DashboardSummaryService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
@@ -35,7 +36,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 
 /**
- * Controller for the main Doriath dashboard page.
+ * Controller for the main Keepiq dashboard page.
  */
 class DashboardController extends Controller {
 	/**
@@ -44,6 +45,7 @@ class DashboardController extends Controller {
 	 * @param IRequest $request The request object
 	 * @param IInitialState $initialState The initial state service
 	 * @param IAppConfig $appConfig The app config interface
+	 * @param IAppManager $appManager The app manager (version source)
 	 * @param DashboardSummaryService $summaryService The dashboard summary aggregator
 	 * @param IUserSession $userSession The user session
 	 * @param IGroupManager $groupManager The group manager
@@ -54,6 +56,7 @@ class DashboardController extends Controller {
 		IRequest $request,
 		private IInitialState $initialState,
 		private IAppConfig $appConfig,
+		private IAppManager $appManager,
 		private DashboardSummaryService $summaryService,
 		private IUserSession $userSession,
 		private IGroupManager $groupManager,
@@ -106,17 +109,25 @@ class DashboardController extends Controller {
 			data: $this->appConfig->getValueBool(Application::APP_ID, 'breach_check_enabled', false),
 		);
 
+		// The user-settings dialog renders this as its version footer.
+		// IAppManager reads appinfo/info.xml — the version truth; the
+		// package.json version is stale and must not be used.
+		$this->initialState->provideInitialState(
+			key: 'appVersion',
+			data: $this->appManager->getAppVersion(Application::APP_ID),
+		);
+
 		$response = new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
 
 		// Link-share encryption derives its AES key client-side via the Argon2id
 		// WASM module (argon2-browser). Nextcloud's default CSP forbids
 		// WebAssembly compilation, so opt in to `'wasm-unsafe-eval'` for this SPA
 		// page. No external script/connect domains are added — the WASM is
-		// app-local (served from custom_apps/doriath/js/argon2.wasm).
+		// app-local (served from custom_apps/keepiq/js/argon2.wasm).
 		$csp = new ContentSecurityPolicy();
 		$csp->allowEvalWasm(true);
 		// The password-health analysis runs in a dedicated same-origin web worker
-		// (src/health/worker.js, bundled to custom_apps/doriath/js). NC's default
+		// (src/health/worker.js, bundled to custom_apps/keepiq/js). NC's default
 		// CSP has no `worker-src`, so it falls back to the nonce-only `script-src`
 		// and blocks the dynamically-created worker. Allow workers from 'self'.
 		$csp->addAllowedWorkerSrcDomain("'self'");

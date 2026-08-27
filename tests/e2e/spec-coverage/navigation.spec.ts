@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Gate-19 spec-coverage — Doriath app navigation (manifest-driven CnAppRoot
+ * Gate-19 spec-coverage — Keepiq app navigation (manifest-driven CnAppRoot
  * shell).
  *
  * Asserts the left-hand app navigation renders the manifest menu entries and
@@ -15,8 +15,8 @@ import { test, expect } from '@playwright/test'
 import {
 	APP_BASE,
 	lockHeading,
-	collectDoriathErrors,
-	assertNoDoriathErrors,
+	collectKeepiqErrors,
+	assertNoKeepiqErrors,
 } from './_helpers'
 // The lock screen is now an EXCLUSIVE surface: App.vue hides `.app-navigation`
 // on the Lock route, so nav coverage requires an unlocked vault. This borrows
@@ -27,7 +27,7 @@ import { unlockVault } from '../workflows/_workflow-helpers'
 
 // The app's left navigation is the `.app-navigation` container. We scope ALL
 // nav queries to it (never the global NC header / apps menu) and additionally
-// match doriath-owned hrefs, so we can never click a global app link.
+// match keepiq-owned hrefs, so we can never click a global app link.
 function appNav(page: import('@playwright/test').Page) {
 	return page.locator('.app-navigation').first()
 }
@@ -49,43 +49,43 @@ async function expandSettingsFoldout(page: import('@playwright/test').Page) {
 test.describe('App navigation — manifest menu', () => {
 	test('the app navigation is hidden on the lock screen', async ({ page }) => {
 		// The unlock/setup prompt is the ONLY interactive surface while locked:
-		// App.vue's `doriath-shell--locked` modifier hides `.app-navigation`
+		// App.vue's `keepiq-shell--locked` modifier hides `.app-navigation`
 		// (and its floating toggle) on the Lock route. This is the inverse of
 		// what this spec used to assert — the old behaviour (a fully clickable
 		// sidebar beside the lock prompt) was the bug.
-		const errors = collectDoriathErrors(page)
+		const errors = collectKeepiqErrors(page)
 		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
 
 		await expect(appNav(page)).toBeHidden()
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 
 	test('left navigation renders the manifest menu entries once unlocked', async ({
 		page,
 	}) => {
-		const errors = collectDoriathErrors(page)
+		const errors = collectKeepiqErrors(page)
 		await unlockVault(page)
 
 		const nav = appNav(page)
 		await expect(nav).toBeVisible({ timeout: 15_000 })
 
-		// The Dashboard entry points at the doriath app root (not /apps/dashboard).
+		// The Dashboard entry points at the keepiq app root (not /apps/dashboard).
 		// Matched on the hash SUFFIX, not the whole href: under vue-router 4 the
 		// hash-history links render relative (`#/`) rather than carrying the
-		// absolute app base (`/apps/doriath/#/`). Both resolve to the same route
-		// from any doriath page; asserting the literal absolute form would pin a
+		// absolute app base (`/apps/keepiq/#/`). Both resolve to the same route
+		// from any keepiq page; asserting the literal absolute form would pin a
 		// router implementation detail rather than the requirement.
 		await expect(nav.locator('a[href$="#/"]').first()).toBeVisible()
 		// Footer entry: Documentation (pinned, always visible).
 		await expect(nav.getByText(/Documentation/i).first()).toBeVisible()
 		// Lock vault lives in the settings foldout (section: "settings"); expand
-		// it so the doriath-owned lock route becomes visible.
+		// it so the keepiq-owned lock route becomes visible.
 		await expandSettingsFoldout(page)
 		await expect(nav.locator('a[href$="#/lock"]').first()).toBeVisible()
 
-		assertNoDoriathErrors(errors)
+		assertNoKeepiqErrors(errors)
 	})
 
 	test('clicking the Lock vault nav entry locks the vault and hides the nav', async ({
@@ -93,7 +93,7 @@ test.describe('App navigation — manifest menu', () => {
 	}) => {
 		await unlockVault(page)
 
-		// "Lock vault" is a doriath-owned route (/apps/doriath/#/lock) in the
+		// "Lock vault" is a keepiq-owned route (/apps/keepiq/#/lock) in the
 		// settings foldout — expand it and click the entry. App.vue's $route
 		// watcher calls session.lock() on entering /lock while unlocked, so
 		// this drives the real re-lock flow end to end.

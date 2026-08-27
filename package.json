@@ -1,5 +1,5 @@
 {
-  "name": "doriath",
+  "name": "keepiq",
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "engines": {
@@ -21,7 +21,10 @@
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
+    "check:schema-l10n": "node scripts/check-schema-l10n.js",
     "check:manifest": "node tests/validate-manifest.js",
+    "l10n:build": "node scripts/build-l10n-js.js",
+    "check:l10n-js": "node scripts/build-l10n-js.js --check",
     "stylelint": "stylelint \"src/**/*.{vue,scss,css}\"",
     "format": "prettier --check \"**/*.{js,ts,vue,css,scss}\"",
     "format:fix": "prettier --write \"**/*.{js,ts,vue,css,scss}\"",
@@ -32,7 +35,7 @@
     "extends @nextcloud/browserslist-config"
   ],
   "dependencies": {
-    "@conduction/nextcloud-vue": "^2.3.0",
+    "@conduction/nextcloud-vue": "^2.19.0",
     "@nextcloud/auth": "^2.6.0",
     "@nextcloud/axios": "~2.5.2",
     "@nextcloud/capabilities": "^1.2.1",

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Write Lock Service
+ * Keepiq Write Lock Service
  *
  * Answers one question — is this owner write-locked by an in-progress
  * compromise-recovery migration? — and depends on nothing but the two mappers
@@ -15,7 +15,7 @@
  * MigrationService delegates here so there is still exactly one implementation.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,11 +28,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\SuiteMigrationMapper;
-use OCA\Doriath\Exception\WriteLockedException;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Exception\WriteLockedException;
 
 /**
  * Reports and enforces the compromise-recovery write lock.

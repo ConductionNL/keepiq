@@ -25,7 +25,7 @@ export const useSettingsStore = defineStore('settings', {
 			this.loading = true
 			try {
 				const response = await fetch(
-					generateUrl('/apps/doriath/api/settings'),
+					generateUrl('/apps/keepiq/api/settings'),
 					{
 						headers: { requesttoken: OC.requestToken },
 					},
@@ -56,7 +56,7 @@ export const useSettingsStore = defineStore('settings', {
 			this.loading = true
 			try {
 				const response = await fetch(
-					generateUrl('/apps/doriath/api/settings'),
+					generateUrl('/apps/keepiq/api/settings'),
 					{
 						method: 'POST',
 						headers: {

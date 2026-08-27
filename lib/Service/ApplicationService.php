@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Service
+ * Keepiq Application Service
  *
  * The read / delete surface of the registered-application capability —
  * get, list, count, delete plus the admin-group lookup — and the entry
@@ -14,7 +14,7 @@
  * vocabulary in ApplicationAuditTrail.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,11 +27,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -73,8 +73,8 @@ class ApplicationService {
 	 * @param ApplicationMapper $mapper The application mapper
 	 * @param IGroupManager $groupManager The group manager (admin lookups)
 	 * @param LoggerInterface $logger The logger
-	 * @param \OCA\Doriath\Db\MachineLeaseMapper|null $leaseMapper The lease mapper (delete cascade)
-	 * @param \OCA\Doriath\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper The lease-policy mapper (delete cascade)
+	 * @param \OCA\Keepiq\Db\MachineLeaseMapper|null $leaseMapper The lease mapper (delete cascade)
+	 * @param \OCA\Keepiq\Db\ApplicationLeasePolicyMapper|null $leasePolicyMapper The lease-policy mapper (delete cascade)
 	 * @param ApplicationLifecycleService|null $lifecycle The admission transitions
 	 * @param ApplicationSuiteProvisioner|null $suiteProvisioner The EncryptionSuite provisioner
 	 * @param ApplicationAuditTrail|null $auditTrail The application audit trail
@@ -85,8 +85,8 @@ class ApplicationService {
 		private ApplicationMapper $mapper,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
-		private ?\OCA\Doriath\Db\MachineLeaseMapper $leaseMapper = null,
-		private ?\OCA\Doriath\Db\ApplicationLeasePolicyMapper $leasePolicyMapper = null,
+		private ?\OCA\Keepiq\Db\MachineLeaseMapper $leaseMapper = null,
+		private ?\OCA\Keepiq\Db\ApplicationLeasePolicyMapper $leasePolicyMapper = null,
 		?ApplicationLifecycleService $lifecycle = null,
 		?ApplicationSuiteProvisioner $suiteProvisioner = null,
 		?ApplicationAuditTrail $auditTrail = null,
@@ -214,7 +214,7 @@ class ApplicationService {
 		$this->leaseMapper?->deleteByApplication($applicationId);
 		$this->leasePolicyMapper?->deleteByApplication($applicationId);
 
-		$this->logger->info('Deleted application ' . $applicationId, ['app' => 'doriath']);
+		$this->logger->info('Deleted application ' . $applicationId, ['app' => 'keepiq']);
 
 		$this->auditTrail->recordDeleted(
 			applicationId: $applicationId,

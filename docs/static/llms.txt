@@ -1,19 +1,19 @@
-# Doriath
+# Keepiq
 
-> Doriath is an open-source password and secrets vault app for the Nextcloud workspace.
+> Keepiq is an open-source password and secrets vault app for the Nextcloud workspace.
 
-Doriath is an open-source password and secrets vault app for the Nextcloud workspace. It stores per-user and per-team credentials with audited access and integrates with the Nextcloud authentication stack, replacing standalone password managers in the workspace. The app is in active development; consult the docs for the current release status. Released under EUPL-1.2 and maintained by Conduction since 2019.
+Keepiq is an open-source password and secrets vault app for the Nextcloud workspace. It stores per-user and per-team credentials with audited access and integrates with the Nextcloud authentication stack, replacing standalone password managers in the workspace. The app is in active development; consult the docs for the current release status. Released under EUPL-1.2 and maintained by Conduction since 2019.
 
 ## Docs
 
-- [Documentation](https://doriath.conduction.nl/docs/intro): main entry, including tutorials, user guide, and admin guide.
-- [API reference](https://doriath.conduction.nl/api): OpenAPI documentation.
+- [Documentation](https://keepiq.conduction.nl/docs/intro): main entry, including tutorials, user guide, and admin guide.
+- [API reference](https://keepiq.conduction.nl/api): OpenAPI documentation.
 
 ## Optional
 
 - [Install](https://www.conduction.nl/install): self-host on your Nextcloud instance.
-- [Source code](https://github.com/ConductionNL/doriath): repository and issue tracker.
-- [App page](https://www.conduction.nl/apps/doriath): product positioning on conduction.nl.
+- [Source code](https://github.com/ConductionNL/keepiq): repository and issue tracker.
+- [App page](https://www.conduction.nl/apps/keepiq): product positioning on conduction.nl.
 
 ## Contact
 

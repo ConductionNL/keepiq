@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Audit Entry Mapper
+ * Keepiq Audit Entry Mapper
  *
  * Database mapper for the append-only doriath_audit_log table
  * (add-secret-audit-trail §1.2). Exposes a single insert path plus scoped
@@ -12,7 +12,7 @@
  * are purgeOlderThan and anonymizeUser.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,7 +25,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use OCP\AppFramework\Db\QBMapper;

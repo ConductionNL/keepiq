@@ -11,7 +11,7 @@
  *
  *   1. The instance is NOT in setup mode. The `SeedDevelopmentData` install
  *      repair step provisioned an active EncryptionSuite for admin, so the lock
- *      screen renders the UNLOCK form (one password field, "Unlock Doriath"),
+ *      screen renders the UNLOCK form (one password field, "Unlock Keepiq"),
  *      never the first-time setup form.
  *
  *   2. The seeded suite CANNOT be unlocked headlessly — and, in fact, not at
@@ -48,7 +48,7 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 		page,
 	}) => {
 		const heading = await gotoLockSettled(page)
-		expect(heading).toMatch(/Unlock Doriath/i)
+		expect(heading).toMatch(/Unlock Keepiq/i)
 		// Unlock mode has exactly one password field (setup mode has two).
 		expect(
 			await page.locator('.lock-screen input[type="password"]').count(),
@@ -79,12 +79,12 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// ADR-074 rule 4: `networkidle` cannot settle on Nextcloud, and this
 			// loop pays the cost three times. The lock heading is the readiness
 			// signal.
-			await page.goto(`/index.php/apps/doriath/${route}`, {
+			await page.goto(`/index.php/apps/keepiq/${route}`, {
 				waitUntil: 'domcontentloaded',
 			})
 			await expect(lockHeading(page)).toBeVisible({ timeout: 20_000 })
 			await expect(lockHeading(page)).toHaveText(
-				/Unlock Doriath|Set up your master password/i,
+				/Unlock Keepiq|Set up your master password/i,
 			)
 			// No unlocked content leaks through the guard.
 			await expect(page.locator('.secret-detail__card')).toHaveCount(0)
@@ -111,7 +111,7 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 *
 	 * @e2e openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
 	 */
-	test("a locked vault issues no Doriath API request beyond the lock screen's own", async ({
+	test("a locked vault issues no Keepiq API request beyond the lock screen's own", async ({
 		page,
 	}) => {
 		const leaked: string[] = []
@@ -168,7 +168,7 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 
 		page.on('request', (req) => {
 			const url = req.url()
-			if (!/\/apps\/doriath\/api\//.test(url)) {
+			if (!/\/apps\/keepiq\/api\//.test(url)) {
 				return
 			}
 			if (LOCK_SCREEN_LEGITIMATE.some((re) => re.test(url))) {
@@ -212,7 +212,7 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 
 		expect(
 			leaked,
-			`locked vault requested Doriath API endpoints:\n${leaked.join('\n')}`,
+			`locked vault requested Keepiq API endpoints:\n${leaked.join('\n')}`,
 		).toEqual([])
 	})
 
@@ -260,7 +260,7 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 				.locator('.lock-screen')
 				.getByText(/Wrong master password|decryption failed/i),
 		).toBeVisible({ timeout: 15_000 })
-		await expect(lockHeading(page)).toHaveText(/Unlock Doriath/i)
+		await expect(lockHeading(page)).toHaveText(/Unlock Keepiq/i)
 	})
 
 	/*

@@ -11,17 +11,17 @@
 <template>
 	<div class="personal-activity" data-testid="personal-activity-view">
 		<h2 class="personal-activity__title">
-			{{ t('doriath', 'My activity') }}
+			{{ t('keepiq', 'My activity') }}
 		</h2>
 
 		<NcLoadingIcon v-if="loading" :size="24" />
 
 		<NcEmptyContent
 			v-else-if="entries.length === 0"
-			:name="t('doriath', 'No activity recorded yet')"
+			:name="t('keepiq', 'No activity recorded yet')"
 			:description="
 				t(
-					'doriath',
+					'keepiq',
 					'Your secret operations will appear here. The trail starts at the deployment of this feature.',
 				)
 			"

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Doriath API-contract test runner (Newman / Postman).
+# Keepiq API-contract test runner (Newman / Postman).
 #
-# Runs tests/integration/doriath.postman_collection.json against a live
-# Nextcloud instance serving the doriath (vault) app. The collection is
+# Runs tests/integration/keepiq.postman_collection.json against a live
+# Nextcloud instance serving the keepiq (vault) app. The collection is
 # self-contained and idempotent: it creates the vault objects it needs (a
 # secret, a folder) and deletes them again in teardown.
 #
@@ -22,14 +22,14 @@
 set -euo pipefail
 
 # Re-exec under an exclusive flock so parallel agents serialise.
-LOCK_FILE="/tmp/uiaudit-doriath.lock"
-if [ "${DORIATH_NEWMAN_LOCKED:-}" != "1" ] && command -v flock >/dev/null 2>&1; then
-  export DORIATH_NEWMAN_LOCKED=1
+LOCK_FILE="/tmp/uiaudit-keepiq.lock"
+if [ "${KEEPIQ_NEWMAN_LOCKED:-}" != "1" ] && command -v flock >/dev/null 2>&1; then
+  export KEEPIQ_NEWMAN_LOCKED=1
   exec flock "${LOCK_FILE}" "$0" "$@"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COLLECTION="${SCRIPT_DIR}/doriath.postman_collection.json"
+COLLECTION="${SCRIPT_DIR}/keepiq.postman_collection.json"
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 ADMIN_USER="${ADMIN_USER:-admin}"
@@ -102,7 +102,7 @@ sign_assertion() {
       .replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
     const signingInput = b64u(JSON.stringify({ alg: "RS256", typ: "JWT" })) + "." +
       b64u(JSON.stringify({
-        iss: appId, aud: "doriath", iat: now, exp: now + 300,
+        iss: appId, aud: "keepiq", iat: now, exp: now + 300,
         jti: "newman-" + tag + "-" + now + "-" + Math.random().toString(36).slice(2),
       }));
     const sig = crypto.sign("RSA-SHA256", Buffer.from(signingInput), pem)

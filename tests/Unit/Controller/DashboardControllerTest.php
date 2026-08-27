@@ -4,7 +4,7 @@
  * Unit tests for the dashboard summary endpoint (GET /api/dashboard/summary).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,10 +20,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\DashboardController;
-use OCA\Doriath\Service\DashboardSummaryService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Controller\DashboardController;
+use OCA\Keepiq\Service\DashboardSummaryService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IAppConfig;
@@ -68,6 +70,20 @@ class DashboardControllerTest extends TestCase {
 	private IGroupManager&MockObject $groupManager;
 
 	/**
+	 * The mocked initial-state service.
+	 *
+	 * @var IInitialState&MockObject
+	 */
+	private IInitialState&MockObject $initialState;
+
+	/**
+	 * The mocked app manager (the version source for page()).
+	 *
+	 * @var IAppManager&MockObject
+	 */
+	private IAppManager&MockObject $appManager;
+
+	/**
 	 * Set up the mocks shared by every test.
 	 *
 	 * @return void
@@ -78,6 +94,8 @@ class DashboardControllerTest extends TestCase {
 		$this->summaryService = $this->createMock(DashboardSummaryService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->groupManager = $this->createMock(IGroupManager::class);
+		$this->initialState = $this->createMock(IInitialState::class);
+		$this->appManager = $this->createMock(IAppManager::class);
 	}//end setUp()
 
 	/**
@@ -98,8 +116,9 @@ class DashboardControllerTest extends TestCase {
 
 		return new DashboardController(
 			request: $this->createMock(IRequest::class),
-			initialState: $this->createMock(IInitialState::class),
+			initialState: $this->initialState,
 			appConfig: $this->createMock(IAppConfig::class),
+			appManager: $this->appManager,
 			summaryService: $this->summaryService,
 			userSession: $this->userSession,
 			groupManager: $this->groupManager
@@ -182,5 +201,37 @@ class DashboardControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 		$this->assertSame(['error' => 'unauthenticated'], $response->getData());
 	}//end testSummaryRejectsAnAnonymousCallerWithoutAggregatingAnything()
+
+	/**
+	 * page() feeds the frontend its initial state, including the app version
+	 * for the user-settings dialog's footer. The version must come from
+	 * IAppManager (appinfo/info.xml — the version truth) scoped to THIS app
+	 * id, and it must ride the same initial-state channel as the two
+	 * pre-existing keys, which are asserted too so a regression that drops
+	 * one of them cannot hide behind a green version assertion.
+	 *
+	 * @return void
+	 */
+	public function testPageProvidesTheAppVersionAsInitialState(): void {
+		$this->appManager->expects($this->once())
+			->method('getAppVersion')
+			->with(Application::APP_ID)
+			->willReturn('0.1.6');
+
+		$provided = [];
+		$this->initialState->method('provideInitialState')
+			->willReturnCallback(
+				function (string $key, mixed $data) use (&$provided): void {
+					$provided[$key] = $data;
+				}
+			);
+
+		$response = $this->controller()->page();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('0.1.6', $provided['appVersion'] ?? null);
+		$this->assertArrayHasKey('faviconServiceUrl', $provided);
+		$this->assertArrayHasKey('breachCheckEnabled', $provided);
+	}//end testPageProvidesTheAppVersionAsInitialState()
 
 }//end class

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath SecretExportedEvent
+ * Keepiq SecretExportedEvent
  *
  * Dispatched when a user completes a vault export (encrypted backup, plaintext
  * CSV, plaintext-file CXF, or HPKE-sealed CXP transfer). Because export runs
@@ -14,7 +14,7 @@
  * its AuditListener (whitelist: mode, scope, secretCount).
  *
  * @category Event
- * @package  OCA\Doriath\Event
+ * @package  OCA\Keepiq\Event
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Event;
+namespace OCA\Keepiq\Event;
 
 use OCP\EventDispatcher\Event;
 

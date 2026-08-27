@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Version Service
+ * Keepiq Secret Version Service
  *
  * Business logic for secret version history (secret-version-history §2/§3):
  * pre-update snapshots (ciphertext copied verbatim — never decrypted),
@@ -10,7 +10,7 @@
  * version; the CLIENT then drives sync-on-update for recipients).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,15 +23,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretVersion;
-use OCA\Doriath\Db\SecretVersionMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -176,9 +176,9 @@ class SecretVersionService {
 		);
 
 		$this->logger->info(
-			'Doriath: secret ' . $secret->getId() . ' restored to version '
+			'Keepiq: secret ' . $secret->getId() . ' restored to version '
 			. $version->getVersionNumber() . ' by ' . $userId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		return $secret;

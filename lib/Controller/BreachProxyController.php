@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Breach Proxy Controller
+ * Keepiq Breach Proxy Controller
  *
  * A prefix-only proxy to the Have I Been Pwned (HIBP) range API, implementing
  * the server side of the k-anonymity breach-check flow (password-health §1.5,
@@ -15,7 +15,7 @@
  * per prefix (no user association is ever logged).
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,9 +28,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -71,11 +71,16 @@ class BreachProxyController extends Controller {
 	private const UPSTREAM_TIMEOUT = 5;
 
 	/**
-	 * The per-prefix response cache (null when no distributed cache is available).
+	 * The per-prefix response cache.
 	 *
-	 * @var ICache|null
+	 * NOT nullable. `ICacheFactory::createDistributed()` always returns an
+	 * ICache — it hands back a no-op implementation when no distributed cache
+	 * is configured rather than null — so the `?` this replaces described a
+	 * state that could not occur, and the `null` case was never assigned.
+	 *
+	 * @var ICache
 	 */
-	private ?ICache $cache;
+	private ICache $cache;
 
 	/**
 	 * Constructor for BreachProxyController.
@@ -98,6 +103,9 @@ class BreachProxyController extends Controller {
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
+		// Namespace deliberately still `doriath_` after the doriath -> keepiq
+		// rename: an ICache key prefix, not an app id. Renaming it would only
+		// throw away a warm HIBP range cache. See appinfo/info.xml.
 		$this->cache = $cacheFactory->createDistributed('doriath_breach_range');
 	}//end __construct()
 
@@ -155,7 +163,7 @@ class BreachProxyController extends Controller {
 			);
 		}
 
-		$cached = $this->cache?->get($prefix);
+		$cached = $this->cache->get($prefix);
 		if (is_string($cached) === true) {
 			return new DataResponse(data: ['suffixes' => $cached]);
 		}
@@ -173,7 +181,7 @@ class BreachProxyController extends Controller {
 		} catch (Throwable $e) {
 			// Soft-degrade: never log the prefix together with a user id (privacy).
 			$this->logger->warning(
-				'Doriath: HIBP range lookup failed: ' . $e->getMessage(),
+				'Keepiq: HIBP range lookup failed: ' . $e->getMessage(),
 				['app' => Application::APP_ID]
 			);
 			return new DataResponse(
@@ -182,7 +190,7 @@ class BreachProxyController extends Controller {
 			);
 		}//end try
 
-		$this->cache?->set($prefix, $body, self::CACHE_TTL);
+		$this->cache->set($prefix, $body, self::CACHE_TTL);
 
 		return new DataResponse(data: ['suffixes' => $body]);
 	}//end range()

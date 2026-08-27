@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Member Controller
+ * Keepiq Team Folder Member Controller
  *
  * Authenticated API controller for team folder MEMBERSHIP
  * (team-folder-sharing §4.1, folder-permission-grades §3.1): list members,
@@ -18,7 +18,7 @@
  * moved with the methods.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -31,11 +31,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\TeamFolderService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Application Secrets Controller
+ * Keepiq Application Secrets Controller
  *
  * Bearer-authenticated machine secret-store surface for a registered
  * application. Returns the application's own secrets as the versioned
@@ -19,7 +19,7 @@
  * via updatedAt and the audit trail).
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -32,20 +32,20 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Exception\NotFoundException;
-use OCA\Doriath\Service\MachineSecretEnvelopeService;
-use OCA\Doriath\Service\MachineSecretResponseService;
-use OCA\Doriath\Service\SecretService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\MachineSecretEnvelopeService;
+use OCA\Keepiq\Service\MachineSecretResponseService;
+use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -98,7 +98,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 		private MachineSecretEnvelopeService $envelopeService,
 		private MachineSecretResponseService $responseService,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

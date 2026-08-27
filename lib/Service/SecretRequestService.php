@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Request Service
+ * Keepiq Secret Request Service
  *
  * The SecretRequest lifecycle: create / fill / approve / decline / list
  * over SecretRequest rows. The preconditions and authorization rules live
@@ -11,7 +11,7 @@
  * moves the rows between those decisions.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,14 +24,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
@@ -187,7 +187,7 @@ class SecretRequestService {
 
 		$this->logger->info(
 			'Filled secret request ' . $current->getId() . ' for secret ' . $current->getSecretId(),
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		$this->outbox->announceFulfilled(request: $current);
@@ -458,7 +458,7 @@ class SecretRequestService {
 				$secretService->delete($shell->getId(), $userId);
 			} catch (Throwable $cleanup) {
 				$this->logger->error(
-					'Doriath: could not roll back the request placeholder: ' . $cleanup->getMessage(),
+					'Keepiq: could not roll back the request placeholder: ' . $cleanup->getMessage(),
 					['exception' => $cleanup]
 				);
 			}
@@ -586,7 +586,7 @@ class SecretRequestService {
 
 		$this->logger->info(
 			'Approved secret request ' . $requestId . ' for secret ' . $entity->getSecretId(),
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		return $this->mapper->update($entity);
@@ -615,7 +615,7 @@ class SecretRequestService {
 
 		$this->logger->info(
 			'Declined secret request ' . $requestId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		$updated = $this->mapper->update($entity);
@@ -694,7 +694,7 @@ class SecretRequestService {
 
 		$this->logger->info(
 			'Expired secret request ' . $request->getId(),
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		return $request;

@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Secret Request Controller
+ * Keepiq Secret Request Controller
  *
  * Authenticated API controller for SecretRequest CRUD (scaffold). The
  * #[PublicPage] two-phase fill-in endpoint is deferred to the full
  * implement-secret-requests build cycle.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,13 +21,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -269,7 +269,7 @@ class SecretRequestController extends OCSController {
 	 * @param string|null $name Name for a FRESH request's created Secret
 	 * @param string|null $folderId Folder for that created Secret
 	 *
-	 * @return \OCA\Doriath\Db\SecretRequest
+	 * @return \OCA\Keepiq\Db\SecretRequest
 	 *
 	 * @throws InvalidArgumentException Propagated from the service.
 	 */
@@ -283,7 +283,7 @@ class SecretRequestController extends OCSController {
 		string $userId,
 		?string $name = null,
 		?string $folderId = null,
-	): \OCA\Doriath\Db\SecretRequest {
+	): \OCA\Keepiq\Db\SecretRequest {
 		if ($mode === self::MODE_APPLICATION) {
 			return $this->service->createForApplication(
 				secretId: $secretId,

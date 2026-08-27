@@ -3,7 +3,7 @@
  * CryptoKey (offline-readonly-cache §2.2 / D1).
  *
  * The offline cache stores secret ciphertext as-is (already server-safe,
- * ADR-003), but the plaintext metadata Doriath keeps for search — secret
+ * ADR-003), but the plaintext metadata Keepiq keeps for search — secret
  * name/url and folder names — must NOT sit in the clear on a stolen locked
  * device. This module encrypts arbitrary JSON metadata at rest under the
  * VAULT UNLOCK KEY (the AES key derived from the master password on unlock),

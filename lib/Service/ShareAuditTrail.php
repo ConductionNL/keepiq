@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Share Audit Trail
+ * Keepiq Share Audit Trail
  *
  * The one place that knows which audit event each user-to-user share
  * transition emits and what identifiers its metadata carries. Extracted
@@ -12,7 +12,7 @@
  * Metadata is identifiers only — never key material (ADR-003).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,11 +25,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**

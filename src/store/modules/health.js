@@ -182,7 +182,7 @@ export const useHealthStore = defineStore('health', {
 			)
 
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/secrets'),
+				generateUrl('/apps/keepiq/api/v1/secrets'),
 				{ params: { limit: 100 } },
 			)
 			const items = response?.data?.items ?? []

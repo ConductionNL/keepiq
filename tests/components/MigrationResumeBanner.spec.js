@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `src/components/MigrationResumeBanner.vue`.
@@ -135,7 +135,7 @@ describe('MigrationResumeBanner', () => {
 		await wrapper.vm.$nextTick()
 
 		expect(wrapper.text()).toContain('Your previous master password')
-		expect(wrapper.find('.doriath-migration-banner__form').exists()).toBe(true)
+		expect(wrapper.find('.keepiq-migration-banner__form').exists()).toBe(true)
 	})
 
 	it('withholds the form while the vault is locked', async () => {
@@ -148,7 +148,7 @@ describe('MigrationResumeBanner', () => {
 		wrapper.vm.expanded = true
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('.doriath-migration-banner__form').exists()).toBe(false)
+		expect(wrapper.find('.keepiq-migration-banner__form').exists()).toBe(false)
 		expect(wrapper.text()).toContain('Unlock your vault first')
 	})
 

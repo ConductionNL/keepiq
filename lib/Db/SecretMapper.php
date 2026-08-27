@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Secret Mapper
+ * Keepiq Secret Mapper
  *
  * Database mapper for secret entities, including filtered/sorted/paginated
  * listing, plaintext-metadata search, and folder-cascade helpers.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;

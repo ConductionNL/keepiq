@@ -5,7 +5,7 @@
  * (PUT /api/v1/applications/{id}/lease-policy).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,14 +21,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\LeaseAdminController;
-use OCA\Doriath\Db\Application;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Db\MachineLeaseMapper;
-use OCA\Doriath\Service\LeaseService;
+use OCA\Keepiq\Controller\LeaseAdminController;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Db\MachineLeaseMapper;
+use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;

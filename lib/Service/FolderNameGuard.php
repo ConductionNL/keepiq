@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Folder Name Guard
+ * Keepiq Folder Name Guard
  *
  * Sibling-uniqueness of folder names. Siblings share the same owner and the
  * same parent, so the guard is the single place that knows what "already
@@ -10,7 +10,7 @@
  * therefore have to run the same check.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,10 +23,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Exception\DuplicateFolderNameException;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Exception\DuplicateFolderNameException;
 
 /**
  * Enforces sibling-uniqueness of folder names.

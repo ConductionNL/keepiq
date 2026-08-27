@@ -71,6 +71,7 @@ export const useDelegationStore = defineStore('delegation', {
 		 *
 		 * @param {string} secretId The Secret ID
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
 		 */
 		async fetchDelegations(secretId) {
 			this.loading = true
@@ -78,7 +79,7 @@ export const useDelegationStore = defineStore('delegation', {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/delegations`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/delegations`,
 					),
 				)
 				this.delegations = response.data || []
@@ -107,7 +108,7 @@ export const useDelegationStore = defineStore('delegation', {
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/delegations`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/delegations`,
 					),
 					{ delegatedTo },
 				)
@@ -138,7 +139,7 @@ export const useDelegationStore = defineStore('delegation', {
 		async fetchCapabilities() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/delegations/capabilities'),
+					generateUrl('/apps/keepiq/api/v1/delegations/capabilities'),
 				)
 				this.isVaultAdmin = response.data?.isVaultAdmin === true
 			} catch (e) {
@@ -165,7 +166,7 @@ export const useDelegationStore = defineStore('delegation', {
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/delegations/handover`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/delegations/handover`,
 					),
 				)
 				this.delegations.push(response.data)
@@ -186,6 +187,7 @@ export const useDelegationStore = defineStore('delegation', {
 		 *
 		 * @param {string} secretId The Secret ID
 		 * @return {Promise<number>} Removed count
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-reclaim-delegation
 		 */
 		async reclaimDelegation(secretId) {
 			this.loading = true
@@ -193,7 +195,7 @@ export const useDelegationStore = defineStore('delegation', {
 			try {
 				const response = await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/secrets/${secretId}/delegations/reclaim`,
+						`/apps/keepiq/api/v1/secrets/${secretId}/delegations/reclaim`,
 					),
 				)
 				// Drop temporary rows locally to match the server-side

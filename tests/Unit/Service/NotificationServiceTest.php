@@ -4,7 +4,7 @@
  * Unit tests for NotificationService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,9 +17,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\IConfig;
 use OCP\Notification\IManager;
 use OCP\Notification\INotification;
@@ -100,7 +100,7 @@ class NotificationServiceTest extends TestCase {
 	public function testNotifyOptedOutReturnsFalse(): void {
 		$this->config
 			->method('getUserValue')
-			->with('alice', 'doriath', 'notify_shares', '1')
+			->with('alice', 'keepiq', 'notify_shares', '1')
 			->willReturn('0');
 
 		$this->manager->expects($this->never())->method('createNotification');
@@ -143,7 +143,7 @@ class NotificationServiceTest extends TestCase {
 	public function testNotifyDefaultOptInDelivers(): void {
 		$this->config
 			->method('getUserValue')
-			->with('alice', 'doriath', 'notify_shares', '1')
+			->with('alice', 'keepiq', 'notify_shares', '1')
 			->willReturn('1');
 
 		$notification = $this->createMock(originalClassName: INotification::class);
@@ -179,7 +179,7 @@ class NotificationServiceTest extends TestCase {
 		// Opt-out path: notify_requests=0 -> dispatch suppressed.
 		$this->config
 			->method('getUserValue')
-			->with('alice', 'doriath', 'notify_requests', '1')
+			->with('alice', 'keepiq', 'notify_requests', '1')
 			->willReturn('0');
 
 		$this->manager->expects($this->never())->method('createNotification');
@@ -204,7 +204,7 @@ class NotificationServiceTest extends TestCase {
 	public function testNotifyRequestFulfilledDeliversWhenOptedIn(): void {
 		$this->config
 			->method('getUserValue')
-			->with('alice', 'doriath', 'notify_requests', '1')
+			->with('alice', 'keepiq', 'notify_requests', '1')
 			->willReturn('1');
 
 		$notification = $this->createMock(originalClassName: INotification::class);

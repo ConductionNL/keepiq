@@ -20,12 +20,12 @@
 			class="passkey-display__invalid"
 			data-testid="passkey-invalid">
 			<AlertCircleOutline :size="20" />
-			<span>{{ t('doriath', 'Not a valid passkey credential') }}</span>
+			<span>{{ t('keepiq', 'Not a valid passkey credential') }}</span>
 		</div>
 
 		<dl v-else class="passkey-display__fields">
 			<div class="passkey-display__field">
-				<dt>{{ t('doriath', 'Site') }}</dt>
+				<dt>{{ t('keepiq', 'Site') }}</dt>
 				<dd data-testid="passkey-site">
 					{{
 						credential.rpName
@@ -37,7 +37,7 @@
 			<div
 				v-if="credential.userName || credential.userDisplayName"
 				class="passkey-display__field">
-				<dt>{{ t('doriath', 'Account') }}</dt>
+				<dt>{{ t('keepiq', 'Account') }}</dt>
 				<dd data-testid="passkey-account">
 					{{ credential.userDisplayName || credential.userName }}
 					<span
@@ -48,21 +48,21 @@
 				</dd>
 			</div>
 			<div class="passkey-display__field">
-				<dt>{{ t('doriath', 'Credential ID') }}</dt>
+				<dt>{{ t('keepiq', 'Credential ID') }}</dt>
 				<dd data-testid="passkey-credential-id">{{ truncatedId }}</dd>
 			</div>
 			<div v-if="credential.transports.length" class="passkey-display__field">
-				<dt>{{ t('doriath', 'Transports') }}</dt>
+				<dt>{{ t('keepiq', 'Transports') }}</dt>
 				<dd data-testid="passkey-transports">
 					{{ credential.transports.join(', ') }}
 				</dd>
 			</div>
 			<div v-if="credential.createdAt" class="passkey-display__field">
-				<dt>{{ t('doriath', 'Created') }}</dt>
+				<dt>{{ t('keepiq', 'Created') }}</dt>
 				<dd data-testid="passkey-created">{{ createdDisplay }}</dd>
 			</div>
 			<div class="passkey-display__field">
-				<dt>{{ t('doriath', 'Private key') }}</dt>
+				<dt>{{ t('keepiq', 'Private key') }}</dt>
 				<dd class="passkey-display__key-row">
 					<span data-testid="passkey-private-key">{{
 						revealed ? credential.privateKey : maskedKey
@@ -72,8 +72,8 @@
 						class="passkey-display__reveal"
 						:aria-label="
 							revealed
-								? t('doriath', 'Hide private key')
-								: t('doriath', 'Show private key')
+								? t('keepiq', 'Hide private key')
+								: t('keepiq', 'Show private key')
 						"
 						data-testid="passkey-reveal"
 						@click="revealed = !revealed">
@@ -81,7 +81,7 @@
 					</button>
 					<CopyButton
 						:value="credential.privateKey"
-						:label="t('doriath', 'Copy private key')"
+						:label="t('keepiq', 'Copy private key')"
 						data-testid="passkey-copy-key" />
 				</dd>
 			</div>

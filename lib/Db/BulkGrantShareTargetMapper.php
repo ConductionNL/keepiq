@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Bulk-Grant Share Target Mapper
+ * Keepiq Bulk-Grant Share Target Mapper
  *
  * Reads and cascades over `doriath_share_targets` keyed on the BULK GRANT that
  * produced each row, rather than on the row's own identity.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\QBMapper;
 use OCP\IDBConnection;

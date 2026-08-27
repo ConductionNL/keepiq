@@ -41,6 +41,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} options Optional overrides for filters/sort/page.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 * @spec openspec/specs/secrets/spec.md#requirement-search
 		 */
 		async fetchSecrets(options = {}) {
 			this.loading = true
@@ -95,7 +97,7 @@ export const useSecretStore = defineStore('secret', {
 
 				try {
 					const response = await axios.get(
-						generateUrl('/apps/doriath/api/v1/secrets'),
+						generateUrl('/apps/keepiq/api/v1/secrets'),
 						{ params },
 					)
 					this.secrets = response.data.items || []
@@ -180,6 +182,7 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {string} id The secret ID.
 		 * @return {Promise<object>} The secret with decrypted key/login/additionalFields.
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async fetchSecret(id) {
 			this.loading = true
@@ -197,7 +200,7 @@ export const useSecretStore = defineStore('secret', {
 
 				try {
 					const response = await axios.get(
-						generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
+						generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
 					)
 					const secret = response.data
 					this.currentSecret = await this.decryptSecret(secret)
@@ -270,6 +273,7 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, ...).
 		 * @return {Promise<object>} The created secret (server response).
+		 * @spec openspec/specs/secrets/spec.md#requirement-create-secret
 		 */
 		async createSecret(data) {
 			const session = useSessionStore()
@@ -309,7 +313,7 @@ export const useSecretStore = defineStore('secret', {
 			}
 
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/secrets'),
+				generateUrl('/apps/keepiq/api/v1/secrets'),
 				payload,
 			)
 			return response.data
@@ -321,6 +325,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string} id The secret ID.
 		 * @param {object} data The fields to change.
 		 * @return {Promise<object>} The updated secret (server response).
+		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 		 */
 		async updateSecret(id, data) {
 			const session = useSessionStore()
@@ -372,7 +377,7 @@ export const useSecretStore = defineStore('secret', {
 			}
 
 			const response = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/secrets/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
 				payload,
 			)
 
@@ -446,9 +451,10 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {string} id The secret ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-delete-secret
 		 */
 		async deleteSecret(id) {
-			await axios.delete(generateUrl(`/apps/doriath/api/v1/secrets/${id}`))
+			await axios.delete(generateUrl(`/apps/keepiq/api/v1/secrets/${id}`))
 			this.secrets = this.secrets.filter((s) => s.id !== id)
 		},
 

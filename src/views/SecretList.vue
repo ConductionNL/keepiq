@@ -6,9 +6,9 @@
 			<CnFolderSidebar
 				:folders="folders"
 				:selectedId="selectedFolderId"
-				:allLabel="t('doriath', 'All secrets')"
+				:allLabel="t('keepiq', 'All secrets')"
 				allowCreate
-				:createLabel="t('doriath', 'New folder')"
+				:createLabel="t('keepiq', 'New folder')"
 				@select="selectFolder"
 				@create="openCreateFolder" />
 		</div>
@@ -28,7 +28,7 @@
 					<template #icon>
 						<FolderPlus :size="20" />
 					</template>
-					{{ t('doriath', 'New folder') }}
+					{{ t('keepiq', 'New folder') }}
 				</NcButton>
 				<!-- Ask someone for a credential (request-first-secret-requests):
 				     reachable with an EMPTY vault, because a requester has nothing
@@ -42,7 +42,7 @@
 					<template #icon>
 						<AccountQuestion :size="20" />
 					</template>
-					{{ t('doriath', 'Ask for a credential') }}
+					{{ t('keepiq', 'Ask for a credential') }}
 				</NcButton>
 				<NcButton
 					variant="secondary"
@@ -52,7 +52,7 @@
 					<template #icon>
 						<Import :size="20" />
 					</template>
-					{{ t('doriath', 'Import') }}
+					{{ t('keepiq', 'Import') }}
 				</NcButton>
 
 				<!-- Team folder sharing (team-folder-sharing §5.1): only for a
@@ -66,7 +66,7 @@
 					<template #icon>
 						<AccountGroup :size="20" />
 					</template>
-					{{ t('doriath', 'Team sharing') }}
+					{{ t('keepiq', 'Team sharing') }}
 				</NcButton>
 
 				<!-- Secret-type filter (passkey-item-type §3.3): show only one
@@ -79,40 +79,40 @@
 					class="secret-list-view__type-filter"
 					:modelValue="typeFilterOption"
 					:options="typeFilterOptions"
-					:inputLabel="t('doriath', 'Type')"
+					:inputLabel="t('keepiq', 'Type')"
 					:clearable="true"
-					:placeholder="t('doriath', 'All types')"
+					:placeholder="t('keepiq', 'All types')"
 					data-testid="secret-type-filter"
 					@update:modelValue="
 						onTypeFilter($event ? $event.value : null)
 					" />
 
 				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
-				<NcActions :menuName="t('doriath', 'My data')">
+				<NcActions :menuName="t('keepiq', 'My data')">
 					<NcActionButton
 						data-testid="open-new-send"
 						@click="newSendOpen = true">
-						{{ t('doriath', 'New ephemeral send') }}
+						{{ t('keepiq', 'New ephemeral send') }}
 					</NcActionButton>
 					<NcActionButton
 						data-testid="open-my-sends"
 						@click="mySendsOpen = true">
-						{{ t('doriath', 'My ephemeral sends') }}
+						{{ t('keepiq', 'My ephemeral sends') }}
 					</NcActionButton>
 					<NcActionButton @click="openExport">
-						{{ t('doriath', 'Export data') }}
+						{{ t('keepiq', 'Export data') }}
 					</NcActionButton>
 					<NcActionButton
 						:disabled="vaultLocked"
 						data-testid="cxp-transfer"
 						@click="openCxp">
-						{{ t('doriath', 'Encrypted transfer (CXP)') }}
+						{{ t('keepiq', 'Encrypted transfer (CXP)') }}
 					</NcActionButton>
 					<NcActionButton @click="openGdpr">
-						{{ t('doriath', 'GDPR export') }}
+						{{ t('keepiq', 'GDPR export') }}
 					</NcActionButton>
 					<NcActionButton @click="deletionOpen = true">
-						{{ t('doriath', 'Delete my Doriath data') }}
+						{{ t('keepiq', 'Delete my Keepiq data') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -187,7 +187,7 @@
 				data-testid="bulk-action-bar">
 				<span data-testid="bulk-selection-count">
 					{{
-						t('doriath', '{count} selected', {
+						t('keepiq', '{count} selected', {
 							count: bulkStore.selectionCount,
 						})
 					}}
@@ -196,31 +196,31 @@
 					variant="secondary"
 					data-testid="bulk-open-move"
 					@click="bulkDialog = 'move'">
-					{{ t('doriath', 'Move') }}
+					{{ t('keepiq', 'Move') }}
 				</NcButton>
 				<NcButton
 					variant="secondary"
 					data-testid="bulk-open-share"
 					@click="bulkDialog = 'share'">
-					{{ t('doriath', 'Share') }}
+					{{ t('keepiq', 'Share') }}
 				</NcButton>
 				<NcButton
 					variant="secondary"
 					data-testid="bulk-open-team-folder"
 					@click="bulkDialog = 'teamFolder'">
-					{{ t('doriath', 'Add to team folder') }}
+					{{ t('keepiq', 'Add to team folder') }}
 				</NcButton>
 				<NcButton
 					variant="error"
 					data-testid="bulk-open-delete"
 					@click="bulkDialog = 'delete'">
-					{{ t('doriath', 'Delete') }}
+					{{ t('keepiq', 'Delete') }}
 				</NcButton>
 				<NcButton
 					variant="tertiary"
 					data-testid="bulk-clear-selection"
 					@click="bulkStore.clearSelection()">
-					{{ t('doriath', 'Clear selection') }}
+					{{ t('keepiq', 'Clear selection') }}
 				</NcButton>
 			</div>
 
@@ -233,16 +233,16 @@
 				:schema="listSchema"
 				:loading="loading"
 				:pagination="pagination"
-				:addLabel="offlineReadOnly ? '' : t('doriath', 'New secret')"
+				:addLabel="offlineReadOnly ? '' : t('keepiq', 'New secret')"
 				addIcon="Plus"
 				inlineSearch
 				:searchValue="searchTerm"
-				:searchPlaceholder="t('doriath', 'Search secrets')"
+				:searchPlaceholder="t('keepiq', 'Search secrets')"
 				showSortSelect
 				:sortSelectOptions="sortOptions"
 				:sortSelectValue="sortField"
 				rowKey="id"
-				:emptyText="t('doriath', 'No secrets yet')"
+				:emptyText="t('keepiq', 'No secrets yet')"
 				@add="openCreateSecret"
 				@search="onSearch"
 				@sortChange="onSort"
@@ -257,7 +257,7 @@
 							class="secret-list-view__check"
 							:checked="bulkStore.selectedIds.includes(object.id)"
 							:aria-label="
-								t('doriath', 'Select {name}', { name: object.name })
+								t('keepiq', 'Select {name}', { name: object.name })
 							"
 							:data-testid="`bulk-check-${object.id}`"
 							@click="onRowCheck(object, $event)" />
@@ -277,7 +277,7 @@
 							:checked="allCurrentSelected"
 							data-testid="bulk-select-all"
 							@change="onSelectAll" />
-						<span>{{ t('doriath', 'Select all') }}</span>
+						<span>{{ t('keepiq', 'Select all') }}</span>
 					</label>
 				</template>
 			</CnIndexPage>
@@ -481,12 +481,18 @@ export default {
 			}
 		},
 
-		/** Minimal schema so CnIndexPage can offer cards/table fallbacks. */
+		/**
+		 * Minimal schema so CnIndexPage can offer cards/table fallbacks.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-secret-list-rows-must-be-keyboard-operable
+		 */
 		listSchema() {
 			return {
 				properties: {
-					name: { title: t('doriath', 'Name'), type: 'string' },
-					url: { title: t('doriath', 'URL'), type: 'string' },
+					name: { title: t('keepiq', 'Name'), type: 'string' },
+					url: { title: t('keepiq', 'URL'), type: 'string' },
 				},
 
 				configuration: {
@@ -496,12 +502,19 @@ export default {
 			}
 		},
 
+		/**
+		 * The sort fields the list offers, matching the columns the server
+		 * accepts for the paged secrets query.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
 		sortOptions() {
 			return [
-				{ value: 'name', label: t('doriath', 'Name') },
-				{ value: 'url', label: t('doriath', 'URL') },
-				{ value: 'created_at', label: t('doriath', 'Created') },
-				{ value: 'updated_at', label: t('doriath', 'Updated') },
+				{ value: 'name', label: t('keepiq', 'Name') },
+				{ value: 'url', label: t('keepiq', 'URL') },
+				{ value: 'created_at', label: t('keepiq', 'Created') },
+				{ value: 'updated_at', label: t('keepiq', 'Updated') },
 			]
 		},
 

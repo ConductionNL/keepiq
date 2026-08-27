@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Application
+ * Keepiq Application
  *
- * Main application class for the Doriath Nextcloud app.
+ * Main application class for the Keepiq Nextcloud app.
  *
  * @category AppInfo
- * @package  OCA\Doriath\AppInfo
+ * @package  OCA\Keepiq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\AppInfo;
+namespace OCA\Keepiq\AppInfo;
 
 use OCA\OpenRegister\AppHost\Bootstrap;
 use OCP\AppFramework\App;
@@ -28,7 +28,7 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Main application class for the Doriath Nextcloud app.
+ * Main application class for the Keepiq Nextcloud app.
  *
  * This class is the composition root and little else. The wiring itself lives
  * in single-purpose registrars in this namespace, each of which owns one
@@ -47,7 +47,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * reports both as never referenced (measured).
  */
 class Application extends App implements IBootstrap {
-	public const APP_ID = 'doriath';
+	public const APP_ID = 'keepiq';
 
 	/**
 	 * Constructor for the Application class.
@@ -88,7 +88,7 @@ class Application extends App implements IBootstrap {
 		// OpenRegister never fatals Nextcloud bootstrap — an aliased route simply
 		// surfaces a 5xx and /api/health reports the degraded state.
 		//
-		// Doriath then RE-REGISTERS its three domain-divergent plumbing classes
+		// Keepiq then RE-REGISTERS its three domain-divergent plumbing classes
 		// after this call so the concrete leaf classes win over the generic
 		// aliases (see DomainOverrideRegistrar).
 		//
@@ -96,14 +96,14 @@ class Application extends App implements IBootstrap {
 		// sort()s the app list, and Coordinator::registerApps() walks THAT sorted
 		// list calling OC_App::registerAutoloading($appId) and then $app->register()
 		// for one app at a time. So every app registers before the PSR-4 prefix of
-		// every alphabetically-LATER app exists: `doriath` < `openregister`, so
+		// every alphabetically-LATER app exists: `keepiq` < `openregister`, so
 		// OCA\OpenRegister\ is not autoloadable at this point on a perfectly
 		// healthy instance.
 		//
 		// Left unguarded, the resulting \Error aborted this ENTIRE register() —
 		// every registrar below never ran, and the audit listener recorded ZERO
 		// dispatched events. Coordinator::registerApps() catches the Throwable and
-		// logs an 'emergency', then `continue`s to the next app, so Doriath stayed
+		// logs an 'emergency', then `continue`s to the next app, so Keepiq stayed
 		// enabled and kept serving requests: nothing in the UI, and nothing in the
 		// app itself, reported that half its wiring was missing.
 		//
@@ -119,10 +119,10 @@ class Application extends App implements IBootstrap {
 		// below, and psalm does not carry that narrowing across a call.
 		if (class_exists(Bootstrap::class) === true) {
 			try {
-				Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Doriath']);
+				Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Keepiq']);
 			} catch (\Throwable) {
 				// AppHost present but unloadable: skip the generic plumbing;
-				// Doriath's own listeners and services MUST still register. No
+				// Keepiq's own listeners and services MUST still register. No
 				// logger is resolvable this early, so the skip is silent —
 				// /api/health surfaces the degraded AppHost state instead.
 			}
@@ -145,7 +145,7 @@ class Application extends App implements IBootstrap {
 
 		// Domain repair steps (BootstrapCertificateAuthority, InitializeSettings,
 		// SeedSecretTypes, the Seed* development data steps) are registered via
-		// info.xml <repair-steps>. InitializeSettings is the Doriath concrete
+		// info.xml <repair-steps>. InitializeSettings is the Keepiq concrete
 		// re-registered above (domain default-config seeding); the rest are
 		// crypto/seed domain steps owned by the app.
 	}//end register()
