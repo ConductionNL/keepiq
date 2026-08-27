@@ -159,6 +159,11 @@
 
 				<!-- Normal unlock mode -->
 				<template v-else>
+					<!-- ⚠️ DEV-ONLY — DO NOT COMMIT: dev auto-unlock status banner (see created()) -->
+					<NcNoteCard v-if="devUnlockNote" type="warning">
+						{{ devUnlockNote }}
+					</NcNoteCard>
+					<!-- ⚠️ END DEV-ONLY — DO NOT COMMIT -->
 					<NcButton
 						v-if="passkeyOffered"
 						variant="primary"
@@ -251,6 +256,11 @@ export default {
 			mismatchSettled: false,
 			/** @type {number|null} Debounce timer for mismatchSettled. */
 			mismatchTimer: null,
+			/**
+			 * ⚠️ DEV-ONLY — DO NOT COMMIT: status message for the dev
+			 * auto-unlock banner (set only from the dev block in created()).
+			 */
+			devUnlockNote: null,
 		}
 	},
 
@@ -385,6 +395,70 @@ export default {
 	 */
 	async created() {
 		await this.checkSuite()
+
+		/* ═══════════════════════════════════════════════════════════════════
+		 * ⚠️⚠️⚠️  DEV-ONLY AUTO-UNLOCK — DO NOT COMMIT THIS BLOCK  ⚠️⚠️⚠️
+		 * ═══════════════════════════════════════════════════════════════════
+		 * Skips retyping the master password on every page refresh while
+		 * developing the frontend. Reads the master password IN PLAINTEXT
+		 * from localStorage and unlocks the vault with it — this defeats the
+		 * entire security model of the lock screen and must NEVER ship.
+		 *
+		 * Enable (once, in the browser console):
+		 *   localStorage.setItem('DORIATH_DEV_MASTER_PASSWORD', 'your-password')
+		 * Disable:
+		 *   localStorage.removeItem('DORIATH_DEV_MASTER_PASSWORD')
+		 *
+		 * Safety nets: inert unless the localStorage key is set, and the
+		 * NODE_ENV guard makes webpack strip the block from production
+		 * builds (npm run build) even if it were committed by accident.
+		 * ═══════════════════════════════════════════════════════════════ */
+		if (process.env.NODE_ENV !== 'production') {
+			const devPassword = window.localStorage.getItem(
+				'DORIATH_DEV_MASTER_PASSWORD',
+			)
+			if (!devPassword) {
+				// No opt-in yet: say so ON the lock screen, so a missing key
+				// vs. a stale bundle is distinguishable at a glance (no banner
+				// at all = the browser is still running an old bundle).
+				this.devUnlockNote =
+					'DEV auto-unlock is built in but INACTIVE — no password '
+					+ 'stored. Run localStorage.setItem('
+					+ "'DORIATH_DEV_MASTER_PASSWORD', '<master password>') "
+					+ 'in the browser console (F12), then refresh.'
+			} else if (
+				!this.isFirstSetup
+				&& !this.checkFailed
+				&& this.sessionStore.isLocked
+			) {
+				// eslint-disable-next-line no-console
+				console.warn(
+					'%c⚠️ DORIATH DEV AUTO-UNLOCK ACTIVE — master password is '
+						+ 'stored in PLAINTEXT in localStorage. Disable with: '
+						+ "localStorage.removeItem('DORIATH_DEV_MASTER_PASSWORD')",
+					'color: red; font-weight: bold; font-size: 14px;',
+				)
+				this.masterPassword = devPassword
+				// Keep the "Checking your vault…" spinner up while the
+				// auto-unlock runs (the argon2 KDF takes a second or two),
+				// so the unlock form never flashes before the redirect.
+				this.suiteCheck = 'pending'
+				await this.handleUnlock()
+				if (this.sessionStore.isLocked) {
+					// Auto-unlock failed (stored password wrong?) — reveal
+					// the normal unlock form and say what happened.
+					this.suiteCheck = 'resolved'
+					this.devUnlockNote =
+						'DEV auto-unlock ran but FAILED — the stored password '
+						+ 'is probably wrong. Re-run localStorage.setItem('
+						+ "'DORIATH_DEV_MASTER_PASSWORD', …) with the correct "
+						+ 'master password.'
+				}
+			}
+		}
+		/* ═══════════════════════════════════════════════════════════════════
+		 * ⚠️⚠️⚠️  END DEV-ONLY AUTO-UNLOCK — DO NOT COMMIT  ⚠️⚠️⚠️
+		 * ═══════════════════════════════════════════════════════════════ */
 	},
 
 	beforeUnmount() {
@@ -459,8 +533,6 @@ export default {
 		 * lock screen — the master password always works.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
-		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-master-password-remains-the-canonical-fallback
 		 */
 		async handlePasskeyUnlock() {
 			this.loading = true
