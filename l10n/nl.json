@@ -616,7 +616,9 @@
         "Application": "Applicatie",
         "Secure message": "Beveiligd bericht",
         "Flows": "Flows",
-        "Flow": "Flow"
+        "Flow": "Flow",
+        "Registered by": "Geregistreerd door",
+        "Requested": "Aangevraagd"
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"
