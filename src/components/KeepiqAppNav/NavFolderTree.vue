@@ -39,6 +39,10 @@
 				:folders="node.children"
 				:depth="depth + 1"
 				:highlightId="highlightId" />
+			<!-- Router link on purpose (navigates INTO the hidden folder it
+			     stands for): its exact-active styling is the "…" row's own
+			     highlight; KeepiqAppNav.highlightFolderId leaves the parent
+			     row dark in that case so only ONE row reads as selected. -->
 			<NcAppNavigationItem
 				v-else-if="hasHiddenChildren(node)"
 				name="…"

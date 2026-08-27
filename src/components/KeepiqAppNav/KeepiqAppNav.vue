@@ -324,9 +324,23 @@ export default {
 			if (trail.length === 0) {
 				return null
 			}
-			return trail.length <= NAV_TREE_MAX_DEPTH
-				? active
-				: trail[NAV_TREE_MAX_DEPTH - 1]
+			if (trail.length <= NAV_TREE_MAX_DEPTH) {
+				return active
+			}
+			// One level below the cap with no siblings: the "…" node stands
+			// for EXACTLY this folder and highlights itself
+			// (NavFolderTree.isEllipsisActive) — highlighting the ancestor
+			// too would select two rows for one folder.
+			if (trail.length === NAV_TREE_MAX_DEPTH + 1) {
+				const parentId = trail[trail.length - 2]
+				const siblings = this.folderStore.folders.filter(
+					(f) => f.parentId === parentId,
+				)
+				if (siblings.length === 1) {
+					return null
+				}
+			}
+			return trail[NAV_TREE_MAX_DEPTH - 1]
 		},
 	},
 
