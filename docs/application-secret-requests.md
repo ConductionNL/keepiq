@@ -24,7 +24,7 @@ shows:
 | Column | Notes |
 |---|---|
 | Status | Pending, Fulfilled, Declined, Expired |
-| Expiry | "Expires <date>", "Expired <date>", or **"No expiry"** — a link that works forever |
+| Expiry | `Expires <date>`, `Expired <date>`, or **"No expiry"** — a link that works forever |
 | Token | Truncated. The full value goes to the clipboard only via **Copy fill link** |
 | Requested fields | The field names asked for, e.g. `key, login` |
 
@@ -58,7 +58,7 @@ submit against it. So it needs an off switch that does not depend on the
 application cooperating, and **Revoke** is it.
 
 Revoking asks for confirmation, and names the fields being asked for, because the
-consequences reach outside Doriath:
+consequences reach outside Keepiq:
 
 - the fill link stops working immediately, even if someone already has it;
 - the empty placeholder Secret the request created is deleted;

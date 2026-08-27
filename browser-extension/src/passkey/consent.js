@@ -14,8 +14,8 @@ document.getElementById('title').textContent =
 	op === 'create' ? 'Create a passkey?' : 'Sign in with a passkey?'
 document.getElementById('body').textContent =
 	op === 'create'
-		? `Create and store a new passkey for “${rp}” in your Doriath vault?`
-		: `Use a passkey stored in your Doriath vault to sign in to “${rp}”?`
+		? `Create and store a new passkey for “${rp}” in your Keepiq vault?`
+		: `Use a passkey stored in your Keepiq vault to sign in to “${rp}”?`
 
 function respond(allow) {
 	chrome.runtime.sendMessage({ type: 'passkey-consent-result', id, allow })

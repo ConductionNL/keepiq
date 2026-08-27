@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Compliance Report Controller
+ * Keepiq Compliance Report Controller
  *
  * Admin-only compliance surface (compliance-reporting §4): generate a
  * snapshot, list/show snapshots, warm metrics, and the export beacon.
  * Every method rejects a non-admin caller BEFORE any report logic runs.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,11 +21,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\ComplianceReport;
-use OCA\Doriath\Service\ComplianceReportService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\ComplianceReport;
+use OCA\Keepiq\Service\ComplianceReportService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

@@ -2,10 +2,10 @@
 
 /**
  * Unit tests for cross-app audit persistence of the SecretService in-process
- * application-vault seam (doriath#54).
+ * application-vault seam (keepiq#54).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -18,33 +18,33 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Doriath\Db\AuditEntry;
-use OCA\Doriath\Db\AuditEntryMapper;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\GroupShareMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Service\AuditService;
-use OCA\Doriath\Service\LinkShareService;
-use OCA\Doriath\Service\MigrationService;
-use OCA\Doriath\Service\SecretRequestService;
-use OCA\Doriath\Service\SecretService;
-use OCA\Doriath\Service\SecretTypeService;
-use OCA\Doriath\Service\ShareService;
+use OCA\Keepiq\Db\AuditEntry;
+use OCA\Keepiq\Db\AuditEntryMapper;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShareMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareService;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Reproduces the doriath#54 cross-app resolution context: OpenRegister (or any
+ * Reproduces the keepiq#54 cross-app resolution context: OpenRegister (or any
  * same-instance app) resolves SecretService via the DI container WITHOUT
- * booting Doriath's frontend Application::register, so the event dispatcher
+ * booting Keepiq's frontend Application::register, so the event dispatcher
  * carries NO AuditListener. The service is wired the way that container builds
  * it — the AuditService recorder autowired (its AuditEntryMapper has strictly
  * simpler dependencies than SecretMapper, which the same container already

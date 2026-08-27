@@ -4,7 +4,7 @@
  * Unit tests for AuditListener.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Listener
+ * @package  OCA\Keepiq\Tests\Unit\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,13 +17,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Listener;
+namespace OCA\Keepiq\Tests\Unit\Listener;
 
-use OCA\Doriath\Db\AuditEntry;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Listener\AuditListener;
-use OCA\Doriath\Service\AuditService;
+use OCA\Keepiq\Db\AuditEntry;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Listener\AuditListener;
+use OCA\Keepiq\Service\AuditService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

@@ -9,7 +9,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Edit secret')"
+		:name="t('keepiq', 'Edit secret')"
 		:open="open"
 		size="normal"
 		@update:open="onUpdateOpen">
@@ -22,63 +22,63 @@
 
 			<NcTextField
 				v-model="name"
-				:label="t('doriath', 'Name')"
+				:label="t('keepiq', 'Name')"
 				:required="true" />
 
 			<NcSelect
 				v-model="typeId"
 				:options="typeOptions"
+				:inputLabel="t('keepiq', 'Type')"
 				:reduce="(opt) => opt.value"
-				:inputLabel="t('doriath', 'Type')"
 				:clearable="false" />
 
 			<!-- Card / identity composite payloads (card-identity-items §3.1). -->
 			<template v-if="isCard">
 				<NcPasswordField
 					v-model="card.number"
-					:label="t('doriath', 'Card number')"
+					:label="t('keepiq', 'Card number')"
 					data-testid="card-number" />
 				<NcTextField
 					v-model="card.expiry"
-					:label="t('doriath', 'Expiry (MM/YY)')"
+					:label="t('keepiq', 'Expiry (MM/YY)')"
 					data-testid="card-expiry" />
 				<NcPasswordField
 					v-model="card.cvv"
-					:label="t('doriath', 'CVV')"
+					:label="t('keepiq', 'CVV')"
 					data-testid="card-cvv" />
 				<NcPasswordField
 					v-model="card.pin"
-					:label="t('doriath', 'PIN (optional)')"
+					:label="t('keepiq', 'PIN (optional)')"
 					data-testid="card-pin" />
 				<NcTextField
 					v-model="card.cardholder"
-					:label="t('doriath', 'Cardholder name')"
+					:label="t('keepiq', 'Cardholder name')"
 					data-testid="card-cardholder" />
 			</template>
 			<template v-else-if="isIdentity">
 				<NcTextField
 					v-model="identity.firstName"
-					:label="t('doriath', 'First name')"
+					:label="t('keepiq', 'First name')"
 					data-testid="identity-first-name" />
 				<NcTextField
 					v-model="identity.lastName"
-					:label="t('doriath', 'Last name')"
+					:label="t('keepiq', 'Last name')"
 					data-testid="identity-last-name" />
 				<NcTextField
 					v-model="identity.address"
-					:label="t('doriath', 'Address')"
+					:label="t('keepiq', 'Address')"
 					data-testid="identity-address" />
 				<NcTextField
 					v-model="identity.phone"
-					:label="t('doriath', 'Phone')"
+					:label="t('keepiq', 'Phone')"
 					data-testid="identity-phone" />
 				<NcTextField
 					v-model="identity.email"
-					:label="t('doriath', 'Email')"
+					:label="t('keepiq', 'Email')"
 					data-testid="identity-email" />
 				<NcPasswordField
 					v-model="identity.bsn"
-					:label="t('doriath', 'BSN')"
+					:label="t('keepiq', 'BSN')"
 					data-testid="identity-bsn" />
 			</template>
 			<div v-else class="secret-form__value-row">
@@ -88,8 +88,8 @@
 					:label="valueLabel" />
 				<NcButton
 					variant="tertiary-no-background"
-					:title="t('doriath', 'Generate a strong key')"
-					:aria-label="t('doriath', 'Generate a strong key')"
+					:title="t('keepiq', 'Generate a strong key')"
+					:aria-label="t('keepiq', 'Generate a strong key')"
 					@click="openGenerator">
 					<template #icon>
 						<Dice5 :size="20" />
@@ -103,9 +103,14 @@
 				@update:open="generatorOpen = $event"
 				@generated="onGenerated" />
 
-			<NcTextField v-model="url" :label="t('doriath', 'URL (optional)')" />
+			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
-			<NcTextField v-model="login" :label="t('doriath', 'Login (optional)')" />
+			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+
+			<AdditionalFieldsEditor
+				:members="additionalFields"
+				:disabled="saving || loading"
+				@update:members="additionalFields = $event" />
 
 			<NcNoteCard
 				v-if="!policyVerdict.compliant"
@@ -117,14 +122,14 @@
 
 		<template #actions>
 			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
-				{{ t('doriath', 'Cancel') }}
+				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton variant="primary" :disabled="!canSubmit" @click="submit">
 				<template #icon>
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<ContentSave v-else :size="20" />
 				</template>
-				{{ t('doriath', 'Save') }}
+				{{ t('keepiq', 'Save') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -142,6 +147,7 @@ import {
 } from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
+import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_FIELDS,
@@ -155,6 +161,7 @@ import {
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -165,6 +172,10 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
+		AdditionalFieldsEditor,
+		ContentSave,
+		Dice5,
+		KeyGeneratorModal,
 		NcButton,
 		NcDialog,
 		NcLoadingIcon,
@@ -172,9 +183,6 @@ export default {
 		NcPasswordField,
 		NcSelect,
 		NcTextField,
-		ContentSave,
-		Dice5,
-		KeyGeneratorModal,
 	},
 
 	props: {
@@ -203,6 +211,7 @@ export default {
 			value: '',
 			url: '',
 			login: '',
+			additionalFields: [],
 			generatorOpen: false,
 			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
 			identity: {
@@ -226,11 +235,19 @@ export default {
 			}))
 		},
 
+		/**
+		 * The label for the secret-value field, which reads "Note" for the
+		 * `note` system type and "Secret value" otherwise.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
 		valueLabel() {
 			const type = useSecretTypeStore().typesById[this.typeId]
 			return type && type.name === 'note'
-				? t('doriath', 'Note')
-				: t('doriath', 'Secret value')
+				? t('keepiq', 'Note')
+				: t('keepiq', 'Secret value')
 		},
 
 		/** The selected type's system name (card-identity-items §3.1). */
@@ -299,7 +316,13 @@ export default {
 		/**
 		 * Load + decrypt the secret and seed the form fields.
 		 *
+		 * Seeding the additional fields from the CURRENT decrypted copy is what bounds
+		 * the last-writer-wins window: a save rewrites the whole blob, so starting
+		 * from a stale copy would drop members another session added.
+		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		async load() {
 			this.loading = true
@@ -312,6 +335,12 @@ export default {
 				this.value = secret.key || ''
 				this.url = secret.url || ''
 				this.login = secret.login || ''
+				// From the DECRYPTED blob the store already parsed. Pre-filling from
+				// the current decrypted copy is also what bounds the known
+				// last-writer-wins window: the whole blob is rewritten on save, so an
+				// edit begun from a stale copy would drop members another session
+				// added meanwhile.
+				this.additionalFields = objectToMembers(secret.additionalFields)
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -333,7 +362,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to load secret')
+					|| t('keepiq', 'Failed to load secret')
 			} finally {
 				this.loading = false
 			}
@@ -377,6 +406,8 @@ export default {
 		 * Compute the changed-fields diff and PUT it via the store.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		async submit() {
 			if (!this.canSubmit) {
@@ -420,6 +451,19 @@ export default {
 					diff.login = this.login
 				}
 
+				// One blob is the storage unit, so ANY member change rewrites all of
+				// it. Sent only when something actually changed, and sent as `{}`
+				// rather than null when the last member is removed: null would mean
+				// "not provided", which the store reads as "leave the stored blob
+				// alone" — the opposite of what removing the last field means.
+				const nextMembers = membersToObject(this.additionalFields)
+				const priorMembers = membersToObject(
+					objectToMembers(o.additionalFields),
+				)
+				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
+					diff.additionalFields = nextMembers
+				}
+
 				let updated = this.original
 				if (Object.keys(diff).length > 0) {
 					updated = await useSecretStore().updateSecret(
@@ -436,7 +480,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to save secret')
+					|| t('keepiq', 'Failed to save secret')
 			} finally {
 				this.saving = false
 			}

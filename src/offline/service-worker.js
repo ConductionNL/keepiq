@@ -1,9 +1,9 @@
 /**
- * Doriath offline app-shell service worker (offline-readonly-cache §3).
+ * Keepiq offline app-shell service worker (offline-readonly-cache §3).
  *
  * Precaches the app shell and its own JS/CSS at install time so the SPA can
  * cold-load with no network, and serves that cache when — and only when — the
- * browser is offline. It NEVER caches secret material: `/apps/doriath/api/`
+ * browser is offline. It NEVER caches secret material: `/apps/keepiq/api/`
  * requests are excluded from the precache and are never stored.
  *
  * The cache name is keyed by the build version so a new deploy activates a
@@ -19,11 +19,11 @@
 // `typeof` guard below is what actually makes this safe — it works whether or
 // not the build injected a value.
 const CACHE_VERSION = typeof appVersion !== 'undefined' ? appVersion : 'dev'
-const CACHE_NAME = 'doriath-shell-' + CACHE_VERSION
+const CACHE_NAME = 'keepiq-shell-' + CACHE_VERSION
 
 /**
  * The app-shell document. The worker is served from the app root, so its
- * registration scope IS the shell URL (`…/index.php/apps/doriath/`). Any
+ * registration scope IS the shell URL (`…/index.php/apps/keepiq/`). Any
  * in-app route falls back to this one document when the network is gone —
  * the SPA router then resolves the requested route client-side.
  *
@@ -58,21 +58,21 @@ function isShellAsset(request) {
 	}
 	// Never cache API responses — they carry (encrypted) secret material and
 	// must always hit the network.
-	if (url.pathname.includes('/apps/doriath/api/')) {
+	if (url.pathname.includes('/apps/keepiq/api/')) {
 		return false
 	}
 	return (
-		/\/apps\/doriath\//.test(url.pathname)
+		/\/apps\/keepiq\//.test(url.pathname)
 		|| /\.(js|css|woff2?|ttf|png|svg|jpg|jpeg|gif|ico)$/.test(url.pathname)
 	)
 }
 
 /**
- * Precache the app shell and the doriath JS/CSS it loads.
+ * Precache the app shell and the keepiq JS/CSS it loads.
  *
  * The shell HTML is fetched once and scanned for its own `src`/`href` assets,
  * so the offline shell is genuinely bootable rather than an HTML document whose
- * scripts are missing. Nothing under `/apps/doriath/api/` is ever added.
+ * scripts are missing. Nothing under `/apps/keepiq/api/` is ever added.
  *
  * Failures are swallowed: a browser that installs the worker while offline
  * simply has no offline shell yet, which is strictly better than a failed
@@ -96,8 +96,8 @@ async function precacheShell() {
 		while (match !== null) {
 			const href = match[1].replace(/&amp;/g, '&')
 			if (
-				href.includes('/apps/doriath/')
-				&& !href.includes('/apps/doriath/api/')
+				href.includes('/apps/keepiq/')
+				&& !href.includes('/apps/keepiq/api/')
 			) {
 				assets.add(new URL(href, SHELL_URL).toString())
 			}
@@ -138,7 +138,19 @@ self.addEventListener('activate', (event) => {
 			await Promise.all(
 				names
 					.filter(
-						(n) => n.startsWith('doriath-shell-') && n !== CACHE_NAME,
+						/* The legacy `doriath-shell-` prefix is matched as well as the
+						   current one. This app was renamed from doriath to keepiq, and a
+						   browser that ran the old build still holds caches under the old
+						   name. Matching only the new prefix would leave a returning
+						   user's cached VAULT SHELL sitting in their browser forever,
+						   unreachable by this code and so impossible to purge on lock or
+						   logout - the eviction guarantee this cache is built around.
+						   Remove the legacy arm only once no client can still be running
+						   a pre-rename build. */
+						(n) =>
+							(n.startsWith('keepiq-shell-')
+								|| n.startsWith('doriath-shell-'))
+							&& n !== CACHE_NAME,
 					)
 					.map((n) => caches.delete(n)),
 			)
@@ -153,7 +165,7 @@ self.addEventListener('fetch', (event) => {
 	// ── The online path is deliberately NOT interposed on ────────────────────
 	//
 	// This worker used to call `event.respondWith()` for every same-origin
-	// `/apps/doriath/` GET, serving it cache-first and writing the response into
+	// `/apps/keepiq/` GET, serving it cache-first and writing the response into
 	// the cache with:
 	//
 	//     const response = await fetch(event.request)
@@ -161,22 +173,22 @@ self.addEventListener('fetch', (event) => {
 	//     return response
 	//
 	// The moment `clients.claim()` put a page under this worker's control, those
-	// requests started failing outright. Verified on CI (doriath run
+	// requests started failing outright. Verified on CI (keepiq run
 	// 30798827764, Playwright traces):
 	//
 	//   • workflows/audit-trail.spec.ts — the first, still-uncontrolled GET of
-	//     `/index.php/apps/doriath/lock` returned `200 text/html`;
+	//     `/index.php/apps/keepiq/lock` returned `200 text/html`;
 	//     `…/serviceworker.js` was then fetched and claimed the client; the very
 	//     next GET of that same URL came back with status `-1` / `x-unknown`
 	//     (`net::ERR_FAILED`). 15 e2e specs failed on it.
 	//   • workflows/folder-sharing.spec.ts — the lazily-loaded
-	//     `doriath-node_modules_argon2-browser_dist_argon2_wasm.js` chunk, which
+	//     `keepiq-node_modules_argon2-browser_dist_argon2_wasm.js` chunk, which
 	//     is requested only AFTER the worker has taken control, failed the same
 	//     way: status `-1`. The Share dialog surfaced
 	//     "Loading chunk … failed" and password-protected link shares could not
 	//     be created at all.
 	//
-	// For a user that means: a reload, a bookmark, or any second Doriath link
+	// For a user that means: a reload, a bookmark, or any second Keepiq link
 	// lands on the browser's network-error page, and link sharing is broken.
 	//
 	// The offline cache is a RESILIENCE feature, not a performance one — it buys

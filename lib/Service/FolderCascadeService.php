@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Folder Cascade Service
+ * Keepiq Folder Cascade Service
  *
  * The mechanics a folder delete cascades into: the per-subfolder resolution
  * actions (delete / move / keep) and the removal of a whole folder subtree's
@@ -10,7 +10,7 @@
  * allowed — that protocol lives in FolderDeletionService.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,13 +23,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\SecretMapper;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 

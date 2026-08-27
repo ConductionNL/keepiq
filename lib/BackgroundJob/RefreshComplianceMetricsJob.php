@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Refresh Compliance Metrics Job
+ * Keepiq Refresh Compliance Metrics Job
  *
  * Daily recompute of the compliance metrics cache (compliance-reporting
  * §3.1) so the admin posture card renders from a warm aggregate.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,10 +20,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\ComplianceReportService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\ComplianceReportService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -68,7 +68,7 @@ class RefreshComplianceMetricsJob extends TimedJob {
 			$this->service->refreshMetricsCache();
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: compliance metrics refresh failed: ' . $exception->getMessage(),
+				'Keepiq: compliance metrics refresh failed: ' . $exception->getMessage(),
 				['app' => Application::APP_ID]
 			);
 		}

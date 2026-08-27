@@ -4,7 +4,7 @@
  * Unit tests for the SettingsController write path (PUT/POST /api/settings).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,11 +20,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\SettingsController;
-use OCA\Doriath\Service\SettingsService;
-use OCA\Doriath\Settings\AdminSettings;
+use OCA\Keepiq\Controller\SettingsController;
+use OCA\Keepiq\Service\SettingsService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -35,7 +35,7 @@ use ReflectionMethod;
 /**
  * The canonical AppHost route table routes BOTH `PUT /api/settings`
  * (`settings#update`) and `POST /api/settings` (`settings#create`) into this
- * controller, and because Doriath ships the class itself no generic is aliased
+ * controller, and because Keepiq ships the class itself no generic is aliased
  * in to cover either.
  *
  * These tests assert the ITEM — that the write actually reaches
@@ -218,7 +218,7 @@ class SettingsControllerWriteTest extends TestCase {
 			$this->assertSame(
 				[AdminSettings::class],
 				$attributes[0]->getArguments(),
-				sprintf('SettingsController::%s() must gate on Doriath\'s own AdminSettings panel', $method)
+				sprintf('SettingsController::%s() must gate on Keepiq\'s own AdminSettings panel', $method)
 			);
 		}
 

@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit tests for the `useApplicationStore` Pinia store
@@ -76,7 +76,7 @@ describe('useApplicationStore', () => {
 
 			expect(post).toHaveBeenCalledOnce()
 			const [url, body] = post.mock.calls[0]
-			expect(url).toBe('/apps/doriath/api/v1/applications')
+			expect(url).toBe('/apps/keepiq/api/v1/applications')
 			expect(body).toEqual({
 				name: 'New',
 				description: null,
@@ -158,7 +158,7 @@ describe('useApplicationStore', () => {
 			await store.deleteApplication('app-1')
 
 			expect(del).toHaveBeenCalledWith(
-				'/apps/doriath/api/v1/applications/app-1',
+				'/apps/keepiq/api/v1/applications/app-1',
 			)
 			expect(store.applications.map((a) => a.id)).toEqual(['app-2'])
 			expect(store.pendingApplications).toHaveLength(0)

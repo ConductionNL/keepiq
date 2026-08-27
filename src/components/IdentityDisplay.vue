@@ -13,23 +13,23 @@
 	<div v-if="payload" class="identity-display" data-testid="identity-display">
 		<dl class="identity-display__fields">
 			<div v-if="fullName">
-				<dt>{{ t('doriath', 'Name') }}</dt>
+				<dt>{{ t('keepiq', 'Name') }}</dt>
 				<dd data-testid="identity-name">{{ fullName }}</dd>
 			</div>
 			<div v-if="payload.address">
-				<dt>{{ t('doriath', 'Address') }}</dt>
+				<dt>{{ t('keepiq', 'Address') }}</dt>
 				<dd>{{ payload.address }}</dd>
 			</div>
 			<div v-if="payload.phone">
-				<dt>{{ t('doriath', 'Phone') }}</dt>
+				<dt>{{ t('keepiq', 'Phone') }}</dt>
 				<dd>{{ payload.phone }}</dd>
 			</div>
 			<div v-if="payload.email">
-				<dt>{{ t('doriath', 'Email') }}</dt>
+				<dt>{{ t('keepiq', 'Email') }}</dt>
 				<dd>{{ payload.email }}</dd>
 			</div>
 			<div v-if="payload.bsn">
-				<dt>{{ t('doriath', 'BSN') }}</dt>
+				<dt>{{ t('keepiq', 'BSN') }}</dt>
 				<dd class="identity-display__masked">
 					<span data-testid="identity-bsn-value">{{
 						revealed ? payload.bsn : '•••••••••'
@@ -38,11 +38,11 @@
 						variant="tertiary"
 						data-testid="identity-reveal-bsn"
 						@click="revealed = !revealed">
-						{{ revealed ? t('doriath', 'Hide') : t('doriath', 'Show') }}
+						{{ revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show') }}
 					</NcButton>
 					<CopyButton
 						:value="payload.bsn"
-						:label="t('doriath', 'Copy BSN')" />
+						:label="t('keepiq', 'Copy BSN')" />
 				</dd>
 			</div>
 		</dl>

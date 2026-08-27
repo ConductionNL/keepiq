@@ -12,7 +12,7 @@
 <template>
 	<NcDialog
 		:name="
-			t('doriath', 'Add {count} secrets to a team folder', {
+			t('keepiq', 'Add {count} secrets to a team folder', {
 				count: bulk.selectionCount,
 			})
 		"
@@ -24,12 +24,12 @@
 			<NcSelect
 				v-model="target"
 				:options="teamFolderOptions"
-				:inputLabel="t('doriath', 'Team folder')"
+				:inputLabel="t('keepiq', 'Team folder')"
 				label="label"
 				data-testid="bulk-team-folder-select" />
 			<p v-if="fanOut.running" data-testid="bulk-tf-fanout">
 				{{
-					t('doriath', 'Fanning out to members — {done} / {total}', {
+					t('keepiq', 'Fanning out to members — {done} / {total}', {
 						done: fanOut.done,
 						total: fanOut.total,
 					})
@@ -39,14 +39,14 @@
 		</div>
 		<template #actions>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
 				:disabled="!target || bulk.progress.running || fanOut.running"
 				data-testid="bulk-team-folder-run"
 				@click="onRun">
-				{{ t('doriath', 'Add to team folder') }}
+				{{ t('keepiq', 'Add to team folder') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -135,12 +135,14 @@ export default {
 		 * idempotent membership fan-out once for the whole folder.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async onRun() {
 			await this.bulk.run(
 				this.bulk.selectedIds,
 				(id) => this.moveOne(id),
-				this.t('doriath', 'Adding to team folder'),
+				this.t('keepiq', 'Adding to team folder'),
 			)
 			try {
 				await this.teamFolderStore.runFanOut(this.target.id)
@@ -156,11 +158,12 @@ export default {
 		 * reconcile step makes the re-run a no-op for shared pairs).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
 			await this.bulk.retryFailed(
 				(id) => this.moveOne(id),
-				this.t('doriath', 'Retrying'),
+				this.t('keepiq', 'Retrying'),
 			)
 			try {
 				await this.teamFolderStore.runFanOut(this.target.id)

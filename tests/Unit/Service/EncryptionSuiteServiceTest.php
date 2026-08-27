@@ -4,7 +4,7 @@
  * Unit tests for EncryptionSuiteService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Service\CertificateAuthorityService;
-use OCA\Doriath\Service\EncryptionSuiteProvisioningService;
-use OCA\Doriath\Service\EncryptionSuiteService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Service\EncryptionSuiteProvisioningService;
+use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -104,6 +105,130 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$this->assertEquals(expected: 'user', actual: $suite->getOwnerType());
 		$this->assertEquals(expected: 'testuser', actual: $suite->getOwnerId());
 	}//end testCreateSuiteSuccess()
+
+	/**
+	 * A plain create is refused when the owner already has an active suite.
+	 *
+	 * Issue #289. The endpoint checked auth, parameters and the migration write-lock,
+	 * but never whether a suite already existed, so any authenticated session could
+	 * mint a second `active` suite. Resolution selects the NEWEST active suite, so new
+	 * secrets were sealed to a key the owner was not unlocking with — they decrypt for
+	 * nobody, and nothing reports it at the time it happens.
+	 *
+	 * Asserts NO INSERT — nothing is persisted, which is the whole guarantee.
+	 *
+	 * It deliberately does NOT assert that signing is skipped. An earlier version of
+	 * this fix checked state first so a refused create would spend no CA signature,
+	 * and that ordering was wrong: a caller who both held a suite AND submitted
+	 * malformed key material got 409, hiding a client error behind a state error. The
+	 * Newman contract assertion "invalid public key is a 400 client error (not 500)"
+	 * caught it. Signing now happens first, and the discarded certificate costs CPU
+	 * only — no database write, and serials are random rather than a counter.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testCreateSuiteRefusesASecondActiveSuite(): void {
+		$this->appConfig->method('getValueString')->willReturn('healthy');
+		$this->caService->method('signPublicKey')->willReturn('-----BEGIN CERTIFICATE-----...');
+		$this->mapper->method('countActiveByOwner')->willReturn(1);
+
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(exception: ConflictException::class);
+
+		$this->service->createSuite('user', 'testuser', 'pubkey-pem', 'encrypted-pk');
+	}//end testCreateSuiteRefusesASecondActiveSuite()
+
+	/**
+	 * Malformed key material reports as a CLIENT error even when a suite exists.
+	 *
+	 * The regression that the Newman contract suite caught and no unit test did: with
+	 * the duplicate check running first, a caller who both held an active suite and
+	 * submitted an unparseable public key received 409 instead of 400. Two things were
+	 * wrong with the request and the response named the one the caller could do least
+	 * about — "you already have a suite" tells them nothing about the garbage they
+	 * sent, and a client fixing their key material would have had no signal at all.
+	 *
+	 * Pinned here so the ordering cannot quietly flip back: the exception type IS the
+	 * contract, because the controller maps InvalidArgumentException to 400 and
+	 * ConflictException to 409.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testAMalformedKeyIsAClientErrorEvenWhenASuiteAlreadyExists(): void {
+		$this->appConfig->method('getValueString')->willReturn('healthy');
+		$this->mapper->method('countActiveByOwner')->willReturn(1);
+		$this->caService->method('signPublicKey')
+			->willThrowException(new InvalidArgumentException('Invalid public key PEM'));
+
+		$this->mapper->expects($this->never())->method('insert');
+
+		// InvalidArgumentException -> 400, NOT ConflictException -> 409.
+		$this->expectException(exception: InvalidArgumentException::class);
+
+		$this->service->createSuite('user', 'testuser', 'not-a-pem', 'encrypted-pk');
+	}//end testAMalformedKeyIsAClientErrorEvenWhenASuiteAlreadyExists()
+
+	/**
+	 * Compromise recovery still gets its successor while the old suite is active.
+	 *
+	 * The counterpart to the refusal above, and the reason the guard is a parameter
+	 * rather than an unconditional rule: for the duration of a migration an owner
+	 * legitimately holds two active suites, because the browser decrypts what it is
+	 * migrating with the old one while the successor takes new writes. A guard without
+	 * this opt-out would make key rotation impossible — which is also why the
+	 * invariant must not be a database uniqueness constraint.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testCompromiseRecoveryMayCreateASuccessorWhileOneIsActive(): void {
+		$this->appConfig->method('getValueString')->willReturn('healthy');
+		$this->caService->method('signPublicKey')->willReturn('-----BEGIN CERTIFICATE-----...');
+		// Never even asks: the successor path carries no single-active check, so the
+		// count cannot accidentally start governing key rotation.
+		$this->mapper->expects($this->never())->method('countActiveByOwner');
+
+		$this->mapper->expects($this->once())->method('insert');
+
+		$suite = $this->service->createSuccessorSuite(
+			ownerType: 'user',
+			ownerId: 'testuser',
+			publicKeyPem: 'pubkey-pem',
+			encryptedPrivateKey: 'encrypted-pk'
+		);
+
+		$this->assertEquals(expected: 'active', actual: $suite->getStatus());
+	}//end testCompromiseRecoveryMayCreateASuccessorWhileOneIsActive()
+
+	/**
+	 * The owner check is scoped to the owner, not global.
+	 *
+	 * A guard that counted active suites across the whole instance would refuse every
+	 * user after the first — the failure mode of a scoping bug here is a vault nobody
+	 * new can set up, so the parameters are pinned rather than assumed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
+	 */
+	public function testTheActiveSuiteCheckIsScopedToTheOwner(): void {
+		$this->appConfig->method('getValueString')->willReturn('healthy');
+		$this->caService->method('signPublicKey')->willReturn('-----BEGIN CERTIFICATE-----...');
+
+		$this->mapper->expects($this->once())
+			->method('countActiveByOwner')
+			->with('user', 'alice')
+			->willReturn(0);
+		$this->mapper->expects($this->once())->method('insert');
+
+		$this->service->createSuite('user', 'alice', 'pubkey-pem', 'encrypted-pk');
+	}//end testTheActiveSuiteCheckIsScopedToTheOwner()
 
 	/**
 	 * Test that createSuite throws when the CA is degraded.
@@ -291,7 +416,7 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$csr = (string)file_get_contents(__DIR__ . '/../fixtures/csr-4096.pem');
 
 		$this->appConfig->method('getValueString')
-			->with('doriath', 'ca_status', 'unknown')
+			->with('keepiq', 'ca_status', 'unknown')
 			->willReturn('healthy');
 
 		$this->caService->expects($this->once())

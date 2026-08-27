@@ -31,7 +31,7 @@
 					:data-testid="`attachment-name-${attachment.id}`">
 					{{
 						attachment.filename
-						|| t('doriath', '(undecryptable attachment)')
+						|| t('keepiq', '(undecryptable attachment)')
 					}}
 				</span>
 				<span class="attachment-panel__size">{{
@@ -39,7 +39,7 @@
 				}}</span>
 				<NcButton
 					variant="tertiary"
-					:aria-label="t('doriath', 'Download attachment')"
+					:aria-label="t('keepiq', 'Download attachment')"
 					:data-testid="`attachment-download-${attachment.id}`"
 					@click="store.download(attachment)">
 					<template #icon>
@@ -49,7 +49,7 @@
 				<NcButton
 					v-if="canManage"
 					variant="tertiary"
-					:aria-label="t('doriath', 'Delete attachment')"
+					:aria-label="t('keepiq', 'Delete attachment')"
 					:data-testid="`attachment-delete-${attachment.id}`"
 					@click="store.remove(secretId, attachment.id)">
 					<template #icon>
@@ -59,7 +59,7 @@
 			</li>
 		</ul>
 		<p v-else class="attachment-panel__empty">
-			{{ t('doriath', 'No attachments') }}
+			{{ t('keepiq', 'No attachments') }}
 		</p>
 
 		<div v-if="canManage" class="attachment-panel__upload">
@@ -67,7 +67,7 @@
 				ref="fileInput"
 				type="file"
 				class="attachment-panel__file-input"
-				:aria-label="t('doriath', 'Add attachment')"
+				:aria-label="t('keepiq', 'Add attachment')"
 				data-testid="attachment-file-input"
 				@change="onFilePicked" />
 			<NcButton
@@ -78,7 +78,7 @@
 				<template #icon>
 					<Paperclip :size="18" />
 				</template>
-				{{ t('doriath', 'Add attachment') }}
+				{{ t('keepiq', 'Add attachment') }}
 			</NcButton>
 		</div>
 	</div>

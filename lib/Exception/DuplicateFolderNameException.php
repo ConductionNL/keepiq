@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Duplicate Folder Name Exception
+ * Keepiq Duplicate Folder Name Exception
  *
  * Thrown when a folder name would collide with an existing sibling in the same
  * parent. Extends ConflictException so controllers map it to an HTTP 409
  * response without needing a dedicated catch clause.
  *
  * @category Exception
- * @package  OCA\Doriath\Exception
+ * @package  OCA\Keepiq\Exception
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Exception;
+namespace OCA\Keepiq\Exception;
 
 /**
  * Thrown when a folder name would collide with an existing sibling in the same parent.

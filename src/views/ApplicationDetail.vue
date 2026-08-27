@@ -26,7 +26,7 @@
 			<template #icon>
 				<ArrowLeft :size="20" />
 			</template>
-			{{ t('doriath', 'Back to applications') }}
+			{{ t('keepiq', 'Back to applications') }}
 		</NcButton>
 
 		<NcLoadingIcon
@@ -36,7 +36,7 @@
 
 		<NcEmptyContent
 			v-else-if="error"
-			:name="t('doriath', 'Cannot open application')"
+			:name="t('keepiq', 'Cannot open application')"
 			:description="error">
 			<template #icon>
 				<AlertCircleOutline />
@@ -62,26 +62,26 @@
 
 			<section class="application-detail__meta">
 				<dl class="application-detail__grid">
-					<dt>{{ t('doriath', 'Type') }}</dt>
+					<dt>{{ t('keepiq', 'Type') }}</dt>
 					<dd>{{ application.type }}</dd>
 
-					<dt>{{ t('doriath', 'Registered by') }}</dt>
+					<dt>{{ t('keepiq', 'Registered by') }}</dt>
 					<dd>
-						{{ application.registered_by || t('doriath', 'anonymous') }}
+						{{ application.registered_by || t('keepiq', 'anonymous') }}
 					</dd>
 
 					<dt v-if="application.approved_by">
-						{{ t('doriath', 'Approved by') }}
+						{{ t('keepiq', 'Approved by') }}
 					</dt>
 					<dd v-if="application.approved_by">
 						{{ application.approved_by }}
 					</dd>
 
-					<dt>{{ t('doriath', 'Created at') }}</dt>
+					<dt>{{ t('keepiq', 'Created at') }}</dt>
 					<dd>{{ formatDate(application.created_at) }}</dd>
 
 					<dt v-if="application.approved_at">
-						{{ t('doriath', 'Approved at') }}
+						{{ t('keepiq', 'Approved at') }}
 					</dt>
 					<dd v-if="application.approved_at">
 						{{ formatDate(application.approved_at) }}
@@ -90,14 +90,14 @@
 			</section>
 
 			<section class="application-detail__suite">
-				<h3>{{ t('doriath', 'Encryption suite') }}</h3>
+				<h3>{{ t('keepiq', 'Encryption suite') }}</h3>
 				<p v-if="suiteLoading">
-					{{ t('doriath', 'Loading certificate…') }}
+					{{ t('keepiq', 'Loading certificate…') }}
 				</p>
 				<NcNoteCard v-else-if="!certificate" type="warning">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'No active encryption suite for this application.',
 						)
 					}}
@@ -106,13 +106,13 @@
 					<p class="application-detail__suite-status">
 						{{
 							t(
-								'doriath',
+								'keepiq',
 								'Certificate active. The application decrypts secrets with its private key.',
 							)
 						}}
 					</p>
 					<details class="application-detail__cert">
-						<summary>{{ t('doriath', 'Show certificate') }}</summary>
+						<summary>{{ t('keepiq', 'Show certificate') }}</summary>
 						<pre class="application-detail__cert-pem">{{
 							certificate
 						}}</pre>
@@ -140,11 +140,11 @@
 				v-if="isAdmin"
 				class="application-detail__requests"
 				data-testid="application-requests-section">
-				<h3>{{ t('doriath', 'Outstanding secret requests') }}</h3>
+				<h3>{{ t('keepiq', 'Outstanding secret requests') }}</h3>
 				<p class="application-detail__requests-hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Credentials this application has asked people to fill in. A pending link works for anyone who has it, so revoke any that should no longer be usable.',
 						)
 					}}
@@ -157,7 +157,7 @@
 					variant="error"
 					data-testid="delete-button"
 					@click="confirmDelete">
-					{{ t('doriath', 'Delete application') }}
+					{{ t('keepiq', 'Delete application') }}
 				</NcButton>
 			</section>
 		</div>
@@ -253,12 +253,18 @@ export default {
 			return this.store.currentApplication
 		},
 
+		/**
+		 * The translated registration status of the application on show.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
+		 */
 		statusLabel() {
 			switch (this.application?.status) {
 				case 'active':
-					return this.t('doriath', 'Active')
+					return this.t('keepiq', 'Active')
 				case 'pending':
-					return this.t('doriath', 'Pending')
+					return this.t('keepiq', 'Pending')
 				default:
 					return this.application?.status || ''
 			}
@@ -287,6 +293,14 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Load the application and its active suite certificate.
+		 *
+		 * @param {string} id The application id.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		async load(id) {
 			this.loading = true
 			this.error = ''
@@ -297,7 +311,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					?? e?.message
-					?? this.t('doriath', 'Unknown error')
+					?? this.t('keepiq', 'Unknown error')
 			} finally {
 				this.loading = false
 			}
@@ -381,7 +395,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					?? e?.message
-					?? this.t('doriath', 'Delete failed')
+					?? this.t('keepiq', 'Delete failed')
 			}
 		},
 	},

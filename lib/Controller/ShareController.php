@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Share Controller
+ * Keepiq Share Controller
  *
  * Authenticated API controller for user-to-user secret-share CRUD
  * (scaffold). The full sharing flow (group expansion, delegation,
  * sync-on-update) is deferred to the implement-user-sharing build cycle.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,11 +21,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\ShareService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

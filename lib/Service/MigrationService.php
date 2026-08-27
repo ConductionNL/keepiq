@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Migration Service
+ * Keepiq Migration Service
  *
  * Tracks compromise recovery migrations (suite to suite).
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\SuiteMigration;
-use OCA\Doriath\Db\SuiteMigrationMapper;
-use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Event\SuiteMigrationStartedEvent;
-use OCA\Doriath\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
+use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
+use OCA\Keepiq\Exception\MigrationIncompleteException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -53,7 +53,7 @@ class MigrationService {
 	 * @param WriteLockService $writeLockService The write-lock oracle
 	 * @param LoggerInterface $logger The logger interface
 	 * @param IEventDispatcher|null $eventDispatcher The optional event dispatcher
-	 * @param \OCA\Doriath\Service\PasskeyService|null $passkeyService The passkey service (null when unwired)
+	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (null when unwired)
 	 *
 	 * @return void
 	 */
@@ -66,7 +66,7 @@ class MigrationService {
 		private WriteLockService $writeLockService,
 		private LoggerInterface $logger,
 		private ?IEventDispatcher $eventDispatcher = null,
-		private ?\OCA\Doriath\Service\PasskeyService $passkeyService = null,
+		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
 	}//end __construct()
 
@@ -90,7 +90,7 @@ class MigrationService {
 
 		$this->mapper->insert($migration);
 
-		$this->logger->info("Doriath: Compromise recovery started, migrating from {$oldSuiteId} to {$newSuiteId}");
+		$this->logger->info("Keepiq: Compromise recovery started, migrating from {$oldSuiteId} to {$newSuiteId}");
 
 		if ($this->eventDispatcher !== null) {
 			$this->eventDispatcher->dispatchTyped(
@@ -141,7 +141,7 @@ class MigrationService {
 		// it. MigrationController::commitRecord already guards this way.
 		if ($migration->getStatus() !== 'in_progress') {
 			$this->logger->info(
-				'Doriath: completeMigration called on an already-terminated migration; ignoring',
+				'Keepiq: completeMigration called on an already-terminated migration; ignoring',
 				['migrationId' => $migrationId, 'status' => $migration->getStatus()]
 			);
 
@@ -201,7 +201,7 @@ class MigrationService {
 		// envelopes are invalidated by EmergencyAccessSuiteRotationListener.
 		// Both already listen for the event dispatched below.
 		$this->logger->info(
-			"Doriath: Compromise recovery completed for migration {$migrationId}",
+			"Keepiq: Compromise recovery completed for migration {$migrationId}",
 			['hasErrors' => $hasErrors]
 		);
 
@@ -275,7 +275,7 @@ class MigrationService {
 			// revokeOwnerKeyMaterial already refuses to guess in this
 			// situation; this now matches it.
 			$this->logger->error(
-				'Doriath: refusing to terminate a migration whose owner cannot be resolved',
+				'Keepiq: refusing to terminate a migration whose owner cannot be resolved',
 				[
 					'migrationId' => $migration->getId(),
 					'oldSuiteId' => $migration->getOldSuiteId(),
@@ -325,7 +325,7 @@ class MigrationService {
 	private function revokeOwnerKeyMaterial(SuiteMigration $migration, ?string $ownerId): void {
 		if ($ownerId === null) {
 			$this->logger->error(
-				'Doriath: migration completed but owner could not be resolved — '
+				'Keepiq: migration completed but owner could not be resolved — '
 				. 'link shares and passkeys were NOT revoked and need manual review',
 				['migrationId' => $migration->getId(), 'oldSuiteId' => $migration->getOldSuiteId()]
 			);
@@ -378,7 +378,7 @@ class MigrationService {
 		}
 
 		$this->logger->warning(
-			'Doriath: refused to complete a migration with unattempted rows on the old suite',
+			'Keepiq: refused to complete a migration with unattempted rows on the old suite',
 			[
 				'migrationId' => $migration->getId(),
 				'oldSuiteId' => $migration->getOldSuiteId(),
@@ -435,7 +435,7 @@ class MigrationService {
 
 		if ($acceptUnrecoverable === $count) {
 			$this->logger->warning(
-				'Doriath: finalising a migration with acknowledged unrecoverable secrets',
+				'Keepiq: finalising a migration with acknowledged unrecoverable secrets',
 				[
 					'migrationId' => $migration->getId(),
 					'oldSuiteId' => $migration->getOldSuiteId(),
@@ -478,7 +478,7 @@ class MigrationService {
 			$ownerId = $this->suiteMapper->findById($suiteId)->getOwnerId();
 		} catch (DoesNotExistException) {
 			$this->logger->error(
-				'Doriath: cannot resolve migration owner — suite missing',
+				'Keepiq: cannot resolve migration owner — suite missing',
 				['suiteId' => $suiteId]
 			);
 			return null;

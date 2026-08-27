@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Secret Request Suite Lock Service
+ * Keepiq Secret Request Suite Lock Service
  *
  * The compromise-recovery half of the secret-request lifecycle. While a
  * requester migrates to a new EncryptionSuite, every pending request bound
@@ -12,7 +12,7 @@
  * SuiteMigrationCompleted listeners.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,10 +25,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretRequestMapper;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -73,7 +73,7 @@ class SecretRequestSuiteLockService {
 
 		$this->logger->info(
 			'Locked ' . $count . ' pending secret requests for compromised suite ' . $encryptionSuiteId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		return $count;
@@ -105,7 +105,7 @@ class SecretRequestSuiteLockService {
 
 		$this->logger->info(
 			'Unlocked ' . $count . ' secret requests by migrating suite ' . $oldEncryptionSuiteId . ' -> ' . $newEncryptionSuiteId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		return $count;

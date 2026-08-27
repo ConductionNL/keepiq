@@ -30,14 +30,14 @@
 				variant="secondary"
 				data-testid="rotation-mark-rotated"
 				@click="onMarkRotated">
-				{{ t('doriath', 'Mark rotated') }}
+				{{ t('keepiq', 'Mark rotated') }}
 			</NcButton>
 			<NcButton
 				v-if="canManage"
 				variant="tertiary"
 				data-testid="rotation-dismiss"
 				@click="onDismiss">
-				{{ t('doriath', 'Dismiss') }}
+				{{ t('keepiq', 'Dismiss') }}
 			</NcButton>
 		</div>
 
@@ -47,7 +47,7 @@
 			data-testid="rotation-required-note">
 			{{
 				t(
-					'doriath',
+					'keepiq',
 					'The credential has not changed since it was flagged — update the secret value first, then mark it rotated.',
 				)
 			}}
@@ -63,7 +63,7 @@
 				{{ expiryLabel }}
 			</span>
 			<span v-else class="rotation-panel__none">
-				{{ t('doriath', 'No expiry') }}
+				{{ t('keepiq', 'No expiry') }}
 			</span>
 
 			<template v-if="canManage">
@@ -71,27 +71,27 @@
 					v-model="editValue"
 					type="date"
 					class="rotation-panel__date"
-					:aria-label="t('doriath', 'Expiry date')"
+					:aria-label="t('keepiq', 'Expiry date')"
 					data-testid="expiry-input" />
 				<NcButton
 					variant="secondary"
 					data-testid="expiry-save"
 					@click="onSave">
-					{{ t('doriath', 'Set expiry') }}
+					{{ t('keepiq', 'Set expiry') }}
 				</NcButton>
 				<NcButton
 					v-if="expiresAt"
 					variant="tertiary"
 					data-testid="expiry-clear"
 					@click="onClear">
-					{{ t('doriath', 'Clear') }}
+					{{ t('keepiq', 'Clear') }}
 				</NcButton>
 				<NcButton
 					v-if="!openFlag"
 					variant="tertiary"
 					data-testid="rotation-flag-now"
 					@click="onFlag">
-					{{ t('doriath', 'Flag for rotation') }}
+					{{ t('keepiq', 'Flag for rotation') }}
 				</NcButton>
 			</template>
 		</div>
@@ -141,18 +141,24 @@ export default {
 			return this.store.flagsBySecretId[this.secretId] || null
 		},
 
+		/**
+		 * The chip text for the open rotation flag, named after the reason
+		 * that raised it (user request, policy expiry, suite compromise).
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
+		 */
 		flagLabel() {
 			const reasons = {
-				user_flagged: this.t('doriath', 'Rotation requested'),
-				policy_expiry: this.t('doriath', 'Rotation due — expired'),
+				user_flagged: this.t('keepiq', 'Rotation requested'),
+				policy_expiry: this.t('keepiq', 'Rotation due — expired'),
 				suite_compromise: this.t(
-					'doriath',
+					'keepiq',
 					'Rotation due — possible compromise',
 				),
 			}
-			return (
-				reasons[this.openFlag?.reason] || this.t('doriath', 'Rotation due')
-			)
+			return reasons[this.openFlag?.reason] || this.t('keepiq', 'Rotation due')
 		},
 
 		daysLeft() {
@@ -177,14 +183,22 @@ export default {
 			return 'rotation-panel__chip--ok'
 		},
 
+		/**
+		 * The chip text for the effective expiry, phrased as "Expired" once
+		 * the date has passed and "Expires" while it is still ahead.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
+		 */
 		expiryLabel() {
 			const date = new Date(
 				Date.parse(this.effectiveExpiry),
 			).toLocaleDateString()
 			if (this.daysLeft !== null && this.daysLeft < 0) {
-				return this.t('doriath', 'Expired {date}', { date })
+				return this.t('keepiq', 'Expired {date}', { date })
 			}
-			return this.t('doriath', 'Expires {date}', { date })
+			return this.t('keepiq', 'Expires {date}', { date })
 		},
 	},
 

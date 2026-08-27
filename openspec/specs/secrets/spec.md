@@ -4,14 +4,14 @@
 
 **OpenSpec changes:**
 - `implement-secrets` (2026-03-31) — Full implementation: Secret/Folder/SecretType CRUD, search, unified search, list/pagination, favicon, clipboard
-- `application-secret-delete` (2026-07-06) — In-process-only application-vault seam for same-instance trusted consumers (OpenRegister `credential-doriath-leaf`): `SecretService::deleteByApplication` (own-vault scoped, idempotent silent no-op, `secret.deleted` audit with application actor) + `SecretService::getByNameForApplication` (own-vault read-by-name, ciphertext intact, null on absent/cross-vault/ambiguous with no existence oracle, `application.secret_retrieved` audit parity with the machine read path); machine HTTP surface keeps its no-DELETE stance (canonical home is this spec, not `secret-store-api`, because it owns the SecretService lifecycle while store-api owns only the HTTP contract)
+- `application-secret-delete` (2026-07-06) — In-process-only application-vault seam for same-instance trusted consumers (OpenRegister `credential-keepiq-leaf`): `SecretService::deleteByApplication` (own-vault scoped, idempotent silent no-op, `secret.deleted` audit with application actor) + `SecretService::getByNameForApplication` (own-vault read-by-name, ciphertext intact, null on absent/cross-vault/ambiguous with no existence oracle, `application.secret_retrieved` audit parity with the machine read path); machine HTTP surface keeps its no-DELETE stance (canonical home is this spec, not `secret-store-api`, because it owns the SecretService lifecycle while store-api owns only the HTTP contract)
 - `request-first-secret-requests` (2026-08-18) — States the keyless exception the secret-requests capability depends on: a Secret MAY have an empty `key` ONLY while a pending SecretRequest targets it, as an explicit creation-time opt-in that is never the default, so the placeholder that spec mandates stops contradicting the key requirement here
 
 ## Purpose
 
 @e2e exclude No secrets CRUD UI is built in v0.1; all scenarios exercise the encrypted REST API or WebCrypto client logic — covered by integration tests (Postman/PHPUnit), not Playwright UI flows.
 
-Secrets are the core data entity in Doriath. A secret holds sensitive information (passwords, API keys, tokens, etc.) for a user or application. All sensitive fields are encrypted at rest using the owner's EncryptionSuite public certificate. Only the secret's name and URL are stored in plain text to allow listing and searching without decryption. Secrets can be organised into a folder hierarchy per user.
+Secrets are the core data entity in Keepiq. A secret holds sensitive information (passwords, API keys, tokens, etc.) for a user or application. All sensitive fields are encrypted at rest using the owner's EncryptionSuite public certificate. Only the secret's name and URL are stored in plain text to allow listing and searching without decryption. Secrets can be organised into a folder hierarchy per user.
 
 ## Data Model
 
@@ -92,7 +92,7 @@ The system MUST allow an authenticated user to create a secret with at minimum a
 - THEN the secret MUST appear under that folder
 
 ### Requirement: Read Secret
-The system MUST decrypt and return secret fields when the user has their master password in session. The Doriath app UI requires the master password to be in session before any secrets are accessible — the lock screen gates all app routes.
+The system MUST decrypt and return secret fields when the user has their master password in session. The Keepiq app UI requires the master password to be in session before any secrets are accessible — the lock screen gates all app routes.
 
 #### Scenario: Read own secret
 - GIVEN a user has the master password in session
@@ -406,23 +406,23 @@ The fuzzy-match scan (SQL substring pre-filter plus in-memory Levenshtein post-f
 ### Requirement: Nextcloud Unified Search Integration
 The system MUST register a Nextcloud search provider (`OCP\Search\IProvider`) so that secrets are discoverable via the Nextcloud unified search (Ctrl+F / search bar).
 
-The search provider MUST query `name` and `url` directly from the database without requiring the Doriath AES key to be in session. Results MUST be scoped to the authenticated Nextcloud user's secrets (owned and received shares).
+The search provider MUST query `name` and `url` directly from the database without requiring the Keepiq AES key to be in session. Results MUST be scoped to the authenticated Nextcloud user's secrets (owned and received shares).
 
-Clicking a search result MUST deep-link into Doriath:
-- If the user has an active Doriath session: navigate directly to the secret
-- If the user does not have an active Doriath session: redirect to the Doriath lock screen; after successful unlock, redirect to the intended secret
+Clicking a search result MUST deep-link into Keepiq:
+- If the user has an active Keepiq session: navigate directly to the secret
+- If the user does not have an active Keepiq session: redirect to the Keepiq lock screen; after successful unlock, redirect to the intended secret
 
 The lock screen MUST support a return URL parameter so the post-unlock redirect works correctly.
 
 #### Scenario: Search result clicked with active session
-- GIVEN a user has an active Doriath session
+- GIVEN a user has an active Keepiq session
 - WHEN they click a secret in the Nextcloud unified search results
-- THEN they MUST be taken directly to that secret in Doriath
+- THEN they MUST be taken directly to that secret in Keepiq
 
 #### Scenario: Search result clicked without active session
-- GIVEN a user does NOT have an active Doriath session
+- GIVEN a user does NOT have an active Keepiq session
 - WHEN they click a secret in the Nextcloud unified search results
-- THEN they MUST be redirected to the Doriath lock screen
+- THEN they MUST be redirected to the Keepiq lock screen
 - AND after entering their master password they MUST be redirected to the intended secret
 
 ### Requirement: Client-Side TOTP Code Generation
@@ -505,7 +505,7 @@ Known limitation, stated rather than implied: an EXPIRED request remains `pendin
 - As a user, I want to place a received share in my own folder structure independently of the sender's organisation
 - As a user, I want to search my secrets by name or URL so that I can quickly find what I need
 - As a user, I want typo-tolerant search so that a small spelling mistake does not prevent me from finding a secret
-- As a user, I want to find my secrets from the Nextcloud search bar so that I do not have to open Doriath first
+- As a user, I want to find my secrets from the Nextcloud search bar so that I do not have to open Keepiq first
 - As a user, I want to sort my secrets by name, URL, or date so that I can browse them in a useful order
 - As a user, I want to delete a secret I no longer need
 - As a user, I want to delete a folder and choose what happens to each subfolder (delete, move contents up, or keep) so that I don't accidentally lose secrets
@@ -544,8 +544,8 @@ Known limitation, stated rather than implied: an EXPIRED request remains `pendin
 - [ ] Search queries name and url with fuzzy matching and typo tolerance
 - [ ] Typo tolerance is bounded — queries with no meaningful similarity return empty results
 - [ ] Received shares are included in search results
-- [ ] Doriath registers a Nextcloud unified search provider
-- [ ] The unified search provider queries name and url without requiring an active Doriath session
+- [ ] Keepiq registers a Nextcloud unified search provider
+- [ ] The unified search provider queries name and url without requiring an active Keepiq session
 - [ ] Clicking a unified search result deep-links to the secret, via the lock screen if the session is not active
 - [ ] The lock screen supports a return URL for post-unlock redirect
 - [ ] Deleting a secret cascades to all derived shares and requests

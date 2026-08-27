@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration Version 21
+ * Keepiq Migration Version 21
  *
  * Secret version history (secret-version-history §1.1). Creates
  * `doriath_secret_versions`: immutable pre-update snapshots of a secret's
@@ -10,7 +10,7 @@
  * them (ADR-003) — the server never decrypts to snapshot.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

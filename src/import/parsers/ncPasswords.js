@@ -7,7 +7,7 @@
  * Parses the Passwords app's own JSON backup export (Settings → Backup →
  * Export, format "Predefined JSON"). Migration is FILE-BASED only: the parser
  * never reads the Passwords app's DB or API, because a server-side migration
- * would decrypt credentials on the server, violating Doriath's always-E2E
+ * would decrypt credentials on the server, violating Keepiq's always-E2E
  * architecture (ADR-003). The user exports a backup from Passwords and imports
  * the file here; plaintext stays in their browser.
  *

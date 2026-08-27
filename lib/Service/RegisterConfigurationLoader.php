@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Doriath Register Configuration Loader
+ * Keepiq Register Configuration Loader
  *
- * Reads `lib/Settings/doriath_register.json`, deep-merges every modular
+ * Reads `lib/Settings/keepiq_register.json`, deep-merges every modular
  * fragment from `lib/Settings/register.d/*.json` (ADR-037), and hands the
  * result to OpenRegister's `ConfigurationService::importFromApp()` using
  * the ADR-022 4-arg signature.
@@ -12,7 +12,7 @@
  * import, and shares nothing with reading or writing a settings key.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,9 +25,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -56,13 +56,13 @@ class RegisterConfigurationLoader {
 	}//end __construct()
 
 	/**
-	 * Load configuration from doriath_register.json via OpenRegister.
+	 * Load configuration from keepiq_register.json via OpenRegister.
 	 *
 	 * Reads the bundled register configuration file from
-	 * `lib/Settings/doriath_register.json`, parses it, and passes it
+	 * `lib/Settings/keepiq_register.json`, parses it, and passes it
 	 * to OpenRegister's `ConfigurationService::importFromApp()` using
 	 * the ADR-022 4-arg signature (appId, data, version, force).
-	 * Mirrors the scholiq / procest / decidesk pattern.
+	 * Mirrors the learniq / procest / decidesk pattern.
 	 *
 	 * @param bool $force Force re-import even if already configured.
 	 *
@@ -72,13 +72,13 @@ class RegisterConfigurationLoader {
 	 *   as a branch: it is the fourth argument of OpenRegister's ADR-022
 	 *   ConfigurationService::importFromApp(appId, data, version, force) signature and is
 	 *   passed straight through. The parameter and its default exist because that foreign
-	 *   signature requires the value; the same shape ships in scholiq / procest / decidesk.
+	 *   signature requires the value; the same shape ships in learniq / procest / decidesk.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
 	 */
 	public function loadConfiguration(bool $force = false): array {
 		if ($this->appManager->isInstalled('openregister') === false) {
-			$this->logger->warning('Doriath: OpenRegister not available, skipping register initialization');
+			$this->logger->warning('Keepiq: OpenRegister not available, skipping register initialization');
 			return [
 				'success' => false,
 				'message' => 'OpenRegister is not installed or enabled.',
@@ -103,7 +103,7 @@ class RegisterConfigurationLoader {
 			);
 
 			if (empty($result) === false) {
-				$this->logger->info('Doriath: register configuration imported successfully');
+				$this->logger->info('Keepiq: register configuration imported successfully');
 				return [
 					'success' => true,
 					'message' => 'Configuration imported successfully.',
@@ -117,7 +117,7 @@ class RegisterConfigurationLoader {
 			];
 		} catch (Throwable $e) {
 			$this->logger->error(
-				'Doriath: configuration import failed',
+				'Keepiq: configuration import failed',
 				['exception' => $e->getMessage()]
 			);
 			return [
@@ -128,7 +128,7 @@ class RegisterConfigurationLoader {
 	}//end loadConfiguration()
 
 	/**
-	 * Load and parse the doriath_register.json configuration file.
+	 * Load and parse the keepiq_register.json configuration file.
 	 *
 	 * Reads the monolith register file, then deep-merges every modular
 	 * fragment from lib/Settings/register.d/*.json (ADR-037) so concurrent
@@ -141,18 +141,18 @@ class RegisterConfigurationLoader {
 	 *                             or ['success' => false, 'message' => string]
 	 */
 	private function loadRegisterConfigData(): array {
-		$configPath = __DIR__ . '/../Settings/doriath_register.json';
+		$configPath = __DIR__ . '/../Settings/keepiq_register.json';
 		if (file_exists($configPath) === false) {
-			$this->logger->error('Doriath: doriath_register.json not found at ' . $configPath);
+			$this->logger->error('Keepiq: keepiq_register.json not found at ' . $configPath);
 			return [
 				'success' => false,
-				'message' => 'Configuration file doriath_register.json not found.',
+				'message' => 'Configuration file keepiq_register.json not found.',
 			];
 		}
 
 		$configContent = file_get_contents($configPath);
 		if ($configContent === false) {
-			$this->logger->error('Doriath: failed to read doriath_register.json');
+			$this->logger->error('Keepiq: failed to read keepiq_register.json');
 			return [
 				'success' => false,
 				'message' => 'Failed to read configuration file.',
@@ -161,7 +161,7 @@ class RegisterConfigurationLoader {
 
 		$configData = json_decode($configContent, true);
 		if (json_last_error() !== JSON_ERROR_NONE) {
-			$this->logger->error('Doriath: failed to parse doriath_register.json: ' . json_last_error_msg());
+			$this->logger->error('Keepiq: failed to parse keepiq_register.json: ' . json_last_error_msg());
 			return [
 				'success' => false,
 				'message' => 'Failed to parse configuration file: ' . json_last_error_msg(),
@@ -215,7 +215,7 @@ class RegisterConfigurationLoader {
 			$fragmentData = json_decode($fragmentContent, true);
 			if (json_last_error() !== JSON_ERROR_NONE) {
 				$this->logger->warning(
-					'Doriath: skipping malformed register fragment ' . basename($fragmentFile)
+					'Keepiq: skipping malformed register fragment ' . basename($fragmentFile)
 					. ': ' . json_last_error_msg()
 				);
 				continue;

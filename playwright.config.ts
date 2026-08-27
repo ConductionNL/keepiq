@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Playwright config for Doriath.
+ * Playwright config for Keepiq.
  *
  * One project:
  *

@@ -4,7 +4,7 @@
  * Tests for the OpenRegister autoload prelude.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\AppInfo
+ * @package  OCA\Keepiq\Tests\Unit\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -18,9 +18,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\AppInfo;
+namespace OCA\Keepiq\Tests\Unit\AppInfo;
 
-use OCA\Doriath\AppInfo\OpenRegisterAutoloader;
+use OCA\Keepiq\AppInfo\OpenRegisterAutoloader;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
  *
  * The defect it exists to prevent is an exception escaping the composition
  * root: an `\Error` thrown while resolving `OCA\OpenRegister\AppHost\Bootstrap`
- * aborted Doriath's entire `Application::register()`, so every listener
+ * aborted Keepiq's entire `Application::register()`, so every listener
  * registered below it silently never ran. A prelude that can itself throw would
  * reintroduce exactly that failure, so "never throws" is the contract under
  * test — on ANY instance, with OpenRegister present or absent.

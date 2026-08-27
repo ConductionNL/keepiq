@@ -4,7 +4,7 @@
  * Unit tests for ScanExpiringSecretsJob (rotation-expiry-policies §8.3).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\BackgroundJob
+ * @package  OCA\Keepiq\Tests\Unit\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,16 +17,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\BackgroundJob;
+namespace OCA\Keepiq\Tests\Unit\BackgroundJob;
 
 use DateTime;
-use OCA\Doriath\BackgroundJob\ScanExpiringSecretsJob;
-use OCA\Doriath\Db\RotationFlag;
-use OCA\Doriath\Db\RotationFlagMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Service\NotificationService;
-use OCA\Doriath\Service\RotationPolicyService;
+use OCA\Keepiq\BackgroundJob\ScanExpiringSecretsJob;
+use OCA\Keepiq\Db\RotationFlag;
+use OCA\Keepiq\Db\RotationFlagMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;

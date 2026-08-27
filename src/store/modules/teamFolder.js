@@ -57,13 +57,14 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * Hydrate the owned + member-of team-folder lists.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 */
 		async fetchTeamFolders() {
 			this.loading = true
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/team-folders'),
+					generateUrl('/apps/keepiq/api/v1/team-folders'),
 				)
 				this.owned = response.data?.owned ?? []
 				this.memberOf = response.data?.memberOf ?? []
@@ -83,10 +84,11 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} folderId The folder to share.
 		 * @return {Promise<object>} The TeamFolder row.
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 */
 		async shareFolder(folderId) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/team-folders'),
+				generateUrl('/apps/keepiq/api/v1/team-folders'),
 				{ folderId },
 			)
 			await this.fetchTeamFolders()
@@ -101,11 +103,13 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} memberType   `user` or `group`.
 		 * @param {string} memberId     The Nextcloud user/group id.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-nested-subfolder-inheritance
 		 */
 		async addMember(teamFolderId, memberType, memberId) {
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members`,
 				),
 				{ memberType, memberId },
 			)
@@ -119,11 +123,12 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {string} membershipId The membership row id.
 		 * @return {Promise<{revoked: number}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async removeMember(teamFolderId, membershipId) {
 			const response = await axios.delete(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
 				),
 			)
 			await this.fetchTeamFolders()
@@ -138,11 +143,13 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} membershipId The membership row id.
 		 * @param {string} grade 'read' | 'write'.
 		 * @return {Promise<object>} The updated membership.
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 		 */
 		async setMemberGrade(teamFolderId, membershipId, grade) {
 			const response = await axios.patch(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members/${membershipId}`,
 				),
 				{ grade },
 			)
@@ -155,10 +162,11 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} teamFolderId The team folder.
 		 * @return {Promise<{revoked: number}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async unshareFolder(teamFolderId) {
 			const response = await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/team-folders/${teamFolderId}`),
+				generateUrl(`/apps/keepiq/api/v1/team-folders/${teamFolderId}`),
 			)
 			await this.fetchTeamFolders()
 			return response.data
@@ -170,11 +178,13 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} teamFolderId The team folder.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-nested-subfolder-inheritance
 		 */
 		async reconcile(teamFolderId) {
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/reconcile`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/reconcile`,
 				),
 			)
 			return response.data
@@ -187,11 +197,12 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {string} newMemberId  The approved user id.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-membership-propagation-with-group-membership
 		 */
 		async approveJoin(teamFolderId, newMemberId) {
 			const response = await axios.post(
 				generateUrl(
-					`/apps/doriath/api/v1/team-folders/${teamFolderId}/approve-join`,
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/approve-join`,
 				),
 				{ newMemberId },
 			)
@@ -204,10 +215,11 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} leavingUserId   The user being offboarded.
 		 * @param {string} successorUserId The successor.
 		 * @return {Promise<{revoked: number, transferred: number, skipped: Array<string>}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
 		 */
 		async offboard(leavingUserId, successorUserId) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/team-folders/offboard'),
+				generateUrl('/apps/keepiq/api/v1/team-folders/offboard'),
 				{ leavingUserId, successorUserId },
 			)
 			return response.data
@@ -260,6 +272,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 *
 		 * @param {string} teamFolderId The team folder to fan out.
 		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async runFanOut(teamFolderId) {
 			const secretStore = useSecretStore()
@@ -327,7 +341,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
 						const response = await axios.post(
 							generateUrl(
-								`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`,
+								`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
 							),
 							{ shares: chunk },
 						)
@@ -345,7 +359,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				if (chunk.length > 0 && !this.fanOutCancelled) {
 					const response = await axios.post(
 						generateUrl(
-							`/apps/doriath/api/v1/team-folders/${teamFolderId}/shares`,
+							`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
 						),
 						{ shares: chunk },
 					)

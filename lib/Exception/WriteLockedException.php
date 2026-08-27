@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Write Locked Exception
+ * Keepiq Write Locked Exception
  *
  * Thrown when a write is attempted while a compromise-recovery migration is
  * in progress for the owner. Controllers map this to an HTTP 423 response.
  *
  * @category Exception
- * @package  OCA\Doriath\Exception
+ * @package  OCA\Keepiq\Exception
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Exception;
+namespace OCA\Keepiq\Exception;
 
 use RuntimeException;
 

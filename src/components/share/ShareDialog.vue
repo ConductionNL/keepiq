@@ -17,23 +17,23 @@
 <template>
 	<section
 		v-if="open"
-		class="doriath-share-dialog"
+		class="keepiq-share-dialog"
 		role="dialog"
 		data-testid="share-dialog">
-		<header class="doriath-share-dialog__header">
-			<h3>{{ t('doriath', 'Share with a Nextcloud user') }}</h3>
+		<header class="keepiq-share-dialog__header">
+			<h3>{{ t('keepiq', 'Share with a Nextcloud user') }}</h3>
 			<button
 				type="button"
-				class="doriath-share-dialog__close"
+				class="keepiq-share-dialog__close"
 				data-testid="share-dialog-close"
-				:aria-label="t('doriath', 'Close')"
+				:aria-label="t('keepiq', 'Close')"
 				@click="$emit('close')">
 				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 		<form @submit.prevent="onSubmit">
-			<label class="doriath-share-dialog__field">
-				<span>{{ t('doriath', 'Recipient user ID') }}</span>
+			<label class="keepiq-share-dialog__field">
+				<span>{{ t('keepiq', 'Recipient user ID') }}</span>
 				<input
 					v-model.trim="targetUserId"
 					type="text"
@@ -43,23 +43,23 @@
 			</label>
 			<p
 				v-if="error"
-				class="doriath-share-dialog__error"
+				class="keepiq-share-dialog__error"
 				data-testid="share-dialog-error">
 				{{ error }}
 			</p>
-			<div class="doriath-share-dialog__actions">
+			<div class="keepiq-share-dialog__actions">
 				<button
 					type="button"
 					data-testid="share-dialog-cancel"
 					@click="$emit('close')">
-					{{ t('doriath', 'Cancel') }}
+					{{ t('keepiq', 'Cancel') }}
 				</button>
 				<button
 					type="submit"
 					class="primary"
 					data-testid="share-dialog-submit"
 					:disabled="busy || targetUserId === ''">
-					{{ busy ? t('doriath', 'Sharing…') : t('doriath', 'Share') }}
+					{{ busy ? t('keepiq', 'Sharing…') : t('keepiq', 'Share') }}
 				</button>
 			</div>
 		</form>
@@ -113,14 +113,21 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Share the secret with one user: re-encrypt under the recipient's
+		 * certificate in the browser, then register the share target.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.targetUserId === '') {
-				this.error = t('doriath', 'Recipient is required')
+				this.error = t('keepiq', 'Recipient is required')
 				return
 			}
 			if (this.recipientCertificate === '') {
-				this.error = t('doriath', 'Recipient has no active encryption suite')
+				this.error = t('keepiq', 'Recipient has no active encryption suite')
 				return
 			}
 
@@ -137,7 +144,7 @@ export default {
 				})
 			} catch (e) {
 				this.error =
-					e?.message || t('doriath', 'Failed to encrypt for recipient')
+					e?.message || t('keepiq', 'Failed to encrypt for recipient')
 			} finally {
 				this.busy = false
 			}
@@ -147,7 +154,7 @@ export default {
 </script>
 
 <style scoped>
-.doriath-share-dialog {
+.keepiq-share-dialog {
 	border: 1px solid var(--color-border, #ddd);
 	background-color: var(--color-main-background, #fff);
 	padding: 16px;
@@ -155,45 +162,45 @@ export default {
 	max-width: 480px;
 }
 
-.doriath-share-dialog__header {
+.keepiq-share-dialog__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 12px;
 }
 
-.doriath-share-dialog__close {
+.keepiq-share-dialog__close {
 	background: transparent;
 	border: 0;
 	font-size: 24px;
 	cursor: pointer;
 }
 
-.doriath-share-dialog__field {
+.keepiq-share-dialog__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
 
-.doriath-share-dialog__field input {
+.keepiq-share-dialog__field input {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 }
 
-.doriath-share-dialog__error {
+.keepiq-share-dialog__error {
 	color: var(--color-error-text);
 	font-size: 13px;
 }
 
-.doriath-share-dialog__actions {
+.keepiq-share-dialog__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
 
-.doriath-share-dialog__actions .primary {
+.keepiq-share-dialog__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
 	border: 0;
@@ -201,7 +208,7 @@ export default {
 	border-radius: var(--border-radius, 4px);
 }
 
-.doriath-share-dialog__actions button:not(.primary) {
+.keepiq-share-dialog__actions button:not(.primary) {
 	background-color: transparent;
 	border: 1px solid var(--color-border-dark, #999);
 	padding: 8px 16px;

@@ -53,6 +53,7 @@ export const useFolderStore = defineStore('folder', {
 		 * Fetch the current user's folders.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async fetchFolders() {
 			this.loading = true
@@ -64,7 +65,7 @@ export const useFolderStore = defineStore('folder', {
 			}
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/folders'),
+					generateUrl('/apps/keepiq/api/v1/folders'),
 				)
 				this.folders = response.data || []
 			} catch (e) {
@@ -91,10 +92,11 @@ export const useFolderStore = defineStore('folder', {
 		 * @param {string} name The folder name.
 		 * @param {string|null} parentId The parent folder ID (null = root).
 		 * @return {Promise<object>} The created folder.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async createFolder(name, parentId = null) {
 			const response = await axios.post(
-				generateUrl('/apps/doriath/api/v1/folders'),
+				generateUrl('/apps/keepiq/api/v1/folders'),
 				{ name, parentId },
 			)
 			this.folders.push(response.data)
@@ -107,10 +109,11 @@ export const useFolderStore = defineStore('folder', {
 		 * @param {string} id The folder ID.
 		 * @param {object} data The change ({ name } and/or { parentId, move: true }).
 		 * @return {Promise<object>} The updated folder.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async updateFolder(id, data) {
 			const response = await axios.put(
-				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/folders/${id}`),
 				data,
 			)
 			const index = this.folders.findIndex((f) => f.id === id)
@@ -125,10 +128,11 @@ export const useFolderStore = defineStore('folder', {
 		 *
 		 * @param {string} id The folder ID.
 		 * @return {Promise<object>} { directSecretCount, subfolders }.
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
 		 */
 		async fetchChildren(id) {
 			const response = await axios.get(
-				generateUrl(`/apps/doriath/api/v1/folders/${id}/children`),
+				generateUrl(`/apps/keepiq/api/v1/folders/${id}/children`),
 			)
 			return response.data
 		},
@@ -139,6 +143,8 @@ export const useFolderStore = defineStore('folder', {
 		 * @param {string} id The folder ID.
 		 * @param {object} options { cascade } and/or { subfolders, directSecrets }.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
 		 */
 		async deleteFolder(id, options = {}) {
 			const config = {}
@@ -152,7 +158,7 @@ export const useFolderStore = defineStore('folder', {
 				}
 			}
 			await axios.delete(
-				generateUrl(`/apps/doriath/api/v1/folders/${id}`),
+				generateUrl(`/apps/keepiq/api/v1/folders/${id}`),
 				config,
 			)
 			this.folders = this.folders.filter((f) => f.id !== id)

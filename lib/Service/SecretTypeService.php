@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Secret Type Service
+ * Keepiq Secret Type Service
  *
  * Business logic for SecretType lifecycle: listing available types,
  * resolving the default login type, creating user and global custom types,
  * renaming, and deleting with fallback-to-login reassignment.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,15 +21,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretType;
-use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Exception\ConflictException;
-use OCA\Doriath\Exception\ForbiddenException;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -119,6 +119,8 @@ class SecretTypeService {
 	 * @throws InvalidArgumentException When validation fails
 	 * @throws ForbiddenException When a non-admin requests a global type
 	 * @throws ConflictException When the name already exists
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function createType(
 		string $name,
@@ -158,7 +160,7 @@ class SecretTypeService {
 		$type->setCreatedAt(new DateTime());
 
 		$this->mapper->insert($type);
-		$this->logger->info("Doriath: secret type '{$name}' ({$scope}) created by {$userId}");
+		$this->logger->info("Keepiq: secret type '{$name}' ({$scope}) created by {$userId}");
 
 		return $type;
 	}//end createType()
@@ -175,6 +177,8 @@ class SecretTypeService {
 	 *
 	 * @throws ForbiddenException When the type is a system type or not owned
 	 * @throws InvalidArgumentException When the label is empty
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function updateType(string $id, string $label, string $userId, bool $isAdmin): SecretType {
 		$label = trim($label);
@@ -186,7 +190,7 @@ class SecretTypeService {
 
 		$type->setLabel($label);
 		$this->mapper->update($type);
-		$this->logger->info("Doriath: secret type {$id} relabelled by {$userId}");
+		$this->logger->info("Keepiq: secret type {$id} relabelled by {$userId}");
 
 		return $type;
 	}//end updateType()
@@ -201,6 +205,8 @@ class SecretTypeService {
 	 * @return void
 	 *
 	 * @throws ForbiddenException When the type is a system type or not owned
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function deleteType(string $id, string $userId, bool $isAdmin): void {
 		$type = $this->loadManageable(id: $id, userId: $userId, isAdmin: $isAdmin);
@@ -209,7 +215,7 @@ class SecretTypeService {
 		$this->secretMapper->reassignType($id, $loginTypeId);
 
 		$this->mapper->delete($type);
-		$this->logger->info("Doriath: secret type {$id} deleted by {$userId} (secrets reassigned to login)");
+		$this->logger->info("Keepiq: secret type {$id} deleted by {$userId} (secrets reassigned to login)");
 	}//end deleteType()
 
 	/**

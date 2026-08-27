@@ -1,16 +1,16 @@
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Applications')"
+		:name="t('keepiq', 'Applications')"
 		:description="
-			t('doriath', 'Pending external applications waiting for admin approval')
+			t('keepiq', 'Pending external applications waiting for admin approval')
 		">
 		<div v-if="loading" class="application-queue">
-			{{ t('doriath', 'Loading…') }}
+			{{ t('keepiq', 'Loading…') }}
 		</div>
 		<div
 			v-else-if="pending.length === 0"
 			class="application-queue application-queue--empty">
-			{{ t('doriath', 'No pending applications') }}
+			{{ t('keepiq', 'No pending applications') }}
 		</div>
 		<ul v-else class="application-queue">
 			<li v-for="app in pending" :key="app.id" class="application-queue__row">
@@ -25,10 +25,10 @@
 				</div>
 				<div class="application-queue__actions">
 					<button class="primary" @click="approve(app)">
-						{{ t('doriath', 'Approve') }}
+						{{ t('keepiq', 'Approve') }}
 					</button>
 					<button @click="reject(app)">
-						{{ t('doriath', 'Reject') }}
+						{{ t('keepiq', 'Reject') }}
 					</button>
 				</div>
 			</li>
@@ -71,13 +71,13 @@ export default {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/applications/pending'),
+					generateUrl('/apps/keepiq/api/v1/applications/pending'),
 				)
 				this.pending = Array.isArray(response.data)
 					? response.data
 					: response.data.applications || []
 			} catch (e) {
-				console.warn('Doriath: failed to load pending applications', e)
+				console.warn('Keepiq: failed to load pending applications', e)
 				this.pending = []
 			} finally {
 				this.loading = false
@@ -93,7 +93,7 @@ export default {
 		 */
 		async approve(app) {
 			await axios.post(
-				generateUrl(`/apps/doriath/api/v1/applications/${app.id}/approve`),
+				generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/approve`),
 			)
 			await this.refresh()
 		},
@@ -107,7 +107,7 @@ export default {
 		 */
 		async reject(app) {
 			await axios.post(
-				generateUrl(`/apps/doriath/api/v1/applications/${app.id}/reject`),
+				generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/reject`),
 			)
 			await this.refresh()
 		},

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Controller
+ * Keepiq Team Folder Controller
  *
  * Authenticated API controller for team folder sharing
  * (team-folder-sharing §4.1): list and share/unshare a folder, run the
@@ -15,7 +15,7 @@
  * that class's docblock.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,11 +28,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\TeamFolderService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

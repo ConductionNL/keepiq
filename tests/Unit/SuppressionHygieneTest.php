@@ -10,10 +10,10 @@
  * audit established, so neither can regress quietly.
  *
  * It scans source rather than exercising behaviour, the same shape as
- * {@see \OCA\Doriath\Tests\Unit\Service\KeyGeneratorServiceTest::testSourceUsesNoWeakRandomness()}.
+ * {@see \OCA\Keepiq\Tests\Unit\Service\KeyGeneratorServiceTest::testSourceUsesNoWeakRandomness()}.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit
+ * @package  OCA\Keepiq\Tests\Unit
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -26,7 +26,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit;
+namespace OCA\Keepiq\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;

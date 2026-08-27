@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Migration - Per-record migration failure accounting
+ * Keepiq Migration - Per-record migration failure accounting
  *
  * Adds `doriath_migration_failures`: one row per RECORD that a
  * compromise-recovery migration could not carry across.
@@ -28,7 +28,7 @@
  * rather than accumulating a second entry for the same record.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -41,7 +41,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

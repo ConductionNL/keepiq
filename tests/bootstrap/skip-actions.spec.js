@@ -16,7 +16,7 @@ import { ensureSkipActionsTarget } from '../../src/bootstrap/skip-actions.js'
 
 describe('ensureSkipActionsTarget', () => {
 	it('creates the target when the layout did not supply one', () => {
-		document.body.innerHTML = '<div id="doriath-app"></div>'
+		document.body.innerHTML = '<div id="keepiq-app"></div>'
 
 		const created = ensureSkipActionsTarget(document)
 
@@ -27,7 +27,7 @@ describe('ensureSkipActionsTarget', () => {
 	it('leaves an existing target alone and never duplicates the id', () => {
 		// What Nextcloud's authenticated layout already renders.
 		document.body.innerHTML =
-			'<div id="skip-actions">core skip link</div><div id="doriath-app"></div>'
+			'<div id="skip-actions">core skip link</div><div id="keepiq-app"></div>'
 
 		const created = ensureSkipActionsTarget(document)
 
@@ -40,7 +40,7 @@ describe('ensureSkipActionsTarget', () => {
 	})
 
 	it('is idempotent across repeated calls', () => {
-		document.body.innerHTML = '<div id="doriath-app"></div>'
+		document.body.innerHTML = '<div id="keepiq-app"></div>'
 
 		expect(ensureSkipActionsTarget(document)).toBe(true)
 		expect(ensureSkipActionsTarget(document)).toBe(false)
@@ -50,7 +50,7 @@ describe('ensureSkipActionsTarget', () => {
 	it('puts the target first in the body so the skip link stays reachable', () => {
 		// A skip link that is not the first focusable element does satisfy the
 		// Teleport but defeats its purpose, so position is asserted, not assumed.
-		document.body.innerHTML = '<div id="doriath-app"></div>'
+		document.body.innerHTML = '<div id="keepiq-app"></div>'
 
 		ensureSkipActionsTarget(document)
 

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath SIEM Sink Entity
+ * Keepiq SIEM Sink Entity
  *
  * One SIEM delivery target (siem-audit-export §1.3). The HMAC secret is
  * encrypted at rest (ICrypto) and NEVER serialized to the API.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

@@ -4,7 +4,7 @@
  *
  * FIDO Credential Exchange Format (CXF) mapping module
  * (cxf-import-export D3). This single module owns the bidirectional
- * CXF-entity ↔ Doriath-secret-type table and the document structure
+ * CXF-entity ↔ Keepiq-secret-type table and the document structure
  * validation, so a revision of the (still-stabilising) standard touches
  * only this file. Everything runs client-side; a CXF document is
  * PLAINTEXT — the encryption in the FIDO stack lives in CXP, not CXF.
@@ -19,7 +19,7 @@
  * serialized vault rows and reports every value with no CXF home in an
  * unmapped-item list shown before download (D4).
  *
- * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-doriath-type-mapping
+ * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
  */
 
@@ -218,7 +218,7 @@ function credentialToRow(credential, item, folder, sourceRow) {
 				),
 			)
 		case 'wifi': {
-			// No dedicated Doriath type — map to `note` with the SSID and
+			// No dedicated Keepiq type — map to `note` with the SSID and
 			// security type as additional fields (design decision).
 			const ssid = fieldValue(credential.ssid)
 			return validateRow(
@@ -299,7 +299,7 @@ export function cxfToRows(doc) {
  *
  * @param {object} row The serialized secret ({ name, url, type, login,
  *   password, additionalFields, folder }).
- * @param {string} typeName The resolved Doriath type name.
+ * @param {string} typeName The resolved Keepiq type name.
  * @param {Array<string>} unmapped The unmapped-item report (appended to).
  * @return {object|null} The CXF credential, or null when unrepresentable.
  */
@@ -324,11 +324,11 @@ function rowToCredential(row, typeName, unmapped) {
 				)
 				return null
 			}
-			// `counter`/`transports`/`createdAt` are Doriath extensions with no
+			// `counter`/`transports`/`createdAt` are Keepiq extensions with no
 			// CXF-core home — dropped on export, reported (design D4).
 			if (credential.counter !== 0 || credential.transports.length > 0) {
 				unmapped.push(
-					`${row.name}: passkey counter/transports are Doriath extensions and do not survive CXF export`,
+					`${row.name}: passkey counter/transports are Keepiq extensions and do not survive CXF export`,
 				)
 			}
 			return {
@@ -444,7 +444,7 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 	return {
 		document: {
 			version: CXF_VERSION,
-			exporter: 'doriath',
+			exporter: 'keepiq',
 			timestamp: Math.floor(Date.now() / 1000),
 			accounts: [
 				{

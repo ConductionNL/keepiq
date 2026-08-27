@@ -4,7 +4,7 @@
  * Unit tests for SuiteCompromiseListener.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Listener
+ * @package  OCA\Keepiq\Tests\Unit\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,16 +17,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Listener;
+namespace OCA\Keepiq\Tests\Unit\Listener;
 
 use DateTime;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Event\SuiteMigrationCompletedEvent;
-use OCA\Doriath\Listener\SuiteCompromiseListener;
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
+use OCA\Keepiq\Listener\SuiteCompromiseListener;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\TestCase;

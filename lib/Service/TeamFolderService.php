@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Service
+ * Keepiq Team Folder Service
  *
  * Business logic for team folder sharing (team-folder-sharing §2):
  * a TeamFolder attaches shared membership (users + groups) to an existing
@@ -23,7 +23,7 @@
  *  - TeamFolderAuditor               the team-folder audit vocabulary
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -36,15 +36,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\TeamFolder;
-use OCA\Doriath\Db\TeamFolderMapper;
-use OCA\Doriath\Db\TeamFolderMember;
-use OCA\Doriath\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Db\TeamFolderMapper;
+use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;

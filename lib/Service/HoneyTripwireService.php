@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Honey Tripwire Service
+ * Keepiq Honey Tripwire Service
  *
  * The detection half of honey credentials (honey-credentials §2.2): an
  * access to a flagged decoy raises (or collapses into) an alert, pages the
@@ -12,7 +12,7 @@
  * access has already been served and must never be broken by the tripwire.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,12 +25,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\HoneyFlagMapper;
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\HoneyFlagMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
@@ -136,7 +136,7 @@ class HoneyTripwireService {
 		} catch (Throwable $exception) {
 			// Fail-soft: the tripwire must never break the audited access.
 			$this->logger->error(
-				'Doriath: honey alert failed for secret ' . $secretId . ': ' . $exception->getMessage(),
+				'Keepiq: honey alert failed for secret ' . $secretId . ': ' . $exception->getMessage(),
 				['app' => Application::APP_ID]
 			);
 		}//end try
@@ -182,7 +182,7 @@ class HoneyTripwireService {
 				);
 			} catch (Throwable $exception) {
 				$this->logger->warning(
-					'Doriath: honey page failed for ' . $recipientId . ': ' . $exception->getMessage(),
+					'Keepiq: honey page failed for ' . $recipientId . ': ' . $exception->getMessage(),
 					['app' => Application::APP_ID]
 				);
 			}

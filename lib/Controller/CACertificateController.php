@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath CA Certificate Controller
+ * Keepiq CA Certificate Controller
  *
  * Admin-only controller for CA management.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,12 +19,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use Exception;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\CertificateAuthorityService;
-use OCA\Doriath\Settings\AdminSettings;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;

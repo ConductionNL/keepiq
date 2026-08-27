@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Team Folder Share Service
+ * Keepiq Team Folder Share Service
  *
  * The DERIVED shares of a team folder: the provenance-linked ShareTarget rows
  * that record which (source secret × recipient) pairs have been fanned out,
@@ -14,7 +14,7 @@
  * pair under the recipient's public certificate and this service records it.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,13 +27,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\BulkGrantShareTargetMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Db\TeamFolder;
+use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolder;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;

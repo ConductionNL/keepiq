@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Share Request Service
+ * Keepiq Share Request Service
  *
  * Recipient-initiated request flow — a user already holding a share of a
  * secret asks the owner to share it with a third party. The request is
@@ -14,7 +14,7 @@
  * keeping the surface narrow and avoiding a second write path.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,12 +27,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 
@@ -130,7 +130,7 @@ class ShareRequestService {
 		$this->logger->info(
 			'Share-request submitted by ' . $requesterId
 			. ' for ' . $sourceSecretId . ' -> ' . $targetUserId,
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 	}//end submitShareRequest()
 

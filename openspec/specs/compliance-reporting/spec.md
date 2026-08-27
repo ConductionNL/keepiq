@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Dutch public-sector buyers must evidence credential-hygiene conformity to auditors, and no self-hosted OSS vault ships the artifact they show. BIO2 v1.3 (Jan 2026) names "een wachtwoordmanager aanbieden" as a measure, and NIS2 / Cyberbeveiligingswet (in force ~Aug 2026 for ~8,000 Dutch organisations including all municipalities) requires demonstrable cyber-hygiene and access-management measures. This feature gives Doriath admins/CISOs an org-level compliance evidence report over server-visible metadata — adoption, secrets-per-user counts, share hygiene, rotation posture, audit-trail integrity, and emergency-access coverage — persisted as an immutable timestamped snapshot with a config snapshot and exportable as CSV/PDF, while honestly stating the zero-knowledge boundary that no password strength or breach statistic exists server-side.
+Dutch public-sector buyers must evidence credential-hygiene conformity to auditors, and no self-hosted OSS vault ships the artifact they show. BIO2 v1.3 (Jan 2026) names "een wachtwoordmanager aanbieden" as a measure, and NIS2 / Cyberbeveiligingswet (in force ~Aug 2026 for ~8,000 Dutch organisations including all municipalities) requires demonstrable cyber-hygiene and access-management measures. This feature gives Keepiq admins/CISOs an org-level compliance evidence report over server-visible metadata — adoption, secrets-per-user counts, share hygiene, rotation posture, audit-trail integrity, and emergency-access coverage — persisted as an immutable timestamped snapshot with a config snapshot and exportable as CSV/PDF, while honestly stating the zero-knowledge boundary that no password strength or breach statistic exists server-side.
 
 ## Requirements
 

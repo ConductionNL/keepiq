@@ -7,9 +7,9 @@
 
 ## Purpose
 
-An EncryptionSuite is the cryptographic identity of a user or application within Doriath. It holds a public certificate (used to encrypt secrets for the owner) and an AES-encrypted private key (used to decrypt them). EncryptionSuites are signed by the application's internal Certificate Authority.
+An EncryptionSuite is the cryptographic identity of a user or application within Keepiq. It holds a public certificate (used to encrypt secrets for the owner) and an AES-encrypted private key (used to decrypt them). EncryptionSuites are signed by the application's internal Certificate Authority.
 
-Every user who opens Doriath gets an EncryptionSuite. Every registered Application gets one when a CSR is submitted or a key pair is generated on their behalf.
+Every user who opens Keepiq gets an EncryptionSuite. Every registered Application gets one when a CSR is submitted or a key pair is generated on their behalf.
 
 ## Data Model
 
@@ -62,12 +62,12 @@ Migration progress is self-evident from secrets: secrets still pointing to `old_
 ## Requirements
 
 ### Requirement: Suite Creation on First Login
-The system MUST automatically create an EncryptionSuite for a Nextcloud user the first time they open Doriath and provide a master password.
+The system MUST automatically create an EncryptionSuite for a Nextcloud user the first time they open Keepiq and provide a master password.
 
 #### Scenario: First-time user setup
 @e2e exclude First-time suite creation requires a suite-less account that the seeded e2e fixture never produces; the vault-unlock e2e suite marks this flow test.fixme and it is covered by PHPUnit suite-creation tests instead.
 - GIVEN a Nextcloud user has no existing EncryptionSuite
-- WHEN they open Doriath and provide a master password
+- WHEN they open Keepiq and provide a master password
 - THEN the system MUST generate a 4096-bit RSA key pair, sign the public key with the active CA intermediate, and store the private key encrypted with the AES-derived key
 
 ### Requirement: Session Mechanism
@@ -75,9 +75,9 @@ After a user successfully enters their master password, the AES-derived key and 
 
 The browser derives the AES key from the master password, uses it to decrypt the private key blob (fetched from the API), and imports the result as a WebCrypto `CryptoKey` with `extractable: false`. This `CryptoKey` is held in a JavaScript variable — never in `localStorage` or `sessionStorage`.
 
-The session is scoped per device. Unlocking Doriath on one device MUST NOT propagate the session to other devices. Tabs on the same device sharing the same browser context MAY share the in-memory key via a shared Pinia store (same-origin tabs).
+The session is scoped per device. Unlocking Keepiq on one device MUST NOT propagate the session to other devices. Tabs on the same device sharing the same browser context MAY share the in-memory key via a shared Pinia store (same-origin tabs).
 
-When the session timeout elapses or all tabs of the Nextcloud instance are closed, the in-memory key MUST be cleared immediately and the user MUST be redirected to the Doriath lock screen. The lock screen is a full page — not an overlay. The API always returns encrypted blobs regardless — there is no server-side session state that could be bypassed.
+When the session timeout elapses or all tabs of the Nextcloud instance are closed, the in-memory key MUST be cleared immediately and the user MUST be redirected to the Keepiq lock screen. The lock screen is a full page — not an overlay. The API always returns encrypted blobs regardless — there is no server-side session state that could be bypassed.
 
 The user MUST be able to lock the vault immediately via a "Lock vault" button in the app navigation. This clears the in-memory CryptoKey and redirects to the lock screen without waiting for the timeout.
 
@@ -85,21 +85,21 @@ The session timeout MUST be configurable per user (Nextcloud session duration, 1
 
 #### Scenario: Session expiry
 @e2e exclude Pure client-side WebCrypto in-memory key expiry — the in-memory CryptoKey cannot be inspected or triggered via Playwright DOM interaction; covered by unit tests of the session-timeout timer logic.
-- GIVEN a user's Doriath session timeout has elapsed
-- WHEN any Doriath route is accessed
+- GIVEN a user's Keepiq session timeout has elapsed
+- WHEN any Keepiq route is accessed
 - THEN the browser MUST clear the in-memory CryptoKey
-- AND redirect the user to the Doriath lock screen
+- AND redirect the user to the Keepiq lock screen
 
 #### Scenario: All tabs closed
 @e2e exclude JavaScript memory is released by the runtime when tabs are closed — not observable or triggerable via Playwright DOM; covered by code review and unit tests.
-- GIVEN a user has Doriath open in one or more tabs
+- GIVEN a user has Keepiq open in one or more tabs
 - WHEN all tabs of that Nextcloud instance are closed
 - THEN the in-memory CryptoKey MUST be lost (JavaScript memory is released)
 
 #### Scenario: Cross-device isolation
 @e2e exclude Multi-device isolation is a property of browser-isolated WebCrypto key storage — requires two separate browser contexts and server-state verification; covered by architecture review (ADR-003) and PHPUnit, not a single-browser Playwright flow.
-- GIVEN a user has unlocked Doriath on device A
-- WHEN they open Doriath on device B
+- GIVEN a user has unlocked Keepiq on device A
+- WHEN they open Keepiq on device B
 - THEN device B MUST show the lock screen and require master password entry independently
 
 ### Requirement: Master Password Strength
@@ -178,7 +178,7 @@ After all secrets are processed — and only once nothing remains that nobody ha
 - WHEN the user closes all browser tabs
 - THEN the write lock MUST remain active
 - AND the SuiteMigration record MUST remain in `in_progress` status
-- WHEN the user reopens Doriath
+- WHEN the user reopens Keepiq
 - THEN they MUST see a "migration paused" screen showing how many secrets remain
 - AND they MUST re-enter their PREVIOUS master password to resume — the current one unlocks the vault but cannot read what has not moved yet
 - AND only unmigrated secrets (still pointing to old_suite_id) MUST be processed
@@ -384,6 +384,38 @@ The system MUST NOT report success in terms that imply the vault is secure again
 - **WHEN** the user watches the recovery dialog
 - **THEN** it MUST show live progress and MUST NOT report completion until the migration has actually terminated
 
+### Requirement: A Plain Create Refuses To Mint A Second Active Suite
+
+`POST /api/v1/suites` MUST refuse, with `409 Conflict`, when the owner already has an `active` EncryptionSuite. The frontend hides the setup form once a suite exists, but that is presentation: the API MUST enforce the invariant itself, because a session cookie or app password reaches the endpoint without the form.
+
+A second suite minted this way is silent data loss. Suite resolution selects the most recently created active suite, so new secrets are sealed to the new key while the owner keeps unlocking with the master password of the old one — the new records decrypt for nobody, and nothing reports an error at the time it happens. Two browser tabs left on the first-setup screen are enough to cause it, which makes it reachable by accident rather than only by a crafted request.
+
+Malformed key material MUST still be reported as `400 Bad Request` even when the owner already has an active suite. Two things are wrong with such a request and the response must name the one the caller can act on: "you already have a suite" tells a client nothing about the unparseable key it sent. Validity of the request is judged before the state of the world, which means the refusal may discard an already-issued certificate — acceptable, because issuing one performs no write and consumes no serial.
+
+This governs the PLAIN create path only. A compromise recovery legitimately creates a successor while the old suite stays active — see "Suite Resolution Is Deterministic During A Migration" — so the refusal MUST be something that path can opt out of explicitly, and MUST NOT be expressed as a database uniqueness constraint on `(owner_type, owner_id)` where `status = 'active'`. Such a constraint would make key rotation impossible and contradicts that requirement.
+
+#### Scenario: A second plain create is refused
+
+@e2e exclude The setup form is unreachable once a suite exists, so the flow cannot be driven from the DOM; the guard is server-side and covered by PHPUnit on the service and the controller.
+- **GIVEN** an owner already has an active EncryptionSuite
+- **WHEN** a plain create is submitted for that owner
+- **THEN** the system MUST refuse with `409 Conflict`
+- **AND** it MUST NOT insert a suite
+
+#### Scenario: A bad key is a client error even when a suite exists
+
+@e2e exclude Server-side status-code contract; covered by PHPUnit and by the Newman contract collection.
+- **GIVEN** an owner already has an active EncryptionSuite
+- **WHEN** a plain create is submitted with an unparseable public key
+- **THEN** the system MUST refuse with `400 Bad Request`, not `409 Conflict`
+
+#### Scenario: Compromise recovery still creates its successor
+
+@e2e exclude Server-side; covered by PHPUnit on the recovery endpoint.
+- **GIVEN** an owner has an active EncryptionSuite and no migration in progress
+- **WHEN** they submit a compromise recovery
+- **THEN** the successor suite MUST be created even though the old one is still active
+
 ### Requirement: Revocation
 The system MUST allow a user or administrator to revoke an EncryptionSuite. Revocation assumes the private key is intact but access should be blocked — it is an administrative action, not a key compromise. When a suite is revoked, all secrets encrypted with it become immediately inaccessible. The private key remains in the database, AES-encrypted, unchanged.
 
@@ -426,11 +458,11 @@ The system MUST generate RSA keys of at least 4096 bits. The minimum MUST only b
 - AND any configured minimum MUST only increase, never decrease
 
 ### Requirement: Certificate Distinguished Name
-All certificates issued by Doriath MUST include a complete X.509 Distinguished Name with default organizational fields (C=NL, ST=Noord-Holland, L=Amsterdam, O=Conduction, OU=Doriath). The `commonName` MUST identify the certificate owner:
+All certificates issued by Keepiq MUST include a complete X.509 Distinguished Name with default organizational fields (C=NL, ST=Noord-Holland, L=Amsterdam, O=Conduction, OU=Keepiq). The `commonName` MUST identify the certificate owner:
 
 - For user certificates: the federated cloud ID (e.g. `admin@nextcloud.local`) if available, otherwise the Nextcloud user ID
 - For application certificates: the application ID
-- For CA certificates: `Doriath Root CA` or `Doriath Intermediate CA`
+- For CA certificates: `Keepiq Root CA` or `Keepiq Intermediate CA`
 
 When a certificate is re-signed during CA renewal, the original `commonName` MUST be preserved.
 
@@ -446,7 +478,7 @@ The system MUST generate a private CA (root + intermediate) on first setup if no
 
 #### Scenario: CA bootstrap success
 @e2e exclude CA bootstrap runs during the Nextcloud repair/install step (PHP Repair class) — not a browser-visible action; verified by PHPUnit and by the CA-healthy state observable in admin-settings.
-- GIVEN Doriath has no CA certificates
+- GIVEN Keepiq has no CA certificates
 - WHEN the repair/install step runs
 - THEN the system MUST generate a root certificate (20-year lifetime) and a signing intermediate certificate (3-year lifetime)
 - AND store the intermediate's private key AES-encrypted in the database
@@ -455,8 +487,8 @@ The system MUST generate a private CA (root + intermediate) on first setup if no
 @e2e exclude Bootstrap failure triggers a degraded-state server response; the observable UI outcome ("not configured" + retry button) is covered by the admin-settings::ca-not-configured scenario.
 - GIVEN the bootstrap step encounters an error (database failure, insufficient entropy, etc.)
 - WHEN the repair/install step completes
-- THEN Doriath MUST install successfully but boot in a degraded state
-- AND all Doriath routes MUST display: "Doriath cannot run without a configured Certificate Authority"
+- THEN Keepiq MUST install successfully but boot in a degraded state
+- AND all Keepiq routes MUST display: "Keepiq cannot run without a configured Certificate Authority"
 - AND the admin panel MUST show CA status as "not configured" with a retry button
 - AND clicking retry MUST attempt bootstrap again
 
@@ -505,13 +537,13 @@ The admin panel MUST display the current CA status at all times.
 
 #### Scenario: Admin panel reflects current CA status
 @e2e exclude CA health status is rendered inside the admin settings page; the admin-facing display is covered by the admin-settings spec scenarios.
-- GIVEN an administrator opens the Doriath admin panel
+- GIVEN an administrator opens the Keepiq admin panel
 - WHEN the CA health status is evaluated
 - THEN the panel MUST display the current status (Not configured, Healthy, Expiring soon, or Action required)
 
 ## User Stories
 
-- As a new user, I want Doriath to set up my encryption automatically when I first enter my master password
+- As a new user, I want Keepiq to set up my encryption automatically when I first enter my master password
 - As a user, I want to choose how long my master password stays in my session so that I balance security with convenience
 - As a user, I want to be redirected to a lock screen when my session expires, not an overlay I could bypass
 - As a user, I want live feedback on my master password strength so that I know if it meets the requirements before submitting
@@ -526,7 +558,7 @@ The admin panel MUST display the current CA status at all times.
 
 ## Acceptance Criteria
 
-- [ ] An EncryptionSuite is created automatically for a user on first login to Doriath
+- [ ] An EncryptionSuite is created automatically for a user on first login to Keepiq
 - [ ] RSA key size is at least 4096 bits
 - [ ] Private key is stored AES-256 encrypted with the AES-derived key — never in plaintext
 - [ ] Master password and AES-derived key never leave the browser — not sent to server or stored in ISession
@@ -536,7 +568,7 @@ The admin panel MUST display the current CA status at all times.
 - [ ] Session expiry clears the in-memory CryptoKey and redirects to the lock screen (full page, not overlay)
 - [x] A "Lock vault" button in the app navigation immediately clears keys and redirects to the lock screen
 - [ ] Closing all tabs releases JavaScript memory (CryptoKey lost)
-- [ ] Unlocking Doriath on one device does not affect other devices
+- [ ] Unlocking Keepiq on one device does not affect other devices
 - [ ] Master password strength is enforced using entropy-based scoring (zxcvbn ≥ 3, length ≥ 12 by default)
 - [ ] Admin can raise the strength floor up to zxcvbn score 4 and length 20
 - [ ] Live strength feedback is shown while the user types
@@ -569,7 +601,7 @@ The admin panel MUST display the current CA status at all times.
 
 ## Notes
 
-- The AES-derived key and decrypted private key exist only in browser JS memory (WebCrypto CryptoKey). There is no server-side session state for Doriath's encryption. See ADR-003 for the always-E2E architecture and the DecryptService/EncryptService for internal Nextcloud app access.
+- The AES-derived key and decrypted private key exist only in browser JS memory (WebCrypto CryptoKey). There is no server-side session state for Keepiq's encryption. See ADR-003 for the always-E2E architecture and the DecryptService/EncryptService for internal Nextcloud app access.
 - Multiple encryption suites per owner (key rotation beyond compromise recovery) are scoped to a future change.
 - CA upload (custom CA chain) is scoped as advanced functionality.
 - **Offline root key export** (future): A future version may allow administrators to export the root CA private key to a hardware token or air-gapped device, then purge it from the database. Root operations (intermediate signing) would require the admin to temporarily provide the key. This reduces long-term root key exposure in the database.

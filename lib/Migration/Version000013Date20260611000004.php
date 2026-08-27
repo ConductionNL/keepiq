@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Migration Version 13
+ * Keepiq Migration Version 13
  *
  * Create the doriath_group_shares table — backs the group-share scaffold
  * for the BLOCKED implement-user-sharing change.
  *
  * @category Migration
- * @package  OCA\Doriath\Migration
+ * @package  OCA\Keepiq\Migration
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Migration;
+namespace OCA\Keepiq\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;

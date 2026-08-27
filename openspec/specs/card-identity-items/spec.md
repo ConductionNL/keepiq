@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Doriath's system secret types cover developer credentials (`login`, `api_key`, `ssh_key`, `certificate`, `note`, `database`, `totp`) but ship no personal or financial types. Bitwarden, 1Password, and Proton Pass all offer "Card" and "Identity" items as core free features, and migrating users bring this data with them — the FIDO Credential Exchange Format (CXF) defines dedicated credit-card and identity-document entities, so import fidelity requires the target types to exist. This feature adds two system types, `card` ("Payment Card") and `identity` ("Identity"), that store their composite payloads as ciphertext in the existing encrypted `key` field with no new column or migration, following the `totp` precedent. Card brand and last-4 are derived in the browser, never stored. BSN, sensitive personal data under the AVG/GDPR, is always ciphertext.
+Keepiq's system secret types cover developer credentials (`login`, `api_key`, `ssh_key`, `certificate`, `note`, `database`, `totp`) but ship no personal or financial types. Bitwarden, 1Password, and Proton Pass all offer "Card" and "Identity" items as core free features, and migrating users bring this data with them — the FIDO Credential Exchange Format (CXF) defines dedicated credit-card and identity-document entities, so import fidelity requires the target types to exist. This feature adds two system types, `card` ("Payment Card") and `identity` ("Identity"), that store their composite payloads as ciphertext in the existing encrypted `key` field with no new column or migration, following the `totp` precedent. Card brand and last-4 are derived in the browser, never stored. BSN, sensitive personal data under the AVG/GDPR, is always ciphertext.
 
 ## Requirements
 

@@ -6,7 +6,7 @@
 
   The printed boundary statement is part of the artefact, not decoration: an
   auditor reading a CSV or a printed PDF has to be told, on the document
-  itself, that every figure is server-visible METADATA — Doriath holds no
+  itself, that every figure is server-visible METADATA — Keepiq holds no
   password strength, reuse or breach number anywhere server-side, and the
   ciphertext-age columns describe blob age, not password quality.
 
@@ -24,7 +24,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Compliance snapshot')"
+		:name="t('keepiq', 'Compliance snapshot')"
 		:open="report !== null"
 		size="large"
 		data-testid="compliance-snapshot-dialog"
@@ -37,14 +37,14 @@
 			<p class="compliance__boundary" data-testid="compliance-boundary">
 				{{
 					t(
-						'doriath',
-						'Zero-knowledge boundary: this report aggregates server-visible metadata only. No secret value, name, login, or ciphertext was read; no password strength, reuse, or breach figure exists anywhere in Doriath server-side. Ciphertext-age figures describe encryption-blob age, not password strength.',
+						'keepiq',
+						'Zero-knowledge boundary: this report aggregates server-visible metadata only. No secret value, name, login, or ciphertext was read; no password strength, reuse, or breach figure exists anywhere in Keepiq server-side. Ciphertext-age figures describe encryption-blob age, not password strength.',
 					)
 				}}
 			</p>
 			<p>
 				{{
-					t('doriath', 'Generated {at} by {by} on Doriath {version}', {
+					t('keepiq', 'Generated {at} by {by} on Keepiq {version}', {
 						at: formatDate(report.generatedAt),
 						by: report.generatedBy,
 						version: report.appVersion,
@@ -75,7 +75,7 @@
 					</template>
 				</dl>
 			</div>
-			<h4>{{ t('doriath', 'Configuration snapshot') }}</h4>
+			<h4>{{ t('keepiq', 'Configuration snapshot') }}</h4>
 			<dl>
 				<template
 					v-for="(value, key) in report.configSnapshot"
@@ -94,16 +94,16 @@
 				variant="secondary"
 				data-testid="compliance-export-csv"
 				@click="exportCsv">
-				{{ t('doriath', 'Export CSV') }}
+				{{ t('keepiq', 'Export CSV') }}
 			</NcButton>
 			<NcButton
 				variant="secondary"
 				data-testid="compliance-export-pdf"
 				@click="exportPdf">
-				{{ t('doriath', 'Export PDF (print)') }}
+				{{ t('keepiq', 'Export PDF (print)') }}
 			</NcButton>
 			<NcButton variant="tertiary" @click="$emit('close')">
-				{{ t('doriath', 'Close') }}
+				{{ t('keepiq', 'Close') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -178,7 +178,7 @@ export default {
 			const blob = new Blob([csv], { type: 'text/csv' })
 			const link = document.createElement('a')
 			link.href = URL.createObjectURL(blob)
-			link.download = `doriath-compliance-${this.report.id}.csv`
+			link.download = `keepiq-compliance-${this.report.id}.csv`
 			link.click()
 			URL.revokeObjectURL(link.href)
 			await this.beacon('csv')
@@ -193,7 +193,7 @@ export default {
 		async exportPdf() {
 			const printWindow = window.open('', '_blank')
 			printWindow.document.write(
-				'<html><head><title>Doriath compliance snapshot</title></head><body>'
+				'<html><head><title>Keepiq compliance snapshot</title></head><body>'
 					+ this.$refs.printable.innerHTML
 					+ '</body></html>',
 			)
@@ -213,7 +213,7 @@ export default {
 			try {
 				await axios.post(
 					generateUrl(
-						`/apps/doriath/api/v1/compliance/reports/${this.report.id}/exported`,
+						`/apps/keepiq/api/v1/compliance/reports/${this.report.id}/exported`,
 					),
 					{ format },
 				)
@@ -232,16 +232,16 @@ export default {
 		 */
 		sectionTitle(section) {
 			const titles = {
-				adoption: this.t('doriath', 'Adoption'),
-				secretsPerUser: this.t('doriath', 'Secrets per user'),
-				shareHygiene: this.t('doriath', 'Share hygiene'),
+				adoption: this.t('keepiq', 'Adoption'),
+				secretsPerUser: this.t('keepiq', 'Secrets per user'),
+				shareHygiene: this.t('keepiq', 'Share hygiene'),
 				rotationPosture: this.t(
-					'doriath',
+					'keepiq',
 					'Rotation posture (ciphertext-age, not strength)',
 				),
 
-				auditIntegrity: this.t('doriath', 'Audit-trail integrity'),
-				emergencyAccess: this.t('doriath', 'Emergency-access coverage'),
+				auditIntegrity: this.t('keepiq', 'Audit-trail integrity'),
+				emergencyAccess: this.t('keepiq', 'Emergency-access coverage'),
 			}
 			return titles[section] || section
 		},

@@ -16,23 +16,23 @@
 <template>
 	<section
 		v-if="open"
-		class="doriath-app-register-dialog"
+		class="keepiq-app-register-dialog"
 		role="dialog"
 		data-testid="application-register-dialog">
-		<header class="doriath-app-register-dialog__header">
-			<h3>{{ t('doriath', 'Register application') }}</h3>
+		<header class="keepiq-app-register-dialog__header">
+			<h3>{{ t('keepiq', 'Register application') }}</h3>
 			<button
 				type="button"
 				data-testid="application-register-close"
-				:aria-label="t('doriath', 'Close')"
+				:aria-label="t('keepiq', 'Close')"
 				@click="$emit('close')">
 				<span aria-hidden="true">×</span>
 			</button>
 		</header>
 
 		<form @submit.prevent="onSubmit">
-			<label class="doriath-app-register-dialog__field">
-				<span>{{ t('doriath', 'Name') }} *</span>
+			<label class="keepiq-app-register-dialog__field">
+				<span>{{ t('keepiq', 'Name') }} *</span>
 				<input
 					v-model.trim="form.name"
 					type="text"
@@ -41,8 +41,8 @@
 					data-testid="application-register-name" />
 			</label>
 
-			<label class="doriath-app-register-dialog__field">
-				<span>{{ t('doriath', 'Description') }}</span>
+			<label class="keepiq-app-register-dialog__field">
+				<span>{{ t('keepiq', 'Description') }}</span>
 				<textarea
 					v-model="form.description"
 					rows="2"
@@ -50,20 +50,20 @@
 					data-testid="application-register-description" />
 			</label>
 
-			<label class="doriath-app-register-dialog__field">
-				<span>{{ t('doriath', 'Type') }}</span>
+			<label class="keepiq-app-register-dialog__field">
+				<span>{{ t('keepiq', 'Type') }}</span>
 				<select v-model="form.type" data-testid="application-register-type">
 					<option value="internal">
-						{{ t('doriath', 'Internal (Nextcloud app)') }}
+						{{ t('keepiq', 'Internal (Nextcloud app)') }}
 					</option>
 					<option value="external">
-						{{ t('doriath', 'External (offsite service)') }}
+						{{ t('keepiq', 'External (offsite service)') }}
 					</option>
 				</select>
 			</label>
 
-			<label class="doriath-app-register-dialog__field">
-				<span>{{ t('doriath', 'CSR (optional, PEM-encoded)') }}</span>
+			<label class="keepiq-app-register-dialog__field">
+				<span>{{ t('keepiq', 'CSR (optional, PEM-encoded)') }}</span>
 				<textarea
 					v-model="form.csr"
 					rows="6"
@@ -78,26 +78,24 @@
 
 			<p
 				v-if="error"
-				class="doriath-app-register-dialog__error"
+				class="keepiq-app-register-dialog__error"
 				data-testid="application-register-error">
 				{{ error }}
 			</p>
 
-			<div class="doriath-app-register-dialog__actions">
+			<div class="keepiq-app-register-dialog__actions">
 				<button
 					type="button"
 					data-testid="application-register-cancel"
 					@click="$emit('close')">
-					{{ t('doriath', 'Cancel') }}
+					{{ t('keepiq', 'Cancel') }}
 				</button>
 				<button
 					type="submit"
 					class="primary"
 					data-testid="application-register-submit"
 					:disabled="busy || form.name === ''">
-					{{
-						busy ? t('doriath', 'Submitting…') : t('doriath', 'Register')
-					}}
+					{{ busy ? t('keepiq', 'Submitting…') : t('keepiq', 'Register') }}
 				</button>
 			</div>
 		</form>
@@ -142,10 +140,17 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Submit the registration, optionally carrying a PKCS#10 CSR.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		async onSubmit() {
 			this.error = null
 			if (this.form.name === '') {
-				this.error = t('doriath', 'Name is required')
+				this.error = t('keepiq', 'Name is required')
 				return
 			}
 			const store = useApplicationStore()
@@ -162,7 +167,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
-					|| t('doriath', 'Failed to register')
+					|| t('keepiq', 'Failed to register')
 			} finally {
 				this.busy = false
 			}
@@ -184,7 +189,7 @@ export default {
 </script>
 
 <style scoped>
-.doriath-app-register-dialog {
+.keepiq-app-register-dialog {
 	max-width: 560px;
 	background-color: var(--color-main-background, #fff);
 	border: 1px solid var(--color-border, #ddd);
@@ -192,41 +197,41 @@ export default {
 	padding: 16px;
 }
 
-.doriath-app-register-dialog__header {
+.keepiq-app-register-dialog__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 12px;
 }
 
-.doriath-app-register-dialog__field {
+.keepiq-app-register-dialog__field {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
 }
 
-.doriath-app-register-dialog__field input,
-.doriath-app-register-dialog__field textarea,
-.doriath-app-register-dialog__field select {
+.keepiq-app-register-dialog__field input,
+.keepiq-app-register-dialog__field textarea,
+.keepiq-app-register-dialog__field select {
 	padding: 8px;
 	border: 1px solid var(--color-border-dark, #999);
 	border-radius: var(--border-radius, 4px);
 	font-family: inherit;
 }
 
-.doriath-app-register-dialog__error {
+.keepiq-app-register-dialog__error {
 	color: var(--color-error-text);
 	font-size: 13px;
 }
 
-.doriath-app-register-dialog__actions {
+.keepiq-app-register-dialog__actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
 }
 
-.doriath-app-register-dialog__actions .primary {
+.keepiq-app-register-dialog__actions .primary {
 	background-color: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
 	border: 0;

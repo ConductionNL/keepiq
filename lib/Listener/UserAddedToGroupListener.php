@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath UserAddedToGroupListener
+ * Keepiq UserAddedToGroupListener
  *
  * Listens for Nextcloud's UserAddedEvent and, for every secret already
  * shared with the joined group, notifies the secret owner that a new
  * member has appeared so the owner can approve the share.
  *
  * @category Listener
- * @package  OCA\Doriath\Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,10 +21,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Listener;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Doriath\Service\GroupShareService;
-use OCA\Doriath\Service\TeamFolderService;
+use OCA\Keepiq\Service\GroupShareService;
+use OCA\Keepiq\Service\TeamFolderService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\UserAddedEvent;
@@ -61,6 +61,9 @@ class UserAddedToGroupListener implements IEventListener {
 	 * @param Event $event The dispatched event
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-new-group-member-owner-notification
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-membership-propagation-with-group-membership
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof UserAddedEvent === false) {
@@ -74,15 +77,15 @@ class UserAddedToGroupListener implements IEventListener {
 			);
 			if ($count > 0) {
 				$this->logger->info(
-					'Doriath: dispatched ' . $count . ' new-member notifications for '
+					'Keepiq: dispatched ' . $count . ' new-member notifications for '
 					. $event->getUser()->getUID() . ' joining ' . $event->getGroup()->getGID(),
-					['app' => 'doriath']
+					['app' => 'keepiq']
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: UserAddedToGroupListener failed: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: UserAddedToGroupListener failed: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 		}
 
@@ -95,15 +98,15 @@ class UserAddedToGroupListener implements IEventListener {
 			);
 			if ($joinCount > 0) {
 				$this->logger->info(
-					'Doriath: dispatched ' . $joinCount . ' team-folder join requests for '
+					'Keepiq: dispatched ' . $joinCount . ' team-folder join requests for '
 					. $event->getUser()->getUID() . ' joining ' . $event->getGroup()->getGID(),
-					['app' => 'doriath']
+					['app' => 'keepiq']
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: team-folder join handling failed: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: team-folder join handling failed: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 		}
 	}//end handle()

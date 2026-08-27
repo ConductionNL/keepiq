@@ -5,13 +5,13 @@
 
 # OpenConnector integration — machine secret-store API
 
-Doriath exposes a **machine-to-machine secret-store API** so a sister app such
+Keepiq exposes a **machine-to-machine secret-store API** so a sister app such
 as **OpenConnector** can hold a *reference* to a credential instead of the
 credential value. Connector configurations embed a `doriath://` reference;
-the actual secret lives encrypted in the Doriath vault, is rotatable in one
+the actual secret lives encrypted in the Keepiq vault, is rotatable in one
 place, and every retrieval is auditable.
 
-This is the **Doriath side** of the contract. The OpenConnector-side resolver
+This is the **Keepiq side** of the contract. The OpenConnector-side resolver
 (an authentication / value-resolver plugin) lives in the OpenConnector repo
 with its own OpenSpec change, built and CI-verified against the shared Newman
 collection shipped here:
@@ -58,7 +58,7 @@ breaks every config that points at it (the failure is an immediate, explicit
 
 ## Resolution algorithm
 
-1. **Discover** (cache the result): `GET /apps/doriath/api/v1/app/.well-known/doriath`
+1. **Discover** (cache the result): `GET /apps/keepiq/api/v1/app/.well-known/doriath`
    (public, no auth). Returns `apiVersion`, the token endpoint, the grant type
    (`urn:ietf:params:oauth:grant-type:jwt-bearer`), assertion requirements
    (`alg: RS256`, `maxLifetime: 300`, `audience`), the secret endpoint paths,
@@ -66,11 +66,11 @@ breaks every config that points at it (the failure is an immediate, explicit
 2. **Get a token** (cache until expiry minus a skew): sign an RS256 JWT bearer
    assertion with the application private key and `POST` it to the token
    endpoint as `grant_type` + `assertion`. The assertion claims:
-   `iss` = application id, `aud` = `doriath`, `iat` = now, `exp` ≤ `iat + 300`,
+   `iss` = application id, `aud` = `keepiq`, `iat` = now, `exp` ≤ `iat + 300`,
    and a **unique `jti`** (single-use within the assertion lifetime). The
    response is an **opaque 5-minute Bearer token** scoped to exactly one
    application's vault.
-3. **Fetch by name**: `GET /apps/doriath/api/v1/app/secrets/by-name/{name}`
+3. **Fetch by name**: `GET /apps/keepiq/api/v1/app/secrets/by-name/{name}`
    with `Authorization: Bearer <token>` and an optional `?folder={path}` to
    scope the reference's `folderPath`. Outcomes:
    - **one match** → the `doriath-machine-secret-v1` envelope (with an `ETag`),
@@ -166,8 +166,8 @@ the consumer's poll cadence.
 A connector that rotates a downstream token can persist the new value where it
 reads it from:
 
-- `POST /apps/doriath/api/v1/app/secrets` — create;
-- `PUT /apps/doriath/api/v1/app/secrets/{id}` — replace the ciphertext
+- `POST /apps/keepiq/api/v1/app/secrets` — create;
+- `PUT /apps/keepiq/api/v1/app/secrets/{id}` — replace the ciphertext
   (advances `updatedAt`, and `keyUpdatedAt` when the `key` blob changes).
 
 Both accept plaintext-safe metadata plus fields the application encrypted with
@@ -187,7 +187,7 @@ server.
 
 Create one in the application's **own** vault:
 
-- `POST /apps/doriath/api/v1/app/secret-requests`
+- `POST /apps/keepiq/api/v1/app/secret-requests`
 
 ```json
 {
@@ -216,8 +216,8 @@ never resolve into another vault.
   "status": "pending",
   "requestedFields": ["url", "api-key", "api-interface-id"],
   "token": "…",
-  "fillLinkUrl": "https://<host>/index.php/apps/doriath/public#/share/request/<token>",
-  "fillApiUrl": "https://<host>/index.php/apps/doriath/api/v1/public/secret-requests/<token>",
+  "fillLinkUrl": "https://<host>/index.php/apps/keepiq/public#/share/request/<token>",
+  "fillApiUrl": "https://<host>/index.php/apps/keepiq/api/v1/public/secret-requests/<token>",
   "expiresAt": "2026-12-31T00:00:00+00:00"
 }
 ```
@@ -239,7 +239,7 @@ if the request itself fails.
 
 Lost the response? The fill-link is retrievable:
 
-- `GET /apps/doriath/api/v1/app/secret-requests` — the caller's own PENDING
+- `GET /apps/keepiq/api/v1/app/secret-requests` — the caller's own PENDING
   requests, each with its `token`, `fillLinkUrl` and `fillApiUrl`.
 
 Requests created by a **user** against the application's vault are deliberately

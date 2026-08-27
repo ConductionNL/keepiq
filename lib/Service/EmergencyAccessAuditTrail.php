@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Emergency Access Audit Trail
+ * Keepiq Emergency Access Audit Trail
  *
  * The single writer of break-glass audit entries (add-emergency-access,
  * design D8). Every emergency-access transition is recorded through this
@@ -10,7 +10,7 @@
  * event shapes in one file is what makes that guarantee checkable.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,10 +23,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Event\Audit\AuditEventFactory;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**

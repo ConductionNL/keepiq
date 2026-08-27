@@ -11,7 +11,16 @@
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-cache-is-evicted-on-lock-logout-and-suite-rotation
  */
 
-const DB_NAME = 'doriath-offline'
+const DB_NAME = 'keepiq-offline'
+
+/* The pre-rename database name. A browser that ran the doriath build still
+   holds an encrypted vault snapshot under it, and renaming the database
+   alone would strand that data: purge() would evict the new database while
+   the old one survives every lock, logout and rotation, unreachable by this
+   code. purge() therefore deletes it too. Remove this once no client can
+   still be carrying a pre-rename snapshot. */
+const LEGACY_DB_NAME = 'doriath-offline'
+
 const DB_VERSION = 1
 const STORE = 'snapshot'
 const SNAPSHOT_KEY = 'current'
@@ -101,6 +110,22 @@ export async function purge() {
 	if (!isCacheAvailable()) {
 		return
 	}
+
+	/* Drop the pre-rename database first, and never let its failure stop the
+	   real eviction below: a browser with no legacy database is the normal
+	   case, and a blocked delete (another tab holding it open) must not leave
+	   the current snapshot in place. */
+	try {
+		await new Promise((resolve) => {
+			const req = indexedDB.deleteDatabase(LEGACY_DB_NAME)
+			req.onsuccess = () => resolve()
+			req.onerror = () => resolve()
+			req.onblocked = () => resolve()
+		})
+	} catch {
+		// Legacy eviction is best-effort; the current snapshot still evicts.
+	}
+
 	const db = await openDb()
 	try {
 		await new Promise((resolve, reject) => {

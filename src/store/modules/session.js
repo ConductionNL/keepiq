@@ -61,7 +61,7 @@ export const useSessionStore = defineStore('session', {
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/suites'),
+				generateUrl('/apps/keepiq/api/v1/suites'),
 			)
 			const suites = response.data
 			const activeSuite = suites.find((s) => s.status === 'active')
@@ -133,7 +133,7 @@ export const useSessionStore = defineStore('session', {
 		 */
 		async unlockWithRawKey(rawUnlockKey) {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/suites'),
+				generateUrl('/apps/keepiq/api/v1/suites'),
 			)
 			const activeSuite = response.data.find((s) => s.status === 'active')
 			if (!activeSuite) {

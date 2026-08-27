@@ -1,10 +1,10 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Vitest configuration for Doriath frontend unit tests.
+ * Vitest configuration for Keepiq frontend unit tests.
  *
- * Doriath ships TWO kinds of vitest specs and the harness picks the runtime
+ * Keepiq ships TWO kinds of vitest specs and the harness picks the runtime
  * environment per file via `environmentMatchGlobs`:
  *
  *   1. PURE LOGIC SPECS  -> `node` env (default)
@@ -26,7 +26,7 @@
  *     parallel Vite build the publishing pipeline runs).
  *   - `@conduction/nextcloud-vue` is aliased to a lightweight stub because
  *     its bundle drags in apexcharts / leaflet / codemirror, none of which
- *     render under jsdom. The doriath stub re-exports the dialog/modal
+ *     render under jsdom. The keepiq stub re-exports the dialog/modal
  *     primitives the tests need as plain Vue 3 components.
  *
  * @spec openspec/changes/implement-link-sharing/tasks.md#13.1
@@ -37,7 +37,7 @@ const path = require('path')
 const vue = require('@vitejs/plugin-vue')
 
 const cssNoop = {
-	name: 'doriath-css-noop',
+	name: 'keepiq-css-noop',
 	enforce: 'pre',
 	resolveId(id) {
 		if (typeof id === 'string' && /\.css(\?.*)?$/.test(id)) {
@@ -182,7 +182,7 @@ module.exports = {
 					'tests/vitest/stubs/argon2-browser.js',
 				),
 			},
-			// The doriath shim does `await import('argon2-browser/dist/argon2.wasm')`
+			// The keepiq shim does `await import('argon2-browser/dist/argon2.wasm')`
 			// in the browser to get the webpack-emitted URL; in node we
 			// short-circuit the import to a no-op (the stubbed argon2 module
 			// above ignores the URL anyway).

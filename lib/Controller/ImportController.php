@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Import Controller
+ * Keepiq Import Controller
  *
  * Authenticated batch-create endpoint for the client-side import pipeline
  * (secret-import D7). The browser parses, maps, deduplicates, and ENCRYPTS every
@@ -18,7 +18,7 @@
  * additionalFields arrive as RSA ciphertext envelopes and are stored verbatim.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -31,12 +31,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Exception\SuiteBlockedException;
-use OCA\Doriath\Service\ImportService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Service\ImportService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;

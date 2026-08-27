@@ -1,8 +1,8 @@
-# Local development stack for Doriath.
+# Local development stack for Keepiq.
 #
 # Brings up PostgreSQL + Nextcloud 32 on http://localhost:8080 (admin/admin),
-# with this repo bind-mounted as the `doriath` custom app and the sibling
-# `../openregister` checkout mounted alongside it — Doriath builds on
+# with this repo bind-mounted as the `keepiq` custom app and the sibling
+# `../openregister` checkout mounted alongside it — Keepiq builds on
 # OpenRegister's AppHost engine, so both apps are enabled automatically on
 # every start by the before-starting hook (docker/nextcloud/enable-apps.sh):
 #
@@ -21,7 +21,7 @@ volumes:
 
 networks:
   default:
-    name: doriath-network
+    name: keepiq-network
 
 services:
   db:
@@ -29,7 +29,7 @@ services:
     # pg_trgm extensions (enabled by the init script below).
     image: pgvector/pgvector:pg16
     restart: always
-    container_name: doriath-postgres
+    container_name: keepiq-postgres
     volumes:
       - db:/var/lib/postgresql/data
       - ./docker/postgres/init-extensions.sql:/docker-entrypoint-initdb.d/01-init-extensions.sql:ro
@@ -46,7 +46,7 @@ services:
       retries: 5
 
   nextcloud:
-    # NC 32 — within Doriath's info.xml min/max-version window (32–34) and
+    # NC 32 — within Keepiq's info.xml min/max-version window (32–34) and
     # matches the openregister reference stack.
     image: nextcloud:32
     user: root
@@ -67,10 +67,10 @@ services:
       # apps_paths entry). Host mounts are world-writable, so this also
       # gives App Store installs a place to land.
       - ./custom_apps:/var/www/html/custom_apps
-      - .:/var/www/html/custom_apps/doriath
+      - .:/var/www/html/custom_apps/keepiq
       - ../openregister:/var/www/html/custom_apps/openregister
       # before-starting hooks run as www-data on every start, after
-      # install/upgrade — this one enables openregister + doriath. Do NOT
+      # install/upgrade — this one enables openregister + keepiq. Do NOT
       # replace the image's entrypoint for this (that broke startup before).
       - ./docker/nextcloud/enable-apps.sh:/docker-entrypoint-hooks.d/before-starting/enable-apps.sh:ro
     environment:

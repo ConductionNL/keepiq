@@ -6,7 +6,7 @@
  * POST /api/v1/group-shares/{id}/deny-new-member).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,11 +22,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\GroupShareController;
-use OCA\Doriath\Service\GroupShareService;
+use OCA\Keepiq\Controller\GroupShareController;
+use OCA\Keepiq\Service\GroupShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

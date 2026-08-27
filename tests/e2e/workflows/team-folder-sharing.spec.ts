@@ -45,7 +45,7 @@ import {
 	APP_BASE,
 } from './_workflow-helpers'
 
-const API = `${APP_BASE.replace('/apps/doriath', '')}/apps/doriath/api/v1`
+const API = `${APP_BASE.replace('/apps/keepiq', '')}/apps/keepiq/api/v1`
 
 test.describe('team folder sharing', () => {
 	test('owner shares a folder, fans out to a user, and revokes', async ({

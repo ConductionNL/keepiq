@@ -1,13 +1,13 @@
 <template>
 	<div class="recent-secrets-widget">
-		<h3>{{ t('doriath', 'Recently accessed secrets') }}</h3>
+		<h3>{{ t('keepiq', 'Recently accessed secrets') }}</h3>
 		<div v-if="loading" class="recent-secrets-widget__row">
-			{{ t('doriath', 'Loading…') }}
+			{{ t('keepiq', 'Loading…') }}
 		</div>
 		<div
 			v-else-if="secrets.length === 0"
 			class="recent-secrets-widget__row recent-secrets-widget__row--empty">
-			{{ t('doriath', 'No secrets accessed yet') }}
+			{{ t('keepiq', 'No secrets accessed yet') }}
 		</div>
 		<ul v-else class="recent-secrets-widget__list">
 			<li
@@ -59,7 +59,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/v1/secrets'),
+				generateUrl('/apps/keepiq/api/v1/secrets'),
 				{
 					params: { limit: 5, sort: 'last_accessed_at:desc' },
 				},
@@ -68,7 +68,7 @@ export default {
 				response.data.secrets || response.data.results || response.data || []
 			this.secrets = Array.isArray(list) ? list.slice(0, 5) : []
 		} catch (e) {
-			console.warn('Doriath: failed to load recent secrets', e)
+			console.warn('Keepiq: failed to load recent secrets', e)
 			this.secrets = []
 		} finally {
 			this.loading = false
@@ -91,7 +91,7 @@ export default {
 				})
 			} else {
 				window.location.href = generateUrl(
-					`/apps/doriath/secrets/${secret.id}`,
+					`/apps/keepiq/secrets/${secret.id}`,
 				)
 			}
 		},

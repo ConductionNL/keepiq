@@ -4,7 +4,7 @@
  * Unit tests for CertificateLifecycleService (certificate-lifecycle §6).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,23 +17,23 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\CACertificateMapper;
-use OCA\Doriath\Db\CertificateMetadata;
-use OCA\Doriath\Db\CertificateMetadataMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\SecretType;
-use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Service\CertificateIssuanceService;
-use OCA\Doriath\Service\CertificateLifecycleService;
-use OCA\Doriath\Service\CertificateMetadataService;
-use OCA\Doriath\Service\SecretService;
+use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\CertificateMetadata;
+use OCA\Keepiq\Db\CertificateMetadataMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Service\CertificateIssuanceService;
+use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Service\CertificateMetadataService;
+use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -94,7 +94,7 @@ class CertificateLifecycleServiceTest extends TestCase {
 		);
 
 		$key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
-		$csr = openssl_csr_new(['commonName' => 'suite-test.doriath'], $key, ['digest_alg' => 'sha256']);
+		$csr = openssl_csr_new(['commonName' => 'suite-test.keepiq'], $key, ['digest_alg' => 'sha256']);
 		$x509 = openssl_csr_sign($csr, null, $key, 365, ['digest_alg' => 'sha256']);
 		openssl_x509_export(certificate: $x509, output: $pemOut);
 		$this->pem = $pemOut;
@@ -154,7 +154,7 @@ class CertificateLifecycleServiceTest extends TestCase {
 		$this->assertSame('client_parsed', $inventory['stored'][0]['metadataSource']);
 		$this->assertSame('CN=stored.example', $inventory['stored'][0]['metadata']['subject']);
 		$this->assertSame('server_parsed', $inventory['suites'][0]['metadataSource']);
-		$this->assertStringContainsString('CN=suite-test.doriath', $inventory['suites'][0]['metadata']['subject']);
+		$this->assertStringContainsString('CN=suite-test.keepiq', $inventory['suites'][0]['metadata']['subject']);
 		$this->assertSame([], $inventory['ca'], 'non-admins see no CA rows');
 
 		$json = (string)json_encode($inventory);
@@ -171,7 +171,7 @@ class CertificateLifecycleServiceTest extends TestCase {
 	public function testParseCaCertificate(): void {
 		$parsed = $this->service->parseCaCertificate(pem: $this->pem);
 		$this->assertNotNull($parsed);
-		$this->assertStringContainsString('CN=suite-test.doriath', $parsed['subject']);
+		$this->assertStringContainsString('CN=suite-test.keepiq', $parsed['subject']);
 		$this->assertNotNull($parsed['notAfter']);
 		$this->assertStringStartsWith('sha256:', $parsed['fingerprintSha256']);
 

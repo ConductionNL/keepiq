@@ -12,6 +12,12 @@
  * @spec openspec/specs/passkey-vault-login/spec.md#requirement-prf-support-is-feature-detected-and-degrades-gracefully
  */
 
+// HKDF `info` — a KEY DERIVATION INPUT, not a label. It MUST stay
+// 'doriath-passkey-kek-v1' across the doriath -> keepiq rename: changing a
+// single byte derives a DIFFERENT KEK from the same passkey PRF output, so
+// every already-registered passkey would silently fail to unwrap its stored
+// unlock key and the user would be locked out of their vault by that route.
+// Rotating it is a re-enrolment migration, never a rename.
 const HKDF_INFO = new TextEncoder().encode('doriath-passkey-kek-v1')
 const IV_LENGTH = 12
 

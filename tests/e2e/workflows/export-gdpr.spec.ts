@@ -16,7 +16,7 @@
  * an `@e2e exclude` directive on their spec scenarios per gate-19 and are
  * covered by PHPUnit.
  *
- * Environment assumptions match the other workflow specs: the doriath app is
+ * Environment assumptions match the other workflow specs: the keepiq app is
  * enabled, the admin owns one active EncryptionSuite seeded with the dev master
  * password, and the dev seed provides at least one secret.
  */
@@ -107,7 +107,7 @@ test.describe('secret export + GDPR', () => {
 			.getByRole('button', { name: /My data/i })
 			.evaluate((el: HTMLElement) => el.click())
 		await page
-			.getByRole('menuitem', { name: /Delete my Doriath data/i })
+			.getByRole('menuitem', { name: /Delete my Keepiq data/i })
 			.evaluate((el: HTMLElement) => el.click())
 
 		// The delete action stays disabled until BOTH gates are satisfied.

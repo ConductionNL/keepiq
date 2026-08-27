@@ -18,18 +18,18 @@
 		class="application-secrets-panel"
 		data-testid="application-secrets-panel">
 		<header class="application-secrets-panel__header">
-			<h3>{{ t('doriath', 'Application secrets') }}</h3>
+			<h3>{{ t('keepiq', 'Application secrets') }}</h3>
 			<NcButton
 				v-if="applicationActive"
 				variant="primary"
 				data-testid="write-secret-button"
 				@click="$emit('write-secret')">
-				{{ t('doriath', 'Write secret') }}
+				{{ t('keepiq', 'Write secret') }}
 			</NcButton>
 		</header>
 
 		<p v-if="loading" class="application-secrets-panel__loading">
-			{{ t('doriath', 'Loading secrets…') }}
+			{{ t('keepiq', 'Loading secrets…') }}
 		</p>
 
 		<NcNoteCard v-else-if="error" type="error">
@@ -38,19 +38,13 @@
 
 		<p v-else-if="!applicationActive" class="application-secrets-panel__empty">
 			{{
-				t(
-					'doriath',
-					'Approve this application before writing secrets to it.',
-				)
+				t('keepiq', 'Approve this application before writing secrets to it.')
 			}}
 		</p>
 
 		<p v-else-if="secrets.length === 0" class="application-secrets-panel__empty">
 			{{
-				t(
-					'doriath',
-					'No secrets have been written for this application yet.',
-				)
+				t('keepiq', 'No secrets have been written for this application yet.')
 			}}
 		</p>
 
@@ -122,6 +116,13 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Reload the application's secrets (ciphertext rows; only metadata is
+		 * displayable here).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		async refresh() {
 			if (!this.applicationId || !this.applicationActive) {
 				this.secrets = []
@@ -137,7 +138,7 @@ export default {
 				this.error =
 					e?.response?.data?.message
 					?? e?.message
-					?? this.t('doriath', 'Failed to load secrets')
+					?? this.t('keepiq', 'Failed to load secrets')
 			} finally {
 				this.loading = false
 			}

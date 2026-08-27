@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
-<ruleset name="Doriath Nextcloud Rules (lib/Db persistence layer)"
+<ruleset name="Keepiq Nextcloud Rules (lib/Db persistence layer)"
     xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
                         http://pmd.sourceforge.net/ruleset_xml_schema.xsd">
 
     <description>
-        The full doriath ruleset (phpmd.xml) MINUS the two rules that measure a
+        The full keepiq ruleset (phpmd.xml) MINUS the two rules that measure a
         database table's shape rather than a design defect. Applied to lib/Db/
         only. Every other rule in phpmd.xml stays in force here - see the long
         rationale in phpmd.xml.
@@ -18,7 +18,7 @@
              base class derives the column list, the magic getters/setters and
              the dirty-field tracking from the declared properties, so the
              field count is not a modelling choice - it is the width of the
-             table. Doriath's two widest tables are:
+             table. Keepiq's two widest tables are:
 
                Db\Secret   19 fields -> `doriath_secrets`
                Db\SiemSink 18 fields -> `doriath_siem_sinks`

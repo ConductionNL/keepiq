@@ -4,14 +4,14 @@
 			<template #icon>
 				<ArrowLeft :size="20" />
 			</template>
-			{{ t('doriath', 'Back to vault') }}
+			{{ t('keepiq', 'Back to vault') }}
 		</NcButton>
 
 		<NcLoadingIcon v-if="loading" :size="32" class="secret-detail__loading" />
 
 		<NcEmptyContent
 			v-else-if="error"
-			:name="t('doriath', 'Cannot open secret')"
+			:name="t('keepiq', 'Cannot open secret')"
 			:description="error">
 			<template #icon>
 				<Lock />
@@ -27,7 +27,7 @@
 					v-if="teamWritable"
 					class="secret-detail__team-badge"
 					data-testid="team-writable-badge">
-					{{ t('doriath', 'Editable — changes sync to the whole team') }}
+					{{ t('keepiq', 'Editable — changes sync to the whole team') }}
 				</span>
 			</h2>
 
@@ -44,7 +44,7 @@
 				<p>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'This value was in the vault when the encryption key was declared compromised, so it must be assumed exposed.',
 						)
 					}}
@@ -52,7 +52,7 @@
 				<p>
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Change it at its source, then save the new value here. Saving a new value clears this warning.',
 						)
 					}}
@@ -60,18 +60,18 @@
 			</NcNoteCard>
 
 			<div v-if="secret.url" class="secret-detail__field">
-				<span class="secret-detail__label">{{ t('doriath', 'URL') }}</span>
+				<span class="secret-detail__label">{{ t('keepiq', 'URL') }}</span>
 				<a :href="secret.url" target="_blank" rel="noopener noreferrer">{{
 					secret.url
 				}}</a>
 			</div>
 
 			<div v-if="secret.login" class="secret-detail__field">
-				<span class="secret-detail__label">{{ t('doriath', 'Login') }}</span>
+				<span class="secret-detail__label">{{ t('keepiq', 'Login') }}</span>
 				<span class="secret-detail__value">{{ secret.login }}</span>
 				<CopyButton
 					:value="secret.login"
-					:label="t('doriath', 'Copy login')" />
+					:label="t('keepiq', 'Copy login')" />
 			</div>
 
 			<div class="secret-detail__field">
@@ -83,7 +83,7 @@
 				v-if="isTotp"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'One-time code')
+					t('keepiq', 'One-time code')
 				}}</span>
 				<TotpDisplay
 					:seed="secret.key || ''"
@@ -94,7 +94,7 @@
 				v-if="isPasskey"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Passkey')
+					t('keepiq', 'Passkey')
 				}}</span>
 				<PasskeyDisplay
 					:credentialJson="secret.key || ''"
@@ -105,7 +105,7 @@
 				v-if="isCard"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Payment card')
+					t('keepiq', 'Payment card')
 				}}</span>
 				<CardDisplay
 					:payloadJson="secret.key || ''"
@@ -116,7 +116,7 @@
 				v-if="isIdentity"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Identity')
+					t('keepiq', 'Identity')
 				}}</span>
 				<IdentityDisplay
 					:payloadJson="secret.key || ''"
@@ -125,7 +125,7 @@
 
 			<div class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Attachments')
+					t('keepiq', 'Attachments')
 				}}</span>
 				<AttachmentPanel :secretId="secretId" :canManage="isOwner" />
 			</div>
@@ -134,7 +134,7 @@
 				v-if="isOwner"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Version history')
+					t('keepiq', 'Version history')
 				}}</span>
 				<VersionHistoryPanel
 					:secretId="secretId"
@@ -146,7 +146,7 @@
 				v-if="isOwner"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Rotation & expiry')
+					t('keepiq', 'Rotation & expiry')
 				}}</span>
 				<RotationPanel :secretId="secretId" :canManage="isOwner" />
 			</div>
@@ -155,7 +155,7 @@
 				v-if="isOwner"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Honey tripwire')
+					t('keepiq', 'Honey tripwire')
 				}}</span>
 				<HoneyPanel :secretId="secretId" />
 			</div>
@@ -164,7 +164,7 @@
 				v-if="hasAdditionalFields"
 				class="secret-detail__field secret-detail__field--block">
 				<span class="secret-detail__label">{{
-					t('doriath', 'Additional fields')
+					t('keepiq', 'Additional fields')
 				}}</span>
 				<dl class="secret-detail__extra">
 					<template
@@ -186,7 +186,7 @@
 				data-testid="secret-detail-offline-note">
 				{{
 					t(
-						'doriath',
+						'keepiq',
 						'Read-only while offline — reconnect to edit, move, share, or delete.',
 					)
 				}}
@@ -196,25 +196,25 @@
 					<template #icon>
 						<Pencil :size="20" />
 					</template>
-					{{ t('doriath', 'Edit') }}
+					{{ t('keepiq', 'Edit') }}
 				</NcButton>
 				<NcButton variant="secondary" @click="openMove">
 					<template #icon>
 						<FolderMove :size="20" />
 					</template>
-					{{ t('doriath', 'Move') }}
+					{{ t('keepiq', 'Move') }}
 				</NcButton>
 				<NcButton variant="secondary" @click="openShare">
 					<template #icon>
 						<ShareVariant :size="20" />
 					</template>
-					{{ t('doriath', 'Share') }}
+					{{ t('keepiq', 'Share') }}
 				</NcButton>
 				<NcButton variant="error" @click="remove">
 					<template #icon>
 						<Delete :size="20" />
 					</template>
-					{{ t('doriath', 'Delete secret') }}
+					{{ t('keepiq', 'Delete secret') }}
 				</NcButton>
 			</div>
 
@@ -232,7 +232,7 @@
 				class="secret-detail__sharing"
 				data-testid="secret-detail-sharing">
 				<h3 class="secret-detail__sharing-heading">
-					{{ t('doriath', 'Sharing') }}
+					{{ t('keepiq', 'Sharing') }}
 				</h3>
 
 				<ShareList
@@ -277,7 +277,7 @@
 				class="secret-detail__requests"
 				data-testid="secret-detail-requests">
 				<h3 class="secret-detail__requests-heading">
-					{{ t('doriath', 'Requests') }}
+					{{ t('keepiq', 'Requests') }}
 				</h3>
 
 				<div class="secret-detail__requests-actions">
@@ -290,8 +290,8 @@
 						@click="openRequestCreate">
 						{{
 							secretHasValue
-								? t('doriath', 'Ask for new values')
-								: t('doriath', 'Ask someone to fill this in')
+								? t('keepiq', 'Ask for new values')
+								: t('keepiq', 'Ask someone to fill this in')
 						}}
 					</NcButton>
 				</div>
@@ -427,21 +427,50 @@ export default {
 			return this.$route.params.id
 		},
 
+		/**
+		 * Whether this secret has at least one additional field to show.
+		 *
+		 * The count matters, not just the presence of an object. `{}` is truthy AND
+		 * an object, so a guard testing only those two rendered the "Additional
+		 * fields" heading with nothing beneath it. That state only became reachable
+		 * when owners could edit members: removing the last one now sends an empty
+		 * blob (deliberately, so "none" stays distinguishable from "not loaded"),
+		 * and the spec says re-opening the secret must then show NO additional
+		 * fields — not an empty section.
+		 *
+		 * Returns a real boolean rather than the last truthy operand, so callers and
+		 * tests get `false` instead of `null` or `undefined`.
+		 *
+		 * @return {boolean} True when there is at least one member to render.
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
 		hasAdditionalFields() {
+			const blob = this.secret?.additionalFields
+
 			return (
-				this.secret
-				&& this.secret.additionalFields
-				&& typeof this.secret.additionalFields === 'object'
+				blob !== null
+				&& blob !== undefined
+				&& typeof blob === 'object'
+				&& Object.keys(blob).length > 0
 			)
 		},
 
+		/**
+		 * The label for the decrypted key field, which reads "Note" for the
+		 * `note` system type and "Key" otherwise.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+		 */
 		keyLabel() {
 			const typeStore = useSecretTypeStore()
 			const type = this.secret ? typeStore.typesById[this.secret.typeId] : null
 			if (type && type.name === 'note') {
-				return t('doriath', 'Note')
+				return t('keepiq', 'Note')
 			}
-			return t('doriath', 'Key')
+			return t('keepiq', 'Key')
 		},
 
 		/**
@@ -575,6 +604,7 @@ export default {
 		 * Load and decrypt the secret.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async load() {
 			this.loading = true
@@ -598,13 +628,13 @@ export default {
 			} catch (e) {
 				if (e?.response?.status === 403) {
 					this.error = t(
-						'doriath',
+						'keepiq',
 						'This secret is locked because its encryption suite was revoked.',
 					)
 				} else {
 					this.error =
 						e?.response?.data?.message
-						|| t('doriath', 'Failed to load secret')
+						|| t('keepiq', 'Failed to load secret')
 				}
 			} finally {
 				this.loading = false

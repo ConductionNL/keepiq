@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Machine Secret Envelope Service
+ * Keepiq Machine Secret Envelope Service
  *
  * Serializes a Secret into the versioned `doriath-machine-secret-v1`
  * machine-to-machine response envelope and derives the strong ETag used
@@ -12,7 +12,7 @@
  * private key. The server returns ciphertext only — never plaintext.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -25,11 +25,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
@@ -43,6 +43,17 @@ use OCP\AppFramework\Db\DoesNotExistException;
 class MachineSecretEnvelopeService {
 	/**
 	 * The current envelope format identifier.
+	 *
+	 * DELIBERATELY STILL `doriath-` AFTER THE doriath -> keepiq RENAME. This
+	 * string is a version tag on a published wire format, not an app id: it
+	 * is advertised in the discovery document's `envelopeFormats`, and every
+	 * machine consumer asserts on it before attempting decryption. Changing
+	 * it in place is precisely what the paragraph above — and
+	 * openspec/specs/secret-store-api/spec.md — forbid: a breaking change to
+	 * the envelope ships as a NEW format identifier under a NEW apiVersion,
+	 * so that a consumer pinned to v1 keeps working instead of silently
+	 * refusing every secret. The v1 envelope's BYTES did not change here, so
+	 * neither may its name.
 	 *
 	 * @var string
 	 */

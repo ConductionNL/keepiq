@@ -101,6 +101,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * unlock. Fail-soft — a cache write failure never breaks the session.
 		 *
 		 * @return {Promise<boolean>} Whether a snapshot was written.
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
 		 */
 		async syncNow() {
 			this.ensureLockHook()
@@ -110,7 +111,7 @@ export const useOfflineStore = defineStore('offline', {
 			}
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/doriath/api/v1/offline/manifest'),
+					generateUrl('/apps/keepiq/api/v1/offline/manifest'),
 				)
 				const snapshot = await encryptSnapshot(session.aesKey, response.data)
 				const written = await writeSnapshot(snapshot)

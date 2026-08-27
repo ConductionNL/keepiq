@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Emergency Envelope Invalidation Service
+ * Keepiq Emergency Envelope Invalidation Service
  *
  * Envelope invalidation on key change (add-emergency-access): when a
  * grantor's or grantee's encryption suite is rotated or revoked, the
@@ -11,7 +11,7 @@
  * DELETES them outright, because the key they wrap is void.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,11 +24,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Doriath\Db\EmergencyContact;
-use OCA\Doriath\Db\EmergencyContactMapper;
+use OCA\Keepiq\Db\EmergencyContact;
+use OCA\Keepiq\Db\EmergencyContactMapper;
 
 /**
  * Key-change invalidation of break-glass recovery envelopes.

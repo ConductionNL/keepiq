@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Dashboard Summary Service
+ * Keepiq Dashboard Summary Service
  *
  * Aggregates the read-only dashboard summary card (totals, shared-counts,
  * rotation-due, CA health, pending-apps and honey-alert counts).
@@ -15,7 +15,7 @@
  * move with no behaviour change.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,16 +28,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\HoneyAlertMapper;
-use OCA\Doriath\Db\RotationFlagMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\HoneyAlertMapper;
+use OCA\Keepiq\Db\RotationFlagMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -186,8 +186,8 @@ class DashboardSummaryService {
 			];
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: CA-health card unavailable: ' . $exception->getMessage(),
-				['app' => 'doriath']
+				'Keepiq: CA-health card unavailable: ' . $exception->getMessage(),
+				['app' => 'keepiq']
 			);
 
 			return null;
@@ -208,7 +208,7 @@ class DashboardSummaryService {
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'DashboardSummaryService::fetchSummary() failed to compute ' . $metricId . ': ' . $e->getMessage(),
-				['app' => 'doriath']
+				['app' => 'keepiq']
 			);
 			return 0;
 		}

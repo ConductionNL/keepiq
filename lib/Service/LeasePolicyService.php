@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Lease Policy Service
+ * Keepiq Lease Policy Service
  *
  * Lease POLICY resolution and administration, split out of LeaseService
  * (machine-secret-leases §2). Knows the instance defaults held in the app
@@ -10,7 +10,7 @@
  * individual lease lives in LeaseService.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,11 +23,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Db\ApplicationLeasePolicyMapper;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\ApplicationLeasePolicyMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 

@@ -13,7 +13,7 @@
 -->
 <template>
 	<div class="cert-inventory" data-testid="certificate-inventory-view">
-		<h2>{{ t('doriath', 'Certificates') }}</h2>
+		<h2>{{ t('keepiq', 'Certificates') }}</h2>
 
 		<NcNoteCard v-if="store.error" type="error">
 			{{ store.error }}
@@ -24,35 +24,35 @@
 		<template v-if="store.inventory">
 			<!-- Stored certificate secrets (client-parsed). -->
 			<section data-testid="cert-stored-section">
-				<h3>{{ t('doriath', 'Stored certificates') }}</h3>
+				<h3>{{ t('keepiq', 'Stored certificates') }}</h3>
 				<p class="cert-inventory__hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'These live encrypted in your vault. Metadata is parsed in your browser after unlocking — the certificate itself never leaves it.',
 						)
 					}}
 				</p>
 				<NcEmptyContent
 					v-if="store.inventory.stored.length === 0"
-					:name="t('doriath', 'No certificate secrets')"
+					:name="t('keepiq', 'No certificate secrets')"
 					:description="
-						t('doriath', 'Secrets of the Certificate type appear here.')
+						t('keepiq', 'Secrets of the Certificate type appear here.')
 					" />
 				<table v-else class="cert-inventory__table">
 					<thead>
 						<tr>
 							<th scope="col">
-								{{ t('doriath', 'Name') }}
+								{{ t('keepiq', 'Name') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Subject') }}
+								{{ t('keepiq', 'Subject') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Issuer') }}
+								{{ t('keepiq', 'Issuer') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Expires') }}
+								{{ t('keepiq', 'Expires') }}
 							</th>
 							<th scope="col" />
 						</tr>
@@ -72,7 +72,7 @@
 									{{ formatDate(row.metadata.notAfter) }}
 								</span>
 								<span v-else class="cert-inventory__muted">{{
-									t('doriath', 'not parsed yet')
+									t('keepiq', 'not parsed yet')
 								}}</span>
 							</td>
 							<td class="cert-inventory__actions">
@@ -83,8 +83,8 @@
 									@click="onParse(row)">
 									{{
 										row.metadata
-											? t('doriath', 'Re-parse')
-											: t('doriath', 'Parse certificate')
+											? t('keepiq', 'Re-parse')
+											: t('keepiq', 'Parse certificate')
 									}}
 								</NcButton>
 								<NcButton
@@ -92,7 +92,7 @@
 									:disabled="busy"
 									:data-testid="`cert-renew-${row.id}`"
 									@click="onChecklist(row)">
-									{{ t('doriath', 'Renew…') }}
+									{{ t('keepiq', 'Renew…') }}
 								</NcButton>
 							</td>
 						</tr>
@@ -104,7 +104,7 @@
 					data-testid="cert-locked-hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Unlock your vault to parse stored certificates.',
 						)
 					}}
@@ -113,11 +113,11 @@
 
 			<!-- CA-issued suite certificates (server-parsed). -->
 			<section data-testid="cert-suites-section">
-				<h3>{{ t('doriath', 'Vault encryption certificates') }}</h3>
+				<h3>{{ t('keepiq', 'Vault encryption certificates') }}</h3>
 				<p class="cert-inventory__hint">
 					{{
 						t(
-							'doriath',
+							'keepiq',
 							'Issued by the built-in certificate authority. Re-issuing keeps your existing key pair — nothing becomes unreadable.',
 						)
 					}}
@@ -128,13 +128,13 @@
 					<thead>
 						<tr>
 							<th scope="col">
-								{{ t('doriath', 'Owner') }}
+								{{ t('keepiq', 'Owner') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Subject') }}
+								{{ t('keepiq', 'Subject') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Expires') }}
+								{{ t('keepiq', 'Expires') }}
 							</th>
 							<th scope="col" />
 						</tr>
@@ -160,7 +160,7 @@
 									:disabled="busy"
 									:data-testid="`cert-reissue-${row.id}`"
 									@click="onReissue(row)">
-									{{ t('doriath', 'Re-issue') }}
+									{{ t('keepiq', 'Re-issue') }}
 								</NcButton>
 							</td>
 						</tr>
@@ -168,23 +168,23 @@
 				</table>
 				<NcEmptyContent
 					v-else
-					:name="t('doriath', 'No active vault certificate')" />
+					:name="t('keepiq', 'No active vault certificate')" />
 			</section>
 
 			<!-- CA certificates (admin only). -->
 			<section v-if="store.inventory.ca.length" data-testid="cert-ca-section">
-				<h3>{{ t('doriath', 'Certificate authority') }}</h3>
+				<h3>{{ t('keepiq', 'Certificate authority') }}</h3>
 				<table class="cert-inventory__table">
 					<thead>
 						<tr>
 							<th scope="col">
-								{{ t('doriath', 'Role') }}
+								{{ t('keepiq', 'Role') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Subject') }}
+								{{ t('keepiq', 'Subject') }}
 							</th>
 							<th scope="col">
-								{{ t('doriath', 'Expires') }}
+								{{ t('keepiq', 'Expires') }}
 							</th>
 						</tr>
 					</thead>
@@ -263,6 +263,8 @@ export default {
 		 *
 		 * @param {object} row The stored-secret inventory row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-certificate-inventory-across-all-three-sources
 		 */
 		async onParse(row) {
 			this.busy = true
@@ -270,7 +272,7 @@ export default {
 				const result = await this.store.parseAndSubmit(row.id)
 				if (result) {
 					showSuccess(
-						t('doriath', 'Certificate parsed — expiry reminder set.'),
+						t('keepiq', 'Certificate parsed — expiry reminder set.'),
 					)
 				}
 			} finally {
@@ -298,6 +300,7 @@ export default {
 		 *
 		 * @param {object} row The suite inventory row.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 		 */
 		async onReissue(row) {
 			this.busy = true
@@ -305,10 +308,7 @@ export default {
 				const result = await this.store.reissueSuite(row.id)
 				if (result) {
 					showSuccess(
-						t(
-							'doriath',
-							'Certificate re-issued with the same key pair.',
-						),
+						t('keepiq', 'Certificate re-issued with the same key pair.'),
 					)
 				} else if (this.store.error) {
 					showError(this.store.error)

@@ -7,9 +7,9 @@
 
 ## Purpose
 
-Passkeys (WebAuthn/FIDO2 discoverable credentials) are 2026 table stakes for a credential manager: FIDO Alliance data puts ~75% of consumers with at least one passkey, Microsoft Entra ID defaults new tenants to passkeys from 1 Sept 2026, and every serious competitor (Bitwarden, Vaultwarden, AliasVault) already stores them — while the incumbent Nextcloud "Passwords" app has three open passkey issues and no support. Doriath's own feature matrix names FIDO2/WebAuthn as an unaddressed Bitwarden gap (`docs/FEATURES.md:24`, `:308`, `:356`).
+Passkeys (WebAuthn/FIDO2 discoverable credentials) are 2026 table stakes for a credential manager: FIDO Alliance data puts ~75% of consumers with at least one passkey, Microsoft Entra ID defaults new tenants to passkeys from 1 Sept 2026, and every serious competitor (Bitwarden, Vaultwarden, AliasVault) already stores them — while the incumbent Nextcloud "Passwords" app has three open passkey issues and no support. Keepiq's own feature matrix names FIDO2/WebAuthn as an unaddressed Bitwarden gap (`docs/FEATURES.md:24`, `:308`, `:356`).
 
-This feature lets Doriath store, organise, present, share, and export WebAuthn credentials with the same always-E2E guarantees as any other secret. A passkey's private key is just another secret value: RSA-encrypted with the owner's EncryptionSuite public certificate (ADR-003), it rides in the existing encrypted `key` field, so all existing paths carry it unchanged. The canonical field schema aligns 1:1 with the FIDO Credential Exchange Format (CXF) passkey entity so the sibling `cxf-import-export` feature maps without translation loss.
+This feature lets Keepiq store, organise, present, share, and export WebAuthn credentials with the same always-E2E guarantees as any other secret. A passkey's private key is just another secret value: RSA-encrypted with the owner's EncryptionSuite public certificate (ADR-003), it rides in the existing encrypted `key` field, so all existing paths carry it unchanged. The canonical field schema aligns 1:1 with the FIDO Credential Exchange Format (CXF) passkey entity so the sibling `cxf-import-export` feature maps without translation loss.
 
 ## Requirements
 
@@ -22,7 +22,7 @@ The system MUST seed a `passkey` system secret type ("Passkey") as an eighth bui
 - THEN `passkey` ("Passkey") MUST be present as a system type alongside the other seven and MUST NOT be modifiable or deletable
 
 ### Requirement: Canonical CXF-aligned credential schema
-The system MUST store a passkey as one canonical JSON object in the encrypted `key` field (credential id, RP id, RP name, user name, user display name, user handle, private key, COSE algorithm, counter, transports, created-at), with the core fields mapping 1:1 to the FIDO CXF passkey entity and `counter`/`transports`/`createdAt` as documented Doriath extensions. Only the RP id MAY additionally be mirrored into the plaintext `url` field.
+The system MUST store a passkey as one canonical JSON object in the encrypted `key` field (credential id, RP id, RP name, user name, user display name, user handle, private key, COSE algorithm, counter, transports, created-at), with the core fields mapping 1:1 to the FIDO CXF passkey entity and `counter`/`transports`/`createdAt` as documented Keepiq extensions. Only the RP id MAY additionally be mirrored into the plaintext `url` field.
 
 #### Scenario: Credential stored ciphertext, RP id in url
 - GIVEN a user creates a `passkey` secret with a canonical credential JSON for `example.com`
@@ -56,7 +56,7 @@ The system MUST carry `passkey` secrets through user sharing, link sharing, expo
 ## User Stories
 
 - As a user, I want to store my passkeys next to my passwords so that all my credentials for a service live in one vault.
-- As a user, I want to migrate the passkeys I exported from Bitwarden so that switching to Doriath does not lose them.
+- As a user, I want to migrate the passkeys I exported from Bitwarden so that switching to Keepiq does not lose them.
 - As a user, I want to see which site a passkey belongs to and search for it so that I can find the right credential.
 - As a user, I want my passkey private key to stay encrypted end-to-end and masked in the UI so that it is never exposed to the server or over my shoulder.
 - As a user, I want to share a stored passkey with a teammate without the server ever seeing its private key.

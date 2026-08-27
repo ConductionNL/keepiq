@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Delegation Authorizer
+ * Keepiq Delegation Authorizer
  *
  * The authorization surface of the SecretDelegation lifecycle
  * (ownership-delegation spec.md, FEATURES.md V1 §17.1). One place answers
@@ -11,7 +11,7 @@
  * an *existing* recipient copy, it never creates access.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,12 +24,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 

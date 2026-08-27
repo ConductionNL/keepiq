@@ -4,7 +4,7 @@
  * Unit tests for SecretRequestFillController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,16 +17,16 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Controller\SecretRequestFillController;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\SecretRequest;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\SecretRequestPolicy;
-use OCA\Doriath\Service\SecretRequestService;
+use OCA\Keepiq\Controller\SecretRequestFillController;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\SecretRequestPolicy;
+use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;

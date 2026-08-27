@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Lease Admin Controller
+ * Keepiq Lease Admin Controller
  *
  * Session-authenticated lease management (machine-secret-leases §4.2):
  * an application's lease list for its registrant or an admin, and
@@ -10,7 +10,7 @@
  * nonexistent application/lease.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -23,14 +23,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\AppInfo\Application as DoriathApp;
-use OCA\Doriath\Db\ApplicationMapper;
-use OCA\Doriath\Db\MachineLease;
-use OCA\Doriath\Db\MachineLeaseMapper;
-use OCA\Doriath\Service\LeaseService;
+use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Db\MachineLease;
+use OCA\Keepiq\Db\MachineLeaseMapper;
+use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,7 +64,7 @@ class LeaseAdminController extends OCSController {
 		private IUserSession $userSession,
 		private IGroupManager $groupManager,
 	) {
-		parent::__construct(appName: DoriathApp::APP_ID, request: $request);
+		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

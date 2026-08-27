@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2026 Conduction / Doriath Contributors
+ * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Component test for `src/views/DashboardSettingsView.vue`.
@@ -98,7 +98,7 @@ describe('DashboardSettingsView', () => {
 
 		expect(put).toHaveBeenCalledOnce()
 		const [url, body] = put.mock.calls[0]
-		expect(url).toBe('/apps/doriath/api/v1/dashboard-settings')
+		expect(url).toBe('/apps/keepiq/api/v1/dashboard-settings')
 		// Empty selects are dropped — they ask for the system default.
 		expect(body.settings).toEqual({
 			default_view: 'list',
@@ -123,7 +123,7 @@ describe('DashboardSettingsView', () => {
 		await wrapper.find('[data-testid="reset-settings"]').trigger('click')
 		await flushPromises()
 
-		expect(del).toHaveBeenCalledWith('/apps/doriath/api/v1/dashboard-settings')
+		expect(del).toHaveBeenCalledWith('/apps/keepiq/api/v1/dashboard-settings')
 		expect(
 			wrapper.find('[data-testid="default-view-select"]').element.value,
 		).toBe('')

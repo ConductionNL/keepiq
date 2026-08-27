@@ -6,7 +6,7 @@
  * `share#recipientCertificate` and `share#writeContext`.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,12 +22,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
-use OCA\Doriath\Controller\ShareController;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Service\ShareService;
+use OCA\Keepiq\Controller\ShareController;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

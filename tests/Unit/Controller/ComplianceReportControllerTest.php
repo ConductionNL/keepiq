@@ -6,7 +6,7 @@
  * POST /api/v1/compliance/reports/{id}/exported).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,10 +22,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\ComplianceReportController;
-use OCA\Doriath\Service\ComplianceReportService;
+use OCA\Keepiq\Controller\ComplianceReportController;
+use OCA\Keepiq\Service\ComplianceReportService;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
 use OCP\IRequest;

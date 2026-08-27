@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath Suite Blocked Exception
+ * Keepiq Suite Blocked Exception
  *
  * Thrown when a secret's encryption suite is revoked or compromised and the
  * encrypted fields may therefore not be returned. Controllers map this to
  * an HTTP 403 response with a descriptive reason.
  *
  * @category Exception
- * @package  OCA\Doriath\Exception
+ * @package  OCA\Keepiq\Exception
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Exception;
+namespace OCA\Keepiq\Exception;
 
 use RuntimeException;
 

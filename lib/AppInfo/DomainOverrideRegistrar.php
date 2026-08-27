@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Doriath domain-override registrar
+ * Keepiq domain-override registrar
  *
- * Re-registers the three plumbing classes whose Doriath behaviour diverges
+ * Re-registers the three plumbing classes whose Keepiq behaviour diverges
  * from the generic AppHost implementation, so the concrete leaf classes win
  * over the engine's aliases.
  *
  * @category AppInfo
- * @package  OCA\Doriath\AppInfo
+ * @package  OCA\Keepiq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,15 +21,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\AppInfo;
+namespace OCA\Keepiq\AppInfo;
 
-use OCA\Doriath\Controller\SettingsController;
-use OCA\Doriath\Repair\InitializeSettings;
-use OCA\Doriath\Service\SettingsService;
+use OCA\Keepiq\Controller\SettingsController;
+use OCA\Keepiq\Repair\InitializeSettings;
+use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Binds Doriath's concrete settings stack over the AppHost generics.
+ * Binds Keepiq's concrete settings stack over the AppHost generics.
  *
  * All three registrations belong to one capability — settings — and MUST run
  * after {@see AppHostRegistrar}, because a `registerService()` for a class the
@@ -47,7 +47,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  */
 final class DomainOverrideRegistrar {
 	/**
-	 * Override the generic AppHost aliases with Doriath's concretes.
+	 * Override the generic AppHost aliases with Keepiq's concretes.
 	 *
 	 * @param IRegistrationContext $context The registration context
 	 *

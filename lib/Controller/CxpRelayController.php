@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Doriath CxpRelayController
+ * Keepiq CxpRelayController
  *
  * A minimal, OPAQUE relay for the CXP (FIDO Credential Exchange Protocol)
- * browser-session handshake (cxp-transfer §2.2). Two cooperating Doriath
+ * browser-session handshake (cxp-transfer §2.2). Two cooperating Keepiq
  * sessions that cannot reach each other directly exchange the CXP request and
  * the HPKE-sealed envelope through this mailbox.
  *
@@ -14,7 +14,7 @@
  * in the distributed cache with a short TTL and are one-shot (consumed on read).
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -27,9 +27,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
+use OCA\Keepiq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -88,6 +88,9 @@ class CxpRelayController extends Controller {
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
+		// Namespace deliberately still `doriath_` after the doriath -> keepiq
+		// rename: it is an ICache key prefix, not an app id, and a rename would
+		// drop every in-flight CXP handshake mid-transfer. See appinfo/info.xml.
 		$this->cache = $cacheFactory->createDistributed('doriath_cxp_relay');
 	}//end __construct()
 
@@ -208,8 +211,8 @@ class CxpRelayController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-doriath-as-importing-provider
-	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-doriath-as-exporting-provider
+	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-importing-provider
+	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-exporting-provider
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -295,8 +298,8 @@ class CxpRelayController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-doriath-as-importing-provider
-	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-doriath-as-exporting-provider
+	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-importing-provider
+	 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-exporting-provider
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]

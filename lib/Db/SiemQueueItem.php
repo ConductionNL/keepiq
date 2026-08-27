@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath SIEM Queue Item Entity
+ * Keepiq SIEM Queue Item Entity
  *
  * One queued forwarding payload (siem-audit-export §1.3) — a strict
  * subset of a sanitized audit entry, never secret material.
  *
  * @category Db
- * @package  OCA\Doriath\Db
+ * @package  OCA\Keepiq\Db
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Db;
+namespace OCA\Keepiq\Db;
 
 use DateTime;
 use JsonSerializable;

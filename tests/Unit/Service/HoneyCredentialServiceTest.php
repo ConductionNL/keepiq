@@ -4,7 +4,7 @@
  * Unit tests for HoneyCredentialService (honey-credentials §6).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,22 +17,22 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\HoneyAlert;
-use OCA\Doriath\Db\HoneyAlertMapper;
-use OCA\Doriath\Db\HoneyFlag;
-use OCA\Doriath\Db\HoneyFlagMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Event\Audit\AuditEvent;
-use OCA\Doriath\Event\Audit\AuditEventTypes;
-use OCA\Doriath\Service\HoneyAlertRecorder;
-use OCA\Doriath\Service\HoneyCredentialService;
-use OCA\Doriath\Service\HoneyTripwireService;
-use OCA\Doriath\Service\NotificationService;
+use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Db\HoneyAlertMapper;
+use OCA\Keepiq\Db\HoneyFlag;
+use OCA\Keepiq\Db\HoneyFlagMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\HoneyAlertRecorder;
+use OCA\Keepiq\Service\HoneyCredentialService;
+use OCA\Keepiq\Service\HoneyTripwireService;
+use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;

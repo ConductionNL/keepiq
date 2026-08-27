@@ -38,7 +38,7 @@ func writeClipboard(value string) ([]string, error) {
 func cmdCopy(args []string) error {
 	clearAfter, args := popFlag(args, "--clear-after")
 	if len(args) < 2 {
-		return fmt.Errorf("usage: doriath copy <id> <field> [--clear-after <seconds>]")
+		return fmt.Errorf("usage: keepiq copy <id> <field> [--clear-after <seconds>]")
 	}
 	seconds := 30
 	if clearAfter != "" {

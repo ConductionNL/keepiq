@@ -11,10 +11,10 @@
 -->
 <template>
 	<CnSettingsSection
-		:name="t('doriath', 'Rotation & expiry')"
+		:name="t('keepiq', 'Rotation & expiry')"
 		:description="
 			t(
-				'doriath',
+				'keepiq',
 				'Instance-wide credential-age defaults. Expiry is resolved from server-visible metadata only — no secret values are ever read.',
 			)
 		">
@@ -24,7 +24,7 @@
 			</NcNoteCard>
 			<label class="rotation-policy__field">
 				<span>{{
-					t('doriath', 'Default maximum credential age (days, 0 = off)')
+					t('keepiq', 'Default maximum credential age (days, 0 = off)')
 				}}</span>
 				<input
 					v-model.number="maxAgeDays"
@@ -36,7 +36,7 @@
 			<label class="rotation-policy__field">
 				<span>{{
 					t(
-						'doriath',
+						'keepiq',
 						'Reminder thresholds (days before expiry, comma-separated)',
 					)
 				}}</span>
@@ -70,11 +70,13 @@ export default {
 
 	/**
 	 * Load the current instance defaults.
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/doriath/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin'),
 			)
 			this.maxAgeDays = response.data.expiry_default_max_age_days ?? 0
 			const days = response.data.expiry_reminder_days
@@ -91,6 +93,8 @@ export default {
 		 * Persist the defaults (server validates positivity).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
 		 */
 		async save() {
 			this.error = null
@@ -100,13 +104,13 @@ export default {
 				.filter((day) => Number.isInteger(day) && day > 0)
 			if (!thresholds.length) {
 				this.error = this.t(
-					'doriath',
+					'keepiq',
 					'At least one positive reminder threshold is required.',
 				)
 				return
 			}
 			try {
-				await axios.put(generateUrl('/apps/doriath/api/settings/admin'), {
+				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
 					expiry_default_max_age_days: Math.max(0, this.maxAgeDays || 0),
 					expiry_reminder_days: thresholds,
 				})

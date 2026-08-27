@@ -4,7 +4,7 @@
  * Unit tests for LinkShareService.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,14 +17,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\LinkShare;
-use OCA\Doriath\Db\LinkShareMapper;
-use OCA\Doriath\Service\LinkShareService;
-use OCA\Doriath\Service\WriteLockService;
+use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

@@ -29,7 +29,7 @@
 					class="version-history__label"
 					:data-testid="`version-${version.versionNumber}`">
 					{{
-						t('doriath', 'Version {number}', {
+						t('keepiq', 'Version {number}', {
 							number: version.versionNumber,
 						})
 					}}
@@ -41,19 +41,19 @@
 					variant="tertiary"
 					:data-testid="`version-view-${version.versionNumber}`"
 					@click="onView(version)">
-					{{ t('doriath', 'View') }}
+					{{ t('keepiq', 'View') }}
 				</NcButton>
 				<NcButton
 					v-if="canManage"
 					variant="tertiary"
 					:data-testid="`version-restore-${version.versionNumber}`"
 					@click="confirmVersion = version">
-					{{ t('doriath', 'Restore') }}
+					{{ t('keepiq', 'Restore') }}
 				</NcButton>
 			</li>
 		</ul>
 		<p v-else class="version-history__empty">
-			{{ t('doriath', 'No previous versions') }}
+			{{ t('keepiq', 'No previous versions') }}
 		</p>
 
 		<!-- Read-only view of one decrypted version. -->

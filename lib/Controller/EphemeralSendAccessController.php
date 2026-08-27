@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Ephemeral Send Access Controller
+ * Keepiq Ephemeral Send Access Controller
  *
  * Anonymous recipient surface (ephemeral-send §4.2), mirroring the
  * link-share two-phase protocol: `peek` (metadata), `access`
@@ -11,7 +11,7 @@
  * expired, and burned sends are indistinguishable 404s.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -24,10 +24,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\EphemeralSendService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\EphemeralSendService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;

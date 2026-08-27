@@ -29,10 +29,10 @@ If the user cannot unlock the vault, the package MUST still be produced with the
 - **THEN** the response MUST contain only data belonging to the session user — no parameter may select another user
 
 ### Requirement: Account Data Deletion
-The system MUST support deletion of all of a user's Doriath data (GDPR Art. 17, right to erasure) via two triggers running the same idempotent cascade:
+The system MUST support deletion of all of a user's Keepiq data (GDPR Art. 17, right to erasure) via two triggers running the same idempotent cascade:
 
-- **In-app**: gated by master-password re-entry (client-side proof of knowledge, as in plaintext export) AND a typed confirmation phrase; deletes Doriath data while the Nextcloud account remains
-- **Automatic**: a `UserDeletedEvent` listener runs the cascade when the Nextcloud account is deleted, so Doriath data never outlives its account
+- **In-app**: gated by master-password re-entry (client-side proof of knowledge, as in plaintext export) AND a typed confirmation phrase; deletes Keepiq data while the Nextcloud account remains
+- **Automatic**: a `UserDeletedEvent` listener runs the cascade when the Nextcloud account is deleted, so Keepiq data never outlives its account
 
 The cascade MUST remove: the user's secrets and folders, their EncryptionSuites (including encrypted private keys) and SuiteMigration records, link shares, secret requests, share records per the shared-secret semantics requirement, and user settings. Every cascade step MUST be idempotent so an interrupted run can be safely re-executed.
 
@@ -45,7 +45,7 @@ The cascade MUST remove: the user's secrets and folders, their EncryptionSuites 
 #### Scenario: Nextcloud account deletion cascades
 @e2e exclude Server-side lifecycle contract — the UserDeletedEvent listener runs the cascade with no UI; covered by PHPUnit (UserDeletedListenerTest triggers the cascade with the user-deleted trigger).
 - **WHEN** a Nextcloud administrator deletes a user account
-- **THEN** all of that user's Doriath data MUST be removed by the listener-triggered cascade without any manual step
+- **THEN** all of that user's Keepiq data MUST be removed by the listener-triggered cascade without any manual step
 
 #### Scenario: Interrupted cascade is re-runnable
 @e2e exclude Server-side idempotency contract — re-running the cascade completes without error; covered by PHPUnit (AccountDeletionServiceTest idempotent re-run test).

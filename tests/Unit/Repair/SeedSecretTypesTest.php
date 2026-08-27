@@ -4,7 +4,7 @@
  * Unit tests for the SeedSecretTypes repair step.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Repair
+ * @package  OCA\Keepiq\Tests\Unit\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,11 +17,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Repair;
+namespace OCA\Keepiq\Tests\Unit\Repair;
 
-use OCA\Doriath\Db\SecretType;
-use OCA\Doriath\Db\SecretTypeMapper;
-use OCA\Doriath\Repair\SeedSecretTypes;
+use OCA\Keepiq\Db\SecretType;
+use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Repair\SeedSecretTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;

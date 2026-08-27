@@ -48,13 +48,14 @@ export const useShareStore = defineStore('share', {
 		 *
 		 * @param {string} secretId The source secret ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-visibility
 		 */
 		async fetchShares(secretId) {
 			this.loading = true
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/shares`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`),
 				)
 				this.shares = response.data || []
 			} catch (e) {
@@ -118,7 +119,7 @@ export const useShareStore = defineStore('share', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/shares`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`),
 					{ targetUserId, recipientSecretId, groupShareId },
 				)
 				this.shares.push(response.data)
@@ -138,12 +139,11 @@ export const useShareStore = defineStore('share', {
 		 *
 		 * @param {string} secretId The secret (source or copy) id.
 		 * @return {Promise<object>} { sourceSecretId, effectiveGrade, ownerCertificate, sourceUpdatedAt }.
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-effective-grade-is-the-highest-grade-along-the-ancestor-folder-chain
 		 */
 		async fetchWriteContext(secretId) {
 			const response = await axios.get(
-				generateUrl(
-					`/apps/doriath/api/v1/secrets/${secretId}/write-context`,
-				),
+				generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/write-context`),
 			)
 			return response.data
 		},
@@ -158,6 +158,8 @@ export const useShareStore = defineStore('share', {
 		 * @param {string} editedSecretId The edited (copy) secret id.
 		 * @param {object} plaintext New plaintext field map.
 		 * @return {Promise<{updated: number}>}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 		 */
 		async syncAsTeamWriter(editedSecretId, plaintext) {
 			const context = await this.fetchWriteContext(editedSecretId)
@@ -171,7 +173,7 @@ export const useShareStore = defineStore('share', {
 			// Recipient rows of the SOURCE (write grade grants the list).
 			const response = await axios.get(
 				generateUrl(
-					`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/shares`,
+					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/shares`,
 				),
 			)
 			const shares = response.data || []
@@ -218,7 +220,7 @@ export const useShareStore = defineStore('share', {
 
 			const syncResponse = await axios.put(
 				generateUrl(
-					`/apps/doriath/api/v1/secrets/${context.sourceSecretId}/sync`,
+					`/apps/keepiq/api/v1/secrets/${context.sourceSecretId}/sync`,
 				),
 				{
 					expectedUpdatedAt: context.sourceUpdatedAt ?? '',
@@ -234,13 +236,14 @@ export const useShareStore = defineStore('share', {
 		 *
 		 * @param {string} shareId The share-target row ID.
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 		 */
 		async revokeShare(shareId) {
 			this.loading = true
 			this.error = null
 			try {
 				await axios.delete(
-					generateUrl(`/apps/doriath/api/v1/shares/${shareId}`),
+					generateUrl(`/apps/keepiq/api/v1/shares/${shareId}`),
 				)
 				this.shares = this.shares.filter((s) => s.id !== shareId)
 			} catch (e) {
@@ -309,6 +312,7 @@ export const useShareStore = defineStore('share', {
 		 *   re-encrypted for recipients).
 		 * @param {string}              expectedUpdatedAt The owner's last-seen updatedAt (ISO).
 		 * @return {Promise<{updated: number}>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
 		 */
 		async syncUpdate(secretId, plaintext, expectedUpdatedAt) {
 			this.loading = true
@@ -356,7 +360,7 @@ export const useShareStore = defineStore('share', {
 				}
 
 				const response = await axios.put(
-					generateUrl(`/apps/doriath/api/v1/secrets/${secretId}/sync`),
+					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/sync`),
 					{
 						expectedUpdatedAt,
 						updates,

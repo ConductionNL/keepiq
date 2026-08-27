@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath user-lifecycle event registrar
+ * Keepiq user-lifecycle event registrar
  *
  * Binds the listeners that keep the sharing graph and the vault in step with
  * Nextcloud's own account and group-membership churn.
  *
  * @category AppInfo
- * @package  OCA\Doriath\AppInfo
+ * @package  OCA\Keepiq\AppInfo
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,11 +20,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\AppInfo;
+namespace OCA\Keepiq\AppInfo;
 
-use OCA\Doriath\Listener\UserAddedToGroupListener;
-use OCA\Doriath\Listener\UserDeletedListener;
-use OCA\Doriath\Listener\UserRemovedFromGroupListener;
+use OCA\Keepiq\Listener\UserAddedToGroupListener;
+use OCA\Keepiq\Listener\UserDeletedListener;
+use OCA\Keepiq\Listener\UserRemovedFromGroupListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
@@ -33,7 +33,7 @@ use OCP\User\Events\UserDeletedEvent;
 /**
  * Wires the Nextcloud account/group lifecycle listener graph.
  *
- * These three listeners are the only ones bound to events Doriath does not
+ * These three listeners are the only ones bound to events Keepiq does not
  * own: they are the seam where a change made in Nextcloud's user
  * administration has to be mirrored into the vault. Grouping them keeps that
  * seam visible in one place, so a new core event is added next to the
@@ -61,7 +61,7 @@ final class UserLifecycleEventRegistrar {
 			listener: UserRemovedFromGroupListener::class
 		);
 
-		// Secret-export-gdpr D4 — cascade-delete all of a user's Doriath data
+		// Secret-export-gdpr D4 — cascade-delete all of a user's Keepiq data
 		// when their Nextcloud account is removed, so vault data never outlives
 		// its account. The cascade is idempotent and shares its implementation
 		// with the in-app GDPR Art. 17 deletion flow.

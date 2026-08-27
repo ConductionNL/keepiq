@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Check Root Certificate Expiry Background Job
+ * Keepiq Check Root Certificate Expiry Background Job
  *
  * Daily check: notify admins when the root certificate is approaching expiry.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
 use Exception;
-use OCA\Doriath\Db\CACertificateMapper;
+use OCA\Keepiq\Db\CACertificateMapper;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -89,7 +89,7 @@ class CheckRootCertificateExpiry extends TimedJob {
 
 			if ($daysUntilExpiry <= $threshold && $daysUntilExpiry > $lowerBound) {
 				$this->logger->warning(
-					"Doriath: Root certificate expires in {$daysUntilExpiry} days (threshold: {$threshold})"
+					"Keepiq: Root certificate expires in {$daysUntilExpiry} days (threshold: {$threshold})"
 				);
 				break;
 			}

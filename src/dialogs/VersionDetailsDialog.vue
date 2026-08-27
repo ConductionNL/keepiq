@@ -17,7 +17,7 @@
 -->
 <template>
 	<NcDialog
-		:name="t('doriath', 'Version details')"
+		:name="t('keepiq', 'Version details')"
 		:open="version !== null"
 		size="normal"
 		data-testid="version-details-dialog"
@@ -27,26 +27,26 @@
 			class="version-history__details"
 			data-testid="version-details">
 			<div>
-				<dt>{{ t('doriath', 'Name') }}</dt>
+				<dt>{{ t('keepiq', 'Name') }}</dt>
 				<dd>{{ version.name }}</dd>
 			</div>
 			<div v-if="version.url">
-				<dt>{{ t('doriath', 'URL') }}</dt>
+				<dt>{{ t('keepiq', 'URL') }}</dt>
 				<dd>{{ version.url }}</dd>
 			</div>
 			<div>
-				<dt>{{ t('doriath', 'Value') }}</dt>
+				<dt>{{ t('keepiq', 'Value') }}</dt>
 				<dd class="version-history__value">
 					<span data-testid="version-value">{{
 						revealed ? version.key : '••••••••••'
 					}}</span>
 					<NcButton variant="tertiary" @click="revealed = !revealed">
-						{{ revealed ? t('doriath', 'Hide') : t('doriath', 'Show') }}
+						{{ revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show') }}
 					</NcButton>
 				</dd>
 			</div>
 			<div v-if="version.login">
-				<dt>{{ t('doriath', 'Login') }}</dt>
+				<dt>{{ t('keepiq', 'Login') }}</dt>
 				<dd>{{ version.login }}</dd>
 			</div>
 		</dl>

@@ -1,0 +1,44 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Keepiq Register",
+    "description": "Register containing all schemas for the Keepiq application.",
+    "version": "0.1.1"
+  },
+  "x-openregister": {
+    "type": "application",
+    "app": "keepiq",
+    "openregister": "^v0.2.10",
+    "description": "Keepiq — replace with your app description"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "example": {
+        "slug": "example",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.1",
+        "title": "Example",
+        "description": "Import canary. Keepiq stores its secrets in its own tables (lib/Db), not as OpenRegister objects, so this is the only schema in the descriptor — and tests/e2e/ci-seed.sh asserts it is present after import, which is what proves the OpenRegister import path actually ran. Do not delete it without moving that assertion to a real schema first.",
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "The title of the example object",
+            "example": "My example"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "An optional description",
+            "example": "This is an example"
+          }
+        }
+      }
+    }
+  }
+}

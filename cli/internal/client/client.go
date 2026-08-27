@@ -1,4 +1,4 @@
-// Package client is Doriath's shared HTTP client (doriath-cli §1.2) for both
+// Package client is Keepiq's shared HTTP client (keepiq-cli §1.2) for both
 // the human session API (Nextcloud app-password auth) and the CI machine
 // secret-store API (RFC 7523 JWT bearer). It never transmits the master
 // password or any derived key — those stay in the CLI process (§3.2).
@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	dcrypto "github.com/ConductionNL/doriath/cli/internal/crypto"
+	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
 )
 
 // ErrNotModified is returned by a conditional fetch when the server answers 304
@@ -25,7 +25,7 @@ import (
 // cached value (§4.2, poll loops).
 var ErrNotModified = errors.New("not modified")
 
-// Client talks to one Doriath instance.
+// Client talks to one Keepiq instance.
 type Client struct {
 	BaseURL    string
 	HTTP       *http.Client
@@ -81,7 +81,7 @@ type Secret struct {
 // ActiveSuite fetches the caller's active suite (human mode).
 func (c *Client) ActiveSuite() (*Suite, error) {
 	var suites []Suite
-	if err := c.getJSON("/apps/doriath/api/v1/suites", &suites); err != nil {
+	if err := c.getJSON("/apps/keepiq/api/v1/suites", &suites); err != nil {
 		return nil, err
 	}
 	for i := range suites {
@@ -97,7 +97,7 @@ func (c *Client) ListSecrets() ([]Secret, error) {
 	var page struct {
 		Items []Secret `json:"items"`
 	}
-	if err := c.getJSON("/apps/doriath/api/v1/secrets?limit=100000", &page); err != nil {
+	if err := c.getJSON("/apps/keepiq/api/v1/secrets?limit=100000", &page); err != nil {
 		return nil, err
 	}
 	return page.Items, nil
@@ -106,7 +106,7 @@ func (c *Client) ListSecrets() ([]Secret, error) {
 // GetSecret fetches one secret by id (human mode).
 func (c *Client) GetSecret(id string) (*Secret, error) {
 	var s Secret
-	if err := c.getJSON("/apps/doriath/api/v1/secrets/"+id, &s); err != nil {
+	if err := c.getJSON("/apps/keepiq/api/v1/secrets/"+id, &s); err != nil {
 		return nil, err
 	}
 	return &s, nil
@@ -136,7 +136,7 @@ type Discovery struct {
 // Discover fetches and returns the machine-store discovery document.
 func (c *Client) Discover() (*Discovery, error) {
 	var d Discovery
-	if err := c.getJSON("/apps/doriath/api/v1/app/.well-known/doriath", &d); err != nil {
+	if err := c.getJSON("/apps/keepiq/api/v1/app/.well-known/doriath", &d); err != nil {
 		return nil, err
 	}
 	return &d, nil
@@ -171,7 +171,7 @@ func (c *Client) MachineToken(applicationID string, key *rsa.PrivateKey, disc *D
 	}
 	assertion := signingInput + "." + sig
 
-	// NB: Doriath's token endpoint reads camelCase param names (grantType), not
+	// NB: Keepiq's token endpoint reads camelCase param names (grantType), not
 	// the OAuth-standard snake_case — verified against the live server.
 	form := url.Values{
 		"grantType": {"urn:ietf:params:oauth:grant-type:jwt-bearer"},
@@ -207,11 +207,13 @@ type MachineEnvelope struct {
 }
 
 // FetchByName fetches an application secret envelope by name with the bearer
-// token, capturing any Doriath-Lease-* headers (§4.4). When the client has a
+// token, capturing any Doriath-Lease-* headers (§4.4 — the header names keep
+// the old prefix; they are a published wire contract, see
+// lib/Service/MachineSecretResponseService.php). When the client has a
 // prior ETag for this secret it sends If-None-Match; on a 304 it returns
 // ErrNotModified so a poll loop can keep its cached value (§4.2).
 func (c *Client) FetchByName(name, bearer string) (*MachineEnvelope, error) {
-	req, _ := http.NewRequest(http.MethodGet, c.BaseURL+"/apps/doriath/api/v1/app/secrets/by-name/"+name, nil)
+	req, _ := http.NewRequest(http.MethodGet, c.BaseURL+"/apps/keepiq/api/v1/app/secrets/by-name/"+name, nil)
 	req.Header.Set("Authorization", "Bearer "+bearer)
 	if c.lastETag != "" {
 		req.Header.Set("If-None-Match", c.lastETag)

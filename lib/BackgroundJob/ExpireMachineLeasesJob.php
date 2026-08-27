@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Expire Machine Leases Job
+ * Keepiq Expire Machine Leases Job
  *
  * Hourly transition of past-expiry active machine leases to `expired`
  * (machine-secret-leases §5.1), emitting `lease.expired` and a rotation
@@ -9,7 +9,7 @@
  * out; revoked/expired rows are untouched.
  *
  * @category BackgroundJob
- * @package  OCA\Doriath\BackgroundJob
+ * @package  OCA\Keepiq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -22,10 +22,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\BackgroundJob;
+namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\LeaseService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -70,13 +70,13 @@ class ExpireMachineLeasesJob extends TimedJob {
 			$expired = $this->leaseService->expireDue();
 			if ($expired > 0) {
 				$this->logger->info(
-					'Doriath: expired ' . $expired . ' machine leases',
+					'Keepiq: expired ' . $expired . ' machine leases',
 					['app' => Application::APP_ID]
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Doriath: lease expiry sweep failed: ' . $exception->getMessage(),
+				'Keepiq: lease expiry sweep failed: ' . $exception->getMessage(),
 				['app' => Application::APP_ID]
 			);
 		}

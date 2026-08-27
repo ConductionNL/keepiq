@@ -4,7 +4,7 @@
  * Unit tests for TeamFolderService (team-folder-sharing §6.1).
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Service
+ * @package  OCA\Keepiq\Tests\Unit\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,35 +17,35 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Service;
+namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Db\BulkGrantShareTargetMapper;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\Folder;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\Secret;
-use OCA\Doriath\Db\SecretDelegation;
-use OCA\Doriath\Db\SecretDelegationMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTarget;
-use OCA\Doriath\Db\ShareTargetMapper;
-use OCA\Doriath\Db\TeamFolder;
-use OCA\Doriath\Db\TeamFolderMapper;
-use OCA\Doriath\Db\TeamFolderMember;
-use OCA\Doriath\Db\TeamFolderMemberMapper;
-use OCA\Doriath\Service\NotificationService;
-use OCA\Doriath\Service\RecipientSecretCopyService;
-use OCA\Doriath\Service\SecretTypeService;
-use OCA\Doriath\Service\TeamFolderAuditor;
-use OCA\Doriath\Service\TeamFolderMembershipResolver;
-use OCA\Doriath\Service\TeamFolderOffboardingService;
-use OCA\Doriath\Service\TeamFolderQueryService;
-use OCA\Doriath\Service\TeamFolderService;
-use OCA\Doriath\Service\TeamFolderShareService;
-use OCA\Doriath\Service\TeamSecretTransferService;
+use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Db\TeamFolderMapper;
+use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\TeamFolderAuditor;
+use OCA\Keepiq\Service\TeamFolderMembershipResolver;
+use OCA\Keepiq\Service\TeamFolderOffboardingService;
+use OCA\Keepiq\Service\TeamFolderQueryService;
+use OCA\Keepiq\Service\TeamFolderService;
+use OCA\Keepiq\Service\TeamFolderShareService;
+use OCA\Keepiq\Service\TeamSecretTransferService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use OCP\IGroup;
@@ -641,13 +641,13 @@ class TeamFolderServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testSetMemberGradeOwnerOnlyNoCiphertext(): void {
-		$teamFolder = new \OCA\Doriath\Db\TeamFolder();
+		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
 		$teamFolder->setId('tf-1');
 		$teamFolder->setFolderId('folder-1');
 		$teamFolder->setOwnerId('alice');
 		$this->mapper->method('findById')->willReturn($teamFolder);
 
-		$member = new \OCA\Doriath\Db\TeamFolderMember();
+		$member = new \OCA\Keepiq\Db\TeamFolderMember();
 		$member->setId('mem-1');
 		$member->setTeamFolderId('tf-1');
 		$member->setMemberType('user');
@@ -685,28 +685,28 @@ class TeamFolderServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testResolveGradeMaxAlongAncestorsAndGroups(): void {
-		$secret = new \OCA\Doriath\Db\Secret();
+		$secret = new \OCA\Keepiq\Db\Secret();
 		$secret->setId('sec-1');
 		$secret->setOwnerType('user');
 		$secret->setOwnerId('alice');
 		$secret->setFolderId('child');
 
 		// child (team folder tf-child: bob read) -> parent (tf-parent: group g1 write).
-		$childFolder = new \OCA\Doriath\Db\Folder();
+		$childFolder = new \OCA\Keepiq\Db\Folder();
 		$childFolder->setId('child');
 		$childFolder->setParentId('parent');
-		$parentFolder = new \OCA\Doriath\Db\Folder();
+		$parentFolder = new \OCA\Keepiq\Db\Folder();
 		$parentFolder->setId('parent');
 		$parentFolder->setParentId(null);
 		$this->folderMapper->method('findById')->willReturnCallback(
 			static fn (string $id) => $id === 'child' ? $childFolder : $parentFolder
 		);
 
-		$tfChild = new \OCA\Doriath\Db\TeamFolder();
+		$tfChild = new \OCA\Keepiq\Db\TeamFolder();
 		$tfChild->setId('tf-child');
 		$tfChild->setFolderId('child');
 		$tfChild->setOwnerId('alice');
-		$tfParent = new \OCA\Doriath\Db\TeamFolder();
+		$tfParent = new \OCA\Keepiq\Db\TeamFolder();
 		$tfParent->setId('tf-parent');
 		$tfParent->setFolderId('parent');
 		$tfParent->setOwnerId('alice');
@@ -714,13 +714,13 @@ class TeamFolderServiceTest extends TestCase {
 			static fn (string $folderId) => $folderId === 'child' ? $tfChild : $tfParent
 		);
 
-		$readMember = new \OCA\Doriath\Db\TeamFolderMember();
+		$readMember = new \OCA\Keepiq\Db\TeamFolderMember();
 		$readMember->setId('m-read');
 		$readMember->setTeamFolderId('tf-child');
 		$readMember->setMemberType('user');
 		$readMember->setMemberId('bob');
 		// Legacy row: grade never set — reads as `read`.
-		$groupWrite = new \OCA\Doriath\Db\TeamFolderMember();
+		$groupWrite = new \OCA\Keepiq\Db\TeamFolderMember();
 		$groupWrite->setId('m-write');
 		$groupWrite->setTeamFolderId('tf-parent');
 		$groupWrite->setMemberType('group');

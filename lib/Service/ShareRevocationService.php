@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath Share Revocation Service
+ * Keepiq Share Revocation Service
  *
  * Undoing a user-to-user share (implement-user-sharing §3.3): the
  * recipient's encrypted Secret copy, its attachment grants and the
@@ -13,7 +13,7 @@
  * share lifecycle would otherwise need the attachment service.
  *
  * @category Service
- * @package  OCA\Doriath\Service
+ * @package  OCA\Keepiq\Service
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -26,11 +26,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Service;
+namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -126,7 +126,7 @@ class ShareRevocationService {
 
 		$this->logger->info(
 			'Revoked share ' . $shareId . ' for source ' . $entity->getSourceSecretId(),
-			['app' => 'doriath']
+			['app' => 'keepiq']
 		);
 
 		$this->auditTrail->recordShareRevoked(

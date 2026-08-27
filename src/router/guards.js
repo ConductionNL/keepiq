@@ -5,7 +5,7 @@
  * Vault navigation guard.
  *
  * The encryption-suites spec requires that when the in-memory CryptoKey is
- * absent, "any Doriath route" access redirects to the lock screen, and that
+ * absent, "any Keepiq route" access redirects to the lock screen, and that
  * the lock screen is a full page rather than an overlay. Enforcing that from
  * a component lifecycle hook is too late: the router has already resolved
  * the route, so `CnPageRenderer` mounts the target page and its `mounted()`
@@ -59,7 +59,7 @@ export const LOCK_ROUTE_NAME = 'Lock'
  *
  * These are the recipient-facing token URLs. A link-share, secret-request,
  * or ephemeral-send recipient is frequently not the vault owner and may
- * have no Doriath suite at all, so gating them on a master password would
+ * have no Keepiq suite at all, so gating them on a master password would
  * make the sharing features unusable rather than more secure. They carry
  * their own token-scoped authorisation server-side.
  *
@@ -110,7 +110,7 @@ export const PUBLIC_HASH_PREFIXES = ['#/share/request/', '#/share/link/', '#/sen
  * reads `supportDialog` once in `setup()`. This answers the same question from
  * the URL alone, so it is correct at that moment.
  *
- * `/apps/doriath/public` is the anonymous SPA shell, so anything served from it
+ * `/apps/keepiq/public` is the anonymous SPA shell, so anything served from it
  * is a recipient page by definition; the hash prefixes cover the same routes
  * when reached on the authenticated shell.
  *
@@ -122,7 +122,7 @@ export function isPublicSurface(location = {}) {
 	const path = location.pathname || ''
 	const hash = location.hash || ''
 
-	if (path.includes('/apps/doriath/public') === true) {
+	if (path.includes('/apps/keepiq/public') === true) {
 		return true
 	}
 

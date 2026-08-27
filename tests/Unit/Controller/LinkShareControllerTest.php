@@ -4,7 +4,7 @@
  * Unit tests for LinkShareController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,15 +17,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Doriath\Controller\LinkShareController;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\LinkShare;
-use OCA\Doriath\Service\EncryptionSuiteService;
-use OCA\Doriath\Service\LinkShareService;
+use OCA\Keepiq\Controller\LinkShareController;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\LinkShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -73,7 +73,7 @@ class LinkShareControllerTest extends TestCase {
 		$this->linkShareService = $this->createMock(originalClassName: LinkShareService::class);
 		$this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
 		$urlGenerator = $this->createMock(originalClassName: IURLGenerator::class);
-		$urlGenerator->method('linkToRoute')->willReturn('/apps/doriath/');
+		$urlGenerator->method('linkToRoute')->willReturn('/apps/keepiq/');
 		$urlGenerator->method('getAbsoluteURL')->willReturnCallback(
 			static fn (string $path): string => 'https://cloud.example.com' . $path
 		);

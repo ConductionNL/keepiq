@@ -4,7 +4,7 @@
  * Contract tests for the PasskeyController challenge + record-use endpoints.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,10 +20,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\PasskeyController;
-use OCA\Doriath\Service\PasskeyService;
+use OCA\Keepiq\Controller\PasskeyController;
+use OCA\Keepiq\Service\PasskeyService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;

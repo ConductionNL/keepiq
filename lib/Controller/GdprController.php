@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Doriath GDPR Controller
+ * Keepiq GDPR Controller
  *
  * Exposes the data-subject endpoints (secret-export-gdpr D3/D4): the
  * server-readable personal-data metadata package (GDPR Art. 15) and account
@@ -15,7 +15,7 @@
  * phrase is the server-checkable gate while the client enforces re-entry.
  *
  * @category Controller
- * @package  OCA\Doriath\Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -28,12 +28,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Controller;
+namespace OCA\Keepiq\Controller;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Event\GdprExportPerformedEvent;
-use OCA\Doriath\Service\AccountDeletionService;
-use OCA\Doriath\Service\GdprService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Event\GdprExportPerformedEvent;
+use OCA\Keepiq\Service\AccountDeletionService;
+use OCA\Keepiq\Service\GdprService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,7 +51,7 @@ class GdprController extends Controller {
 	 *
 	 * @var string
 	 */
-	public const CONFIRMATION_PHRASE = 'DELETE MY DORIATH DATA';
+	public const CONFIRMATION_PHRASE = 'DELETE MY KEEPIQ DATA';
 
 	/**
 	 * Constructor for GdprController.
@@ -112,7 +112,7 @@ class GdprController extends Controller {
 	}//end metadata()
 
 	/**
-	 * Delete all of the session user's Doriath data (GDPR Art. 17).
+	 * Delete all of the session user's Keepiq data (GDPR Art. 17).
 	 *
 	 * Gated by the typed confirmation phrase in the request body. The
 	 * master-password re-authentication is enforced client-side (proof of

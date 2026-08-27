@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Doriath Dev Suite Integrity Guard
+ * Keepiq Dev Suite Integrity Guard
  *
  * Decides whether the development EncryptionSuite on disk is still usable,
  * and tears it (and the data encrypted under it) down when it is not.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,14 +20,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
 use Exception;
-use OCA\Doriath\Db\EncryptionSuite;
-use OCA\Doriath\Db\EncryptionSuiteMapper;
-use OCA\Doriath\Db\FolderMapper;
-use OCA\Doriath\Db\SecretMapper;
-use OCA\Doriath\Service\DecryptService;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FolderMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\DecryptService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Migration\IOutput;
 use Psr\Log\LoggerInterface;
@@ -179,7 +179,7 @@ class DevSuiteIntegrityGuard {
 			'Discarded mismatched dev suite ' . $suite->getId() . ' and ' . $deletedSecrets . ' dev secrets for rebuild'
 		);
 		$this->logger->warning(
-			'Doriath dev seed: rebuilt mismatched EncryptionSuite for ' . $userId
+			'Keepiq dev seed: rebuilt mismatched EncryptionSuite for ' . $userId
 			. ' (deleted ' . $deletedSecrets . ' secrets encrypted under the broken certificate)'
 		);
 
