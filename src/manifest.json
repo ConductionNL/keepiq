@@ -78,6 +78,21 @@
 								"type": "route-match",
 								"route": "PersonalActivity"
 							}
+						},
+						{
+							"id": "go-flows",
+							"placement": "right",
+							"body": "Flows automate the repetitive parts of this app. Have a look — you do not have to build one now.",
+							"task": "Open Flows from the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "Flows"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "Flows"
+							},
+							"allowManualNext": true
 						}
 					]
 				}
