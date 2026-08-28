@@ -654,7 +654,11 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Authenticator (TOTP)",
         "Payment Card": "Creditcard",
         "Identity": "Identiteit",
-        "Filter and sort": "Filteren en sorteren"
+        "Filter and sort": "Filteren en sorteren",
+        "Flows": "Flows",
+        "Flow": "Flow",
+        "Registered by": "Geregistreerd door",
+        "Requested": "Aangevraagd"
     },
     "nplurals=2; plural=(n != 1);"
 )
