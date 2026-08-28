@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Bunachar sonraí",
         "Authenticator (TOTP)": "Fíordheimhnitheoir (TOTP)",
         "Payment Card": "Cárta íocaíochta",
-        "Identity": "Aitheantas"
+        "Identity": "Aitheantas",
+        "Filter and sort": "Scag agus sórtáil"
     },
     "nplurals=2; plural=(n != 1);"
 )

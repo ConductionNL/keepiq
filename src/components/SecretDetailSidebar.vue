@@ -30,8 +30,8 @@
 		     the edit DIALOG; Share is icon-only but keeps its accessible
 		     name via ariaLabel + title (WCAG 4.1.2); Move + Delete fold
 		     into a trailing "…" menu with a distinct accessible name so it
-		     can never collide with the list toolbar's "More actions" in
-		     role-based queries. -->
+		     can never collide with the list page's "Actions" overflow menu
+		     in role-based queries. -->
 		<template #description>
 			<div
 				v-if="secret && !error && offlineReadOnly"

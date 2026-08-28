@@ -45,9 +45,9 @@ test.describe('secret import', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// Import lives in the "More actions" overflow (restyle Stage 5). The
-		// helper clicks the NcActionButton's INNER button — the testid sits on
-		// the presentational <li>, whose click fires nothing.
+		// Import lives in the actions bar's "Actions" overflow (restyle
+		// Stage 8). The helper clicks the NcActionButton's INNER button — the
+		// testid sits on the presentational <li>, whose click fires nothing.
 		await clickOverflowAction(page, 'import-secrets')
 
 		// Upload the CSV via the file input (read entirely client-side).
@@ -85,9 +85,9 @@ test.describe('secret import', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// Import lives in the "More actions" overflow (restyle Stage 5). The
-		// helper clicks the NcActionButton's INNER button — the testid sits on
-		// the presentational <li>, whose click fires nothing.
+		// Import lives in the actions bar's "Actions" overflow (restyle
+		// Stage 8). The helper clicks the NcActionButton's INNER button — the
+		// testid sits on the presentational <li>, whose click fires nothing.
 		await clickOverflowAction(page, 'import-secrets')
 		await page.getByTestId('import-file').setInputFiles({
 			name: 'sample.csv',

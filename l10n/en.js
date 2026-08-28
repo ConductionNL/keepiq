@@ -1030,7 +1030,8 @@ OC.L10N.register(
         "Secure Note": "Secure Note",
         "Database": "Database",
         "Authenticator (TOTP)": "Authenticator (TOTP)",
-        "Payment Card": "Payment Card"
+        "Payment Card": "Payment Card",
+        "Filter and sort": "Filter and sort"
     },
     "nplurals=2; plural=(n != 1);"
 )

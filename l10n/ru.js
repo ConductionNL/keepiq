@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "База данных",
         "Authenticator (TOTP)": "Аутентификатор (TOTP)",
         "Payment Card": "Платёжная карта",
-        "Identity": "Личность"
+        "Identity": "Личность",
+        "Filter and sort": "Фильтрация и сортировка"
     },
     "nplurals=2; plural=(n != 1);"
 )

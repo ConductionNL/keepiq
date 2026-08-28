@@ -67,192 +67,266 @@
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
 
-			<!-- Bulk action bar (bulk-actions §3.1): visible only while a
-			     selection is active; selection is client-only (§1.2). -->
-			<div
-				v-if="bulkStore.selectionCount > 0"
-				class="secret-list-view__bulk-bar"
-				data-testid="bulk-action-bar">
-				<span data-testid="bulk-selection-count">
-					{{
-						t('keepiq', '{count} selected', {
-							count: bulkStore.selectionCount,
-						})
-					}}
-				</span>
-				<NcButton
-					variant="secondary"
-					data-testid="bulk-open-move"
-					@click="bulkDialog = 'move'">
-					{{ t('keepiq', 'Move') }}
-				</NcButton>
-				<NcButton
-					variant="secondary"
-					data-testid="bulk-open-share"
-					@click="bulkDialog = 'share'">
-					{{ t('keepiq', 'Share') }}
-				</NcButton>
-				<NcButton
-					variant="secondary"
-					data-testid="bulk-open-team-folder"
-					@click="bulkDialog = 'teamFolder'">
-					{{ t('keepiq', 'Add to team folder') }}
-				</NcButton>
-				<NcButton
-					variant="error"
-					data-testid="bulk-open-delete"
-					@click="bulkDialog = 'delete'">
-					{{ t('keepiq', 'Delete') }}
-				</NcButton>
-				<NcButton
-					variant="tertiary"
-					data-testid="bulk-clear-selection"
-					@click="bulkStore.clearSelection()">
-					{{ t('keepiq', 'Clear selection') }}
-				</NcButton>
-			</div>
-
 			<CnIndexPage
 				viewMode="list"
 				:availableViewModes="['list', 'cards', 'table']"
 				listLabel="List"
-				:selectable="false"
+				:selectedIds="bulkStore.selectedIds"
+				rowClickToView
 				:objects="listObjects"
 				:schema="listSchema"
 				:loading="loading || folderSwitching"
 				:pagination="pagination"
-				showTitle
 				:title="pageTitle"
 				:addLabel="offlineReadOnly ? '' : t('keepiq', 'New secret')"
 				addIcon="Plus"
 				inlineSearch
 				:searchValue="searchTerm"
 				:searchPlaceholder="t('keepiq', 'Search secrets')"
-				showSortSelect
-				:sortSelectOptions="sortOptions"
-				:sortSelectValue="sortField"
 				rowKey="id"
 				:emptyText="t('keepiq', 'No secrets found')"
 				:refreshing="loading"
+				:showMassImport="false"
+				:showMassExport="false"
+				:showMassCopy="false"
+				:showMassDelete="false"
 				@refresh="reload"
 				@add="openCreateSecret"
 				@search="onSearch"
-				@sortChange="onSort"
+				@select="onLibrarySelect"
+				@rowClick="onRowOpen"
 				@pageChanged="goToPage">
-				<!-- Title row (restyle Stage 8): the page title and the
-				     toolbar share ONE row, aligned with the page content.
-				     The toolbar is the Stage-5 declarative toolbarItems()
-				     list — per-item `placement` decides between a visible
-				     button and the single "More actions" overflow, which
-				     carries the secondary actions, the "My data" entries
-				     (secret-export-gdpr §6.5) and the secret-type filter
+				<!-- ONE actions menu (Stage 8 toolbar decision): everything
+				     that lived in the title row's Refresh button + "More
+				     actions" overflow, and the inline Select-all checkbox,
+				     folds into the actions bar's own overflow menu.
+				     #action-items renders right after the bar's built-in
+				     Refresh entry (already wired via @refresh/:refreshing).
+				     The library's generic mass Import/Export/Copy/Delete
+				     entries are turned OFF above — they bypass keepiq's
+				     encrypted import/export flows and duplicated the "My
+				     data" entries. Order: list controls (Select all), the
+				     Stage-5 toolbar actions, the "My data" entries
+				     (secret-export-gdpr §6.5), then the secret-type filter
 				     (passkey-item-type §3.3). data-testids and disabled
 				     conditions are unchanged. -->
-				<template #header="{ title }">
-					<div class="secret-list-view__header">
-						<CnPageHeader :title="title" />
-						<div class="secret-list-view__actions">
-							<NcButton
-								v-for="item in visibleToolbarItems"
-								:key="item.id"
-								variant="secondary"
-								:disabled="item.disabled"
-								:data-testid="item.testid"
-								@click="item.run()">
-								<template #icon>
-									<component :is="item.icon" :size="20" />
-								</template>
-								{{ item.label }}
-							</NcButton>
-							<NcActions
-								:menuName="t('keepiq', 'More actions')"
-								:forceMenu="true"
-								:forceName="true"
-								data-testid="more-actions">
-								<NcActionButton
-									v-for="item in overflowToolbarItems"
-									:key="item.id"
-									:disabled="item.disabled"
-									:data-testid="item.testid"
-									:closeAfterClick="true"
-									@click="item.run()">
-									<template #icon>
-										<component :is="item.icon" :size="20" />
-									</template>
-									{{ item.label }}
-								</NcActionButton>
+				<template #action-items>
+					<!-- Select-all for the current filtered/paginated view. -->
+					<NcActionCheckbox
+						:modelValue="allCurrentSelected"
+						:disabled="secrets.length === 0"
+						data-testid="bulk-select-all"
+						@update:modelValue="onSelectAll">
+						{{ t('keepiq', 'Select all') }}
+					</NcActionCheckbox>
 
-								<!-- Data export / GDPR / deletion entry points
-								     (secret-export-gdpr §6.5). -->
-								<NcActionSeparator />
-								<NcActionButton
-									data-testid="open-new-send"
-									:closeAfterClick="true"
-									@click="newSendOpen = true">
-									{{ t('keepiq', 'New ephemeral send') }}
-								</NcActionButton>
-								<NcActionButton
-									data-testid="open-my-sends"
-									:closeAfterClick="true"
-									@click="mySendsOpen = true">
-									{{ t('keepiq', 'My ephemeral sends') }}
-								</NcActionButton>
-								<NcActionButton
-									:closeAfterClick="true"
-									@click="openExport">
-									{{ t('keepiq', 'Export data') }}
-								</NcActionButton>
-								<NcActionButton
-									:disabled="vaultLocked"
-									data-testid="cxp-transfer"
-									:closeAfterClick="true"
-									@click="openCxp">
-									{{ t('keepiq', 'Encrypted transfer (CXP)') }}
-								</NcActionButton>
-								<NcActionButton
-									:closeAfterClick="true"
-									@click="openGdpr">
-									{{ t('keepiq', 'GDPR export') }}
-								</NcActionButton>
-								<NcActionButton
-									:closeAfterClick="true"
-									@click="deletionOpen = true">
-									{{ t('keepiq', 'Delete my Keepiq data') }}
-								</NcActionButton>
+					<NcActionSeparator />
+					<NcActionButton
+						v-for="item in toolbarItems"
+						:key="item.id"
+						:disabled="item.disabled"
+						:data-testid="item.testid"
+						:closeAfterClick="true"
+						@click="item.run()">
+						<template #icon>
+							<component :is="item.icon" :size="20" />
+						</template>
+						{{ item.label }}
+					</NcActionButton>
 
-								<!-- Secret-type filter (passkey-item-type §3.3):
-								     show only one type, e.g. passkeys.
-								     Server-side via the typeId param. -->
-								<NcActionSeparator />
-								<NcActionCaption
-									:name="t('keepiq', 'Filter by type')" />
-								<NcActionRadio
-									name="secret-type-filter"
-									value=""
-									:modelValue="typeFilter ?? ''"
-									data-testid="secret-type-filter"
-									@update:modelValue="onTypeFilter(null)">
-									{{ t('keepiq', 'All types') }}
-								</NcActionRadio>
-								<NcActionRadio
-									v-for="option in typeFilterOptions"
-									:key="option.value"
-									name="secret-type-filter"
-									:value="option.value"
-									:modelValue="typeFilter ?? ''"
-									data-testid="secret-type-filter"
-									@update:modelValue="onTypeFilter(option.value)">
-									{{ option.label }}
-								</NcActionRadio>
-							</NcActions>
-						</div>
+					<!-- Data export / GDPR / deletion entry points
+					     (secret-export-gdpr §6.5). -->
+					<NcActionSeparator />
+					<NcActionButton
+						data-testid="open-new-send"
+						:closeAfterClick="true"
+						@click="newSendOpen = true">
+						{{ t('keepiq', 'New ephemeral send') }}
+					</NcActionButton>
+					<NcActionButton
+						data-testid="open-my-sends"
+						:closeAfterClick="true"
+						@click="mySendsOpen = true">
+						{{ t('keepiq', 'My ephemeral sends') }}
+					</NcActionButton>
+					<NcActionButton :closeAfterClick="true" @click="openExport">
+						{{ t('keepiq', 'Export data') }}
+					</NcActionButton>
+					<NcActionButton
+						:disabled="vaultLocked"
+						data-testid="cxp-transfer"
+						:closeAfterClick="true"
+						@click="openCxp">
+						{{ t('keepiq', 'Encrypted transfer (CXP)') }}
+					</NcActionButton>
+					<NcActionButton :closeAfterClick="true" @click="openGdpr">
+						{{ t('keepiq', 'GDPR export') }}
+					</NcActionButton>
+					<NcActionButton
+						:closeAfterClick="true"
+						@click="deletionOpen = true">
+						{{ t('keepiq', 'Delete my Keepiq data') }}
+					</NcActionButton>
+				</template>
+
+				<!-- Secret-type filter + sort (passkey-item-type §3.3) as a
+				     funnel button BESIDE the search field: search + filters
+				     group as "narrow what you see" on the bar's left (the
+				     convention GitHub/Files-style list toolbars follow), while
+				     the right cluster stays "display + act". Sorting lives in
+				     the same menu instead of a standalone select — one compact
+				     control for everything that reorders/narrows the list.
+				     With a filter ACTIVE the funnel flips to its filled glyph
+				     in the primary color, so an applied filter is always
+				     visible even while the menu is closed. -->
+				<template #after-search>
+					<NcActions
+						:forceMenu="true"
+						:ariaLabel="t('keepiq', 'Filter and sort')"
+						:class="{
+							'secret-list-view__filter--active': filterMenuActive,
+						}"
+						data-testid="secret-type-filter-menu">
+						<template #icon>
+							<FilterIcon v-if="filterMenuActive" :size="20" />
+							<FilterOutline v-else :size="20" />
+						</template>
+						<NcActionCaption :name="t('keepiq', 'Filter by type')" />
+						<NcActionRadio
+							name="secret-type-filter"
+							value=""
+							:modelValue="typeFilter ?? ''"
+							data-testid="secret-type-filter"
+							@update:modelValue="onTypeFilter(null)">
+							{{ t('keepiq', 'All types') }}
+						</NcActionRadio>
+						<NcActionRadio
+							v-for="option in typeFilterOptions"
+							:key="option.value"
+							name="secret-type-filter"
+							:value="option.value"
+							:modelValue="typeFilter ?? ''"
+							data-testid="secret-type-filter"
+							@update:modelValue="onTypeFilter(option.value)">
+							{{ option.label }}
+						</NcActionRadio>
+						<NcActionSeparator />
+						<NcActionCaption :name="t('keepiq', 'Sort by')" />
+						<NcActionRadio
+							v-for="option in sortOptions"
+							:key="option.value"
+							name="secret-sort"
+							:value="option.value"
+							:modelValue="sortField"
+							data-testid="secret-sort-option"
+							@update:modelValue="onSort(option.value)">
+							{{ option.label }}
+						</NcActionRadio>
+					</NcActions>
+				</template>
+				<!-- Vault/folder strip (restyle Stage 6, revised): the current
+				     folder's direct subfolders — the VAULTS at root — render as
+				     a distinct section ABOVE the collection in every view mode,
+				     so they never masquerade as secrets in the table or card
+				     views. Clicking one navigates into it; folders are not
+				     bulk-operable, so no checkbox. Filtered by the inline
+				     search (team decision: everything visible is searchable),
+				     independent of the secrets' pagination. -->
+				<template #before-collection>
+					<!-- Folder trail (restyle Stage 5): home crumb + parent
+					     walk to the current folder (unlinked). BELOW the
+					     actions bar — the bar always owns the top row — and
+					     above the folder strip. Empty at the vault root, so
+					     CnBreadcrumbs renders no landmark there. -->
+					<div
+						v-if="breadcrumbs.length > 0"
+						class="secret-list-view__crumbs">
+						<CnBreadcrumbs :crumbs="breadcrumbs" />
+					</div>
+					<div
+						v-if="!folderSwitching && folderRows.length > 0"
+						class="secret-list-view__folders">
+						<!-- Group caption, Passwork-style: names the section
+						     so folders read as a group, not as odd rows.
+						     Level-appropriate wording (Stage 5 terminology). -->
+						<span class="secret-list-view__folders-caption">
+							{{
+								selectedFolderId
+									? t('keepiq', 'Folders')
+									: t('keepiq', 'Vaults')
+							}}
+						</span>
+						<button
+							v-for="folder in folderRows"
+							:key="folder.id"
+							type="button"
+							class="secret-list-view__folder-row"
+							:data-testid="`folder-row-${folder.folderId}`"
+							@click="openFolder(folder.folderId)">
+							<!-- Root rows ARE the vaults → safe glyph; inside
+							     a vault the rows are plain folders. -->
+							<Safe v-if="!selectedFolderId" :size="20" />
+							<FolderOutline v-else :size="20" />
+							<span class="secret-list-view__folder-name">
+								{{ folder.name }}
+							</span>
+						</button>
 					</div>
 				</template>
-				<!-- Folder trail (restyle Stage 5): home crumb + parent walk to
-				     the current folder (unlinked). Empty at the vault root, so
-				     CnBreadcrumbs renders no landmark there. -->
-				<template #below-header>
-					<CnBreadcrumbs :crumbs="breadcrumbs" />
+
+				<!-- Bulk actions (bulk-actions §3): the contextual selection
+				     strip is THE surface — it appears the moment a selection
+				     exists (Proton Pass / Gmail / Files pattern; §3.1's bulk
+				     action bar) with a live count the library announces via
+				     role="status" (WCAG 2.1 SC 4.1.3) and its own Clear
+				     control. Selection is client-only (§1.2) and shared with
+				     the library's checkboxes (table header select-all, card
+				     and row checkboxes) via the bulk store. -->
+				<!-- Disabled while the list is (re)loading: between "user
+				     navigated away" and "the prune watcher saw the new rows"
+				     the strip still shows the OLD view's selection — acting
+				     on it would move/delete secrets from the previous page. -->
+				<template #selection-actions>
+					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-move"
+						@click="bulkDialog = 'move'">
+						<template #icon>
+							<FolderMoveOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Move') }}
+					</NcButton>
+					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-share"
+						@click="bulkDialog = 'share'">
+						<template #icon>
+							<ShareVariantOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Share') }}
+					</NcButton>
+					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-team-folder"
+						@click="bulkDialog = 'teamFolder'">
+						<template #icon>
+							<AccountGroup :size="20" />
+						</template>
+						{{ t('keepiq', 'Add to team folder') }}
+					</NcButton>
+					<NcButton
+						variant="error"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-delete"
+						@click="bulkDialog = 'delete'">
+						<template #icon>
+							<TrashCanOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Delete') }}
+					</NcButton>
 				</template>
 				<!-- Rich empty state (restyle Stage 5). -->
 				<template #empty>
@@ -269,56 +343,36 @@
 						</template>
 					</NcEmptyContent>
 				</template>
-				<template #list-item="{ object }">
-					<!-- Subfolder row (restyle Stage 6): the current folder's
-					     direct subfolders list ABOVE the secrets, file-manager
-					     style; clicking one navigates into it. No bulk
-					     checkbox — folders are not bulk-operable. -->
-					<button
-						v-if="object.isFolder"
-						type="button"
-						class="secret-list-view__folder-row"
-						:data-testid="`folder-row-${object.folderId}`"
-						@click="openFolder(object.folderId)">
-						<!-- Root rows ARE the vaults → safe glyph; inside a
-						     vault the rows are plain folders. -->
-						<Safe v-if="!selectedFolderId" :size="20" />
-						<FolderOutline v-else :size="20" />
-						<span class="secret-list-view__folder-name">
-							{{ object.name }}
-						</span>
-					</button>
-					<div v-else class="secret-list-view__row">
+				<template #list-item="{ object, selected }">
+					<div class="secret-list-view__row">
 						<!-- Per-row selection (bulk-actions §1.1): click
 						     toggles, shift-click selects the range from the
 						     last-clicked row in the current view. -->
-						<input
-							type="checkbox"
+						<!-- Nextcloud's own checkbox, same as the table and
+						     card views. The capture-phase click listener only
+						     records the shift state; update:modelValue does
+						     the toggling exactly once (a raw click handler
+						     would double-fire through the label's forwarded
+						     click). -->
+						<NcCheckboxRadioSwitch
 							class="secret-list-view__check"
-							:checked="bulkStore.selectedIds.includes(object.id)"
-							:aria-label="
+							:modelValue="bulkStore.selectedIds.includes(object.id)"
+							:ariaLabel="
 								t('keepiq', 'Select {name}', { name: object.name })
 							"
 							:data-testid="`bulk-check-${object.id}`"
-							@click="onRowCheck(object, $event)" />
+							@click.capture="lastShiftKey = $event.shiftKey"
+							@update:modelValue="onRowCheck(object)" />
 						<SecretListItem
 							class="secret-list-view__row-item"
+							:class="{
+								'secret-list-view__row-item--selected': selected,
+							}"
 							:secret="object"
 							:requestState="requestStateFor(object)"
 							@open="openSecret"
 							@copied="onCopied" />
 					</div>
-				</template>
-				<template #actions>
-					<!-- Select-all for the current filtered/paginated view. -->
-					<label class="secret-list-view__select-all">
-						<input
-							type="checkbox"
-							:checked="allCurrentSelected"
-							data-testid="bulk-select-all"
-							@change="onSelectAll" />
-						<span>{{ t('keepiq', 'Select all') }}</span>
-					</label>
 				</template>
 			</CnIndexPage>
 		</div>
@@ -333,25 +387,31 @@
 </template>
 
 <script>
-import { CnBreadcrumbs, CnIndexPage, CnPageHeader } from '@conduction/nextcloud-vue'
+import { CnBreadcrumbs, CnIndexPage } from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
 	NcActionCaption,
+	NcActionCheckbox,
 	NcActionRadio,
 	NcActions,
 	NcActionSeparator,
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcEmptyContent,
 } from '@nextcloud/vue'
 import { markRaw } from 'vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
+import FilterIcon from 'vue-material-design-icons/Filter.vue'
+import FilterOutline from 'vue-material-design-icons/FilterOutline.vue'
+import FolderMoveOutline from 'vue-material-design-icons/FolderMoveOutline.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
-import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Safe from 'vue-material-design-icons/Safe.vue'
+import ShareVariantOutline from 'vue-material-design-icons/ShareVariantOutline.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
@@ -383,7 +443,6 @@ const PAGE_SIZE = 50
 // Toolbar icon components, marked raw once so the declarative toolbarItems()
 // entries never wrap component options in a reactive proxy.
 const TOOLBAR_ICONS = {
-	refresh: markRaw(Refresh),
 	folderPlus: markRaw(FolderPlus),
 	safe: markRaw(Safe),
 	accountQuestion: markRaw(AccountQuestion),
@@ -411,15 +470,22 @@ export default {
 		SecretRequestCreateDialog,
 		CnBreadcrumbs,
 		CnIndexPage,
-		CnPageHeader,
 		NcActionButton,
 		NcActionCaption,
+		NcActionCheckbox,
 		NcActionRadio,
-		NcActionSeparator,
 		NcActions,
+		NcActionSeparator,
 		NcButton,
+		NcCheckboxRadioSwitch,
 		NcEmptyContent,
+		AccountGroup,
+		FilterIcon,
+		FilterOutline,
+		FolderMoveOutline,
 		FolderOutline,
+		ShareVariantOutline,
+		TrashCanOutline,
 		KeyVariant,
 		Safe,
 		SecretListItem,
@@ -461,6 +527,12 @@ export default {
 			decryptedSecrets: [],
 			bulkDialog: null,
 			lastCheckedId: null,
+			/**
+			 * Shift state of the most recent checkbox click, recorded in the
+			 * capture phase so onRowCheck (fired via update:modelValue, which
+			 * carries no MouseEvent) can extend the selection as a range.
+			 */
+			lastShiftKey: false,
 			newSendOpen: false,
 			mySendsOpen: false,
 			/**
@@ -608,6 +680,20 @@ export default {
 			]
 		},
 
+		/**
+		 * Whether the funnel menu holds a NON-DEFAULT state — a type filter,
+		 * or a sort other than the default name sort. Drives the filled
+		 * primary-colored funnel so a narrowed/reordered list is visible at
+		 * a glance; the defaults (all types, sorted by name) keep the plain
+		 * outline.
+		 *
+		 * @return {boolean}
+		 * @spec exclude Presentation-only active-state derivation for the funnel button.
+		 */
+		filterMenuActive() {
+			return !!this.typeFilter || this.sortField !== 'name'
+		},
+
 		/** Options for the secret-type filter (passkey-item-type §3.3). */
 		typeFilterOptions() {
 			return useSecretTypeStore().types.map((type) => ({
@@ -634,11 +720,11 @@ export default {
 		},
 
 		/**
-		 * What the list renders: subfolders first as a group, then the
-		 * secrets (restyle Stage 6, file-manager style). Folder rows show
-		 * only on the FIRST page — repeating them on every page of a long
-		 * secret list would read as duplicates. Pagination totals keep
-		 * counting secrets only.
+		 * What the collection renders: SECRETS only. The subfolder/vault
+		 * rows moved to a dedicated strip above the collection (the
+		 * `#before-collection` slot), so folders never masquerade as
+		 * secrets in the table and card views and are independent of
+		 * pagination. Pagination totals keep counting secrets only.
 		 *
 		 * @return {Array<object>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
@@ -649,10 +735,7 @@ export default {
 			if (this.folderSwitching) {
 				return []
 			}
-			if (this.secretStore.page > 1) {
-				return this.secrets
-			}
-			return [...this.folderRows, ...this.secrets]
+			return this.secrets
 		},
 
 		/**
@@ -739,26 +822,18 @@ export default {
 		},
 
 		/**
-		 * The declarative toolbar (restyle Stage 5). Per-item `placement`
-		 * ('visible' | 'overflow') is the ONE knob that moves an action
-		 * between the visible row and the "More actions" overflow; ids,
-		 * testids and disabled conditions are stable. "New secret" is not
-		 * listed — it stays CnIndexPage's own add button.
+		 * The declarative page actions (restyle Stages 5 + 8). All entries
+		 * render inside the actions bar's overflow menu (the `#action-items`
+		 * slot); ids, testids and disabled conditions are stable. "New
+		 * secret" is not listed — it stays CnIndexPage's own add button —
+		 * and Refresh is not listed — the actions bar carries its own
+		 * built-in Refresh entry, wired via `@refresh`/`:refreshing`.
 		 *
-		 * @return {Array<{id: string, label: string, icon: object, placement: string, disabled: boolean, testid: (string|undefined), run: Function}>}
+		 * @return {Array<{id: string, label: string, icon: object, disabled: boolean, testid: (string|undefined), run: Function}>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		toolbarItems() {
 			const items = [
-				{
-					id: 'refresh',
-					label: t('keepiq', 'Refresh'),
-					icon: TOOLBAR_ICONS.refresh,
-					placement: 'visible',
-					disabled: this.loading,
-					testid: 'vault-refresh',
-					run: () => this.reload(),
-				},
 				{
 					id: 'new-folder',
 					label: this.newFolderLabel,
@@ -768,7 +843,6 @@ export default {
 						? TOOLBAR_ICONS.folderPlus
 						: TOOLBAR_ICONS.safe,
 
-					placement: 'overflow',
 					disabled: this.offlineReadOnly,
 					testid: 'open-create-folder',
 					run: () => this.openCreateFolder(),
@@ -781,7 +855,6 @@ export default {
 					id: 'credential-request',
 					label: t('keepiq', 'Ask for a credential'),
 					icon: TOOLBAR_ICONS.accountQuestion,
-					placement: 'overflow',
 					disabled: this.vaultLocked || this.offlineReadOnly,
 					testid: 'open-credential-request',
 					run: () => {
@@ -792,7 +865,6 @@ export default {
 					id: 'import',
 					label: t('keepiq', 'Import'),
 					icon: TOOLBAR_ICONS.import,
-					placement: 'overflow',
 					disabled: this.vaultLocked || this.offlineReadOnly,
 					testid: 'import-secrets',
 					run: () => this.openImport(),
@@ -805,7 +877,6 @@ export default {
 					id: 'team-sharing',
 					label: t('keepiq', 'Team sharing'),
 					icon: TOOLBAR_ICONS.accountGroup,
-					placement: 'overflow',
 					disabled: this.vaultLocked,
 					testid: 'team-folder-open',
 					run: () => {
@@ -814,24 +885,6 @@ export default {
 				})
 			}
 			return items
-		},
-
-		/**
-		 * Toolbar items rendered as visible buttons.
-		 *
-		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
-		 */
-		visibleToolbarItems() {
-			return this.toolbarItems.filter((item) => item.placement === 'visible')
-		},
-
-		/**
-		 * Toolbar items rendered inside the "More actions" overflow.
-		 *
-		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
-		 */
-		overflowToolbarItems() {
-			return this.toolbarItems.filter((item) => item.placement === 'overflow')
 		},
 
 		/** Bulk selection store (bulk-actions §1). */
@@ -859,6 +912,25 @@ export default {
 				await this.reload()
 			} finally {
 				this.folderSwitching = false
+			}
+		},
+
+		/**
+		 * Prune the selection to the rows actually VISIBLE whenever the
+		 * list changes (folder navigation, page flip, filter, refresh):
+		 * selection is scoped to the current view (§1.1 — select-all is
+		 * too), so ids that left the view must not linger invisibly in the
+		 * bulk store and keep the selection strip alive over an unrelated
+		 * folder.
+		 *
+		 * @param {Array<object>} newSecrets The freshly loaded secrets.
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
+		 */
+		secrets(newSecrets) {
+			const visible = new Set((newSecrets || []).map((s) => s.id))
+			const pruned = this.bulkStore.selectedIds.filter((id) => visible.has(id))
+			if (pruned.length !== this.bulkStore.selectedIds.length) {
+				this.bulkStore.setSelection(pruned)
 			}
 		},
 	},
@@ -903,15 +975,16 @@ export default {
 		/**
 		 * Per-row selection toggle with shift-click range support
 		 * (bulk-actions §1.1): shift extends from the last-clicked row
-		 * to this one within the current view's order.
+		 * to this one within the current view's order. The shift state
+		 * comes from `lastShiftKey`, recorded by the checkbox's
+		 * capture-phase click listener just before the component emits.
 		 *
 		 * @param {object} object The clicked row's secret.
-		 * @param {MouseEvent} event The click event (shiftKey).
 		 * @return {void}
 		 */
-		onRowCheck(object, event) {
+		onRowCheck(object) {
 			const ids = new Set(this.bulkStore.selectedIds)
-			if (event.shiftKey && this.lastCheckedId) {
+			if (this.lastShiftKey && this.lastCheckedId) {
 				const order = this.secrets.map((s) => s.id)
 				const from = order.indexOf(this.lastCheckedId)
 				const to = order.indexOf(object.id)
@@ -940,13 +1013,13 @@ export default {
 		/**
 		 * Select-all / clear-all for the current filtered view (§1.1).
 		 *
-		 * @param {Event} event The checkbox change event.
+		 * @param {boolean} checked The NcActionCheckbox model value.
 		 * @return {void}
 		 */
-		onSelectAll(event) {
+		onSelectAll(checked) {
 			const ids = new Set(this.bulkStore.selectedIds)
 			for (const secret of this.secrets) {
-				if (event.target.checked) {
+				if (checked) {
 					ids.add(secret.id)
 				} else {
 					ids.delete(secret.id)
@@ -1217,6 +1290,34 @@ export default {
 		},
 
 		/**
+		 * Selection change from the library's checkboxes (table header
+		 * select-all, table/card row checkboxes) into the shared bulk
+		 * store — the collection holds secrets only (folders live in the
+		 * strip above it), so the ids pass through unfiltered.
+		 *
+		 * @param {Array<string>} ids The selected row ids from CnIndexPage.
+		 * @return {void}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
+		 */
+		onLibrarySelect(ids) {
+			this.bulkStore.setSelection(ids || [])
+		},
+
+		/**
+		 * Row/card click in the table and card views (`rowClickToView`:
+		 * clicking opens the detail sidebar, the checkbox selects — same
+		 * split as the list view).
+		 *
+		 * @param {object} row The clicked row object.
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		onRowOpen(row) {
+			if (!row) return
+			this.openSecret(row.id)
+		},
+
+		/**
 		 * Navigate into a subfolder row (restyle Stage 6).
 		 *
 		 * @param {string} folderId The clicked folder's id.
@@ -1265,43 +1366,89 @@ export default {
 </script>
 
 <style scoped>
+/* No own padding: CnIndexPage already pads the page (5 × baseline); the
+   old extra 16px doubled every edge and, with the page title visually
+   hidden (Stage 8), left a dead band between the nav toggle and the bar. */
 .secret-list-view {
 	height: 100%;
-	padding: 16px;
 }
 
 .secret-list-view__main {
 	min-width: 0;
 }
 
-/* Title row (restyle Stage 8): page title left, toolbar right, one line. */
-.secret-list-view__header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	flex-wrap: wrap;
+/* With the title row gone (keepiq-only — other apps keep their heading
+   beside the toggle), the actions bar moves UP into that row: trim the
+   page's top padding and clear the floating nav toggle. A MARGIN, not
+   padding: the bar's background must START after the toggle (padding
+   kept the background underneath it) — and since only the toggle's
+   protruding half overlaps the content area, ~30px clears it (56px, the
+   in-flow clearance CnPageHeader uses, left a hole). The !important
+   guards against design-system themes that flatten the bar's box with
+   their own !important rules. */
+.secret-list-view :deep(.cn-index-page) {
+	padding-top: 4px;
 }
 
-.secret-list-view__actions {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
+.secret-list-view :deep(.cn-actions-bar) {
+	margin-inline-start: 30px !important;
+
+	/* Container-scale rounding, keepiq-only: with the bar as the page's TOP
+	   element its shell reads flat at the small element radius next to the
+	   pill-shaped search and view toggle inside. Other apps keep the
+	   library default — their bars sit mid-page under a title, and that
+	   rounding call is theirs. Fallbacks for older server generations. */
+	border-radius: var(
+		--border-radius-container-large,
+		var(--border-radius-large, 12px)
+	);
 }
 
-.secret-list-view__bulk-bar {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
-	padding: 8px 12px;
+/* The selection strip nests one step tighter than the bar's shell. */
+.secret-list-view :deep(.cn-actions-bar__selection) {
+	border-radius: var(--border-radius-container, var(--border-radius-large, 8px));
+}
+
+/* Breadcrumb trail: below the bar, above the folder strip. With the page
+   title hidden, the trail IS the folder heading (Passwork-style), so it
+   renders a step larger — via the font token, which NcBreadcrumb's
+   internals consume. */
+.secret-list-view__crumbs {
+	--default-font-size: 16px;
+
 	margin-bottom: 8px;
-	border: 1px solid var(--color-border, #ddd);
-	border-radius: var(--border-radius-large, 12px);
-	background-color: var(--color-background-hover, #f5f5f5);
 }
 
+/* Passwork-style group caption over the folder strip. */
+.secret-list-view__folders-caption {
+	padding: 4px 12px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--color-text-maxcontrast);
+}
+
+/* Vault/folder strip: a distinct section above the collection in every
+   view mode, so folders never read as secrets among the rows or cards.
+   The strip owns the divider (it renders in EVERY view mode); the list
+   view's own container top-border is suppressed below so the two never
+   stack into an empty band. */
+.secret-list-view__folders {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--color-border, #ddd);
+}
+
+.secret-list-view :deep(.cn-object-list__rows) {
+	border-top: none;
+}
+
+/* No selected-row tint: the checked checkbox (plus the selection strip's
+   count) is the signal — the primary wash over whole rows read as noise
+   next to it (review call). */
 .secret-list-view__row {
 	display: flex;
 	align-items: center;
@@ -1340,9 +1487,6 @@ export default {
 
 .secret-list-view__check {
 	flex: 0 0 auto;
-	width: 18px;
-	height: 18px;
-	cursor: pointer;
 }
 
 .secret-list-view__row-item {
@@ -1350,10 +1494,17 @@ export default {
 	min-width: 0;
 }
 
-.secret-list-view__select-all {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	cursor: pointer;
+/* Selected rows tint the ITEM only (same token as its hover state), never
+   the checkbox gutter — the earlier full-row primary wash read as noise
+   (review call). */
+.secret-list-view__row-item--selected {
+	background-color: var(--color-background-hover);
+}
+
+/* Active type filter: the funnel already flips to its filled glyph; the
+   primary color makes the applied-filter state readable at a glance even
+   in a row of monochrome controls. */
+.secret-list-view__filter--active :deep(button) {
+	color: var(--color-primary-element);
 }
 </style>

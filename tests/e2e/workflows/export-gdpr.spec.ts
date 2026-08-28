@@ -25,6 +25,7 @@ import {
 	DEV_MASTER_PASSWORD,
 	gotoLockSettled,
 	gotoVaultRoute,
+	openActionsMenu,
 	unlockVault,
 } from './_workflow-helpers'
 
@@ -38,12 +39,8 @@ test.describe('secret export + GDPR', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// Open the "More actions" overflow and start an export.
-		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "More actions" overflow menu opens.
-		await page
-			.getByRole('button', { name: /More actions/i })
-			.evaluate((el: HTMLElement) => el.click())
+		// Open the actions-bar "Actions" overflow and start an export.
+		await openActionsMenu(page)
 		await page
 			.getByRole('menuitem', { name: /Export data/i })
 			.evaluate((el: HTMLElement) => el.click())
@@ -68,11 +65,8 @@ test.describe('secret export + GDPR', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "More actions" overflow menu opens.
-		await page
-			.getByRole('button', { name: /More actions/i })
-			.evaluate((el: HTMLElement) => el.click())
+		// Open the actions-bar "Actions" overflow and start an export.
+		await openActionsMenu(page)
 		await page
 			.getByRole('menuitem', { name: /Export data/i })
 			.evaluate((el: HTMLElement) => el.click())
@@ -101,11 +95,8 @@ test.describe('secret export + GDPR', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "More actions" overflow menu opens.
-		await page
-			.getByRole('button', { name: /More actions/i })
-			.evaluate((el: HTMLElement) => el.click())
+		// Open the actions-bar "Actions" overflow and start the deletion flow.
+		await openActionsMenu(page)
 		await page
 			.getByRole('menuitem', { name: /Delete my Keepiq data/i })
 			.evaluate((el: HTMLElement) => el.click())
@@ -128,11 +119,8 @@ test.describe('secret export + GDPR', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "More actions" overflow menu opens.
-		await page
-			.getByRole('button', { name: /More actions/i })
-			.evaluate((el: HTMLElement) => el.click())
+		// Open the actions-bar "Actions" overflow and start the GDPR export.
+		await openActionsMenu(page)
 		await page
 			.getByRole('menuitem', { name: /GDPR export/i })
 			.evaluate((el: HTMLElement) => el.click())

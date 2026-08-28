@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Adatbázis",
         "Authenticator (TOTP)": "Hitelesítő (TOTP)",
         "Payment Card": "Bankkártya",
-        "Identity": "Személyazonosság"
+        "Identity": "Személyazonosság",
+        "Filter and sort": "Szűrés és rendezés"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -485,7 +485,8 @@
         "Database": "Database",
         "Authenticator (TOTP)": "Awtentikatur (TOTP)",
         "Payment Card": "Karta tal-ħlas",
-        "Identity": "Identità"
+        "Identity": "Identità",
+        "Filter and sort": "Iffiltra u ordna"
     },
     "plurals": null
 }

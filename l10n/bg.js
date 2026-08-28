@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "База данни",
         "Authenticator (TOTP)": "Автентикатор (TOTP)",
         "Payment Card": "Платежна карта",
-        "Identity": "Самоличност"
+        "Identity": "Самоличност",
+        "Filter and sort": "Филтриране и сортиране"
     },
     "nplurals=2; plural=(n != 1);"
 )

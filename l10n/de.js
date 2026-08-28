@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Datenbank",
         "Authenticator (TOTP)": "Authenticator (TOTP)",
         "Payment Card": "Zahlungskarte",
-        "Identity": "Identität"
+        "Identity": "Identität",
+        "Filter and sort": "Filtern und sortieren"
     },
     "nplurals=2; plural=(n != 1);"
 )

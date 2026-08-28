@@ -485,7 +485,8 @@
         "Database": "Andmebaas",
         "Authenticator (TOTP)": "Autentija (TOTP)",
         "Payment Card": "Maksekaart",
-        "Identity": "Identiteet"
+        "Identity": "Identiteet",
+        "Filter and sort": "Filtreeri ja sordi"
     },
     "plurals": null
 }

@@ -485,7 +485,8 @@
         "Database": "Database",
         "Authenticator (TOTP)": "Autentifikator (TOTP)",
         "Payment Card": "Betalingskort",
-        "Identity": "Identitet"
+        "Identity": "Identitet",
+        "Filter and sort": "Filtrér og sortér"
     },
     "plurals": null
 }

@@ -485,7 +485,8 @@
         "Database": "База података",
         "Authenticator (TOTP)": "Аутентификатор (TOTP)",
         "Payment Card": "Платна картица",
-        "Identity": "Идентитет"
+        "Identity": "Идентитет",
+        "Filter and sort": "Филтрирање и сортирање"
     },
     "plurals": null
 }

@@ -485,7 +485,8 @@
         "Database": "База даних",
         "Authenticator (TOTP)": "Автентифікатор (TOTP)",
         "Payment Card": "Платіжна картка",
-        "Identity": "Особа"
+        "Identity": "Особа",
+        "Filter and sort": "Фільтрувати та сортувати"
     },
     "plurals": null
 }

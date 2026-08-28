@@ -485,7 +485,8 @@
         "Database": "Databáza",
         "Authenticator (TOTP)": "Autentifikátor (TOTP)",
         "Payment Card": "Platobná karta",
-        "Identity": "Identita"
+        "Identity": "Identita",
+        "Filter and sort": "Filtrovať a zoradiť"
     },
     "plurals": null
 }

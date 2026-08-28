@@ -485,7 +485,8 @@
         "Database": "Gagnagrunnur",
         "Authenticator (TOTP)": "Auðkennari (TOTP)",
         "Payment Card": "Greiðslukort",
-        "Identity": "Auðkenni"
+        "Identity": "Auðkenni",
+        "Filter and sort": "Sía og raða"
     },
     "plurals": null
 }

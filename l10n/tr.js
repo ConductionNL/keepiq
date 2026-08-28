@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Veritabanı",
         "Authenticator (TOTP)": "Kimlik doğrulayıcı (TOTP)",
         "Payment Card": "Ödeme kartı",
-        "Identity": "Kimlik"
+        "Identity": "Kimlik",
+        "Filter and sort": "Filtrele ve sırala"
     },
     "nplurals=2; plural=(n != 1);"
 )

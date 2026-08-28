@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Gagnagrunnur",
         "Authenticator (TOTP)": "Auðkennari (TOTP)",
         "Payment Card": "Greiðslukort",
-        "Identity": "Auðkenni"
+        "Identity": "Auðkenni",
+        "Filter and sort": "Sía og raða"
     },
     "nplurals=2; plural=(n != 1);"
 )

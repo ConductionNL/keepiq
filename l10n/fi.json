@@ -485,7 +485,8 @@
         "Database": "Tietokanta",
         "Authenticator (TOTP)": "Autentikaattori (TOTP)",
         "Payment Card": "Maksukortti",
-        "Identity": "Henkilöllisyys"
+        "Identity": "Henkilöllisyys",
+        "Filter and sort": "Suodata ja lajittele"
     },
     "plurals": null
 }

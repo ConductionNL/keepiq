@@ -167,8 +167,8 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 
-		// The create affordance lives in the toolbar's "More actions" overflow
-		// (restyle Stage 5); at the vault root its label is "New vault". The
+		// The create affordance lives in the actions bar's "Actions" overflow
+		// (restyle Stage 8); at the vault root its label is "New vault". The
 		// helper clicks the NcActionButton's INNER button — the testid sits on
 		// the presentational <li>, whose click fires nothing.
 		await clickOverflowAction(page, 'open-create-folder')

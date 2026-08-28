@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Databáza",
         "Authenticator (TOTP)": "Autentifikátor (TOTP)",
         "Payment Card": "Platobná karta",
-        "Identity": "Identita"
+        "Identity": "Identita",
+        "Filter and sort": "Filtrovať a zoradiť"
     },
     "nplurals=2; plural=(n != 1);"
 )

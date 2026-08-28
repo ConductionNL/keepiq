@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Βάση δεδομένων",
         "Authenticator (TOTP)": "Επαληθευτής (TOTP)",
         "Payment Card": "Κάρτα πληρωμής",
-        "Identity": "Ταυτότητα"
+        "Identity": "Ταυτότητα",
+        "Filter and sort": "Φιλτράρισμα και ταξινόμηση"
     },
     "nplurals=2; plural=(n != 1);"
 )

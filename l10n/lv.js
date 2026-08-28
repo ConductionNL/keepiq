@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Datubāze",
         "Authenticator (TOTP)": "Autentifikators (TOTP)",
         "Payment Card": "Maksājumu karte",
-        "Identity": "Identitāte"
+        "Identity": "Identitāte",
+        "Filter and sort": "Filtrēt un kārtot"
     },
     "nplurals=2; plural=(n != 1);"
 )

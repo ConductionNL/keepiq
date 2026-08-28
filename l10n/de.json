@@ -485,7 +485,8 @@
         "Database": "Datenbank",
         "Authenticator (TOTP)": "Authenticator (TOTP)",
         "Payment Card": "Zahlungskarte",
-        "Identity": "Identität"
+        "Identity": "Identität",
+        "Filter and sort": "Filtern und sortieren"
     },
     "plurals": null
 }

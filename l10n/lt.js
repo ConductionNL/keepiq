@@ -486,7 +486,8 @@ OC.L10N.register(
         "Database": "Duomenų bazė",
         "Authenticator (TOTP)": "Autentifikatorius (TOTP)",
         "Payment Card": "Mokėjimo kortelė",
-        "Identity": "Tapatybė"
+        "Identity": "Tapatybė",
+        "Filter and sort": "Filtruoti ir rikiuoti"
     },
     "nplurals=2; plural=(n != 1);"
 )

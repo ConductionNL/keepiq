@@ -485,7 +485,8 @@
         "Database": "Adatbázis",
         "Authenticator (TOTP)": "Hitelesítő (TOTP)",
         "Payment Card": "Bankkártya",
-        "Identity": "Személyazonosság"
+        "Identity": "Személyazonosság",
+        "Filter and sort": "Szűrés és rendezés"
     },
     "plurals": null
 }
