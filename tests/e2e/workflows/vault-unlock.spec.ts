@@ -288,7 +288,10 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 * would break the other specs). The setup form's structure + 12-char strength
 	 * gating is already covered by the spec-coverage lock-screen spec.
 	 */
-	test.fixme('first-time setup creates a suite and unlocks (needs a suite-less account)', async () => {
-		// Intentionally empty — see block comment for the precise blocker.
+	test('first-time setup creates a suite and unlocks', async () => {
+		test.fixme(
+			true,
+			"SETUP MODE is not drivable: an active suite already exists for admin, so the first-time setup form never renders. Driving it needs a suite-less account — there is no UI to revoke or delete the admin suite, and doing it out-of-band would break the other specs in this file. The setup form's structure and its 12-character strength gating are already covered by the spec-coverage lock-screen spec.",
+		)
 	})
 })
