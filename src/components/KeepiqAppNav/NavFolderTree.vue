@@ -38,15 +38,18 @@
 				v-if="hasVisibleChildren(node)"
 				:folders="node.children"
 				:depth="depth + 1"
-				:highlightId="highlightId" />
+				:highlightId="highlightId"
+				:ellipsisHighlightId="ellipsisHighlightId" />
 			<!-- Router link on purpose (navigates INTO the hidden folder it
-			     stands for): its exact-active styling is the "…" row's own
-			     highlight; KeepiqAppNav.highlightFolderId leaves the parent
-			     row dark in that case so only ONE row reads as selected. -->
+			     stands for). ACTIVE whenever the open folder lives anywhere
+			     in the chain this "…" hides (KeepiqAppNav's
+			     ellipsisHighlightId) — ancestor rows stay unhighlighted so
+			     only ONE row reads as selected. -->
 			<NcAppNavigationItem
 				v-else-if="hasHiddenChildren(node)"
 				name="…"
 				:to="ellipsisTarget(node)"
+				:active="node.id === ellipsisHighlightId"
 				:data-testid="`nav-folder-ellipsis-${node.id}`" />
 		</NcAppNavigationItem>
 	</ul>
@@ -93,11 +96,22 @@ export default {
 		},
 
 		/**
-		 * The folder id to highlight. When the ACTIVE folder is deeper than
-		 * the display cap, the caller passes its deepest visible ancestor
-		 * instead, so the rail still shows where the user is.
+		 * The folder id to highlight. Null when the ACTIVE folder is deeper
+		 * than the display cap — the "…" node carries the selection then
+		 * (ellipsisHighlightId), so the rail still shows where the user is
+		 * without lighting an ancestor row.
 		 */
 		highlightId: {
+			type: String,
+			default: null,
+		},
+
+		/**
+		 * The capped node whose "…" child renders ACTIVE: set by the caller
+		 * whenever the open folder lives anywhere in that node's hidden
+		 * chain (below the display cap).
+		 */
+		ellipsisHighlightId: {
 			type: String,
 			default: null,
 		},
