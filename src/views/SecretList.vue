@@ -1415,7 +1415,6 @@ export default {
    internals consume. */
 .secret-list-view__crumbs {
 	--default-font-size: 16px;
-
 	margin-bottom: 8px;
 }
 
