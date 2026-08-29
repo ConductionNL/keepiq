@@ -1,5 +1,103 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+		"walkthrough": {
+			"enabled": true,
+			"version": 1,
+			"completionConfigKey": "walkthrough_completed_version",
+			"tours": [
+				{
+					"id": "keepiq:getting-started",
+					"title": "Getting started",
+					"trigger": "first-visit",
+					"steps": [
+						{
+							"id": "welcome",
+							"placement": "center",
+							"title": "Welcome to Keepiq",
+							"body": "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.",
+							"target": {
+								"kind": "page",
+								"ref": "Dashboard"
+							},
+							"advanceOn": {
+								"type": "manual"
+							}
+						},
+						{
+							"id": "go-dashboard",
+							"placement": "right",
+							"body": "Open Dashboard from the menu.",
+							"task": "Click Dashboard in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "Dashboard"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "Dashboard"
+							}
+						},
+						{
+							"id": "go-secretlist",
+							"placement": "right",
+							"body": "Open All secrets from the menu.",
+							"task": "Click All secrets in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "SecretList"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "SecretList"
+							}
+						},
+						{
+							"id": "go-featuresroadmap",
+							"placement": "right",
+							"body": "Open Features & roadmap from the menu.",
+							"task": "Click Features & roadmap in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "FeaturesRoadmap"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "FeaturesRoadmap"
+							}
+						},
+						{
+							"id": "go-personalactivity",
+							"placement": "right",
+							"body": "Open My activity from the menu.",
+							"task": "Click My activity in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "PersonalActivity"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "PersonalActivity"
+							}
+						},
+						{
+							"id": "go-flows",
+							"placement": "right",
+							"body": "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.",
+							"task": "Open Flows from the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "Flows"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "Flows"
+							},
+							"allowManualNext": true
+						}
+					]
+				}
+			]
+		},
 	"version": "1.0.0",
 	"dependencies": [],
 	"nav": {
