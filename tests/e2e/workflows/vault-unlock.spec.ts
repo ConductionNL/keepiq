@@ -164,22 +164,15 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// `:support-dialog="false"` would silence it by removing a feature
 			// rather than by judging the traffic.
 			/\/api\/preferences\/support-dialog-seen\b/,
-			// Same shell layer, same controller and the same judgement as the
-			// support-dialog entry above. CnAppRoot's
-			// resolveWalkthroughSeenVersion() runs whenever the manifest declares
-			// an enabled `walkthrough` block with a `completionConfigKey`
-			// (ADR-043), before any route resolves and therefore regardless of
-			// lock state. It reads one `pref_`-namespaced UI flag for the SESSION
-			// user — the last app version whose tour they have seen — and carries
-			// no vault material, so it is chrome, not a leak.
-			//
-			// The tour itself does NOT paint over the lock screen: the a11y
-			// snapshot captured when this endpoint first reached the wire shows
-			// the bare unlock form, with no walkthrough card in the tree. Only
-			// the preference probe is in scope here, which is what this entry
-			// covers — a tour that ever did open over the lock screen would be a
-			// rendering bug, and this entry does not hide it.
-			/\/api\/preferences\/walkthrough_completed_version\b/,
+			// NOTE: `walkthrough_completed_version` is deliberately NOT listed.
+			// It was added here in #488 when the walkthrough merge put that
+			// probe on the wire behind the lock screen — but #486 had already
+			// fixed the cause the better way, by withholding `walkthrough` from
+			// the manifest while locked (`manifestForLockState`), so
+			// CnAppRoot never resolves the preference at all. The two landed
+			// minutes apart and the allowlist entry became an entry that CANNOT
+			// FIRE, which the note above names as pure masking surface: it would
+			// silently swallow a real regression of exactly this shape.
 		]
 
 		page.on('request', (req) => {
