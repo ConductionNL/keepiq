@@ -11,7 +11,7 @@ OC.L10N.register(
         "Click Features & roadmap in the menu": "Klik op Features & roadmap in het menu",
         "Open My activity from the menu.": "Open My activity via het menu.",
         "Click My activity in the menu": "Klik op My activity in het menu",
-        "Flows automate the repetitive parts of this app. Have a look — you do not have to build one now.": "Flows automatiseren het repeterende werk in deze app. Kijk gerust rond — je hoeft er nu geen te maken.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatiseren het repeterende werk in deze app. Kijk gerust rond, je hoeft er nu geen te maken.",
         "Open Flows from the menu": "Open Flows via het menu",
         "Take over as vault administrator": "Overnemen als kluisbeheerder",
         "Select {name}": "{name} selecteren",
