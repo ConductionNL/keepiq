@@ -12,16 +12,17 @@
  * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import manifest from '../../src/manifest.json'
 import {
-	LOCK_ROUTE_NAME,
-	PUBLIC_ROUTE_NAMES,
 	createVaultGuard,
 	handleLockTransition,
 	isPublicRoute,
 	isPublicSurface,
+	LOCK_ROUTE_NAME,
+	manifestForLockState,
+	PUBLIC_ROUTE_NAMES,
 } from '../../src/router/guards.js'
-import manifest from '../../src/manifest.json'
 
 /**
  * Build a guard plus a spy `next`, over a session store of the given state.
@@ -414,5 +415,57 @@ describe('isPublicSurface', () => {
 				hash: '#/share/request/tok',
 			}),
 		).toBe(true)
+	})
+})
+
+describe('manifestForLockState', () => {
+	const MANIFEST = {
+		version: 1,
+		pages: [],
+		walkthrough: { enabled: true, tours: [] },
+	}
+
+	it('withholds the walkthrough while the vault is locked', () => {
+		// CnAppRoot fetches the tour's completion preference as soon as it sees
+		// `manifest.walkthrough`, and it mounts OUTSIDE the router guard — so
+		// this is the only thing keeping that request off the wire behind the
+		// lock screen.
+		const shown = manifestForLockState(MANIFEST, { isLocked: true })
+
+		expect(shown.walkthrough).toBeUndefined()
+		expect(shown.pages).toBe(MANIFEST.pages)
+	})
+
+	it('offers the walkthrough once the vault is unlocked', () => {
+		// Withheld, not disabled: a first-visit tour must still run on a user's
+		// first UNLOCKED visit.
+		expect(manifestForLockState(MANIFEST, { isLocked: false })).toBe(MANIFEST)
+	})
+
+	it('fails closed when the store is missing or its flag is not a boolean', () => {
+		// Same posture as createVaultGuard: only an explicit `false` unlocks.
+		// A store that failed to initialise must withhold the tour, not ship it.
+		for (const store of [
+			undefined,
+			null,
+			{},
+			{ isLocked: undefined },
+			{ isLocked: 'no' },
+			{ isLocked: 0 },
+		]) {
+			expect(manifestForLockState(MANIFEST, store).walkthrough).toBeUndefined()
+		}
+	})
+
+	it('leaves a manifest without a walkthrough untouched', () => {
+		const plain = { version: 1, pages: [] }
+
+		expect(manifestForLockState(plain, { isLocked: true })).toBe(plain)
+	})
+
+	it('does not mutate the manifest it was given', () => {
+		manifestForLockState(MANIFEST, { isLocked: true })
+
+		expect(MANIFEST.walkthrough).toBeDefined()
 	})
 })

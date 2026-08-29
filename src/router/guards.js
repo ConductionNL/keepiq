@@ -222,3 +222,48 @@ export function createVaultGuard(getSessionStore) {
 		next()
 	}
 }
+
+/**
+ * The manifest as the SHELL should see it for the current lock state.
+ *
+ * 🔴 THE VAULT GUARD ABOVE DOES NOT COVER THIS. That guard works by refusing
+ * to resolve a route, so it only reaches what mounts inside the
+ * `<router-view>`. The walkthrough is a shell-level SIBLING of it: CnAppRoot
+ * reads `manifest.walkthrough` and fetches the tour's completion preference
+ * when the shell mounts, before any route resolves. That put
+ * `GET /api/preferences/walkthrough_completed_version` on the wire behind the
+ * lock screen and broke the invariant that a locked vault issues no Keepiq API
+ * request at all — the assertion that exists because a lock screen which is a
+ * redirect rather than a gate leaks the real inventory.
+ *
+ * Withheld, not disabled: the shell re-renders when `isLocked` flips, so the
+ * tour is offered on the first UNLOCKED visit. A product tour drawn over a
+ * locked vault would be the wrong behaviour regardless of the request.
+ *
+ * Fail closed, exactly as `createVaultGuard` does: only an explicit `false`
+ * counts as unlocked, so a store that failed to initialise withholds the tour
+ * rather than shipping it.
+ *
+ * @param {object} manifest The bundled manifest.
+ * @param {object} store    The session store (with `isLocked`).
+ * @return {object} The manifest, without `walkthrough` while locked.
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-session-mechanism
+ */
+export function manifestForLockState(manifest, store) {
+	if (store?.isLocked === false) {
+		return manifest
+	}
+
+	if (
+		manifest === null
+		|| manifest === undefined
+		|| manifest.walkthrough === undefined
+	) {
+		return manifest
+	}
+
+	const withoutWalkthrough = { ...manifest }
+	delete withoutWalkthrough.walkthrough
+
+	return withoutWalkthrough
+}
