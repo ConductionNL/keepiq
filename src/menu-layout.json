@@ -1,0 +1,12 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"description": "Canonical navigation layout applied AFTER all manifest.d fragments merge (ADR-037). Fragments stay the source of WHAT exists in the menu; this file is the single place deciding WHERE entries live. relocations: sourceId -> targetGroupId. removals: leaf menu-entry ids retired as duplicate navigation — their PAGES stay routable for deep links. settingsSection: leaf ids lifted into the NC gear foldout (NcAppNavigationSettings, outside the scrollable nav) — config/admin/app-registration entries only; operational/vault/activity items stay in the main nav."
+	},
+	"relocations": {},
+	"removals": [],
+	"settingsSection": [
+		"ApplicationsMenu"
+	]
+}

@@ -1,0 +1,195 @@
+# secrets-write-ui Specification
+
+**Status**: in-progress
+
+**OpenSpec changes:**
+- `implement-secrets-write-ui` (2026-06-11) — Original write UI: create/edit dialogs, folder create + move, public-link share, modal isolation, keyboard-operable rows
+- `owner-editable-additional-fields` (2026-08-19) — An owner could SEE additional fields but never write one: the whole stack supported them (controller, service, store encrypt/decrypt, SecretDetail rendering) except the two dialogs an owner uses, so the only writers were the write-for-application dialog, import, and an external recipient filling a secret request. Both requirements below enumerated the collectable fields and omitted this one, which is how it shipped. Adds a shared member editor with the reserved-name rule (`key`, `login`, `url`) in one place, refused with a reason rather than silently misrouted, and an empty blob rather than null when the last member is removed
+
+## Purpose
+TBD - created by archiving change implement-secrets-write-ui. Update Purpose after archive.
+## Requirements
+### Requirement: Create a Secret from the UI
+The system MUST provide a dialog reachable from the vault view that lets the user
+create a new secret. The dialog MUST collect a name (required), a secret type
+(from the seeded type catalogue), the secret value (required), and optional URL
+and login fields. The optional target folder MUST default to the folder the user
+is currently viewing.
+
+The dialog MUST also let the user add ADDITIONAL FIELDS: named members carried
+inside the Secret's single encrypted `additional_fields` blob. A member name that
+collides with a reserved field name (`key`, `login`, `url`) MUST be refused with a
+reason rather than accepted, because those names address the Secret's own columns
+and a member bearing one would be misrouted or shadowed. Duplicate and blank
+names MUST be refused.
+
+On submit, the browser MUST encrypt the secret value (and the login, when present)
+with the owner's suite certificate via the existing `importPublicKey` +
+`rsaEncrypt` crypto BEFORE the request leaves the page, then POST the ciphertext
+through `secret.createSecret`. The additional fields MUST be encrypted as ONE blob
+by the same path. The server MUST never receive the plaintext value.
+The dialog MUST be blocked (disabled) while the vault is locked.
+
+#### Scenario: Create a secret with required fields
+- **WHEN** the user opens the "New secret" dialog, enters a name and a secret value, and submits
+- **THEN** the browser MUST RSA-encrypt the value with the suite certificate
+- **THEN** the system MUST POST the ciphertext and create the secret (HTTP 201)
+- **THEN** the new secret MUST appear in the vault list and its value MUST round-trip: opening it and decrypting MUST return the exact value entered
+
+#### Scenario: Create a secret with additional fields
+@e2e exclude Proven without a browser, and more strongly than a browser could: SecretCreateDialog.additionalFields "sends the members the user added, as one object" pins that the members reach the store, secret-additional-fields "encrypts the members as ONE blob on create" pins the single-blob shape, and additional-fields-crypto "round-trips every member name and value exactly as entered" does it with REAL RSA-4096 keys, including unicode and punctuation a serializer could mangle.
+- **WHEN** the user adds one or more named additional fields and submits
+- **THEN** they MUST be stored inside the encrypted `additional_fields` blob
+- **AND** opening the secret and decrypting MUST return every member name and value exactly as entered
+
+#### Scenario: A reserved name is refused as an additional field
+@e2e exclude Dialog-level validation with one shared implementation: additional-fields "refuses every reserved name, with a reason" and "refuses a reserved name whatever its casing" cover the rule, AdditionalFieldsEditor "refuses a reserved name WITH a reason, and emits nothing" and "flags a rename onto a reserved or duplicate name" cover both entry points. Removing the check fails exactly those four and nothing else — verified by injecting it.
+- **WHEN** the user tries to add an additional field named `key`, `login` or `url`
+- **THEN** the dialog MUST refuse it and say why
+- **AND** MUST NOT write that value into the Secret's corresponding column
+
+#### Scenario: Create a secret inside the current folder
+@e2e exclude Had NO coverage of any kind until now — carried across PR #270, #282 and #286 as a known gap rather than waived with an exclude claiming coverage that did not exist. Two specs drive it, both real after this merge: SecretCreateDialog.requiredFields "defaults the folder to the one being viewed, and persists it" plus its null-folder-at-the-root counterpart, and SecretCreateDialog.additionalFields "defaults the folder to the one being viewed, and persists it".
+- **WHEN** the user is viewing a folder and creates a secret
+- **THEN** the dialog's folder field MUST default to that folder and the created secret MUST persist that `folderId`
+
+#### Scenario: Name and value are required
+@e2e exclude Also previously uncovered, from the same gap. Driven by SecretCreateDialog.requiredFields "requires a name AND a value before anything is sent" and "stays blocked while the vault is locked, however complete the form is", and by SecretCreateDialog.additionalFields "requires a name AND a value before anything is sent". Each walks every partial state including whitespace-only and asserts no request is made.
+- **WHEN** the user submits with an empty name or empty value
+- **THEN** the submit control MUST be disabled and no request MUST be sent
+
+
+### Requirement: Edit a Secret from the UI
+The system MUST provide an "Edit" affordance on the secret detail view that opens a
+dialog pre-filled with the secret's current (decrypted) fields. The user MUST be
+able to change the name, type, URL, login, and secret value. Only changed
+sensitive fields (value / login) MUST be re-encrypted client-side before the PUT
+via `secret.updateSecret`; metadata-only edits (name / type / URL) MUST NOT require
+re-encryption.
+
+The dialog MUST also present the secret's existing ADDITIONAL FIELDS, pre-filled
+from the decrypted blob, and MUST let the user rename a member, change its value,
+add another and remove one. The same reserved-name, duplicate and blank rules
+apply as on creation. Because the members share one blob, any member change MUST
+re-encrypt and write the whole blob; removing the last member MUST produce an
+empty blob rather than a null value, so that "no additional fields" stays
+distinguishable from "not loaded".
+
+An owner MUST NOT have to ask another party to write an additional field for them.
+Until this requirement, the only writers were the write-for-application dialog,
+import, and an external recipient filling a secret request — so obtaining one on
+your own secret meant asking a stranger to submit it.
+
+#### Scenario: Edit a secret's value
+- **WHEN** the user edits a secret, changes the value, and saves
+- **THEN** the browser MUST RSA-encrypt the new value and PUT it
+- **THEN** re-opening the secret and decrypting MUST return the updated value
+
+
+#### Scenario: Edit metadata only
+@e2e exclude Previously uncovered. Driven by SecretEditDialog.metadataOnly — only the name is sent when only the name changed, nothing is sent when nothing changed, and the counterpart that the value IS re-encrypted when it really changes, since the rule is "only CHANGED sensitive fields" rather than "never" — and by SecretEditDialog.additionalFields "alters no ciphertext when only the name changes". Same diff logic: a rename that re-encrypted the blob would also be a rename that loses a concurrent session's members.
+- **WHEN** the user changes only the name and saves
+- **THEN** the system MUST persist the new name and MUST NOT alter the stored ciphertext
+#### Scenario: Edit an existing additional field
+@e2e exclude Driven by SecretEditDialog.additionalFields "pre-fills the existing members from the decrypted blob" and "sends the whole blob when one member is renamed" / "when a value changes or a member is added"; the decrypt round-trip itself is proven with real keys in additional-fields-crypto. Removing the diff block fails exactly the three write-path tests.
+- **GIVEN** a secret whose encrypted blob holds a member
+- **WHEN** the user opens Edit
+- **THEN** that member MUST be shown with its decrypted name and value
+- **AND** changing either and saving MUST round-trip through decryption
+
+#### Scenario: Remove the last additional field
+@e2e exclude Driven at three layers, because the distinction is a JavaScript trap rather than a UI one. The write half: SecretEditDialog.additionalFields "sends an EMPTY object when the last member is removed", plus secret-additional-fields "sends an EMPTY blob, not null" and "leaves the stored blob alone when the caller sends nothing" — that pair is what makes empty-versus-absent meaningful. The read half ("re-opening MUST show no additional fields"): SecretDetail.additionalFields "shows NO additional-fields section for an empty blob", added after /opsx-verify found the view rendered the heading over an empty list, since `{}` is truthy AND an object. That state was unreachable before owners could remove a member.
+- **WHEN** the user removes the only remaining member and saves
+- **THEN** the stored blob MUST be empty rather than null
+- **AND** re-opening the secret MUST show no additional fields and no error
+
+
+### Requirement: Create a Folder and Move a Secret
+The system MUST provide a "New folder" affordance in the vault view that creates a
+folder (optionally under a parent) via `folder.createFolder`, and a "Move"
+affordance on the secret detail view that moves the secret into a chosen folder
+(or to the vault root) via `secret.updateSecret({ folderId })`.
+
+#### Scenario: Create a folder
+- **WHEN** the user opens "New folder", enters a name, and submits
+- **THEN** the system MUST create the folder (HTTP 200) and it MUST appear in the folder tree
+
+#### Scenario: Move a secret into a folder
+- **WHEN** the user opens "Move" on a secret and selects a folder
+- **THEN** the system MUST persist the secret's new `folderId`
+- **THEN** the secret MUST appear under that folder's filter in the vault list
+
+### Requirement: Share a Secret via a Public Link
+The system MUST provide a "Share" affordance on the secret detail view that opens a
+dialog to create a password-protected public link share. The dialog MUST let the
+user pick a usage limit (1–10, default 1). On create, the browser MUST decrypt the
+secret, build a snapshot of its sensitive fields, generate a one-time link
+password, derive an AES-256 key via Argon2id, encrypt the snapshot client-side,
+and POST only the encrypted blob via `linkShare.createLinkShare`. The dialog MUST
+display the resulting link URL and the generated password EXACTLY ONCE, each with
+a copy control. The link password MUST NOT be sent to or stored on the server.
+
+The dialog MUST list existing active link shares for the secret and let the owner
+revoke one.
+
+#### Scenario: Create a public link share
+- **WHEN** the owner opens "Share", chooses a usage limit, and creates the link
+- **THEN** the browser MUST encrypt the snapshot with an Argon2id-derived key and POST only the blob
+- **THEN** the dialog MUST show the link URL and the one-time password with copy buttons
+- **THEN** the share token MUST resolve via the public endpoint `GET /api/v1/public/link-shares/{token}`
+
+#### Scenario: Revoke a link share
+@e2e exclude Coverage existed and was simply never annotated: tests/store/share.spec.js "DELETEs and removes the share from the list" asserts both halves of this scenario — the DELETE is issued and the share leaves the list. Found while clearing the gate-19 debt on this spec, not written for it.
+- **WHEN** the owner revokes an existing link share from the dialog
+- **THEN** the system MUST delete it and it MUST disappear from the list
+
+#### Scenario: User-to-user sharing is deferred
+- **WHEN** the user opens the share dialog
+- **THEN** a user-to-user share affordance MAY be shown as disabled / "coming soon"
+- **THEN** it MUST NOT issue any request until the `implement-user-sharing` backend exists
+
+### Requirement: Dialogs Honour Modal Isolation and Registry Dispatch
+Every write dialog MUST live in its own `.vue` file under `src/dialogs/` (ADR-004
+modal-isolation) and MUST be registered in `src/registry.js` as a `kind:"modal"`
+entry (ADR-036). Affordances MUST open dialogs through the injected
+`cnOpenModal(key, props)` dispatcher provided by `CnAppRoot`, forwarding the
+target secret / folder context as props.
+
+#### Scenario: Modal opened via registry dispatcher
+@e2e exclude Had NO coverage until now, and the gap was invisible by construction: `cnOpenModal` is an inject whose default is a NO-OP so the view still mounts in isolation, so a regression to local dialog state looks identical in every other test while the dialog silently never opens in the real app. Driven by SecretList.registryDispatch — the key and props each affordance dispatches, that those keys exist in src/registry.js as `kind: "modal"`, and that the no-op default does not throw. A one-character key typo fails it; verified by injecting one.
+- **WHEN** the user clicks a write affordance
+- **THEN** the corresponding registry-registered modal MUST mount via `cnOpenModal`
+- **THEN** closing the dialog MUST emit `close` and unmount it
+
+### Requirement: Secret List Rows MUST Be Keyboard-Operable
+
+The secret row rendered by `SecretListItem.vue` for every entry in the vault list MUST expose a real interactive semantic (a native `<button type="button">`, or a `<div>` carrying `role="button"`, `tabindex="0"`, and an accessible `aria-label` built from the secret's name) instead of a bare non-interactive `<div>` with only a mouse click handler. The row MUST be reachable via `Tab` and MUST open the secret's detail view when activated via `Enter` or `Space`, in addition to the existing mouse click. This satisfies WCAG 2.1 AA Success Criteria 2.1.1 (Keyboard) and 4.1.2 (Name, Role, Value), and ADR-010's mandatory keyboard-navigable requirement.
+
+The row MUST display a visible focus indicator using Nextcloud focus-ring CSS custom properties (no hardcoded colors) when it receives keyboard focus via `:focus-visible`.
+
+The inner copy-password control MUST remain independently focusable, and activating it via mouse or keyboard MUST NOT also trigger the row's `open` navigation.
+
+#### Scenario: Opening a secret row via keyboard only
+
+- **GIVEN** the user is tabbing through the vault list with no mouse input
+- **WHEN** the user presses `Tab` until a secret row receives focus and then presses `Enter`
+- **THEN** the system MUST emit the row's `open` event and navigate to that secret's detail view
+
+#### Scenario: Space also activates a focused row
+
+- **GIVEN** a secret row has keyboard focus
+- **WHEN** the user presses `Space`
+- **THEN** the system MUST emit the row's `open` event exactly once, matching the click behaviour
+
+#### Scenario: Focused row shows a visible focus indicator
+
+- **GIVEN** a secret row receives keyboard focus
+- **WHEN** the row is rendered in that focused state
+- **THEN** the system MUST render a `:focus-visible` outline using an NC CSS custom property, with no hardcoded color value
+
+#### Scenario: Copy control does not trigger row navigation
+
+- **GIVEN** a secret row's inner copy-password control has keyboard focus
+- **WHEN** the user activates it via `Enter` or `Space`
+- **THEN** the system MUST copy the password and MUST NOT also emit the row's `open` event
+

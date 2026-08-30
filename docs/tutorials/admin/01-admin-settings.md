@@ -1,57 +1,58 @@
 ---
 sidebar_position: 1
-title: Manage Doriath settings
-description: Configure encryption, group-level sharing policies, and the audit log from the Nextcloud admin settings panel.
+title: Manage Keepiq settings
+description: Monitor the Certificate Authority, set password policy, and approve registered applications from the Nextcloud admin settings panel.
 ---
 
-# Manage Doriath settings
+# Manage Keepiq settings
 
-The admin-side configuration for Doriath — encryption back end,
-group-level sharing policy, audit retention.
+The admin-side configuration for Keepiq — Certificate Authority health,
+master-password policy, and the application approval queue.
 
-> **This guide is being written as Doriath approaches feature-completeness.**
-> The structure below mirrors the journeydoc shape the rest of the
-> fleet uses; bodies and screenshots fill in once the admin UI lands.
-> Follow the [GitHub repository](https://github.com/ConductionNL/doriath)
-> for milestones.
+> **Screenshots for this guide are still being captured.** The steps
+> below describe the real, shipped admin panel; the numbered walkthrough
+> with screenshots lands with the next journeydoc capture pass. Follow
+> the [repository](https://github.com/ConductionNL/keepiq) for progress.
 
 ## Goal
 
-By the end of this guide you will have opened the Doriath admin panel
-under **Settings → Administration → Doriath**, verified that the
-encryption back end is wired up, set a default sharing policy for new
-team vaults, and confirmed that the audit log is being written.
+By the end of this guide you will have opened the Keepiq admin panel
+under **Settings → Administration → Keepiq**, verified the Certificate
+Authority is healthy, set the minimum master-password length and
+strength score, and approved a pending application registration.
 
 ## Prerequisites
 
-- A Nextcloud admin account on an instance where Doriath is installed
+- A Nextcloud admin account on an instance where Keepiq is installed
   and enabled.
-- The **OpenRegister** app installed and enabled.
-- Nextcloud server-side encryption configured at the platform level
-  (Doriath does not enable it for you — it relies on it).
+- Nothing else. Keepiq bootstraps its own private root and intermediate
+  Certificate Authority on install — there is no external PKI or
+  OpenRegister dependency to configure first.
 
 ## Steps
 
-The numbered steps land here once the admin UI is built. The journeydoc
-capture spec (see ADR-030) ships a placeholder; the real shoot() calls
-are added together with the implementation.
+The numbered steps land here once the capture pass runs, but the flow
+is: open **Settings → Administration → Keepiq**, confirm the CA health
+card is green (root and intermediate certificate expiry), set
+`min_password_length` / `min_password_score`, and act on any pending
+application in the approval queue.
 
 ## Verification
 
-You are set up correctly when: the Doriath settings panel renders
-without an error banner, the encryption-back-end indicator is green,
-saving a sharing policy persists across a reload, and a freshly created
-entry appears in the audit log within a few seconds.
+You are set up correctly when: the Keepiq settings panel renders
+without an error banner, the CA health card shows valid root and
+intermediate certificates, saving the password policy persists across a
+reload, and approving an application moves it out of the pending queue.
 
 ## Common issues
 
 | Symptom | Fix |
 |---|---|
-| Settings panel not visible | The app is not enabled, or OpenRegister is missing. |
-| Encryption indicator stays red | Nextcloud server-side encryption is not configured at the platform level; configure it first, then reload Doriath. |
-| Audit log is empty after creating an entry | OpenRegister's audit trail is not enabled for the Doriath register — re-import the configuration from **Settings → Registers**. |
+| Settings panel not visible | The app is not enabled for your instance. |
+| CA health card shows an error | The certificate authority failed to bootstrap; use the CA bootstrap-retry action, or check the server log for the `BootstrapCertificateAuthority` repair step. |
+| Intermediate certificate nearing expiry | Keepiq renews the intermediate certificate automatically via a background job; force a renewal from the admin panel if the automatic renewal hasn't run yet. |
 
 ## Reference
 
-- [Open Doriath for the first time](../user/01-first-launch.md) — the user-side journey.
-- Doriath on GitHub: [ConductionNL/doriath](https://github.com/ConductionNL/doriath).
+- [Open Keepiq for the first time](../user/01-first-launch.md) — the user-side journey.
+- Keepiq repository: [github.com/ConductionNL/keepiq](https://github.com/ConductionNL/keepiq).

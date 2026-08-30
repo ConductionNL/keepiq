@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<ruleset name="Keepiq Nextcloud Rules (lib/Db persistence layer)"
+    xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
+                        http://pmd.sourceforge.net/ruleset_xml_schema.xsd">
+
+    <description>
+        The full keepiq ruleset (phpmd.xml) MINUS the two rules that measure a
+        database table's shape rather than a design defect. Applied to lib/Db/
+        only. Every other rule in phpmd.xml stays in force here - see the long
+        rationale in phpmd.xml.
+    </description>
+
+    <rule ref="phpmd.xml">
+        <!-- TooManyFields: in an OCP\AppFramework\Db\Entity subclass one
+             protected property IS one database column. Nextcloud's Entity
+             base class derives the column list, the magic getters/setters and
+             the dirty-field tracking from the declared properties, so the
+             field count is not a modelling choice - it is the width of the
+             table. Keepiq's two widest tables are:
+
+               Db\Secret   19 fields -> `doriath_secrets`
+               Db\SiemSink 18 fields -> `doriath_siem_sinks`
+
+             Verified against the migrations that own those tables:
+             Version000008Date20260604000002::changeSchema() creates
+             `doriath_secrets` with 15 addColumn() calls, and
+             Version000016Date20260614000001 / Version000017Date20260614000002 /
+             Version000022Date20260718110000 each getTable('doriath_secrets')
+             and add more. Every property on the entity is one of those real
+             columns. The only refactor that takes the class under the
+             threshold of 15 is splitting the app's core secrets table in a
+             destructive migration - i.e. the rule is unreachable by
+             refactoring the PHP.
+
+             This is a rule-scoped, path-scoped exception. It is NOT an
+             @SuppressWarnings (which would have to be repeated on every future
+             entity and is invisible to the count) and NOT a baseline file
+             (which hides everything that exists today, including real
+             defects). -->
+        <exclude name="TooManyFields"/>
+
+        <!-- ExcessiveClassLength: same cause. An entity's length is a linear
+             function of its column count - each column contributes a typed
+             property plus its @method docblock entries. No lib/Db class trips
+             this today; the rule is excluded here so that the next wide table
+             does not reopen the same unreachable ticket. -->
+        <exclude name="ExcessiveClassLength"/>
+    </rule>
+</ruleset>

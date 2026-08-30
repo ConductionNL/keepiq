@@ -13,6 +13,7 @@
 import { chromium, request, type FullConfig } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
+import { resolveBaseUrl } from './base-url'
 
 const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
@@ -20,11 +21,13 @@ const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 	const ctx = await request.newContext()
 	try {
-		const res = await ctx.get(`${baseURL}/status.php`, { failOnStatusCode: false })
+		const res = await ctx.get(`${baseURL}/status.php`, {
+			failOnStatusCode: false,
+		})
 		if (!res.ok()) {
 			throw new Error(
 				`Nextcloud status.php returned ${res.status()} at ${baseURL}. `
-				+ 'Make sure the docker container is running.',
+					+ 'Make sure the docker container is running.',
 			)
 		}
 		const body = await res.json().catch(() => ({}))
@@ -38,32 +41,125 @@ async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 	}
 }
 
+/**
+ * Returns true when the cached storageState still authenticates against NC,
+ * letting us skip a fresh (throttle-prone) login.
+ */
+async function cachedSessionValid(baseURL: string): Promise<boolean> {
+	if (!fs.existsSync(STORAGE_STATE)) {
+		return false
+	}
+	try {
+		const state = JSON.parse(fs.readFileSync(STORAGE_STATE, 'utf8'))
+		const ctx = await request.newContext({ baseURL, storageState: state })
+		try {
+			const res = await ctx.get('/ocs/v2.php/cloud/user?format=json', {
+				headers: { 'OCS-APIRequest': 'true' },
+				failOnStatusCode: false,
+			})
+			return res.status() === 200
+		} finally {
+			await ctx.dispose()
+		}
+	} catch {
+		return false
+	}
+}
+
 export default async function globalSetup(config: FullConfig): Promise<void> {
-	const baseURL = (config.projects[0]?.use?.baseURL as string | undefined)
-		?? process.env.NEXTCLOUD_URL
-		?? 'http://localhost:8080'
+	// No localhost:8080 fallback — that is the SHARED dev container, and this
+	// function performs LOGINS.
+	const baseURL =
+		(config.projects[0]?.use?.baseURL as string | undefined) ?? resolveBaseUrl()
 	const username = process.env.NC_ADMIN_USER ?? 'admin'
 	const password = process.env.NC_ADMIN_PASS ?? 'admin'
 
 	await ensureNextcloudReachable(baseURL)
 	fs.mkdirSync(AUTH_DIR, { recursive: true })
 
+	// Reuse a still-valid cached session when possible. NC brute-force protection
+	// throttles repeated logins on a busy shared instance, so avoid re-logging in
+	// on every run: if the stored cookies still authenticate, skip the login flow.
+	if (await cachedSessionValid(baseURL)) {
+		return
+	}
+
 	const browser = await chromium.launch()
 	const context = await browser.newContext({ baseURL })
 	const page = await context.newPage()
 
-	await page.goto('/index.php/login')
-	await page.locator('input[name="user"]').fill(username)
-	await page.locator('input[name="password"]').fill(password)
-	await page.locator('button[type="submit"]').first().click()
-	await page.waitForSelector('#header, header.header', { timeout: 20_000 })
+	// The NC login form hydrates client-side and this shared dev instance can be
+	// sluggish (asset loads, brute-force throttling). Retry the whole login a few
+	// times with generous waits so a single slow hydrate doesn't fail every spec.
+	const MAX_ATTEMPTS = 4
+	let loggedIn = false
+	let lastErr: unknown
+	for (let attempt = 1; attempt <= MAX_ATTEMPTS && !loggedIn; attempt++) {
+		try {
+			await page.goto('/index.php/login', { waitUntil: 'domcontentloaded' })
+			const userField = page.locator('input[name="user"]')
+			await userField.waitFor({ state: 'visible', timeout: 40_000 })
+			await userField.fill(username)
+			await page.locator('input[name="password"]').fill(password)
+			await page.locator('button[type="submit"]').first().click()
+			await page.waitForSelector('#header, header.header', {
+				state: 'attached',
+				timeout: 40_000,
+			})
+			// Give the redirect a moment to settle, then confirm we left /login.
+			await page.waitForLoadState('domcontentloaded').catch(() => {})
+			if (!/\/login(\?|$|\/)/.test(page.url())) {
+				loggedIn = true
+			} else {
+				lastErr = new Error(`still on ${page.url()} after submit`)
+			}
+		} catch (e) {
+			lastErr = e
+		}
+		if (!loggedIn && attempt < MAX_ATTEMPTS) {
+			await page.waitForTimeout(5_000 * attempt)
+		}
+	}
 
-	const currentUrl = page.url()
-	if (/\/login(\?|$|\/)/.test(currentUrl)) {
+	if (!loggedIn) {
 		throw new Error(
-			`Login appears to have failed — still on ${currentUrl}. `
-			+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).',
+			`Login failed after ${MAX_ATTEMPTS} attempts (last: ${String(lastErr)}). `
+				+ 'Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin) and that the '
+				+ 'instance is reachable / not brute-force throttled.',
 		)
+	}
+
+	/*
+	 * Suppress the product walkthrough (ADR-043) for automated runs, the way
+	 * dossiq's global-setup already does. The tour's "seen" state is per USER,
+	 * not per test, so whichever spec runs first wears the tour and the rest
+	 * inherit a dismissed one — an order-dependent suite. `audit-trail.spec.ts`
+	 * started needing a retry the moment the walkthrough landed (#484), having
+	 * never retried in the three preceding runs on development.
+	 *
+	 * This is NOT covered by #486: that withholds the tour while the vault is
+	 * LOCKED, which is a different concern. Every spec here unlocks, and the
+	 * tour is offered on the first unlocked visit by design.
+	 *
+	 * The sentinel is deliberately higher than any real app version, so every
+	 * step's `sinceVersion` sorts below it and the tour composes to an empty
+	 * step set rather than merely starting dismissed. localStorage is the right
+	 * lever despite keepiq declaring a `completionConfigKey`:
+	 * loadWalkthroughSeenVersion() reads a `{ value: null }` server answer —
+	 * what a fresh user gets — as "never seen" and returns the local mirror, so
+	 * the seeded value wins. The page is already on the instance origin after
+	 * login, which is the origin storageState persists.
+	 */
+	try {
+		await page.evaluate(() => {
+			try {
+				window.localStorage.setItem('cn-walkthrough-seen:keepiq', '999.0.0')
+			} catch (e) {
+				// localStorage unavailable — specs fall back to dismissing by hand.
+			}
+		})
+	} catch {
+		// Never fail setup over an optional convenience.
 	}
 
 	await context.storageState({ path: STORAGE_STATE })

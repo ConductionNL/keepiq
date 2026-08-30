@@ -1,6 +1,6 @@
 # Roadmap
 
-This document tracks the planned development of Doriath.
+This document tracks the planned development of Keepiq.
 
 Features are defined in [`openspec/specs/`](specs/). When a feature reaches `planned` status it is listed here and an OpenSpec change is created with `/opsx:ff`.
 
@@ -15,12 +15,36 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | [User Sharing](specs/user-sharing/spec.md) | planned | 5 | — |
 | [Link Sharing](specs/link-sharing/spec.md) | planned | 6 | — |
 | [Secret Requests](specs/secret-requests/spec.md) | planned | 7 | — |
+| [Team Folder Sharing](specs/team-folder-sharing/spec.md) | done — live-verified 2026-07-18 | 8 — #1 ecosystem wish | [archive](changes/archive/2026-07-18-team-folder-sharing/) |
+| [Browser Extension & Autofill](specs/browser-extension-autofill/spec.md) | in-progress | 9 | [browser-extension-autofill](changes/browser-extension-autofill/) |
+| [Passkey Item Type](specs/passkey-item-type/spec.md) | done — live-verified 2026-07-18 | 10 — 2026 table stakes | [archive](changes/archive/2026-07-18-passkey-item-type/) |
+| [CXF Import/Export](specs/cxf-import-export/spec.md) | done — 2026-07-18 | 11 — after passkeys | [archive](changes/archive/2026-07-18-cxf-import-export/) |
+| [Encrypted Attachments](specs/encrypted-attachments/spec.md) | done — live-verified 2026-07-18 | 12 | [archive](changes/archive/2026-07-18-encrypted-attachments/) |
+| [Secret Version History](specs/secret-version-history/spec.md) | done — 2026-07-18 | 13 | [archive](changes/archive/2026-07-18-secret-version-history/) |
+| [Rotation & Expiry Policies](specs/rotation-expiry-policies/spec.md) | done — 2026-07-18 | 14 — NIS2/BIO2 driver | [archive](changes/archive/2026-07-18-rotation-expiry-policies/) |
+| [Machine Secret Leases](specs/machine-secret-leases/spec.md) | done — 2026-07-18 | 15 — NHI segment | [archive](changes/archive/2026-07-18-machine-secret-leases/) |
+| [Extension Passkey Provider](specs/extension-passkey-provider/spec.md) | in-progress | 16 — makes passkeys usable | [extension-passkey-provider](changes/extension-passkey-provider/) |
+| [Extension TOTP Autofill](specs/extension-totp-autofill/spec.md) | in-progress | 17 | [extension-totp-autofill](changes/extension-totp-autofill/) |
+| [Passkey Vault Login](specs/passkey-vault-login/spec.md) | done | 18 — PRF frontier | [passkey-vault-login](changes/archive/2026-07-20-passkey-vault-login/) |
+| [Offline Read-only Cache](specs/offline-readonly-cache/spec.md) | done | 19 | [offline-readonly-cache](changes/archive/2026-07-20-offline-readonly-cache/) |
+| [Folder Permission Grades](specs/folder-permission-grades/spec.md) | done — 2026-07-18 | 20 — after team folders | [archive](changes/archive/2026-07-18-folder-permission-grades/) |
+| [Ephemeral Send](specs/ephemeral-send/spec.md) | done — 2026-07-18 | 21 | [archive](changes/archive/2026-07-18-ephemeral-send/) |
+| [Compliance Reporting](specs/compliance-reporting/spec.md) | done — 2026-07-18 | 22 — BIO2/NIS2 evidence | [archive](changes/archive/2026-07-18-compliance-reporting/) |
+| [SIEM Audit Export](specs/siem-audit-export/spec.md) | done | 23 | [siem-audit-export](changes/archive/2026-07-18-siem-audit-export/) |
+| [Org Password Policies](specs/org-password-policies/spec.md) | done — 2026-07-18 | 24 | [archive](changes/archive/2026-07-18-org-password-policies/) |
+| [Card & Identity Items](specs/card-identity-items/spec.md) | done — 2026-07-18 | 25 | [archive](changes/archive/2026-07-18-card-identity-items/) |
+| [Bulk Actions](specs/bulk-actions/spec.md) | done — 2026-07-18 | 26 | [archive](changes/archive/2026-07-18-bulk-actions/) |
+| [Mobile PWA](specs/mobile-pwa/spec.md) | done | 27 | [mobile-pwa](changes/archive/2026-07-20-mobile-pwa/) |
+| [Keepiq CLI](specs/keepiq-cli/spec.md) | in-progress | 28 | [keepiq-cli](changes/keepiq-cli/) |
+| [CXP Transfer](specs/cxp-transfer/spec.md) | in-progress | 29 — after CXF | [cxp-transfer](changes/cxp-transfer/) |
+| [Certificate Lifecycle](specs/certificate-lifecycle/spec.md) | done | 30 | [certificate-lifecycle](changes/archive/2026-07-18-certificate-lifecycle/) |
+| [Honey Credentials](specs/honey-credentials/spec.md) | done | 31 — deception differentiator | [honey-credentials](changes/archive/2026-07-20-honey-credentials/) |
 
 ## Phases
 
 ### Phase 1 — Foundation (Core)
 
-The minimum set that makes Doriath useful as a secrets manager.
+The minimum set that makes Keepiq useful as a secrets manager.
 
 1. **Encryption Suites** — CA bootstrap, key pair generation, user setup on first login
 2. **Secrets** — CRUD with RSA encryption at rest
@@ -43,6 +67,30 @@ _Not yet specced. To be explored in future `/opsx:app-explore` sessions._
 - API (basic auth + OAuth)
 - Custom CA chain upload
 - Post-quantum cryptography (when available in PHP)
+
+### Phase 3.5 — Market-gap wave (specced 2026-07-16, deep-research driven)
+
+Eight changes created from the 2026-07-16 competitive deep-dive (results logged to the Spectr register, `sourceRef: deepdive-2026-07-16-app-keepiq`). Ordered by demand evidence:
+
+1. **Team Folder Sharing** — share folders with users/groups, inheritance + offboarding (NC Passwords #582/#583, 63+60 reactions — the ecosystem's #1 wish)
+2. **Browser Extension & Autofill** — MV3 extension, zero-knowledge unlock, iframe-capable autofill (the #1 experiential complaint ecosystem-wide)
+3. **Passkey Item Type** — passkey storage as a secret type (2026 table stakes; Entra ID defaults to passkeys Sept 2026)
+4. **CXF Import/Export** — FIDO Credential Exchange Format portability (Proposed Standard Aug 2025; kills the lock-in objection)
+5. **Encrypted Attachments** — client-side-encrypted files on secrets (tier-1 table stakes)
+6. **Secret Version History** — view/restore prior values (Passbolt v5.7 parity)
+7. **Rotation & Expiry Policies** — expiry reminders + rotate-after-breach (NIS2 Art. 21(2)(j) + BIO2 compliance sale)
+8. **Machine Secret Leases** — TTL-bounded scoped grants on the machine API (NHI market ~22% CAGR; unified human+machine store differentiator)
+
+### Phase 3.6 — Market-gap wave 2 (specced 2026-07-17)
+
+Sixteen follow-up changes from the same 2026-07-16 deep-dive: wave-1's deferred seams, tier-2/3 differentiators, and the BIO2/NIS2 compliance surface.
+
+**Extension follow-ups**: `extension-passkey-provider` (WebAuthn provider — makes stored passkeys usable), `extension-totp-autofill` (codes in the extension, auto-copy on fill)
+**Unlock & offline**: `passkey-vault-login` (PRF unlock — only Bitwarden has it), `offline-readonly-cache` (encrypted offline vault)
+**Sharing follow-ups**: `folder-permission-grades` (read/write grades — wave-1's declared v2), `ephemeral-send` (burn-after-read ad-hoc sends)
+**Compliance (BIO2/NIS2)**: `compliance-reporting` (auditor evidence export — no competitor has a BIO2/NIS2-framed report), `siem-audit-export` (syslog/webhook streaming), `org-password-policies` (admin generator/strength policies)
+**Item types & UX**: `card-identity-items` (card + identity types, BSN-aware), `bulk-actions` (multi-select operations), `mobile-pwa` (installable PWA)
+**Machine/dev**: `keepiq-cli` (human + CI modes), `cxp-transfer` (HPKE provider-to-provider migration), `certificate-lifecycle` (inventory/renewal on the private CA), `honey-credentials` (decoy tripwires — deception is one of few detection controls a zero-knowledge store can offer)
 
 ### Phase 4 — Future Development
 

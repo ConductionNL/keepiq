@@ -69,7 +69,7 @@ The system MUST allow a user to share a secret they own with another Nextcloud u
 - AND create a SecretShare linking the original to the copy
 
 #### Scenario: Share with user without EncryptionSuite
-- GIVEN user B has never opened Doriath and has no EncryptionSuite
+- GIVEN user B has never opened Keepiq and has no EncryptionSuite
 - WHEN user A attempts to share a secret with user B
 - THEN the system MUST return an error indicating the recipient has no encryption suite
 
@@ -201,7 +201,7 @@ When a recipient's EncryptionSuite is **revoked** (deliberate decommissioning), 
 - AND the original secrets owned by their respective owners remain intact
 
 ### Requirement: EncryptionSuite Compromise — Shared Copy Migration and Owner Notification
-When a recipient's EncryptionSuite is **replaced due to compromise**, the suite migration process (see encryption-suites spec) naturally covers all `Secret` rows encrypted with the old suite — including shared copies held by the recipient. Those copies are re-encrypted with the new suite and flagged `possibly_compromised_at` as part of the standard migration.
+When a recipient's EncryptionSuite is **replaced due to compromise**, the suite migration process (see encryption-suites spec) MUST cover all `Secret` rows encrypted with the old suite — including shared copies held by the recipient. Those copies MUST be re-encrypted with the new suite and flagged `possibly_compromised_at` as part of the standard migration.
 
 The additional responsibility of User Sharing is: when a shared copy is flagged `possibly_compromised_at` during migration, the **original owner of the secret MUST be notified** that the secret may have been compromised and its value should be replaced.
 
@@ -220,7 +220,7 @@ When the owner replaces the secret value, sync-on-update (see Requirement: Sync 
 - AND `possibly_compromised_at` MUST be unset on the original and all copies
 
 ### Requirement: Ownership Delegation
-A secret's ownership can be delegated to one or more other users, granting them co-owner rights (share management, full recipient visibility, value updates). Multiple active delegations for the same secret are allowed simultaneously.
+The system MUST allow a secret's ownership to be delegated to one or more other users, granting them co-owner rights (share management, full recipient visibility, value updates). Multiple active delegations for the same secret MUST be allowed simultaneously.
 
 **Who can create a delegation:**
 - **Admin power grab**: a vault administrator can create a delegation for any secret that has already been shared with them. No owner consent is required.
@@ -325,5 +325,5 @@ The system MUST allow the original owner to revoke a share, removing the recipie
 ## Notes
 
 - The sync-on-update requirement means that updating a widely-shared secret triggers multiple re-encryption operations. For the initial implementation, this can be synchronous. Async fanout can be explored if performance becomes an issue.
-- **Future consideration (flagged for later):** delegation currently requires the delegatee to already hold a share, due to the cryptographic constraint that no one can decrypt a secret they were never given a copy of. This means an admin can only take over a secret if it was proactively shared with them. A team policy should ensure that secrets vital to operations are always shared with a designated admin. Whether a mechanism to enforce this policy (e.g. mandatory admin share on creation) should be added to Doriath is left for a future exploration session.
+- **Future consideration (flagged for later):** delegation currently requires the delegatee to already hold a share, due to the cryptographic constraint that no one can decrypt a secret they were never given a copy of. This means an admin can only take over a secret if it was proactively shared with them. A team policy should ensure that secrets vital to operations are always shared with a designated admin. Whether a mechanism to enforce this policy (e.g. mandatory admin share on creation) should be added to Keepiq is left for a future exploration session.
 - Related ADRs: ADR-003 (encryption architecture — write-without-read property)

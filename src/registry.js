@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
- * V2 component registry for doriath (hydra ADR-036).
+ * V2 component registry for keepiq (hydra ADR-036).
  *
  * Recognised kinds: page, widget, modal, form-field, cell-renderer.
  *
@@ -14,63 +14,104 @@
  *     are looked up against this registry via `CnWidgetGrid` (the
  *     `kind:"widget"` entries below).
  *
- * Widget metadata fields (ADR-036): every `kind:"widget"` entry
- * declares `defaultSize`, `minSize`, `maxSize`, `allowedSlots`, and
- * `propsSchema` so `CnAppRoot` can validate the manifest against the
- * widget's contract. Missing fields trigger console-warn noise.
+ * ZERO custom `kind:"widget"` entries (hydra ADR-049, Decision 5) —
+ * the dashboard's banners, KPI tiles, and placeholder panels are
+ * built-in manifest widgets (`banner`, `stat`, `text`) configured in
+ * src/manifest.json against the summary / migration-status endpoints.
  *
- * Current entries:
+ * Notable entries:
  *   - LockScreen (page) — master-password setup + unlock flow.
  *     `type:"custom"` because the lock owns its own full-page layout
  *     (no app nav / header / sidebar) and the existing lock-redirect
  *     watcher in App.vue must short-circuit normal navigation. No lib
  *     primitive matches yet.
- *   - stats-block (widget) — local placeholder KPI tile. Overrides the
- *     library's `CnStatsBlockWidget` (which requires a `dataSource`
- *     block pointing at an OR schema) until doriath registers its own
- *     OR-backed schemas; until then the manifest passes static
- *     `count` / `title` / `variant` props directly.
- *   - doriath-recent-activity (widget) — sample activity stream
- *     placeholder for the dashboard. Replace with a real feed widget
- *     once the underlying schema lands.
- *   - doriath-quick-actions (widget) — sample quick-actions tile for
- *     the dashboard. Placeholder until real actions wire through.
  *
  * @type {Record<string, { kind: string, component: object, defaultSize?: object, minSize?: object, maxSize?: object, allowedSlots?: string[], propsSchema?: object }>}
  */
 
+import ApplicationRegisterDialog from './components/application/ApplicationRegisterDialog.vue'
+import PrivateKeyDownloadDialog from './components/application/PrivateKeyDownloadDialog.vue'
+import SecretRequestForm from './components/secretRequest/SecretRequestForm.vue'
+import SecretRequestList from './components/secretRequest/SecretRequestList.vue'
+import GroupShareForm from './components/share/GroupShareForm.vue'
+import ShareDialog from './components/share/ShareDialog.vue'
+import ShareList from './components/share/ShareList.vue'
+import FolderCreateDialog from './dialogs/FolderCreateDialog.vue'
+import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
+import SecretEditDialog from './dialogs/SecretEditDialog.vue'
+import SecretMoveDialog from './dialogs/SecretMoveDialog.vue'
+import SecretShareDialog from './dialogs/SecretShareDialog.vue'
+import ApplicationDetail from './views/ApplicationDetail.vue'
+import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
+import CertificateInventoryView from './views/CertificateInventoryView.vue'
+import EmergencyAccessView from './views/EmergencyAccessView.vue'
+import EphemeralSendAccess from './views/EphemeralSendAccess.vue'
+import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
+import HealthReportView from './views/HealthReportView.vue'
+import LinkShareAccess from './views/LinkShareAccess.vue'
 import LockScreen from './views/LockScreen.vue'
-import RecentActivityWidget from './widgets/RecentActivityWidget.vue'
-import QuickActionsWidget from './widgets/QuickActionsWidget.vue'
-import StatsBlockWidget from './widgets/StatsBlockWidget.vue'
+import PersonalActivityView from './views/PersonalActivityView.vue'
+import SecretDetail from './views/SecretDetail.vue'
+import SecretList from './views/SecretList.vue'
+import SecretRequestFill from './views/SecretRequestFill.vue'
 
 export default {
+	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
+	//     the list and the canvas are the shared `flows` / `flow-detail`
+	//     manifest page types. CnFlowSidebar has to mount in the NC app
+	//     sidebar for the canvas to keep full width. ---
+	FlowDetailSidebar: { kind: 'page', component: FlowDetailSidebar },
+
 	LockScreen: { kind: 'page', component: LockScreen },
-	'stats-block': {
-		kind: 'widget',
-		component: StatsBlockWidget,
-		defaultSize: { w: 3, h: 2 },
-		minSize: { w: 2, h: 2 },
-		maxSize: { w: 6, h: 4 },
-		allowedSlots: ['body'],
+	SecretList: { kind: 'page', component: SecretList },
+	SecretDetail: { kind: 'page', component: SecretDetail },
+	SecretRequestFill: { kind: 'page', component: SecretRequestFill },
+	LinkShareAccess: { kind: 'page', component: LinkShareAccess },
+	EphemeralSendAccess: { kind: 'page', component: EphemeralSendAccess },
+	ApplicationRegisterView: { kind: 'page', component: ApplicationRegisterView },
+	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
+	PersonalActivityView: { kind: 'page', component: PersonalActivityView },
+	HealthReportView: { kind: 'page', component: HealthReportView },
+	EmergencyAccessView: { kind: 'page', component: EmergencyAccessView },
+	CertificateInventoryView: { kind: 'page', component: CertificateInventoryView },
+	'secret-create': {
+		kind: 'modal',
+		component: SecretCreateDialog,
 		propsSchema: {},
 	},
-	'doriath-recent-activity': {
-		kind: 'widget',
-		component: RecentActivityWidget,
-		defaultSize: { w: 6, h: 4 },
-		minSize: { w: 4, h: 3 },
-		maxSize: { w: 12, h: 8 },
-		allowedSlots: ['body'],
+	'secret-edit': { kind: 'modal', component: SecretEditDialog, propsSchema: {} },
+	'folder-create': {
+		kind: 'modal',
+		component: FolderCreateDialog,
 		propsSchema: {},
 	},
-	'doriath-quick-actions': {
-		kind: 'widget',
-		component: QuickActionsWidget,
-		defaultSize: { w: 6, h: 4 },
-		minSize: { w: 3, h: 2 },
-		maxSize: { w: 12, h: 8 },
-		allowedSlots: ['body'],
+	'secret-move': { kind: 'modal', component: SecretMoveDialog, propsSchema: {} },
+	'secret-share': { kind: 'modal', component: SecretShareDialog, propsSchema: {} },
+	'application-register': {
+		kind: 'modal',
+		component: ApplicationRegisterDialog,
+		propsSchema: {},
+	},
+	'private-key-download': {
+		kind: 'modal',
+		component: PrivateKeyDownloadDialog,
+		propsSchema: {},
+	},
+	'share-dialog': { kind: 'modal', component: ShareDialog, propsSchema: {} },
+	'share-list': { kind: 'form-field', component: ShareList, propsSchema: {} },
+	'group-share-form': {
+		kind: 'modal',
+		component: GroupShareForm,
+		propsSchema: {},
+	},
+	'secret-request-form': {
+		kind: 'modal',
+		component: SecretRequestForm,
+		propsSchema: {},
+	},
+	'secret-request-list': {
+		kind: 'form-field',
+		component: SecretRequestList,
 		propsSchema: {},
 	},
 }

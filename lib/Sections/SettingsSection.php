@@ -1,12 +1,18 @@
 <?php
 
 /**
- * Doriath Settings Section
+ * Keepiq Settings Section
  *
- * Defines the Doriath section in the Nextcloud admin settings.
+ * AppHost stub floor: Nextcloud instantiates the admin-settings section by the
+ * class name in info.xml `<settings><admin-section>`, so it must physically
+ * exist in the Keepiq namespace. All behaviour lives in the engine-owned
+ * {@see \OCA\OpenRegister\AppHost\Settings\GenericSettingsSection}, which
+ * Bootstrap::register() binds to this class via a factory closure (section id
+ * `keepiq`, name `Keepiq`, icon `app-dark.svg`, priority 75 — unchanged from
+ * the bespoke section). This subclass carries no logic.
  *
  * @category Sections
- * @package  OCA\Doriath\Sections
+ * @package  OCA\Keepiq\Sections
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,68 +25,14 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Sections;
+namespace OCA\Keepiq\Sections;
 
-use OCP\IL10N;
-use OCP\IURLGenerator;
-use OCP\Settings\IIconSection;
+use OCA\OpenRegister\AppHost\Settings\GenericSettingsSection;
 
 /**
- * Defines the Doriath section in the Nextcloud admin settings.
+ * Keepiq admin-settings section — engine-backed stub (AppHost, ADR-040).
+ *
+ * @psalm-suppress UnusedClass
  */
-class SettingsSection implements IIconSection
-{
-    /**
-     * Constructor for SettingsSection.
-     *
-     * @param IL10N         $l            The localization service
-     * @param IURLGenerator $urlGenerator The URL generator service
-     *
-     * @return void
-     */
-    public function __construct(
-        private IL10N $l,
-        private IURLGenerator $urlGenerator,
-    ) {
-    }//end __construct()
-
-    /**
-     * Get the section identifier.
-     *
-     * @return string
-     */
-    public function getID(): string
-    {
-        return 'doriath';
-    }//end getID()
-
-    /**
-     * Get the display name of this section.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->l->t('Doriath');
-    }//end getName()
-
-    /**
-     * Get the priority for ordering this section.
-     *
-     * @return int
-     */
-    public function getPriority(): int
-    {
-        return 75;
-    }//end getPriority()
-
-    /**
-     * Get the icon path for this section.
-     *
-     * @return string
-     */
-    public function getIcon(): string
-    {
-        return $this->urlGenerator->imagePath(appName: 'doriath', file: 'app-dark.svg');
-    }//end getIcon()
+class SettingsSection extends GenericSettingsSection {
 }//end class

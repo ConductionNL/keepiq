@@ -9,7 +9,7 @@
 
 ## Purpose
 
-The Doriath admin settings page provides configuration and monitoring for vault administrators. It covers master password policy enforcement, Certificate Authority health and management, and application approval queue access. The admin settings use `CnSettingsSection` and `CnVersionInfoCard` from `@conduction/nextcloud-vue`.
+The Keepiq admin settings page provides configuration and monitoring for vault administrators. It covers master password policy enforcement, Certificate Authority health and management, and application approval queue access. The admin settings use `CnSettingsSection` and `CnVersionInfoCard` from `@conduction/nextcloud-vue`.
 
 ## Data Model
 
@@ -32,9 +32,9 @@ See [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for entity definitions.
 The admin settings page MUST start with a `CnVersionInfoCard` showing the app name, version, and update status.
 
 #### Scenario: Admin opens settings
-- GIVEN the admin navigates to Doriath settings
+- GIVEN the admin navigates to Keepiq settings
 - WHEN the page loads
-- THEN the first section MUST be a `CnVersionInfoCard` with app name "Doriath" and current version
+- THEN the first section MUST be a `CnVersionInfoCard` with app name "Keepiq" and current version
 
 ### Requirement: Master Password Policy [MVP]
 The admin MUST be able to configure the minimum master password strength requirements.
@@ -136,5 +136,5 @@ The admin settings MUST provide access to the application approval queue.
 ## Notes
 
 - Admin settings are registered via `OCP\Settings\ISettings` and `OCP\AppFramework\Http\TemplateResponse`.
-- The admin settings page is accessible at `/settings/admin/doriath`.
+- The admin settings page is accessible at `/settings/admin/keepiq`.
 - Related specs: encryption-suites (CA management), application-mgmt (approval queue)
