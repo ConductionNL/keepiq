@@ -16,7 +16,7 @@
  * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import axios from '@nextcloud/axios'
 import { useExportStore } from '../../src/store/modules/export.js'
@@ -47,6 +47,14 @@ describe('useExportStore', () => {
 		global.URL.revokeObjectURL = () => {}
 		lsSpy = vi.spyOn(Storage.prototype, 'setItem')
 		ssSpy = lsSpy // setItem is shared across localStorage/sessionStorage prototypes
+	})
+
+	// These spies are installed on SHARED prototypes (HTMLAnchorElement,
+	// Storage), so without a restore each `beforeEach` stacks another wrapper
+	// on the same method and calls accumulate across tests. That is what made
+	// `expect(clickSpy).not.toHaveBeenCalled()` see two clicks it never made.
+	afterEach(() => {
+		vi.restoreAllMocks()
 	})
 
 	it('calls the export-event endpoint before offering the backup download', async () => {

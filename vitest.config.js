@@ -86,32 +86,49 @@ module.exports = {
 		// scored as a test failure.
 		testTimeout: 20000,
 		hookTimeout: 20000,
-		// Default to node so the existing pure-crypto specs keep running fast.
-		environment: 'node',
-		environmentMatchGlobs: [
-			['tests/bootstrap/**', 'jsdom'],
-			['tests/components/**', 'jsdom'],
-			['tests/views/**', 'jsdom'],
-			['tests/dialogs/**', 'jsdom'],
-			['tests/modals/**', 'jsdom'],
-			['tests/store/**', 'jsdom'],
-			['tests/extension/**', 'jsdom'],
+		// vitest 4 removed `environmentMatchGlobs`, which is how this app used to
+		// give its DOM specs jsdom while the crypto specs stayed on node. Without a
+		// replacement every DOM spec dies with `ReferenceError: window is not
+		// defined`, so the split is expressed as two projects instead.
+		//
+		// `extends: true` means each project inherits everything configured at
+		// this level (timeouts, setupFiles, stubs, inlined deps). Only the name,
+		// the environment and the files differ, which is the whole of the old
+		// `environmentMatchGlobs` intent.
+		projects: [
+			{
+				extends: true,
+				test: {
+					name: 'node',
+					environment: 'node',
+					// Crypto round-trips use WebCrypto from `globalThis.crypto`
+					// (Node >= 20); jsdom would only slow them down. The router
+					// guards are pure logic and belong here for the same reason.
+					include: [
+						'tests/vitest/**/*.spec.{js,ts}',
+						'tests/router/**/*.spec.{js,ts}',
+					],
+				},
+			},
+			{
+				extends: true,
+				test: {
+					name: 'jsdom',
+					environment: 'jsdom',
+					// Everything that mounts an SFC or touches the document.
+					include: [
+						'tests/bootstrap/**/*.spec.{js,ts}',
+						'tests/components/**/*.spec.{js,ts}',
+						'tests/views/**/*.spec.{js,ts}',
+						'tests/dialogs/**/*.spec.{js,ts}',
+						'tests/modals/**/*.spec.{js,ts}',
+						'tests/store/**/*.spec.{js,ts}',
+						'tests/extension/**/*.spec.{js,ts}',
+					],
+				},
+			},
 		],
 		globals: false,
-		include: [
-			'tests/vitest/**/*.spec.{js,ts}',
-			// Pure-logic router guards — no DOM, so they stay on the
-			// default `node` env alongside the crypto specs.
-			'tests/router/**/*.spec.{js,ts}',
-			// Bootstrap helpers that touch the document before mount.
-			'tests/bootstrap/**/*.spec.{js,ts}',
-			'tests/components/**/*.spec.{js,ts}',
-			'tests/views/**/*.spec.{js,ts}',
-			'tests/dialogs/**/*.spec.{js,ts}',
-			'tests/modals/**/*.spec.{js,ts}',
-			'tests/store/**/*.spec.{js,ts}',
-			'tests/extension/**/*.spec.{js,ts}',
-		],
 		exclude: [
 			'tests/e2e/**',
 			'tests/integration/**',
