@@ -45,6 +45,7 @@ import BulkRunPanel from '../components/BulkRunPanel.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
+import { folderPathLabel } from '../utils/vaultList.js'
 
 export default {
 	name: 'BulkMoveDialog',
@@ -76,15 +77,21 @@ export default {
 
 		/**
 		 * The move-target picker options: the vault root plus every folder
-		 * the user owns.
+		 * the user owns, at ANY depth. Labelled with the full "A / B / C"
+		 * path so a nested folder is distinguishable from a same-named one
+		 * elsewhere (restyle Stage 6).
 		 *
 		 * @return {Array<{id: string|null, label: string}>}
 		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 		 */
 		folderOptions() {
+			const folders = useFolderStore().folders
 			const options = [{ id: null, label: this.t('keepiq', 'Vault root') }]
-			for (const folder of useFolderStore().folders) {
-				options.push({ id: folder.id, label: folder.name })
+			for (const folder of folders) {
+				options.push({
+					id: folder.id,
+					label: folderPathLabel(folders, folder.id) || folder.name,
+				})
 			}
 			return options
 		},

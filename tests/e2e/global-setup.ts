@@ -129,6 +129,39 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 		)
 	}
 
+	/*
+	 * Suppress the product walkthrough (ADR-043) for automated runs, the way
+	 * dossiq's global-setup already does. The tour's "seen" state is per USER,
+	 * not per test, so whichever spec runs first wears the tour and the rest
+	 * inherit a dismissed one — an order-dependent suite. `audit-trail.spec.ts`
+	 * started needing a retry the moment the walkthrough landed (#484), having
+	 * never retried in the three preceding runs on development.
+	 *
+	 * This is NOT covered by #486: that withholds the tour while the vault is
+	 * LOCKED, which is a different concern. Every spec here unlocks, and the
+	 * tour is offered on the first unlocked visit by design.
+	 *
+	 * The sentinel is deliberately higher than any real app version, so every
+	 * step's `sinceVersion` sorts below it and the tour composes to an empty
+	 * step set rather than merely starting dismissed. localStorage is the right
+	 * lever despite keepiq declaring a `completionConfigKey`:
+	 * loadWalkthroughSeenVersion() reads a `{ value: null }` server answer —
+	 * what a fresh user gets — as "never seen" and returns the local mirror, so
+	 * the seeded value wins. The page is already on the instance origin after
+	 * login, which is the origin storageState persists.
+	 */
+	try {
+		await page.evaluate(() => {
+			try {
+				window.localStorage.setItem('cn-walkthrough-seen:keepiq', '999.0.0')
+			} catch (e) {
+				// localStorage unavailable — specs fall back to dismissing by hand.
+			}
+		})
+	} catch {
+		// Never fail setup over an optional convenience.
+	}
+
 	await context.storageState({ path: STORAGE_STATE })
 	await browser.close()
 }

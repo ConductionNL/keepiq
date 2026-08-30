@@ -92,9 +92,13 @@
 <script>
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import CardAccountDetailsOutline from 'vue-material-design-icons/CardAccountDetailsOutline.vue'
+import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
 import CodeTags from 'vue-material-design-icons/CodeTags.vue'
 import Console from 'vue-material-design-icons/Console.vue'
+import CreditCardOutline from 'vue-material-design-icons/CreditCardOutline.vue'
 import Database from 'vue-material-design-icons/Database.vue'
+import Fingerprint from 'vue-material-design-icons/Fingerprint.vue'
 import Key from 'vue-material-design-icons/Key.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
 import NoteText from 'vue-material-design-icons/NoteText.vue'
@@ -117,8 +121,12 @@ export default {
 		Lock,
 		AlertOutline,
 		Key,
+		CardAccountDetailsOutline,
+		ClockOutline,
 		CodeTags,
 		Console,
+		CreditCardOutline,
+		Fingerprint,
 		ShieldCheck,
 		NoteText,
 		Database,

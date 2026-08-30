@@ -1,122 +1,10 @@
 <template>
 	<div class="secret-list-view">
-		<!-- Folder sidebar — the shared CnFolderSidebar (custom source), fed by
-		     the per-user folder store. -->
-		<div class="secret-list-view__sidebar">
-			<CnFolderSidebar
-				:folders="folders"
-				:selectedId="selectedFolderId"
-				:allLabel="t('keepiq', 'All secrets')"
-				allowCreate
-				:createLabel="t('keepiq', 'New folder')"
-				@select="selectFolder"
-				@create="openCreateFolder" />
-		</div>
-
-		<!-- Main: the shared CnIndexPage in list mode, plus the secondary
-		     actions (new folder / import / export / GDPR / account deletion)
-		     that live alongside it. -->
+		<!-- Single pane (restyle Stage 7): folder navigation lives in the app
+		     nav's folder tree (KeepiqAppNav/NavFolderTree) and in the list's
+		     own subfolder rows + breadcrumbs (Stage 6); the in-page folder
+		     sidebar is gone. -->
 		<div class="secret-list-view__main">
-			<!-- Secondary actions: new folder / import / export / GDPR / account
-			     deletion (secret-export-gdpr §6.5, secret-import). "New secret"
-			     itself is CnIndexPage's own add button below. -->
-			<div class="secret-list-view__actions">
-				<NcButton
-					variant="secondary"
-					:disabled="offlineReadOnly"
-					@click="openCreateFolder">
-					<template #icon>
-						<FolderPlus :size="20" />
-					</template>
-					{{ t('keepiq', 'New folder') }}
-				</NcButton>
-				<!-- Ask someone for a credential (request-first-secret-requests):
-				     reachable with an EMPTY vault, because a requester has nothing
-				     to point at yet. The Secret is created by the request itself, so
-				     this is not "make a secret then request into it". -->
-				<NcButton
-					variant="secondary"
-					:disabled="vaultLocked || offlineReadOnly"
-					data-testid="open-credential-request"
-					@click="credentialRequestOpen = true">
-					<template #icon>
-						<AccountQuestion :size="20" />
-					</template>
-					{{ t('keepiq', 'Ask for a credential') }}
-				</NcButton>
-				<NcButton
-					variant="secondary"
-					:disabled="vaultLocked || offlineReadOnly"
-					data-testid="import-secrets"
-					@click="openImport">
-					<template #icon>
-						<Import :size="20" />
-					</template>
-					{{ t('keepiq', 'Import') }}
-				</NcButton>
-
-				<!-- Team folder sharing (team-folder-sharing §5.1): only for a
-				     concrete selected folder; the dialog owns membership + fan-out. -->
-				<NcButton
-					v-if="selectedFolderId"
-					variant="secondary"
-					:disabled="vaultLocked"
-					data-testid="team-folder-open"
-					@click="teamFolderOpen = true">
-					<template #icon>
-						<AccountGroup :size="20" />
-					</template>
-					{{ t('keepiq', 'Team sharing') }}
-				</NcButton>
-
-				<!-- Secret-type filter (passkey-item-type §3.3): show only one
-				     type, e.g. passkeys. Server-side via the typeId param. -->
-				<!-- v9 NcSelect models through `modelValue` and emits ONLY
-				     `update:modelValue`. The Vue-2 pair (`:value` + `@input`)
-				     is dead on BOTH sides: the filter never showed a selection
-				     and selecting a type never filtered. -->
-				<NcSelect
-					class="secret-list-view__type-filter"
-					:modelValue="typeFilterOption"
-					:options="typeFilterOptions"
-					:inputLabel="t('keepiq', 'Type')"
-					:clearable="true"
-					:placeholder="t('keepiq', 'All types')"
-					data-testid="secret-type-filter"
-					@update:modelValue="
-						onTypeFilter($event ? $event.value : null)
-					" />
-
-				<!-- Data export / GDPR / deletion entry points (secret-export-gdpr §6.5). -->
-				<NcActions :menuName="t('keepiq', 'My data')">
-					<NcActionButton
-						data-testid="open-new-send"
-						@click="newSendOpen = true">
-						{{ t('keepiq', 'New ephemeral send') }}
-					</NcActionButton>
-					<NcActionButton
-						data-testid="open-my-sends"
-						@click="mySendsOpen = true">
-						{{ t('keepiq', 'My ephemeral sends') }}
-					</NcActionButton>
-					<NcActionButton @click="openExport">
-						{{ t('keepiq', 'Export data') }}
-					</NcActionButton>
-					<NcActionButton
-						:disabled="vaultLocked"
-						data-testid="cxp-transfer"
-						@click="openCxp">
-						{{ t('keepiq', 'Encrypted transfer (CXP)') }}
-					</NcActionButton>
-					<NcActionButton @click="openGdpr">
-						{{ t('keepiq', 'GDPR export') }}
-					</NcActionButton>
-					<NcActionButton @click="deletionOpen = true">
-						{{ t('keepiq', 'Delete my Keepiq data') }}
-					</NcActionButton>
-				</NcActions>
-			</div>
-
 			<ExportDialog
 				:open="exportOpen"
 				:secrets="decryptedSecrets"
@@ -229,10 +117,12 @@
 				:availableViewModes="['list', 'cards', 'table']"
 				listLabel="List"
 				:selectable="false"
-				:objects="secrets"
+				:objects="listObjects"
 				:schema="listSchema"
 				:loading="loading"
 				:pagination="pagination"
+				showTitle
+				:title="pageTitle"
 				:addLabel="offlineReadOnly ? '' : t('keepiq', 'New secret')"
 				addIcon="Plus"
 				inlineSearch
@@ -242,13 +132,163 @@
 				:sortSelectOptions="sortOptions"
 				:sortSelectValue="sortField"
 				rowKey="id"
-				:emptyText="t('keepiq', 'No secrets yet')"
+				:emptyText="t('keepiq', 'No secrets found')"
+				:refreshing="loading"
+				@refresh="reload"
 				@add="openCreateSecret"
 				@search="onSearch"
 				@sortChange="onSort"
 				@pageChanged="goToPage">
+				<!-- Title row (restyle Stage 8): the page title and the
+				     toolbar share ONE row, aligned with the page content.
+				     The toolbar is the Stage-5 declarative toolbarItems()
+				     list — per-item `placement` decides between a visible
+				     button and the single "More actions" overflow, which
+				     carries the secondary actions, the "My data" entries
+				     (secret-export-gdpr §6.5) and the secret-type filter
+				     (passkey-item-type §3.3). data-testids and disabled
+				     conditions are unchanged. -->
+				<template #header="{ title }">
+					<div class="secret-list-view__header">
+						<CnPageHeader :title="title" />
+						<div class="secret-list-view__actions">
+							<NcButton
+								v-for="item in visibleToolbarItems"
+								:key="item.id"
+								variant="secondary"
+								:disabled="item.disabled"
+								:data-testid="item.testid"
+								@click="item.run()">
+								<template #icon>
+									<component :is="item.icon" :size="20" />
+								</template>
+								{{ item.label }}
+							</NcButton>
+							<NcActions
+								:menuName="t('keepiq', 'More actions')"
+								:forceMenu="true"
+								:forceName="true"
+								data-testid="more-actions">
+								<NcActionButton
+									v-for="item in overflowToolbarItems"
+									:key="item.id"
+									:disabled="item.disabled"
+									:data-testid="item.testid"
+									:closeAfterClick="true"
+									@click="item.run()">
+									<template #icon>
+										<component :is="item.icon" :size="20" />
+									</template>
+									{{ item.label }}
+								</NcActionButton>
+
+								<!-- Data export / GDPR / deletion entry points
+								     (secret-export-gdpr §6.5). -->
+								<NcActionSeparator />
+								<NcActionButton
+									data-testid="open-new-send"
+									:closeAfterClick="true"
+									@click="newSendOpen = true">
+									{{ t('keepiq', 'New ephemeral send') }}
+								</NcActionButton>
+								<NcActionButton
+									data-testid="open-my-sends"
+									:closeAfterClick="true"
+									@click="mySendsOpen = true">
+									{{ t('keepiq', 'My ephemeral sends') }}
+								</NcActionButton>
+								<NcActionButton
+									:closeAfterClick="true"
+									@click="openExport">
+									{{ t('keepiq', 'Export data') }}
+								</NcActionButton>
+								<NcActionButton
+									:disabled="vaultLocked"
+									data-testid="cxp-transfer"
+									:closeAfterClick="true"
+									@click="openCxp">
+									{{ t('keepiq', 'Encrypted transfer (CXP)') }}
+								</NcActionButton>
+								<NcActionButton
+									:closeAfterClick="true"
+									@click="openGdpr">
+									{{ t('keepiq', 'GDPR export') }}
+								</NcActionButton>
+								<NcActionButton
+									:closeAfterClick="true"
+									@click="deletionOpen = true">
+									{{ t('keepiq', 'Delete my Keepiq data') }}
+								</NcActionButton>
+
+								<!-- Secret-type filter (passkey-item-type §3.3):
+								     show only one type, e.g. passkeys.
+								     Server-side via the typeId param. -->
+								<NcActionSeparator />
+								<NcActionCaption
+									:name="t('keepiq', 'Filter by type')" />
+								<NcActionRadio
+									name="secret-type-filter"
+									value=""
+									:modelValue="typeFilter ?? ''"
+									data-testid="secret-type-filter"
+									@update:modelValue="onTypeFilter(null)">
+									{{ t('keepiq', 'All types') }}
+								</NcActionRadio>
+								<NcActionRadio
+									v-for="option in typeFilterOptions"
+									:key="option.value"
+									name="secret-type-filter"
+									:value="option.value"
+									:modelValue="typeFilter ?? ''"
+									data-testid="secret-type-filter"
+									@update:modelValue="onTypeFilter(option.value)">
+									{{ option.label }}
+								</NcActionRadio>
+							</NcActions>
+						</div>
+					</div>
+				</template>
+				<!-- Folder trail (restyle Stage 5): home crumb + parent walk to
+				     the current folder (unlinked). Empty at the vault root, so
+				     CnBreadcrumbs renders no landmark there. -->
+				<template #below-header>
+					<CnBreadcrumbs :crumbs="breadcrumbs" />
+				</template>
+				<!-- Rich empty state (restyle Stage 5). -->
+				<template #empty>
+					<NcEmptyContent
+						:name="t('keepiq', 'No secrets found')"
+						:description="
+							t(
+								'keepiq',
+								'Add your first secret using the button above',
+							)
+						">
+						<template #icon>
+							<KeyVariant :size="64" />
+						</template>
+					</NcEmptyContent>
+				</template>
 				<template #list-item="{ object }">
-					<div class="secret-list-view__row">
+					<!-- Subfolder row (restyle Stage 6): the current folder's
+					     direct subfolders list ABOVE the secrets, file-manager
+					     style; clicking one navigates into it. No bulk
+					     checkbox — folders are not bulk-operable. -->
+					<button
+						v-if="object.isFolder"
+						type="button"
+						class="secret-list-view__folder-row"
+						:data-testid="`folder-row-${object.folderId}`"
+						@click="openFolder(object.folderId)">
+						<!-- Root rows ARE the vaults → safe glyph; inside a
+						     vault the rows are plain folders. -->
+						<Safe v-if="!selectedFolderId" :size="20" />
+						<FolderOutline v-else :size="20" />
+						<span class="secret-list-view__folder-name">
+							{{ object.name }}
+						</span>
+					</button>
+					<div v-else class="secret-list-view__row">
 						<!-- Per-row selection (bulk-actions §1.1): click
 						     toggles, shift-click selects the range from the
 						     last-clicked row in the current view. -->
@@ -293,12 +333,25 @@
 </template>
 
 <script>
-import { CnFolderSidebar, CnIndexPage } from '@conduction/nextcloud-vue'
-import { NcActionButton, NcActions, NcButton, NcSelect } from '@nextcloud/vue'
+import { CnBreadcrumbs, CnIndexPage, CnPageHeader } from '@conduction/nextcloud-vue'
+import {
+	NcActionButton,
+	NcActionCaption,
+	NcActionRadio,
+	NcActions,
+	NcActionSeparator,
+	NcButton,
+	NcEmptyContent,
+} from '@nextcloud/vue'
+import { markRaw } from 'vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Import from 'vue-material-design-icons/Import.vue'
+import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
+import Safe from 'vue-material-design-icons/Safe.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
@@ -321,13 +374,32 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { subfolderRows } from '../utils/vaultList.js'
 
 const PAGE_SIZE = 50
+
+// Toolbar icon components, marked raw once so the declarative toolbarItems()
+// entries never wrap component options in a reactive proxy.
+const TOOLBAR_ICONS = {
+	refresh: markRaw(Refresh),
+	folderPlus: markRaw(FolderPlus),
+	safe: markRaw(Safe),
+	accountQuestion: markRaw(AccountQuestion),
+	import: markRaw(Import),
+	accountGroup: markRaw(AccountGroup),
+}
+
+/**
+ * Hard ceiling on the breadcrumb parent walk. A well-formed tree never gets
+ * near it; it exists so a corrupt parentId cycle that survives the seen-set
+ * (e.g. duplicated ids) still terminates.
+ */
+const MAX_TRAIL_DEPTH = 32
 
 /**
  * The main vault view: a folder sidebar plus a searchable, sortable,
  * paginated secret list, built on the shared CnIndexPage list view and
- * CnFolderSidebar. Names and urls are plaintext; encrypted fields are
+ * the app nav's folder tree. Names and urls are plaintext; encrypted fields are
  * decrypted only on demand (copy / detail) inside SecretListItem.
  */
 export default {
@@ -335,16 +407,19 @@ export default {
 
 	components: {
 		SecretRequestCreateDialog,
-		AccountQuestion,
+		CnBreadcrumbs,
 		CnIndexPage,
-		CnFolderSidebar,
+		CnPageHeader,
 		NcActionButton,
+		NcActionCaption,
+		NcActionRadio,
+		NcActionSeparator,
 		NcActions,
 		NcButton,
-		NcSelect,
-		FolderPlus,
-		Import,
-		AccountGroup,
+		NcEmptyContent,
+		FolderOutline,
+		KeyVariant,
+		Safe,
 		SecretListItem,
 		ExportDialog,
 		CxpTransferDialog,
@@ -526,12 +601,217 @@ export default {
 			}))
 		},
 
-		/** The currently selected type-filter option object (or null). */
-		typeFilterOption() {
-			return (
-				this.typeFilterOptions.find((opt) => opt.value === this.typeFilter)
-				?? null
+		/**
+		 * The current folder's direct subfolders as list rows (restyle
+		 * Stage 6): root = the top-level vaults. Filtered by the inline
+		 * search term — everything visible in the list is searchable —
+		 * and name-sorted as one group.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		folderRows() {
+			return subfolderRows(
+				this.folders,
+				this.selectedFolderId,
+				this.searchTerm,
 			)
+		},
+
+		/**
+		 * What the list renders: subfolders first as a group, then the
+		 * secrets (restyle Stage 6, file-manager style). Folder rows show
+		 * only on the FIRST page — repeating them on every page of a long
+		 * secret list would read as duplicates. Pagination totals keep
+		 * counting secrets only.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		listObjects() {
+			if (this.secretStore.page > 1) {
+				return this.secrets
+			}
+			return [...this.folderRows, ...this.secrets]
+		},
+
+		/**
+		 * The page title: the selected folder's name, or "Secrets" at the
+		 * vault root (restyle Stage 5).
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		pageTitle() {
+			return this.selectedFolderName || t('keepiq', 'Secrets')
+		},
+
+		/**
+		 * Level-appropriate create label (restyle terminology): a TOP-LEVEL
+		 * folder is a Vault, a folder inside one is a folder.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
+		 */
+		newFolderLabel() {
+			return this.selectedFolderId
+				? t('keepiq', 'New folder')
+				: t('keepiq', 'New vault')
+		},
+
+		/**
+		 * The selected folder's ancestor chain, root first, current folder
+		 * last — walked through `parentId` (the field buildTree links on in
+		 * the folder store). Guarded against parentId cycles (seen-set) and
+		 * runaway depth.
+		 *
+		 * @return {Array<object>} Folder objects along the trail.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		folderTrail() {
+			if (!this.selectedFolderId) {
+				return []
+			}
+			const byId = new Map(this.folders.map((f) => [f.id, f]))
+			const trail = []
+			const seen = new Set()
+			let current = byId.get(this.selectedFolderId)
+			while (
+				current
+				&& !seen.has(current.id)
+				&& trail.length < MAX_TRAIL_DEPTH
+			) {
+				seen.add(current.id)
+				trail.unshift(current)
+				current = current.parentId ? byId.get(current.parentId) : null
+			}
+			return trail
+		},
+
+		/**
+		 * The breadcrumb trail (restyle Stage 5): a Home crumb back to the
+		 * vault root, the ancestor folders as links, the current folder
+		 * last (CnBreadcrumbs renders it unlinked with aria-current). Empty
+		 * at the root — no trail is rendered there.
+		 *
+		 * @return {Array<object>} CnBreadcrumbs `crumbs` entries.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		breadcrumbs() {
+			const trail = this.folderTrail
+			if (trail.length === 0) {
+				return []
+			}
+			return [
+				{ icon: 'Home', to: { name: 'SecretList' } },
+				...trail.map((folder, index) =>
+					index === trail.length - 1
+						? { label: folder.name }
+						: {
+								label: folder.name,
+								to: {
+									name: 'SecretListFolder',
+									params: { folderId: folder.id },
+								},
+							},
+				),
+			]
+		},
+
+		/**
+		 * The declarative toolbar (restyle Stage 5). Per-item `placement`
+		 * ('visible' | 'overflow') is the ONE knob that moves an action
+		 * between the visible row and the "More actions" overflow; ids,
+		 * testids and disabled conditions are stable. "New secret" is not
+		 * listed — it stays CnIndexPage's own add button.
+		 *
+		 * @return {Array<{id: string, label: string, icon: object, placement: string, disabled: boolean, testid: (string|undefined), run: Function}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		toolbarItems() {
+			const items = [
+				{
+					id: 'refresh',
+					label: t('keepiq', 'Refresh'),
+					icon: TOOLBAR_ICONS.refresh,
+					placement: 'visible',
+					disabled: this.loading,
+					testid: 'vault-refresh',
+					run: () => this.reload(),
+				},
+				{
+					id: 'new-folder',
+					label: this.newFolderLabel,
+					// A top-level create makes a VAULT, so the entry carries
+					// the safe glyph there (restyle terminology).
+					icon: this.selectedFolderId
+						? TOOLBAR_ICONS.folderPlus
+						: TOOLBAR_ICONS.safe,
+
+					placement: 'overflow',
+					disabled: this.offlineReadOnly,
+					testid: 'open-create-folder',
+					run: () => this.openCreateFolder(),
+				},
+				// Ask someone for a credential (request-first-secret-requests):
+				// reachable with an EMPTY vault, because a requester has nothing
+				// to point at yet. The Secret is created by the request itself,
+				// so this is not "make a secret then request into it".
+				{
+					id: 'credential-request',
+					label: t('keepiq', 'Ask for a credential'),
+					icon: TOOLBAR_ICONS.accountQuestion,
+					placement: 'overflow',
+					disabled: this.vaultLocked || this.offlineReadOnly,
+					testid: 'open-credential-request',
+					run: () => {
+						this.credentialRequestOpen = true
+					},
+				},
+				{
+					id: 'import',
+					label: t('keepiq', 'Import'),
+					icon: TOOLBAR_ICONS.import,
+					placement: 'overflow',
+					disabled: this.vaultLocked || this.offlineReadOnly,
+					testid: 'import-secrets',
+					run: () => this.openImport(),
+				},
+			]
+			// Team folder sharing (team-folder-sharing §5.1): only for a
+			// concrete selected folder; the dialog owns membership + fan-out.
+			if (this.selectedFolderId) {
+				items.push({
+					id: 'team-sharing',
+					label: t('keepiq', 'Team sharing'),
+					icon: TOOLBAR_ICONS.accountGroup,
+					placement: 'overflow',
+					disabled: this.vaultLocked,
+					testid: 'team-folder-open',
+					run: () => {
+						this.teamFolderOpen = true
+					},
+				})
+			}
+			return items
+		},
+
+		/**
+		 * Toolbar items rendered as visible buttons.
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		visibleToolbarItems() {
+			return this.toolbarItems.filter((item) => item.placement === 'visible')
+		},
+
+		/**
+		 * Toolbar items rendered inside the "More actions" overflow.
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		overflowToolbarItems() {
+			return this.toolbarItems.filter((item) => item.placement === 'overflow')
 		},
 
 		/** Bulk selection store (bulk-actions §1). */
@@ -889,22 +1169,6 @@ export default {
 		},
 
 		/**
-		 * Navigate to a folder filter (null = all secrets).
-		 *
-		 * @param {string|null} folderId The folder ID.
-		 * @return {void}
-		 */
-		selectFolder(folderId) {
-			if (folderId) {
-				this.$router.push(`/folders/${folderId}`)
-			} else if (this.$route.path !== '/secrets') {
-				this.$router.push('/secrets')
-			} else {
-				this.reload()
-			}
-		},
-
-		/**
 		 * Open a secret's detail view.
 		 *
 		 * @param {string} id The secret ID.
@@ -912,6 +1176,17 @@ export default {
 		 */
 		openSecret(id) {
 			this.$router.push(`/secrets/${id}`)
+		},
+
+		/**
+		 * Navigate into a subfolder row (restyle Stage 6).
+		 *
+		 * @param {string} folderId The clicked folder's id.
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		openFolder(folderId) {
+			this.$router.push(`/folders/${folderId}`)
 		},
 
 		/**
@@ -953,20 +1228,28 @@ export default {
 
 <style scoped>
 .secret-list-view {
-	display: flex;
-	gap: 16px;
 	height: 100%;
 	padding: 16px;
 }
 
-.secret-list-view__sidebar {
-	width: 240px;
-	flex: 0 0 auto;
+.secret-list-view__main {
+	min-width: 0;
 }
 
-.secret-list-view__main {
-	flex: 1 1 auto;
-	min-width: 0;
+/* Title row (restyle Stage 8): page title left, toolbar right, one line. */
+.secret-list-view__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.secret-list-view__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
 }
 
 .secret-list-view__bulk-bar {
@@ -985,6 +1268,36 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+/* Subfolder rows (restyle Stage 6): full-width, file-manager style. */
+.secret-list-view__folder-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 10px 12px;
+	border: none;
+	border-radius: var(--border-radius-large, 12px);
+	background: transparent;
+	cursor: pointer;
+	text-align: start;
+	font: inherit;
+	color: inherit;
+}
+
+.secret-list-view__folder-row:hover,
+.secret-list-view__folder-row:focus-visible {
+	background-color: var(--color-background-hover, #f5f5f5);
+}
+
+.secret-list-view__folder-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 600;
 }
 
 .secret-list-view__check {
