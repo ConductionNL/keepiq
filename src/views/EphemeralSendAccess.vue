@@ -226,7 +226,7 @@ export default {
 	border-radius: var(--border-radius-large, 12px);
 	background-color: var(--color-background-dark, #f5f5f5);
 	white-space: pre-wrap;
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .send-access__hint {
