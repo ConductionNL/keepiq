@@ -138,7 +138,7 @@ export default {
 	margin: 0;
 	font: inherit;
 	color: inherit;
-	text-align: left;
+	text-align: start;
 }
 
 .recent-secrets-widget__button:hover {
