@@ -1,0 +1,20 @@
+{
+  "id": "FEATURES",
+  "title": "Keepiq — Feature Analysis & Product Strategy",
+  "description": "Executive Summary",
+  "source": "@site/FEATURES.md",
+  "sourceDirName": ".",
+  "slug": "/FEATURES",
+  "permalink": "/docs/FEATURES",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/ConductionNL/keepiq/tree/development/docs/FEATURES.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Keepiq — Design References & Dashboard Wireframes",
+    "permalink": "/docs/DESIGN-REFERENCES"
+  }
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Keepiq</title>
+	<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+	<main id="app" class="keepiq-popup">
+		<!-- Pairing view -->
+		<section id="view-pair" hidden>
+			<h1>Connect to Keepiq</h1>
+			<label>Server URL<input id="pair-url" type="url" placeholder="https://cloud.example.org" autocomplete="off"></label>
+			<label>Nextcloud user<input id="pair-user" type="text" autocomplete="off"></label>
+			<label>App password<input id="pair-app-password" type="password" autocomplete="off"></label>
+			<p class="hint">Use a Nextcloud <strong>app password</strong> (Settings → Security), not your login password. Revoke it there to unpair.</p>
+			<button id="pair-submit" class="primary">Connect</button>
+			<p id="pair-error" class="error" role="alert" hidden></p>
+		</section>
+
+		<!-- Locked view -->
+		<section id="view-locked" hidden>
+			<h1>Unlock vault</h1>
+			<label>Master password<input id="unlock-master" type="password" autocomplete="off"></label>
+			<p class="hint">Your master password is used only in this extension to decrypt your vault. It never reaches the server.</p>
+			<button id="unlock-submit" class="primary">Unlock</button>
+			<button id="unlock-unpair" class="link">Disconnect</button>
+			<p id="unlock-error" class="error" role="alert" hidden></p>
+		</section>
+
+		<!-- Unlocked view -->
+		<section id="view-unlocked" hidden>
+			<header class="row">
+				<span id="active-host" class="host"></span>
+				<button id="lock-btn" class="link">Lock</button>
+			</header>
+			<ul id="candidates" class="candidates"></ul>
+			<p id="no-candidates" class="hint" hidden>No matching secrets for this site.</p>
+			<div id="totp-block" hidden>
+				<div class="totp"><span id="totp-code" class="totp-code"></span><span id="totp-count" class="totp-count"></span></div>
+			</div>
+			<div id="save-prompt" class="save-prompt" hidden>
+				<p id="save-text"></p>
+				<button id="save-yes" class="primary">Save</button>
+				<button id="save-no" class="link">Not now</button>
+			</div>
+		</section>
+	</main>
+	<script type="module" src="popup.js"></script>
+</body>
+</html>

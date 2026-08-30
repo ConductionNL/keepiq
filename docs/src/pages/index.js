@@ -1,14 +1,14 @@
 /**
- * Doriath landing page.
+ * Keepiq landing page.
  *
  * Composes the brand <DetailHero> + <WidgetShelf> from
  * @conduction/docusaurus-preset/components, mirroring the OpenRegister
  * landing page at openregister.conduction.nl (docs/src/pages/index.js).
  *
- * Doriath is in development — this page tells visitors what the app
+ * Keepiq is in development — this page tells visitors what the app
  * is going to be (self-hosted password and secrets vault, per-user,
  * per-team, audited) and previews the three surfaces the UI will
- * land with. No <AppMock> yet (no doriath variant in the preset);
+ * land with. No <AppMock> yet (no keepiq variant in the preset);
  * the widget panels are token-built sketches.
  *
  * Written as .js (not .mdx) because the docs site has the docs plugin
@@ -26,10 +26,10 @@ import {
   WidgetShelf,
 } from '@conduction/docusaurus-preset/components';
 
-/* Padlock glyph — the body of the doriath identity, lifted straight
+/* Padlock glyph — the body of the keepiq identity, lifted straight
    from the apps-catalog entry on conduction-website. Stroke-only so it
    inherits hero `iconColor` without any fill override. */
-const DORIATH_ICON = (
+const KEEPIQ_ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M8 10V7a4 4 0 0 1 8 0v3" />
     <rect x="4" y="10" width="16" height="11" rx="2" />
@@ -46,7 +46,7 @@ const TAGLINE = (
 );
 
 /* --- Token-built mock widget panels -----------------------------------
-   Sketches of the three surfaces Doriath will land with: a personal
+   Sketches of the three surfaces Keepiq will land with: a personal
    vault, items shared with a team, and a recent-activity feed. All
    token-only so they restyle automatically with the brand palette. */
 
@@ -226,7 +226,7 @@ const WIDGETS = [
 export default function Home() {
   return (
     <Layout
-      title="Doriath"
+      title="Keepiq"
       description="Self-hosted password and secrets vault for Nextcloud. Per-user, per-team, audited. In development."
     >
       <main className="marketing-page">
@@ -235,22 +235,22 @@ export default function Home() {
           status={{ label: 'In development', color: 'var(--c-orange-knvb)' }}
           version="pre-release"
           locales="NL · EN"
-          title="Doriath"
+          title="Keepiq"
           tagline={TAGLINE}
           primaryCta={{
             label: 'View on GitHub',
-            href: 'https://github.com/ConductionNL/doriath',
+            href: 'https://github.com/ConductionNL/keepiq',
             tone: 'orange',
           }}
           secondaryCta={{ label: 'Read the docs', href: '/docs/intro' }}
           iconColor="var(--c-orange-knvb)"
-          icon={DORIATH_ICON}
+          icon={KEEPIQ_ICON}
         />
 
         <WidgetShelf
-          eyebrow="What Doriath will land with"
+          eyebrow="What Keepiq will land with"
           title="Eén plek voor wachtwoorden en secrets — op je eigen Nextcloud."
-          lede="Een password manager mag niet wéér een extra leverancier zijn. Doriath leeft binnen je bestaande Nextcloud: dezelfde users, dezelfde groepen, dezelfde audit log. Per-user vaults, gedeelde team-secrets, en een activity feed die zegt wie wat heeft gedaan."
+          lede="Een password manager mag niet wéér een extra leverancier zijn. Keepiq leeft binnen je bestaande Nextcloud: dezelfde users, dezelfde groepen, dezelfde audit log. Per-user vaults, gedeelde team-secrets, en een activity feed die zegt wie wat heeft gedaan."
           widgets={WIDGETS}
         />
       </main>

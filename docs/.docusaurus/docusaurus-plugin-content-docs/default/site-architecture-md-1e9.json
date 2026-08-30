@@ -1,0 +1,24 @@
+{
+  "id": "ARCHITECTURE",
+  "title": "Keepiq — Architecture & Data Model",
+  "description": "1. Overview",
+  "source": "@site/ARCHITECTURE.md",
+  "sourceDirName": ".",
+  "slug": "/ARCHITECTURE",
+  "permalink": "/docs/ARCHITECTURE",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/ConductionNL/keepiq/tree/development/docs/ARCHITECTURE.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Manage Keepiq settings",
+    "permalink": "/docs/tutorials/admin/admin-settings"
+  },
+  "next": {
+    "title": "Keepiq — Design References & Dashboard Wireframes",
+    "permalink": "/docs/DESIGN-REFERENCES"
+  }
+}

@@ -1,0 +1,74 @@
+name: CLI Release
+
+# Builds the keepiq-cli single static binary for every supported platform.
+# On a tag push it also uploads the artifacts to the GitHub release. The CLI is
+# stdlib-only Go, so the matrix is a plain cross-compile — no PHP/Node needed.
+
+on:
+  push:
+    branches: [main, development]
+    paths: ["cli/**"]
+    tags: ["cli-v*"]
+  pull_request:
+    branches: [main, development, beta]
+    paths: ["cli/**"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # No observed runs yet; a Go vet+test of a stdlib-only CLI is minutes at most.
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - run: go vet ./...
+      - run: go test ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    # No observed runs yet; a stdlib-only Go cross-compile is minutes at most.
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: cli
+    strategy:
+      matrix:
+        target:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: windows, goarch: arm64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Build static binary
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          ext=""
+          [ "$GOOS" = "windows" ] && ext=".exe"
+          out="keepiq-${GOOS}-${GOARCH}${ext}"
+          go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o "$out" .
+          echo "ARTIFACT=cli/$out" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keepiq-${{ matrix.target.goos }}-${{ matrix.target.goarch }}
+          path: ${{ env.ARTIFACT }}
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/cli-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ARTIFACT }}

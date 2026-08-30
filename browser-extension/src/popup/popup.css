@@ -1,0 +1,155 @@
+:root {
+	--cobalt: #21468b;
+	--fg: #1a1a1a;
+	--muted: #6b7280;
+	--border: #d1d5db;
+	--error: #b00020;
+	--bg: #ffffff;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		sans-serif;
+	color: var(--fg);
+	background: var(--bg);
+	width: 340px;
+}
+
+.keepiq-popup {
+	padding: 16px;
+}
+
+h1 {
+	font-size: 16px;
+	margin: 0 0 12px;
+	color: var(--cobalt);
+}
+
+label {
+	display: block;
+	font-size: 13px;
+	margin-bottom: 10px;
+}
+
+input {
+	display: block;
+	width: 100%;
+	margin-top: 4px;
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 14px;
+}
+
+button.primary {
+	width: 100%;
+	padding: 9px;
+	margin-top: 8px;
+	background: var(--cobalt);
+	color: #fff;
+	border: 0;
+	border-radius: 6px;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+button.link {
+	background: none;
+	border: 0;
+	color: var(--cobalt);
+	cursor: pointer;
+	font-size: 13px;
+	padding: 6px 0;
+}
+
+.hint {
+	font-size: 12px;
+	color: var(--muted);
+	margin: 8px 0;
+}
+
+.error {
+	color: var(--error);
+	font-size: 13px;
+	margin-top: 8px;
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.host {
+	font-weight: 600;
+	font-size: 14px;
+}
+
+.candidates {
+	list-style: none;
+	margin: 12px 0;
+	padding: 0;
+}
+
+.candidate-fill {
+	display: block;
+	width: 100%;
+	text-align: left;
+	padding: 10px;
+	margin-bottom: 6px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: #fff;
+	cursor: pointer;
+	font-size: 14px;
+}
+.candidate-fill:hover {
+	border-color: var(--cobalt);
+}
+
+.totp {
+	display: flex;
+	gap: 10px;
+	align-items: baseline;
+	margin: 10px 0;
+}
+.totp-code {
+	font-family: monospace;
+	font-size: 22px;
+	letter-spacing: 2px;
+}
+.totp-count {
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.save-prompt {
+	margin-top: 14px;
+	padding: 10px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: #f9fafb;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--fg: #e5e7eb;
+		--bg: #1f2937;
+		--border: #374151;
+		--muted: #9ca3af;
+	}
+	.candidate-fill {
+		background: #111827;
+	}
+	.save-prompt {
+		background: #111827;
+	}
+}

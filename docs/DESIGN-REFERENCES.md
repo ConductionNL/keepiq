@@ -1,4 +1,4 @@
-# Doriath — Design References & Dashboard Wireframes
+# Keepiq — Design References & Dashboard Wireframes
 
 ## 1. Design Inspiration Sources
 
@@ -93,7 +93,7 @@
 │                                                                     │
 │                          ┌─────────────┐                            │
 │                          │    🔒       │                            │
-│                          │   DORIATH   │                            │
+│                          │   KEEPIQ   │                            │
 │                          └─────────────┘                            │
 │                                                                     │
 │                    ┌───────────────────────────┐                    │
@@ -124,12 +124,12 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          ┌─────────────┐                            │
 │                          │    🔒       │                            │
-│                          │   DORIATH   │                            │
+│                          │   KEEPIQ   │                            │
 │                          └─────────────┘                            │
 │                                                                     │
 │                    ┌───────────────────────────┐                    │
 │                    │                           │                    │
-│                    │   Welcome to Doriath      │                    │
+│                    │   Welcome to Keepiq      │                    │
 │                    │                           │                    │
 │                    │   Choose a master         │                    │
 │                    │   password for your vault  │                    │
@@ -161,7 +161,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  DORIATH                                           [Search...] [⚙] │
+│  KEEPIQ                                           [Search...] [⚙] │
 ├──────────┬──────────┬──────────┬──────────┬──────────────────────────┤
 │ Dashboard│  Vault   │  Apps    │  Shared  │                          │
 ├──────────┴──────────┴──────────┴──────────┴──────────────────────────┤
@@ -215,7 +215,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  DORIATH > Vault                        [🔍 Search secrets...]  [⚙]│
+│  KEEPIQ > Vault                        [🔍 Search secrets...]  [⚙]│
 ├──────────┬──────────┬──────────┬──────────┬──────────────────────────┤
 │ Dashboard│  Vault   │  Apps    │  Shared  │                          │
 ├──────────┴──────────┴──────────┴──────────┴──────────────────────────┤
@@ -410,7 +410,7 @@ CnDetailPage (title="AWS Console Login", back-route={name:'Secrets'})
 │                                                                     │
 │                          ┌─────────────┐                            │
 │                          │    🔒       │                            │
-│                          │   DORIATH   │                            │
+│                          │   KEEPIQ   │                            │
 │                          └─────────────┘                            │
 │                                                                     │
 │                    ┌───────────────────────────┐                    │
@@ -463,7 +463,7 @@ CnDetailPage (title="AWS Console Login", back-route={name:'Secrets'})
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          ┌─────────────┐                            │
 │                          │    📨       │                            │
-│                          │   DORIATH   │                            │
+│                          │   KEEPIQ   │                            │
 │                          └─────────────┘                            │
 │                                                                     │
 │                    ┌───────────────────────────┐                    │
@@ -500,7 +500,7 @@ CnDetailPage (title="AWS Console Login", back-route={name:'Secrets'})
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  DORIATH > Applications                        [+ Register App]  [⚙]│
+│  KEEPIQ > Applications                        [+ Register App]  [⚙]│
 ├──────────┬──────────┬──────────┬──────────┬──────────────────────────┤
 │ Dashboard│  Vault   │  Apps    │  Shared  │                          │
 ├──────────┴──────────┴──────────┴──────────┴──────────────────────────┤
@@ -544,11 +544,11 @@ CnDetailPage (title="AWS Console Login", back-route={name:'Secrets'})
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Administration > Doriath                                           │
+│  Administration > Keepiq                                           │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ┌── CnVersionInfoCard ──────────────────────────────────────────┐ │
-│  │  Doriath v0.1.0                                  [Check for   │ │
+│  │  Keepiq v0.1.0                                  [Check for   │ │
 │  │  Encrypted secrets manager                        updates]    │ │
 │  └────────────────────────────────────────────────────────────────┘ │
 │                                                                     │
@@ -594,7 +594,7 @@ CnDetailPage (title="AWS Console Login", back-route={name:'Secrets'})
 
 **Component hierarchy:**
 ```
-CnVersionInfoCard (app-name="Doriath", app-version="0.1.0")
+CnVersionInfoCard (app-name="Keepiq", app-version="0.1.0")
 CnSettingsSection (name="Certificate Authority", doc-url="...")
   └─ CA status display, certificate details, action buttons
 CnSettingsSection (name="Master Password Policy")
@@ -607,7 +607,7 @@ CnSettingsSection (name="Applications")
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Doriath Settings                     [✕]   │
+│  Keepiq Settings                     [✕]   │
 │                                             │
 │  ┌─── Security ──────────────────────┐      │
 │  │                                    │     │
@@ -652,7 +652,7 @@ Must use `NcAppSettingsDialog` (NOT `NcDialog`) with `NcAppSettingsSection` for 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  DORIATH > Change Master Password                                   │
+│  KEEPIQ > Change Master Password                                   │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ┌────────────────────────────────────────────────────────────────┐ │

@@ -1,38 +1,202 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+		"walkthrough": {
+			"enabled": true,
+			"version": 1,
+			"completionConfigKey": "walkthrough_completed_version",
+			"tours": [
+				{
+					"id": "keepiq:getting-started",
+					"title": "Getting started",
+					"trigger": "first-visit",
+					"steps": [
+						{
+							"id": "welcome",
+							"placement": "center",
+							"title": "Welcome to Keepiq",
+							"body": "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.",
+							"target": {
+								"kind": "page",
+								"ref": "Dashboard"
+							},
+							"advanceOn": {
+								"type": "manual"
+							}
+						},
+						{
+							"id": "go-dashboard",
+							"placement": "right",
+							"body": "Open Dashboard from the menu.",
+							"task": "Click Dashboard in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "Dashboard"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "Dashboard"
+							}
+						},
+						{
+							"id": "go-secretlist",
+							"placement": "right",
+							"body": "Open All secrets from the menu.",
+							"task": "Click All secrets in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "SecretList"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "SecretList"
+							}
+						},
+						{
+							"id": "go-featuresroadmap",
+							"placement": "right",
+							"body": "Open Features & roadmap from the menu.",
+							"task": "Click Features & roadmap in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "FeaturesRoadmap"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "FeaturesRoadmap"
+							}
+						},
+						{
+							"id": "go-personalactivity",
+							"placement": "right",
+							"body": "Open My activity from the menu.",
+							"task": "Click My activity in the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "PersonalActivity"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "PersonalActivity"
+							}
+						},
+						{
+							"id": "go-flows",
+							"placement": "right",
+							"body": "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.",
+							"task": "Open Flows from the menu",
+							"target": {
+								"kind": "nav-item",
+								"ref": "Flows"
+							},
+							"advanceOn": {
+								"type": "route-match",
+								"route": "Flows"
+							},
+							"allowManualNext": true
+						}
+					]
+				}
+			]
+		},
 	"version": "1.0.0",
 	"dependencies": [],
+	"nav": {
+		"includePersonalSettings": false
+	},
 	"menu": [
 		{
 			"id": "Dashboard",
 			"label": "Dashboard",
-			"icon": "icon-category-dashboard",
+			"icon": "ViewDashboardOutline",
 			"route": "Dashboard",
 			"order": 10
 		},
 		{
+			"id": "Vault",
+			"label": "All secrets",
+			"icon": "KeyVariant",
+			"route": "SecretList",
+			"order": 20
+		},
+		{
+			"id": "ApplicationsMenu",
+			"label": "Applications",
+			"icon": "ApplicationOutline",
+			"route": "ApplicationRegister",
+			"section": "settings",
+			"order": 70
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
-			"icon": "icon-info",
-			"href": "https://conduction.nl",
+			"icon": "BookOpenVariantOutline",
+			"href": "https://keepiq.conduction.nl",
 			"section": "footer",
 			"order": 80
 		},
 		{
 			"id": "FeaturesRoadmapMenu",
 			"label": "Features & roadmap",
-			"icon": "icon-toggle",
+			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 85
 		},
 		{
+			"id": "MyActivityMenu",
+			"label": "My activity",
+			"icon": "Pulse",
+			"route": "PersonalActivity",
+			"section": "footer",
+			"order": 86
+		},
+		{
+			"id": "PasswordHealthMenu",
+			"label": "Password health",
+			"icon": "LockOutline",
+			"route": "PasswordHealth",
+			"section": "footer",
+			"order": 87
+		},
+		{
+			"id": "CertificatesMenu",
+			"label": "Certificates",
+			"icon": "CertificateOutline",
+			"route": "Certificates",
+			"section": "settings",
+			"order": 88
+		},
+		{
+			"id": "EmergencyAccessMenu",
+			"label": "Emergency access",
+			"icon": "ShieldKeyOutline",
+			"route": "EmergencyAccess",
+			"section": "settings",
+			"order": 89
+		},
+		{
 			"id": "LockVault",
 			"label": "Lock vault",
-			"icon": "icon-password",
+			"icon": "LockOutline",
 			"route": "Lock",
 			"section": "settings",
 			"order": 90
+		},
+		{
+			"id": "UserSettings",
+			"label": "Personal settings",
+			"icon": "CogOutline",
+			"action": "user-settings",
+			"section": "settings",
+			"order": 99
+		},
+		{
+			"id": "FlowsMenu",
+			"label": "Flows",
+			"icon": "Sitemap",
+			"route": "Flows",
+			"section": "settings",
+			"order": 96
 		}
 	],
 	"pages": [
@@ -40,96 +204,237 @@
 			"id": "Dashboard",
 			"route": "/",
 			"type": "dashboard",
-			"title": "Dashboard",
-			"config": {},
-			"widgets": [
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Open items",
-						"iconClass": "icon-folder",
-						"count": 12,
-						"countLabel": "sample",
-						"variant": "primary",
-						"showTitle": true
+			"title": "Vault overview",
+			"config": {
+				"description": "Your secrets, folders and applications at a glance",
+				"documentationUrl": "https://keepiq.conduction.nl",
+				"_note": "The nine dashboard widgets live in config.widgets[] + config.layout[], NOT in the page-level widgets[] array. CnPageRenderer renders a bare CnWidgetGrid whenever a typed page carries page-level widgets targeting the body slot, so this type:\"dashboard\" page never mounted CnDashboardPage and lost its header, max-width, padding, sidebar and grid discipline (hydra gate-69 page-type-discipline; hrmq#112 moved 47 pages for the same reason). Only config.widgets/config.layout reach the typed page component. Three shape differences follow from that move, all verified against the installed @conduction/nextcloud-vue dist rather than the schema prose: (1) banner/stat/text payloads move from props{} to content{}, because CnDashboardPage's registry branch passes the widget def's content BOTH as a `content` prop and spread flat, which is the dual shape those renderers document; (2) tile fields move to the widget def's TOP LEVEL, because isTile() is matched before the registry branch and CnDashboardPage.getTileConfig() reads title/icon/iconType/backgroundColor/textColor/linkType/linkValue straight off the def and never looks at content; (3) showTitle:false is set on the four KPI stat widgets that render inside CnWidgetWrapper, so they stay header-less exactly as they were under the bare CnWidgetGrid — without it a non-card widget would grow a header captioned with its own widget id; recent-activity-feed and pending-apps-queue are the deliberate exceptions, carrying def-level titles so the wrapper renders their headers (wrapper caption = customTitle || def.title || widgetId). Tiles bypass the wrapper entirely, so they carry no showTitle. CONDITIONAL WIDGETS: pending-apps-queue is the only survivor of the original three conditional banners — the two migration banners stayed out for good (MigrationResumeBanner in App.vue shows migration state app-wide, and the error state is unreachable server-side) and the pending-apps banner grew into the real approval queue. It relies on two post-2.8.2 library behaviours (restyle follow-ups 4b + 4c): a def-level visibleWhen collapses the widget's whole grid cell while unmet (with the grid's first paint held until predicates settle, so nothing pops in and reflows the page), and endpointSource tables forward a client-side `limit` so the View-all footer can render. This entry therefore REQUIRES @conduction/nextcloud-vue > 2.8.2.",
+				"widgets": [
+					{
+						"id": "pending-apps-queue",
+						"type": "object-table",
+						"title": "Applications awaiting approval",
+						"visibleWhen": {
+							"endpoint": "/apps/keepiq/api/dashboard/summary",
+							"field": "pending_apps_count",
+							"op": "gt",
+							"value": 0
+						},
+						"_note": "The admin approval queue itself, replacing the earlier keepiq-pending-apps banner (which could only say THAT applications were waiting, not WHICH — the library gained the two pieces this needs: a def-level visibleWhen collapses any widget's grid cell while unmet, and endpointSource tables forward a client-side `limit` so the View-all footer condition can hold). visibleWhen gates on the summary's pending_apps_count: non-admins get null and admins with an empty queue get 0, so the whole card — row included — exists only for an admin with pending work. Rows come from GET /api/v1/applications/pending (a bare array: name, registeredBy — null means an anonymous registration, createdAt ISO-8601 rendered relative via format:date-time). limit 3 + viewAllRoute: the footer appears only when a fourth application is waiting. No rowRoute: applications have no detail page; approval happens on the applications page.",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/keepiq/api/v1/applications/pending"
+							},
+							"columns": [
+								{ "key": "name", "label": "Name" },
+								{ "key": "registeredBy", "label": "Registered by" },
+								{
+									"key": "createdAt",
+									"label": "Requested",
+									"format": "date-time"
+								}
+							],
+							"limit": 3,
+							"viewAllRoute": { "name": "ApplicationRegister" },
+							"viewAllLabel": "View all",
+							"borderless": true,
+							"emptyText": "No applications awaiting approval"
+						}
+					},
+					{
+						"id": "kpi-total-secrets",
+						"type": "stat",
+						"showTitle": false,
+						"_note": "ADR-049 dissolution of the keepiq-kpi-card custom widget — endpoint-bound KPI tiles against GET /api/dashboard/summary. Bound to the payload keys DashboardService::fetchSummary actually emits (total_secrets / shared_with_me_count / folders_count); the legacy view read shared_secrets / folder_count / compromised_count, which the backend never sends. The 'Possibly compromised' card is dropped: compromised_count does not exist in the summary payload, so it was a permanently-zero dead binding. COLOR IDENTITY (restyle Stage 2): each KPI keeps one constant color via valueColor — total-secrets primary, folders success, rotation-due error, shared-with-me deliberately unset (theme default). TOKEN CHOICE: the *-text variants (--color-success-text / --color-error-text), NOT the bare --color-success / --color-error — on current Nextcloud server builds the bare tokens are pale BACKGROUND tints (verified live: #D8F3DA / #FFE7E7), while the *-text variants are the readable strong colors on both old and new server generations. CnStatWidget's icon circle falls back to valueColor when iconColor is unset, so valueColor alone colors both the number and the icon. A variantWhen threshold rule on rotation-due was considered and skipped: first-match variantWhen overrides the static color, which would break the constant identity this stage restores.",
+						"content": {
+							"label": "Total secrets",
+							"icon": "ClipboardList",
+							"valueColor": "var(--color-primary-element)",
+							"endpointSource": {
+								"url": "/apps/keepiq/api/dashboard/summary"
+							},
+							"valueField": "total_secrets"
+						}
+					},
+					{
+						"id": "kpi-shared-with-me",
+						"type": "stat",
+						"showTitle": false,
+						"content": {
+							"label": "Shared with you",
+							"icon": "AccountGroup",
+							"endpointSource": {
+								"url": "/apps/keepiq/api/dashboard/summary"
+							},
+							"valueField": "shared_with_me_count"
+						}
+					},
+					{
+						"id": "kpi-folders",
+						"type": "stat",
+						"showTitle": false,
+						"content": {
+							"label": "Folders",
+							"icon": "FolderOutline",
+							"valueColor": "var(--color-success-text)",
+							"endpointSource": {
+								"url": "/apps/keepiq/api/dashboard/summary"
+							},
+							"valueField": "folders_count"
+						}
+					},
+					{
+						"id": "kpi-rotation-due",
+						"type": "stat",
+						"showTitle": false,
+						"_note": "Rotation-due count (rotation-expiry-policies §7.2) — open rotation flags for the caller's secrets, from DashboardService::fetchSummary rotation_due_count. Deep-dive detail lives in the password-health report's rotation category.",
+						"content": {
+							"label": "Rotation due",
+							"icon": "Autorenew",
+							"valueColor": "var(--color-error-text)",
+							"endpointSource": {
+								"url": "/apps/keepiq/api/dashboard/summary"
+							},
+							"valueField": "rotation_due_count"
+						}
+					},
+					{
+						"id": "recent-activity-feed",
+						"type": "object-table",
+						"title": "Recent activity",
+						"_note": "Restyle Stage 2, ported from the pre-rename WIP: replaces the recent-activity-text ADR-049 placeholder with a live feed off GET /api/v1/audit/me — a plain app endpoint, so the object-table widget's endpointSource, not the OpenRegister-bound object-list. Verified against the backend: AuditController::mine returns {entries:[...]} newest-first (AuditEntryMapper orders occurred_at DESC) and AuditEntry::jsonSerialize emits occurredAt as ISO-8601 ('c'), eventType and objectName. The occurredAt column carries format:'date-time' so CnCellRenderer renders it through NcDateTime (relative time), not raw ISO. No rowRoute: audit entries have no detail page. viewAllRoute NOW WORKS — the original Stage-2 attempt had to omit it as dead config (endpointSource mode forwarded no client limit, restyle follow-up 4b, fixed in the same library release as the cell collapse): the endpoint is asked for 6 entries while the client shows 5, so the View-all footer appears exactly when a sixth entry exists, linking to the My activity page. Def-level title and no showTitle:false, so CnWidgetWrapper renders the 'Recent activity' header.",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/keepiq/api/v1/audit/me",
+								"params": { "limit": 6 },
+								"responsePath": "entries"
+							},
+							"columns": [
+								{
+									"key": "occurredAt",
+									"label": "When",
+									"format": "date-time"
+								},
+								{ "key": "eventType", "label": "Action" },
+								{ "key": "objectName", "label": "Item" }
+							],
+							"limit": 5,
+							"viewAllRoute": { "name": "PersonalActivity" },
+							"viewAllLabel": "View all",
+							"borderless": true,
+							"emptyText": "No recent activity"
+						}
+					},
+					{
+						"id": "quick-action-new-secret",
+						"type": "tile",
+						"_note": "Union of the bump-ncvue branch's real quick-action tiles with development's ADR-049 placeholder text; wired here in place of the quick-actions-text placeholder since these already point at live deep links. Tile fields sit at the def's top level because CnDashboardPage.getTileConfig() reads them from there, not from content. LINK SHAPE: CnTileWidget resolves linkType 'app' as generateUrl('/apps/' + linkValue), so linkValue must NOT start with /apps/ (a full path doubled into /apps//apps/… and 404'd). The SPA router is hash-based (createWebHashHistory on /apps/keepiq), so an in-app page needs the hash in the value: 'keepiq#/secrets' → {webroot}/apps/keepiq#/secrets, correct on index.php-prefixed instances too.",
+						"title": "New secret",
+						"icon": "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
+						"iconType": "svg",
+						"backgroundColor": "#21468B",
+						"textColor": "#ffffff",
+						"linkType": "app",
+						"linkValue": "keepiq#/secrets"
+					},
+					{
+						"id": "quick-action-register-application",
+						"type": "tile",
+						"title": "Register application",
+						"icon": "M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,15V12H8V10H5V7H3V10H0V12H3V15H5Z",
+						"iconType": "svg",
+						"backgroundColor": "#3b82f6",
+						"textColor": "#ffffff",
+						"linkType": "app",
+						"linkValue": "keepiq#/applications"
+					},
+					{
+						"id": "quick-action-documentation",
+						"type": "tile",
+						"title": "Documentation",
+						"icon": "M19,2L14,6.5V17.5L19,13V2M6.5,5C4.55,5 2.45,5.4 1,6.5V21.16C1,21.41 1.25,21.66 1.5,21.66C1.6,21.66 1.65,21.59 1.75,21.59C3.1,20.94 5.05,20.5 6.5,20.5C8.45,20.5 10.55,20.9 12,22C13.35,21.15 15.8,20.5 17.5,20.5C19.15,20.5 20.85,20.81 22.25,21.56C22.35,21.61 22.4,21.59 22.5,21.59C22.75,21.59 23,21.34 23,21.09V6.5C22.4,6.05 21.75,5.75 21,5.5V19C19.9,18.65 18.7,18.5 17.5,18.5C15.8,18.5 13.35,19.15 12,20V6.5C10.55,5.4 8.45,5 6.5,5Z",
+						"iconType": "svg",
+						"backgroundColor": "#6b7280",
+						"textColor": "#ffffff",
+						"linkType": "url",
+						"linkValue": "https://keepiq.conduction.nl"
 					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 3,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Due this week",
-						"iconClass": "icon-calendar",
-						"count": 5,
-						"countLabel": "sample",
-						"variant": "warning",
-						"showTitle": true
+				],
+				"layout": [
+					{
+						"id": 1,
+						"widgetId": "pending-apps-queue",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": 2,
+						"widgetId": "kpi-total-secrets",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 3,
+						"widgetId": "kpi-shared-with-me",
+						"gridX": 3,
+						"gridY": 4,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 4,
+						"widgetId": "kpi-folders",
+						"gridX": 6,
+						"gridY": 4,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 5,
+						"widgetId": "kpi-rotation-due",
+						"gridX": 9,
+						"gridY": 4,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 6,
+						"widgetId": "recent-activity-feed",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 6,
+						"gridHeight": 4
+					},
+					{
+						"id": 7,
+						"widgetId": "quick-action-new-secret",
+						"gridX": 6,
+						"gridY": 6,
+						"gridWidth": 6,
+						"gridHeight": 2
+					},
+					{
+						"id": 8,
+						"widgetId": "quick-action-register-application",
+						"gridX": 6,
+						"gridY": 8,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": 9,
+						"widgetId": "quick-action-documentation",
+						"gridX": 9,
+						"gridY": 8,
+						"gridWidth": 3,
+						"gridHeight": 2
 					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Completed",
-						"iconClass": "icon-checkmark",
-						"count": 48,
-						"countLabel": "sample",
-						"variant": "success",
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 9,
-					"gridY": 0,
-					"gridWidth": 3,
-					"gridHeight": 2,
-					"props": {
-						"title": "Team members",
-						"iconClass": "icon-group",
-						"count": 7,
-						"countLabel": "sample",
-						"variant": "default",
-						"showTitle": true
-					}
-				},
-				{
-					"widgetKey": "doriath-recent-activity",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 2,
-					"gridWidth": 6,
-					"gridHeight": 4,
-					"props": {
-						"title": "Recent activity"
-					}
-				},
-				{
-					"widgetKey": "doriath-quick-actions",
-					"slot": "body",
-					"gridX": 6,
-					"gridY": 2,
-					"gridWidth": 6,
-					"gridHeight": 4,
-					"props": {
-						"title": "Quick actions"
-					}
-				}
-			]
+				]
+			}
 		},
 		{
 			"id": "FeaturesRoadmap",
@@ -137,16 +442,152 @@
 			"type": "roadmap",
 			"title": "Features & roadmap",
 			"config": {
-				"documentationUrl": "https://doriath.conduction.nl"
+				"documentationUrl": "https://keepiq.conduction.nl"
 			}
+		},
+		{
+			"id": "PersonalActivity",
+			"route": "/my-activity",
+			"type": "custom",
+			"title": "My activity",
+			"component": "PersonalActivityView",
+			"_note": "The session user's own audit-trail entries (add-secret-audit-trail §5.3). type:\"custom\" — a simple actor-scoped feed view, no built-in page type models it."
+		},
+		{
+			"id": "PasswordHealth",
+			"route": "/password-health",
+			"type": "custom",
+			"title": "Password health",
+			"component": "HealthReportView",
+			"_note": "Client-side vault health report (password-health). type:\"custom\" — the analysis runs in-browser over the unlocked vault; no built-in page type models a memory-only analysis surface."
+		},
+		{
+			"id": "Certificates",
+			"route": "/certificates",
+			"type": "custom",
+			"title": "Certificates",
+			"component": "CertificateInventoryView",
+			"_note": "Certificate inventory (certificate-lifecycle). type:\"custom\" — stored certificate secrets are decrypted and X.509-parsed in-browser (ADR-003); only non-secret display metadata is submitted. Suite/CA rows are server-parsed from cleartext PEM."
+		},
+		{
+			"id": "EmergencyAccess",
+			"route": "/emergency-access",
+			"type": "custom",
+			"title": "Emergency access",
+			"component": "EmergencyAccessView",
+			"_note": "Break-glass emergency access (add-emergency-access). type:\"custom\" — the grantor designates contacts and builds recovery envelopes in-browser; a grantee requests and recovers a grantor's key client-side. No built-in page type models this zero-knowledge escrow surface."
 		},
 		{
 			"id": "Lock",
 			"route": "/lock",
 			"type": "custom",
-			"title": "Unlock Doriath",
+			"title": "Unlock Keepiq",
 			"component": "LockScreen",
 			"_note": "Master-password setup + unlock flow. Cannot use a built-in page type because the lock screen owns its own full-page layout (no app nav / header / sidebar) and gates router navigation via App.vue's lock-redirect watcher. Stays type:\"custom\" until the lib gains a dedicated unlock-page primitive."
+		},
+		{
+			"id": "SecretList",
+			"route": "/secrets",
+			"type": "custom",
+			"title": "Vault",
+			"component": "SecretList",
+			"_note": "Main vault: folder sidebar + searchable/sortable/paginated secret list. type:\"custom\" because it owns a bespoke two-pane layout and on-demand client-side decryption that no built-in page type models yet."
+		},
+		{
+			"id": "SecretListFolder",
+			"route": "/folders/:folderId",
+			"type": "custom",
+			"title": "Vault",
+			"component": "SecretList",
+			"_note": "Same vault view filtered to a folder (folderId route param)."
+		},
+		{
+			"id": "SecretDetail",
+			"route": "/secrets/:id",
+			"type": "custom",
+			"title": "Secret",
+			"component": "SecretDetail",
+			"_note": "Secret detail with type-specific fields, decrypted client-side; show/hide toggle keeps the key masked until revealed."
+		},
+		{
+			"id": "ApplicationRegister",
+			"route": "/applications",
+			"type": "custom",
+			"title": "Applications",
+			"component": "ApplicationRegisterView",
+			"_note": "Developer-facing app registration page. Owner sees their own apps + can register new ones; admin queue lives on AdminApplicationsView under settings."
+		},
+		{
+			"id": "ApplicationDetail",
+			"route": "/applications/:id",
+			"type": "custom",
+			"title": "Application",
+			"component": "ApplicationDetail",
+			"_note": "Per-application detail page. Shows metadata, EncryptionSuite info, application-attributed secrets list, and the write-secret-for-app dialog. Owner sees own + active; admin sees all (server enforces)."
+		},
+		{
+			"id": "SecretRequestFill",
+			"route": "/share/request/:token",
+			"type": "custom",
+			"title": "Fill in secret",
+			"component": "SecretRequestFill",
+			"_note": "Public fill-in page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the flow without a Nextcloud account; the controller runs as #[PublicPage]."
+		},
+		{
+			"id": "EphemeralSendAccess",
+			"route": "/send/:token",
+			"type": "custom",
+			"title": "Secure message",
+			"component": "EphemeralSendAccess",
+			"_note": "Public ephemeral-send access page (no auth; ephemeral-send §5.3). Exempt from the lock guard via PUBLIC_ROUTE_NAMES; the EphemeralSendAccessController endpoints run as #[PublicPage]. Fragment-mode content keys ride the SPA hash query (?k=) and never reach the server."
+		},
+		{
+			"id": "LinkShareAccess",
+			"route": "/share/link/:token",
+			"type": "custom",
+			"title": "Shared secret",
+			"component": "LinkShareAccess",
+			"_note": "Public link-share access page (no auth). The lock-screen redirect guard in App.vue exempts this route by name — see PUBLIC_ROUTE_NAMES — so an external recipient can complete the password-protected flow without a Nextcloud account; the LinkShareAccessController endpoints run as #[PublicPage]. Implements the two-phase recipient protocol: Phase 1 fetches the ciphertext + Argon2id salt; Phase 2 confirms a successful client-side decrypt so the server can increment the usage count and auto-delete on cap."
+		},
+		{
+			"id": "Flows",
+			"route": "/flows",
+			"type": "index",
+			"title": "Flows",
+			"config": { "entitySource": "flows", "app": "keepiq" },
+			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. An ordinary index over the named `flows` source (config.entitySource) rather than the deprecated `flows` page type, reading OpenRegister's one native flow store (ADR-065), scoped to this app by config.app."
+		},
+		{
+			"id": "FlowDetail",
+			"route": "/flows/:id",
+			"type": "flow",
+			"title": "Flow",
+			"config": { "app": "keepiq" },
+			"sidebarComponent": "FlowDetailSidebar",
+			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}
-	]
+	],
+	"observability": {
+		"_note": "Declarative observability via the OpenRegister AppHost engine (ADR-040 / ADR-006). These descriptors reproduce the output of the deleted hand-written HealthController + MetricsController. /api/health and /api/metrics are aliased to AppHost\\Controller\\GenericHealthController / GenericMetricsController by Bootstrap::register, so the engine reads this block at request time. Auth-posture deltas (intentional, ADR-006): health is now PUBLIC (was authenticated) and metrics are now ADMIN-ONLY (was any authenticated user). No secret material is exposed — health carries only status/app/version/checks; metrics carry only the aggregate active-suite COUNT, never any suite identifier, key material, or owner. The suites_total source is now a SQL COUNT(*) over an allowlisted table (was a PHP count() over a fetch-all). Implicit keepiq_info and keepiq_up metrics are added by the engine.",
+		"health": {
+			"statusCodePolicy": "adr006",
+			"checks": [
+				{ "id": "database", "type": "database", "severity": "critical" },
+				{ "id": "filesystem", "type": "filesystem", "severity": "degraded" }
+			]
+		},
+		"metrics": [
+			{
+				"name": "suites_total",
+				"type": "gauge",
+				"help": "Total number of active encryption suites",
+				"source": {
+					"kind": "tableCount",
+					"table": "doriath_enc_suites",
+					"filter": { "status": { "eq": "active" } }
+				}
+			}
+		]
+	},
+	"deepLinks": []
 }

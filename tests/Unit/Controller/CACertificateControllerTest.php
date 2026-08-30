@@ -4,7 +4,7 @@
  * Unit tests for CACertificateController.
  *
  * @category Test
- * @package  OCA\Doriath\Tests\Unit\Controller
+ * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Tests\Unit\Controller;
+namespace OCA\Keepiq\Tests\Unit\Controller;
 
-use OCA\Doriath\Controller\CACertificateController;
-use OCA\Doriath\Service\CertificateAuthorityService;
+use OCA\Keepiq\Controller\CACertificateController;
+use OCA\Keepiq\Service\CertificateAuthorityService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -30,167 +30,160 @@ use RuntimeException;
 /**
  * Tests for CACertificateController.
  */
-class CACertificateControllerTest extends TestCase
-{
-    private CACertificateController $controller;
-    private CertificateAuthorityService&MockObject $caService;
+class CACertificateControllerTest extends TestCase {
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	private CACertificateController $controller;
 
-        $request = $this->createMock(IRequest::class);
-        $this->caService = $this->createMock(CertificateAuthorityService::class);
+	private CertificateAuthorityService&MockObject $caService;
 
-        $this->controller = new CACertificateController(
-            $request,
-            $this->caService,
-        );
-    }
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-    /**
-     * Test getStatus returns CA status.
-     *
-     * @return void
-     */
-    public function testGetStatusReturnsCaStatus(): void
-    {
-        $statusData = [
-            'status'       => 'healthy',
-            'root'         => ['id' => 'root-1', 'type' => 'root'],
-            'intermediate' => ['id' => 'int-1', 'type' => 'intermediate'],
-        ];
+		$request = $this->createMock(IRequest::class);
+		$this->caService = $this->createMock(CertificateAuthorityService::class);
 
-        $this->caService->method('getStatus')
-            ->willReturn($statusData);
+		$this->controller = new CACertificateController(
+			$request,
+			$this->caService,
+		);
+	}//end setUp()
 
-        $response = $this->controller->getStatus();
+	/**
+	 * Test getStatus returns CA status.
+	 *
+	 * @return void
+	 */
+	public function testGetStatusReturnsCaStatus(): void {
+		$statusData = [
+			'status' => 'healthy',
+			'root' => ['id' => 'root-1', 'type' => 'root'],
+			'intermediate' => ['id' => 'int-1', 'type' => 'intermediate'],
+		];
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('healthy', $response->getData()['status']);
-    }
+		$this->caService->method('getStatus')
+			->willReturn($statusData);
 
-    /**
-     * Test retryBootstrap delegates and returns status.
-     *
-     * @return void
-     */
-    public function testRetryBootstrapReturnsStatus(): void
-    {
-        $statusData = [
-            'status'       => 'healthy',
-            'root'         => ['id' => 'root-1'],
-            'intermediate' => ['id' => 'int-1'],
-        ];
+		$response = $this->controller->getStatus();
 
-        $this->caService->expects($this->once())->method('retryBootstrap');
-        $this->caService->method('getStatus')->willReturn($statusData);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('healthy', $response->getData()['status']);
+	}//end testGetStatusReturnsCaStatus()
 
-        $response = $this->controller->retryBootstrap();
+	/**
+	 * Test retryBootstrap delegates and returns status.
+	 *
+	 * @return void
+	 */
+	public function testRetryBootstrapReturnsStatus(): void {
+		$statusData = [
+			'status' => 'healthy',
+			'root' => ['id' => 'root-1'],
+			'intermediate' => ['id' => 'int-1'],
+		];
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame('healthy', $response->getData()['status']);
-    }
+		$this->caService->expects($this->once())->method('retryBootstrap');
+		$this->caService->method('getStatus')->willReturn($statusData);
 
-    /**
-     * Test retryBootstrap returns 500 on failure.
-     *
-     * @return void
-     */
-    public function testRetryBootstrapReturns500OnFailure(): void
-    {
-        $this->caService->method('retryBootstrap')
-            ->willThrowException(new RuntimeException('Bootstrap failed'));
+		$response = $this->controller->retryBootstrap();
 
-        $response = $this->controller->retryBootstrap();
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('healthy', $response->getData()['status']);
+	}//end testRetryBootstrapReturnsStatus()
 
-        $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-        $this->assertSame('Bootstrap failed', $response->getData()['message']);
-    }
+	/**
+	 * Test retryBootstrap returns 500 on failure.
+	 *
+	 * @return void
+	 */
+	public function testRetryBootstrapReturns500OnFailure(): void {
+		$this->caService->method('retryBootstrap')
+			->willThrowException(new RuntimeException('Bootstrap failed'));
 
-    /**
-     * Test renewIntermediate returns count and status.
-     *
-     * @return void
-     */
-    public function testRenewIntermediateReturnsCountAndStatus(): void
-    {
-        $this->caService->method('renewIntermediate')
-            ->with(true)
-            ->willReturn(5);
+		$response = $this->controller->retryBootstrap();
 
-        $statusData = [
-            'status'       => 'healthy',
-            'root'         => ['id' => 'root-1'],
-            'intermediate' => ['id' => 'int-2'],
-        ];
-        $this->caService->method('getStatus')->willReturn($statusData);
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertSame('Bootstrap failed', $response->getData()['message']);
+	}//end testRetryBootstrapReturns500OnFailure()
 
-        $response = $this->controller->renewIntermediate();
+	/**
+	 * Test renewIntermediate returns count and status.
+	 *
+	 * @return void
+	 */
+	public function testRenewIntermediateReturnsCountAndStatus(): void {
+		$this->caService->method('renewIntermediate')
+			->with(true)
+			->willReturn(5);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        $this->assertSame(5, $data['resignedCount']);
-        $this->assertArrayHasKey('status', $data);
-        $this->assertStringContainsString('5', $data['message']);
-    }
+		$statusData = [
+			'status' => 'healthy',
+			'root' => ['id' => 'root-1'],
+			'intermediate' => ['id' => 'int-2'],
+		];
+		$this->caService->method('getStatus')->willReturn($statusData);
 
-    /**
-     * Test renewIntermediate returns 500 on failure.
-     *
-     * @return void
-     */
-    public function testRenewIntermediateReturns500OnFailure(): void
-    {
-        $this->caService->method('renewIntermediate')
-            ->willThrowException(new RuntimeException('Renew failed'));
+		$response = $this->controller->renewIntermediate();
 
-        $response = $this->controller->renewIntermediate();
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame(5, $data['resignedCount']);
+		$this->assertArrayHasKey('status', $data);
+		$this->assertStringContainsString('5', $data['message']);
+	}//end testRenewIntermediateReturnsCountAndStatus()
 
-        $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-    }
+	/**
+	 * Test renewIntermediate returns 500 on failure.
+	 *
+	 * @return void
+	 */
+	public function testRenewIntermediateReturns500OnFailure(): void {
+		$this->caService->method('renewIntermediate')
+			->willThrowException(new RuntimeException('Renew failed'));
 
-    /**
-     * Test renewRoot returns count and status.
-     *
-     * @return void
-     */
-    public function testRenewRootReturnsCountAndStatus(): void
-    {
-        $this->caService->method('renewRoot')->willReturn(10);
+		$response = $this->controller->renewIntermediate();
 
-        $statusData = [
-            'status'       => 'healthy',
-            'root'         => ['id' => 'root-2'],
-            'intermediate' => ['id' => 'int-3'],
-        ];
-        $this->caService->method('getStatus')->willReturn($statusData);
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+	}//end testRenewIntermediateReturns500OnFailure()
 
-        $response = $this->controller->renewRoot();
+	/**
+	 * Test renewRoot returns count and status.
+	 *
+	 * @return void
+	 */
+	public function testRenewRootReturnsCountAndStatus(): void {
+		$this->caService->method('renewRoot')->willReturn(10);
 
-        $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        $this->assertSame(10, $data['resignedCount']);
-        $this->assertArrayHasKey('status', $data);
-    }
+		$statusData = [
+			'status' => 'healthy',
+			'root' => ['id' => 'root-2'],
+			'intermediate' => ['id' => 'int-3'],
+		];
+		$this->caService->method('getStatus')->willReturn($statusData);
 
-    /**
-     * Test renewRoot returns 500 on failure.
-     *
-     * @return void
-     */
-    public function testRenewRootReturns500OnFailure(): void
-    {
-        $this->caService->method('renewRoot')
-            ->willThrowException(new RuntimeException('Root renew failed'));
+		$response = $this->controller->renewRoot();
 
-        $response = $this->controller->renewRoot();
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame(10, $data['resignedCount']);
+		$this->assertArrayHasKey('status', $data);
+	}//end testRenewRootReturnsCountAndStatus()
 
-        $this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-    }
-}
+	/**
+	 * Test renewRoot returns 500 on failure.
+	 *
+	 * @return void
+	 */
+	public function testRenewRootReturns500OnFailure(): void {
+		$this->caService->method('renewRoot')
+			->willThrowException(new RuntimeException('Root renew failed'));
+
+		$response = $this->controller->renewRoot();
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+	}//end testRenewRootReturns500OnFailure()
+}//end class

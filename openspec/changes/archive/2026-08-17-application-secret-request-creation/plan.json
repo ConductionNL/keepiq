@@ -1,0 +1,59 @@
+{
+  "change": "application-secret-request-creation",
+  "project": "doriath",
+  "repo": "ConductionNL/doriath",
+  "base_branch": "development",
+  "feature_branch": "feature/120/application-secret-request-creation",
+  "created": "2026-08-14",
+  "tracking_issue": 120,
+  "tasks": [
+    {
+      "id": "1.1",
+      "title": "Register `POST /api/v1/app/secret-requests` and `GET /api/v1/app/secret-requests` in `appinfo/routes.php`.",
+      "section": "1. Machine HTTP route + controller",
+      "status": "done"
+    },
+    {
+      "id": "1.2",
+      "title": "Add an `ApplicationSecretRequests` controller extending `ApplicationApiController` (`#[PublicPage]`, `JwtAuthMiddleware`), resolving the principal via `getApplication()`; create returns `201` with `token` + `fillLinkUrl`, index returns the caller's pending requests.",
+      "section": "1. Machine HTTP route + controller",
+      "status": "done"
+    },
+    {
+      "id": "2.1",
+      "title": "Add a `SecretRequestService` operation that creates a request keyed to an application id (no `userId`), auto-creating the application-owned Secret shell via `SecretService::createByApplication` and minting the token through the existing `create()` path (atomic — no orphan shell on failure).",
+      "section": "2. Service — app-scoped creation without userId",
+      "status": "done"
+    },
+    {
+      "id": "2.2",
+      "title": "Add an own-vault pending-request list for an application (each row carrying `token` + derived fill-link URL), mirroring the owner-keyed `getByNameForApplication` scoping.",
+      "section": "2. Service — app-scoped creation without userId",
+      "status": "done"
+    },
+    {
+      "id": "3.1",
+      "title": "Add the signed-proof-authenticated create seam that verifies the assertion through the `JwtAuthService` path (signature vs registered cert, `jti` replay, ≤300 s lifetime), derives `applicationId` from the verified `iss`, and rejects `userId` / appId-only / invalid-signature / replayed-jti / wrong-cert.",
+      "section": "3. DI seam — signed-proof authentication",
+      "status": "done"
+    },
+    {
+      "id": "4.1",
+      "title": "Enforce token-issuance-parity guards (refuse pending/rejected/deleted applications and revoked/compromised suites) and preserve no-existence-oracle semantics on both entrypoints.",
+      "section": "4. Guards + audit",
+      "status": "done"
+    },
+    {
+      "id": "4.2",
+      "title": "Emit an application-actor audit event on creation via `AuditEvent::forApplication`, wiring the event type in `AuditEventTypes`.",
+      "section": "4. Guards + audit",
+      "status": "done"
+    },
+    {
+      "id": "5.1",
+      "title": "Add unit tests covering the machine route (create → token + fill-link; index lists own pending), the DI seam (valid proof; rejects appId-only / invalid-signature / replayed-jti / wrong-cert), cross-vault refusal, revoked-suite / non-approved refusal, and that a created request is fillable via the existing public fill flow.",
+      "section": "5. Tests",
+      "status": "done"
+    }
+  ]
+}

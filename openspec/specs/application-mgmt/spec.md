@@ -4,12 +4,13 @@
 
 **OpenSpec changes:**
 - `implement-application-mgmt` (2026-04-01) — Full implementation: registration, CSR/generated key pair, approval queue, JWT auth, write-without-read, cascade deletion
+- `admin-application-request-visibility` (2026-08-18) — An application can ask humans for credentials that no person can see: `created_by` is `application:<id>` and the user listing matches the acting user's id, the target Secrets are application-owned so they appear in no vault, and the only lister is the application's own Bearer endpoint (6 such requests measured on development). Adds an admin-scoped listing and revoke on the application's detail page, leaving the user-side listing untouched
 
 ## Purpose
 
 @e2e exclude No application-management UI is built in v0.1; all scenarios exercise registration, CSR/key-pair handling, and JWT-auth API flows — covered by integration tests, not Playwright UI flows.
 
-External and internal applications can be registered in Doriath so that secrets can be attributed to them. An application gets its own EncryptionSuite, allowing secrets to be encrypted specifically for that application. The application can then retrieve and decrypt its own secrets via the API.
+External and internal applications can be registered in Keepiq so that secrets can be attributed to them. An application gets its own EncryptionSuite, allowing secrets to be encrypted specifically for that application. The application can then retrieve and decrypt its own secrets via the API.
 
 Registration is open (anyone can register, even anonymously), but non-admin registrations go into a pending queue for approval by the vault administrator. Secrets cannot be attributed to a pending application.
 
@@ -94,7 +95,7 @@ When a non-admin submits an application registration, all vault administrators M
 Notification content:
 - Title: "New application pending approval"
 - Body: "Application *{name}* is awaiting approval."
-- Action link: opens the approval queue in Doriath
+- Action link: opens the approval queue in Keepiq
 
 #### Scenario: Non-admin registers application
 - GIVEN a non-admin submits a registration
@@ -102,17 +103,17 @@ Notification content:
 - THEN a Nextcloud notification MUST be dispatched to all vault administrators
 
 ### Requirement: Pending Applications Counter on Dashboard
-The Doriath dashboard MUST display a visible counter of pending application registrations to vault administrators. Non-administrators MUST NOT see this counter.
+The Keepiq dashboard MUST display a visible counter of pending application registrations to vault administrators. Non-administrators MUST NOT see this counter.
 
 #### Scenario: Pending applications exist
 - GIVEN one or more applications are in `pending` status
-- WHEN a vault administrator views the Doriath dashboard
+- WHEN a vault administrator views the Keepiq dashboard
 - THEN the dashboard MUST show the count of pending registrations
 - AND the counter MUST link to the approval queue
 
 #### Scenario: No pending applications
 - GIVEN no applications are pending
-- WHEN a vault administrator views the Doriath dashboard
+- WHEN a vault administrator views the Keepiq dashboard
 - THEN the counter MUST NOT be shown (or shown as zero, implementation choice)
 
 ### Requirement: Attribute Secrets to Application
@@ -124,9 +125,51 @@ Once an application is active, users with appropriate permission MUST be able to
 - THEN the secret MUST be encrypted with the application's public certificate
 - AND the writing user MUST NOT be able to read it back (write-without-read)
 
+### Requirement: Outstanding Application Requests Visible to Administrators
+
+An administrator MUST be able to see the secret requests an application has created, and MUST be able to revoke them.
+
+Today they cannot. `created_by` for an application request is `application:<id>`, and the user-facing listing matches `created_by` against the acting user's id, so no person can enumerate them; the target Secrets are application-owned and appear in no user's vault; and the only lister is the application's own Bearer-authenticated endpoint. Creation is recorded in the audit trail, so the events exist with nowhere to read them as state.
+
+This matters because a pending fill link is a bearer credential in a URL. An administrator accountable for an approved application MUST be able to answer what credentials it is currently asking humans for, and MUST be able to end a circulating link without the application's cooperation.
+
+Visibility MUST be scoped to administrators, not to whoever registered the application: an application's vault belongs to no single user, and registration is a historical act rather than continuing responsibility.
+
+The listing MUST NOT render a request's full token, and MUST NOT expose any submitted value — write-without-read is unaffected by who is looking.
+
+#### Scenario: An administrator sees what an application is asking for
+@e2e exclude No Playwright coverage of the admin application page yet; driven by ApplicationRequestAdminControllerTest::testAnAdministratorSeesTheApplicationsRequests, SecretRequestServiceTest::testListForApplicationReturnsThatApplicationsRequestsNewestFirst and the SecretRequestList vitest "renders the application rows". Verified live on 2026-08-19: the endpoint returned each application's own two requests with their status and requested field names.
+- **GIVEN** an application has created pending secret requests
+- **WHEN** an administrator opens that application
+- **THEN** those requests MUST be listed with their status, requested field names and expiry
+
+#### Scenario: A non-administrator cannot list them
+@e2e exclude Authorization, asserted at both layers rather than through a browser: ApplicationRequestAdminControllerTest::testANonAdministratorIsRefused (and ::testAnAnonymousCallerIsRefused) plus SecretRequestServiceTest::testListForApplicationRefusesANonAdmin, which fails when the service guard is removed. Registrar identity is not an input to either check. Verified live: alice received 403.
+- **WHEN** a user who is not an administrator requests an application's secret requests
+- **THEN** the system MUST refuse, regardless of whether that user registered the application
+
+#### Scenario: The user's own listing is unchanged
+@e2e exclude Regression guard on a query, not a UI flow; driven by SecretRequestServiceTest::testListByUserStillQueriesTheRawUid, which pins that the uid is passed with no application prefix — the reason a user listing can never match an application's rows.
+- **GIVEN** an instance with both user-created and application-created requests
+- **WHEN** a user lists their own requests
+- **THEN** only requests they created MUST be returned, exactly as before
+
+#### Scenario: An administrator revokes a circulating fill link
+@e2e exclude Driven by SecretRequestServiceTest::testAdminRevokeDeletesTheUnfilledApplicationPlaceholder, ::testAdminRevokeNeverDeletesAFilledApplicationSecret, ::testAdminRevokeWillNotDeleteAnotherApplicationsSecret and ::testRevokeForApplicationRefusesARequestOfAnotherActor (which fails when the created_by check is removed), plus the vitest "asks before revoking, and revokes through the application endpoint". NOT verified live: doing so would hard-delete a seeded placeholder Secret on the development instance, and the request row cannot be restored.
+- **GIVEN** an application has a pending request whose link is in circulation
+- **WHEN** an administrator revokes it
+- **THEN** the token MUST stop being fillable
+- **AND** the unfilled placeholder Secret MUST be deleted, per the Revoke Request requirement
+
+#### Scenario: The listing does not leak the token or the values
+@e2e exclude Driven by the vitest "never renders a full token", which asserts the truncated form is shown and neither full token appears anywhere in the rendered output. The API deliberately still returns the token — the copy-link action needs it — so truncation is the view's job, exactly as on the user side. No submitted value is readable from a listing because the response carries only metadata (write-without-read, ADR-003).
+- **WHEN** an application's requests are listed for an administrator
+- **THEN** each row MUST show the token truncated
+- **AND** no submitted value MUST be readable from the listing
+
 ## User Stories
 
-- As a developer, I want to register my application so that I can store and retrieve its secrets from Doriath
+- As a developer, I want to register my application so that I can store and retrieve its secrets from Keepiq
 - As an administrator, I want to approve or reject application registrations so that I control which applications can use the vault
 - As a user, I want to write a secret for an application without being able to read it so that sensitive values are never in my hands
 - As an application, I want to retrieve my secrets via the API using my private key so that I can configure myself securely
@@ -143,7 +186,7 @@ Once an application is active, users with appropriate permission MUST be able to
 - [ ] Secrets cannot be attributed to pending applications
 - [ ] Writing a secret for an application encrypts it with the app's public certificate
 - [ ] All vault administrators receive a Nextcloud notification when a new application registration is pending
-- [ ] The Doriath dashboard shows a pending application counter to vault administrators (hidden from non-admins)
+- [ ] The Keepiq dashboard shows a pending application counter to vault administrators (hidden from non-admins)
 - [ ] Vault administrators can delete an active application
 - [ ] Deletion permanently removes the application, its EncryptionSuite, and all its secrets (hard delete, no soft-delete or deactivation state)
 
@@ -153,7 +196,7 @@ Once an application is active, users with appropriate permission MUST be able to
 
 **Decision:** RFC 7523 — OAuth2 client credentials flow where the application authenticates by presenting a JWT signed with its own RSA private key.
 
-**Why:** Standard pattern (used by Google service accounts), uses the existing key infrastructure (the application already has an RSA key pair from registration), produces short-lived access tokens, and introduces no new credential to manage. Doriath owns the `/oauth2/token` endpoint since Nextcloud's oauth2 app does not support this grant type.
+**Why:** Standard pattern (used by Google service accounts), uses the existing key infrastructure (the application already has an RSA key pair from registration), produces short-lived access tokens, and introduces no new credential to manage. Keepiq owns the `/oauth2/token` endpoint since Nextcloud's oauth2 app does not support this grant type.
 
 **Recovery:** If the private key is lost, re-registration is the recovery path (new key pair, new EncryptionSuite; existing secrets encrypted with the old public key become inaccessible).
 

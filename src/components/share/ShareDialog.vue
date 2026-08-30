@@ -1,0 +1,217 @@
+<!--
+  SPDX-License-Identifier: EUPL-1.2
+  SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+
+  User-to-user share dialog. The owner picks a recipient Nextcloud user
+  id, the parent component supplies the plaintext snapshot + the
+  recipient's public certificate, and the dialog runs the browser-side
+  RSA encryption through `useShareStore.encryptForRecipient` before
+  emitting an `encrypted` event.
+
+  The recipient's encrypted Secret copy is persisted via the secrets
+  endpoint by the parent — this dialog only owns the picker UI and the
+  encryption call.
+
+  @spec openspec/changes/implement-user-sharing/tasks.md#task-12.1
+-->
+<template>
+	<section
+		v-if="open"
+		class="keepiq-share-dialog"
+		role="dialog"
+		data-testid="share-dialog">
+		<header class="keepiq-share-dialog__header">
+			<h3>{{ t('keepiq', 'Share with a Nextcloud user') }}</h3>
+			<button
+				type="button"
+				class="keepiq-share-dialog__close"
+				data-testid="share-dialog-close"
+				:aria-label="t('keepiq', 'Close')"
+				@click="$emit('close')">
+				<span aria-hidden="true">×</span>
+			</button>
+		</header>
+		<form @submit.prevent="onSubmit">
+			<label class="keepiq-share-dialog__field">
+				<span>{{ t('keepiq', 'Recipient user ID') }}</span>
+				<input
+					v-model.trim="targetUserId"
+					type="text"
+					required
+					autocomplete="off"
+					data-testid="share-dialog-target" />
+			</label>
+			<p
+				v-if="error"
+				class="keepiq-share-dialog__error"
+				data-testid="share-dialog-error">
+				{{ error }}
+			</p>
+			<div class="keepiq-share-dialog__actions">
+				<button
+					type="button"
+					data-testid="share-dialog-cancel"
+					@click="$emit('close')">
+					{{ t('keepiq', 'Cancel') }}
+				</button>
+				<button
+					type="submit"
+					class="primary"
+					data-testid="share-dialog-submit"
+					:disabled="busy || targetUserId === ''">
+					{{ busy ? t('keepiq', 'Sharing…') : t('keepiq', 'Share') }}
+				</button>
+			</div>
+		</form>
+	</section>
+</template>
+
+<script>
+import { useShareStore } from '../../store/modules/share.js'
+
+export default {
+	name: 'ShareDialog',
+	props: {
+		open: {
+			type: Boolean,
+			default: false,
+		},
+
+		secretId: {
+			type: String,
+			required: true,
+		},
+
+		plaintextSnapshot: {
+			type: Object,
+			default: () => ({}),
+		},
+
+		recipientCertificate: {
+			type: String,
+			default: '',
+		},
+	},
+
+	emits: ['close', 'shared'],
+	data() {
+		return {
+			targetUserId: '',
+			busy: false,
+			error: null,
+		}
+	},
+
+	watch: {
+		open(val) {
+			if (val === false) {
+				this.targetUserId = ''
+				this.error = null
+				this.busy = false
+			}
+		},
+	},
+
+	methods: {
+		/**
+		 * Share the secret with one user: re-encrypt under the recipient's
+		 * certificate in the browser, then register the share target.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		async onSubmit() {
+			this.error = null
+			if (this.targetUserId === '') {
+				this.error = t('keepiq', 'Recipient is required')
+				return
+			}
+			if (this.recipientCertificate === '') {
+				this.error = t('keepiq', 'Recipient has no active encryption suite')
+				return
+			}
+
+			const store = useShareStore()
+			this.busy = true
+			try {
+				const encrypted = await store.encryptForRecipient(
+					this.plaintextSnapshot,
+					this.recipientCertificate,
+				)
+				this.$emit('shared', {
+					targetUserId: this.targetUserId,
+					encryptedFields: encrypted,
+				})
+			} catch (e) {
+				this.error =
+					e?.message || t('keepiq', 'Failed to encrypt for recipient')
+			} finally {
+				this.busy = false
+			}
+		},
+	},
+}
+</script>
+
+<style scoped>
+.keepiq-share-dialog {
+	border: 1px solid var(--color-border, #ddd);
+	background-color: var(--color-main-background, #fff);
+	padding: 16px;
+	border-radius: var(--border-radius-large, 12px);
+	max-width: 480px;
+}
+
+.keepiq-share-dialog__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.keepiq-share-dialog__close {
+	background: transparent;
+	border: 0;
+	font-size: 24px;
+	cursor: pointer;
+}
+
+.keepiq-share-dialog__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 12px;
+}
+
+.keepiq-share-dialog__field input {
+	padding: 8px;
+	border: 1px solid var(--color-border-dark, #999);
+	border-radius: var(--border-radius, 4px);
+}
+
+.keepiq-share-dialog__error {
+	color: var(--color-error-text);
+	font-size: 13px;
+}
+
+.keepiq-share-dialog__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.keepiq-share-dialog__actions .primary {
+	background-color: var(--color-primary-element, #0082c9);
+	color: var(--color-primary-element-text, #fff);
+	border: 0;
+	padding: 8px 16px;
+	border-radius: var(--border-radius, 4px);
+}
+
+.keepiq-share-dialog__actions button:not(.primary) {
+	background-color: transparent;
+	border: 1px solid var(--color-border-dark, #999);
+	padding: 8px 16px;
+	border-radius: var(--border-radius, 4px);
+}
+</style>

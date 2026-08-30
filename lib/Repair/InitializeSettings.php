@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Doriath Initialize Settings Repair Step
+ * Keepiq Initialize Settings Repair Step
  *
- * Repair step that initializes Doriath register and schemas on install/upgrade.
+ * Repair step that initializes Keepiq register and schemas on install/upgrade.
  *
  * @category Repair
- * @package  OCA\Doriath\Repair
+ * @package  OCA\Keepiq\Repair
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Doriath\Repair;
+namespace OCA\Keepiq\Repair;
 
-use OCA\Doriath\AppInfo\Application;
-use OCA\Doriath\Service\SettingsService;
+use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\SettingsService;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -30,95 +30,108 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Repair step that initializes Doriath configuration via SettingsService.
+ * Repair step that initializes Keepiq configuration via SettingsService.
  */
-class InitializeSettings implements IRepairStep
-{
-    private const DEFAULT_CONFIG = [
-        'master_password_min_length' => '12',
-        'master_password_min_score'  => '3',
-        'session_timeout_default'    => '600000',
-    ];
+class InitializeSettings implements IRepairStep {
+	private const DEFAULT_CONFIG = [
+		'master_password_min_length' => '12',
+		'master_password_min_score' => '3',
+		'session_timeout_default' => '600000',
+		// Default opt-in flags for sharing notifications (W29 §1.6).
+		// These are admin-side defaults consumed by SettingsService when
+		// a per-user pref is absent — user prefs themselves stay
+		// user-scoped via IConfig::setUserValue + the SettingsService
+		// USER_PREF_KEYS default map ('1' for each notify_* flag).
+		'default_notify_shares' => '1',
+		'default_notify_group_shares' => '1',
+		'default_notify_security' => '1',
+		'default_notify_requests' => '1',
+	];
 
-    /**
-     * Constructor for InitializeSettings.
-     *
-     * @param SettingsService $settingsService The settings service
-     * @param IAppConfig      $appConfig       The app config interface
-     * @param LoggerInterface $logger          The logger interface
-     *
-     * @return void
-     */
-    public function __construct(
-        private SettingsService $settingsService,
-        private IAppConfig $appConfig,
-        private LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor for InitializeSettings.
+	 *
+	 * @param SettingsService $settingsService The settings service
+	 * @param IAppConfig $appConfig The app config interface
+	 * @param LoggerInterface $logger The logger interface
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private SettingsService $settingsService,
+		private IAppConfig $appConfig,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Get the name of this repair step.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return 'Initialize Doriath register and schemas via ConfigurationService';
-    }//end getName()
+	/**
+	 * Get the name of this repair step.
+	 *
+	 * @return string
+	 */
+	public function getName(): string {
+		return 'Initialize Keepiq register and schemas via ConfigurationService';
+	}//end getName()
 
-    /**
-     * Run the repair step to initialize Doriath configuration.
-     *
-     * @param IOutput $output The output interface for progress reporting
-     *
-     * @return void
-     *
-     * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
-     */
-    public function run(IOutput $output): void
-    {
-        $output->info('Initializing Doriath configuration...');
+	/**
+	 * Run the repair step to initialize Keepiq configuration.
+	 *
+	 * @param IOutput $output The output interface for progress reporting
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
+	 */
+	public function run(IOutput $output): void {
+		$output->info('Initializing Keepiq configuration...');
 
-        // Seed default app config values for encryption settings.
-        foreach (self::DEFAULT_CONFIG as $key => $value) {
-            $existing = $this->appConfig->getValueString(Application::APP_ID, $key, '');
-            if ($existing === '') {
-                $this->appConfig->setValueString(Application::APP_ID, $key, $value);
-                $output->info("Set default config: {$key} = {$value}");
-            }
-        }
+		// Seed default app config values for encryption settings.
+		foreach (self::DEFAULT_CONFIG as $key => $value) {
+			$existing = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+			if ($existing === '') {
+				$this->appConfig->setValueString(Application::APP_ID, $key, $value);
+				$output->info("Set default config: {$key} = {$value}");
+			}
+		}
 
-        if ($this->settingsService->isOpenRegisterAvailable() === false) {
-            $output->warning(
-                'OpenRegister is not installed or enabled. Skipping auto-configuration.'
-            );
-            $this->logger->warning(
-                'Doriath: OpenRegister not available, skipping register initialization'
-            );
-            return;
-        }
+		if ($this->settingsService->isOpenRegisterAvailable() === false) {
+			$output->warning(
+				'OpenRegister is not installed or enabled. Skipping auto-configuration.'
+			);
+			$this->logger->warning(
+				'Keepiq: OpenRegister not available, skipping register initialization'
+			);
+			return;
+		}
 
-        try {
-            $result = $this->settingsService->loadConfiguration(force: true);
+		try {
+			// NOT forced. `force: true` bypasses OpenRegister's app-level import fast-skip
+			// (gated on `$force === false`), so this step re-parsed the register descriptor +
+			// register.d fragments and walked every register/schema on EVERY upgrade, even when
+			// nothing changed. Forcing was never needed: the version passed to OR is
+			// content-addressed (`+frag.<md5 of the fragments>`), so a content change already
+			// bumps the version and re-imports; OpenRegister#426 additionally makes the gate
+			// content-aware. A genuinely unchanged config now fast-skips in milliseconds.
+			$result = $this->settingsService->loadConfiguration();
 
-            if ($result['success'] === true) {
-                $version = ($result['version'] ?? 'unknown');
-                $output->info(
-                    'Doriath configuration imported successfully (version: '.$version.')'
-                );
-                return;
-            }
+			if ($result['success'] === true) {
+				$version = ($result['version'] ?? 'unknown');
+				$output->info(
+					'Keepiq configuration imported successfully (version: ' . $version . ')'
+				);
+				return;
+			}
 
-            $message = ($result['message'] ?? 'unknown error');
-            $output->warning(
-                'Doriath configuration import issue: '.$message
-            );
-        } catch (Throwable $e) {
-            $output->warning('Could not auto-configure Doriath: '.$e->getMessage());
-            $this->logger->error(
-                'Doriath initialization failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
-    }//end run()
+			$message = ($result['message'] ?? 'unknown error');
+			$output->warning(
+				'Keepiq configuration import issue: ' . $message
+			);
+		} catch (Throwable $e) {
+			$output->warning('Could not auto-configure Keepiq: ' . $e->getMessage());
+			$this->logger->error(
+				'Keepiq initialization failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
+	}//end run()
 }//end class

@@ -1,29 +1,31 @@
 <template>
 	<div class="master-password-form">
-		<h2>{{ t('doriath', 'Change master password') }}</h2>
+		<h2>{{ t('keepiq', 'Change master password') }}</h2>
 
 		<NcPasswordField
 			v-model="currentPassword"
-			:label="t('doriath', 'Current password')"
+			:label="t('keepiq', 'Current password')"
 			:disabled="loading" />
 
 		<NcPasswordField
 			v-model="newPassword"
-			:label="t('doriath', 'New password')"
+			:label="t('keepiq', 'New password')"
 			:disabled="loading" />
 
 		<PasswordStrengthMeter
 			v-if="newPassword"
 			:password="newPassword"
-			@strength-change="onStrengthChange" />
+			@strengthChange="onStrengthChange" />
 
 		<NcPasswordField
 			v-model="confirmPassword"
-			:label="t('doriath', 'Confirm new password')"
+			:label="t('keepiq', 'Confirm new password')"
 			:disabled="loading" />
 
-		<NcNoteCard v-if="confirmPassword && newPassword !== confirmPassword" type="error">
-			{{ t('doriath', 'Passwords do not match') }}
+		<NcNoteCard
+			v-if="confirmPassword && newPassword !== confirmPassword"
+			type="error">
+			{{ t('keepiq', 'Passwords do not match') }}
 		</NcNoteCard>
 
 		<NcNoteCard v-if="error" type="error">
@@ -31,22 +33,22 @@
 		</NcNoteCard>
 
 		<NcNoteCard v-if="success" type="success">
-			{{ t('doriath', 'Master password changed successfully') }}
+			{{ t('keepiq', 'Master password changed successfully') }}
 		</NcNoteCard>
 
 		<NcButton
-			type="primary"
+			variant="primary"
 			:disabled="!canSubmit || loading"
 			@click="handleSubmit">
-			{{ loading ? t('doriath', 'Changing...') : t('doriath', 'Change password') }}
+			{{ loading ? t('keepiq', 'Changing…') : t('keepiq', 'Change password') }}
 		</NcButton>
 	</div>
 </template>
 
 <script>
 import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
-import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 
 export default {
 	name: 'MasterPasswordForm',
@@ -72,11 +74,13 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		canSubmit() {
-			return this.currentPassword
+			return (
+				this.currentPassword
 				&& this.newPassword
 				&& this.confirmPassword
 				&& this.newPassword === this.confirmPassword
 				&& this.strengthValid
+			)
 		},
 	},
 
@@ -111,7 +115,7 @@ export default {
 				this.newPassword = ''
 				this.confirmPassword = ''
 			} catch (e) {
-				this.error = e.message || t('doriath', 'Failed to change password')
+				this.error = e.message || t('keepiq', 'Failed to change password')
 			} finally {
 				this.loading = false
 			}
