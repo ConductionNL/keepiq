@@ -21,6 +21,7 @@ import ClipboardList from 'vue-material-design-icons/ClipboardList.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
+import Home from 'vue-material-design-icons/Home.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
@@ -40,6 +41,7 @@ export default {
 	CogOutline,
 	FileDocumentOutline,
 	FolderOutline,
+	Home,
 	KeyVariant,
 	LockOutline,
 	MapMarkerPath,

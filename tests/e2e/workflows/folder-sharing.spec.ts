@@ -39,7 +39,12 @@
  * `secrets-write-ui` scenarios they actually drive.
  */
 import { test, expect } from '@playwright/test'
-import { gotoLockSettled, unlockVault, openVault } from './_workflow-helpers'
+import {
+	clickOverflowAction,
+	gotoLockSettled,
+	openVault,
+	unlockVault,
+} from './_workflow-helpers'
 
 const REQ_TOKEN = `(() => {
 	const head = document.querySelector('head[data-requesttoken]');
@@ -161,21 +166,29 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 
-		await nativeClickByText(
-			page,
-			'.secret-list-view__sidebar button',
-			'New folder',
-		)
+		// The create affordance lives in the toolbar's "More actions" overflow
+		// (restyle Stage 5); at the vault root its label is "New vault". The
+		// helper clicks the NcActionButton's INNER button — the testid sits on
+		// the presentational <li>, whose click fires nothing.
+		await clickOverflowAction(page, 'open-create-folder')
 		await expect(page.locator('.folder-form')).toBeVisible({ timeout: 10_000 })
 		await page
 			.locator('.folder-form input[type="text"]')
 			.first()
 			.fill(FOLDER, { force: true })
 		await page.waitForTimeout(300)
-		await nativeClickByText(page, 'body button', 'Create folder')
+		// At the vault root the dialog's submit reads "Create vault"
+		// (level-appropriate terminology).
+		await nativeClickByText(page, 'body button', 'Create (vault|folder)')
 		await expect(page.locator('.folder-form')).toHaveCount(0, {
 			timeout: 15_000,
 		})
+
+		// The new vault appears in the app nav's folder tree (restyle Stage 7)
+		// — the create dialog's onSaved refetches the shared folder store.
+		await expect(
+			page.locator('[data-testid="nav-folder-tree"]').getByText(FOLDER),
+		).toBeVisible({ timeout: 15_000 })
 
 		const folder = await page.evaluate(
 			async ({ tokExpr, name }) => {
@@ -195,9 +208,11 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		)
 		expect(folder, 'folder must be persisted').toBeTruthy()
 
-		await expect(
-			page.locator('.secret-list-view__sidebar', { hasText: FOLDER }),
-		).toBeVisible({ timeout: 10_000 })
+		// The in-page folder pane is gone (restyle Stage 6): at the vault root
+		// the new vault appears as a SUBFOLDER ROW in the list itself.
+		await expect(page.getByTestId(`folder-row-${folder.id}`)).toBeVisible({
+			timeout: 10_000,
+		})
 
 		await page.evaluate(
 			async ({ tokExpr, id }) => {
@@ -498,5 +513,83 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 			userShareRequests,
 			'the deferred user-share affordance issued a request',
 		).toEqual([])
+	})
+
+	/*
+	 * Deep folder navigation purely through the LIST (restyle Stage 6): the
+	 * vault root shows top-level vaults as rows, clicking one descends, the
+	 * breadcrumb trail appears inside a folder, and clicking a crumb walks
+	 * back up — no sidebar involvement.
+	 */
+	test('navigates root → vault → nested folder via subfolder rows and breadcrumbs', async ({
+		page,
+	}) => {
+		// @e2e secrets-write-ui::create-a-folder
+		const PARENT = `__e2e_nav_vault_${Date.now()}`
+		const CHILD = `__e2e_nav_sub_${Date.now()}`
+		await unlockVault(page)
+		await openVault(page)
+
+		// Seed a vault + nested folder via the API (the create dialog is
+		// covered by its own test above; this one is about navigation).
+		const ids = await page.evaluate(
+			async ({ tokExpr, parent, child }) => {
+				// eslint-disable-next-line no-eval
+				const token = eval(tokExpr)
+				const mk = async (name: string, parentId: string | null) => {
+					const res = await fetch(
+						'/index.php/apps/keepiq/api/v1/folders',
+						{
+							method: 'POST',
+							credentials: 'include',
+							headers: {
+								requesttoken: token,
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({ name, parentId }),
+						},
+					)
+					return (await res.json()).id as string
+				}
+				const parentId = await mk(parent, null)
+				const childId = await mk(child, parentId)
+				return { parentId, childId }
+			},
+			{ tokExpr: REQ_TOKEN, parent: PARENT, child: CHILD },
+		)
+
+		// The freshly created folders only exist server-side, and the folder
+		// store refetches on unlock. A reload alone cannot surface them: it
+		// wipes the in-memory CryptoKey, so the app lands back on the lock
+		// gate and no vault row ever renders. Reload, unlock again, reopen
+		// the vault (domcontentloaded, not networkidle — ADR-074 rule 4).
+		await page.reload({ waitUntil: 'domcontentloaded' })
+		await unlockVault(page)
+		await openVault(page)
+
+		// Root: the new vault appears as a subfolder row; descend into it.
+		const parentRow = page.getByTestId(`folder-row-${ids.parentId}`)
+		await expect(parentRow).toBeVisible({ timeout: 20_000 })
+		await parentRow.evaluate((el: HTMLElement) => el.click())
+
+		// Inside the vault: breadcrumbs render, the nested folder is a row.
+		await expect(page.getByTestId('cn-breadcrumbs')).toBeVisible({
+			timeout: 20_000,
+		})
+		const childRow = page.getByTestId(`folder-row-${ids.childId}`)
+		await expect(childRow).toBeVisible({ timeout: 20_000 })
+		await childRow.evaluate((el: HTMLElement) => el.click())
+
+		// Inside the nested folder: the trail carries the parent as a LINK;
+		// clicking it walks back up to the vault.
+		const crumbs = page.getByTestId('cn-breadcrumbs')
+		await expect(crumbs).toContainText(CHILD, { timeout: 20_000 })
+		await crumbs
+			.getByText(PARENT)
+			.first()
+			.evaluate((el: HTMLElement) => el.click())
+		await expect(page.getByTestId(`folder-row-${ids.childId}`)).toBeVisible({
+			timeout: 20_000,
+		})
 	})
 })

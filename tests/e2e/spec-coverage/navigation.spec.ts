@@ -9,7 +9,7 @@
  * that clicking a gated nav entry routes through the lock guard. Nav clicks are
  * scoped to the app navigation (never the global NC header) per the nav trap.
  *
- * @e2e openspec/specs/dashboard/spec.md#app-navigation-renders
+ * @e2e openspec/specs/menu-architecture/spec.md#app-navigation-renders
  */
 import { test, expect } from '@playwright/test'
 import {

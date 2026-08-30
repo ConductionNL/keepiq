@@ -24,6 +24,7 @@
  */
 import { test, expect } from '@playwright/test'
 import {
+	clickOverflowAction,
 	DEV_MASTER_PASSWORD,
 	gotoLockSettled,
 	gotoVaultRoute,
@@ -44,11 +45,10 @@ test.describe('secret import', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// The themed NcButton swallows Playwright's synthetic click, so fire a
-		// native HTMLButtonElement.click() to open the import wizard.
-		await page
-			.getByTestId('import-secrets')
-			.evaluate((el: HTMLElement) => el.click())
+		// Import lives in the "More actions" overflow (restyle Stage 5). The
+		// helper clicks the NcActionButton's INNER button — the testid sits on
+		// the presentational <li>, whose click fires nothing.
+		await clickOverflowAction(page, 'import-secrets')
 
 		// Upload the CSV via the file input (read entirely client-side).
 		await page.getByTestId('import-file').setInputFiles({
@@ -85,11 +85,10 @@ test.describe('secret import', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// The themed NcButton swallows Playwright's synthetic click, so fire a
-		// native HTMLButtonElement.click() to open the import wizard.
-		await page
-			.getByTestId('import-secrets')
-			.evaluate((el: HTMLElement) => el.click())
+		// Import lives in the "More actions" overflow (restyle Stage 5). The
+		// helper clicks the NcActionButton's INNER button — the testid sits on
+		// the presentational <li>, whose click fires nothing.
+		await clickOverflowAction(page, 'import-secrets')
 		await page.getByTestId('import-file').setInputFiles({
 			name: 'sample.csv',
 			mimeType: 'text/csv',

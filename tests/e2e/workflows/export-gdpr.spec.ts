@@ -38,11 +38,11 @@ test.describe('secret export + GDPR', () => {
 		await unlockVault(page, DEV_MASTER_PASSWORD)
 		await gotoVaultRoute(page, 'secrets')
 
-		// Open the "My data" actions and start an export.
+		// Open the "More actions" overflow and start an export.
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "My data" actions menu opens.
+		// click so the "More actions" overflow menu opens.
 		await page
-			.getByRole('button', { name: /My data/i })
+			.getByRole('button', { name: /More actions/i })
 			.evaluate((el: HTMLElement) => el.click())
 		await page
 			.getByRole('menuitem', { name: /Export data/i })
@@ -69,9 +69,9 @@ test.describe('secret export + GDPR', () => {
 		await gotoVaultRoute(page, 'secrets')
 
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "My data" actions menu opens.
+		// click so the "More actions" overflow menu opens.
 		await page
-			.getByRole('button', { name: /My data/i })
+			.getByRole('button', { name: /More actions/i })
 			.evaluate((el: HTMLElement) => el.click())
 		await page
 			.getByRole('menuitem', { name: /Export data/i })
@@ -102,9 +102,9 @@ test.describe('secret export + GDPR', () => {
 		await gotoVaultRoute(page, 'secrets')
 
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "My data" actions menu opens.
+		// click so the "More actions" overflow menu opens.
 		await page
-			.getByRole('button', { name: /My data/i })
+			.getByRole('button', { name: /More actions/i })
 			.evaluate((el: HTMLElement) => el.click())
 		await page
 			.getByRole('menuitem', { name: /Delete my Keepiq data/i })
@@ -129,9 +129,9 @@ test.describe('secret export + GDPR', () => {
 		await gotoVaultRoute(page, 'secrets')
 
 		// The themed NcButton swallows Playwright's synthetic click; fire a native
-		// click so the "My data" actions menu opens.
+		// click so the "More actions" overflow menu opens.
 		await page
-			.getByRole('button', { name: /My data/i })
+			.getByRole('button', { name: /More actions/i })
 			.evaluate((el: HTMLElement) => el.click())
 		await page
 			.getByRole('menuitem', { name: /GDPR export/i })

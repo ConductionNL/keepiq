@@ -23,6 +23,7 @@ import {
 	buildManifest,
 	CnPageRenderer,
 	defaultPageTypes,
+	invalidateEndpointSourceCache,
 	registerBuiltinDashboardWidgets,
 	registerIcons,
 	registerTranslations,
@@ -42,7 +43,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
-import { createVaultGuard } from './router/guards.js'
+import { createVaultGuard, manifestForLockState } from './router/guards.js'
 import { useSessionStore } from './store/modules/session.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
@@ -156,6 +157,19 @@ const router = createRouter({
 // own gating: this guard will not cover it.
 router.beforeEach(createVaultGuard(() => useSessionStore(pinia)))
 
+// The dashboard's endpoint-bound widgets (KPI stats, activity feed, pending
+// queue) fetch through the library's shared endpoint cache, which holds
+// responses for 5 minutes. Fine within a page, but wrong ACROSS a
+// navigation: create a secret and come back, and the dashboard still shows
+// the pre-creation totals and an activity feed without the event. Dropping
+// the cache whenever a navigation lands on the dashboard makes every visit
+// current, while same-page dedupe/caching keeps working.
+router.afterEach((to) => {
+	if (to.name === 'Dashboard') {
+		invalidateEndpointSourceCache()
+	}
+})
+
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib
@@ -178,9 +192,13 @@ const customComponentsProp = Object.fromEntries(
 
 // Create and mount the app immediately so the shell renders.
 const app = createApp({
+	// `manifestForLockState` withholds the walkthrough while the vault is
+	// locked. Reading `isLocked` here makes it a render dependency, so the tour
+	// reappears the moment the vault is unlocked — see the note on that helper
+	// for why the router guard above cannot cover this.
 	render: () =>
 		h(App, {
-			manifest: mergedManifest,
+			manifest: manifestForLockState(mergedManifest, useSessionStore(pinia)),
 			customComponents: customComponentsProp,
 			pageTypes: pageTypesProp,
 			registry: registryProp,

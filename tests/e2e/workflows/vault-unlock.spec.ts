@@ -164,6 +164,15 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// `:support-dialog="false"` would silence it by removing a feature
 			// rather than by judging the traffic.
 			/\/api\/preferences\/support-dialog-seen\b/,
+			// NOTE: `walkthrough_completed_version` is deliberately NOT listed.
+			// It was added here in #488 when the walkthrough merge put that
+			// probe on the wire behind the lock screen — but #486 had already
+			// fixed the cause the better way, by withholding `walkthrough` from
+			// the manifest while locked (`manifestForLockState`), so
+			// CnAppRoot never resolves the preference at all. The two landed
+			// minutes apart and the allowlist entry became an entry that CANNOT
+			// FIRE, which the note above names as pure masking surface: it would
+			// silently swallow a real regression of exactly this shape.
 		]
 
 		page.on('request', (req) => {
@@ -288,7 +297,10 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	 * would break the other specs). The setup form's structure + 12-char strength
 	 * gating is already covered by the spec-coverage lock-screen spec.
 	 */
-	test.fixme('first-time setup creates a suite and unlocks (needs a suite-less account)', async () => {
-		// Intentionally empty — see block comment for the precise blocker.
+	test('first-time setup creates a suite and unlocks', async () => {
+		test.fixme(
+			true,
+			"SETUP MODE is not drivable: an active suite already exists for admin, so the first-time setup form never renders. Driving it needs a suite-less account — there is no UI to revoke or delete the admin suite, and doing it out-of-band would break the other specs in this file. The setup form's structure and its 12-character strength gating are already covered by the spec-coverage lock-screen spec.",
+		)
 	})
 })
