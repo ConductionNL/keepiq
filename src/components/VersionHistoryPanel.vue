@@ -195,7 +195,7 @@ export default {
 .version-history__meta {
 	color: var(--color-text-maxcontrast, #777);
 	font-size: 13px;
-	margin-left: 8px;
+	margin-inline-start: 8px;
 }
 
 .version-history__empty {

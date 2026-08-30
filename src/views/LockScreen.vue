@@ -589,9 +589,8 @@ export default {
 	 */
 	position: fixed;
 	top: var(--header-height, 50px);
-	right: 0;
+	inset-inline: 0;
 	bottom: 0;
-	left: 0;
 	z-index: 1999;
 	display: flex;
 	/*
