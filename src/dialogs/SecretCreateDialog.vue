@@ -251,6 +251,12 @@ export default {
 			return useSessionStore().isLocked
 		},
 
+		/**
+		 * The seeded secret types as select options, labels translated.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 */
 		typeOptions() {
 			return useSecretTypeStore().types.map((type) => ({
 				value: type.id,

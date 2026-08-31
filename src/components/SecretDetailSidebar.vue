@@ -1252,7 +1252,7 @@ export default {
 		 * recipient list + delegation manager.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-secret-sharing
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		isOwner() {
 			if (this.secret === null || this.currentUserId === null) {
@@ -1270,7 +1270,7 @@ export default {
 		 * all write actions on the detail are hidden (offline-readonly-cache §4.2).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-cached-vault-is-read-only
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-mode-is-strictly-read-only
 		 */
 		offlineReadOnly() {
 			return useOfflineStore().readOnly
@@ -1282,7 +1282,7 @@ export default {
 		 * share with a third party.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-secret-sharing
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		isRecipient() {
 			return this.secret !== null && this.isOwner === false
@@ -1293,7 +1293,7 @@ export default {
 		 * or recipient).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-secret-sharing
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		canSeeSharing() {
 			return this.isOwner === true || this.isRecipient === true
@@ -1316,6 +1316,11 @@ export default {
 		},
 	},
 
+	/**
+	 * Fetch the type catalogue, then load and decrypt the secret.
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+	 */
 	async mounted() {
 		await useSecretTypeStore().fetchTypes()
 		await this.load()
@@ -1444,7 +1449,7 @@ export default {
 		 * Open the share dialog for this secret.
 		 *
 		 * @return {void}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-secret-sharing
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		openShare() {
 			this.cnOpenModal('secret-share', {
@@ -1578,6 +1583,13 @@ export default {
 
 details[open] > summary .secret-detail__accordion-chevron {
 	transform: rotate(180deg);
+}
+
+/* Vestibular safety (gate-45): no motion for users who asked for none. */
+@media (prefers-reduced-motion: reduce) {
+	.secret-detail__accordion-chevron {
+		transition: none;
+	}
 }
 
 /* Keep a long secret name from running under the lifted action row. */

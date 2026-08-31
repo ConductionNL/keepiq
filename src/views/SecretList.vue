@@ -357,7 +357,7 @@
 						<NcCheckboxRadioSwitch
 							class="secret-list-view__check"
 							:modelValue="bulkStore.selectedIds.includes(object.id)"
-							:ariaLabel="
+							:aria-label="
 								t('keepiq', 'Select {name}', { name: object.name })
 							"
 							:data-testid="`bulk-check-${object.id}`"
@@ -694,7 +694,12 @@ export default {
 			return !!this.typeFilter || this.sortField !== 'name'
 		},
 
-		/** Options for the secret-type filter (passkey-item-type §3.3). */
+		/**
+		 * Options for the secret-type filter (passkey-item-type §3.3).
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 */
 		typeFilterOptions() {
 			return useSecretTypeStore().types.map((type) => ({
 				value: type.id,
@@ -904,6 +909,11 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Reload the list when the route's folder changes.
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
 		async selectedFolderId() {
 			// Blank the list for the duration of the fetch so the switch
 			// reads as loading → new folder, never old rows → new rows.
@@ -981,6 +991,7 @@ export default {
 		 *
 		 * @param {object} object The clicked row's secret.
 		 * @return {void}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
 		 */
 		onRowCheck(object) {
 			const ids = new Set(this.bulkStore.selectedIds)
@@ -1015,6 +1026,7 @@ export default {
 		 *
 		 * @param {boolean} checked The NcActionCheckbox model value.
 		 * @return {void}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
 		 */
 		onSelectAll(checked) {
 			const ids = new Set(this.bulkStore.selectedIds)
