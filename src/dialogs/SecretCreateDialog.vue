@@ -181,6 +181,7 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
 import { membersToObject } from '../utils/additionalFields.js'
+import { secretTypeLabel } from '../utils/secretTypes.js'
 
 /**
  * Create a secret. The value (and optional login) are RSA-encrypted by the
@@ -250,10 +251,16 @@ export default {
 			return useSessionStore().isLocked
 		},
 
+		/**
+		 * The seeded secret types as select options, labels translated.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 */
 		typeOptions() {
 			return useSecretTypeStore().types.map((type) => ({
 				value: type.id,
-				label: type.label || type.name,
+				label: secretTypeLabel(type),
 			}))
 		},
 

@@ -14,7 +14,7 @@
  *
  *   (A) FIXED — the write-UI now exists. SecretList.vue offers a "New secret"
  *       affordance that opens SecretCreateDialog (src/dialogs/), wired to the
- *       secret store; SecretDetail.vue offers Edit / Move / Share. The dialogs
+ *       secret store; SecretDetailSidebar.vue offers Edit / Move / Share. The dialogs
  *       RSA-encrypt the value in the browser before the POST.
  *   (B) FIXED — the Secret entity `ownerType` default is '' so setOwnerType('user')
  *       marks the column dirty and QBMapper writes it; POST /api/v1/secrets
@@ -411,7 +411,11 @@ test.describe('Workflow: secret CRUD + encryption — secrets/spec.md', () => {
 		await expect(page.locator(`${SecretDetail}__card`)).toBeVisible({
 			timeout: 20_000,
 		})
-		await expect(page.locator(`${SecretDetail}__title`)).toHaveText(NAME)
+		// Restyle Stage 8: the detail is a right sidebar over the list; the
+		// secret's name is the NcAppSidebar header rather than an in-card h2.
+		await expect(
+			page.locator(`${SecretDetail} .app-sidebar-header__mainname`),
+		).toHaveText(NAME)
 		await nativeClickByLabel(page, 'Show')
 		await expect(
 			page.locator('.secret-detail .keepiq-password-field input'),

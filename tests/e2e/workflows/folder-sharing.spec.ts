@@ -13,9 +13,10 @@
  *   - Folder create: SecretList.vue offers a "New folder" affordance that opens
  *     FolderCreateDialog (src/dialogs/), wired to folderStore.createFolder.
  *     POST /api/v1/folders persists owner_type cleanly.
- *   - Move: SecretDetail.vue offers a "Move" affordance (SecretMoveDialog) that
- *     re-parents a secret via secret.updateSecret({ folderId }).
- *   - Share: SecretDetail.vue offers a "Share" affordance (SecretShareDialog)
+ *   - Move: the detail sidebar's "Secret actions" menu offers a "Move" entry
+ *     (SecretMoveDialog) that re-parents a secret via
+ *     secret.updateSecret({ folderId }).
+ *   - Share: the detail sidebar offers an icon-only "Share" button (SecretShareDialog)
  *     that creates a password-protected public link via linkShare.createLinkShare
  *     (Argon2id + AES-GCM snapshot, client-side) and reveals the link + password
  *     once. The token resolves via the public two-phase endpoint.
@@ -166,8 +167,8 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 
-		// The create affordance lives in the toolbar's "More actions" overflow
-		// (restyle Stage 5); at the vault root its label is "New vault". The
+		// The create affordance lives in the actions bar's "Actions" overflow
+		// (restyle Stage 8); at the vault root its label is "New vault". The
 		// helper clicks the NcActionButton's INNER button — the testid sits on
 		// the presentational <li>, whose click fires nothing.
 		await clickOverflowAction(page, 'open-create-folder')
@@ -272,7 +273,15 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		const secretName = await openFirstSecret(page)
 		expect(secretName).toBeTruthy()
 
-		await nativeClickByText(page, '.secret-detail__actions button', 'Move')
+		// Restyle Stage-8 polish: Move lives in the sidebar's "Secret
+		// actions" ("…") menu. Native clicks — the themed buttons swallow
+		// Playwright's synthetic click, same as elsewhere in this file.
+		await page
+			.getByRole('button', { name: /Secret actions/i })
+			.evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('secret-detail-move')
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.locator('.move-form')).toBeVisible({ timeout: 10_000 })
 		await page.locator('.move-form .vs__dropdown-toggle').click()
 		await page
@@ -355,7 +364,9 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await openVault(page)
 		await openFirstSecret(page)
 
-		await nativeClickByText(page, '.secret-detail__actions button', 'Share')
+		await page
+			.getByTestId('secret-detail-share')
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.locator('.share-dialog')).toBeVisible({ timeout: 10_000 })
 		await nativeClickByText(page, 'body button', 'Create link')
 
@@ -475,7 +486,9 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 		await openFirstSecret(page)
-		await nativeClickByText(page, '.secret-detail__actions button', 'Share')
+		await page
+			.getByTestId('secret-detail-share')
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.locator('.share-dialog')).toBeVisible({ timeout: 10_000 })
 		const userBtn = page.locator('.share-dialog__user button')
 		await expect(userBtn).toBeVisible()

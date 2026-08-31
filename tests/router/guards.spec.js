@@ -70,9 +70,11 @@ const PROTECTED_ROUTES = [
 	'PasswordHealth',
 	'Certificates',
 	'EmergencyAccess',
+	// SecretList/'SecretListFolder' also carry the optional `:id?` detail
+	// segment (restyle Stage 8) — the old SecretDetail page id is gone, but
+	// /secrets/<id> deep links still resolve to SecretList and stay gated.
 	'SecretList',
 	'SecretListFolder',
-	'SecretDetail',
 	'ApplicationRegister',
 	'ApplicationDetail',
 	// Flows are PROTECTED, not public. A flow in this app can read and write
@@ -100,11 +102,10 @@ describe('createVaultGuard', () => {
 		it('preserves the attempted path as returnUrl so unlock resumes it', () => {
 			const { guard, next } = harness(true)
 
-			guard(
-				route('SecretDetail', '/secrets/42'),
-				route('Dashboard', '/'),
-				next,
-			)
+			// A secret deep link resolves to the SecretList route with the
+			// optional :id segment (restyle Stage 8) — the deep PATH is what
+			// must survive as returnUrl.
+			guard(route('SecretList', '/secrets/42'), route('Dashboard', '/'), next)
 
 			expect(next).toHaveBeenCalledWith({
 				name: LOCK_ROUTE_NAME,

@@ -72,7 +72,8 @@
 			<NavFolderTree
 				v-if="folderTree.length > 0"
 				:folders="folderTree"
-				:highlightId="highlightFolderId" />
+				:highlightId="highlightFolderId"
+				:ellipsisHighlightId="ellipsisHighlightId" />
 		</template>
 		<template #footer>
 			<!-- Footer-section entries live in NcAppNavigation's #footer slot —
@@ -308,9 +309,31 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		highlightFolderId() {
+			const trail = this.activeFolderTrail
+			if (trail.length === 0) {
+				return null
+			}
+			if (trail.length <= NAV_TREE_MAX_DEPTH) {
+				return this.activeFolderId
+			}
+			// Below the display cap no visible row IS the folder — the "…"
+			// node under the deepest visible ancestor carries the highlight
+			// instead (ellipsisHighlightId). Highlighting the ancestor too
+			// would read as two selections for one folder.
+			return null
+		},
+
+		/**
+		 * The root-first id trail of the active folder (cycle/depth guarded
+		 * like every other parentId walk); empty when no folder is active.
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		activeFolderTrail() {
 			const active = this.activeFolderId
 			if (!active) {
-				return null
+				return []
 			}
 			const byId = new Map(this.folderStore.folders.map((f) => [f.id, f]))
 			const trail = []
@@ -321,12 +344,24 @@ export default {
 				trail.unshift(current.id)
 				current = current.parentId ? byId.get(current.parentId) : null
 			}
-			if (trail.length === 0) {
+			return trail
+		},
+
+		/**
+		 * The capped node whose "…" child should render ACTIVE: set whenever
+		 * the active folder lives anywhere below the display cap — the "…"
+		 * stands for the whole hidden chain, so it (and only it) carries the
+		 * selection, however deep the folder is.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		ellipsisHighlightId() {
+			const trail = this.activeFolderTrail
+			if (trail.length <= NAV_TREE_MAX_DEPTH) {
 				return null
 			}
-			return trail.length <= NAV_TREE_MAX_DEPTH
-				? active
-				: trail[NAV_TREE_MAX_DEPTH - 1]
+			return trail[NAV_TREE_MAX_DEPTH - 1]
 		},
 	},
 

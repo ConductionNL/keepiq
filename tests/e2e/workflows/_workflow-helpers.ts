@@ -193,7 +193,25 @@ export async function openVault(page: Page): Promise<void> {
 }
 
 /**
- * Click an entry inside the vault toolbar's "More actions" overflow.
+ * Open the vault page's single "Actions" overflow menu — the actions bar's
+ * own NcActions (`data-testid="cn-actions"`), which since the Stage-8
+ * toolbar consolidation carries EVERY page action (Refresh, Select all,
+ * the create/import actions, the "My data" entries and the type filter).
+ * The themed trigger button swallows Playwright's synthetic click, so the
+ * click is fired natively (same as the unlock button above).
+ *
+ * @param page The Playwright page (must be on the vault list, unlocked).
+ */
+export async function openActionsMenu(page: Page): Promise<void> {
+	await page
+		.getByTestId('cn-actions')
+		.locator('button')
+		.first()
+		.evaluate((el: HTMLElement) => el.click())
+}
+
+/**
+ * Click an entry inside the vault page's "Actions" overflow menu.
  *
  * The overflow entries are NcActionButtons (restyle Stage 5), and NcActionButton
  * renders its `data-testid` on the `<li role="presentation">` WRAPPER while the
@@ -211,10 +229,7 @@ export async function clickOverflowAction(
 	page: Page,
 	testid: string,
 ): Promise<void> {
-	await page
-		.getByRole('button', { name: /More actions/i })
-		.first()
-		.evaluate((el: HTMLElement) => el.click())
+	await openActionsMenu(page)
 	const inner = page.getByTestId(testid).locator('button').first()
 	await inner.waitFor({ state: 'attached', timeout: 10_000 })
 	await inner.evaluate((el: HTMLElement) => el.click())

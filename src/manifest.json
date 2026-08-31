@@ -486,27 +486,19 @@
 		},
 		{
 			"id": "SecretList",
-			"route": "/secrets",
+			"route": "/secrets/:id?",
 			"type": "custom",
 			"title": "Vault",
 			"component": "SecretList",
-			"_note": "Main vault: folder sidebar + searchable/sortable/paginated secret list. type:\"custom\" because it owns a bespoke two-pane layout and on-demand client-side decryption that no built-in page type models yet."
+			"_note": "Main vault: searchable/sortable/paginated secret list on the app nav's folder tree. type:\"custom\" because it owns bespoke list rows and on-demand client-side decryption that no built-in page type models yet. The optional :id? segment opens the secret-detail sidebar OVER the list (restyle Stage 8) — /secrets/<id> deep links keep working, and keeping the page id stable means CnPageRenderer never remounts the list when a row opens (its render key is the page id)."
 		},
 		{
 			"id": "SecretListFolder",
-			"route": "/folders/:folderId",
+			"route": "/folders/:folderId/:id?",
 			"type": "custom",
 			"title": "Vault",
 			"component": "SecretList",
-			"_note": "Same vault view filtered to a folder (folderId route param)."
-		},
-		{
-			"id": "SecretDetail",
-			"route": "/secrets/:id",
-			"type": "custom",
-			"title": "Secret",
-			"component": "SecretDetail",
-			"_note": "Secret detail with type-specific fields, decrypted client-side; show/hide toggle keeps the key masked until revealed."
+			"_note": "Same vault view filtered to a folder (folderId route param); :id? opens the secret-detail sidebar with the folder context kept in the path."
 		},
 		{
 			"id": "ApplicationRegister",

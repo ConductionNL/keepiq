@@ -1016,7 +1016,22 @@ OC.L10N.register(
         "Opens in a new tab": "Opens in a new tab",
         "Vaults": "Vaults",
         "Create vault": "Create vault",
-        "Vault name": "Vault name"
+        "Vault name": "Vault name",
+        "Details": "Details",
+        "Versions": "Versions",
+        "Secret actions": "Secret actions",
+        "More information": "More information",
+        "Personal details": "Personal details",
+        "Address details": "Address details",
+        "Contact details": "Contact details",
+        "API Key": "API Key",
+        "SSH Key": "SSH Key",
+        "Certificate": "Certificate",
+        "Secure Note": "Secure Note",
+        "Database": "Database",
+        "Authenticator (TOTP)": "Authenticator (TOTP)",
+        "Payment Card": "Payment Card",
+        "Filter and sort": "Filter and sort"
     },
     "nplurals=2; plural=(n != 1);"
 )
