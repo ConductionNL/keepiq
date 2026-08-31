@@ -810,6 +810,7 @@
 </template>
 
 <script>
+import { showError } from '@nextcloud/dialogs'
 import {
 	NcActionButton,
 	NcActions,
@@ -1258,11 +1259,10 @@ export default {
 			if (this.secret === null || this.currentUserId === null) {
 				return false
 			}
-			// Backend serializes ownerType / ownerId on the Secret entity;
-			// fallback to userId for legacy responses.
-			const owner =
-				this.secret.ownerId ?? this.secret.owner_id ?? this.secret.userId
-			return owner === this.currentUserId
+			// `ownerId` is the one canonical owner field: the Secret entity
+			// has serialized it since its first version, so every response
+			// (offline snapshots included) carries it.
+			return this.secret.ownerId === this.currentUserId
 		},
 
 		/**
@@ -1322,7 +1322,17 @@ export default {
 	 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 	 */
 	async mounted() {
-		await useSecretTypeStore().fetchTypes()
+		try {
+			await useSecretTypeStore().fetchTypes()
+		} catch (e) {
+			// A failed catalogue fetch must not strand the sidebar on its
+			// spinner — surface the error the same way load() does.
+			this.error =
+				e?.response?.data?.message
+				|| t('keepiq', 'Failed to load secret')
+			this.loading = false
+			return
+		}
 		await this.load()
 	},
 
@@ -1383,7 +1393,17 @@ export default {
 		refreshList() {
 			useSecretStore()
 				.fetchSecrets()
-				.catch(() => {})
+				.catch(() => {
+					// The mutation itself succeeded — only the list behind the
+					// sidebar is stale now, so a toast (not this.error) is the
+					// right weight: the detail view is correct.
+					showError(
+						t(
+							'keepiq',
+							'Could not refresh the list — it may be out of date',
+						),
+					)
+				})
 		},
 
 		/**
@@ -1465,7 +1485,16 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-delete-secret
 		 */
 		async remove() {
-			await useSecretStore().deleteSecret(this.secretId)
+			try {
+				await useSecretStore().deleteSecret(this.secretId)
+			} catch (e) {
+				// A refused delete (403 on a delegated secret, server error,
+				// offline write) keeps the sidebar open with the reason inline.
+				this.error =
+					e?.response?.data?.message
+					|| t('keepiq', 'Failed to delete secret')
+				return
+			}
 			this.$emit('close')
 		},
 
