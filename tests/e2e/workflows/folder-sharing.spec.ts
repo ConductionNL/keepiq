@@ -279,8 +279,13 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await page
 			.getByRole('button', { name: /Secret actions/i })
 			.evaluate((el: HTMLElement) => el.click())
+		// `data-testid` falls through to NcActionButton's ROOT, which is the
+		// <li> wrapper, not the <button> carrying the click handler — so
+		// clicking the testid node itself is a silent no-op and the dialog
+		// never opens. Descend to the button.
 		await page
 			.getByTestId('secret-detail-move')
+			.locator('button')
 			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.locator('.move-form')).toBeVisible({ timeout: 10_000 })
 		await page.locator('.move-form .vs__dropdown-toggle').click()
