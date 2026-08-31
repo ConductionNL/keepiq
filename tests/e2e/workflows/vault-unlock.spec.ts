@@ -164,6 +164,15 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// `:support-dialog="false"` would silence it by removing a feature
 			// rather than by judging the traffic.
 			/\/api\/preferences\/support-dialog-seen\b/,
+			// NOTE: `walkthrough_completed_version` is deliberately NOT listed.
+			// It was added here in #488 when the walkthrough merge put that
+			// probe on the wire behind the lock screen — but #486 had already
+			// fixed the cause the better way, by withholding `walkthrough` from
+			// the manifest while locked (`manifestForLockState`), so
+			// CnAppRoot never resolves the preference at all. The two landed
+			// minutes apart and the allowlist entry became an entry that CANNOT
+			// FIRE, which the note above names as pure masking surface: it would
+			// silently swallow a real regression of exactly this shape.
 		]
 
 		page.on('request', (req) => {

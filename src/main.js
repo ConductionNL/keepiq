@@ -43,7 +43,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
-import { createVaultGuard } from './router/guards.js'
+import { createVaultGuard, manifestForLockState } from './router/guards.js'
 import { useSessionStore } from './store/modules/session.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
@@ -192,9 +192,13 @@ const customComponentsProp = Object.fromEntries(
 
 // Create and mount the app immediately so the shell renders.
 const app = createApp({
+	// `manifestForLockState` withholds the walkthrough while the vault is
+	// locked. Reading `isLocked` here makes it a render dependency, so the tour
+	// reappears the moment the vault is unlocked — see the note on that helper
+	// for why the router guard above cannot cover this.
 	render: () =>
 		h(App, {
-			manifest: mergedManifest,
+			manifest: manifestForLockState(mergedManifest, useSessionStore(pinia)),
 			customComponents: customComponentsProp,
 			pageTypes: pageTypesProp,
 			registry: registryProp,

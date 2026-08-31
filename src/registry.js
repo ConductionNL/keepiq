@@ -46,6 +46,7 @@ import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
 import CertificateInventoryView from './views/CertificateInventoryView.vue'
 import EmergencyAccessView from './views/EmergencyAccessView.vue'
 import EphemeralSendAccess from './views/EphemeralSendAccess.vue'
+import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import HealthReportView from './views/HealthReportView.vue'
 import LinkShareAccess from './views/LinkShareAccess.vue'
 import LockScreen from './views/LockScreen.vue'
@@ -54,6 +55,12 @@ import SecretList from './views/SecretList.vue'
 import SecretRequestFill from './views/SecretRequestFill.vue'
 
 export default {
+	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
+	//     the list and the canvas are the shared `flows` / `flow-detail`
+	//     manifest page types. CnFlowSidebar has to mount in the NC app
+	//     sidebar for the canvas to keep full width. ---
+	FlowDetailSidebar: { kind: 'page', component: FlowDetailSidebar },
+
 	LockScreen: { kind: 'page', component: LockScreen },
 	SecretList: { kind: 'page', component: SecretList },
 	SecretRequestFill: { kind: 'page', component: SecretRequestFill },
