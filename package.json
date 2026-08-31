@@ -32,7 +32,7 @@
   ],
   "prettier": "@nextcloud/prettier-config",
   "overrides": {
-    "@nextcloud/axios": "~2.5.2",
+    "@nextcloud/axios": "$@nextcloud/axios",
     "libxmljs2": "^0.37.0"
   },
   "dependencies": {
