@@ -120,6 +120,23 @@ export default {
 		},
 	},
 
+	watch: {
+		/**
+		 * The hosting sidebar swaps the `:id` route segment without
+		 * remounting (see SecretDetailSidebar), so a secret switch must
+		 * refetch here — `mounted()` alone leaves the previous secret's
+		 * list on screen.
+		 */
+		async secretId() {
+			this.store.reset()
+			try {
+				await this.store.fetchAttachments(this.secretId)
+			} catch {
+				// Error surfaced via store state.
+			}
+		},
+	},
+
 	async mounted() {
 		try {
 			await this.store.fetchAttachments(this.secretId)
