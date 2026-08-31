@@ -1637,7 +1637,9 @@ details[open] > summary .secret-detail__accordion-chevron {
 }
 
 .secret-detail__row-value {
-	word-break: break-word;
+	/* Same wrapping behaviour as the deprecated `word-break: break-word`
+	   (stylelint: declaration-property-value-keyword-no-deprecated). */
+	overflow-wrap: anywhere;
 }
 
 /* Masked card values read as digits: monospace, slightly tracked. */
