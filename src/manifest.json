@@ -249,7 +249,6 @@
 						"content": {
 							"label": "Total secrets",
 							"icon": "ClipboardList",
-							"valueColor": "var(--color-primary-element)",
 							"endpointSource": {
 								"url": "/apps/keepiq/api/dashboard/summary"
 							},
@@ -276,7 +275,7 @@
 						"content": {
 							"label": "Folders",
 							"icon": "FolderOutline",
-							"valueColor": "var(--color-success-text)",
+							"variant": "success",
 							"endpointSource": {
 								"url": "/apps/keepiq/api/dashboard/summary"
 							},
@@ -291,7 +290,7 @@
 						"content": {
 							"label": "Rotation due",
 							"icon": "Autorenew",
-							"valueColor": "var(--color-error-text)",
+							"variant": "error",
 							"endpointSource": {
 								"url": "/apps/keepiq/api/dashboard/summary"
 							},
