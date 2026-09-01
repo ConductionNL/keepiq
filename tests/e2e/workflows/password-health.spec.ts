@@ -87,7 +87,7 @@ test.describe('password health', () => {
 		// redirected to the lock gate by the zero-knowledge router guard (the same
 		// behaviour the gated-routes spec verifies for every in-app route), so the
 		// dashboard — and any health data — never mounts.
-		await page.goto(`${APP_BASE}/#/`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP_BASE}/`, { waitUntil: 'domcontentloaded' })
 		await expect(page.locator('.lock-screen')).toBeVisible({ timeout: 20_000 })
 
 		// No health data leaks while locked: no strength badges, no dashboard card.

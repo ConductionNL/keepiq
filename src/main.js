@@ -35,7 +35,7 @@ import {
 } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { createApp, h } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import { ensureSkipActionsTarget } from './bootstrap/skip-actions.js'
 import appIcons from './icons.js'
@@ -133,8 +133,37 @@ function routesFromManifest(manifest) {
 	return routes
 }
 
+/**
+ * The router base for THIS page load.
+ *
+ * ⚠️ `generateUrl('/apps/keepiq')` alone is not enough. Nextcloud serves the
+ * app under BOTH `/apps/keepiq/...` and `/index.php/apps/keepiq/...`, but
+ * `generateUrl()` returns only the form the instance is configured for. A
+ * visitor arriving on the other form — a bookmark, an emailed deep link, an
+ * integration that hardcodes `/index.php` — falls outside the router base,
+ * vue-router cannot resolve the path, and the catch-all redirects to `/`. They
+ * land on the dashboard with no error: the deep link is silently swallowed.
+ *
+ * Hash routing never had this, because the route travelled in the fragment and
+ * the path prefix was irrelevant. This app's own e2e helpers use the
+ * `/index.php` form (`APP_BASE = '/index.php/apps/keepiq'`), so without this
+ * every deep link the suite makes would break.
+ *
+ * It matters more here than elsewhere: keepiq's share and send links
+ * (`/share/link/:token`, `/send/:token`, `/share/request/:token`) are handed to
+ * people OUTSIDE the app, in messages and emails, in whichever URL shape the
+ * sender's client produced. A swallowed deep link there is a share that
+ * silently does nothing.
+ *
+ * @return {string} The base path vue-router should strip from the URL.
+ */
+function routerBase() {
+	const match = window.location.pathname.match(/^(.*\/apps\/keepiq)(?:\/|$)/)
+	return match ? match[1] : generateUrl('/apps/keepiq')
+}
+
 const router = createRouter({
-	history: createWebHashHistory(generateUrl('/apps/keepiq')),
+	history: createWebHistory(routerBase()),
 	routes: routesFromManifest(mergedManifest),
 })
 

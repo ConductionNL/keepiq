@@ -177,7 +177,7 @@ test.describe('Keepiq — routed page baselines', () => {
 			(r: any) => r.status === 'pending',
 		)
 		expect(pending, 'no pending secret request to fill').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/share/request/${pending.token}`, {
+		await page.goto(`${APP_BASE}/share/request/${pending.token}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await shootComponent(page, 'secret-request-fill', 'secret-request-fill.png')
@@ -205,7 +205,7 @@ test.describe('Keepiq — routed page baselines', () => {
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created link share carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/share/link/${token}`, {
+		await page.goto(`${APP_BASE}/share/link/${token}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await shootComponent(page, 'link-share-access', 'link-share-access.png')
@@ -228,7 +228,7 @@ test.describe('Keepiq — routed page baselines', () => {
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created ephemeral send carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/send/${token}`, {
+		await page.goto(`${APP_BASE}/send/${token}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await shootComponent(page, 'send-access-page', 'ephemeral-send-access.png')

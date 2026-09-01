@@ -74,7 +74,7 @@ test.describe('App navigation — manifest menu', () => {
 		// The Dashboard entry points at the keepiq app root (not /apps/dashboard).
 		// Matched on the hash SUFFIX, not the whole href: under vue-router 4 the
 		// hash-history links render relative (`#/`) rather than carrying the
-		// absolute app base (`/apps/keepiq/#/`). Both resolve to the same route
+		// absolute app base (`/apps/keepiq/`). Both resolve to the same route
 		// from any keepiq page; asserting the literal absolute form would pin a
 		// router implementation detail rather than the requirement.
 		await expect(nav.locator('a[href$="#/"]').first()).toBeVisible()
@@ -93,7 +93,7 @@ test.describe('App navigation — manifest menu', () => {
 	}) => {
 		await unlockVault(page)
 
-		// "Lock vault" is a keepiq-owned route (/apps/keepiq/#/lock) in the
+		// "Lock vault" is a keepiq-owned route (/apps/keepiq/lock) in the
 		// settings foldout — expand it and click the entry. App.vue's $route
 		// watcher calls session.lock() on entering /lock while unlocked, so
 		// this drives the real re-lock flow end to end.
