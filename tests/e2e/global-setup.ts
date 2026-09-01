@@ -10,10 +10,12 @@
  * session without repeating the login flow.
  */
 
-import { chromium, request, type FullConfig } from '@playwright/test'
-import * as path from 'path'
+import type { FullConfig } from '@playwright/test'
+
+import { chromium, request } from '@playwright/test'
 import * as fs from 'fs'
-import { resolveBaseUrl } from './base-url'
+import * as path from 'path'
+import { resolveBaseUrl } from './base-url.ts'
 
 const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
@@ -154,7 +156,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 		await page.evaluate(() => {
 			try {
 				window.localStorage.setItem('cn-walkthrough-seen:keepiq', '999.0.0')
-			} catch (e) {
+			} catch {
 				// localStorage unavailable — specs fall back to dismissing by hand.
 			}
 		})

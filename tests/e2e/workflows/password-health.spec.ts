@@ -22,14 +22,14 @@
  * development master password, and the dev seed data provides at least one
  * secret to analyse.
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
 	APP_BASE,
 	DEV_MASTER_PASSWORD,
 	gotoLockSettled,
 	gotoVaultRoute,
 	unlockVault,
-} from './_workflow-helpers'
+} from './_workflow-helpers.ts'
 
 test.describe('password health', () => {
 	test('the secrets list shows a strength badge after unlock', async ({

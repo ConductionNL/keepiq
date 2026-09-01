@@ -20,14 +20,14 @@
  * enabled, the admin owns one active EncryptionSuite seeded with the dev master
  * password, and the dev seed provides at least one secret.
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
 	DEV_MASTER_PASSWORD,
 	gotoLockSettled,
 	gotoVaultRoute,
 	openActionsMenu,
 	unlockVault,
-} from './_workflow-helpers'
+} from './_workflow-helpers.ts'
 
 test.describe('secret export + GDPR', () => {
 	test('encrypted backup export downloads a .doriath-backup file client-side', async ({

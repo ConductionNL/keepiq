@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -20,7 +22,7 @@
  *     and decrypts in-browser; the suite's `certificate` field is a full
  *     CA-signed X.509 certificate.
  */
-import { type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 export const APP_BASE = '/index.php/apps/keepiq'
 

@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,8 +45,8 @@
  * @e2e openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
  * @e2e openspec/specs/encryption-suites/spec.md#requirement-suite-migration
  */
-import { test, expect, type Page } from '@playwright/test'
-import { APP_BASE } from './_workflow-helpers'
+import { expect, test } from '@playwright/test'
+import { APP_BASE } from './_workflow-helpers.ts'
 
 /** A fixture account that owns no EncryptionSuite, so setup mode is reachable. */
 const VAULT_USER = process.env.KEEPIQ_VAULT_USER ?? 'alice'
