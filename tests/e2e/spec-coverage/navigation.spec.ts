@@ -72,18 +72,18 @@ test.describe('App navigation — manifest menu', () => {
 		await expect(nav).toBeVisible({ timeout: 15_000 })
 
 		// The Dashboard entry points at the keepiq app root (not /apps/dashboard).
-		// Matched on the hash SUFFIX, not the whole href: under vue-router 4 the
-		// hash-history links render relative (`#/`) rather than carrying the
-		// absolute app base (`/apps/keepiq/`). Both resolve to the same route
-		// from any keepiq page; asserting the literal absolute form would pin a
-		// router implementation detail rather than the requirement.
-		await expect(nav.locator('a[href$="#/"]').first()).toBeVisible()
+		// Matched on the SUFFIX, not the whole href: the app routes on history
+		// now, and Nextcloud serves it as both `/apps/keepiq/...` and
+		// `/index.php/apps/keepiq/...`, so the link carries whichever base the
+		// page was loaded under. Asserting a literal absolute form would pin one
+		// of the two and fail on the other for a reason that is not a defect.
+		await expect(nav.locator('a[href$="/apps/keepiq/"]').first()).toBeVisible()
 		// Footer entry: Documentation (pinned, always visible).
 		await expect(nav.getByText(/Documentation/i).first()).toBeVisible()
 		// Lock vault lives in the settings foldout (section: "settings"); expand
 		// it so the keepiq-owned lock route becomes visible.
 		await expandSettingsFoldout(page)
-		await expect(nav.locator('a[href$="#/lock"]').first()).toBeVisible()
+		await expect(nav.locator('a[href$="/lock"]').first()).toBeVisible()
 
 		assertNoKeepiqErrors(errors)
 	})
@@ -98,14 +98,14 @@ test.describe('App navigation — manifest menu', () => {
 		// watcher calls session.lock() on entering /lock while unlocked, so
 		// this drives the real re-lock flow end to end.
 		await expandSettingsFoldout(page)
-		const lockEntry = appNav(page).locator('a[href$="#/lock"]').first()
+		const lockEntry = appNav(page).locator('a[href$="/lock"]').first()
 		await expect(lockEntry).toBeVisible()
 		await lockEntry.evaluate((el: HTMLElement) => el.click())
 
 		await expect(lockHeading(page)).toBeVisible({ timeout: 15_000 })
-		// Hash-mode router: the lock route is `#/lock` (the path may retain the
-		// `/lock` prefix from the initial load, so assert the hash, not the path).
-		await expect(page).toHaveURL(/#\/lock$/)
+		// History router: the lock route is a real path. Anchored at the end so
+		// it holds under both the `/apps/...` and `/index.php/apps/...` bases.
+		await expect(page).toHaveURL(/\/apps\/keepiq\/lock$/)
 		// Back on the lock gate the nav disappears again — the exclusive-surface
 		// contract, asserted on the transition and not only on a cold load.
 		await expect(appNav(page)).toBeHidden()
