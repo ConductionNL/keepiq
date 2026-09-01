@@ -109,55 +109,11 @@
 				:children="deleteChildren"
 				@deleted="onDeleted"
 				@update:open="(value) => !value && resetDelete()" />
-			<NcDialog
+			<FolderDeleteConfirmDialog
 				v-if="deleteFolder && deleteChildren && deleteIsEmpty"
-				:name="
-					deleteFolder.parentId
-						? t('keepiq', 'Delete folder')
-						: t('keepiq', 'Delete vault')
-				"
-				:open="true"
-				size="small"
-				@update:open="(value) => !value && resetDelete()">
-				<div class="keepiq-nav__delete-body">
-					<NcNoteCard v-if="deleteError" type="error">
-						{{ deleteError }}
-					</NcNoteCard>
-					<p>
-						{{
-							deleteFolder.parentId
-								? t(
-									'keepiq',
-									'This folder is empty and will be removed permanently.',
-								)
-								: t(
-									'keepiq',
-									'This vault is empty and will be removed permanently.',
-								)
-						}}
-					</p>
-				</div>
-				<template #actions>
-					<NcButton variant="tertiary" @click="resetDelete()">
-						{{ t('keepiq', 'Cancel') }}
-					</NcButton>
-					<NcButton
-						variant="error"
-						:disabled="deleteBusy"
-						data-testid="nav-folder-delete-confirm"
-						@click="confirmDeleteEmpty">
-						<template #icon>
-							<NcLoadingIcon v-if="deleteBusy" :size="20" />
-							<TrashCanOutline v-else :size="20" />
-						</template>
-						{{
-							deleteFolder.parentId
-								? t('keepiq', 'Delete folder')
-								: t('keepiq', 'Delete vault')
-						}}
-					</NcButton>
-				</template>
-			</NcDialog>
+				:folder="deleteFolder"
+				@deleted="onDeleted"
+				@close="resetDelete()" />
 		</template>
 		<template #footer>
 			<!-- Footer-section entries live in NcAppNavigation's #footer slot —
@@ -234,14 +190,10 @@ import {
 	NcAppNavigationCaption,
 	NcAppNavigationItem,
 	NcAppNavigationSettings,
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
 } from '@nextcloud/vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
-import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import FolderDeleteConfirmDialog from '../../dialogs/FolderDeleteConfirmDialog.vue'
 import FolderEditDialog from '../../dialogs/FolderEditDialog.vue'
 import FolderMoveDialog from '../../dialogs/FolderMoveDialog.vue'
 import SubfolderResolutionDialog from '../../modals/SubfolderResolutionDialog.vue'
@@ -258,6 +210,7 @@ export default {
 
 	components: {
 		CnIcon,
+		FolderDeleteConfirmDialog,
 		FolderEditDialog,
 		FolderMoveDialog,
 		NavFolderTree,
@@ -265,15 +218,10 @@ export default {
 		NcAppNavigationCaption,
 		NcAppNavigationItem,
 		NcAppNavigationSettings,
-		NcButton,
-		NcDialog,
-		NcLoadingIcon,
-		NcNoteCard,
 		OpenInNew,
 		ShieldAccountOutline,
 		SubfolderResolutionDialog,
 		TeamFolderDialog,
-		TrashCanOutline,
 	},
 
 	inject: {
@@ -310,10 +258,6 @@ export default {
 			 * delete target — decides confirm vs the resolution protocol.
 			 */
 			deleteChildren: null,
-			/** Whether the empty-vault delete is in flight. */
-			deleteBusy: false,
-			/** Inline error of the empty-vault delete. */
-			deleteError: '',
 		}
 	},
 
@@ -617,11 +561,8 @@ export default {
 		async onDeleteRequested(node) {
 			this.deleteFolder = node
 			this.deleteChildren = null
-			this.deleteError = ''
 			try {
-				this.deleteChildren = await this.folderStore.fetchChildren(
-					node.id,
-				)
+				this.deleteChildren = await this.folderStore.fetchChildren(node.id)
 			} catch {
 				// No payload, no dialog — fail quiet rather than offering a
 				// delete whose consequences we could not describe.
@@ -630,37 +571,14 @@ export default {
 		},
 
 		/**
-		 * Delete a confirmed-empty folder.
-		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
-		 */
-		async confirmDeleteEmpty() {
-			this.deleteBusy = true
-			this.deleteError = ''
-			try {
-				const id = this.deleteFolder.id
-				await this.folderStore.deleteFolder(id)
-				this.resetDelete()
-				this.leaveDeletedRoute(id)
-			} catch (e) {
-				this.deleteError =
-					e?.response?.data?.message
-					|| t('keepiq', 'Failed to delete folder')
-			} finally {
-				this.deleteBusy = false
-			}
-		},
-
-		/**
 		 * Close whichever delete surface is open and clear its state.
 		 *
 		 * @return {void}
+		 * @spec exclude Dialog-host state reset; no domain behaviour.
 		 */
 		resetDelete() {
 			this.deleteFolder = null
 			this.deleteChildren = null
-			this.deleteError = ''
 		},
 
 		/**
@@ -669,6 +587,7 @@ export default {
 		 *
 		 * @param {string} folderId The deleted folder id.
 		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		onDeleted(folderId) {
 			this.resetDelete()
@@ -680,6 +599,7 @@ export default {
 		 * cap hides) and close the dialog.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		onMoved() {
 			this.moveFolder = null
@@ -692,6 +612,7 @@ export default {
 		 *
 		 * @param {string} folderId The deleted folder id.
 		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		leaveDeletedRoute(folderId) {
 			if (this.$route?.params?.folderId === folderId) {
