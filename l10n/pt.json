@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Autenticador (TOTP)",
         "Payment Card": "Cartão de pagamento",
         "Identity": "Identidade",
-        "Filter and sort": "Filtrar e ordenar"
+        "Filter and sort": "Filtrar e ordenar",
+        "Features & roadmap": "Funcionalidades e roteiro",
+        "My activity": "A minha atividade",
+        "Flows": "Flows",
+        "Getting started": "Introdução",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Uma breve visita guiada pelos ecrãs principais. Demora menos de um minuto e pode fechá-la a qualquer momento e retomá-la a partir do menu de ajuda.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Os Flows automatizam as tarefas repetitivas desta aplicação. Dê uma vista de olhos — não precisa de criar nenhum agora.",
+        "Open Dashboard from the menu.": "Abra Painel a partir do menu.",
+        "Click Dashboard in the menu": "Clique em Painel no menu",
+        "Open All secrets from the menu.": "Abra Todos os segredos a partir do menu.",
+        "Click All secrets in the menu": "Clique em Todos os segredos no menu",
+        "Open Features & roadmap from the menu.": "Abra Funcionalidades e roteiro a partir do menu.",
+        "Click Features & roadmap in the menu": "Clique em Funcionalidades e roteiro no menu",
+        "Open My activity from the menu.": "Abra A minha atividade a partir do menu.",
+        "Click My activity in the menu": "Clique em A minha atividade no menu",
+        "Open Flows from the menu": "Abra Flows a partir do menu",
+        "Could not refresh the list — it may be out of date": "Não foi possível atualizar a lista — pode estar desatualizada",
+        "Failed to delete secret": "Não foi possível eliminar o segredo"
     },
     "plurals": null
 }

@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Autentifikatorius (TOTP)",
         "Payment Card": "Mokėjimo kortelė",
         "Identity": "Tapatybė",
-        "Filter and sort": "Filtruoti ir rikiuoti"
+        "Filter and sort": "Filtruoti ir rikiuoti",
+        "Features & roadmap": "Funkcijos ir planas",
+        "My activity": "Mano veikla",
+        "Flows": "Flows",
+        "Getting started": "Darbo pradžia",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Trumpa pagrindinių ekranų apžvalga. Ji trunka mažiau nei minutę; galite ją bet kada užverti ir vėliau tęsti iš pagalbos meniu.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "„Flows“ automatizuoja pasikartojančius šios programėlės darbus. Žvilgtelėkite — dabar kurti nieko nereikia.",
+        "Open Dashboard from the menu.": "Atverkite Valdymo skydelis iš meniu.",
+        "Click Dashboard in the menu": "Meniu spustelėkite Valdymo skydelis",
+        "Open All secrets from the menu.": "Atverkite Visos paslaptys iš meniu.",
+        "Click All secrets in the menu": "Meniu spustelėkite Visos paslaptys",
+        "Open Features & roadmap from the menu.": "Atverkite Funkcijos ir planas iš meniu.",
+        "Click Features & roadmap in the menu": "Meniu spustelėkite Funkcijos ir planas",
+        "Open My activity from the menu.": "Atverkite Mano veikla iš meniu.",
+        "Click My activity in the menu": "Meniu spustelėkite Mano veikla",
+        "Open Flows from the menu": "Atverkite Flows iš meniu",
+        "Could not refresh the list — it may be out of date": "Nepavyko atnaujinti sąrašo — jis gali būti pasenęs",
+        "Failed to delete secret": "Nepavyko ištrinti paslapties"
     },
     "plurals": null
 }

@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Autentifikators (TOTP)",
         "Payment Card": "Maksājumu karte",
         "Identity": "Identitāte",
-        "Filter and sort": "Filtrēt un kārtot"
+        "Filter and sort": "Filtrēt un kārtot",
+        "Features & roadmap": "Funkcijas un ceļvedis",
+        "My activity": "Mana aktivitāte",
+        "Flows": "Flows",
+        "Getting started": "Darba sākšana",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Īss galveno ekrānu apskats. Tas aizņem mazāk par minūti, un to var jebkurā brīdī aizvērt un vēlāk turpināt no palīdzības izvēlnes.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatizē šīs lietotnes atkārtotos darbus. Apskatiet tos — pašlaik neviens nav jāizveido.",
+        "Open Dashboard from the menu.": "Atveriet Informācijas panelis no izvēlnes.",
+        "Click Dashboard in the menu": "Izvēlnē noklikšķiniet uz Informācijas panelis",
+        "Open All secrets from the menu.": "Atveriet Visi noslēpumi no izvēlnes.",
+        "Click All secrets in the menu": "Izvēlnē noklikšķiniet uz Visi noslēpumi",
+        "Open Features & roadmap from the menu.": "Atveriet Funkcijas un ceļvedis no izvēlnes.",
+        "Click Features & roadmap in the menu": "Izvēlnē noklikšķiniet uz Funkcijas un ceļvedis",
+        "Open My activity from the menu.": "Atveriet Mana aktivitāte no izvēlnes.",
+        "Click My activity in the menu": "Izvēlnē noklikšķiniet uz Mana aktivitāte",
+        "Open Flows from the menu": "Atveriet Flows no izvēlnes",
+        "Could not refresh the list — it may be out of date": "Sarakstu neizdevās atsvaidzināt — tas var būt novecojis",
+        "Failed to delete secret": "Noslēpumu neizdevās izdzēst"
     },
     "plurals": null
 }

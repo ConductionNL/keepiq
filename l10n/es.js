@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Autenticador (TOTP)",
         "Payment Card": "Tarjeta de pago",
         "Identity": "Identidad",
-        "Filter and sort": "Filtrar y ordenar"
+        "Filter and sort": "Filtrar y ordenar",
+        "Features & roadmap": "Funcionalidades y hoja de ruta",
+        "My activity": "Mi actividad",
+        "Flows": "Flows",
+        "Getting started": "Primeros pasos",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Un breve recorrido por las pantallas principales. Dura menos de un minuto y puedes cerrarlo en cualquier momento y retomarlo desde el menú de ayuda.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Los Flows automatizan las tareas repetitivas de esta aplicación. Échales un vistazo; no hace falta que crees uno ahora.",
+        "Open Dashboard from the menu.": "Abre Panel de control desde el menú.",
+        "Click Dashboard in the menu": "Haz clic en Panel de control en el menú",
+        "Open All secrets from the menu.": "Abre Todos los secretos desde el menú.",
+        "Click All secrets in the menu": "Haz clic en Todos los secretos en el menú",
+        "Open Features & roadmap from the menu.": "Abre Funcionalidades y hoja de ruta desde el menú.",
+        "Click Features & roadmap in the menu": "Haz clic en Funcionalidades y hoja de ruta en el menú",
+        "Open My activity from the menu.": "Abre Mi actividad desde el menú.",
+        "Click My activity in the menu": "Haz clic en Mi actividad en el menú",
+        "Open Flows from the menu": "Abre Flows desde el menú",
+        "Could not refresh the list — it may be out of date": "No se pudo actualizar la lista — puede estar desactualizada",
+        "Failed to delete secret": "No se pudo eliminar el secreto"
     },
     "nplurals=2; plural=(n != 1);"
 )

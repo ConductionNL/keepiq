@@ -1031,7 +1031,23 @@ OC.L10N.register(
         "Database": "Database",
         "Authenticator (TOTP)": "Authenticator (TOTP)",
         "Payment Card": "Payment Card",
-        "Filter and sort": "Filter and sort"
+        "Filter and sort": "Filter and sort",
+        "Features & roadmap": "Features & roadmap",
+        "Flows": "Flows",
+        "Getting started": "Getting started",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.",
+        "Open Dashboard from the menu.": "Open Dashboard from the menu.",
+        "Click Dashboard in the menu": "Click Dashboard in the menu",
+        "Open All secrets from the menu.": "Open All secrets from the menu.",
+        "Click All secrets in the menu": "Click All secrets in the menu",
+        "Open Features & roadmap from the menu.": "Open Features & roadmap from the menu.",
+        "Click Features & roadmap in the menu": "Click Features & roadmap in the menu",
+        "Open My activity from the menu.": "Open My activity from the menu.",
+        "Click My activity in the menu": "Click My activity in the menu",
+        "Open Flows from the menu": "Open Flows from the menu",
+        "Could not refresh the list — it may be out of date": "Could not refresh the list — it may be out of date",
+        "Failed to delete secret": "Failed to delete secret"
     },
     "nplurals=2; plural=(n != 1);"
 )

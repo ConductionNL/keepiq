@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Fíordheimhnitheoir (TOTP)",
         "Payment Card": "Cárta íocaíochta",
         "Identity": "Aitheantas",
-        "Filter and sort": "Scag agus sórtáil"
+        "Filter and sort": "Scag agus sórtáil",
+        "Features & roadmap": "Gnéithe agus treochlár",
+        "My activity": "Mo ghníomhaíocht",
+        "Flows": "Flows",
+        "Getting started": "Ag tosú",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Turas gairid ar na príomhscáileáin. Tógann sé níos lú ná nóiméad, agus is féidir leat é a dhúnadh am ar bith agus leanúint ar aghaidh leis ón roghchlár cabhrach.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Déanann Flows na codanna athráiteacha den aip seo a uathoibriú. Caith súil orthu — ní gá ceann a chruthú anois.",
+        "Open Dashboard from the menu.": "Oscail Deais ón roghchlár.",
+        "Click Dashboard in the menu": "Cliceáil Deais sa roghchlár",
+        "Open All secrets from the menu.": "Oscail Gach rún ón roghchlár.",
+        "Click All secrets in the menu": "Cliceáil Gach rún sa roghchlár",
+        "Open Features & roadmap from the menu.": "Oscail Gnéithe agus treochlár ón roghchlár.",
+        "Click Features & roadmap in the menu": "Cliceáil Gnéithe agus treochlár sa roghchlár",
+        "Open My activity from the menu.": "Oscail Mo ghníomhaíocht ón roghchlár.",
+        "Click My activity in the menu": "Cliceáil Mo ghníomhaíocht sa roghchlár",
+        "Open Flows from the menu": "Oscail Flows ón roghchlár",
+        "Could not refresh the list — it may be out of date": "Níorbh fhéidir an liosta a athnuachan — seans go bhfuil sé as dáta",
+        "Failed to delete secret": "Níorbh fhéidir an rún a scriosadh"
     },
     "plurals": null
 }

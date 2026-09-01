@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Autentija (TOTP)",
         "Payment Card": "Maksekaart",
         "Identity": "Identiteet",
-        "Filter and sort": "Filtreeri ja sordi"
+        "Filter and sort": "Filtreeri ja sordi",
+        "Features & roadmap": "Funktsioonid ja teekaart",
+        "My activity": "Minu tegevus",
+        "Flows": "Flows",
+        "Getting started": "Alustamine",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Lühike ringkäik peamiste vaadete vahel. See võtab alla minuti ning selle saab igal hetkel sulgeda ja hiljem abimenüüst jätkata.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatiseerivad selle rakenduse korduvaid toiminguid. Heida pilk peale — praegu ei pea ühtegi looma.",
+        "Open Dashboard from the menu.": "Ava menüüst Töölaud.",
+        "Click Dashboard in the menu": "Klõpsa menüüs valikul Töölaud",
+        "Open All secrets from the menu.": "Ava menüüst Kõik saladused.",
+        "Click All secrets in the menu": "Klõpsa menüüs valikul Kõik saladused",
+        "Open Features & roadmap from the menu.": "Ava menüüst Funktsioonid ja teekaart.",
+        "Click Features & roadmap in the menu": "Klõpsa menüüs valikul Funktsioonid ja teekaart",
+        "Open My activity from the menu.": "Ava menüüst Minu tegevus.",
+        "Click My activity in the menu": "Klõpsa menüüs valikul Minu tegevus",
+        "Open Flows from the menu": "Ava menüüst Flows",
+        "Could not refresh the list — it may be out of date": "Loendit ei õnnestunud värskendada — see võib olla aegunud",
+        "Failed to delete secret": "Saladuse kustutamine nurjus"
     },
     "nplurals=2; plural=(n != 1);"
 )

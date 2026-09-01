@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Autentikator (TOTP)",
         "Payment Card": "Betalingskort",
         "Identity": "Identitet",
-        "Filter and sort": "Filtrer og sorter"
+        "Filter and sort": "Filtrer og sorter",
+        "Features & roadmap": "Funksjoner og veikart",
+        "My activity": "Min aktivitet",
+        "Flows": "Flows",
+        "Getting started": "Kom i gang",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "En kort omvisning i hovedskjermene. Den tar under ett minutt, og du kan lukke den når som helst og fortsette senere fra hjelpemenyen.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatiserer de repeterende oppgavene i denne appen. Ta en titt — du trenger ikke lage en nå.",
+        "Open Dashboard from the menu.": "Åpne Dashbord fra menyen.",
+        "Click Dashboard in the menu": "Klikk på Dashbord i menyen",
+        "Open All secrets from the menu.": "Åpne Alle hemmeligheter fra menyen.",
+        "Click All secrets in the menu": "Klikk på Alle hemmeligheter i menyen",
+        "Open Features & roadmap from the menu.": "Åpne Funksjoner og veikart fra menyen.",
+        "Click Features & roadmap in the menu": "Klikk på Funksjoner og veikart i menyen",
+        "Open My activity from the menu.": "Åpne Min aktivitet fra menyen.",
+        "Click My activity in the menu": "Klikk på Min aktivitet i menyen",
+        "Open Flows from the menu": "Åpne Flows fra menyen",
+        "Could not refresh the list — it may be out of date": "Kunne ikke oppdatere listen — den kan være utdatert",
+        "Failed to delete secret": "Kunne ikke slette hemmeligheten"
     },
     "nplurals=2; plural=(n != 1);"
 )

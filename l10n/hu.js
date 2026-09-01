@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Hitelesítő (TOTP)",
         "Payment Card": "Bankkártya",
         "Identity": "Személyazonosság",
-        "Filter and sort": "Szűrés és rendezés"
+        "Filter and sort": "Szűrés és rendezés",
+        "Features & roadmap": "Funkciók és ütemterv",
+        "My activity": "Saját tevékenység",
+        "Flows": "Flows",
+        "Getting started": "Első lépések",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Rövid bemutató a fő képernyőkről. Kevesebb mint egy percet vesz igénybe, bármikor bezárhatja, és később folytathatja a súgómenüből.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "A Flows folyamatok automatizálják az alkalmazás ismétlődő feladatait. Nézzen körül — most nem kell létrehoznia egyet.",
+        "Open Dashboard from the menu.": "Nyissa meg a menüből: Irányítópult.",
+        "Click Dashboard in the menu": "Kattintson a menüben erre: Irányítópult",
+        "Open All secrets from the menu.": "Nyissa meg a menüből: Minden titok.",
+        "Click All secrets in the menu": "Kattintson a menüben erre: Minden titok",
+        "Open Features & roadmap from the menu.": "Nyissa meg a menüből: Funkciók és ütemterv.",
+        "Click Features & roadmap in the menu": "Kattintson a menüben erre: Funkciók és ütemterv",
+        "Open My activity from the menu.": "Nyissa meg a menüből: Saját tevékenység.",
+        "Click My activity in the menu": "Kattintson a menüben erre: Saját tevékenység",
+        "Open Flows from the menu": "Nyissa meg a menüből: Flows",
+        "Could not refresh the list — it may be out of date": "A lista frissítése nem sikerült — előfordulhat, hogy elavult",
+        "Failed to delete secret": "A titok törlése nem sikerült"
     },
     "nplurals=2; plural=(n != 1);"
 )

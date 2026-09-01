@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Authentificateur (TOTP)",
         "Payment Card": "Carte de paiement",
         "Identity": "Identité",
-        "Filter and sort": "Filtrer et trier"
+        "Filter and sort": "Filtrer et trier",
+        "Features & roadmap": "Fonctionnalités et feuille de route",
+        "My activity": "Mon activité",
+        "Flows": "Flows",
+        "Getting started": "Premiers pas",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Une visite rapide des écrans principaux. Elle prend moins d'une minute et vous pouvez la fermer à tout moment et la reprendre depuis le menu d'aide.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Les Flows automatisent les tâches répétitives de cette application. Jetez-y un œil, vous n'êtes pas obligé d'en créer un maintenant.",
+        "Open Dashboard from the menu.": "Ouvrez Tableau de bord depuis le menu.",
+        "Click Dashboard in the menu": "Cliquez sur Tableau de bord dans le menu",
+        "Open All secrets from the menu.": "Ouvrez Tous les secrets depuis le menu.",
+        "Click All secrets in the menu": "Cliquez sur Tous les secrets dans le menu",
+        "Open Features & roadmap from the menu.": "Ouvrez Fonctionnalités et feuille de route depuis le menu.",
+        "Click Features & roadmap in the menu": "Cliquez sur Fonctionnalités et feuille de route dans le menu",
+        "Open My activity from the menu.": "Ouvrez Mon activité depuis le menu.",
+        "Click My activity in the menu": "Cliquez sur Mon activité dans le menu",
+        "Open Flows from the menu": "Ouvrez Flows depuis le menu",
+        "Could not refresh the list — it may be out of date": "Impossible d'actualiser la liste — elle est peut-être obsolète",
+        "Failed to delete secret": "Impossible de supprimer le secret"
     },
     "plurals": null
 }

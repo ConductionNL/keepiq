@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Επαληθευτής (TOTP)",
         "Payment Card": "Κάρτα πληρωμής",
         "Identity": "Ταυτότητα",
-        "Filter and sort": "Φιλτράρισμα και ταξινόμηση"
+        "Filter and sort": "Φιλτράρισμα και ταξινόμηση",
+        "Features & roadmap": "Λειτουργίες και πλάνο ανάπτυξης",
+        "My activity": "Η δραστηριότητά μου",
+        "Flows": "Flows",
+        "Getting started": "Ξεκινώντας",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Μια σύντομη ξενάγηση στις κύριες οθόνες. Διαρκεί λιγότερο από ένα λεπτό και μπορείτε να την κλείσετε ανά πάσα στιγμή και να τη συνεχίσετε από το μενού βοήθειας.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Τα Flows αυτοματοποιούν τις επαναλαμβανόμενες εργασίες αυτής της εφαρμογής. Ρίξτε μια ματιά — δεν χρειάζεται να δημιουργήσετε κάποιο τώρα.",
+        "Open Dashboard from the menu.": "Ανοίξτε το Πίνακας ελέγχου από το μενού.",
+        "Click Dashboard in the menu": "Κάντε κλικ στο Πίνακας ελέγχου στο μενού",
+        "Open All secrets from the menu.": "Ανοίξτε το Όλα τα μυστικά από το μενού.",
+        "Click All secrets in the menu": "Κάντε κλικ στο Όλα τα μυστικά στο μενού",
+        "Open Features & roadmap from the menu.": "Ανοίξτε το Λειτουργίες και πλάνο ανάπτυξης από το μενού.",
+        "Click Features & roadmap in the menu": "Κάντε κλικ στο Λειτουργίες και πλάνο ανάπτυξης στο μενού",
+        "Open My activity from the menu.": "Ανοίξτε το Η δραστηριότητά μου από το μενού.",
+        "Click My activity in the menu": "Κάντε κλικ στο Η δραστηριότητά μου στο μενού",
+        "Open Flows from the menu": "Ανοίξτε τα Flows από το μενού",
+        "Could not refresh the list — it may be out of date": "Δεν ήταν δυνατή η ανανέωση της λίστας — ενδέχεται να μην είναι ενημερωμένη",
+        "Failed to delete secret": "Δεν ήταν δυνατή η διαγραφή του μυστικού"
     },
     "nplurals=2; plural=(n != 1);"
 )

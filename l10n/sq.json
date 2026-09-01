@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Autentifikues (TOTP)",
         "Payment Card": "Kartë pagese",
         "Identity": "Identitet",
-        "Filter and sort": "Filtro dhe rendit"
+        "Filter and sort": "Filtro dhe rendit",
+        "Features & roadmap": "Veçoritë dhe plani i zhvillimit",
+        "My activity": "Aktiviteti im",
+        "Flows": "Flows",
+        "Getting started": "Si të filloni",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Një turne i shkurtër nëpër ekranet kryesore. Zgjat më pak se një minutë dhe mund ta mbyllni në çdo moment e ta rinisni nga menuja e ndihmës.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatizojnë punët e përsëritura në këtë aplikacion. Hidhuni një sy — s'keni pse krijoni ndonjë tani.",
+        "Open Dashboard from the menu.": "Hapni Paneli i kontrollit nga menuja.",
+        "Click Dashboard in the menu": "Klikoni Paneli i kontrollit te menuja",
+        "Open All secrets from the menu.": "Hapni Të gjitha sekretet nga menuja.",
+        "Click All secrets in the menu": "Klikoni Të gjitha sekretet te menuja",
+        "Open Features & roadmap from the menu.": "Hapni Veçoritë dhe plani i zhvillimit nga menuja.",
+        "Click Features & roadmap in the menu": "Klikoni Veçoritë dhe plani i zhvillimit te menuja",
+        "Open My activity from the menu.": "Hapni Aktiviteti im nga menuja.",
+        "Click My activity in the menu": "Klikoni Aktiviteti im te menuja",
+        "Open Flows from the menu": "Hapni Flows nga menuja",
+        "Could not refresh the list — it may be out of date": "Lista nuk u rifreskua dot — mund të jetë e vjetruar",
+        "Failed to delete secret": "Sekreti nuk u fshi dot"
     },
     "plurals": null
 }

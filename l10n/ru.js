@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Аутентификатор (TOTP)",
         "Payment Card": "Платёжная карта",
         "Identity": "Личность",
-        "Filter and sort": "Фильтрация и сортировка"
+        "Filter and sort": "Фильтрация и сортировка",
+        "Features & roadmap": "Функции и план развития",
+        "My activity": "Моя активность",
+        "Flows": "Flows",
+        "Getting started": "Начало работы",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Краткий обзор основных экранов. Он занимает меньше минуты; вы можете закрыть его в любой момент и вернуться к нему через меню справки.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows автоматизируют повторяющиеся действия в этом приложении. Загляните — создавать поток сейчас не обязательно.",
+        "Open Dashboard from the menu.": "Откройте Панель управления через меню.",
+        "Click Dashboard in the menu": "Нажмите Панель управления в меню",
+        "Open All secrets from the menu.": "Откройте Все секреты через меню.",
+        "Click All secrets in the menu": "Нажмите Все секреты в меню",
+        "Open Features & roadmap from the menu.": "Откройте Функции и план развития через меню.",
+        "Click Features & roadmap in the menu": "Нажмите Функции и план развития в меню",
+        "Open My activity from the menu.": "Откройте Моя активность через меню.",
+        "Click My activity in the menu": "Нажмите Моя активность в меню",
+        "Open Flows from the menu": "Откройте Flows через меню",
+        "Could not refresh the list — it may be out of date": "Не удалось обновить список — он может быть устаревшим",
+        "Failed to delete secret": "Не удалось удалить секрет"
     },
     "nplurals=2; plural=(n != 1);"
 )

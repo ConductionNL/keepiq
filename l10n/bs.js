@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Autentifikator (TOTP)",
         "Payment Card": "Platna kartica",
         "Identity": "Identitet",
-        "Filter and sort": "Filtriranje i sortiranje"
+        "Filter and sort": "Filtriranje i sortiranje",
+        "Features & roadmap": "Funkcije i plan razvoja",
+        "My activity": "Moja aktivnost",
+        "Flows": "Flows",
+        "Getting started": "Prvi koraci",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Kratki obilazak glavnih ekrana. Traje manje od minute, a možete ga zatvoriti u bilo kojem trenutku i kasnije nastaviti iz menija pomoći.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatiziraju ponavljajuće zadatke u ovoj aplikaciji. Pogledajte ih — ne morate sada praviti nijedan.",
+        "Open Dashboard from the menu.": "Otvorite Nadzorna ploča iz menija.",
+        "Click Dashboard in the menu": "Kliknite na Nadzorna ploča u meniju",
+        "Open All secrets from the menu.": "Otvorite Sve tajne iz menija.",
+        "Click All secrets in the menu": "Kliknite na Sve tajne u meniju",
+        "Open Features & roadmap from the menu.": "Otvorite Funkcije i plan razvoja iz menija.",
+        "Click Features & roadmap in the menu": "Kliknite na Funkcije i plan razvoja u meniju",
+        "Open My activity from the menu.": "Otvorite Moja aktivnost iz menija.",
+        "Click My activity in the menu": "Kliknite na Moja aktivnost u meniju",
+        "Open Flows from the menu": "Otvorite Flows iz menija",
+        "Could not refresh the list — it may be out of date": "Lista se nije mogla osvježiti — možda je zastarjela",
+        "Failed to delete secret": "Brisanje tajne nije uspjelo"
     },
     "nplurals=2; plural=(n != 1);"
 )

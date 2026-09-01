@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Autentificator (TOTP)",
         "Payment Card": "Card de plată",
         "Identity": "Identitate",
-        "Filter and sort": "Filtrare și sortare"
+        "Filter and sort": "Filtrare și sortare",
+        "Features & roadmap": "Funcționalități și plan de dezvoltare",
+        "My activity": "Activitatea mea",
+        "Flows": "Flows",
+        "Getting started": "Primii pași",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Un scurt tur al ecranelor principale. Durează mai puțin de un minut și îl puteți închide oricând și relua din meniul de ajutor.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatizează sarcinile repetitive din această aplicație. Aruncați o privire — nu trebuie să creați unul acum.",
+        "Open Dashboard from the menu.": "Deschideți Tablou de bord din meniu.",
+        "Click Dashboard in the menu": "Faceți clic pe Tablou de bord în meniu",
+        "Open All secrets from the menu.": "Deschideți Toate secretele din meniu.",
+        "Click All secrets in the menu": "Faceți clic pe Toate secretele în meniu",
+        "Open Features & roadmap from the menu.": "Deschideți Funcționalități și plan de dezvoltare din meniu.",
+        "Click Features & roadmap in the menu": "Faceți clic pe Funcționalități și plan de dezvoltare în meniu",
+        "Open My activity from the menu.": "Deschideți Activitatea mea din meniu.",
+        "Click My activity in the menu": "Faceți clic pe Activitatea mea în meniu",
+        "Open Flows from the menu": "Deschideți Flows din meniu",
+        "Could not refresh the list — it may be out of date": "Lista nu a putut fi reîmprospătată — poate fi învechită",
+        "Failed to delete secret": "Secretul nu a putut fi șters"
     },
     "nplurals=2; plural=(n != 1);"
 )

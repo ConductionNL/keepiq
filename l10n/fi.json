@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Autentikaattori (TOTP)",
         "Payment Card": "Maksukortti",
         "Identity": "Henkilöllisyys",
-        "Filter and sort": "Suodata ja lajittele"
+        "Filter and sort": "Suodata ja lajittele",
+        "Features & roadmap": "Ominaisuudet ja tiekartta",
+        "My activity": "Oma toimintani",
+        "Flows": "Flows",
+        "Getting started": "Aloittaminen",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Lyhyt esittelykierros päänäkymistä. Se kestää alle minuutin, ja voit sulkea sen milloin tahansa ja jatkaa myöhemmin ohjevalikosta.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows-työnkulut automatisoivat tämän sovelluksen toistuvia tehtäviä. Vilkaise niitä — sinun ei tarvitse luoda sellaista nyt.",
+        "Open Dashboard from the menu.": "Avaa Kojelauta valikosta.",
+        "Click Dashboard in the menu": "Napsauta valikossa kohtaa Kojelauta",
+        "Open All secrets from the menu.": "Avaa Kaikki salaisuudet valikosta.",
+        "Click All secrets in the menu": "Napsauta valikossa kohtaa Kaikki salaisuudet",
+        "Open Features & roadmap from the menu.": "Avaa Ominaisuudet ja tiekartta valikosta.",
+        "Click Features & roadmap in the menu": "Napsauta valikossa kohtaa Ominaisuudet ja tiekartta",
+        "Open My activity from the menu.": "Avaa Oma toimintani valikosta.",
+        "Click My activity in the menu": "Napsauta valikossa kohtaa Oma toimintani",
+        "Open Flows from the menu": "Avaa Flows valikosta",
+        "Could not refresh the list — it may be out of date": "Luetteloa ei voitu päivittää — se voi olla vanhentunut",
+        "Failed to delete secret": "Salaisuuden poistaminen epäonnistui"
     },
     "plurals": null
 }

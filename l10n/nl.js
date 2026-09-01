@@ -5,12 +5,12 @@ OC.L10N.register(
         "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Een korte rondleiding langs de belangrijkste schermen. Het duurt minder dan een minuut en je kunt op elk moment stoppen en later verder gaan via het helpmenu.",
         "Open Dashboard from the menu.": "Open Dashboard via het menu.",
         "Click Dashboard in the menu": "Klik op Dashboard in het menu",
-        "Open All secrets from the menu.": "Open All secrets via het menu.",
-        "Click All secrets in the menu": "Klik op All secrets in het menu",
-        "Open Features & roadmap from the menu.": "Open Features & roadmap via het menu.",
-        "Click Features & roadmap in the menu": "Klik op Features & roadmap in het menu",
-        "Open My activity from the menu.": "Open My activity via het menu.",
-        "Click My activity in the menu": "Klik op My activity in het menu",
+        "Open All secrets from the menu.": "Open Alle geheimen via het menu.",
+        "Click All secrets in the menu": "Klik op Alle geheimen in het menu",
+        "Open Features & roadmap from the menu.": "Open Functies en roadmap via het menu.",
+        "Click Features & roadmap in the menu": "Klik op Functies en roadmap in het menu",
+        "Open My activity from the menu.": "Open Mijn activiteit via het menu.",
+        "Click My activity in the menu": "Klik op Mijn activiteit in het menu",
         "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatiseren het repeterende werk in deze app. Kijk gerust rond, je hoeft er nu geen te maken.",
         "Open Flows from the menu": "Open Flows via het menu",
         "Take over as vault administrator": "Overnemen als kluisbeheerder",
@@ -670,7 +670,9 @@ OC.L10N.register(
         "Flows": "Flows",
         "Flow": "Flow",
         "Registered by": "Geregistreerd door",
-        "Requested": "Aangevraagd"
+        "Requested": "Aangevraagd",
+        "Could not refresh the list — it may be out of date": "Kon de lijst niet verversen — deze kan verouderd zijn",
+        "Failed to delete secret": "Kon het geheim niet verwijderen"
     },
     "nplurals=2; plural=(n != 1);"
 )

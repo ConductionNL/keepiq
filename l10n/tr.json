@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Kimlik doğrulayıcı (TOTP)",
         "Payment Card": "Ödeme kartı",
         "Identity": "Kimlik",
-        "Filter and sort": "Filtrele ve sırala"
+        "Filter and sort": "Filtrele ve sırala",
+        "Features & roadmap": "Özellikler ve yol haritası",
+        "My activity": "Etkinliğim",
+        "Flows": "Flows",
+        "Getting started": "Başlarken",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Ana ekranların kısa bir turu. Bir dakikadan az sürer; istediğiniz zaman kapatabilir ve daha sonra yardım menüsünden devam edebilirsiniz.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows, bu uygulamadaki tekrarlayan işleri otomatikleştirir. Bir göz atın — şimdi bir tane oluşturmanız gerekmiyor.",
+        "Open Dashboard from the menu.": "Menüden Gösterge paneli bölümünü açın.",
+        "Click Dashboard in the menu": "Menüde Gösterge paneli seçeneğine tıklayın",
+        "Open All secrets from the menu.": "Menüden Tüm gizliler bölümünü açın.",
+        "Click All secrets in the menu": "Menüde Tüm gizliler seçeneğine tıklayın",
+        "Open Features & roadmap from the menu.": "Menüden Özellikler ve yol haritası bölümünü açın.",
+        "Click Features & roadmap in the menu": "Menüde Özellikler ve yol haritası seçeneğine tıklayın",
+        "Open My activity from the menu.": "Menüden Etkinliğim bölümünü açın.",
+        "Click My activity in the menu": "Menüde Etkinliğim seçeneğine tıklayın",
+        "Open Flows from the menu": "Menüden Flows bölümünü açın",
+        "Could not refresh the list — it may be out of date": "Liste yenilenemedi — güncel olmayabilir",
+        "Failed to delete secret": "Gizli öğe silinemedi"
     },
     "plurals": null
 }

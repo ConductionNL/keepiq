@@ -486,7 +486,24 @@
         "Authenticator (TOTP)": "Autentifikator (TOTP)",
         "Payment Card": "Betalingskort",
         "Identity": "Identitet",
-        "Filter and sort": "Filtrér og sortér"
+        "Filter and sort": "Filtrér og sortér",
+        "Features & roadmap": "Funktioner og køreplan",
+        "My activity": "Min aktivitet",
+        "Flows": "Flows",
+        "Getting started": "Kom godt i gang",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "En kort rundvisning i de vigtigste skærme. Det tager under et minut, og du kan lukke den når som helst og fortsætte senere fra hjælpemenuen.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows automatiserer de gentagne opgaver i denne app. Tag et kig — du behøver ikke oprette et nu.",
+        "Open Dashboard from the menu.": "Åbn Dashboard fra menuen.",
+        "Click Dashboard in the menu": "Klik på Dashboard i menuen",
+        "Open All secrets from the menu.": "Åbn Alle hemmeligheder fra menuen.",
+        "Click All secrets in the menu": "Klik på Alle hemmeligheder i menuen",
+        "Open Features & roadmap from the menu.": "Åbn Funktioner og køreplan fra menuen.",
+        "Click Features & roadmap in the menu": "Klik på Funktioner og køreplan i menuen",
+        "Open My activity from the menu.": "Åbn Min aktivitet fra menuen.",
+        "Click My activity in the menu": "Klik på Min aktivitet i menuen",
+        "Open Flows from the menu": "Åbn Flows fra menuen",
+        "Could not refresh the list — it may be out of date": "Listen kunne ikke opdateres — den kan være forældet",
+        "Failed to delete secret": "Hemmeligheden kunne ikke slettes"
     },
     "plurals": null
 }

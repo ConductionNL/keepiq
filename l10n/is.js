@@ -487,7 +487,24 @@ OC.L10N.register(
         "Authenticator (TOTP)": "Auðkennari (TOTP)",
         "Payment Card": "Greiðslukort",
         "Identity": "Auðkenni",
-        "Filter and sort": "Sía og raða"
+        "Filter and sort": "Sía og raða",
+        "Features & roadmap": "Eiginleikar og vegvísir",
+        "My activity": "Mín virkni",
+        "Flows": "Flows",
+        "Getting started": "Að hefjast handa",
+        "A short tour of the main screens. It takes under a minute, and you can close it at any point and pick it up again from the help menu.": "Stutt kynning á helstu skjámyndum. Hún tekur innan við mínútu og þú getur lokað henni hvenær sem er og haldið áfram síðar úr hjálparvalmyndinni.",
+        "Flows automate the repetitive parts of this app. Have a look, though you do not have to build one now.": "Flows gera endurtekin verk í þessu forriti sjálfvirk. Kíktu á þau — þú þarft ekki að búa til neitt núna.",
+        "Open Dashboard from the menu.": "Opnaðu Mælaborð úr valmyndinni.",
+        "Click Dashboard in the menu": "Smelltu á Mælaborð í valmyndinni",
+        "Open All secrets from the menu.": "Opnaðu Öll leyndarmál úr valmyndinni.",
+        "Click All secrets in the menu": "Smelltu á Öll leyndarmál í valmyndinni",
+        "Open Features & roadmap from the menu.": "Opnaðu Eiginleikar og vegvísir úr valmyndinni.",
+        "Click Features & roadmap in the menu": "Smelltu á Eiginleikar og vegvísir í valmyndinni",
+        "Open My activity from the menu.": "Opnaðu Mín virkni úr valmyndinni.",
+        "Click My activity in the menu": "Smelltu á Mín virkni í valmyndinni",
+        "Open Flows from the menu": "Opnaðu Flows úr valmyndinni",
+        "Could not refresh the list — it may be out of date": "Ekki tókst að endurnýja listann — hann gæti verið úreltur",
+        "Failed to delete secret": "Ekki tókst að eyða leyndarmálinu"
     },
     "nplurals=2; plural=(n != 1);"
 )
