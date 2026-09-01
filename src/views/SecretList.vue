@@ -274,9 +274,9 @@
 								:style="
 									vaultRowTint(folder)
 										? {
-											backgroundColor:
-												vaultRowTint(folder),
-										}
+												backgroundColor:
+													vaultRowTint(folder),
+											}
 										: undefined
 								">
 								<component

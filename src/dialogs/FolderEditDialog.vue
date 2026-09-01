@@ -129,6 +129,12 @@ export default {
 			return !this.folder.parentId
 		},
 
+		/**
+		 * Whether Save may run: not already saving, and a name is present.
+		 *
+		 * @return {boolean}
+		 * @spec exclude Form-enablement guard; no domain behaviour.
+		 */
 		canSubmit() {
 			return !this.saving && this.name.trim() !== ''
 		},
@@ -154,6 +160,7 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 * @spec exclude Dialog open-state plumbing; no domain behaviour.
 		 */
 		onUpdateOpen(value) {
 			this.open = value

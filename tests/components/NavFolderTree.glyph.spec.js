@@ -28,9 +28,7 @@ const VAULTS = [
 		parentId: null,
 		customIcon: 'briefcase',
 		customColor: 'blue',
-		children: [
-			{ id: 'f-sub', name: 'Test2', parentId: 'v-all', children: [] },
-		],
+		children: [{ id: 'f-sub', name: 'Test2', parentId: 'v-all', children: [] }],
 	},
 	{
 		id: 'v-keys',

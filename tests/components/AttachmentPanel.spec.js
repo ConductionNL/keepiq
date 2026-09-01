@@ -53,9 +53,9 @@ describe('AttachmentPanel', () => {
 		})
 		await flush()
 
-		expect(
-			wrapper.find('[data-testid="attachment-name-att-a"]').exists(),
-		).toBe(true)
+		expect(wrapper.find('[data-testid="attachment-name-att-a"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('refetches when the secretId prop changes without a remount', async () => {
@@ -68,24 +68,22 @@ describe('AttachmentPanel', () => {
 			propsData: { secretId: 'sec-a' },
 		})
 		await flush()
-		expect(
-			wrapper.find('[data-testid="attachment-name-att-a"]').exists(),
-		).toBe(true)
+		expect(wrapper.find('[data-testid="attachment-name-att-a"]').exists()).toBe(
+			true,
+		)
 
 		await wrapper.setProps({ secretId: 'sec-b' })
 		await flush()
 
 		const urls = get.mock.calls.map((c) => c[0])
-		expect(urls.some((u) => u.includes('/secrets/sec-b/attachments'))).toBe(
+		expect(urls.some((u) => u.includes('/secrets/sec-b/attachments'))).toBe(true)
+		expect(wrapper.find('[data-testid="attachment-name-att-b"]').exists()).toBe(
 			true,
 		)
-		expect(
-			wrapper.find('[data-testid="attachment-name-att-b"]').exists(),
-		).toBe(true)
 		// The first secret's rows never linger into the second.
-		expect(
-			wrapper.find('[data-testid="attachment-name-att-a"]').exists(),
-		).toBe(false)
+		expect(wrapper.find('[data-testid="attachment-name-att-a"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('clears the previous list even when the new fetch fails', async () => {
@@ -96,20 +94,18 @@ describe('AttachmentPanel', () => {
 			propsData: { secretId: 'sec-a' },
 		})
 		await flush()
-		expect(
-			wrapper.find('[data-testid="attachment-name-att-a"]').exists(),
-		).toBe(true)
+		expect(wrapper.find('[data-testid="attachment-name-att-a"]').exists()).toBe(
+			true,
+		)
 
 		await wrapper.setProps({ secretId: 'sec-b' })
 		await flush()
 
 		// Showing sec-a's attachments against sec-b would be worse than
 		// showing none: reset first, then surface the fetch error.
-		expect(
-			wrapper.find('[data-testid="attachment-name-att-a"]').exists(),
-		).toBe(false)
-		expect(wrapper.find('[data-testid="attachment-error"]').exists()).toBe(
-			true,
+		expect(wrapper.find('[data-testid="attachment-name-att-a"]').exists()).toBe(
+			false,
 		)
+		expect(wrapper.find('[data-testid="attachment-error"]').exists()).toBe(true)
 	})
 })

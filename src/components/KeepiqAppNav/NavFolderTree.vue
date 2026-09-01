@@ -273,8 +273,7 @@ export default {
 		 */
 		vaultGlyphStyle(node) {
 			const theme = currentTheme()
-			const hasColor
-				= resolveFolderColor(node.customColor, theme) !== null
+			const hasColor = resolveFolderColor(node.customColor, theme) !== null
 			if (!hasColor) {
 				// Colorless vaults: no circle anywhere; the glyph follows the
 				// row's text color (white on the highlight, via the CSS
@@ -401,13 +400,15 @@ export default {
 }
 
 .keepiq-nav-tree
-	:deep(.app-navigation-entry.active
-		.app-navigation-entry__utils
-		.button-vue:hover),
+	:deep(
+		.app-navigation-entry.active .app-navigation-entry__utils .button-vue:hover
+	),
 .keepiq-nav-tree
-	:deep(.app-navigation-entry.active
-		.app-navigation-entry__utils
-		.button-vue:focus-visible) {
+	:deep(
+		.app-navigation-entry.active
+			.app-navigation-entry__utils
+			.button-vue:focus-visible
+	) {
 	background-color: color-mix(in srgb, currentColor 20%, transparent) !important;
 }
 </style>

@@ -194,9 +194,9 @@
 					<div class="secret-detail__row-main">
 						<div class="secret-detail__row-value">
 							<PasswordField
-							:key="secretLoadToken"
-							:label="keyLabel"
-							:resolve="resolveKey" />
+								:key="secretLoadToken"
+								:label="keyLabel"
+								:resolve="resolveKey" />
 						</div>
 					</div>
 				</div>
@@ -1354,8 +1354,7 @@ export default {
 			// A failed catalogue fetch must not strand the sidebar on its
 			// spinner — surface the error the same way load() does.
 			this.error =
-				e?.response?.data?.message
-				|| t('keepiq', 'Failed to load secret')
+				e?.response?.data?.message || t('keepiq', 'Failed to load secret')
 			this.loading = false
 			return
 		}

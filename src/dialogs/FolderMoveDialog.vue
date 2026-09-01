@@ -27,13 +27,13 @@
 				{{
 					isEmpty
 						? t(
-							'keepiq',
-							'This vault is empty — there is nothing to move.',
-						)
+								'keepiq',
+								'This vault is empty — there is nothing to move.',
+							)
 						: t(
-							'keepiq',
-							'Move everything in this vault to another vault.',
-						)
+								'keepiq',
+								'Move everything in this vault to another vault.',
+							)
 				}}
 			</p>
 
@@ -183,8 +183,7 @@ export default {
 			return useFolderStore()
 				.folders.filter(
 					(candidate) =>
-						!candidate.parentId
-						&& candidate.id !== this.folder.id,
+						!candidate.parentId && candidate.id !== this.folder.id,
 				)
 				.map((candidate) => ({
 					value: candidate.id,
@@ -194,6 +193,13 @@ export default {
 				}))
 		},
 
+		/**
+		 * Whether Move may run: not already moving, the source holds
+		 * something, and a target vault is chosen.
+		 *
+		 * @return {boolean}
+		 * @spec exclude Form-enablement guard; no domain behaviour.
+		 */
 		canSubmit() {
 			return !this.saving && !this.isEmpty && !!this.targetVaultId
 		},
@@ -207,9 +213,7 @@ export default {
 	 */
 	async mounted() {
 		try {
-			this.children = await useFolderStore().fetchChildren(
-				this.folder.id,
-			)
+			this.children = await useFolderStore().fetchChildren(this.folder.id)
 		} catch {
 			// No payload — keep the move offered; the transfer itself will
 			// surface any real problem.
@@ -266,6 +270,7 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 * @spec exclude Dialog open-state plumbing; no domain behaviour.
 		 */
 		onUpdateOpen(value) {
 			this.open = value

@@ -47,9 +47,9 @@ describe('FolderEditDialog', () => {
 				folder: { id: 'f-1', name: 'Sub', parentId: 'v-1' },
 			},
 		})
-		expect(
-			wrapper.findComponent({ name: 'CnIconColorPicker' }).exists(),
-		).toBe(false)
+		expect(wrapper.findComponent({ name: 'CnIconColorPicker' }).exists()).toBe(
+			false,
+		)
 	})
 
 	it('saves picked keys and the changed name in one update', async () => {

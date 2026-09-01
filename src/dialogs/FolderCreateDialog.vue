@@ -147,6 +147,7 @@ export default {
 		 * flow shows no parent picker at all.
 		 *
 		 * @return {boolean}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		isVaultLevel() {
 			return !this.parentId
@@ -231,9 +232,9 @@ export default {
 					// not ride along.
 					this.isVaultLevel
 						? {
-							customIcon: this.customIcon,
-							customColor: this.customColor,
-						}
+								customIcon: this.customIcon,
+								customColor: this.customColor,
+							}
 						: {},
 				)
 				this.$emit('saved', created)

@@ -31,9 +31,9 @@ describe('FolderCreateDialog (vault customization)', () => {
 		// no parent choice at all.
 		const wrapper = mount(FolderCreateDialog)
 		await flush()
-		expect(
-			wrapper.findComponent({ name: 'CnIconColorPicker' }).exists(),
-		).toBe(true)
+		expect(wrapper.findComponent({ name: 'CnIconColorPicker' }).exists()).toBe(
+			true,
+		)
 		expect(wrapper.findComponent({ name: 'NcSelect' }).exists()).toBe(false)
 	})
 
@@ -42,9 +42,9 @@ describe('FolderCreateDialog (vault customization)', () => {
 			propsData: { parentId: 'v-1' },
 		})
 		await flush()
-		expect(
-			wrapper.findComponent({ name: 'CnIconColorPicker' }).exists(),
-		).toBe(false)
+		expect(wrapper.findComponent({ name: 'CnIconColorPicker' }).exists()).toBe(
+			false,
+		)
 		const select = wrapper.findComponent({ name: 'NcSelect' })
 		expect(select.exists()).toBe(true)
 		// No root option: creating at the root is the vault flow — the two
