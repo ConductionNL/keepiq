@@ -46,7 +46,7 @@ import type { Page } from '@playwright/test'
  * @e2e openspec/specs/encryption-suites/spec.md#requirement-suite-migration
  */
 import { expect, test } from '@playwright/test'
-import { APP_BASE } from './_workflow-helpers.ts'
+import { APP_BASE, gotoVaultRoute } from './_workflow-helpers.ts'
 
 /** A fixture account that owns no EncryptionSuite, so setup mode is reachable. */
 const VAULT_USER = process.env.KEEPIQ_VAULT_USER ?? 'alice'
@@ -396,9 +396,7 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 			timeout: 15_000,
 		})
 
-		await page.evaluate(() => {
-			window.location.hash = '#/secrets'
-		})
+		await gotoVaultRoute(page, 'secrets')
 		await page.waitForTimeout(2500)
 
 		const warned = page.locator('[data-testid="secret-possibly-compromised"]')
