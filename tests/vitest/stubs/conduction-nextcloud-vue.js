@@ -151,4 +151,4 @@ const CnBreadcrumbs = {
 	},
 }
 
-export { CnIndexPage, CnStatusBadge, CnBreadcrumbs }
+export { CnBreadcrumbs, CnIndexPage, CnStatusBadge }

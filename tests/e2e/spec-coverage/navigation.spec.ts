@@ -11,24 +11,26 @@
  *
  * @e2e openspec/specs/menu-architecture/spec.md#app-navigation-renders
  */
-import { test, expect } from '@playwright/test'
-import {
-	APP_BASE,
-	lockHeading,
-	collectKeepiqErrors,
-	assertNoKeepiqErrors,
-} from './_helpers'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 // The lock screen is now an EXCLUSIVE surface: App.vue hides `.app-navigation`
 // on the Lock route, so nav coverage requires an unlocked vault. This borrows
 // the workflow layer's unlock (dev master password, debug instances only) —
 // the one deliberate exception to this suite's no-unlock rule, because the
 // asserted surface no longer exists while locked.
-import { unlockVault } from '../workflows/_workflow-helpers'
+import { unlockVault } from '../workflows/_workflow-helpers.ts'
+import {
+	APP_BASE,
+	assertNoKeepiqErrors,
+	collectKeepiqErrors,
+	lockHeading,
+} from './_helpers.ts'
 
 // The app's left navigation is the `.app-navigation` container. We scope ALL
 // nav queries to it (never the global NC header / apps menu) and additionally
 // match keepiq-owned hrefs, so we can never click a global app link.
-function appNav(page: import('@playwright/test').Page) {
+function appNav(page: Page) {
 	return page.locator('.app-navigation').first()
 }
 
@@ -36,7 +38,7 @@ function appNav(page: import('@playwright/test').Page) {
 // NcAppNavigationSettings foldout, which starts collapsed. Expand it so those
 // entries become visible. The toggle is clicked via a real DOM `.click()` so
 // the full-page lock-screen layout cannot swallow the synthetic pointer event.
-async function expandSettingsFoldout(page: import('@playwright/test').Page) {
+async function expandSettingsFoldout(page: Page) {
 	const toggle = page
 		.locator(
 			'#app-settings button.settings-button, [data-testid="cn-nav-settings"] button',

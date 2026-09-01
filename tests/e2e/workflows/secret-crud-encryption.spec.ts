@@ -39,14 +39,14 @@
  * The UI round-trip below is genuinely the `secrets-write-ui` write path, and it
  * is anchored there, per-test, so each claim sits next to the body that backs it.
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
 	APP_BASE,
 	gotoLockSettled,
 	lockHeading,
-	unlockVault,
 	openVault,
-} from './_workflow-helpers'
+	unlockVault,
+} from './_workflow-helpers.ts'
 
 // The two views this workflow drives, named after the files they cover. The
 // selectors are unchanged — this makes the spec-to-component link readable in

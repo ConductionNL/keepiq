@@ -16,7 +16,6 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
@@ -47,7 +46,7 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
  *
  * @return {Promise<object>} The mounted wrapper.
  */
-const mountDetail = async (additionalFields) => {
+async function mountDetail(additionalFields) {
 	const secret = {
 		id: 's-1',
 		name: 'Supplier API',

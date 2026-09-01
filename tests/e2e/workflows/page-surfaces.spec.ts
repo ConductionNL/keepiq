@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -51,8 +53,8 @@
  * `unlockVault()`. The three public recipient routes are exempt from the lock
  * guard (`PUBLIC_ROUTE_NAMES` in `src/App.vue`) and are reached with `goto`.
  */
-import { test, expect, type Page } from '@playwright/test'
-import { APP_BASE, gotoVaultRoute, unlockVault } from './_workflow-helpers'
+import { expect, test } from '@playwright/test'
+import { APP_BASE, gotoVaultRoute, unlockVault } from './_workflow-helpers.ts'
 
 /** A placeholder ciphertext blob. The server stores it opaquely, never decrypts. */
 const OPAQUE = 'ZTJlLXBhZ2Utc3VyZmFjZS1wbGFjZWhvbGRlcg=='
@@ -92,7 +94,7 @@ async function api(
 				body: body ? JSON.stringify(body) : undefined,
 			})
 			const text = await res.text()
-			let parsed: any = null
+			let parsed: any
 			try {
 				parsed = JSON.parse(text)
 			} catch {
