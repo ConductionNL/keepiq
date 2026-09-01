@@ -254,9 +254,6 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		vaultColor(node) {
-			if (this.isHighlighted(node)) {
-				return 'currentColor'
-			}
 			return (
 				resolveFolderColor(node.customColor, currentTheme())
 				?? 'currentColor'
@@ -275,11 +272,29 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		vaultGlyphStyle(node) {
-			if (this.isHighlighted(node)) {
+			const theme = currentTheme()
+			const hasColor
+				= resolveFolderColor(node.customColor, theme) !== null
+			if (!hasColor) {
+				// Colorless vaults: no circle anywhere; the glyph follows the
+				// row's text color (white on the highlight, via the CSS
+				// icon-column rule below).
 				return undefined
 			}
-			const tint = folderColorTint(node.customColor, currentTheme())
-			return tint ? { backgroundColor: tint } : undefined
+			if (this.isHighlighted(node)) {
+				// Selected row (team decision, settled after trying both a
+				// plain white glyph and a translucent tint): the circle goes
+				// OPAQUE in the theme's main background — a white disc in
+				// light mode, a dark disc in dark mode — with the vault's
+				// COLORED glyph on it. That recreates exactly the rest-state
+				// foreground/background pairing (light palette variants on a
+				// light surface, dark variants on a dark one), so the color
+				// identity survives selection at unchanged contrast.
+				return { backgroundColor: 'var(--color-main-background)' }
+			}
+			return {
+				backgroundColor: folderColorTint(node.customColor, theme),
+			}
 		},
 
 		/**
@@ -352,34 +367,20 @@ export default {
 	border-radius: 50%;
 }
 
-/* The glyph on the ACTIVE row is flattened in CSS, keyed to the row's own
-   `.active` class — NOT to the highlightId prop. The class has MORE
-   SOURCES than the prop (NcAppNavigationItem also activates through
-   vue-router's own link matching), so a JS-side fill can disagree with
-   what the row actually renders; a state-keyed style cannot. Two rules:
-
-   1. color on the icon column: NcAppNavigationItem's modern active rule
-      pins the link to --color-main-text (black) with !important while the
-      instance themes paint the row SOLID PRIMARY and whiten only the
-      label — so inherited currentColor resolves black on a blue row. The
-      primary-contrast token is what every themed instance here (and NC's
-      legacy variant) needs. Covers colorless vaults and the nested
-      FolderOutline.
-   2. fill on the glyph svg: a COLORED vault carries its hex as the svg's
-      fill ATTRIBUTE, which no inherited color overrides — the fill
-      PROPERTY does. Anchored on .app-navigation-entry.active (the row
-      element itself), so an open parent never flattens for an active
-      child. The tint circle drops with it. */
+/* Icon-column color on the ACTIVE row, keyed to the row's own `.active`
+   class (which has MORE sources than the highlightId prop —
+   NcAppNavigationItem also activates through vue-router's own link
+   matching). NcAppNavigationItem's modern active rule pins the LINK to
+   --color-main-text (black) with !important while the instance themes
+   paint the row SOLID PRIMARY and whiten only the label — so inherited
+   currentColor resolves black on a blue row. The primary-contrast token
+   makes colorless vault glyphs and the nested FolderOutline white there.
+   COLORED vault glyphs are untouched: their hex rides the svg fill
+   attribute, which inherited color never overrides — on the selected row
+   they render on the opaque main-background disc instead (see
+   vaultGlyphStyle), keeping the color identity visible. */
 .keepiq-nav-tree :deep(.app-navigation-entry.active .app-navigation-entry-icon) {
 	color: var(--color-primary-element-text) !important;
-}
-
-.keepiq-nav-tree :deep(.app-navigation-entry.active .keepiq-nav-tree__vault-glyph) {
-	background-color: transparent !important;
-}
-
-.keepiq-nav-tree :deep(.app-navigation-entry.active .keepiq-nav-tree__vault-glyph svg) {
-	fill: var(--color-primary-element-text) !important;
 }
 
 /* The actions trigger on the ACTIVE row: the default button chrome reads

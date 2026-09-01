@@ -50,20 +50,28 @@ function factory(highlightId) {
 }
 
 describe('NavFolderTree vault glyph highlight', () => {
-	it('renders the HIGHLIGHTED vault plain: currentColor fill, no tint style', () => {
+	it('renders the HIGHLIGHTED vault on the OPAQUE theme disc, keeping its color', () => {
+		// Team decision, settled after trying both alternatives: the
+		// selected row shows the vault's COLORED glyph on a disc in the
+		// theme's main background (white in light, dark in dark) — the
+		// rest-state pairing at unchanged contrast, so the identity
+		// survives selection.
 		const w = factory('v-all')
 		const vm = w.vm
 		const all = VAULTS[0]
 		expect(vm.isHighlighted(all)).toBe(true)
-		expect(vm.vaultColor(all)).toBe('currentColor')
-		expect(vm.vaultGlyphStyle(all)).toBeUndefined()
+		expect(vm.vaultColor(all)).toBe('#0064a3') // stays colored
+		expect(vm.vaultGlyphStyle(all)).toEqual({
+			backgroundColor: 'var(--color-main-background)',
+		})
 	})
 
 	it('renders a highlighted vault WITH CHILDREN identically to a leaf vault', () => {
 		const withChildren = factory('v-all')
 		const leaf = factory('v-keys')
-		expect(withChildren.vm.vaultColor(VAULTS[0])).toBe('currentColor')
-		expect(leaf.vm.vaultColor(VAULTS[1])).toBe('currentColor')
+		expect(withChildren.vm.vaultGlyphStyle(VAULTS[0])).toEqual(
+			leaf.vm.vaultGlyphStyle(VAULTS[1]),
+		)
 	})
 
 	it('renders vaults AT REST with their color and same-hex tint', () => {
@@ -73,16 +81,15 @@ describe('NavFolderTree vault glyph highlight', () => {
 		// Stub resolvers: red light-variant hex + derived tint.
 		expect(w.vm.vaultColor(keys)).toBe('#c92020')
 		expect(w.vm.vaultGlyphStyle(keys)).toBeTruthy()
+		expect(w.vm.vaultGlyphStyle(keys).backgroundColor).not.toBe(
+			'var(--color-main-background)',
+		)
 	})
 
-	it('renders the DOM fill correctly for the highlighted vault', () => {
-		const w = factory('v-all')
-		const glyphs = w.findAll('.keepiq-nav-tree__vault-glyph')
-		// First glyph = v-all (highlighted): its icon stub must receive
-		// currentColor, and the span must carry no background style.
-		const first = glyphs[0]
-		expect(first.attributes('style')).toBeUndefined()
-		const icon = first.find('[data-stub="folder-icon"]')
-		expect(icon.exists()).toBe(true)
+	it('renders a COLORLESS vault with no circle in every state', () => {
+		const w = factory('v-plain')
+		const plain = { id: 'v-plain', name: 'Plain', parentId: null, children: [] }
+		expect(w.vm.vaultGlyphStyle(plain)).toBeUndefined()
+		expect(w.vm.vaultColor(plain)).toBe('currentColor')
 	})
 })
