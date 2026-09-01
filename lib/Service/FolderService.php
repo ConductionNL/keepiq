@@ -117,8 +117,8 @@ class FolderService {
 		?string $customIcon = null,
 		?string $customColor = null,
 	): Folder {
-		$this->assertAttributeFormat('customIcon', $customIcon);
-		$this->assertAttributeFormat('customColor', $customColor);
+		$this->assertAttributeFormat(attribute: 'customIcon', value: $customIcon);
+		$this->assertAttributeFormat(attribute: 'customColor', value: $customColor);
 
 		return $this->tree->create(
 			name: $name,
@@ -157,12 +157,18 @@ class FolderService {
 		$folder = $this->ownership->requireOwned(id: $id, userId: $userId);
 
 		if (array_key_exists('customIcon', $changes) === true) {
-			$this->assertAttributeFormat('customIcon', $changes['customIcon']);
+			$this->assertAttributeFormat(
+				attribute: 'customIcon',
+				value: $changes['customIcon']
+			);
 			$folder->setCustomIcon($changes['customIcon']);
 		}
 
 		if (array_key_exists('customColor', $changes) === true) {
-			$this->assertAttributeFormat('customColor', $changes['customColor']);
+			$this->assertAttributeFormat(
+				attribute: 'customColor',
+				value: $changes['customColor']
+			);
 			$folder->setCustomColor($changes['customColor']);
 		}
 

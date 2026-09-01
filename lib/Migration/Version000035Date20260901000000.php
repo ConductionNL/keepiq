@@ -47,7 +47,10 @@ class Version000035Date20260901000000 extends SimpleMigrationStep {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
-		/** @var ISchemaWrapper $schema */
+		/*
+		 * @var ISchemaWrapper $schema
+		 */
+
 		$schema = $schemaClosure();
 
 		if ($schema->hasTable('doriath_folders') === false) {
