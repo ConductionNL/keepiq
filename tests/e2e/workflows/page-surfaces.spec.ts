@@ -399,7 +399,7 @@ test.describe('Routed page surfaces — public recipient routes', () => {
 			pending,
 			'no pending secret request — the dev seed is missing',
 		).toBeTruthy()
-		await page.goto(`${APP_BASE}/#/share/request/${pending.token}`, {
+		await page.goto(`${APP_BASE}/share/request/${pending.token}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await expect(
@@ -448,7 +448,7 @@ test.describe('Routed page surfaces — public recipient routes', () => {
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created link share carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/share/link/${token}`, {
+		await page.goto(`${APP_BASE}/share/link/${token}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await expect(page.locator('[data-testid="link-share-access"]')).toBeVisible({
@@ -487,7 +487,7 @@ test.describe('Routed page surfaces — public recipient routes', () => {
 		).toBeLessThan(300)
 		const token = created.json.token ?? created.json.data?.token
 		expect(token, 'the created ephemeral send carries no token').toBeTruthy()
-		await page.goto(`${APP_BASE}/#/send/${token}`, {
+		await page.goto(`${APP_BASE}/send/${token}`, {
 			waitUntil: 'domcontentloaded',
 		})
 		await expect(page.locator('[data-testid="send-access-page"]')).toBeVisible({

@@ -109,7 +109,7 @@ async function clickByLabel(page: Page, label: string): Promise<void> {
  * @return True when setup ran; false when the user already owned a suite.
  */
 async function setUpVault(page: Page): Promise<boolean> {
-	await page.goto(`${APP_BASE}/#/lock`, { waitUntil: 'domcontentloaded' })
+	await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 	await page
 		.locator('.lock-screen__card')
 		.waitFor({ state: 'visible', timeout: 30_000 })
@@ -410,7 +410,7 @@ test.describe('Workflow: compromise recovery — encryption-suites/spec.md', () 
 		// The negative case is the one that regresses quietly: a banner shown to
 		// everyone gets noticed immediately, one shown to nobody does not.
 		await loginAsVaultUser(page)
-		await page.goto(`${APP_BASE}/#/lock`, { waitUntil: 'domcontentloaded' })
+		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
 		await page
 			.locator('.lock-screen__card')
 			.waitFor({ state: 'visible', timeout: 30_000 })
