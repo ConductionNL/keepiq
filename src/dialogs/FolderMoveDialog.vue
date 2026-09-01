@@ -21,6 +21,14 @@
 		<div class="folder-form">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
+				<!-- Naming the items that stayed behind is the whole point:
+				     without it "some items may have moved" leaves the user
+				     with two vaults and no way to tell them apart. -->
+				<ul v-if="failures.length" class="folder-move__failures">
+					<li v-for="failure in failures" :key="failure.id">
+						{{ failure.name }} — {{ failure.message }}
+					</li>
+				</ul>
 			</NcNoteCard>
 
 			<p class="folder-form__hint">
@@ -148,6 +156,11 @@ export default {
 			children: null,
 			saving: false,
 			error: '',
+			/**
+			 * @type {Array<{id: string, name: string, message: string}>}
+			 * Items that stayed behind, named so the split state is visible.
+			 */
+			failures: [],
 		}
 	},
 
@@ -280,11 +293,36 @@ export default {
 		},
 
 		/**
+		 * Name one item that stayed behind, with the server's reason.
+		 *
+		 * @param {object} item The secret or subfolder that failed to move.
+		 * @param {Error|object} error The rejection from the update call.
+		 * @return {{id: string, name: string, message: string}} A failure row.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		describeFailure(item, error) {
+			return {
+				id: item.id,
+				name: item.name || item.id,
+				message:
+					error?.response?.data?.message
+					|| error?.message
+					|| t('keepiq', 'Unknown error'),
+			}
+		},
+
+		/**
 		 * Transfer the vault's contents: every direct secret via
 		 * updateSecret (folderId only — no re-encryption), then every
 		 * direct subfolder via updateFolder (each carries its subtree).
 		 * Finally refresh the visible list, which may have been mutated by
 		 * the full-vault fetch.
+		 *
+		 * There is no bulk endpoint, so the transfer is not atomic. Each
+		 * item is therefore attempted on its own: a failure is recorded and
+		 * the run continues, and the dialog stays open listing exactly what
+		 * is still in the source vault, so the split state is recoverable by
+		 * moving again rather than being merely announced.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
@@ -295,26 +333,56 @@ export default {
 			}
 			this.saving = true
 			this.error = ''
+			this.failures = []
 			const folderStore = useFolderStore()
 			const secretStore = useSecretStore()
+			const failures = []
 			try {
+				// The subfolder set comes from the SERVER, not from
+				// `folderStore.folders`: that list is hydrated on nav mount
+				// and on vault-unlock, so a subfolder created since (another
+				// tab, another device) is absent from it and the move would
+				// silently leave it behind.
+				const children = await folderStore.fetchChildren(this.folder.id)
+				this.children = children
+				const subfolders = children.subfolders || []
 				const secrets = await secretStore.fetchAllSecrets({
 					folderId: this.folder.id,
 				})
+
+				// Per item, so one failure does not strand the rest in the
+				// source vault. There is no bulk endpoint, so the move cannot
+				// be atomic — what it CAN do is carry on and name everything
+				// that stayed behind.
 				for (const secret of secrets) {
-					await secretStore.updateSecret(secret.id, {
-						folderId: this.targetVaultId,
-					})
+					try {
+						await secretStore.updateSecret(secret.id, {
+							folderId: this.targetVaultId,
+						})
+					} catch (e) {
+						failures.push(this.describeFailure(secret, e))
+					}
 				}
-				const subfolders = folderStore.folders.filter(
-					(candidate) => candidate.parentId === this.folder.id,
-				)
 				for (const subfolder of subfolders) {
-					await folderStore.updateFolder(subfolder.id, {
-						parentId: this.targetVaultId,
-						move: true,
-					})
+					try {
+						await folderStore.updateFolder(subfolder.id, {
+							parentId: this.targetVaultId,
+							move: true,
+						})
+					} catch (e) {
+						failures.push(this.describeFailure(subfolder, e))
+					}
 				}
+
+				if (failures.length > 0) {
+					this.failures = failures
+					this.error = t(
+						'keepiq',
+						'Failed to move the vault contents — some items may have moved already.',
+					)
+					return
+				}
+
 				this.$emit('saved', this.folder)
 				this.onUpdateOpen(false)
 			} catch (e) {
@@ -346,6 +414,15 @@ export default {
 .folder-form__hint {
 	color: var(--color-text-maxcontrast);
 	margin: 0;
+}
+
+/* The list of items that stayed behind. Capped and scrollable so a large
+   vault cannot push the dialog's own buttons off screen. */
+.folder-move__failures {
+	margin: 8px 0 0;
+	padding-inline-start: 20px;
+	max-height: 140px;
+	overflow-y: auto;
 }
 
 /* Vault identity inside the target picker: glyph + name per option, the
