@@ -38,6 +38,31 @@ describe('subfolderRows', () => {
 			folderId: 'a1x',
 			name: 'Deep',
 			isFolder: true,
+			customIcon: null,
+			customColor: null,
+		})
+	})
+
+	it('carries the vault customization keys through (restyle Stage 9)', () => {
+		const folders = [
+			{
+				id: 'v1',
+				name: 'Styled',
+				parentId: null,
+				customIcon: 'briefcase',
+				customColor: 'blue',
+			},
+			{ id: 'v2', name: 'Plain', parentId: null },
+		]
+		const rows = subfolderRows(folders, null)
+		expect(rows.find((r) => r.folderId === 'v1')).toMatchObject({
+			customIcon: 'briefcase',
+			customColor: 'blue',
+		})
+		// Unset stays an explicit null, never undefined.
+		expect(rows.find((r) => r.folderId === 'v2')).toMatchObject({
+			customIcon: null,
+			customColor: null,
 		})
 	})
 
