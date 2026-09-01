@@ -35,13 +35,13 @@
  * @e2e openspec/specs/encryption-suites/spec.md#user-views-lock-screen
  */
 import { expect, test } from '@playwright/test'
+import manifest from '../../../src/manifest.json'
 import {
 	APP_BASE,
 	gotoLockSettled,
 	lockHeading,
 	unlockVault,
 } from './_workflow-helpers.ts'
-import manifest from '../../../src/manifest.json'
 
 test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 	test('lock screen renders in UNLOCK mode (admin owns a seeded active suite)', async ({
