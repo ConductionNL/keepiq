@@ -44,7 +44,9 @@ class Version000035Date20260901000000 extends SimpleMigrationStep {
 	 *
 	 * @return null|ISchemaWrapper
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $output and $options are
+	 * mandated by SimpleMigrationStep::changeSchema(); this step reads only the
+	 * schema closure.
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		/*
