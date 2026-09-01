@@ -283,10 +283,13 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 		page,
 	}) => {
 		await unlockVault(page)
-		// Hash-mode router: after a successful unlock the router pushes off the
-		// `#/lock` gate to the return route (default `#/` dashboard). Assert the
-		// hash left the lock gate rather than the (path-form) URL prefix.
-		await expect(page).toHaveURL(/#\/(?!lock)/, { timeout: 15_000 })
+		// History router: after a successful unlock the router pushes off the
+		// `/lock` gate to the return route (default `/` dashboard). Assert we
+		// LEFT the gate rather than naming the destination, which varies with
+		// the returnUrl the gate captured.
+		await expect(page).not.toHaveURL(/\/apps\/keepiq\/lock(\?|$)/, {
+			timeout: 15_000,
+		})
 		await expect(page.locator('.lock-screen')).toHaveCount(0)
 	})
 
