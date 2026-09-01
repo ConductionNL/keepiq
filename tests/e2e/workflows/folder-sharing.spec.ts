@@ -39,13 +39,13 @@
  * were credited to zero scenarios. They are anchored per-test below, against the
  * `secrets-write-ui` scenarios they actually drive.
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
 	clickOverflowAction,
 	gotoLockSettled,
 	openVault,
 	unlockVault,
-} from './_workflow-helpers'
+} from './_workflow-helpers.ts'
 
 const REQ_TOKEN = `(() => {
 	const head = document.querySelector('head[data-requesttoken]');
@@ -279,9 +279,25 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await page
 			.getByRole('button', { name: /Secret actions/i })
 			.evaluate((el: HTMLElement) => el.click())
-		await page
-			.getByTestId('secret-detail-move')
-			.evaluate((el: HTMLElement) => el.click())
+		// TARGET THE MENUITEM, NOT A NODE GUESSED FROM THE MARKUP.
+		//
+		// This used to descend from `data-testid=secret-detail-move` to an
+		// inner <button> and dispatch `el.click()`, on the assumption that
+		// the testid lands on NcActionButton's <li> root while the handler
+		// sits on the button. That assumption is what broke: after the
+		// Stage-8 restyle the synthetic dispatch stopped reaching the
+		// handler, and the failure was invisible — the trace shows the
+		// testid RESOLVING in 0.1s and then `.move-form` timing out for 10s,
+		// with the menu still `[expanded]` and `menuitem "Move"` present in
+		// the snapshot. A click that lands on the wrong node looks exactly
+		// like a dialog that refuses to open.
+		//
+		// The accessibility tree exposes this as `menuitem "Move"` whatever
+		// element NcActionButton happens to render, so ask for that and let
+		// Playwright's own click do the actionability checks. It is also a
+		// real click rather than a dispatched event, which is what a user
+		// performs.
+		await page.getByRole('menuitem', { name: 'Move' }).click()
 		await expect(page.locator('.move-form')).toBeVisible({ timeout: 10_000 })
 		await page.locator('.move-form .vs__dropdown-toggle').click()
 		await page

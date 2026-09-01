@@ -193,7 +193,10 @@
 					</span>
 					<div class="secret-detail__row-main">
 						<div class="secret-detail__row-value">
-							<PasswordField :label="keyLabel" :resolve="resolveKey" />
+							<PasswordField
+							:key="secretLoadToken"
+							:label="keyLabel"
+							:resolve="resolveKey" />
 						</div>
 					</div>
 				</div>
@@ -956,6 +959,29 @@ export default {
 			cardRevealed: { number: false, cvv: false, pin: false },
 			/** Reveal state for the identity's BSN row (masked by default). */
 			bsnRevealed: false,
+			/**
+			 * Bumped by every successful `load()`, and bound to
+			 * `<PasswordField :key>` so the field remounts whenever the
+			 * loaded secret changes.
+			 *
+			 * PasswordField decrypts lazily and then CACHES the plaintext
+			 * for its own lifetime (`plain` is only resolved while it is
+			 * still `null`), and it keeps `revealed` across that lifetime
+			 * too. That was harmless while the detail was a full page which
+			 * remounted per secret. This sidebar deliberately does NOT
+			 * remount — the `secretId` watcher above swaps the secret in
+			 * place — so without a key the cache outlives the secret it
+			 * belongs to, in two ways that both matter for a vault:
+			 *
+			 *   • Edit the open secret: `load()` refreshes `this.secret`,
+			 *     the field keeps showing the OLD plaintext.
+			 *   • Click another row while revealed: the panel shows secret
+			 *     B's name with secret A's plaintext, and Copy copies A's.
+			 *
+			 * Remounting resets `plain` and `revealed` together, so a
+			 * changed secret is re-masked until the user asks for it again.
+			 */
+			secretLoadToken: 0,
 		}
 	},
 
@@ -1350,6 +1376,9 @@ export default {
 			this.error = ''
 			try {
 				this.secret = await useSecretStore().fetchSecret(this.secretId)
+				// Retire the previous secret's decrypted plaintext with the
+				// secret it came from. See `secretLoadToken` in data().
+				this.secretLoadToken += 1
 				// Write-grade badge (folder-permission-grades §4.3) — a
 				// copy the user may team-write shows the sync warning.
 				try {

@@ -16,7 +16,6 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
 import SecretCreateDialog from '../../src/dialogs/SecretCreateDialog.vue'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
@@ -54,7 +53,7 @@ const stubs = {
 	KeyGeneratorModal: { props: ['open'], template: '<div />' },
 }
 
-const mountDialog = async () => {
+async function mountDialog() {
 	const wrapper = mount(SecretCreateDialog, { propsData: {}, global: { stubs } })
 	await wrapper.vm.$nextTick()
 

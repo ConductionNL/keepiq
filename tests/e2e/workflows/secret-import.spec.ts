@@ -22,14 +22,14 @@
  * enabled and the admin owns one active EncryptionSuite seeded with the dev
  * master password.
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
 	clickOverflowAction,
 	DEV_MASTER_PASSWORD,
 	gotoLockSettled,
 	gotoVaultRoute,
 	unlockVault,
-} from './_workflow-helpers'
+} from './_workflow-helpers.ts'
 
 const CSV =
 	'name,url,username,password,folder\n'

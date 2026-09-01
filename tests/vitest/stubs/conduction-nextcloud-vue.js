@@ -269,15 +269,15 @@ function currentTheme() {
 }
 
 export {
-	CnIndexPage,
-	CnStatusBadge,
 	CnBreadcrumbs,
 	CnIconColorPicker,
+	CnIndexPage,
+	CnStatusBadge,
+	currentTheme,
 	FOLDER_COLORS,
 	FOLDER_ICONS,
 	folderColorTint,
 	resolveFolderColor,
 	resolveFolderIcon,
 	searchFolderIcons,
-	currentTheme,
 }

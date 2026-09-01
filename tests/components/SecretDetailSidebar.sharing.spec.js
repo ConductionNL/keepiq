@@ -14,11 +14,10 @@
  * @spec openspec/changes/implement-user-sharing/tasks.md#task-12.6
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import axios from '@nextcloud/axios'
-
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
@@ -48,7 +47,7 @@ const stubAll = {
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
-const mountDetail = async ({ secret, currentUser }) => {
+async function mountDetail({ secret, currentUser }) {
 	window.OC = { currentUser }
 	// Pre-seed the secret store so the component's mounted hook resolves
 	// `fetchSecret` to our fixture rather than going through the live

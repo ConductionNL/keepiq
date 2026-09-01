@@ -26,19 +26,18 @@
  * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // @vue/test-utils v1 (Vue 2) does not export flushPromises; the
 // canonical equivalent is to await an already-resolved promise twice
 // to drain the microtask queue and let v-if branches re-render.
-const flushPromises = async () => {
+async function flushPromises() {
 	await Promise.resolve()
 	await Promise.resolve()
 	await Promise.resolve()
 }
 import { createPinia, setActivePinia } from 'pinia'
-
 import LinkShareAccess from '../../src/views/LinkShareAccess.vue'
 import { useLinkShareStore } from '../../src/store/modules/linkShare.js'
 

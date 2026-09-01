@@ -20,10 +20,9 @@
  * @spec openspec/changes/implement-secret-requests/tasks.md#13.3
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretRequestCreateDialog from '../../src/dialogs/SecretRequestCreateDialog.vue'
 import { useSecretRequestStore } from '../../src/store/modules/secretRequest.js'
 
