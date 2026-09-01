@@ -239,18 +239,24 @@ export default {
 
 		/**
 		 * The vault glyph's fill for the ACTIVE theme (reactive — a live
-		 * light/dark flip swaps the variant without a reload). The color
-		 * STAYS on the highlighted row (Proton keeps the identity visible
-		 * there too) — the circle behind it goes opaque instead, see
-		 * vaultGlyphStyle. ALWAYS a string: 'currentColor' for unset
-		 * colors — an explicit null fill-color strips the SVG fill
-		 * attribute entirely, which renders BLACK regardless of theme.
+		 * light/dark flip swaps the variant without a reload). On the
+		 * HIGHLIGHTED row the glyph follows the row's own text color like
+		 * every other nav glyph (the collapse chevron included) — an
+		 * opaque-disc-keeps-the-color variant was tried and rejected in
+		 * review: the disc read as a stray pill on the highlight. Color
+		 * identity shows at rest and on hover. ALWAYS a string:
+		 * 'currentColor' for unset colors — an explicit null fill-color
+		 * strips the SVG fill attribute entirely, which renders BLACK
+		 * regardless of theme.
 		 *
 		 * @param {object} node The vault node.
 		 * @return {string} A hex color or 'currentColor'.
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		vaultColor(node) {
+			if (this.isHighlighted(node)) {
+				return 'currentColor'
+			}
 			return (
 				resolveFolderColor(node.customColor, currentTheme())
 				?? 'currentColor'
@@ -258,35 +264,22 @@ export default {
 		},
 
 		/**
-		 * The circle behind the vault glyph. At rest and on hover: the
-		 * Proton-style translucent tint of the SAME resolved color (the
-		 * 53a36006 approach — one color source, glyph and circle can never
-		 * disagree across themes). On the HIGHLIGHTED row the disc goes
-		 * OPAQUE in the theme's main background instead: that recreates
-		 * exactly the rest-state foreground/background pairing (light
-		 * palette variants on a white disc, dark variants on a dark disc),
-		 * so the color identity survives the selection at unchanged
-		 * contrast — the glyph never sits on the saturated primary
-		 * highlight itself. Colorless vaults keep no circle and follow the
-		 * row's text color (white on the highlight), as they always did.
+		 * The circle behind the vault glyph: the Proton-style translucent
+		 * tint of the SAME resolved color (the 53a36006 approach — one
+		 * color source, glyph and circle can never disagree across
+		 * themes). No circle on the HIGHLIGHTED row (the glyph is plain
+		 * there, see vaultColor) and none for uncolored vaults.
 		 *
 		 * @param {object} node The vault node.
 		 * @return {object|undefined} A style object or undefined.
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		vaultGlyphStyle(node) {
-			const theme = currentTheme()
-			const hasColor
-				= resolveFolderColor(node.customColor, theme) !== null
-			if (!hasColor) {
+			if (this.isHighlighted(node)) {
 				return undefined
 			}
-			if (this.isHighlighted(node)) {
-				return { backgroundColor: 'var(--color-main-background)' }
-			}
-			return {
-				backgroundColor: folderColorTint(node.customColor, theme),
-			}
+			const tint = folderColorTint(node.customColor, currentTheme())
+			return tint ? { backgroundColor: tint } : undefined
 		},
 
 		/**
@@ -359,6 +352,36 @@ export default {
 	border-radius: 50%;
 }
 
+/* The glyph on the ACTIVE row is flattened in CSS, keyed to the row's own
+   `.active` class — NOT to the highlightId prop. The class has MORE
+   SOURCES than the prop (NcAppNavigationItem also activates through
+   vue-router's own link matching), so a JS-side fill can disagree with
+   what the row actually renders; a state-keyed style cannot. Two rules:
+
+   1. color on the icon column: NcAppNavigationItem's modern active rule
+      pins the link to --color-main-text (black) with !important while the
+      instance themes paint the row SOLID PRIMARY and whiten only the
+      label — so inherited currentColor resolves black on a blue row. The
+      primary-contrast token is what every themed instance here (and NC's
+      legacy variant) needs. Covers colorless vaults and the nested
+      FolderOutline.
+   2. fill on the glyph svg: a COLORED vault carries its hex as the svg's
+      fill ATTRIBUTE, which no inherited color overrides — the fill
+      PROPERTY does. Anchored on .app-navigation-entry.active (the row
+      element itself), so an open parent never flattens for an active
+      child. The tint circle drops with it. */
+.keepiq-nav-tree :deep(.app-navigation-entry.active .app-navigation-entry-icon) {
+	color: var(--color-primary-element-text) !important;
+}
+
+.keepiq-nav-tree :deep(.app-navigation-entry.active .keepiq-nav-tree__vault-glyph) {
+	background-color: transparent !important;
+}
+
+.keepiq-nav-tree :deep(.app-navigation-entry.active .keepiq-nav-tree__vault-glyph svg) {
+	fill: var(--color-primary-element-text) !important;
+}
+
 /* The actions trigger on the ACTIVE row: the default button chrome reads
    as a stray light pill on the row highlight (whether the server renders
    the solid legacy highlight or the tinted modern one) — make it
@@ -368,7 +391,12 @@ export default {
 .keepiq-nav-tree
 	:deep(.app-navigation-entry.active .app-navigation-entry__utils .button-vue) {
 	background-color: transparent !important;
-	color: inherit !important;
+	/* NOT `inherit`: NC's legacy-active rule whitens only the LINK element,
+	   so the utils area inherits the entry div's default (main-text, black
+	   on the blue row). The collapse chevron is white because NC hands it
+	   the tertiary-on-primary variant — the menu toggle never gets that,
+	   so it takes the same contrast token explicitly. */
+	color: var(--color-primary-element-text) !important;
 }
 
 .keepiq-nav-tree
