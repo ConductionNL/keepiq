@@ -43,6 +43,7 @@ import { expect, test } from '@playwright/test'
 import {
 	clickOverflowAction,
 	gotoLockSettled,
+	gotoVaultRoute,
 	openVault,
 	unlockVault,
 } from './_workflow-helpers.ts'
@@ -334,10 +335,7 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		// write; this is the read, and they are not the same claim — the list
 		// could filter on something else entirely and the row would vanish.
 		// Navigate in place (a reload would drop the in-memory key).
-		await page.evaluate((id) => {
-			window.location.hash = `#/folders/${id}`
-		}, folder.id)
-		await page.waitForLoadState('domcontentloaded')
+		await gotoVaultRoute(page, `folders/${folder.id}`)
 		await expect(
 			page.locator('.secret-list-item', { hasText: secretName }),
 			`"${secretName}" is not listed under the folder it was moved into`,
