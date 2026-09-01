@@ -99,6 +99,8 @@ class FolderController extends OCSController {
 	 *
 	 * @param string $name The folder name (no slashes)
 	 * @param string|null $parentId The parent folder ID (null = root)
+	 * @param string|null $customIcon Optional custom icon key (restyle Stage 9)
+	 * @param string|null $customColor Optional custom color key (restyle Stage 9)
 	 *
 	 * @NoAdminRequired
 	 *
@@ -107,14 +109,19 @@ class FolderController extends OCSController {
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.3
 	 */
 	#[NoAdminRequired]
-	public function create(string $name, ?string $parentId = null): JSONResponse {
+	public function create(
+		string $name,
+		?string $parentId = null,
+		?string $customIcon = null,
+		?string $customColor = null,
+	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			$folder = $this->folderService->create($name, $parentId, $userId);
+			$folder = $this->folderService->create($name, $parentId, $userId, $customIcon, $customColor);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (ConflictException $e) {
@@ -127,12 +134,19 @@ class FolderController extends OCSController {
 	}//end create()
 
 	/**
-	 * Update a folder — rename and/or move.
+	 * Update a folder — rename, move, and/or update presentation attributes.
+	 *
+	 * customIcon/customColor apply only when their KEY is present in the
+	 * request body (an explicit null CLEARS the value), so a rename/move
+	 * call that does not mention them can never accidentally wipe a
+	 * customization (restyle Stage 9).
 	 *
 	 * @param string $id The folder ID
 	 * @param string|null $name The new name (null = no rename)
 	 * @param string|null $parentId The new parent (when moving)
 	 * @param bool $move Whether parentId is a move instruction
+	 * @param string|null $customIcon The new custom icon key (null clears; only applied when the key is present)
+	 * @param string|null $customColor The new custom color key (null clears; only applied when the key is present)
 	 *
 	 * @NoAdminRequired
 	 *
@@ -145,7 +159,14 @@ class FolderController extends OCSController {
 	 *   parentId is simply absent.
 	 */
 	#[NoAdminRequired]
-	public function update(string $id, ?string $name = null, ?string $parentId = null, bool $move = false): JSONResponse {
+	public function update(
+		string $id,
+		?string $name = null,
+		?string $parentId = null,
+		bool $move = false,
+		?string $customIcon = null,
+		?string $customColor = null,
+	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -159,6 +180,23 @@ class FolderController extends OCSController {
 
 			if ($move === true) {
 				$folder = $this->folderService->move($id, $parentId, $userId);
+			}
+
+			// Key-present-with-null CLEARS, absent key stays untouched — the
+			// distinction only the raw request params can make (the method
+			// arguments read null for both).
+			$requestParams = $this->request->getParams();
+			$attributeChanges = [];
+			if (array_key_exists('customIcon', $requestParams) === true) {
+				$attributeChanges['customIcon'] = $customIcon;
+			}
+
+			if (array_key_exists('customColor', $requestParams) === true) {
+				$attributeChanges['customColor'] = $customColor;
+			}
+
+			if ($attributeChanges !== []) {
+				$folder = $this->folderService->updateAttributes($id, $attributeChanges, $userId);
 			}
 
 			if ($folder === null) {
