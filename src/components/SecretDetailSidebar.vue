@@ -85,7 +85,7 @@
 						<NcActionButton
 							:closeAfterClick="true"
 							data-testid="secret-detail-delete"
-							@click="remove">
+							@click="openDelete">
 							<template #icon>
 								<Delete :size="20" />
 							</template>
@@ -1506,24 +1506,22 @@ export default {
 		},
 
 		/**
-		 * Delete the secret and close the sidebar. The store removes the
-		 * row from the list state itself, so no list refetch is needed.
+		 * Open the delete confirmation for this secret; close the sidebar
+		 * once the dialog reports the delete went through. The dialog owns
+		 * the call and the failure message, so a refused delete leaves the
+		 * sidebar open behind it. The store removes the row from the list
+		 * state itself, so no list refetch is needed.
 		 *
-		 * @return {Promise<void>}
+		 * @return {void}
 		 * @spec openspec/specs/secrets/spec.md#requirement-delete-secret
 		 */
-		async remove() {
-			try {
-				await useSecretStore().deleteSecret(this.secretId)
-			} catch (e) {
-				// A refused delete (403 on a delegated secret, server error,
-				// offline write) keeps the sidebar open with the reason inline.
-				this.error =
-					e?.response?.data?.message
-					|| t('keepiq', 'Failed to delete secret')
-				return
-			}
-			this.$emit('close')
+		openDelete() {
+			this.cnOpenModal('secret-delete', {
+				secretId: this.secretId,
+				onDeleted: () => {
+					this.$emit('close')
+				},
+			})
 		},
 
 		/**

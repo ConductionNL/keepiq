@@ -1116,7 +1116,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "This vault is empty — there is nothing to move.",
         "Target vault": "Target vault",
         "Failed to move the vault contents — some items may have moved already.": "Failed to move the vault contents — some items may have moved already.",
-        "Move vault contents": "Move vault contents"
+        "Move vault contents": "Move vault contents",
+        "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone."
     },
     "nplurals=2; plural=(n != 1);"
 )
