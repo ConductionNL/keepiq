@@ -85,8 +85,9 @@
 				v-if="editFolder"
 				:folder="editFolder"
 				@close="editFolder = null" />
-			<FolderMoveDialog
+			<MoveDialog
 				v-if="moveFolder"
+				subject="vault"
 				:folder="moveFolder"
 				@saved="onMoved"
 				@close="moveFolder = null" />
@@ -195,7 +196,7 @@ import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
 import FolderDeleteConfirmDialog from '../../dialogs/FolderDeleteConfirmDialog.vue'
 import FolderEditDialog from '../../dialogs/FolderEditDialog.vue'
-import FolderMoveDialog from '../../dialogs/FolderMoveDialog.vue'
+import MoveDialog from '../../dialogs/MoveDialog.vue'
 import SubfolderResolutionDialog from '../../modals/SubfolderResolutionDialog.vue'
 import TeamFolderDialog from '../../modals/TeamFolderDialog.vue'
 import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
@@ -212,7 +213,7 @@ export default {
 		CnIcon,
 		FolderDeleteConfirmDialog,
 		FolderEditDialog,
-		FolderMoveDialog,
+		MoveDialog,
 		NavFolderTree,
 		NcAppNavigation,
 		NcAppNavigationCaption,

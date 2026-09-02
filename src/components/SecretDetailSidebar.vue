@@ -1484,6 +1484,7 @@ export default {
 		 */
 		openMove() {
 			this.cnOpenModal('secret-move', {
+				subject: 'secret',
 				secretId: this.secretId,
 				currentFolderId: this.secret ? this.secret.folderId || null : null,
 				onSaved: () => {

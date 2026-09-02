@@ -40,7 +40,7 @@ import FolderCreateDialog from './dialogs/FolderCreateDialog.vue'
 import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
 import SecretDeleteConfirmDialog from './dialogs/SecretDeleteConfirmDialog.vue'
 import SecretEditDialog from './dialogs/SecretEditDialog.vue'
-import SecretMoveDialog from './dialogs/SecretMoveDialog.vue'
+import MoveDialog from './dialogs/MoveDialog.vue'
 import SecretShareDialog from './dialogs/SecretShareDialog.vue'
 import ApplicationDetail from './views/ApplicationDetail.vue'
 import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
@@ -89,7 +89,7 @@ export default {
 		component: SecretDeleteConfirmDialog,
 		propsSchema: {},
 	},
-	'secret-move': { kind: 'modal', component: SecretMoveDialog, propsSchema: {} },
+	'secret-move': { kind: 'modal', component: MoveDialog, propsSchema: {} },
 	'secret-share': { kind: 'modal', component: SecretShareDialog, propsSchema: {} },
 	'application-register': {
 		kind: 'modal',

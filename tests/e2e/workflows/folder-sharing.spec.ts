@@ -300,6 +300,53 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await page.getByRole('menuitem', { name: 'Move' }).click()
 		await expect(page.locator('.move-form')).toBeVisible({ timeout: 10_000 })
 		await page.locator('.move-form .vs__dropdown-toggle').click()
+
+		// Is the option list actually REACHABLE, not merely present? This block
+		// exists because the clicks below kept passing while a human could not
+		// use the control at all: with the teleport turned off, the open list
+		// was clipped by `.dialog__content` (52px tall, `overflow: auto`) to
+		// roughly 9 visible pixels of 350. Playwright scrolls an element into
+		// view before clicking, so it drove the select happily — the failure
+		// was invisible to exactly the test that covered the flow.
+		//
+		// The list teleports again now, so it floats over the dialog and the
+		// question is whether it is on screen rather than whether some scroll
+		// box contains it. Measure against the VIEWPORT and against any
+		// clipping ancestor: a teleported list has none, an inline one is cut
+		// down to the sliver this test exists to catch.
+		const listVisibility = await page.evaluate(() => {
+			const menu = document.querySelector('.vs__dropdown-menu')
+			if (!menu) return null
+			const m = menu.getBoundingClientRect()
+			let top = Math.max(m.top, 0)
+			let bottom = Math.min(m.bottom, window.innerHeight)
+			for (
+				let node = menu.parentElement;
+				node && node !== document.body;
+				node = node.parentElement
+			) {
+				const style = getComputedStyle(node)
+				if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+					const box = node.getBoundingClientRect()
+					top = Math.max(top, box.top)
+					bottom = Math.min(bottom, box.bottom)
+				}
+			}
+			return {
+				menuHeight: m.height,
+				visibleHeight: Math.max(0, bottom - top),
+			}
+		})
+		expect(
+			listVisibility,
+			'the destination-folder list should be rendered',
+		).not.toBeNull()
+		expect(
+			listVisibility!.visibleHeight,
+			`destination-folder list clipped: only ${listVisibility!.visibleHeight}px `
+				+ `of ${listVisibility!.menuHeight}px is inside the dialog's visible area`,
+		).toBeGreaterThan(120)
+
 		await page
 			.locator('.vs__dropdown-menu li', { hasText: FOLDER })
 			.first()

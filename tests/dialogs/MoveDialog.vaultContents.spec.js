@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction / Keepiq Contributors
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Component test for `src/dialogs/FolderMoveDialog.vue`.
+ * Component test for `src/dialogs/MoveDialog.vue` with subject="vault".
  *
  * There is no bulk move endpoint, so "move vault contents" is a client-driven
  * loop and cannot be atomic. What these tests pin is the two things that make
@@ -22,7 +22,7 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import FolderMoveDialog from '../../src/dialogs/FolderMoveDialog.vue'
+import MoveDialog from '../../src/dialogs/MoveDialog.vue'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 
@@ -32,14 +32,18 @@ import { useSecretStore } from '../../src/store/modules/secret.js'
  * @return {object} The wrapper.
  */
 function mountDialog() {
-	return mount(FolderMoveDialog, {
-		propsData: { folder: { id: 'source-vault', name: 'Source' } },
+	return mount(MoveDialog, {
+		propsData: {
+			subject: 'vault',
+			folder: { id: 'source-vault', name: 'Source' },
+		},
 		global: {
 			stubs: {
 				NcDialog: { template: '<div><slot /><slot name="actions" /></div>' },
 				NcNoteCard: { template: '<div class="note"><slot /></div>' },
 				NcButton: { template: '<button v-bind="$attrs"><slot /></button>' },
 				NcSelect: { template: '<div />' },
+				DestinationSelect: { template: '<div />' },
 				NcLoadingIcon: true,
 				FolderMove: true,
 			},
@@ -80,7 +84,7 @@ describe('FolderMoveDialog', () => {
 
 		const wrapper = mountDialog()
 		await wrapper.vm.$nextTick()
-		wrapper.vm.targetVaultId = 'target-vault'
+		wrapper.vm.target = 'target-vault'
 
 		await wrapper.vm.submit()
 
@@ -100,7 +104,7 @@ describe('FolderMoveDialog', () => {
 
 		const wrapper = mountDialog()
 		await wrapper.vm.$nextTick()
-		wrapper.vm.targetVaultId = 'target-vault'
+		wrapper.vm.target = 'target-vault'
 
 		await wrapper.vm.submit()
 
@@ -133,7 +137,7 @@ describe('FolderMoveDialog', () => {
 		const wrapper = mountDialog()
 		await wrapper.vm.$nextTick()
 		wrapper.vm.children = { directSecretCount: 2, subfolders: [] }
-		wrapper.vm.targetVaultId = 'target-vault'
+		wrapper.vm.target = 'target-vault'
 
 		await wrapper.vm.submit()
 
