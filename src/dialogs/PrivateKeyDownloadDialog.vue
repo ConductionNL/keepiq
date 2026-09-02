@@ -141,6 +141,13 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Reset the acknowledgment when the parent closes the dialog, so a
+		 * later key starts unacknowledged again.
+		 *
+		 * @param {boolean} val The new open state.
+		 * @spec exclude Dialog open-state reset plumbing; no domain behaviour.
+		 */
 		open(val) {
 			if (val === false) {
 				this.acknowledged = false
@@ -152,6 +159,13 @@ export default {
 	methods: {
 		t,
 
+		/**
+		 * Copy the one-time key to the clipboard, with a transient
+		 * confirmation on the button.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		async onCopy() {
 			try {
 				if (navigator?.clipboard?.writeText) {
@@ -166,6 +180,12 @@ export default {
 			}
 		},
 
+		/**
+		 * Download the one-time key as a .pem file.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		onDownload() {
 			try {
 				const blob = new Blob([this.privateKey], {

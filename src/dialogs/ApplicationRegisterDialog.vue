@@ -175,6 +175,12 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Reset the form when the parent closes the dialog.
+		 *
+		 * @param {boolean} val The new open state.
+		 * @spec exclude Dialog open-state reset plumbing; no domain behaviour.
+		 */
 		open(val) {
 			if (val === false) {
 				this.form = { name: '', description: '', type: 'internal', csr: '' }
@@ -234,6 +240,13 @@ export default {
 			}
 		},
 
+		/**
+		 * Read an uploaded CSR file into the PEM textarea.
+		 *
+		 * @param {Event} event The file input's change event.
+		 * @return {void}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		onCsrUpload(event) {
 			const file = event.target.files && event.target.files[0]
 			if (!file) {
