@@ -138,7 +138,12 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		)
 	})
 
-	it('falls back to legacy owner_id field when ownerId is absent', async () => {
+	it('treats ownerId as the single canonical owner field (fail-closed)', async () => {
+		// The Secret entity has serialized `ownerId` since its first version,
+		// so no response or offline snapshot ever carried `owner_id`/`userId`.
+		// A payload with only a legacy-style name therefore reads as
+		// not-owned rather than re-introducing a fallback chain every
+		// consumer would have to duplicate (PR #479 review).
 		const wrapper = await mountDetail({
 			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', owner_id: 'alice' },
 			currentUser: 'alice',
@@ -146,6 +151,9 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 
 		expect(
 			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
 		).toBe(true)
 	})
 

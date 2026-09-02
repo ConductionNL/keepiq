@@ -73,7 +73,47 @@
 				v-if="folderTree.length > 0"
 				:folders="folderTree"
 				:highlightId="highlightFolderId"
-				:ellipsisHighlightId="ellipsisHighlightId" />
+				:ellipsisHighlightId="ellipsisHighlightId"
+				@edit="editFolder = $event"
+				@share="shareFolder = $event"
+				@move="moveFolder = $event"
+				@delete="onDeleteRequested" />
+			<!-- Vault dialogs (restyle Stage 9), opened from the tree
+			     entries' "⋮" menu. The store updates the folder list in
+			     place, so the tree re-renders without a refetch. -->
+			<FolderEditDialog
+				v-if="editFolder"
+				:folder="editFolder"
+				@close="editFolder = null" />
+			<FolderMoveDialog
+				v-if="moveFolder"
+				:folder="moveFolder"
+				@saved="onMoved"
+				@close="moveFolder = null" />
+			<!-- Share = team sharing, the same flow the list toolbar offers
+			     for the open folder — here for any vault straight from the
+			     rail. -->
+			<TeamFolderDialog
+				v-if="shareFolder"
+				:open="true"
+				:folderId="shareFolder.id"
+				:folderName="shareFolder.name"
+				@update:open="(value) => !value && (shareFolder = null)" />
+			<!-- Deleting a vault with content goes through the resolution
+			     protocol (per-subfolder keep/move/delete); an EMPTY vault
+			     gets a plain confirm. -->
+			<SubfolderResolutionDialog
+				v-if="deleteFolder && deleteChildren && !deleteIsEmpty"
+				:open="true"
+				:folderId="deleteFolder.id"
+				:children="deleteChildren"
+				@deleted="onDeleted"
+				@update:open="(value) => !value && resetDelete()" />
+			<FolderDeleteConfirmDialog
+				v-if="deleteFolder && deleteChildren && deleteIsEmpty"
+				:folder="deleteFolder"
+				@deleted="onDeleted"
+				@close="resetDelete()" />
 		</template>
 		<template #footer>
 			<!-- Footer-section entries live in NcAppNavigation's #footer slot —
@@ -153,6 +193,11 @@ import {
 } from '@nextcloud/vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import ShieldAccountOutline from 'vue-material-design-icons/ShieldAccountOutline.vue'
+import FolderDeleteConfirmDialog from '../../dialogs/FolderDeleteConfirmDialog.vue'
+import FolderEditDialog from '../../dialogs/FolderEditDialog.vue'
+import FolderMoveDialog from '../../dialogs/FolderMoveDialog.vue'
+import SubfolderResolutionDialog from '../../modals/SubfolderResolutionDialog.vue'
+import TeamFolderDialog from '../../modals/TeamFolderDialog.vue'
 import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
@@ -165,6 +210,9 @@ export default {
 
 	components: {
 		CnIcon,
+		FolderDeleteConfirmDialog,
+		FolderEditDialog,
+		FolderMoveDialog,
 		NavFolderTree,
 		NcAppNavigation,
 		NcAppNavigationCaption,
@@ -172,6 +220,8 @@ export default {
 		NcAppNavigationSettings,
 		OpenInNew,
 		ShieldAccountOutline,
+		SubfolderResolutionDialog,
+		TeamFolderDialog,
 	},
 
 	inject: {
@@ -188,6 +238,27 @@ export default {
 			type: Object,
 			required: true,
 		},
+	},
+
+	data() {
+		return {
+			/**
+			 * The vault whose edit dialog is open (from the tree entries'
+			 * "⋮" menu), or null. Restyle Stage 9.
+			 */
+			editFolder: null,
+			/** The vault whose team-share dialog is open, or null. */
+			shareFolder: null,
+			/** The vault whose move dialog is open, or null. */
+			moveFolder: null,
+			/** The vault a delete was requested for, or null. */
+			deleteFolder: null,
+			/**
+			 * The children payload (GET /folders/{id}/children) of the
+			 * delete target — decides confirm vs the resolution protocol.
+			 */
+			deleteChildren: null,
+		}
 	},
 
 	computed: {
@@ -216,6 +287,25 @@ export default {
 		 */
 		folderTree() {
 			return this.folderStore.folderTree
+		},
+
+		/**
+		 * Whether the delete target holds neither secrets nor subfolders —
+		 * an empty folder gets a plain confirm; anything else goes through
+		 * the resolution protocol.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		deleteIsEmpty() {
+			const children = this.deleteChildren
+			if (!children) {
+				return false
+			}
+			return (
+				(children.directSecretCount || 0) === 0
+				&& (children.subfolders || []).length === 0
+			)
 		},
 
 		/**
@@ -456,6 +546,78 @@ export default {
 		 */
 		fetchFoldersSafe() {
 			this.folderStore.fetchFolders().catch(() => {})
+		},
+
+		/**
+		 * A delete was requested from a vault's "⋮" menu: load the folder's
+		 * children payload first, because it decides which surface opens —
+		 * a plain confirm for an empty folder, the per-subfolder resolution
+		 * protocol for anything with content.
+		 *
+		 * @param {object} node The vault node.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-folder-children
+		 */
+		async onDeleteRequested(node) {
+			this.deleteFolder = node
+			this.deleteChildren = null
+			try {
+				this.deleteChildren = await this.folderStore.fetchChildren(node.id)
+			} catch {
+				// No payload, no dialog — fail quiet rather than offering a
+				// delete whose consequences we could not describe.
+				this.deleteFolder = null
+			}
+		},
+
+		/**
+		 * Close whichever delete surface is open and clear its state.
+		 *
+		 * @return {void}
+		 * @spec exclude Dialog-host state reset; no domain behaviour.
+		 */
+		resetDelete() {
+			this.deleteFolder = null
+			this.deleteChildren = null
+		},
+
+		/**
+		 * The resolution dialog finished: clear state and leave the deleted
+		 * folder's route if it was open.
+		 *
+		 * @param {string} folderId The deleted folder id.
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		onDeleted(folderId) {
+			this.resetDelete()
+			this.leaveDeletedRoute(folderId)
+		},
+
+		/**
+		 * A move landed: refetch (a re-parent can change what the display
+		 * cap hides) and close the dialog.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		onMoved() {
+			this.moveFolder = null
+			this.fetchFoldersSafe()
+		},
+
+		/**
+		 * Navigate back to the vault root when the just-deleted folder was
+		 * the OPEN one — its route would otherwise 404 into an empty list.
+		 *
+		 * @param {string} folderId The deleted folder id.
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		leaveDeletedRoute(folderId) {
+			if (this.$route?.params?.folderId === folderId) {
+				this.$router?.push({ name: 'SecretList' })
+			}
 		},
 	},
 }

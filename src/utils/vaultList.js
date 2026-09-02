@@ -53,6 +53,10 @@ export function subfolderRows(folders, selectedFolderId, searchTerm = '') {
 			folderId: folder.id,
 			name: folder.name,
 			isFolder: true,
+			// Vault personalization keys (restyle Stage 9) ride along so the
+			// root rows can render the picked icon + color.
+			customIcon: folder.customIcon ?? null,
+			customColor: folder.customColor ?? null,
 		}))
 }
 
