@@ -86,6 +86,7 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 		 */
 		async moveOne(secretId) {
 			await useSecretStore().updateSecret(secretId, {

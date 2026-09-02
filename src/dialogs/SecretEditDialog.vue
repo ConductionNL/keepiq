@@ -213,6 +213,8 @@ export default {
 		},
 	},
 
+	emits: ['saved', 'close'],
+
 	data() {
 		return {
 			open: true,

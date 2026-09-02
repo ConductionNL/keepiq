@@ -187,6 +187,7 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} options Optional filters ({ folderId, typeId, search }).
 		 * @return {Promise<Array<object>>} the full secret list.
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		async fetchAllSecrets(options = {}) {
 			// Offline: fetchSecrets already returns the whole cached snapshot.

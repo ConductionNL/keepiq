@@ -1248,6 +1248,7 @@ export default {
 		 * Reload the current page of secrets with the active filters.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		async reload() {
 			// Declare the query to the store, don't just pass it: the detail
@@ -1308,6 +1309,7 @@ export default {
 		 *
 		 * @param {number} target The target page number.
 		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		goToPage(target) {
 			// Same contract as reload(): the store holds the query, this call
