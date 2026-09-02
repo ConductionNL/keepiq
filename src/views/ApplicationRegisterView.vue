@@ -65,8 +65,8 @@
 
 <script>
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
-import ApplicationRegisterDialog from '../components/application/ApplicationRegisterDialog.vue'
-import PrivateKeyDownloadDialog from '../components/application/PrivateKeyDownloadDialog.vue'
+import ApplicationRegisterDialog from '../dialogs/ApplicationRegisterDialog.vue'
+import PrivateKeyDownloadDialog from '../dialogs/PrivateKeyDownloadDialog.vue'
 import { useApplicationStore } from '../store/modules/application.js'
 
 export default {

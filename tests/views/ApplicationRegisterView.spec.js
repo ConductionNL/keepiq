@@ -62,20 +62,26 @@ describe('ApplicationRegisterView', () => {
 		expect(wrapper.findAll('.cn-object-row').at(1).text()).toContain('internal')
 	})
 
+	// Both dialogs render through NcDialog now (they used to be in-flow
+	// sections), and the test alias's NcDialog stub always renders with a
+	// `data-open` attribute — so a bare `exists()` would pass vacuously.
+	// The open flag is what the click actually changes.
 	it('opens the dialog when the register (add) button is clicked', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
+		const dialog = wrapper.find('[data-testid="application-register-dialog"]')
+		expect(dialog.attributes('data-open')).toBe('false')
 		await wrapper.find('[data-testid="cn-cta-primary"]').trigger('click')
-		expect(
-			wrapper.find('[data-testid="application-register-dialog"]').exists(),
-		).toBe(true)
+		expect(dialog.attributes('data-open')).toBe('true')
 	})
 
-	it('mounts the PrivateKeyDownloadDialog when the store has a one-time key', async () => {
+	it('opens the PrivateKeyDownloadDialog when the store has a one-time key', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
+		const dialog = wrapper.find('[data-testid="private-key-dialog"]')
+		expect(dialog.attributes('data-open')).toBe('false')
 		// Simulate the registration flow having captured the key.
 		const { useApplicationStore } =
 			await import('../../src/store/modules/application.js')
@@ -83,8 +89,6 @@ describe('ApplicationRegisterView', () => {
 		store.oneTimePrivateKey =
 			'-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----'
 		await flush()
-		expect(wrapper.find('[data-testid="private-key-dialog"]').exists()).toBe(
-			true,
-		)
+		expect(dialog.attributes('data-open')).toBe('true')
 	})
 })
