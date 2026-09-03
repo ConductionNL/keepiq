@@ -35,16 +35,91 @@
  * store surface this spec is what notices.
  */
 
+import type { Page } from '@playwright/test'
+
 import { expect, test } from '@playwright/test'
 
 const APP_ID = 'keepiq'
+const VAULT_PASSWORD = 'correct horse battery staple'
+
+/**
+ * Dismiss the first-run setup wizard if it is open.
+ *
+ * ⚠️ On a FRESH instance CnSetupWizard opens over the app and its modal
+ * intercepts pointer events, so every nav click resolves its locator and then
+ * times out after 30s — a failure that reads like the navigation is broken.
+ * Tests that navigate by URL pass, which is what makes this so easy to miss:
+ * only the click-through tests fail, and only on a clean install.
+ *
+ * @param page The page.
+ */
+async function dismissSetupWizard(page: Page): Promise<void> {
+	const modal = page.locator('[data-testid="cn-modal"]')
+	if ((await modal.count()) === 0) {
+		return
+	}
+	await modal.first().getByRole('button', { name: 'Close' }).click()
+	await expect(modal).toHaveCount(0, { timeout: 15_000 })
+}
+
+/**
+ * Get past the vault lock so the app chrome renders.
+ *
+ * ⚠️ keepiq redirects every route to /lock until the vault exists, and the
+ * app navigation is present in the DOM but NOT visible behind it. Its
+ * global-setup logs in and suppresses the walkthrough but does not create a
+ * vault — its comment says "every spec here unlocks", and this is the first
+ * spec that needs the app UI, so the unlocking lives here.
+ *
+ * Idempotent: the setup form appears once, the unlock form on every later
+ * visit, and neither appears once the vault is open in this session.
+ *
+ * @param page The page.
+ */
+async function openVault(page: Page): Promise<void> {
+	if (!page.url().includes('/lock')) {
+		return
+	}
+	const main = page.locator('main, .app-content').first()
+	const fields = main.locator('input[type="password"]:visible')
+	await expect(fields.first()).toBeVisible({ timeout: 30_000 })
+
+	const count = await fields.count()
+	await fields.first().fill(VAULT_PASSWORD)
+	if (count > 1) {
+		// The first-run form asks twice; the later unlock form asks once.
+		await fields.nth(1).fill(VAULT_PASSWORD)
+	}
+	await main
+		.getByRole('button', { name: /Set up vault|Unlock/ })
+		.first()
+		.click()
+	await expect(page).not.toHaveURL(/\/lock/, { timeout: 30_000 })
+}
+
+/**
+ * Navigate to an app route and get past the vault lock.
+ *
+ * ⚠️ A FULL PAGE LOAD RE-LOCKS THE VAULT. Unlocking once in `beforeEach` is
+ * not enough: every `page.goto()` lands on /lock again, and the app navigation
+ * is then present but hidden behind it, so an assertion on `cn-nav` fails with
+ * "hidden" rather than anything that names the real cause.
+ *
+ * @param page The page.
+ * @param path App-relative path, e.g. "/password-health".
+ */
+async function gotoApp(page: Page, path: string): Promise<void> {
+	await page.goto(`/apps/${APP_ID}${path}`, { waitUntil: 'domcontentloaded' })
+	await openVault(page)
+}
 
 test.describe('app chrome (ADR-114)', () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto(`/apps/${APP_ID}/`)
+		await gotoApp(page, '/')
 		await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({
 			timeout: 30_000,
 		})
+		await dismissSetupWizard(page)
 	})
 
 	test('the footer reads Documentation, Reports, Features & roadmap, each with a glyph', async ({
@@ -91,7 +166,10 @@ test.describe('app chrome (ADR-114)', () => {
 			nav.locator('[data-testid="cn-nav-entry-PasswordHealthMenu"]'),
 		).toHaveCount(0)
 
-		await nav.locator('[data-testid="cn-nav-entry-ReportsMenu"]').click()
+		await nav
+			.locator('[data-testid="cn-nav-entry-ReportsMenu"] a')
+			.first()
+			.click()
 		await expect(page).toHaveURL(new RegExp(`/apps/${APP_ID}/reports(\\?|$)`), {
 			timeout: 15_000,
 		})
@@ -114,7 +192,7 @@ test.describe('app chrome (ADR-114)', () => {
 		// specs all address these by route. Retiring a menu entry must not take
 		// the route with it.
 		for (const path of ['/my-activity', '/password-health']) {
-			await page.goto(`/apps/${APP_ID}${path}`)
+			await gotoApp(page, path)
 			await expect(page).toHaveURL(new RegExp(`${path}(\\?|$)`), {
 				timeout: 15_000,
 			})
