@@ -375,6 +375,7 @@
 							}"
 							:secret="object"
 							:requestState="requestStateFor(object)"
+							:vault="rowVault(object)"
 							@open="openSecret"
 							@copied="onCopied" />
 					</div>
@@ -404,6 +405,7 @@
 							class="secret-list-view__card-item"
 							:secret="object"
 							:requestState="requestStateFor(object)"
+							:vault="rowVault(object)"
 							@open="openSecret"
 							@copied="onCopied" />
 					</div>
@@ -413,6 +415,19 @@
 				     slots — their values live in the type/health stores, not
 				     on the row object, so the generic cell renderer cannot
 				     draw them. -->
+				<!-- The Name cell carries the vault dot at the All-secrets
+				     root — same rule as the rows: the table needs to say
+				     where a secret lives without spending a whole column on
+				     it, and the name is the thing the dot locates. rowVault
+				     returns null inside a vault, hiding the dot. -->
+				<template #column-name="{ row }">
+					<span class="secret-list-view__name-cell">
+						<span class="secret-list-view__name-cell-text">{{
+							row.name
+						}}</span>
+						<VaultIndicator :vault="rowVault(row)" />
+					</span>
+				</template>
 				<template #column-type="{ row }">
 					<span class="secret-list-view__type-cell">
 						<SecretTypeIcon :typeId="row.typeId" :size="20" />
@@ -477,6 +492,7 @@ import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import SecretTypeIcon from '../components/SecretTypeIcon.vue'
 import StrengthBadge from '../components/StrengthBadge.vue'
+import VaultIndicator from '../components/VaultIndicator.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
 import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
@@ -500,7 +516,7 @@ import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
 import { secretDetailLocation } from '../utils/detailRoute.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
-import { subfolderRows } from '../utils/vaultList.js'
+import { rootVaultOf, subfolderRows } from '../utils/vaultList.js'
 
 const PAGE_SIZE = 50
 
@@ -554,6 +570,7 @@ export default {
 		SecretListItem,
 		SecretTypeIcon,
 		StrengthBadge,
+		VaultIndicator,
 		ExportDialog,
 		CxpTransferDialog,
 		GdprExportDialog,
@@ -1288,6 +1305,23 @@ export default {
 		},
 
 		/**
+		 * The vault a row's dot indicator names — ONLY at the All-secrets
+		 * root (2026-09-03, per Remko, Proton pattern): a cross-vault list
+		 * is the one place a row must say where its secret lives. Inside a
+		 * vault the page itself is the location, so no dot renders there.
+		 *
+		 * @param {object} secret The row's secret.
+		 * @return {object|null} The root vault record, or null for no dot.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		rowVault(secret) {
+			if (this.selectedFolderId) {
+				return null
+			}
+			return rootVaultOf(this.folders, secret.folderId)
+		},
+
+		/**
 		 * Whether the table's Strength cell shows the badge: a scored,
 		 * unblocked row. Blocked rows are guarded here rather than trusting
 		 * the score map — a suite revoked mid-session can leave a stale
@@ -1747,6 +1781,22 @@ export default {
 	min-width: 0;
 	border-bottom: none;
 	border-radius: var(--border-radius);
+}
+
+/* Table Name cell: name + (root only) the vault dot as one centered unit;
+   the name keeps its ellipsis so the dot never pushes the cell wider. */
+.secret-list-view__name-cell {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.secret-list-view__name-cell-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* Table Type cell: glyph + label, vertically centered as one unit. */

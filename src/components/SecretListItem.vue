@@ -70,6 +70,15 @@
 			</span>
 		</span>
 
+		<!-- Which vault this secret lives in — only passed by cross-vault
+		     hosts (the All-secrets root), where the row itself is the only
+		     place that can say so (2026-09-03, Proton pattern). -->
+		<VaultIndicator
+			v-if="vault"
+			class="secret-list-item__vault"
+			:vault="vault"
+			:data-testid="`secret-vault-dot-${secret.id}`" />
+
 		<span v-if="secret.blocked" class="secret-list-item__blocked">
 			<Lock :size="16" />
 			{{ blockedLabel }}
@@ -96,6 +105,7 @@ import Lock from 'vue-material-design-icons/Lock.vue'
 import CopyButton from './CopyButton.vue'
 import SecretTypeIcon from './SecretTypeIcon.vue'
 import StrengthBadge from './StrengthBadge.vue'
+import VaultIndicator from './VaultIndicator.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { resolveFaviconUrl } from '../utils/favicon.js'
 
@@ -113,6 +123,7 @@ export default {
 		CopyButton,
 		SecretTypeIcon,
 		StrengthBadge,
+		VaultIndicator,
 	},
 
 	props: {
@@ -135,6 +146,17 @@ export default {
 		 */
 		requestState: {
 			type: String,
+			default: null,
+		},
+
+		/**
+		 * The root VAULT this secret lives under, or null to show no vault
+		 * indicator. Only cross-vault hosts pass it (the All-secrets root):
+		 * inside a vault the location is the page itself, and a dot on every
+		 * row would say nothing.
+		 */
+		vault: {
+			type: Object,
 			default: null,
 		},
 	},

@@ -85,6 +85,30 @@ export function folderPathLabel(folders, folderId) {
 }
 
 /**
+ * The top-level VAULT a folder ultimately lives under, walked up through
+ * `parentId`. Powers the vault indicators outside the vault's own page (the
+ * All-secrets row dot, the detail sidebar's vault tag): a secret only knows
+ * its direct `folderId`, which may be a nested folder. Guarded against
+ * parentId cycles (seen-set) like the path walk above; a dangling or
+ * unknown id yields null, and so does a cycle that never reaches a root.
+ *
+ * @param {Array<object>} folders The flat folder list (`{id, name, parentId}`).
+ * @param {string|null} folderId The folder to resolve.
+ * @return {object|null} The root vault record, or null.
+ * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+ */
+export function rootVaultOf(folders, folderId) {
+	const byId = new Map((folders || []).map((f) => [f.id, f]))
+	const seen = new Set()
+	let current = byId.get(folderId)
+	while (current && current.parentId && !seen.has(current.id)) {
+		seen.add(current.id)
+		current = byId.get(current.parentId)
+	}
+	return current && !current.parentId ? current : null
+}
+
+/**
  * Every vault and folder as a depth-ordered list for the move pickers: a
  * vault, then its own folders beneath it, then the next vault.
  *

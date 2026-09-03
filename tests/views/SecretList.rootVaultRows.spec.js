@@ -47,3 +47,29 @@ describe('SecretList — no vault rows at the root', () => {
 		expect(rows.map((row) => row.folderId)).toEqual(['f-1'])
 	})
 })
+
+// The inverse rule of the strip: WITHOUT vault rows, the cross-vault list
+// is the one place a row must say where its secret lives — so the dot
+// renders at the root only, and never inside a vault where the page itself
+// is the location.
+describe('SecretList — vault dot only at the root', () => {
+	const rowVault = SecretList.methods.rowVault
+
+	it('resolves a secret in a nested folder to its top-level vault', () => {
+		const vault = rowVault.call(
+			{ selectedFolderId: null, folders: FOLDERS },
+			{ id: 's-1', folderId: 'f-1' },
+		)
+
+		expect(vault?.id).toBe('v-1')
+	})
+
+	it('passes no vault inside a folder — the page is the location', () => {
+		const vault = rowVault.call(
+			{ selectedFolderId: 'v-1', folders: FOLDERS },
+			{ id: 's-1', folderId: 'f-1' },
+		)
+
+		expect(vault).toBeNull()
+	})
+})
