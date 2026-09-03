@@ -52,11 +52,13 @@ describe('PrivateKeyDownloadDialog', () => {
 		expect(dialog.attributes('noclose')).toBe('true')
 	})
 
-	it('shows the key and the unmissable one-time warning', () => {
+	it('presents the key area and the unmissable one-time warning', () => {
 		const wrapper = mountDialog()
-		expect(
-			wrapper.find('[data-testid="private-key-textarea"]').element.value,
-		).toBe(KEY)
+		// Masked by default (review call) — the reveal test below covers
+		// the plaintext path; here the block must be present and key-sized.
+		const textarea = wrapper.find('[data-testid="private-key-textarea"]')
+		expect(textarea.exists()).toBe(true)
+		expect(textarea.element.value).toHaveLength(KEY.length)
 		expect(wrapper.find('[data-testid="private-key-warning"]').text()).toContain(
 			'cannot be recovered',
 		)
@@ -94,17 +96,64 @@ describe('PrivateKeyDownloadDialog', () => {
 		).toBeDefined()
 	})
 
-	it('copies the key to the clipboard and confirms on the button', async () => {
-		const writeText = vi.fn().mockResolvedValue(undefined)
-		Object.assign(navigator, { clipboard: { writeText } })
+	// Copy goes through CopyButton so the clipboard is CLEARED again on its
+	// timer (review call): a one-time key must not outlive its dialog in
+	// the paste buffer of a shared workstation.
+	it('copies the key and auto-clears the clipboard afterwards', async () => {
+		vi.useFakeTimers()
+		try {
+			const writeText = vi.fn().mockResolvedValue(undefined)
+			Object.assign(navigator, { clipboard: { writeText } })
 
+			const wrapper = mountDialog()
+			await wrapper.find('[data-testid="private-key-copy"]').trigger('click')
+			await wrapper.vm.$nextTick()
+
+			expect(writeText).toHaveBeenCalledWith(KEY)
+
+			await vi.advanceTimersByTimeAsync(30_000)
+			expect(writeText).toHaveBeenLastCalledWith('')
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	// The key renders MASKED until an explicit reveal (review call): the
+	// dialog pops open unprompted after registration, possibly mid-
+	// screenshare — not one character may show without consent.
+	it('masks the key until revealed, and re-masks on hide', async () => {
 		const wrapper = mountDialog()
-		await wrapper.find('[data-testid="private-key-copy"]').trigger('click')
-		await wrapper.vm.$nextTick()
+		const textarea = wrapper.find('[data-testid="private-key-textarea"]')
 
-		expect(writeText).toHaveBeenCalledWith(KEY)
-		expect(wrapper.find('[data-testid="private-key-copy"]').text()).toContain(
-			'Copied!',
+		expect(textarea.element.value).not.toContain('PRIVATE KEY')
+		expect(textarea.element.value).toContain('•')
+		// The line structure survives, so revealing does not reflow.
+		expect(textarea.element.value.split('\n')).toHaveLength(
+			KEY.split('\n').length,
 		)
+
+		await wrapper.find('[data-testid="private-key-reveal"]').trigger('click')
+		expect(textarea.element.value).toBe(KEY)
+
+		await wrapper.find('[data-testid="private-key-reveal"]').trigger('click')
+		expect(textarea.element.value).not.toContain('PRIVATE KEY')
+	})
+
+	// Belt and braces for the noClose gate (review call): the library's Esc
+	// handling has historically routed through internals rather than
+	// noClose, so the dialog swallows Escape itself.
+	it('swallows Escape before it can reach the library', () => {
+		const wrapper = mountDialog()
+		const container = wrapper.find('.private-key').element
+
+		const esc = new KeyboardEvent('keydown', {
+			key: 'Escape',
+			bubbles: true,
+			cancelable: true,
+		})
+		container.dispatchEvent(esc)
+
+		expect(esc.defaultPrevented).toBe(true)
+		expect(wrapper.emitted('close')).toBeFalsy()
 	})
 })
