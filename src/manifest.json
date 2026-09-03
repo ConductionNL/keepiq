@@ -327,14 +327,14 @@
 					{
 						"id": "quick-action-new-secret",
 						"type": "tile",
-						"_note": "Union of the bump-ncvue branch's real quick-action tiles with development's ADR-049 placeholder text; wired here in place of the quick-actions-text placeholder since these already point at live deep links. Tile fields sit at the def's top level because CnDashboardPage.getTileConfig() reads them from there, not from content. LINK SHAPE: CnTileWidget resolves linkType 'app' as generateUrl('/apps/' + linkValue), so linkValue must NOT start with /apps/ (a full path doubled into /apps//apps/… and 404'd). The SPA router is hash-based (createWebHashHistory on /apps/keepiq), so an in-app page needs the hash in the value: 'keepiq#/secrets' → {webroot}/apps/keepiq#/secrets, correct on index.php-prefixed instances too.",
+						"_note": "Union of the bump-ncvue branch's real quick-action tiles with development's ADR-049 placeholder text; wired here in place of the quick-actions-text placeholder since these already point at live deep links. Tile fields sit at the def's top level because CnDashboardPage.getTileConfig() reads them from there, not from content. LINK SHAPE: both in-app tiles use linkType 'route', which the tile widgets push through the host vue-router. linkType 'app' resolved to a FULL page load, and the vault master key is memory-only, so every tile click re-locked the vault and landed on /lock — and the old 'keepiq#/secrets' values were dead weight on top, because main.js routes with createWebHistory and the hash fragment is never read (an earlier revision of this note claimed createWebHashHistory; that stale claim made the hash links look correct on review). The values carry ?action=create / ?action=register, which SecretList and ApplicationRegisterView consume (open the create/register dialog) and then strip from the URL. Requires @conduction/nextcloud-vue with route-type tile support (CnTileWidget/CnDashTileWidget router navigation).",
 						"title": "New secret",
 						"icon": "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
 						"iconType": "svg",
 						"backgroundColor": "#21468B",
 						"textColor": "#ffffff",
-						"linkType": "app",
-						"linkValue": "keepiq#/secrets"
+						"linkType": "route",
+						"linkValue": "/secrets?action=create"
 					},
 					{
 						"id": "quick-action-register-application",
@@ -344,8 +344,8 @@
 						"iconType": "svg",
 						"backgroundColor": "#3b82f6",
 						"textColor": "#ffffff",
-						"linkType": "app",
-						"linkValue": "keepiq#/applications"
+						"linkType": "route",
+						"linkValue": "/applications?action=register"
 					},
 					{
 						"id": "quick-action-documentation",
