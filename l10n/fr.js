@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Coffre-fort de destination",
         "Failed to move the vault contents — some items may have moved already.": "Échec du déplacement du contenu du coffre-fort — certains éléments ont peut-être déjà été déplacés.",
         "Move vault contents": "Déplacer le contenu du coffre-fort",
-        "Strength": "Force"
+        "Strength": "Force",
+        "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Cette action supprime définitivement ce secret et révoque ses partages. Il n’y a pas de corbeille — c’est irréversible."
     },
     "nplurals=2; plural=(n != 1);"
 )

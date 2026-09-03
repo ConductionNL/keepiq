@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Ziel-Tresor",
         "Failed to move the vault contents — some items may have moved already.": "Der Tresorinhalt konnte nicht verschoben werden — einige Einträge wurden möglicherweise bereits verschoben.",
         "Move vault contents": "Tresorinhalt verschieben",
-        "Strength": "Stärke"
+        "Strength": "Stärke",
+        "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Dies löscht dieses Geheimnis dauerhaft und widerruft seine Freigaben. Es gibt keinen Papierkorb — dies kann nicht rückgängig gemacht werden."
     },
     "nplurals=2; plural=(n != 1);"
 )
