@@ -34,7 +34,11 @@
 		</div>
 
 		<template #actions>
-			<NcButton variant="tertiary" @click="onUpdateOpen(false)">
+			<NcButton
+				variant="tertiary"
+				:disabled="busy"
+				data-testid="secret-delete-cancel"
+				@click="onUpdateOpen(false)">
 				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton
@@ -100,13 +104,20 @@ export default {
 		t,
 
 		/**
-		 * Forward the open-state change; emit `close` when dismissed.
+		 * Forward the open-state change; emit `close` when dismissed. Dismissal
+		 * is ignored while the delete request is in flight (Cancel is disabled,
+		 * but Esc and the dialog's own close button arrive here too): the
+		 * request would still land, so closing would read as a cancel that
+		 * never happened.
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
 		 * @spec exclude Dialog open-state plumbing; no domain behaviour.
 		 */
 		onUpdateOpen(value) {
+			if (!value && this.busy) {
+				return
+			}
 			this.open = value
 			if (!value) {
 				this.$emit('close')
@@ -127,18 +138,19 @@ export default {
 			this.error = ''
 			try {
 				await useSecretStore().deleteSecret(this.secretId)
-				this.$emit('deleted', this.secretId)
-				if (this.onDeleted) {
-					this.onDeleted(this.secretId)
-				}
-				this.onUpdateOpen(false)
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message
 					|| t('keepiq', 'Failed to delete secret')
+				return
 			} finally {
 				this.busy = false
 			}
+			this.$emit('deleted', this.secretId)
+			if (this.onDeleted) {
+				this.onDeleted(this.secretId)
+			}
+			this.onUpdateOpen(false)
 		},
 	},
 }

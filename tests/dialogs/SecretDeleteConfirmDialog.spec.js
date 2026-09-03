@@ -11,9 +11,15 @@
  *
  *  - Nothing is sent on mount. The store is only touched once the confirm
  *    button is pressed, so opening the dialog can never delete anything.
+ *  - Cancel closes WITHOUT deleting, and never routes through submit(). A
+ *    refactor that wired Cancel into the delete path would re-introduce the
+ *    exact regression this dialog exists to fix.
  *  - A REFUSED delete keeps the dialog open and reports why. A 403 on a
  *    delegated secret must not close the dialog and the sidebar behind it,
  *    because that reads exactly like a delete that succeeded.
+ *  - While the request is in flight the dialog cannot be dismissed: the
+ *    delete would still land, so a close would read as a cancel that never
+ *    happened.
  *
  * @spec openspec/specs/secrets/spec.md#requirement-delete-secret
  */
@@ -96,6 +102,50 @@ describe('SecretDeleteConfirmDialog', () => {
 		expect(wrapper.emitted('deleted')).toBeFalsy()
 		expect(wrapper.emitted('close')).toBeFalsy()
 		expect(wrapper.text()).toContain('Not the owner')
+	})
+
+	it('closes without deleting when Cancel is pressed', async () => {
+		const deleteSecret = vi.spyOn(secretStore, 'deleteSecret')
+		const onDeleted = vi.fn()
+
+		const wrapper = mountDialog({ onDeleted })
+		await wrapper.find('[data-testid="secret-delete-cancel"]').trigger('click')
+
+		expect(deleteSecret).not.toHaveBeenCalled()
+		expect(onDeleted).not.toHaveBeenCalled()
+		expect(wrapper.emitted('deleted')).toBeFalsy()
+		expect(wrapper.emitted('close')).toBeTruthy()
+	})
+
+	// Once the request is on the wire it will land regardless of what the
+	// dialog does, so a dismissal mid-flight would look like a cancel that
+	// actually deleted the secret.
+	it('cannot be dismissed while the delete request is in flight', async () => {
+		let resolveDelete
+		vi.spyOn(secretStore, 'deleteSecret').mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					resolveDelete = resolve
+				}),
+		)
+
+		const wrapper = mountDialog()
+		await wrapper.find('[data-testid="secret-delete-confirm"]').trigger('click')
+
+		const cancel = wrapper.find('[data-testid="secret-delete-cancel"]')
+		expect(cancel.attributes('disabled')).toBeDefined()
+
+		// NcDialog's other dismissal paths (Esc, the top-right close button)
+		// arrive as `update:open` = false; the stub cannot produce them, so
+		// exercise the handler directly.
+		wrapper.vm.onUpdateOpen(false)
+		expect(wrapper.emitted('close')).toBeFalsy()
+
+		resolveDelete()
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.emitted('deleted')).toEqual([['secret-1']])
+		expect(wrapper.emitted('close')).toBeTruthy()
 	})
 
 	it('falls back to a generic failure message when the server sends none', async () => {
