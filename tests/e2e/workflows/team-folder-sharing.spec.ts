@@ -50,7 +50,7 @@ const API = `${APP_BASE.replace('/apps/keepiq', '')}/apps/keepiq/api/v1`
 test.describe('team folder sharing', () => {
 	test('owner shares a folder, fans out to a user, and revokes', async ({
 		page,
-		_request,
+		request: _request,
 	}) => {
 		await gotoLockSettled(page)
 		await unlockVault(page)
