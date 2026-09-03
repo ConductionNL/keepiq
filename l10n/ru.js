@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Это хранилище пустое — перемещать нечего.",
         "Target vault": "Целевое хранилище",
         "Failed to move the vault contents — some items may have moved already.": "Не удалось переместить содержимое хранилища — часть элементов могла уже переместиться.",
-        "Move vault contents": "Переместить содержимое хранилища"
+        "Move vault contents": "Переместить содержимое хранилища",
+        "Click Reports in the menu": "Нажмите Отчёты в меню",
+        "Your activity and vault health live under Reports.": "Ваша активность и состояние хранилища находятся в Отчётах.",
+        "Pick a report to open it.": "Выберите отчёт, чтобы открыть его.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Слабые, повторно использованные и старые пароли в разблокированном хранилище.",
+        "Everything you did, from the audit trail.": "Всё, что вы сделали, из журнала аудита.",
+        "Reports": "Отчёты"
     },
     "nplurals=2; plural=(n != 1);"
 )

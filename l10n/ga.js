@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Tá an taisceadán seo folamh — níl aon rud le bogadh.",
         "Target vault": "Sprioc-thaisceadán",
         "Failed to move the vault contents — some items may have moved already.": "Theip ar bhogadh inneachar an taisceadáin — seans gur bogadh cuid de na míreanna cheana.",
-        "Move vault contents": "Bog inneachar an taisceadáin"
+        "Move vault contents": "Bog inneachar an taisceadáin",
+        "Click Reports in the menu": "Cliceáil Tuarascálacha sa roghchlár",
+        "Your activity and vault health live under Reports.": "Tá do ghníomhaíocht agus sláinte na taisce faoi Thuarascálacha.",
+        "Pick a report to open it.": "Roghnaigh tuarascáil chun í a oscailt.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Pasfhocail laga, athúsáidte agus sean i do thaisce dhíghlasáilte.",
+        "Everything you did, from the audit trail.": "Gach rud a rinne tú, ón lorg iniúchta.",
+        "Reports": "Tuarascálacha"
     },
     "nplurals=2; plural=(n != 1);"
 )

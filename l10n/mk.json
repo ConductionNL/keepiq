@@ -572,7 +572,13 @@
         "This vault is empty — there is nothing to move.": "Овој трезор е празен — нема што да се премести.",
         "Target vault": "Целен трезор",
         "Failed to move the vault contents — some items may have moved already.": "Преместувањето на содржината на трезорот не успеа — некои елементи можеби веќе се преместени.",
-        "Move vault contents": "Премести ја содржината на трезорот"
+        "Move vault contents": "Премести ја содржината на трезорот",
+        "Click Reports in the menu": "Кликнете на Извештаи во менито",
+        "Your activity and vault health live under Reports.": "Вашата активност и состојбата на трезорот се под Извештаи.",
+        "Pick a report to open it.": "Изберете извештај за да го отворите.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Слаби, повторно користени и стари пароли во отклучениот трезор.",
+        "Everything you did, from the audit trail.": "Сè што направивте, од ревизорската трага.",
+        "Reports": "Извештаи"
     },
     "plurals": null
 }

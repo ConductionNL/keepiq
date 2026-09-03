@@ -68,15 +68,15 @@
 						{
 							"id": "go-personalactivity",
 							"placement": "right",
-							"body": "Open My activity from the menu.",
-							"task": "Click My activity in the menu",
+							"body": "Your activity and vault health live under Reports.",
+							"task": "Click Reports in the menu",
 							"target": {
 								"kind": "nav-item",
-								"ref": "PersonalActivity"
+								"ref": "Reports"
 							},
 							"advanceOn": {
 								"type": "route-match",
-								"route": "PersonalActivity"
+								"route": "Reports"
 							}
 						},
 						{
@@ -132,7 +132,15 @@
 			"icon": "BookOpenVariantOutline",
 			"href": "https://keepiq.conduction.nl",
 			"section": "footer",
-			"order": 80
+			"order": 90
+		},
+		{
+			"id": "ReportsMenu",
+			"label": "Reports",
+			"icon": "ChartBoxOutline",
+			"route": "Reports",
+			"section": "footer",
+			"order": 95
 		},
 		{
 			"id": "FeaturesRoadmapMenu",
@@ -140,23 +148,7 @@
 			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
-			"order": 85
-		},
-		{
-			"id": "MyActivityMenu",
-			"label": "My activity",
-			"icon": "Pulse",
-			"route": "PersonalActivity",
-			"section": "footer",
-			"order": 86
-		},
-		{
-			"id": "PasswordHealthMenu",
-			"label": "Password health",
-			"icon": "LockOutline",
-			"route": "PasswordHealth",
-			"section": "footer",
-			"order": 87
+			"order": 100
 		},
 		{
 			"id": "CertificatesMenu",
@@ -443,6 +435,38 @@
 			"config": {
 				"documentationUrl": "https://keepiq.conduction.nl"
 			}
+		},
+		{
+			"id": "Reports",
+			"route": "/reports",
+			"type": "reports",
+			"title": "Reports",
+			"config": {
+				"description": "Pick a report to open it.",
+				"categories": {
+					"security": "Vault security",
+					"personal": "Your own record"
+				},
+				"cards": [
+					{
+						"id": "PasswordHealth",
+						"label": "Password health",
+						"description": "Weak, reused and ageing passwords in your unlocked vault.",
+						"icon": "LockOutline",
+						"category": "security",
+						"route": "PasswordHealth"
+					},
+					{
+						"id": "PersonalActivity",
+						"label": "My activity",
+						"description": "Everything you did, from the audit trail.",
+						"icon": "Pulse",
+						"category": "personal",
+						"route": "PersonalActivity"
+					}
+				]
+			},
+			"_note": "ADR-112 / ADR-114 Decision 3: Keepiq already had two reports, and they were two footer menu entries. Nothing is invented here — the pages stay exactly as they were, routable by the same names, and their menu entries are deleted so a report is a card OR an entry, never both (ADR-112 Decision 2). Deleted rather than listed in menu-layout's `removals`: that key retires an entry that still EXISTS, and gate-53 reports a removal naming an absent entry as a stale removal. Password health is a MEMORY-ONLY analysis over the unlocked vault, which is why it is type:\"custom\" rather than an object-backed page, and why it reports nothing while the vault is locked."
 		},
 		{
 			"id": "PersonalActivity",
