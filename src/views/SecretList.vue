@@ -988,6 +988,13 @@ export default {
 		 */
 		'$route.query.action': {
 			immediate: true,
+			/**
+			 * Dispatch the marker to the consumer; anything else is ignored.
+			 *
+			 * @param {string|undefined} action The `action` query value.
+			 * @return {void}
+			 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+			 */
 			handler(action) {
 				if (action === 'create') {
 					this.consumeCreateAction()
@@ -1460,6 +1467,7 @@ export default {
 		 * view, and reload the list on success.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		openCreateSecret() {
 			this.cnOpenModal('secret-create', {

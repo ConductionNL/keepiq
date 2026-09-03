@@ -137,6 +137,16 @@ export default {
 		 */
 		'$route.query.action': {
 			immediate: true,
+			/**
+			 * Open the dialog and strip the marker; anything else is ignored.
+			 * The dialog is local view state (not a registry modal), so the
+			 * query replace cannot close it the way it would a cnOpenModal
+			 * dialog.
+			 *
+			 * @param {string|undefined} action The `action` query value.
+			 * @return {void}
+			 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+			 */
 			handler(action) {
 				if (action === 'register') {
 					this.dialogOpen = true
