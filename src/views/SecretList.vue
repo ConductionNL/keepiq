@@ -251,18 +251,18 @@
 						class="secret-list-view__crumbs">
 						<CnBreadcrumbs :crumbs="breadcrumbs" />
 					</div>
+					<!-- Only INSIDE a folder (2026-09-03, per Remko): the rows
+					     are then the folder's own contents. At the root the
+					     strip showed the vaults — navigation posing as
+					     contents, duplicating the nav tree and pushing every
+					     secret below a screen of vault rows. -->
 					<div
 						v-if="!folderSwitching && folderRows.length > 0"
 						class="secret-list-view__folders">
 						<!-- Group caption, Passwork-style: names the section
-						     so folders read as a group, not as odd rows.
-						     Level-appropriate wording (Stage 5 terminology). -->
+						     so folders read as a group, not as odd rows. -->
 						<span class="secret-list-view__folders-caption">
-							{{
-								selectedFolderId
-									? t('keepiq', 'Folders')
-									: t('keepiq', 'Vaults')
-							}}
+							{{ t('keepiq', 'Folders') }}
 						</span>
 						<button
 							v-for="folder in folderRows"
@@ -271,28 +271,7 @@
 							class="secret-list-view__folder-row"
 							:data-testid="`folder-row-${folder.folderId}`"
 							@click="openFolder(folder.folderId)">
-							<!-- Root rows ARE the vaults → safe glyph, or
-							     the user's own icon + color on a
-							     Proton-style tinted circle derived from
-							     the SAME color (restyle Stage 9); inside
-							     a vault the rows are plain folders. -->
-							<span
-								v-if="!selectedFolderId"
-								class="secret-list-view__vault-glyph"
-								:style="
-									vaultRowTint(folder)
-										? {
-												backgroundColor:
-													vaultRowTint(folder),
-											}
-										: undefined
-								">
-								<component
-									:is="vaultRowIcon(folder)"
-									:size="20"
-									:fillColor="vaultRowColor(folder)" />
-							</span>
-							<FolderOutline v-else :size="20" />
+							<FolderOutline :size="20" />
 							<span class="secret-list-view__folder-name">
 								{{ folder.name }}
 							</span>
@@ -470,14 +449,7 @@
 </template>
 
 <script>
-import {
-	CnBreadcrumbs,
-	CnIndexPage,
-	currentTheme,
-	folderColorTint,
-	resolveFolderColor,
-	resolveFolderIcon,
-} from '@conduction/nextcloud-vue'
+import { CnBreadcrumbs, CnIndexPage } from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
 	NcActionCaption,
@@ -579,7 +551,6 @@ export default {
 		ShareVariantOutline,
 		TrashCanOutline,
 		KeyVariant,
-		Safe,
 		SecretListItem,
 		SecretTypeIcon,
 		StrengthBadge,
@@ -831,14 +802,23 @@ export default {
 
 		/**
 		 * The current folder's direct subfolders as list rows (restyle
-		 * Stage 6): root = the top-level vaults. Filtered by the inline
-		 * search term — everything visible in the list is searchable —
-		 * and name-sorted as one group.
+		 * Stage 6). Filtered by the inline search term — everything visible
+		 * in the list is searchable — and name-sorted as one group.
+		 *
+		 * NONE at the root (2026-09-03, per Remko, Proton-style): "All
+		 * secrets" is a cross-vault query, not a container the user is
+		 * inside, so vault rows there were navigation posing as contents —
+		 * duplicating the nav tree one panel away and pushing every secret
+		 * below a screen of vaults. Inside a folder the rows stay: there
+		 * they ARE the contents of the thing being looked at.
 		 *
 		 * @return {Array<object>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		folderRows() {
+			if (!this.selectedFolderId) {
+				return []
+			}
 			return subfolderRows(
 				this.folders,
 				this.selectedFolderId,
@@ -1535,50 +1515,6 @@ export default {
 		},
 
 		/**
-		 * The glyph a root (vault) row renders: the vault's picked icon
-		 * (restyle Stage 9), Safe for unset — and for UNKNOWN keys, which
-		 * keeps older bundles forward-compatible with newer catalogs.
-		 *
-		 * @param {object} folder The vault pseudo-row.
-		 * @return {object} An icon component.
-		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
-		 */
-		vaultRowIcon(folder) {
-			return resolveFolderIcon(folder.customIcon) ?? Safe
-		},
-
-		/**
-		 * The vault row glyph's fill for the ACTIVE theme (reactive — a
-		 * live light/dark flip swaps the variant). ALWAYS a string:
-		 * 'currentColor' for unset colors — an explicit null fill-color
-		 * strips the SVG fill attribute, which renders BLACK regardless of
-		 * theme.
-		 *
-		 * @param {object} folder The vault pseudo-row.
-		 * @return {string} A hex color or 'currentColor'.
-		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
-		 */
-		vaultRowColor(folder) {
-			return (
-				resolveFolderColor(folder.customColor, currentTheme())
-				?? 'currentColor'
-			)
-		},
-
-		/**
-		 * The Proton-style circle behind the vault row's glyph: the SAME
-		 * resolved color at low alpha, so glyph and circle stay in lockstep
-		 * across themes. Null keeps the neutral background.
-		 *
-		 * @param {object} folder The vault pseudo-row.
-		 * @return {string|null} An rgba string or null.
-		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
-		 */
-		vaultRowTint(folder) {
-			return folderColorTint(folder.customColor, currentTheme())
-		},
-
-		/**
 		 * Copied-toast hook (SecretListItem @copied). No-op placeholder for
 		 * future toast wiring; kept so the event has a handler.
 		 *
@@ -1749,17 +1685,6 @@ export default {
 .secret-list-view__folder-row:hover,
 .secret-list-view__folder-row:focus-visible {
 	background-color: var(--color-background-hover, #f5f5f5);
-}
-
-/* The Proton-style tinted circle behind a colored vault's glyph. */
-.secret-list-view__vault-glyph {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	flex-shrink: 0;
 }
 
 .secret-list-view__folder-name {
