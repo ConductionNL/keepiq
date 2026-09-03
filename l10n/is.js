@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Markhvelfing",
         "Failed to move the vault contents — some items may have moved already.": "Tókst ekki að færa innihald hvelfingarinnar — sum atriði gætu þegar hafa verið færð.",
         "Move vault contents": "Færa innihald hvelfingarinnar",
-        "Strength": "Styrkur"
+        "Strength": "Styrkur",
+        "Invalid password. Please try again.": "Ógilt lykilorð. Reyndu aftur."
     },
     "nplurals=2; plural=(n != 1);"
 )

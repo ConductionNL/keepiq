@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Kaxxa-forti tad-destinazzjoni",
         "Failed to move the vault contents — some items may have moved already.": "Falliment fit-tmexxija tal-kontenut — xi elementi jistgħu jkunu diġà tmexxew.",
         "Move vault contents": "Mexxi l-kontenut tal-kaxxa-forti",
-        "Strength": "Saħħa"
+        "Strength": "Saħħa",
+        "Invalid password. Please try again.": "Password invalida. Erġa' pprova."
     },
     "nplurals=2; plural=(n != 1);"
 )

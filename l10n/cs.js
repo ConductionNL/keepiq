@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Cílový trezor",
         "Failed to move the vault contents — some items may have moved already.": "Obsah trezoru se nepodařilo přesunout — část položek už mohla být přesunuta.",
         "Move vault contents": "Přesunout obsah trezoru",
-        "Strength": "Síla"
+        "Strength": "Síla",
+        "Invalid password. Please try again.": "Neplatné heslo. Zkuste to znovu."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Hedef kasa",
         "Failed to move the vault contents — some items may have moved already.": "Kasa içeriği taşınamadı — bazı öğeler zaten taşınmış olabilir.",
         "Move vault contents": "Kasa içeriğini taşı",
-        "Strength": "Güç"
+        "Strength": "Güç",
+        "Invalid password. Please try again.": "Geçersiz parola. Lütfen tekrar deneyin."
     },
     "nplurals=2; plural=(n != 1);"
 )

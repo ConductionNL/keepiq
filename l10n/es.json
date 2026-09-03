@@ -573,7 +573,8 @@
         "Target vault": "Caja fuerte de destino",
         "Failed to move the vault contents — some items may have moved already.": "No se pudo mover el contenido de la caja fuerte — puede que algunos elementos ya se hayan movido.",
         "Move vault contents": "Mover el contenido de la caja fuerte",
-        "Strength": "Fortaleza"
+        "Strength": "Fortaleza",
+        "Invalid password. Please try again.": "Contraseña no válida. Inténtelo de nuevo."
     },
     "plurals": null
 }

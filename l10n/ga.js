@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Sprioc-thaisceadán",
         "Failed to move the vault contents — some items may have moved already.": "Theip ar bhogadh inneachar an taisceadáin — seans gur bogadh cuid de na míreanna cheana.",
         "Move vault contents": "Bog inneachar an taisceadáin",
-        "Strength": "Neart"
+        "Strength": "Neart",
+        "Invalid password. Please try again.": "Pasfhocal neamhbhailí. Bain triail eile as."
     },
     "nplurals=2; plural=(n != 1);"
 )

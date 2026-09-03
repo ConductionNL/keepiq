@@ -573,7 +573,8 @@
         "Target vault": "Cofre de destino",
         "Failed to move the vault contents — some items may have moved already.": "Falha ao mover o conteúdo do cofre — alguns itens podem já ter sido movidos.",
         "Move vault contents": "Mover o conteúdo do cofre",
-        "Strength": "Força"
+        "Strength": "Força",
+        "Invalid password. Please try again.": "Palavra-passe inválida. Tente novamente."
     },
     "plurals": null
 }

@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Sihthoidla",
         "Failed to move the vault contents — some items may have moved already.": "Hoidla sisu teisaldamine nurjus — osa üksusi võib olla juba teisaldatud.",
         "Move vault contents": "Teisalda hoidla sisu",
-        "Strength": "Tugevus"
+        "Strength": "Tugevus",
+        "Invalid password. Please try again.": "Vale parool. Proovige uuesti."
     },
     "nplurals=2; plural=(n != 1);"
 )

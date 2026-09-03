@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Мэтавае сховішча",
         "Failed to move the vault contents — some items may have moved already.": "Не ўдалося перамясціць змесціва сховішча — частка элементаў магла ўжо перамясціцца.",
         "Move vault contents": "Перамясціць змесціва сховішча",
-        "Strength": "Надзейнасць"
+        "Strength": "Надзейнасць",
+        "Invalid password. Please try again.": "Няправільны пароль. Паспрабуйце яшчэ раз."
     },
     "nplurals=2; plural=(n != 1);"
 )

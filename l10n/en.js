@@ -1118,7 +1118,8 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Failed to move the vault contents — some items may have moved already.",
         "Move vault contents": "Move vault contents",
         "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.",
-        "Strength": "Strength"
+        "Strength": "Strength",
+        "Invalid password. Please try again.": "Invalid password. Please try again."
     },
     "nplurals=2; plural=(n != 1);"
 )

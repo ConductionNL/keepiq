@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Zil-Tresor",
         "Failed to move the vault contents — some items may have moved already.": "Den Inhalt vum Tresor konnt net geréckelt ginn — verschidden Elementer si vläicht scho geréckelt.",
         "Move vault contents": "Tresorinhalt réckelen",
-        "Strength": "Stäerkt"
+        "Strength": "Stäerkt",
+        "Invalid password. Please try again.": "Ongëltegt Passwuert. Probéiert et w.e.g. nach eng Kéier."
     },
     "nplurals=2; plural=(n != 1);"
 )

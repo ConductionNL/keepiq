@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Cél széf",
         "Failed to move the vault contents — some items may have moved already.": "A széf tartalmának áthelyezése nem sikerült — egyes elemek már áthelyezésre kerülhettek.",
         "Move vault contents": "Széf tartalmának áthelyezése",
-        "Strength": "Erősség"
+        "Strength": "Erősség",
+        "Invalid password. Please try again.": "Érvénytelen jelszó. Próbálja újra."
     },
     "nplurals=2; plural=(n != 1);"
 )

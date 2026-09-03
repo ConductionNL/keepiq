@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Ciljni trezor",
         "Failed to move the vault contents — some items may have moved already.": "Vsebine trezorja ni bilo mogoče premakniti — nekateri elementi so morda že premaknjeni.",
         "Move vault contents": "Premakni vsebino trezorja",
-        "Strength": "Moč"
+        "Strength": "Moč",
+        "Invalid password. Please try again.": "Neveljavno geslo. Poskusite znova."
     },
     "nplurals=2; plural=(n != 1);"
 )

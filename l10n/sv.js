@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Målvalv",
         "Failed to move the vault contents — some items may have moved already.": "Kunde inte flytta valvets innehåll — vissa objekt kan redan ha flyttats.",
         "Move vault contents": "Flytta valvets innehåll",
-        "Strength": "Styrka"
+        "Strength": "Styrka",
+        "Invalid password. Please try again.": "Ogiltigt lösenord. Försök igen."
     },
     "nplurals=2; plural=(n != 1);"
 )

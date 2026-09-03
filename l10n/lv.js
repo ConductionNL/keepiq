@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Mērķa glabātava",
         "Failed to move the vault contents — some items may have moved already.": "Neizdevās pārvietot glabātavas saturu — daži vienumi, iespējams, jau ir pārvietoti.",
         "Move vault contents": "Pārvietot glabātavas saturu",
-        "Strength": "Stiprums"
+        "Strength": "Stiprums",
+        "Invalid password. Please try again.": "Nederīga parole. Mēģiniet vēlreiz."
     },
     "nplurals=2; plural=(n != 1);"
 )

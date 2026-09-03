@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Seif de destinație",
         "Failed to move the vault contents — some items may have moved already.": "Mutarea conținutului seifului a eșuat — este posibil ca unele elemente să fi fost deja mutate.",
         "Move vault contents": "Mutați conținutul seifului",
-        "Strength": "Putere"
+        "Strength": "Putere",
+        "Invalid password. Please try again.": "Parolă nevalidă. Încercați din nou."
     },
     "nplurals=2; plural=(n != 1);"
 )

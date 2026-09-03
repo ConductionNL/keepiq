@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Målboks",
         "Failed to move the vault contents — some items may have moved already.": "Kunne ikke flytte boksens indhold — nogle elementer kan allerede være flyttet.",
         "Move vault contents": "Flyt boksens indhold",
-        "Strength": "Styrke"
+        "Strength": "Styrke",
+        "Invalid password. Please try again.": "Ugyldig adgangskode. Prøv igen."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Tresor da destinaziun",
         "Failed to move the vault contents — some items may have moved already.": "Betg reussì da spustar il cuntegn dal tresor — tscherts elements pon gia esser spustads.",
         "Move vault contents": "Spustar il cuntegn dal tresor",
-        "Strength": "Forza"
+        "Strength": "Forza",
+        "Invalid password. Please try again.": "Pled-clav nunvalid. Empruvai anc ina giada."
     },
     "nplurals=2; plural=(n != 1);"
 )

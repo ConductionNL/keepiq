@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Kasaforta e synuar",
         "Failed to move the vault contents — some items may have moved already.": "Zhvendosja e përmbajtjes së kasafortës dështoi — disa elemente mund të jenë zhvendosur tashmë.",
         "Move vault contents": "Zhvendos përmbajtjen e kasafortës",
-        "Strength": "Fuqia"
+        "Strength": "Fuqia",
+        "Invalid password. Please try again.": "Fjalëkalim i pavlefshëm. Provoni përsëri."
     },
     "nplurals=2; plural=(n != 1);"
 )

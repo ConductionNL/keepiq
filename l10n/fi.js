@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Kohdeholvi",
         "Failed to move the vault contents — some items may have moved already.": "Holvin sisällön siirto epäonnistui — osa kohteista on voitu jo siirtää.",
         "Move vault contents": "Siirrä holvin sisältö",
-        "Strength": "Vahvuus"
+        "Strength": "Vahvuus",
+        "Invalid password. Please try again.": "Virheellinen salasana. Yritä uudelleen."
     },
     "nplurals=2; plural=(n != 1);"
 )

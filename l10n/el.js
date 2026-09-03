@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Θησαυροφυλάκιο προορισμού",
         "Failed to move the vault contents — some items may have moved already.": "Αποτυχία μετακίνησης των περιεχομένων — ορισμένα στοιχεία ενδέχεται να έχουν ήδη μετακινηθεί.",
         "Move vault contents": "Μετακίνηση περιεχομένων θησαυροφυλακίου",
-        "Strength": "Ισχύς"
+        "Strength": "Ισχύς",
+        "Invalid password. Please try again.": "Μη έγκυρος κωδικός πρόσβασης. Δοκιμάστε ξανά."
     },
     "nplurals=2; plural=(n != 1);"
 )

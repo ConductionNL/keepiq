@@ -574,7 +574,8 @@ OC.L10N.register(
         "Target vault": "Sejf docelowy",
         "Failed to move the vault contents — some items may have moved already.": "Nie udało się przenieść zawartości sejfu — część elementów mogła już zostać przeniesiona.",
         "Move vault contents": "Przenieś zawartość sejfu",
-        "Strength": "Siła"
+        "Strength": "Siła",
+        "Invalid password. Please try again.": "Nieprawidłowe hasło. Spróbuj ponownie."
     },
     "nplurals=2; plural=(n != 1);"
 )

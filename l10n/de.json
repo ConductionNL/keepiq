@@ -574,7 +574,8 @@
         "Failed to move the vault contents — some items may have moved already.": "Der Tresorinhalt konnte nicht verschoben werden — einige Einträge wurden möglicherweise bereits verschoben.",
         "Move vault contents": "Tresorinhalt verschieben",
         "Strength": "Stärke",
-        "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Dies löscht dieses Geheimnis dauerhaft und widerruft seine Freigaben. Es gibt keinen Papierkorb — dies kann nicht rückgängig gemacht werden."
+        "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Dies löscht dieses Geheimnis dauerhaft und widerruft seine Freigaben. Es gibt keinen Papierkorb — dies kann nicht rückgängig gemacht werden.",
+        "Invalid password. Please try again.": "Ungültiges Passwort. Bitte versuchen Sie es erneut."
     },
     "plurals": null
 }
