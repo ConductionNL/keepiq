@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Ce coffre-fort est vide — il n'y a rien à déplacer.",
         "Target vault": "Coffre-fort de destination",
         "Failed to move the vault contents — some items may have moved already.": "Échec du déplacement du contenu du coffre-fort — certains éléments ont peut-être déjà été déplacés.",
-        "Move vault contents": "Déplacer le contenu du coffre-fort"
+        "Move vault contents": "Déplacer le contenu du coffre-fort",
+        "Click Reports in the menu": "Cliquez sur Rapports dans le menu",
+        "Your activity and vault health live under Reports.": "Votre activité et la santé du coffre sont sous Rapports.",
+        "Pick a report to open it.": "Choisissez un rapport pour l'ouvrir.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Mots de passe faibles, réutilisés et anciens dans votre coffre déverrouillé.",
+        "Everything you did, from the audit trail.": "Tout ce que vous avez fait, depuis la piste d'audit.",
+        "Reports": "Rapports"
     },
     "nplurals=2; plural=(n != 1);"
 )

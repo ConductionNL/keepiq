@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Questa cassaforte è vuota — non c'è nulla da spostare.",
         "Target vault": "Cassaforte di destinazione",
         "Failed to move the vault contents — some items may have moved already.": "Impossibile spostare il contenuto della cassaforte — alcuni elementi potrebbero essere già stati spostati.",
-        "Move vault contents": "Sposta il contenuto della cassaforte"
+        "Move vault contents": "Sposta il contenuto della cassaforte",
+        "Click Reports in the menu": "Fai clic su Rapporti nel menu",
+        "Your activity and vault health live under Reports.": "La tua attività e lo stato della cassaforte sono sotto Rapporti.",
+        "Pick a report to open it.": "Scegli un rapporto per aprirlo.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Password deboli, riutilizzate e vecchie nella cassaforte sbloccata.",
+        "Everything you did, from the audit trail.": "Tutto ciò che hai fatto, dal registro di controllo.",
+        "Reports": "Rapporti"
     },
     "nplurals=2; plural=(n != 1);"
 )

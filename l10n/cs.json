@@ -572,7 +572,13 @@
         "This vault is empty — there is nothing to move.": "Tento trezor je prázdný — není co přesouvat.",
         "Target vault": "Cílový trezor",
         "Failed to move the vault contents — some items may have moved already.": "Obsah trezoru se nepodařilo přesunout — část položek už mohla být přesunuta.",
-        "Move vault contents": "Přesunout obsah trezoru"
+        "Move vault contents": "Přesunout obsah trezoru",
+        "Click Reports in the menu": "Klikněte na Reporty v nabídce",
+        "Your activity and vault health live under Reports.": "Vaše aktivita a stav trezoru jsou pod Reporty.",
+        "Pick a report to open it.": "Vyberte report a otevřete jej.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Slabá, opakovaně použitá a stará hesla v odemčeném trezoru.",
+        "Everything you did, from the audit trail.": "Vše, co jste udělali, ze záznamu auditu.",
+        "Reports": "Reporty"
     },
     "plurals": null
 }

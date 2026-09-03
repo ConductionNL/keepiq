@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Bu kasa boş — taşınacak bir şey yok.",
         "Target vault": "Hedef kasa",
         "Failed to move the vault contents — some items may have moved already.": "Kasa içeriği taşınamadı — bazı öğeler zaten taşınmış olabilir.",
-        "Move vault contents": "Kasa içeriğini taşı"
+        "Move vault contents": "Kasa içeriğini taşı",
+        "Click Reports in the menu": "Menüden Raporlar'a tıklayın",
+        "Your activity and vault health live under Reports.": "Etkinliğiniz ve kasa sağlığı Raporlar altında.",
+        "Pick a report to open it.": "Açmak için bir rapor seçin.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Kilidi açılmış kasanızdaki zayıf, yeniden kullanılmış ve eski şifreler.",
+        "Everything you did, from the audit trail.": "Yaptığınız her şey, denetim izinden.",
+        "Reports": "Raporlar"
     },
     "nplurals=2; plural=(n != 1);"
 )

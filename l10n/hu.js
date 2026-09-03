@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Ez a széf üres — nincs mit áthelyezni.",
         "Target vault": "Cél széf",
         "Failed to move the vault contents — some items may have moved already.": "A széf tartalmának áthelyezése nem sikerült — egyes elemek már áthelyezésre kerülhettek.",
-        "Move vault contents": "Széf tartalmának áthelyezése"
+        "Move vault contents": "Széf tartalmának áthelyezése",
+        "Click Reports in the menu": "Kattintson a menü Jelentések pontjára",
+        "Your activity and vault health live under Reports.": "Az Ön tevékenysége és a széf állapota a Jelentések alatt található.",
+        "Pick a report to open it.": "Válasszon egy jelentést a megnyitásához.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Gyenge, újrahasznált és régi jelszavak a feloldott széfben.",
+        "Everything you did, from the audit trail.": "Minden, amit tett, az ellenőrzési nyomvonalból.",
+        "Reports": "Jelentések"
     },
     "nplurals=2; plural=(n != 1);"
 )
