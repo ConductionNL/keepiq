@@ -1248,15 +1248,22 @@ export default {
 		 * Reload the current page of secrets with the active filters.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		async reload() {
-			await this.secretStore.fetchSecrets({
+			// Declare the query to the store, don't just pass it: the detail
+			// sidebar and the folder dialogs refresh this list with a bare
+			// `fetchSecrets()` and have no way to know what it is showing. While
+			// the query lived only in these call arguments, every such refresh
+			// dropped the folder filter and replaced a folder's contents with
+			// the whole vault.
+			this.secretStore.setListQuery({
 				folderId: this.selectedFolderId,
 				search: this.searchTerm,
 				sort: this.sortField,
 				typeId: this.typeFilter,
-				page: 1,
 			})
+			await this.secretStore.fetchSecrets({ page: 1 })
 		},
 
 		/**
@@ -1302,14 +1309,19 @@ export default {
 		 *
 		 * @param {number} target The target page number.
 		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		goToPage(target) {
-			this.secretStore.fetchSecrets({
+			// Same contract as reload(): the store holds the query, this call
+			// only moves the page. Note this used to omit `typeId`, so paging a
+			// type-filtered list silently un-filtered it.
+			this.secretStore.setListQuery({
 				folderId: this.selectedFolderId,
 				search: this.searchTerm,
 				sort: this.sortField,
-				page: target,
+				typeId: this.typeFilter,
 			})
+			this.secretStore.fetchSecrets({ page: target })
 		},
 
 		/**
