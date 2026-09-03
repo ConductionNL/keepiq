@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "See hoidla on tühi — pole midagi teisaldada.",
         "Target vault": "Sihthoidla",
         "Failed to move the vault contents — some items may have moved already.": "Hoidla sisu teisaldamine nurjus — osa üksusi võib olla juba teisaldatud.",
-        "Move vault contents": "Teisalda hoidla sisu"
+        "Move vault contents": "Teisalda hoidla sisu",
+        "Strength": "Tugevus"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Bu kasa boş — taşınacak bir şey yok.",
         "Target vault": "Hedef kasa",
         "Failed to move the vault contents — some items may have moved already.": "Kasa içeriği taşınamadı — bazı öğeler zaten taşınmış olabilir.",
-        "Move vault contents": "Kasa içeriğini taşı"
+        "Move vault contents": "Kasa içeriğini taşı",
+        "Strength": "Güç"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Detta valv är tomt — det finns inget att flytta.",
         "Target vault": "Målvalv",
         "Failed to move the vault contents — some items may have moved already.": "Kunde inte flytta valvets innehåll — vissa objekt kan redan ha flyttats.",
-        "Move vault contents": "Flytta valvets innehåll"
+        "Move vault contents": "Flytta valvets innehåll",
+        "Strength": "Styrka"
     },
     "nplurals=2; plural=(n != 1);"
 )

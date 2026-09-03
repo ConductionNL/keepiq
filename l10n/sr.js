@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Ovaj trezor je prazan — nema šta da se premesti.",
         "Target vault": "Odredišni trezor",
         "Failed to move the vault contents — some items may have moved already.": "Premeštanje sadržaja trezora nije uspelo — neki elementi su možda već premešteni.",
-        "Move vault contents": "Premesti sadržaj trezora"
+        "Move vault contents": "Premesti sadržaj trezora",
+        "Strength": "Јачина"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -572,7 +572,8 @@
         "This vault is empty — there is nothing to move.": "Aquesta caixa forta és buida — no hi ha res per moure.",
         "Target vault": "Caixa forta de destinació",
         "Failed to move the vault contents — some items may have moved already.": "No s'ha pogut moure el contingut de la caixa forta — pot ser que alguns elements ja s'hagin mogut.",
-        "Move vault contents": "Mou el contingut de la caixa forta"
+        "Move vault contents": "Mou el contingut de la caixa forta",
+        "Strength": "Fortalesa"
     },
     "plurals": null
 }

@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Ši saugykla tuščia — nėra ko perkelti.",
         "Target vault": "Paskirties saugykla",
         "Failed to move the vault contents — some items may have moved already.": "Nepavyko perkelti saugyklos turinio — dalis elementų galėjo būti jau perkelta.",
-        "Move vault contents": "Perkelti saugyklos turinį"
+        "Move vault contents": "Perkelti saugyklos turinį",
+        "Strength": "Stiprumas"
     },
     "nplurals=2; plural=(n != 1);"
 )

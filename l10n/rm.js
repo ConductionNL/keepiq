@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Quest tresor è vid — i na dat nagut da spustar.",
         "Target vault": "Tresor da destinaziun",
         "Failed to move the vault contents — some items may have moved already.": "Betg reussì da spustar il cuntegn dal tresor — tscherts elements pon gia esser spustads.",
-        "Move vault contents": "Spustar il cuntegn dal tresor"
+        "Move vault contents": "Spustar il cuntegn dal tresor",
+        "Strength": "Forza"
     },
     "nplurals=2; plural=(n != 1);"
 )

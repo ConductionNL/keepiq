@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Tá an taisceadán seo folamh — níl aon rud le bogadh.",
         "Target vault": "Sprioc-thaisceadán",
         "Failed to move the vault contents — some items may have moved already.": "Theip ar bhogadh inneachar an taisceadáin — seans gur bogadh cuid de na míreanna cheana.",
-        "Move vault contents": "Bog inneachar an taisceadáin"
+        "Move vault contents": "Bog inneachar an taisceadáin",
+        "Strength": "Neart"
     },
     "nplurals=2; plural=(n != 1);"
 )

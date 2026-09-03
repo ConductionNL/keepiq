@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Ce coffre-fort est vide — il n'y a rien à déplacer.",
         "Target vault": "Coffre-fort de destination",
         "Failed to move the vault contents — some items may have moved already.": "Échec du déplacement du contenu du coffre-fort — certains éléments ont peut-être déjà été déplacés.",
-        "Move vault contents": "Déplacer le contenu du coffre-fort"
+        "Move vault contents": "Déplacer le contenu du coffre-fort",
+        "Strength": "Force"
     },
     "nplurals=2; plural=(n != 1);"
 )

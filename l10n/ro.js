@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Acest seif este gol — nu este nimic de mutat.",
         "Target vault": "Seif de destinație",
         "Failed to move the vault contents — some items may have moved already.": "Mutarea conținutului seifului a eșuat — este posibil ca unele elemente să fi fost deja mutate.",
-        "Move vault contents": "Mutați conținutul seifului"
+        "Move vault contents": "Mutați conținutul seifului",
+        "Strength": "Putere"
     },
     "nplurals=2; plural=(n != 1);"
 )

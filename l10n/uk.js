@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Це сховище порожнє — немає чого переміщати.",
         "Target vault": "Цільове сховище",
         "Failed to move the vault contents — some items may have moved already.": "Не вдалося перемістити вміст сховища — частина елементів могла вже переміститися.",
-        "Move vault contents": "Перемістити вміст сховища"
+        "Move vault contents": "Перемістити вміст сховища",
+        "Strength": "Надійність"
     },
     "nplurals=2; plural=(n != 1);"
 )

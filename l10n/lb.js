@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Dësen Tresor ass eidel — et gëtt näischt ze réckelen.",
         "Target vault": "Zil-Tresor",
         "Failed to move the vault contents — some items may have moved already.": "Den Inhalt vum Tresor konnt net geréckelt ginn — verschidden Elementer si vläicht scho geréckelt.",
-        "Move vault contents": "Tresorinhalt réckelen"
+        "Move vault contents": "Tresorinhalt réckelen",
+        "Strength": "Stäerkt"
     },
     "nplurals=2; plural=(n != 1);"
 )

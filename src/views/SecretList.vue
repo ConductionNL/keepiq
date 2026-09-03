@@ -82,6 +82,7 @@
 				rowClickToView
 				:objects="listObjects"
 				:schema="listSchema"
+				:columnOverrides="listColumnOverrides"
 				:loading="loading || folderSwitching"
 				:pagination="pagination"
 				:title="pageTitle"
@@ -399,6 +400,63 @@
 							@copied="onCopied" />
 					</div>
 				</template>
+				<!-- Card view (fix-brief bugs 8+9): the SAME row component as
+				     the list — favicon/type icon, strength pill, request/
+				     blocked/compromised states, copy button — boxed as a card,
+				     so the views cannot drift apart again. The #card slot
+				     replaces CnObjectCard entirely, so the selection checkbox
+				     is re-wired here exactly like the #list-item override. -->
+				<template #card="{ object, selected }">
+					<div
+						class="secret-list-view__card"
+						:class="{
+							'secret-list-view__card--selected': selected,
+						}">
+						<NcCheckboxRadioSwitch
+							class="secret-list-view__check"
+							:modelValue="bulkStore.selectedIds.includes(object.id)"
+							:aria-label="
+								t('keepiq', 'Select {name}', { name: object.name })
+							"
+							:data-testid="`bulk-check-${object.id}`"
+							@click.capture="lastShiftKey = $event.shiftKey"
+							@update:modelValue="onRowCheck(object)" />
+						<SecretListItem
+							class="secret-list-view__card-item"
+							:secret="object"
+							:requestState="requestStateFor(object)"
+							@open="openSecret"
+							@copied="onCopied" />
+					</div>
+				</template>
+				<!-- Table view (fix-brief bugs 8+9): the Type and Strength
+				     columns declared in listSchema render through these cell
+				     slots — their values live in the type/health stores, not
+				     on the row object, so the generic cell renderer cannot
+				     draw them. -->
+				<template #column-type="{ row }">
+					<span class="secret-list-view__type-cell">
+						<SecretTypeIcon :typeId="row.typeId" :size="20" />
+						{{ typeLabelFor(row) }}
+					</span>
+				</template>
+				<!-- Unscored rows (locked vault, machine key material,
+				     blocked) get a muted dash instead of an empty cell:
+				     locale-neutral, and honest where "N/A" would not be —
+				     a locked vault means "not scored yet", not "not
+				     applicable". Hidden from screen readers, which already
+				     treat an empty cell as "no value". -->
+				<template #column-strength="{ row }">
+					<StrengthBadge
+						v-if="strengthBadgeVisible(row)"
+						:secretId="row.id" />
+					<span
+						v-else
+						class="secret-list-view__strength-empty"
+						aria-hidden="true"
+						>—</span
+					>
+				</template>
 			</CnIndexPage>
 		</div>
 		<!-- No `:secret` prop: the dialog creates the placeholder itself. -->
@@ -445,6 +503,8 @@ import Safe from 'vue-material-design-icons/Safe.vue'
 import ShareVariantOutline from 'vue-material-design-icons/ShareVariantOutline.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SecretListItem from '../components/SecretListItem.vue'
+import SecretTypeIcon from '../components/SecretTypeIcon.vue'
+import StrengthBadge from '../components/StrengthBadge.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
 import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
@@ -521,6 +581,8 @@ export default {
 		KeyVariant,
 		Safe,
 		SecretListItem,
+		SecretTypeIcon,
+		StrengthBadge,
 		ExportDialog,
 		CxpTransferDialog,
 		GdprExportDialog,
@@ -676,7 +738,12 @@ export default {
 		},
 
 		/**
-		 * Minimal schema so CnIndexPage can offer cards/table fallbacks.
+		 * Schema for CnIndexPage's table view (cards render through the
+		 * #card slot). Type and Strength (fix-brief bugs 8+9) are declared
+		 * here so the table grows their columns; their cells render through
+		 * the #column-type / #column-strength slots because the values live
+		 * in the type/health stores, not on the row object. The order hints
+		 * pin the column order — columnsFromSchema falls back to alphabetical.
 		 *
 		 * @return {object}
 		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
@@ -685,14 +752,37 @@ export default {
 		listSchema() {
 			return {
 				properties: {
-					name: { title: t('keepiq', 'Name'), type: 'string' },
-					url: { title: t('keepiq', 'URL'), type: 'string' },
+					name: { title: t('keepiq', 'Name'), type: 'string', order: 1 },
+					type: { title: t('keepiq', 'Type'), type: 'string', order: 2 },
+
+					strength: {
+						title: t('keepiq', 'Strength'),
+						type: 'string',
+						order: 3,
+					},
+
+					url: { title: t('keepiq', 'URL'), type: 'string', order: 4 },
 				},
 
 				configuration: {
 					objectNameField: 'name',
 					objectDescriptionField: 'url',
 				},
+			}
+		},
+
+		/**
+		 * Type and Strength are synthesized columns — no row field backs
+		 * them, and the server cannot sort on either — so their headers
+		 * must not offer the sort affordance the schema defaults grant.
+		 *
+		 * @return {object}
+		 * @spec exclude Presentation-only column configuration for the table view.
+		 */
+		listColumnOverrides() {
+			return {
+				type: { sortable: false },
+				strength: { sortable: false },
 			}
 		},
 
@@ -1204,6 +1294,40 @@ export default {
 		},
 
 		/**
+		 * The translated type label for a row's Type cell (fix-brief bugs
+		 * 8+9), resolved against the type catalogue; empty while the
+		 * catalogue has not loaded the row's type yet.
+		 *
+		 * @param {object} secret The row's secret.
+		 * @return {string} The label, or '' when the type is unknown.
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 */
+		typeLabelFor(secret) {
+			const type = useSecretTypeStore().typesById[secret.typeId]
+			return type ? secretTypeLabel(type) : ''
+		},
+
+		/**
+		 * Whether the table's Strength cell shows the badge: a scored,
+		 * unblocked row. Blocked rows are guarded here rather than trusting
+		 * the score map — a suite revoked mid-session can leave a stale
+		 * score behind for a row that can no longer be decrypted, and the
+		 * list view suppresses the badge on blocked rows for the same
+		 * reason. Everything else renders the placeholder dash.
+		 *
+		 * @param {object} secret The row's secret.
+		 * @return {boolean} True when StrengthBadge would render a pill.
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+		 */
+		strengthBadgeVisible(secret) {
+			if (secret.blocked) {
+				return false
+			}
+			const score = useHealthStore().scoreById[secret.id]
+			return score !== undefined && score !== null
+		},
+
+		/**
 		 * A credential was requested from the vault level.
 		 *
 		 * The request created its own placeholder Secret, so the list must refetch
@@ -1661,6 +1785,62 @@ export default {
    (review call). */
 .secret-list-view__row-item--selected {
 	background-color: var(--color-background-hover);
+}
+
+/* Card view (fix-brief bugs 8+9): the list-row component boxed as a card.
+   Shell tokens mirror CnObjectCard, so these cards sit indistinguishable
+   next to library-rendered ones elsewhere in the fleet. */
+.secret-list-view__card {
+	display: flex;
+	/* Centered like the row content beside it — a top-pinned checkbox next
+	   to vertically centered text read as misaligned (review call). */
+	align-items: center;
+	gap: 4px;
+	height: 100%;
+	padding: 8px;
+	background: var(--color-main-background);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large, 10px);
+	transition:
+		box-shadow 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.secret-list-view__card:hover {
+	border-color: var(--color-primary-element);
+	box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+/* Selection marks the card's BORDER, like CnObjectCard — the row-item's
+   background tint is the list view's signal and reads as hover here. */
+.secret-list-view__card--selected {
+	border-color: var(--color-primary-element);
+}
+
+.secret-list-view__card-item {
+	flex: 1 1 auto;
+	min-width: 0;
+	border-bottom: none;
+	border-radius: var(--border-radius);
+}
+
+/* Table Type cell: glyph + label, vertically centered as one unit. */
+.secret-list-view__type-cell {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* The Strength cell's "no score" dash: present so the column never shows
+   blank holes between pills, muted so it never competes with them. */
+.secret-list-view__strength-empty {
+	color: var(--color-text-maxcontrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.secret-list-view__card {
+		transition: none;
+	}
 }
 
 /* Active type filter: the funnel already flips to its filled glyph; the

@@ -572,7 +572,8 @@
         "This vault is empty — there is nothing to move.": "Este cofre está vazio — não há nada para mover.",
         "Target vault": "Cofre de destino",
         "Failed to move the vault contents — some items may have moved already.": "Falha ao mover o conteúdo do cofre — alguns itens podem já ter sido movidos.",
-        "Move vault contents": "Mover o conteúdo do cofre"
+        "Move vault contents": "Mover o conteúdo do cofre",
+        "Strength": "Força"
     },
     "plurals": null
 }

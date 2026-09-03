@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Þessi hvelfing er tóm — það er ekkert að færa.",
         "Target vault": "Markhvelfing",
         "Failed to move the vault contents — some items may have moved already.": "Tókst ekki að færa innihald hvelfingarinnar — sum atriði gætu þegar hafa verið færð.",
-        "Move vault contents": "Færa innihald hvelfingarinnar"
+        "Move vault contents": "Færa innihald hvelfingarinnar",
+        "Strength": "Styrkur"
     },
     "nplurals=2; plural=(n != 1);"
 )

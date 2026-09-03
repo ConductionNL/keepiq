@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Αυτό το θησαυροφυλάκιο είναι άδειο — δεν υπάρχει τίποτα για μετακίνηση.",
         "Target vault": "Θησαυροφυλάκιο προορισμού",
         "Failed to move the vault contents — some items may have moved already.": "Αποτυχία μετακίνησης των περιεχομένων — ορισμένα στοιχεία ενδέχεται να έχουν ήδη μετακινηθεί.",
-        "Move vault contents": "Μετακίνηση περιεχομένων θησαυροφυλακίου"
+        "Move vault contents": "Μετακίνηση περιεχομένων θησαυροφυλακίου",
+        "Strength": "Ισχύς"
     },
     "nplurals=2; plural=(n != 1);"
 )

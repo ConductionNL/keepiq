@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Tämä holvi on tyhjä — siirrettävää ei ole.",
         "Target vault": "Kohdeholvi",
         "Failed to move the vault contents — some items may have moved already.": "Holvin sisällön siirto epäonnistui — osa kohteista on voitu jo siirtää.",
-        "Move vault contents": "Siirrä holvin sisältö"
+        "Move vault contents": "Siirrä holvin sisältö",
+        "Strength": "Vahvuus"
     },
     "nplurals=2; plural=(n != 1);"
 )

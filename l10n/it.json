@@ -572,7 +572,8 @@
         "This vault is empty — there is nothing to move.": "Questa cassaforte è vuota — non c'è nulla da spostare.",
         "Target vault": "Cassaforte di destinazione",
         "Failed to move the vault contents — some items may have moved already.": "Impossibile spostare il contenuto della cassaforte — alcuni elementi potrebbero essere già stati spostati.",
-        "Move vault contents": "Sposta il contenuto della cassaforte"
+        "Move vault contents": "Sposta il contenuto della cassaforte",
+        "Strength": "Robustezza"
     },
     "plurals": null
 }

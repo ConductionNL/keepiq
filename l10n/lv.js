@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Šī glabātava ir tukša — nav ko pārvietot.",
         "Target vault": "Mērķa glabātava",
         "Failed to move the vault contents — some items may have moved already.": "Neizdevās pārvietot glabātavas saturu — daži vienumi, iespējams, jau ir pārvietoti.",
-        "Move vault contents": "Pārvietot glabātavas saturu"
+        "Move vault contents": "Pārvietot glabātavas saturu",
+        "Strength": "Stiprums"
     },
     "nplurals=2; plural=(n != 1);"
 )

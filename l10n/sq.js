@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Kjo kasafortë është bosh — s'ka asgjë për të zhvendosur.",
         "Target vault": "Kasaforta e synuar",
         "Failed to move the vault contents — some items may have moved already.": "Zhvendosja e përmbajtjes së kasafortës dështoi — disa elemente mund të jenë zhvendosur tashmë.",
-        "Move vault contents": "Zhvendos përmbajtjen e kasafortës"
+        "Move vault contents": "Zhvendos përmbajtjen e kasafortës",
+        "Strength": "Fuqia"
     },
     "nplurals=2; plural=(n != 1);"
 )

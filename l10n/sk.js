@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Tento trezor je prázdny — nie je čo presúvať.",
         "Target vault": "Cieľový trezor",
         "Failed to move the vault contents — some items may have moved already.": "Obsah trezora sa nepodarilo presunúť — časť položiek už mohla byť presunutá.",
-        "Move vault contents": "Presunúť obsah trezora"
+        "Move vault contents": "Presunúť obsah trezora",
+        "Strength": "Sila"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Esta caja fuerte está vacía — no hay nada que mover.",
         "Target vault": "Caja fuerte de destino",
         "Failed to move the vault contents — some items may have moved already.": "No se pudo mover el contenido de la caja fuerte — puede que algunos elementos ya se hayan movido.",
-        "Move vault contents": "Mover el contenido de la caja fuerte"
+        "Move vault contents": "Mover el contenido de la caja fuerte",
+        "Strength": "Fortaleza"
     },
     "nplurals=2; plural=(n != 1);"
 )

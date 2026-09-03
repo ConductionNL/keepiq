@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Ez a széf üres — nincs mit áthelyezni.",
         "Target vault": "Cél széf",
         "Failed to move the vault contents — some items may have moved already.": "A széf tartalmának áthelyezése nem sikerült — egyes elemek már áthelyezésre kerülhettek.",
-        "Move vault contents": "Széf tartalmának áthelyezése"
+        "Move vault contents": "Széf tartalmának áthelyezése",
+        "Strength": "Erősség"
     },
     "nplurals=2; plural=(n != 1);"
 )

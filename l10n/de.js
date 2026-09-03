@@ -573,7 +573,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Dieser Tresor ist leer — es gibt nichts zu verschieben.",
         "Target vault": "Ziel-Tresor",
         "Failed to move the vault contents — some items may have moved already.": "Der Tresorinhalt konnte nicht verschoben werden — einige Einträge wurden möglicherweise bereits verschoben.",
-        "Move vault contents": "Tresorinhalt verschieben"
+        "Move vault contents": "Tresorinhalt verschieben",
+        "Strength": "Stärke"
     },
     "nplurals=2; plural=(n != 1);"
 )

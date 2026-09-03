@@ -572,7 +572,8 @@
         "This vault is empty — there is nothing to move.": "Ten sejf jest pusty — nie ma nic do przeniesienia.",
         "Target vault": "Sejf docelowy",
         "Failed to move the vault contents — some items may have moved already.": "Nie udało się przenieść zawartości sejfu — część elementów mogła już zostać przeniesiona.",
-        "Move vault contents": "Przenieś zawartość sejfu"
+        "Move vault contents": "Przenieś zawartość sejfu",
+        "Strength": "Siła"
     },
     "plurals": null
 }
