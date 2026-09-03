@@ -214,22 +214,38 @@ export default {
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
 		 */
 		async onSubmit() {
+			// Re-entrancy gate: the form's @submit and the actions-slot
+			// button share this handler; should a refactor ever let both
+			// fire for one gesture, the second entry finds the gate shut
+			// before any request is built.
+			if (this.busy) {
+				return
+			}
 			this.error = null
 			const name = this.form.name.trim()
 			if (name === '') {
 				this.error = t('keepiq', 'Name is required')
 				return
 			}
+			// Trimmed like name: a pasted trailing newline is a spurious 400
+			// on strict servers or invisible garbage in storage.
+			const description = this.form.description.trim()
+			const csr = this.form.csr.trim()
 			const store = useApplicationStore()
 			this.busy = true
 			try {
 				const row = await store.registerApplication({
 					name,
-					description: this.form.description,
+					description,
 					type: this.form.type,
-					csr: this.form.csr || null,
+					csr: csr || null,
 				})
 				this.$emit('registered', row)
+				// Self-sufficient close: a cnOpenModal host that only wires
+				// @registered must not be left with a stuck dialog. The
+				// register view also closes on @registered — setting its
+				// flag twice is harmless.
+				this.$emit('close')
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message

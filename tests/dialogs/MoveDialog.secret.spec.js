@@ -147,6 +147,24 @@ describe('MoveDialog — subject="secret"', () => {
 		expect(mountDialog().vm.excludeId).toBeNull()
 	})
 
+	// Review follow-up (#600): the picker preselects the CURRENT folder so
+	// "you are here" is visible, which used to arm Move on open — clicking
+	// it fired a PUT that kept the secret exactly where it was.
+	it('keeps Move disarmed until the destination actually changes', async () => {
+		const update = vi.spyOn(secretStore, 'updateSecret')
+
+		const wrapper = mountDialog()
+		expect(wrapper.vm.target).toBe('folder-a')
+		expect(wrapper.vm.canSubmit).toBe(false)
+
+		await wrapper.vm.submit()
+		expect(update).not.toHaveBeenCalled()
+
+		wrapper.vm.target = 'folder-b'
+		await wrapper.vm.$nextTick()
+		expect(wrapper.vm.canSubmit).toBe(true)
+	})
+
 	it('will not submit without a destination', async () => {
 		const update = vi.spyOn(secretStore, 'updateSecret')
 

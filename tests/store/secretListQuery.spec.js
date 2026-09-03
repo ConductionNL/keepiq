@@ -24,6 +24,7 @@
 import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useOfflineStore } from '../../src/store/modules/offline.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 
 /**
@@ -124,5 +125,52 @@ describe('secret store — the stored list query', () => {
 
 		expect(store.filters.folderId).toBe('folder-8')
 		expect(store.filters.typeId).toBe('passkey')
+	})
+})
+
+// Review follow-up (#600): the offline branch honoured folderId and search
+// but silently dropped typeId — a "passkeys only" list showed the whole
+// vault on every offline refresh. The offline filters must mirror the
+// params the online branch sends.
+describe('secret store — the stored list query, served from cache', () => {
+	let store
+
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		store = useSecretStore()
+
+		const offline = useOfflineStore()
+		offline.servedFromCache = true
+		offline.vault = {
+			secrets: [
+				{ id: 's-1', name: 'Login one', folderId: 'f-1', typeId: 'login' },
+				{ id: 's-2', name: 'Passkey', folderId: 'f-1', typeId: 'passkey' },
+				{ id: 's-3', name: 'Login two', folderId: 'f-2', typeId: 'login' },
+			],
+		}
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
+	})
+
+	it('honours the stored type filter offline, like the online branch', async () => {
+		store.setListQuery({ typeId: 'login' })
+		await store.fetchSecrets()
+
+		expect(store.secrets.map((s) => s.id)).toEqual(['s-1', 's-3'])
+		expect(axios.get).not.toHaveBeenCalled()
+	})
+
+	it('combines the type filter with the browsed folder', async () => {
+		store.setListQuery({ folderId: 'f-1', typeId: 'login' })
+		await store.fetchSecrets()
+
+		expect(store.secrets.map((s) => s.id)).toEqual(['s-1'])
+	})
+
+	it('lets an explicit null clear the stored type filter offline', async () => {
+		store.setListQuery({ typeId: 'login' })
+		await store.fetchSecrets({ typeId: null })
+
+		expect(store.secrets).toHaveLength(3)
 	})
 })
