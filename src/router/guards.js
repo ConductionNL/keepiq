@@ -93,10 +93,24 @@ export function isPublicRoute(route) {
 }
 
 /**
- * Hash prefixes of the recipient-facing routes.
+ * Path prefixes of the recipient-facing routes, relative to the router base.
  *
  * Derived from the same routes as PUBLIC_ROUTE_NAMES, kept as paths because the
  * check below runs before the router has resolved a name.
+ *
+ * @type {string[]}
+ */
+export const PUBLIC_PATH_PREFIXES = ['/share/request/', '/share/link/', '/send/']
+
+/**
+ * Hash prefixes of the same routes under the RETIRED hash-routing scheme.
+ *
+ * Links built under that scheme are still in the wild (they were mailed to
+ * recipients), and `applyHashRouteHandoff()` in the bootstrap rewrites them to
+ * the path form before the router is created. This list exists for the reads
+ * that can happen before or without that handoff — direct unit-test calls,
+ * mainly — so the classification of a legacy URL never depends on rewrite
+ * order.
  *
  * @type {string[]}
  */
@@ -111,8 +125,9 @@ export const PUBLIC_HASH_PREFIXES = ['#/share/request/', '#/share/link/', '#/sen
  * the URL alone, so it is correct at that moment.
  *
  * `/apps/keepiq/public` is the anonymous SPA shell, so anything served from it
- * is a recipient page by definition; the hash prefixes cover the same routes
- * when reached on the authenticated shell.
+ * is a recipient page by definition; the path prefixes cover the same routes
+ * when reached on the authenticated shell, and the legacy hash prefixes cover
+ * links built under the retired hash-routing scheme.
  *
  * @param {{pathname?: string, hash?: string}} location A Location-like object.
  * @return {boolean} True when the URL is a public recipient surface.
@@ -123,6 +138,12 @@ export function isPublicSurface(location = {}) {
 	const hash = location.hash || ''
 
 	if (path.includes('/apps/keepiq/public') === true) {
+		return true
+	}
+
+	if (
+		PUBLIC_PATH_PREFIXES.some((prefix) => path.includes(`/apps/keepiq${prefix}`))
+	) {
 		return true
 	}
 

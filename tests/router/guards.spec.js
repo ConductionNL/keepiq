@@ -384,7 +384,23 @@ describe('isPublicSurface', () => {
 		).toBe(true)
 	})
 
-	it('recognises the recipient routes on the authenticated shell', () => {
+	it('recognises the recipient PATH routes on either shell', () => {
+		// The link builders emit paths (createWebHistory), on the public shell
+		// for recipients and resolvable on the authenticated shell too.
+		for (const pathname of [
+			'/index.php/apps/keepiq/public/share/request/tok',
+			'/apps/keepiq/public/share/link/tok',
+			'/index.php/apps/keepiq/share/request/tok',
+			'/index.php/apps/keepiq/share/link/tok',
+			'/apps/keepiq/send/tok',
+		]) {
+			expect(isPublicSurface({ pathname, hash: '' }), pathname).toBe(true)
+		}
+	})
+
+	it('still recognises the RETIRED hash forms, links to which are in the wild', () => {
+		// applyHashRouteHandoff() rewrites these at bootstrap, but the
+		// classification must not depend on rewrite order.
 		for (const hash of [
 			'#/share/request/tok',
 			'#/share/link/tok',
@@ -402,6 +418,23 @@ describe('isPublicSurface', () => {
 				pathname: '/index.php/apps/keepiq/',
 				hash: '#/secrets',
 			}),
+		).toBe(false)
+		expect(
+			isPublicSurface({
+				pathname: '/index.php/apps/keepiq/secrets',
+				hash: '',
+			}),
+		).toBe(false)
+		// A nested segment that merely CONTAINS a recipient word is not one.
+		expect(
+			isPublicSurface({
+				pathname: '/apps/keepiq/secrets/send/decoy',
+				hash: '',
+			}),
+		).toBe(false)
+		// A send URL's #k= fragment alone does not make a surface public.
+		expect(
+			isPublicSurface({ pathname: '/apps/keepiq/secrets', hash: '#k=abc' }),
 		).toBe(false)
 		expect(isPublicSurface({})).toBe(false)
 		expect(isPublicSurface()).toBe(false)
