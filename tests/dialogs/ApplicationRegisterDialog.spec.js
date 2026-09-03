@@ -167,4 +167,77 @@ describe('ApplicationRegisterDialog', () => {
 		await wrapper.vm.$nextTick()
 		expect(wrapper.emitted('close')).toBeTruthy()
 	})
+
+	// Review follow-ups (#601):
+
+	it('trims description and CSR like it already trims the name', async () => {
+		const register = vi
+			.spyOn(applicationStore, 'registerApplication')
+			.mockResolvedValue({ id: 'app-1' })
+
+		const wrapper = mountDialog()
+		await setField(wrapper, 'application-register-name', 'CI runner')
+		await setField(
+			wrapper,
+			'application-register-description',
+			'  pasted with a trailing newline\n',
+		)
+		await setField(
+			wrapper,
+			'application-register-csr',
+			'\n-----BEGIN CERTIFICATE REQUEST-----\nabc\n-----END CERTIFICATE REQUEST-----\n',
+		)
+		await wrapper
+			.find('[data-testid="application-register-submit"]')
+			.trigger('click')
+
+		expect(register).toHaveBeenCalledWith({
+			name: 'CI runner',
+			description: 'pasted with a trailing newline',
+			type: 'internal',
+			csr: '-----BEGIN CERTIFICATE REQUEST-----\nabc\n-----END CERTIFICATE REQUEST-----',
+		})
+	})
+
+	// A cnOpenModal host that only wires @registered must not be left with
+	// a stuck dialog: success closes the dialog itself.
+	it('emits close as well as registered on success', async () => {
+		vi.spyOn(applicationStore, 'registerApplication').mockResolvedValue({
+			id: 'app-1',
+		})
+
+		const wrapper = mountDialog()
+		await setField(wrapper, 'application-register-name', 'CI runner')
+		await wrapper
+			.find('[data-testid="application-register-submit"]')
+			.trigger('click')
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.emitted('registered')).toBeTruthy()
+		expect(wrapper.emitted('close')).toBeTruthy()
+	})
+
+	// The form's @submit and the actions-slot button share onSubmit; the
+	// busy gate makes a double fire structurally harmless.
+	it('registers once when the handler fires twice for one gesture', async () => {
+		let resolveRegister
+		const register = vi
+			.spyOn(applicationStore, 'registerApplication')
+			.mockImplementation(
+				() =>
+					new Promise((resolve) => {
+						resolveRegister = resolve
+					}),
+			)
+
+		const wrapper = mountDialog()
+		await setField(wrapper, 'application-register-name', 'CI runner')
+
+		const first = wrapper.vm.onSubmit()
+		const second = wrapper.vm.onSubmit()
+		resolveRegister({ id: 'app-1' })
+		await Promise.all([first, second])
+
+		expect(register).toHaveBeenCalledTimes(1)
+	})
 })
