@@ -531,7 +531,7 @@
 			"type": "custom",
 			"title": "Secure message",
 			"component": "EphemeralSendAccess",
-			"_note": "Public ephemeral-send access page (no auth; ephemeral-send §5.3). Exempt from the lock guard via PUBLIC_ROUTE_NAMES; the EphemeralSendAccessController endpoints run as #[PublicPage]. Fragment-mode content keys ride the SPA hash query (?k=) and never reach the server."
+			"_note": "Public ephemeral-send access page (no auth; ephemeral-send §5.3). Exempt from the lock guard via PUBLIC_ROUTE_NAMES; the EphemeralSendAccessController endpoints run as #[PublicPage]. Fragment-mode content keys ride the URL fragment (#k=) and never reach the server."
 		},
 		{
 			"id": "LinkShareAccess",
