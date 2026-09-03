@@ -38,6 +38,7 @@ import ShareDialog from './components/share/ShareDialog.vue'
 import ShareList from './components/share/ShareList.vue'
 import FolderCreateDialog from './dialogs/FolderCreateDialog.vue'
 import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
+import SecretDeleteConfirmDialog from './dialogs/SecretDeleteConfirmDialog.vue'
 import SecretEditDialog from './dialogs/SecretEditDialog.vue'
 import SecretMoveDialog from './dialogs/SecretMoveDialog.vue'
 import SecretShareDialog from './dialogs/SecretShareDialog.vue'
@@ -81,6 +82,11 @@ export default {
 	'folder-create': {
 		kind: 'modal',
 		component: FolderCreateDialog,
+		propsSchema: {},
+	},
+	'secret-delete': {
+		kind: 'modal',
+		component: SecretDeleteConfirmDialog,
 		propsSchema: {},
 	},
 	'secret-move': { kind: 'modal', component: SecretMoveDialog, propsSchema: {} },

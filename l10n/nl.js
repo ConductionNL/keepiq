@@ -741,7 +741,8 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Deze kluis is leeg — er is niets te verplaatsen.",
         "Target vault": "Doelkluis",
         "Failed to move the vault contents — some items may have moved already.": "Verplaatsen van de kluisinhoud mislukt — sommige items zijn mogelijk al verplaatst.",
-        "Move vault contents": "Kluisinhoud verplaatsen"
+        "Move vault contents": "Kluisinhoud verplaatsen",
+        "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Dit verwijdert dit geheim permanent en trekt de delingen ervan in. Er is geen prullenbak — dit kan niet ongedaan worden gemaakt."
     },
     "nplurals=2; plural=(n != 1);"
 )
