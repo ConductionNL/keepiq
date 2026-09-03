@@ -42,15 +42,23 @@ const APP_ID = 'keepiq'
 test.describe('app chrome (ADR-114)', () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto(`/apps/${APP_ID}/`)
-		await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({ timeout: 30_000 })
+		await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({
+			timeout: 30_000,
+		})
 	})
 
-	test('the footer reads Documentation, Reports, Features & roadmap, each with a glyph', async ({ page }) => {
-		const footer = page.locator('[data-testid="cn-nav"] .cn-app-nav__footer-list')
+	test('the footer reads Documentation, Reports, Features & roadmap, each with a glyph', async ({
+		page,
+	}) => {
+		const footer = page.locator(
+			'[data-testid="cn-nav"] .cn-app-nav__footer-list',
+		)
 		await expect(footer).toBeAttached({ timeout: 15_000 })
 
 		const rows = footer.locator('li')
-		const texts = (await rows.allInnerTexts()).map((t) => t.trim()).filter(Boolean)
+		const texts = (await rows.allInnerTexts())
+			.map((t) => t.trim())
+			.filter(Boolean)
 
 		// ORDER is the rule, not the numbers: ADR-114 fixes the sequence and
 		// openregister runs its footer at 1/2 while pipelinq runs 160/200/230.
@@ -63,44 +71,68 @@ test.describe('app chrome (ADR-114)', () => {
 		// A glyph on every row. This is the assertion that would have caught
 		// the unregistered-icon defect in launchpad, humaniq and planninq.
 		for (const row of await rows.all()) {
-			await expect(row.locator('svg, .material-design-icon').first()).toBeAttached()
+			await expect(
+				row.locator('svg, .material-design-icon').first(),
+			).toBeAttached()
 		}
 	})
 
-	test('the two reports are cards on the Reports page, not menu entries', async ({ page }) => {
+	test('the two reports are cards on the Reports page, not menu entries', async ({
+		page,
+	}) => {
 		const nav = page.locator('[data-testid="cn-nav"]')
 
 		// ADR-112 Decision 2: a report is a card OR an entry, never both. These
 		// two WERE footer entries before ADR-114; the entries are gone.
-		await expect(nav.locator('[data-testid="cn-nav-entry-MyActivityMenu"]')).toHaveCount(0)
-		await expect(nav.locator('[data-testid="cn-nav-entry-PasswordHealthMenu"]')).toHaveCount(0)
+		await expect(
+			nav.locator('[data-testid="cn-nav-entry-MyActivityMenu"]'),
+		).toHaveCount(0)
+		await expect(
+			nav.locator('[data-testid="cn-nav-entry-PasswordHealthMenu"]'),
+		).toHaveCount(0)
 
 		await nav.locator('[data-testid="cn-nav-entry-ReportsMenu"]').click()
-		await expect(page).toHaveURL(new RegExp(`/apps/${APP_ID}/reports(\\?|$)`), { timeout: 15_000 })
+		await expect(page).toHaveURL(new RegExp(`/apps/${APP_ID}/reports(\\?|$)`), {
+			timeout: 15_000,
+		})
 
 		// Both reports are reachable from the page that replaced their entries.
 		// ADR-044 Decision 5's no-functionality-loss invariant, checked rather
 		// than asserted in a comment.
-		await expect(page.getByText('Password health', { exact: false }).first()).toBeVisible({ timeout: 15_000 })
-		await expect(page.getByText('My activity', { exact: false }).first()).toBeVisible()
+		await expect(
+			page.getByText('Password health', { exact: false }).first(),
+		).toBeVisible({ timeout: 15_000 })
+		await expect(
+			page.getByText('My activity', { exact: false }).first(),
+		).toBeVisible()
 	})
 
-	test('the pages behind the retired entries are still routable', async ({ page }) => {
+	test('the pages behind the retired entries are still routable', async ({
+		page,
+	}) => {
 		// Deep links, the dashboard widget's viewAllRoute and the older e2e
 		// specs all address these by route. Retiring a menu entry must not take
 		// the route with it.
 		for (const path of ['/my-activity', '/password-health']) {
 			await page.goto(`/apps/${APP_ID}${path}`)
-			await expect(page).toHaveURL(new RegExp(`${path}(\\?|$)`), { timeout: 15_000 })
+			await expect(page).toHaveURL(new RegExp(`${path}(\\?|$)`), {
+				timeout: 15_000,
+			})
 			await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible()
 		}
 	})
 
-	test('the settings foldout carries Personal settings and Flows', async ({ page }) => {
+	test('the settings foldout carries Personal settings and Flows', async ({
+		page,
+	}) => {
 		const nav = page.locator('[data-testid="cn-nav"]')
 
-		await expect(nav.locator('[data-testid="cn-nav-settings"]')).toBeAttached({ timeout: 15_000 })
-		await expect(nav.locator('[data-testid="cn-nav-entry-FlowsMenu"]')).toBeAttached()
+		await expect(nav.locator('[data-testid="cn-nav-settings"]')).toBeAttached({
+			timeout: 15_000,
+		})
+		await expect(
+			nav.locator('[data-testid="cn-nav-entry-FlowsMenu"]'),
+		).toBeAttached()
 
 		// Keepiq opts out of the shell's auto-prepended Personal settings and
 		// declares its OWN entry with action:"user-settings" onto the same
@@ -108,11 +140,17 @@ test.describe('app chrome (ADR-114)', () => {
 		// rather than the flag. Exactly one of the two must exist.
 		const shellEntry = nav.locator('[data-testid="cn-nav-personal-settings"]')
 		const ownEntry = nav.locator('[data-testid="cn-nav-entry-UserSettings"]')
-		expect(await shellEntry.count() + await ownEntry.count()).toBeGreaterThan(0)
+		expect(
+			(await shellEntry.count()) + (await ownEntry.count()),
+		).toBeGreaterThan(0)
 	})
 
-	test('keepiq offers no Store, because it owns no schemas to install into', async ({ page }) => {
-		const footer = page.locator('[data-testid="cn-nav"] .cn-app-nav__footer-list')
+	test('keepiq offers no Store, because it owns no schemas to install into', async ({
+		page,
+	}) => {
+		const footer = page.locator(
+			'[data-testid="cn-nav"] .cn-app-nav__footer-list',
+		)
 		await expect(footer).toBeAttached({ timeout: 15_000 })
 
 		// Not an oversight. Keepiq's OpenRegister register declares zero
