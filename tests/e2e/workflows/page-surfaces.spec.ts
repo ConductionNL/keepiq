@@ -46,12 +46,12 @@ import type { Page } from '@playwright/test'
  *
  * ROUTING NOTE
  * ------------
- * The router is in hash mode and the vault's private key lives only in memory,
- * so a full `page.goto()` to an in-app route reloads the SPA, discards the
- * CryptoKey and lands on the lock gate. Authenticated pages are reached with
- * `gotoVaultRoute()` (an in-place `location.hash` change) after one
- * `unlockVault()`. The three public recipient routes are exempt from the lock
- * guard (`PUBLIC_ROUTE_NAMES` in `src/App.vue`) and are reached with `goto`.
+ * The vault's private key lives only in memory, so a full `page.goto()` to an
+ * in-app route reloads the SPA, discards the CryptoKey and lands on the lock
+ * gate. Authenticated pages are reached with `gotoVaultRoute()` (an in-place
+ * router navigation) after one `unlockVault()`. The three public recipient
+ * routes are exempt from the lock guard (`PUBLIC_ROUTE_NAMES` in `src/App.vue`)
+ * and are reached with `goto`.
  */
 import { expect, test } from '@playwright/test'
 import { APP_BASE, gotoVaultRoute, unlockVault } from './_workflow-helpers.ts'
