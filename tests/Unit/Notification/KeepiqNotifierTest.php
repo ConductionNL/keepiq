@@ -229,7 +229,7 @@ class KeepiqNotifierTest extends TestCase {
 
 	/**
 	 * prepare(): a subject outside SUBJECT_SETTING_MAP is rejected before any
-	 * rendering happens â€” no icon is set on the way out.
+	 * rendering happens — no icon is set on the way out.
 	 *
 	 * @return void
 	 */
@@ -430,7 +430,7 @@ class KeepiqNotifierTest extends TestCase {
 	}//end testShareRequestResultDenied()
 
 	/**
-	 * share_request_result: an absent or unrecognised result must fail closed â€”
+	 * share_request_result: an absent or unrecognised result must fail closed —
 	 * anything that is not literally "approved" reads as denied.
 	 *
 	 * @return void
@@ -476,7 +476,7 @@ class KeepiqNotifierTest extends TestCase {
 
 		$this->assertSame(expected: 'Group member added', actual: $recorded['parsedSubject']);
 		$this->assertSame(
-			expected: 'A new member joined the group "ops" â€” approve to share "Vault seal".',
+			expected: 'A new member joined the group "ops" — approve to share "Vault seal".',
 			actual: $recorded['parsedMessage']
 		);
 		$this->assertSame(
@@ -661,7 +661,7 @@ class KeepiqNotifierTest extends TestCase {
 
 	/*
 	 * ---------------------------------------------------------------
-	 * Vault access subjects â€” none of these carry a deep-link
+	 * Vault access subjects — none of these carry a deep-link
 	 * ---------------------------------------------------------------
 	 */
 
@@ -699,7 +699,7 @@ class KeepiqNotifierTest extends TestCase {
 
 		$this->assertSame(expected: 'Team folder join request', actual: $recorded['parsedSubject']);
 		$this->assertSame(
-			expected: 'erin joined the group "finance" â€” approve to share your team folder with them.',
+			expected: 'erin joined the group "finance" — approve to share your team folder with them.',
 			actual: $recorded['parsedMessage']
 		);
 	}//end testTeamFolderJoinRequestRendersMemberAndGroup()
@@ -720,7 +720,7 @@ class KeepiqNotifierTest extends TestCase {
 
 		$this->assertSame(expected: 'Honey credential accessed', actual: $recorded['parsedSubject']);
 		$this->assertSame(
-			expected: 'A decoy secret was accessed by mallory via api. Review the honey alerts now â€” '
+			expected: 'A decoy secret was accessed by mallory via api. Review the honey alerts now — '
 				. 'this may indicate a compromise.',
 			actual: $recorded['parsedMessage']
 		);
@@ -736,7 +736,7 @@ class KeepiqNotifierTest extends TestCase {
 
 		$this->assertSame(
 			expected: 'A decoy secret was accessed by an unknown accessor via unknown channel. '
-				. 'Review the honey alerts now â€” this may indicate a compromise.',
+				. 'Review the honey alerts now — this may indicate a compromise.',
 			actual: $recorded['parsedMessage']
 		);
 	}//end testHoneyAccessFallsBackToPlaceholders()
@@ -860,7 +860,7 @@ class KeepiqNotifierTest extends TestCase {
 	 */
 
 	/**
-	 * withSecretLink(): an unroutable dashboard route is swallowed â€” the link is
+	 * withSecretLink(): an unroutable dashboard route is swallowed — the link is
 	 * optional and must never break the notification itself.
 	 *
 	 * @return void
