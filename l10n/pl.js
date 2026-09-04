@@ -575,6 +575,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Nie udało się przenieść zawartości sejfu — część elementów mogła już zostać przeniesiona.",
         "Move vault contents": "Przenieś zawartość sejfu",
         "Strength": "Siła",
+        "Invalid password. Please try again.": "Nieprawidłowe hasło. Spróbuj ponownie.",
         "Click Reports in the menu": "Kliknij Raporty w menu",
         "Your activity and vault health live under Reports.": "Twoja aktywność i kondycja sejfu są w sekcji Raporty.",
         "Pick a report to open it.": "Wybierz raport, aby go otworzyć.",

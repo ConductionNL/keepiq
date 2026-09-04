@@ -575,6 +575,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Holvin sisällön siirto epäonnistui — osa kohteista on voitu jo siirtää.",
         "Move vault contents": "Siirrä holvin sisältö",
         "Strength": "Vahvuus",
+        "Invalid password. Please try again.": "Virheellinen salasana. Yritä uudelleen.",
         "Click Reports in the menu": "Napsauta valikossa Raportit",
         "Your activity and vault health live under Reports.": "Toimintasi ja holvin kunto ovat Raporttien alla.",
         "Pick a report to open it.": "Valitse raportti avataksesi sen.",

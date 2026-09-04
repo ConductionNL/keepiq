@@ -575,6 +575,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Не вдалося перемістити вміст сховища — частина елементів могла вже переміститися.",
         "Move vault contents": "Перемістити вміст сховища",
         "Strength": "Надійність",
+        "Invalid password. Please try again.": "Недійсний пароль. Спробуйте ще раз.",
         "Click Reports in the menu": "Натисніть Звіти в меню",
         "Your activity and vault health live under Reports.": "Ваша активність і стан сховища є в розділі Звіти.",
         "Pick a report to open it.": "Виберіть звіт, щоб відкрити його.",

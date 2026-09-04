@@ -575,6 +575,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Impossibile spostare il contenuto della cassaforte — alcuni elementi potrebbero essere già stati spostati.",
         "Move vault contents": "Sposta il contenuto della cassaforte",
         "Strength": "Robustezza",
+        "Invalid password. Please try again.": "Password non valida. Riprova.",
         "Click Reports in the menu": "Fai clic su Rapporti nel menu",
         "Your activity and vault health live under Reports.": "La tua attività e lo stato della cassaforte sono sotto Rapporti.",
         "Pick a report to open it.": "Scegli un rapporto per aprirlo.",

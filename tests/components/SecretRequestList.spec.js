@@ -141,7 +141,7 @@ describe('SecretRequestList', () => {
 		// The anonymous shell form — the one a recipient without an account can open.
 		expect(writeText).toHaveBeenCalledTimes(1)
 		const copied = writeText.mock.calls[0][0]
-		expect(copied).toContain('/apps/keepiq/public#/share/request/')
+		expect(copied).toContain('/apps/keepiq/public/share/request/')
 		expect(copied).toContain('aaaaaaaabbbbbbbbccccccccdddddddd')
 		expect(copied).not.toContain('/api/v1/public/')
 	})

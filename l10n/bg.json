@@ -574,6 +574,7 @@
         "Failed to move the vault contents — some items may have moved already.": "Неуспешно преместване на съдържанието на трезора — част от елементите може вече да са преместени.",
         "Move vault contents": "Преместване на съдържанието на трезора",
         "Strength": "Сила",
+        "Invalid password. Please try again.": "Невалидна парола. Опитайте отново.",
         "Click Reports in the menu": "Щракнете върху Отчети в менюто",
         "Your activity and vault health live under Reports.": "Вашата активност и състоянието на трезора са под Отчети.",
         "Pick a report to open it.": "Изберете отчет, за да го отворите.",

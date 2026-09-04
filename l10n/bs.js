@@ -575,6 +575,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Premještanje sadržaja trezora nije uspjelo — neki elementi su možda već premješteni.",
         "Move vault contents": "Premjesti sadržaj trezora",
         "Strength": "Jačina",
+        "Invalid password. Please try again.": "Nevažeća lozinka. Pokušajte ponovo.",
         "Click Reports in the menu": "Kliknite Izvještaji u meniju",
         "Your activity and vault health live under Reports.": "Vaša aktivnost i stanje sefa su pod Izvještajima.",
         "Pick a report to open it.": "Odaberite izvještaj da ga otvorite.",

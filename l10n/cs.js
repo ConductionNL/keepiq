@@ -575,6 +575,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Obsah trezoru se nepodařilo přesunout — část položek už mohla být přesunuta.",
         "Move vault contents": "Přesunout obsah trezoru",
         "Strength": "Síla",
+        "Invalid password. Please try again.": "Neplatné heslo. Zkuste to znovu.",
         "Click Reports in the menu": "Klikněte na Reporty v nabídce",
         "Your activity and vault health live under Reports.": "Vaše aktivita a stav trezoru jsou pod Reporty.",
         "Pick a report to open it.": "Vyberte report a otevřete jej.",

@@ -575,6 +575,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Falha ao mover o conteúdo do cofre — alguns itens podem já ter sido movidos.",
         "Move vault contents": "Mover o conteúdo do cofre",
         "Strength": "Força",
+        "Invalid password. Please try again.": "Palavra-passe inválida. Tente novamente.",
         "Click Reports in the menu": "Clique em Relatórios no menu",
         "Your activity and vault health live under Reports.": "A sua atividade e a saúde do cofre estão em Relatórios.",
         "Pick a report to open it.": "Escolha um relatório para o abrir.",
