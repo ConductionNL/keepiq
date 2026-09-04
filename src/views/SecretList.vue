@@ -67,14 +67,22 @@
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
 
+			<!-- showFormDialog OFF: CnIndexPage also watches ?action=create
+			     and would open its own generic schema-form dialog OVER the
+			     registry's SecretCreateDialog (the consumeCreateAction
+			     watcher below). The prop is the library's documented
+			     "consumer manages its own dialog" opt-out; the @add path is
+			     unaffected because this view listens to it. -->
 			<CnIndexPage
 				viewMode="list"
 				:availableViewModes="['list', 'cards', 'table']"
 				listLabel="List"
+				:showFormDialog="false"
 				:selectedIds="bulkStore.selectedIds"
 				rowClickToView
 				:objects="listObjects"
 				:schema="listSchema"
+				:columnOverrides="listColumnOverrides"
 				:loading="loading || folderSwitching"
 				:pagination="pagination"
 				:title="pageTitle"
@@ -243,18 +251,18 @@
 						class="secret-list-view__crumbs">
 						<CnBreadcrumbs :crumbs="breadcrumbs" />
 					</div>
+					<!-- Only INSIDE a folder (2026-09-03, per Remko): the rows
+					     are then the folder's own contents. At the root the
+					     strip showed the vaults — navigation posing as
+					     contents, duplicating the nav tree and pushing every
+					     secret below a screen of vault rows. -->
 					<div
 						v-if="!folderSwitching && folderRows.length > 0"
 						class="secret-list-view__folders">
 						<!-- Group caption, Passwork-style: names the section
-						     so folders read as a group, not as odd rows.
-						     Level-appropriate wording (Stage 5 terminology). -->
+						     so folders read as a group, not as odd rows. -->
 						<span class="secret-list-view__folders-caption">
-							{{
-								selectedFolderId
-									? t('keepiq', 'Folders')
-									: t('keepiq', 'Vaults')
-							}}
+							{{ t('keepiq', 'Folders') }}
 						</span>
 						<button
 							v-for="folder in folderRows"
@@ -263,28 +271,7 @@
 							class="secret-list-view__folder-row"
 							:data-testid="`folder-row-${folder.folderId}`"
 							@click="openFolder(folder.folderId)">
-							<!-- Root rows ARE the vaults → safe glyph, or
-							     the user's own icon + color on a
-							     Proton-style tinted circle derived from
-							     the SAME color (restyle Stage 9); inside
-							     a vault the rows are plain folders. -->
-							<span
-								v-if="!selectedFolderId"
-								class="secret-list-view__vault-glyph"
-								:style="
-									vaultRowTint(folder)
-										? {
-												backgroundColor:
-													vaultRowTint(folder),
-											}
-										: undefined
-								">
-								<component
-									:is="vaultRowIcon(folder)"
-									:size="20"
-									:fillColor="vaultRowColor(folder)" />
-							</span>
-							<FolderOutline v-else :size="20" />
+							<FolderOutline :size="20" />
 							<span class="secret-list-view__folder-name">
 								{{ folder.name }}
 							</span>
@@ -388,9 +375,81 @@
 							}"
 							:secret="object"
 							:requestState="requestStateFor(object)"
+							:vault="rowVault(object)"
 							@open="openSecret"
 							@copied="onCopied" />
 					</div>
+				</template>
+				<!-- Card view (fix-brief bugs 8+9): the SAME row component as
+				     the list — favicon/type icon, strength pill, request/
+				     blocked/compromised states, copy button — boxed as a card,
+				     so the views cannot drift apart again. The #card slot
+				     replaces CnObjectCard entirely, so the selection checkbox
+				     is re-wired here exactly like the #list-item override. -->
+				<template #card="{ object, selected }">
+					<div
+						class="secret-list-view__card"
+						:class="{
+							'secret-list-view__card--selected': selected,
+						}">
+						<NcCheckboxRadioSwitch
+							class="secret-list-view__check"
+							:modelValue="bulkStore.selectedIds.includes(object.id)"
+							:aria-label="
+								t('keepiq', 'Select {name}', { name: object.name })
+							"
+							:data-testid="`bulk-check-${object.id}`"
+							@click.capture="lastShiftKey = $event.shiftKey"
+							@update:modelValue="onRowCheck(object)" />
+						<SecretListItem
+							class="secret-list-view__card-item"
+							:secret="object"
+							:requestState="requestStateFor(object)"
+							:vault="rowVault(object)"
+							@open="openSecret"
+							@copied="onCopied" />
+					</div>
+				</template>
+				<!-- Table view (fix-brief bugs 8+9): the Type and Strength
+				     columns declared in listSchema render through these cell
+				     slots — their values live in the type/health stores, not
+				     on the row object, so the generic cell renderer cannot
+				     draw them. -->
+				<!-- The Name cell carries the vault dot at the All-secrets
+				     root — same rule as the rows: the table needs to say
+				     where a secret lives without spending a whole column on
+				     it, and the name is the thing the dot locates. rowVault
+				     returns null inside a vault, hiding the dot. -->
+				<template #column-name="{ row }">
+					<span class="secret-list-view__name-cell">
+						<span class="secret-list-view__name-cell-text">{{
+							row.name
+						}}</span>
+						<VaultIndicator :vault="rowVault(row)" />
+					</span>
+				</template>
+				<template #column-type="{ row }">
+					<span class="secret-list-view__type-cell">
+						<SecretTypeIcon :typeId="row.typeId" :size="20" />
+						{{ typeLabelFor(row) }}
+					</span>
+				</template>
+				<!-- Unscored rows (locked vault, machine key material,
+				     blocked) get a muted dash instead of an empty cell:
+				     locale-neutral, and honest where "N/A" would not be —
+				     a locked vault means "not scored yet", not "not
+				     applicable". Hidden from screen readers, which already
+				     treat an empty cell as "no value". -->
+				<template #column-strength="{ row }">
+					<StrengthBadge
+						v-if="strengthBadgeVisible(row)"
+						:secretId="row.id" />
+					<span
+						v-else
+						class="secret-list-view__strength-empty"
+						aria-hidden="true"
+						>—</span
+					>
 				</template>
 			</CnIndexPage>
 		</div>
@@ -405,14 +464,7 @@
 </template>
 
 <script>
-import {
-	CnBreadcrumbs,
-	CnIndexPage,
-	currentTheme,
-	folderColorTint,
-	resolveFolderColor,
-	resolveFolderIcon,
-} from '@conduction/nextcloud-vue'
+import { CnBreadcrumbs, CnIndexPage } from '@conduction/nextcloud-vue'
 import {
 	NcActionButton,
 	NcActionCaption,
@@ -438,6 +490,9 @@ import Safe from 'vue-material-design-icons/Safe.vue'
 import ShareVariantOutline from 'vue-material-design-icons/ShareVariantOutline.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SecretListItem from '../components/SecretListItem.vue'
+import SecretTypeIcon from '../components/SecretTypeIcon.vue'
+import StrengthBadge from '../components/StrengthBadge.vue'
+import VaultIndicator from '../components/VaultIndicator.vue'
 import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
 import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
@@ -461,7 +516,7 @@ import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
 import { secretDetailLocation } from '../utils/detailRoute.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
-import { subfolderRows } from '../utils/vaultList.js'
+import { rootVaultOf, subfolderRows } from '../utils/vaultList.js'
 
 const PAGE_SIZE = 50
 
@@ -512,8 +567,10 @@ export default {
 		ShareVariantOutline,
 		TrashCanOutline,
 		KeyVariant,
-		Safe,
 		SecretListItem,
+		SecretTypeIcon,
+		StrengthBadge,
+		VaultIndicator,
 		ExportDialog,
 		CxpTransferDialog,
 		GdprExportDialog,
@@ -669,7 +726,12 @@ export default {
 		},
 
 		/**
-		 * Minimal schema so CnIndexPage can offer cards/table fallbacks.
+		 * Schema for CnIndexPage's table view (cards render through the
+		 * #card slot). Type and Strength (fix-brief bugs 8+9) are declared
+		 * here so the table grows their columns; their cells render through
+		 * the #column-type / #column-strength slots because the values live
+		 * in the type/health stores, not on the row object. The order hints
+		 * pin the column order — columnsFromSchema falls back to alphabetical.
 		 *
 		 * @return {object}
 		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
@@ -678,14 +740,37 @@ export default {
 		listSchema() {
 			return {
 				properties: {
-					name: { title: t('keepiq', 'Name'), type: 'string' },
-					url: { title: t('keepiq', 'URL'), type: 'string' },
+					name: { title: t('keepiq', 'Name'), type: 'string', order: 1 },
+					type: { title: t('keepiq', 'Type'), type: 'string', order: 2 },
+
+					strength: {
+						title: t('keepiq', 'Strength'),
+						type: 'string',
+						order: 3,
+					},
+
+					url: { title: t('keepiq', 'URL'), type: 'string', order: 4 },
 				},
 
 				configuration: {
 					objectNameField: 'name',
 					objectDescriptionField: 'url',
 				},
+			}
+		},
+
+		/**
+		 * Type and Strength are synthesized columns — no row field backs
+		 * them, and the server cannot sort on either — so their headers
+		 * must not offer the sort affordance the schema defaults grant.
+		 *
+		 * @return {object}
+		 * @spec exclude Presentation-only column configuration for the table view.
+		 */
+		listColumnOverrides() {
+			return {
+				type: { sortable: false },
+				strength: { sortable: false },
 			}
 		},
 
@@ -734,14 +819,23 @@ export default {
 
 		/**
 		 * The current folder's direct subfolders as list rows (restyle
-		 * Stage 6): root = the top-level vaults. Filtered by the inline
-		 * search term — everything visible in the list is searchable —
-		 * and name-sorted as one group.
+		 * Stage 6). Filtered by the inline search term — everything visible
+		 * in the list is searchable — and name-sorted as one group.
+		 *
+		 * NONE at the root (2026-09-03, per Remko, Proton-style): "All
+		 * secrets" is a cross-vault query, not a container the user is
+		 * inside, so vault rows there were navigation posing as contents —
+		 * duplicating the nav tree one panel away and pushing every secret
+		 * below a screen of vaults. Inside a folder the rows stay: there
+		 * they ARE the contents of the thing being looked at.
 		 *
 		 * @return {Array<object>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		folderRows() {
+			if (!this.selectedFolderId) {
+				return []
+			}
 			return subfolderRows(
 				this.folders,
 				this.selectedFolderId,
@@ -968,6 +1062,32 @@ export default {
 				this.bulkStore.setSelection(pruned)
 			}
 		},
+
+		/**
+		 * Dashboard quick-action deep link (`/secrets?action=create`): open
+		 * the create-secret dialog. A watcher rather than a mounted() check,
+		 * because CnPageRenderer keeps the list mounted when only the query
+		 * changes (its render key is the page id), so a later navigation to
+		 * the same page with the marker must still be seen.
+		 *
+		 * @param {string|undefined} action The `action` query value.
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		'$route.query.action': {
+			immediate: true,
+			/**
+			 * Dispatch the marker to the consumer; anything else is ignored.
+			 *
+			 * @param {string|undefined} action The `action` query value.
+			 * @return {void}
+			 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+			 */
+			handler(action) {
+				if (action === 'create') {
+					this.consumeCreateAction()
+				}
+			},
+		},
 	},
 
 	/**
@@ -1168,6 +1288,57 @@ export default {
 			}
 
 			return String(secret.key || '') === '' ? 'awaiting-fill' : 're-request'
+		},
+
+		/**
+		 * The translated type label for a row's Type cell (fix-brief bugs
+		 * 8+9), resolved against the type catalogue; empty while the
+		 * catalogue has not loaded the row's type yet.
+		 *
+		 * @param {object} secret The row's secret.
+		 * @return {string} The label, or '' when the type is unknown.
+		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 */
+		typeLabelFor(secret) {
+			const type = useSecretTypeStore().typesById[secret.typeId]
+			return type ? secretTypeLabel(type) : ''
+		},
+
+		/**
+		 * The vault a row's dot indicator names — ONLY at the All-secrets
+		 * root (2026-09-03, per Remko, Proton pattern): a cross-vault list
+		 * is the one place a row must say where its secret lives. Inside a
+		 * vault the page itself is the location, so no dot renders there.
+		 *
+		 * @param {object} secret The row's secret.
+		 * @return {object|null} The root vault record, or null for no dot.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		rowVault(secret) {
+			if (this.selectedFolderId) {
+				return null
+			}
+			return rootVaultOf(this.folders, secret.folderId)
+		},
+
+		/**
+		 * Whether the table's Strength cell shows the badge: a scored,
+		 * unblocked row. Blocked rows are guarded here rather than trusting
+		 * the score map — a suite revoked mid-session can leave a stale
+		 * score behind for a row that can no longer be decrypted, and the
+		 * list view suppresses the badge on blocked rows for the same
+		 * reason. Everything else renders the placeholder dash.
+		 *
+		 * @param {object} secret The row's secret.
+		 * @return {boolean} True when StrengthBadge would render a pill.
+		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+		 */
+		strengthBadgeVisible(secret) {
+			if (secret.blocked) {
+				return false
+			}
+			const score = useHealthStore().scoreById[secret.id]
+			return score !== undefined && score !== null
 		},
 
 		/**
@@ -1378,50 +1549,6 @@ export default {
 		},
 
 		/**
-		 * The glyph a root (vault) row renders: the vault's picked icon
-		 * (restyle Stage 9), Safe for unset — and for UNKNOWN keys, which
-		 * keeps older bundles forward-compatible with newer catalogs.
-		 *
-		 * @param {object} folder The vault pseudo-row.
-		 * @return {object} An icon component.
-		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
-		 */
-		vaultRowIcon(folder) {
-			return resolveFolderIcon(folder.customIcon) ?? Safe
-		},
-
-		/**
-		 * The vault row glyph's fill for the ACTIVE theme (reactive — a
-		 * live light/dark flip swaps the variant). ALWAYS a string:
-		 * 'currentColor' for unset colors — an explicit null fill-color
-		 * strips the SVG fill attribute, which renders BLACK regardless of
-		 * theme.
-		 *
-		 * @param {object} folder The vault pseudo-row.
-		 * @return {string} A hex color or 'currentColor'.
-		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
-		 */
-		vaultRowColor(folder) {
-			return (
-				resolveFolderColor(folder.customColor, currentTheme())
-				?? 'currentColor'
-			)
-		},
-
-		/**
-		 * The Proton-style circle behind the vault row's glyph: the SAME
-		 * resolved color at low alpha, so glyph and circle stay in lockstep
-		 * across themes. Null keeps the neutral background.
-		 *
-		 * @param {object} folder The vault pseudo-row.
-		 * @return {string|null} An rgba string or null.
-		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
-		 */
-		vaultRowTint(folder) {
-			return folderColorTint(folder.customColor, currentTheme())
-		},
-
-		/**
 		 * Copied-toast hook (SecretListItem @copied). No-op placeholder for
 		 * future toast wiring; kept so the event has a handler.
 		 *
@@ -1434,12 +1561,38 @@ export default {
 		 * view, and reload the list on success.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		openCreateSecret() {
 			this.cnOpenModal('secret-create', {
 				folderId: this.selectedFolderId,
 				onSaved: () => this.reload(),
 			})
+		},
+
+		/**
+		 * Consume the dashboard tile's `?action=create` marker: strip it from
+		 * the URL, then open the create-secret dialog for the current folder.
+		 *
+		 * Stripping matters because a full page load re-locks the vault and
+		 * the lock screen's `returnUrl` carries the query along — without it,
+		 * every unlock after a refresh would re-open the dialog.
+		 *
+		 * STRICTLY strip-first: CnAppRoot closes the active registry modal on
+		 * EVERY route change (so dialogs cannot follow a navigation to another
+		 * page), and the query replace IS a route change — opening first got
+		 * the dialog closed in the same tick it opened. The nextTick lets that
+		 * route watcher run before the modal opens.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		async consumeCreateAction() {
+			const query = { ...this.$route.query }
+			delete query.action
+			await this.$router.replace({ query })
+			await this.$nextTick()
+			this.openCreateSecret()
 		},
 
 		/**
@@ -1568,17 +1721,6 @@ export default {
 	background-color: var(--color-background-hover, #f5f5f5);
 }
 
-/* The Proton-style tinted circle behind a colored vault's glyph. */
-.secret-list-view__vault-glyph {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	flex-shrink: 0;
-}
-
 .secret-list-view__folder-name {
 	flex: 1 1 auto;
 	min-width: 0;
@@ -1602,6 +1744,78 @@ export default {
    (review call). */
 .secret-list-view__row-item--selected {
 	background-color: var(--color-background-hover);
+}
+
+/* Card view (fix-brief bugs 8+9): the list-row component boxed as a card.
+   Shell tokens mirror CnObjectCard, so these cards sit indistinguishable
+   next to library-rendered ones elsewhere in the fleet. */
+.secret-list-view__card {
+	display: flex;
+	/* Centered like the row content beside it — a top-pinned checkbox next
+	   to vertically centered text read as misaligned (review call). */
+	align-items: center;
+	gap: 4px;
+	height: 100%;
+	padding: 8px;
+	background: var(--color-main-background);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large, 10px);
+	transition:
+		box-shadow 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.secret-list-view__card:hover {
+	border-color: var(--color-primary-element);
+	box-shadow: 0 2px 8px var(--color-box-shadow);
+}
+
+/* Selection marks the card's BORDER, like CnObjectCard — the row-item's
+   background tint is the list view's signal and reads as hover here. */
+.secret-list-view__card--selected {
+	border-color: var(--color-primary-element);
+}
+
+.secret-list-view__card-item {
+	flex: 1 1 auto;
+	min-width: 0;
+	border-bottom: none;
+	border-radius: var(--border-radius);
+}
+
+/* Table Name cell: name + (root only) the vault dot as one centered unit;
+   the name keeps its ellipsis so the dot never pushes the cell wider. */
+.secret-list-view__name-cell {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.secret-list-view__name-cell-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Table Type cell: glyph + label, vertically centered as one unit. */
+.secret-list-view__type-cell {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* The Strength cell's "no score" dash: present so the column never shows
+   blank holes between pills, muted so it never competes with them. */
+.secret-list-view__strength-empty {
+	color: var(--color-text-maxcontrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.secret-list-view__card {
+		transition: none;
+	}
 }
 
 /* Active type filter: the funnel already flips to its filled glyph; the

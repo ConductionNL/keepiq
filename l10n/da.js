@@ -574,6 +574,8 @@ OC.L10N.register(
         "Target vault": "Målboks",
         "Failed to move the vault contents — some items may have moved already.": "Kunne ikke flytte boksens indhold — nogle elementer kan allerede være flyttet.",
         "Move vault contents": "Flyt boksens indhold",
+        "Strength": "Styrke",
+        "Invalid password. Please try again.": "Ugyldig adgangskode. Prøv igen.",
         "Click Reports in the menu": "Klik på Rapporter i menuen",
         "Your activity and vault health live under Reports.": "Din aktivitet og boksens tilstand ligger under Rapporter.",
         "Pick a report to open it.": "Vælg en rapport for at åbne den.",

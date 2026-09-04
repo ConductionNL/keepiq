@@ -37,6 +37,10 @@ import { generateUrl } from '@nextcloud/router'
 import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
+import {
+	applyHashRouteHandoff,
+	matchRouterBase,
+} from './bootstrap/hash-route-handoff.js'
 import { ensureSkipActionsTarget } from './bootstrap/skip-actions.js'
 import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
@@ -136,31 +140,33 @@ function routesFromManifest(manifest) {
 /**
  * The router base for THIS page load.
  *
- * ⚠️ `generateUrl('/apps/keepiq')` alone is not enough. Nextcloud serves the
- * app under BOTH `/apps/keepiq/...` and `/index.php/apps/keepiq/...`, but
- * `generateUrl()` returns only the form the instance is configured for. A
- * visitor arriving on the other form — a bookmark, an emailed deep link, an
- * integration that hardcodes `/index.php` — falls outside the router base,
- * vue-router cannot resolve the path, and the catch-all redirects to `/`. They
- * land on the dashboard with no error: the deep link is silently swallowed.
+ * The two-form problem (`/apps/keepiq/...` vs `/index.php/apps/keepiq/...`)
+ * and the `/public` extension on the anonymous shell are documented on
+ * `matchRouterBase` — the fallback to `generateUrl()` only covers a pathname
+ * that is not a Keepiq URL at all (component-test mounts, mainly).
  *
- * Hash routing never had this, because the route travelled in the fragment and
- * the path prefix was irrelevant. This app's own e2e helpers use the
- * `/index.php` form (`APP_BASE = '/index.php/apps/keepiq'`), so without this
- * every deep link the suite makes would break.
+ * On the anonymous shell the base includes `/public`, so the SAME manifest
+ * routes (`/share/link/:token`, `/send/:token`, `/share/request/:token`)
+ * resolve on both shells: the recipient links the builders now emit
+ * (`/apps/keepiq/public/share/link/<token>`) are served by
+ * `publicShell#pageCatchAll` and match here.
  *
- * It matters more here than elsewhere: keepiq's share and send links
- * (`/share/link/:token`, `/send/:token`, `/share/request/:token`) are handed to
- * people OUTSIDE the app, in messages and emails, in whichever URL shape the
- * sender's client produced. A swallowed deep link there is a share that
- * silently does nothing.
+ * It matters more here than elsewhere: keepiq's share and send links are
+ * handed to people OUTSIDE the app, in messages and emails, in whichever URL
+ * shape the sender's client produced. A swallowed deep link there is a share
+ * that silently does nothing.
  *
  * @return {string} The base path vue-router should strip from the URL.
  */
 function routerBase() {
-	const match = window.location.pathname.match(/^(.*\/apps\/keepiq)(?:\/|$)/)
-	return match ? match[1] : generateUrl('/apps/keepiq')
+	return matchRouterBase(window.location.pathname) ?? generateUrl('/apps/keepiq')
 }
+
+// Legacy hash links (`/public#/share/link/<token>` and friends) predate the
+// move to createWebHistory and cannot be regenerated — they sit in
+// recipients' inboxes. Rewrite them to the path form IN PLACE, and do it
+// BEFORE createRouter(): the history reads the location at construction.
+applyHashRouteHandoff()
 
 const router = createRouter({
 	history: createWebHistory(routerBase()),

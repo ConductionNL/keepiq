@@ -573,6 +573,8 @@
         "Target vault": "Caixa forta de destinació",
         "Failed to move the vault contents — some items may have moved already.": "No s'ha pogut moure el contingut de la caixa forta — pot ser que alguns elements ja s'hagin mogut.",
         "Move vault contents": "Mou el contingut de la caixa forta",
+        "Strength": "Fortalesa",
+        "Invalid password. Please try again.": "Contrasenya no vàlida. Torneu-ho a provar.",
         "Click Reports in the menu": "Feu clic a Informes al menú",
         "Your activity and vault health live under Reports.": "La vostra activitat i la salut de la caixa forta són a Informes.",
         "Pick a report to open it.": "Trieu un informe per obrir-lo.",

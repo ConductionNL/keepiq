@@ -574,6 +574,8 @@ OC.L10N.register(
         "Target vault": "Sihthoidla",
         "Failed to move the vault contents — some items may have moved already.": "Hoidla sisu teisaldamine nurjus — osa üksusi võib olla juba teisaldatud.",
         "Move vault contents": "Teisalda hoidla sisu",
+        "Strength": "Tugevus",
+        "Invalid password. Please try again.": "Vale parool. Proovige uuesti.",
         "Click Reports in the menu": "Klõpsake menüüs Aruanded",
         "Your activity and vault health live under Reports.": "Teie tegevus ja hoidla seisund on Aruannete all.",
         "Pick a report to open it.": "Valige aruanne, et see avada.",

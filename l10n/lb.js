@@ -574,6 +574,8 @@ OC.L10N.register(
         "Target vault": "Zil-Tresor",
         "Failed to move the vault contents — some items may have moved already.": "Den Inhalt vum Tresor konnt net geréckelt ginn — verschidden Elementer si vläicht scho geréckelt.",
         "Move vault contents": "Tresorinhalt réckelen",
+        "Strength": "Stäerkt",
+        "Invalid password. Please try again.": "Ongëltegt Passwuert. Probéiert et w.e.g. nach eng Kéier.",
         "Click Reports in the menu": "Klickt op Berichter am Menü",
         "Your activity and vault health live under Reports.": "Är Aktivitéit an d'Gesondheet vum Safe stinn ënner Berichter.",
         "Pick a report to open it.": "Wielt e Bericht fir hien opzemaachen.",

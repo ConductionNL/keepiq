@@ -574,6 +574,8 @@ OC.L10N.register(
         "Target vault": "Ciljni trezor",
         "Failed to move the vault contents — some items may have moved already.": "Vsebine trezorja ni bilo mogoče premakniti — nekateri elementi so morda že premaknjeni.",
         "Move vault contents": "Premakni vsebino trezorja",
+        "Strength": "Moč",
+        "Invalid password. Please try again.": "Neveljavno geslo. Poskusite znova.",
         "Click Reports in the menu": "V meniju kliknite Poročila",
         "Your activity and vault health live under Reports.": "Vaša dejavnost in stanje trezorja sta pod Poročili.",
         "Pick a report to open it.": "Izberite poročilo, da ga odprete.",

@@ -574,6 +574,8 @@ OC.L10N.register(
         "Target vault": "Cél széf",
         "Failed to move the vault contents — some items may have moved already.": "A széf tartalmának áthelyezése nem sikerült — egyes elemek már áthelyezésre kerülhettek.",
         "Move vault contents": "Széf tartalmának áthelyezése",
+        "Strength": "Erősség",
+        "Invalid password. Please try again.": "Érvénytelen jelszó. Próbálja újra.",
         "Click Reports in the menu": "Kattintson a menü Jelentések pontjára",
         "Your activity and vault health live under Reports.": "Az Ön tevékenysége és a széf állapota a Jelentések alatt található.",
         "Pick a report to open it.": "Válasszon egy jelentést a megnyitásához.",

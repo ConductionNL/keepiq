@@ -574,6 +574,8 @@ OC.L10N.register(
         "Target vault": "Мэтавае сховішча",
         "Failed to move the vault contents — some items may have moved already.": "Не ўдалося перамясціць змесціва сховішча — частка элементаў магла ўжо перамясціцца.",
         "Move vault contents": "Перамясціць змесціва сховішча",
+        "Strength": "Надзейнасць",
+        "Invalid password. Please try again.": "Няправільны пароль. Паспрабуйце яшчэ раз.",
         "Click Reports in the menu": "Націсніце Звіты ў меню",
         "Your activity and vault health live under Reports.": "Ваша актыўнасць і стан сховішча знаходзяцца ў Звітах.",
         "Pick a report to open it.": "Выберыце звіт, каб адкрыць яго.",

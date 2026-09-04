@@ -146,4 +146,42 @@ describe('FolderMoveDialog', () => {
 		expect(wrapper.vm.error).toBeTruthy()
 		expect(wrapper.emitted('saved')).toBeFalsy()
 	})
+
+	// Review follow-up (#600): closing the dialog used to be cosmetic — the
+	// per-item loop kept PUTting invisibly until every item had moved, and
+	// the trailing refresh landed on whatever the user navigated to.
+	it('stops the transfer when the dialog is dismissed mid-loop', async () => {
+		const resolvers = []
+		vi.spyOn(secretStore, 'updateSecret').mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					resolvers.push(resolve)
+				}),
+		)
+
+		const wrapper = mountDialog()
+		await wrapper.vm.$nextTick()
+		wrapper.vm.target = 'target-vault'
+
+		const run = wrapper.vm.submit()
+		await vi.waitFor(() =>
+			expect(secretStore.updateSecret).toHaveBeenCalledTimes(1),
+		)
+
+		// The user dismisses while the first PUT is still in flight; the
+		// list is put back immediately with the store's current filters.
+		wrapper.vm.onUpdateOpen(false)
+		expect(secretStore.fetchSecrets).toHaveBeenCalledTimes(1)
+
+		resolvers[0]()
+		await run
+
+		// The second secret and the subfolder are never touched, nothing is
+		// reported as saved, and the loop's finally does not fire a second
+		// stale refresh.
+		expect(secretStore.updateSecret).toHaveBeenCalledTimes(1)
+		expect(folderStore.updateFolder).not.toHaveBeenCalled()
+		expect(secretStore.fetchSecrets).toHaveBeenCalledTimes(1)
+		expect(wrapper.emitted('saved')).toBeFalsy()
+	})
 })

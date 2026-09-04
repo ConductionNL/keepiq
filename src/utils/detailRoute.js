@@ -8,7 +8,7 @@
  * list instead of on a page of its own. The open/closed state lives in
  * the URL: the list routes carry an optional `:id?` segment
  * (`/secrets/:id?`, `/folders/:folderId/:id?`), so a deep link like
- * `#/secrets/<id>` renders the list WITH the sidebar open, and closing
+ * `/secrets/<id>` renders the list WITH the sidebar open, and closing
  * the sidebar just drops the segment. Bookmarks, the browser extension
  * and the e2e specs keep their `/secrets/:id` URLs; the folder context
  * survives in the path, so opening a secret never rebuilds the list

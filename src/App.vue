@@ -849,6 +849,27 @@ export default {
 
 <style scoped>
 /*
+ * Anonymous recipient shell: centre the single card each public view
+ * renders. The guest layout gives the page a full-bleed background and
+ * mounts the app top-left with no chrome, so without this the card sat
+ * pinned in the corner. Flex + `margin: auto` on the child (the routed
+ * view's root) centres both axes AND stays scrollable when the card is
+ * taller than the viewport — unlike `align-items: center`, which clips
+ * overflowing flex children at the top edge.
+ */
+.keepiq-public-shell {
+	box-sizing: border-box;
+	display: flex;
+	min-height: 100vh;
+	width: 100%;
+	padding: clamp(16px, 4vh, 48px) 16px;
+}
+
+.keepiq-public-shell > :deep(*) {
+	margin: auto;
+}
+
+/*
  * Lock/setup route: the master-password prompt must be the only visible
  * and interactive surface. LockScreen.vue's fixed overlay covers the
  * content area, but NcAppNavigation is a SIBLING stacking context that

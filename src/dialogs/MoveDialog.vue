@@ -149,6 +149,11 @@ export default {
 			/** @type {object|null} The source vault's children (`vault` only). */
 			children: null,
 			saving: false,
+			/**
+			 * Set when the dialog is dismissed while a transfer is running:
+			 * the per-item vault loop checks it between items and stops.
+			 */
+			cancelled: false,
 			error: '',
 			/**
 			 * @type {Array<{id: string, name: string, message: string}>}
@@ -216,13 +221,22 @@ export default {
 
 		/**
 		 * Whether Move may run: not already moving, a destination chosen, and
-		 * for a vault, something to move.
+		 * for a vault, something to move. A secret's picker preselects its
+		 * CURRENT folder so "you are here" is visible, but Move stays
+		 * disarmed until the destination actually changes — an unchanged
+		 * target would fire a no-op PUT that keeps the secret where it is.
 		 *
 		 * @return {boolean}
 		 * @spec exclude Form-enablement guard; no domain behaviour.
 		 */
 		canSubmit() {
-			return !this.saving && !this.isEmpty && !!this.target
+			if (this.saving || this.isEmpty || !this.target) {
+				return false
+			}
+			if (!this.isVault && this.target === this.currentFolderId) {
+				return false
+			}
+			return true
 		},
 	},
 
@@ -249,7 +263,12 @@ export default {
 		t,
 
 		/**
-		 * Forward the open-state change; emit `close` when dismissed.
+		 * Forward a USER dismissal; emit `close`. Dismissed mid-transfer,
+		 * it aborts the vault loop at the next item and puts the shared
+		 * list back right away — the loop's full-vault fetch replaced it,
+		 * and its own finally no longer restores it once cancelled (the
+		 * user may have navigated elsewhere by the time the loop winds
+		 * down). Programmatic closes after success go through closeDone().
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
@@ -258,8 +277,26 @@ export default {
 		onUpdateOpen(value) {
 			this.open = value
 			if (!value) {
+				if (this.saving) {
+					this.cancelled = true
+					useSecretStore()
+						.fetchSecrets()
+						.catch(() => {})
+				}
 				this.$emit('close')
 			}
+		},
+
+		/**
+		 * Close after a completed operation — no cancel semantics, so the
+		 * vault loop's finally still restores the visible list.
+		 *
+		 * @return {void}
+		 * @spec exclude Dialog open-state plumbing; no domain behaviour.
+		 */
+		closeDone() {
+			this.open = false
+			this.$emit('close')
 		},
 
 		/**
@@ -296,7 +333,7 @@ export default {
 				if (this.onSaved) {
 					this.onSaved(updated)
 				}
-				this.onUpdateOpen(false)
+				this.closeDone()
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message
@@ -343,8 +380,13 @@ export default {
 				})
 
 				// Per item, so one failure does not strand the rest in the
-				// source vault.
+				// source vault — and per item is also the abort granularity:
+				// a dismissal mid-transfer stops before the next PUT rather
+				// than churning on invisibly after the dialog is gone.
 				for (const secret of secrets) {
+					if (this.cancelled) {
+						return
+					}
 					try {
 						await secretStore.updateSecret(secret.id, {
 							folderId: this.target,
@@ -354,6 +396,9 @@ export default {
 					}
 				}
 				for (const subfolder of subfolders) {
+					if (this.cancelled) {
+						return
+					}
 					try {
 						await folderStore.updateFolder(subfolder.id, {
 							parentId: this.target,
@@ -362,6 +407,9 @@ export default {
 					} catch (e) {
 						failures.push(this.describeFailure(subfolder, e))
 					}
+				}
+				if (this.cancelled) {
+					return
 				}
 
 				if (failures.length > 0) {
@@ -377,7 +425,7 @@ export default {
 				if (this.onSaved) {
 					this.onSaved(this.folder)
 				}
-				this.onUpdateOpen(false)
+				this.closeDone()
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message
@@ -387,8 +435,12 @@ export default {
 					)
 			} finally {
 				// The full-vault fetch replaced the shared list state; restore
-				// the visible list with the store's active filters.
-				secretStore.fetchSecrets().catch(() => {})
+				// the visible list with the store's active filters. Not after
+				// a cancel: onUpdateOpen already restored it at cancel time,
+				// and by now the user may be looking at something else.
+				if (!this.cancelled) {
+					secretStore.fetchSecrets().catch(() => {})
+				}
 				this.saving = false
 			}
 		},
