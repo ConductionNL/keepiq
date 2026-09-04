@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Mērķa glabātava",
         "Failed to move the vault contents — some items may have moved already.": "Neizdevās pārvietot glabātavas saturu — daži vienumi, iespējams, jau ir pārvietoti.",
         "Move vault contents": "Pārvietot glabātavas saturu",
-        "Strength": "Stiprums"
+        "Strength": "Stiprums",
+        "Click Reports in the menu": "Noklikšķiniet uz Pārskati izvēlnē",
+        "Your activity and vault health live under Reports.": "Jūsu aktivitāte un glabātavas stāvoklis ir sadaļā Pārskati.",
+        "Pick a report to open it.": "Izvēlieties pārskatu, lai to atvērtu.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Vājas, atkārtoti izmantotas un vecas paroles jūsu atslēgtajā glabātavā.",
+        "Everything you did, from the audit trail.": "Viss, ko darījāt, no audita pieraksta.",
+        "Reports": "Pārskati"
     },
     "nplurals=2; plural=(n != 1);"
 )

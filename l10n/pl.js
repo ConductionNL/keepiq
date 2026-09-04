@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Sejf docelowy",
         "Failed to move the vault contents — some items may have moved already.": "Nie udało się przenieść zawartości sejfu — część elementów mogła już zostać przeniesiona.",
         "Move vault contents": "Przenieś zawartość sejfu",
-        "Strength": "Siła"
+        "Strength": "Siła",
+        "Click Reports in the menu": "Kliknij Raporty w menu",
+        "Your activity and vault health live under Reports.": "Twoja aktywność i kondycja sejfu są w sekcji Raporty.",
+        "Pick a report to open it.": "Wybierz raport, aby go otworzyć.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Słabe, ponownie użyte i stare hasła w odblokowanym sejfie.",
+        "Everything you did, from the audit trail.": "Wszystko, co zrobiłeś, ze ścieżki audytu.",
+        "Reports": "Raporty"
     },
     "nplurals=2; plural=(n != 1);"
 )

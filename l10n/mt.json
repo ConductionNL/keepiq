@@ -573,7 +573,13 @@
         "Target vault": "Kaxxa-forti tad-destinazzjoni",
         "Failed to move the vault contents — some items may have moved already.": "Falliment fit-tmexxija tal-kontenut — xi elementi jistgħu jkunu diġà tmexxew.",
         "Move vault contents": "Mexxi l-kontenut tal-kaxxa-forti",
-        "Strength": "Saħħa"
+        "Strength": "Saħħa",
+        "Click Reports in the menu": "Ikklikkja Rapporti fil-menu",
+        "Your activity and vault health live under Reports.": "L-attività tiegħek u s-saħħa tal-kaxxa qegħdin taħt Rapporti.",
+        "Pick a report to open it.": "Agħżel rapport biex tiftaħ.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Passwords dgħajfa, użati mill-ġdid u qodma fil-kaxxa mhux imsakkra.",
+        "Everything you did, from the audit trail.": "Kollox li għamilt, mit-traċċa tal-verifika.",
+        "Reports": "Rapporti"
     },
     "plurals": null
 }

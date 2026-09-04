@@ -68,6 +68,12 @@ const PROTECTED_ROUTES = [
 	'FeaturesRoadmap',
 	'PersonalActivity',
 	'PasswordHealth',
+	// Reports is PROTECTED, not public. It is the page those two now live on
+	// as cards (ADR-112 / ADR-114), and both read vault state: Password health
+	// analyses the UNLOCKED vault in memory, and My activity is the caller's
+	// own audit trail. A Reports page reachable while the vault is locked would
+	// be a way in around the lock, even if each card then refused.
+	'Reports',
 	'Certificates',
 	'EmergencyAccess',
 	// SecretList/'SecretListFolder' also carry the optional `:id?` detail

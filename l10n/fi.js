@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Kohdeholvi",
         "Failed to move the vault contents — some items may have moved already.": "Holvin sisällön siirto epäonnistui — osa kohteista on voitu jo siirtää.",
         "Move vault contents": "Siirrä holvin sisältö",
-        "Strength": "Vahvuus"
+        "Strength": "Vahvuus",
+        "Click Reports in the menu": "Napsauta valikossa Raportit",
+        "Your activity and vault health live under Reports.": "Toimintasi ja holvin kunto ovat Raporttien alla.",
+        "Pick a report to open it.": "Valitse raportti avataksesi sen.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Heikot, uudelleenkäytetyt ja vanhat salasanat avatussa holvissasi.",
+        "Everything you did, from the audit trail.": "Kaikki mitä teit, tarkastusjäljestä.",
+        "Reports": "Raportit"
     },
     "nplurals=2; plural=(n != 1);"
 )

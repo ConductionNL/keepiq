@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Caixa forta de destinació",
         "Failed to move the vault contents — some items may have moved already.": "No s'ha pogut moure el contingut de la caixa forta — pot ser que alguns elements ja s'hagin mogut.",
         "Move vault contents": "Mou el contingut de la caixa forta",
-        "Strength": "Fortalesa"
+        "Strength": "Fortalesa",
+        "Click Reports in the menu": "Feu clic a Informes al menú",
+        "Your activity and vault health live under Reports.": "La vostra activitat i la salut de la caixa forta són a Informes.",
+        "Pick a report to open it.": "Trieu un informe per obrir-lo.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Contrasenyes febles, reutilitzades i antigues a la caixa forta desbloquejada.",
+        "Everything you did, from the audit trail.": "Tot el que heu fet, des del registre d'auditoria.",
+        "Reports": "Informes"
     },
     "nplurals=2; plural=(n != 1);"
 )

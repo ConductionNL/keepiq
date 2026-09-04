@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Odredišni trezor",
         "Failed to move the vault contents — some items may have moved already.": "Premeštanje sadržaja trezora nije uspelo — neki elementi su možda već premešteni.",
         "Move vault contents": "Premesti sadržaj trezora",
-        "Strength": "Јачина"
+        "Strength": "Јачина",
+        "Click Reports in the menu": "Кликните на Извештаји у менију",
+        "Your activity and vault health live under Reports.": "Ваша активност и стање сефа су под Извештајима.",
+        "Pick a report to open it.": "Изаберите извештај да га отворите.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Слабе, поново коришћене и старе лозинке у откљученом сефу.",
+        "Everything you did, from the audit trail.": "Све што сте урадили, из записа ревизије.",
+        "Reports": "Извештаји"
     },
     "nplurals=2; plural=(n != 1);"
 )

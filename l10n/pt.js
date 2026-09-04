@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Cofre de destino",
         "Failed to move the vault contents — some items may have moved already.": "Falha ao mover o conteúdo do cofre — alguns itens podem já ter sido movidos.",
         "Move vault contents": "Mover o conteúdo do cofre",
-        "Strength": "Força"
+        "Strength": "Força",
+        "Click Reports in the menu": "Clique em Relatórios no menu",
+        "Your activity and vault health live under Reports.": "A sua atividade e a saúde do cofre estão em Relatórios.",
+        "Pick a report to open it.": "Escolha um relatório para o abrir.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Palavras-passe fracas, reutilizadas e antigas no seu cofre desbloqueado.",
+        "Everything you did, from the audit trail.": "Tudo o que fez, a partir do registo de auditoria.",
+        "Reports": "Relatórios"
     },
     "nplurals=2; plural=(n != 1);"
 )

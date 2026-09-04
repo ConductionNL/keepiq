@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Seif de destinație",
         "Failed to move the vault contents — some items may have moved already.": "Mutarea conținutului seifului a eșuat — este posibil ca unele elemente să fi fost deja mutate.",
         "Move vault contents": "Mutați conținutul seifului",
-        "Strength": "Putere"
+        "Strength": "Putere",
+        "Click Reports in the menu": "Faceți clic pe Rapoarte în meniu",
+        "Your activity and vault health live under Reports.": "Activitatea dvs. și starea seifului se află la Rapoarte.",
+        "Pick a report to open it.": "Alegeți un raport pentru a-l deschide.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Parole slabe, reutilizate și vechi în seiful deblocat.",
+        "Everything you did, from the audit trail.": "Tot ce ați făcut, din urma de audit.",
+        "Reports": "Rapoarte"
     },
     "nplurals=2; plural=(n != 1);"
 )

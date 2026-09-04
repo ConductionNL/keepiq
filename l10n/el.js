@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Θησαυροφυλάκιο προορισμού",
         "Failed to move the vault contents — some items may have moved already.": "Αποτυχία μετακίνησης των περιεχομένων — ορισμένα στοιχεία ενδέχεται να έχουν ήδη μετακινηθεί.",
         "Move vault contents": "Μετακίνηση περιεχομένων θησαυροφυλακίου",
-        "Strength": "Ισχύς"
+        "Strength": "Ισχύς",
+        "Click Reports in the menu": "Κάντε κλικ στις Αναφορές στο μενού",
+        "Your activity and vault health live under Reports.": "Η δραστηριότητά σας και η υγεία του θησαυροφυλακίου είναι στις Αναφορές.",
+        "Pick a report to open it.": "Επιλέξτε μια αναφορά για να την ανοίξετε.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Αδύναμοι, επαναχρησιμοποιημένοι και παλιοί κωδικοί στο ξεκλείδωτο θησαυροφυλάκιο.",
+        "Everything you did, from the audit trail.": "Όλα όσα κάνατε, από το ίχνος ελέγχου.",
+        "Reports": "Εκθέσεις"
     },
     "nplurals=2; plural=(n != 1);"
 )

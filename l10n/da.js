@@ -574,7 +574,13 @@ OC.L10N.register(
         "Target vault": "Målboks",
         "Failed to move the vault contents — some items may have moved already.": "Kunne ikke flytte boksens indhold — nogle elementer kan allerede være flyttet.",
         "Move vault contents": "Flyt boksens indhold",
-        "Strength": "Styrke"
+        "Strength": "Styrke",
+        "Click Reports in the menu": "Klik på Rapporter i menuen",
+        "Your activity and vault health live under Reports.": "Din aktivitet og boksens tilstand ligger under Rapporter.",
+        "Pick a report to open it.": "Vælg en rapport for at åbne den.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Svage, genbrugte og gamle adgangskoder i din oplåste boks.",
+        "Everything you did, from the audit trail.": "Alt hvad du gjorde, fra revisionssporet.",
+        "Reports": "Rapporter"
     },
     "nplurals=2; plural=(n != 1);"
 )
