@@ -575,7 +575,13 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Premještanje sadržaja trezora nije uspjelo — neki su elementi možda već premješteni.",
         "Move vault contents": "Premjesti sadržaj trezora",
         "Strength": "Snaga",
-        "Invalid password. Please try again.": "Nevažeća lozinka. Pokušajte ponovno."
+        "Invalid password. Please try again.": "Nevažeća lozinka. Pokušajte ponovno.",
+        "Click Reports in the menu": "Kliknite Izvješća u izborniku",
+        "Your activity and vault health live under Reports.": "Vaša aktivnost i zdravlje trezora su pod Izvješća.",
+        "Pick a report to open it.": "Odaberite izvješće da ga otvorite.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Slabe, ponovno korištene i stare lozinke u otključanom trezoru.",
+        "Everything you did, from the audit trail.": "Sve što ste učinili, iz zapisa revizije.",
+        "Reports": "Izvješća"
     },
     "nplurals=2; plural=(n != 1);"
 )

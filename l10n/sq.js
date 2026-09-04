@@ -575,7 +575,13 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Zhvendosja e përmbajtjes së kasafortës dështoi — disa elemente mund të jenë zhvendosur tashmë.",
         "Move vault contents": "Zhvendos përmbajtjen e kasafortës",
         "Strength": "Fuqia",
-        "Invalid password. Please try again.": "Fjalëkalim i pavlefshëm. Provoni përsëri."
+        "Invalid password. Please try again.": "Fjalëkalim i pavlefshëm. Provoni përsëri.",
+        "Click Reports in the menu": "Klikoni Raportet në meny",
+        "Your activity and vault health live under Reports.": "Aktiviteti juaj dhe shëndeti i kasafortës janë nën Raportet.",
+        "Pick a report to open it.": "Zgjidhni një raport për të hapur.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Fjalëkalime të dobëta, të përsëritura dhe të vjetra në kasafortën e zhbllokuar.",
+        "Everything you did, from the audit trail.": "Gjithçka që bëtë, nga gjurma e auditimit.",
+        "Reports": "Raportet"
     },
     "nplurals=2; plural=(n != 1);"
 )

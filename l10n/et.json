@@ -574,7 +574,13 @@
         "Failed to move the vault contents — some items may have moved already.": "Hoidla sisu teisaldamine nurjus — osa üksusi võib olla juba teisaldatud.",
         "Move vault contents": "Teisalda hoidla sisu",
         "Strength": "Tugevus",
-        "Invalid password. Please try again.": "Vale parool. Proovige uuesti."
+        "Invalid password. Please try again.": "Vale parool. Proovige uuesti.",
+        "Click Reports in the menu": "Klõpsake menüüs Aruanded",
+        "Your activity and vault health live under Reports.": "Teie tegevus ja hoidla seisund on Aruannete all.",
+        "Pick a report to open it.": "Valige aruanne, et see avada.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Nõrgad, korduvkasutatud ja vanad paroolid teie avatud hoidlas.",
+        "Everything you did, from the audit trail.": "Kõik, mida tegite, auditijäljest.",
+        "Reports": "Aruanded"
     },
     "plurals": null
 }

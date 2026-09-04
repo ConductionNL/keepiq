@@ -575,7 +575,13 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Nepavyko perkelti saugyklos turinio — dalis elementų galėjo būti jau perkelta.",
         "Move vault contents": "Perkelti saugyklos turinį",
         "Strength": "Stiprumas",
-        "Invalid password. Please try again.": "Neteisingas slaptažodis. Bandykite dar kartą."
+        "Invalid password. Please try again.": "Neteisingas slaptažodis. Bandykite dar kartą.",
+        "Click Reports in the menu": "Meniu spustelėkite Ataskaitos",
+        "Your activity and vault health live under Reports.": "Jūsų veikla ir saugyklos būklė yra Ataskaitose.",
+        "Pick a report to open it.": "Pasirinkite ataskaitą, kad ją atidarytumėte.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Silpni, pakartotinai naudoti ir seni slaptažodžiai atrakintoje saugykloje.",
+        "Everything you did, from the audit trail.": "Viskas, ką padarėte, iš audito įrašo.",
+        "Reports": "Ataskaitos"
     },
     "nplurals=2; plural=(n != 1);"
 )

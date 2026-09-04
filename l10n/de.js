@@ -576,7 +576,13 @@ OC.L10N.register(
         "Move vault contents": "Tresorinhalt verschieben",
         "Strength": "Stärke",
         "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Dies löscht dieses Geheimnis dauerhaft und widerruft seine Freigaben. Es gibt keinen Papierkorb — dies kann nicht rückgängig gemacht werden.",
-        "Invalid password. Please try again.": "Ungültiges Passwort. Bitte versuchen Sie es erneut."
+        "Invalid password. Please try again.": "Ungültiges Passwort. Bitte versuchen Sie es erneut.",
+        "Click Reports in the menu": "Klicken Sie im Menü auf Berichte",
+        "Your activity and vault health live under Reports.": "Ihre Aktivität und die Zustandsprüfung des Tresors stehen unter Berichte.",
+        "Pick a report to open it.": "Wählen Sie einen Bericht, um ihn zu öffnen.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Schwache, mehrfach genutzte und alte Passwörter in Ihrem entsperrten Tresor.",
+        "Everything you did, from the audit trail.": "Alles, was Sie getan haben, aus dem Prüfprotokoll.",
+        "Reports": "Berichte"
     },
     "nplurals=2; plural=(n != 1);"
 )

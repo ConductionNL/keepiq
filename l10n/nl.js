@@ -762,7 +762,13 @@ OC.L10N.register(
         "Copy content": "Inhoud kopiëren",
         "This send is gone": "Deze verzending bestaat niet meer",
         "It was burned, expired, or never existed.": "Deze is vernietigd, verlopen of heeft nooit bestaan.",
-        "Invalid password. Please try again.": "Ongeldig wachtwoord. Probeer het opnieuw."
+        "Invalid password. Please try again.": "Ongeldig wachtwoord. Probeer het opnieuw.",
+        "Click Reports in the menu": "Klik op Rapportages in het menu",
+        "Your activity and vault health live under Reports.": "Je activiteit en kluisgezondheid staan onder Rapportages.",
+        "Pick a report to open it.": "Kies een rapport om het te openen.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Zwakke, hergebruikte en verouderde wachtwoorden in je ontgrendelde kluis.",
+        "Everything you did, from the audit trail.": "Alles wat je deed, uit het audittrail.",
+        "Reports": "Rapportages"
     },
     "nplurals=2; plural=(n != 1);"
 )

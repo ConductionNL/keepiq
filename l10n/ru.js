@@ -575,7 +575,13 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Не удалось переместить содержимое хранилища — часть элементов могла уже переместиться.",
         "Move vault contents": "Переместить содержимое хранилища",
         "Strength": "Надёжность",
-        "Invalid password. Please try again.": "Неверный пароль. Попробуйте ещё раз."
+        "Invalid password. Please try again.": "Неверный пароль. Попробуйте ещё раз.",
+        "Click Reports in the menu": "Нажмите Отчёты в меню",
+        "Your activity and vault health live under Reports.": "Ваша активность и состояние хранилища находятся в Отчётах.",
+        "Pick a report to open it.": "Выберите отчёт, чтобы открыть его.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Слабые, повторно использованные и старые пароли в разблокированном хранилище.",
+        "Everything you did, from the audit trail.": "Всё, что вы сделали, из журнала аудита.",
+        "Reports": "Отчёты"
     },
     "nplurals=2; plural=(n != 1);"
 )

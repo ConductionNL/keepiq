@@ -1119,7 +1119,13 @@ OC.L10N.register(
         "Move vault contents": "Move vault contents",
         "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.",
         "Strength": "Strength",
-        "Invalid password. Please try again.": "Invalid password. Please try again."
+        "Invalid password. Please try again.": "Invalid password. Please try again.",
+        "Click Reports in the menu": "Click Reports in the menu",
+        "Your activity and vault health live under Reports.": "Your activity and vault health live under Reports.",
+        "Pick a report to open it.": "Pick a report to open it.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Weak, reused and ageing passwords in your unlocked vault.",
+        "Everything you did, from the audit trail.": "Everything you did, from the audit trail.",
+        "Reports": "Reports"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -575,7 +575,13 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Betg reussì da spustar il cuntegn dal tresor — tscherts elements pon gia esser spustads.",
         "Move vault contents": "Spustar il cuntegn dal tresor",
         "Strength": "Forza",
-        "Invalid password. Please try again.": "Pled-clav nunvalid. Empruvai anc ina giada."
+        "Invalid password. Please try again.": "Pled-clav nunvalid. Empruvai anc ina giada.",
+        "Click Reports in the menu": "Cliccai sin Rapports en il menu",
+        "Your activity and vault health live under Reports.": "Vossa activitad e la sanadad da la cassa fermada èn sut Rapports.",
+        "Pick a report to open it.": "Tscherni in rapport per l'avrir.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Pleds-clav flaivels, reutilisads e vegls en vossa cassa averta.",
+        "Everything you did, from the audit trail.": "Tut quai che vus avais fatg, dal protocol da revisiun.",
+        "Reports": "Rapports"
     },
     "nplurals=2; plural=(n != 1);"
 )

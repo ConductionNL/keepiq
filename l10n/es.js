@@ -575,7 +575,13 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "No se pudo mover el contenido de la caja fuerte — puede que algunos elementos ya se hayan movido.",
         "Move vault contents": "Mover el contenido de la caja fuerte",
         "Strength": "Fortaleza",
-        "Invalid password. Please try again.": "Contraseña no válida. Inténtelo de nuevo."
+        "Invalid password. Please try again.": "Contraseña no válida. Inténtelo de nuevo.",
+        "Click Reports in the menu": "Haga clic en Informes en el menú",
+        "Your activity and vault health live under Reports.": "Su actividad y la salud de la caja fuerte están en Informes.",
+        "Pick a report to open it.": "Elija un informe para abrirlo.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Contraseñas débiles, reutilizadas y antiguas en su caja fuerte desbloqueada.",
+        "Everything you did, from the audit trail.": "Todo lo que hizo, desde el registro de auditoría.",
+        "Reports": "Informes"
     },
     "nplurals=2; plural=(n != 1);"
 )

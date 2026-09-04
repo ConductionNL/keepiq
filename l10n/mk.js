@@ -575,7 +575,13 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Преместувањето на содржината на трезорот не успеа — некои елементи можеби веќе се преместени.",
         "Move vault contents": "Премести ја содржината на трезорот",
         "Strength": "Јачина",
-        "Invalid password. Please try again.": "Неважечка лозинка. Обидете се повторно."
+        "Invalid password. Please try again.": "Неважечка лозинка. Обидете се повторно.",
+        "Click Reports in the menu": "Кликнете на Извештаи во менито",
+        "Your activity and vault health live under Reports.": "Вашата активност и состојбата на трезорот се под Извештаи.",
+        "Pick a report to open it.": "Изберете извештај за да го отворите.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Слаби, повторно користени и стари пароли во отклучениот трезор.",
+        "Everything you did, from the audit trail.": "Сè што направивте, од ревизорската трага.",
+        "Reports": "Извештаи"
     },
     "nplurals=2; plural=(n != 1);"
 )
