@@ -542,6 +542,14 @@ export default {
 		await this.checkSuite()
 	},
 
+	/**
+	 * Cancel every pending timer so a teardown mid-animation cannot fire a
+	 * callback against a destroyed component. The unlock timer is the one
+	 * that matters: its resolve drives `$router.push`, so leaving it armed
+	 * would navigate after the screen is gone.
+	 *
+	 * @spec exclude Lifecycle teardown — clears timers only; the behaviour each timer drives is specified on the method that arms it.
+	 */
 	beforeUnmount() {
 		clearTimeout(this.mismatchTimer)
 		clearTimeout(this.unlockTimer)
