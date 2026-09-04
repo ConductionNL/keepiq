@@ -33,8 +33,53 @@
 				}}
 			</NcNoteCard>
 
+			<!--
+			  The icon is the unlock's own success signal: a successful unlock
+			  swaps it for an OPEN lock and animates that swap in before the
+			  redirect fires (the unlock handlers hold navigation for
+			  UNLOCK_HOLD_MS — the animation plus a settle beat). Without the
+			  hold the open lock would render for at most one frame and the
+			  screen would just blink away.
+
+			  A REJECTED password is the mirror image: the lock stays closed
+			  and shakes red for LOCK_ERROR_MS before returning to black.
+			  Both are second channels only — the padlock's shape says
+			  locked-vs-open, and the field's inline error text says why —
+			  so neither colour is load-bearing (WCAG 1.4.1).
+			-->
+			<!--
+			  The screen-reader channel for everything the icon says in
+			  colour and motion (WCAG 4.1.3). Red, green and the shake reach
+			  nobody using a screen reader, and the field's helperText is
+			  wired by aria-describedby — announced when the FIELD has focus,
+			  which after clicking Unlock it does not: focus is on the button,
+			  so a rejection could pass in complete silence.
+
+			  Both regions are rendered UNCONDITIONALLY and only their text
+			  changes. A live region inserted together with its message is
+			  not reliably announced — the container has to be in the
+			  accessibility tree before the text lands in it.
+
+			  Two regions, because the two kinds of news deserve different
+			  urgency: progress and success are polite (role="status"), a
+			  rejected credential interrupts (role="alert"). The unlock's
+			  settle beat is what gives the polite one time to be spoken
+			  before the redirect tears the screen down.
+			-->
+			<p class="lock-screen__sr-live" role="status">{{ liveStatus }}</p>
+			<p class="lock-screen__sr-live" role="alert">{{ liveAlert }}</p>
+
 			<div class="lock-screen__icon">
-				<LockIcon :size="48" />
+				<LockOpenVariantIcon
+					v-if="unlocked"
+					class="lock-screen__icon-open"
+					:size="48"
+					data-testid="lock-screen-icon-open" />
+				<LockIcon
+					v-else
+					:class="{ 'lock-screen__icon-rejected': unlockRejected }"
+					:size="48"
+					data-testid="lock-screen-icon-closed" />
 			</div>
 			<!--
 			  No title while setup-vs-unlock is unknown — pending, or failed
@@ -96,12 +141,23 @@
 					}}
 				</NcNoteCard>
 
-				<!-- First-time setup mode -->
+				<!--
+				  First-time setup mode.
+
+				  autocomplete carries the programmatic purpose WCAG 1.3.5
+				  asks for, and it is `new-password` on BOTH fields here
+				  because this credential is being minted: that keeps the
+				  browser from autofilling the account password and lets a
+				  manager offer to generate and store one, which is where a
+				  vault master password belongs — nobody can recover it for
+				  the user afterwards.
+				-->
 				<template v-if="isFirstSetup">
 					<NcPasswordField
 						v-model="masterPassword"
 						:label="t('keepiq', 'Master password')"
 						:disabled="loading"
+						autocomplete="new-password"
 						@blur="revealMismatch"
 						@keyup.enter="handleSetup" />
 					<PasswordStrengthMeter
@@ -124,6 +180,7 @@
 						:disabled="loading"
 						:error="showMismatch || !!error"
 						:helperText="confirmHelperText"
+						autocomplete="new-password"
 						@blur="revealMismatch"
 						@keyup.enter="handleSetup" />
 					<!--
@@ -181,6 +238,11 @@
 					  inline under the field, matching the Nextcloud login
 					  screen's wrong-password feedback (red outline + red
 					  helper text) instead of a banner.
+
+					  `current-password` is the programmatic purpose here
+					  (WCAG 1.3.5) — unlike setup, this field asks for a
+					  credential the user already holds, so a password
+					  manager should fill it.
 					-->
 					<NcPasswordField
 						v-model="masterPassword"
@@ -188,11 +250,13 @@
 						:disabled="loading"
 						:error="!!error"
 						:helperText="error || ''"
+						autocomplete="current-password"
 						@keyup.enter="handleUnlock" />
 					<NcButton
 						:variant="passkeyOffered ? 'secondary' : 'primary'"
 						:disabled="!masterPassword || loading"
 						:wide="true"
+						data-testid="unlock-with-password"
 						@click="handleUnlock">
 						{{
 							loading
@@ -210,11 +274,50 @@
 import { NcButton, NcLoadingIcon, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
+import LockOpenVariantIcon from 'vue-material-design-icons/LockOpenVariant.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { usePasskeyStore } from '../store/modules/passkey.js'
 import { useSessionStore } from '../store/modules/session.js'
+
+/**
+ * How long the open-lock swap takes to play, in milliseconds. Matches the
+ * `lock-screen-unlock-in` keyframe duration in this component's
+ * stylesheet — change both together, or navigation cuts the animation off.
+ */
+const UNLOCK_ANIMATION_MS = 400
+
+/**
+ * How long the open lock then simply sits there, in milliseconds, before
+ * the redirect fires. Navigating the instant the keyframes end reads as
+ * the screen being yanked away mid-gesture: the eye needs a beat on the
+ * settled state to register "unlocked" as the outcome, rather than as a
+ * flicker on the way out. Half a second is that beat — long enough to
+ * land, short enough that the vault still feels immediate.
+ */
+const UNLOCK_SETTLE_MS = 500
+
+/**
+ * Total navigation hold: the animation, then its settle. Skipped entirely
+ * under prefers-reduced-motion, where nothing plays and so there is
+ * nothing to hold for.
+ */
+const UNLOCK_HOLD_MS = UNLOCK_ANIMATION_MS + UNLOCK_SETTLE_MS
+
+/**
+ * How long the closed lock stays red after a rejected password, in
+ * milliseconds, before it returns to black. Long enough to be noticed by
+ * someone whose eyes were on the field rather than the icon, short enough
+ * that it has cleared before a second attempt is typed — a red lock still
+ * sitting there over a fresh attempt would be reporting the wrong state.
+ *
+ * The shake plays INSIDE this window (see the stylesheet) and is motion,
+ * so it is suppressed under prefers-reduced-motion; the red is not motion
+ * and stays. Nothing waits for this window: unlike the unlock hold, the
+ * screen is not going anywhere, so the timer is a visual reset only.
+ */
+const LOCK_ERROR_MS = 1100
 
 export default {
 	name: 'LockScreen',
@@ -224,6 +327,7 @@ export default {
 		NcNoteCard,
 		NcPasswordField,
 		LockIcon,
+		LockOpenVariantIcon,
 		KeyIcon,
 		PasswordStrengthMeter,
 	},
@@ -251,10 +355,61 @@ export default {
 			mismatchSettled: false,
 			/** @type {number|null} Debounce timer for mismatchSettled. */
 			mismatchTimer: null,
+			/**
+			 * Whether the vault has just been unlocked — drives the open-lock
+			 * icon and its animation. Purely visual: the authoritative locked
+			 * state lives in the session store, and this screen is on its way
+			 * out the moment this flips.
+			 */
+			unlocked: false,
+			/** @type {number|null} Timer holding navigation for the unlock animation and its settle. */
+			unlockTimer: null,
+			/**
+			 * Whether the last attempt was REJECTED — drives the shake and
+			 * the red lock. Separate from `error`, which stays on screen as
+			 * text until the next attempt: this flag is the momentary flash,
+			 * so it clears itself after LOCK_ERROR_MS while the message the
+			 * viewer actually reads stays put.
+			 */
+			unlockRejected: false,
+			/** @type {number|null} Timer returning the rejected lock to black. */
+			rejectedTimer: null,
 		}
 	},
 
 	computed: {
+		/**
+		 * Polite screen-reader narration of the states that only show
+		 * themselves as a spinner or an icon: the suite check, and the
+		 * unlock's own success. Empty the rest of the time, so the region
+		 * announces on change instead of re-reading itself.
+		 *
+		 * @return {string} The status to announce, or '' for silence.
+		 * @spec exclude Accessibility mirror of existing visual state — announces what the spinner and the open-lock icon already show; introduces no state of its own.
+		 */
+		liveStatus() {
+			if (this.checking) {
+				return t('keepiq', 'Checking your vault…')
+			}
+			if (this.unlocked) {
+				return t('keepiq', 'Vault unlocked. Opening your vault…')
+			}
+			return ''
+		},
+
+		/**
+		 * Assertive narration of a rejected attempt. Deliberately the SAME
+		 * string the field shows, so the two channels cannot drift; the
+		 * systemic banners are not repeated here, because NcNoteCard already
+		 * renders `type="error"` as role="alert" itself.
+		 *
+		 * @return {string} The alert to announce, or '' for silence.
+		 * @spec exclude Accessibility mirror of existing visual state — re-announces the field's own error text; introduces no state of its own.
+		 */
+		liveAlert() {
+			return this.error || ''
+		},
+
 		/**
 		 * @spec exclude Store-ref passthrough — returns the Pinia offline store with no domain logic.
 		 */
@@ -389,6 +544,8 @@ export default {
 
 	beforeUnmount() {
 		clearTimeout(this.mismatchTimer)
+		clearTimeout(this.unlockTimer)
+		clearTimeout(this.rejectedTimer)
 	},
 
 	methods: {
@@ -467,7 +624,9 @@ export default {
 			this.error = null
 			try {
 				await usePasskeyStore().unlockWithPasskey()
-				this.$router.push(this.$route.query.returnUrl || '/')
+				const returnUrl = this.$route.query.returnUrl || '/'
+				await this.playUnlockAnimation()
+				this.$router.push(returnUrl)
 			} catch (e) {
 				this.error =
 					e?.message
@@ -475,6 +634,9 @@ export default {
 						'keepiq',
 						'Passkey unlock failed — use your master password',
 					)
+				// Same signal for a refused passkey: the lock is still shut,
+				// and the fallback is the same password field below it.
+				this.flashUnlockRejected()
 			} finally {
 				this.loading = false
 			}
@@ -499,6 +661,7 @@ export default {
 					await this.offlineStore.unlockOffline(this.masterPassword)
 				}
 				const returnUrl = this.$route.query.returnUrl || '/'
+				await this.playUnlockAnimation()
 				this.$router.push(returnUrl)
 			} catch (e) {
 				// When an online unlock fails on a network error, fall back to the
@@ -506,7 +669,9 @@ export default {
 				if (this.offlineStore.online && this.isNetworkError(e)) {
 					try {
 						await this.offlineStore.unlockOffline(this.masterPassword)
-						this.$router.push(this.$route.query.returnUrl || '/')
+						const returnUrl = this.$route.query.returnUrl || '/'
+						await this.playUnlockAnimation()
+						this.$router.push(returnUrl)
 						return
 					} catch {
 						// fall through to the generic error below
@@ -516,10 +681,75 @@ export default {
 					'keepiq',
 					'Wrong master password or decryption failed',
 				)
+				this.flashUnlockRejected()
 			} finally {
 				this.loading = false
 				this.masterPassword = ''
 			}
+		},
+
+		/**
+		 * Show the open lock and give the swap a stage: flip the icon, then
+		 * resolve once the animation has had UNLOCK_ANIMATION_MS to play AND
+		 * the settled open lock has held for UNLOCK_SETTLE_MS on top of it.
+		 * Every unlock path awaits this immediately before `$router.push`,
+		 * because the redirect unmounts this screen — pushing first would
+		 * make the icon swap unobservable, and pushing at the keyframes'
+		 * end makes it read as a flicker.
+		 *
+		 * Under prefers-reduced-motion nothing animates, so there is nothing
+		 * to wait for and the redirect is not delayed at all: a viewer who
+		 * asked for less motion gets a faster unlock, never a slower one.
+		 *
+		 * @return {Promise<void>} Resolves when the redirect may proceed.
+		 * @spec exclude Presentation-only success signal — flips the icon flag and waits out its CSS animation; no requirement prescribes the unlock's visuals.
+		 */
+		playUnlockAnimation() {
+			this.unlocked = true
+			if (this.prefersReducedMotion()) {
+				return Promise.resolve()
+			}
+			return new Promise((resolve) => {
+				this.unlockTimer = setTimeout(resolve, UNLOCK_HOLD_MS)
+			})
+		},
+
+		/**
+		 * Flash the closed lock red (and shake it, motion permitting) to
+		 * mark a rejected attempt, then reset it after LOCK_ERROR_MS.
+		 *
+		 * Re-arming from scratch on every call is what makes a second wrong
+		 * password shake again: the animation is bound to the class, so
+		 * without the flag going false and true again the CSS would replay
+		 * nothing and the second rejection would look like no response at
+		 * all. `$nextTick` is load-bearing for the same reason — Vue would
+		 * otherwise coalesce false-then-true into no DOM change at all.
+		 *
+		 * @spec exclude Presentation-only failure signal — flashes a class for LOCK_ERROR_MS; the rejection itself is reported by the field's error text, which the unlock handlers set.
+		 */
+		flashUnlockRejected() {
+			clearTimeout(this.rejectedTimer)
+			this.unlockRejected = false
+			this.$nextTick(() => {
+				this.unlockRejected = true
+				this.rejectedTimer = setTimeout(() => {
+					this.unlockRejected = false
+				}, LOCK_ERROR_MS)
+			})
+		},
+
+		/**
+		 * Whether the viewer has asked their OS for reduced motion. Guarded
+		 * against a missing `matchMedia` so the unlock still completes in
+		 * environments that do not implement it (jsdom in some setups,
+		 * embedded webviews) — an unavailable answer means "no preference",
+		 * which is the same default the CSS media query applies.
+		 *
+		 * @return {boolean} True when reduced motion is preferred.
+		 * @spec exclude Environment probe for the motion preference — no domain logic; the accessibility requirement is met by the CSS media query it mirrors.
+		 */
+		prefersReducedMotion() {
+			return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
 		},
 
 		/**
@@ -639,6 +869,109 @@ export default {
 	text-align: center;
 }
 
+/*
+ * Screen-reader-only live regions: present in the layout at all times but
+ * never visible, same clip pattern as Nextcloud's hidden-visually. NOT
+ * `display: none` or `visibility: hidden` — either one takes the element
+ * out of the accessibility tree, and a live region that is not in the tree
+ * announces nothing at all.
+ */
+.lock-screen__sr-live {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/*
+ * The unlock's success signal. The open shackle says "it worked" on its
+ * own, so the state still reads correctly with the animation suppressed
+ * below; the pop-and-settle only carries the "it just opened" timing.
+ * Green is the SECOND channel, never the only one: the shape change from
+ * closed to open padlock carries the state on its own (WCAG 1.4.1), so a
+ * viewer who cannot separate green from black loses nothing. It uses
+ * --color-success-text rather than --color-success because Nextcloud tunes
+ * that token per theme for contrast against --color-main-background — the
+ * card's background — which keeps the icon past the 3:1 that WCAG 1.4.11
+ * asks of a graphical object carrying meaning, in light AND dark themes.
+ * Duration must stay in step with
+ * UNLOCK_ANIMATION_MS in the script above — the navigation hold is that
+ * duration plus UNLOCK_SETTLE_MS, so the settled lock is what the viewer
+ * is left looking at rather than a pop cut off by the redirect.
+ */
+.lock-screen__icon-open {
+	/*
+	 * inline-block, because the icon's root is a span and transforms do
+	 * not apply to inline boxes — without this the keyframes below are
+	 * silently dropped.
+	 */
+	display: inline-block;
+	color: var(--color-success-text, #286c39);
+	animation: lock-screen-unlock-in 0.4s ease-out;
+}
+
+@keyframes lock-screen-unlock-in {
+	from {
+		opacity: 0;
+		transform: scale(0.7) rotate(-10deg);
+	}
+
+	60% {
+		opacity: 1;
+		transform: scale(1.12) rotate(3deg);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1) rotate(0);
+	}
+}
+
+/*
+ * The rejected-attempt signal, and the mirror of the success one above:
+ * red instead of green, a head-shake instead of a pop, and the padlock
+ * staying SHUT is the channel that does not depend on colour at all
+ * (WCAG 1.4.1) — backed by the field's inline error text, which is what
+ * a screen reader reads. --color-error-text is the theme-tuned token, so
+ * the icon clears 3:1 against the card in light and dark alike
+ * (WCAG 1.4.11); the red is held by the class for LOCK_ERROR_MS rather
+ * than by the keyframes, so it survives the shake and outlasts it.
+ *
+ * A head-shake is not a flash: one 0.4s pass at 6 movements is far below
+ * the three-per-second threshold of WCAG 2.3.1, and nothing here loops.
+ */
+.lock-screen__icon-rejected {
+	/* inline-block for the same reason as the open lock above: the icon's
+	 * root is a span, and transforms do not apply to inline boxes. */
+	display: inline-block;
+	color: var(--color-error-text, #c20505);
+	animation: lock-screen-reject-shake 0.4s ease-in-out;
+}
+
+/*
+ * Small amplitude on purpose: 4px is a "no" gesture, not a jolt. The
+ * outer steps are half-size so the shake eases out of its own accord
+ * rather than stopping dead on a peak.
+ */
+@keyframes lock-screen-reject-shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+
+	20%,
+	60% {
+		transform: translateX(-4px);
+	}
+
+	40%,
+	80% {
+		transform: translateX(4px);
+	}
+}
+
 /* Block, so the tooltip wrapper doesn't shrink the wide submit button. */
 .lock-screen__submit {
 	display: block;
@@ -675,6 +1008,26 @@ export default {
 
 /* Vestibular safety (gate-45): no motion for users who asked for none. */
 @media (prefers-reduced-motion: reduce) {
+	/*
+	 * The open-lock glyph stays — it is the state, not motion — but the
+	 * scale/rotate pop goes. playUnlockAnimation() also skips its wait
+	 * here, so the redirect is immediate rather than held for an
+	 * animation that never runs.
+	 */
+	.lock-screen__icon-open {
+		animation: none;
+	}
+
+	/*
+	 * Same split for the rejection: the red stays (it is the state, and it
+	 * lives on the class, not in these keyframes), the shake goes. A shake
+	 * is exactly the horizontal motion vestibular disorders react to, so
+	 * this one is not negotiable.
+	 */
+	.lock-screen__icon-rejected {
+		animation: none;
+	}
+
 	.lock-screen__confirm :deep(.input-field__input) {
 		transition: none;
 	}
