@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Dette hvelvet er tomt — det er ingenting å flytte.",
         "Target vault": "Målhvelv",
         "Failed to move the vault contents — some items may have moved already.": "Kunne ikke flytte hvelvets innhold — noen elementer kan allerede være flyttet.",
-        "Move vault contents": "Flytt hvelvets innhold"
+        "Move vault contents": "Flytt hvelvets innhold",
+        "Click Reports in the menu": "Klikk Rapporter i menyen",
+        "Your activity and vault health live under Reports.": "Aktiviteten din og hvelvets tilstand ligger under Rapporter.",
+        "Pick a report to open it.": "Velg en rapport for å åpne den.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Svake, gjenbrukte og gamle passord i det opplåste hvelvet.",
+        "Everything you did, from the audit trail.": "Alt du gjorde, fra revisjonssporet.",
+        "Reports": "Rapporter"
     },
     "nplurals=2; plural=(n != 1);"
 )

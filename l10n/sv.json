@@ -572,7 +572,13 @@
         "This vault is empty — there is nothing to move.": "Detta valv är tomt — det finns inget att flytta.",
         "Target vault": "Målvalv",
         "Failed to move the vault contents — some items may have moved already.": "Kunde inte flytta valvets innehåll — vissa objekt kan redan ha flyttats.",
-        "Move vault contents": "Flytta valvets innehåll"
+        "Move vault contents": "Flytta valvets innehåll",
+        "Click Reports in the menu": "Klicka på Rapporter i menyn",
+        "Your activity and vault health live under Reports.": "Din aktivitet och valvets hälsa finns under Rapporter.",
+        "Pick a report to open it.": "Välj en rapport för att öppna den.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Svaga, återanvända och gamla lösenord i ditt upplåsta valv.",
+        "Everything you did, from the audit trail.": "Allt du gjorde, från granskningsloggen.",
+        "Reports": "Rapporter"
     },
     "plurals": null
 }

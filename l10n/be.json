@@ -572,7 +572,13 @@
         "This vault is empty — there is nothing to move.": "Гэтае сховішча пустое — няма чаго перамяшчаць.",
         "Target vault": "Мэтавае сховішча",
         "Failed to move the vault contents — some items may have moved already.": "Не ўдалося перамясціць змесціва сховішча — частка элементаў магла ўжо перамясціцца.",
-        "Move vault contents": "Перамясціць змесціва сховішча"
+        "Move vault contents": "Перамясціць змесціва сховішча",
+        "Click Reports in the menu": "Націсніце Звіты ў меню",
+        "Your activity and vault health live under Reports.": "Ваша актыўнасць і стан сховішча знаходзяцца ў Звітах.",
+        "Pick a report to open it.": "Выберыце звіт, каб адкрыць яго.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Слабыя, паўторна выкарыстаныя і старыя паролі ў разблакаваным сховішчы.",
+        "Everything you did, from the audit trail.": "Усё, што вы зрабілі, з журнала аўдыту.",
+        "Reports": "Звіты"
     },
     "plurals": null
 }
