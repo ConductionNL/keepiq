@@ -165,6 +165,18 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // dashboard#catchAll split: a distinct name, because Symfony silently
     // replaces same-named routes. Sits in $extra, so it precedes the
     // authenticated /{path} fallback.
+    //
+    // NEVER ROUTE AN AUTHENTICATED ENDPOINT UNDER /public/. This catch-all
+    // ('path' => '.+') matches every GET below /public/ and hands it to a
+    // #[PublicPage] controller, so a session-gated route placed here is
+    // shadowed: the router matches this entry first, the anonymous shell
+    // renders, and the intended handler never runs. The author sees a working
+    // page, not a 404 — a routing slip becomes a silent auth bypass. The shell
+    // itself exposes no data (it returns the HTML template and nothing else),
+    // so there is no live vulnerability; the shape is the hazard.
+    // tests/Unit/AppInfo/PublicRouteSurfaceContractTest.php enforces this:
+    // every /public route must declare #[PublicPage], or the unit suite fails
+    // and names the route.
     ['name' => 'publicShell#pageCatchAll', 'url' => '/public/{path}', 'verb' => 'GET',
         'requirements' => ['path' => '.+']],
 
