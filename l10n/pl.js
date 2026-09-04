@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Ten sejf jest pusty — nie ma nic do przeniesienia.",
         "Target vault": "Sejf docelowy",
         "Failed to move the vault contents — some items may have moved already.": "Nie udało się przenieść zawartości sejfu — część elementów mogła już zostać przeniesiona.",
-        "Move vault contents": "Przenieś zawartość sejfu"
+        "Move vault contents": "Przenieś zawartość sejfu",
+        "Click Reports in the menu": "Kliknij Raporty w menu",
+        "Your activity and vault health live under Reports.": "Twoja aktywność i kondycja sejfu są w sekcji Raporty.",
+        "Pick a report to open it.": "Wybierz raport, aby go otworzyć.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Słabe, ponownie użyte i stare hasła w odblokowanym sejfie.",
+        "Everything you did, from the audit trail.": "Wszystko, co zrobiłeś, ze ścieżki audytu.",
+        "Reports": "Raporty"
     },
     "nplurals=2; plural=(n != 1);"
 )

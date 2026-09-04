@@ -572,7 +572,13 @@
         "This vault is empty — there is nothing to move.": "Dieser Tresor ist leer — es gibt nichts zu verschieben.",
         "Target vault": "Ziel-Tresor",
         "Failed to move the vault contents — some items may have moved already.": "Der Tresorinhalt konnte nicht verschoben werden — einige Einträge wurden möglicherweise bereits verschoben.",
-        "Move vault contents": "Tresorinhalt verschieben"
+        "Move vault contents": "Tresorinhalt verschieben",
+        "Click Reports in the menu": "Klicken Sie im Menü auf Berichte",
+        "Your activity and vault health live under Reports.": "Ihre Aktivität und die Zustandsprüfung des Tresors stehen unter Berichte.",
+        "Pick a report to open it.": "Wählen Sie einen Bericht, um ihn zu öffnen.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Schwache, mehrfach genutzte und alte Passwörter in Ihrem entsperrten Tresor.",
+        "Everything you did, from the audit trail.": "Alles, was Sie getan haben, aus dem Prüfprotokoll.",
+        "Reports": "Berichte"
     },
     "plurals": null
 }

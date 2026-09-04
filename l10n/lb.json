@@ -572,7 +572,13 @@
         "This vault is empty — there is nothing to move.": "Dësen Tresor ass eidel — et gëtt näischt ze réckelen.",
         "Target vault": "Zil-Tresor",
         "Failed to move the vault contents — some items may have moved already.": "Den Inhalt vum Tresor konnt net geréckelt ginn — verschidden Elementer si vläicht scho geréckelt.",
-        "Move vault contents": "Tresorinhalt réckelen"
+        "Move vault contents": "Tresorinhalt réckelen",
+        "Click Reports in the menu": "Klickt op Berichter am Menü",
+        "Your activity and vault health live under Reports.": "Är Aktivitéit an d'Gesondheet vum Safe stinn ënner Berichter.",
+        "Pick a report to open it.": "Wielt e Bericht fir hien opzemaachen.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Schwaach, méi Mol benotzt an al Passwierder an Ärem opgeschlossene Safe.",
+        "Everything you did, from the audit trail.": "Alles wat Dir gemaach hutt, aus dem Auditspur.",
+        "Reports": "Berichter"
     },
     "plurals": null
 }

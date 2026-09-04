@@ -573,7 +573,13 @@ OC.L10N.register(
         "This vault is empty — there is nothing to move.": "Þessi hvelfing er tóm — það er ekkert að færa.",
         "Target vault": "Markhvelfing",
         "Failed to move the vault contents — some items may have moved already.": "Tókst ekki að færa innihald hvelfingarinnar — sum atriði gætu þegar hafa verið færð.",
-        "Move vault contents": "Færa innihald hvelfingarinnar"
+        "Move vault contents": "Færa innihald hvelfingarinnar",
+        "Click Reports in the menu": "Smelltu á Skýrslur í valmyndinni",
+        "Your activity and vault health live under Reports.": "Virkni þín og heilsa hirslunnar eru undir Skýrslum.",
+        "Pick a report to open it.": "Veldu skýrslu til að opna hana.",
+        "Weak, reused and ageing passwords in your unlocked vault.": "Veik, endurnotuð og gömul lykilorð í opnaðri hirslu þinni.",
+        "Everything you did, from the audit trail.": "Allt sem þú gerðir, úr endurskoðunarsporinu.",
+        "Reports": "Skýrslur"
     },
     "nplurals=2; plural=(n != 1);"
 )
