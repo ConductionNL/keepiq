@@ -54,7 +54,13 @@ const stubs = {
 }
 
 async function mountDialog() {
-	const wrapper = mount(SecretCreateDialog, { propsData: {}, global: { stubs } })
+	const wrapper = mount(SecretCreateDialog, {
+		// A folder is required since the picker lost its "Vault root" option
+		// (secrets cannot live at the root). These scenarios are about the
+		// additional fields, so any folder will do.
+		propsData: { folderId: 'folder-1' },
+		global: { stubs },
+	})
 	await wrapper.vm.$nextTick()
 
 	return wrapper

@@ -91,4 +91,48 @@ describe('ApplicationRegisterView', () => {
 		await flush()
 		expect(dialog.attributes('data-open')).toBe('true')
 	})
+
+	// The dashboard's "Register application" tile deep-links to
+	// `/applications?action=register` through the router (a full page load
+	// would drop the in-memory vault key). The view consumes the marker:
+	// dialog open, marker stripped so a refresh cannot re-open it.
+	it('opens the register dialog from the dashboard quick action and strips the marker', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+		const replace = vi.fn()
+		const wrapper = mount(ApplicationRegisterView, {
+			global: {
+				mocks: {
+					$route: { query: { action: 'register', view: 'cards' } },
+					$router: { replace, push: vi.fn() },
+				},
+			},
+		})
+		await flush()
+		expect(
+			wrapper
+				.find('[data-testid="application-register-dialog"]')
+				.attributes('data-open'),
+		).toBe('true')
+		expect(replace).toHaveBeenCalledWith({ query: { view: 'cards' } })
+	})
+
+	it('ignores an action marker that is not register', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+		const replace = vi.fn()
+		const wrapper = mount(ApplicationRegisterView, {
+			global: {
+				mocks: {
+					$route: { query: { action: 'create' } },
+					$router: { replace, push: vi.fn() },
+				},
+			},
+		})
+		await flush()
+		expect(
+			wrapper
+				.find('[data-testid="application-register-dialog"]')
+				.attributes('data-open'),
+		).toBe('false')
+		expect(replace).not.toHaveBeenCalled()
+	})
 })

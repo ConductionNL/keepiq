@@ -67,10 +67,17 @@
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
 
+			<!-- showFormDialog OFF: CnIndexPage also watches ?action=create
+			     and would open its own generic schema-form dialog OVER the
+			     registry's SecretCreateDialog (the consumeCreateAction
+			     watcher below). The prop is the library's documented
+			     "consumer manages its own dialog" opt-out; the @add path is
+			     unaffected because this view listens to it. -->
 			<CnIndexPage
 				viewMode="list"
 				:availableViewModes="['list', 'cards', 'table']"
 				listLabel="List"
+				:showFormDialog="false"
 				:selectedIds="bulkStore.selectedIds"
 				rowClickToView
 				:objects="listObjects"
@@ -968,6 +975,32 @@ export default {
 				this.bulkStore.setSelection(pruned)
 			}
 		},
+
+		/**
+		 * Dashboard quick-action deep link (`/secrets?action=create`): open
+		 * the create-secret dialog. A watcher rather than a mounted() check,
+		 * because CnPageRenderer keeps the list mounted when only the query
+		 * changes (its render key is the page id), so a later navigation to
+		 * the same page with the marker must still be seen.
+		 *
+		 * @param {string|undefined} action The `action` query value.
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		'$route.query.action': {
+			immediate: true,
+			/**
+			 * Dispatch the marker to the consumer; anything else is ignored.
+			 *
+			 * @param {string|undefined} action The `action` query value.
+			 * @return {void}
+			 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+			 */
+			handler(action) {
+				if (action === 'create') {
+					this.consumeCreateAction()
+				}
+			},
+		},
 	},
 
 	/**
@@ -1434,12 +1467,38 @@ export default {
 		 * view, and reload the list on success.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		openCreateSecret() {
 			this.cnOpenModal('secret-create', {
 				folderId: this.selectedFolderId,
 				onSaved: () => this.reload(),
 			})
+		},
+
+		/**
+		 * Consume the dashboard tile's `?action=create` marker: strip it from
+		 * the URL, then open the create-secret dialog for the current folder.
+		 *
+		 * Stripping matters because a full page load re-locks the vault and
+		 * the lock screen's `returnUrl` carries the query along — without it,
+		 * every unlock after a refresh would re-open the dialog.
+		 *
+		 * STRICTLY strip-first: CnAppRoot closes the active registry modal on
+		 * EVERY route change (so dialogs cannot follow a navigation to another
+		 * page), and the query replace IS a route change — opening first got
+		 * the dialog closed in the same tick it opened. The nextTick lets that
+		 * route watcher run before the modal opens.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		async consumeCreateAction() {
+			const query = { ...this.$route.query }
+			delete query.action
+			await this.$router.replace({ query })
+			await this.$nextTick()
+			this.openCreateSecret()
 		},
 
 		/**
