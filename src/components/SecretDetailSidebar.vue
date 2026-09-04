@@ -33,6 +33,15 @@
 		     can never collide with the list page's "Actions" overflow menu
 		     in role-based queries. -->
 		<template #description>
+			<!-- Proton's vault tag (2026-09-03, per Remko): the one place
+			     you look at a single secret names the vault it lives in,
+			     with the vault's own Stage 9 icon and color. -->
+			<VaultIndicator
+				v-if="secret && !error && vault"
+				class="secret-detail__vault"
+				variant="tag"
+				:vault="vault"
+				data-testid="secret-detail-vault" />
 			<div
 				v-if="secret && !error && offlineReadOnly"
 				class="secret-detail__offline-note"
@@ -863,12 +872,15 @@ import DelegationManager from './share/DelegationManager.vue'
 import ShareList from './share/ShareList.vue'
 import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
+import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
+import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
+import { rootVaultOf } from '../utils/vaultList.js'
 
 /**
  * The secret detail sidebar (restyle Stage 8). Encrypted fields are
@@ -927,6 +939,7 @@ export default {
 		ShareList,
 		ShareRequestForm,
 		TotpDisplay,
+		VaultIndicator,
 		VersionHistoryPanel,
 	},
 
@@ -1011,6 +1024,23 @@ export default {
 			return secretTypeLabel(
 				useSecretTypeStore().typesById[this.secret.typeId],
 			)
+		},
+
+		/**
+		 * The VAULT this secret ultimately lives under, for the header's
+		 * vault tag (2026-09-03, per Remko — Proton's pattern: the rows in
+		 * All secrets stay clean, and the one place you look at a single
+		 * secret names its vault, with the vault's own icon and color).
+		 * Null while nothing is loaded or the folder tree has no match.
+		 *
+		 * @return {object|null}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		vault() {
+			if (!this.secret) {
+				return null
+			}
+			return rootVaultOf(useFolderStore().folders, this.secret.folderId)
 		},
 
 		/**
@@ -1589,6 +1619,14 @@ export default {
    (.app-sidebar-header__desc) is position:relative with its
    padding-inline-end already reserving the close button's column — so
    the row is lifted to the top-right corner, next to the name. */
+/* The vault tag sits in flow directly under the name/type sublines
+   (Proton pattern) — the actions row beside it is corner-positioned.
+   Generous block margins: pressed against the type subline above and the
+   content below, the three lines read as one cramped blob (review call). */
+.secret-detail__vault {
+	margin-block: 6px 14px;
+}
+
 .secret-detail__actions {
 	display: flex;
 	align-items: center;

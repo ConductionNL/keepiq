@@ -574,6 +574,7 @@ OC.L10N.register(
         "Target vault": "Målvalv",
         "Failed to move the vault contents — some items may have moved already.": "Kunde inte flytta valvets innehåll — vissa objekt kan redan ha flyttats.",
         "Move vault contents": "Flytta valvets innehåll",
+        "Strength": "Styrka",
         "Click Reports in the menu": "Klicka på Rapporter i menyn",
         "Your activity and vault health live under Reports.": "Din aktivitet och valvets hälsa finns under Rapporter.",
         "Pick a report to open it.": "Välj en rapport för att öppna den.",

@@ -743,6 +743,7 @@ OC.L10N.register(
         "Failed to move the vault contents — some items may have moved already.": "Verplaatsen van de kluisinhoud mislukt — sommige items zijn mogelijk al verplaatst.",
         "Move vault contents": "Kluisinhoud verplaatsen",
         "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Dit verwijdert dit geheim permanent en trekt de delingen ervan in. Er is geen prullenbak — dit kan niet ongedaan worden gemaakt.",
+        "Strength": "Sterkte",
         "Click Reports in the menu": "Klik op Rapportages in het menu",
         "Your activity and vault health live under Reports.": "Je activiteit en kluisgezondheid staan onder Rapportages.",
         "Pick a report to open it.": "Kies een rapport om het te openen.",

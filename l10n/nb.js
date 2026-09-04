@@ -574,6 +574,7 @@ OC.L10N.register(
         "Target vault": "Målhvelv",
         "Failed to move the vault contents — some items may have moved already.": "Kunne ikke flytte hvelvets innhold — noen elementer kan allerede være flyttet.",
         "Move vault contents": "Flytt hvelvets innhold",
+        "Strength": "Styrke",
         "Click Reports in the menu": "Klikk Rapporter i menyen",
         "Your activity and vault health live under Reports.": "Aktiviteten din og hvelvets tilstand ligger under Rapporter.",
         "Pick a report to open it.": "Velg en rapport for å åpne den.",

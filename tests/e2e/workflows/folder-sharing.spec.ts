@@ -210,9 +210,9 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		)
 		expect(folder, 'folder must be persisted').toBeTruthy()
 
-		// The in-page folder pane is gone (restyle Stage 6): at the vault root
-		// the new vault appears as a SUBFOLDER ROW in the list itself.
-		await expect(page.getByTestId(`folder-row-${folder.id}`)).toBeVisible({
+		// The root shows no vault rows (2026-09-03): the nav's folder tree is
+		// the one place a new vault appears.
+		await expect(page.getByTestId(`nav-folder-${folder.id}`)).toBeVisible({
 			timeout: 10_000,
 		})
 
@@ -641,10 +641,16 @@ test.describe('Workflow: folders + sharing — folders/spec.md', () => {
 		await unlockVault(page)
 		await openVault(page)
 
-		// Root: the new vault appears as a subfolder row; descend into it.
-		const parentRow = page.getByTestId(`folder-row-${ids.parentId}`)
-		await expect(parentRow).toBeVisible({ timeout: 20_000 })
-		await parentRow.evaluate((el: HTMLElement) => el.click())
+		// The root shows no vault rows (2026-09-03): descend into the vault
+		// through the nav's folder tree, like a user would. The testid sits
+		// on NcAppNavigationItem's <li>; the router link is the entry-link
+		// anchor inside — `.first()` skips the expanded children's links.
+		const parentNavItem = page.getByTestId(`nav-folder-${ids.parentId}`)
+		await expect(parentNavItem).toBeVisible({ timeout: 20_000 })
+		await parentNavItem
+			.locator('a.app-navigation-entry-link')
+			.first()
+			.evaluate((el: HTMLElement) => el.click())
 
 		// Inside the vault: breadcrumbs render, the nested folder is a row.
 		await expect(page.getByTestId('cn-breadcrumbs')).toBeVisible({

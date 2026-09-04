@@ -574,6 +574,8 @@ OC.L10N.register(
         "Target vault": "Coffre-fort de destination",
         "Failed to move the vault contents — some items may have moved already.": "Échec du déplacement du contenu du coffre-fort — certains éléments ont peut-être déjà été déplacés.",
         "Move vault contents": "Déplacer le contenu du coffre-fort",
+        "Strength": "Force",
+        "This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.": "Cette action supprime définitivement ce secret et révoque ses partages. Il n’y a pas de corbeille — c’est irréversible.",
         "Click Reports in the menu": "Cliquez sur Rapports dans le menu",
         "Your activity and vault health live under Reports.": "Votre activité et la santé du coffre sont sous Rapports.",
         "Pick a report to open it.": "Choisissez un rapport pour l'ouvrir.",

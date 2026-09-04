@@ -574,6 +574,7 @@ OC.L10N.register(
         "Target vault": "Paskirties saugykla",
         "Failed to move the vault contents — some items may have moved already.": "Nepavyko perkelti saugyklos turinio — dalis elementų galėjo būti jau perkelta.",
         "Move vault contents": "Perkelti saugyklos turinį",
+        "Strength": "Stiprumas",
         "Click Reports in the menu": "Meniu spustelėkite Ataskaitos",
         "Your activity and vault health live under Reports.": "Jūsų veikla ir saugyklos būklė yra Ataskaitose.",
         "Pick a report to open it.": "Pasirinkite ataskaitą, kad ją atidarytumėte.",

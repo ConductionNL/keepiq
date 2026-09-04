@@ -574,6 +574,7 @@ OC.L10N.register(
         "Target vault": "Целен трезор",
         "Failed to move the vault contents — some items may have moved already.": "Преместувањето на содржината на трезорот не успеа — некои елементи можеби веќе се преместени.",
         "Move vault contents": "Премести ја содржината на трезорот",
+        "Strength": "Јачина",
         "Click Reports in the menu": "Кликнете на Извештаи во менито",
         "Your activity and vault health live under Reports.": "Вашата активност и состојбата на трезорот се под Извештаи.",
         "Pick a report to open it.": "Изберете извештај за да го отворите.",

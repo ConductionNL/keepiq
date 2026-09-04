@@ -573,6 +573,7 @@
         "Target vault": "Hedef kasa",
         "Failed to move the vault contents — some items may have moved already.": "Kasa içeriği taşınamadı — bazı öğeler zaten taşınmış olabilir.",
         "Move vault contents": "Kasa içeriğini taşı",
+        "Strength": "Güç",
         "Click Reports in the menu": "Menüden Raporlar'a tıklayın",
         "Your activity and vault health live under Reports.": "Etkinliğiniz ve kasa sağlığı Raporlar altında.",
         "Pick a report to open it.": "Açmak için bir rapor seçin.",

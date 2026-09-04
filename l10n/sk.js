@@ -574,6 +574,7 @@ OC.L10N.register(
         "Target vault": "Cieľový trezor",
         "Failed to move the vault contents — some items may have moved already.": "Obsah trezora sa nepodarilo presunúť — časť položiek už mohla byť presunutá.",
         "Move vault contents": "Presunúť obsah trezora",
+        "Strength": "Sila",
         "Click Reports in the menu": "Kliknite na Reporty v ponuke",
         "Your activity and vault health live under Reports.": "Vaša aktivita a stav trezora sú pod Reportmi.",
         "Pick a report to open it.": "Vyberte report a otvorte ho.",
