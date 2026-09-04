@@ -13,3 +13,4 @@ set -eu
 
 php /var/www/html/occ app:enable openregister
 php /var/www/html/occ app:enable keepiq
+php /var/www/html/occ app:enable thematiq
