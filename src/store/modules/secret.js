@@ -109,9 +109,17 @@ export const useSecretStore = defineStore('secret', {
 						('search' in options ? options.search : this.filters.search)
 						?? ''
 					).toLowerCase()
+					// Same presence semantics as folderId, mirroring the online
+					// branch's params.typeId — without it a type-filtered list
+					// silently showed the whole vault while offline.
+					const typeId =
+						'typeId' in options ? options.typeId : this.filters.typeId
 					let items = offline.vault.secrets
 					if (folderId) {
 						items = items.filter((s) => s.folderId === folderId)
+					}
+					if (typeId) {
+						items = items.filter((s) => s.typeId === typeId)
 					}
 					if (search) {
 						items = items.filter(
