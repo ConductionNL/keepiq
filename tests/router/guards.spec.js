@@ -446,6 +446,41 @@ describe('isPublicSurface', () => {
 		expect(isPublicSurface()).toBe(false)
 	})
 
+	it('matches the shell on a segment boundary, not as a substring', () => {
+		// A substring test on '/apps/keepiq/public' answered true for every one
+		// of these. It is not the security gate, but a classifier that is wrong
+		// for a whole family of paths invites being mistaken for one.
+		for (const pathname of [
+			'/apps/keepiq/publications/share/link/tok',
+			'/index.php/apps/keepiq/publications',
+			'/apps/keepiq/publicfoo',
+			'/apps/keepiq/secrets/public',
+		]) {
+			expect(isPublicSurface({ pathname, hash: '' }), pathname).toBe(false)
+		}
+	})
+
+	it('is not fooled by another app whose id starts with this one', () => {
+		for (const pathname of [
+			'/apps/keepiq-old/public/share/link/tok',
+			'/index.php/apps/keepiqfoo/send/tok',
+		]) {
+			expect(isPublicSurface({ pathname, hash: '' }), pathname).toBe(false)
+		}
+	})
+
+	it('still works when Nextcloud is served from a sub-directory', () => {
+		// The app segment is located, not anchored, so a webroot install keeps
+		// resolving — the boundary check must not cost that.
+		for (const pathname of [
+			'/nextcloud/index.php/apps/keepiq/public',
+			'/nextcloud/apps/keepiq/public/share/link/tok',
+			'/nextcloud/index.php/apps/keepiq/send/tok',
+		]) {
+			expect(isPublicSurface({ pathname, hash: '' }), pathname).toBe(true)
+		}
+	})
+
 	it('answers without a resolved route, which is the whole point', () => {
 		// CnAppRoot reads `supportDialog` once in setup(), before the router has
 		// resolved a name — so a route-based check is still undefined there.
