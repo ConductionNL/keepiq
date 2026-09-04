@@ -30,11 +30,20 @@
 			<!-- Root-level entries ARE the vaults (Stage 5 terminology), so
 			     they carry the safe glyph — or the user's OWN icon + color
 			     on a Proton-style tinted circle derived from the SAME color
-			     (restyle Stage 9); only nested entries are plain folders. -->
+			     (restyle Stage 9); only nested entries are plain folders.
+			     EVERY vault gets the circle, the default (colorless) one
+			     included: with a disc on some rows and a bare glyph on
+			     others the two sat on different optical baselines, so the
+			     rail read as misaligned. The colorless disc is neutral and
+			     comes from CSS (see --plain below) because its active-row
+			     variant cannot be derived from a vault color. -->
 			<template #icon>
 				<span
 					v-if="depth === 0"
 					class="keepiq-nav-tree__vault-glyph"
+					:class="{
+						'keepiq-nav-tree__vault-glyph--plain': isColorless(node),
+					}"
 					:style="vaultGlyphStyle(node)">
 					<component
 						:is="vaultIcon(node)"
@@ -225,6 +234,20 @@ export default {
 		},
 
 		/**
+		 * Whether the vault has no color of its own — the DEFAULT vault
+		 * look. Drives the neutral disc class rather than an inline tint:
+		 * "no color" has no hex to derive an active-row variant from, so
+		 * that state is expressed in CSS against the row's own `.active`.
+		 *
+		 * @param {object} node The vault node.
+		 * @return {boolean}
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		isColorless(node) {
+			return resolveFolderColor(node.customColor, currentTheme()) === null
+		},
+
+		/**
 		 * Whether the entry renders as the rail's ACTIVE row — where NC
 		 * paints a solid primary background, which a translucent tint and
 		 * a colored glyph would sink into.
@@ -261,11 +284,12 @@ export default {
 		},
 
 		/**
-		 * The circle behind the vault glyph: the Proton-style translucent
-		 * tint of the SAME resolved color (the 53a36006 approach — one
-		 * color source, glyph and circle can never disagree across
-		 * themes). No circle on the HIGHLIGHTED row (the glyph is plain
-		 * there, see vaultColor) and none for uncolored vaults.
+		 * The INLINE tint behind the vault glyph: the Proton-style
+		 * translucent tint of the SAME resolved color (the 53a36006
+		 * approach — one color source, glyph and circle can never disagree
+		 * across themes). Uncolored vaults get no inline style at all —
+		 * they still show a circle, painted by the
+		 * `keepiq-nav-tree__vault-glyph--plain` rule.
 		 *
 		 * @param {object} node The vault node.
 		 * @return {object|undefined} A style object or undefined.
@@ -275,9 +299,10 @@ export default {
 			const theme = currentTheme()
 			const hasColor = resolveFolderColor(node.customColor, theme) !== null
 			if (!hasColor) {
-				// Colorless vaults: no circle anywhere; the glyph follows the
-				// row's text color (white on the highlight, via the CSS
-				// icon-column rule below).
+				// Colorless vaults have no hex to tint with — the neutral
+				// disc and its active-row variant are CSS-only, and the glyph
+				// follows the row's text color (white on the highlight, via
+				// the CSS icon-column rule below).
 				return undefined
 			}
 			if (this.isHighlighted(node)) {
@@ -355,15 +380,65 @@ export default {
 	display: contents;
 }
 
-/* The Proton-style tinted circle behind a colored vault's glyph. Sized to
-   sit inside NcAppNavigationItem's icon column without growing the row. */
+/* Give the tree's icon column room for a circle. NcAppNavigationItem
+   sizes it to --default-clickable-area (34px on NC 30), which a 30px disc
+   fills almost edge to edge: the label ended up 2px from the disc where a
+   bare glyph sat 8px clear of it, and that gap difference is what made the
+   circled rows look wrong next to the uncircled default. Widening the
+   column by 8px and taking the disc down to 28px restores ~7px on both
+   sides — the bare glyph's own breathing room — without moving the glyph's
+   center, so the rows still line up vertically. Applied to the WHOLE tree
+   (nested folder rows too) so every label in it shares one text column.
+
+   The selector mirrors NcAppNavigationItem's OWN
+   `.app-navigation-entry .app-navigation-entry-link .app-navigation-entry-icon`
+   on purpose: that rule sets `flex: 0 0 var(--default-clickable-area)` at
+   three classes plus its scope attribute, so the short
+   `:deep(.app-navigation-entry-icon)` form loses the cascade and the
+   column silently stays 34px. Both link and button variants are listed
+   because which one NcAppNavigationItem renders depends on `to`/`href`. */
+.keepiq-nav-tree
+	:deep(
+		.app-navigation-entry .app-navigation-entry-link .app-navigation-entry-icon
+	),
+.keepiq-nav-tree
+	:deep(
+		.app-navigation-entry .app-navigation-entry-button .app-navigation-entry-icon
+	) {
+	flex-basis: calc(var(--default-clickable-area) + 8px);
+	width: calc(var(--default-clickable-area) + 8px);
+}
+
+/* The Proton-style tinted circle behind a vault's glyph. Sized to sit
+   inside the widened icon column above without growing the row. */
 .keepiq-nav-tree__vault-glyph {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 30px;
-	height: 30px;
+	width: 28px;
+	height: 28px;
 	border-radius: 50%;
+}
+
+/* The DEFAULT vault — no color picked — gets the same circle, in the
+   theme's neutral surface. Without it the default row was the only one
+   with a bare glyph, which is the asymmetry this rule exists to remove. */
+.keepiq-nav-tree__vault-glyph--plain {
+	background-color: var(--color-background-dark);
+}
+
+/* ...except on the ACTIVE row, which NC paints solid primary: a neutral
+   grey disc there reads as a stray pill (the same finding that sent the
+   COLORED discs to an opaque main-background variant), and the glyph is
+   white on that row, so the disc has to sit ABOVE the primary rather than
+   under a light surface. A low-alpha scrim in the row's own text color
+   works on both highlight generations. */
+.app-navigation-entry.active .keepiq-nav-tree__vault-glyph--plain {
+	background-color: color-mix(
+		in srgb,
+		var(--color-primary-element-text) 20%,
+		transparent
+	);
 }
 
 /* Icon-column color on the ACTIVE row, keyed to the row's own `.active`

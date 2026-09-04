@@ -581,7 +581,8 @@ OC.L10N.register(
         "Pick a report to open it.": "Tscherni in rapport per l'avrir.",
         "Weak, reused and ageing passwords in your unlocked vault.": "Pleds-clav flaivels, reutilisads e vegls en vossa cassa averta.",
         "Everything you did, from the audit trail.": "Tut quai che vus avais fatg, dal protocol da revisiun.",
-        "Reports": "Rapports"
+        "Reports": "Rapports",
+        "Vault unlocked. Opening your vault…": "Cassaforte sbloccata. Apertura della tua cassaforte…"
     },
     "nplurals=2; plural=(n != 1);"
 )
