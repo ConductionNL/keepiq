@@ -112,6 +112,12 @@ export default {
 			return this.$route.params.token || ''
 		},
 
+		/**
+		 * The content key, read from the URL fragment.
+		 *
+		 * @return {string} The decoded key, or '' when the URL carries none.
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+		 */
 		fragmentKey() {
 			// The content key rides in the URL fragment (`#k=<key>`), which the
 			// browser never transmits — see ephemeralSend.createSend(). The
