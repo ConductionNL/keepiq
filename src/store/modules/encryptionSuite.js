@@ -1015,18 +1015,34 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * Revoke the current user's active encryption suite.
 		 *
 		 * @param {string} reason The reason for revocation
+		 * @param {string} masterPassword The master password, to sign the vault-key proof
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 */
-		async revokeSuite(reason) {
+		async revokeSuite(reason, masterPassword) {
 			if (!this.currentSuite) {
 				throw new Error('No active suite to revoke')
 			}
+
+			// Revocation is guarded by a vault-key proof: prove possession of the
+			// master password over this suite's private key, binding the reason so
+			// a captured proof cannot be replayed against a different request. A
+			// stolen session has no master password and so cannot revoke.
+			const session = useSessionStore()
+			const proof = await buildKeyProofHeaders({
+				suiteId: this.currentSuite.id,
+				purpose: PROOF_PURPOSE.REVOKE_SUITE,
+				encryptedPrivateKey: session.encryptedPrivateKey,
+				masterPassword,
+				boundValues: [reason],
+			})
 
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/suites/${this.currentSuite.id}/revoke`,
 				),
 				{ reason },
+				{ headers: proof },
 			)
 
 			this.currentSuite = response.data

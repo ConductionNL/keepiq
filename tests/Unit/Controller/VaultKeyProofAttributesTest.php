@@ -78,6 +78,13 @@ class VaultKeyProofAttributesTest extends TestCase {
 				'active',
 				VaultKeyProofService::PURPOSE_EMERGENCY_DESTROY,
 			],
+			'revoke suite' => [
+				EncryptionSuiteController::class,
+				'revoke',
+				['reason'],
+				'routeParam:id',
+				VaultKeyProofService::PURPOSE_REVOKE_SUITE,
+			],
 		];
 	}//end guardedMethodsProvider()
 

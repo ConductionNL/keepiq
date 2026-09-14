@@ -273,6 +273,14 @@ class EncryptionSuiteController extends OCSController {
 	/**
 	 * Revoke an EncryptionSuite.
 	 *
+	 * Guarded by a vault-key proof: revocation is irreversible for the owner
+	 * (reinstate is admin-only), hard-deletes ShareTargets, promotes delegations
+	 * and blocks every secret read — the #395 session-only lockout shape. Requiring
+	 * a proof signed with the suite's own private key means a stolen session, leaked
+	 * app password or XSS in an unlocked tab cannot revoke the vault; only the owner,
+	 * with their master password, can. An owner who has LOST that password revokes
+	 * via the (separate, admin-only) recovery path, never this one.
+	 *
 	 * @param string $id The suite ID
 	 * @param string $reason The revocation reason
 	 *
@@ -281,8 +289,14 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['reason'],
+		subject: 'routeParam:id',
+		purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE
+	)]
 	public function revoke(string $id, string $reason): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

@@ -60,6 +60,7 @@ class VaultKeyProofService {
 	public const PURPOSE_UPDATE_PRIVATE_KEY = 'update-private-key';
 	public const PURPOSE_COMPLETE_MIGRATION = 'complete-migration';
 	public const PURPOSE_EMERGENCY_DESTROY = 'emergency-access-destroy';
+	public const PURPOSE_REVOKE_SUITE = 'revoke-suite';
 
 	/**
 	 * The purposes a challenge may be issued for.

@@ -35,6 +35,7 @@
 import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildKeyProofHeaders } from '../../src/crypto/keyProof.js'
 import { useEncryptionSuiteStore } from '../../src/store/modules/encryptionSuite.js'
 
 const evict = vi.fn(async () => {})
@@ -43,14 +44,37 @@ vi.mock('../../src/store/modules/offline.js', () => ({
 	useOfflineStore: () => ({ evict }),
 }))
 
+// The guarded flows sign a vault-key proof; stub the helper so these tests
+// assert the store's wiring (headers attached, reason bound) without real crypto.
+vi.mock('../../src/crypto/keyProof.js', () => ({
+	HEADER_NONCE: 'X-Keepiq-Key-Proof-Nonce',
+	HEADER_PROOF: 'X-Keepiq-Key-Proof',
+	PROOF_PURPOSE: {
+		COMPROMISE_RECOVERY: 'compromise-recovery',
+		UPDATE_PRIVATE_KEY: 'update-private-key',
+		COMPLETE_MIGRATION: 'complete-migration',
+		EMERGENCY_DESTROY: 'emergency-access-destroy',
+		REVOKE_SUITE: 'revoke-suite',
+	},
+	buildKeyProofHeaders: vi.fn(async () => ({
+		'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+		'X-Keepiq-Key-Proof': 'test-sig',
+	})),
+}))
+
 describe('useEncryptionSuiteStore — revocation', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
 		evict.mockClear()
+		buildKeyProofHeaders.mockClear()
+		buildKeyProofHeaders.mockResolvedValue({
+			'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+			'X-Keepiq-Key-Proof': 'test-sig',
+		})
 	})
 
-	it('POSTs the revocation to the active suite with the supplied reason', async () => {
+	it('signs a vault-key proof and attaches it to the revocation request', async () => {
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
 			data: {
 				id: 'suite-1',
@@ -61,10 +85,21 @@ describe('useEncryptionSuiteStore — revocation', () => {
 		const store = useEncryptionSuiteStore()
 		store.currentSuite = { id: 'suite-1', status: 'active' }
 
-		await store.revokeSuite('laptop stolen')
+		await store.revokeSuite('laptop stolen', 'master-pw')
+
+		// The proof is made for THIS suite, with the revoke purpose, binding the
+		// reason so a captured proof cannot be replayed against another request.
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith(
+			expect.objectContaining({
+				suiteId: 'suite-1',
+				purpose: 'revoke-suite',
+				masterPassword: 'master-pw',
+				boundValues: ['laptop stolen'],
+			}),
+		)
 
 		expect(post).toHaveBeenCalledTimes(1)
-		const [url, body] = post.mock.calls[0]
+		const [url, body, config] = post.mock.calls[0]
 
 		// The suite id must be in the path — revoking the wrong suite, or a
 		// path built from a stale id, locks a user out of the wrong vault.
@@ -72,9 +107,15 @@ describe('useEncryptionSuiteStore — revocation', () => {
 
 		// The reason is REQUIRED by the spec: status is set alongside
 		// revoked_at, revoked_reason and revoked_by. Dropping it here would
-		// still return 200 and still revoke, losing only the audit trail —
-		// which is exactly why it needs asserting rather than eyeballing.
+		// still return 200 and still revoke, losing only the audit trail.
 		expect(body).toEqual({ reason: 'laptop stolen' })
+
+		// The guard is enforced by the middleware, so the proof headers MUST ride
+		// the request — a revoke without them is a 401 the user never asked for.
+		expect(config.headers).toMatchObject({
+			'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+			'X-Keepiq-Key-Proof': 'test-sig',
+		})
 	})
 
 	it('adopts the revoked suite returned by the server as the current suite', async () => {
@@ -84,7 +125,7 @@ describe('useEncryptionSuiteStore — revocation', () => {
 		const store = useEncryptionSuiteStore()
 		store.currentSuite = { id: 'suite-1', status: 'active' }
 
-		await store.revokeSuite('rotation')
+		await store.revokeSuite('rotation', 'master-pw')
 
 		// Keeping the pre-revocation object would leave the UI showing an
 		// active suite that the server has already revoked.
@@ -98,7 +139,7 @@ describe('useEncryptionSuiteStore — revocation', () => {
 		const store = useEncryptionSuiteStore()
 		store.currentSuite = { id: 'suite-1', status: 'active' }
 
-		await store.revokeSuite('compromised device')
+		await store.revokeSuite('compromised device', 'master-pw')
 
 		// THE SECURITY INVARIANT. Revocation blocks server-side access, but an
 		// offline copy is already decrypted on this device: without the evict
@@ -117,7 +158,9 @@ describe('useEncryptionSuiteStore — revocation', () => {
 
 		// A missing cache must not turn a completed server-side revocation into
 		// a client-side error — the suite IS revoked by this point.
-		await expect(store.revokeSuite('reason')).resolves.toBeUndefined()
+		await expect(
+			store.revokeSuite('reason', 'master-pw'),
+		).resolves.toBeUndefined()
 		expect(store.currentSuite.status).toBe('revoked')
 	})
 
