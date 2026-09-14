@@ -607,7 +607,8 @@ Enforced declaratively by `#[VaultKeyProofRequired(binds, subject, purpose)]`
 |---|---|---|---|
 | `EncryptionSuiteController::compromiseRecovery` | `active` (old suite) | `publicKey`, `encryptedPrivateKey` | `compromise-recovery` |
 | `EncryptionSuiteController::updatePrivateKey` | `routeParam:id` | `encryptedPrivateKey` | `update-private-key` |
-| `MigrationController::complete` | `migrationOldSuite` | `id` | `complete-migration` |
+| `EncryptionSuiteController::revoke` | `routeParam:id` | `reason` | `revoke-suite` |
+| `MigrationController::complete` | `migrationOldSuite` | `id`, `hasErrors`, `acceptUnrecoverable` | `complete-migration` |
 | `EmergencyAccessController::destroy` | `active` | `id` | `emergency-access-destroy` |
 
 Load-bearing design points — change these only deliberately:

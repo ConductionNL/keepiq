@@ -67,7 +67,7 @@ class VaultKeyProofAttributesTest extends TestCase {
 			'complete migration' => [
 				MigrationController::class,
 				'complete',
-				['id'],
+				['id', 'hasErrors', 'acceptUnrecoverable'],
 				'migrationOldSuite',
 				VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION,
 			],

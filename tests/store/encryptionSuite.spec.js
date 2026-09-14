@@ -250,3 +250,45 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		expect(post).not.toHaveBeenCalled()
 	})
 })
+
+describe('useEncryptionSuiteStore — completion proof binding', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		buildKeyProofHeaders.mockClear()
+		buildKeyProofHeaders.mockResolvedValue({
+			'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+			'X-Keepiq-Key-Proof': 'test-sig',
+		})
+	})
+
+	it('binds the acknowledged loss count into the completion proof', async () => {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
+			if (url.includes('/suites/old-suite')) {
+				return { data: { privateKey: 'OLD-ENC-PK' } }
+			}
+			// completeMigration's trailing fetchMigrationStatus
+			return { data: { status: 'none' } }
+		})
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { droppedVersions: 0, unrecoverable: [] },
+		})
+
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migr-1', oldSuiteId: 'old-suite' }
+		store.migrationRequiredAcknowledgement = 3
+
+		await store.acceptMigrationLosses('migr-1', 'old-pw')
+
+		// The exact replay Wilco flagged: a proof committing only to the id could
+		// be captured on a clean completion and re-presented to finalise with an
+		// unacknowledged loss. The proof MUST bind hasErrors ('1') and the
+		// accepted count ('3'), serialised as the server's (string) cast.
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith(
+			expect.objectContaining({
+				purpose: 'complete-migration',
+				boundValues: ['migr-1', '1', '3'],
+			}),
+		)
+	})
+})

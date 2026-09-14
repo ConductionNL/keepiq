@@ -118,7 +118,7 @@ class MigrationController extends OCSController {
 	 */
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(
-		binds: ['id'],
+		binds: ['id', 'hasErrors', 'acceptUnrecoverable'],
 		subject: 'migrationOldSuite',
 		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
 	)]
