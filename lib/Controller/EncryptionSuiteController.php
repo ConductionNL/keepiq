@@ -25,8 +25,10 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\VaultKeyProofService;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -39,6 +41,14 @@ use RuntimeException;
 
 /**
  * API controller for EncryptionSuite CRUD operations.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The suite lifecycle this
+ *   controller owns — create, show, revoke, reinstate, routine re-key,
+ *   compromise recovery and now vault-key-proof challenge issuance — legitimately
+ *   coordinates several services and the guard attribute. Adding
+ *   VaultKeyProofService for the challenge endpoint pushed it to 13; splitting
+ *   the challenge onto its own controller would add a route surface for one
+ *   trivial method without reducing the domain coupling that the rest carries.
  */
 class EncryptionSuiteController extends OCSController {
 	/**
@@ -48,6 +58,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @param EncryptionSuiteService $suiteService The suite service
 	 * @param MigrationService $migrationService The migration service
 	 * @param IUserSession $userSession The user session
+	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
 	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
 	 * @return void
@@ -57,6 +68,7 @@ class EncryptionSuiteController extends OCSController {
 		private EncryptionSuiteService $suiteService,
 		private MigrationService $migrationService,
 		private IUserSession $userSession,
+		private VaultKeyProofService $proofService,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -230,6 +242,11 @@ class EncryptionSuiteController extends OCSController {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['encryptedPrivateKey'],
+		subject: 'routeParam:id',
+		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
+	)]
 	public function updatePrivateKey(string $id, string $encryptedPrivateKey): JSONResponse {
 		try {
 			$suite = $this->suiteService->getSuite($id);
@@ -256,6 +273,14 @@ class EncryptionSuiteController extends OCSController {
 	/**
 	 * Revoke an EncryptionSuite.
 	 *
+	 * Guarded by a vault-key proof: revocation is irreversible for the owner
+	 * (reinstate is admin-only), hard-deletes ShareTargets, promotes delegations
+	 * and blocks every secret read — the #395 session-only lockout shape. Requiring
+	 * a proof signed with the suite's own private key means a stolen session, leaked
+	 * app password or XSS in an unlocked tab cannot revoke the vault; only the owner,
+	 * with their master password, can. An owner who has LOST that password revokes
+	 * via the (separate, admin-only) recovery path, never this one.
+	 *
 	 * @param string $id The suite ID
 	 * @param string $reason The revocation reason
 	 *
@@ -264,8 +289,14 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['reason'],
+		subject: 'routeParam:id',
+		purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE
+	)]
 	public function revoke(string $id, string $reason): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -342,6 +373,11 @@ class EncryptionSuiteController extends OCSController {
 	 * @spec openspec/changes/implement-link-sharing/tasks.md#5.2
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['publicKey', 'encryptedPrivateKey'],
+		subject: 'active',
+		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
+	)]
 	public function compromiseRecovery(
 		string $publicKey,
 		string $encryptedPrivateKey,
@@ -441,6 +477,52 @@ class EncryptionSuiteController extends OCSController {
 			);
 		}//end try
 	}//end compromiseRecovery()
+
+	/**
+	 * Issue a vault-key-proof challenge for one of the guarded operations.
+	 *
+	 * Returns a stateless, expiring nonce the client signs with its suite
+	 * private key to authorise a destructive operation. Requires only a session
+	 * and that the caller own the named suite; it is NOT itself guarded, since a
+	 * challenge grants nothing on its own.
+	 *
+	 * @param string $id The caller's suite the proof will be made with
+	 * @param string|null $purpose The operation the challenge authorises
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 */
+	#[NoAdminRequired]
+	public function proofChallenge(string $id, ?string $purpose = null): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		if ($purpose === null || in_array($purpose, VaultKeyProofService::ALLOWED_PURPOSES, true) === false) {
+			return new JSONResponse(
+				data: ['message' => 'Unknown or missing proof purpose'],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		try {
+			$suite = $this->suiteService->getSuite($id);
+			$this->validateOwnership(suite: $suite);
+		} catch (Exception $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage()],
+				statusCode: Http::STATUS_NOT_FOUND
+			);
+		}
+
+		return new JSONResponse(
+			data: $this->proofService->issueChallenge(userId: $user->getUID(), purpose: $purpose)
+		);
+	}//end proofChallenge()
 
 	/**
 	 * Validate that the current user owns the suite.
