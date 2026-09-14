@@ -29,7 +29,7 @@ const MIGRATION_CONCURRENCY = 4
  * else its string form. The proof commits to the request, so a bound value that
  * serialised differently on the two sides would fail every verification.
  *
- * @param {*} value The parameter value being bound.
+ * @param {boolean|number|string|null|undefined} value The parameter value being bound.
  * @return {string} The server-matching string form.
  */
 function boundParam(value) {
