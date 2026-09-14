@@ -276,16 +276,21 @@ class EncryptionSuiteController extends OCSController {
 	/**
 	 * Revoke an EncryptionSuite.
 	 *
-	 * Revoking a user suite deletes its emergency-access recovery envelopes
-	 * outright (the revocation listener runs clearForGrantorRevocation), and
-	 * revocation is the last-resort route for an owner who lost their master
-	 * password — exactly the owner most likely to still need their emergency
-	 * contact. So the destruction is made a knowing choice: while a usable
-	 * (non-invalidated) emergency contact exists, revocation is refused unless the
-	 * caller passes $acceptEmergencyLoss, and the refusal surfaces the COUNT
-	 * of usable contacts (never their identities, which stay grantor-private) so
-	 * the administrator can decide. An emergency accessor must retrieve the
-	 * secrets first, while the suite is still active.
+	 * Guarded by a vault-key proof: revocation is irreversible for the owner
+	 * (reinstate is admin-only), hard-deletes ShareTargets, promotes delegations
+	 * and blocks every secret read — the #395 session-only lockout shape. Requiring
+	 * a proof signed with the suite's own private key means a stolen session, leaked
+	 * app password or XSS in an unlocked tab cannot revoke the vault; only the owner,
+	 * with their master password, can. An owner who has LOST that password revokes
+	 * via the (separate, admin-only) recovery path, never this one.
+	 *
+	 * Revocation also deletes the owner's emergency-access recovery envelopes
+	 * outright (the revocation listener runs clearForGrantorRevocation), so while a
+	 * usable (non-invalidated) emergency contact exists it is refused unless the
+	 * caller passes $acceptEmergencyLoss; the refusal surfaces the COUNT of usable
+	 * contacts (never their identities) so the choice is made knowingly. An
+	 * emergency accessor must retrieve the secrets first, while the suite is still
+	 * active.
 	 *
 	 * @param string $id The suite ID
 	 * @param string $reason The revocation reason
@@ -301,9 +306,16 @@ class EncryptionSuiteController extends OCSController {
 	 *   behaviours: it only lifts the safeguard refusal. Splitting the method
 	 *   would split the route and change the HTTP contract.
 	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['reason', 'acceptEmergencyLoss'],
+		subject: 'routeParam:id',
+		purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE
+	)]
 	public function revoke(string $id, string $reason, bool $acceptEmergencyLoss = false): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -553,7 +565,19 @@ class EncryptionSuiteController extends OCSController {
 	}//end proofChallenge()
 
 	/**
-	 * Validate that the current user owns the suite (or is admin).
+	 * Validate that the current user owns the suite.
+	 *
+	 * These are user self-service endpoints (show/updatePrivateKey/revoke): the
+	 * only suite a session may act on here is its own. The previous form guarded
+	 * `ownerType === 'user' && ownerId !== $userId`, which silently PASSED for
+	 * every non-user suite — an APPLICATION suite has `ownerType === 'application'`,
+	 * so the `=== 'user'` clause is false and the whole condition is false. Any
+	 * authenticated non-admin could therefore revoke an application's suite by id
+	 * and lock that application out of its own vault (a revoked suite blocks every
+	 * read). CertificateLifecycleService::reissueSuite already expresses the same
+	 * intent the correct way round (`ownsIt = ownerType==='user' && ownerId===uid`);
+	 * this brings the check into line. Application suites are managed through the
+	 * admin application-lifecycle endpoints, never here.
 	 *
 	 * @param mixed $suite The encryption suite entity
 	 *
@@ -561,8 +585,8 @@ class EncryptionSuiteController extends OCSController {
 	 */
 	private function validateOwnership($suite): void {
 		$userId = $this->userSession->getUser()->getUID();
-		if ($suite->getOwnerType() === 'user' && $suite->getOwnerId() !== $userId) {
-			throw new RuntimeException('Access denied: suite belongs to another user');
+		if ($suite->getOwnerType() !== 'user' || $suite->getOwnerId() !== $userId) {
+			throw new RuntimeException('Access denied: suite belongs to another owner');
 		}
 	}//end validateOwnership()
 }//end class

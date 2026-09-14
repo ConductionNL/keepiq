@@ -23,6 +23,26 @@ import { onVaultLock, useSessionStore } from './session.js'
  */
 const MIGRATION_CONCURRENCY = 4
 
+/**
+ * Serialise a request parameter for a vault-key proof's bound values exactly as
+ * the server's middleware does — a PHP `(string)` cast of `getParam(name, '')`:
+ * `true` → `'1'`, `false`/`null`/`undefined` (an absent param) → `''`, anything
+ * else its string form. The proof commits to the request, so a bound value that
+ * serialised differently on the two sides would fail every verification.
+ *
+ * @param {boolean|number|string|null|undefined} value The parameter value being bound.
+ * @return {string} The server-matching string form.
+ */
+function boundParam(value) {
+	if (value === true) {
+		return '1'
+	}
+	if (value === false || value === null || value === undefined) {
+		return ''
+	}
+	return String(value)
+}
+
 export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 	state: () => ({
 		/** @type {object|null} Current active suite */
@@ -300,12 +320,21 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// the suite being retired — not the new one. That is the key both
 			// this initiate path and the resume path already hold the password
 			// for (oldPassword), so completion needs no extra prompt on either.
+			// Bind every parameter finaliseMigration will send to complete — the
+			// id, hasErrors and the (here absent) acceptUnrecoverable — so a
+			// captured proof cannot be replayed to finalise with an acknowledged
+			// loss it never carried. This path finalises a clean run, so
+			// acceptUnrecoverable is null and hasErrors follows the outcome.
 			const completeProof = await buildKeyProofHeaders({
 				suiteId: response.data.migration.oldSuiteId,
 				purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
 				encryptedPrivateKey: response.data.oldEncryptedPrivateKey,
 				masterPassword: oldPassword,
-				boundValues: [response.data.migration.id],
+				boundValues: [
+					response.data.migration.id,
+					boundParam(outcome.failed > 0),
+					boundParam(null),
+				],
 			})
 			await this.finaliseMigration(
 				response.data.migration.id,
@@ -881,12 +910,17 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					`/apps/keepiq/api/v1/suites/${this.migrationStatus.oldSuiteId}`,
 				),
 			)
+			// Bind the acknowledged count: this is the exact replay Wilco flagged —
+			// a proof that committed only to the id could be captured on a clean
+			// completion and re-presented here to finalise with an unacknowledged
+			// permanent loss. Binding hasErrors (always true on this path) and the
+			// accepted count closes it.
 			const proof = await buildKeyProofHeaders({
 				suiteId: this.migrationStatus.oldSuiteId,
 				purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
 				encryptedPrivateKey: oldSuite.privateKey,
 				masterPassword: oldPassword,
-				boundValues: [migrationId],
+				boundValues: [migrationId, boundParam(true), boundParam(accepted)],
 			})
 
 			const data = await this.completeMigration(
@@ -1060,12 +1094,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// Completion's proof is over the OLD key, which resume already holds
 			// the password for — so a resumed run finalises without any extra
 			// prompt, exactly like the initiate path.
+			// Bind every parameter finaliseMigration sends to complete (id,
+			// hasErrors, and the absent acceptUnrecoverable), matching the initiate
+			// path — a proof that commits only to the id could be re-aimed to
+			// acknowledge a loss.
 			const completeProof = await buildKeyProofHeaders({
 				suiteId: this.migrationStatus.oldSuiteId,
 				purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
 				encryptedPrivateKey: oldSuite.privateKey,
 				masterPassword: oldPassword,
-				boundValues: [migrationId],
+				boundValues: [
+					migrationId,
+					boundParam(outcome.failed > 0),
+					boundParam(null),
+				],
 			})
 			await this.finaliseMigration(migrationId, outcome, completeProof)
 
@@ -1113,19 +1155,37 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * caller to surface and re-confirm.
 		 *
 		 * @param {string} reason The reason for revocation
+		 * @param {string} masterPassword The master password, to sign the vault-key proof
 		 * @param {boolean} acceptEmergencyLoss Proceed even though emergency access will be deleted
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
-		async revokeSuite(reason, acceptEmergencyLoss = false) {
+		async revokeSuite(reason, masterPassword, acceptEmergencyLoss = false) {
 			if (!this.currentSuite) {
 				throw new Error('No active suite to revoke')
 			}
+
+			// Revocation is guarded by a vault-key proof: prove possession of the
+			// master password over this suite's private key, binding the reason AND
+			// the emergency-loss flag so a proof captured on a no-override revoke
+			// cannot be replayed with acceptEmergencyLoss=true to force emergency
+			// deletion. A stolen session has no master password and cannot revoke.
+			const session = useSessionStore()
+			const proof = await buildKeyProofHeaders({
+				suiteId: this.currentSuite.id,
+				purpose: PROOF_PURPOSE.REVOKE_SUITE,
+				encryptedPrivateKey: session.encryptedPrivateKey,
+				masterPassword,
+				boundValues: [reason, boundParam(acceptEmergencyLoss)],
+			})
 
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/suites/${this.currentSuite.id}/revoke`,
 				),
 				{ reason, acceptEmergencyLoss },
+				{ headers: proof },
 			)
 
 			this.currentSuite = response.data

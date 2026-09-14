@@ -205,6 +205,16 @@
 										" />
 								</div>
 
+								<!-- Revocation is guarded by a vault-key proof: the
+								     master password signs the proof and is never sent,
+								     so a stolen session cannot revoke the vault. -->
+								<div style="margin-top: 0.5rem">
+									<NcPasswordField
+										v-model="revokePassword"
+										:label="t('keepiq', 'Your master password')"
+										:disabled="revoking" />
+								</div>
+
 								<!-- The server refuses to silently delete a usable
 								     break-glass path; once it has, name the loss and
 								     the retrieve-first ordering before letting the
@@ -231,7 +241,11 @@
 									">
 									<NcButton
 										variant="error"
-										:disabled="!revokeReason || revoking"
+										:disabled="
+											!revokeReason
+											|| !revokePassword
+											|| revoking
+										"
 										data-testid="revoke-confirm"
 										@click="
 											handleRevoke(revokeEmergencyCount > 0)
@@ -370,6 +384,7 @@ import {
 	NcButton,
 	NcEmptyContent,
 	NcNoteCard,
+	NcPasswordField,
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
@@ -404,6 +419,7 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcNoteCard,
+		NcPasswordField,
 		NcSelect,
 		NcTextField,
 		TimerIcon,
@@ -481,6 +497,7 @@ export default {
 			showRecovery: false,
 			revokeConfirm: false,
 			revokeReason: '',
+			revokePassword: '',
 			revoking: false,
 			revokeSuccess: false,
 			revokeError: null,
@@ -834,21 +851,27 @@ export default {
 		},
 
 		/**
-		 * Dismiss the revoke confirmation, clearing any emergency-loss prompt.
+		 * Dismiss the revoke confirmation, clearing the entered master password
+		 * and any emergency-loss prompt.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		cancelRevoke() {
 			this.revokeConfirm = false
+			this.revokeReason = ''
+			this.revokePassword = ''
 			this.revokeEmergencyCount = 0
 		},
 
 		/**
 		 * Revoke the current user's encryption suite from the app shell,
-		 * surfacing success/error state to the UI.
+		 * surfacing success/error state to the UI. The master password signs the
+		 * vault-key proof the guarded endpoint requires and is never sent.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 */
 		async handleRevoke(acceptEmergencyLoss = false) {
 			this.revoking = true
@@ -858,11 +881,13 @@ export default {
 			try {
 				await this.suiteStore.revokeSuite(
 					this.revokeReason,
+					this.revokePassword,
 					acceptEmergencyLoss,
 				)
 				this.revokeSuccess = true
 				this.revokeConfirm = false
 				this.revokeReason = ''
+				this.revokePassword = ''
 				this.revokeEmergencyCount = 0
 			} catch (e) {
 				// The server refuses to silently delete a usable break-glass path.

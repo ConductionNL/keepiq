@@ -67,7 +67,7 @@ class VaultKeyProofAttributesTest extends TestCase {
 			'complete migration' => [
 				MigrationController::class,
 				'complete',
-				['id'],
+				['id', 'hasErrors', 'acceptUnrecoverable'],
 				'migrationOldSuite',
 				VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION,
 			],
@@ -77,6 +77,13 @@ class VaultKeyProofAttributesTest extends TestCase {
 				['id'],
 				'active',
 				VaultKeyProofService::PURPOSE_EMERGENCY_DESTROY,
+			],
+			'revoke suite' => [
+				EncryptionSuiteController::class,
+				'revoke',
+				['reason', 'acceptEmergencyLoss'],
+				'routeParam:id',
+				VaultKeyProofService::PURPOSE_REVOKE_SUITE,
 			],
 		];
 	}//end guardedMethodsProvider()

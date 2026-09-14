@@ -29,6 +29,7 @@ export const PROOF_PURPOSE = {
 	UPDATE_PRIVATE_KEY: 'update-private-key',
 	COMPLETE_MIGRATION: 'complete-migration',
 	EMERGENCY_DESTROY: 'emergency-access-destroy',
+	REVOKE_SUITE: 'revoke-suite',
 }
 
 /**
