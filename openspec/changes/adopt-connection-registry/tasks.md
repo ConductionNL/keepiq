@@ -2,9 +2,9 @@
 
 ## 1. Declare
 
-- [ ] 1.1 Write `lib/Settings/connections.json` with `hibp` and `siem`.
-- [ ] 1.2 Give the Breach checking and SIEM audit export sections the ids the file links to.
-- [ ] 1.3 Guard the file in `tests/Unit/Settings/ConnectionsDeclarationTest.php`, against integriq's schema vendored in `tests/fixtures/Integriq/connections.schema.json`.
+- [x] 1.1 Write `lib/Settings/connections.json` with `hibp` and `siem`.
+- [x] 1.2 Give the Breach checking and SIEM audit export sections the ids the file links to.
+- [x] 1.3 Guard the file in `tests/Unit/Settings/ConnectionsDeclarationTest.php`, against integriq's schema vendored in `tests/fixtures/Integriq/connections.schema.json`.
 
 ## 2. Page
 
