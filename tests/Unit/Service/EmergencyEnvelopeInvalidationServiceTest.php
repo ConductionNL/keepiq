@@ -92,7 +92,10 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 			auditTrail: new EmergencyAccessAuditTrail(eventDispatcher: $dispatcher),
 		);
 
-		$this->mapper->method('update')->willReturnArgument(0);
+		// `update` is deliberately NOT stubbed here: the refusal tests assert it is
+		// never reached (expects($this->never())), and a shared stub would make the
+		// method already-configured and defeat that. The tests that DO persist stub
+		// it themselves with willReturnArgument(0).
 	}//end setUp()
 
 	/**
@@ -172,6 +175,7 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 		$contact = $this->contact();
 		$contact->setInvalidatedReason('was-invalidated-earlier');
 		$this->mapper->method('findById')->willReturn($contact);
+		$this->mapper->method('update')->willReturnArgument(0);
 		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite('grantee-active'));
 
 		$updated = $this->service->reEnvelopeForRotation(
@@ -192,11 +196,41 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 	}//end testReEnvelopeRepointsToNewSuiteAndKeepsGranted()
 
 	/**
+	 * A re-envelope carries an in-flight break-glass (requested/approved) onto the
+	 * new suite WITHOUT forcing it back to granted — that would silently veto the
+	 * request — and without mis-auditing the carry as a grant.
+	 *
+	 * @return void
+	 */
+	public function testReEnvelopePreservesInFlightBreakGlassState(): void {
+		$contact = $this->contact(state: EmergencyContact::STATE_APPROVED);
+		$this->mapper->method('findById')->willReturn($contact);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite('grantee-active'));
+
+		$updated = $this->service->reEnvelopeForRotation(
+			ownerId: 'alice',
+			oldSuiteId: 'old-suite',
+			newSuiteId: 'new-suite',
+			contactId: 'rel-1',
+			recoveryEnvelope: $this->envelope(),
+			sealedSuiteId: 'grantee-active',
+		);
+
+		// Carried across the rotation (new suite, fresh envelope) but the approved
+		// break-glass is neither vetoed nor relabelled as a grant.
+		$this->assertSame('new-suite', $updated->getGrantorSuiteId());
+		$this->assertSame(EmergencyContact::STATE_APPROVED, $updated->getState());
+		$this->assertSame(0, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_GRANTED));
+	}//end testReEnvelopePreservesInFlightBreakGlassState()
+
+	/**
 	 * A contact whose grantor is not the migration owner is refused.
 	 *
 	 * @return void
 	 */
 	public function testReEnvelopeRefusesForeignGrantor(): void {
+		$this->mapper->expects($this->never())->method('update');
 		$this->mapper->method('findById')->willReturn($this->contact(grantor: 'mallory'));
 
 		$this->expectException(ForbiddenException::class);
@@ -216,6 +250,7 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReEnvelopeRefusesContactOnDifferentSuite(): void {
+		$this->mapper->expects($this->never())->method('update');
 		$this->mapper->method('findById')->willReturn($this->contact(grantorSuite: 'some-other-suite'));
 
 		$this->expectException(ForbiddenException::class);
@@ -235,6 +270,7 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReEnvelopeThrowsWhenContactMissing(): void {
+		$this->mapper->expects($this->never())->method('update');
 		$this->mapper->method('findById')->willThrowException(new DoesNotExistException('nope'));
 
 		$this->expectException(NotFoundException::class);
@@ -259,6 +295,7 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 	 * @dataProvider malformedEnvelopes
 	 */
 	public function testReEnvelopeRejectsMalformedEnvelope(string $envelope): void {
+		$this->mapper->expects($this->never())->method('update');
 		$this->mapper->method('findById')->willReturn($this->contact());
 		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite('grantee-active'));
 
@@ -296,6 +333,7 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReEnvelopeRejectsSuiteMismatch(): void {
+		$this->mapper->expects($this->never())->method('update');
 		$this->mapper->method('findById')->willReturn($this->contact());
 		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite('grantee-active'));
 
@@ -317,6 +355,7 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReEnvelopeRejectsWhenGranteeHasNoActiveSuite(): void {
+		$this->mapper->expects($this->never())->method('update');
 		$this->mapper->method('findById')->willReturn($this->contact());
 		$this->suiteMapper->method('findActiveByOwner')->willThrowException(new DoesNotExistException('none'));
 

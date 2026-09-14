@@ -250,20 +250,33 @@ class EmergencyEnvelopeInvalidationService {
 		$contact->setRecoveryEnvelope($recoveryEnvelope);
 		$contact->setGrantorSuiteId($newSuiteId);
 		$contact->setGranteeSuiteId($sealedSuiteId);
-		$contact->setState(EmergencyContact::STATE_GRANTED);
+
+		// Re-enveloping carries the escrow across the key rotation; it is NOT a
+		// lifecycle change, so the state is PRESERVED. Forcing STATE_GRANTED would
+		// silently veto an in-flight (`requested`) or `approved` break-glass and
+		// mis-audit that veto as a grant. The one exception is a previously
+		// invalidated contact — the client should not send one, but if it does, a
+		// fresh envelope genuinely re-establishes it, so it becomes granted.
+		if ($contact->getState() === EmergencyContact::STATE_INVALIDATED) {
+			$contact->setState(EmergencyContact::STATE_GRANTED);
+		}
+
 		$contact->setInvalidatedReason(null);
 		$contact->setUpdatedAt(new DateTime());
 		$updated = $this->mapper->update($contact);
 
-		// A rotation re-establishes the contact under the new key; audited as a
-		// (re-)grant, exactly as recordGranted's contract covers.
-		$this->auditTrail->recordGranted(
-			grantorUserId: $updated->getGrantorUserId(),
-			granteeUserId: $updated->getGranteeUserId(),
-			id: $updated->getId(),
-			accessLevel: (string)$updated->getAccessLevel(),
-			waitPeriodDays: (int)$updated->getWaitPeriodDays(),
-		);
+		// Audit as a (re-)grant only when the escrow is (re-)established to a
+		// granted contact — never relabel a preserved in-flight or declined
+		// request as a grant.
+		if ($updated->getState() === EmergencyContact::STATE_GRANTED) {
+			$this->auditTrail->recordGranted(
+				grantorUserId: $updated->getGrantorUserId(),
+				granteeUserId: $updated->getGranteeUserId(),
+				id: $updated->getId(),
+				accessLevel: (string)$updated->getAccessLevel(),
+				waitPeriodDays: (int)$updated->getWaitPeriodDays(),
+			);
+		}
 
 		return $updated;
 	}//end reEnvelopeForRotation()

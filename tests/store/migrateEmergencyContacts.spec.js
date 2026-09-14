@@ -63,7 +63,14 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 
 	it('re-envelopes a reachable grantee and reports no residual', async () => {
 		mockGets({
-			contacts: [{ id: 'rel-1', granteeUserId: 'bob', state: 'granted' }],
+			contacts: [
+				{
+					id: 'rel-1',
+					granteeUserId: 'bob',
+					state: 'granted',
+					grantorSuiteId: 'old-suite',
+				},
+			],
 			certs: { bob: { suiteId: 'bob-suite', certificate: 'BOB-CERT' } },
 		})
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
@@ -71,6 +78,7 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await store.migrateEmergencyContacts({
 			migrationId: 'migr-1',
+			oldSuiteId: 'old-suite',
 			newPrivateKeyPem: 'NEW-PEM',
 		})
 
@@ -84,7 +92,14 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 
 	it('reports an unreachable grantee as residual and never posts', async () => {
 		mockGets({
-			contacts: [{ id: 'rel-1', granteeUserId: 'bob', state: 'granted' }],
+			contacts: [
+				{
+					id: 'rel-1',
+					granteeUserId: 'bob',
+					state: 'granted',
+					grantorSuiteId: 'old-suite',
+				},
+			],
 			certs: { bob: 'throw' },
 		})
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
@@ -92,6 +107,7 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await store.migrateEmergencyContacts({
 			migrationId: 'migr-1',
+			oldSuiteId: 'old-suite',
 			newPrivateKeyPem: 'NEW-PEM',
 		})
 
@@ -102,7 +118,12 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 	it('skips an already-invalidated contact entirely', async () => {
 		mockGets({
 			contacts: [
-				{ id: 'rel-x', granteeUserId: 'carol', state: 'invalidated' },
+				{
+					id: 'rel-x',
+					granteeUserId: 'carol',
+					state: 'invalidated',
+					grantorSuiteId: 'old-suite',
+				},
 			],
 			certs: {},
 		})
@@ -111,6 +132,7 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await store.migrateEmergencyContacts({
 			migrationId: 'migr-1',
+			oldSuiteId: 'old-suite',
 			newPrivateKeyPem: 'NEW-PEM',
 		})
 
@@ -122,8 +144,18 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 	it('treats a re-point failure as residual without halting the run', async () => {
 		mockGets({
 			contacts: [
-				{ id: 'rel-1', granteeUserId: 'bob', state: 'granted' },
-				{ id: 'rel-2', granteeUserId: 'dave', state: 'granted' },
+				{
+					id: 'rel-1',
+					granteeUserId: 'bob',
+					state: 'granted',
+					grantorSuiteId: 'old-suite',
+				},
+				{
+					id: 'rel-2',
+					granteeUserId: 'dave',
+					state: 'granted',
+					grantorSuiteId: 'old-suite',
+				},
 			],
 			certs: {
 				bob: { suiteId: 'bob-suite', certificate: 'BOB-CERT' },
@@ -141,6 +173,7 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await store.migrateEmergencyContacts({
 			migrationId: 'migr-1',
+			oldSuiteId: 'old-suite',
 			newPrivateKeyPem: 'NEW-PEM',
 		})
 
@@ -154,10 +187,39 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await store.migrateEmergencyContacts({
 			migrationId: 'migr-1',
+			oldSuiteId: 'old-suite',
 			newPrivateKeyPem: 'NEW-PEM',
 		})
 
 		expect(residual).toEqual([])
+		expect(post).not.toHaveBeenCalled()
+	})
+
+	it('skips a contact stranded on a prior suite — not a residual of this rotation', async () => {
+		mockGets({
+			contacts: [
+				{
+					id: 'rel-old',
+					granteeUserId: 'erin',
+					state: 'granted',
+					grantorSuiteId: 'a-prior-suite',
+				},
+			],
+			certs: { erin: { suiteId: 'erin-suite', certificate: 'ERIN-CERT' } },
+		})
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+
+		const store = useEncryptionSuiteStore()
+		const residual = await store.migrateEmergencyContacts({
+			migrationId: 'migr-1',
+			oldSuiteId: 'old-suite',
+			newPrivateKeyPem: 'NEW-PEM',
+		})
+
+		// Not on this rotation's old suite: skipped entirely, never posted, and not
+		// reported as lost in this rotation.
+		expect(residual).toEqual([])
+		expect(buildRecoveryEnvelope).not.toHaveBeenCalled()
 		expect(post).not.toHaveBeenCalled()
 	})
 })

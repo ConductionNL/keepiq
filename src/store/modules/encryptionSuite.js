@@ -309,6 +309,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// blocks completion (design D2).
 			outcome.residualContacts = await this.migrateEmergencyContacts({
 				migrationId: response.data.migration.id,
+				oldSuiteId: response.data.migration.oldSuiteId,
 				newPrivateKeyPem,
 			})
 
@@ -362,11 +363,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {object} params The parameters.
 		 * @param {string} params.migrationId The migration id.
+		 * @param {string} params.oldSuiteId The rotating old suite; only contacts bound to it are carried.
 		 * @param {string} params.newPrivateKeyPem The freshly generated private key PEM.
 		 * @return {Promise<string[]>} The grantee ids that could not be re-enveloped.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
-		async migrateEmergencyContacts({ migrationId, newPrivateKeyPem }) {
+		async migrateEmergencyContacts({
+			migrationId,
+			oldSuiteId,
+			newPrivateKeyPem,
+		}) {
 			const residualContacts = []
 
 			let contacts
@@ -384,6 +390,15 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			for (const contact of contacts) {
 				// An already-invalidated contact has no envelope to carry.
 				if (contact.state === 'invalidated') {
+					continue
+				}
+
+				// Only THIS rotation's contacts belong here. A contact stranded on
+				// a prior suite (grantorSuiteId !== the rotating old suite) was not
+				// lost in this rotation, so skip it silently rather than posting it
+				// (the server would refuse it, grantorSuiteId !== oldSuiteId) and
+				// mislabelling it as a residual this rotation dropped.
+				if (contact.grantorSuiteId !== oldSuiteId) {
 					continue
 				}
 

@@ -217,6 +217,7 @@ class EmergencyContact extends Entity implements JsonSerializable {
 			'accessLevel' => $this->accessLevel,
 			'waitPeriodDays' => $this->waitPeriodDays,
 			'state' => $this->state,
+			'grantorSuiteId' => $this->grantorSuiteId,
 			'requestedAt' => $this->requestedAt?->format('c'),
 			'hasEnvelope' => ($this->recoveryEnvelope !== null && $this->recoveryEnvelope !== ''),
 			'createdAt' => $this->createdAt?->format('c'),
