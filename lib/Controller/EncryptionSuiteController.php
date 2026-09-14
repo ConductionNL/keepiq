@@ -434,7 +434,12 @@ class EncryptionSuiteController extends OCSController {
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	#[PasswordConfirmationRequired]
 	public function forceRevoke(string $id, string $reason, bool $markCompromised = false): JSONResponse {
-		$adminUid = $this->userSession->getUser()->getUID();
+		$admin = $this->userSession->getUser();
+		if ($admin === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$adminUid = $admin->getUID();
 
 		if (trim($reason) === '') {
 			return new JSONResponse(
