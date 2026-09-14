@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Komandas mapei pievienoti {ok} no {total} noslēpumiem",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiq pārlūka paplašinājums automātiski aizpilda jūsu pieteikšanās datus, nodrošina piekļuves atslēgas un rāda TOTP kodus, un jūsu noslēpumi nekad neatstāj jūsu ierīci.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Tiek izveidots vietturis, kas paliek tukšs, līdz saņēmējs to aizpilda — jums nekad nav jāizdomā vērtība.",
-        "Could not reach the directory": "Neizdevās sasniegt direktoriju"
+        "Could not reach the directory": "Neizdevās sasniegt direktoriju",
+        "Integrations": "Integrācijas",
+        "Connection": "Savienojums",
+        "Status message": "Statusa ziņojums",
+        "Last checked": "Pēdējoreiz pārbaudīts",
+        "All connections": "Visi savienojumi",
+        "Add integration": "Pievienot integrāciju",
+        "Open settings": "Atvērt iestatījumus",
+        "Configured": "Konfigurēts",
+        "Limited": "Ierobežots",
+        "Simulated": "Simulēts",
+        "Not available": "Nav pieejams",
+        "Error": "Kļūda"
     },
     "nplurals=2; plural=(n != 1);"
 )

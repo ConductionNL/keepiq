@@ -93,7 +93,8 @@
 			:aiCompanion="true"
 			:supportDialog="showSupportDialog"
 			:manifest="manifest"
-			:customComponents="customComponents"
+			:customComponents="shellCustomComponents"
+			:formatters="formatters"
 			:pageTypes="pageTypes"
 			:registry="registry"
 			appId="keepiq"
@@ -404,6 +405,10 @@ import {
 	isPublicSurface,
 	LOCK_ROUTE_NAME,
 } from './router/guards.js'
+import {
+	createConnectionFormatters,
+	createConnectionHandlers,
+} from './services/connectionRegistry.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
@@ -508,10 +513,44 @@ export default {
 				{ value: '10min', label: ncT('keepiq', '10 minutes') },
 				{ value: '30min', label: ncT('keepiq', '30 minutes') },
 			],
+
+			/**
+			 * Named cell formatters merged over CnAppRoot's built-ins.
+			 * `connectionStatus` and `connectionSettingsLabel` render the
+			 * Integrations page (adopt-connection-registry); nextcloud-vue
+			 * 2.41.1 ships neither as a built-in. Before this change the app
+			 * passed no formatters at all.
+			 */
+			formatters: createConnectionFormatters((source) =>
+				ncT('keepiq', source),
+			),
 		}
 	},
 
 	computed: {
+		/**
+		 * The `customComponents` map CnAppRoot receives: the page components
+		 * main.js derives from src/registry.js, plus the Integrations page's
+		 * Add integration header-action handler (adopt-connection-registry).
+		 *
+		 * The handler is a FUNCTION, because it leaves the app for integriq's
+		 * Connections overview and a header action's `navigate` only pushes a
+		 * route inside this app. CnIndexPage resolves a handler name against
+		 * this map, not against `registry`.
+		 *
+		 * @return {object} Map of name to component or handler.
+		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+		 */
+		shellCustomComponents() {
+			return {
+				...this.customComponents,
+				...createConnectionHandlers({
+					generateUrl,
+					assign: (url) => window.location.assign(url),
+				}),
+			}
+		},
+
 		/**
 		 * Whether this page is being served to an anonymous recipient.
 		 *
