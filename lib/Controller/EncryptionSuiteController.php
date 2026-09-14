@@ -311,11 +311,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['reason', 'acceptEmergencyLoss'],
-		subject: 'routeParam:id',
-		purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE
-	)]
+	#[VaultKeyProofRequired(binds: ['reason', 'acceptEmergencyLoss'], subject: 'routeParam:id', purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE)]
 	public function revoke(string $id, string $reason, bool $acceptEmergencyLoss = false): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
