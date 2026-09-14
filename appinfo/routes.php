@@ -37,6 +37,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'encryptionSuite#create',            'url' => '/api/v1/suites',                          'verb' => 'POST'],
     ['name' => 'encryptionSuite#updatePrivateKey',  'url' => '/api/v1/suites/{id}/private-key',         'verb' => 'PUT'],
     ['name' => 'encryptionSuite#revoke',            'url' => '/api/v1/suites/{id}/revoke',              'verb' => 'POST'],
+    ['name' => 'encryptionSuite#forceRevoke',       'url' => '/api/v1/suites/{id}/force-revoke',        'verb' => 'POST'],
     ['name' => 'encryptionSuite#reinstate',         'url' => '/api/v1/suites/{id}/reinstate',           'verb' => 'POST'],
     ['name' => 'encryptionSuite#compromiseRecovery','url' => '/api/v1/suites/compromise-recovery',      'verb' => 'POST'],
     ['name' => 'encryptionSuite#proofChallenge',    'url' => '/api/v1/suites/{id}/proof-challenge',     'verb' => 'GET'],

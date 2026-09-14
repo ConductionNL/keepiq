@@ -151,6 +151,13 @@ class VaultKeyProofAttributesTest extends TestCase {
 				'Abort is restorative — it returns the vault to the still-active old suite. '
 				. 'Requiring a proof would leave a vault wedged by an unauthorised rotation wedged.',
 			],
+			'admin force-revoke' => [
+				EncryptionSuiteController::class,
+				'forceRevoke',
+				'The administrator holds no vault key (zero-knowledge), so a vault-key proof is '
+				. 'unproducible; forceRevoke is guarded by AuthorizedAdminSetting + PasswordConfirmationRequired '
+				. 'instead (ADR-005).',
+			],
 		];
 	}//end deliberatelyUnguardedProvider()
 

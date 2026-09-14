@@ -34,6 +34,7 @@ use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -394,6 +395,87 @@ class EncryptionSuiteController extends OCSController {
 			);
 		}
 	}//end reinstate()
+
+	/**
+	 * Force-revoke any EncryptionSuite by id (administrator only).
+	 *
+	 * The administrator counterpart to the owner's proof-gated revoke(): the
+	 * vault is zero-knowledge, so an administrator holds no vault key to sign the
+	 * revoke challenge (ADR-003/ADR-005). Authorisation is the admin guard plus
+	 * Nextcloud sudo (re-confirm the administrator's OWN password), NOT a
+	 * vault-key proof; this is the only revocation path for a locked-out owner, a
+	 * de-authorised departure, a compromise, or an application-owned suite with no
+	 * human owner. It deliberately does NOT call validateOwnership() — cross-owner
+	 * revocation is the whole point, and the AuthorizedAdminSetting guard (which
+	 * reinstate() also relies on) is the authorization, so no-admin-idor must read
+	 * this as an admin-guarded method, not an unguarded NoAdminRequired one.
+	 *
+	 * The usable-emergency-contact count is read BEFORE revokeSuite() because the
+	 * revoke event cascade clears those envelopes; it is threaded into the audit
+	 * metadata and surfaced as an informational warning, never as a gate (unlike
+	 * the owner path's acceptEmergencyLoss). Only the count crosses the wire — the
+	 * contacts' identities stay grantor-private.
+	 *
+	 * @param string $id The suite ID
+	 * @param string $reason The required, free-form revocation reason
+	 * @param bool $markCompromised Treat the suite's secrets as compromised (default false)
+	 *
+	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $markCompromised is the
+	 *   administrator's explicit, transient compromise decision carried in the
+	 *   POST body and bound by name by the router (ADR-005), not a mode switch:
+	 *   it only drives the compromise cascade branch on the revoke event.
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 */
+	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[PasswordConfirmationRequired]
+	public function forceRevoke(string $id, string $reason, bool $markCompromised = false): JSONResponse {
+		$adminUid = $this->userSession->getUser()->getUID();
+
+		if (trim($reason) === '') {
+			return new JSONResponse(
+				data: ['message' => 'A non-empty reason is required'],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		try {
+			// Read BEFORE revokeSuite(): the EncryptionSuiteRevokedEvent cascade
+			// clears the grantor's emergency envelopes, so the usable count is
+			// non-zero here only while the contacts still exist.
+			$emergencyCount = $this->emergencyService->countUsableForGrantorSuite($id);
+
+			$suite = $this->suiteService->revokeSuite(
+				id: $id,
+				reason: $reason,
+				revokedBy: $adminUid,
+				markCompromised: $markCompromised,
+				emergencyContactsDestroyed: $emergencyCount,
+			);
+
+			$data = $suite->jsonSerialize();
+			$data['emergencyContactsDestroyed'] = $emergencyCount;
+			if ($markCompromised === false) {
+				$data['warning'] = 'The revoked user may still know these secrets; consider rotating them.';
+			}
+
+			return new JSONResponse(data: $data);
+		} catch (RuntimeException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage()],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage()],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}//end try
+	}//end forceRevoke()
 
 	/**
 	 * Initiate compromise recovery: create new suite and migration record.
