@@ -41,6 +41,7 @@ use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IConfig;
 use OCP\Security\ISecureRandom;
+use RuntimeException;
 
 /**
  * Stateless issuance and verification of vault-key proofs.
@@ -70,6 +71,7 @@ class VaultKeyProofService {
 		self::PURPOSE_UPDATE_PRIVATE_KEY,
 		self::PURPOSE_COMPLETE_MIGRATION,
 		self::PURPOSE_EMERGENCY_DESTROY,
+		self::PURPOSE_REVOKE_SUITE,
 	];
 
 	/**
@@ -237,9 +239,19 @@ class VaultKeyProofService {
 	 * @param string $payload The base64url payload
 	 *
 	 * @return string
+	 *
+	 * @throws RuntimeException When the instance secret is unset — a key-material
+	 *   control must fail loudly, not silently degrade to an empty HMAC key.
 	 */
 	private function mac(string $payload): string {
 		$secret = $this->config->getSystemValueString('secret', '');
+		if ($secret === '') {
+			throw new RuntimeException(
+				'Cannot compute a vault-key-proof MAC: the Nextcloud instance secret '
+				. 'is unset. A key-material control must not degrade to an empty key.'
+			);
+		}
+
 		return $this->b64url(raw: hash_hmac('sha256', $payload, $secret, true));
 	}//end mac()
 

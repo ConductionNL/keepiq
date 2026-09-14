@@ -119,6 +119,18 @@ class VaultKeyProofAttributesTest extends TestCase {
 		$this->assertSame($binds, $attribute->getBinds(), "$class::$method binds");
 		$this->assertSame($subject, $attribute->getSubject(), "$class::$method subject");
 		$this->assertSame($purpose, $attribute->getPurpose(), "$class::$method purpose");
+
+		// A guarded route's purpose MUST be issuable, or proofChallenge answers
+		// 400, no proof can be built, and the middleware refuses every request —
+		// the guard is present but inert (revoke shipped exactly this way: the
+		// purpose constant existed but was never added to ALLOWED_PURPOSES, and 30
+		// green checks missed it because nothing crossed the attribute's purpose
+		// against the issuable set).
+		$this->assertContains(
+			$purpose,
+			VaultKeyProofService::ALLOWED_PURPOSES,
+			"$class::$method purpose '$purpose' must be in ALLOWED_PURPOSES, or no proof can be issued for it"
+		);
 	}//end testDestructiveMethodCarriesTheGuard()
 
 	/**
