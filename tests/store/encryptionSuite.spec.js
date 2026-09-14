@@ -94,7 +94,9 @@ describe('useEncryptionSuiteStore — revocation', () => {
 				suiteId: 'suite-1',
 				purpose: 'revoke-suite',
 				masterPassword: 'master-pw',
-				boundValues: ['laptop stolen'],
+				// reason, then acceptEmergencyLoss serialised as the server's
+				// (string) cast — '' for the default false.
+				boundValues: ['laptop stolen', ''],
 			}),
 		)
 
@@ -108,7 +110,10 @@ describe('useEncryptionSuiteStore — revocation', () => {
 		// The reason is REQUIRED by the spec: status is set alongside
 		// revoked_at, revoked_reason and revoked_by. Dropping it here would
 		// still return 200 and still revoke, losing only the audit trail.
-		expect(body).toEqual({ reason: 'laptop stolen' })
+		expect(body).toEqual({
+			reason: 'laptop stolen',
+			acceptEmergencyLoss: false,
+		})
 
 		// The guard is enforced by the middleware, so the proof headers MUST ride
 		// the request — a revoke without them is a 401 the user never asked for.
@@ -116,6 +121,52 @@ describe('useEncryptionSuiteStore — revocation', () => {
 			'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
 			'X-Keepiq-Key-Proof': 'test-sig',
 		})
+	})
+
+	it('carries the emergency-loss override in the body and the proof', async () => {
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'suite-1', status: 'revoked' },
+		})
+		const store = useEncryptionSuiteStore()
+		store.currentSuite = { id: 'suite-1', status: 'active' }
+
+		await store.revokeSuite('lost password', 'master-pw', true)
+
+		// Bound into the proof (as '1') as well as sent in the body, so a proof
+		// captured on a no-override revoke cannot be replayed to force it.
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith(
+			expect.objectContaining({
+				boundValues: ['lost password', '1'],
+			}),
+		)
+		expect(post.mock.calls[0][1]).toEqual({
+			reason: 'lost password',
+			acceptEmergencyLoss: true,
+		})
+	})
+
+	it('propagates the 409 emergency-access refusal for the caller to surface', async () => {
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: {
+				status: 409,
+				data: {
+					error: 'emergency_access_present',
+					usableEmergencyContacts: 3,
+				},
+			},
+		})
+		const store = useEncryptionSuiteStore()
+		store.currentSuite = { id: 'suite-1', status: 'active' }
+
+		// The refusal must reach the UI so it can show the count and re-confirm —
+		// never be swallowed into a silent success.
+		await expect(
+			store.revokeSuite('lost password', 'master-pw'),
+		).rejects.toMatchObject({
+			response: { data: { usableEmergencyContacts: 3 } },
+		})
+		// The refused revocation must not evict the still-valid offline cache.
+		expect(evict).not.toHaveBeenCalled()
 	})
 
 	it('adopts the revoked suite returned by the server as the current suite', async () => {

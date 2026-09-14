@@ -26,6 +26,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\VaultKeyProofService;
@@ -59,6 +60,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @param MigrationService $migrationService The migration service
 	 * @param IUserSession $userSession The user session
 	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
+	 * @param EmergencyEnvelopeInvalidationService $emergencyService The emergency-envelope service (revoke safeguard)
 	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
 	 * @return void
@@ -69,6 +71,7 @@ class EncryptionSuiteController extends OCSController {
 		private MigrationService $migrationService,
 		private IUserSession $userSession,
 		private VaultKeyProofService $proofService,
+		private EmergencyEnvelopeInvalidationService $emergencyService,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -281,23 +284,35 @@ class EncryptionSuiteController extends OCSController {
 	 * with their master password, can. An owner who has LOST that password revokes
 	 * via the (separate, admin-only) recovery path, never this one.
 	 *
+	 * Revocation also deletes the owner's emergency-access recovery envelopes
+	 * outright (the revocation listener runs clearForGrantorRevocation), so while a
+	 * usable (non-invalidated) emergency contact exists it is refused unless the
+	 * caller passes $acceptEmergencyLoss; the refusal surfaces the COUNT of usable
+	 * contacts (never their identities) so the choice is made knowingly. An
+	 * emergency accessor must retrieve the secrets first, while the suite is still
+	 * active.
+	 *
 	 * @param string $id The suite ID
 	 * @param string $reason The revocation reason
+	 * @param bool $acceptEmergencyLoss Proceed even though emergency access will be deleted
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $acceptEmergencyLoss is a
+	 *   knowing-consent flag carried in the POST body and bound by name by the
+	 *   Nextcloud router, not a mode switch the caller toggles between two
+	 *   behaviours: it only lifts the safeguard refusal. Splitting the method
+	 *   would split the route and change the HTTP contract.
+	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['reason'],
-		subject: 'routeParam:id',
-		purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE
-	)]
-	public function revoke(string $id, string $reason): JSONResponse {
+	#[VaultKeyProofRequired(binds: ['reason', 'acceptEmergencyLoss'], subject: 'routeParam:id', purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE)]
+	public function revoke(string $id, string $reason, bool $acceptEmergencyLoss = false): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -317,6 +332,27 @@ class EncryptionSuiteController extends OCSController {
 			// delegations to permanent. `show()` and `updatePrivateKey()`
 			// already call this same helper; revoke() did not.
 			$this->validateOwnership(suite: $this->suiteService->getSuite($id));
+
+			// Refuse to silently destroy a still-usable break-glass path. The
+			// envelope clear runs asynchronously in EmergencyAccessSuiteRevocation-
+			// Listener, downstream of the event revokeSuite dispatches, so the
+			// safeguard must gate HERE, before that call. Only the count crosses
+			// the wire — the contacts' identities stay grantor-private.
+			if ($acceptEmergencyLoss === false) {
+				$usableContacts = $this->emergencyService->countUsableForGrantorSuite($id);
+				if ($usableContacts > 0) {
+					return new JSONResponse(
+						data: [
+							'error' => 'emergency_access_present',
+							'usableEmergencyContacts' => $usableContacts,
+							'message' => 'Revoking this suite permanently deletes its emergency access. '
+								. 'Any emergency accessor must retrieve the secrets first, while the suite is still active. '
+								. 'Confirm to proceed.',
+						],
+						statusCode: Http::STATUS_CONFLICT
+					);
+				}
+			}
 
 			$suite = $this->suiteService->revokeSuite(id: $id, reason: $reason, revokedBy: $userId);
 			return new JSONResponse(data: $suite->jsonSerialize());

@@ -81,7 +81,7 @@ class VaultKeyProofAttributesTest extends TestCase {
 			'revoke suite' => [
 				EncryptionSuiteController::class,
 				'revoke',
-				['reason'],
+				['reason', 'acceptEmergencyLoss'],
 				'routeParam:id',
 				VaultKeyProofService::PURPOSE_REVOKE_SUITE,
 			],

@@ -1,6 +1,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { buildRecoveryEnvelope } from '../../crypto/emergencyEnvelope.js'
 import {
 	decryptPrivateKey,
 	encryptPrivateKey,
@@ -212,7 +213,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @param {string} oldPassword The current master password.
 		 * @param {string} newPassword The new master password.
 		 * @return {Promise<{migrated: number, failed: number, droppedVersions: number,
-		 *   failures: Array<object>, usedWorker: boolean}>} The migration outcome.
+		 *   failures: Array<object>, usedWorker: boolean, residualContacts: string[]}>}
+		 *   The migration outcome, including the emergency contacts that could not
+		 *   be re-enveloped and must be re-established.
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
 		async initiateCompromiseRecovery(oldPassword, newPassword) {
@@ -296,6 +299,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				newPrivateKey: await importPrivateKey(newPrivateKeyPem),
 			})
 
+			// Migrate emergency-access recovery envelopes BEFORE completion. The
+			// completion sweep (SuiteMigrationCompletedEvent) invalidates every
+			// contact still bound to the old suite, so any contact re-enveloped
+			// here has already left the old suite and survives; the ones that
+			// could not be carried stay behind for the sweep to invalidate and are
+			// returned as residual for the form to prompt re-establishment.
+			// Emergency contacts are outside the completion gate, so this never
+			// blocks completion (design D2).
+			outcome.residualContacts = await this.migrateEmergencyContacts({
+				migrationId: response.data.migration.id,
+				oldSuiteId: response.data.migration.oldSuiteId,
+				newPrivateKeyPem,
+			})
+
 			// Only now, with nothing left on the old suite, is the vault ready
 			// for the terminal step. The premature complete() that used to sit
 			// here reported success five lines after initiating, before a single
@@ -327,6 +344,96 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			)
 
 			return outcome
+		},
+
+		/**
+		 * Migrate the owner's emergency-access recovery envelopes onto the new
+		 * suite during a compromise-recovery rotation.
+		 *
+		 * For each of the owner's non-invalidated contacts the browser fetches the
+		 * grantee's CURRENT certificate, mints a fresh recovery envelope escrowing
+		 * the new private key (never the old one — this is a build, not a re-wrap),
+		 * and posts it to the migration re-point endpoint. A grantee with no active
+		 * certificate, or a transient re-point failure, is not fatal: the contact
+		 * is left on the old suite for the completion sweep to invalidate and its
+		 * grantee is returned as residual so the form can prompt re-establishment.
+		 *
+		 * The raw new private key PEM stays in this rotation scope: it only ever
+		 * leaves as envelope ciphertext, never logged or persisted (ADR-003).
+		 *
+		 * @param {object} params The parameters.
+		 * @param {string} params.migrationId The migration id.
+		 * @param {string} params.oldSuiteId The rotating old suite; only contacts bound to it are carried.
+		 * @param {string} params.newPrivateKeyPem The freshly generated private key PEM.
+		 * @return {Promise<string[]>} The grantee ids that could not be re-enveloped.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		async migrateEmergencyContacts({
+			migrationId,
+			oldSuiteId,
+			newPrivateKeyPem,
+		}) {
+			const residualContacts = []
+
+			let contacts
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
+				)
+				contacts = Array.isArray(response.data) ? response.data : []
+			} catch {
+				// Could not enumerate the contacts — none are re-enveloped and the
+				// completion sweep invalidates them all, the pre-change behaviour.
+				return residualContacts
+			}
+
+			for (const contact of contacts) {
+				// An already-invalidated contact has no envelope to carry.
+				if (contact.state === 'invalidated') {
+					continue
+				}
+
+				// Only THIS rotation's contacts belong here. A contact stranded on
+				// a prior suite (grantorSuiteId !== the rotating old suite) was not
+				// lost in this rotation, so skip it silently rather than posting it
+				// (the server would refuse it, grantorSuiteId !== oldSuiteId) and
+				// mislabelling it as a residual this rotation dropped.
+				if (contact.grantorSuiteId !== oldSuiteId) {
+					continue
+				}
+
+				try {
+					const certResponse = await axios.get(
+						generateUrl(
+							'/apps/keepiq/api/v1/emergency-access/grantee-certificate',
+						),
+						{ params: { granteeUserId: contact.granteeUserId } },
+					)
+
+					const recoveryEnvelope = await buildRecoveryEnvelope(
+						newPrivateKeyPem,
+						certResponse.data.certificate,
+					)
+
+					await axios.post(
+						generateUrl(
+							`/apps/keepiq/api/v1/migrations/${migrationId}/emergency-contacts/${contact.id}`,
+						),
+						{
+							recoveryEnvelope,
+							granteeSuiteId: certResponse.data.suiteId,
+						},
+					)
+				} catch {
+					// Grantee unreachable (no active certificate) or a transient
+					// re-point failure: leave the contact on the old suite for the
+					// completion sweep to invalidate, and prompt re-establishment.
+					// Never fatal — emergency contacts are outside the gate.
+					residualContacts.push(contact.granteeUserId)
+				}
+			}
+
+			return residualContacts
 		},
 
 		/**
@@ -1056,34 +1163,43 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Revoke the current user's active encryption suite.
 		 *
+		 * When the suite still has a usable emergency contact the server refuses
+		 * with 409 `emergency_access_present` and the count of usable contacts,
+		 * unless `acceptEmergencyLoss` is set — revocation permanently deletes that
+		 * emergency access. The refusal propagates as a rejected request for the
+		 * caller to surface and re-confirm.
+		 *
 		 * @param {string} reason The reason for revocation
 		 * @param {string} masterPassword The master password, to sign the vault-key proof
+		 * @param {boolean} acceptEmergencyLoss Proceed even though emergency access will be deleted
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
-		async revokeSuite(reason, masterPassword) {
+		async revokeSuite(reason, masterPassword, acceptEmergencyLoss = false) {
 			if (!this.currentSuite) {
 				throw new Error('No active suite to revoke')
 			}
 
 			// Revocation is guarded by a vault-key proof: prove possession of the
-			// master password over this suite's private key, binding the reason so
-			// a captured proof cannot be replayed against a different request. A
-			// stolen session has no master password and so cannot revoke.
+			// master password over this suite's private key, binding the reason AND
+			// the emergency-loss flag so a proof captured on a no-override revoke
+			// cannot be replayed with acceptEmergencyLoss=true to force emergency
+			// deletion. A stolen session has no master password and cannot revoke.
 			const session = useSessionStore()
 			const proof = await buildKeyProofHeaders({
 				suiteId: this.currentSuite.id,
 				purpose: PROOF_PURPOSE.REVOKE_SUITE,
 				encryptedPrivateKey: session.encryptedPrivateKey,
 				masterPassword,
-				boundValues: [reason],
+				boundValues: [reason, boundParam(acceptEmergencyLoss)],
 			})
 
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/suites/${this.currentSuite.id}/revoke`,
 				),
-				{ reason },
+				{ reason, acceptEmergencyLoss },
 				{ headers: proof },
 			)
 
