@@ -112,8 +112,11 @@ class MigrationWorkService {
 	 * @param IDBConnection $db The database connection (per-record transactions)
 	 * @param IAppConfig $appConfig The app config (version window override)
 	 * @param LoggerInterface $logger The logger interface
+	 * @param EmergencyEnvelopeInvalidationService $emergencyService Counts re-enveloped contacts for the abort gate
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only — no domain logic.
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
@@ -123,6 +126,7 @@ class MigrationWorkService {
 		private IDBConnection $db,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
+		private EmergencyEnvelopeInvalidationService $emergencyService,
 	) {
 	}//end __construct()
 
@@ -363,7 +367,21 @@ class MigrationWorkService {
 			recipientId: $ownerId
 		);
 
-		return ($secrets + $versions + $grants);
+		// Emergency contacts are re-enveloped onto the new suite during the run
+		// (migrate-emergency-access-on-rotation), and that re-envelope OVERWRITES
+		// the old envelope — it cannot be undone. So a contact now bound to the new
+		// suite is a moved record exactly like a re-encrypted secret: aborting past
+		// it would discard the new suite and strand the contact on a deleted suite
+		// with an envelope escrowing a discarded key, while the residual sweep
+		// (which queries the OLD suite) never sees it. Counting it here makes abort
+		// refuse once any contact has been carried, keeping the gate's invariant
+		// whole (a grantor's contacts sit on the grantor's own new suite, so this
+		// count is already owner-scoped).
+		$contacts = $this->emergencyService->countUsableForGrantorSuite(
+			grantorSuiteId: $newSuiteId
+		);
+
+		return ($secrets + $versions + $grants + $contacts);
 	}//end countCommitted()
 
 	/**
