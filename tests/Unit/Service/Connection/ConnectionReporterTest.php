@@ -200,11 +200,26 @@ class ConnectionReporterTest extends TestCase {
 			static fn (Event $event): array => [
 				(new \ReflectionClass($event))->getShortName(),
 				(string) $event->key,
-				(property_exists($event, 'status') === true ? $event->status : ''),
+				self::statusOf(event: $event),
 			],
 			$this->sent
 		);
 	}//end sentSummary()
+
+	/**
+	 * The status an event carries, or an empty string for a refresh.
+	 *
+	 * @param Event $event The event sent.
+	 *
+	 * @return string
+	 */
+	private static function statusOf(Event $event): string {
+		if (property_exists($event, 'status') === false) {
+			return '';
+		}
+
+		return (string) $event->status;
+	}//end statusOf()
 
 	/**
 	 * A range lookup reports with this app's id, the hibp key, the status and the message.

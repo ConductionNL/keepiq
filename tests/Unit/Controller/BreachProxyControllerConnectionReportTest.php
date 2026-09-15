@@ -295,7 +295,7 @@ class BreachProxyControllerConnectionReportTest extends TestCase {
 
 		$message = 'Client error: `GET https://api.pwnedpasswords.com/range/' . self::PREFIX . '` resulted in a `' . $status . '` response';
 
-		return new class($message, $answer) extends RuntimeException {
+		return new class(message: $message, response: $answer) extends RuntimeException {
 
 			/**
 			 * Constructor.
@@ -304,7 +304,7 @@ class BreachProxyControllerConnectionReportTest extends TestCase {
 			 * @param IResponse $response The answer the call got.
 			 */
 			public function __construct(string $message, private IResponse $response) {
-				parent::__construct($message);
+				parent::__construct(message: $message);
 			}//end __construct()
 
 			/**

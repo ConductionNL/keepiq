@@ -214,11 +214,26 @@ class SiemConnectionReportCallersTest extends TestCase {
 			static fn (Event $event): array => [
 				(new \ReflectionClass($event))->getShortName(),
 				(string) $event->key,
-				(property_exists($event, 'status') === true ? $event->status : ''),
+				self::statusOf(event: $event),
 			],
 			$this->sent
 		);
 	}//end sentSummary()
+
+	/**
+	 * The status an event carries, or an empty string for a refresh.
+	 *
+	 * @param Event $event The event sent.
+	 *
+	 * @return string
+	 */
+	private static function statusOf(Event $event): string {
+		if (property_exists($event, 'status') === false) {
+			return '';
+		}
+
+		return (string) $event->status;
+	}//end statusOf()
 
 	/**
 	 * Deleting the last sink refreshes the SIEM row, then reports it unconfigured.
@@ -284,7 +299,13 @@ class SiemConnectionReportCallersTest extends TestCase {
 		$idle  = $this->sink(id: 'sink-2', endpoint: 'https://idle.gemeente.example/in');
 		$this->sinkMapper->method('findEnabled')->willReturn([$tried, $idle]);
 		$this->queueMapper->method('findDue')->willReturnCallback(
-			fn (string $sinkId): array => ($sinkId === 'sink-1' ? [$this->dueItem(sinkId: 'sink-1'), $this->dueItem(sinkId: 'sink-1')] : [])
+			function (string $sinkId): array {
+				if ($sinkId !== 'sink-1') {
+					return [];
+				}
+
+				return [$this->dueItem(sinkId: 'sink-1'), $this->dueItem(sinkId: 'sink-1')];
+			}
 		);
 		$this->transport->method('deliver')->willThrowException(new RuntimeException('down'));
 
@@ -292,7 +313,7 @@ class SiemConnectionReportCallersTest extends TestCase {
 		$reporter->expects($this->once())->method('reportSiemDrain')->with(
 			2,
 			$this->callback(
-				static fn (array $sinks): bool => $sinks === [$tried] && $tried->getLastDeliveryStatus() === 'failing'
+				callback: static fn (array $sinks): bool => $sinks === [$tried] && $tried->getLastDeliveryStatus() === 'failing'
 			)
 		)->willReturn(true);
 

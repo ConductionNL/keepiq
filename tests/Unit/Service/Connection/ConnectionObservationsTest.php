@@ -98,7 +98,10 @@ class ConnectionObservationsTest extends TestCase {
 		$ok     = ['host' => 'siem.gemeente.example', 'ok' => true];
 		$failed = ['host' => 'logs.gemeente.example', 'ok' => false];
 
-		$this->assertSame(expected: ['unconfigured', 'No SIEM sink is switched on. Add one under SIEM audit export.'], actual: $this->observations->siemDrain(enabledSinks: 0, delivered: []));
+		$this->assertSame(
+			expected: ['unconfigured', 'No SIEM sink is switched on. Add one under SIEM audit export.'],
+			actual: $this->observations->siemDrain(enabledSinks: 0, delivered: [])
+		);
 		$this->assertNull(actual: $this->observations->siemDrain(enabledSinks: 2, delivered: []));
 		$this->assertSame(
 			expected: ['configured', 'The SIEM sink at siem.gemeente.example took the last delivery.'],
@@ -171,7 +174,7 @@ class ConnectionObservationsTest extends TestCase {
 			}//end getStatusCode()
 		};
 
-		$withAnswer = new class('Client error: GET https://api.pwnedpasswords.com/range/ABCDE', $answer) extends RuntimeException {
+		$withAnswer = new class(message: 'Client error: GET https://api.pwnedpasswords.com/range/ABCDE', response: $answer) extends RuntimeException {
 
 			/**
 			 * Constructor.
@@ -180,7 +183,7 @@ class ConnectionObservationsTest extends TestCase {
 			 * @param object $response The answer the call got.
 			 */
 			public function __construct(string $message, private object $response) {
-				parent::__construct($message);
+				parent::__construct(message: $message);
 			}//end __construct()
 
 			/**
