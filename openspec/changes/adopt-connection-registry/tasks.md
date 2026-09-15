@@ -21,8 +21,8 @@
 - [x] 3.2 Refresh from the admin settings save in `SettingsController`, and pass the reporter in `DomainOverrideRegistrar`.
 - [x] 3.3 Report range lookup outcomes from `BreachProxyController`.
 - [x] 3.4 Refresh and report from `SiemSinkService` sink changes, and report drain outcomes from `SiemService::deliverDue()`.
-- [ ] 3.5 Add the integriq event stubs for PHPUnit, psalm and phpstan.
-- [ ] 3.6 Cover it in `ConnectionObservationsTest`, `ConnectionReporterTest`, `SettingsControllerConnectionRefreshTest`, `BreachProxyControllerConnectionReportTest` and `SiemConnectionReportCallersTest`.
+- [x] 3.5 Add the integriq event stubs for PHPUnit, psalm and phpstan.
+- [x] 3.6 Cover it in `ConnectionObservationsTest`, `ConnectionReporterTest`, `SettingsControllerConnectionRefreshTest`, `BreachProxyControllerConnectionReportTest` and `SiemConnectionReportCallersTest`.
 
 ## 4. End to end
 
