@@ -38,10 +38,16 @@
 import type { APIRequestContext, Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
-import { APP_BASE, gotoVaultRoute, READ_REQUEST_TOKEN, unlockVault } from './_workflow-helpers.ts'
+import {
+	APP_BASE,
+	gotoVaultRoute,
+	READ_REQUEST_TOKEN,
+	unlockVault,
+} from './_workflow-helpers.ts'
 
 /** Integriq's objects endpoint for Keepiq's connection rows. */
-const CONNECTIONS_API = '/index.php/apps/openregister/api/objects/integriq/app_connection?app=keepiq&_limit=50'
+const CONNECTIONS_API =
+	'/index.php/apps/openregister/api/objects/integriq/app_connection?app=keepiq&_limit=50'
 
 /** Keepiq's admin settings endpoint. */
 const ADMIN_SETTINGS_API = `${APP_BASE}/api/settings/admin`
@@ -61,7 +67,9 @@ const JSON_HEADERS = { 'OCS-APIRequest': 'true', Accept: 'application/json' }
  * @param request An admin request context.
  * @return The rows by key.
  */
-async function rowsByKey(request: APIRequestContext): Promise<Record<string, Record<string, unknown>>> {
+async function rowsByKey(
+	request: APIRequestContext,
+): Promise<Record<string, Record<string, unknown>>> {
 	const res = await request.get(CONNECTIONS_API, { headers: JSON_HEADERS })
 	expect(res.ok(), `list integriq/app_connection -> ${res.status()}`).toBeTruthy()
 	const body = await res.json()
@@ -103,25 +111,35 @@ async function saveBreachCheck(page: Page, enabled: boolean): Promise<void> {
 }
 
 test.describe('Integrations over the connection registry', () => {
-	test('lists the two declared connections, both of them Keepiq\'s', async ({ page }) => {
+	test("lists the two declared connections, both of them Keepiq's", async ({
+		page,
+	}) => {
 		const byKey = await rowsByKey(page.request)
 		expect(Object.keys(byKey).sort()).toEqual(DECLARED.map((d) => d.key).sort())
 
 		// Every row links to a section of Keepiq's own admin page.
 		for (const { key } of DECLARED) {
-			expect(String(byKey[key]?.settingsUrl ?? ''), key).toMatch(/^\/settings\/admin\/keepiq#section-/)
+			expect(String(byKey[key]?.settingsUrl ?? ''), key).toMatch(
+				/^\/settings\/admin\/keepiq#section-/,
+			)
 		}
 
 		await openIntegrations(page)
 		for (const { title } of DECLARED) {
-			await expect(page.getByRole('row', { name: new RegExp(`^${title}\\b`, 'i') })).toHaveCount(1)
+			await expect(
+				page.getByRole('row', { name: new RegExp(`^${title}\\b`, 'i') }),
+			).toHaveCount(1)
 		}
 	})
 
-	test('reads Not configured while the breach check is off, and Configured once it is on', async ({ page }) => {
+	test('reads Not configured while the breach check is off, and Configured once it is on', async ({
+		page,
+	}) => {
 		await page.goto(`${APP_BASE}/`, { timeout: 60_000 })
 
-		const before = await page.request.get(ADMIN_SETTINGS_API, { headers: JSON_HEADERS })
+		const before = await page.request.get(ADMIN_SETTINGS_API, {
+			headers: JSON_HEADERS,
+		})
 		expect(before.ok(), `admin settings read -> ${before.status()}`).toBeTruthy()
 		const previous = Boolean((await before.json())?.breach_check_enabled)
 
@@ -132,9 +150,14 @@ test.describe('Integrations over the connection registry', () => {
 		 * @return The status and message, or empty strings when the row is missing.
 		 */
 		const hibpRow = async (): Promise<string> => {
-			const list = await page.request.get(CONNECTIONS_API, { headers: JSON_HEADERS })
+			const list = await page.request.get(CONNECTIONS_API, {
+				headers: JSON_HEADERS,
+			})
 			const rows = list.ok() ? ((await list.json()).results ?? []) : []
-			const row = rows.find((r: Record<string, unknown>) => r.key === 'hibp' && r.app === 'keepiq')
+			const row = rows.find(
+				(r: Record<string, unknown>) =>
+					r.key === 'hibp' && r.app === 'keepiq',
+			)
 			return `${String(row?.status ?? '')}|${String(row?.statusMessage ?? '')}`
 		}
 
@@ -142,20 +165,26 @@ test.describe('Integrations over the connection registry', () => {
 			// The save sends ConnectionRefreshRequestedEvent, which retires any
 			// older lookup report, and integriq's rule 6 reads `false` as empty.
 			await saveBreachCheck(page, false)
-			await expect.poll(hibpRow, { timeout: 15_000 }).toBe(
-				'unconfigured|Breach checking is switched off. Switch it on under Breach checking in the Keepiq admin settings.',
-			)
+			await expect
+				.poll(hibpRow, { timeout: 15_000 })
+				.toBe(
+					'unconfigured|Breach checking is switched off. Switch it on under Breach checking in the Keepiq admin settings.',
+				)
 
 			// Rule 5: the required switch is filled.
 			await saveBreachCheck(page, true)
-			await expect.poll(hibpRow, { timeout: 15_000 }).toBe('configured|Required settings are filled.')
+			await expect
+				.poll(hibpRow, { timeout: 15_000 })
+				.toBe('configured|Required settings are filled.')
 		} finally {
 			// Put the VALUE back. The restore is a save too, so it refreshes the row again.
 			await saveBreachCheck(page, previous)
 		}
 	})
 
-	test('sends Add integration to integriq instead of offering a form', async ({ page }) => {
+	test('sends Add integration to integriq instead of offering a form', async ({
+		page,
+	}) => {
 		await openIntegrations(page)
 
 		// No generic Add button: a row nothing declared has nothing to check.
@@ -164,10 +193,20 @@ test.describe('Integrations over the connection registry', () => {
 		// The action lives in the overflow menu. English and Dutch are the two
 		// catalogues this change ships, and nothing forces the E2E locale. The
 		// themed trigger swallows a synthetic click, so it is clicked natively.
-		await page.getByTestId('cn-actions').locator('button').first().evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('cn-actions')
+			.locator('button')
+			.first()
+			.evaluate((el: HTMLElement) => el.click())
 		await Promise.all([
-			page.waitForURL(/\/apps\/integriq\/connections\?app=keepiq&link=1$/, { timeout: 30_000 }),
-			page.getByRole('menuitem', { name: /Add integration|Integratie toevoegen/i }).click(),
+			page.waitForURL(/\/apps\/integriq\/connections\?app=keepiq&link=1$/, {
+				timeout: 30_000,
+			}),
+			page
+				.getByRole('menuitem', {
+					name: /Add integration|Integratie toevoegen/i,
+				})
+				.click(),
 		])
 	})
 })

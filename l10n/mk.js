@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "Ограничено",
         "Simulated": "Симулирано",
         "Not available": "Не е достапно",
-        "Error": "Грешка"
+        "Error": "Грешка",
+        "e.g. Offboarding, device lost, key compromised": "на пр. напуштање, изгубен уред, компромитиран клуч",
+        "Encryption suites": "Комплети за шифрирање",
+        "Failed to force-revoke suite": "Присилното отповикување на комплетот не успеа",
+        "Failed to reinstate suite": "Враќањето на комплетот не успеа",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Присилно отповикај комплет за шифрирање во сопственост на корисник или апликација според id кога неговиот сопственик не може (заборавена главна лозинка, одземен пристап или компромитација) и врати отповикан. Присилното отповикување бара повторно да ја потврдите вашата лозинка и трајно го брише итниот пристап на комплетот.",
+        "Force-revoke suite": "Присилно отповикај комплет",
+        "Reinstate suite": "Врати комплет",
+        "Revoking this suite deleted %n emergency-access contact.": "Отповикувањето на овој комплет избриша %n контакт за итен пристап.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Отповикувањето на овој комплет избриша %n контакти за итен пристап.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирај ги тајните на комплетот како компромитирани (означи за ротација и извести ги сопствениците)"
     },
     "nplurals=2; plural=(n != 1);"
 )

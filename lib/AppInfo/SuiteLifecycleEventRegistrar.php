@@ -31,6 +31,7 @@ use OCA\Keepiq\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRotationListener;
 use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
 use OCA\Keepiq\Listener\SuiteCompromiseListener;
+use OCA\Keepiq\Listener\SuiteCompromiseOnRevokeListener;
 use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Listener\SuiteMigrationCompletedListener;
 use OCA\Keepiq\Listener\SuiteMigrationStartedListener;
@@ -44,10 +45,17 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * every registered listener for an event and a failure in one is contained by
  * that listener, not by this registration.
  *
- * Grouped as one registrar because all six listeners share a single trigger
+ * Grouped as one registrar because all the listeners share a single trigger
  * family (a suite started migrating, finished migrating, or was revoked) and
  * a single invariant: no ciphertext may survive a suite it can no longer be
  * decrypted under.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) This registrar's sole job is
+ *   to name the suite-lifecycle event/listener graph, so its coupling is the
+ *   size of that graph and grows by one with each listener it wires (the
+ *   admin-suite-revocation compromise listener is the latest). Splitting it
+ *   would fragment one trigger family across files without reducing any real
+ *   dependency.
  */
 final class SuiteLifecycleEventRegistrar {
 	/**
@@ -90,6 +98,15 @@ final class SuiteLifecycleEventRegistrar {
 		$context->registerEventListener(
 			event: SuiteMigrationCompletedEvent::class,
 			listener: SuiteCompromiseListener::class
+		);
+
+		// Admin force-revoke compromise cascade (admin-suite-revocation D2):
+		// on the SAME revoke event, but only when the administrator flagged the
+		// revocation as a compromise — stamp/flag/notify over the revoked
+		// suite's blast radius. A no-op on the owner path (flag stays false).
+		$context->registerEventListener(
+			event: EncryptionSuiteRevokedEvent::class,
+			listener: SuiteCompromiseOnRevokeListener::class
 		);
 
 		// Emergency access — invalidate/clear recovery envelopes on a grantor's

@@ -1157,7 +1157,17 @@
         "Limited": "Rajoitettu",
         "Simulated": "Simuloitu",
         "Not available": "Ei saatavilla",
-        "Error": "Virhe"
+        "Error": "Virhe",
+        "e.g. Offboarding, device lost, key compromised": "esim. työsuhteen päättyminen, kadonnut laite, avain vaarantunut",
+        "Encryption suites": "Salaussarjat",
+        "Failed to force-revoke suite": "Sarjan pakotettu peruutus epäonnistui",
+        "Failed to reinstate suite": "Sarjan palautus epäonnistui",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Peruuta pakotetusti käyttäjän tai sovelluksen omistama salaussarja tunnisteen perusteella, kun sen omistaja ei voi (unohtunut pääsalasana, peruutettu käyttöoikeus tai vaarantuminen), ja palauta peruutettu. Pakotettu peruutus pyytää vahvistamaan oman salasanasi uudelleen ja poistaa sarjan hätäkäytön pysyvästi.",
+        "Force-revoke suite": "Peruuta sarja pakotetusti",
+        "Reinstate suite": "Palauta sarja",
+        "Revoking this suite deleted %n emergency-access contact.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilön.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilöä.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsittele sarjan salaisuuksia vaarantuneina (merkitse kierrätettäväksi ja ilmoita omistajille)"
     },
     "plurals": null
 }

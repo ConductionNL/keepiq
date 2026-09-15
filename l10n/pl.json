@@ -1157,7 +1157,17 @@
         "Limited": "Ograniczone",
         "Simulated": "Symulowane",
         "Not available": "Niedostępne",
-        "Error": "Błąd"
+        "Error": "Błąd",
+        "e.g. Offboarding, device lost, key compromised": "np. odejście pracownika, utrata urządzenia, klucz naruszony",
+        "Encryption suites": "Zestawy szyfrowania",
+        "Failed to force-revoke suite": "Nie udało się wymusić unieważnienia zestawu",
+        "Failed to reinstate suite": "Nie udało się przywrócić zestawu",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Wymuś unieważnienie zestawu szyfrowania należącego do użytkownika lub aplikacji według id, gdy jego właściciel nie może (zapomniane hasło główne, cofnięty dostęp lub naruszenie), i przywróć unieważniony. Wymuszone unieważnienie prosi o ponowne potwierdzenie własnego hasła i trwale usuwa dostęp awaryjny zestawu.",
+        "Force-revoke suite": "Wymuś unieważnienie zestawu",
+        "Reinstate suite": "Przywróć zestaw",
+        "Revoking this suite deleted %n emergency-access contact.": "Unieważnienie tego zestawu usunęło %n kontakt dostępu awaryjnego.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Unieważnienie tego zestawu usunęło %n kontaktów dostępu awaryjnego.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Traktuj sekrety zestawu jako naruszone (oznacz do rotacji i powiadom właścicieli)"
     },
     "plurals": null
 }

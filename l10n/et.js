@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "Piiratud",
         "Simulated": "Simuleeritud",
         "Not available": "Pole saadaval",
-        "Error": "Viga"
+        "Error": "Viga",
+        "e.g. Offboarding, device lost, key compromised": "nt töösuhte lõpp, kaotatud seade, võti ohustatud",
+        "Encryption suites": "Krüpteerimiskomplektid",
+        "Failed to force-revoke suite": "Komplekti sunniviisiline tühistamine ebaõnnestus",
+        "Failed to reinstate suite": "Komplekti taastamine ebaõnnestus",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Tühista sunniviisiliselt kasutajale või rakendusele kuuluv krüpteerimiskomplekt id alusel, kui selle omanik ei saa (unustatud ülemparool, tühistatud juurdepääs või ohustatus), ja taasta tühistatud. Sunniviisiline tühistamine palub sul oma parool uuesti kinnitada ja kustutab jäädavalt komplekti hädajuurdepääsu.",
+        "Force-revoke suite": "Tühista komplekt sunniviisiliselt",
+        "Reinstate suite": "Taasta komplekt",
+        "Revoking this suite deleted %n emergency-access contact.": "Selle komplekti tühistamine kustutas %n hädajuurdepääsu kontakti.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Selle komplekti tühistamine kustutas %n hädajuurdepääsu kontakti.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsitle komplekti saladusi ohustatuna (märgi rotatsiooniks ja teavita omanikke)"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1157,7 +1157,17 @@
         "Limited": "Takmarkað",
         "Simulated": "Hermt",
         "Not available": "Ekki tiltækt",
-        "Error": "Villa"
+        "Error": "Villa",
+        "e.g. Offboarding, device lost, key compromised": "t.d. starfslok, tapað tæki, lykill í hættu",
+        "Encryption suites": "Dulkóðunarsett",
+        "Failed to force-revoke suite": "Þvinguð afturköllun setts mistókst",
+        "Failed to reinstate suite": "Endurvirkjun setts mistókst",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Þvinga afturköllun á dulkóðunarsetti í eigu notanda eða forrits eftir auðkenni þegar eigandi þess getur það ekki (gleymt aðallykilorð, afturkallaður aðgangur eða öryggisbrestur), og endurvirkja afturkallað. Þvinguð afturköllun biður þig um að staðfesta þitt eigið lykilorð aftur og eyðir neyðaraðgangi settsins varanlega.",
+        "Force-revoke suite": "Þvinga afturköllun setts",
+        "Reinstate suite": "Endurvirkja sett",
+        "Revoking this suite deleted %n emergency-access contact.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengilið.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengiliðum.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Meðhöndla leyndarmál settsins sem í hættu (merkja fyrir endurnýjun og láta eigendur vita)"
     },
     "plurals": null
 }

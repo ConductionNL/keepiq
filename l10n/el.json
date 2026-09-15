@@ -1157,7 +1157,17 @@
         "Limited": "Περιορισμένη",
         "Simulated": "Προσομοιωμένη",
         "Not available": "Μη διαθέσιμη",
-        "Error": "Σφάλμα"
+        "Error": "Σφάλμα",
+        "e.g. Offboarding, device lost, key compromised": "π.χ. αποχώρηση, απώλεια συσκευής, παραβίαση κλειδιού",
+        "Encryption suites": "Σουίτες κρυπτογράφησης",
+        "Failed to force-revoke suite": "Η αναγκαστική ανάκληση της σουίτας απέτυχε",
+        "Failed to reinstate suite": "Η επαναφορά της σουίτας απέτυχε",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Αναγκαστική ανάκληση μιας σουίτας κρυπτογράφησης που ανήκει σε χρήστη ή εφαρμογή βάσει id όταν ο ιδιοκτήτης της δεν μπορεί (ξεχασμένος κύριος κωδικός, ανακληθείσα πρόσβαση ή παραβίαση), και επαναφορά μιας ανακληθείσας. Η αναγκαστική ανάκληση σας ζητά να επιβεβαιώσετε ξανά τον δικό σας κωδικό και διαγράφει οριστικά την πρόσβαση έκτακτης ανάγκης της σουίτας.",
+        "Force-revoke suite": "Αναγκαστική ανάκληση σουίτας",
+        "Reinstate suite": "Επαναφορά σουίτας",
+        "Revoking this suite deleted %n emergency-access contact.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Αντιμετώπιση των μυστικών της σουίτας ως παραβιασμένων (επισήμανση για εναλλαγή και ειδοποίηση ιδιοκτητών)"
     },
     "plurals": null
 }
