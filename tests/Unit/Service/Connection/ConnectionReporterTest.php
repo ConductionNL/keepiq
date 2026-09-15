@@ -338,7 +338,9 @@ class ConnectionReporterTest extends TestCase {
 	 * @return void
 	 */
 	public function testASinkChangeWithSinksOnSendsTheRefreshAlone(): void {
-		$this->assertFalse(condition: $this->reporter()->siemSinksChanged(enabledSinkCount: static fn (): int => 1, sinkCount: $this->sinkCountNeverTaken()));
+		$this->assertFalse(
+			condition: $this->reporter()->siemSinksChanged(enabledSinkCount: static fn (): int => 1, sinkCount: $this->sinkCountNeverTaken())
+		);
 		$this->assertSame(expected: [['ConnectionRefreshRequestedEvent', 'siem', '']], actual: $this->sentSummary());
 	}//end testASinkChangeWithSinksOnSendsTheRefreshAlone()
 
