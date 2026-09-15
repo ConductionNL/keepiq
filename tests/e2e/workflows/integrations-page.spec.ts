@@ -29,7 +29,8 @@
  * Locale: nothing forces the E2E language, so statuses are read from the API
  * and rows are found by their declared titles, which are not translated.
  *
- * Written, not yet run: it needs an instance with both apps (tasks.md 5.1).
+ * It needs an instance with both apps (tasks.md 5.1). First run in CI on
+ * 2026-09-15 (keepiq run 34955589876), where the row lookup below was fixed.
  *
  * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#the-page-lists-only-the-rows-of-keepiq
  * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#add-integration-goes-to-integriq
@@ -125,9 +126,14 @@ test.describe('Integrations over the connection registry', () => {
 		}
 
 		await openIntegrations(page)
+		// Match the row by its Connection cell, not by the row's accessible name:
+		// that name starts with the "Select row" checkbox, so a `^title` pattern
+		// on it never matches.
 		for (const { title } of DECLARED) {
 			await expect(
-				page.getByRole('row', { name: new RegExp(`^${title}\\b`, 'i') }),
+				page.getByRole('row').filter({
+					has: page.getByRole('cell', { name: title, exact: true }),
+				}),
 			).toHaveCount(1)
 		}
 	})
