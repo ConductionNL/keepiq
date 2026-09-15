@@ -8,10 +8,10 @@ Each candidate was checked against the code on `development` on 2026-09-14.
 
 | Key | Declared as | Why |
 |---|---|---|
-| `hibp` | `requiredConfig: ["breach_check_enabled"]` | `BreachProxyController::range()` refuses every lookup with 403 while the key is off. Nothing else gates the call. |
+| `hibp` | `switch: {"configKey": "breach_check_enabled"}` | `BreachProxyController::range()` refuses every lookup with 403 while the key is off. Nothing else gates the call. |
 | `siem` | `reportedOnly: true` | `SiemService::deliverDue()` drains every enabled sink in `keepiq_siem_sinks`. Sinks are records, not app config. |
 
-**Why a boolean key is honest here.** `AdminSettingsService` stores `breach_check_enabled` with `setValueBool`. Integriq's `ConnectionConfigReader::readAnyType()` reads a typed key with `getValueBool`, and since hydra#676 a `false` counts as empty. A switched-off check therefore reads Not configured, and a switched-on one reads Configured with "Required settings are filled." until the first lookup reports. Verified against `integriq/lib/Service/ConnectionConfigReader.php` on `development`.
+**Why a boolean key is honest here.** `AdminSettingsService` stores `breach_check_enabled` with `setValueBool`. Integriq's `ConnectionConfigReader::readAnyType()` reads a typed key with `getValueBool`, and since hydra#676 a `false` counts as empty. Since hydra#677 the key is the row's `switch`, not a required setting: a switched-off check reads `disabled` with the declared `disabledMessage`, and a switched-on one reads Not configured with "Not checked yet" until the first lookup reports. A filled switch says the check may run, not that Have I Been Pwned answered.
 
 **Why no adapter on `hibp`.** The upstream is a fixed constant, `https://api.pwnedpasswords.com/range/`. There is no mock to select, so rule 3 has nothing to read.
 
@@ -36,13 +36,14 @@ Each candidate was checked against the code on `development` on 2026-09-14.
 | answered anything else | `error` | "Have I Been Pwned answered HTTP {n} on the last range lookup." |
 | did not answer | `error` | "The last range lookup got no answer from Have I Been Pwned." |
 
-**SIEM, on a sink create, change or delete.** A refresh for `siem`. When no enabled sink is left, a report `unconfigured`: "No SIEM sink is switched on. Add one under SIEM audit export." Otherwise the refresh alone, so the row reads the declared "Not checked yet" until the next drain delivers.
+**SIEM, on a sink create, change or delete.** A refresh for `siem`. When no enabled sink is left and sinks still exist, a report `disabled`: "Every SIEM sink is switched off, so no audit event is forwarded." When no sink exists at all, a report `unconfigured`: "No SIEM sink is added yet. Add one under SIEM audit export." The row has no `switch`, because sinks are records, so Keepiq reports `disabled` itself (hydra connection-registry D4). All sinks are counted only when none is enabled. Otherwise the refresh alone, so the row reads the declared "Not checked yet" until the next drain delivers.
 
 **SIEM, after a drain** (`DeliverSiemEventsJob`, every 60 seconds). The report looks only at sinks the drain tried to deliver to in this run. A sink's older `lastDeliveryStatus` is not used: it would bring back an error from before a save, which is exactly what hydra#674 retires.
 
 | Sinks the drain delivered to | Status |
 |---|---|
-| none, and no sink is enabled | `unconfigured` |
+| none, no sink is enabled, and sinks exist | `disabled` |
+| none, and no sink exists | `unconfigured` |
 | none, while sinks are enabled | nothing |
 | all took it | `configured` |
 | some took it | `limited`, naming the first host that failed |

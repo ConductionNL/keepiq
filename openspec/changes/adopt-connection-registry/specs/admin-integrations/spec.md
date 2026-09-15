@@ -13,7 +13,7 @@ Admins see Keepiq's outside connections on one page, with a status Keepiq can ba
 
 ### Requirement: REQ-KEEPIQ-CONN-001 Keepiq declares its outside connections in one static file
 
-Keepiq SHALL declare `hibp` and `siem` in `lib/Settings/connections.json` in the shape of hydra connection-registry design D2 (hydra REQ-CONN-001). The file MUST validate against integriq's `connections.schema.json`, and its `app` MUST equal the id in `appinfo/info.xml`. The `hibp` entry SHALL require `breach_check_enabled`. The `siem` entry SHALL be `reportedOnly`, because the sinks are records and not settings. Every `settingsUrl` SHALL point at a section id that exists in the Keepiq admin settings.
+Keepiq SHALL declare `hibp` and `siem` in `lib/Settings/connections.json` in the shape of hydra connection-registry design D2 (hydra REQ-CONN-001). The file MUST validate against integriq's `connections.schema.json`, and its `app` MUST equal the id in `appinfo/info.xml`. The `hibp` entry SHALL declare `breach_check_enabled` as its `switch` and SHALL require no setting, so a switched-off check reads `disabled` (hydra connection-registry D12 item 9). The `siem` entry SHALL be `reportedOnly`, because the sinks are records and not settings. Every `settingsUrl` SHALL point at a section id that exists in the Keepiq admin settings.
 
 #### Scenario: The declaration names this app and passes integriq's schema
 @e2e exclude A static file with no browser surface; tests/Unit/Settings/ConnectionsDeclarationTest.php validates it against the schema, and checks the app id, unique keys and the anchors.
@@ -25,17 +25,17 @@ Keepiq SHALL declare `hibp` and `siem` in `lib/Settings/connections.json` in the
 - **AND** every key SHALL be unique
 - **AND** every `#section-...` anchor SHALL be an id in a settings section component
 
-#### Scenario: A switched-off breach check reads not configured
+#### Scenario: A switched-off breach check reads switched off
 @e2e tests/e2e/workflows/integrations-page.spec.ts
 
 - **GIVEN** integriq has synced Keepiq's declaration
 - **WHEN** `breach_check_enabled` holds `false`
-- **THEN** the Breach check row SHALL read Not configured with the declared message
-- **AND** when an admin switches breach checking on, the row SHALL read Configured
+- **THEN** the Breach check row SHALL read `disabled` with the declared message
+- **AND** when an admin switches breach checking on, the row SHALL read Not configured with "Not checked yet" until a lookup reports
 
 ### Requirement: REQ-KEEPIQ-CONN-002 A save asks integriq to look again, and a lookup or a drain reports what it met
 
-When an admin save writes `breach_check_enabled`, Keepiq SHALL send `ConnectionRefreshRequestedEvent` with app `keepiq` and key `hibp`. When an admin creates, changes or deletes a SIEM sink, Keepiq SHALL send a refresh for `siem`, and then report `unconfigured` when no sink is switched on. A refresh SHALL come before any report for the same key (hydra REQ-CONN-004, hydra#674). A range lookup that reaches Have I Been Pwned SHALL report `configured` on a 2xx answer, `limited` on HTTP 429 and `error` on any other answer or no answer. A SIEM drain SHALL report over the sinks it delivered to in that run: all took it as `configured`, some as `limited`, none as `error`. A drain that delivered to no sink SHALL report nothing. The same status SHALL be reported at most once an hour and a new status at most once every five minutes, and a save SHALL clear that memory. Both events SHALL be named by string and sent only when the class exists. Neither SHALL change the response of the request, job or run that sent it.
+When an admin save writes `breach_check_enabled`, Keepiq SHALL send `ConnectionRefreshRequestedEvent` with app `keepiq` and key `hibp`. When an admin creates, changes or deletes a SIEM sink, Keepiq SHALL send a refresh for `siem`. When no sink is switched on afterwards, it SHALL then report `disabled` while sinks exist, and `unconfigured` when none does. A `disabled` report SHALL name no host. A refresh SHALL come before any report for the same key (hydra REQ-CONN-004, hydra#674). A range lookup that reaches Have I Been Pwned SHALL report `configured` on a 2xx answer, `limited` on HTTP 429 and `error` on any other answer or no answer. A SIEM drain SHALL report over the sinks it delivered to in that run: all took it as `configured`, some as `limited`, none as `error`. A drain that delivered to no sink SHALL report nothing. The same status SHALL be reported at most once an hour and a new status at most once every five minutes, and a save SHALL clear that memory. Both events SHALL be named by string and sent only when the class exists. Neither SHALL change the response of the request, job or run that sent it.
 
 #### Scenario: Saving the breach check switch asks for a refresh
 @e2e exclude The event is not observable from a browser; tests/Unit/Controller/SettingsControllerConnectionRefreshTest.php asserts the refresh and the unchanged response.
@@ -49,9 +49,17 @@ When an admin save writes `breach_check_enabled`, Keepiq SHALL send `ConnectionR
 @e2e exclude A sink change needs a SIEM receiver the CI instance does not have; tests/Unit/Service/Connection/ConnectionReporterTest.php asserts the order, and tests/Unit/Service/SiemConnectionReportCallersTest.php that the sink service hands it over.
 
 - **GIVEN** integriq is installed
-- **WHEN** an admin deletes the only enabled SIEM sink
+- **WHEN** an admin deletes the only SIEM sink
 - **THEN** Keepiq SHALL send a refresh for `siem`
-- **AND** then a report `unconfigured` saying no sink is switched on
+- **AND** then a report `unconfigured` saying no sink is added yet
+
+#### Scenario: Switching off the last enabled sink reports disabled
+@e2e exclude A sink change needs a SIEM receiver the CI instance does not have; tests/Unit/Service/SiemConnectionReportCallersTest.php and tests/Unit/Service/Connection/ConnectionReporterTest.php assert the refresh, the `disabled` report and its host-free message.
+
+- **GIVEN** integriq is installed and two SIEM sinks exist
+- **WHEN** an admin switches off the last one that was enabled
+- **THEN** Keepiq SHALL send a refresh for `siem`
+- **AND** then a report `disabled` that names no host
 
 #### Scenario: A drain where some sinks fail reads limited
 @e2e exclude A drain needs reachable and unreachable receivers; tests/Unit/Service/Connection/ConnectionObservationsTest.php drives the outcomes.

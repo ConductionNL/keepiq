@@ -7,8 +7,11 @@
             "description": "Checks password hash prefixes against Have I Been Pwned, once an admin switches it on and a user opts in.",
             "order": 10,
             "settingsUrl": "/settings/admin/keepiq#section-breach-check",
-            "requiredConfig": ["breach_check_enabled"],
-            "unconfiguredMessage": "Breach checking is switched off. Switch it on under Breach checking in the Keepiq admin settings."
+            "switch": {
+                "configKey": "breach_check_enabled"
+            },
+            "disabledMessage": "Breach checking is switched off. Switch it on under Breach checking in the Keepiq admin settings.",
+            "unconfiguredMessage": "Not checked yet. Keepiq reports here after the next password check reaches Have I Been Pwned."
         },
         {
             "key": "siem",

@@ -176,6 +176,17 @@ class ConnectionReporterTest extends TestCase {
 	}//end reporterWithoutIntegriq()
 
 	/**
+	 * A sink count the reporter must not take, because a sink is enabled.
+	 *
+	 * @return callable(): int
+	 */
+	private function sinkCountNeverTaken(): callable {
+		return function (): int {
+			$this->fail(message: 'All sinks were counted while a sink is enabled.');
+		};
+	}//end sinkCountNeverTaken()
+
+	/**
 	 * A sink as the drain leaves it.
 	 *
 	 * @param string      $endpoint The stored endpoint.
@@ -251,7 +262,8 @@ class ConnectionReporterTest extends TestCase {
 				attemptedSinks: [
 					$this->sink(endpoint: 'https://siem.gemeente.example/in', status: 'ok'),
 					$this->sink(endpoint: 'logs.gemeente.example:6514', status: 'failing'),
-				]
+				],
+				sinkCount: $this->sinkCountNeverTaken()
 			)
 		);
 
@@ -268,7 +280,7 @@ class ConnectionReporterTest extends TestCase {
 	 * @return void
 	 */
 	public function testADrainThatMetNothingSendsNothing(): void {
-		$this->assertFalse(condition: $this->reporter()->reportSiemDrain(enabledSinks: 3, attemptedSinks: []));
+		$this->assertFalse(condition: $this->reporter()->reportSiemDrain(enabledSinks: 3, attemptedSinks: [], sinkCount: $this->sinkCountNeverTaken()));
 		$this->assertSame(expected: [], actual: $this->sent);
 		$this->assertArrayNotHasKey(key: 'connection_report_siem', array: $this->store);
 	}//end testADrainThatMetNothingSendsNothing()
@@ -282,7 +294,9 @@ class ConnectionReporterTest extends TestCase {
 	 * @return void
 	 */
 	public function testASinkChangeRefreshesBeforeItReports(): void {
-		$this->assertTrue(condition: $this->reporter()->siemSinksChanged(enabledSinkCount: static fn (): int => 0));
+		$this->assertTrue(
+			condition: $this->reporter()->siemSinksChanged(enabledSinkCount: static fn (): int => 0, sinkCount: static fn (): int => 0)
+		);
 
 		$this->assertSame(
 			expected: [['ConnectionRefreshRequestedEvent', 'siem', ''], ['ConnectionStatusReportedEvent', 'siem', 'unconfigured']],
@@ -292,12 +306,39 @@ class ConnectionReporterTest extends TestCase {
 	}//end testASinkChangeRefreshesBeforeItReports()
 
 	/**
+	 * Switching off the last enabled sink reports disabled, with no host, from a save and from a drain.
+	 *
+	 * The sinks still exist, so an admin chose to stop the export (hydra
+	 * connection-registry D4, D12 item 9). Not configured would read as a step
+	 * nobody took.
+	 *
+	 * @return void
+	 */
+	public function testSwitchingEverySinkOffReportsDisabled(): void {
+		$reporter = $this->reporter();
+
+		$this->assertTrue(
+			condition: $reporter->siemSinksChanged(enabledSinkCount: static fn (): int => 0, sinkCount: static fn (): int => 2)
+		);
+		$this->assertSame(
+			expected: [['ConnectionRefreshRequestedEvent', 'siem', ''], ['ConnectionStatusReportedEvent', 'siem', 'disabled']],
+			actual: $this->sentSummary()
+		);
+		$this->assertSame(expected: 'Every SIEM sink is switched off, so no audit event is forwarded.', actual: $this->sent[1]->message);
+
+		$this->store = [];
+		$this->sent  = [];
+		$this->assertTrue(condition: $reporter->reportSiemDrain(enabledSinks: 0, attemptedSinks: [], sinkCount: static fn (): int => 1));
+		$this->assertSame(expected: [['ConnectionStatusReportedEvent', 'siem', 'disabled']], actual: $this->sentSummary());
+	}//end testSwitchingEverySinkOffReportsDisabled()
+
+	/**
 	 * A sink change with sinks still on sends the refresh alone.
 	 *
 	 * @return void
 	 */
 	public function testASinkChangeWithSinksOnSendsTheRefreshAlone(): void {
-		$this->assertFalse(condition: $this->reporter()->siemSinksChanged(enabledSinkCount: static fn (): int => 1));
+		$this->assertFalse(condition: $this->reporter()->siemSinksChanged(enabledSinkCount: static fn (): int => 1, sinkCount: $this->sinkCountNeverTaken()));
 		$this->assertSame(expected: [['ConnectionRefreshRequestedEvent', 'siem', '']], actual: $this->sentSummary());
 	}//end testASinkChangeWithSinksOnSendsTheRefreshAlone()
 
@@ -360,7 +401,7 @@ class ConnectionReporterTest extends TestCase {
 		$reporter = $this->reporter();
 
 		$this->assertTrue(condition: $reporter->reportBreachLookup(httpStatus: 200));
-		$this->assertTrue(condition: $reporter->reportSiemDrain(enabledSinks: 0, attemptedSinks: []));
+		$this->assertTrue(condition: $reporter->reportSiemDrain(enabledSinks: 0, attemptedSinks: [], sinkCount: static fn (): int => 0));
 
 		$this->assertCount(expectedCount: 2, haystack: $this->sent);
 	}//end testEachConnectionKeepsItsOwnMemory()
@@ -373,7 +414,7 @@ class ConnectionReporterTest extends TestCase {
 	public function testASaveClearsItsOwnMemory(): void {
 		$reporter = $this->reporter();
 		$reporter->reportBreachLookup(httpStatus: 200);
-		$reporter->reportSiemDrain(enabledSinks: 0, attemptedSinks: []);
+		$reporter->reportSiemDrain(enabledSinks: 0, attemptedSinks: [], sinkCount: static fn (): int => 0);
 
 		$reporter->breachCheckSaved();
 
@@ -403,7 +444,8 @@ class ConnectionReporterTest extends TestCase {
 			attemptedSinks: [
 				$this->sink(endpoint: 'https://svc:' . $token . '@hooks.gemeente.example/ingest?token=' . $token, status: 'failing'),
 				$this->sink(endpoint: 'https://hooks.gemeente.example/' . $token, status: 'ok'),
-			]
+			],
+			sinkCount: $this->sinkCountNeverTaken()
 		);
 
 		$this->assertCount(expectedCount: 6, haystack: $this->sent);
@@ -438,10 +480,14 @@ class ConnectionReporterTest extends TestCase {
 				enabledSinkCount: static function () use (&$counted): int {
 					$counted = true;
 					return 0;
+				},
+				sinkCount: static function () use (&$counted): int {
+					$counted = true;
+					return 0;
 				}
 			)
 		);
-		$this->assertFalse(condition: $reporter->reportSiemDrain(enabledSinks: 0, attemptedSinks: []));
+		$this->assertFalse(condition: $reporter->reportSiemDrain(enabledSinks: 0, attemptedSinks: [], sinkCount: static fn (): int => 0));
 		$this->assertFalse(condition: $counted);
 	}//end testWithoutIntegriqNothingIsReadSentStoredOrLogged()
 

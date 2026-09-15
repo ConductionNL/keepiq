@@ -84,17 +84,18 @@ class ConnectionObservations {
 	 * enabled the refresh stands alone, and the row waits for the next drain.
 	 *
 	 * @param int $enabledSinks How many sinks are enabled after the save.
+	 * @param int $sinks        How many sinks exist after the save, enabled or not.
 	 *
 	 * @return array{0: string, 1: string}|null The status and the message, or null.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
-	public function siemSinksChanged(int $enabledSinks): ?array {
+	public function siemSinksChanged(int $enabledSinks, int $sinks): ?array {
 		if ($enabledSinks > 0) {
 			return null;
 		}
 
-		return $this->noSinkEnabled();
+		return $this->noSinkEnabled(sinks: $sinks);
 	}//end siemSinksChanged()
 
 	/**
@@ -106,14 +107,15 @@ class ConnectionObservations {
 	 * @param int                                       $enabledSinks How many sinks are enabled.
 	 * @param array<int, array{host: string, ok: bool}> $delivered    Per sink the drain delivered to: its host, and
 	 *                                                                whether its last delivery went through.
+	 * @param int                                       $sinks        How many sinks exist, enabled or not.
 	 *
 	 * @return array{0: string, 1: string}|null The status and the message, or null when the drain met nothing.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
-	public function siemDrain(int $enabledSinks, array $delivered): ?array {
+	public function siemDrain(int $enabledSinks, array $delivered, int $sinks): ?array {
 		if ($enabledSinks === 0) {
-			return $this->noSinkEnabled();
+			return $this->noSinkEnabled(sinks: $sinks);
 		}
 
 		$total = count($delivered);
@@ -219,9 +221,20 @@ class ConnectionObservations {
 	/**
 	 * The report for an instance where no sink is enabled.
 	 *
+	 * Sinks that exist and are all switched off are a choice an admin made, so
+	 * they read `disabled` (hydra connection-registry D4, D12 item 9). No sink
+	 * at all is a step nobody took yet, so it stays `unconfigured`. Neither
+	 * message names a host: there is no delivery to name one from.
+	 *
+	 * @param int $sinks How many sinks exist, enabled or not.
+	 *
 	 * @return array{0: string, 1: string}
 	 */
-	private function noSinkEnabled(): array {
-		return ['unconfigured', 'No SIEM sink is switched on. Add one under SIEM audit export.'];
+	private function noSinkEnabled(int $sinks): array {
+		if ($sinks > 0) {
+			return ['disabled', 'Every SIEM sink is switched off, so no audit event is forwarded.'];
+		}
+
+		return ['unconfigured', 'No SIEM sink is added yet. Add one under SIEM audit export.'];
 	}//end noSinkEnabled()
 }//end class
