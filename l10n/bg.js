@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Добавени {ok} от {total} тайни към екипната папка",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Разширението Keepiq за браузър попълва автоматично данните ви за вход, предоставя ключове за достъп и показва кодове TOTP — без тайните ви никога да напускат устройството ви.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Създава се запазено място, което остава празно, докато получателят не го попълни — никога не се налага да измисляте стойност.",
-        "Could not reach the directory": "Указателят не можа да бъде достигнат"
+        "Could not reach the directory": "Указателят не можа да бъде достигнат",
+        "e.g. Offboarding, device lost, key compromised": "напр. напускане, изгубено устройство, компрометиран ключ",
+        "Encryption suites": "Комплекти за шифроване",
+        "Failed to force-revoke suite": "Принудителното отменяне на комплекта е неуспешно",
+        "Failed to reinstate suite": "Възстановяването на комплекта е неуспешно",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Принудително отмени комплект за шифроване, собственост на потребител или приложение, по id, когато собственикът му не може (забравена главна парола, отнет достъп или компрометиране), и възстанови отменен. Принудителното отменяне изисква повторно потвърждаване на собствената ви парола и трайно премахва аварийния достъп на комплекта.",
+        "Force-revoke suite": "Принудително отмени комплекта",
+        "Reinstate suite": "Възстанови комплекта",
+        "Revoking this suite deleted %n emergency-access contact.": "Отменянето на този комплект премахна %n контакт за авариен достъп.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Отменянето на този комплект премахна %n контакта за авариен достъп.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирай тайните на комплекта като компрометирани (маркирай за ротация и уведоми собствениците)"
     },
     "nplurals=2; plural=(n != 1);"
 )

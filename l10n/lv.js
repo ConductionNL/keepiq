@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Komandas mapei pievienoti {ok} no {total} noslēpumiem",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiq pārlūka paplašinājums automātiski aizpilda jūsu pieteikšanās datus, nodrošina piekļuves atslēgas un rāda TOTP kodus, un jūsu noslēpumi nekad neatstāj jūsu ierīci.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Tiek izveidots vietturis, kas paliek tukšs, līdz saņēmējs to aizpilda — jums nekad nav jāizdomā vērtība.",
-        "Could not reach the directory": "Neizdevās sasniegt direktoriju"
+        "Could not reach the directory": "Neizdevās sasniegt direktoriju",
+        "e.g. Offboarding, device lost, key compromised": "piem. aiziešana no darba, pazaudēta ierīce, atslēga kompromitēta",
+        "Encryption suites": "Šifrēšanas komplekti",
+        "Failed to force-revoke suite": "Komplekta piespiedu atsaukšana neizdevās",
+        "Failed to reinstate suite": "Komplekta atjaunošana neizdevās",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Piespiedu kārtā atsaukt lietotājam vai lietotnei piederošu šifrēšanas komplektu pēc id, kad tā īpašnieks nevar (aizmirsta galvenā parole, atsaukta piekļuve vai kompromitēšana), un atjaunot atsauktu. Piespiedu atsaukšana lūdz vēlreiz apstiprināt jūsu paša paroli un neatgriezeniski dzēš komplekta ārkārtas piekļuvi.",
+        "Force-revoke suite": "Piespiedu kārtā atsaukt komplektu",
+        "Reinstate suite": "Atjaunot komplektu",
+        "Revoking this suite deleted %n emergency-access contact.": "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktu.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktus.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Uzskatīt komplekta noslēpumus par kompromitētiem (atzīmēt maiņai un paziņot īpašniekiem)"
     },
     "nplurals=2; plural=(n != 1);"
 )

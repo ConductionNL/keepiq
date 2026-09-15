@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Cuireadh {ok} as {total} rún leis an bhfillteán foirne",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Líonann breiseán brabhsálaí Keepiq do chuid logálacha isteach go huathoibríoch, soláthraíonn sé eochracha rochtana, agus taispeánann sé cóid TOTP — agus ní fhágann do rúin do ghléas riamh.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Cruthaítear coimeádán a fhanann folamh go dtí go líonann an faighteoir é — ní gá duit luach a cheapadh riamh.",
-        "Could not reach the directory": "Níorbh fhéidir teacht ar an eolaire"
+        "Could not reach the directory": "Níorbh fhéidir teacht ar an eolaire",
+        "e.g. Offboarding, device lost, key compromised": "e.g. Offboarding, device lost, key compromised",
+        "Encryption suites": "Encryption suites",
+        "Failed to force-revoke suite": "Failed to force-revoke suite",
+        "Failed to reinstate suite": "Failed to reinstate suite",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.",
+        "Force-revoke suite": "Force-revoke suite",
+        "Reinstate suite": "Reinstate suite",
+        "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)"
     },
     "nplurals=2; plural=(n != 1);"
 )

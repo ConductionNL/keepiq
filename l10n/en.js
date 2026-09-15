@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",
         "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
-        "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+        "e.g. Offboarding, device lost, key compromised": "e.g. Offboarding, device lost, key compromised",
+        "Encryption suites": "Encryption suites",
+        "Failed to force-revoke suite": "Failed to force-revoke suite",
+        "Failed to reinstate suite": "Failed to reinstate suite",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.",
+        "Force-revoke suite": "Force-revoke suite",
+        "Reinstate suite": "Reinstate suite",
+        "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)"
     },
     "nplurals=2; plural=(n != 1);"
 )

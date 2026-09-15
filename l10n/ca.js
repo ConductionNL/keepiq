@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "S'han afegit {ok} de {total} secrets a la carpeta d'equip",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "L'extensió de navegador de Keepiq emplena automàticament els vostres inicis de sessió, proporciona claus d'accés i mostra codis TOTP, sense que els vostres secrets surtin mai del vostre dispositiu.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Es crea un marcador que queda buit fins que el destinatari l’ompli: no has d’inventar mai cap valor.",
-        "Could not reach the directory": "No s'ha pogut connectar amb el directori"
+        "Could not reach the directory": "No s'ha pogut connectar amb el directori",
+        "e.g. Offboarding, device lost, key compromised": "p. ex. baixa, dispositiu perdut, clau compromesa",
+        "Encryption suites": "Suites de xifratge",
+        "Failed to force-revoke suite": "Ha fallat la revocació forçada de la suite",
+        "Failed to reinstate suite": "Ha fallat el restabliment de la suite",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Revoca de manera forçada una suite de xifratge propietat d'un usuari o d'una aplicació per id quan el seu propietari no pot (una contrasenya mestra oblidada, un accés revocat o un compromís), i restableix-ne una de revocada. La revocació forçada et demana que tornis a confirmar la teva pròpia contrasenya i elimina permanentment l'accés d'emergència de la suite.",
+        "Force-revoke suite": "Revoca la suite de manera forçada",
+        "Reinstate suite": "Restableix la suite",
+        "Revoking this suite deleted %n emergency-access contact.": "La revocació d'aquesta suite ha eliminat %n contacte d'accés d'emergència.",
+        "Revoking this suite deleted %n emergency-access contacts.": "La revocació d'aquesta suite ha eliminat %n contactes d'accés d'emergència.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tracta els secrets de la suite com a compromesos (marca per a rotació i notifica els propietaris)"
     },
     "nplurals=2; plural=(n != 1);"
 )

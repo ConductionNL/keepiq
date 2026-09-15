@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Přidáno {ok} z {total} tajemství do týmové složky",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Rozšíření prohlížeče Keepiq automaticky vyplňuje vaše přihlašovací údaje, poskytuje přístupové klíče a zobrazuje kódy TOTP — a vaše tajemství přitom nikdy neopustí vaše zařízení.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Vytvoří se zástupný záznam, který zůstane prázdný, dokud jej příjemce nevyplní — nikdy si nemusíte hodnotu vymýšlet.",
-        "Could not reach the directory": "Adresář se nepodařilo kontaktovat"
+        "Could not reach the directory": "Adresář se nepodařilo kontaktovat",
+        "e.g. Offboarding, device lost, key compromised": "např. odchod zaměstnance, ztracené zařízení, kompromitovaný klíč",
+        "Encryption suites": "Šifrovací sady",
+        "Failed to force-revoke suite": "Vynucené odvolání sady se nezdařilo",
+        "Failed to reinstate suite": "Obnovení sady se nezdařilo",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Vynuceně odvolat šifrovací sadu vlastněnou uživatelem nebo aplikací podle id, když to její vlastník nemůže (zapomenuté hlavní heslo, odebraný přístup nebo kompromitace), a obnovit odvolanou. Vynucené odvolání vás požádá o opětovné potvrzení vlastního hesla a trvale odstraní nouzový přístup sady.",
+        "Force-revoke suite": "Vynuceně odvolat sadu",
+        "Reinstate suite": "Obnovit sadu",
+        "Revoking this suite deleted %n emergency-access contact.": "Odvolání této sady odstranilo %n kontakt nouzového přístupu.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Odvolání této sady odstranilo %n kontaktů nouzového přístupu.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovat tajemství sady za kompromitovaná (označit k obměně a upozornit vlastníky)"
     },
     "nplurals=2; plural=(n != 1);"
 )

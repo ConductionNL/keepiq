@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Dodano {ok} od {total} tajni u timsku mapu",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Proširenje preglednika Keepiq automatski ispunjava vaše prijave, pruža pristupne ključeve i prikazuje TOTP kodove — a vaše tajne pritom nikada ne izlaze s vašeg uređaja.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Kreira se rezervirano mjesto koje ostaje prazno dok ga primalac ne ispuni — nikada ne morate izmišljati vrijednost.",
-        "Could not reach the directory": "Do imenika nije bilo moguće doći"
+        "Could not reach the directory": "Do imenika nije bilo moguće doći",
+        "e.g. Offboarding, device lost, key compromised": "npr. odlazak zaposlenika, izgubljeni uređaj, ključ kompromitiran",
+        "Encryption suites": "Kompleti šifriranja",
+        "Failed to force-revoke suite": "Prisilno opozivanje kompleta nije uspjelo",
+        "Failed to reinstate suite": "Vraćanje kompleta nije uspjelo",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Prisilno opozovi komplet šifriranja u vlasništvu korisnika ili aplikacije prema id-u kada njegov vlasnik to ne može (zaboravljena glavna lozinka, opozvani pristup ili kompromitacija) i vrati opozvani. Prisilno opozivanje traži da ponovo potvrdite vlastitu lozinku i trajno briše hitni pristup kompleta.",
+        "Force-revoke suite": "Prisilno opozovi komplet",
+        "Reinstate suite": "Vrati komplet",
+        "Revoking this suite deleted %n emergency-access contact.": "Opozivanje ovog kompleta izbrisalo je %n kontakt hitnog pristupa.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Opozivanje ovog kompleta izbrisalo je %n kontakata hitnog pristupa.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tretiraj tajne kompleta kao kompromitirane (označi za rotaciju i obavijesti vlasnike)"
     },
     "nplurals=2; plural=(n != 1);"
 )

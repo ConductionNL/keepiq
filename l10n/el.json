@@ -1145,7 +1145,17 @@
         "Added {ok} of {total} secrets to the team folder": "Προστέθηκαν {ok} από {total} μυστικά στον φάκελο ομάδας",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Η επέκταση Keepiq για το πρόγραμμα περιήγησης συμπληρώνει αυτόματα τις συνδέσεις σας, παρέχει κλειδιά πρόσβασης και εμφανίζει κωδικούς TOTP — χωρίς τα μυστικά σας να φεύγουν ποτέ από τη συσκευή σας.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Δημιουργείται ένα σύμβολο κράτησης που παραμένει κενό μέχρι να το συμπληρώσει ο παραλήπτης — δεν χρειάζεται ποτέ να επινοήσετε τιμή.",
-        "Could not reach the directory": "Δεν ήταν δυνατή η σύνδεση με τον κατάλογο"
+        "Could not reach the directory": "Δεν ήταν δυνατή η σύνδεση με τον κατάλογο",
+        "e.g. Offboarding, device lost, key compromised": "π.χ. αποχώρηση, απώλεια συσκευής, παραβίαση κλειδιού",
+        "Encryption suites": "Σουίτες κρυπτογράφησης",
+        "Failed to force-revoke suite": "Η αναγκαστική ανάκληση της σουίτας απέτυχε",
+        "Failed to reinstate suite": "Η επαναφορά της σουίτας απέτυχε",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Αναγκαστική ανάκληση μιας σουίτας κρυπτογράφησης που ανήκει σε χρήστη ή εφαρμογή βάσει id όταν ο ιδιοκτήτης της δεν μπορεί (ξεχασμένος κύριος κωδικός, ανακληθείσα πρόσβαση ή παραβίαση), και επαναφορά μιας ανακληθείσας. Η αναγκαστική ανάκληση σας ζητά να επιβεβαιώσετε ξανά τον δικό σας κωδικό και διαγράφει οριστικά την πρόσβαση έκτακτης ανάγκης της σουίτας.",
+        "Force-revoke suite": "Αναγκαστική ανάκληση σουίτας",
+        "Reinstate suite": "Επαναφορά σουίτας",
+        "Revoking this suite deleted %n emergency-access contact.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Αντιμετώπιση των μυστικών της σουίτας ως παραβιασμένων (επισήμανση για εναλλαγή και ειδοποίηση ιδιοκτητών)"
     },
     "plurals": null
 }

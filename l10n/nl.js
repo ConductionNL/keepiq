@@ -1151,7 +1151,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "{ok} van {total} geheimen aan de teammap toegevoegd",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "De Keepiq-browserextensie vult je inloggegevens automatisch in, levert passkeys en toont TOTP-codes — zonder dat je geheimen ooit je apparaat verlaten.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Er wordt een placeholder aangemaakt die leeg blijft totdat de ontvanger hem invult — je hoeft nooit zelf een waarde te bedenken.",
-        "Could not reach the directory": "Kan de directory niet bereiken"
+        "Could not reach the directory": "Kan de directory niet bereiken",
+        "e.g. Offboarding, device lost, key compromised": "bijv. Uitdiensttreding, apparaat verloren, sleutel gecompromitteerd",
+        "Encryption suites": "Versleutelingssuites",
+        "Failed to force-revoke suite": "Gedwongen intrekken van suite mislukt",
+        "Failed to reinstate suite": "Herstellen van suite mislukt",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Trek een suite van een gebruiker of applicatie gedwongen in op id wanneer de eigenaar dat niet kan (een vergeten hoofdwachtwoord, een ingetrokken toegang, of een compromittering), en herstel een ingetrokken suite. Gedwongen intrekken vraagt je je eigen wachtwoord opnieuw te bevestigen en verwijdert de noodtoegang van de suite permanent.",
+        "Force-revoke suite": "Suite gedwongen intrekken",
+        "Reinstate suite": "Suite herstellen",
+        "Revoking this suite deleted %n emergency-access contact.": "Het intrekken van deze suite verwijderde %n noodtoegangscontact.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Het intrekken van deze suite verwijderde %n noodtoegangscontacten.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)"
     },
     "nplurals=2; plural=(n != 1);"
 )

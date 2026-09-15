@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Bætt {ok} af {total} leyndarmálum í hópmöppuna",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiq-vafraviðbótin fyllir sjálfkrafa út innskráningar þínar, veitir aðgangslykla og birtir TOTP-kóða — án þess að leyndarmálin þín fari nokkurn tímann úr tækinu þínu.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Búinn er til frátekinn staður sem er tómur þar til viðtakandinn fyllir hann út — þú þarft aldrei að finna upp gildi.",
-        "Could not reach the directory": "Ekki tókst að ná sambandi við nafnaskrána"
+        "Could not reach the directory": "Ekki tókst að ná sambandi við nafnaskrána",
+        "e.g. Offboarding, device lost, key compromised": "t.d. starfslok, tapað tæki, lykill í hættu",
+        "Encryption suites": "Dulkóðunarsett",
+        "Failed to force-revoke suite": "Þvinguð afturköllun setts mistókst",
+        "Failed to reinstate suite": "Endurvirkjun setts mistókst",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Þvinga afturköllun á dulkóðunarsetti í eigu notanda eða forrits eftir auðkenni þegar eigandi þess getur það ekki (gleymt aðallykilorð, afturkallaður aðgangur eða öryggisbrestur), og endurvirkja afturkallað. Þvinguð afturköllun biður þig um að staðfesta þitt eigið lykilorð aftur og eyðir neyðaraðgangi settsins varanlega.",
+        "Force-revoke suite": "Þvinga afturköllun setts",
+        "Reinstate suite": "Endurvirkja sett",
+        "Revoking this suite deleted %n emergency-access contact.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengilið.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengiliðum.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Meðhöndla leyndarmál settsins sem í hættu (merkja fyrir endurnýjun og láta eigendur vita)"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "V ekipno mapo dodanih {ok} od {total} skrivnosti",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Razširitev brskalnika Keepiq samodejno izpolni vaše prijave, ponuja ključe za dostop in prikazuje kode TOTP — vaše skrivnosti pa nikoli ne zapustijo vaše naprave.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Ustvari se nadomestek, ki ostane prazen, dokler ga prejemnik ne izpolni — vrednosti si nikoli ni treba izmišljati.",
-        "Could not reach the directory": "Povezave z imenikom ni bilo mogoče vzpostaviti"
+        "Could not reach the directory": "Povezave z imenikom ni bilo mogoče vzpostaviti",
+        "e.g. Offboarding, device lost, key compromised": "npr. odhod zaposlenega, izgubljena naprava, ogrožen ključ",
+        "Encryption suites": "Šifrirni kompleti",
+        "Failed to force-revoke suite": "Prisilni preklic kompleta ni uspel",
+        "Failed to reinstate suite": "Ponovna vzpostavitev kompleta ni uspela",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Prisilno prekliči šifrirni komplet v lasti uporabnika ali aplikacije po id-ju, kadar njegov lastnik tega ne more (pozabljeno glavno geslo, preklican dostop ali ogroženost), in ponovno vzpostavi preklicanega. Prisilni preklic zahteva ponovno potrditev vašega gesla in trajno izbriše zasilni dostop kompleta.",
+        "Force-revoke suite": "Prisilno prekliči komplet",
+        "Reinstate suite": "Ponovno vzpostavi komplet",
+        "Revoking this suite deleted %n emergency-access contact.": "Preklic tega kompleta je izbrisal %n stik zasilnega dostopa.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Preklic tega kompleta je izbrisal %n stikov zasilnega dostopa.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Obravnavaj skrivnosti kompleta kot ogrožene (označi za menjavo in obvesti lastnike)"
     },
     "nplurals=2; plural=(n != 1);"
 )

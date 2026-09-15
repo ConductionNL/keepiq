@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "{ok} secret(s) sur {total} ajouté(s) au dossier d'équipe",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "L'extension de navigateur Keepiq remplit automatiquement vos identifiants, fournit des clés d'accès et affiche les codes TOTP — sans que vos secrets quittent jamais votre appareil.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Un espace réservé est créé et reste vide jusqu’à ce que le destinataire le remplisse — vous n’avez jamais à inventer de valeur.",
-        "Could not reach the directory": "Impossible de joindre l'annuaire"
+        "Could not reach the directory": "Impossible de joindre l'annuaire",
+        "e.g. Offboarding, device lost, key compromised": "p. ex. départ d'un employé, appareil perdu, clé compromise",
+        "Encryption suites": "Suites de chiffrement",
+        "Failed to force-revoke suite": "Échec de la révocation forcée de la suite",
+        "Failed to reinstate suite": "Échec du rétablissement de la suite",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Révoquer de force une suite de chiffrement appartenant à un utilisateur ou à une application par son id lorsque son propriétaire ne le peut pas (un mot de passe maître oublié, un départ non autorisé ou une compromission), et rétablir une suite révoquée. La révocation forcée vous demande de confirmer à nouveau votre propre mot de passe et supprime définitivement l'accès d'urgence de la suite.",
+        "Force-revoke suite": "Révoquer la suite de force",
+        "Reinstate suite": "Rétablir la suite",
+        "Revoking this suite deleted %n emergency-access contact.": "La révocation de cette suite a supprimé %n contact d'accès d'urgence.",
+        "Revoking this suite deleted %n emergency-access contacts.": "La révocation de cette suite a supprimé %n contacts d'accès d'urgence.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Traiter les secrets de la suite comme compromis (marquer pour rotation et avertir les propriétaires)"
     },
     "nplurals=2; plural=(n != 1);"
 )

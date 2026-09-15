@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "U shtuan {ok} nga {total} sekrete në dosjen e ekipit",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Shtojca e shfletuesit e Keepiq plotëson automatikisht kredencialet tuaja të hyrjes, ofron çelësa hyrjeje dhe shfaq kode TOTP — dhe sekretet tuaja nuk e lënë kurrë pajisjen tuaj.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Krijohet një mbajtëse vendi që qëndron bosh derisa marrësi ta plotësojë — nuk duhet kurrë të shpikni një vlerë.",
-        "Could not reach the directory": "Drejtoria nuk mund të arrihej"
+        "Could not reach the directory": "Drejtoria nuk mund të arrihej",
+        "e.g. Offboarding, device lost, key compromised": "p.sh. largim nga puna, pajisje e humbur, çelës i komprometuar",
+        "Encryption suites": "Suita enkriptimi",
+        "Failed to force-revoke suite": "Revokimi i detyruar i suitës dështoi",
+        "Failed to reinstate suite": "Rivendosja e suitës dështoi",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Revoko me forcë një suitë enkriptimi në pronësi të një përdoruesi ose aplikacioni sipas id-së kur pronari i saj nuk mundet (një fjalëkalim kryesor i harruar, një qasje e revokuar ose një komprometim), dhe rivendos një të revokuar. Revokimi i detyruar kërkon të rikonfirmoni fjalëkalimin tuaj dhe fshin përgjithmonë qasjen e emergjencës të suitës.",
+        "Force-revoke suite": "Revoko me forcë suitën",
+        "Reinstate suite": "Rivendos suitën",
+        "Revoking this suite deleted %n emergency-access contact.": "Revokimi i kësaj suite fshiu %n kontakt të qasjes së emergjencës.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Revokimi i kësaj suite fshiu %n kontakte të qasjes së emergjencës.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Trajto sekretet e suitës si të komprometuara (shëno për rotacion dhe njofto pronarët)"
     },
     "nplurals=2; plural=(n != 1);"
 )

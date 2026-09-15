@@ -1145,7 +1145,17 @@
         "Added {ok} of {total} secrets to the team folder": "{total} gizliden {ok} tanesi takım klasörüne eklendi",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiq tarayıcı eklentisi oturum bilgilerinizi kendiliğinden doldurur, geçiş anahtarları sağlar ve TOTP kodlarını gösterir — gizlileriniz aygıtınızdan asla ayrılmadan.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Bir yer tutucu oluşturulur ve alıcı doldurana kadar boş kalır — asla bir değer uydurmanız gerekmez.",
-        "Could not reach the directory": "Dizine ulaşılamadı"
+        "Could not reach the directory": "Dizine ulaşılamadı",
+        "e.g. Offboarding, device lost, key compromised": "ör. işten ayrılma, cihaz kaybı, anahtar ele geçirildi",
+        "Encryption suites": "Şifreleme paketleri",
+        "Failed to force-revoke suite": "Paketin zorla iptali başarısız oldu",
+        "Failed to reinstate suite": "Paketin yeniden etkinleştirilmesi başarısız oldu",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Sahibi yapamadığında (unutulmuş ana parola, geri alınmış erişim veya ele geçirilme) bir kullanıcıya veya uygulamaya ait şifreleme paketini id ile zorla iptal et ve iptal edilmiş bir paketi yeniden etkinleştir. Zorla iptal, kendi parolanızı yeniden onaylamanızı ister ve paketin acil durum erişimini kalıcı olarak siler.",
+        "Force-revoke suite": "Paketi zorla iptal et",
+        "Reinstate suite": "Paketi yeniden etkinleştir",
+        "Revoking this suite deleted %n emergency-access contact.": "Bu paketin iptali %n acil durum erişim kişisini sildi.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Bu paketin iptali %n acil durum erişim kişisini sildi.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Paketin sırlarını ele geçirilmiş olarak değerlendir (rotasyon için işaretle ve sahiplerini bilgilendir)"
     },
     "plurals": null
 }

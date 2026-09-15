@@ -1145,7 +1145,17 @@
         "Added {ok} of {total} secrets to the team folder": "{total} titok közül {ok} hozzáadva a csoportmappához",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "A Keepiq böngészőkiegészítő automatikusan kitölti a bejelentkezéseit, bejelentkezési kulcsokat biztosít és TOTP-kódokat jelenít meg — a titkai pedig soha nem hagyják el az eszközét.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Létrejön egy helykitöltő, amely üres marad, amíg a címzett ki nem tölti — soha nem kell értéket kitalálnia.",
-        "Could not reach the directory": "A címtár nem érhető el"
+        "Could not reach the directory": "A címtár nem érhető el",
+        "e.g. Offboarding, device lost, key compromised": "pl. kilépés, elveszett eszköz, kulcs kompromittálódott",
+        "Encryption suites": "Titkosítási csomagok",
+        "Failed to force-revoke suite": "A csomag kényszerített visszavonása nem sikerült",
+        "Failed to reinstate suite": "A csomag visszaállítása nem sikerült",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Egy felhasználó vagy alkalmazás tulajdonában lévő titkosítási csomag kényszerített visszavonása azonosító alapján, amikor a tulajdonosa nem tudja (elfelejtett mesterjelszó, visszavont hozzáférés vagy kompromittálódás), és egy visszavont visszaállítása. A kényszerített visszavonás a saját jelszavának újbóli megerősítését kéri, és véglegesen törli a csomag vészhozzáférését.",
+        "Force-revoke suite": "Csomag kényszerített visszavonása",
+        "Reinstate suite": "Csomag visszaállítása",
+        "Revoking this suite deleted %n emergency-access contact.": "A csomag visszavonása %n vészhozzáférési névjegyet törölt.",
+        "Revoking this suite deleted %n emergency-access contacts.": "A csomag visszavonása %n vészhozzáférési névjegyet törölt.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "A csomag titkainak kompromittáltként kezelése (megjelölés cserére és a tulajdonosok értesítése)"
     },
     "plurals": null
 }

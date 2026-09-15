@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Adicionados {ok} de {total} segredos à pasta de equipa",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "A extensão de navegador do Keepiq preenche automaticamente as suas credenciais, fornece chaves de acesso e mostra códigos TOTP, sem que os seus segredos saiam nunca do seu dispositivo.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "É criado um marcador que fica vazio até o destinatário o preencher — nunca precisa de inventar um valor.",
-        "Could not reach the directory": "Não foi possível contactar o diretório"
+        "Could not reach the directory": "Não foi possível contactar o diretório",
+        "e.g. Offboarding, device lost, key compromised": "por ex. saída de colaborador, dispositivo perdido, chave comprometida",
+        "Encryption suites": "Suites de cifragem",
+        "Failed to force-revoke suite": "Falha ao revogar a suite à força",
+        "Failed to reinstate suite": "Falha ao restaurar a suite",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Revogar à força uma suite de cifragem pertencente a um utilizador ou aplicação pelo id quando o proprietário não pode (uma palavra-passe mestra esquecida, um acesso revogado ou um comprometimento), e restaurar uma revogada. A revogação forçada pede para reconfirmar a sua própria palavra-passe e elimina permanentemente o acesso de emergência da suite.",
+        "Force-revoke suite": "Revogar a suite à força",
+        "Reinstate suite": "Restaurar a suite",
+        "Revoking this suite deleted %n emergency-access contact.": "Revogar esta suite eliminou %n contacto de acesso de emergência.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Revogar esta suite eliminou %n contactos de acesso de emergência.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratar os segredos da suite como comprometidos (marcar para rotação e notificar os proprietários)"
     },
     "nplurals=2; plural=(n != 1);"
 )

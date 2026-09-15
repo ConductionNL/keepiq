@@ -1145,7 +1145,17 @@
         "Added {ok} of {total} secrets to the team folder": "{ok} av {total} hemligheter tillagda i teammappen",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiqs webbläsartillägg fyller i dina inloggningar automatiskt, tillhandahåller åtkomstnycklar och visar TOTP-koder — utan att dina hemligheter någonsin lämnar din enhet.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "En platshållare skapas och förblir tom tills mottagaren fyller i den — du behöver aldrig hitta på ett värde.",
-        "Could not reach the directory": "Katalogen kunde inte nås"
+        "Could not reach the directory": "Katalogen kunde inte nås",
+        "e.g. Offboarding, device lost, key compromised": "t.ex. avslut av anställning, förlorad enhet, nyckel komprometterad",
+        "Encryption suites": "Krypteringssviter",
+        "Failed to force-revoke suite": "Tvångsåterkallelse av svit misslyckades",
+        "Failed to reinstate suite": "Återinförande av svit misslyckades",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Tvångsåterkalla en användar- eller applikationsägd krypteringssvit via id när ägaren inte kan (ett glömt huvudlösenord, en återkallad behörighet eller en kompromettering), och återinför en återkallad. Tvångsåterkallelse ber dig bekräfta ditt eget lösenord igen och tar permanent bort svitens nödåtkomst.",
+        "Force-revoke suite": "Tvångsåterkalla svit",
+        "Reinstate suite": "Återinför svit",
+        "Revoking this suite deleted %n emergency-access contact.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakt.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakter.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)"
     },
     "plurals": null
 }

@@ -1146,7 +1146,17 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Dodano {ok} z {total} sekretów do folderu zespołu",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Rozszerzenie przeglądarki Keepiq automatycznie wypełnia Twoje loginy, dostarcza klucze dostępu i pokazuje kody TOTP — a Twoje sekrety nigdy nie opuszczają urządzenia.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Tworzony jest element zastępczy, który pozostaje pusty, dopóki odbiorca go nie wypełni — nigdy nie musisz wymyślać wartości.",
-        "Could not reach the directory": "Nie udało się połączyć z katalogiem"
+        "Could not reach the directory": "Nie udało się połączyć z katalogiem",
+        "e.g. Offboarding, device lost, key compromised": "np. odejście pracownika, utrata urządzenia, klucz naruszony",
+        "Encryption suites": "Zestawy szyfrowania",
+        "Failed to force-revoke suite": "Nie udało się wymusić unieważnienia zestawu",
+        "Failed to reinstate suite": "Nie udało się przywrócić zestawu",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Wymuś unieważnienie zestawu szyfrowania należącego do użytkownika lub aplikacji według id, gdy jego właściciel nie może (zapomniane hasło główne, cofnięty dostęp lub naruszenie), i przywróć unieważniony. Wymuszone unieważnienie prosi o ponowne potwierdzenie własnego hasła i trwale usuwa dostęp awaryjny zestawu.",
+        "Force-revoke suite": "Wymuś unieważnienie zestawu",
+        "Reinstate suite": "Przywróć zestaw",
+        "Revoking this suite deleted %n emergency-access contact.": "Unieważnienie tego zestawu usunęło %n kontakt dostępu awaryjnego.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Unieważnienie tego zestawu usunęło %n kontaktów dostępu awaryjnego.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Traktuj sekrety zestawu jako naruszone (oznacz do rotacji i powiadom właścicieli)"
     },
     "nplurals=2; plural=(n != 1);"
 )
