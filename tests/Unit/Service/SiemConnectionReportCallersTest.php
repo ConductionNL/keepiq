@@ -51,6 +51,11 @@ use RuntimeException;
  *
  * @covers \OCA\Keepiq\Service\SiemSinkService
  * @covers \OCA\Keepiq\Service\SiemService
+ * @uses   \OCA\Keepiq\Service\Connection\ConnectionReporter
+ * @uses   \OCA\Keepiq\Service\Connection\ConnectionObservations
+ * @uses   \OCA\Keepiq\Service\SiemAuditTrail
+ * @uses   \OCA\Keepiq\Db\SiemSink
+ * @uses   \OCA\Keepiq\Db\SiemQueueItem
  */
 class SiemConnectionReportCallersTest extends TestCase {
 
