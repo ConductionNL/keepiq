@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "{total} titok közül {ok} hozzáadva a csoportmappához",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "A Keepiq böngészőkiegészítő automatikusan kitölti a bejelentkezéseit, bejelentkezési kulcsokat biztosít és TOTP-kódokat jelenít meg — a titkai pedig soha nem hagyják el az eszközét.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Létrejön egy helykitöltő, amely üres marad, amíg a címzett ki nem tölti — soha nem kell értéket kitalálnia.",
-        "Could not reach the directory": "A címtár nem érhető el"
+        "Could not reach the directory": "A címtár nem érhető el",
+        "Integrations": "Integrációk",
+        "Connection": "Kapcsolat",
+        "Status message": "Állapotüzenet",
+        "Last checked": "Utolsó ellenőrzés",
+        "All connections": "Minden kapcsolat",
+        "Add integration": "Integráció hozzáadása",
+        "Open settings": "Beállítások megnyitása",
+        "Configured": "Konfigurálva",
+        "Limited": "Korlátozott",
+        "Simulated": "Szimulált",
+        "Not available": "Nem érhető el",
+        "Error": "Hiba"
     },
     "nplurals=2; plural=(n != 1);"
 )

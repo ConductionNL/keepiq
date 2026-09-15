@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Додадени {ok} од {total} тајни во тимската папка",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Проширувањето за прелистувач Keepiq автоматски ги пополнува вашите најави, обезбедува пристапни клучеви и прикажува TOTP кодови — а вашите тајни никогаш не го напуштаат вашиот уред.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Се создава резервирано место што останува празно додека примачот не го пополни — никогаш не треба да измислувате вредност.",
-        "Could not reach the directory": "До именикот не можеше да се дојде"
+        "Could not reach the directory": "До именикот не можеше да се дојде",
+        "Integrations": "Интеграции",
+        "Connection": "Врска",
+        "Status message": "Порака за статус",
+        "Last checked": "Последна проверка",
+        "All connections": "Сите врски",
+        "Add integration": "Додај интеграција",
+        "Open settings": "Отвори поставки",
+        "Configured": "Конфигурирано",
+        "Limited": "Ограничено",
+        "Simulated": "Симулирано",
+        "Not available": "Не е достапно",
+        "Error": "Грешка"
     },
     "nplurals=2; plural=(n != 1);"
 )

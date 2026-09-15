@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "{ok} vun {total} Geheimnisser an den Equipendossier gesat",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "D'Keepiq-Browser-Erweiderung fëllt Är Logins automatesch aus, bitt Passkeys a weist TOTP-Coden — ouni datt Är Geheimnisser Ären Apparat jeemools verloossen.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Et gëtt e Plazhalter erstellt, deen eidel bleift bis den Empfänger en ausfëllt — Dir musst ni e Wäert erfannen.",
-        "Could not reach the directory": "De Verzeechnes konnt net erreecht ginn"
+        "Could not reach the directory": "De Verzeechnes konnt net erreecht ginn",
+        "Integrations": "Integratiounen",
+        "Connection": "Verbindung",
+        "Status message": "Statusmeldung",
+        "Last checked": "Lescht iwwerpréift",
+        "All connections": "All Verbindungen",
+        "Add integration": "Integratioun derbäisetzen",
+        "Open settings": "Astellungen opmaachen",
+        "Configured": "Konfiguréiert",
+        "Limited": "Limitéiert",
+        "Simulated": "Simuléiert",
+        "Not available": "Net disponibel",
+        "Error": "Feeler"
     },
     "nplurals=2; plural=(n != 1);"
 )

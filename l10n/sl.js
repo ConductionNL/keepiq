@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "V ekipno mapo dodanih {ok} od {total} skrivnosti",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Razširitev brskalnika Keepiq samodejno izpolni vaše prijave, ponuja ključe za dostop in prikazuje kode TOTP — vaše skrivnosti pa nikoli ne zapustijo vaše naprave.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Ustvari se nadomestek, ki ostane prazen, dokler ga prejemnik ne izpolni — vrednosti si nikoli ni treba izmišljati.",
-        "Could not reach the directory": "Povezave z imenikom ni bilo mogoče vzpostaviti"
+        "Could not reach the directory": "Povezave z imenikom ni bilo mogoče vzpostaviti",
+        "Integrations": "Integracije",
+        "Connection": "Povezava",
+        "Status message": "Sporočilo o stanju",
+        "Last checked": "Nazadnje preverjeno",
+        "All connections": "Vse povezave",
+        "Add integration": "Dodaj integracijo",
+        "Open settings": "Odpri nastavitve",
+        "Configured": "Nastavljeno",
+        "Limited": "Omejeno",
+        "Simulated": "Simulirano",
+        "Not available": "Ni na voljo",
+        "Error": "Napaka"
     },
     "nplurals=2; plural=(n != 1);"
 )

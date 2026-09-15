@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -91,8 +92,11 @@ class BreachProxyController extends Controller {
 	 * @param ICacheFactory $cacheFactory The cache factory
 	 * @param IUserSession $userSession The user session (auth posture)
 	 * @param LoggerInterface $logger The logger
+	 * @param ConnectionReporter|null $connectionReporter Tells integriq what an upstream lookup met, or nothing when absent.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	public function __construct(
 		IRequest $request,
@@ -101,6 +105,7 @@ class BreachProxyController extends Controller {
 		ICacheFactory $cacheFactory,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
+		private ?ConnectionReporter $connectionReporter = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 		// Namespace deliberately still `keepiq_` after the doriath -> keepiq
@@ -133,11 +138,18 @@ class BreachProxyController extends Controller {
 	 * gate-7 correctly stops treating that 403 as a guard once it requires a
 	 * 403 to have consulted the caller.
 	 *
+	 * A call that reaches the upstream reports its HTTP status to integriq's
+	 * connection registry, at most once an hour while it stays the same
+	 * (adopt-connection-registry). Only the status travels: never the prefix,
+	 * the suffix list or the exception, whose message names the full URL. A
+	 * cache hit and every refusal before the call report nothing.
+	 *
 	 * @NoAdminRequired
 	 *
 	 * @return DataResponse
 	 *
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
+	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	#[NoAdminRequired]
 	public function range(string $prefix): DataResponse {
@@ -184,14 +196,27 @@ class BreachProxyController extends Controller {
 				'Keepiq: HIBP range lookup failed: ' . $e->getMessage(),
 				['app' => Application::APP_ID]
 			);
+			$this->reportLookup(httpStatus: $this->connectionReporter?->httpStatusOf(exception: $e));
 			return new DataResponse(
 				data: ['message' => 'Breach service unavailable'],
 				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
 			);
 		}//end try
 
+		$this->reportLookup(httpStatus: $response->getStatusCode());
 		$this->cache->set($prefix, $body, self::CACHE_TTL);
 
 		return new DataResponse(data: ['suffixes' => $body]);
 	}//end range()
+
+	/**
+	 * Hand the upstream's HTTP status, and nothing else, to the connection reporter.
+	 *
+	 * @param int|null $httpStatus The upstream's HTTP status, or null when nothing answered.
+	 *
+	 * @return void
+	 */
+	private function reportLookup(?int $httpStatus): void {
+		$this->connectionReporter?->reportBreachLookup(httpStatus: $httpStatus);
+	}//end reportLookup()
 }//end class

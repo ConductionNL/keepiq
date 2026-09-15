@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "{total} gizliden {ok} tanesi takım klasörüne eklendi",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiq tarayıcı eklentisi oturum bilgilerinizi kendiliğinden doldurur, geçiş anahtarları sağlar ve TOTP kodlarını gösterir — gizlileriniz aygıtınızdan asla ayrılmadan.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Bir yer tutucu oluşturulur ve alıcı doldurana kadar boş kalır — asla bir değer uydurmanız gerekmez.",
-        "Could not reach the directory": "Dizine ulaşılamadı"
+        "Could not reach the directory": "Dizine ulaşılamadı",
+        "Integrations": "Entegrasyonlar",
+        "Connection": "Bağlantı",
+        "Status message": "Durum iletisi",
+        "Last checked": "Son denetim",
+        "All connections": "Tüm bağlantılar",
+        "Add integration": "Entegrasyon ekle",
+        "Open settings": "Ayarları aç",
+        "Configured": "Yapılandırılmış",
+        "Limited": "Sınırlı",
+        "Simulated": "Benzetilmiş",
+        "Not available": "Kullanılamıyor",
+        "Error": "Hata"
     },
     "nplurals=2; plural=(n != 1);"
 )
