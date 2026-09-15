@@ -26,8 +26,8 @@
 
 ## 4. End to end
 
-- [ ] 4.1 Write `tests/e2e/workflows/integrations-page.spec.ts`.
-- [ ] 4.2 Install integriq in the CI `additional-apps`.
+- [x] 4.1 Write `tests/e2e/workflows/integrations-page.spec.ts`.
+- [x] 4.2 Install integriq in the CI `additional-apps`.
 
 ## 5. After integriq ships
 
