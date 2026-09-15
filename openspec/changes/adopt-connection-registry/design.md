@@ -54,7 +54,7 @@ Each candidate was checked against the code on `development` on 2026-09-14.
 
 **Why this is cheap (ADR-076).** A lookup reports only on a cache miss, and then reads one in-memory app-config value. The drain runs from cron, never from a page request. A save is an admin action.
 
-**Wiring.** `SettingsController` is built by hand in `DomainOverrideRegistrar::register()`, which `Application::register()` calls. That factory passes the reporter by name. `BreachProxyController`, `SiemService` and `SiemSinkService` are autowired, so each takes the reporter as an optional last argument.
+**Wiring.** `SettingsController` is built by hand, because `DomainOverrideRegistrar::register()` (called from `Application::register()`) overrides the AppHost alias. The build moved into `lib/AppInfo/SettingsControllerFactory.php`, which passes the reporter by name; left in the registrar, the extra dependency took its coupling to 13, over the PHPMD limit. `BreachProxyController`, `SiemService` and `SiemSinkService` are autowired, so each takes the reporter as an optional last argument.
 
 ## D3. The page
 
