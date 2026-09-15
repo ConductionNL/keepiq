@@ -26,7 +26,7 @@ Hydra change `connection-registry` (hydra#667, amended in hydra#673, hydra#674 a
 - An Integrations page under the settings gear, over integriq's `app_connection` schema, preset to `app=keepiq`, admin only, and only shown when integriq is installed.
 - Keepiq's own navigation rail learns to honour a menu entry's `query`, `permission: admin` and `visibleIf.appInstalled`. It ignored all three before, so the preset would not have reached the page.
 - Add integration opens `/apps/integriq/connections?app=keepiq&link=1`.
-- Local `connectionStatus` and `connectionSettingsLabel` formatters with all six statuses, and the strings in English and Dutch.
+- The `connectionStatus` and `connectionSettingsLabel` formatters come from `@conduction/nextcloud-vue` 3.2.0, which labels all seven statuses. The page strings are in English and Dutch.
 
 ## Depends on
 

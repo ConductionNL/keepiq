@@ -61,14 +61,14 @@ Each candidate was checked against the code on `development` on 2026-09-14.
 
 - `src/manifest.d/80-connection-registry.json`: an `index` page `Integrations` at `/settings/integrations`, `requiresApp` integriq, `permission: admin`, `showAdd: false`, and the columns connection, status, status message, last checked and settings.
 - Its menu entry `IntegrationsMenu` sits in the settings gear with `query: {app: keepiq}`, `permission: admin` and `visibleIf.appInstalled: integriq`.
-- `src/services/connectionRegistry.js` holds the two formatters and `openIntegriqConnections`.
-- `App.vue` passes the formatters through CnAppRoot's `formatters` prop, and merges the handler into the `customComponents` it passes, because CnIndexPage resolves a header action's handler against `customComponents`. It passed no formatters before this change.
+- `src/services/connectionRegistry.js` holds `openIntegriqConnections`.
+- `App.vue` passes no `formatters`, because CnAppRoot supplies the two built-ins, and merges the handler into the `customComponents` it passes, because CnIndexPage resolves a header action's handler against `customComponents`.
 
 **Keepiq's own navigation rail.** Keepiq renders `KeepiqAppNav` in CnAppRoot's `#menu` slot, because CnAppNav cannot draw the vault folder tree. That rail read only `route`, `href` and `action`. It dropped `query`, so the menu would have opened the page with no preset and listed every app's rows. It also ignored `permission` and `visibleIf`, so the entry would have shown to every user and without integriq. `src/utils/navEntries.js` now holds both rules, taken from CnAppNav: `menuEntryTo()` passes `query` into the route, and `isMenuEntryVisible()` checks `visibleIf.appInstalled` against `OC.appswebroots` and `permission: admin` against the instance admin flag. No existing entry declares either field, so nothing else in the rail changes.
 
 **Why `/settings/integrations` does not break ADR-004.** The rule forbids routing an admin settings component, such as `AdminRoot.vue`, inside the app. This route renders a CnIndexPage over integriq's `app_connection`, whose schema grants read access to admins only. The admin settings themselves stay in `AdminSettings.php`. The `hydra-gate-admin-router` check reads `src/router/index.js`, which Keepiq does not have: routes come from the manifest.
 
-**Formatters.** The installed `@conduction/nextcloud-vue` 2.41.1 ships no `connectionStatus` built-in, so Keepiq carries a local copy with all six labels, `limited` included.
+**Formatters.** `@conduction/nextcloud-vue` 3.2.0 ships `connectionStatus` and `connectionSettingsLabel` as built-ins, `disabled` included (nextcloud-vue#1173). Keepiq carried a local copy while it pinned 2.41.1, and dropped it on moving to 3.2.0.
 
 ## D4. Contract misfits
 

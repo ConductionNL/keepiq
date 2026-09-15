@@ -107,7 +107,7 @@ A connection report is read by every admin, and integriq stores it in OpenRegist
 
 ### Requirement: REQ-KEEPIQ-CONN-004 An admin reads the connections on an Integrations page
 
-Keepiq SHALL render an `index` page at `/settings/integrations` over `integriq/app_connection`, reached from the settings gear and preset to `app` equal to `keepiq` through its menu entry's `query` (hydra REQ-CONN-006). The page and its menu entry SHALL be admin only. The page SHALL require Integriq, and the menu entry SHALL only render when integriq is installed. Keepiq's navigation rail SHALL pass the entry's `query` into the route and SHALL honour `permission: admin` and `visibleIf.appInstalled`. The status column SHALL name all six statuses, `limited` included. The page SHALL NOT offer a generic Add button. Its Add integration action SHALL open `/apps/integriq/connections?app=keepiq&link=1`.
+Keepiq SHALL render an `index` page at `/settings/integrations` over `integriq/app_connection`, reached from the settings gear and preset to `app` equal to `keepiq` through its menu entry's `query` (hydra REQ-CONN-006). The page and its menu entry SHALL be admin only. The page SHALL require Integriq, and the menu entry SHALL only render when integriq is installed. Keepiq's navigation rail SHALL pass the entry's `query` into the route and SHALL honour `permission: admin` and `visibleIf.appInstalled`. The status column SHALL name all seven statuses, `limited` and `disabled` included, through the `connectionStatus` formatter `@conduction/nextcloud-vue` ships. The page SHALL NOT offer a generic Add button. Its Add integration action SHALL open `/apps/integriq/connections?app=keepiq&link=1`.
 
 #### Scenario: The page lists only the rows of keepiq
 @e2e tests/e2e/workflows/integrations-page.spec.ts
@@ -132,7 +132,7 @@ Keepiq SHALL render an `index` page at `/settings/integrations` over `integriq/a
 - **THEN** Keepiq's navigation rail SHALL NOT render the entry
 
 #### Scenario: A connection that works in part reads Limited
-@e2e exclude Only a rate-limited lookup or a partly failing drain produces limited; tests/vitest/connectionRegistry.spec.js asserts the label in English and Dutch.
+@e2e exclude Only a rate-limited lookup or a partly failing drain produces limited; tests/vitest/connectionRegistry.spec.js asserts the status column uses the library's built-in connectionStatus, whose labels nextcloud-vue's tests/utils/builtInFormatters.spec.js (formatConnectionStatus) asserts, with Beperkt in the library's l10n/nl.json.
 
 - **GIVEN** a row whose status is `limited`
 - **WHEN** the page renders it
