@@ -1,5 +1,18 @@
 {
     "translations": {
+        "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+        "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+        "Revoke and delete emergency access": "Revoke and delete emergency access",
+        "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+        "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+        "Abort and keep my old key": "Abort and keep my old key",
+        "Aborting…": "Aborting…",
+        "Could not abort the rotation.": "Could not abort the rotation.",
+        "Could not revoke. Check your master password.": "Could not revoke. Check your master password.",
+        "Discards the new key and unlocks your vault under the old one. Only possible while nothing has been re-encrypted yet.": "Discards the new key and unlocks your vault under the old one. Only possible while nothing has been re-encrypted yet.",
+        "Re-enter your previous master password to finish": "Re-enter your previous master password to finish",
+        "Revoke emergency access": "Revoke emergency access",
+        "This deletes the recovery envelope for this contact. They will no longer be able to break glass unless you re-establish them.": "This deletes the recovery envelope for this contact. They will no longer be able to break glass unless you re-establish them.",
         "Take over as vault administrator": "Als Tresoradministrator übernehmen",
         "Select {name}": "{name} auswählen",
         "Could not load the password policy.": "Die Passwortrichtlinie konnte nicht geladen werden.",
@@ -1132,7 +1145,19 @@
         "Added {ok} of {total} secrets to the team folder": "{ok} von {total} Geheimnissen dem Teamordner hinzugefügt",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Die Keepiq-Browser-Erweiterung füllt Ihre Logins automatisch aus, stellt Passkeys bereit und zeigt TOTP-Codes an — ohne dass Ihre Geheimnisse Ihr Gerät je verlassen.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Es wird ein Platzhalter erstellt, der leer bleibt, bis der Empfänger ihn ausfüllt – Sie müssen sich niemals einen Wert ausdenken.",
-        "Could not reach the directory": "Das Verzeichnis konnte nicht erreicht werden"
+        "Could not reach the directory": "Das Verzeichnis konnte nicht erreicht werden",
+        "Integrations": "Integrationen",
+        "Connection": "Verbindung",
+        "Status message": "Statusmeldung",
+        "Last checked": "Zuletzt geprüft",
+        "All connections": "Alle Verbindungen",
+        "Add integration": "Integration hinzufügen",
+        "Open settings": "Einstellungen öffnen",
+        "Configured": "Konfiguriert",
+        "Limited": "Eingeschränkt",
+        "Simulated": "Simuliert",
+        "Not available": "Nicht verfügbar",
+        "Error": "Fehler"
     },
     "plurals": null
 }

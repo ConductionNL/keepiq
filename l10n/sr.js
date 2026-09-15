@@ -1,6 +1,19 @@
 OC.L10N.register(
     "keepiq",
     {
+        "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.": "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+        "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+        "Revoke and delete emergency access": "Revoke and delete emergency access",
+        "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+        "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+        "Abort and keep my old key": "Abort and keep my old key",
+        "Aborting…": "Aborting…",
+        "Could not abort the rotation.": "Could not abort the rotation.",
+        "Could not revoke. Check your master password.": "Could not revoke. Check your master password.",
+        "Discards the new key and unlocks your vault under the old one. Only possible while nothing has been re-encrypted yet.": "Discards the new key and unlocks your vault under the old one. Only possible while nothing has been re-encrypted yet.",
+        "Re-enter your previous master password to finish": "Re-enter your previous master password to finish",
+        "Revoke emergency access": "Revoke emergency access",
+        "This deletes the recovery envelope for this contact. They will no longer be able to break glass unless you re-establish them.": "This deletes the recovery envelope for this contact. They will no longer be able to break glass unless you re-establish them.",
         "Take over as vault administrator": "Преузми као администратор трезора",
         "Select {name}": "Изабери {name}",
         "Could not load the password policy.": "Смерница за лозинке није могла да се учита.",
@@ -1133,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Додато {ok} од {total} тајни у тимску фасциклу",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Проширење прегледача Keepiq аутоматски испуњава ваше пријаве, пружа приступне кључеве и приказује TOTP кодове — а ваше тајне никада не излазе са вашег уређаја.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Креира се резервисано место које остаје празно док га прималац не испуни — никада не морате да измишљате вредност.",
-        "Could not reach the directory": "До именика није било могуће доћи"
+        "Could not reach the directory": "До именика није било могуће доћи",
+        "Integrations": "Интеграције",
+        "Connection": "Веза",
+        "Status message": "Порука о статусу",
+        "Last checked": "Последња провера",
+        "All connections": "Све везе",
+        "Add integration": "Додај интеграцију",
+        "Open settings": "Отвори подешавања",
+        "Configured": "Подешено",
+        "Limited": "Ограничено",
+        "Simulated": "Симулирано",
+        "Not available": "Није доступно",
+        "Error": "Грешка"
     },
     "nplurals=2; plural=(n != 1);"
 )

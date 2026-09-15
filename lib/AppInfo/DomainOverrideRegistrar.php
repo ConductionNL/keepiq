@@ -69,14 +69,9 @@ final class DomainOverrideRegistrar {
 				eventDispatcher: $c->get(\OCP\EventDispatcher\IEventDispatcher::class),
 			)
 		);
-		$context->registerService(
-			SettingsController::class,
-			static fn ($c) => new SettingsController(
-				request: $c->get(\OCP\IRequest::class),
-				settingsService: $c->get(SettingsService::class),
-				userSession: $c->get(\OCP\IUserSession::class),
-			)
-		);
+		// SettingsControllerFactory spells out every argument, the integriq
+		// connection reporter included (adopt-connection-registry).
+		$context->registerService(SettingsController::class, new SettingsControllerFactory());
 		$context->registerService(
 			InitializeSettings::class,
 			static fn ($c) => new InitializeSettings(
