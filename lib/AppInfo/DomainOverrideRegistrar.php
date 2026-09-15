@@ -25,6 +25,7 @@ namespace OCA\Keepiq\AppInfo;
 
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Repair\InitializeSettings;
+use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -75,6 +76,10 @@ final class DomainOverrideRegistrar {
 				request: $c->get(\OCP\IRequest::class),
 				settingsService: $c->get(SettingsService::class),
 				userSession: $c->get(\OCP\IUserSession::class),
+				// The integriq connection refresh (adopt-connection-registry). Passed by
+				// name: this factory is hand-built, so the constructor default of null
+				// would otherwise switch the breach check refresh off without a sound.
+				connectionReporter: $c->get(ConnectionReporter::class),
 			)
 		);
 		$context->registerService(

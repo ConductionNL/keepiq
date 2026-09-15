@@ -48,7 +48,7 @@ Each candidate was checked against the code on `development` on 2026-09-14.
 | some took it | `limited`, naming the first host that failed |
 | none took it | `error`, naming the first host that failed |
 
-**What a message may carry.** The breach check reporter takes only an HTTP status, as `?int`. A hash prefix cannot reach it by type. The SIEM mapper takes a host, derived with `parse_url(..., PHP_URL_HOST)`: a webhook URL as is, a syslog `host:port` behind `tcp://`. A value with no host reads "a SIEM sink". Neither ever reads an exception message, because a Guzzle exception names the full request URL, and on a range lookup that URL ends in the prefix.
+**What a message may carry.** The breach check reporter takes only an HTTP status, as `?int`. A hash prefix cannot reach it by type. The SIEM mapper takes a host, derived with `parse_url(..., PHP_URL_HOST)`: a webhook URL as is, a syslog `host:port` behind `tcp://`. A value with no host is left out of the message, which then reads "The SIEM sink took the last delivery." Neither ever reads an exception message, because a Guzzle exception names the full request URL, and on a range lookup that URL ends in the prefix.
 
 **Throttle.** The reporter remembers the last status and time per key in the app-config key `connection_report_{key}`. The same status goes out again after an hour. A different status waits five minutes after the last report, so an upstream that flips cannot report on every lookup. A save deletes the memory for its key, so the first outcome after a save is reported at once. The copy is the one buildiq#777 uses.
 
