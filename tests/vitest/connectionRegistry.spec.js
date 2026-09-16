@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -12,9 +13,16 @@
  * The two formatters are @conduction/nextcloud-vue built-ins since 3.2.0, so
  * their names are checked against the installed library, not a local copy.
  *
+ * The library's map is IMPORTED and called, not read as text. A regex over the
+ * module source answers about the file on disk, which is one step beside the
+ * question: whether the formatter the page resolves actually returns the label.
+ * The import reaches @nextcloud/auth through formatMetric, which wants a
+ * `window`, so this file runs on jsdom rather than the suite's default node.
+ *
  * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 
+import { BUILT_IN_FORMATTERS } from '@conduction/nextcloud-vue/src/utils/builtInFormatters.js'
 import * as fs from 'fs'
 import * as path from 'path'
 import { describe, expect, it } from 'vitest'
@@ -30,25 +38,15 @@ const page = fragment.pages.find((p) => p.id === 'Integrations')
 const menu = fragment.menu.find((m) => m.id === 'IntegrationsMenu')
 
 /**
- * The installed library's built-in formatter module, as source text.
+ * The formatter registry CnAppRoot provides, built the way CnAppRoot builds it:
+ * the library's built-ins under whatever the app passes in its `formatters`
+ * prop. A same-named local formatter wins, which is why keepiq passes none.
  *
- * @return {string} The module source.
+ * @param {object} appFormatters What the app hands CnAppRoot. Empty by default.
+ * @return {object} The merged registry, keyed by formatter name.
  */
-function builtInFormattersSource() {
-	return read('node_modules', '@conduction', 'nextcloud-vue', 'src', 'utils', 'builtInFormatters.js')
-}
-
-/**
- * The formatter names the installed @conduction/nextcloud-vue registers as
- * built-ins, read from its BUILT_IN_FORMATTERS map.
- *
- * @return {Set<string>} The registry keys.
- */
-function libraryBuiltInFormatters() {
-	const source = builtInFormattersSource()
-	const block = source.slice(source.indexOf('export const BUILT_IN_FORMATTERS'))
-	const body = block.slice(block.indexOf('{') + 1, block.indexOf('}'))
-	return new Set([...body.matchAll(/^\t'?([\w-]+)'?:/gm)].map((match) => match[1]))
+function shellFormatterRegistry(appFormatters = {}) {
+	return { ...BUILT_IN_FORMATTERS, ...appFormatters }
 }
 
 describe('connection strings', () => {
@@ -115,17 +113,17 @@ describe('the Integrations page declaration', () => {
 	})
 
 	it('names only formatters the library ships and handlers that exist, and wires the handler into the shell', () => {
-		const builtIns = libraryBuiltInFormatters()
+		const registry = shellFormatterRegistry()
 		const handlers = createConnectionHandlers({
 			generateUrl: (p) => p,
 			assign: () => {},
 		})
 
-		expect(builtIns.has('date'), 'the built-in formatter map was read').toBe(true)
+		expect(typeof registry.date, 'the built-in formatter map was read').toBe('function')
 		const named = page.config.columns.filter((c) => c.formatter).map((c) => c.formatter)
 		expect(named.sort()).toEqual(['connectionSettingsLabel', 'connectionStatus'])
 		for (const formatter of named) {
-			expect(builtIns.has(formatter), `@conduction/nextcloud-vue ships ${formatter}`).toBe(true)
+			expect(typeof registry[formatter], `@conduction/nextcloud-vue ships ${formatter}`).toBe('function')
 		}
 		for (const action of page.config.headerActions) {
 			expect(typeof handlers[action.handler], action.handler).toBe('function')
@@ -139,9 +137,26 @@ describe('the Integrations page declaration', () => {
 	})
 
 	// The library labels all seven statuses. A copy of the formatter passed to
-	// CnAppRoot would win over the built-in and could predate `disabled`.
+	// CnAppRoot would win over the built-in and could predate `disabled`, which
+	// is the status the hibp switch introduces.
 	it('lets the library label the statuses, disabled included', () => {
-		expect(builtInFormattersSource()).toMatch(/^\tdisabled: 'Switched off',$/m)
+		const registry = shellFormatterRegistry()
+
+		expect(registry.connectionStatus('disabled')).toBe('Switched off')
+		expect(registry.connectionStatus('unconfigured')).toBe('Not configured')
+		expect(registry.connectionStatus('configured')).toBe('Configured')
+	})
+
+	// THE SHADOW. CnAppRoot merges `{ ...BUILT_IN_FORMATTERS, ...formatters }`,
+	// so a local formatter under either name silently replaces the built-in and
+	// nothing logs. keepiq passes no formatters at all, and this states what
+	// that buys: the built-in is what the Status column resolves.
+	it('passes CnAppRoot no formatters, so nothing shadows the built-ins', () => {
+		const shadow = shellFormatterRegistry({
+			connectionStatus: () => 'a local copy answered',
+		})
+
+		expect(shadow.connectionStatus('disabled')).toBe('a local copy answered')
 		expect(read('src', 'App.vue')).not.toContain(':formatters=')
 	})
 
