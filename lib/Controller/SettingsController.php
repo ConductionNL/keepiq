@@ -23,6 +23,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
@@ -43,13 +44,17 @@ class SettingsController extends Controller {
 	 * @param IRequest $request The request object
 	 * @param SettingsService $settingsService The settings service
 	 * @param IUserSession $userSession The user session
+	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a breach check save, or nothing when absent.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	public function __construct(
 		IRequest $request,
 		private SettingsService $settingsService,
 		private IUserSession $userSession,
+		private ?ConnectionReporter $connectionReporter = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -192,11 +197,16 @@ class SettingsController extends Controller {
 	/**
 	 * Update admin-scoped settings (implement-dashboard-settings §2.2).
 	 *
+	 * A save that wrote `breach_check_enabled` asks integriq to resolve the
+	 * breach check connection again (adopt-connection-registry). That never
+	 * throws, does nothing without integriq, and never changes the response.
+	 *
 	 * @AuthorizedAdminSetting(AdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
+	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function updateAdminSettings(): JSONResponse {
@@ -209,6 +219,11 @@ class SettingsController extends Controller {
 				data: ['message' => $e->getMessage()],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
+		}
+
+		// The same test AdminSettingsService uses to decide it wrote the key.
+		if (isset($data['breach_check_enabled']) === true) {
+			$this->connectionReporter?->breachCheckSaved();
 		}
 
 		return new JSONResponse(data: $result);

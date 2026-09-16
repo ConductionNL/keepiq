@@ -1145,7 +1145,19 @@
         "Added {ok} of {total} secrets to the team folder": "Cuireadh {ok} as {total} rún leis an bhfillteán foirne",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Líonann breiseán brabhsálaí Keepiq do chuid logálacha isteach go huathoibríoch, soláthraíonn sé eochracha rochtana, agus taispeánann sé cóid TOTP — agus ní fhágann do rúin do ghléas riamh.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Cruthaítear coimeádán a fhanann folamh go dtí go líonann an faighteoir é — ní gá duit luach a cheapadh riamh.",
-        "Could not reach the directory": "Níorbh fhéidir teacht ar an eolaire"
+        "Could not reach the directory": "Níorbh fhéidir teacht ar an eolaire",
+        "Integrations": "Comhtháthuithe",
+        "Connection": "Nasc",
+        "Status message": "Teachtaireacht stádais",
+        "Last checked": "Seiceáladh go deireanach",
+        "All connections": "Gach nasc",
+        "Add integration": "Cuir comhtháthú leis",
+        "Open settings": "Oscail na socruithe",
+        "Configured": "Cumraithe",
+        "Limited": "Teoranta",
+        "Simulated": "Insamhlaithe",
+        "Not available": "Níl sé ar fáil",
+        "Error": "Earráid"
     },
     "plurals": null
 }

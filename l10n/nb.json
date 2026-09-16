@@ -1145,7 +1145,19 @@
         "Added {ok} of {total} secrets to the team folder": "Lagt til {ok} av {total} hemmeligheter i teammappen",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiq-nettleserutvidelsen fyller ut innloggingene dine automatisk, leverer tilgangsnøkler og viser TOTP-koder — uten at hemmelighetene dine noen gang forlater enheten din.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Det opprettes en plassholder som står tom til mottakeren fyller den ut — du skal aldri finne opp en verdi.",
-        "Could not reach the directory": "Kunne ikke nå katalogen"
+        "Could not reach the directory": "Kunne ikke nå katalogen",
+        "Integrations": "Integrasjoner",
+        "Connection": "Tilkobling",
+        "Status message": "Statusmelding",
+        "Last checked": "Sist kontrollert",
+        "All connections": "Alle tilkoblinger",
+        "Add integration": "Legg til integrasjon",
+        "Open settings": "Åpne innstillinger",
+        "Configured": "Konfigurert",
+        "Limited": "Begrenset",
+        "Simulated": "Simulert",
+        "Not available": "Ikke tilgjengelig",
+        "Error": "Feil"
     },
     "plurals": null
 }

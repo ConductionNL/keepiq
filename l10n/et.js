@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Meeskonnakausta lisatud {ok} / {total} saladust",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiqi brauserilaiendus täidab sinu sisselogimisandmed automaatselt, pakub pääsuvõtmeid ja näitab TOTP-koode — ilma et sinu saladused kunagi sinu seadmest lahkuksid.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Luuakse kohahoidja, mis jääb tühjaks kuni saaja selle täidab — sul ei ole kunagi vaja väärtust välja mõelda.",
-        "Could not reach the directory": "Kataloogiga ei õnnestunud ühendust saada"
+        "Could not reach the directory": "Kataloogiga ei õnnestunud ühendust saada",
+        "Integrations": "Integratsioonid",
+        "Connection": "Ühendus",
+        "Status message": "Olekuteade",
+        "Last checked": "Viimati kontrollitud",
+        "All connections": "Kõik ühendused",
+        "Add integration": "Lisa integratsioon",
+        "Open settings": "Ava sätted",
+        "Configured": "Konfigureeritud",
+        "Limited": "Piiratud",
+        "Simulated": "Simuleeritud",
+        "Not available": "Pole saadaval",
+        "Error": "Viga"
     },
     "nplurals=2; plural=(n != 1);"
 )

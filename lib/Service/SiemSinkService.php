@@ -33,6 +33,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\SiemQueueItemMapper;
 use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Db\SiemSinkMapper;
+use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Security\ICrypto;
 use Ramsey\Uuid\Uuid;
@@ -58,6 +59,7 @@ class SiemSinkService {
 	 * @param ICrypto $crypto NC crypto (HMAC secret at rest)
 	 * @param SiemTransport $transport The sink transport (test-fire)
 	 * @param SiemAuditTrail|null $auditTrail The sink audit trail
+	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a sink change, or nothing when absent
 	 *
 	 * @return void
 	 *
@@ -69,6 +71,7 @@ class SiemSinkService {
 		private ICrypto $crypto,
 		private SiemTransport $transport,
 		?SiemAuditTrail $auditTrail = null,
+		private ?ConnectionReporter $connectionReporter = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new SiemAuditTrail());
 	}//end __construct()
@@ -114,6 +117,7 @@ class SiemSinkService {
 		$sink = $this->sinkMapper->insert($sink);
 
 		$this->auditTrail->recordSinkCreated(actorId: $adminUid, sinkId: $sink->getId(), type: $type);
+		$this->reportSinksChanged();
 
 		return $sink;
 	}//end createSink()
@@ -158,6 +162,7 @@ class SiemSinkService {
 		$sink = $this->sinkMapper->update($sink);
 
 		$this->auditTrail->recordSinkUpdated(actorId: $adminUid, sinkId: $sinkId);
+		$this->reportSinksChanged();
 
 		return $sink;
 	}//end updateSink()
@@ -180,6 +185,7 @@ class SiemSinkService {
 		$this->sinkMapper->delete($sink);
 
 		$this->auditTrail->recordSinkDeleted(actorId: $adminUid, sinkId: $sinkId);
+		$this->reportSinksChanged();
 	}//end deleteSink()
 
 	/**
@@ -262,4 +268,20 @@ class SiemSinkService {
 			$sink->setCategoryFilter($encoded);
 		}
 	}//end applySecretAndFilter()
+
+	/**
+	 * Ask integriq to resolve SIEM export again after a sink change.
+	 *
+	 * The reporter counts the enabled sinks only when integriq is installed,
+	 * and never throws (adopt-connection-registry).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+	 */
+	private function reportSinksChanged(): void {
+		$this->connectionReporter?->siemSinksChanged(
+			enabledSinkCount: fn (): int => count($this->sinkMapper->findEnabled())
+		);
+	}//end reportSinksChanged()
 }//end class

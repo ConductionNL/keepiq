@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Přidáno {ok} z {total} tajemství do týmové složky",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Rozšíření prohlížeče Keepiq automaticky vyplňuje vaše přihlašovací údaje, poskytuje přístupové klíče a zobrazuje kódy TOTP — a vaše tajemství přitom nikdy neopustí vaše zařízení.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Vytvoří se zástupný záznam, který zůstane prázdný, dokud jej příjemce nevyplní — nikdy si nemusíte hodnotu vymýšlet.",
-        "Could not reach the directory": "Adresář se nepodařilo kontaktovat"
+        "Could not reach the directory": "Adresář se nepodařilo kontaktovat",
+        "Integrations": "Integrace",
+        "Connection": "Připojení",
+        "Status message": "Zpráva o stavu",
+        "Last checked": "Naposledy zkontrolováno",
+        "All connections": "Všechna připojení",
+        "Add integration": "Přidat integraci",
+        "Open settings": "Otevřít nastavení",
+        "Configured": "Nastaveno",
+        "Limited": "Omezeno",
+        "Simulated": "Simulováno",
+        "Not available": "Není k dispozici",
+        "Error": "Chyba"
     },
     "nplurals=2; plural=(n != 1);"
 )

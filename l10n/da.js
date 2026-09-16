@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Added {ok} of {total} secrets to the team folder": "Tilføjede {ok} af {total} hemmeligheder til teammappen",
         "The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.": "Keepiq-browserudvidelsen udfylder dine logins automatisk, leverer adgangsnøgler og viser TOTP-koder — uden at dine hemmeligheder nogensinde forlader din enhed.",
         "A placeholder is created and stays empty until the recipient fills it in — you never have to invent a value.": "Der oprettes en pladsholder, som forbliver tom, indtil modtageren udfylder den — du skal aldrig opdigte en værdi.",
-        "Could not reach the directory": "Kataloget kunne ikke nås"
+        "Could not reach the directory": "Kataloget kunne ikke nås",
+        "Integrations": "Integrationer",
+        "Connection": "Forbindelse",
+        "Status message": "Statusbesked",
+        "Last checked": "Sidst kontrolleret",
+        "All connections": "Alle forbindelser",
+        "Add integration": "Tilføj integration",
+        "Open settings": "Åbn indstillinger",
+        "Configured": "Konfigureret",
+        "Limited": "Begrænset",
+        "Simulated": "Simuleret",
+        "Not available": "Ikke tilgængelig",
+        "Error": "Fejl"
     },
     "nplurals=2; plural=(n != 1);"
 )

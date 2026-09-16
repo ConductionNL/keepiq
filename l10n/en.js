@@ -1146,7 +1146,19 @@ OC.L10N.register(
         "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.": "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
         "Revoke and delete emergency access": "Revoke and delete emergency access",
         "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
-        "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.": "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+        "Integrations": "Integrations",
+        "Connection": "Connection",
+        "Status message": "Status message",
+        "Last checked": "Last checked",
+        "All connections": "All connections",
+        "Add integration": "Add integration",
+        "Open settings": "Open settings",
+        "Configured": "Configured",
+        "Limited": "Limited",
+        "Simulated": "Simulated",
+        "Not available": "Not available",
+        "Error": "Error"
     },
     "nplurals=2; plural=(n != 1);"
 )
