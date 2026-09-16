@@ -119,11 +119,18 @@ describe('the Integrations page declaration', () => {
 			assign: () => {},
 		})
 
-		expect(typeof registry.date, 'the built-in formatter map was read').toBe('function')
-		const named = page.config.columns.filter((c) => c.formatter).map((c) => c.formatter)
+		expect(typeof registry.date, 'the built-in formatter map was read').toBe(
+			'function',
+		)
+		const named = page.config.columns
+			.filter((c) => c.formatter)
+			.map((c) => c.formatter)
 		expect(named.sort()).toEqual(['connectionSettingsLabel', 'connectionStatus'])
 		for (const formatter of named) {
-			expect(typeof registry[formatter], `@conduction/nextcloud-vue ships ${formatter}`).toBe('function')
+			expect(
+				typeof registry[formatter],
+				`@conduction/nextcloud-vue ships ${formatter}`,
+			).toBe('function')
 		}
 		for (const action of page.config.headerActions) {
 			expect(typeof handlers[action.handler], action.handler).toBe('function')

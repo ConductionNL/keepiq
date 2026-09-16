@@ -182,7 +182,9 @@ test.describe('Integrations over the connection registry', () => {
 			await saveBreachCheck(page, true)
 			await expect
 				.poll(hibpRow, { timeout: 15_000 })
-				.toBe('unconfigured|Not checked yet. Keepiq reports here after the next password check reaches Have I Been Pwned.')
+				.toBe(
+					'unconfigured|Not checked yet. Keepiq reports here after the next password check reaches Have I Been Pwned.',
+				)
 		} finally {
 			// Put the VALUE back. The restore is a save too, so it refreshes the row again.
 			await saveBreachCheck(page, previous)
