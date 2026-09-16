@@ -48,6 +48,8 @@ use RuntimeException;
  * Unit tests for ConnectionReporter.
  *
  * @covers \OCA\Keepiq\Service\Connection\ConnectionReporter
+ * @uses   \OCA\Keepiq\Service\Connection\ConnectionObservations
+ * @uses   \OCA\Keepiq\Db\SiemSink
  */
 class ConnectionReporterTest extends TestCase {
 
