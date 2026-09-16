@@ -51,6 +51,11 @@ use RuntimeException;
  *
  * @covers \OCA\Keepiq\Service\SiemSinkService
  * @covers \OCA\Keepiq\Service\SiemService
+ * @uses   \OCA\Keepiq\Service\Connection\ConnectionReporter
+ * @uses   \OCA\Keepiq\Service\Connection\ConnectionObservations
+ * @uses   \OCA\Keepiq\Service\SiemAuditTrail
+ * @uses   \OCA\Keepiq\Db\SiemSink
+ * @uses   \OCA\Keepiq\Db\SiemQueueItem
  */
 class SiemConnectionReportCallersTest extends TestCase {
 
@@ -253,6 +258,26 @@ class SiemConnectionReportCallersTest extends TestCase {
 	}//end testDeletingTheLastSinkRefreshesThenReports()
 
 	/**
+	 * Switching off the last enabled sink refreshes, then reports disabled from the count of every sink.
+	 *
+	 * @return void
+	 */
+	public function testSwitchingOffTheLastSinkReportsDisabled(): void {
+		$sink = $this->sink(id: 'sink-1', endpoint: 'https://siem.gemeente.example/in');
+		$this->sinkMapper->method('findById')->willReturn($sink);
+		$this->sinkMapper->method('findEnabled')->willReturn([]);
+		$this->sinkMapper->expects($this->once())->method('findAll')->willReturn([$sink]);
+
+		$this->sinkService(reporter: $this->recordingReporter())->updateSink(adminUid: 'admin', sinkId: 'sink-1', params: ['enabled' => false]);
+
+		$this->assertSame(
+			expected: [['ConnectionRefreshRequestedEvent', 'siem', ''], ['ConnectionStatusReportedEvent', 'siem', 'disabled']],
+			actual: $this->sentSummary()
+		);
+		$this->assertStringNotContainsString(needle: 'siem.gemeente.example', haystack: $this->sent[1]->message);
+	}//end testSwitchingOffTheLastSinkReportsDisabled()
+
+	/**
 	 * Creating and changing a sink each ask for a refresh.
 	 *
 	 * @return void
@@ -314,7 +339,8 @@ class SiemConnectionReportCallersTest extends TestCase {
 			2,
 			$this->callback(
 				callback: static fn (array $sinks): bool => $sinks === [$tried] && $tried->getLastDeliveryStatus() === 'failing'
-			)
+			),
+			$this->callback(callback: static fn (mixed $sinkCount): bool => is_callable($sinkCount))
 		)->willReturn(true);
 
 		$this->siemService(reporter: $reporter)->deliverDue();

@@ -217,7 +217,8 @@ class SiemService {
 
 		$this->connectionReporter?->reportSiemDrain(
 			enabledSinks: count($enabledSinks),
-			attemptedSinks: array_values($attempted)
+			attemptedSinks: array_values($attempted),
+			sinkCount: fn (): int => count($this->sinkMapper->findAll())
 		);
 
 		return $delivered;
