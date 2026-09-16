@@ -53,6 +53,8 @@ use RuntimeException;
  * Unit tests for the connection report of BreachProxyController::range().
  *
  * @covers \OCA\Keepiq\Controller\BreachProxyController
+ * @uses   \OCA\Keepiq\Service\Connection\ConnectionReporter
+ * @uses   \OCA\Keepiq\Service\Connection\ConnectionObservations
  */
 class BreachProxyControllerConnectionReportTest extends TestCase {
 

@@ -23,17 +23,18 @@
  *
  * WHAT A RED HERE USUALLY MEANS. An empty list in the first test means
  * integriq has not synced the declaration, or refused it whole. A Breach check
- * row stuck on Configured after the switch goes off means the refresh did not
- * reach integriq, so an older observation still counts.
+ * row that does not read disabled after the switch goes off means integriq
+ * did not sync the declared switch, or runs without hydra#677.
  *
  * Locale: nothing forces the E2E language, so statuses are read from the API
  * and rows are found by their declared titles, which are not translated.
  *
- * Written, not yet run: it needs an instance with both apps (tasks.md 5.1).
+ * It needs an instance with both apps (tasks.md 5.1). First run in CI on
+ * 2026-09-15 (keepiq run 34955589876), where the row lookup below was fixed.
  *
  * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#the-page-lists-only-the-rows-of-keepiq
  * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#add-integration-goes-to-integriq
- * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#a-switched-off-breach-check-reads-not-configured
+ * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#a-switched-off-breach-check-reads-switched-off
  */
 import type { APIRequestContext, Page } from '@playwright/test'
 
@@ -125,14 +126,19 @@ test.describe('Integrations over the connection registry', () => {
 		}
 
 		await openIntegrations(page)
+		// Match the row by its Connection cell, not by the row's accessible name:
+		// that name starts with the "Select row" checkbox, so a `^title` pattern
+		// on it never matches.
 		for (const { title } of DECLARED) {
 			await expect(
-				page.getByRole('row', { name: new RegExp(`^${title}\\b`, 'i') }),
+				page.getByRole('row').filter({
+					has: page.getByRole('cell', { name: title, exact: true }),
+				}),
 			).toHaveCount(1)
 		}
 	})
 
-	test('reads Not configured while the breach check is off, and Configured once it is on', async ({
+	test('reads disabled while the breach check is off, and Not checked yet once it is on', async ({
 		page,
 	}) => {
 		await page.goto(`${APP_BASE}/`, { timeout: 60_000 })
@@ -162,20 +168,23 @@ test.describe('Integrations over the connection registry', () => {
 		}
 
 		try {
-			// The save sends ConnectionRefreshRequestedEvent, which retires any
-			// older lookup report, and integriq's rule 6 reads `false` as empty.
+			// The save sends ConnectionRefreshRequestedEvent, and integriq's
+			// rule 2b reads the `false` switch as off.
 			await saveBreachCheck(page, false)
 			await expect
 				.poll(hibpRow, { timeout: 15_000 })
 				.toBe(
-					'unconfigured|Breach checking is switched off. Switch it on under Breach checking in the Keepiq admin settings.',
+					'disabled|Breach checking is switched off. Switch it on under Breach checking in the Keepiq admin settings.',
 				)
 
-			// Rule 5: the required switch is filled.
+			// Rule 6: the switch is on, and the refresh retired every older
+			// lookup report, so nothing has been checked yet.
 			await saveBreachCheck(page, true)
 			await expect
 				.poll(hibpRow, { timeout: 15_000 })
-				.toBe('configured|Required settings are filled.')
+				.toBe(
+					'unconfigured|Not checked yet. Keepiq reports here after the next password check reaches Have I Been Pwned.',
+				)
 		} finally {
 			// Put the VALUE back. The restore is a save too, so it refreshes the row again.
 			await saveBreachCheck(page, previous)

@@ -281,7 +281,8 @@ class SiemSinkService {
 	 */
 	private function reportSinksChanged(): void {
 		$this->connectionReporter?->siemSinksChanged(
-			enabledSinkCount: fn (): int => count($this->sinkMapper->findEnabled())
+			enabledSinkCount: fn (): int => count($this->sinkMapper->findEnabled()),
+			sinkCount: fn (): int => count($this->sinkMapper->findAll())
 		);
 	}//end reportSinksChanged()
 }//end class

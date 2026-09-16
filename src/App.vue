@@ -94,7 +94,6 @@
 			:supportDialog="showSupportDialog"
 			:manifest="manifest"
 			:customComponents="shellCustomComponents"
-			:formatters="formatters"
 			:pageTypes="pageTypes"
 			:registry="registry"
 			appId="keepiq"
@@ -405,10 +404,7 @@ import {
 	isPublicSurface,
 	LOCK_ROUTE_NAME,
 } from './router/guards.js'
-import {
-	createConnectionFormatters,
-	createConnectionHandlers,
-} from './services/connectionRegistry.js'
+import { createConnectionHandlers } from './services/connectionRegistry.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
@@ -513,17 +509,6 @@ export default {
 				{ value: '10min', label: ncT('keepiq', '10 minutes') },
 				{ value: '30min', label: ncT('keepiq', '30 minutes') },
 			],
-
-			/**
-			 * Named cell formatters merged over CnAppRoot's built-ins.
-			 * `connectionStatus` and `connectionSettingsLabel` render the
-			 * Integrations page (adopt-connection-registry); nextcloud-vue
-			 * 2.41.1 ships neither as a built-in. Before this change the app
-			 * passed no formatters at all.
-			 */
-			formatters: createConnectionFormatters((source) =>
-				ncT('keepiq', source),
-			),
 		}
 	},
 

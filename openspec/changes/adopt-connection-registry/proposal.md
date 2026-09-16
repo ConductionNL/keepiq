@@ -16,17 +16,17 @@ Hydra change `connection-registry` (hydra#667, amended in hydra#673, hydra#674 a
 ## What changes
 
 - New `lib/Settings/connections.json` with two connections: `hibp` and `siem`.
-- `hibp` requires `breach_check_enabled`. The key is a boolean, and integriq reads a stored `false` as empty (amendment 6), so a switched-off check reads Not configured.
+- `hibp` declares `breach_check_enabled` as its `switch`. The key is a boolean, and integriq reads a stored `false` as empty (amendment 6), so a switched-off check reads Switched off (amendment 9).
 - `siem` is `reportedOnly`. The sinks are records, not settings, so a static file cannot list them. One row speaks for the whole family (D12, "Still out").
 - The Breach checking and SIEM audit export sections get stable ids: `section-breach-check` and `section-siem`.
 - Saving `breach_check_enabled` sends `ConnectionRefreshRequestedEvent` for `hibp`.
-- Creating, changing or deleting a sink sends a refresh for `siem`, then reports Not configured when no sink is switched on.
+- Creating, changing or deleting a sink sends a refresh for `siem`, then reports Switched off when sinks exist and none is on, or Not configured when there is no sink.
 - A range lookup that reaches Have I Been Pwned reports its outcome. A SIEM drain that delivered to at least one sink reports the outcome over those sinks. Both are throttled: the same status at most once an hour, a new status at most once every five minutes.
 - A report names a status code or a host. It never carries a hash prefix, a password, a sink URL path, a token or an exception message.
 - An Integrations page under the settings gear, over integriq's `app_connection` schema, preset to `app=keepiq`, admin only, and only shown when integriq is installed.
 - Keepiq's own navigation rail learns to honour a menu entry's `query`, `permission: admin` and `visibleIf.appInstalled`. It ignored all three before, so the preset would not have reached the page.
 - Add integration opens `/apps/integriq/connections?app=keepiq&link=1`.
-- Local `connectionStatus` and `connectionSettingsLabel` formatters with all six statuses, and the strings in English and Dutch.
+- The `connectionStatus` and `connectionSettingsLabel` formatters come from `@conduction/nextcloud-vue` 3.2.0, which labels all seven statuses. The page strings are in English and Dutch.
 
 ## Depends on
 
