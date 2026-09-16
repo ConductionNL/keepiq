@@ -77,15 +77,19 @@ class ConnectionObservationsTest extends TestCase {
 	}//end testARangeLookupMapsByStatusCode()
 
 	/**
-	 * A sink change reports only when no sink is left on.
+	 * A sink change reports only when no sink is left on: disabled when sinks are off, unconfigured when none exists.
 	 *
 	 * @return void
 	 */
 	public function testASinkChangeReportsOnlyWhenNoSinkIsOn(): void {
-		$this->assertNull(actual: $this->observations->siemSinksChanged(enabledSinks: 2));
+		$this->assertNull(actual: $this->observations->siemSinksChanged(enabledSinks: 2, sinks: 3));
 		$this->assertSame(
-			expected: ['unconfigured', 'No SIEM sink is switched on. Add one under SIEM audit export.'],
-			actual: $this->observations->siemSinksChanged(enabledSinks: 0)
+			expected: ['disabled', 'Every SIEM sink is switched off, so no audit event is forwarded.'],
+			actual: $this->observations->siemSinksChanged(enabledSinks: 0, sinks: 2)
+		);
+		$this->assertSame(
+			expected: ['unconfigured', 'No SIEM sink is added yet. Add one under SIEM audit export.'],
+			actual: $this->observations->siemSinksChanged(enabledSinks: 0, sinks: 0)
 		);
 	}//end testASinkChangeReportsOnlyWhenNoSinkIsOn()
 
@@ -99,29 +103,33 @@ class ConnectionObservationsTest extends TestCase {
 		$failed = ['host' => 'logs.gemeente.example', 'ok' => false];
 
 		$this->assertSame(
-			expected: ['unconfigured', 'No SIEM sink is switched on. Add one under SIEM audit export.'],
-			actual: $this->observations->siemDrain(enabledSinks: 0, delivered: [])
+			expected: ['disabled', 'Every SIEM sink is switched off, so no audit event is forwarded.'],
+			actual: $this->observations->siemDrain(enabledSinks: 0, delivered: [], sinks: 1)
 		);
-		$this->assertNull(actual: $this->observations->siemDrain(enabledSinks: 2, delivered: []));
+		$this->assertSame(
+			expected: ['unconfigured', 'No SIEM sink is added yet. Add one under SIEM audit export.'],
+			actual: $this->observations->siemDrain(enabledSinks: 0, delivered: [], sinks: 0)
+		);
+		$this->assertNull(actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [], sinks: 2));
 		$this->assertSame(
 			expected: ['configured', 'The SIEM sink at siem.gemeente.example took the last delivery.'],
-			actual: $this->observations->siemDrain(enabledSinks: 1, delivered: [$ok])
+			actual: $this->observations->siemDrain(enabledSinks: 1, delivered: [$ok], sinks: 1)
 		);
 		$this->assertSame(
 			expected: ['configured', 'All 2 SIEM sinks took their last delivery.'],
-			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [$ok, $ok])
+			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [$ok, $ok], sinks: 2)
 		);
 		$this->assertSame(
 			expected: ['error', 'The last delivery to the SIEM sink at logs.gemeente.example failed.'],
-			actual: $this->observations->siemDrain(enabledSinks: 1, delivered: [$failed])
+			actual: $this->observations->siemDrain(enabledSinks: 1, delivered: [$failed], sinks: 1)
 		);
 		$this->assertSame(
 			expected: ['limited', '1 of 2 SIEM sinks took their last delivery. The first to fail is at logs.gemeente.example.'],
-			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [$ok, $failed])
+			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [$ok, $failed], sinks: 2)
 		);
 		$this->assertSame(
 			expected: ['error', 'None of the 2 SIEM sinks took their last delivery. The first to fail is at logs.gemeente.example.'],
-			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [$failed, $failed])
+			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [$failed, $failed], sinks: 2)
 		);
 	}//end testADrainMapsItsSinks()
 
@@ -133,11 +141,11 @@ class ConnectionObservationsTest extends TestCase {
 	public function testASinkWithoutAHostIsLeftOut(): void {
 		$this->assertSame(
 			expected: ['configured', 'The SIEM sink took the last delivery.'],
-			actual: $this->observations->siemDrain(enabledSinks: 1, delivered: [['host' => '', 'ok' => true]])
+			actual: $this->observations->siemDrain(enabledSinks: 1, delivered: [['host' => '', 'ok' => true]], sinks: 1)
 		);
 		$this->assertSame(
 			expected: ['error', 'None of the 2 SIEM sinks took their last delivery.'],
-			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [['host' => '', 'ok' => false], ['host' => '', 'ok' => false]])
+			actual: $this->observations->siemDrain(enabledSinks: 2, delivered: [['host' => '', 'ok' => false], ['host' => '', 'ok' => false]], sinks: 2)
 		);
 	}//end testASinkWithoutAHostIsLeftOut()
 

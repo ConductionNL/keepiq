@@ -41,10 +41,11 @@ class ConnectionsDeclarationTest extends TestCase {
 
 	/**
 	 * Integriq's schema, fetched with `gh api` from integriq `development` on
-	 * 2026-09-14, where the file was last changed in
-	 * a93665880f7f552d8280b84a1f5ce402507c4466. It carries amendments 1 to 7
-	 * (`reportedOnly`, `adapter.jsonPath`, `adapter.simulatedValues` and the
-	 * `{configKey, jsonPath}` form of `requiredConfig`).
+	 * 2026-09-15, where the file was last changed in
+	 * 64b437fc2df24827985ce6e919fe5e47c5205617 (integriq#2024). It carries
+	 * amendments 1 to 9 (`reportedOnly`, `adapter.jsonPath`,
+	 * `adapter.simulatedValues`, the `{configKey, jsonPath}` form of
+	 * `requiredConfig`, and `switch` with `disabledMessage`).
 	 *
 	 * @var string
 	 */
@@ -266,19 +267,25 @@ class ConnectionsDeclarationTest extends TestCase {
 	}//end testEverySettingsLinkPointsAtARenderedSection()
 
 	/**
-	 * The breach check requires the one switch that gates every lookup.
+	 * The breach check declares the one switch that gates every lookup, and requires nothing.
 	 *
-	 * The switch is written as a boolean. Integriq reads a stored `false` as
-	 * empty (hydra#676), so a switched-off check reads Not configured.
+	 * The switch is written as a boolean. Integriq reads a stored `false`, an
+	 * unset key and `0` as empty, and a switch without `offValues` is off when
+	 * empty, so a switched-off check reads `disabled` (hydra connection-registry
+	 * D4 rule 2b, D12 item 9). The key stays out of `requiredConfig`: a filled
+	 * switch says the check may run, not that Have I Been Pwned answered.
 	 *
 	 * @return void
 	 */
-	public function testTheBreachCheckRequiresItsSwitch(): void {
+	public function testTheBreachCheckDeclaresItsSwitch(): void {
 		$hibp = $this->connectionsByKey()['hibp'];
 
-		$this->assertSame(expected: ['breach_check_enabled'], actual: $hibp['requiredConfig']);
+		$this->assertSame(expected: ['configKey' => 'breach_check_enabled'], actual: $hibp['switch']);
+		$this->assertArrayNotHasKey(key: 'requiredConfig', array: $hibp);
 		$this->assertArrayNotHasKey(key: 'reportedOnly', array: $hibp);
 		$this->assertArrayNotHasKey(key: 'adapter', array: $hibp);
+		$this->assertStringContainsString(needle: 'switched off', haystack: $hibp['disabledMessage']);
+		$this->assertStringStartsWith(prefix: 'Not checked yet.', string: $hibp['unconfiguredMessage']);
 
 		$this->assertStringContainsString(
 			needle: "getValueBool(Application::APP_ID, 'breach_check_enabled', false) === false",
@@ -288,7 +295,7 @@ class ConnectionsDeclarationTest extends TestCase {
 			needle: "setValueBool(\$appId, 'breach_check_enabled',",
 			haystack: $this->read(path: 'lib/Service/AdminSettingsService.php')
 		);
-	}//end testTheBreachCheckRequiresItsSwitch()
+	}//end testTheBreachCheckDeclaresItsSwitch()
 
 	/**
 	 * SIEM is one reported-only row for every sink, and carries nothing for integriq to guess from.
@@ -301,6 +308,7 @@ class ConnectionsDeclarationTest extends TestCase {
 		$this->assertTrue(condition: $siem['reportedOnly']);
 		$this->assertArrayNotHasKey(key: 'requiredConfig', array: $siem);
 		$this->assertArrayNotHasKey(key: 'adapter', array: $siem);
+		$this->assertArrayNotHasKey(key: 'switch', array: $siem, message: 'sinks are records, so keepiq reports disabled itself');
 		$this->assertStringStartsWith(prefix: 'Not checked yet.', string: $siem['unconfiguredMessage']);
 	}//end testSiemIsOneReportedOnlyRow()
 }//end class

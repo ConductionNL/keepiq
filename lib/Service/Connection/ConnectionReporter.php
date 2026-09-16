@@ -143,8 +143,8 @@ class ConnectionReporter {
 	/**
 	 * After an admin save wrote `breach_check_enabled`: ask integriq to look again.
 	 *
-	 * No report follows. Integriq reads the switch itself (rule 5), and a
-	 * lookup reports once a user checks a password.
+	 * No report follows. Integriq reads the `hibp` switch itself (rule 2b), and
+	 * a lookup reports once a user checks a password.
 	 *
 	 * @return bool True when the refresh was sent.
 	 *
@@ -173,23 +173,32 @@ class ConnectionReporter {
 	/**
 	 * After a sink create, change or delete: refresh, then report when no sink is left on.
 	 *
-	 * The count is only taken when integriq is installed, so without it the
-	 * save costs no extra query.
+	 * The counts are only taken when integriq is installed, so without it the
+	 * save costs no extra query. All sinks are only counted when none is
+	 * enabled, to tell switched off from never added.
 	 *
 	 * @param callable(): int $enabledSinkCount Counts the sinks that are enabled after the save.
+	 * @param callable(): int $sinkCount        Counts every sink after the save, enabled or not.
 	 *
 	 * @return bool True when a report was sent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
-	public function siemSinksChanged(callable $enabledSinkCount): bool {
+	public function siemSinksChanged(callable $enabledSinkCount, callable $sinkCount): bool {
 		if ($this->refresh(key: self::KEY_SIEM) === false) {
 			return false;
 		}
 
 		return $this->reportObserved(
 			key: self::KEY_SIEM,
-			observe: fn (): ?array => $this->observations->siemSinksChanged(enabledSinks: $enabledSinkCount())
+			observe: function () use ($enabledSinkCount, $sinkCount): ?array {
+				$enabled = $enabledSinkCount();
+
+				return $this->observations->siemSinksChanged(
+					enabledSinks: $enabled,
+					sinks: $this->countSinksWhenNoneEnabled(enabled: $enabled, sinkCount: $sinkCount)
+				);
+			}
 		);
 	}//end siemSinksChanged()
 
@@ -198,12 +207,13 @@ class ConnectionReporter {
 	 *
 	 * @param int                   $enabledSinks   How many sinks are enabled.
 	 * @param array<int, SiemSink>  $attemptedSinks The sinks this drain tried to deliver to, after the attempt.
+	 * @param callable(): int       $sinkCount      Counts every sink, enabled or not. Only called when none is enabled.
 	 *
 	 * @return bool True when a report was sent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
-	public function reportSiemDrain(int $enabledSinks, array $attemptedSinks): bool {
+	public function reportSiemDrain(int $enabledSinks, array $attemptedSinks, callable $sinkCount): bool {
 		return $this->reportObserved(
 			key: self::KEY_SIEM,
 			observe: fn (): ?array => $this->observations->siemDrain(
@@ -214,10 +224,29 @@ class ConnectionReporter {
 						'ok'   => $sink->getLastDeliveryStatus() === 'ok',
 					],
 					array_values($attemptedSinks)
-				)
+				),
+				sinks: $this->countSinksWhenNoneEnabled(enabled: $enabledSinks, sinkCount: $sinkCount)
 			)
 		);
 	}//end reportSiemDrain()
+
+	/**
+	 * Every sink, counted only when none is enabled; otherwise the enabled count stands in.
+	 *
+	 * With a sink enabled the total cannot change the report, so the query is skipped.
+	 *
+	 * @param int             $enabled   How many sinks are enabled.
+	 * @param callable(): int $sinkCount Counts every sink.
+	 *
+	 * @return int
+	 */
+	private function countSinksWhenNoneEnabled(int $enabled, callable $sinkCount): int {
+		if ($enabled > 0) {
+			return $enabled;
+		}
+
+		return $sinkCount();
+	}//end countSinksWhenNoneEnabled()
 
 	/**
 	 * The HTTP status a failed call still carries, for {@see reportBreachLookup()}.
