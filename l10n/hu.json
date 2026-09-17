@@ -1157,7 +1157,17 @@
         "Limited": "Korlátozott",
         "Simulated": "Szimulált",
         "Not available": "Nem érhető el",
-        "Error": "Hiba"
+        "Error": "Hiba",
+        "e.g. Offboarding, device lost, key compromised": "pl. kilépés, elveszett eszköz, kulcs kompromittálódott",
+        "Encryption suites": "Titkosítási csomagok",
+        "Failed to force-revoke suite": "A csomag kényszerített visszavonása nem sikerült",
+        "Failed to reinstate suite": "A csomag visszaállítása nem sikerült",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Egy felhasználó vagy alkalmazás tulajdonában lévő titkosítási csomag kényszerített visszavonása azonosító alapján, amikor a tulajdonosa nem tudja (elfelejtett mesterjelszó, visszavont hozzáférés vagy kompromittálódás), és egy visszavont visszaállítása. A kényszerített visszavonás a saját jelszavának újbóli megerősítését kéri, és véglegesen törli a csomag vészhozzáférését.",
+        "Force-revoke suite": "Csomag kényszerített visszavonása",
+        "Reinstate suite": "Csomag visszaállítása",
+        "Revoking this suite deleted %n emergency-access contact.": "A csomag visszavonása %n vészhozzáférési névjegyet törölt.",
+        "Revoking this suite deleted %n emergency-access contacts.": "A csomag visszavonása %n vészhozzáférési névjegyet törölt.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "A csomag titkainak kompromittáltként kezelése (megjelölés cserére és a tulajdonosok értesítése)"
     },
     "plurals": null
 }

@@ -1157,7 +1157,17 @@
         "Limited": "Limitado",
         "Simulated": "Simulado",
         "Not available": "No disponible",
-        "Error": "Error"
+        "Error": "Error",
+        "e.g. Offboarding, device lost, key compromised": "p. ej. baja del empleado, dispositivo perdido, clave comprometida",
+        "Encryption suites": "Suites de cifrado",
+        "Failed to force-revoke suite": "No se pudo revocar la suite a la fuerza",
+        "Failed to reinstate suite": "No se pudo restablecer la suite",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Revocar a la fuerza una suite de cifrado propiedad de un usuario o aplicación por su id cuando su propietario no puede (una contraseña maestra olvidada, una baja no autorizada o un compromiso), y restablecer una revocada. La revocación forzada le pide volver a confirmar su propia contraseña y elimina permanentemente el acceso de emergencia de la suite.",
+        "Force-revoke suite": "Revocar la suite a la fuerza",
+        "Reinstate suite": "Restablecer la suite",
+        "Revoking this suite deleted %n emergency-access contact.": "Revocar esta suite eliminó %n contacto de acceso de emergencia.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Revocar esta suite eliminó %n contactos de acceso de emergencia.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratar los secretos de la suite como comprometidos (marcar para rotación y notificar a los propietarios)"
     },
     "plurals": null
 }

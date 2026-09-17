@@ -1157,7 +1157,17 @@
         "Limited": "Ograničeno",
         "Simulated": "Simulirano",
         "Not available": "Nije dostupno",
-        "Error": "Pogreška"
+        "Error": "Pogreška",
+        "e.g. Offboarding, device lost, key compromised": "npr. odlazak zaposlenika, izgubljeni uređaj, ključ kompromitiran",
+        "Encryption suites": "Kompleti šifriranja",
+        "Failed to force-revoke suite": "Prisilno opozivanje kompleta nije uspjelo",
+        "Failed to reinstate suite": "Vraćanje kompleta nije uspjelo",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Prisilno opozovi komplet šifriranja u vlasništvu korisnika ili aplikacije prema id-u kada njegov vlasnik to ne može (zaboravljena glavna lozinka, opozvani pristup ili kompromitacija) i vrati opozvani. Prisilno opozivanje traži da ponovno potvrdite vlastitu lozinku i trajno briše hitni pristup kompleta.",
+        "Force-revoke suite": "Prisilno opozovi komplet",
+        "Reinstate suite": "Vrati komplet",
+        "Revoking this suite deleted %n emergency-access contact.": "Opozivanje ovog kompleta izbrisalo je %n kontakt hitnog pristupa.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Opozivanje ovog kompleta izbrisalo je %n kontakata hitnog pristupa.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tretiraj tajne kompleta kao kompromitirane (označi za rotaciju i obavijesti vlasnike)"
     },
     "plurals": null
 }

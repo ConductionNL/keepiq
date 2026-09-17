@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "Обмежено",
         "Simulated": "Імітовано",
         "Not available": "Недоступно",
-        "Error": "Помилка"
+        "Error": "Помилка",
+        "e.g. Offboarding, device lost, key compromised": "напр. звільнення, втрата пристрою, компрометація ключа",
+        "Encryption suites": "Набори шифрування",
+        "Failed to force-revoke suite": "Не вдалося примусово відкликати набір",
+        "Failed to reinstate suite": "Не вдалося відновити набір",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Примусово відкликати набір шифрування, що належить користувачу або застосунку, за id, коли його власник не може (забутий головний пароль, відкликаний доступ або компрометація), і відновити відкликаний. Примусове відкликання просить повторно підтвердити ваш власний пароль і назавжди видаляє аварійний доступ набору.",
+        "Force-revoke suite": "Примусово відкликати набір",
+        "Reinstate suite": "Відновити набір",
+        "Revoking this suite deleted %n emergency-access contact.": "Відкликання цього набору видалило %n контакт аварійного доступу.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Відкликання цього набору видалило %n контактів аварійного доступу.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Вважати секрети набору скомпрометованими (позначити для ротації та сповістити власників)"
     },
     "nplurals=2; plural=(n != 1);"
 )

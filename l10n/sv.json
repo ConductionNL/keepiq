@@ -1157,7 +1157,17 @@
         "Limited": "Begränsad",
         "Simulated": "Simulerad",
         "Not available": "Inte tillgänglig",
-        "Error": "Fel"
+        "Error": "Fel",
+        "e.g. Offboarding, device lost, key compromised": "t.ex. avslut av anställning, förlorad enhet, nyckel komprometterad",
+        "Encryption suites": "Krypteringssviter",
+        "Failed to force-revoke suite": "Tvångsåterkallelse av svit misslyckades",
+        "Failed to reinstate suite": "Återinförande av svit misslyckades",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Tvångsåterkalla en användar- eller applikationsägd krypteringssvit via id när ägaren inte kan (ett glömt huvudlösenord, en återkallad behörighet eller en kompromettering), och återinför en återkallad. Tvångsåterkallelse ber dig bekräfta ditt eget lösenord igen och tar permanent bort svitens nödåtkomst.",
+        "Force-revoke suite": "Tvångsåterkalla svit",
+        "Reinstate suite": "Återinför svit",
+        "Revoking this suite deleted %n emergency-access contact.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakt.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakter.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)"
     },
     "plurals": null
 }

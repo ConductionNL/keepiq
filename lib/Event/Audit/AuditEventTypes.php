@@ -214,7 +214,7 @@ final class AuditEventTypes {
 		// event type itself. Adding expires_at here would put a timestamp in the
 		// trail that the request row already carries.
 		self::REQUEST_EXPIRED => [],
-		self::SUITE_REVOKED => ['reason'],
+		self::SUITE_REVOKED => ['reason', 'markCompromised', 'emergencyContactsDestroyed'],
 		self::SUITE_REINSTATED => [],
 		self::SUITE_RECOVERY_STARTED => [],
 		self::SUITE_RECOVERY_COMPLETED => ['reSuitedCount'],
