@@ -41,6 +41,7 @@ use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\MigrationWorkService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -78,6 +79,13 @@ class MigrationWorkServiceTest extends TestCase {
 	private MigrationFailureMapper&MockObject $failureMapper;
 
 	/**
+	 * Counts re-enveloped emergency contacts for the abort gate.
+	 *
+	 * @var EmergencyEnvelopeInvalidationService&MockObject
+	 */
+	private EmergencyEnvelopeInvalidationService&MockObject $emergencyService;
+
+	/**
 	 * Set up test fixtures.
 	 *
 	 * @return void
@@ -95,6 +103,9 @@ class MigrationWorkServiceTest extends TestCase {
 		);
 
 		$this->failureMapper = $this->createMock(MigrationFailureMapper::class);
+		// Unconfigured, countUsableForGrantorSuite auto-returns 0 (int return type),
+		// so existing count tests are unaffected; tests that care stub it explicitly.
+		$this->emergencyService = $this->createMock(EmergencyEnvelopeInvalidationService::class);
 
 		$this->service = new MigrationWorkService(
 			secretMapper: $this->secretMapper,
@@ -103,7 +114,8 @@ class MigrationWorkServiceTest extends TestCase {
 			failureMapper: $this->failureMapper,
 			db: $this->createMock(IDBConnection::class),
 			appConfig: $appConfig,
-			logger: $this->createMock(LoggerInterface::class)
+			logger: $this->createMock(LoggerInterface::class),
+			emergencyService: $this->emergencyService
 		);
 	}//end setUp()
 
@@ -693,4 +705,71 @@ class MigrationWorkServiceTest extends TestCase {
 			array_keys($record)
 		);
 	}//end testListWorkCarriesCiphertextOnly()
+
+	/**
+	 * countCommitted sums the owner's rows now on the NEW suite across the three
+	 * suite-bound stores — the count the abort gate uses to decide whether any
+	 * record has already moved.
+	 *
+	 * @return void
+	 */
+	public function testCountCommittedSumsNewSuiteRowsAcrossStores(): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId('old-suite');
+		$migration->setNewSuiteId('new-suite');
+
+		$this->secretMapper->method('countBySuiteForOwner')
+			->with('new-suite', 'user', 'alice')->willReturn(2);
+		$this->versionMapper->method('countBySuiteForOwner')
+			->with('new-suite', 'user', 'alice')->willReturn(1);
+		$this->grantMapper->method('countBySuiteForRecipient')
+			->with('new-suite', 'user', 'alice')->willReturn(3);
+
+		$this->assertSame(6, $this->service->countCommitted($migration, 'alice'));
+	}//end testCountCommittedSumsNewSuiteRowsAcrossStores()
+
+	/**
+	 * Nothing on the new suite means nothing has been committed — the state in
+	 * which abort is allowed.
+	 *
+	 * @return void
+	 */
+	public function testCountCommittedIsZeroWhenNothingMoved(): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId('old-suite');
+		$migration->setNewSuiteId('new-suite');
+
+		$this->secretMapper->method('countBySuiteForOwner')->willReturn(0);
+		$this->versionMapper->method('countBySuiteForOwner')->willReturn(0);
+		$this->grantMapper->method('countBySuiteForRecipient')->willReturn(0);
+
+		$this->assertSame(0, $this->service->countCommitted($migration, 'alice'));
+	}//end testCountCommittedIsZeroWhenNothingMoved()
+
+	/**
+	 * A re-enveloped emergency contact on the new suite counts as committed even
+	 * when no secret/version/grant has moved — the abort-blocker Wilco flagged.
+	 * The re-envelope overwrote the old envelope, so aborting past it would strand
+	 * the contact on a discarded suite; counting it here makes abort refuse.
+	 *
+	 * @return void
+	 */
+	public function testCountCommittedCountsReEnvelopedEmergencyContacts(): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId('old-suite');
+		$migration->setNewSuiteId('new-suite');
+
+		// Nothing else has moved — the empty/low-secret vault case.
+		$this->secretMapper->method('countBySuiteForOwner')->willReturn(0);
+		$this->versionMapper->method('countBySuiteForOwner')->willReturn(0);
+		$this->grantMapper->method('countBySuiteForRecipient')->willReturn(0);
+		// Two contacts have been re-enveloped onto the new suite.
+		$this->emergencyService->method('countUsableForGrantorSuite')
+			->with('new-suite')->willReturn(2);
+
+		$this->assertSame(2, $this->service->countCommitted($migration, 'alice'));
+	}//end testCountCommittedCountsReEnvelopedEmergencyContacts()
 }//end class

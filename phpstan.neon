@@ -18,6 +18,10 @@ parameters:
         # classes they extend when the openregister sibling app is absent from the
         # analysis path. Analysis-only — never loaded at runtime (ADR-040).
         - tests/stubs/openregister-apphost.stub.php
+        # Integriq's connection-registry events (adopt-connection-registry), named
+        # by string behind class_exists in ConnectionReporter (ADR-041).
+        - tests/stubs/Integriq/Event/ConnectionStatusReportedEvent.php
+        - tests/stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php
 
     ignoreErrors:
         # Doctrine\DBAL wordings the base does not cover. The base ignores the

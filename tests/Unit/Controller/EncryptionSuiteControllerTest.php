@@ -26,6 +26,8 @@ use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
+use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -62,6 +64,18 @@ class EncryptionSuiteControllerTest extends TestCase {
 	private MigrationService&MockObject $migrationService;
 
 	/**
+	 * The mocked vault-key-proof service.
+	 *
+	 * @var VaultKeyProofService&MockObject
+	 */
+	private VaultKeyProofService&MockObject $proofService;
+
+	/**
+	 * @var EmergencyEnvelopeInvalidationService&MockObject
+	 */
+	private EmergencyEnvelopeInvalidationService&MockObject $emergencyService;
+
+	/**
 	 * The mocked user session.
 	 *
 	 * @var IUserSession&MockObject
@@ -80,6 +94,8 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->suiteService = $this->createMock(originalClassName: EncryptionSuiteService::class);
 		$this->migrationService = $this->createMock(originalClassName: MigrationService::class);
 		$this->userSession = $this->createMock(originalClassName: IUserSession::class);
+		$this->proofService = $this->createMock(originalClassName: VaultKeyProofService::class);
+		$this->emergencyService = $this->createMock(originalClassName: EmergencyEnvelopeInvalidationService::class);
 
 		$user = $this->createMock(originalClassName: IUser::class);
 		$user->method('getUID')->willReturn('testuser');
@@ -90,6 +106,8 @@ class EncryptionSuiteControllerTest extends TestCase {
 			suiteService: $this->suiteService,
 			migrationService: $this->migrationService,
 			userSession: $this->userSession,
+			proofService: $this->proofService,
+			emergencyService: $this->emergencyService,
 		);
 	}//end setUp()
 
@@ -419,6 +437,87 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testRevokeRefusesAnotherUsersSuiteAndNeverCallsTheService()
 
 	/**
+	 * Build an owned, active suite for the revoke-safeguard tests.
+	 *
+	 * @return EncryptionSuite
+	 */
+	private function ownedActiveSuite(): EncryptionSuite {
+		$owned = new EncryptionSuite();
+		$owned->setId('suite-1');
+		$owned->setOwnerType('user');
+		$owned->setOwnerId('testuser');
+		$owned->setStatus('active');
+		return $owned;
+	}//end ownedActiveSuite()
+
+	/**
+	 * While a usable emergency contact exists, revocation without the override is
+	 * refused with the COUNT — never the identities — and never reaches the
+	 * destructive clear.
+	 *
+	 * @return void
+	 */
+	public function testRevokeRefusedWhileUsableEmergencyContactExists(): void {
+		$this->suiteService->method('getSuite')->willReturn($this->ownedActiveSuite());
+		$this->emergencyService->method('countUsableForGrantorSuite')->with('suite-1')->willReturn(2);
+		$this->suiteService->expects($this->never())->method('revokeSuite');
+
+		$response = $this->controller->revoke('suite-1', 'lost password');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('emergency_access_present', $data['error']);
+		$this->assertSame(2, $data['usableEmergencyContacts']);
+		// The count is surfaced; the contacts' identities are not.
+		$this->assertArrayNotHasKey('granteeUserId', $data);
+		$this->assertArrayNotHasKey('contacts', $data);
+	}//end testRevokeRefusedWhileUsableEmergencyContactExists()
+
+	/**
+	 * With the explicit override, revocation proceeds and reaches the service
+	 * even though a usable emergency contact exists.
+	 *
+	 * @return void
+	 */
+	public function testRevokeProceedsWithOverrideDespiteEmergencyContact(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setStatus('revoked');
+
+		$this->suiteService->method('getSuite')->willReturn($this->ownedActiveSuite());
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(2);
+		$this->suiteService->expects($this->once())
+			->method('revokeSuite')
+			->with('suite-1', 'lost password', 'testuser')
+			->willReturn($revoked);
+
+		$response = $this->controller->revoke('suite-1', 'lost password', acceptEmergencyLoss: true);
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(expected: 'revoked', actual: $response->getData()['status']);
+	}//end testRevokeProceedsWithOverrideDespiteEmergencyContact()
+
+	/**
+	 * With no usable emergency contact the safeguard is inert and revocation
+	 * proceeds unchanged, without an override.
+	 *
+	 * @return void
+	 */
+	public function testRevokeProceedsWhenNoUsableEmergencyContact(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setStatus('revoked');
+
+		$this->suiteService->method('getSuite')->willReturn($this->ownedActiveSuite());
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
+		$this->suiteService->expects($this->once())->method('revokeSuite')->willReturn($revoked);
+
+		$response = $this->controller->revoke('suite-1', 'housekeeping');
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+	}//end testRevokeProceedsWhenNoUsableEmergencyContact()
+
+	/**
 	 * Test revoke refuses an APPLICATION-owned suite and never calls the service.
 	 *
 	 * These are user self-service endpoints, so the only suite a session may act
@@ -685,4 +784,199 @@ class EncryptionSuiteControllerTest extends TestCase {
 
 		$this->assertSame(expected: Http::STATUS_CREATED, actual: $response->getStatus());
 	}//end testCompromiseRecoveryLeavesTerminalWorkToCompletion()
+
+	/**
+	 * proofChallenge issues a challenge for a valid purpose on an owned suite.
+	 *
+	 * @return void
+	 */
+	public function testProofChallengeIssuesForAValidPurpose(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('testuser');
+		$this->suiteService->method('getSuite')->with('suite-1')->willReturn($suite);
+
+		$this->proofService->method('issueChallenge')
+			->with('testuser', VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY)
+			->willReturn(['nonce' => 'n.mac', 'expiresAt' => 123]);
+
+		$response = $this->controller->proofChallenge('suite-1', VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY);
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(expected: 'n.mac', actual: $response->getData()['nonce']);
+	}//end testProofChallengeIssuesForAValidPurpose()
+
+	/**
+	 * proofChallenge rejects a missing or unknown purpose with 400 and never
+	 * issues a challenge.
+	 *
+	 * @return void
+	 */
+	public function testProofChallengeRejectsAnUnknownPurpose(): void {
+		$this->proofService->expects($this->never())->method('issueChallenge');
+
+		$response = $this->controller->proofChallenge('suite-1', 'not-a-real-purpose');
+
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+	}//end testProofChallengeRejectsAnUnknownPurpose()
+
+	/**
+	 * proofChallenge refuses to issue against a suite the caller does not own.
+	 *
+	 * @return void
+	 */
+	public function testProofChallengeRefusesAForeignSuite(): void {
+		$foreign = new EncryptionSuite();
+		$foreign->setId('suite-1');
+		$foreign->setOwnerType('user');
+		$foreign->setOwnerId('someoneelse');
+		$this->suiteService->method('getSuite')->with('suite-1')->willReturn($foreign);
+		$this->proofService->expects($this->never())->method('issueChallenge');
+
+		$response = $this->controller->proofChallenge('suite-1', VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY);
+
+		$this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
+	}//end testProofChallengeRefusesAForeignSuite()
+
+	/**
+	 * forceRevoke is guarded by the admin setting AND Nextcloud sudo, and carries
+	 * NO vault-key proof — an administrator holds no vault key (ADR-005). This
+	 * reflection backstop keeps the guard posture from being loosened silently;
+	 * the middleware itself (a real 401/403 for a non-administrator or a stale
+	 * sudo window) needs a running instance, exactly as VaultKeyProofAttributesTest
+	 * documents for its own destructive-route coverage.
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeCarriesAdminAndSudoGuardsButNoVaultProof(): void {
+		$method = new \ReflectionMethod(EncryptionSuiteController::class, 'forceRevoke');
+
+		$this->assertCount(
+			expectedCount: 1,
+			haystack: $method->getAttributes(\OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting::class),
+			message: 'forceRevoke must be admin-guarded, mirroring reinstate()'
+		);
+		$this->assertCount(
+			expectedCount: 1,
+			haystack: $method->getAttributes(\OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired::class),
+			message: 'forceRevoke must require Nextcloud sudo'
+		);
+		// A vault-key proof is unproducible by an administrator, so the owner
+		// path's guard must NOT be present here.
+		$this->assertCount(
+			expectedCount: 0,
+			haystack: $method->getAttributes(\OCA\Keepiq\Attribute\VaultKeyProofRequired::class),
+			message: 'forceRevoke must not carry a vault-key proof — the administrator holds no vault key'
+		);
+	}//end testForceRevokeCarriesAdminAndSudoGuardsButNoVaultProof()
+
+	/**
+	 * An empty (or whitespace-only) reason is rejected with 400 and the suite is
+	 * never revoked.
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeRejectsAnEmptyReason(): void {
+		$this->suiteService->expects($this->never())->method('revokeSuite');
+
+		$response = $this->controller->forceRevoke('suite-1', '   ');
+
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+	}//end testForceRevokeRejectsAnEmptyReason()
+
+	/**
+	 * An application-owned suite is force-revoked by the same endpoint, with the
+	 * administrator recorded as revokedBy and no ownership check or vault-key
+	 * proof — the whole point is a cross-owner admin action (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeRevokesAnApplicationSuiteAsAdmin(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('00000000-0000-0000-0000-000000000000');
+		$revoked->setOwnerType('application');
+		$revoked->setStatus('revoked');
+
+		// Cross-owner: getSuite()/validateOwnership() must NOT be consulted.
+		$this->suiteService->expects($this->never())->method('getSuite');
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
+		$this->suiteService->expects($this->once())
+			->method('revokeSuite')
+			->with(
+				'00000000-0000-0000-0000-000000000000',
+				'application retired',
+				'testuser',
+				false,
+				0
+			)
+			->willReturn($revoked);
+
+		$response = $this->controller->forceRevoke(
+			'00000000-0000-0000-0000-000000000000',
+			'application retired'
+		);
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(expected: 'revoked', actual: $response->getData()['status']);
+	}//end testForceRevokeRevokesAnApplicationSuiteAsAdmin()
+
+	/**
+	 * The usable-emergency-contact count is read BEFORE the revoke cascade,
+	 * threaded into revokeSuite() and surfaced in the response as a count only —
+	 * never the contacts' identities, and never as a gate.
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeReadsEmergencyCountBeforeCascadeAndSurfacesIt(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setStatus('revoked');
+
+		$this->emergencyService->expects($this->once())
+			->method('countUsableForGrantorSuite')
+			->with('suite-1')
+			->willReturn(3);
+		// The count is passed through to the service (audit) as the 5th arg, and
+		// the revoke is NOT gated on it (unlike the owner path).
+		$this->suiteService->expects($this->once())
+			->method('revokeSuite')
+			->with('suite-1', 'compromise', 'testuser', true, 3)
+			->willReturn($revoked);
+
+		$response = $this->controller->forceRevoke('suite-1', 'compromise', markCompromised: true);
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame(expected: 3, actual: $data['emergencyContactsDestroyed']);
+		// Only the count crosses the wire.
+		$this->assertArrayNotHasKey('granteeUserId', $data);
+		$this->assertArrayNotHasKey('contacts', $data);
+		// markCompromised=true drives the cascade, so no rotation warning.
+		$this->assertArrayNotHasKey('warning', $data);
+	}//end testForceRevokeReadsEmergencyCountBeforeCascadeAndSurfacesIt()
+
+	/**
+	 * When markCompromised is left off, no cascade runs and the response carries
+	 * the "user may still know these secrets" rotation warning for the UI.
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeWithoutCompromiseReturnsTheRotationWarning(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setStatus('revoked');
+
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
+		$this->suiteService->method('revokeSuite')->willReturn($revoked);
+
+		$response = $this->controller->forceRevoke('suite-1', 'de-authorised departure');
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertArrayHasKey('warning', $response->getData());
+		$this->assertStringContainsString(
+			needle: 'may still know these secrets',
+			haystack: $response->getData()['warning']
+		);
+	}//end testForceRevokeWithoutCompromiseReturnsTheRotationWarning()
 }//end class

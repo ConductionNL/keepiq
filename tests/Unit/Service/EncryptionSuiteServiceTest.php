@@ -26,6 +26,10 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Service\CertificateAuthorityService;
 use OCA\Keepiq\Service\EncryptionSuiteProvisioningService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -470,4 +474,123 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$this->expectExceptionMessage('applicationId is required');
 		$this->service->provisionForApplication(applicationId: '', csrPem: 'csr');
 	}//end testProvisionForApplicationRequiresApplicationId()
+
+	/**
+	 * An administrator force-revoke threads the compromise flag onto the
+	 * dispatched EncryptionSuiteRevokedEvent and records all three keys —
+	 * reason, markCompromised and emergencyContactsDestroyed (the count, never
+	 * any identity) — in the SUITE_REVOKED audit metadata (ADR-005 D5).
+	 *
+	 * @return void
+	 */
+	public function testRevokeSuiteThreadsCompromiseAndCountIntoEventAndAudit(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$suite->setStatus('active');
+
+		$this->mapper->method('findById')->willReturn($suite);
+		$this->mapper->expects($this->once())->method('update');
+
+		$dispatched = [];
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')
+			->willReturnCallback(
+				function (object $event) use (&$dispatched): void {
+					$dispatched[] = $event;
+				}
+			);
+
+		$service = new EncryptionSuiteService(
+			mapper: $this->mapper,
+			provisioning: new EncryptionSuiteProvisioningService(
+				mapper: $this->mapper,
+				caService: $this->caService,
+				appConfig: $this->appConfig,
+				userManager: $this->createMock(originalClassName: \OCP\IUserManager::class),
+				logger: $this->createMock(originalClassName: LoggerInterface::class),
+			),
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			eventDispatcher: $dispatcher,
+		);
+
+		$service->revokeSuite(
+			id: 'suite-1',
+			reason: 'stolen laptop',
+			revokedBy: 'admin',
+			markCompromised: true,
+			emergencyContactsDestroyed: 4,
+		);
+
+		$revokedEvents = array_filter(
+			$dispatched,
+			static fn ($event) => $event instanceof EncryptionSuiteRevokedEvent
+		);
+		$this->assertCount(expectedCount: 1, haystack: $revokedEvents);
+		$this->assertTrue(array_values($revokedEvents)[0]->getCompromised());
+
+		$audits = array_filter(
+			$dispatched,
+			static fn ($event) => $event instanceof AuditEvent
+				&& $event->getEventType() === AuditEventTypes::SUITE_REVOKED
+		);
+		$this->assertCount(expectedCount: 1, haystack: $audits);
+		$metadata = array_values($audits)[0]->getMetadata();
+		$this->assertSame('stolen laptop', $metadata['reason']);
+		$this->assertTrue($metadata['markCompromised']);
+		$this->assertSame(4, $metadata['emergencyContactsDestroyed']);
+		// The count crosses the wire; no contact identity does.
+		$this->assertArrayNotHasKey('granteeUserId', $metadata);
+	}//end testRevokeSuiteThreadsCompromiseAndCountIntoEventAndAudit()
+
+	/**
+	 * The owner path leaves the compromise flag false, so the dispatched event's
+	 * compromised flag is false — the owner revoke stays behaviourally unchanged.
+	 *
+	 * @return void
+	 */
+	public function testOwnerRevokeLeavesCompromiseFlagFalse(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$suite->setStatus('active');
+
+		$this->mapper->method('findById')->willReturn($suite);
+
+		$dispatched = [];
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')
+			->willReturnCallback(
+				function (object $event) use (&$dispatched): void {
+					$dispatched[] = $event;
+				}
+			);
+
+		$service = new EncryptionSuiteService(
+			mapper: $this->mapper,
+			provisioning: new EncryptionSuiteProvisioningService(
+				mapper: $this->mapper,
+				caService: $this->caService,
+				appConfig: $this->appConfig,
+				userManager: $this->createMock(originalClassName: \OCP\IUserManager::class),
+				logger: $this->createMock(originalClassName: LoggerInterface::class),
+			),
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			eventDispatcher: $dispatcher,
+		);
+
+		// Owner-path call shape: no markCompromised, no count.
+		$service->revokeSuite(id: 'suite-1', reason: 'housekeeping', revokedBy: 'alice');
+
+		$revokedEvents = array_values(
+			array_filter(
+				$dispatched,
+				static fn ($event) => $event instanceof EncryptionSuiteRevokedEvent
+			)
+		);
+		$this->assertCount(expectedCount: 1, haystack: $revokedEvents);
+		$this->assertFalse($revokedEvents[0]->getCompromised());
+	}//end testOwnerRevokeLeavesCompromiseFlagFalse()
 }//end class

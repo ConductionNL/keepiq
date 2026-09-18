@@ -36,14 +36,20 @@ class EncryptionSuiteRevokedEvent extends Event {
 	 * @param string $ownerType The owner type ('user' or 'application')
 	 * @param string $ownerId The owner Nextcloud user ID or application ID
 	 * @param string $revokedBy The user that triggered the revocation
+	 * @param bool $compromised Whether the revocation treats the suite as compromised
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $compromised carries the
+	 *   administrator's explicit, transient compromise decision (ADR-005); it is
+	 *   a payload field on the event, not a mode switch between two behaviours.
 	 */
 	public function __construct(
 		private string $suiteId,
 		private string $ownerType,
 		private string $ownerId,
 		private string $revokedBy,
+		private bool $compromised = false,
 	) {
 		parent::__construct();
 	}//end __construct()
@@ -83,4 +89,17 @@ class EncryptionSuiteRevokedEvent extends Event {
 	public function getRevokedBy(): string {
 		return $this->revokedBy;
 	}//end getRevokedBy()
+
+	/**
+	 * Whether this revocation treats the suite's secrets as compromised.
+	 *
+	 * @return bool
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanGetMethodName) The accessor mirrors the
+	 *   event's other get* getters and its callers/tests read it as
+	 *   getCompromised(); the flag is a plain payload field (admin-suite-revocation).
+	 */
+	public function getCompromised(): bool {
+		return $this->compromised;
+	}//end getCompromised()
 }//end class

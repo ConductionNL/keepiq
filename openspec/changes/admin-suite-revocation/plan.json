@@ -1,0 +1,182 @@
+{
+  "change": "admin-suite-revocation",
+  "project": "keepiq",
+  "repo": "ConductionNL/keepiq",
+  "base_branch": "development",
+  "feature_branch": "feature/702/admin-suite-revocation",
+  "created": "2026-09-14",
+  "tracking_issue": 702,
+  "tasks": [
+    {
+      "id": 1,
+      "num": "1.1",
+      "title": "Add EncryptionSuiteController::forceRevoke() guarded by AuthorizedAdminSetting + PasswordConfirmationRequired; resolve the acting admin as revokedBy; reuse revokeSuite(); do not call validateOwnership()",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["lib/Controller/EncryptionSuiteController.php"]
+    },
+    {
+      "id": 2,
+      "num": "1.2",
+      "title": "Register POST /api/v1/suites/{id}/force-revoke (encryptionSuite#forceRevoke) in appinfo/routes.php before the SPA catch-all",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["appinfo/routes.php"]
+    },
+    {
+      "id": 3,
+      "num": "1.3",
+      "title": "Reject empty/missing reason with STATUS_BAD_REQUEST; store it in the existing revoked_reason field; reuse the owner revoke() exception mapping",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["lib/Controller/EncryptionSuiteController.php"]
+    },
+    {
+      "id": 4,
+      "num": "2.1",
+      "title": "Add a compromised flag to EncryptionSuiteRevokedEvent + markCompromised param to revokeSuite(); add SuiteCompromiseOnRevokeListener that (only when true) flags secrets possibly_compromised_at, raises suite_compromise flags, and notifies owners",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["lib/Event/EncryptionSuiteRevokedEvent.php", "lib/Service/EncryptionSuiteService.php", "lib/Listener/SuiteCompromiseOnRevokeListener.php", "lib/AppInfo/Application.php"]
+    },
+    {
+      "id": 5,
+      "num": "2.2",
+      "title": "When markCompromised is false, run no cascade and return the rotation-may-be-warranted warning for the UI",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["lib/Controller/EncryptionSuiteController.php"]
+    },
+    {
+      "id": 6,
+      "num": "2.3",
+      "title": "Read countUsableForGrantorSuite() before the revoke event clears envelopes; thread it into SUITE_REVOKED audit metadata as emergencyContactsDestroyed and return it (count only); emergency cleared unconditionally, not gated",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["lib/Controller/EncryptionSuiteController.php", "lib/Service/EncryptionSuiteService.php"]
+    },
+    {
+      "id": 7,
+      "num": "2.4",
+      "title": "Widen the AuditEventTypes SUITE_REVOKED metadata whitelist from ['reason'] to ['reason','markCompromised','emergencyContactsDestroyed']",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["lib/Event/Audit/AuditEventTypes.php"]
+    },
+    {
+      "id": 8,
+      "num": "3.1",
+      "title": "New admin 'Encryption suites' settings section under AdminRoot.vue with a force-revoke action (look up by owner/id, required reason, markCompromised toggle) via the encryptionSuite store",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["src/views/settings/AdminRoot.vue", "src/store/modules/encryptionSuite.js"]
+    },
+    {
+      "id": 9,
+      "num": "3.2",
+      "title": "Perform the Nextcloud sudo (password-confirmation) flow before the request",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["src/views/settings/AdminRoot.vue"]
+    },
+    {
+      "id": 10,
+      "num": "3.3",
+      "title": "Render the returned emergencyContactsDestroyed count as an informational warning, and the no-compromise 'user may still know these secrets' copy when markCompromised was off",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["src/views/settings/AdminRoot.vue"]
+    },
+    {
+      "id": 11,
+      "num": "3.4",
+      "title": "Add a reinstate action on the same surface for revoked suites, wired to the existing reinstate() endpoint (frontend-only, no server change, no sudo)",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["src/views/settings/AdminRoot.vue", "src/store/modules/encryptionSuite.js"]
+    },
+    {
+      "id": 12,
+      "num": "4.1",
+      "title": "Endpoint-guard tests: non-admin refused by AuthorizedAdminSetting; PasswordConfirmationRequired posture asserted; suite not revoked",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["tests/Unit/Controller/EncryptionSuiteControllerTest.php"]
+    },
+    {
+      "id": 13,
+      "num": "4.2",
+      "title": "Validation + scope tests: empty/missing reason rejected; an application-owned suite is force-revoked with revokedBy = admin and no vault-key proof",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["tests/Unit/Controller/EncryptionSuiteControllerTest.php"]
+    },
+    {
+      "id": 14,
+      "num": "4.3",
+      "title": "Compromise-cascade test (markCompromised=true): secrets flagged possibly_compromised_at, suite_compromise flags raised, owners notified via secret_compromised",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["tests/Unit/Listener/SuiteCompromiseOnRevokeListenerTest.php"]
+    },
+    {
+      "id": 15,
+      "num": "4.4",
+      "title": "No-cascade test (markCompromised=false): no secret flagged, no rotation flag, warning present in response",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["tests/Unit/Listener/SuiteCompromiseOnRevokeListenerTest.php", "tests/Unit/Controller/EncryptionSuiteControllerTest.php"]
+    },
+    {
+      "id": 16,
+      "num": "4.5",
+      "title": "Emergency + audit test: count read before the cascade, emergency cleared unconditionally (not gated), SUITE_REVOKED metadata carries reason/markCompromised/emergencyContactsDestroyed with count but no identities",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["tests/Unit/Controller/EncryptionSuiteControllerTest.php"]
+    },
+    {
+      "id": 17,
+      "num": "4.6",
+      "title": "Frontend unit test: collects reason + markCompromised, runs sudo before the request, renders count and (when applicable) the no-compromise warning",
+      "status": "done",
+      "spec_ref": "openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation",
+      "acceptance_criteria": [],
+      "files_likely_affected": ["tests/store/encryptionSuite.spec.js"]
+    },
+    {
+      "id": 18,
+      "num": "5.1",
+      "title": "Run hydra gates locally: route-auth / semantic-auth, no-admin-idor (admin-guarded like reinstate()), gate-16 spec-coverage, route-reachability",
+      "status": "done",
+      "spec_ref": null,
+      "acceptance_criteria": [],
+      "files_likely_affected": []
+    },
+    {
+      "id": 19,
+      "num": "5.2",
+      "title": "Confirm gate-110 does not apply: no migration, no new column, no <version> bump (revoked_reason reused, markCompromised transient)",
+      "status": "done",
+      "spec_ref": null,
+      "acceptance_criteria": [],
+      "files_likely_affected": []
+    }
+  ]
+}
