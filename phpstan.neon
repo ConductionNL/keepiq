@@ -24,6 +24,20 @@ parameters:
         - tests/stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php
 
     ignoreErrors:
+        # `OCP\DB\Schema\IColumn` / `ITable` arrived in Nextcloud 35. This app
+        # declares min-version 32, so the test double that implements them
+        # (ConsolidatedSchemaMigrationTest::tableDouble) is guarded by
+        # `interface_exists()` and only ever runs on the stable35 leg. Whether
+        # phpstan can SEE the symbols depends on which `nextcloud/ocp` dev stub
+        # the checkout installed — v35.0.0 ships `OCP/DB/Schema/`, older ones do
+        # not. `reportUnmatched: false` is what makes this correct in both
+        # worlds: without it, a checkout that DOES resolve them fails the run on
+        # an unmatched ignore, which is the same gate failing for the opposite
+        # reason.
+        -
+            message: '#OCP\\DB\\Schema\\(IColumn|ITable)#'
+            path: tests/Unit/Migration/ConsolidatedSchemaMigrationTest.php
+            reportUnmatched: false
         # Doctrine\DBAL wordings the base does not cover. The base ignores the
         # "unknown class" / "not found" shapes; migrations here also produce the
         # capitalised "Class …" wording and Platforms\* references, which come

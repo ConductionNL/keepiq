@@ -22,6 +22,8 @@ namespace OCA\Keepiq\Tests\Unit\Migration;
 use InvalidArgumentException;
 use OCA\Keepiq\Migration\Version001000Date20260908000000;
 use OCP\DB\ISchemaWrapper;
+use OCP\DB\Schema\IColumn;
+use OCP\DB\Schema\ITable;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
@@ -108,6 +110,86 @@ class ConsolidatedSchemaMigrationTest extends TestCase {
 	}
 
 	/**
+	 * The table double the migration is handed, recording into $fake.
+	 *
+	 * Nextcloud 35 gave `ISchemaWrapper::createTable()` and `getTable()` a
+	 * declared return type of `OCP\DB\Schema\ITable`, so a mock of
+	 * `ISchemaWrapper` refuses to hand back a plain `FakeTable`:
+	 *
+	 *   TypeError: createTable(): Return value must be of type
+	 *   OCP\DB\Schema\ITable, FakeTable returned
+	 *
+	 * `FakeTable implements ITable` is not available as a fix: this app declares
+	 * `min-version="32"`, and `ITable` — along with `IColumn`, `IIndex` and the
+	 * `ColumnType` enum in its signatures — exists only from 35. Declaring it
+	 * unconditionally would fatal on every older leg, and hand-writing its 25
+	 * methods would pin this test to one revision of an interface it does not own.
+	 *
+	 * So on 35 the migration is handed a GENERATED mock of the real interface,
+	 * which cannot drift from it, delegating the seven methods the migration
+	 * actually calls to the same `FakeTable` the assertions read. Below 35 the
+	 * interface does not exist and the `FakeTable` is passed through unchanged.
+	 *
+	 * @param FakeTable $fake The recorder the assertions read.
+	 *
+	 * @return object The double to hand the migration.
+	 */
+	private function tableDouble(FakeTable $fake): object {
+		if (interface_exists(ITable::class) === false) {
+			return $fake;
+		}
+
+		$mock = $this->createMock(ITable::class);
+		$mock->method('hasColumn')->willReturnCallback(static fn (string $n): bool => $fake->hasColumn($n));
+		$mock->method('hasPrimaryKey')->willReturnCallback(static fn (): bool => $fake->hasPrimaryKey());
+		$mock->method('hasIndex')->willReturnCallback(static fn (string $n): bool => $fake->hasIndex($n));
+
+		$mock->method('addColumn')->willReturnCallback(
+			function (string $name, mixed $type, array $options = []) use ($fake): object {
+				// `ColumnType` is a backed enum on 35 and a plain string before.
+				$fake->addColumn(
+					$name,
+					($type instanceof \BackedEnum ? (string)$type->value : (string)$type),
+					$options
+				);
+
+				// `IColumn` exists only from Nextcloud 35. phpstan resolves it from
+				// the vendored `nextcloud/ocp` DEV stub, and whether that stub
+				// carries `OCP/DB/Schema/` depends on which ocp the checkout
+				// installed — so the symbol is ignored in phpstan.neon with
+				// `reportUnmatched: false`, which is correct in both worlds. The
+				// RUNTIME class is the server's, never the stub's, and this line
+				// only executes on 35.
+				return $this->createMock(IColumn::class);
+			}
+		);
+
+		$mock->method('setPrimaryKey')->willReturnCallback(
+			static function (array $columns, string|false $indexName = false) use ($fake, $mock): object {
+				$fake->setPrimaryKey($columns);
+				return $mock;
+			}
+		);
+
+		$mock->method('addIndex')->willReturnCallback(
+			static function (array $columns, ?string $name = null, array $flags = [], array $options = []) use ($fake, $mock): object {
+				$fake->addIndex($columns, (string)$name);
+				return $mock;
+			}
+		);
+
+		$mock->method('addUniqueIndex')->willReturnCallback(
+			static function (array $columns, ?string $name = null, array $options = []) use ($fake, $mock): object {
+				$fake->addUniqueIndex($columns, (string)$name);
+				return $mock;
+			}
+		);
+
+		return $mock;
+
+	}//end tableDouble()
+
+	/**
 	 * Build the migration with the two doubles it needs.
 	 *
 	 * @param IDBConnection $db     Connection double.
@@ -132,13 +214,14 @@ class ConsolidatedSchemaMigrationTest extends TestCase {
 		$schema = $this->createMock(ISchemaWrapper::class);
 		$schema->method('hasTable')->willReturn(false);
 		$schema->method('createTable')->willReturnCallback(
-			static function (string $name) use (&$tables): FakeTable {
-				return $tables[$name] = new FakeTable();
+			function (string $name) use (&$tables): object {
+				$tables[$name] = new FakeTable();
+				return $this->tableDouble($tables[$name]);
 			}
 		);
 		$schema->method('getTable')->willReturnCallback(
-			static function (string $name) use (&$tables): FakeTable {
-				return $tables[$name];
+			function (string $name) use (&$tables): object {
+				return $this->tableDouble($tables[$name]);
 			}
 		);
 
@@ -180,7 +263,7 @@ class ConsolidatedSchemaMigrationTest extends TestCase {
 		$schema = $this->createMock(ISchemaWrapper::class);
 		$schema->method('hasTable')->willReturn(true);
 		$schema->expects($this->never())->method('createTable');
-		$schema->method('getTable')->willReturn($table);
+		$schema->method('getTable')->willReturn($this->tableDouble($table));
 
 		$this->migration($this->createMock(IDBConnection::class))
 			->changeSchema($this->createMock(IOutput::class), static fn () => $schema, []);
