@@ -23,7 +23,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\Migration\Version001000Date20260908000000;
 use OCP\DB\ISchemaWrapper;
 use OCP\DB\Schema\IColumn;
-use OCP\DB\Schema\ITable;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
@@ -135,11 +134,31 @@ class ConsolidatedSchemaMigrationTest extends TestCase {
 	 * @return object The double to hand the migration.
 	 */
 	private function tableDouble(FakeTable $fake): object {
-		if (interface_exists(ITable::class) === false) {
+		// Ask the SIGNATURE, not the autoloader.
+		//
+		// This used to branch on `interface_exists(ITable::class)`, which asks
+		// "has this interface been loaded yet" — a question whose answer depends
+		// on autoloader state and test order, not on the platform. It answered
+		// true on one stable35 run and false on the next, with no code change
+		// between them, so the same tests passed and then failed for reasons
+		// that had nothing to do with what they assert (keepiq#712).
+		//
+		// The question that actually decides this is what the mocked method is
+		// DECLARED to return, because that is what PHPUnit enforces. Nextcloud
+		// 34 declares no return type on `createTable()`; 35 declares `ITable`.
+		// Reflection over the interface under test answers it exactly, on any
+		// version, in any order.
+		$returnType = (new \ReflectionMethod(ISchemaWrapper::class, 'createTable'))->getReturnType();
+		if ($returnType instanceof \ReflectionNamedType === false) {
 			return $fake;
 		}
 
-		$mock = $this->createMock(ITable::class);
+		// No interface_exists() probe on the resolved name, deliberately: if the
+		// signature declares it, PHPUnit will enforce it, so the mock has to be
+		// of that type or nothing works. Probing here could disagree with the
+		// signature and hand back a FakeTable the mock then refuses — which is
+		// the exact failure this method exists to prevent.
+		$mock = $this->createMock($returnType->getName());
 		$mock->method('hasColumn')->willReturnCallback(static fn (string $n): bool => $fake->hasColumn($n));
 		$mock->method('hasPrimaryKey')->willReturnCallback(static fn (): bool => $fake->hasPrimaryKey());
 		$mock->method('hasIndex')->willReturnCallback(static fn (string $n): bool => $fake->hasIndex($n));
