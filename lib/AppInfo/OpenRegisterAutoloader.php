@@ -74,6 +74,21 @@ final class OpenRegisterAutoloader {
 	private static bool $registered = false;
 
 	/**
+	 * The registered autoload callable, kept so it can be removed again.
+	 *
+	 * Registering an autoloader is a PROCESS-WIDE side effect. In a unit-test
+	 * run that outlives one test: every later `class_exists()` for an absent
+	 * class runs this closure, and PHPUnit's strict coverage metadata then
+	 * reports unrelated tests as risky for "executing code not listed as
+	 * covered or used" — which is true, and is the suite telling us a global
+	 * was left behind. Measured on keepiq#712 (ConnectionReporterTest). The
+	 * handle lets {@see unregister()} put the process back as it found it.
+	 *
+	 * @var callable|null
+	 */
+	private static $loader = null;
+
+	/**
 	 * Register OpenRegister's PSR-4 prefix on the composer autoloader.
 	 *
 	 * MUST be called before any `OCA\OpenRegister\…` reference in
@@ -125,6 +140,10 @@ final class OpenRegisterAutoloader {
 	 *              is absent, disabled, or otherwise unresolvable — in which
 	 *              case the caller MUST fall through to its degraded path.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) `\OCP\Server::get()` is the public
+	 * service locator, and this runs at the composition root — there is no
+	 * container to inject, which is the whole reason a prelude exists.
+	 *
 	 * @spec openspec/specs/apphost-adoption/spec.md
 	 */
 	public static function register(): bool {
@@ -144,14 +163,14 @@ final class OpenRegisterAutoloader {
 				return false;
 			}
 
-			spl_autoload_register(
-				static function (string $class) use ($path): void {
-					$file = self::classFile(appPath: $path, class: $class);
-					if ($file !== null && is_file($file) === true) {
-						require_once $file;
-					}
+			self::$loader = static function (string $class) use ($path): void {
+				$file = self::classFile(appPath: $path, class: $class);
+				if ($file !== null && is_file($file) === true) {
+					require_once $file;
 				}
-			);
+			};
+
+			spl_autoload_register(self::$loader);
 
 			self::$registered = true;
 			return true;
@@ -165,6 +184,28 @@ final class OpenRegisterAutoloader {
 		}
 
 	}//end register()
+
+	/**
+	 * Remove the autoloader again, for tests that must not leak it.
+	 *
+	 * Production never calls this: the prefix is wanted for the life of the
+	 * request. A test suite runs many tests in one process, so a test that
+	 * exercises {@see register()} has to hand the process back unchanged or it
+	 * changes the behaviour of every test after it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	public static function unregister(): void {
+		if (self::$loader !== null) {
+			spl_autoload_unregister(self::$loader);
+			self::$loader = null;
+		}
+
+		self::$registered = false;
+
+	}//end unregister()
 
 	/**
 	 * The file a PSR-4 class name maps to, or null when it is not ours.

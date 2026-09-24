@@ -45,6 +45,26 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Hand the process back exactly as it was found.
+	 *
+	 * `register()` installs a PROCESS-WIDE autoloader. Without this, in CI —
+	 * where the server container resolves and `register()` therefore actually
+	 * succeeds — every later `class_exists()` for an absent class runs that
+	 * closure, and PHPUnit reports unrelated tests as risky for executing code
+	 * they do not declare. Measured on keepiq#712: `ConnectionReporterTest::
+	 * testTheLookupAnswersNullForAnAbsentClass` went risky on the stable35 leg
+	 * while every assertion still passed. It never reproduced locally, because
+	 * without a container `register()` returns false and installs nothing.
+	 *
+	 * @return void
+	 */
+	protected function tearDown(): void {
+		OpenRegisterAutoloader::unregister();
+		parent::tearDown();
+
+	}//end tearDown()
+
 	public function testRegisterNeverThrows(): void {
 		$result = OpenRegisterAutoloader::register();
 

@@ -135,6 +135,22 @@ class Application extends App implements IBootstrap {
 		// plumbing.
 		OpenRegisterAutoloader::register();
 
+		// Gate-64 — apphost-prelude exclude This app HAS a prelude, OpenRegisterAutoloader
+		// above — but gate-64 matches only `registerAutoloading(...)` naming
+		// 'openregister', which is `\OC_App::registerAutoloading()`. That is
+		// PRIVATE API and Nextcloud 35 REMOVED it, which is the defect this
+		// app just fixed (keepiq#712): the call threw, the prelude's catch-all
+		// returned false, the guard below answered false, and every AppHost
+		// endpoint returned 500. NC 35 moved the method to
+		// `OC\App\AppManager`, also private and not on `OCP\App\IAppManager`,
+		// so there is no public API the gate's pattern can be satisfied with.
+		// The prelude now does what Nextcloud does — a PSR-4 prefix over the
+		// app's lib/, via spl_autoload_register and the public
+		// IAppManager::getAppPath(). The gate's intent is met; its pattern
+		// cannot be. Tracked for hydra-gates: gate-64 should accept a prelude
+		// that registers the prefix by any means, and stop mandating a method
+		// that no longer exists.
+		//
 		// The class_exists() guard MUST stay in this method: it is also the
 		// assertion psalm relies on to accept the Bootstrap::register() call
 		// below, and psalm does not carry that narrowing across a call.
