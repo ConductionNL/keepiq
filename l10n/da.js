@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "Begrænset",
         "Simulated": "Simuleret",
         "Not available": "Ikke tilgængelig",
-        "Error": "Fejl"
+        "Error": "Fejl",
+        "e.g. Offboarding, device lost, key compromised": "f.eks. fratrædelse, mistet enhed, nøgle kompromitteret",
+        "Encryption suites": "Krypteringssuiter",
+        "Failed to force-revoke suite": "Tvangstilbagekaldelse af suite mislykkedes",
+        "Failed to reinstate suite": "Genindsættelse af suite mislykkedes",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Tvangstilbagekald en bruger- eller applikationsejet krypteringssuite via id, når ejeren ikke kan (en glemt hovedadgangskode, en tilbagekaldt adgang eller en kompromittering), og genindsæt en tilbagekaldt. Tvangstilbagekaldelse beder dig bekræfte din egen adgangskode igen og fjerner permanent suitens nødadgang.",
+        "Force-revoke suite": "Tvangstilbagekald suite",
+        "Reinstate suite": "Genindsæt suite",
+        "Revoking this suite deleted %n emergency-access contact.": "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakt.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakter.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandl suitens hemmeligheder som kompromitterede (markér til rotation, og underret ejere)"
     },
     "nplurals=2; plural=(n != 1);"
 )

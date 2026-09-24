@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "I kufizuar",
         "Simulated": "I simuluar",
         "Not available": "Jo i disponueshëm",
-        "Error": "Gabim"
+        "Error": "Gabim",
+        "e.g. Offboarding, device lost, key compromised": "p.sh. largim nga puna, pajisje e humbur, çelës i komprometuar",
+        "Encryption suites": "Suita enkriptimi",
+        "Failed to force-revoke suite": "Revokimi i detyruar i suitës dështoi",
+        "Failed to reinstate suite": "Rivendosja e suitës dështoi",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Revoko me forcë një suitë enkriptimi në pronësi të një përdoruesi ose aplikacioni sipas id-së kur pronari i saj nuk mundet (një fjalëkalim kryesor i harruar, një qasje e revokuar ose një komprometim), dhe rivendos një të revokuar. Revokimi i detyruar kërkon të rikonfirmoni fjalëkalimin tuaj dhe fshin përgjithmonë qasjen e emergjencës të suitës.",
+        "Force-revoke suite": "Revoko me forcë suitën",
+        "Reinstate suite": "Rivendos suitën",
+        "Revoking this suite deleted %n emergency-access contact.": "Revokimi i kësaj suite fshiu %n kontakt të qasjes së emergjencës.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Revokimi i kësaj suite fshiu %n kontakte të qasjes së emergjencës.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Trajto sekretet e suitës si të komprometuara (shëno për rotacion dhe njofto pronarët)"
     },
     "nplurals=2; plural=(n != 1);"
 )

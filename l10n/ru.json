@@ -1157,7 +1157,17 @@
         "Limited": "Ограничено",
         "Simulated": "Имитация",
         "Not available": "Недоступно",
-        "Error": "Ошибка"
+        "Error": "Ошибка",
+        "e.g. Offboarding, device lost, key compromised": "напр. увольнение, потеря устройства, компрометация ключа",
+        "Encryption suites": "Наборы шифрования",
+        "Failed to force-revoke suite": "Не удалось принудительно отозвать набор",
+        "Failed to reinstate suite": "Не удалось восстановить набор",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Принудительно отозвать набор шифрования, принадлежащий пользователю или приложению, по id, когда его владелец не может (забытый главный пароль, отозванный доступ или компрометация), и восстановить отозванный. Принудительный отзыв просит повторно подтвердить ваш собственный пароль и безвозвратно удаляет аварийный доступ набора.",
+        "Force-revoke suite": "Принудительно отозвать набор",
+        "Reinstate suite": "Восстановить набор",
+        "Revoking this suite deleted %n emergency-access contact.": "Отзыв этого набора удалил %n контакт аварийного доступа.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Отзыв этого набора удалил %n контактов аварийного доступа.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Считать секреты набора скомпрометированными (отметить для ротации и уведомить владельцев)"
     },
     "plurals": null
 }

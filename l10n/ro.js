@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "Limitat",
         "Simulated": "Simulat",
         "Not available": "Indisponibil",
-        "Error": "Eroare"
+        "Error": "Eroare",
+        "e.g. Offboarding, device lost, key compromised": "de ex. plecare din companie, dispozitiv pierdut, cheie compromisă",
+        "Encryption suites": "Suite de criptare",
+        "Failed to force-revoke suite": "Revocarea forțată a suitei a eșuat",
+        "Failed to reinstate suite": "Restabilirea suitei a eșuat",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Revocă forțat o suită de criptare deținută de un utilizator sau de o aplicație după id atunci când proprietarul ei nu poate (o parolă principală uitată, un acces revocat sau o compromitere) și restabilește una revocată. Revocarea forțată vă cere să vă reconfirmați propria parolă și șterge definitiv accesul de urgență al suitei.",
+        "Force-revoke suite": "Revocă forțat suita",
+        "Reinstate suite": "Restabilește suita",
+        "Revoking this suite deleted %n emergency-access contact.": "Revocarea acestei suite a șters %n contact de acces de urgență.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Revocarea acestei suite a șters %n contacte de acces de urgență.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratează secretele suitei ca fiind compromise (marchează pentru rotire și notifică proprietarii)"
     },
     "nplurals=2; plural=(n != 1);"
 )

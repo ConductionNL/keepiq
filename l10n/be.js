@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "Абмежавана",
         "Simulated": "Імітавана",
         "Not available": "Недаступна",
-        "Error": "Памылка"
+        "Error": "Памылка",
+        "e.g. Offboarding, device lost, key compromised": "напр. звальненне, страта прылады, кампраметацыя ключа",
+        "Encryption suites": "Наборы шыфравання",
+        "Failed to force-revoke suite": "Не ўдалося прымусова адклікаць набор",
+        "Failed to reinstate suite": "Не ўдалося аднавіць набор",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Прымусова адклікаць набор шыфравання, які належыць карыстальніку або дадатку, па id, калі яго ўладальнік не можа (забыты галоўны пароль, адкліканы доступ або кампраметацыя), і аднавіць адкліканы. Прымусовае адкліканне просіць паўторна пацвердзіць ваш уласны пароль і назаўжды выдаляе аварыйны доступ набору.",
+        "Force-revoke suite": "Прымусова адклікаць набор",
+        "Reinstate suite": "Аднавіць набор",
+        "Revoking this suite deleted %n emergency-access contact.": "Адкліканне гэтага набору выдаліла %n кантакт аварыйнага доступу.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Адкліканне гэтага набору выдаліла %n кантактаў аварыйнага доступу.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)"
     },
     "nplurals=2; plural=(n != 1);"
 )

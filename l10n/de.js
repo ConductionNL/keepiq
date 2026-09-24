@@ -1158,7 +1158,17 @@ OC.L10N.register(
         "Limited": "Eingeschränkt",
         "Simulated": "Simuliert",
         "Not available": "Nicht verfügbar",
-        "Error": "Fehler"
+        "Error": "Fehler",
+        "e.g. Offboarding, device lost, key compromised": "z. B. Offboarding, Gerät verloren, Schlüssel kompromittiert",
+        "Encryption suites": "Verschlüsselungs-Suites",
+        "Failed to force-revoke suite": "Zwangsweiser Widerruf der Suite fehlgeschlagen",
+        "Failed to reinstate suite": "Wiederherstellung der Suite fehlgeschlagen",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Eine benutzer- oder anwendungseigene Verschlüsselungs-Suite anhand der ID zwangsweise widerrufen, wenn deren Eigentümer es nicht kann (ein vergessenes Hauptpasswort, ein entzogener Zugang oder eine Kompromittierung), und eine widerrufene wiederherstellen. Der zwangsweise Widerruf verlangt die erneute Bestätigung Ihres eigenen Passworts und löscht den Notfallzugang der Suite dauerhaft.",
+        "Force-revoke suite": "Suite zwangsweise widerrufen",
+        "Reinstate suite": "Suite wiederherstellen",
+        "Revoking this suite deleted %n emergency-access contact.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakt gelöscht.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakte gelöscht.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Die Geheimnisse der Suite als kompromittiert behandeln (zur Rotation markieren und Eigentümer benachrichtigen)"
     },
     "nplurals=2; plural=(n != 1);"
 )

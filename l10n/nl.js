@@ -1163,7 +1163,17 @@ OC.L10N.register(
         "Limited": "Beperkt",
         "Simulated": "Gesimuleerd",
         "Not available": "Niet beschikbaar",
-        "Error": "Fout"
+        "Error": "Fout",
+        "e.g. Offboarding, device lost, key compromised": "bijv. Uitdiensttreding, apparaat verloren, sleutel gecompromitteerd",
+        "Encryption suites": "Versleutelingssuites",
+        "Failed to force-revoke suite": "Gedwongen intrekken van suite mislukt",
+        "Failed to reinstate suite": "Herstellen van suite mislukt",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Trek een suite van een gebruiker of applicatie gedwongen in op id wanneer de eigenaar dat niet kan (een vergeten hoofdwachtwoord, een ingetrokken toegang, of een compromittering), en herstel een ingetrokken suite. Gedwongen intrekken vraagt je je eigen wachtwoord opnieuw te bevestigen en verwijdert de noodtoegang van de suite permanent.",
+        "Force-revoke suite": "Suite gedwongen intrekken",
+        "Reinstate suite": "Suite herstellen",
+        "Revoking this suite deleted %n emergency-access contact.": "Het intrekken van deze suite verwijderde %n noodtoegangscontact.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Het intrekken van deze suite verwijderde %n noodtoegangscontacten.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)"
     },
     "nplurals=2; plural=(n != 1);"
 )

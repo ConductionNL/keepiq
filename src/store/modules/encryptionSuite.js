@@ -1215,6 +1215,87 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		},
 
 		/**
+		 * Administrator force-revoke of any suite by id (admin settings surface).
+		 *
+		 * The administrator counterpart to the owner path's `revokeSuite()`. The
+		 * vault is zero-knowledge (ADR-003), so an administrator holds no vault key
+		 * to sign the revoke challenge; authorisation is the admin guard plus
+		 * Nextcloud sudo. The endpoint carries `#[PasswordConfirmationRequired]`, so
+		 * the password-confirmation (sudo) flow MUST complete BEFORE the request —
+		 * the middleware rejects a request whose sudo has not been re-confirmed.
+		 *
+		 * `@nextcloud/password-confirmation` is imported lazily (like the offline
+		 * store below) so its `@nextcloud/vue` dialog dependency stays off the
+		 * store's static load path; `confirmPassword()` resolves immediately when
+		 * sudo is not currently required and otherwise prompts, resolving only once
+		 * the administrator has re-confirmed and rejecting if they cancel.
+		 *
+		 * The offline cache is deliberately NOT evicted here: it holds the acting
+		 * administrator's OWN vault, not the (cross-owner) target suite's secrets,
+		 * so evicting it on an unrelated admin action would be wrong. The owner
+		 * `revokeSuite()` evicts because there the revoked suite IS the caller's own.
+		 *
+		 * @param {object} params The parameters.
+		 * @param {string} params.id The suite id to force-revoke.
+		 * @param {string} params.reason The required, free-form revocation reason.
+		 * @param {boolean} params.markCompromised Treat the suite's secrets as compromised (default false).
+		 * @return {Promise<{suite: object, emergencyContactsDestroyed: number, warning: string|null}>}
+		 *   The revoked suite, the count of destroyed usable emergency contacts, and
+		 *   (only when `markCompromised` was false) the rotation-may-be-warranted warning.
+		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 */
+		async forceRevokeSuite({ id, reason, markCompromised = false }) {
+			if (!id) {
+				throw new Error('No suite id to revoke')
+			}
+			if (!reason) {
+				throw new Error('A reason is required to force-revoke a suite')
+			}
+
+			// Complete Nextcloud sudo BEFORE issuing the request — the endpoint's
+			// #[PasswordConfirmationRequired] middleware rejects it otherwise.
+			const { confirmPassword } =
+				await import('@nextcloud/password-confirmation')
+			await confirmPassword()
+
+			const response = await axios.post(
+				generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
+				{ reason, markCompromised },
+			)
+
+			return {
+				suite: response.data,
+				emergencyContactsDestroyed:
+					response.data.emergencyContactsDestroyed ?? 0,
+				warning: response.data.warning ?? null,
+			}
+		},
+
+		/**
+		 * Reinstate a revoked suite by id from the admin settings surface.
+		 *
+		 * Wired to the existing admin-only `reinstate()` endpoint, which carries no
+		 * `#[PasswordConfirmationRequired]` — the `AuthorizedAdminSetting` guard is
+		 * the authorization, so no sudo flow is needed. Frontend-only; the endpoint
+		 * and `reinstateSuite()` service are unchanged.
+		 *
+		 * @param {string} id The suite id to reinstate.
+		 * @return {Promise<object>} The reinstated suite JSON.
+		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 */
+		async reinstateSuiteAdmin(id) {
+			if (!id) {
+				throw new Error('No suite id to reinstate')
+			}
+
+			const response = await axios.post(
+				generateUrl(`/apps/keepiq/api/v1/suites/${id}/reinstate`),
+			)
+
+			return response.data
+		},
+
+		/**
 		 * Check migration status.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7

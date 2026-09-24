@@ -147,16 +147,23 @@ jobs:
       # all four onto stable32 silently. List order is now inert, and the one
       # thing the override bought is structural instead.
       #
-      # THIS ADDS A stable35 LEG, AND IT IS RED BEFORE IT IS GREEN.
-      # `additional-apps` below installs openregister and integriq, and BOTH still
-      # declare `max-version="34"` on `development`. The shared workflow aborts the
-      # job when `occ app:enable` fails for an additional app — that was once only
-      # a ::warning::, which is how a leg previously ran on WITHOUT OpenRegister
-      # loaded and reported nothing — so the stable35 legs fail at the fixture
-      # until ConductionNL/openregister#3777 (max-version 34 -> 35) and the
-      # matching integriq bump land. That red is the honest state of NC 35 support
-      # for this app: the range is declared, the dependencies do not carry it yet,
-      # and the point of deriving is that nothing here can hide the gap.
+      # THIS ADDS A stable35 LEG. It was RED BEFORE IT WAS GREEN, deliberately.
+      # `additional-apps` below installs openregister and integriq, and when this
+      # branch was opened (2026-09-15) BOTH still declared `max-version="34"` on
+      # `development`. The shared workflow aborts the job when `occ app:enable`
+      # fails for an additional app — that was once only a ::warning::, which is
+      # how a leg previously ran on WITHOUT OpenRegister loaded and reported
+      # nothing — so the stable35 legs failed at the fixture, not in the tests.
+      #
+      # RESOLVED 2026-09-24: both dependencies now declare
+      # `<nextcloud min-version="32" max-version="35"/>` on `development`, which
+      # is the ref this file pins. Verified by parsing each appinfo/info.xml
+      # rather than grepping, because both files carry comments that quote OTHER
+      # apps' ranges and a grep matches those first.
+      #
+      # The point of deriving the matrix from info.xml stands: the red was the
+      # honest state of NC 35 support while the gap existed, and nothing here
+      # could hide it. Leave it derived.
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true

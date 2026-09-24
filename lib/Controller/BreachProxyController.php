@@ -191,12 +191,19 @@ class BreachProxyController extends Controller {
 			);
 			$body = (string)$response->getBody();
 		} catch (Throwable $e) {
-			// Soft-degrade: never log the prefix together with a user id (privacy).
+			// Soft-degrade. Never log the prefix together with a user id
+			// (privacy), and the exception is exactly that pairing: the client's
+			// message names the request URL, which ends in the prefix, and
+			// Nextcloud stamps every line with the user who typed the password.
+			// So the class and the HTTP status go in the line and the message
+			// goes nowhere, not even as an `exception` context key, which the
+			// log writer would render in full.
+			$httpStatus = $this->connectionReporter?->httpStatusOf(exception: $e);
 			$this->logger->warning(
-				'Keepiq: HIBP range lookup failed: ' . $e->getMessage(),
+				'Keepiq: HIBP range lookup failed: ' . $e::class . ' ' . $this->outcomeOf(httpStatus: $httpStatus),
 				['app' => Application::APP_ID]
 			);
-			$this->reportLookup(httpStatus: $this->connectionReporter?->httpStatusOf(exception: $e));
+			$this->reportLookup(httpStatus: $httpStatus);
 			return new DataResponse(
 				data: ['message' => 'Breach service unavailable'],
 				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
@@ -219,4 +226,24 @@ class BreachProxyController extends Controller {
 	private function reportLookup(?int $httpStatus): void {
 		$this->connectionReporter?->reportBreachLookup(httpStatus: $httpStatus);
 	}//end reportLookup()
+
+	/**
+	 * What the upstream did, for the log, as a status or as silence.
+	 *
+	 * This is the half of the log line an admin reads to tell "Have I Been
+	 * Pwned is down" (no answer) from "it refused us" (HTTP 429, HTTP 403).
+	 * It is derived from the answer the exception carries, never from its
+	 * message, so it can hold only a number.
+	 *
+	 * @param int|null $httpStatus The upstream's HTTP status, or null when nothing answered.
+	 *
+	 * @return string
+	 */
+	private function outcomeOf(?int $httpStatus): string {
+		if ($httpStatus === null) {
+			return '(no answer)';
+		}
+
+		return '(HTTP ' . $httpStatus . ')';
+	}//end outcomeOf()
 }//end class

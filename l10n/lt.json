@@ -1157,7 +1157,17 @@
         "Limited": "Ribota",
         "Simulated": "Imituota",
         "Not available": "Nepasiekiama",
-        "Error": "Klaida"
+        "Error": "Klaida",
+        "e.g. Offboarding, device lost, key compromised": "pvz. atleidimas, prarastas įrenginys, pažeistas raktas",
+        "Encryption suites": "Šifravimo rinkiniai",
+        "Failed to force-revoke suite": "Nepavyko priverstinai atšaukti rinkinio",
+        "Failed to reinstate suite": "Nepavyko atkurti rinkinio",
+        "Force-revoke a user- or application-owned encryption suite by id when its owner cannot (a forgotten master password, a de-authorised departure, or a compromise), and reinstate a revoked one. Force-revocation asks you to re-confirm your own password and permanently clears the suite's emergency access.": "Priverstinai atšaukti naudotojui ar programai priklausantį šifravimo rinkinį pagal id, kai jo savininkas negali (pamirštas pagrindinis slaptažodis, atšaukta prieiga arba pažeidimas), ir atkurti atšauktą. Priverstinis atšaukimas paprašo iš naujo patvirtinti jūsų paties slaptažodį ir visam laikui pašalina rinkinio avarinę prieigą.",
+        "Force-revoke suite": "Priverstinai atšaukti rinkinį",
+        "Reinstate suite": "Atkurti rinkinį",
+        "Revoking this suite deleted %n emergency-access contact.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktą.",
+        "Revoking this suite deleted %n emergency-access contacts.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų.",
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)"
     },
     "plurals": null
 }
