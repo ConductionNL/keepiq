@@ -169,4 +169,52 @@ class OpenRegisterAutoloaderTest extends TestCase {
 
 	}//end foreignClassProvider()
 
+	/**
+	 * Unregistering when nothing was registered is safe, not an error.
+	 *
+	 * The degraded path is the common one: on an instance without OpenRegister,
+	 * and in any unit run without a server container, `register()` installs
+	 * nothing. Teardown still runs. If `unregister()` assumed a loader was
+	 * present it would turn every such teardown into a failure, which is a
+	 * worse outcome than the leak it exists to prevent.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	public function testUnregisterIsSafeWhenNothingWasRegistered(): void {
+		OpenRegisterAutoloader::unregister();
+		OpenRegisterAutoloader::unregister();
+
+		// Reaching here is the assertion: neither call raised.
+		$this->assertTrue(true);
+
+	}//end testUnregisterIsSafeWhenNothingWasRegistered()
+
+	/**
+	 * After unregistering, a fresh register() is allowed to run again.
+	 *
+	 * `register()` short-circuits on its own `$registered` flag, so if
+	 * `unregister()` removed the loader but left the flag set, the prelude
+	 * would report success while nothing was on the autoloader — the silent
+	 * half-state that produced the 500s in the first place. This pins that the
+	 * two are reset together.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	public function testRegisterRunsAgainAfterUnregister(): void {
+		$first = OpenRegisterAutoloader::register();
+		OpenRegisterAutoloader::unregister();
+		$second = OpenRegisterAutoloader::register();
+
+		// Whatever the environment answers, it must answer the SAME both times:
+		// a true that becomes false would mean the reset lost the path, and a
+		// false that becomes true would mean the first call was short-circuited
+		// by a flag rather than by the environment.
+		$this->assertSame($first, $second);
+
+	}//end testRegisterRunsAgainAfterUnregister()
+
 }//end class
