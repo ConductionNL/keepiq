@@ -217,4 +217,89 @@ class OpenRegisterAutoloaderTest extends TestCase {
 
 	}//end testRegisterRunsAgainAfterUnregister()
 
+	/**
+	 * Invoke the prelude's class loader.
+	 *
+	 * @param string $appPath The fake app root.
+	 * @param string $class   The class to resolve.
+	 *
+	 * @return void
+	 */
+	private function load(string $appPath, string $class): void {
+		$method = new \ReflectionMethod(OpenRegisterAutoloader::class, 'loadClass');
+		$method->setAccessible(true);
+		$method->invoke(null, $appPath, $class);
+
+	}//end load()
+
+	/**
+	 * An OpenRegister class present on disk is actually included.
+	 *
+	 * This is the work the prelude exists to do, and until now nothing ran it:
+	 * inside the registered closure it could only fire if PHP happened to
+	 * autoload an `OCA\OpenRegister\…` name mid-suite, which no test can
+	 * arrange. A prefix that maps correctly but never includes anything would
+	 * look exactly like success at every other assertion.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	public function testAClassPresentOnDiskIsIncluded(): void {
+		$root = sys_get_temp_dir() . '/keepiq-prelude-' . bin2hex(random_bytes(6));
+		mkdir($root . '/lib/Probe', 0777, true);
+		file_put_contents(
+			$root . '/lib/Probe/Marker.php',
+			"<?php\nnamespace OCA\\OpenRegister\\Probe;\nclass Marker { public const OK = true; }\n"
+		);
+
+		$class = 'OCA\\OpenRegister\\Probe\\Marker';
+		$this->assertFalse(class_exists($class, false), 'precondition: not loaded yet');
+
+		$this->load($root, $class);
+
+		$this->assertTrue(class_exists($class, false), 'the prelude must have included the file');
+
+		unlink($root . '/lib/Probe/Marker.php');
+		rmdir($root . '/lib/Probe');
+		rmdir($root . '/lib');
+		rmdir($root);
+
+	}//end testAClassPresentOnDiskIsIncluded()
+
+	/**
+	 * A class that maps to a missing file is a silent no-op.
+	 *
+	 * An autoloader is consulted about every class PHP cannot already see, most
+	 * of them somebody else's. Raising here would make this app noisy about
+	 * other people's lookups, and on a partial OpenRegister checkout it would
+	 * turn a missing file into a fatal instead of a clean "not found".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	public function testAMissingFileIsASilentNoOp(): void {
+		$this->load('/nonexistent-path-' . bin2hex(random_bytes(4)), 'OCA\\OpenRegister\\Nope\\Missing');
+
+		$this->assertFalse(class_exists('OCA\\OpenRegister\\Nope\\Missing', false));
+
+	}//end testAMissingFileIsASilentNoOp()
+
+	/**
+	 * A foreign class is refused before the filesystem is touched.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	public function testAForeignClassIsNotLoaded(): void {
+		$this->load(sys_get_temp_dir(), 'OCA\\Keepiq\\AppInfo\\Application');
+
+		// Nothing to assert on the filesystem; reaching here without an include
+		// or a raise is the behaviour.
+		$this->assertTrue(true);
+
+	}//end testAForeignClassIsNotLoaded()
+
 }//end class

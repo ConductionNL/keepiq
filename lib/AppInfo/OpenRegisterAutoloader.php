@@ -164,10 +164,7 @@ final class OpenRegisterAutoloader {
 			}
 
 			self::$loader = static function (string $class) use ($path): void {
-				$file = self::classFile(appPath: $path, class: $class);
-				if ($file !== null && is_file($file) === true) {
-					require_once $file;
-				}
+				self::loadClass(appPath: $path, class: $class);
 			};
 
 			spl_autoload_register(self::$loader);
@@ -206,6 +203,38 @@ final class OpenRegisterAutoloader {
 		self::$registered = false;
 
 	}//end unregister()
+
+	/**
+	 * Resolve and include one class, if it is ours and present on disk.
+	 *
+	 * The body of the registered closure, lifted out so it is reachable from a
+	 * test. Inside the closure it could only ever run when PHP happened to
+	 * autoload an `OCA\OpenRegister\…` name during the suite — which no test
+	 * can arrange and which therefore went unexercised, while being the part
+	 * that actually does the work.
+	 *
+	 * Silent on a miss, deliberately: an autoloader is asked about every class
+	 * PHP cannot already see, most of which belong to somebody else. Throwing,
+	 * or even warning, would make this app noisy about other people's lookups.
+	 *
+	 * @param string $appPath Absolute path to the openregister app.
+	 * @param string $class   The class being resolved.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	private static function loadClass(string $appPath, string $class): void {
+		$file = self::classFile(appPath: $appPath, class: $class);
+		if ($file === null) {
+			return;
+		}
+
+		if (is_file($file) === true) {
+			require_once $file;
+		}
+
+	}//end loadClass()
 
 	/**
 	 * The file a PSR-4 class name maps to, or null when it is not ours.
