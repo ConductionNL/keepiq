@@ -97,15 +97,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
             31 was never actually deliverable: the CI matrix already tests only
             stable32 (see nextcloud-test-refs in .github/workflows/
             code-quality.yml), because OpenRegister — which this app builds on —
-            declares `<nextcloud min-version="32" max-version="34"/>` itself. Advertising 31 in
+            declares `min-version="32"` itself. Advertising 31 in
             the App Store promised a range no test leg covered and no dependency
             could satisfy.
 
             max-version is 35 as of 2026-09-15: verified against Nextcloud 35
             (35.0.0 dev) on the shared dev instance — keepiq enabled, its DB
             migrations ran cleanly under `occ upgrade`, and the log showed no
-            deprecations or errors. keepiq and openconnector now advertise 35;
-            the rest of the fleet is still 34.
+            deprecations or errors. Dependencies openregister and integriq also
+            declare 35 on development (verified 2026-09-24).
         -->
         <nextcloud min-version="32" max-version="35"/>
     </dependencies>
