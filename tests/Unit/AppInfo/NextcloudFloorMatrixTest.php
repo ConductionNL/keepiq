@@ -192,8 +192,10 @@ class NextcloudFloorMatrixTest extends TestCase {
 
 		$refs = $this->testedRefs();
 		if ($refs === null) {
-			$this->assertDerivationIsWired();
-			return;
+			$this->markTestSkipped(
+				'No tested-ref list to read: the matrix is derived from appinfo/info.xml '
+				. '(see testTheMatrixIsDerivedFromTheDeclaredManifest).'
+			);
 		}
 
 		$this->assertNotEmpty(
@@ -202,6 +204,19 @@ class NextcloudFloorMatrixTest extends TestCase {
 			. 'assertion below pass vacuously.'
 		);
 	}//end testBothDeclarationsAreActuallyReadable()
+
+	/**
+	 * When the matrix is derived, the manifest it is derived from must exist.
+	 *
+	 * @return void
+	 */
+	public function testTheMatrixIsDerivedFromTheDeclaredManifest(): void {
+		if ($this->testedRefs() !== null) {
+			$this->markTestSkipped('The quality workflow overrides nextcloud-test-refs; nothing is derived.');
+		}
+
+		$this->assertDerivationIsWired();
+	}//end testTheMatrixIsDerivedFromTheDeclaredManifest()
 
 	/**
 	 * The manifest the matrix is derived from must actually be there.
@@ -250,11 +265,10 @@ class NextcloudFloorMatrixTest extends TestCase {
 		$floor = $this->declaredFloor();
 		$refs = $this->testedRefs();
 		if ($refs === null) {
-			// Derived: the shared workflow builds the matrix FROM the declared
-			// range, so a leg below the floor is not expressible. The thing
-			// that can still go wrong is the derivation not happening at all.
-			$this->assertDerivationIsWired();
-			return;
+			$this->markTestSkipped(
+				'The matrix is derived from appinfo/info.xml, so a leg below the floor '
+				. 'is not expressible; the shared workflow owns this check.'
+			);
 		}
 
 		$below = [];
@@ -289,8 +303,10 @@ class NextcloudFloorMatrixTest extends TestCase {
 		$floor = $this->declaredFloor();
 		$refs = $this->testedRefs();
 		if ($refs === null) {
-			$this->assertDerivationIsWired();
-			return;
+			$this->markTestSkipped(
+				'The matrix is derived from appinfo/info.xml, so every leg is inside the '
+				. 'declared range; the shared workflow owns this check.'
+			);
 		}
 
 		$atOrAbove = array_filter($refs, static fn (int $major): bool => $major >= $floor);
