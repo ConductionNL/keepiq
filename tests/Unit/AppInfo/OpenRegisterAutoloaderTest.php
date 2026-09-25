@@ -21,7 +21,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\AppInfo;
 
 use OCA\Keepiq\AppInfo\OpenRegisterAutoloader;
+use OCP\App\AppPathNotFoundException;
+use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * The prelude's whole purpose is that it CANNOT take down the caller.
@@ -35,16 +38,6 @@ use PHPUnit\Framework\TestCase;
  */
 class OpenRegisterAutoloaderTest extends TestCase {
 
-	/**
-	 * The prelude must never throw, whatever the instance looks like.
-	 *
-	 * This runs in both environments the suite is executed in: with Nextcloud
-	 * booted (where OpenRegister may or may not be installed) and with only the
-	 * OCP stubs registered (where `\OCP\Server::get()` cannot resolve anything).
-	 * Both must be swallowed.
-	 *
-	 * @return void
-	 */
 	/**
 	 * Hand the process back exactly as it was found.
 	 *
@@ -65,6 +58,16 @@ class OpenRegisterAutoloaderTest extends TestCase {
 
 	}//end tearDown()
 
+	/**
+	 * The prelude must never throw, whatever the instance looks like.
+	 *
+	 * This runs in both environments the suite is executed in: with Nextcloud
+	 * booted (where OpenRegister may or may not be installed) and with only the
+	 * OCP stubs registered (where `\OCP\Server::get()` cannot resolve anything).
+	 * Both must be swallowed.
+	 *
+	 * @return void
+	 */
 	public function testRegisterNeverThrows(): void {
 		$result = OpenRegisterAutoloader::register();
 
@@ -78,8 +81,8 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	/**
 	 * Calling the prelude twice must be free and must agree with itself.
 	 *
-	 * `OC_App::registerAutoloading()` early-returns on an `$alreadyRegistered`
-	 * key, so a second call is a no-op. Application::register() may run more
+	 * `register()` short-circuits on its own `$registered` flag, so a second
+	 * call is a no-op. Application::register() may run more
 	 * than once in a single process (web + occ share no state, but tests and
 	 * repair steps do), and a prelude that failed or threw on the second call
 	 * would be a latent bootstrap defect.
@@ -123,7 +126,7 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testAnOpenRegisterClassMapsUnderLib(): void {
 		$this->assertSame(
@@ -147,7 +150,7 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	 *
 	 * @dataProvider foreignClassProvider
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testAForeignClassIsNotClaimed(string $class): void {
 		$this->assertNull($this->mapped($class));
@@ -180,14 +183,15 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testUnregisterIsSafeWhenNothingWasRegistered(): void {
+		$before = spl_autoload_functions();
+
 		OpenRegisterAutoloader::unregister();
 		OpenRegisterAutoloader::unregister();
 
-		// Reaching here is the assertion: neither call raised.
-		$this->assertTrue(true);
+		$this->assertSame($before, spl_autoload_functions(), 'a no-op unregister must not touch the chain');
 
 	}//end testUnregisterIsSafeWhenNothingWasRegistered()
 
@@ -202,18 +206,27 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testRegisterRunsAgainAfterUnregister(): void {
-		$first = OpenRegisterAutoloader::register();
-		OpenRegisterAutoloader::unregister();
-		$second = OpenRegisterAutoloader::register();
+		$root = $this->fakeApp();
+		$appManager = $this->appManager(enabled: true, path: $root);
+		$baseline = count(spl_autoload_functions());
 
-		// Whatever the environment answers, it must answer the SAME both times:
-		// a true that becomes false would mean the reset lost the path, and a
-		// false that becomes true would mean the first call was short-circuited
-		// by a flag rather than by the environment.
-		$this->assertSame($first, $second);
+		try {
+			$this->assertTrue(OpenRegisterAutoloader::register($appManager));
+			$this->assertCount($baseline + 1, spl_autoload_functions(), 'register must install the closure');
+
+			OpenRegisterAutoloader::unregister();
+			$this->assertCount($baseline, spl_autoload_functions(), 'unregister must take the closure off the chain');
+
+			// A flag left set by unregister() would short-circuit here and
+			// report true while nothing is installed — so count, don't compare.
+			$this->assertTrue(OpenRegisterAutoloader::register($appManager));
+			$this->assertCount($baseline + 1, spl_autoload_functions(), 'a re-register after unregister must actually re-install');
+		} finally {
+			$this->removeFakeApp($root);
+		}
 
 	}//end testRegisterRunsAgainAfterUnregister()
 
@@ -243,27 +256,25 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testAClassPresentOnDiskIsIncluded(): void {
-		$root = sys_get_temp_dir() . '/keepiq-prelude-' . bin2hex(random_bytes(6));
-		mkdir($root . '/lib/Probe', 0777, true);
+		$root = $this->fakeApp();
 		file_put_contents(
 			$root . '/lib/Probe/Marker.php',
 			"<?php\nnamespace OCA\\OpenRegister\\Probe;\nclass Marker { public const OK = true; }\n"
 		);
 
-		$class = 'OCA\\OpenRegister\\Probe\\Marker';
-		$this->assertFalse(class_exists($class, false), 'precondition: not loaded yet');
+		try {
+			$class = 'OCA\\OpenRegister\\Probe\\Marker';
+			$this->assertFalse(class_exists($class, false), 'precondition: not loaded yet');
 
-		$this->load($root, $class);
+			$this->load($root, $class);
 
-		$this->assertTrue(class_exists($class, false), 'the prelude must have included the file');
-
-		unlink($root . '/lib/Probe/Marker.php');
-		rmdir($root . '/lib/Probe');
-		rmdir($root . '/lib');
-		rmdir($root);
+			$this->assertTrue(class_exists($class, false), 'the prelude must have included the file');
+		} finally {
+			$this->removeFakeApp($root);
+		}
 
 	}//end testAClassPresentOnDiskIsIncluded()
 
@@ -277,7 +288,7 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testAMissingFileIsASilentNoOp(): void {
 		$this->load('/nonexistent-path-' . bin2hex(random_bytes(4)), 'OCA\\OpenRegister\\Nope\\Missing');
@@ -289,17 +300,182 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	/**
 	 * A foreign class is refused before the filesystem is touched.
 	 *
+	 * The name is the near-miss `OCA\OpenRegisterExtra\…`, and a file is planted
+	 * exactly where a prefix test without its trailing separator would map it,
+	 * so the assertion fails if the prefix check is weakened.
+	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testAForeignClassIsNotLoaded(): void {
-		$this->load(sys_get_temp_dir(), 'OCA\\Keepiq\\AppInfo\\Application');
+		$root = $this->fakeApp();
+		mkdir($root . '/lib/Extra/Probe', 0700, true);
+		file_put_contents($root . '/lib/Extra/Probe/Foreign.php', "<?php\n");
 
-		// Nothing to assert on the filesystem; reaching here without an include
-		// or a raise is the behaviour.
-		$this->assertTrue(true);
+		try {
+			$before = get_included_files();
+			$this->load($root, 'OCA\\OpenRegisterExtra\\Probe\\Foreign');
+			$this->assertSame($before, get_included_files(), 'a foreign class must not cause an include');
+		} finally {
+			$this->removeFakeApp($root);
+		}
 
 	}//end testAForeignClassIsNotLoaded()
+
+	/**
+	 * An installed-but-disabled OpenRegister is treated exactly like an absent one.
+	 *
+	 * `getAppPath()` is a pure path lookup and does not consult enabled state,
+	 * so without this check disabling OpenRegister (for containment, or a bad
+	 * release) would still load its code into this app's process.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testADisabledOpenRegisterIsNotRegistered(): void {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->with('openregister')->willReturn(false);
+		$appManager->expects($this->never())->method('getAppPath');
+
+		$baseline = count(spl_autoload_functions());
+
+		$this->assertFalse(OpenRegisterAutoloader::register($appManager));
+		$this->assertCount($baseline, spl_autoload_functions(), 'a disabled OpenRegister must not be put on the autoloader');
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method($this->anything());
+		OpenRegisterAutoloader::reportFailure($logger);
+
+	}//end testADisabledOpenRegisterIsNotRegistered()
+
+	/**
+	 * An unexpected failure is swallowed at register() time and logged once at boot.
+	 *
+	 * This is the fail mode that hid the Nextcloud 35 500s: every failure
+	 * collapsed into an unlogged false. It must still never throw, but it must
+	 * leave one line in the log.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testAnUnexpectedFailureIsLoggedOnce(): void {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->willReturn(true);
+		$appManager->method('getAppPath')->willThrowException(new \RuntimeException('boom'));
+
+		$this->assertFalse(OpenRegisterAutoloader::register($appManager));
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('warning')
+			->with(
+				$this->stringContains('did not register OpenRegister'),
+				$this->callback(static fn (array $ctx): bool => ($ctx['exception'] ?? null) instanceof \RuntimeException)
+			);
+
+		OpenRegisterAutoloader::reportFailure($logger);
+		// A second report in the same process must not repeat the line.
+		OpenRegisterAutoloader::reportFailure($logger);
+
+	}//end testAnUnexpectedFailureIsLoggedOnce()
+
+	/**
+	 * An absent OpenRegister stays quiet: it is the expected degraded path.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testAnAbsentOpenRegisterIsNotLogged(): void {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->willReturn(true);
+		$appManager->method('getAppPath')->willThrowException(new AppPathNotFoundException('openregister'));
+
+		$this->assertFalse(OpenRegisterAutoloader::register($appManager));
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method($this->anything());
+		OpenRegisterAutoloader::reportFailure($logger);
+
+	}//end testAnAbsentOpenRegisterIsNotLogged()
+
+	/**
+	 * unregister() also forgets a recorded failure, so it cannot leak into a later test.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testUnregisterForgetsARecordedFailure(): void {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->willReturn(true);
+		$appManager->method('getAppPath')->willThrowException(new \RuntimeException('boom'));
+
+		OpenRegisterAutoloader::register($appManager);
+		OpenRegisterAutoloader::unregister();
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method($this->anything());
+		OpenRegisterAutoloader::reportFailure($logger);
+
+	}//end testUnregisterForgetsARecordedFailure()
+
+	/**
+	 * An app manager double for register().
+	 *
+	 * @param bool   $enabled Whether openregister is enabled.
+	 * @param string $path    The app path getAppPath() answers.
+	 *
+	 * @return IAppManager The double.
+	 */
+	private function appManager(bool $enabled, string $path): IAppManager {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->with('openregister')->willReturn($enabled);
+		$appManager->method('getAppPath')->with('openregister')->willReturn($path);
+
+		return $appManager;
+
+	}//end appManager()
+
+	/**
+	 * Create a throwaway app root with a lib/Probe directory.
+	 *
+	 * @return string The app root.
+	 */
+	private function fakeApp(): string {
+		$root = sys_get_temp_dir() . '/keepiq-prelude-' . bin2hex(random_bytes(6));
+		mkdir($root . '/lib/Probe', 0700, true);
+
+		return $root;
+
+	}//end fakeApp()
+
+	/**
+	 * Remove an app root created by fakeApp(), whatever it now contains.
+	 *
+	 * @param string $root The app root.
+	 *
+	 * @return void
+	 */
+	private function removeFakeApp(string $root): void {
+		$entries = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
+			\RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ($entries as $entry) {
+			if ($entry->isDir() === true) {
+				rmdir($entry->getPathname());
+				continue;
+			}
+
+			unlink($entry->getPathname());
+		}
+
+		rmdir($root);
+
+	}//end removeFakeApp()
 
 }//end class

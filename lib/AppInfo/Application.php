@@ -26,6 +26,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use Psr\Log\LoggerInterface;
 
 /**
  * Main application class for the Keepiq Nextcloud app.
@@ -115,8 +116,8 @@ class Application extends App implements IBootstrap {
 		//
 		// LOAD-ORDER HAZARD (measured, not theoretical). OC_App::getEnabledApps()
 		// sort()s the app list, and Coordinator::registerApps() walks THAT sorted
-		// list calling OC_App::registerAutoloading($appId) and then $app->register()
-		// for one app at a time. So every app registers before the PSR-4 prefix of
+		// list registering one app's autoloader (private API: OC_App's up to NC 34,
+		// AppManager's from 35) and then calling $app->register(), one app at a time. So every app registers before the PSR-4 prefix of
 		// every alphabetically-LATER app exists: `keepiq` < `openregister`, so
 		// OCA\OpenRegister\ is not autoloadable at this point on a perfectly
 		// healthy instance.
@@ -131,8 +132,8 @@ class Application extends App implements IBootstrap {
 		// OpenRegisterAutoloader::register() puts OpenRegister's prefix on the
 		// autoloader ourselves, which is exactly what Nextcloud will do a few
 		// iterations later. It never throws; it returns false when OpenRegister is
-		// absent, and the class_exists() guard below then skips the AppHost
-		// plumbing.
+		// absent or disabled, and the class_exists() guard below then skips the
+		// AppHost plumbing. Any other failure is logged from boot().
 		OpenRegisterAutoloader::register();
 
 		// Gate-64 — apphost-prelude exclude This app HAS a prelude, OpenRegisterAutoloader
@@ -147,9 +148,9 @@ class Application extends App implements IBootstrap {
 		// The prelude now does what Nextcloud does — a PSR-4 prefix over the
 		// app's lib/, via spl_autoload_register and the public
 		// IAppManager::getAppPath(). The gate's intent is met; its pattern
-		// cannot be. Tracked for hydra-gates: gate-64 should accept a prelude
-		// that registers the prefix by any means, and stop mandating a method
-		// that no longer exists.
+		// cannot be. Tracked in ConductionNL/.github#791: gate-64 should
+		// accept a prelude that registers the prefix by any means, and stop
+		// mandating a method that no longer exists.
 		//
 		// The class_exists() guard MUST stay in this method: it is also the
 		// assertion psalm relies on to accept the Bootstrap::register() call
@@ -192,13 +193,20 @@ class Application extends App implements IBootstrap {
 	 *
 	 * @param IBootContext $context The boot context
 	 *
+	 * All wiring happens in register(). The one thing done here is reporting
+	 * why the OpenRegister prelude fell through to the degraded path, because
+	 * register() runs before a logger is resolvable and must never throw.
+	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $context is mandated by
-	 *   OCP\AppFramework\Bootstrap\IBootstrap::boot(), which this class implements.
-	 *   All wiring happens in register(); there is nothing to do at boot time, but
-	 *   the method and its parameter cannot be dropped from the interface.
+	 * @SuppressWarnings(PHPMD.StaticAccess) OpenRegisterAutoloader is a static
+	 *   prelude by design: it runs before this app's container exists.
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function boot(IBootContext $context): void {
+		OpenRegisterAutoloader::reportFailure(
+			logger: $context->getServerContainer()->get(LoggerInterface::class)
+		);
 	}//end boot()
 }//end class

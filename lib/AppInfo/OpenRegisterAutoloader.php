@@ -22,6 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
+use OCP\App\AppPathNotFoundException;
+use OCP\App\IAppManager;
+use Psr\Log\LoggerInterface;
+
 /**
  * Registers OpenRegister's autoload prefix before AppHost is referenced.
  *
@@ -48,7 +52,7 @@ namespace OCA\Keepiq\AppInfo;
  * degraded-path contract — "this NEVER throws, whatever the instance looks
  * like" — is directly assertable, and it is asserted.
  *
- * @spec openspec/specs/apphost-adoption/spec.md
+ * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
  */
 final class OpenRegisterAutoloader {
 
@@ -87,6 +91,20 @@ final class OpenRegisterAutoloader {
 	 * @var callable|null
 	 */
 	private static $loader = null;
+
+	/**
+	 * Why the last register() call returned false, when it was not a clean "absent".
+	 *
+	 * `register()` runs before any logger can be injected and must never
+	 * throw, so it cannot report a failure itself. It records it here and
+	 * {@see reportFailure()} logs it from `Application::boot()`. Without this,
+	 * every failure collapsed into an unlogged false — which is how the
+	 * Nextcloud 35 removal of `OC_App::registerAutoloading()` turned into
+	 * AppHost 500s with nothing in the log.
+	 *
+	 * @var \Throwable|null
+	 */
+	private static ?\Throwable $failure = null;
 
 	/**
 	 * Register OpenRegister's PSR-4 prefix on the composer autoloader.
@@ -136,6 +154,15 @@ final class OpenRegisterAutoloader {
 	 * hints are not resolved until used, so a PSR-4 prefix over `lib/` is
 	 * sufficient to reference `AppHost\Bootstrap`.
 	 *
+	 * `getAppPath()` is a pure path lookup and does not consult enabled state,
+	 * so enabled state is checked first: Nextcloud only autoloads enabled apps,
+	 * and an admin who disables OpenRegister must not still get its code loaded
+	 * into this app's process.
+	 *
+	 * @param IAppManager|null $appManager The app manager; resolved from the
+	 *                                     server container when null. Injectable
+	 *                                     for tests only.
+	 *
 	 * @return bool True when the prefix is registered, false when OpenRegister
 	 *              is absent, disabled, or otherwise unresolvable — in which
 	 *              case the caller MUST fall through to its degraded path.
@@ -144,15 +171,22 @@ final class OpenRegisterAutoloader {
 	 * service locator, and this runs at the composition root — there is no
 	 * container to inject, which is the whole reason a prelude exists.
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
-	public static function register(): bool {
+	public static function register(?IAppManager $appManager = null): bool {
 		if (self::$registered === true) {
 			return true;
 		}
 
+		self::$failure = null;
+
 		try {
-			$appManager = \OCP\Server::get(\OCP\App\IAppManager::class);
+			$appManager ??= \OCP\Server::get(IAppManager::class);
+			if ($appManager->isEnabledForAnyone(self::OPENREGISTER_APP_ID) === false) {
+				// Installed but disabled: the same degraded path as absent.
+				return false;
+			}
+
 			$path = rtrim($appManager->getAppPath(self::OPENREGISTER_APP_ID), '/');
 
 			// A missing lib/ means this is not an app we can autoload from, and
@@ -171,12 +205,14 @@ final class OpenRegisterAutoloader {
 
 			self::$registered = true;
 			return true;
-		} catch (\Throwable) {
-			// OpenRegister absent, disabled, or the server container is not up
-			// (unit tests). The caller's class_exists() guard then skips the
-			// AppHost plumbing. Never rethrow: an exception escaping here would
-			// abort the caller's entire register(), which is the exact defect
-			// this prelude exists to prevent.
+		} catch (\Throwable $e) {
+			// OpenRegister absent, or the server container is not up (unit
+			// tests), or something unexpected. The caller's class_exists() guard
+			// then skips the AppHost plumbing. Never rethrow: an exception
+			// escaping here would abort the caller's entire register(), which is
+			// the exact defect this prelude exists to prevent. Record it instead,
+			// for reportFailure() to log once a logger is available.
+			self::$failure = $e;
 			return false;
 		}
 
@@ -192,7 +228,7 @@ final class OpenRegisterAutoloader {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public static function unregister(): void {
 		if (self::$loader !== null) {
@@ -201,8 +237,38 @@ final class OpenRegisterAutoloader {
 		}
 
 		self::$registered = false;
+		self::$failure = null;
 
 	}//end unregister()
+
+	/**
+	 * Log, once, why register() fell through to the degraded path.
+	 *
+	 * Called from `Application::boot()`, where the logger is resolvable. An
+	 * absent OpenRegister ({@see AppPathNotFoundException}) and a disabled one
+	 * are the expected degraded paths and stay quiet; anything else leaves one
+	 * warning. The failure is cleared once reported, so it is logged once.
+	 *
+	 * @param LoggerInterface $logger The logger to report to.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public static function reportFailure(LoggerInterface $logger): void {
+		$failure = self::$failure;
+		self::$failure = null;
+
+		if ($failure === null || $failure instanceof AppPathNotFoundException) {
+			return;
+		}
+
+		$logger->warning(
+			'AppHost prelude did not register OpenRegister: {reason}',
+			['reason' => $failure->getMessage(), 'exception' => $failure]
+		);
+
+	}//end reportFailure()
 
 	/**
 	 * Resolve and include one class, if it is ours and present on disk.
@@ -222,7 +288,7 @@ final class OpenRegisterAutoloader {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	private static function loadClass(string $appPath, string $class): void {
 		$file = self::classFile(appPath: $appPath, class: $class);
@@ -256,7 +322,7 @@ final class OpenRegisterAutoloader {
 	 *
 	 * @return string|null The candidate file, or null when the class is not OpenRegister's.
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	private static function classFile(string $appPath, string $class): ?string {
 		$prefix = self::OPENREGISTER_NAMESPACE;
