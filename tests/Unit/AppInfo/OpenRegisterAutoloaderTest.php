@@ -79,25 +79,31 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	}//end testRegisterNeverThrows()
 
 	/**
-	 * Calling the prelude twice must be free and must agree with itself.
+	 * A second register() is a no-op: it must not stack a second closure.
 	 *
-	 * `register()` short-circuits on its own `$registered` flag, so a second
-	 * call is a no-op. Application::register() may run more
-	 * than once in a single process (web + occ share no state, but tests and
-	 * repair steps do), and a prelude that failed or threw on the second call
-	 * would be a latent bootstrap defect.
+	 * `register()` short-circuits on its own `$registered` flag, because
+	 * `spl_autoload_register()` has no early-return of its own. Without the
+	 * flag every call stacks another closure, and `unregister()` only holds the
+	 * last handle, so the rest leak for the life of the process — per request
+	 * under a worker, per test in a suite. Two calls agreeing on their return
+	 * value is not enough to see that, so this counts the chain.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public function testRegisterIsIdempotent(): void {
-		$first = OpenRegisterAutoloader::register();
-		$second = OpenRegisterAutoloader::register();
+		$root = $this->fakeApp();
+		$appManager = $this->appManager(enabled: true, path: $root);
+		$baseline = count(spl_autoload_functions());
 
-		$this->assertSame(
-			$first,
-			$second,
-			'The prelude is idempotent, so repeated calls must agree.'
-		);
+		try {
+			$this->assertTrue(OpenRegisterAutoloader::register($appManager));
+			$this->assertTrue(OpenRegisterAutoloader::register($appManager));
+			$this->assertCount($baseline + 1, spl_autoload_functions(), 'a second register() must not stack a second closure');
+		} finally {
+			$this->removeFakeApp($root);
+		}
 
 	}//end testRegisterIsIdempotent()
 
@@ -372,7 +378,7 @@ class OpenRegisterAutoloaderTest extends TestCase {
 		$logger->expects($this->once())
 			->method('warning')
 			->with(
-				$this->stringContains('did not register OpenRegister'),
+				$this->stringContains('AppHost wiring was skipped'),
 				$this->callback(static fn (array $ctx): bool => ($ctx['exception'] ?? null) instanceof \RuntimeException)
 			);
 
@@ -383,13 +389,18 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	}//end testAnUnexpectedFailureIsLoggedOnce()
 
 	/**
-	 * An absent OpenRegister stays quiet: it is the expected degraded path.
+	 * An OpenRegister that is enabled but missing on disk stays quiet.
+	 *
+	 * Nextcloud's own Coordinator already logs an enabled app it cannot find, so
+	 * a second line here would only be noise. A genuinely absent OpenRegister
+	 * never gets this far: it is not enabled, which
+	 * {@see testADisabledOpenRegisterIsNotRegistered} covers.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
-	public function testAnAbsentOpenRegisterIsNotLogged(): void {
+	public function testAnEnabledButMissingOpenRegisterIsNotLogged(): void {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isEnabledForAnyone')->willReturn(true);
 		$appManager->method('getAppPath')->willThrowException(new AppPathNotFoundException('openregister'));
@@ -400,7 +411,7 @@ class OpenRegisterAutoloaderTest extends TestCase {
 		$logger->expects($this->never())->method($this->anything());
 		OpenRegisterAutoloader::reportFailure($logger);
 
-	}//end testAnAbsentOpenRegisterIsNotLogged()
+	}//end testAnEnabledButMissingOpenRegisterIsNotLogged()
 
 	/**
 	 * unregister() also forgets a recorded failure, so it cannot leak into a later test.
@@ -422,6 +433,82 @@ class OpenRegisterAutoloaderTest extends TestCase {
 		OpenRegisterAutoloader::reportFailure($logger);
 
 	}//end testUnregisterForgetsARecordedFailure()
+
+	/**
+	 * An enabled OpenRegister without a lib/ directory is a failure, not "absent".
+	 *
+	 * A partial deploy, a packaging change or wrong permissions on lib/ is
+	 * neither absent nor disabled, and Nextcloud logs nothing for it either, so
+	 * unless this records it the AppHost surface fails with nothing in the log.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testAnEnabledOpenRegisterWithoutLibIsLogged(): void {
+		$root = sys_get_temp_dir() . '/keepiq-prelude-' . bin2hex(random_bytes(6));
+		mkdir($root, 0700);
+
+		try {
+			$this->assertFalse(OpenRegisterAutoloader::register($this->appManager(enabled: true, path: $root)));
+
+			$logger = $this->createMock(LoggerInterface::class);
+			$logger->expects($this->once())->method('warning');
+			OpenRegisterAutoloader::reportFailure($logger);
+		} finally {
+			rmdir($root);
+		}
+
+	}//end testAnEnabledOpenRegisterWithoutLibIsLogged()
+
+	/**
+	 * Disabling OpenRegister after a successful registration is still honoured.
+	 *
+	 * Under a worker (FrankenPHP on NC 35) statics outlive the request, so the
+	 * `$registered` short-circuit must not answer true for an OpenRegister that
+	 * has since been disabled.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testADisableAfterRegistrationIsHonoured(): void {
+		$root = $this->fakeApp();
+
+		try {
+			$this->assertTrue(OpenRegisterAutoloader::register($this->appManager(enabled: true, path: $root)));
+			$this->assertFalse(OpenRegisterAutoloader::register($this->appManager(enabled: false, path: $root)));
+		} finally {
+			$this->removeFakeApp($root);
+		}
+
+	}//end testADisableAfterRegistrationIsHonoured()
+
+	/**
+	 * A failure recorded by the caller is reported like the prelude's own.
+	 *
+	 * `Application::register()` catches a throwing `AppHost\Bootstrap::register()`
+	 * and hands it here, so boot() logs both failure points the same way.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testARecordedBootstrapFailureIsLoggedOnce(): void {
+		OpenRegisterAutoloader::recordFailure(new \RuntimeException('bootstrap broke'));
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('warning')
+			->with(
+				$this->stringContains('AppHost wiring was skipped'),
+				$this->callback(static fn (array $ctx): bool => ($ctx['reason'] ?? null) === 'bootstrap broke')
+			);
+
+		OpenRegisterAutoloader::reportFailure($logger);
+		OpenRegisterAutoloader::reportFailure($logger);
+
+	}//end testARecordedBootstrapFailureIsLoggedOnce()
 
 	/**
 	 * An app manager double for register().

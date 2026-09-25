@@ -116,8 +116,9 @@ class Application extends App implements IBootstrap {
 		//
 		// LOAD-ORDER HAZARD (measured, not theoretical). OC_App::getEnabledApps()
 		// sort()s the app list, and Coordinator::registerApps() walks THAT sorted
-		// list registering one app's autoloader (private API: OC_App's up to NC 34,
-		// AppManager's from 35) and then calling $app->register(), one app at a time. So every app registers before the PSR-4 prefix of
+		// list registering one app's autoloader (private API: OC_App's up to
+		// NC 34, AppManager's from 35) and then calling $app->register(), one
+		// app at a time. So every app registers before the PSR-4 prefix of
 		// every alphabetically-LATER app exists: `keepiq` < `openregister`, so
 		// OCA\OpenRegister\ is not autoloadable at this point on a perfectly
 		// healthy instance.
@@ -132,9 +133,10 @@ class Application extends App implements IBootstrap {
 		// OpenRegisterAutoloader::register() puts OpenRegister's prefix on the
 		// autoloader ourselves, which is exactly what Nextcloud will do a few
 		// iterations later. It never throws; it returns false when OpenRegister is
-		// absent or disabled, and the class_exists() guard below then skips the
-		// AppHost plumbing. Any other failure is logged from boot().
-		OpenRegisterAutoloader::register();
+		// absent, disabled or unusable, and the guard below then skips the
+		// AppHost plumbing. Unexpected failures, here and in Bootstrap below,
+		// are logged from boot().
+		$openRegisterLoadable = OpenRegisterAutoloader::register();
 
 		// Gate-64 — apphost-prelude exclude This app HAS a prelude, OpenRegisterAutoloader
 		// above — but gate-64 matches only `registerAutoloading(...)` naming
@@ -152,17 +154,23 @@ class Application extends App implements IBootstrap {
 		// accept a prelude that registers the prefix by any means, and stop
 		// mandating a method that no longer exists.
 		//
-		// The class_exists() guard MUST stay in this method: it is also the
-		// assertion psalm relies on to accept the Bootstrap::register() call
-		// below, and psalm does not carry that narrowing across a call.
-		if (class_exists(Bootstrap::class) === true) {
-			try {
-				Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Keepiq']);
-			} catch (\Throwable) {
-				// AppHost present but unloadable: skip the generic plumbing;
-				// Keepiq's own listeners and services MUST still register. No
-				// logger is resolvable this early, so the skip is silent —
-				// /api/health surfaces the degraded AppHost state instead.
+		// Gate on the prelude's answer, not only on class_exists(): under a
+		// worker the class stays defined after OpenRegister is disabled. The
+		// class_exists() guard MUST stay in this method as well, as its own
+		// condition: it is the assertion psalm relies on to accept the
+		// Bootstrap::register() call below, and psalm neither carries that
+		// narrowing across a call nor through an `&&` with another operand.
+		if ($openRegisterLoadable === true) {
+			if (class_exists(Bootstrap::class) === true) {
+				try {
+					Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Keepiq']);
+				} catch (\Throwable $e) {
+					// AppHost present but unloadable: skip the generic plumbing;
+					// Keepiq's own listeners and services MUST still register.
+					// This app's container cannot inject a logger yet, so the
+					// failure is recorded and boot() logs it.
+					OpenRegisterAutoloader::recordFailure($e);
+				}
 			}
 		}
 
@@ -194,8 +202,9 @@ class Application extends App implements IBootstrap {
 	 * @param IBootContext $context The boot context
 	 *
 	 * All wiring happens in register(). The one thing done here is reporting
-	 * why the OpenRegister prelude fell through to the degraded path, because
-	 * register() runs before a logger is resolvable and must never throw.
+	 * why the OpenRegister AppHost wiring fell through to the degraded path,
+	 * because register() runs before this app's container can inject a logger
+	 * and must never throw.
 	 *
 	 * @return void
 	 *

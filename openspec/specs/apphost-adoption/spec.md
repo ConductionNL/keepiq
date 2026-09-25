@@ -72,7 +72,7 @@ Keepiq SHALL delete its local `HealthController`, `MetricsController`, and `Deep
 
 ### Requirement: AppHost Prelude Registers OpenRegister With Public API Only
 
-Because Nextcloud registers app autoloaders in sorted order, `OCA\OpenRegister\` is not autoloadable inside Keepiq's `Application::register()`. Keepiq SHALL put OpenRegister's PSR-4 prefix on the autoloader itself (`OpenRegisterAutoloader::register()`) before any `OCA\OpenRegister\…` reference, using only public API (`IAppManager`) and without booting OpenRegister. The prelude MUST NOT throw. When OpenRegister is absent or disabled it SHALL register nothing and return false, so the caller falls through to its degraded path. Any other failure SHALL be recorded and logged once at boot.
+Because Nextcloud registers app autoloaders in sorted order, `OCA\OpenRegister\` is not autoloadable inside Keepiq's `Application::register()`. Keepiq SHALL put OpenRegister's PSR-4 prefix on the autoloader itself (`OpenRegisterAutoloader::register()`) before any `OCA\OpenRegister\…` reference, using only public API (`IAppManager`) and without booting OpenRegister. The prelude MUST NOT throw. When OpenRegister is absent or disabled it SHALL register nothing and return false, so the caller falls through to its degraded path, and this SHALL be re-checked on every call, including after an earlier successful registration. Any other failure, including an enabled OpenRegister without a `lib/` directory and a throwing `AppHost\Bootstrap::register()`, SHALL be recorded and logged once per request at boot.
 
 #### Scenario: Enabled OpenRegister is autoloadable during register()
 
@@ -90,9 +90,9 @@ Because Nextcloud registers app autoloaders in sorted order, `OCA\OpenRegister\`
 
 #### Scenario: Unexpected failure leaves one log line
 
-- **GIVEN** resolving OpenRegister fails for any reason other than the app being absent or disabled
+- **GIVEN** resolving OpenRegister fails for any reason other than the app being absent, disabled, or enabled but missing from disk — for example an enabled OpenRegister without `lib/`, or a throwing `AppHost\Bootstrap::register()`
 - **WHEN** the prelude runs and the app then boots
-- **THEN** `register()` MUST return false without throwing, and `Application::boot()` MUST log exactly one warning carrying the exception
+- **THEN** `register()` MUST NOT throw, and `Application::boot()` MUST log exactly one warning for that request, carrying the reason
 - @e2e exclude bootstrap logging — no UI surface; covered by unit tests
 
 ### Requirement: Domain Surfaces Excluded From Adoption

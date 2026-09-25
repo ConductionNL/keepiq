@@ -25,6 +25,7 @@ namespace OCA\Keepiq\AppInfo;
 use OCP\App\AppPathNotFoundException;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Registers OpenRegister's autoload prefix before AppHost is referenced.
@@ -174,26 +175,33 @@ final class OpenRegisterAutoloader {
 	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public static function register(?IAppManager $appManager = null): bool {
-		if (self::$registered === true) {
-			return true;
-		}
-
 		self::$failure = null;
 
 		try {
 			$appManager ??= \OCP\Server::get(IAppManager::class);
+
+			// Checked BEFORE the short-circuit: under a worker (FrankenPHP on
+			// NC 35) this static outlives the request, and an OpenRegister
+			// disabled since the first registration must not still be wired.
 			if ($appManager->isEnabledForAnyone(self::OPENREGISTER_APP_ID) === false) {
-				// Installed but disabled: the same degraded path as absent.
+				// Absent or disabled: the expected degraded path, and quiet.
 				return false;
+			}
+
+			if (self::$registered === true) {
+				return true;
 			}
 
 			$path = rtrim($appManager->getAppPath(self::OPENREGISTER_APP_ID), '/');
 
-			// A missing lib/ means this is not an app we can autoload from, and
-			// registering a prefix pointing at nothing would turn a clean
-			// "absent" into class_exists() answering false for a reason nobody
-			// can see.
+			// Enabled but without lib/ (a partial deploy, a packaging change,
+			// wrong permissions) is neither absent nor disabled, and Nextcloud
+			// logs nothing for it either. Registering a prefix over nothing would
+			// only hide it, so record it for reportFailure() instead.
 			if (is_dir($path . '/lib') === false) {
+				self::$failure = new RuntimeException(
+					sprintf('OpenRegister is enabled but %s/lib is not a directory', $path)
+				);
 				return false;
 			}
 
@@ -206,9 +214,9 @@ final class OpenRegisterAutoloader {
 			self::$registered = true;
 			return true;
 		} catch (\Throwable $e) {
-			// OpenRegister absent, or the server container is not up (unit
-			// tests), or something unexpected. The caller's class_exists() guard
-			// then skips the AppHost plumbing. Never rethrow: an exception
+			// OpenRegister enabled but not on disk, or the server container is
+			// not up (unit tests), or something unexpected. The caller then skips
+			// the AppHost plumbing. Never rethrow: an exception
 			// escaping here would abort the caller's entire register(), which is
 			// the exact defect this prelude exists to prevent. Record it instead,
 			// for reportFailure() to log once a logger is available.
@@ -242,12 +250,32 @@ final class OpenRegisterAutoloader {
 	}//end unregister()
 
 	/**
-	 * Log, once, why register() fell through to the degraded path.
+	 * Record a failure of the AppHost wiring that follows this prelude.
 	 *
-	 * Called from `Application::boot()`, where the logger is resolvable. An
-	 * absent OpenRegister ({@see AppPathNotFoundException}) and a disabled one
-	 * are the expected degraded paths and stay quiet; anything else leaves one
-	 * warning. The failure is cleared once reported, so it is logged once.
+	 * `Application::register()` catches a throwing `AppHost\Bootstrap::register()`
+	 * for the same reason this class catches its own failures, and cannot log
+	 * there either. Handing it here lets {@see reportFailure()} cover both.
+	 *
+	 * @param \Throwable $failure What went wrong.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public static function recordFailure(\Throwable $failure): void {
+		self::$failure = $failure;
+
+	}//end recordFailure()
+
+	/**
+	 * Log why the AppHost wiring fell through to the degraded path.
+	 *
+	 * Called from `Application::boot()`, where the logger is resolvable. A
+	 * disabled or absent OpenRegister records nothing and stays quiet, and so
+	 * does one that is enabled but not on disk ({@see AppPathNotFoundException}),
+	 * which Nextcloud's Coordinator already logs. Anything else leaves one
+	 * warning. The failure is cleared once reported, so it is logged once per
+	 * request: a persistent failure logs on every request until it is fixed.
 	 *
 	 * @param LoggerInterface $logger The logger to report to.
 	 *
@@ -264,7 +292,7 @@ final class OpenRegisterAutoloader {
 		}
 
 		$logger->warning(
-			'AppHost prelude did not register OpenRegister: {reason}',
+			'OpenRegister AppHost wiring was skipped: {reason}',
 			['reason' => $failure->getMessage(), 'exception' => $failure]
 		);
 
