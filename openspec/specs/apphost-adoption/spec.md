@@ -70,6 +70,31 @@ Keepiq SHALL delete its local `HealthController`, `MetricsController`, and `Deep
 - **WHEN** an admin opens the Keepiq section in Nextcloud admin settings
 - **THEN** the settings form MUST render and the domain admin settings (password policy, session timeout, CA auto-renew) MUST remain readable and writable via the retained `SettingsController` subclass methods
 
+### Requirement: AppHost Prelude Registers OpenRegister With Public API Only
+
+Because Nextcloud registers app autoloaders in sorted order, `OCA\OpenRegister\` is not autoloadable inside Keepiq's `Application::register()`. Keepiq SHALL put OpenRegister's PSR-4 prefix on the autoloader itself (`OpenRegisterAutoloader::register()`) before any `OCA\OpenRegister\…` reference, using only public API (`IAppManager`) and without booting OpenRegister. The prelude MUST NOT throw. When OpenRegister is absent or disabled it SHALL register nothing and return false, so the caller falls through to its degraded path, and this SHALL be re-checked on every call, including after an earlier successful registration. Any other failure, including an enabled OpenRegister without a `lib/` directory and a throwing `AppHost\Bootstrap::register()`, SHALL be recorded and logged once per request at boot.
+
+#### Scenario: Enabled OpenRegister is autoloadable during register()
+
+- **GIVEN** OpenRegister is installed and enabled
+- **WHEN** `OpenRegisterAutoloader::register()` runs from `Application::register()`
+- **THEN** exactly one autoloader MUST be added that resolves `OCA\OpenRegister\…` names to files under OpenRegister's `lib/`, and it MUST NOT claim names outside that prefix
+- @e2e exclude bootstrap autoloading — no UI surface; covered by unit tests and the AppHost Newman collection
+
+#### Scenario: Disabled or absent OpenRegister is not loaded
+
+- **GIVEN** OpenRegister is installed but disabled, or not installed
+- **WHEN** the prelude runs
+- **THEN** it MUST return false without adding an autoloader and without throwing, and nothing SHALL be logged
+- @e2e exclude bootstrap autoloading — no UI surface; covered by unit tests
+
+#### Scenario: Unexpected failure leaves one log line
+
+- **GIVEN** resolving OpenRegister fails for any reason other than the app being absent, disabled, or enabled but missing from disk — for example an enabled OpenRegister without `lib/`, or a throwing `AppHost\Bootstrap::register()`
+- **WHEN** the prelude runs and the app then boots
+- **THEN** `register()` MUST NOT throw, and `Application::boot()` MUST log exactly one warning for that request, carrying the reason
+- @e2e exclude bootstrap logging — no UI surface; covered by unit tests
+
 ### Requirement: Domain Surfaces Excluded From Adoption
 
 Keepiq SHALL retain its `DashboardController` (argon2-WASM CSP and `summary()` aggregation), `DashboardService`, and every controller, service, middleware, listener, and repair step that touches secrets, encryption suites, shares, certificates, or JWT authentication, unchanged by this adoption.

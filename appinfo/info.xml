@@ -94,17 +94,19 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!--
             Floor is 32, fleet-wide, so PHP 8.3 is guaranteed by the platform.
 
-            31 was never actually deliverable: the CI matrix already tests only
-            stable32 (see nextcloud-test-refs in .github/workflows/
-            code-quality.yml), because OpenRegister — which this app builds on —
-            declares `<nextcloud min-version="32" max-version="34"/>` itself. Advertising 31 in
-            the App Store promised a range no test leg covered and no dependency
-            could satisfy.
+            31 was never actually deliverable: the CI matrix is derived from
+            this `<nextcloud>` range (no leg below 32), because OpenRegister —
+            which this app builds on — declares `min-version="32"` itself.
+            Advertising 31 in the App Store promised a range no test leg covered
+            and no dependency could satisfy.
 
-            max-version stays 34, which is the fleet-wide value everywhere
-            except openconnector (35).
+            max-version is 35 as of 2026-09-15: verified against Nextcloud 35
+            (35.0.0 dev) on the shared dev instance — keepiq enabled, its DB
+            migrations ran cleanly under `occ upgrade`, and the log showed no
+            deprecations or errors. Dependencies openregister and integriq also
+            declare 35 on development (verified 2026-09-24).
         -->
-        <nextcloud min-version="32" max-version="34"/>
+        <nextcloud min-version="32" max-version="35"/>
     </dependencies>
 
     <background-jobs>
