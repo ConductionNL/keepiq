@@ -1296,9 +1296,9 @@
       "name": "Compare two versions of a secret side by side to see what changed.",
       "keepiq": "partial",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
-      "keeper": "unknown",
+      "keeper": "partial",
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "unknown",
       "built": {
@@ -1312,7 +1312,9 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:24 secret.metadata.diff route; ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 Version diff Note: The KV UI compares two versions side by side."
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:24 secret.metadata.diff route; ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 Version diff Note: The KV UI compares two versions side by side.",
+        "onepassword": "https://support.1password.com/item-history/ : 'View previous versions' opens one earlier version of an item and 'Restore' brings it back; no side-by-side comparison is described.",
+        "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/record-commands : the Commander record-history command can 'see differences in between revision' (diff action); in the vault UI (https://docs.keeper.io/user-guides/web-vault) Record History opens one old version at a time and restores it, with no side-by-side view described."
       }
     },
     {
@@ -2043,9 +2045,9 @@
       "name": "Lock a user out after repeated failed sign-in attempts.",
       "keepiq": "partial",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
-      "keeper": "unknown",
+      "keeper": "yes",
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "unknown",
       "built": {
@@ -2059,7 +2061,9 @@
       "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
-        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:2891 user_lockout_config LockoutThreshold on auth mount tune; ui/app/components/auth-config-form/options.ts:56 supportsUserLockoutConfig for approle, ldap, userpass, :67 saves user_lockout_config Note: Failed login lockout with threshold, duration and counter reset is configurable per auth method, in the UI and API."
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:2891 user_lockout_config LockoutThreshold on auth mount tune; ui/app/components/auth-config-form/options.ts:56 supportsUserLockoutConfig for approle, ldap, userpass, :67 saves user_lockout_config Note: Failed login lockout with threshold, duration and counter reset is configurable per auth method, in the UI and API.",
+        "onepassword": "https://support.1password.com/team-policies/ : 'Sign-in attempts: Set the number of failed sign-in attempts allowed before team members are temporarily blocked from accessing 1Password. The block applies only to the IP address where the attempt' occurred, so it is a temporary IP block, not an account lockout.",
+        "keeper": "https://docs.keeper.io/enterprise-guide/developer-tools/login-api : 'Password attempts are limited to ten attempts, after which authentication attempts are throttled' until support resets it; https://docs.keeper.io/enterprise-guide/roles/enforcement-policies adds a role policy that erases local data after 5 incorrect attempts."
       }
     },
     {
@@ -3981,7 +3985,7 @@
       "name": "Push secrets out to cloud secret stores such as AWS Secrets Manager, Azure Key Vault or GitHub and keep them in sync.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "yes",
       "hashicorp-vault": "yes",
@@ -3998,6 +4002,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/sync/addon/routes.js:10 destinations and sync routes; ui/lib/sync/addon/utils/constants.ts:12 aws-sm, azure-kv, gcp-sm, gh, vercel-project; ui/lib/sync/addon/components/secrets/page/overview.hbs:18 activation required; no sys/sync server code in the CE tree | docs: https://developer.hashicorp.com/vault/docs/sync Note: Secrets sync to AWS, Azure, GCP, GitHub and Vercel is in the UI; the server side is Enterprise only, which is the plan this column rates.",
+        "onepassword": "https://developer.1password.com/docs/environments/aws-secrets-manager/ : 'Sync secrets from 1Password to AWS Secrets Manager (beta)' from a 1Password Environment; AWS is the only destination documented (Azure Key Vault, GitHub and the rest not found).",
         "keeper": "https://docs.keeper.io/keeperpam/privileged-access-manager/universal-secrets-sync : 'Synchronize Shared Secrets to Cloud Secret Management Services'; Universal Secrets Sync automatically pushes shared secrets to cloud secret stores (KeeperPAM)."
       }
     },
@@ -5278,7 +5283,7 @@
       "feature": "password-health",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/access-intelligence/ : Enterprise Access Intelligence analyses exposed passwords across the organisation",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/organizations/exposed-passwords-report.component.ts; bitwarden_license/bit-web/src/app/dirt/access-intelligence/risk-insights.component.ts (Access Intelligence at-risk passwords across the org); libs/common/src/services/audit.service.ts:13 pwnedpasswords range API Note: Organisation-wide exposed password analysis in reports and Access Intelligence; it is on for Enterprise rather than a separate switch.",
         "onepassword": "https://support.1password.com/insights/ : Business breach checks and domain breach report",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-policy : 'External services ... check if the current secret is known in some data breach' (Pro)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings : 'Password Security Checks' service (HIBP, local databases) chosen by the admin",
@@ -5291,7 +5296,7 @@
       "area": "admin",
       "name": "Decide how long old versions of secrets are kept.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "yes",
       "keeper": "partial",
@@ -5310,7 +5315,7 @@
       "feature": "secret-version-history",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: password history keeps the last five passwords, no admin retention setting found",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:1911 password history hard-capped at 5; searched 'retention', 'MaxVersions', 'versionsToKeep' in bitwarden/server@v2026.9.1 src/Core/SecretsManager src/Api/SecretsManager bitwarden_license/src/Commercial.Core/SecretsManager: no match Note: History length is fixed in code and Secrets Manager versions have no retention setting. Moved from unknown on code.",
         "onepassword": "not checked: no admin setting for item history retention found",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/secret-history : 'History length ... between 1 and a maximum ... 10 by default'",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Password-Detail-View : 'Revisions are immutable and can not be changed or deleted'; no retention setting in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -5339,7 +5344,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/about-scim/ : SCIM provisioning for Teams and Enterprise organisations",
+        "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Scim/Controllers/v2/UsersController.cs, bitwarden_license/src/Scim/Controllers/v2/GroupsController.cs (SCIM 2.0 users and groups) Note: SCIM 2.0 service provisions and deprovisions users and groups.",
         "onepassword": "https://support.1password.com/scim/ : SCIM Bridge creates users and groups and suspends users",
         "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/scim/ : Entra ID and Okta via '/Users endpoints' (Pro 5.5+, users only)",
         "nextcloud-passwords": "not checked: users are Nextcloud accounts, so provisioning is whatever the Nextcloud instance offers; the app itself documents none",
@@ -5377,7 +5382,7 @@
       "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/ldap-directory/ : Directory Connector syncs users and groups from Active Directory or any LDAP directory",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Public/Controllers/OrganizationController.cs:48 POST public/organization/import (members and groups) used by Directory Connector | docs: https://bitwarden.com/help/ldap-directory/ Note: The server import API is present; the Directory Connector client that reads AD or LDAP lives in bitwarden/directory-connector, not read here. Docs rating kept.",
         "onepassword": "https://support.1password.com/scim/ : group sync via SCIM from Entra ID, Okta, Google Workspace, JumpCloud; no direct AD or LDAP connector",
         "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/users-directory/ : 'synchronise users and groups from an external directory' for OpenLDAP and Active Directory (Pro)",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords/blob/master/CHANGELOG.md : LDAP users are supported ('Sharing issues with LDAP' fixed) via Nextcloud, but groups cannot receive shares",
@@ -5406,7 +5411,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/policies/ : 'Require two-step login' and 'Remove export' policies",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:5 TwoFactorAuthentication, :19 DisablePersonalVaultExport; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/two-factor-authentication.component.ts; bitwarden_license/bit-web/src/app/admin-console/policies/policy-edit-definitions/disable-personal-vault-export.component.ts Note: Require two-step login and remove individual vault export are among 23 policies.",
         "onepassword": "https://support.1password.com/team-policies/ : 'Two-factor authentication' enforcement and further sign-in, sharing and file policies",
         "passbolt": "https://www.passbolt.com/docs/admin/authentication/mfa-policy : MFA policy only prompts ('does not block sign-in'); cleartext CSV export off by default per https://www.passbolt.com/docs/admin/resource-policies/export-policies ; KDBX export stays allowed",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q : 2FA at passphrase login when 'the passwords app is configured to enable the feature' and E2E is on; no export ban",
@@ -5437,7 +5442,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/user-types-access-control/ : member roles including custom roles with granular permissions",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/OrganizationUserType.cs:5 Owner, :6 Admin, :7 User, :9 Custom; src/Core/AdminConsole/Models/Data/Permissions.cs:8 13 granular permission flags (event logs, import/export, reports, collections, groups, users, policies, SSO, SCIM, account recovery); bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/components/member-dialog/member-dialog.component.ts Note: Custom role with 13 granular permissions besides owner and admin.",
         "onepassword": "https://support.1password.com/custom-groups/ : custom groups with chosen administrative permissions (Business)",
         "passbolt": "https://www.passbolt.com/docs/admin/authentication/account-recovery/account-recovery-configuration : 'with passbolt 5.8 ... the ability to create additional roles' e.g. account recovery reviewers; RBAC in https://www.passbolt.com/docs/admin/role-based-access-control",
         "keeper": "https://docs.keeper.io/enterprise-guide/delegated-administration : administrative permissions granted per role and scoped to nodes",
@@ -6377,7 +6382,7 @@
       "name": "Keep the folders from the source when importing.",
       "keepiq": "yes",
       "bitwarden": "yes",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "yes",
       "keeper": "yes",
       "hashicorp-vault": "no",
@@ -6404,7 +6409,7 @@
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/import-data/ : folder structure is preserved, a chosen destination folder becomes the parent",
-        "onepassword": "not checked: https://support.1password.com/import/ does not say whether folders become vaults or tags",
+        "onepassword": "https://support.1password.com/import-lastpass/ : 'Private folders will be converted to tags'; shared folders become vaults. The folder tree survives as tags rather than folders.",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/import/keepass-kdbx : KeePass 'Group' imported (and Bitwarden 'folder' column)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Export : backups include 'Passwords, Folders and Tags' and restore them",
         "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-a-.csv-file : 'supports advanced structure including Folders, Subfolders, Shared Folders'",
