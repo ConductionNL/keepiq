@@ -2338,8 +2338,8 @@
       "area": "apps",
       "name": "Register an application that needs secrets.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2355,7 +2355,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "application-mgmt",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : machine accounts give 'non-human users (applications, deployment pipelines)' programmatic access (Secrets Manager)",
+        "onepassword": "https://developer.1password.com/docs/service-accounts/get-started/ : create a service account with vault access for an application or pipeline"
+      }
     },
     {
       "id": "apps-02",
@@ -2387,7 +2391,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "application-mgmt",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: machine accounts are created directly by permitted members; no approve or reject queue found",
+        "onepassword": "not checked: no approve or reject queue for service account creation found"
+      }
     },
     {
       "id": "apps-03",
@@ -2411,7 +2419,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "application-mgmt",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no pending-registration notification found",
+        "onepassword": "not checked: no pending-registration notification found"
+      }
     },
     {
       "id": "apps-04",
@@ -2435,15 +2447,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "application-mgmt",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no certificate signing request onboarding found; machines use access tokens",
+        "onepassword": "not checked: no certificate signing request onboarding found; machines use service account tokens or Connect tokens"
+      }
     },
     {
       "id": "apps-05",
       "area": "apps",
       "name": "An application signs in with a signed token instead of a stored password.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2459,15 +2475,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-store-api",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-tokens/ : machines authenticate with a bearer access token that is shown once and stored by the operator",
+        "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : Credential Broker gives pipelines short-lived tokens 'without managing service account tokens'; service accounts otherwise use a stored bearer token"
+      }
     },
     {
       "id": "apps-06",
       "area": "apps",
       "name": "An application fetches a secret by its name.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2483,15 +2503,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-store-api",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/secrets-manager-cli/ : 'bws secret get <SECRET_ID>' by identifier; by-name lookup needs listing and filtering",
+        "onepassword": "https://developer.1password.com/docs/cli/secret-references/ : 'op://<vault-name>/<item-name>/[section-name/]<field-name>'"
+      }
     },
     {
       "id": "apps-07",
       "area": "apps",
       "name": "An application can write a secret it is not allowed to read back.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2507,15 +2531,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-store-api",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : permission levels are only 'Can read' and 'Can read, write'",
+        "onepassword": "https://developer.1password.com/docs/cli/reference/management-commands/service-account/ : 'write_items (requires read_items)'"
+      }
     },
     {
       "id": "apps-08",
       "area": "apps",
       "name": "An application notices a rotated secret by polling for a new version.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2531,7 +2559,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-store-api",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/secrets-manager-kubernetes-operator/ : the operator 'uses a controller to synchronize Bitwarden Secrets into Kubernetes secrets' on an interval",
+        "onepassword": "https://developer.1password.com/docs/k8s/operator/ : operator can 'automatically restart deployments when 1Password items update'"
+      }
     },
     {
       "id": "apps-09",
@@ -2563,15 +2595,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-store-api",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: machine account Config tab lists server URLs, no well-known discovery document found",
+        "onepassword": "not checked: no well-known discovery document found"
+      }
     },
     {
       "id": "apps-10",
       "area": "apps",
       "name": "A machine that fetches a secret gets a lease that expires.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2587,15 +2623,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "machine-secret-leases",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-tokens/ : an authenticated machine's session expires within one hour; tokens can carry an expiry",
+        "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : short-lived, 'scoped and time-bound' tokens for pipelines (not a per-secret lease)"
+      }
     },
     {
       "id": "apps-11",
       "area": "apps",
       "name": "Renew or revoke a machine lease.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2619,15 +2659,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "machine-secret-leases",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-tokens/ : 'revoke tokens immediately', sessions die within an hour; no renewal call",
+        "onepassword": "https://developer.1password.com/docs/cli/reference/management-commands/service-account/ : rotating a token issues a new one and can set an expiry on the current token"
+      }
     },
     {
       "id": "apps-12",
       "area": "apps",
       "name": "An administrator sets the lease time limit.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2651,14 +2695,18 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "machine-secret-leases",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-tokens/ : expiration set per token at creation, default 'Never'; no org-wide maximum found",
+        "onepassword": "https://developer.1password.com/docs/cli/reference/management-commands/service-account/ : 'set how long the service account is valid for'"
+      }
     },
     {
       "id": "apps-13",
       "area": "apps",
       "name": "Delete an application together with its secrets.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -2683,15 +2731,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "application-mgmt",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : when deleted 'Machine accounts are fully removed' and associated secrets remain intact",
+        "onepassword": "not checked: deleting a service account is documented, deleting its vault with it is not"
+      }
     },
     {
       "id": "apps-14",
       "area": "apps",
       "name": "See which secrets belong to which application.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2707,15 +2759,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "application-mgmt",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : projects are added to a machine account with read or read-write, shown on its Projects tab",
+        "onepassword": "https://developer.1password.com/docs/service-accounts/get-started/ : each service account is scoped to named vaults with per-vault permissions"
+      }
     },
     {
       "id": "apps-15",
       "area": "apps",
       "name": "Fetch secrets in a CI pipeline from one command-line binary without writing plaintext to disk.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2731,15 +2787,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "keepiq-cli",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/secrets-manager-cli/ : 'bws run' injects secrets 'as environment variables'",
+        "onepassword": "https://developer.1password.com/docs/cli/secrets-environment-variables : 'op run' passes secrets as environment variables 'without exposing any secrets in plaintext'"
+      }
     },
     {
       "id": "apps-16",
       "area": "apps",
       "name": "Read your own vault from the command line.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2755,15 +2815,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "keepiq-cli",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/cli/ : Password Manager CLI reads and edits your own vault",
+        "onepassword": "https://developer.1password.com/docs/cli/reference/ : 1Password CLI 'op' reads items from your account"
+      }
     },
     {
       "id": "apps-17",
       "area": "apps",
       "name": "Inject secrets into a Kubernetes cluster.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2775,15 +2839,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/secrets-manager-kubernetes-operator/ : sm-operator deployed with Helm syncs secrets into Kubernetes",
+        "onepassword": "https://developer.1password.com/docs/k8s/integrations/ : Kubernetes Secrets Injector, Operator and Helm charts"
+      }
     },
     {
       "id": "apps-18",
       "area": "apps",
       "name": "Use a ready-made GitHub Actions or GitLab CI integration.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2795,7 +2863,11 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/github-actions-integration/ : injects secrets as masked environment variables; GitLab CI/CD and Jenkins listed in https://bitwarden.com/help/secrets-manager-overview/",
+        "onepassword": "https://developer.1password.com/docs/ci-cd/github-actions/ : load secrets into GitHub Actions with secret references"
+      }
     },
     {
       "id": "apps-19",
@@ -2803,7 +2875,7 @@
       "name": "Generate short-lived database credentials on demand.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2815,7 +2887,11 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "not checked: no dynamic database credential feature found in Secrets Manager docs or FAQs",
+        "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : automatic rotation is not in the initial release and a database password 'may still be long-lived in the database'"
+      }
     },
     {
       "id": "apps-20",
@@ -2823,7 +2899,7 @@
       "name": "Rotate a database or service password automatically.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2836,15 +2912,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "not checked: no built-in automatic rotation found; only manual update and community Ansible tooling",
+        "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : no built-in rotation yet; SDKs can script rotation per https://blog.1password.com/1password-sdks-programmatic-item-management/"
+      }
     },
     {
       "id": "apps-21",
       "area": "apps",
       "name": "Use client libraries for common programming languages.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2857,15 +2937,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/secrets-manager-sdk/ : C++, C#, Go, Java, JavaScript, PHP, Python, Ruby",
+        "onepassword": "https://developer.1password.com/docs/sdks/ : SDKs for Go, JavaScript and Python"
+      }
     },
     {
       "id": "apps-22",
       "area": "apps",
       "name": "Manage secrets as code with a Terraform provider.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2877,7 +2961,11 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/secrets-manager-overview/ : Terraform listed among integrations",
+        "onepassword": "https://developer.1password.com/docs/terraform : reference, create or update items as Terraform resources"
+      }
     },
     {
       "id": "apps-23",
@@ -2901,7 +2989,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-store-api",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: Conduction-specific integration, not applicable to a third-party product",
+        "onepassword": "not checked: Conduction-specific integration, not applicable to a third-party product"
+      }
     },
     {
       "id": "apps-24",
@@ -2921,7 +3013,11 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "not checked: no encryption-as-a-service API found",
+        "onepassword": "not checked: no encryption-as-a-service API found"
+      }
     },
     {
       "id": "pki-01",
@@ -2945,7 +3041,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs"
+      }
     },
     {
       "id": "pki-02",
@@ -2983,7 +3083,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs"
+      }
     },
     {
       "id": "pki-03",
@@ -3015,7 +3119,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs"
+      }
     },
     {
       "id": "pki-04",
@@ -3039,7 +3147,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs"
+      }
     },
     {
       "id": "pki-05",
@@ -3071,7 +3183,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs"
+      }
     },
     {
       "id": "pki-06",
@@ -3095,7 +3211,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs"
+      }
     },
     {
       "id": "pki-07",
@@ -3116,15 +3236,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs"
+      }
     },
     {
       "id": "pki-08",
       "area": "pki",
       "name": "Store a certificate and see its expiry date and subject.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3140,7 +3264,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : the five item types are Login, Card, Identity, Secure note and SSH key; no certificate type with expiry or subject",
+        "onepassword": "https://support.1password.com/item-categories/ : the full category list (about 22 types) has no certificate type with expiry or subject"
+      }
     },
     {
       "id": "pki-09",
@@ -3171,7 +3299,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "application-mgmt",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: applications receive an access token shown once (https://bitwarden.com/help/access-tokens/), not a private key",
+        "onepassword": "not checked: service accounts receive a token shown once, not a private key"
+      }
     },
     {
       "id": "health-01",
