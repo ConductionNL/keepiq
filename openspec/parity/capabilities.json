@@ -5663,7 +5663,7 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "partial",
+        "state": "building",
         "evidence": "appinfo/routes.php:75-77 secretType#create/update/destroy -> lib/Controller/SecretTypeController.php; src/store/modules/secretType.js:73 createType has no caller in src (git grep createType src)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing, API only",
